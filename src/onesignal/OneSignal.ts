@@ -43,6 +43,7 @@ import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferre
 import DebugNamespace from "./DebugNamesapce";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
 import { ONESIGNAL_EVENTS } from "./OneSignalEvents";
+import { bowserCastle } from "../shared/utils/bowserCastle";
 
 export default class OneSignal {
   static EVENTS = ONESIGNAL_EVENTS;
@@ -379,4 +380,4 @@ LegacyManager.ensureBackwardsCompatibility(OneSignal);
 Log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION},
   ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
 Log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
-Log.debug(`Browser Environment: ${bowser.name} ${bowser.version}`);
+Log.debug(`Browser Environment: ${bowserCastle().name} ${bowserCastle().version}`);

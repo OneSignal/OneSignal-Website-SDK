@@ -4,6 +4,7 @@ import Environment from "../helpers/Environment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { Utils } from "../context/Utils";
 import Log from "../libraries/Log";
+import { bowserCastle } from "./bowserCastle";
 
 export class OneSignalUtils {
   public static getBaseUrl() {
@@ -75,7 +76,7 @@ export class OneSignalUtils {
 
   public static redetectBrowserUserAgent(): IBowser {
     // During testing, the browser object may be initialized before the userAgent is injected
-    if (bowser.name === "" && bowser.version === "") {
+    if (bowserCastle().name === "" && bowserCastle().version === "") {
       return bowser._detect(navigator.userAgent);
     }
     return bowser;

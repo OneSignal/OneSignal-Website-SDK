@@ -5,6 +5,7 @@ import SdkEnvironment from '../../shared/managers/SdkEnvironment';
 import { addDomElement, clearDomElementChildren, getPlatformNotificationIcon } from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
+import { bowserCastle } from '../../shared/utils/bowserCastle';
 
 export default class Dialog extends AnimatedElement {
 
@@ -79,7 +80,7 @@ export default class Dialog extends AnimatedElement {
         else if (this.bell.state === Bell.STATES.BLOCKED) {
           let imageUrl = null;
           if (bowser.chrome) {
-            if (!bowser.mobile && !bowser.tablet)
+            if (!bowserCastle().mobile && !bowserCastle().tablet)
               imageUrl = '/bell/chrome-unblock.jpg';
           }
           else if (bowser.firefox)
@@ -95,7 +96,7 @@ export default class Dialog extends AnimatedElement {
             instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>`;
           }
 
-          if ((bowser.mobile || bowser.tablet) && bowser.chrome) {
+          if ((bowserCastle().mobile || bowserCastle().tablet) && bowser.chrome) {
             instructionsHtml = `<ol><li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li><li>Click <strong>Site settings</strong> under Advanced.</li><li>Click <strong>Notifications</strong>.</li><li>Find and click this entry for this website.</li><li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li></ol>`;
           }
           contents = `<h1>${this.bell.options.text['dialog.blocked.title']}</h1><div class="divider"></div><div class="instructions"><p>${this.bell.options.text['dialog.blocked.message']}</p>${instructionsHtml}</div>${footer}`;

@@ -3,6 +3,7 @@ import { Serializable } from '../../page/models/Serializable';
 
 import NotImplementedError from '../errors/NotImplementedError';
 import Environment from '../helpers/Environment';
+import { bowserCastle } from '../utils/bowserCastle';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import { DeliveryPlatformKind } from './DeliveryPlatformKind';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
@@ -47,7 +48,7 @@ export abstract class DeviceRecord implements Serializable {
     this.language = Environment.getLanguage();
     this.timezone = new Date().getTimezoneOffset() * -60;
     this.timezoneId = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const browserVersion = parseInt(String(bowser.version), 10);
+    const browserVersion = parseInt(String(bowserCastle().version), 10);
     this.browserVersion = isNaN(browserVersion) ? -1 : browserVersion;
     this.deviceModel = navigator.platform;
     this.sdkVersion = Environment.version().toString();
