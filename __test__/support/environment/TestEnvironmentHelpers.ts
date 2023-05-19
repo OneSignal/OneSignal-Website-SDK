@@ -17,13 +17,33 @@ import Context from "../../../src/page/models/Context";
 import NotificationsNamespace from "../../../src/onesignal/NotificationsNamespace";
 import UserNamespace from "../../../src/onesignal/UserNamespace";
 import { ONESIGNAL_EVENTS } from "../../../src/onesignal/OneSignalEvents";
+import bowser from "bowser";
 
 declare const global: any;
+
+jest.mock('../../../src/shared/utils/bowserCastle', () => ({
+  bowserCastle: jest.fn(),
+}));
+
+// Import the mocked module
+const { bowserCastle } = require('../../../src/shared/utils/bowserCastle');
 
 export function resetDatabase() {
   // Erase and reset IndexedDb database name to something random
   Database.resetInstance();
   Database.databaseInstanceName = Random.getRandomString(10);
+}
+
+export function mockUserAgent(config: TestEnvironmentConfig = {}): void {
+  const info = bowser._detect(config.userAgent ?? BrowserUserAgent.Default);
+
+  // Modify the mock implementation
+  bowserCastle.mockImplementation(() => ({
+    mobile: info.mobile,
+    tablet: info.tablet,
+    name: info.name.toLowerCase(),
+    version: info.version,
+  }));
 }
 
 export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
