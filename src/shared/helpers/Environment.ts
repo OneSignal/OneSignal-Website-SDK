@@ -1,6 +1,6 @@
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import bowser from 'bowser';
+import { bowserCastle } from '../utils/bowserCastle';
 
 export default class Environment {
   /**
@@ -11,7 +11,7 @@ export default class Environment {
   }
 
   public static isSafari(): boolean {
-    return Environment.isBrowser() && bowser.safari;
+    return Environment.isBrowser() && bowserCastle().name == 'safari';
   }
 
   public static version() {

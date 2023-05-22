@@ -2,7 +2,7 @@ import SdkEnvironment from "../../../src/shared/managers/SdkEnvironment";
 import { AppUserConfig, ConfigIntegrationKind, ServerAppConfig } from "../../../src/shared/models/AppConfig";
 import { TestEnvironmentKind } from "../../../src/shared/models/TestEnvironmentKind";
 import BrowserUserAgent from "../models/BrowserUserAgent";
-import { resetDatabase, initOSGlobals, stubDomEnvironment, stubNotification } from "./TestEnvironmentHelpers";
+import { resetDatabase, initOSGlobals, stubDomEnvironment, stubNotification, mockUserAgent } from "./TestEnvironmentHelpers";
 import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
 import OperationCache from "../../../src/core/caching/OperationCache";
 import "fake-indexeddb/auto";
@@ -33,6 +33,7 @@ export interface TestEnvironmentConfig {
 
 export class TestEnvironment {
   static async initialize(config: TestEnvironmentConfig = {}) {
+    mockUserAgent(config);
     // reset db & localStorage
     resetDatabase();
     OperationCache.flushOperations();

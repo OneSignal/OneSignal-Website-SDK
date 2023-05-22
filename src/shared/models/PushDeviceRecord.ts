@@ -1,9 +1,8 @@
-import bowser from 'bowser';
-
 import NotImplementedError from '../errors/NotImplementedError';
 import { RawPushSubscription } from './RawPushSubscription';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
 import { DeviceRecord, FlattenedDeviceRecord } from './DeviceRecord';
+import { bowserCastle } from '../utils/bowserCastle';
 
 // TO DO: deprecate in favor of FuturePushSubscriptionRecord.ts
 export interface SerializedPushDeviceRecord extends FlattenedDeviceRecord {
@@ -30,7 +29,7 @@ export class PushDeviceRecord extends DeviceRecord {
     const serializedBundle: SerializedPushDeviceRecord = super.serialize();
 
     if (this.subscription) {
-      serializedBundle.identifier = bowser.safari ?
+      serializedBundle.identifier = bowserCastle().name == 'safari' ?
         this.subscription.safariDeviceToken :
         this.subscription.w3cEndpoint ? this.subscription.w3cEndpoint.toString() : null;
       serializedBundle.web_auth = this.subscription.w3cAuth;

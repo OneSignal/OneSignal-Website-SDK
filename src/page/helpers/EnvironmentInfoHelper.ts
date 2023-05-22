@@ -4,6 +4,7 @@ import { Browser } from '../../shared/models/Browser';
 import { OneSignalUtils } from '../../shared/utils/OneSignalUtils';
 import { isMacOSSafariInIframe } from '../utils/BrowserSupportsPush';
 import Utils from '../../shared/context/Utils';
+import { bowserCastle } from "../../shared/utils/bowserCastle";
 
 /**
  * EnvironmentInfoHelper is used to save page ("browser") context environment information to
@@ -25,10 +26,10 @@ export class EnvironmentInfoHelper {
     }
 
     private static getBrowser(): Browser {
-        if (bowser.chrome) { return Browser.Chrome; }
-        if (bowser.msedge) { return Browser.Edge; }
-        if (bowser.opera) { return Browser.Opera; }
-        if (bowser.firefox) { return Browser.Firefox; }
+        if (bowserCastle().name === 'chrome') { return Browser.Chrome; }
+        if (bowserCastle().name === 'msedge') { return Browser.Edge; }
+        if (bowserCastle().name === 'opera') { return Browser.Opera; }
+        if (bowserCastle().name === 'firefox') { return Browser.Firefox; }
         // use existing safari detection to be consistent
         if (this.isMacOSSafari()) { return Browser.Safari; }
 
@@ -45,7 +46,7 @@ export class EnvironmentInfoHelper {
     }
 
     private static getBrowserVersion(): number {
-        return Utils.parseVersionString(bowser.version);
+        return Utils.parseVersionString(bowserCastle().version);
     }
 
     private static isHttps(): boolean {
