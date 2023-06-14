@@ -19,7 +19,7 @@ startNgrokHTTPSForwarding() {
     sleep 5
 
     # Get the ngrok url
-    read -r rawurl < <(grep -o "https://[^ ]*\.ngrok\.io" ngrok.log)
+    read -r rawurl < <(grep -o "https://[^ ]*\.ngrok.*" ngrok.log)
     url=$(echo $rawurl | sed 's/https:\/\///')
     echo "ngrok url: $url"
     rm -f ngrok_last_url
