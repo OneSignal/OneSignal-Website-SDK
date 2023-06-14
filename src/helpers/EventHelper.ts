@@ -11,8 +11,11 @@ import LocalStorage from '../utils/LocalStorage';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 
 export default class EventHelper {
-  static onNotificationPermissionChange() {
-    EventHelper.checkAndTriggerSubscriptionChanged();
+  static _mutexPromise: Promise<void> = Promise.resolve();
+  static _mutexLocked = false;
+
+  static async onNotificationPermissionChange() {
+    await EventHelper.checkAndTriggerSubscriptionChanged();
   }
 
   static async onInternalSubscriptionSet(optedOut: boolean) {
@@ -20,25 +23,39 @@ export default class EventHelper {
   }
 
   static async checkAndTriggerSubscriptionChanged() {
-    OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
-    const context: ContextSWInterface = OneSignal.context;
-    const subscriptionState = await context.subscriptionManager.getSubscriptionState();
-    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-    const appState = await Database.getAppState();
-    const { lastKnownPushEnabled } = appState;
-    const didStateChange = (
-      lastKnownPushEnabled === null ||
-      isPushEnabled !== lastKnownPushEnabled
-    );
-    if (!didStateChange) return;
-    Log.info(
-      `The user's subscription state changed from ` +
-        `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
-    );
-    LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
-    appState.lastKnownPushEnabled = isPushEnabled;
-    await Database.setAppState(appState);
-    EventHelper.triggerSubscriptionChanged(isPushEnabled);
+    if (EventHelper._mutexLocked) {
+      await EventHelper._mutexPromise;
+    }
+
+    EventHelper._mutexLocked = true;
+    // eslint-disable-next-line no-async-promise-executor
+    EventHelper._mutexPromise = new Promise(async (resolve, reject) => {
+      try {
+        OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
+        const context: ContextSWInterface = OneSignal.context;
+        const subscriptionState = await context.subscriptionManager.getSubscriptionState();
+        const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+        const appState = await Database.getAppState();
+        const { lastKnownPushEnabled } = appState;
+        const didStateChange = (
+          lastKnownPushEnabled === null ||
+          isPushEnabled !== lastKnownPushEnabled
+        );
+        if (!didStateChange) return;
+        Log.info(
+          `The user's subscription state changed from ` +
+            `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
+        );
+        LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
+        appState.lastKnownPushEnabled = isPushEnabled;
+        await Database.setAppState(appState);
+        EventHelper.triggerSubscriptionChanged(isPushEnabled);
+        EventHelper._mutexLocked = false;
+        resolve();
+      } catch (e) {
+        reject(`checkAndTriggerSubscriptionChanged error: ${e}`);
+      }
+    });
   }
 
   static async _onSubscriptionChanged(newSubscriptionState: boolean | undefined) {

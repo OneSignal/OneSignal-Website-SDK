@@ -18,6 +18,7 @@ import {
 import { createSubscription } from "../../support/tester/utils";
 import EventsTestHelper from '../../support/tester/EventsTestHelper';
 import { DelayedPromptType } from '../../../src/models/Prompts';
+import EventHelper from "../../../src/helpers/EventHelper";
 
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
@@ -30,6 +31,8 @@ test.afterEach(function (_t: ExecutionContext) {
   OneSignal._initCalled = false;
   OneSignal.__initAlreadyCalled = false;
   OneSignal._sessionInitAlreadyRunning = false;
+  EventHelper._mutexPromise = Promise.resolve();
+  EventHelper._mutexLocked = false;
 });
 
 /**
