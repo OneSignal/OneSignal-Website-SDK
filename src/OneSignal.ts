@@ -219,7 +219,7 @@ export default class OneSignal {
       OneSignal.__initAlreadyCalled = true;
 
       OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED,
-        EventHelper.onNotificationPermissionChange);
+        EventHelper.checkAndTriggerSubscriptionChanged);
       OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
       OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
 

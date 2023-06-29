@@ -11,10 +11,6 @@ import LocalStorage from '../utils/LocalStorage';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 
 export default class EventHelper {
-  static onNotificationPermissionChange() {
-    EventHelper.checkAndTriggerSubscriptionChanged();
-  }
-
   static async onInternalSubscriptionSet(optedOut: boolean) {
     LimitStore.put('subscription.optedOut', optedOut);
   }
