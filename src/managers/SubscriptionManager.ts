@@ -334,15 +334,12 @@ export class SubscriptionManager {
       const permission = await SubscriptionManager.requestPresubscribeNotificationPermission();
 
       /*
-        Notification permission changes are already broadcast by the page's
-        notificationpermissionchange handler. This means that allowing or
-        denying the permission prompt will cause double events. However, the
-        native event handler does not broadcast an event for dismissing the
+        The native event handler does not broadcast an event for dismissing the
         prompt, because going from "default" permissions to "default"
         permissions isn't a change. We specifically broadcast "default" to "default" changes.
        */
-      if (permission === NotificationPermission.Default)
-        await PermissionUtils.triggerNotificationPermissionChanged(true);
+      const forcePermissionChangeEvent = permission === NotificationPermission.Default
+      await PermissionUtils.triggerNotificationPermissionChanged(forcePermissionChangeEvent);
 
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
