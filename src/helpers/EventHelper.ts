@@ -77,6 +77,7 @@ export default class EventHelper {
     }
   }
 
+  private static sendingOrSentWelcomeNotification = false;
   private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean | undefined) {
     if (OneSignal.__doNotShowWelcomeNotification) {
       Log.debug('Not showing welcome notification because user has previously subscribed.');
@@ -93,6 +94,13 @@ export default class EventHelper {
     if (isSubscribed !== true) {
       return;
     }
+
+    // Workaround only for this v15 branch; There are race conditions in the SDK
+    // that result in the onSubscriptionChanged firing more than once sometimes.
+    if (EventHelper.sendingOrSentWelcomeNotification) {
+      return;
+    }
+    EventHelper.sendingOrSentWelcomeNotification = true;
 
     const { deviceId } = await Database.getSubscription();
     const { appId } = await Database.getAppConfig();
