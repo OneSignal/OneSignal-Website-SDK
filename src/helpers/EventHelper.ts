@@ -11,11 +11,8 @@ import LocalStorage from '../utils/LocalStorage';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 
 export default class EventHelper {
-  static _mutexPromise: Promise<void> = Promise.resolve();
-  static _mutexLocked = false;
-
-  static async onNotificationPermissionChange() {
-    await EventHelper.checkAndTriggerSubscriptionChanged();
+  static onNotificationPermissionChange() {
+    EventHelper.checkAndTriggerSubscriptionChanged();
   }
 
   static async onInternalSubscriptionSet(optedOut: boolean) {
@@ -23,40 +20,25 @@ export default class EventHelper {
   }
 
   static async checkAndTriggerSubscriptionChanged() {
-    if (EventHelper._mutexLocked) {
-      await EventHelper._mutexPromise;
-    }
-
-    EventHelper._mutexLocked = true;
-    // eslint-disable-next-line no-async-promise-executor
-    EventHelper._mutexPromise = new Promise(async (resolve, reject) => {
-      try {
-        OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
-        const context: ContextSWInterface = OneSignal.context;
-        const subscriptionState = await context.subscriptionManager.getSubscriptionState();
-        const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-        const appState = await Database.getAppState();
-        const { lastKnownPushEnabled } = appState;
-        const didStateChange = (
-          lastKnownPushEnabled === null ||
-          isPushEnabled !== lastKnownPushEnabled
-        );
-        if (!didStateChange) return;
-        Log.info(
-          `The user's subscription state changed from ` +
-            `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
-        );
-        LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
-        appState.lastKnownPushEnabled = isPushEnabled;
-        await Database.setAppState(appState);
-        EventHelper.triggerSubscriptionChanged(isPushEnabled);
-        EventHelper._mutexLocked = false;
-        resolve();
-      } catch (e) {
-        EventHelper._mutexLocked = false;
-        reject(`checkAndTriggerSubscriptionChanged error: ${e}`);
-      }
-    });
+    OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
+    const context: ContextSWInterface = OneSignal.context;
+    const subscriptionState = await context.subscriptionManager.getSubscriptionState();
+    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    const appState = await Database.getAppState();
+    const { lastKnownPushEnabled } = appState;
+    const didStateChange = (
+      lastKnownPushEnabled === null ||
+      isPushEnabled !== lastKnownPushEnabled
+    );
+    if (!didStateChange) return;
+    Log.info(
+      `The user's subscription state changed from ` +
+        `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
+    );
+    LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
+    appState.lastKnownPushEnabled = isPushEnabled;
+    await Database.setAppState(appState);
+    EventHelper.triggerSubscriptionChanged(isPushEnabled);
   }
 
   static async _onSubscriptionChanged(newSubscriptionState: boolean | undefined) {
@@ -77,58 +59,70 @@ export default class EventHelper {
     }
   }
 
+  private static sendingOrSentWelcomeNotification = false;
   private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean | undefined) {
     if (OneSignal.__doNotShowWelcomeNotification) {
       Log.debug('Not showing welcome notification because user has previously subscribed.');
       return;
     }
-    if (isSubscribed === true) {
-      const { deviceId } = await Database.getSubscription();
-      const { appId } = await Database.getAppConfig();
+    const welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
+    const welcome_notification_disabled =
+      welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true;
 
-      const welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
-      const welcome_notification_disabled =
-        welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true;
-      let title =
-        welcome_notification_opts !== undefined &&
-          welcome_notification_opts['title'] !== undefined &&
-          welcome_notification_opts['title'] !== null
-          ? welcome_notification_opts['title']
-          : '';
-      let message =
-        welcome_notification_opts !== undefined &&
-          welcome_notification_opts['message'] !== undefined &&
-          welcome_notification_opts['message'] !== null &&
-          welcome_notification_opts['message'].length > 0
-          ? welcome_notification_opts['message']
-          : 'Thanks for subscribing!';
-      const unopenableWelcomeNotificationUrl = new URL(location.href).origin + '?_osp=do_not_open';
-      const url =
-        welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0
-          ? welcome_notification_opts['url']
-          : unopenableWelcomeNotificationUrl;
-      title = BrowserUtils.decodeHtmlEntities(title);
-      message = BrowserUtils.decodeHtmlEntities(message);
-
-      if (!welcome_notification_disabled) {
-        Log.debug('Sending welcome notification.');
-        OneSignalApiShared.sendNotification(
-          appId,
-          [deviceId],
-          { en: title },
-          { en: message },
-          url,
-          null,
-          { __isOneSignalWelcomeNotification: true },
-          undefined
-        );
-        Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
-          title: title,
-          message: message,
-          url: url
-        });
-      }
+    if (welcome_notification_disabled) {
+      return;
     }
+
+    if (isSubscribed !== true) {
+      return;
+    }
+
+    // Workaround only for this v15 branch; There are race conditions in the SDK
+    // that result in the onSubscriptionChanged firing more than once sometimes.
+    if (EventHelper.sendingOrSentWelcomeNotification) {
+      return;
+    }
+    EventHelper.sendingOrSentWelcomeNotification = true;
+
+    const { deviceId } = await Database.getSubscription();
+    const { appId } = await Database.getAppConfig();
+    let title =
+      welcome_notification_opts !== undefined &&
+        welcome_notification_opts['title'] !== undefined &&
+        welcome_notification_opts['title'] !== null
+        ? welcome_notification_opts['title']
+        : '';
+    let message =
+      welcome_notification_opts !== undefined &&
+        welcome_notification_opts['message'] !== undefined &&
+        welcome_notification_opts['message'] !== null &&
+        welcome_notification_opts['message'].length > 0
+        ? welcome_notification_opts['message']
+        : 'Thanks for subscribing!';
+    const unopenableWelcomeNotificationUrl = new URL(location.href).origin + '?_osp=do_not_open';
+    const url =
+      welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0
+        ? welcome_notification_opts['url']
+        : unopenableWelcomeNotificationUrl;
+    title = BrowserUtils.decodeHtmlEntities(title);
+    message = BrowserUtils.decodeHtmlEntities(message);
+
+    Log.debug('Sending welcome notification.');
+    OneSignalApiShared.sendNotification(
+      appId,
+      [deviceId],
+      { en: title },
+      { en: message },
+      url,
+      null,
+      { __isOneSignalWelcomeNotification: true },
+      undefined
+    );
+    Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+      title: title,
+      message: message,
+      url: url
+    });
   }
 
   private static async onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
