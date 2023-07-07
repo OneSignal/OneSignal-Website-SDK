@@ -82,53 +82,57 @@ export default class EventHelper {
       Log.debug('Not showing welcome notification because user has previously subscribed.');
       return;
     }
-    if (isSubscribed === true) {
-      const { deviceId } = await Database.getSubscription();
-      const { appId } = await Database.getAppConfig();
+    const welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
+    const welcome_notification_disabled =
+      welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true;
 
-      const welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
-      const welcome_notification_disabled =
-        welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true;
-      let title =
-        welcome_notification_opts !== undefined &&
-          welcome_notification_opts['title'] !== undefined &&
-          welcome_notification_opts['title'] !== null
-          ? welcome_notification_opts['title']
-          : '';
-      let message =
-        welcome_notification_opts !== undefined &&
-          welcome_notification_opts['message'] !== undefined &&
-          welcome_notification_opts['message'] !== null &&
-          welcome_notification_opts['message'].length > 0
-          ? welcome_notification_opts['message']
-          : 'Thanks for subscribing!';
-      const unopenableWelcomeNotificationUrl = new URL(location.href).origin + '?_osp=do_not_open';
-      const url =
-        welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0
-          ? welcome_notification_opts['url']
-          : unopenableWelcomeNotificationUrl;
-      title = BrowserUtils.decodeHtmlEntities(title);
-      message = BrowserUtils.decodeHtmlEntities(message);
-
-      if (!welcome_notification_disabled) {
-        Log.debug('Sending welcome notification.');
-        OneSignalApiShared.sendNotification(
-          appId,
-          [deviceId],
-          { en: title },
-          { en: message },
-          url,
-          null,
-          { __isOneSignalWelcomeNotification: true },
-          undefined
-        );
-        Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
-          title: title,
-          message: message,
-          url: url
-        });
-      }
+    if (welcome_notification_disabled) {
+      return;
     }
+
+    if (isSubscribed !== true) {
+      return;
+    }
+
+    const { deviceId } = await Database.getSubscription();
+    const { appId } = await Database.getAppConfig();
+    let title =
+      welcome_notification_opts !== undefined &&
+        welcome_notification_opts['title'] !== undefined &&
+        welcome_notification_opts['title'] !== null
+        ? welcome_notification_opts['title']
+        : '';
+    let message =
+      welcome_notification_opts !== undefined &&
+        welcome_notification_opts['message'] !== undefined &&
+        welcome_notification_opts['message'] !== null &&
+        welcome_notification_opts['message'].length > 0
+        ? welcome_notification_opts['message']
+        : 'Thanks for subscribing!';
+    const unopenableWelcomeNotificationUrl = new URL(location.href).origin + '?_osp=do_not_open';
+    const url =
+      welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0
+        ? welcome_notification_opts['url']
+        : unopenableWelcomeNotificationUrl;
+    title = BrowserUtils.decodeHtmlEntities(title);
+    message = BrowserUtils.decodeHtmlEntities(message);
+
+    Log.debug('Sending welcome notification.');
+    OneSignalApiShared.sendNotification(
+      appId,
+      [deviceId],
+      { en: title },
+      { en: message },
+      url,
+      null,
+      { __isOneSignalWelcomeNotification: true },
+      undefined
+    );
+    Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+      title: title,
+      message: message,
+      url: url
+    });
   }
 
   private static async onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
