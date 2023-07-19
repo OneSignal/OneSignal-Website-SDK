@@ -5,9 +5,9 @@ import { TestEnvironment } from "../../support/environment/TestEnvironment";
 import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 
 describe('MainHelper Tests', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.useFakeTimers();
-    TestEnvironment.initialize({
+    await TestEnvironment.initialize({
       httpOrHttps: HttpHttpsEnvironment.Https,
     });
   });
@@ -15,8 +15,6 @@ describe('MainHelper Tests', () => {
   afterEach(() => {
     jest.resetAllMocks();
   });
-
-  // test('This is a test description', () => {});
 
   test('getCurrentNotificationType for default permission', async () => {
     test.stub(OneSignal.context.permissionManager, 'getNotificationPermission', NotificationPermission.Default);
