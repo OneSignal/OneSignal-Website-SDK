@@ -1,6 +1,6 @@
 import { ConfigHelper } from "../../../src/shared/helpers/ConfigHelper";
 import { AppConfig, ConfigIntegrationKind, ServerAppConfig } from "../../../src/shared/models/AppConfig";
-import { TestEnvironment } from "../sdk/TestEnvironment";
+import TestContext from "../environment/TestContext";
 
 /**
  * Test Helper Function.
@@ -10,12 +10,12 @@ import { TestEnvironment } from "../sdk/TestEnvironment";
  * @param fakeUserConfig
  */
 export async function getFinalAppConfig(fakeUserConfig: any):
-    Promise<AppConfig>{
-        const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-        fakeUserConfig.appId = fakeServerConfig.app_id;
-        const getFakeServerConfig = (appId: string) => new Promise<ServerAppConfig>(resolve => {
-            resolve(fakeServerConfig);
-        });
+  Promise<AppConfig>{
+    const fakeServerConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+    fakeUserConfig.appId = fakeServerConfig.app_id;
+    const getFakeServerConfig = (appId: string) => new Promise<ServerAppConfig>(resolve => {
+        resolve(fakeServerConfig);
+    });
 
-        return await ConfigHelper.getAppConfig(fakeUserConfig, getFakeServerConfig);
+    return await ConfigHelper.getAppConfig(fakeUserConfig, getFakeServerConfig);
 }
