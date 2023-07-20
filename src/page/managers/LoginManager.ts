@@ -61,19 +61,24 @@ export default class LoginManager {
       LoginManager.setExternalId(identityModel, externalId);
 
       let userData: Partial<UserData>;
-      const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
       if (!isIdentified) {
+        // Guest User -> Logged In User
+        //    If login was not called before we want to keep all data from the "Guest User".
         userData = await UserDirector.getAllUserData();
       } else {
+        // Stripping all other Aliases, The REST API POST /users API only allows one. (as of 2023/07/19)
         userData = {
           identity: {
             external_id: externalId,
           }
         };
 
+        const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
         if (pushSubscription) {
           userData.subscriptions = [pushSubscription.data];
         }
+        // We don't want to carry over tags and other properties from the current User if we are switching Users.
+        //   - Example switching from User A to User B.
       }
       await OneSignal.coreDirector.resetModelRepoAndCache();
       await UserDirector.initializeUser(true);
