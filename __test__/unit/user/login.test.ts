@@ -1,4 +1,3 @@
-import ModelCache from "../../../src/core/caching/ModelCache";
 import { TestEnvironment } from "../../support/environment/TestEnvironment";
 import Database from "../../../src/shared/services/Database";
 import LoginManager from "../../../src/page/managers/LoginManager";
@@ -19,7 +18,6 @@ jest.mock("../../../src/shared/libraries/Log");
 describe('Login tests', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
     test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
     test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
     test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
@@ -46,13 +44,16 @@ describe('Login tests', () => {
   });
 
   test('Login twice with same user -> only one call to identify user', async () => {
-    await TestEnvironment.initialize({ useMockIdentityModel: true });
+    await TestEnvironment.initialize({ 
+      useMockIdentityModel: true,
+      useMockPushSubscriptionModel: true,
+    });
     setupLoginStubs();
 
     const identifyOrUpsertUserSpy = test.stub(LoginManager, 'identifyOrUpsertUser', Promise.resolve({
       identity: {
         external_id: DUMMY_EXTERNAL_ID,
-        onesignal_id: "1234567890",
+        onesignal_id: DUMMY_ONESIGNAL_ID,
       }
     }));
 
@@ -189,4 +190,26 @@ describe('Login tests', () => {
   });
 
   test('If login with JWT token, save it to the database', async () => {});
+});
+
+
+test('Login called before any Subscriptions, should save external_id but not create User', async () => {
+  setupLoginStubs();
+  await TestEnvironment.initialize();
+  test.nock({});
+
+  OneSignal.coreDirector.add(
+    ModelName.Identity,
+    getDummyIdentityOSModel()
+  );
+
+  const createUserSpy = jest.spyOn(RequestService, 'createUser');
+
+  await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+  expect(OneSignal.coreDirector.getIdentityModel().data.external_id)
+    .toBe(DUMMY_EXTERNAL_ID);
+
+  // User should NOT be created, as we have no subscriptions yet.
+  expect(createUserSpy.mock.calls.length).toBe(0);
 });

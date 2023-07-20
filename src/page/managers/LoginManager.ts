@@ -61,19 +61,24 @@ export default class LoginManager {
       LoginManager.setExternalId(identityModel, externalId);
 
       let userData: Partial<UserData>;
-      const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
       if (!isIdentified) {
+        // Guest User -> Logged In User
+        //    If login was not called before we want to keep all data from the "Guest User".
         userData = await UserDirector.getAllUserData();
       } else {
+        // Stripping all other Aliases, The REST API POST /users API only allows one. (as of 2023/07/19)
         userData = {
           identity: {
             external_id: externalId,
           }
         };
 
+        const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
         if (pushSubscription) {
           userData.subscriptions = [pushSubscription.data];
         }
+        // We don't want to carry over tags and other properties from the current User if we are switching Users.
+        //   - Example switching from User A to User B.
       }
       await OneSignal.coreDirector.resetModelRepoAndCache();
       await UserDirector.initializeUser(true);
@@ -86,7 +91,8 @@ export default class LoginManager {
         const onesignalId = result?.identity?.onesignal_id;
 
         if (!onesignalId) {
-          throw new OneSignalError('Login: No OneSignal ID found');
+          Log.info("Caching login call, waiting on network or subscription creation.");
+          return;
         }
         await LoginManager.fetchAndHydrate(onesignalId);
       } catch (e) {
@@ -205,8 +211,16 @@ export default class LoginManager {
 
       const { identity } = userData;
 
-      if (!identity || !onesignalId) {
+
+      if (!identity) {
         throw new OneSignalError("identifyUser failed: no identity found");
+      }
+
+      if (!onesignalId) {
+        // Persist to disk so it is used once we have the opportunity to create a User.
+        const identityModel = OneSignal.coreDirector.getIdentityModel();
+        identityModel?.set(AliasPair.EXTERNAL_ID, identity.external_id, false);
+        return userData;
       }
 
       const appId = await MainHelper.getAppId();
@@ -249,16 +263,16 @@ export default class LoginManager {
    * otherwise contain any existing user a aliases
    */
   static stripAliasesOtherThanExternalId(userData: Partial<UserData>): void {
-    logMethodCall("LoginManager.prepareIdentityForUpsert", { userData });
+    logMethodCall("LoginManager.stripAliasesOtherThanExternalId", { userData });
 
     const { identity } = userData;
     if (!identity) {
-      throw new OneSignalError("prepareIdentityForUpsert failed: no identity found");
+      throw new OneSignalError("stripAliasesOtherThanExternalId failed: no identity found");
     }
 
     const { external_id } = identity;
     if (!external_id) {
-      throw new OneSignalError("prepareIdentityForUpsert failed: no external_id found");
+      throw new OneSignalError("stripAliasesOtherThanExternalId failed: no external_id found");
     }
 
     const newIdentity = { external_id };
