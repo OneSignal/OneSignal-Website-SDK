@@ -25,3 +25,42 @@ export const DUMMY_EXTERNAL_ID = "rodrigo";
 export const DUMMY_EXTERNAL_ID_2 = "iryna";
 export const DUMMY_SUBSCRIPTION_ID = "4444444444-5555555555-6666666666";
 export const DUMMY_MODEL_ID = "0000000000";
+
+/* REQUEST CONSTANTS */
+export const DUMMY_GET_USER_REQUEST_WITH_PUSH_SUB = {
+    "result": {
+        "properties": {
+            "language": "en",
+            "timezone_id": "America/New_York",
+            "first_active": 1689826588,
+            "last_active": 1689826588
+        },
+        "identity": {
+            "external_id": DUMMY_EXTERNAL_ID,
+            "onesignal_id": DUMMY_ONESIGNAL_ID,
+        },
+        "subscriptions": [
+            {
+                "id": DUMMY_SUBSCRIPTION_ID,
+                "app_id": APP_ID,
+                "type": "ChromePush",
+                "token": DUMMY_PUSH_TOKEN,
+                "enabled": false,
+                "notification_types": -2,
+                "session_time": 0,
+                "session_count": 1,
+                "sdk": "160000",
+                "device_model": "MacIntel",
+                "device_os": "114",
+                "rooted": false,
+                "test_type": 0,
+                "app_version": "",
+                "net_type": 0,
+                "carrier": "",
+                "web_auth": "R5dzF/EvmUbv0IsM3Ria7g==",
+                "web_p256": "BNWNgguO0F+id4MjCW2V98cwPiXHs0XyPUOCqlU0OgyqG4W9V3H1R799goSjSSgZ0CMI+7/nZYiVl1bB8ZnDZx0="
+            }
+        ]
+    },
+    "status": 200
+}
