@@ -205,8 +205,16 @@ export default class LoginManager {
 
       const { identity } = userData;
 
-      if (!identity || !onesignalId) {
+
+      if (!identity) {
         throw new OneSignalError("identifyUser failed: no identity found");
+      }
+
+      if (!onesignalId) {
+        // Persist to disk so it is used once we have the opportunity to create a User.
+        const identityModel = OneSignal.coreDirector.getIdentityModel();
+        identityModel?.set(AliasPair.EXTERNAL_ID, identity.external_id, false);
+        return userData;
       }
 
       const appId = await MainHelper.getAppId();
