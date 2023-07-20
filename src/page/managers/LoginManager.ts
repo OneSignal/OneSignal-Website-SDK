@@ -86,7 +86,8 @@ export default class LoginManager {
         const onesignalId = result?.identity?.onesignal_id;
 
         if (!onesignalId) {
-          throw new OneSignalError('Login: No OneSignal ID found');
+          Log.info("Caching login call, waiting on network or subscription creation.");
+          return;
         }
         await LoginManager.fetchAndHydrate(onesignalId);
       } catch (e) {
