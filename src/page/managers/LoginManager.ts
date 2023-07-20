@@ -258,16 +258,16 @@ export default class LoginManager {
    * otherwise contain any existing user a aliases
    */
   static stripAliasesOtherThanExternalId(userData: Partial<UserData>): void {
-    logMethodCall("LoginManager.prepareIdentityForUpsert", { userData });
+    logMethodCall("LoginManager.stripAliasesOtherThanExternalId", { userData });
 
     const { identity } = userData;
     if (!identity) {
-      throw new OneSignalError("prepareIdentityForUpsert failed: no identity found");
+      throw new OneSignalError("stripAliasesOtherThanExternalId failed: no identity found");
     }
 
     const { external_id } = identity;
     if (!external_id) {
-      throw new OneSignalError("prepareIdentityForUpsert failed: no external_id found");
+      throw new OneSignalError("stripAliasesOtherThanExternalId failed: no external_id found");
     }
 
     const newIdentity = { external_id };
