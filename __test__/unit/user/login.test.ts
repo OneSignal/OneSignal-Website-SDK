@@ -190,3 +190,25 @@ describe('Login tests', () => {
 
   test('If login with JWT token, save it to the database', async () => {});
 });
+
+
+test('Login called before any Subscriptions, should save external_id but not create User', async () => {
+  setupLoginStubs();
+  await TestEnvironment.initialize();
+  test.nock({});
+
+  OneSignal.coreDirector.add(
+    ModelName.Identity,
+    getDummyIdentityOSModel()
+  );
+
+  const createUserSpy = jest.spyOn(RequestService, 'createUser');
+
+  await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+  expect(OneSignal.coreDirector.getIdentityModel().data.external_id)
+    .toBe(DUMMY_EXTERNAL_ID);
+
+  // User should NOT be created, as we have no subscriptions yet.
+  expect(createUserSpy.mock.calls.length).toBe(0);
+});
