@@ -2,7 +2,7 @@ import NotImplementedError from '../errors/NotImplementedError';
 import { RawPushSubscription } from './RawPushSubscription';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
 import { DeviceRecord, FlattenedDeviceRecord } from './DeviceRecord';
-import Environment from '../Environment';
+import Environment from '../helpers/Environment';
 
 // TO DO: deprecate in favor of FuturePushSubscriptionRecord.ts
 export interface SerializedPushDeviceRecord extends FlattenedDeviceRecord {
