@@ -364,14 +364,15 @@ export default class InitHelper {
     try {
       if (navigator.permissions) {
         const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
+        // NOTE: Safari 16.4 has a bug where onchange callback never fires
         permissionStatus.onchange = function() {
           triggerNotificationPermissionChanged();
         };
       }
     } catch (e) {
-      // navigator.permissions.query({ name: 'notifications' }) currently not supported on Safari 16 (beta)
-      // as of June 2022
-      Log.warn(`Could not install native prompt permission change hook w/ error: ${e}`);
+      // Some browsers (Safari 16.3 and older) have the API navigator.permissions.query, but don't support the
+      // { name: 'notifications' } param and throws.
+      Log.warn(`Could not install native notification permission change hook w/ error: ${e}`);
     }
   }
 
