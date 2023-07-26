@@ -18,8 +18,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install Yarn
-        run: npm install -g yarn
       - name: "[Setup] Install dependencies"
         run: yarn
       - name: "[Test] Run linters"
