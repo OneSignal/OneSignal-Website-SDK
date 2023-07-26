@@ -2,16 +2,11 @@ import OneSignalUtils from "../../../src/shared/utils/OneSignalUtils";
 import InitHelper from "../../../src/shared/helpers/InitHelper";
 import { TestEnvironment } from "../../support/environment/TestEnvironment";
 import { MessageChannel } from "worker_threads";
-import { SubscriptionManager } from "../../../src/shared/managers/SubscriptionManager";
-import PermissionManager from "../../../src/shared/managers/PermissionManager";
 
 describe('InitHelper', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize();
     (global as any).MessageChannel = MessageChannel;
-    // temporary: remove when we fix default environment being Safari
-    test.stub(SubscriptionManager, 'isSafari', false);
-    test.stub(PermissionManager, 'getSafariNotificationPermission', Promise.resolve('granted'));
   });
 
   afterEach(() => {
