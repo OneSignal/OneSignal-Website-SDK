@@ -4,7 +4,7 @@ import UserPropertyRequests from "../../../../src/core/requestService/UserProper
 import { ModelName } from "../../../../src/core/models/SupportedModels";
 import { UserPropertiesModel } from "../../../../src/core/models/UserPropertiesModel";
 import { OSModel } from "../../../../src/core/modelRepo/OSModel";
-import ExecutorResult from "../../../../src/core/executors/ExecutorResult";
+import { ExecutorResultFailNotRetriable } from "../../../../src/core/executors/ExecutorResult";
 import Database from "../../../../src/shared/services/Database";
 
 describe('User Property Request tests', () => {
@@ -29,7 +29,7 @@ describe('User Property Request tests', () => {
 
         const result = await UserPropertyRequests.updateUserProperties(operation);
 
-        expect(result).toStrictEqual(new ExecutorResult(false, false));
+        expect(result).toStrictEqual(new ExecutorResultFailNotRetriable());
     });
 
 });

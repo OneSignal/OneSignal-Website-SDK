@@ -1,6 +1,10 @@
 import { logMethodCall } from "../../shared/utils/utils";
 import OneSignalError from "../../shared/errors/OneSignalError";
-import ExecutorResult from "../executors/ExecutorResult";
+import ExecutorResult, {
+  ExecutorResultFailNotRetriable,
+  ExecutorResultFailRetriable,
+  ExecutorResultSuccess
+} from "../executors/ExecutorResult";
 import { UserPropertiesModel } from "../models/UserPropertiesModel";
 import { Operation } from "../operationRepo/Operation";
 import AliasPair from "./AliasPair";
@@ -26,7 +30,7 @@ export default class UserPropertyRequests {
 
     if (!propertiesModel.onesignalId) {
       Log.info("Caching User Property update until subscription is created.");
-      return new ExecutorResult(false, false);
+      return new ExecutorResultFailNotRetriable();
     }
 
     const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, propertiesModel.onesignalId);
@@ -47,13 +51,13 @@ export default class UserPropertyRequests {
       const { status, result } = response;
 
       if (status >= 200 && status < 300) {
-        return new ExecutorResult(true, true, result?.properties);
+        return new ExecutorResultSuccess(result?.properties);
       }
 
       if (status >= 400 && status < 500) {
-        return new ExecutorResult(false, false);
+        return new ExecutorResultFailNotRetriable();
       }
 
-      return new ExecutorResult(false, true);
+      return new ExecutorResultFailRetriable();
   }
 }

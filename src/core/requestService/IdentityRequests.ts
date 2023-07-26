@@ -1,7 +1,11 @@
 import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
 import { logMethodCall } from "../../shared/utils/utils";
 import OneSignalError from "../../shared/errors/OneSignalError";
-import ExecutorResult from "../executors/ExecutorResult";
+import ExecutorResult, {
+  ExecutorResultFailNotRetriable,
+  ExecutorResultFailRetriable,
+  ExecutorResultSuccess
+} from "../executors/ExecutorResult";
 import { IdentityModel } from "../models/IdentityModel";
 import { Operation } from "../operationRepo/Operation";
 import { isIdentityObject } from "../utils/typePredicates";
@@ -56,14 +60,14 @@ export default class IdentityRequests {
         throw new OneSignalError(`processIdentityResponse: result ${identity} is not an identity object`);
       }
 
-      return new ExecutorResult(true, true, identity);
+      return new ExecutorResultSuccess(identity);
     }
 
     // shouldn't impact login since doesn't go through core module (special 409 case)
     if (status >= 400 && status < 500) {
-      return new ExecutorResult(false, false);
+      return new ExecutorResultFailNotRetriable();
     }
 
-    return new ExecutorResult(false, true);
+    return new ExecutorResultFailRetriable();
   }
 }
