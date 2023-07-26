@@ -19,9 +19,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install Yarn
         run: npm install -g yarn
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '2.7'
       - name: "[Setup] Install dependencies"
         run: yarn
       - name: "[Build] Staging"
