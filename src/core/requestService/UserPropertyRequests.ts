@@ -7,6 +7,7 @@ import AliasPair from "./AliasPair";
 import { RequestService } from "./RequestService";
 import MainHelper from "../../shared/helpers/MainHelper";
 import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
+import Log from "../../shared/libraries/Log";
 
 /**
  * This class contains logic for all the UserProperty model related requests that can be made to the OneSignal API
@@ -19,14 +20,13 @@ export default class UserPropertyRequests {
     const propertiesModel = operation.model;
     const properties = propertiesModel?.data;
 
-    // fixes typescript errors
     if (!properties || !propertiesModel) {
       throw new OneSignalError(`updateUserProperty: bad identity model: ${propertiesModel}`);
     }
 
-    // fixes typescript errors
     if (!propertiesModel.onesignalId) {
-      throw new OneSignalError(`updateUserProperty: missing onesignalId: ${propertiesModel}`);
+      Log.info("Caching User Property update until subscription is created.");
+      return new ExecutorResult(false, false);
     }
 
     const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, propertiesModel.onesignalId);
