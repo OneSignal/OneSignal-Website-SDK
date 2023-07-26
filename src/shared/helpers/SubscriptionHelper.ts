@@ -11,8 +11,8 @@ import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { EnvironmentInfo } from '../../page/models/EnvironmentInfo';
-import { Browser } from '../models/Browser';
 import { PermissionUtils } from '../utils/PermissionUtils';
+import Environment from './Environment';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -117,7 +117,7 @@ export default class SubscriptionHelper {
     return subscription;
   }
 
-  static getRawPushSubscriptionForSafari(safariWebId: string): RawPushSubscription {
+  static getRawPushSubscriptionForLegacySafari(safariWebId: string): RawPushSubscription {
     const subscription = new RawPushSubscription();
 
     const { deviceToken: existingDeviceToken } = window.safari.pushNotification.permission(safariWebId);
@@ -145,8 +145,8 @@ export default class SubscriptionHelper {
   static async getRawPushSubscription(
     environmentInfo: EnvironmentInfo, safariWebId: string
   ):Promise<RawPushSubscription | null> {
-    if (environmentInfo.browserType === Browser.Safari) {
-      return SubscriptionHelper.getRawPushSubscriptionForSafari(safariWebId);
+    if (Environment.useSafariLegacyPush()) {
+      return SubscriptionHelper.getRawPushSubscriptionForLegacySafari(safariWebId);
     }
 
     if (environmentInfo.isUsingSubscriptionWorkaround) {
