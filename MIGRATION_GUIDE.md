@@ -65,10 +65,19 @@ To:
 ```
 ### Service Worker
 
-Download the new [service worker file](https://github.com/OneSignal/OneSignal-Website-SDK/files/11480764/OneSignalSDK-v16-ServiceWorker.zip) and place it next to the original OneSignalSDKWorker.js file.
+Open your `OneSignalSDKWorker.js` and update the following line.
 
-**DO NOT DELETE** the original OneSignalSDKWorker.js file.
+From:
+```js
+importScripts('https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js');
+```
 
+To:
+```js
+importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
+```
+
+Another option is to download the new [service worker file](https://github.com/OneSignal/OneSignal-Website-SDK/files/11480764/OneSignalSDK-v16-ServiceWorker.zip) file, overwriting your existing one.
 
 ## 2. OneSignal Usages
 
