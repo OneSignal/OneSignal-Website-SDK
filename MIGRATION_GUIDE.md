@@ -94,8 +94,8 @@ OneSignal.push(function() {
 To:
 ```js
 window.OneSignalDeferred = window.OneSignalDeferred || [];
-OneSignalDeferred.push(function(OneSignal) {
-    OneSignal.init({});
+OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({});
 });
 ```
 
@@ -128,7 +128,7 @@ OneSignal.SERVICE_WORKER_PATH = "/myPath/OneSignalSDKWorker.js";
 
 Change to this:
 ```js
-onesignal.init({
+await OneSignal.init({
     // ... keep other pre-existing params, such as appId
     serviceWorkerParam: { scope: "/myCustomScope" },
     serviceWorkerPath: "/myPath/OneSignalSDKWorker.js"
