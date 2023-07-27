@@ -3,7 +3,6 @@ import ModelCache from "../../../src/core/caching/ModelCache";
 import { OSModel } from '../../../src/core/modelRepo/OSModel'
 import PermissionManager from "../../../src/shared/managers/PermissionManager";
 import EventHelper from "../../../src/shared/helpers/EventHelper";
-import { SubscriptionManager } from "../../../src/shared/managers/SubscriptionManager";
 import { DUMMY_PUSH_TOKEN } from "../../support/constants";
 import { initializeWithPermission } from "../../support/helpers/pushSubscription";
 
@@ -11,7 +10,6 @@ describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(async () => {
     jest.useFakeTimers();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
-    test.stub(SubscriptionManager, 'isSafari', false)
     test.stub(MainHelper, 'getCurrentPushToken', DUMMY_PUSH_TOKEN);
   });
 

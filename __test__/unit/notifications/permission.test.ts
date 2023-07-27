@@ -1,6 +1,5 @@
 import ModelCache from "../../../src/core/caching/ModelCache";
 import PermissionManager from "../../../src/shared/managers/PermissionManager";
-import { SubscriptionManager } from "../../../src/shared/managers/SubscriptionManager";
 import { PermissionUtils } from "../../../src/shared/utils/PermissionUtils";
 import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import { TestEnvironment } from "../../support/environment/TestEnvironment";
@@ -9,7 +8,6 @@ describe('Notifications namespace permission properties', () => {
   beforeEach(async () => {
     jest.useFakeTimers();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
-    test.stub(SubscriptionManager, 'isSafari', false)
     TestEnvironment.initialize();
   });
 
