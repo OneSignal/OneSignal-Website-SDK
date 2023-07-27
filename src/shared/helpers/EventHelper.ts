@@ -14,6 +14,13 @@ import { OSModel } from '../../core/modelRepo/OSModel';
 import { SubscriptionModel } from '../../core/models/SubscriptionModels';
 
 export default class EventHelper {
+  // Sets the app badge count: https://developer.mozilla.org/en-US/docs/Web/API/Badging_API
+  static setAppBadgeCount(notification: OSNotificationDataPayload): void {
+    if (notification.badgeCount !== undefined) {
+      navigator.setAppBadge(notification.badgeCount);
+    }
+  }
+
   static onNotificationPermissionChange() {
     EventHelper.checkAndTriggerSubscriptionChanged();
   }

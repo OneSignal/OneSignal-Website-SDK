@@ -173,6 +173,7 @@ export default class OneSignal {
         EventHelper.onNotificationPermissionChange);
       OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
       OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
+      OneSignal.emitter.on(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, EventHelper.setAppBadgeCount)
 
       if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
         /**
