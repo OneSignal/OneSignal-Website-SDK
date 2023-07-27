@@ -50,9 +50,11 @@ The SDK will use `external_id` as the default alias label for the public `OneSig
 # Guide
 ## 1. Setup Changes
 
-Use the new script import on both your pages and your Service Worker file.
+Use the new script import on both your pages and your Service Worker file (OneSignalSDKWorker.js).
 
 ### Script
+
+Find and replace the following on all your pages.
 
 From:
 ```html
@@ -137,7 +139,7 @@ await OneSignal.init({
 
 ### `script.onLoad`
 
-Uncommon setup, but if you have `script.onLoad` on `OneSignalSDK.js` you must replace this with the new `OneSignalDeferred` instead noted above.
+Uncommon setup, if you have `script.onLoad` on `OneSignalSDK.js` you must replace this with the new `OneSignalDeferred` instead noted above.
 
 ## 5. API Changes
 
