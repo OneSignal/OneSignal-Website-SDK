@@ -83,9 +83,6 @@ export default class LoginManager {
       await OneSignal.coreDirector.resetModelRepoAndCache();
       await UserDirector.initializeUser(true);
 
-      // use optional chaining to prevent errors if the namespace is not initialized (e.g. in unit tests)
-      await OneSignal.User?.PushSubscription?._resubscribeToPushModelChanges();
-
       try {
         const result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
         const onesignalId = result?.identity?.onesignal_id;
@@ -130,7 +127,6 @@ export default class LoginManager {
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
     OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);
     await UserDirector.initializeUser(false);
-    await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
   }
 
   static setExternalId(identityOSModel: OSModel<SupportedIdentity>, externalId: string): void {
