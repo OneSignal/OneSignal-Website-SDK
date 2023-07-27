@@ -1,7 +1,7 @@
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { bowserCastle } from '../utils/bowserCastle';
-import { supportsVapidPush } from './context/browser/utils/BrowserSupportsPush';
+import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
 
 export default class Environment {
   /**

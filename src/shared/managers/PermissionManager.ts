@@ -4,7 +4,7 @@ import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from './SdkEnvironment';
 import LocalStorage from '../utils/LocalStorage';
 import OneSignalError from '../errors/OneSignalError';
-import Environment from '../../src/Environment';
+import Environment from '../helpers/Environment';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
