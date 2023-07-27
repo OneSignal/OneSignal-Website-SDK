@@ -24,9 +24,13 @@
   icon?: string;
   image?: string;
   tag?: string;
+  // URL of the image used to represent the notification when there is
+  // not enough space to display the notification itself
+  // (https://developer.mozilla.org/en-US/docs/Web/API/Notification/badge)
   badge?: string;
   vibrate?: VibratePattern;
   buttons?: NotificationButtonData[];
+  badgeCount?: number;
 };
 
 interface NotificationButtonData extends NotificationAction {
