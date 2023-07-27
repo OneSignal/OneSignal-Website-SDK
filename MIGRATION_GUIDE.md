@@ -184,7 +184,7 @@ await OneSignal.Notifications.requestPermission();
 | `async`    | `requestPermission()`   | Requests push notifications permission via the native browser prompt.                                                                                                                   |                                                                                                                                                                  |
 |            | `permission`            | Returns true if your site has permission to display notifications.                                                                                    |                                 |
 |            | `permissionNative`      | Returns browser's native notification permission status; `"default"`(end-user has not accept or decided yet), `"granted"`, or `"denied"`.             |                                 |
-| `sync`     | `addEventListener()`    | Adds an event listener for the following events:<br><br>- `click`<br>- `willDisplay`<br>- `dismiss`<br>- `permissionPromptDisplay`<br>- `permissionChange`*<br> * argument type: bool | - `<event>` (string)<br>- `(arg: <type>) => {}` (callback)                                                                                                       |
+| `sync`     | `addEventListener()`    | Adds an event listener for the following events:<br><br>- `click`<br>- `foregroundWillDisplay`<br>- `dismiss`<br>- `permissionPromptDisplay`<br>- `permissionChange`*<br> * argument type: bool | - `<event>` (string)<br>- `(arg: <type>) => {}` (callback)                                                                                                       |
 | `sync`     | `removeEventListener()` | Removes the event listener.                                                                                                                                                             | `() => {}` (the event listener you want to remove)                                                                                                               |
 
 
@@ -222,8 +222,8 @@ OneSignal.User.PushSubscription.optIn();
 |            | `optedIn`               | Gets a boolean value indicating whether the current user is subscribed to push notifications. |                                                                                              |
 | `async`    | `optIn()`               | Subscribes the current user to push notifications.                                            |                                                                                              |
 | `async`    | `optOut()`              | Unsubscribes the current user from push notifications.                                        |                                                                                              |
-| `sync`     | `addEventListener()`    | Adds an event listener for the `subscriptionChange` event.                                    | - `event` ("subscriptionChange")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
-| `sync`     | `removeEventListener()` | Removes an event listener for the `subscriptionChange` event.                                 | - `event` ("subscriptionChange")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
+| `sync`     | `addEventListener()`    | Adds an event listener for the `change` event.                                    | - `event` ("change")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
+| `sync`     | `removeEventListener()` | Removes an event listener for the `change` event.                                 | - `event` ("change")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
 
 ### Debug Namespace
 
