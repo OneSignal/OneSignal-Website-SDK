@@ -548,7 +548,8 @@ export class ServiceWorker {
       image: rawNotification.image,
       tag: rawNotification.tag,
       badge: rawNotification.badge,
-      vibrate: Number(rawNotification.vibrate)
+      vibrate: Number(rawNotification.vibrate),
+      badgeCount: rawNotification.custom.b,
     };
 
     // Add action buttons

@@ -15,4 +15,5 @@ interface ICustomNotificationPayload {
   i: string;
   u: string;
   rr: string;
+  b: number;
 }
