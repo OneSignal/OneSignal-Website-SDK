@@ -5,9 +5,7 @@ on:
 
 jobs:
   test_build_deploy:
-    runs-on: ubuntu-20.04
-    container:
-      image: python:2.7.18-buster
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -19,11 +17,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install Yarn
-        run: npm install -g yarn
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '2.7'
       - name: "[Setup] Install dependencies"
         run: yarn
       - name: "[Build] Staging"
