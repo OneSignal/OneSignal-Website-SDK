@@ -1,4 +1,4 @@
-import ExecutorResult from "../executors/ExecutorResult";
+import { ExecutorResult } from "../executors/ExecutorResult";
 import { Operation } from "../operationRepo/Operation";
 import { ModelName, SupportedModel } from "./SupportedModels";
 

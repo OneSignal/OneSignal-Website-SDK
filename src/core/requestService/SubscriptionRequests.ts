@@ -1,7 +1,8 @@
 import MainHelper from "../../shared/helpers/MainHelper";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import { logMethodCall } from "../../shared/utils/utils";
-import ExecutorResult, {
+import {
+  ExecutorResult,
   ExecutorResultFailNotRetriable,
   ExecutorResultFailRetriable,
   ExecutorResultSuccess

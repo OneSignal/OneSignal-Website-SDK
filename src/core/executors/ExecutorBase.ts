@@ -5,7 +5,7 @@ import { ExecutorConfig } from "../models/ExecutorConfig";
 import { Operation } from "../operationRepo/Operation";
 import { logMethodCall } from "../../shared/utils/utils";
 import { SupportedModel } from "../models/SupportedModels";
-import ExecutorResult from "./ExecutorResult";
+import { ExecutorResult } from "./ExecutorResult";
 import Log from "../../shared/libraries/Log";
 import Database from "../../shared/services/Database";
 import LocalStorage from "../../shared/utils/LocalStorage";

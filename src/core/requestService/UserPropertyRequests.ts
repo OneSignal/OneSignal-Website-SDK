@@ -1,6 +1,7 @@
 import { logMethodCall } from "../../shared/utils/utils";
 import OneSignalError from "../../shared/errors/OneSignalError";
-import ExecutorResult, {
+import {
+  ExecutorResult,
   ExecutorResultFailNotRetriable,
   ExecutorResultFailRetriable,
   ExecutorResultSuccess

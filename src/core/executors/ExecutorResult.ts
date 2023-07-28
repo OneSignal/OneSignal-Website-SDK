@@ -1,28 +1,28 @@
-export default interface ExecutorResult<Model> {
+export interface ExecutorResult<Model> {
   readonly success: boolean,
   readonly retriable: boolean,
   readonly result?: Model
 }
 
 export class ExecutorResultSuccess<Model> implements ExecutorResult<Model> {
-  success = true;
-  retriable = false;
+  readonly success = true;
+  readonly retriable = false;
   constructor(readonly result?: Model) {
 
   }
 }
 
 export class ExecutorResultFailRetriable<Model> implements ExecutorResult<Model> {
-  success = false;
-  retriable = true;
+  readonly success = false;
+  readonly retriable = true;
   constructor(readonly result?: Model) {
 
   }
 }
 
 export class ExecutorResultFailNotRetriable<Model> implements ExecutorResult<Model> {
-  success = false;
-  retriable = false;
+  readonly success = false;
+  readonly retriable = false;
   constructor(readonly result?: Model) {
 
   }
