@@ -1,7 +1,12 @@
 import MainHelper from "../../shared/helpers/MainHelper";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import { logMethodCall } from "../../shared/utils/utils";
-import ExecutorResult from "../executors/ExecutorResult";
+import {
+  ExecutorResult,
+  ExecutorResultFailNotRetriable,
+  ExecutorResultFailRetriable,
+  ExecutorResultSuccess
+} from "../executors/ExecutorResult";
 import { SupportedSubscription } from "../models/SubscriptionModels";
 import { Operation } from "../operationRepo/Operation";
 import { processSubscriptionOperation } from "./helpers";
@@ -71,13 +76,13 @@ export default class SubscriptionRequests {
           throw new OneSignalError(`processSubscriptionResponse: bad subscription object: ${subscription}`);
         }
 
-        return new ExecutorResult<SupportedSubscription>(true, true, subscription);
+        return new ExecutorResultSuccess<SupportedSubscription>(subscription);
       }
 
       if (status >= 400 && status < 500) {
-        return new ExecutorResult(false, false);
+        return new ExecutorResultFailNotRetriable();
       }
 
-      return new ExecutorResult(false, true);
+      return new ExecutorResultFailRetriable();
   }
 }
