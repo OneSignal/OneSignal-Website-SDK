@@ -1,5 +1,3 @@
-import bowser from "bowser";
-
 import Environment from "../../shared/helpers/Environment";
 import ContextSW from "../../shared/models/ContextSW";
 import Database from "../../shared/services/Database";
@@ -33,6 +31,7 @@ import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscript
 import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
 import { NotificationClickEvent } from "../../page/models/NotificationEvent";
 import { RawNotificationPayload } from "../../shared/models/RawNotificationPayload";
+import { bowserCastle } from "../../shared/utils/bowserCastle";
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -73,13 +72,6 @@ export class ServiceWorker {
    */
   static get database() {
     return Database;
-  }
-
-  /**
-   * Describes the current browser name and version.
-   */
-  static get browser() {
-    return bowser;
   }
 
   /**
@@ -392,7 +384,7 @@ export class ServiceWorker {
    * to be safe we are disabling it for all Safari browsers.
   */
   static browserSupportsConfirmedDelivery(): boolean {
-    return !bowser.safari
+    return bowserCastle().name !== 'safari'
   }
 
   /**

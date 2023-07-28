@@ -118,6 +118,8 @@ export default class InitHelper {
     await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   }
 
+  // In-Addition to registering for push, this shows a native browser
+  // notification permission prompt, if needed.
   public static async registerForPushNotifications(options: RegisterOptions = {}): Promise<void> {
     if (options && options.modalPrompt) {
       /* Show the HTTPS fullscreen modal permission message. */
@@ -146,15 +148,7 @@ export default class InitHelper {
       return;
     }
 
-    /*
-     * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
-     * prevent the popup from opening.
-     */
-    const subscription = await Database.getSubscription();
-    const isOptedOut = subscription.optedOut;
-    if (!isOptedOut) {
-      await SubscriptionHelper.registerForPush();
-    }
+    await SubscriptionHelper.registerForPush();
   }
 
   /**
@@ -370,14 +364,15 @@ export default class InitHelper {
     try {
       if (navigator.permissions) {
         const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
+        // NOTE: Safari 16.4 has a bug where onchange callback never fires
         permissionStatus.onchange = function() {
           triggerNotificationPermissionChanged();
         };
       }
     } catch (e) {
-      // navigator.permissions.query({ name: 'notifications' }) currently not supported on Safari 16 (beta)
-      // as of June 2022
-      Log.warn(`Could not install native prompt permission change hook w/ error: ${e}`);
+      // Some browsers (Safari 16.3 and older) have the API navigator.permissions.query, but don't support the
+      // { name: 'notifications' } param and throws.
+      Log.warn(`Could not install native notification permission change hook w/ error: ${e}`);
     }
   }
 

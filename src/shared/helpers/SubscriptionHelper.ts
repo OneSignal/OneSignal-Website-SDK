@@ -11,40 +11,18 @@ import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { EnvironmentInfo } from '../../page/models/EnvironmentInfo';
-import { SessionOrigin } from '../models/Session';
-import { Browser } from '../models/Browser';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { PermissionUtils } from '../utils/PermissionUtils';
-import MainHelper from './MainHelper';
+import Environment from './Environment';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
-    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-    return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
+    return await SubscriptionHelper.internalRegisterForPush();
   }
 
-  public static async internalRegisterForPush(isPushEnabled: boolean): Promise<Subscription | null> {
+  public static async internalRegisterForPush(): Promise<Subscription | null> {
     const context: ContextSWInterface = OneSignal.context;
     let subscription: Subscription | null = null;
 
-    /*
-      Within the same page navigation (the same session), do not register for
-      push if the user is already subscribed, otherwise the user will have its
-      session count incremented on each page refresh. However, if the user is
-      not subscribed, subscribe.
-    */
-    if (isPushEnabled && !context.pageViewManager.isFirstPageView()) {
-      Log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
-      Log.debug("But we want to rekindle their session.");
-      const deviceId = await MainHelper.getDeviceId();
-      if (deviceId) {
-        const deviceRecord: PushDeviceRecord = await MainHelper.createDeviceRecord(OneSignal.config.appId, true);
-        await OneSignal.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PageRefresh);
-      } else {
-        Log.error("Should have been impossible to have push as enabled but no device id.");
-      }
-      return null;
-    }
 
     switch (SdkEnvironment.getWindowEnv()) {
       case WindowEnvironmentKind.Host:
@@ -139,7 +117,7 @@ export default class SubscriptionHelper {
     return subscription;
   }
 
-  static getRawPushSubscriptionForSafari(safariWebId: string): RawPushSubscription {
+  static getRawPushSubscriptionForLegacySafari(safariWebId: string): RawPushSubscription {
     const subscription = new RawPushSubscription();
 
     const { deviceToken: existingDeviceToken } = window.safari.pushNotification.permission(safariWebId);
@@ -167,8 +145,8 @@ export default class SubscriptionHelper {
   static async getRawPushSubscription(
     environmentInfo: EnvironmentInfo, safariWebId: string
   ):Promise<RawPushSubscription | null> {
-    if (environmentInfo.browserType === Browser.Safari) {
-      return SubscriptionHelper.getRawPushSubscriptionForSafari(safariWebId);
+    if (Environment.useSafariLegacyPush()) {
+      return SubscriptionHelper.getRawPushSubscriptionForLegacySafari(safariWebId);
     }
 
     if (environmentInfo.isUsingSubscriptionWorkaround) {

@@ -4,6 +4,7 @@ import { EnvironmentInfoHelper } from "../helpers/EnvironmentInfoHelper";
 import { RawPushSubscription } from "src/shared/models/RawPushSubscription";
 import OneSignalUtils from "../../shared/utils/OneSignalUtils";
 import { SubscriptionStateKind } from "../../shared/models/SubscriptionStateKind";
+import Environment from "../../shared/helpers/Environment";
 
 export default class FuturePushSubscriptionRecord implements Serializable {
   readonly type: SubscriptionType;
@@ -33,10 +34,10 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   }
 
   private _getToken(subscription: RawPushSubscription): string | undefined {
-    const browser = OneSignalUtils.redetectBrowserUserAgent();
-    const isLegacySafari = browser.safari && browser.version < 16;
-    return isLegacySafari ? subscription.safariDeviceToken : subscription.w3cEndpoint ?
-      subscription.w3cEndpoint.toString() : undefined;
+    if (subscription.w3cEndpoint) {
+      return subscription.w3cEndpoint.toString();
+    }
+    return subscription.safariDeviceToken;
   }
 
   serialize(): FutureSubscriptionModel {
@@ -60,11 +61,10 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     if (browser.firefox) {
       return SubscriptionType.FirefoxPush;
     }
-    // TO DO: update to use feature detection
-    if (browser.safari && browser.version >= 16) {
+    if (Environment.useSafariVapidPush()) {
       return SubscriptionType.SafariPush;
     }
-    if (browser.safari && browser.version < 16) {
+    if (Environment.useSafariLegacyPush()) {
       return SubscriptionType.SafariLegacyPush;
     }
     if (browser.msedge) {
