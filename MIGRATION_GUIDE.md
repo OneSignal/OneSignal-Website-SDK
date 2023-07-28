@@ -50,9 +50,11 @@ The SDK will use `external_id` as the default alias label for the public `OneSig
 # Guide
 ## 1. Setup Changes
 
-Use the new script import on both your pages and your Service Worker file.
+Use the new script import on both your pages and your Service Worker file (OneSignalSDKWorker.js).
 
 ### Script
+
+Find and replace the following on all your pages.
 
 From:
 ```html
@@ -65,10 +67,19 @@ To:
 ```
 ### Service Worker
 
-Download the new [service worker file](https://github.com/OneSignal/OneSignal-Website-SDK/files/11480764/OneSignalSDK-v16-ServiceWorker.zip) and place it next to the original OneSignalSDKWorker.js file.
+Open your `OneSignalSDKWorker.js` and update the following line.
 
-**DO NOT DELETE** the original OneSignalSDKWorker.js file.
+From:
+```js
+importScripts('https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js');
+```
 
+To:
+```js
+importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
+```
+
+Another option is to download the new [service worker file](https://github.com/OneSignal/OneSignal-Website-SDK/files/11480764/OneSignalSDK-v16-ServiceWorker.zip) file, overwriting your existing one.
 
 ## 2. OneSignal Usages
 
@@ -85,8 +96,8 @@ OneSignal.push(function() {
 To:
 ```js
 window.OneSignalDeferred = window.OneSignalDeferred || [];
-OneSignalDeferred.push(function(OneSignal) {
-    OneSignal.init({});
+OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({});
 });
 ```
 
@@ -119,7 +130,7 @@ OneSignal.SERVICE_WORKER_PATH = "/myPath/OneSignalSDKWorker.js";
 
 Change to this:
 ```js
-onesignal.init({
+await OneSignal.init({
     // ... keep other pre-existing params, such as appId
     serviceWorkerParam: { scope: "/myCustomScope" },
     serviceWorkerPath: "/myPath/OneSignalSDKWorker.js"
@@ -128,7 +139,7 @@ onesignal.init({
 
 ### `script.onLoad`
 
-Uncommon setup, but if you have `script.onLoad` on `OneSignalSDK.js` you must replace this with the new `OneSignalDeferred` instead noted above.
+Uncommon setup, if you have `script.onLoad` on `OneSignalSDK.js` you must replace this with the new `OneSignalDeferred` instead noted above.
 
 ## 5. API Changes
 
@@ -173,7 +184,7 @@ await OneSignal.Notifications.requestPermission();
 | `async`    | `requestPermission()`   | Requests push notifications permission via the native browser prompt.                                                                                                                   |                                                                                                                                                                  |
 |            | `permission`            | Returns true if your site has permission to display notifications.                                                                                    |                                 |
 |            | `permissionNative`      | Returns browser's native notification permission status; `"default"`(end-user has not accept or decided yet), `"granted"`, or `"denied"`.             |                                 |
-| `sync`     | `addEventListener()`    | Adds an event listener for the following events:<br><br>- `click`<br>- `willDisplay`<br>- `dismiss`<br>- `permissionPromptDisplay`<br>- `permissionChange`*<br> * argument type: bool | - `<event>` (string)<br>- `(arg: <type>) => {}` (callback)                                                                                                       |
+| `sync`     | `addEventListener()`    | Adds an event listener for the following events:<br><br>- `click`<br>- `foregroundWillDisplay`<br>- `dismiss`<br>- `permissionPromptDisplay`<br>- `permissionChange`*<br> * argument type: bool | - `<event>` (string)<br>- `(arg: <type>) => {}` (callback)                                                                                                       |
 | `sync`     | `removeEventListener()` | Removes the event listener.                                                                                                                                                             | `() => {}` (the event listener you want to remove)                                                                                                               |
 
 
@@ -211,8 +222,8 @@ OneSignal.User.PushSubscription.optIn();
 |            | `optedIn`               | Gets a boolean value indicating whether the current user is subscribed to push notifications. |                                                                                              |
 | `async`    | `optIn()`               | Subscribes the current user to push notifications.                                            |                                                                                              |
 | `async`    | `optOut()`              | Unsubscribes the current user from push notifications.                                        |                                                                                              |
-| `sync`     | `addEventListener()`    | Adds an event listener for the `subscriptionChange` event.                                    | - `event` ("subscriptionChange")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
-| `sync`     | `removeEventListener()` | Removes an event listener for the `subscriptionChange` event.                                 | - `event` ("subscriptionChange")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
+| `sync`     | `addEventListener()`    | Adds an event listener for the `change` event.                                    | - `event` ("change")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
+| `sync`     | `removeEventListener()` | Removes an event listener for the `change` event.                                 | - `event` ("change")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
 
 ### Debug Namespace
 
