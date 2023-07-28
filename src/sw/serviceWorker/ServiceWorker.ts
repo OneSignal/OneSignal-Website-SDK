@@ -265,7 +265,13 @@ export class ServiceWorker {
                   ServiceWorker.executeWebhooks('notification.willDisplay', notif);
 
                   return ServiceWorker.displayNotification(notif)
-                      .then(() => ServiceWorker.sendConfirmedDelivery(notif)).catch(e => Log.error(e));
+                      .then(() => {
+                        ServiceWorker.sendConfirmedDelivery(notif);
+
+                        if (notif.badgeCount !== undefined) {
+                          self.navigator.setAppBadge(notif.badgeCount);
+                        }
+                      }).catch(e => Log.error(e));
                 }).bind(null, notification));
               }
 
