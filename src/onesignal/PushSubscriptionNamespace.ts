@@ -1,14 +1,12 @@
-import { ModelStoreChange } from "../core/models/ModelStoreChange";
 import { ValidatorUtils } from "../page/utils/ValidatorUtils";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
 import { InvalidStateError, InvalidStateReason } from "../shared/errors/InvalidStateError";
 import EventHelper from "../shared/helpers/EventHelper";
-import MainHelper from "../shared/helpers/MainHelper";
 import Log from "../shared/libraries/Log";
 import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
-import { SubscriptionModel, SupportedSubscription } from "../core/models/SubscriptionModels";
-import { isCompleteSubscriptionObject, isModelStoreHydratedObject } from "../core/utils/typePredicates";
+import { SupportedSubscription } from "../core/models/SubscriptionModels";
+import { isCompleteSubscriptionObject } from "../core/utils/typePredicates";
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import SubscriptionChangeEvent from "../page/models/SubscriptionChangeEvent";
 import { OSModel } from "../core/modelRepo/OSModel";
@@ -40,12 +38,9 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
         Log.error(e);
       });
 
-    this._subscribeToPushModelChanges().catch(e => {
-      Log.error(e);
-    });
-
-    OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async () => {
-      this._token = await MainHelper.getCurrentPushToken();
+    OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async (change: SubscriptionChangeEvent | undefined) => {
+      this._id = change?.current.id
+      this._token = change?.current.token;
     });
 
     OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, async (permission: NotificationPermission) => {
@@ -96,14 +91,6 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     OneSignal.emitter.off(event, listener);
   }
 
-  /**
-   * Resubscribes this namespace to the push model changes.
-   * Should be called when the user and/or core module is reset.
-   */
-  async _resubscribeToPushModelChanges(): Promise<void> {
-    await this._subscribeToPushModelChanges();
-  }
-
   /* P R I V A T E */
 
   private async _enable(enabled: boolean): Promise<void> {
@@ -125,20 +112,6 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     });
     EventHelper.checkAndTriggerSubscriptionChanged().catch(e => {
       Log.error(e);
-    });
-  }
-
-  private async _subscribeToPushModelChanges(): Promise<void> {
-    const pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
-    if (!pushModel) {
-      return;
-    }
-    pushModel.subscribe((modelStoreChange: ModelStoreChange<SupportedSubscription>): void => {
-      if (isModelStoreHydratedObject<SubscriptionModel>(modelStoreChange)) {
-        // only update if we are hydrating entire model
-        this._id = modelStoreChange.payload.data.id;
-        return;
-      }
     });
   }
 }
