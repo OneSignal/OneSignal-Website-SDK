@@ -8,7 +8,6 @@ import PermissionMessageDismissedError from "../../errors/PermissionMessageDismi
 import { NotificationPermission } from "../../../shared/models/NotificationPermission";
 import { OneSignalUtils } from "../../../shared/utils/OneSignalUtils";
 import ChannelCaptureContainer from "../../slidedown/ChannelCaptureContainer";
-import LocalStorage from "../../../shared/utils/LocalStorage";
 import ConfirmationToast from "../../slidedown/ConfirmationToast";
 import { awaitableTimeout } from "../../../shared/utils/AwaitableTimeout";
 import { DismissPrompt } from "../../models/Dismiss";
@@ -126,15 +125,8 @@ export class SlidedownManager {
     const tags = TaggingContainer.getValuesFromTaggingContainer();
     this.context.tagManager.storeTagValuesToUpdate(tags);
 
-    const isPushEnabled: boolean = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-    if (isPushEnabled) {
-      // already subscribed, send tags immediately
-      this.slidedown.setSaveState();
-      await this.context.tagManager.sendTags(true);
-    } else {
-      this.registerForPush();
-      // tags are sent on the subscription change event handler
-    }
+    this.registerForPush();
+    await this.context.tagManager.sendTags(true);
   }
 
   private async handleAllowForEmailType(): Promise<void> {
