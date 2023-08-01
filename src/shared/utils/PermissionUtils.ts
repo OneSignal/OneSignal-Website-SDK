@@ -35,5 +35,14 @@ export class PermissionUtils {
 
     await Database.put('Options', { key: 'notificationPermission', value: newPermission });
     OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, newPermission);
+    
+    const newPermissionBoolean = newPermission === 'granted';
+    const previousPermissionBoolean = previousPermission === 'granted';
+
+    const shouldBeUpdatedBoolean = newPermissionBoolean !== previousPermissionBoolean || updateIfIdentical;
+    if (!shouldBeUpdatedBoolean) {
+      return;
+    }
+    OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN, newPermissionBoolean);
   }
 }

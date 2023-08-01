@@ -12,7 +12,12 @@ export const ONESIGNAL_EVENTS = {
    * manually changes it.
    * Occurs BEFORE the actual push subscription is created on on the backend.
    */
-  NOTIFICATION_PERMISSION_CHANGED_AS_STRING: 'permissionChange',
+  NOTIFICATION_PERMISSION_CHANGED_AS_STRING: 'permissionChangeAsString',
+  /**
+   * Same as NOTIFICATION_PERMISSION_CHANGED_AS_STRING, expect a boolean and will be used to fire
+   * events to the public API OneSignal.Notification.addEventListener("permissionChange", function....)
+   */
+  NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN: 'permissionChange',
   /**
    * Occurs after the user is officially subscribed to push notifications. The service worker is fully registered
    * and activated and the user is eligible to receive push notifications at any point after this.
