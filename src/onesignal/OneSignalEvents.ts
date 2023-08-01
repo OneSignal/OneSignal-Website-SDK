@@ -6,11 +6,13 @@ export const ONESIGNAL_EVENTS = {
    */
   CUSTOM_PROMPT_CLICKED: 'customPromptClick',
   /**
-   * Occurs when the user clicks "Allow" or "Block" on the native permission prompt on Chrome, Firefox, or Safari.
-   * This event is used for both HTTP and HTTPS sites and occurs after the user actually grants notification
-   * permissions for the site. Occurs before the user is actually subscribed to push notifications.
+   * Occurs immediately when the notification permission changes for the domain at the browser level.
+   * This normally happens when the user clicks "Allow" or "Block" on the native permission prompt
+   * on Chrome, Firefox, etc, however it also changes if the end-user clicks on the lock icon and
+   * manually changes it.
+   * Occurs BEFORE the actual push subscription is created on on the backend.
    */
-  NATIVE_PROMPT_PERMISSIONCHANGED: 'permissionChange',
+  NOTIFICATION_PERMISSION_CHANGED_AS_STRING: 'permissionChange',
   /**
    * Occurs after the user is officially subscribed to push notifications. The service worker is fully registered
    * and activated and the user is eligible to receive push notifications at any point after this.

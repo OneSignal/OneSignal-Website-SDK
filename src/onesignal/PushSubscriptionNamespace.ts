@@ -43,7 +43,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
       this._token = change?.current.token;
     });
 
-    OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, async (permission: NotificationPermission) => {
+    OneSignal.emitter.on(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, async (permission: NotificationPermission) => {
       this._permission = permission;
     });
   }

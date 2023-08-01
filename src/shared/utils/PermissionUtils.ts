@@ -3,7 +3,7 @@ import OneSignalEvent from '../services/OneSignalEvent';
 
 export class PermissionUtils {
 
-  // This flag prevents firing the NATIVE_PROMPT_PERMISSIONCHANGED event twice
+  // This flag prevents firing the NOTIFICATION_PERMISSION_CHANGED_AS_STRING event twice
   // We use multiple APIs:
   //    1. Notification.requestPermission callback
   //    2. navigator.permissions.query({ name: 'notifications' }`).onchange
@@ -34,6 +34,6 @@ export class PermissionUtils {
     }
 
     await Database.put('Options', { key: 'notificationPermission', value: newPermission });
-    OneSignalEvent.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, newPermission);
+    OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, newPermission);
   }
 }
