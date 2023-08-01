@@ -14,8 +14,17 @@ export class PermissionUtils {
     if (PermissionUtils.executing) {
       return;
     }
-    PermissionUtils.executing = true;
 
+    PermissionUtils.executing = true;
+    try {
+      await PermissionUtils.privateTriggerNotificationPermissionChanged(updateIfIdentical);
+    }
+    finally {
+      PermissionUtils.executing = false;
+    }
+  }
+
+  private static async privateTriggerNotificationPermissionChanged(updateIfIdentical: boolean) {
     const newPermission = await OneSignal.privateGetNotificationPermission();
     const previousPermission = await Database.get('Options', 'notificationPermission');
 
@@ -26,6 +35,5 @@ export class PermissionUtils {
 
     await Database.put('Options', { key: 'notificationPermission', value: newPermission });
     Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, { to: newPermission });
-    PermissionUtils.executing = false;
   }
 }
