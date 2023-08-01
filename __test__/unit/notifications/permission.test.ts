@@ -1,4 +1,3 @@
-import NotificationEventName from "../../../src/page/models/NotificationEventName";
 import ModelCache from "../../../src/core/caching/ModelCache";
 import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import { TestEnvironment } from "../../support/environment/TestEnvironment";
@@ -8,7 +7,7 @@ import OneSignal from "../../../src/onesignal/OneSignal";
 function expectPermissionChangeEvent(expectedPermission: boolean): Promise<void> {
   return new Promise((resolver) => {
     OneSignal.Notifications.addEventListener(
-      NotificationEventName.PermissionChange,
+      "permissionChange",
       (permission: boolean) => {
         expect(permission).toBe(expectedPermission)
         resolver();
@@ -75,8 +74,8 @@ describe('Notifications namespace permission properties', () => {
     const callback = (_permission: boolean) => {
       throw new Error("Should never be call since removeEventListener should prevent this.");
     };
-    OneSignal.Notifications.addEventListener(NotificationEventName.PermissionChange, callback);
-    OneSignal.Notifications.removeEventListener(NotificationEventName.PermissionChange, callback);
+    OneSignal.Notifications.addEventListener("permissionChange", callback);
+    OneSignal.Notifications.removeEventListener("permissionChange", callback);
 
     // Change permissions through all possible states to ensure the event has had a chance to fire
     await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Granted);
