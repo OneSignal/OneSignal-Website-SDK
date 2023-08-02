@@ -160,25 +160,39 @@ export class CoreModuleDirector {
     return modelStores.pushSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
   }
 
+  private async getPushSubscriptionModelByCurrentToken()
+    :Promise<OSModel<SupportedSubscription> | undefined> {
+      logMethodCall("CoreModuleDirector.getPushSubscriptionModelByCurrentToken");
+      const pushToken = await MainHelper.getCurrentPushToken();
+      if (pushToken) {
+        return this.getSubscriptionOfTypeWithToken(ModelName.PushSubscriptions, pushToken);
+      }
+      return undefined;
+  }
+
+  // Browser may return a different PushToken value, use the last-known value as a fallback.
+  //   - This happens if you disable notification permissions then re-enable them.
+  private async getPushSubscriptionModelByLastKnownToken()
+    :Promise<OSModel<SupportedSubscription> | undefined> {
+    logMethodCall("CoreModuleDirector.getPushSubscriptionModelByLastKnownToken");
+    const { lastKnownPushToken } = await Database.getAppState();
+    if (lastKnownPushToken) {
+      return this.getSubscriptionOfTypeWithToken(ModelName.PushSubscriptions, lastKnownPushToken);
+    }
+    return undefined;
+  }
+
   /**
    * Gets the current push subscription model for the current browser.
    * @returns The push subscription model for the current browser, or undefined if no push subscription exists.
    */
-  // TO DO: make synchronous by making getting the current push token synchronous
-  public async getCurrentPushSubscriptionModel(): Promise<OSModel<SupportedSubscription> | undefined> {
+  public async getPushSubscriptionModel()
+    :Promise<OSModel<SupportedSubscription> | undefined> {
     logMethodCall("CoreModuleDirector.getPushSubscriptionModel");
-    let pushToken = await MainHelper.getCurrentPushToken();
-
-    if (!pushToken) {
-      const appState = await Database.getAppState();
-      pushToken = appState.lastKnownPushToken;
-
-      if (!pushToken) {
-        Log.debug("No push token found, returning undefined");
-        return undefined;
-      }
-    }
-    return this.getSubscriptionOfTypeWithToken(ModelName.PushSubscriptions, pushToken);
+    return (
+      await this.getPushSubscriptionModelByCurrentToken() ||
+      await this.getPushSubscriptionModelByLastKnownToken()
+    );
   }
 
   public getIdentityModel(): OSModel<SupportedIdentity> | undefined {
@@ -199,7 +213,7 @@ export class CoreModuleDirector {
     logMethodCall("CoreModuleDirector.getAllSubscriptionsModels");
     const emailSubscriptions = this.getEmailSubscriptionModels();
     const smsSubscriptions = this.getSmsSubscriptionModels();
-    const pushSubscription = await this.getCurrentPushSubscriptionModel();
+    const pushSubscription = await this.getPushSubscriptionModel();
 
     const subscriptions = Object.values(emailSubscriptions)
       .concat(Object.values(smsSubscriptions))

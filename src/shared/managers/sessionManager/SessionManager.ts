@@ -92,7 +92,7 @@ export class SessionManager implements ISessionManager {
 
   async _getOneSignalAndSubscriptionIds(): Promise<{ onesignalId: string; subscriptionId: string }> {
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-    const pushSubscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (!identityModel || !identityModel.onesignalId) {
       throw new OneSignalError("Abort _getOneSignalAndSubscriptionIds: no identity");
@@ -340,7 +340,7 @@ export class SessionManager implements ISessionManager {
       return;
     }
 
-    const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushSubscription = await OneSignal.coreDirector.getPushSubscriptionModel();
     if (pushSubscription?.data.notification_types !== SubscriptionStateKind.Subscribed &&
       OneSignal.config?.enableOnSession !== true) {
       return;

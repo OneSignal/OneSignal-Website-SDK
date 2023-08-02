@@ -48,7 +48,7 @@ export default class LoginManager {
         return;
       }
 
-      const pushSubModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+      const pushSubModel = await OneSignal.coreDirector.getPushSubscriptionModel();
       let currentPushSubscriptionId;
 
       if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
@@ -73,7 +73,7 @@ export default class LoginManager {
           }
         };
 
-        const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+        const pushSubscription = await OneSignal.coreDirector.getPushSubscriptionModel();
         if (pushSubscription) {
           userData.subscriptions = [pushSubscription.data];
         }
@@ -122,7 +122,7 @@ export default class LoginManager {
     // before, logging out, process anything waiting in the delta queue so it's not lost
     OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
     UserDirector.resetUserMetaProperties();
-    const pushSubModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushSubModel = await OneSignal.coreDirector.getPushSubscriptionModel();
     await OneSignal.coreDirector.resetModelRepoAndCache();
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
     OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);

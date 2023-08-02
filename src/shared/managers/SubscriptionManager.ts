@@ -163,7 +163,8 @@ export class SubscriptionManager {
   }
 
   private async _updatePushSubscriptionModelWithRawSubscription(rawPushSubscription: RawPushSubscription) {
-    const pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    // This undefined when it shouldn't be
+    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (!pushModel) {
       OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
@@ -206,7 +207,7 @@ export class SubscriptionManager {
   }
 
   async updatePushSubscriptionNotificationTypes(notificationTypes: SubscriptionStateKind): Promise<void> {
-    const pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
     if (!pushModel) {
       throw new OneSignalError(
         `Cannot update notification_types for push subscription model because it does not exist.`
@@ -800,7 +801,7 @@ export class SubscriptionManager {
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
     const { optedOut, subscriptionToken } = await Database.getSubscription();
 
-    const pushSubscriptionOSModel: OSModel<SupportedSubscription> | undefined = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushSubscriptionOSModel: OSModel<SupportedSubscription> | undefined = await OneSignal.coreDirector.getPushSubscriptionModel();
     const isValidPushSubscription = isCompleteSubscriptionObject(pushSubscriptionOSModel?.data) && !!pushSubscriptionOSModel?.onesignalId;
 
     if (Environment.useSafariLegacyPush()) {
