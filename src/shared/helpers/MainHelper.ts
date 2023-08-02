@@ -21,25 +21,25 @@ export default class MainHelper {
       await OneSignal.context.permissionManager.getNotificationPermission(OneSignal.context.appConfig.safariWebId);
 
     if (currentPermission === NotificationPermission.Default) {
-      return SubscriptionStateKind.Default;
+      return SubscriptionStateKind.NoNativePermission;
     }
 
     if (currentPermission === NotificationPermission.Denied) {
       // Due to this issue https://github.com/OneSignal/OneSignal-Website-SDK/issues/289 we cannot reliably detect
       // "default" permission in HTTP context. Browser reports denied for both "default" and "denied" statuses.
-      // Returning SubscriptionStateKind.Default for this case.
+      // Returning SubscriptionStateKind.NoNativePermission for this case.
       return (OneSignalUtils.isUsingSubscriptionWorkaround()) ?
-        SubscriptionStateKind.Default :
+        SubscriptionStateKind.NoNativePermission :
         SubscriptionStateKind.NotSubscribed;
     }
 
     const existingUser = await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (currentPermission === NotificationPermission.Granted && existingUser) {
       const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-      return  isPushEnabled ? SubscriptionStateKind.Subscribed : SubscriptionStateKind.MutedByApi;
+      return  isPushEnabled ? SubscriptionStateKind.Subscribed : SubscriptionStateKind.UserOptedOut;
     }
 
-    return SubscriptionStateKind.Default;
+    return SubscriptionStateKind.NoNativePermission;
   }
 
   /**

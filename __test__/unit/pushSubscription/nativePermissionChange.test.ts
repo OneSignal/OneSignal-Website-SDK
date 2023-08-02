@@ -29,7 +29,7 @@ describe('Notification Types are set correctly on subscription change', () => {
     await EventHelper.checkAndTriggerSubscriptionChanged();
 
     // check that the set function was called at least once with the correct value
-    expect(osModelSetSpy).toHaveBeenCalledWith('notification_types', SubscriptionStateKind.Default);
+    expect(osModelSetSpy).toHaveBeenCalledWith('notification_types', SubscriptionStateKind.NoNativePermission);
     expect(osModelSetSpy).toHaveBeenCalledWith('enabled', false);
   });
 

@@ -194,7 +194,7 @@ export class SubscriptionManager {
   async getNotificationTypes(): Promise<SubscriptionStateKind> {
     const { optedOut } = await Database.getSubscription();
     if (optedOut) {
-      return SubscriptionStateKind.MutedByApi;
+      return SubscriptionStateKind.UserOptedOut;
     }
 
     const permission = await OneSignal.context.permissionManager.getPermissionStatus();
@@ -202,7 +202,7 @@ export class SubscriptionManager {
       return SubscriptionStateKind.Subscribed;
     }
 
-    return SubscriptionStateKind.Default;
+    return SubscriptionStateKind.NoNativePermission;
   }
 
   async updatePushSubscriptionNotificationTypes(notificationTypes: SubscriptionStateKind): Promise<void> {
