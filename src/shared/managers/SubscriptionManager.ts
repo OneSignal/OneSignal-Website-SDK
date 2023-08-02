@@ -209,9 +209,8 @@ export class SubscriptionManager {
   async updatePushSubscriptionNotificationTypes(notificationTypes: SubscriptionStateKind): Promise<void> {
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
     if (!pushModel) {
-      throw new OneSignalError(
-        `Cannot update notification_types for push subscription model because it does not exist.`
-        );
+      Log.info("No Push Subscription yet to update notification_types.");
+      return;
     }
 
     pushModel.set("notification_types", notificationTypes);
