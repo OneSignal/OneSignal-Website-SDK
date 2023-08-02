@@ -43,19 +43,6 @@ export default class MainHelper {
   }
 
   /**
-   * If the user has manually opted out of notifications (OneSignal.User.PushSubscription.optOut),
-   * returns -2; otherwise returns 1.
-   * @param isOptedIn The result of OneSignal.getSubscription().
-   */
-  static getNotificationTypeFromOptIn(isOptedIn: boolean | null) {
-    if (isOptedIn == true || isOptedIn == null) {
-      return SubscriptionStateKind.Subscribed;
-    } else {
-      return SubscriptionStateKind.MutedByApi;
-    }
-  }
-
-  /**
    * Stores a flag in sessionStorage that we've already shown the HTTP slidedown to this user and that we should not
    * show it again until they open a new window or tab to the site.
    */
