@@ -51,7 +51,6 @@ export default class EventHelper {
     // update notification_types via core module
     await context.subscriptionManager.updateNotificationTypes()
 
-    await Database.setIsPushEnabled(isPushEnabled);
     appState.lastKnownPushEnabled = isPushEnabled;
     appState.lastKnownPushToken = currentPushToken;
     appState.lastKnownPushId = pushSubscriptionId;
