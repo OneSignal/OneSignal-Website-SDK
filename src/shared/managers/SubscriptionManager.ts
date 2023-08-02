@@ -1,5 +1,3 @@
-import bowser from "bowser";
-
 import Database from "../services/Database";
 import Environment from "../helpers/Environment";
 import OneSignalEvent from "../services/OneSignalEvent";
@@ -188,20 +186,35 @@ export class SubscriptionManager {
     }
   }
 
-  async updatePushSubscriptionNotificationTypes(notificationTypes: number): Promise<void> {
+  async updateNotificationTypes(): Promise<void> {
+    const notificationTypes = await this.getNotificationTypes()
+    await this.updatePushSubscriptionNotificationTypes(notificationTypes);
+  }
+
+  async getNotificationTypes(): Promise<SubscriptionStateKind> {
+    const { optedOut } = await Database.getSubscription();
+    if (optedOut) {
+      return SubscriptionStateKind.MutedByApi;
+    }
+
+    const permission = await OneSignal.context.permissionManager.getPermissionStatus();
+    if (permission === 'granted') {
+      return SubscriptionStateKind.Subscribed;
+    }
+
+    return SubscriptionStateKind.Default;
+  }
+
+  async updatePushSubscriptionNotificationTypes(notificationTypes: SubscriptionStateKind): Promise<void> {
     const pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
     if (!pushModel) {
       throw new OneSignalError(
         `Cannot update notification_types for push subscription model because it does not exist.`
         );
     }
-    pushModel.set("notification_types", notificationTypes);
 
-    if (notificationTypes === 1) {
-      pushModel.set('enabled', true);
-    } else if (notificationTypes === -2) {
-      pushModel.set('enabled', false);
-    }
+    pushModel.set("notification_types", notificationTypes);
+    pushModel.set('enabled', notificationTypes === SubscriptionStateKind.Subscribed);
   }
 
   /**

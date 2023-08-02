@@ -6,6 +6,7 @@ import { DUMMY_PUSH_TOKEN } from "../../support/constants";
 import { initializeWithPermission } from "../../support/helpers/pushSubscription";
 import { PermissionManager } from "../../support/managers/PermissionManager";
 import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
+import { SubscriptionStateKind } from "../../../src/shared/models/SubscriptionStateKind";
 
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(async () => {
@@ -18,7 +19,7 @@ describe('Notification Types are set correctly on subscription change', () => {
     jest.resetAllMocks();
   });
 
-  test('When native permission is rejected, we update notification_types to -2 & enabled to false', async () => {
+  test('When native permission is rejected, we update notification_types to 0 & enabled to false', async () => {
     await initializeWithPermission('granted');
     const osModelSetSpy = jest.spyOn(OSModel.prototype, 'set');
 
@@ -28,7 +29,7 @@ describe('Notification Types are set correctly on subscription change', () => {
     await EventHelper.checkAndTriggerSubscriptionChanged();
 
     // check that the set function was called at least once with the correct value
-    expect(osModelSetSpy).toHaveBeenCalledWith('notification_types', -2);
+    expect(osModelSetSpy).toHaveBeenCalledWith('notification_types', SubscriptionStateKind.Default);
     expect(osModelSetSpy).toHaveBeenCalledWith('enabled', false);
   });
 
@@ -42,7 +43,7 @@ describe('Notification Types are set correctly on subscription change', () => {
     await EventHelper.checkAndTriggerSubscriptionChanged();
 
     // check that the set function was called at least once with the correct value
-    expect(osModelSetSpy).toHaveBeenCalledWith('notification_types', 1);
+    expect(osModelSetSpy).toHaveBeenCalledWith('notification_types', SubscriptionStateKind.Subscribed);
     expect(osModelSetSpy).toHaveBeenCalledWith('enabled', true);
   });
 });
