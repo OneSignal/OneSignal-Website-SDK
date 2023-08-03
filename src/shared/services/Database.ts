@@ -446,7 +446,7 @@ export default class Database {
         return false;
       }
 
-      return new URL(url).origin === new URL(notification.url).origin;
+      return new URL(url).origin === new URL(notification.launchURL).origin;
     };
     return allClickedNotifications.find(predicate) || null;
   }

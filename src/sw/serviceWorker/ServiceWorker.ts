@@ -16,7 +16,10 @@ import {
 import ServiceWorkerHelper from "../../shared/helpers/ServiceWorkerHelper";
 import { cancelableTimeout } from "../helpers/CancelableTimeout";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
-import { NotificationReceived } from "../../shared/models/OSNotification";
+import { 
+  OSNotification,
+  NotificationReceived
+} from "../../shared/models/OSNotification";
 import {
   UpsertOrDeactivateSessionPayload,
   PageVisibilityResponse,
@@ -31,7 +34,8 @@ import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscript
 import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
 import { NotificationClickEvent } from "../../page/models/NotificationEvent";
 import { OSMinifiedNotificationPayload } from "../models/OSMinifiedNotificationPayload";
-import { IOSNotificationPayload, OSNotificationPayload } from "../models/OSNotificationPayload";
+import { IOSNotificationPayload } from "../../shared/models/IOSNotificationPayload";
+import { OSNotificationPayload } from "../models/OSNotificationPayload";
 
 import { bowserCastle } from "../../shared/utils/bowserCastle";
 
@@ -254,7 +258,7 @@ export class ServiceWorker {
                 const notificationReceived: NotificationReceived = {
                   notificationId: notification.id,
                   appId,
-                  url: notification.url,
+                  launchURL: notification.url,
                   timestamp: new Date().getTime(),
                 };
                 notificationReceivedPromises.push(Database.put("NotificationReceived", notificationReceived));
@@ -701,34 +705,29 @@ export class ServiceWorker {
    * After clicking a notification, determines the URL to open based on whether an action button was clicked or the
    * notification body was clicked.
    */
-  static async getNotificationUrlToOpen(notification): Promise<string> {
-    // Defaults to the URL the service worker was registered
-    // TODO: This should be fixed for HTTP sites
-    let launchUrl = location.origin;
-
-    // Use the user-provided default URL if one exists
-    const { defaultNotificationUrl: dbDefaultNotificationUrl } = await Database.getAppState();
-    if (dbDefaultNotificationUrl)
-      launchUrl = dbDefaultNotificationUrl;
-
-    // If the user clicked an action button, use the URL provided by the action button
+  static async getNotificationUrlToOpen(
+    notification: IOSNotificationPayload,
+    actionId?: string,
+  ): Promise<string> {
+    // If the user clicked an action button, use the URL provided by the action button.
     // Unless the action button URL is null
-    if (notification.action) {
-      // Find the URL tied to the action button that was clicked
-      for (const button of notification.buttons) {
-        if (button.action === notification.action &&
-            button.url &&
-            button.url !== '') {
-          launchUrl = button.url;
-        }
+    if (actionId) {
+      const clickedButton = notification?.buttons?.find((button) => button.action === actionId);
+      if (clickedButton?.url && clickedButton.url !== '') {
+        return clickedButton.url;
       }
-    } else if (notification.url &&
-               notification.url !== '') {
-      // The user clicked the notification body instead of an action button
-      launchUrl = notification.url;
     }
 
-    return launchUrl;
+    if (notification.url && notification.url !== '') {
+      return notification.url;
+    }
+
+    const { defaultNotificationUrl: dbDefaultNotificationUrl } = await Database.getAppState();
+    if (dbDefaultNotificationUrl) {
+      return dbDefaultNotificationUrl;
+    }
+
+    return location.origin;
   }
 
   /**
@@ -754,18 +753,18 @@ export class ServiceWorker {
     if (actionPreference)
       notificationClickHandlerAction = actionPreference;
 
-    const launchUrl: string = await ServiceWorker.getNotificationUrlToOpen(data);
+    const launchUrl = await ServiceWorker.getNotificationUrlToOpen(data, event.action);
     const notificationOpensLink: boolean = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
     const appId = await ServiceWorker.getAppId();
     const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
     const notificationClickEvent: NotificationClickEvent = {
-      notification: data,
+      notification: new OSNotification(data),
       result: {
-        url: data.url,
-        actionId: event.action, // get action id directly from event
+        actionId: event.action,
+        url: launchUrl,
       }
-    }
+    };
 
     Log.info("NotificationClicked", notificationClickEvent);
     const saveNotificationClickedPromise = (async notificationClicked => {
@@ -779,7 +778,7 @@ export class ServiceWorker {
         // upgrade existing session to be directly attributed to the notif
         // if it results in re-focusing the site
         if (existingSession) {
-          existingSession.notificationId = notificationClicked.notification.id as string | null;
+          existingSession.notificationId = notificationClicked.notification.notificationId;
           await Database.upsertSession(existingSession);
         }
       } catch(e) {

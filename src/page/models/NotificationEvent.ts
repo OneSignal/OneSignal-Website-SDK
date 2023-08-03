@@ -1,21 +1,21 @@
-import { OSNotification } from "../../shared/models/OSNotification";
+import { IOSNotification } from "../../shared/models/OSNotification";
 
 // post-user-model
 export interface NotificationClickEvent {
-  notification: OSNotification;
+  notification: IOSNotification;
   result: NotificationClickResult;
 }
 
 export type NotificationClickResult = {
-  actionId?: string;
+  actionId: string;
   url?: string;
 }
 
 export interface NotificationForegroundWillDisplayEvent {
-  notification: OSNotification;
+  notification: IOSNotification;
   preventDefault(): void;
 }
 
 export interface NotificationDismissEvent {
-  notification: OSNotification;
+  notification: IOSNotification;
 }

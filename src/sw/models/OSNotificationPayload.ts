@@ -1,35 +1,5 @@
-import { OSMinifiedNotificationPayload } from "../models/OSMinifiedNotificationPayload";
-
-/**
- * the data payload on the notification event notification object
- * @see https://developer.mozilla.org/en-US/docs/Web/API/NotificationEvent
- *
- * @example
- * NotificationEvent {
- *  action: "action"
- *  notification: Notification {
- *    actions: (2) [{…}, {…}]
- *    badge: ""
- *    body: "Test Message"
- *    data: {…}  <------ this is the IOSNotificationPayload
- *  }
- * }
- */
-
-export interface IOSNotificationPayload {
-  id: string;
-  body: string;
-  title?: string;
-  url?: string;
-  data?: object;
-  confirmDelivery: boolean;
-  icon?: string;
-  image?: string;
-  tag?: string;
-  badge?: string;
-  vibrate?: VibratePattern;
-  buttons?: NotificationButtonData[];
-};
+import { OSMinifiedNotificationPayload } from "./OSMinifiedNotificationPayload";
+import { IOSNotificationPayload, INotificationButtonPayload } from "../../shared/models/IOSNotificationPayload";
 
 export class OSNotificationPayload implements IOSNotificationPayload {
   id: string;
@@ -43,7 +13,7 @@ export class OSNotificationPayload implements IOSNotificationPayload {
   tag?: string | undefined;
   badge?: string | undefined;
   vibrate?: VibratePattern | undefined;
-  buttons?: NotificationButtonData[] | undefined;
+  buttons?: INotificationButtonPayload[] | undefined;
 
   constructor(payload: OSMinifiedNotificationPayload) {
     this.id = payload.custom.i;
@@ -62,16 +32,12 @@ export class OSNotificationPayload implements IOSNotificationPayload {
       this.buttons = [];
       for (const rawButton of payload.o) {
         this.buttons.push({
-                            action: rawButton.i,
-                            title: rawButton.n,
-                            icon: rawButton.p,
-                            url: rawButton.u,
-                          });
+          action: rawButton.i,
+          title: rawButton.n,
+          icon: rawButton.p,
+          url: rawButton.u,
+        });
       }
     }
   }
 }
-
-interface NotificationButtonData extends NotificationAction {
-  url?: string;
-};
