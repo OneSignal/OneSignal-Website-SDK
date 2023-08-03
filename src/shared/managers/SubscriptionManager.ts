@@ -366,8 +366,6 @@ export class SubscriptionManager {
     }
 
     const { deviceToken: existingDeviceToken } = window.safari.pushNotification.permission(this.config.safariWebId);
-    pushSubscriptionDetails.existingSafariDeviceToken = existingDeviceToken;
-
     if (!existingDeviceToken) {
       /*
         We're about to show the Safari native permission request. It can fail for a number of
@@ -605,10 +603,6 @@ export class SubscriptionManager {
 
     // Create our own custom object from the browser's native PushSubscription object
     const pushSubscriptionDetails = RawPushSubscription.setFromW3cSubscription(newPushSubscription);
-    if (existingPushSubscription) {
-      pushSubscriptionDetails.existingW3cPushSubscription =
-        RawPushSubscription.setFromW3cSubscription(existingPushSubscription);
-    }
     return pushSubscriptionDetails;
   }
 

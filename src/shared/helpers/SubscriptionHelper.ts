@@ -120,8 +120,8 @@ export default class SubscriptionHelper {
   static getRawPushSubscriptionForLegacySafari(safariWebId: string): RawPushSubscription {
     const subscription = new RawPushSubscription();
 
-    const { deviceToken: existingDeviceToken } = window.safari.pushNotification.permission(safariWebId);
-    subscription.existingSafariDeviceToken = existingDeviceToken;
+    const { deviceToken } = window.safari.pushNotification.permission(safariWebId);
+    subscription.setFromSafariSubscription(deviceToken);
 
     return subscription;
   }
