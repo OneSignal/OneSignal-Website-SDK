@@ -30,7 +30,9 @@ import { DeviceRecord } from "../../../src/shared/models/DeviceRecord";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
 import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
 import { NotificationClickEvent } from "../../page/models/NotificationEvent";
-import { RawNotificationPayload } from "../../shared/models/RawNotificationPayload";
+import { OSMinifiedNotificationPayload } from "../models/OSMinifiedNotificationPayload";
+import { IOSNotificationPayload, OSNotificationPayload } from "../models/OSNotificationPayload";
+
 import { bowserCastle } from "../../shared/utils/bowserCastle";
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
@@ -239,7 +241,7 @@ export class ServiceWorker {
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)
-            .then(async (rawNotificationsArray: RawNotificationPayload[]) => {
+            .then(async (rawNotificationsArray: OSMinifiedNotificationPayload[]) => {
               //Display push notifications in the order we received them
               const notificationEventPromiseFns = [];
               const notificationReceivedPromises: Promise<void>[] = [];
@@ -247,7 +249,7 @@ export class ServiceWorker {
 
               for (const rawNotification of rawNotificationsArray) {
                 Log.debug('Raw Notification from OneSignal:', rawNotification);
-                const notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
+                const notification = new OSNotificationPayload(rawNotification);
 
                 const notificationReceived: NotificationReceived = {
                   notificationId: notification.id,
@@ -260,7 +262,7 @@ export class ServiceWorker {
                 // Probably should have it's own error handling but not blocking the rest of the execution?
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
-                notificationEventPromiseFns.push((async (notif: OSNotificationDataPayload) => {
+                notificationEventPromiseFns.push((async (notif: IOSNotificationPayload) => {
                   await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationWillDisplay, notif).catch(e => Log.error(e));
                   ServiceWorker.executeWebhooks('notification.willDisplay', notif);
 
@@ -284,13 +286,13 @@ export class ServiceWorker {
   }
 
   /**
-   * Makes a POST call to a specified URL to forward certain events.
+   * Makes a POST call to a specified URL to forward display, clicks, and dismisses.
    * @param event The name of the webhook event. Affects the DB key pulled for settings and the final event the user
    *              consumes.
    * @param notification A JSON object containing notification details the user consumes.
    * @returns {Promise}
    */
-  static async executeWebhooks(event: string, notification: any): Promise<Response | null> {
+  static async executeWebhooks(event: string, notification: IOSNotificationPayload): Promise<Response | null> {
     const webhookTargetUrl = await Database.get<string>('Options', `webhooks.${event}`);
     if (!webhookTargetUrl)
       return null;
@@ -304,10 +306,10 @@ export class ServiceWorker {
       event: event,
       id: notification.id,
       userId: deviceId,
-      action: notification.action,
+      action: notification.action, // TODO: MUST fix to compile
       buttons: notification.buttons,
-      heading: notification.heading,
-      content: notification.content,
+      heading: notification.title,
+      content: notification.body,
       url: notification.url,
       icon: notification.icon,
       data: notification.data
@@ -337,15 +339,14 @@ export class ServiceWorker {
    * @param notification A JSON object containing notification details.
    * @returns {Promise}
    */
-  static async sendConfirmedDelivery(notification: any): Promise<void> {
+  static async sendConfirmedDelivery(notification: IOSNotificationPayload): Promise<void> {
     if (!notification)
       return;
 
     if (!ServiceWorker.browserSupportsConfirmedDelivery())
       return null;
 
-    // Received receipts enabled?
-    if (notification.rr !== "y")
+    if (!notification.confirmDelivery)
       return;
 
     const appId = await ServiceWorker.getAppId();
@@ -531,42 +532,6 @@ export class ServiceWorker {
   }
 
   /**
-   * Constructs a structured notification object from the raw notification fetched from OneSignal's server. This
-   * object is passed around from event to event, and is also returned to the host page for notification event details.
-   * Constructed in onPushReceived, and passed along to other event handlers.
-   * @param rawNotification The raw notification JSON returned from OneSignal's server.
-   */
-  static buildStructuredNotificationObject(rawNotification: RawNotificationPayload): OSNotificationDataPayload {
-    const notification: OSNotificationDataPayload = {
-      id: rawNotification.custom.i,
-      heading: rawNotification.title,
-      content: rawNotification.alert,
-      data: rawNotification.custom.a,
-      url: rawNotification.custom.u,
-      rr: rawNotification.custom.rr, // received receipts
-      icon: rawNotification.icon,
-      image: rawNotification.image,
-      tag: rawNotification.tag,
-      badge: rawNotification.badge,
-      vibrate: Number(rawNotification.vibrate)
-    };
-
-    // Add action buttons
-    if (rawNotification.o) {
-      notification.buttons = [];
-      for (const rawButton of rawNotification.o) {
-        notification.buttons.push({
-                                    action: rawButton.i,
-                                    title: rawButton.n,
-                                    icon: rawButton.p,
-                                    url: rawButton.u
-                                  });
-      }
-    }
-    return Utils.trimUndefined(notification) as OSNotificationDataPayload;
-  }
-
-  /**
    * Given an image URL, returns a proxied HTTPS image using the https://images.weserv.nl service.
    * For a null image, returns null so that no icon is displayed.
    * If the image protocol is HTTPS, or origin contains localhost or starts with 192.168.*.*, we do not proxy the image.
@@ -599,7 +564,7 @@ export class ServiceWorker {
   /**
    * Given a structured notification object, HTTPS-ifies the notification icons and action button icons, if they exist.
    */
-  static ensureNotificationResourcesHttps(notification) {
+  static ensureNotificationResourcesHttps(notification: IOSNotificationPayload) {
     if (notification) {
       if (notification.icon) {
         notification.icon = ServiceWorker.ensureImageResourceHttps(notification.icon);
@@ -622,7 +587,7 @@ export class ServiceWorker {
    * Any event needing to display a notification calls this so that all the display options can be centralized here.
    * @param notification A structured notification object.
    */
-  static async displayNotification(notification: OSNotificationDataPayload, overrides?: object) {
+  static async displayNotification(notification: IOSNotificationPayload) {
     Log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, Utils.getConsoleStyle('code'), notification);
 
     // Use the default title if one isn't provided
@@ -634,23 +599,13 @@ export class ServiceWorker {
     // Get app ID for tag value
     const appId = await ServiceWorker.getAppId();
 
-    notification.heading = notification.heading ? notification.heading : defaultTitle;
+    notification.title = notification.title ? notification.title : defaultTitle;
     notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
-
-    const extra: any = {};
-    extra.tag = notification.tag || appId;
-    extra.persistNotification = persistNotification !== false;
-
-    // Allow overriding some values
-    if (!overrides) {
-      overrides = {};
-    }
-    notification = { ...notification, ...overrides };
 
     ServiceWorker.ensureNotificationResourcesHttps(notification);
 
-    const notificationOptions = {
-      body: notification.content,
+    const notificationOptions: NotificationOptions = {
+      body: notification.body,
       icon: notification.icon,
       /*
        On Chrome 56, a large image can be displayed:
@@ -676,13 +631,13 @@ export class ServiceWorker {
        Tags are any string value that groups notifications together. Two
        or notifications sharing a tag replace each other.
        */
-      tag: extra.tag,
+      tag: notification.tag || appId,
       /*
        On Chrome 47+ (desktop), notifications will be dismissed after 20
        seconds unless requireInteraction is set to true. See:
        https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
        */
-      requireInteraction: extra.persistNotification,
+      requireInteraction: persistNotification !== false,
       /*
        On Chrome 50+, by default notifications replacing
        identically-tagged notifications no longer vibrate/signal the user
@@ -711,10 +666,10 @@ export class ServiceWorker {
       long to pause. For example [300, 100, 400] would vibrate 300ms,
       pause 100ms, then vibrate 400ms.
        */
-      vibrate: notification.vibrate
+      vibrate: notification.vibrate,
     };
 
-    return self.registration.showNotification(notification.heading, notificationOptions);
+    return self.registration.showNotification(notification.title, notificationOptions);
   }
 
   /**
@@ -786,7 +741,7 @@ export class ServiceWorker {
     // Close the notification first here, before we do anything that might fail
     event.notification.close();
 
-    const data = event.notification.data as OSNotificationDataPayload;
+    const data = event.notification.data as IOSNotificationPayload;
 
     let notificationClickHandlerMatch = 'exact';
     let notificationClickHandlerAction = 'navigate';
@@ -953,7 +908,7 @@ export class ServiceWorker {
   static async sendConvertedAPIRequests(
     appId: string | undefined | null,
     deviceId: string | undefined,
-    notificationData: any,
+    notificationData: IOSNotificationPayload,
     deviceType: DeliveryPlatformKind): Promise<void> {
 
     if (!notificationData.id) {
@@ -1116,7 +1071,7 @@ export class ServiceWorker {
    * @returns An array of notifications. The new web push protocol will only ever contain one notification, however
    * an array is returned for backwards compatibility with the rest of the service worker plumbing.
      */
-  static parseOrFetchNotifications(event: PushEvent): Promise<RawNotificationPayload[]> {
+  static parseOrFetchNotifications(event: PushEvent): Promise<OSMinifiedNotificationPayload[]> {
     if (!event || !event.data) {
       return Promise.reject("Missing event.data on push payload!");
     }
@@ -1124,7 +1079,7 @@ export class ServiceWorker {
     const isValidPayload = ServiceWorker.isValidPushPayload(event.data);
     if (isValidPayload) {
       Log.debug("Received a valid encrypted push payload.");
-      const payload: RawNotificationPayload = event.data.json();
+      const payload: OSMinifiedNotificationPayload = event.data.json();
       return Promise.resolve([payload]);
     }
 
@@ -1142,7 +1097,7 @@ export class ServiceWorker {
    */
   static isValidPushPayload(rawData: PushMessageData) {
     try {
-      const payload: RawNotificationPayload = rawData.json();
+      const payload: OSMinifiedNotificationPayload = rawData.json();
       if (payload &&
           payload.custom &&
           payload.custom.i &&

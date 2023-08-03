@@ -15,3 +15,7 @@ export interface NotificationForegroundWillDisplayEvent {
   notification: OSNotification;
   preventDefault(): void;
 }
+
+export interface NotificationDismissEvent {
+  notification: OSNotification;
+}
