@@ -163,7 +163,6 @@ export class SubscriptionManager {
   }
 
   private async _updatePushSubscriptionModelWithRawSubscription(rawPushSubscription: RawPushSubscription) {
-    // This undefined when it shouldn't be
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (!pushModel) {

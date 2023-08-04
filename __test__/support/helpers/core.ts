@@ -5,7 +5,8 @@ import { CoreDelta } from "../../../src/core/models/CoreDeltas";
 import { SupportedSubscription, SubscriptionType } from "../../../src/core/models/SubscriptionModels";
 import { ModelName } from "../../../src/core/models/SupportedModels";
 import { DUMMY_MODEL_ID, DUMMY_PUSH_TOKEN, DUMMY_SUBSCRIPTION_ID } from "../constants";
-
+import CoreModule from "../../../src/core/CoreModule";
+import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
 
 export function generateNewSubscription(modelId = '0000000000') {
   return new OSModel<SupportedSubscription>(
@@ -38,6 +39,13 @@ export function getDummyPushSubscriptionOSModel(): OSModel<SupportedSubscription
     id: DUMMY_SUBSCRIPTION_ID,
     token: DUMMY_PUSH_TOKEN,
   }, DUMMY_MODEL_ID);
+}
+
+// Requirement: Test must also call TestEnvironment.initialize();
+export async function getCoreModuleDirector(): Promise<CoreModuleDirector> {
+  const coreModule = new CoreModule();
+  await coreModule.init();
+  return new CoreModuleDirector(coreModule);
 }
 
 export const passIfBroadcastNTimes = (target: number, broadcastCount: number, pass: () => void) => {
