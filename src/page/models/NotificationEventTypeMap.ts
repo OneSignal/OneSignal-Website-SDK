@@ -2,7 +2,7 @@ import {
   NotificationClickEvent,
   NotificationForegroundWillDisplayEvent,
   NotificationDismissEvent,
-} from "./NotificationEvent";
+} from "../../shared/models/NotificationEvent";
 
 type NotificationEventTypeMap = {
   'click': NotificationClickEvent;

@@ -1,4 +1,4 @@
-import { IOSNotification } from "../../shared/models/OSNotification";
+import { IOSNotification } from "./OSNotification";
 
 // post-user-model
 export interface NotificationClickEvent {

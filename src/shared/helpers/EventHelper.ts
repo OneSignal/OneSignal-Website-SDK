@@ -75,6 +75,7 @@ export default class EventHelper {
   }
 
   static async _onSubscriptionChanged(change: SubscriptionChangeEvent | undefined) {
+    // TODO: Re-enable welcome notifications
     // EventHelper.onSubscriptionChanged_showWelcomeNotification(change?.current.enabled);
     EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(change?.current?.optedIn);
     EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();

@@ -4,16 +4,16 @@ import { IOSNotificationPayload, INotificationButtonPayload } from "../../shared
 export class OSNotificationPayload implements IOSNotificationPayload {
   id: string;
   body: string;
-  title?: string | undefined;
-  url?: string | undefined;
-  data?: object | undefined;
+  title?: string;
+  url?: string;
+  data?: object;
   confirmDelivery: boolean;
-  icon?: string | undefined;
-  image?: string | undefined;
-  tag?: string | undefined;
-  badge?: string | undefined;
-  vibrate?: VibratePattern | undefined;
-  buttons?: INotificationButtonPayload[] | undefined;
+  icon?: string;
+  image?: string;
+  tag?: string;
+  badge?: string;
+  vibrate?: VibratePattern;
+  buttons?: INotificationButtonPayload[];
 
   constructor(payload: OSMinifiedNotificationPayload) {
     this.id = payload.custom.i;
