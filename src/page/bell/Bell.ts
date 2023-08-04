@@ -320,7 +320,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, () => {
+    OneSignal.emitter.on(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, () => {
       this.updateState();
     });
 

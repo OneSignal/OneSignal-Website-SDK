@@ -1,8 +1,20 @@
 import ModelCache from "../../../src/core/caching/ModelCache";
-import PermissionManager from "../../../src/shared/managers/PermissionManager";
-import { PermissionUtils } from "../../../src/shared/utils/PermissionUtils";
 import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import { TestEnvironment } from "../../support/environment/TestEnvironment";
+import { PermissionManager } from "../../support/managers/PermissionManager";
+import OneSignal from "../../../src/onesignal/OneSignal";
+
+function expectPermissionChangeEvent(expectedPermission: boolean): Promise<void> {
+  return new Promise((resolver) => {
+    OneSignal.Notifications.addEventListener(
+      "permissionChange",
+      (permission: boolean) => {
+        expect(permission).toBe(expectedPermission)
+        resolver();
+      }
+    );
+  });
+}
 
 describe('Notifications namespace permission properties', () => {
   beforeEach(async () => {
@@ -15,46 +27,59 @@ describe('Notifications namespace permission properties', () => {
     jest.resetAllMocks();
   });
 
+  test('When permission changes to granted, ensure permissionChange fires with true', async () => {
+    const expectedPromise = expectPermissionChangeEvent(true);
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Granted);
+    await expectedPromise;
+  });
+
+  test('When permission changes to Denied, ensure permissionChange fires with false', async () => {
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Granted);
+
+    const expectedPromise = expectPermissionChangeEvent(false);
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Denied);
+    await expectedPromise;
+  });
+
+  test('When permission changes to Default, ensure permissionChange fires with false', async () => {
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Granted);
+
+    const expectedPromise = expectPermissionChangeEvent(false);
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Default);
+    await expectedPromise;
+  });
 
   test('When permission changes to granted, we update the permission properties on the Notifications namespace', async () => {
-    test.stub(PermissionManager.prototype, 'getPermissionStatus', Promise.resolve(NotificationPermission.Granted));
-    const permissionChangeEventFiredPromise = new Promise(resolve => {
-      OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, resolve);
-    });
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Granted);
 
-    // mimick native permission change
-    PermissionUtils.triggerNotificationPermissionChanged();
-
-    await permissionChangeEventFiredPromise
     expect(OneSignal.Notifications.permission).toBe(true);
     expect(OneSignal.Notifications.permissionNative).toBe(NotificationPermission.Granted);
   });
 
   test('When permission changes to default, we update the permission properties on the Notifications namespace', async () => {
-    test.stub(PermissionManager.prototype, 'getPermissionStatus', Promise.resolve(NotificationPermission.Default));
-    const permissionChangeEventFiredPromise = new Promise(resolve => {
-      OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, resolve);
-    });
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Default);
 
-    // mimick native permission change
-    PermissionUtils.triggerNotificationPermissionChanged();
-
-    await permissionChangeEventFiredPromise
     expect(OneSignal.Notifications.permission).toBe(false);
     expect(OneSignal.Notifications.permissionNative).toBe(NotificationPermission.Default);
   });
 
   test('When permission changes to denied, we update the permission properties on the Notifications namespace', async () => {
-    test.stub(PermissionManager.prototype, 'getPermissionStatus', Promise.resolve(NotificationPermission.Denied));
-    const permissionChangeEventFiredPromise = new Promise(resolve => {
-      OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, resolve);
-    });
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Denied);
 
-    // mimick native permission change
-    PermissionUtils.triggerNotificationPermissionChanged();
-
-    await permissionChangeEventFiredPromise
     expect(OneSignal.Notifications.permission).toBe(false);
     expect(OneSignal.Notifications.permissionNative).toBe(NotificationPermission.Denied);
+  });
+
+  test('When permission changes, removeEventListener should stop callback from firing', async () => {
+    const callback = (_permission: boolean) => {
+      throw new Error("Should never be call since removeEventListener should prevent this.");
+    };
+    OneSignal.Notifications.addEventListener("permissionChange", callback);
+    OneSignal.Notifications.removeEventListener("permissionChange", callback);
+
+    // Change permissions through all possible states to ensure the event has had a chance to fire
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Granted);
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Default);
+    await PermissionManager.mockNotificationPermissionChange(test, NotificationPermission.Denied);
   });
 });

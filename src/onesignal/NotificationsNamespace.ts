@@ -4,7 +4,7 @@ import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
 import OneSignal from "./OneSignal";
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
-import NotificationEventName from "../page/models/NotificationEventName";
+import { NotificationEventName } from "../page/models/NotificationEventName";
 import { NotificationPermission } from "../shared/models/NotificationPermission";
 import NotificationEventTypeMap from "../page/models/NotificationEventTypeMap";
 
@@ -16,7 +16,7 @@ export default class NotificationsNamespace extends EventListenerBase {
 
     this._permission = _permissionNative === NotificationPermission.Granted;
 
-    OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (permissionNative: NotificationPermission) => {
+    OneSignal.emitter.on(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, (permissionNative: NotificationPermission) => {
       this._permissionNative = permissionNative;
       this._permission = permissionNative === NotificationPermission.Granted;
     });
