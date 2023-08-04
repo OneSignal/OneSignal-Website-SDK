@@ -19,6 +19,6 @@ describe('MainHelper Tests', () => {
   test('getCurrentNotificationType for default permission', async () => {
     test.stub(OneSignal.context.permissionManager, 'getNotificationPermission', NotificationPermission.Default);
     const result = await MainHelper.getCurrentNotificationType();
-    expect(result).toBe(SubscriptionStateKind.Default);
+    expect(result).toBe(SubscriptionStateKind.NoNativePermission);
   });
 });

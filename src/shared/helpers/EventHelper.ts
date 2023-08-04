@@ -43,9 +43,9 @@ export default class EventHelper {
       `The user's subscription state changed from ` +
         `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${isPushEnabled}`
     );
+
     // update notification_types via core module
-    const newNotificationTypes = isOptedIn ? 1 : -2;
-    await context.subscriptionManager.updatePushSubscriptionNotificationTypes(newNotificationTypes);
+    await context.subscriptionManager.updateNotificationTypes();
 
     const currentPushToken = await MainHelper.getCurrentPushToken();
     const pushModel: OSModel<SubscriptionModel> = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();

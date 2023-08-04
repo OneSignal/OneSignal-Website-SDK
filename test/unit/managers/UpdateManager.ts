@@ -137,7 +137,7 @@ test("sendOnSessionUpdate triggers on_session for existing unsubscribed user if 
   sandbox.stub(Database, "getSubscription").resolves({ deviceId: Random.getRandomUuid() });
   sandbox.stub(OneSignal.context.pageViewManager, "isFirstPageView").returns(true);
   sandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
-  sandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.MutedByApi);
+  sandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.UserOptedOut);
   OneSignal.config.enableOnSession = true;
 
   const onSessionSpy = sandbox.stub(OneSignal.context.sessionManager, "upsertSession").resolves();
@@ -154,7 +154,7 @@ test(
   sandbox.stub(Database, "getSubscription").resolves({ deviceId: Random.getRandomUuid() });
   sandbox.stub(OneSignal.context.pageViewManager, "isFirstPageView").returns(true);
   sandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
-  sandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.MutedByApi);
+  sandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.UserOptedOut);
   OneSignal.config.enableOnSession = false;
 
   const onSessionSpy = sandbox.stub(OneSignal.context.sessionManager, "upsertSession").resolves();
