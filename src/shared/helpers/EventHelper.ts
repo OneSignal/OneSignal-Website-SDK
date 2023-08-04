@@ -32,26 +32,25 @@ export default class EventHelper {
 
     const appState = await Database.getAppState();
     const { lastKnownPushEnabled, lastKnownPushId, lastKnownPushToken, lastKnownOptedIn } = appState;
+
+    const currentPushToken = await MainHelper.getCurrentPushToken();
+
+    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushSubscriptionId = pushModel?.data?.id;
+
     const didStateChange = (
       lastKnownPushEnabled === null ||
-      isPushEnabled !== lastKnownPushEnabled
+      isPushEnabled !== lastKnownPushEnabled ||
+      currentPushToken !== lastKnownPushToken ||
+      pushSubscriptionId !== lastKnownPushId
     );
     if (!didStateChange) {
       return;
     }
-    Log.info(
-      `The user's subscription state changed from ` +
-        `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${isPushEnabled}`
-    );
 
     // update notification_types via core module
-    await context.subscriptionManager.updateNotificationTypes();
+    await context.subscriptionManager.updateNotificationTypes()
 
-    const currentPushToken = await MainHelper.getCurrentPushToken();
-    const pushModel: OSModel<SubscriptionModel> = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
-    const pushSubscriptionId = pushModel.data?.id;
-
-    await Database.setIsPushEnabled(isPushEnabled);
     appState.lastKnownPushEnabled = isPushEnabled;
     appState.lastKnownPushToken = currentPushToken;
     appState.lastKnownPushId = pushSubscriptionId;
@@ -71,7 +70,7 @@ export default class EventHelper {
         optedIn: isOptedIn,
       }
     };
-
+    Log.info("Push Subscription state changed: ", change);
     EventHelper.triggerSubscriptionChanged(change);
   }
 

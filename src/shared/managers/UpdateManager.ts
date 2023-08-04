@@ -61,7 +61,7 @@ export class UpdateManager {
       return;
     }
 
-    const subscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const subscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (subscriptionModel?.data.notification_types !== SubscriptionStateKind.Subscribed &&
       OneSignal.config?.enableOnSession !== true) {
@@ -151,7 +151,7 @@ export class UpdateManager {
 
   public async sendOutcomeDirect(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
     logMethodCall("sendOutcomeDirect");
-    const pushSubscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel?.data)) {
       const outcomeRequestData: OutcomeRequestData = {
@@ -175,7 +175,7 @@ export class UpdateManager {
 
   public async sendOutcomeInfluenced(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
     logMethodCall("sendOutcomeInfluenced");
-    const pushSubscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel?.data)) {
       const outcomeRequestData: OutcomeRequestData = {
@@ -199,7 +199,7 @@ export class UpdateManager {
 
   public async sendOutcomeUnattributed(appId: string, outcomeName: string, value?: number) {
     logMethodCall("sendOutcomeUnattributed");
-    const pushSubscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel?.data)) {
       const outcomeRequestData: OutcomeRequestData = {
