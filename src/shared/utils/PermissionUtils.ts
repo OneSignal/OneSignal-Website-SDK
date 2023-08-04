@@ -10,37 +10,44 @@ export class PermissionUtils {
   // Some browsers support both, while others only support Notification.requestPermission
   private static executing = false;
 
-  public static async triggerNotificationPermissionChanged(updateIfIdentical = false) {
+  public static async triggerNotificationPermissionChanged(force = false) {
     if (PermissionUtils.executing) {
       return;
     }
 
     PermissionUtils.executing = true;
     try {
-      await PermissionUtils.privateTriggerNotificationPermissionChanged(updateIfIdentical);
+      await PermissionUtils.privateTriggerNotificationPermissionChanged(force);
     }
     finally {
       PermissionUtils.executing = false;
     }
   }
 
-  private static async privateTriggerNotificationPermissionChanged(updateIfIdentical: boolean) {
+  private static async privateTriggerNotificationPermissionChanged(force: boolean) {
     const newPermission: NotificationPermission = await OneSignal.context.permissionManager.getPermissionStatus();
     const previousPermission: NotificationPermission = await Database.get('Options', 'notificationPermission');
 
-    const shouldBeUpdated = newPermission !== previousPermission || updateIfIdentical;
-    if (!shouldBeUpdated) {
+    const triggerEvent = newPermission !== previousPermission || force;
+    if (!triggerEvent) {
       return;
     }
 
     await Database.put('Options', { key: 'notificationPermission', value: newPermission });
+
     OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, newPermission);
-    
+    this.triggerBooleanPermissionChangeEvent(previousPermission, newPermission, force);
+  }
+
+  private static triggerBooleanPermissionChangeEvent(
+    previousPermission: NotificationPermission,
+    newPermission: NotificationPermission,
+    force: boolean,
+  ): void {
     const newPermissionBoolean = newPermission === 'granted';
     const previousPermissionBoolean = previousPermission === 'granted';
-
-    const shouldBeUpdatedBoolean = newPermissionBoolean !== previousPermissionBoolean || updateIfIdentical;
-    if (!shouldBeUpdatedBoolean) {
+    const triggerEvent = newPermissionBoolean !== previousPermissionBoolean || force;
+    if (!triggerEvent) {
       return;
     }
     OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN, newPermissionBoolean);
