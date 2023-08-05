@@ -1,5 +1,5 @@
-import { OSNotificationPayload } from "../../../models/OSNotificationPayload";
 import { IOSWebhookEventPayload } from "../../IOSWebhookEventPayload";
+import { IOSNotification } from "../../../../shared/models/OSNotification";
 
 export class OSWebhookPayloadNotificationDismiss implements IOSWebhookEventPayload {
   readonly event: string = "notification.dismiss";
@@ -9,10 +9,10 @@ export class OSWebhookPayloadNotificationDismiss implements IOSWebhookEventPaylo
   readonly additionalData?: object;
   readonly actionId?: string;
 
-  constructor(notification: OSNotificationPayload) {
-    this.notificationId = notification.id;
+  constructor(notification: IOSNotification) {
+    this.notificationId = notification.notificationId;
     this.heading = notification.title;
     this.content = notification.body;
-    this.additionalData = notification.data;
+    this.additionalData = notification.additionalData;
   }
 }

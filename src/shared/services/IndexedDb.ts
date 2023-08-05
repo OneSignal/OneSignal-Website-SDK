@@ -111,7 +111,8 @@ export default class IndexedDb {
     if (event.oldVersion < 2) {
       db.createObjectStore("Sessions", { keyPath: "sessionKey" });
       db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
-      db.createObjectStore("NotificationClicked", { keyPath: "notification.id" });
+      // NOTE: Some v16 betas had "{ keyPath: "notification.id" }"
+      db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
     }
     if (event.oldVersion < 3) {
       db.createObjectStore("SentUniqueOutcome", { keyPath: "outcomeName" });

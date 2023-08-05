@@ -278,7 +278,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
    const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
    await fakeSetSubscription();
 
-   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "y" });
+   await OSServiceWorker.sendConfirmedDelivery({ notificationId: notificationId, rr: "y" });
    t.false(notificationPutCall.nockScope.isDone());
  });
 
@@ -288,7 +288,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "y" });
+  await OSServiceWorker.sendConfirmedDelivery({ notificationId: notificationId, rr: "y" });
   t.true(notificationPutCall.nockScope.isDone());
  });
 
@@ -298,7 +298,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "n" });
+  await OSServiceWorker.sendConfirmedDelivery({ notificationId: notificationId, rr: "n" });
   t.false(notificationPutCall.nockScope.isDone());
  });
 
@@ -308,7 +308,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
+  await OSServiceWorker.sendConfirmedDelivery({ notificationId: notificationId });
   t.false(notificationPutCall.nockScope.isDone());
  });
 
@@ -318,7 +318,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: null });
+  await OSServiceWorker.sendConfirmedDelivery({ notificationId: notificationId, rr: null });
   t.false(notificationPutCall.nockScope.isDone());
  });
 
@@ -329,7 +329,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   const notificationId = Random.getRandomUuid();
   const notificationNock = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: 'y' });
+  await OSServiceWorker.sendConfirmedDelivery({ notificationId: notificationId, rr: 'y' });
   const requestBody = (await notificationNock.result).request.body;
   t.is(requestBody.device_type, 5); // 5 = chrome like
  });
