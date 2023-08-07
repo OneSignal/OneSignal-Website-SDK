@@ -2,8 +2,8 @@ import Emitter from "../libraries/Emitter";
 import IndexedDb from "./IndexedDb";
 
 import { AppConfig } from "../models/AppConfig";
-import { AppState, ClickedNotifications } from "../models/AppState";
-import { NotificationReceived, NotificationClicked } from "../models/OSNotification";
+import { AppState, NotificationClickEventsPendingUrlOpening } from "../models/AppState";
+import { IOSNotification, NotificationClicked, NotificationReceived } from "../models/OSNotification";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
@@ -17,6 +17,14 @@ import { SentUniqueOutcome } from '../models/Outcomes';
 import { BundleSMS, SMSProfile } from "../models/SMSProfile";
 import { ModelName } from "../../core/models/SupportedModels";
 import Utils from "../context/Utils";
+import { 
+  NotificationClickForOpenHandlingSchema,
+  NotificationClickForOpenHandlingSerializer,
+  NotificationClickedForOutcomesSerializer,
+  NotificationReceivedForOutcomesSchema,
+  NotificationReceivedForOutcomesSerializer,
+} from "../helpers/OSNotificationDatabaseSerializer";
+import { NotificationClickEventInternal } from "../models/NotificationEvent";
 
 enum DatabaseEventName {
   SET
@@ -28,6 +36,12 @@ interface DatabaseResult {
   data: any;
   timestamp: any;
 }
+
+/**
+ * "NotificationOpened" = Pending Notification Click events that haven't fired yet
+ * "NotificationClicked" = Outcomes only, notifications part of it's session
+ * "NotificationReceived" = Outcomes only, notifications part of it's session
+ */
 
 export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions" |
   "NotificationOpened" | "NotificationReceived" | "NotificationClicked" | "SentUniqueOutcome" |  ModelName;
@@ -76,13 +90,6 @@ export default class Database {
       case "Ids":
         if (result && key)
           return result.id;
-        else if (result && !key)
-          return result;
-        else
-          return null;
-      case "NotificationOpened":
-        if (result && key)
-          return { data: result.data, timestamp: result.timestamp };
         else if (result && !key)
           return result;
         else
@@ -256,7 +263,7 @@ export default class Database {
     state.defaultNotificationUrl = await this.get<string>("Options", "defaultUrl");
     state.defaultNotificationTitle = await this.get<string>("Options", "defaultTitle");
     state.lastKnownPushEnabled = await this.get<boolean>("Options", "isPushEnabled");
-    state.clickedNotifications = await this.get<ClickedNotifications>("NotificationOpened");
+    state.notificationClickEventsPendingUrlOpening = await this.getAllNotificationClickEventsPendingUrlOpening();
     // lastKnown<PushId|PushToken|OptedIn> are used to track changes to the user's subscription
     // state. Displayed in the `current` & `previous` fields of the `subscriptionChange` event.
     state.lastKnownPushId = await this.get<string>("Options", "lastPushId");
@@ -282,10 +289,10 @@ export default class Database {
       await this.put("Options", { key: "lastPushToken", value: appState.lastKnownPushToken });
     if (appState.lastKnownOptedIn != null)
       await this.put("Options", { key: "lastOptedIn", value: appState.lastKnownOptedIn });
-    if (appState.clickedNotifications) {
-      const clickedNotificationUrls = Object.keys(appState.clickedNotifications);
+    if (appState.notificationClickEventsPendingUrlOpening) {
+      const clickedNotificationUrls = Object.keys(appState.notificationClickEventsPendingUrlOpening);
       for (const url of clickedNotificationUrls) {
-        const notificationDetails = appState.clickedNotifications[url];
+        const notificationDetails = appState.notificationClickEventsPendingUrlOpening[url];
         if (notificationDetails) {
           await this.put("NotificationOpened", {
             url: url,
@@ -423,48 +430,64 @@ export default class Database {
     await this.remove("Sessions", sessionKey);
   }
 
-  async getLastNotificationClicked(appId: string): Promise<NotificationClicked | null> {
+  async getLastNotificationClickedForOutcomes(appId: string): Promise<NotificationClicked | null> {
     let allClickedNotifications: NotificationClicked[] = [];
     try {
-      allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
+      allClickedNotifications = await this.getAllNotificationClickedForOutcomes();
     } catch(e) {
-      Log.error("Database.getNotificationClickedByUrl", e);
+      Log.error("Database.getLastNotificationClickedForOutcomes", e);
     }
     const predicate = (notification: NotificationClicked) => notification.appId === appId;
     return allClickedNotifications.find(predicate) || null;
   }
 
-  async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
-    let allClickedNotifications: NotificationClicked[] = [];
-    try {
-      allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
-    } catch(e) {
-      Log.error("Database.getNotificationClickedByUrl", e);
-    }
-    const predicate = (notification: NotificationClicked) => {
-      if (notification.appId !== appId) {
-        return false;
+  async getAllNotificationClickedForOutcomes(): Promise<NotificationClicked[]> {
+    const notifications = await this.getAll<NotificationReceivedForOutcomesSchema>("NotificationClicked");
+    return notifications.map(notification => NotificationClickedForOutcomesSerializer.fromDatabase(notification));
+  }
+
+  async putNotificationClickedForOutcomes(appId: string, event: NotificationClickEventInternal): Promise<void> {
+    await this.put(
+      "NotificationClicked",
+      NotificationClickedForOutcomesSerializer.toDatabase(appId, event)
+    );
+  }
+
+  async putNotificationClickedEventPendingUrlOpening(event: NotificationClickEventInternal): Promise<void> {
+    await this.put(
+      "NotificationOpened",
+      NotificationClickForOpenHandlingSerializer.toDatabase(event)
+    );
+  }
+
+  private async getAllNotificationClickEventsPendingUrlOpening(): Promise<NotificationClickEventsPendingUrlOpening> {
+    const clickedNotifications: NotificationClickEventsPendingUrlOpening = {};
+    const eventsFromDb = await this.getAll<NotificationClickForOpenHandlingSchema>("NotificationOpened");
+    for(const eventFromDb of eventsFromDb) {
+      const event = NotificationClickForOpenHandlingSerializer.fromDatabase(eventFromDb);
+      const url = event.result.url;
+      if (!url) {
+        continue;
       }
-
-      return new URL(url).origin === new URL(notification.launchURL).origin;
-    };
-    return allClickedNotifications.find(predicate) || null;
+      clickedNotifications[url] = event; 
+    }
+    return clickedNotifications;
   }
 
-  async getNotificationClickedById(notificationId: string): Promise<NotificationClicked | null> {
-    return await this.get<NotificationClicked | null>("NotificationClicked", notificationId);
-  }
-
-  async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
-    return await this.get<NotificationReceived | null>("NotificationReceived", notificationId);
-  }
-
-  async removeNotificationClickedById(notificationId: string): Promise<void> {
-    await this.remove("NotificationClicked", notificationId);
-  }
-
-  async removeAllNotificationClicked(): Promise<void> {
+  async removeAllNotificationClickedForOutcomes(): Promise<void> {
     await this.remove("NotificationClicked");
+  }
+
+  async getAllNotificationReceivedForOutcomes(): Promise<NotificationReceived[]> {
+    const notifications = await this.getAll<NotificationReceivedForOutcomesSchema>("NotificationReceived");
+    return notifications.map(notification => NotificationReceivedForOutcomesSerializer.fromDatabase(notification));
+  }
+
+  async putNotificationReceivedForOutcomes(appId: string, notification: IOSNotification): Promise<void> {
+    await this.put(
+      "NotificationReceived",
+      NotificationReceivedForOutcomesSerializer.toDatabase(appId, notification, new Date().getTime())
+    );
   }
 
   async resetSentUniqueOutcomes(): Promise<void> {
@@ -585,32 +608,36 @@ export default class Database {
     return await Database.singletonInstance.getExternalUserIdAuthHash();
   }
 
-  static async getLastNotificationClicked(appId: string): Promise<NotificationClicked | null> {
-    return await Database.singletonInstance.getLastNotificationClicked(appId);
+  static async getLastNotificationClickedForOutcomes(appId: string): Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getLastNotificationClickedForOutcomes(appId);
   }
 
-  static async removeNotificationClickedById(notificationId: string): Promise<void> {
-    return await Database.singletonInstance.removeNotificationClickedById(notificationId);
+  static async removeAllNotificationClickedForOutcomes(): Promise<void> {
+    return await Database.singletonInstance.removeAllNotificationClickedForOutcomes();
   }
 
-  static async removeAllNotificationClicked(): Promise<void> {
-    return await Database.singletonInstance.removeAllNotificationClicked();
+  static async getAllNotificationReceivedForOutcomes(): Promise<NotificationReceived[]> {
+    return await Database.singletonInstance.getAllNotificationReceivedForOutcomes();
+  }
+
+  static async putNotificationReceivedForOutcomes(appId: string, notification: IOSNotification): Promise<void> {
+    return await Database.singletonInstance.putNotificationReceivedForOutcomes(appId, notification);
+  }
+
+  static async getAllNotificationClickedForOutcomes(): Promise<NotificationClicked[]> {
+    return await Database.singletonInstance.getAllNotificationClickedForOutcomes();
+  }
+
+  static async putNotificationClickedForOutcomes(appId: string, event: NotificationClickEventInternal): Promise<void> {
+    return await Database.singletonInstance.putNotificationClickedForOutcomes(appId, event);
+  }
+
+  static async putNotificationClickedEventPendingUrlOpening(event: NotificationClickEventInternal): Promise<void> {
+    return await Database.singletonInstance.putNotificationClickedEventPendingUrlOpening(event);
   }
 
   static async resetSentUniqueOutcomes(): Promise<void> {
     return await Database.singletonInstance.resetSentUniqueOutcomes();
-  }
-
-  static async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
-    return await Database.singletonInstance.getNotificationClickedByUrl(url, appId);
-  }
-
-  static async getNotificationClickedById(notificationId: string): Promise<NotificationClicked | null> {
-    return await Database.singletonInstance.getNotificationClickedById(notificationId);
-  }
-
-  static async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
-    return await Database.singletonInstance.getNotificationReceivedById(notificationId);
   }
 
   static async setExternalUserId(externalUserId?: string | null, authHash?: string | null):

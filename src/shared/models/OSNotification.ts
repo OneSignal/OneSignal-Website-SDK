@@ -82,11 +82,31 @@ export interface IOSNotificationActionButton {
   readonly launchURL?: string;
 }
 
-// TODO: Remove these interfaces, more move them somewhere else.
-export interface NotificationReceived {
-  notificationId: string;
-  appId: string;
+
+export interface IMutableOSNotification extends IOSNotification {
+  title?: string;
+  body: string;
+  icon?: string;
+  badgeIcon?: string;
+  image?: string;
+  actionButtons?: IMutableOSNotificationActionButton[];
+  topic?: string;
+  additionalData?: object;
   launchURL?: string;
+  confirmDelivery: boolean;
+}
+
+export interface IMutableOSNotificationActionButton extends IOSNotificationActionButton {
+  actionId: string;
+  text: string;
+  icon?: string;
+  launchURL?: string;
+}
+
+// TODO: Move these two interfaces to Outcomes
+export interface NotificationReceived {
+  appId: string;
+  notificationId: string;
   timestamp: number;
 }
 
@@ -94,7 +114,5 @@ export interface NotificationReceived {
 export interface NotificationClicked {
   appId: string;
   notificationId: string;
-  actionId: string;
-  launchURL?: string;
   timestamp: number;
 }

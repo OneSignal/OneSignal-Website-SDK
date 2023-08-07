@@ -10,8 +10,7 @@ import PromptsHelper from './PromptsHelper';
 import OneSignalEvent from "../services/OneSignalEvent";
 import SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
 import MainHelper from './MainHelper';
-import { OSModel } from '../../core/modelRepo/OSModel';
-import { SubscriptionModel } from '../../core/models/SubscriptionModels';
+import { NotificationClickEvent, NotificationClickEventInternal } from '../models/NotificationEvent';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -186,6 +185,14 @@ export default class EventHelper {
     OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
   }
 
+  static triggerNotificationClick(event: NotificationClickEventInternal): Promise<void> {
+    const publicEvent: NotificationClickEvent = {
+      notification: event.notification,
+      result: event.result,
+    };
+    return OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, publicEvent);
+  }
+
   /**
    * When notifications are clicked, because the site isn't open, the notification is stored in the database. The next
    * time the page opens, the event is triggered if its less than 5 minutes (usually page opens instantly from click).
@@ -194,34 +201,20 @@ export default class EventHelper {
    * subdomain.onesignal.com URL.
    */
   static async fireStoredNotificationClicks(url: string = document.URL) {
-    async function fireEventWithNotification(clickedNotificationInfo: { url: string, data: any, timestamp: number }) {
+    async function fireEventWithNotification(selectedEvent: NotificationClickEventInternal) {
       // Remove the notification from the recently clicked list
       // Once this page processes this retroactively provided clicked event, nothing should get the same event
       const appState = await Database.getAppState();
-      appState.clickedNotifications[clickedNotificationInfo.url] = null;
+      appState.notificationClickEventsPendingUrlOpening[selectedEvent.result.url] = null;
       await Database.setAppState(appState);
 
-      /* Clicked notifications look like:
-      {
-        "url": "https://notify.tech",
-        "data": {
-          "id": "f44dfcc7-e8cd-47c6-af7e-e2b7ac68afca",
-          "heading": "Example Notification",
-          "content": "This is an example notification.",
-          "icon": "https://onesignal.com/images/notification_logo.png"
-          (there would be a URL field here if it was set)
-        },
-        "timestamp": 1490998270607
-      }
-      */
-      const { data: notification, timestamp } = clickedNotificationInfo;
-
+      const timestamp = selectedEvent.timestamp;
       if (timestamp) {
         const minutesSinceNotificationClicked = (Date.now() - timestamp) / 1000 / 60;
         if (minutesSinceNotificationClicked > 5) return;
       }
 
-      OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification);
+      EventHelper.triggerNotificationClick(selectedEvent);
     }
 
     const appState = await Database.getAppState();
@@ -236,11 +229,11 @@ export default class EventHelper {
     */
     const notificationClickHandlerMatch = await Database.get<string>('Options', 'notificationClickHandlerMatch');
     if (notificationClickHandlerMatch === 'origin') {
-      for (const clickedNotificationUrl of Object.keys(appState.clickedNotifications)) {
+      for (const clickedNotificationUrl of Object.keys(appState.notificationClickEventsPendingUrlOpening)) {
         // Using notificationClickHandlerMatch: 'origin', as long as the notification's URL's origin matches our current tab's origin,
         // fire the clicked event
         if (new URL(clickedNotificationUrl).origin === location.origin) {
-          const clickedNotification = appState.clickedNotifications[clickedNotificationUrl];
+          const clickedNotification = appState.notificationClickEventsPendingUrlOpening[clickedNotificationUrl];
           await fireEventWithNotification(clickedNotification);
         }
       }
@@ -252,12 +245,12 @@ export default class EventHelper {
 
         As a workaround, if there are no notifications for https://site.com/, we'll do a check for https://site.com.
       */
-      var pageClickedNotifications = appState.clickedNotifications[url];
+      var pageClickedNotifications = appState.notificationClickEventsPendingUrlOpening[url];
       if (pageClickedNotifications) {
         await fireEventWithNotification(pageClickedNotifications);
       } else if (!pageClickedNotifications && url.endsWith('/')) {
         var urlWithoutTrailingSlash = url.substring(0, url.length - 1);
-        pageClickedNotifications = appState.clickedNotifications[urlWithoutTrailingSlash];
+        pageClickedNotifications = appState.notificationClickEventsPendingUrlOpening[urlWithoutTrailingSlash];
         if (pageClickedNotifications) {
           await fireEventWithNotification(pageClickedNotifications);
         }

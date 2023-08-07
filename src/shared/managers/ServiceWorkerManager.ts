@@ -18,6 +18,8 @@ import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/Utils";
 import { PageVisibilityRequest, PageVisibilityResponse } from '../models/Session';
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
+import { NotificationClickEventInternal, NotificationForegroundWillDisplayEvent, NotificationForegroundWillDisplayEventSerializable } from '../models/NotificationEvent';
+import EventHelper from '../helpers/EventHelper';
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -259,12 +261,18 @@ export class ServiceWorkerManager {
     const workerMessenger = this.context.workerMessenger;
     workerMessenger.off();
 
-    workerMessenger.on(WorkerMessengerCommand.NotificationWillDisplay, async data => {
+    workerMessenger.on(WorkerMessengerCommand.NotificationWillDisplay, async (event: NotificationForegroundWillDisplayEventSerializable) => {
       Log.debug(location.origin, 'Received notification display event from service worker.');
-      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, data);
+      const publicEvent: NotificationForegroundWillDisplayEvent = {
+        notification: event.notification,
+        preventDefault: function(): void {
+          throw new Error('Browser does not support preventing display.');
+        }
+      };
+      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, publicEvent);
     });
 
-    workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async data => {
+    workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async (event: NotificationClickEventInternal) => {
       let clickedListenerCallbackCount: number;
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
         clickedListenerCallbackCount = await new Promise<number>(resolve => {
@@ -305,16 +313,19 @@ export class ServiceWorkerManager {
         Log.debug(
           'notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.'
         );
+
+        // TODO: Shouldn't we just ensure we always have a URL before sending the event instead?
         /* For empty notifications without a URL, use the current document's URL */
-        let url = data.url;
-        if (!data.url) {
+        let url = event.result.url;
+        if (!url) {
           // Least likely to modify, since modifying this property changes the page's URL
           url = location.href;
         }
-        await Database.put('NotificationOpened', { url, data, timestamp: Date.now() });
+        await Database.putNotificationClickedEventPendingUrlOpening(event);
       }
-      else
-        await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+      else {
+        await EventHelper.triggerNotificationClick(event);
+      }
     });
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {

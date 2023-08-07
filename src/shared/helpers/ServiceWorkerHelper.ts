@@ -44,7 +44,7 @@ export default class ServiceWorkerHelper {
       );
 
       // if there is a record about a clicked notification in our database, attribute session to it.
-      const clickedNotification: NotificationClicked | null = await Database.getLastNotificationClicked(appId);
+      const clickedNotification: NotificationClicked | null = await Database.getLastNotificationClickedForOutcomes(appId);
       if (clickedNotification) {
         session.notificationId = clickedNotification.notificationId;
       }
@@ -230,7 +230,7 @@ export default class ServiceWorkerHelper {
 
     await Promise.all([
       Database.cleanupCurrentSession(),
-      Database.removeAllNotificationClicked()
+      Database.removeAllNotificationClickedForOutcomes()
     ]);
     Log.debug(
       "Finalize session finished",

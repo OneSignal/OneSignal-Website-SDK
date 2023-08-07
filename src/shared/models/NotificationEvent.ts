@@ -1,18 +1,27 @@
 import { IOSNotification } from "./OSNotification";
 
-// post-user-model
 export interface NotificationClickEvent {
-  notification: IOSNotification;
-  result: NotificationClickResult;
+  readonly notification: IOSNotification;
+  readonly result: NotificationClickResult;
+}
+
+// Timestamp is required for internal click handing, but omit it externally
+// to simply the public SDK API 
+export interface NotificationClickEventInternal extends NotificationClickEvent {
+  readonly timestamp: number;
 }
 
 export type NotificationClickResult = {
-  actionId: string;
+  actionId?: string;
   url?: string;
 }
 
-export interface NotificationForegroundWillDisplayEvent {
-  notification: IOSNotification;
+export interface NotificationForegroundWillDisplayEventSerializable {
+  readonly notification: IOSNotification;
+}
+
+export interface NotificationForegroundWillDisplayEvent
+  extends NotificationForegroundWillDisplayEventSerializable {
   preventDefault(): void;
 }
 

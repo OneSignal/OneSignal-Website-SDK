@@ -15,10 +15,7 @@ import {
 import ServiceWorkerHelper from "../../shared/helpers/ServiceWorkerHelper";
 import { cancelableTimeout } from "../helpers/CancelableTimeout";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
-import { 
-  IOSNotification,
-  NotificationReceived
-} from "../../shared/models/OSNotification";
+import { IMutableOSNotification, IOSNotification } from "../../shared/models/OSNotification";
 import {
   UpsertOrDeactivateSessionPayload,
   PageVisibilityResponse,
@@ -31,7 +28,7 @@ import { WorkerMessenger, WorkerMessengerMessage, WorkerMessengerCommand } from 
 import { DeviceRecord } from "../../../src/shared/models/DeviceRecord";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
 import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
-import { NotificationClickEvent } from "../../shared/models/NotificationEvent";
+import { NotificationClickEventInternal, NotificationForegroundWillDisplayEventSerializable } from "../../shared/models/NotificationEvent";
 import { OSMinifiedNotificationPayload, OSMinifiedNotificationPayloadHelper } from "../models/OSMinifiedNotificationPayload";
 
 import { bowserCastle } from "../../shared/utils/bowserCastle";
@@ -258,19 +255,16 @@ export class ServiceWorker {
                 Log.debug('Raw Notification from OneSignal:', rawNotification);
                 const notification = OSMinifiedNotificationPayloadHelper.toOSNotification(rawNotification);
 
-                const notificationReceived: NotificationReceived = {
-                  notificationId: notification.notificationId,
-                  appId,
-                  launchURL: notification.launchURL,
-                  timestamp: new Date().getTime(),
-                };
-                notificationReceivedPromises.push(Database.put("NotificationReceived", notificationReceived));
+                notificationReceivedPromises.push(Database.putNotificationReceivedForOutcomes(appId, notification));
                 // TODO: decide what to do with all the notif received promises
                 // Probably should have it's own error handling but not blocking the rest of the execution?
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
                 notificationEventPromiseFns.push((async (notif: IOSNotification) => {
-                  await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationWillDisplay, notif).catch(e => Log.error(e));
+                  const event: NotificationForegroundWillDisplayEventSerializable = {
+                    notification: notif,
+                  };
+                  await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationWillDisplay, event).catch(e => Log.error(e))
                   ServiceWorker.webhookNotificationEventSender.willDisplay(notif);
 
                   return ServiceWorker.displayNotification(notif)
@@ -522,7 +516,7 @@ export class ServiceWorker {
   /**
    * Given a structured notification object, HTTPS-ifies the notification icons and action button icons, if they exist.
    */
-  static ensureNotificationResourcesHttps(notification: IOSNotification) {
+  static ensureNotificationResourcesHttps(notification: IMutableOSNotification) {
     if (notification) {
       if (notification.icon) {
         notification.icon = ServiceWorker.ensureImageResourceHttps(notification.icon);
@@ -545,7 +539,7 @@ export class ServiceWorker {
    * Any event needing to display a notification calls this so that all the display options can be centralized here.
    * @param notification A structured notification object.
    */
-  static async displayNotification(notification: IOSNotification) {
+  static async displayNotification(notification: IMutableOSNotification) {
     Log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, Utils.getConsoleStyle('code'), notification);
 
     // Use the default title if one isn't provided
@@ -685,7 +679,7 @@ export class ServiceWorker {
     // Close the notification first here, before we do anything that might fail
     event.notification.close();
 
-    const osNotification = OSMinifiedNotificationPayloadHelper.toOSNotification(event.notification.data);
+    const osNotification = event.notification.data as IOSNotification;
 
     let notificationClickHandlerMatch = 'exact';
     let notificationClickHandlerAction = 'navigate';
@@ -703,27 +697,28 @@ export class ServiceWorker {
     const appId = await ServiceWorker.getAppId();
     const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
-    const notificationClickEvent: NotificationClickEvent = {
+    const notificationClickEvent: NotificationClickEventInternal = {
       notification: osNotification,
       result: {
         actionId: event.action,
         url: launchUrl,
-      }
+      },
+      timestamp: new Date().getTime(),
     };
 
     Log.info("NotificationClicked", notificationClickEvent);
-    const saveNotificationClickedPromise = (async notificationClicked => {
+    const saveNotificationClickedPromise = (async notificationClickEvent => {
       try {
         const existingSession = await Database.getCurrentSession();
         if (existingSession && existingSession.status === SessionStatus.Active) {
           return;
         }
-        await Database.put("NotificationClicked", notificationClicked);
+        await Database.putNotificationClickedForOutcomes(appId, notificationClickEvent);
 
         // upgrade existing session to be directly attributed to the notif
         // if it results in re-focusing the site
         if (existingSession) {
-          existingSession.notificationId = notificationClicked.notification.notificationId;
+          existingSession.notificationId = notificationClickEvent.notification.notificationId;
           await Database.upsertSession(existingSession);
         }
       } catch(e) {
@@ -797,7 +792,7 @@ export class ServiceWorker {
             }
             if (notificationOpensLink) {
               Log.debug(`Redirecting HTTP site to ${launchUrl}.`);
-              await Database.put("NotificationOpened", { url: launchUrl, data: osNotification, timestamp: Date.now() });
+              await Database.putNotificationClickedEventPendingUrlOpening(notificationClickEvent);
               ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.RedirectPage, launchUrl, client);
             } else {
               Log.debug('Not navigating because link is special.');
@@ -814,7 +809,7 @@ export class ServiceWorker {
             try {
               if (notificationOpensLink) {
                 Log.debug(`Redirecting HTTPS site to (${launchUrl}).`);
-                await Database.put("NotificationOpened", { url: launchUrl, data: osNotification, timestamp: Date.now() });
+                await Database.putNotificationClickedEventPendingUrlOpening(notificationClickEvent);
                 await client.navigate(launchUrl);
               } else {
                 Log.debug('Not navigating because link is special.');
@@ -824,7 +819,7 @@ export class ServiceWorker {
             }
           } else {
             // If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
-            await Database.put("NotificationOpened", { url: launchUrl, data: osNotification, timestamp: Date.now() });
+            await Database.putNotificationClickedEventPendingUrlOpening(notificationClickEvent);
             await ServiceWorker.openUrl(launchUrl);
           }
         }
@@ -834,7 +829,7 @@ export class ServiceWorker {
     }
 
     if (notificationOpensLink && !doNotOpenLink) {
-      await Database.put("NotificationOpened", { url: launchUrl, data: osNotification, timestamp: Date.now() });
+      await Database.putNotificationClickedEventPendingUrlOpening(notificationClickEvent);
       await ServiceWorker.openUrl(launchUrl);
     }
     if (saveNotificationClickedPromise) {
@@ -852,7 +847,7 @@ export class ServiceWorker {
   static async sendConvertedAPIRequests(
     appId: string | undefined | null,
     deviceId: string | undefined,
-    notificationClickEvent: NotificationClickEvent,
+    notificationClickEvent: NotificationClickEventInternal,
     deviceType: DeliveryPlatformKind,
   ): Promise<void> {
     const notificationData = notificationClickEvent.notification;
