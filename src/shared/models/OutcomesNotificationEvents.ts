@@ -1,11 +1,11 @@
 export interface OutcomesNotificationReceived {
-  appId: string;
-  notificationId: string;
-  timestamp: number;
+  readonly appId: string;
+  readonly notificationId: string;
+  readonly timestamp: number;
 }
 
 export interface OutcomesNotificationClicked {
-  appId: string;
-  notificationId: string;
-  timestamp: number;
+  readonly appId: string;
+  readonly notificationId: string;
+  readonly timestamp: number;
 }
