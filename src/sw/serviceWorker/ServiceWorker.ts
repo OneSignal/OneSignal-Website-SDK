@@ -8,7 +8,6 @@ import { SubscriptionStrategyKind } from "../../shared/models/SubscriptionStrate
 import { PushDeviceRecord } from "../../shared/models/PushDeviceRecord";
 import Log from "../libraries/Log";
 import { ConfigHelper } from "../../shared/helpers/ConfigHelper";
-import { OneSignalUtils } from "../../shared/utils/OneSignalUtils";
 import { Utils } from "../../shared/context/Utils";
 import {
   OSWindowClient, OSServiceWorkerFields, SubscriptionChangeEvent
@@ -31,7 +30,10 @@ import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscript
 import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
 import { NotificationClickEventInternal, NotificationForegroundWillDisplayEventSerializable } from "../../shared/models/NotificationEvent";
 import { OSMinifiedNotificationPayload, OSMinifiedNotificationPayloadHelper } from "../models/OSMinifiedNotificationPayload";
+
 import { bowserCastle } from "../../shared/utils/bowserCastle";
+import { OSWebhookNotificationEventSender } from "../webhooks/notifications/OSWebhookNotificationEventSender";
+import { OSNotificationButtonsConverter } from "../models/OSNotificationButtonsConverter";
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -72,6 +74,10 @@ export class ServiceWorker {
    */
   static get database() {
     return Database;
+  }
+
+  static get webhookNotificationEventSender() {
+    return new OSWebhookNotificationEventSender();
   }
 
   /**
@@ -254,9 +260,12 @@ export class ServiceWorker {
                 // Probably should have it's own error handling but not blocking the rest of the execution?
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
-                notificationEventPromiseFns.push((async (notif: OSNotificationDataPayload) => {
-                  await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationWillDisplay, notif).catch(e => Log.error(e));
-                  ServiceWorker.executeWebhooks('notification.willDisplay', notif);
+                notificationEventPromiseFns.push((async (notif: IOSNotification) => {
+                  const event: NotificationForegroundWillDisplayEventSerializable = {
+                    notification: notif,
+                  };
+                  await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationWillDisplay, event).catch(e => Log.error(e))
+                  ServiceWorker.webhookNotificationEventSender.willDisplay(notif);
 
                   return ServiceWorker.displayNotification(notif)
                       .then(() => ServiceWorker.sendConfirmedDelivery(notif)).catch(e => Log.error(e));
@@ -275,55 +284,6 @@ export class ServiceWorker {
               }
             })
     );
-  }
-
-  /**
-   * Makes a POST call to a specified URL to forward certain events.
-   * @param event The name of the webhook event. Affects the DB key pulled for settings and the final event the user
-   *              consumes.
-   * @param notification A JSON object containing notification details the user consumes.
-   * @returns {Promise}
-   */
-  static async executeWebhooks(event: string, notification: any): Promise<Response | null> {
-    const webhookTargetUrl = await Database.get<string>('Options', `webhooks.${event}`);
-    if (!webhookTargetUrl)
-      return null;
-
-    const { deviceId } = await Database.getSubscription();
-    const isServerCorsEnabled = await Database.get<boolean>('Options', 'webhooks.cors');
-
-    // JSON.stringify() does not include undefined values
-    // Our response will not contain those fields here which have undefined values
-    const postData = {
-      event: event,
-      id: notification.id,
-      userId: deviceId,
-      action: notification.action,
-      buttons: notification.buttons,
-      heading: notification.heading,
-      content: notification.content,
-      url: notification.url,
-      icon: notification.icon,
-      data: notification.data
-    };
-    const fetchOptions: RequestInit = {
-      method: 'post',
-      mode: 'no-cors',
-      body: JSON.stringify(postData),
-    };
-
-    if (isServerCorsEnabled) {
-      fetchOptions.mode = 'cors';
-      fetchOptions.headers = {
-        'X-OneSignal-Event': event,
-        'Content-Type': 'application/json'
-      };
-    }
-    Log.debug(
-      `Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${webhookTargetUrl}`,
-      Utils.getConsoleStyle('code'), ':', postData
-    );
-    return await fetch(webhookTargetUrl, fetchOptions);
   }
 
   /**
@@ -676,7 +636,7 @@ export class ServiceWorker {
 
     ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDismissed, notification).catch(e => Log.error(e));
     event.waitUntil(
-        ServiceWorker.executeWebhooks('notification.dismissed', notification)
+        ServiceWorker.webhookNotificationEventSender.dismiss(notification)
     );
   }
 
@@ -887,8 +847,10 @@ export class ServiceWorker {
   static async sendConvertedAPIRequests(
     appId: string | undefined | null,
     deviceId: string | undefined,
-    notificationData: any,
-    deviceType: DeliveryPlatformKind): Promise<void> {
+    notificationClickEvent: NotificationClickEventInternal,
+    deviceType: DeliveryPlatformKind,
+  ): Promise<void> {
+    const notificationData = notificationClickEvent.notification;
 
     if (!notificationData.notificationId) {
       console.error("No notification id, skipping networks calls to report open!");
@@ -898,17 +860,18 @@ export class ServiceWorker {
     let onesignalRestPromise: Promise<any> | undefined;
 
     if (appId) {
-      onesignalRestPromise = OneSignalApiBase.put(`notifications/${notificationData.id}`, {
+      onesignalRestPromise = OneSignalApiBase.put(`notifications/${notificationData.notificationId}`, {
         app_id: appId,
         player_id: deviceId,
         opened: true,
         device_type: deviceType
       });
     }
-    else
+    else {
       console.error("No app Id, skipping OneSignal API call for notification open!");
+    }
 
-    await ServiceWorker.executeWebhooks('notification.clicked', notificationData);
+    await ServiceWorker.webhookNotificationEventSender.click(notificationClickEvent);
     if (onesignalRestPromise)
       await onesignalRestPromise;
   }
