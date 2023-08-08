@@ -205,7 +205,7 @@ export default class EventHelper {
       // Remove the notification from the recently clicked list
       // Once this page processes this retroactively provided clicked event, nothing should get the same event
       const appState = await Database.getAppState();
-      appState.notificationClickEventsPendingUrlOpening[selectedEvent.result.url] = null;
+      appState.pendingNotificationClickEvents[selectedEvent.result.url] = null;
       await Database.setAppState(appState);
 
       const timestamp = selectedEvent.timestamp;
@@ -229,11 +229,11 @@ export default class EventHelper {
     */
     const notificationClickHandlerMatch = await Database.get<string>('Options', 'notificationClickHandlerMatch');
     if (notificationClickHandlerMatch === 'origin') {
-      for (const clickedNotificationUrl of Object.keys(appState.notificationClickEventsPendingUrlOpening)) {
+      for (const clickedNotificationUrl of Object.keys(appState.pendingNotificationClickEvents)) {
         // Using notificationClickHandlerMatch: 'origin', as long as the notification's URL's origin matches our current tab's origin,
         // fire the clicked event
         if (new URL(clickedNotificationUrl).origin === location.origin) {
-          const clickedNotification = appState.notificationClickEventsPendingUrlOpening[clickedNotificationUrl];
+          const clickedNotification = appState.pendingNotificationClickEvents[clickedNotificationUrl];
           await fireEventWithNotification(clickedNotification);
         }
       }
@@ -245,12 +245,12 @@ export default class EventHelper {
 
         As a workaround, if there are no notifications for https://site.com/, we'll do a check for https://site.com.
       */
-      var pageClickedNotifications = appState.notificationClickEventsPendingUrlOpening[url];
+      var pageClickedNotifications = appState.pendingNotificationClickEvents[url];
       if (pageClickedNotifications) {
         await fireEventWithNotification(pageClickedNotifications);
       } else if (!pageClickedNotifications && url.endsWith('/')) {
         var urlWithoutTrailingSlash = url.substring(0, url.length - 1);
-        pageClickedNotifications = appState.notificationClickEventsPendingUrlOpening[urlWithoutTrailingSlash];
+        pageClickedNotifications = appState.pendingNotificationClickEvents[urlWithoutTrailingSlash];
         if (pageClickedNotifications) {
           await fireEventWithNotification(pageClickedNotifications);
         }

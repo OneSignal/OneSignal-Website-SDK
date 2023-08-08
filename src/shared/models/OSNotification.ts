@@ -102,5 +102,3 @@ export interface IMutableOSNotificationActionButton extends IOSNotificationActio
   icon?: string;
   launchURL?: string;
 }
-
-

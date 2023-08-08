@@ -2,7 +2,7 @@ import Emitter from "../libraries/Emitter";
 import IndexedDb from "./IndexedDb";
 
 import { AppConfig } from "../models/AppConfig";
-import { AppState, NotificationClickEventsPendingUrlOpening } from "../models/AppState";
+import { AppState, PendingNotificationClickEvents } from "../models/AppState";
 import { IOSNotification } from "../models/OSNotification";
 import { OutcomesNotificationClicked, OutcomesNotificationReceived } from "../models/OutcomesNotificationEvents";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
@@ -264,7 +264,7 @@ export default class Database {
     state.defaultNotificationUrl = await this.get<string>("Options", "defaultUrl");
     state.defaultNotificationTitle = await this.get<string>("Options", "defaultTitle");
     state.lastKnownPushEnabled = await this.get<boolean>("Options", "isPushEnabled");
-    state.notificationClickEventsPendingUrlOpening = await this.getAllNotificationClickEventsPendingUrlOpening();
+    state.pendingNotificationClickEvents = await this.getAllPendingNotificationClickEvents();
     // lastKnown<PushId|PushToken|OptedIn> are used to track changes to the user's subscription
     // state. Displayed in the `current` & `previous` fields of the `subscriptionChange` event.
     state.lastKnownPushId = await this.get<string>("Options", "lastPushId");
@@ -290,10 +290,10 @@ export default class Database {
       await this.put("Options", { key: "lastPushToken", value: appState.lastKnownPushToken });
     if (appState.lastKnownOptedIn != null)
       await this.put("Options", { key: "lastOptedIn", value: appState.lastKnownOptedIn });
-    if (appState.notificationClickEventsPendingUrlOpening) {
-      const clickedNotificationUrls = Object.keys(appState.notificationClickEventsPendingUrlOpening);
+    if (appState.pendingNotificationClickEvents) {
+      const clickedNotificationUrls = Object.keys(appState.pendingNotificationClickEvents);
       for (const url of clickedNotificationUrls) {
-        const notificationDetails = appState.notificationClickEventsPendingUrlOpening[url];
+        const notificationDetails = appState.pendingNotificationClickEvents[url];
         if (notificationDetails) {
           await this.put("NotificationOpened", {
             url: url,
@@ -461,8 +461,8 @@ export default class Database {
     );
   }
 
-  private async getAllNotificationClickEventsPendingUrlOpening(): Promise<NotificationClickEventsPendingUrlOpening> {
-    const clickedNotifications: NotificationClickEventsPendingUrlOpening = {};
+  private async getAllPendingNotificationClickEvents(): Promise<PendingNotificationClickEvents> {
+    const clickedNotifications: PendingNotificationClickEvents = {};
     const eventsFromDb = await this.getAll<NotificationClickForOpenHandlingSchema>("NotificationOpened");
     for(const eventFromDb of eventsFromDb) {
       const event = NotificationClickForOpenHandlingSerializer.fromDatabase(eventFromDb);
