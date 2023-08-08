@@ -103,16 +103,4 @@ export interface IMutableOSNotificationActionButton extends IOSNotificationActio
   launchURL?: string;
 }
 
-// TODO: Move these two interfaces to Outcomes
-export interface NotificationReceived {
-  appId: string;
-  notificationId: string;
-  timestamp: number;
-}
 
-// used to store click info in IndexedDB
-export interface NotificationClicked {
-  appId: string;
-  notificationId: string;
-  timestamp: number;
-}

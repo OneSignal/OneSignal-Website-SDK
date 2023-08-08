@@ -6,14 +6,14 @@ export interface NotificationClickEvent {
 }
 
 // Timestamp is required for internal click handing, but omit it externally
-// to simply the public SDK API 
+// to simply the public SDK API
 export interface NotificationClickEventInternal extends NotificationClickEvent {
   readonly timestamp: number;
 }
 
-export type NotificationClickResult = {
-  actionId?: string;
-  url?: string;
+export interface NotificationClickResult {
+  readonly actionId?: string;
+  readonly url?: string;
 }
 
 export interface NotificationForegroundWillDisplayEventSerializable {

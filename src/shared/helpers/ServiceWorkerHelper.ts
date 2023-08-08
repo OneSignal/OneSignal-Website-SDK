@@ -6,7 +6,7 @@ import { cancelableTimeout, CancelableTimeoutPromise } from '../../sw/helpers/Ca
 import Utils from "../context/Utils";
 import OutcomesHelper from "./OutcomesHelper";
 import { OSServiceWorkerFields } from "../../sw/serviceWorker/types";
-import { NotificationClicked } from "../models/OSNotification";
+import { OutcomesNotificationClicked } from "../models/OutcomesNotificationEvents";
 import { SessionOrigin, initializeNewSession, SessionStatus, Session } from "../models/Session";
 import OneSignalApiSW from "../api/OneSignalApiSW";
 import Path from "../models/Path";
@@ -44,7 +44,7 @@ export default class ServiceWorkerHelper {
       );
 
       // if there is a record about a clicked notification in our database, attribute session to it.
-      const clickedNotification: NotificationClicked | null = await Database.getLastNotificationClickedForOutcomes(appId);
+      const clickedNotification: OutcomesNotificationClicked | null = await Database.getLastNotificationClickedForOutcomes(appId);
       if (clickedNotification) {
         session.notificationId = clickedNotification.notificationId;
       }

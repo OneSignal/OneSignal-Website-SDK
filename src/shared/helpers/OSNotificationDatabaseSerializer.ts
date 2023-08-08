@@ -1,5 +1,6 @@
 import { NotificationClickEventInternal } from "../models/NotificationEvent";
-import { IOSNotification, IOSNotificationActionButton, NotificationClicked, NotificationReceived } from "../models/OSNotification";
+import { IOSNotification, IOSNotificationActionButton } from "../models/OSNotification";
+import { OutcomesNotificationClicked, OutcomesNotificationReceived } from "../models/OutcomesNotificationEvents";
 /**
  * Purpose: This file defines mapping so any changes to the public
  * classes don't break indexDb serialization.
@@ -134,7 +135,7 @@ export class NotificationClickedForOutcomesSerializer {
 
   static fromDatabase(
     record: NotificationClickedForOutcomesSchema,
-  ): NotificationClicked {
+  ): OutcomesNotificationClicked {
     return {
       appId: record.appId,
       notificationId: record.notificationId,
@@ -165,7 +166,7 @@ export class NotificationReceivedForOutcomesSerializer {
 
   static fromDatabase(
     record: NotificationReceivedForOutcomesSchema,
-  ): NotificationReceived {
+  ): OutcomesNotificationReceived {
     return {
       appId: record.appId,
       notificationId: record.notificationId,

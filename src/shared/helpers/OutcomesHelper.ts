@@ -1,5 +1,5 @@
 import { OutcomesConfig, OutcomeAttribution, OutcomeAttributionType, SentUniqueOutcome } from '../models/Outcomes';
-import { NotificationReceived } from '../models/OSNotification';
+import { OutcomesNotificationReceived } from "../models/OutcomesNotificationEvents";
 import Database from "../services/Database";
 import Log from '../libraries/Log';
 import { Utils } from "../../shared/context/Utils";
@@ -223,7 +223,7 @@ export default class OutcomesHelper {
          */
 
         const allReceivedNotificationSorted = Utils.sortArrayOfObjects(
-          allReceivedNotification, (notif: NotificationReceived) => notif.timestamp, true, false
+          allReceivedNotification, (notif: OutcomesNotificationReceived) => notif.timestamp, true, false
         );
         const matchingNotificationIds = allReceivedNotificationSorted
           .filter(notif => notif.timestamp >= maxTimestamp)

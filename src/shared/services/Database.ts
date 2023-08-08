@@ -3,7 +3,8 @@ import IndexedDb from "./IndexedDb";
 
 import { AppConfig } from "../models/AppConfig";
 import { AppState, NotificationClickEventsPendingUrlOpening } from "../models/AppState";
-import { IOSNotification, NotificationClicked, NotificationReceived } from "../models/OSNotification";
+import { IOSNotification } from "../models/OSNotification";
+import { OutcomesNotificationClicked, OutcomesNotificationReceived } from "../models/OutcomesNotificationEvents";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
@@ -430,18 +431,18 @@ export default class Database {
     await this.remove("Sessions", sessionKey);
   }
 
-  async getLastNotificationClickedForOutcomes(appId: string): Promise<NotificationClicked | null> {
-    let allClickedNotifications: NotificationClicked[] = [];
+  async getLastNotificationClickedForOutcomes(appId: string): Promise<OutcomesNotificationClicked | null> {
+    let allClickedNotifications: OutcomesNotificationClicked[] = [];
     try {
       allClickedNotifications = await this.getAllNotificationClickedForOutcomes();
     } catch(e) {
       Log.error("Database.getLastNotificationClickedForOutcomes", e);
     }
-    const predicate = (notification: NotificationClicked) => notification.appId === appId;
+    const predicate = (notification: OutcomesNotificationClicked) => notification.appId === appId;
     return allClickedNotifications.find(predicate) || null;
   }
 
-  async getAllNotificationClickedForOutcomes(): Promise<NotificationClicked[]> {
+  async getAllNotificationClickedForOutcomes(): Promise<OutcomesNotificationClicked[]> {
     const notifications = await this.getAll<NotificationReceivedForOutcomesSchema>("NotificationClicked");
     return notifications.map(notification => NotificationClickedForOutcomesSerializer.fromDatabase(notification));
   }
@@ -478,7 +479,7 @@ export default class Database {
     await this.remove("NotificationClicked");
   }
 
-  async getAllNotificationReceivedForOutcomes(): Promise<NotificationReceived[]> {
+  async getAllNotificationReceivedForOutcomes(): Promise<OutcomesNotificationReceived[]> {
     const notifications = await this.getAll<NotificationReceivedForOutcomesSchema>("NotificationReceived");
     return notifications.map(notification => NotificationReceivedForOutcomesSerializer.fromDatabase(notification));
   }
@@ -608,7 +609,7 @@ export default class Database {
     return await Database.singletonInstance.getExternalUserIdAuthHash();
   }
 
-  static async getLastNotificationClickedForOutcomes(appId: string): Promise<NotificationClicked | null> {
+  static async getLastNotificationClickedForOutcomes(appId: string): Promise<OutcomesNotificationClicked | null> {
     return await Database.singletonInstance.getLastNotificationClickedForOutcomes(appId);
   }
 
@@ -616,7 +617,7 @@ export default class Database {
     return await Database.singletonInstance.removeAllNotificationClickedForOutcomes();
   }
 
-  static async getAllNotificationReceivedForOutcomes(): Promise<NotificationReceived[]> {
+  static async getAllNotificationReceivedForOutcomes(): Promise<OutcomesNotificationReceived[]> {
     return await Database.singletonInstance.getAllNotificationReceivedForOutcomes();
   }
 
@@ -624,7 +625,7 @@ export default class Database {
     return await Database.singletonInstance.putNotificationReceivedForOutcomes(appId, notification);
   }
 
-  static async getAllNotificationClickedForOutcomes(): Promise<NotificationClicked[]> {
+  static async getAllNotificationClickedForOutcomes(): Promise<OutcomesNotificationClicked[]> {
     return await Database.singletonInstance.getAllNotificationClickedForOutcomes();
   }
 
