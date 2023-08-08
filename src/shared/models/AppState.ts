@@ -1,5 +1,10 @@
-export interface ClickedNotifications {
-    [key: string]: { url: string; data: any; timestamp: number; };
+import { NotificationClickEventInternal } from "./NotificationEvent";
+
+// NotificationsClickEvents that are waiting to fire until these conditions are meet:
+// 1. Page is opened to the result.url; that is once a page is open to the intended URL
+// 2. There is a listener added via OneSignal.Notifications.addEventListener('clicked', (event) => ...)
+export interface PendingNotificationClickEvents {
+  [key: string]: NotificationClickEventInternal; // key = result.url
 }
 
 class AppState {
@@ -19,7 +24,7 @@ class AppState {
     // default true
     lastKnownOptedIn: boolean = true;
 
-    clickedNotifications: ClickedNotifications | undefined;
+    pendingNotificationClickEvents: PendingNotificationClickEvents | undefined;
 }
 
 export { AppState };

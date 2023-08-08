@@ -1,93 +1,104 @@
-import Utils from '../context/Utils';
-import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
-import { NotificationActionButton } from '../../page/models/NotificationActionButton';
+// Public SDK API
+export interface IOSNotification {
+  /** 
+   * The OneSignal notification id;
+   *  - Primary id on OneSignal's REST API and dashboard
+   */
+  readonly notificationId: string;
 
-export class OSNotification {
-    public id?: string;
-    public title?: string;
-    public body?: string;
-    public data?: any;
-    public url?: string;
-    public icon?: string;
-    public image?: string;
-    public tag?: string;
-    public requireInteraction?: boolean;
-    public renotify?: true;
-    public actions?: Array<NotificationActionButton>;
+  /** 
+   * Visible title text on the notification
+   */
+  readonly title?: string;
 
-    constructor(title: string, options?: OSNotification) {
-      this.title = title;
-      if (options) {
-        this.id = options.id;
-        this.body = options.body;
-        this.data = options.data;
-        this.url = options.url;
-        this.icon = options.icon;
-        this.image = options.image;
-        this.tag = options.tag;
-        this.requireInteraction = options.requireInteraction;
-        this.renotify = options.renotify;
-        this.actions = options.actions;
-      }
-    }
+  /**
+   * Visible body text on the notification
+   */
+  readonly body: string;
 
-    static createMock({
-      title = "Mock notification title",
-      body = 'Mock notification body',
-      url = "https://onesignal.com?_osp=do_not_open",
-      icon = "https://onesignal.com/images/notification_logo.png",
-      data = {}
-    } = {}) {
-        return new OSNotification(title, {
-            icon: icon,
-            body: body,
-            url: url,
-            data: data
-        });
-    }
+  /**
+   * Visible icon the notification; URL format
+   */
+  readonly icon?: string;
 
-    static createFromPushPayload(payload: any): OSNotification {
-        if (!payload) {
-            throw new InvalidArgumentError('payload', InvalidArgumentReason.Empty);
-        }
-        const notification = new OSNotification(payload.title, {
-            id: payload.custom.i,
-            title: payload.title,
-            body: payload.alert,
-            data: payload.custom.a,
-            url: payload.custom.u,
-            icon: payload.icon,
-            tag: payload.tag
-        });
+  /**
+   * Visible small badgeIcon that displays on some devices; URL format
+   * Example: On Android's status bar
+   */
+  readonly badgeIcon?: string;
 
-        // Add action buttons
-        if (payload.o) {
-            notification.actions = [];
-            for (const rawButton of payload.o) {
-                notification.actions.push({
-                    action: rawButton.i,
-                    title: rawButton.n,
-                    icon: rawButton.p,
-                    url: rawButton.u
-                });
-            }
-        }
-        return Utils.trimUndefined(notification);
-    }
+  /**
+   * Visible image on the notification; URL format
+   */ 
+  readonly image?: string;
+
+  /**
+   * Visible buttons on the notification
+   */
+  readonly actionButtons?: IOSNotificationActionButton[];
+  
+  /**
+   * If this value is the same as existing notification, it will replace it
+   * Can be set when creating the notification with "Web Push Topic" on the dashboard
+   * or web_push_topic from the REST API.
+  */
+  readonly topic?: string;
+
+  /**
+   * Custom object that was sent with the notification;
+   * definable when creating the notification from the OneSignal REST API or dashboard
+   */
+  readonly additionalData?: object;
+
+  /** 
+   * URL to open when clicking or tapping on the notification
+   */
+  readonly launchURL?: string;
+
+  /**
+   * Confirm the push was received by reporting back to OneSignal
+   */
+  readonly confirmDelivery: boolean;
 }
 
-export interface NotificationReceived {
-    notificationId: string;
-    appId: string;
-    url: string;
-    timestamp: number;
+export interface IOSNotificationActionButton {
+  /**
+   * Any unique identifier to represent which button was clicked. This is typically passed back to the service worker
+   * and host page through events to identify which button was clicked.
+   * e.g. 'like-button'
+   */
+  readonly actionId: string;
+  /**
+   * The notification action button's text.
+   */
+  readonly text: string;
+  /**
+   * A valid publicly reachable HTTPS URL to an image.
+   */
+  readonly icon?: string;
+  /**
+   * The URL to open the web browser to when this action button is clicked.
+   */
+  readonly launchURL?: string;
 }
 
-// used to store click info in IndexedDB
-export interface NotificationClicked {
-    notificationId: string;
-    action: string;
-    appId: string;
-    url: string;
-    timestamp: number;
+
+export interface IMutableOSNotification extends IOSNotification {
+  title?: string;
+  body: string;
+  icon?: string;
+  badgeIcon?: string;
+  image?: string;
+  actionButtons?: IMutableOSNotificationActionButton[];
+  topic?: string;
+  additionalData?: object;
+  launchURL?: string;
+  confirmDelivery: boolean;
+}
+
+export interface IMutableOSNotificationActionButton extends IOSNotificationActionButton {
+  actionId: string;
+  text: string;
+  icon?: string;
+  launchURL?: string;
 }

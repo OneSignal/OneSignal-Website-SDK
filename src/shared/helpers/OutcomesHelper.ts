@@ -1,5 +1,5 @@
 import { OutcomesConfig, OutcomeAttribution, OutcomeAttributionType, SentUniqueOutcome } from '../models/Outcomes';
-import { NotificationClicked, NotificationReceived } from '../models/OSNotification';
+import { OutcomesNotificationReceived } from "../models/OutcomesNotificationEvents";
 import Database from "../services/Database";
 import Log from '../libraries/Log';
 import { Utils } from "../../shared/context/Utils";
@@ -197,7 +197,7 @@ export default class OutcomesHelper {
 
     /* direct notifications */
     if (config.direct && config.direct.enabled) {
-      const clickedNotifications = await Database.getAll<NotificationClicked>("NotificationClicked");
+      const clickedNotifications = await Database.getAllNotificationClickedForOutcomes();
       if (clickedNotifications.length > 0) {
         return {
           type: OutcomeAttributionType.Direct,
@@ -212,7 +212,7 @@ export default class OutcomesHelper {
       const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
       const maxTimestamp = beginningOfTimeframe.getTime();
 
-      const allReceivedNotification = await Database.getAll<NotificationReceived>("NotificationReceived");
+      const allReceivedNotification = await Database.getAllNotificationReceivedForOutcomes();
       Log.debug(`\tFound total of ${allReceivedNotification.length} received notifications`);
 
       if (allReceivedNotification.length > 0) {
@@ -223,7 +223,7 @@ export default class OutcomesHelper {
          */
 
         const allReceivedNotificationSorted = Utils.sortArrayOfObjects(
-          allReceivedNotification, (notif: NotificationReceived) => notif.timestamp, true, false
+          allReceivedNotification, (notif: OutcomesNotificationReceived) => notif.timestamp, true, false
         );
         const matchingNotificationIds = allReceivedNotificationSorted
           .filter(notif => notif.timestamp >= maxTimestamp)
