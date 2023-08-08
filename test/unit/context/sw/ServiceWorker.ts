@@ -37,7 +37,7 @@ test.afterEach(function () {
 
 
 /***************************************************
- * onPushReceived() 
+ * onPushReceived()
 ****************************************************/
 
 function mockOneSignalPushEvent(data: object): MockPushEvent {
@@ -124,7 +124,11 @@ test('displayNotification - persistNotification - true', async t => {
   await Database.put('Options', { key: 'persistNotification', value: true });
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await OSServiceWorker.displayNotification({});
+  await OSServiceWorker.displayNotification({
+    body: '',
+    confirmDelivery: false,
+    notificationId: ''
+  });
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
 });
 
@@ -132,7 +136,11 @@ test('displayNotification - persistNotification - undefined', async t => {
   setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await OSServiceWorker.displayNotification({});
+  await OSServiceWorker.displayNotification({
+    body: '',
+    confirmDelivery: false,
+    notificationId: ''
+  });
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
 });
 
@@ -143,7 +151,11 @@ test('displayNotification - persistNotification - force', async t => {
   await Database.put('Options', { key: 'persistNotification', value: "force" });
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await OSServiceWorker.displayNotification({});
+  await OSServiceWorker.displayNotification({
+    body: '',
+    confirmDelivery: false,
+    notificationId: ''
+  });
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
 });
 
@@ -153,7 +165,11 @@ test('displayNotification - persistNotification - false', async t => {
   await Database.put('Options', { key: 'persistNotification', value: false });
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await OSServiceWorker.displayNotification({});
+  await OSServiceWorker.displayNotification({
+    body: '',
+    confirmDelivery: false,
+    notificationId: ''
+  });
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
 });
 // End - displayNotification - persistNotification
@@ -272,23 +288,15 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   await Database.setSubscription(subscription);
  }
 
- test('sendConfirmedDelivery - notification is undefined - feature flag is y', async t => {
-   sandbox.stub(awaitableTimeout, 'awaitableTimeout');
-   const notificationId = undefined;
-   const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
-   await fakeSetSubscription();
-
-   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "y" });
-   t.false(notificationPutCall.nockScope.isDone());
- });
-
  test('sendConfirmedDelivery - notification is valid - feature flag is y', async t => {
   sandbox.stub(awaitableTimeout, 'awaitableTimeout');
   const notificationId = Random.getRandomUuid();
   const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "y" });
+  await OSServiceWorker.sendConfirmedDelivery({
+    notificationId: notificationId, confirmDelivery: true, body: "",
+  });
   t.true(notificationPutCall.nockScope.isDone());
  });
 
@@ -298,7 +306,9 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "n" });
+  await OSServiceWorker.sendConfirmedDelivery({
+    notificationId: notificationId, confirmDelivery: false, body: "",
+  });
   t.false(notificationPutCall.nockScope.isDone());
  });
 
@@ -308,17 +318,9 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
-  t.false(notificationPutCall.nockScope.isDone());
- });
-
- test('sendConfirmedDelivery - notification is valid - feature flag is null', async t => {
-  sandbox.stub(awaitableTimeout, 'awaitableTimeout');
-  const notificationId = Random.getRandomUuid();
-  const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
-  await fakeSetSubscription();
-
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: null });
+  await OSServiceWorker.sendConfirmedDelivery({
+    notificationId: notificationId, confirmDelivery: false, body: "",
+  });
   t.false(notificationPutCall.nockScope.isDone());
  });
 
@@ -329,7 +331,9 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   const notificationId = Random.getRandomUuid();
   const notificationNock = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: 'y' });
+  await OSServiceWorker.sendConfirmedDelivery({
+    notificationId: notificationId, confirmDelivery: true, body: "",
+  });
   const requestBody = (await notificationNock.result).request.body;
   t.is(requestBody.device_type, 5); // 5 = chrome like
  });

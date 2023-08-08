@@ -1,9 +1,13 @@
-import { NotificationClickResult, NotificationForegroundWillDisplayEvent } from "./NotificationEvent";
+import {
+  NotificationClickEvent,
+  NotificationForegroundWillDisplayEvent,
+  NotificationDismissEvent,
+} from "../../shared/models/NotificationEvent";
 
 type NotificationEventTypeMap = {
-  'click': NotificationClickResult;
+  'click': NotificationClickEvent;
   'foregroundWillDisplay': NotificationForegroundWillDisplayEvent;
-  'dismiss': OSNotificationDataPayload;
+  'dismiss': NotificationDismissEvent;
   'permissionChange': boolean;
   'permissionPromptDisplay': void;
 };

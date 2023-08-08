@@ -259,12 +259,18 @@ export class ServiceWorkerManager {
     const workerMessenger = this.context.workerMessenger;
     workerMessenger.off();
 
-    workerMessenger.on(WorkerMessengerCommand.NotificationWillDisplay, async data => {
+    workerMessenger.on(WorkerMessengerCommand.NotificationWillDisplay, async (event: NotificationForegroundWillDisplayEventSerializable) => {
       Log.debug(location.origin, 'Received notification display event from service worker.');
-      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, data);
+      const publicEvent: NotificationForegroundWillDisplayEvent = {
+        notification: event.notification,
+        preventDefault: function(): void {
+          throw new Error('Browser does not support preventing display.');
+        }
+      };
+      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, publicEvent);
     });
 
-    workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async data => {
+    workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async (event: NotificationClickEventInternal) => {
       let clickedListenerCallbackCount: number;
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
         clickedListenerCallbackCount = await new Promise<number>(resolve => {
@@ -311,10 +317,9 @@ export class ServiceWorkerManager {
           // Least likely to modify, since modifying this property changes the page's URL
           url = location.href;
         }
-        await Database.put('NotificationOpened', { url, data, timestamp: Date.now() });
+      else {
+        await EventHelper.triggerNotificationClick(event);
       }
-      else
-        await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {
