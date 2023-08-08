@@ -753,7 +753,7 @@ export class ServiceWorker {
         if (existingSession && existingSession.status === SessionStatus.Active) {
           return;
         }
-        await Database.put("NotificationClicked", notificationClicked);
+        await Database.putNotificationClickedForOutcomes(appId, notificationClickEvent);
 
         // upgrade existing session to be directly attributed to the notif
         // if it results in re-focusing the site

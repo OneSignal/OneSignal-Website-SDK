@@ -18,6 +18,8 @@ import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/Utils";
 import { PageVisibilityRequest, PageVisibilityResponse } from '../models/Session';
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
+import { NotificationClickEventInternal, NotificationForegroundWillDisplayEvent, NotificationForegroundWillDisplayEventSerializable } from '../models/NotificationEvent';
+import EventHelper from '../helpers/EventHelper';
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -312,11 +314,13 @@ export class ServiceWorkerManager {
           'notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.'
         );
         /* For empty notifications without a URL, use the current document's URL */
-        let url = data.url;
-        if (!data.url) {
+        let url = event.result.url;
+        if (!url) {
           // Least likely to modify, since modifying this property changes the page's URL
           url = location.href;
         }
+        await Database.putNotificationClickedEventPendingUrlOpening(event);
+      }
       else {
         await EventHelper.triggerNotificationClick(event);
       }

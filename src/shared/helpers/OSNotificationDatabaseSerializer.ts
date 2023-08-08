@@ -115,3 +115,62 @@ export class NotificationClickForOpenHandlingSerializer {
   }
 }
 
+export interface NotificationClickedForOutcomesSchema {
+  readonly appId: string;
+  readonly notificationId: string; // indexDb's keyPath
+  readonly timestamp: number;
+}
+
+export class NotificationClickedForOutcomesSerializer {
+  static toDatabase(
+    appId: string,
+    event: NotificationClickEventInternal,
+  ): NotificationClickedForOutcomesSchema {
+    return {
+      appId: appId,
+      notificationId: event.notification.notificationId,
+      timestamp: event.timestamp,
+    };
+  }
+
+  static fromDatabase(
+    record: NotificationClickedForOutcomesSchema,
+  ): OutcomesNotificationClicked {
+    return {
+      appId: record.appId,
+      notificationId: record.notificationId,
+      timestamp: record.timestamp,
+    };
+  }
+}
+
+
+export interface NotificationReceivedForOutcomesSchema {
+  readonly appId: string;
+  readonly notificationId: string; // indexDb's keyPath
+  readonly timestamp: number;
+}
+
+export class NotificationReceivedForOutcomesSerializer {
+  static toDatabase(
+    appId: string,
+    notification: IOSNotification,
+    timeStamp: number,
+  ): NotificationReceivedForOutcomesSchema {
+    return {
+      appId: appId,
+      notificationId: notification.notificationId,
+      timestamp: timeStamp,
+    };
+  }
+
+  static fromDatabase(
+    record: NotificationReceivedForOutcomesSchema,
+  ): OutcomesNotificationReceived {
+    return {
+      appId: record.appId,
+      notificationId: record.notificationId,
+      timestamp: record.timestamp,
+    };
+  }
+}
