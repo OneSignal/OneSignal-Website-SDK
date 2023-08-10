@@ -34,6 +34,7 @@ import { OSMinifiedNotificationPayload, OSMinifiedNotificationPayloadHelper } fr
 import { bowserCastle } from "../../shared/utils/bowserCastle";
 import { OSWebhookNotificationEventSender } from "../webhooks/notifications/OSWebhookNotificationEventSender";
 import { OSNotificationButtonsConverter } from "../models/OSNotificationButtonsConverter";
+import { ModelCacheDirectAccess } from "../helpers/ModelCacheDirectAccess";
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -78,6 +79,15 @@ export class ServiceWorker {
 
   static get webhookNotificationEventSender() {
     return new OSWebhookNotificationEventSender();
+  }
+
+  static async getPushSubscriptionId(): Promise<string | undefined> {
+    const pushSubscription = await self.registration.pushManager.getSubscription();
+    const pushToken = pushSubscription?.endpoint;
+    if (!pushToken) {
+      return undefined;
+    }
+    return ModelCacheDirectAccess.getPushSubscriptionIdByToken(pushToken);
   }
 
   /**
@@ -302,7 +312,7 @@ export class ServiceWorker {
       return;
 
     const appId = await ServiceWorker.getAppId();
-    const { deviceId } = await Database.getSubscription();
+    const pushSubscriptionId = await this.getPushSubscriptionId();
 
     // app and notification ids are required, decided to exclude deviceId from required params
     // In rare case we don't have it we can still report as confirmed to backend to increment count
@@ -314,7 +324,7 @@ export class ServiceWorker {
     // JSON.stringify() does not include undefined values
     // Our response will not contain those fields here which have undefined values
     const postData = {
-      player_id : deviceId,
+      player_id : pushSubscriptionId,
       app_id : appId,
       device_type: DeviceRecord.prototype.getDeliveryPlatform()
     };
@@ -728,8 +738,8 @@ export class ServiceWorker {
 
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
-    const { deviceId } = await Database.getSubscription();
-    const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, notificationClickEvent, deviceType);
+    const pushSubscriptionId = await this.getPushSubscriptionId();
+    const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, pushSubscriptionId, notificationClickEvent, deviceType);
 
     /*
      Check if we can focus on an existing tab instead of opening a new url.
@@ -846,7 +856,7 @@ export class ServiceWorker {
    */
   static async sendConvertedAPIRequests(
     appId: string | undefined | null,
-    deviceId: string | undefined,
+    pushSubscriptionId: string | undefined,
     notificationClickEvent: NotificationClickEventInternal,
     deviceType: DeliveryPlatformKind,
   ): Promise<void> {
@@ -862,7 +872,7 @@ export class ServiceWorker {
     if (appId) {
       onesignalRestPromise = OneSignalApiBase.put(`notifications/${notificationData.notificationId}`, {
         app_id: appId,
-        player_id: deviceId,
+        player_id: pushSubscriptionId,
         opened: true,
         device_type: deviceType
       });
