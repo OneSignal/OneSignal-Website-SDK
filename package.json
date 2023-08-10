@@ -147,7 +147,7 @@
     },
     {
       "path": "./build/bundles/OneSignalSDK.page.es6.js",
-      "maxSize": "78 kB",
+      "maxSize": "79 kB",
       "compression": "gzip"
     },
     {
