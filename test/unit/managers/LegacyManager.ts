@@ -1,9 +1,9 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
 import sinon from "sinon";
-import SdkEnvironment from '../../../src/managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';
-import OneSignal from "../../../src/OneSignal";
+import SdkEnvironment from '../../../src/shared/managers/SdkEnvironment';
+import { WindowEnvironmentKind } from '../../../src/shared/models/WindowEnvironmentKind';
+import OneSignal from "../../../src/onesignal/OneSignal";
 
 
 test('OneSignal.environment.getEnv()', async t => {

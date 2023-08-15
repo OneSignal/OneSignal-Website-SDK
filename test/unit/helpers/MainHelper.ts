@@ -1,12 +1,10 @@
 import test, { ExecutionContext } from "ava";
 import sinon, { SinonSandbox } from 'sinon';
-
-import MainHelper from "../../../src/helpers/MainHelper";
-import OneSignal from "../../../src/OneSignal";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
-import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
+import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
+import { OneSignalUtils } from '../../../src/shared/utils/OneSignalUtils';
+import MainHelper from "../../../src/shared/helpers/MainHelper";
 
 let sinonSandbox: SinonSandbox;
 
@@ -28,7 +26,7 @@ test("getCurrentNotificationType for default permission", async t => {
   sinonSandbox.stub(OneSignal.context.permissionManager, "getNotificationPermission")
     .resolves(NotificationPermission.Default);
 
-  t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.Default);
+  t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.NoNativePermission);
 });
 
 test("getCurrentNotificationType for denied permission in HTTP context", async t => {
@@ -36,7 +34,7 @@ test("getCurrentNotificationType for denied permission in HTTP context", async t
     .resolves(NotificationPermission.Denied);
   sinonSandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").returns(true);
 
-  t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.Default);
+  t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.NoNativePermission);
 });
 
 test("getCurrentNotificationType for denied permission in HTTPS context", async t => {
@@ -62,7 +60,7 @@ test("getCurrentNotificationType for granted permission: opted out", async t => 
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(false);
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
 
-  t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.MutedByApi);
+  t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.UserOptedOut);
 });
 
 test("getCurrentNotificationType for granted permission: new user", async t => {
@@ -70,5 +68,5 @@ test("getCurrentNotificationType for granted permission: new user", async t => {
     .resolves(NotificationPermission.Granted);
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
 
-  t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.Default);
+  t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.NoNativePermission);
 });

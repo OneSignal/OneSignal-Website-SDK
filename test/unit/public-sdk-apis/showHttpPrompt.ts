@@ -1,10 +1,10 @@
 import test, { ExecutionContext } from "ava";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/onesignal/OneSignal";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import Context from "../../../src/models/Context";
+import Context from "../../../src/page/models/Context";
 import sinon, { SinonSandbox } from 'sinon';
-import { DismissHelper } from "../../../src/helpers/DismissHelper";
-import { DelayedPromptType } from "../../../src/models/Prompts";
+import { DismissHelper } from "../../../src/shared/helpers/DismissHelper";
+import { DelayedPromptType } from "../../../src/shared/models/Prompts";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 

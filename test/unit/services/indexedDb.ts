@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import IndexedDb from "../../../src/services/IndexedDb";
+import IndexedDb from "../../../src/shared/services/IndexedDb";
 import Random from "../../support/tester/Random";
 
 test(`should get and set value`, async t => {

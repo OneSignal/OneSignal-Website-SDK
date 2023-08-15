@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import { InvalidArgumentError, InvalidArgumentReason } from "../../../src/errors/InvalidArgumentError";
+import { InvalidArgumentError, InvalidArgumentReason } from "../../../src/shared/errors/InvalidArgumentError";
 import Macros from "../../support/tester/Macros";
 
 

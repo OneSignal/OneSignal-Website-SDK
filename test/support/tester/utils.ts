@@ -1,15 +1,15 @@
 import { SinonSandbox } from 'sinon';
 import nock from 'nock';
-import ProxyFrameHost from "../../../src/modules/frames/ProxyFrameHost";
-import AltOriginManager from "../../../src/managers/AltOriginManager";
-import OneSignalApi from "../../../src/OneSignalApi";
-import OneSignalApiBase from "../../../src/OneSignalApiBase";
+import ProxyFrameHost from "../../../src/page/modules/frames/ProxyFrameHost";
+import AltOriginManager from "../../../src/page/managers/AltOriginManager";
+import OneSignalApi from "../../../src/shared/api/OneSignalApi";
 import { TestEnvironment, TestEnvironmentConfig, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { ServerAppConfig } from '../../../src/models/AppConfig';
+import { ServerAppConfig } from '../../../src/shared/models/AppConfig';
 import Random from "../../support/tester/Random";
-import { Subscription } from "../../../src/models/Subscription";
+import { Subscription } from "../../../src/shared/models/Subscription";
 import { ExecutionContext } from 'ava';
-import Database from '../../../src/services/Database';
+import Database from '../../../src/shared/services/Database';
+import OneSignalApiBase from '../../../src/shared/api/OneSignalApiBase';
 
 export function isNullOrUndefined<T>(value: T | null | undefined): boolean {
   return typeof value === 'undefined' || value === null;

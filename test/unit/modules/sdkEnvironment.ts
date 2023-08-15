@@ -2,10 +2,10 @@ import "../../support/polyfills/polyfills";
 import test from "ava";
 import sinon from "sinon";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import SdkEnvironment from '../../../src/managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';
-import { EnvironmentKind } from '../../../src/models/EnvironmentKind';
-import { IntegrationKind } from '../../../src/models/IntegrationKind';
+import SdkEnvironment from '../../../src/shared/managers/SdkEnvironment';
+import { WindowEnvironmentKind } from '../../../src/shared/models/WindowEnvironmentKind';
+import { EnvironmentKind } from '../../../src/shared/models/EnvironmentKind';
+import { IntegrationKind } from '../../../src/shared/models/IntegrationKind';
 
 test('should get service worker window environment', async t => {
   await TestEnvironment.stubServiceWorkerEnvironment();

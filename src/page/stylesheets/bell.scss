@@ -1,0 +1,664 @@
+@import 'reset';
+@import 'helpers';
+
+$red: #e54b4d;
+$orange: #e7924c;
+$gray: lighten(#bcbec0, 15%);
+
+$sm-size: 36px;
+$md-size: 48px;
+$lg-size: 64px;
+$dock-offset: 20px;
+
+$redwhite-background: white;
+$redwhite-background-active: darken(white, 5%);
+$inverse-primary: $red;
+$inverse-secondary: white;
+$inverse-tertiary: black;
+$whitered-background: $red;
+$whitered-background-active: darken($red, 10%);
+$default-primary: white;
+$default-secondary: $red;
+$default-tertiary: black;
+
+$message-font-size-base: 14px;
+$badge-font-size-base: 12px;
+
+$bell-border-width: 3px;
+$bell-foreground: white;
+$bell-shadow: drop-shadow(0 2px 4px rgba(34,36,38,0.35));
+$badge-shadow: drop-shadow(0 2px 4px rgba(34,36,38,0));
+$transition-duration: 175ms;
+$hover-size-increase: 1.15;
+$launcher-width: 330px;
+$max-launcher-width: 70vmin;
+$offset-x: 15px;
+$offset-y: 15px;
+$inactive-opacity: 0.5;
+
+$dialog-background: white;
+$dialog-border-width: 2px;
+$dialog-border-color: rgba(0, 0, 0, 0.1);
+//$dialog-border-color: rgba($red, 0.1);
+$dialog-shadow: drop-shadow(0px 2px 2px rgba(34,36,38,.15));
+
+$font-sans-serif: Helvetica Neue, Helvetica, Arial, sans-serif;
+
+$positions: 'bottom-left' 'bottom-right';
+
+$sizes: (
+        'sm': 32px,
+        'md': 48px,
+        'lg': 64px,
+);
+
+
+#onesignal-bell-container.onesignal-reset {
+    z-index: 2147483000;
+    position: fixed;
+
+    &.onesignal-bell-container-bottom-left {
+        bottom: 0;
+        left: 0;
+    }
+
+    &.onesignal-bell-container-bottom-right {
+        bottom: 0;
+        right: 0;
+    }
+
+    .onesignal-bell-launcher {
+        @include unselectable();
+        -webkit-font-smoothing: initial;
+        position: absolute;
+        z-index: 2147483000;
+        font-family: $font-sans-serif;
+        transform: scale(0.01) translateZ(0);
+        opacity: 0;
+        transition: transform $transition-duration ease-in-out,
+        opacity $transition-duration ease-in-out;
+
+        @each $position in $positions {
+
+            $leftOrRight: 'right';
+            @if $position == 'bottom-left' {
+                $leftOrRight: 'left';
+            } @else if $position == 'bottom-right' {
+                $leftOrRight: 'right';
+            }
+
+            &.onesignal-bell-launcher-#{$position} {
+                bottom: $dock-offset;
+                #{$leftOrRight}: $dock-offset;
+
+                @each $size-name, $size-amount in $sizes {
+                    $arrow-size: ceil($size-amount * 0.20625);
+                    @if $position == 'bottom-left' {
+                        $transform-origin-x-offset: #{ceil($size-amount * 0.5)};
+                    } @else if $position == 'bottom-right' {
+                        $transform-origin-x-offset: #{$launcher-width - (ceil($size-amount * 0.5))};
+                    }
+
+                    &.onesignal-bell-launcher-#{$size-name} {
+                        //transform-origin: $transform-origin-x-offset center;
+                        transform-origin: center center;
+                        width: $size-amount;
+
+                        .onesignal-bell-launcher-message {
+                            #{$leftOrRight}: #{($size-amount + $arrow-size) + 3px};
+                        }
+
+                        .onesignal-bell-launcher-dialog {
+                            bottom: #{$size-amount + $arrow-size};
+                            #{$leftOrRight}: 0;
+                            transform-origin: #{$leftOrRight} bottom;
+
+                            &:before {
+                                #{$leftOrRight}: #{ceil(($size-amount * 0.5)) - 5 - ($dialog-border-width + (ceil($arrow-size * 0.5)))};
+                            }
+
+                            &:after {
+                                #{$leftOrRight}: #{ceil(($size-amount * 0.5)) - 5 - ceil(($arrow-size * 0.5))};
+                            }
+                        }
+                    }
+                }
+
+                .onesignal-bell-launcher-badge {
+                    #{$leftOrRight}: 4px;
+                }
+
+                .onesignal-bell-launcher-message {
+                    &:after {
+                        #{opposite-direction($leftOrRight)}: 100%;
+                        border-#{opposite-direction($leftOrRight)}-color: black;
+                    }
+
+                    transform-origin: #{$leftOrRight} center;
+                }
+
+                .onesignal-bell-launcher-button {
+                    #{$leftOrRight}: 0px;
+                }
+
+            }
+        }
+
+        .onesignal-bell-launcher-button {
+            position: absolute;
+            bottom: 0;
+            border-radius: 50%;
+            transition: transform $transition-duration ease-in-out,
+            border $transition-duration ease-in-out,
+            width $transition-duration ease-in-out,
+            height $transition-duration ease-in-out;
+            cursor: pointer;
+            z-index: 2147483000;
+
+            svg {
+                width: 100%;
+                height: 100%;
+                overflow: visible;
+
+                // TODO: Add this back in once Safari 9.1 beta fixes its bug with drop-shadow making the SVG disappear
+                //-webkit-filter: $bell-shadow;
+                //filter: $bell-shadow;
+            }
+
+            &.onesignal-bell-launcher-button-hover {
+                cursor: pointer;
+            }
+        }
+
+        .onesignal-bell-launcher-badge {
+            position: absolute;
+            bottom: 0;
+            border-radius: 50%;
+            text-align: center;
+            top: 0;
+            cursor: pointer;
+            // TODO: Add this back in once Safari 9.1 beta fixes its bug with drop-shadow making the SVG disappear
+            -webkit-filter: $badge-shadow;
+            filter: $badge-shadow;
+            transition: transform $transition-duration ease-in-out,
+            border $transition-duration ease-in-out,
+            opacity $transition-duration * 1.2 ease-in-out,
+            width $transition-duration * 1.2 ease-in-out,
+            height $transition-duration * 1.2 ease-in-out,
+            position $transition-duration * 1.2 ease-in-out,
+            right $transition-duration * 1.2 ease-in-out,
+            top $transition-duration * 1.2 ease-in-out,
+            bottom $transition-duration * 1.2 ease-in-out,
+            left $transition-duration * 1.2 ease-in-out;
+            z-index: 2147483400;
+            opacity: 0;
+            transform: scale(0.01);
+            pointer-events: none;
+
+            &.onesignal-bell-launcher-badge-hover {
+                cursor: pointer;
+            }
+
+            &.onesignal-bell-launcher-badge-opened {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .onesignal-bell-launcher-message {
+            position: absolute;
+            color: white;
+            background: black;
+            cursor: pointer;
+            border-radius: 5px;
+            transform: translateY(-50%) scaleX(0) translateZ(0);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform $transition-duration ease-in-out,
+            opacity $transition-duration ease-in-out;
+            top: 50%;
+            z-index: 2147481000;
+
+            &:after {
+                top: 50%;
+                border: solid transparent;
+                content: " ";
+                height: 0;
+                width: 0;
+                position: absolute;
+                pointer-events: none;
+                border-color: transparent;
+            }
+
+            .onesignal-bell-launcher-message-body {
+                z-index: 2147482000;
+                max-width: 100%;
+                white-space: nowrap;
+                // overflow: hidden;  # Re-enable this if things get janky
+                text-overflow: ellipsis;
+            }
+
+            &.onesignal-bell-launcher-message-opened {
+                pointer-events: auto;
+                opacity: 1;
+                transform: translateY(-50%) scaleX(1) translateZ(0);
+            }
+        }
+
+        .onesignal-bell-launcher-dialog {
+            cursor: pointer;
+            position: absolute;
+            background-color: $dialog-background;
+            border-radius: 5px;
+            border: 1px solid $dialog-border-color;
+            // TODO: Add this back in once Safari 9.1 beta fixes its bug with drop-shadow making the SVG disappear
+            //-webkit-filter: $dialog-shadow;
+            //filter: $dialog-shadow;
+            opacity: 0;
+            width: 200px;
+
+            transform: scale(0, 0) translateZ(0);
+            transition: transform $transition-duration ease-in-out,
+            opacity $transition-duration ease-in-out;
+            z-index: 2147481000;
+
+            ol {
+                counter-reset: foo;
+                display: table;
+                border-spacing: 0.3em 0.75em;
+            }
+
+            ol > li {
+                counter-increment: foo;
+                display: table-row;
+                margin-bottom: 0.75em;
+            }
+
+            ol > li::before {
+                content: counter(foo) ".";
+                display: table-cell; /* aha! */
+                text-align: right;
+            }
+
+            &:after, &:before {
+                top: 100%;
+                border: solid transparent;
+                content: " ";
+                height: 0;
+                width: 0;
+                position: absolute;
+            }
+
+            .onesignal-bell-launcher-dialog-body {
+                z-index: 2147482000;
+                max-width: 100%;
+                white-space: nowrap;
+                // overflow: hidden;  # Re-enable this if things get janky
+                text-overflow: ellipsis;
+                font-family: $font-sans-serif;
+            }
+
+            &.onesignal-bell-launcher-dialog-opened {
+                transform: scale(1, 1) translateZ(0);
+                opacity: 1;
+            }
+
+            a {
+                box-sizing: border-box;
+                text-decoration: none;
+                color: initial;
+
+                &:visited, &:hover, &:hover:active, &:active, &:focus {
+                    text-decoration: none;
+                    color: initial;
+                }
+            }
+
+            button {
+                box-sizing: border-box;
+                border: 1px solid transparent;
+                padding: 0.625em 1em;
+                box-shadow: none;
+                border-radius: 4px;
+                font-weight: 400;
+                font-family: $font-sans-serif;
+                font-size: #{$message-font-size-base - 2px};
+                letter-spacing: 0.65px;
+                cursor: pointer;
+
+                &.action {
+                    color: white;
+                    background: $red;
+                    width: 100%;
+
+                    &:hover {
+                        background: darken($red, 10%);
+                    }
+
+                    &:active {
+                        background: darken($red, 20%);
+                    }
+                }
+            }
+        }
+
+        @each $size-name, $size-amount in $sizes {
+            $badge-font-size: $badge-font-size-base;
+            @if $size-name == 'sm' {
+                $badge-font-size: $badge-font-size-base - 4;
+                $message-font-size: $message-font-size-base;
+            } @else if $size-name == 'md' {
+                $badge-font-size: $badge-font-size-base;
+                $message-font-size: $message-font-size-base + 1;
+            } @else if $size-name == 'lg' {
+                $badge-font-size: $badge-font-size-base;
+                $message-font-size: $message-font-size-base + 2;
+            }
+
+            &.onesignal-bell-launcher-#{$size-name} {
+                height: $size-amount;
+
+                .onesignal-bell-launcher-button {
+                    width: $size-amount;
+                    height: $size-amount;
+                }
+
+                .onesignal-bell-launcher-badge {
+                    font-size: #{$badge-font-size};
+                    width: $size-amount * 0.375;
+                    height: $size-amount * 0.375;
+                    line-height: $size-amount * 0.375;
+                }
+
+                .onesignal-bell-launcher-message {
+                    $arrow-size: $size-amount * 0.20625;
+                    padding: $size-amount * 0.3;
+
+                    &:after {
+                        border-width: $arrow-size;
+                        margin-top: -$arrow-size;
+                    }
+
+                    .onesignal-bell-launcher-message-body {
+                        font-size: $message-font-size-base;
+                    }
+                }
+
+                .onesignal-bell-launcher-dialog {
+                    $arrow-size: $size-amount * 0.20625;
+                    //padding: $size-amount * 0.1 $size-amount * 0.3;
+                    padding: 0.3em 0.8em 0.6em 0.8em;
+                    color: rgb(51, 51, 51);
+
+                    &:after {
+                        border-top-color: $dialog-background;
+                        border-width: $arrow-size;
+                    }
+
+                    &:before {
+                        border-top-color: rgba(180, 180, 180, 0.1);
+                        border-width: #{$arrow-size + $dialog-border-width};
+                    }
+
+                    .onesignal-bell-launcher-dialog-body {
+                        font-size: $message-font-size-base;
+                        font-family: $font-sans-serif;
+
+                        h1 {
+                            font-size: 15px;
+                            line-height: 1.2em;
+                            font-weight: 500;
+                            font-family: $font-sans-serif;
+                            letter-spacing: 0.2px;
+                            text-align: center;
+                            color: darken($red, 45%);
+                        }
+
+                        p {
+                            font-size: $message-font-size-base;
+                            font-weight: 400;
+                            font-family: $font-sans-serif;
+                        }
+
+                        .divider {
+                            border-bottom: 1px solid $dialog-border-color;
+                            margin: 0.25em -0.93em;
+                        }
+
+                        .kickback {
+                            text-align: center;
+                            font-family: $font-sans-serif;
+                            font-weight: 300;
+                            font-size: $message-font-size-base * 0.7;
+                            letter-spacing: 0.5px;
+                        }
+
+                        .instructions {
+                            max-width: 95vw;
+                            max-height: 70vh;
+                            font-family: $font-sans-serif;
+                            font-weight: 400;
+                            font-size: $message-font-size-base;
+
+                            img {
+                                width: 100%;
+                            }
+                        }
+
+                        .push-notification {
+                            display: -webkit-flex;
+                            display: flex;
+                            max-width: 330px;
+                            border: 1px solid $dialog-border-color;
+                            border-radius: 3px;
+                            background: rgba(250, 250, 250, 0.5);
+                            overflow: auto;
+                            margin: 0.5em 0;
+
+                            .push-notification-icon {
+                                $dimensions: 50px;
+                                width: $dimensions;
+                                height: $dimensions;
+                                margin: 6px;
+                                margin-right: 3px;
+                                border-radius: 2px;
+
+                                &.push-notification-icon-default {
+                                    background: $gray;
+                                }
+
+                                img {
+                                    width: $dimensions;
+                                    height: $dimensions;
+                                    border-radius: 1px;
+                                }
+                            }
+
+                            .push-notification-text-container {
+                                margin: 6px;
+                                margin-left: 3px;
+                                -webkit-flex: 1;
+                                flex: 1;
+
+                                .push-notification-text {
+                                    height: 5px;
+                                    width: 100%;
+                                    background: $gray;
+                                    margin: 5px 0;
+                                    border-radius: 1px;
+
+                                    &.push-notification-text-short {
+                                        width: 75%;
+                                    }
+
+                                    &.push-notification-text-medium {
+                                        width: 87%;
+                                    }
+
+                                    &:first-of-type {
+                                        margin-top: 2px;
+                                    }
+
+                                    &:last-of-type {
+                                        margin-bottom: 0;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        &.onesignal-bell-launcher-theme-default {
+            .onesignal-bell-launcher-button {
+                svg {
+                    .background {
+                        fill: $whitered-background;
+                    }
+
+                    .foreground {
+                        fill: $default-primary;
+                    }
+
+                    .stroke {
+                        fill: none;
+                        stroke: $default-primary;
+                        stroke-width: $bell-border-width;
+                        stroke-miterlimit: 10;
+                    }
+                }
+
+                &.onesignal-bell-launcher-button-active, &.onesignal-bell-launcher-badge-active {
+                    svg {
+                        .background {
+                            fill: $whitered-background-active !important;
+                        }
+                    }
+                }
+
+                .pulse-ring {
+                    border: 7px solid rgba(255, 255, 255, 0.4);
+                }
+            }
+
+            .onesignal-bell-launcher-badge {
+                border: 1px solid $default-primary;
+                background: $default-tertiary;
+                color: $default-primary;
+            }
+        }
+
+        &.onesignal-bell-launcher-theme-inverse {
+            .onesignal-bell-launcher-button {
+                svg {
+                    .background {
+                        fill: $redwhite-background
+                    }
+
+                    .foreground {
+                        fill: $inverse-primary;
+                    }
+
+                    .stroke {
+                        fill: none;
+                        stroke: $inverse-primary;
+                        stroke-width: $bell-border-width;
+                        stroke-miterlimit: 10;
+                    }
+                }
+
+                &.onesignal-bell-launcher-button-active, &.onesignal-bell-launcher-badge-active {
+                    svg {
+                        .background {
+                            fill: $redwhite-background-active !important;
+                        }
+                    }
+                }
+
+                .pulse-ring {
+                    border: 7px solid rgba(229, 75, 77, 0.4);
+                }
+            }
+
+            .onesignal-bell-launcher-badge {
+                border: 1px solid $inverse-secondary;
+                background: $inverse-primary;
+                color: $inverse-secondary;
+            }
+        }
+    }
+
+    .onesignal-bell-launcher-enabled, .onesignal-bell-launcher-active {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    .onesignal-bell-launcher-disabled {
+        visibility: hidden;
+    }
+
+    .onesignal-bell-launcher-inactive {
+        opacity: $inactive-opacity;
+    }
+
+    .pulse-ring {
+        border-radius: 50%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        -webkit-animation: notifyButtonPulse 0.35s ease-in-out;
+        animation: notifyButtonPulse 0.35s ease-in-out;
+        -webkit-animation-iteration-count: 1;
+        animation-iteration-count: 1;
+        opacity: 0;
+        z-index: 1000;
+        pointer-events: none;
+    }
+}
+
+@media print {
+    #onesignal-bell-container {
+        display: none;
+    }
+}
+
+@-webkit-keyframes notifyButtonPulse {
+    0% {
+        -webkit-transform: scale(0.1);
+        transform: scale(0.1);
+        opacity: 0.0;
+        border-width: 10px;
+    }
+    50% {
+        opacity: 1.0;
+        border-width: 5px;
+    }
+    100% {
+        -webkit-transform: scale(1.2);
+        transform: scale(1.2);
+        opacity: 0.0;
+        border-width: 1px;
+    }
+}
+
+@keyframes notifyButtonPulse {
+    0% {
+        -webkit-transform: scale(0.1);
+        transform: scale(0.1);
+        opacity: 0.0;
+        border-width: 10px;
+    }
+    50% {
+        opacity: 1.0;
+        border-width: 5px;
+    }
+    100% {
+        -webkit-transform: scale(1.2);
+        transform: scale(1.2);
+        opacity: 0.0;
+        border-width: 1px;
+    }
+}

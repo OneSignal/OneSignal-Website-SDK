@@ -1,11 +1,11 @@
 import "../../support/polyfills/polyfills";
 import anyTest, { ExecutionContext, TestInterface } from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
+import OneSignal from '../../../src/onesignal/OneSignal';
 import nock from 'nock';
-import Database from '../../../src/services/Database';
-import { EmailProfile } from '../../../src/models/EmailProfile';
-import { Subscription } from '../../../src/models/Subscription';
+import Database from '../../../src/shared/services/Database';
+import { EmailProfile } from '../../../src/shared/models/EmailProfile';
+import { Subscription } from '../../../src/shared/models/Subscription';
 
 const EMAIL_ID = "dafb31e3-19a5-473c-b319-62082bd696fb";
 const EMAIL = "test@example.com";
@@ -101,7 +101,7 @@ test("sendTags sends to email record and push record with email auth hash", asyn
   await Database.setEmailProfile(emailProfile);
   expectPushRecordTagUpdateRequest(t, emailProfile.subscriptionId, emailProfile.identifierAuthHash);
   expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
-  await OneSignal.sendTags(t.context.simpleTags);
+  await OneSignal.User.addTags(t.context.simpleTags);
 });
 
 test("sendTags sends to email record and push record without email auth hash", async t => {
@@ -120,7 +120,7 @@ test("sendTags sends to email record and push record without email auth hash", a
   await Database.setEmailProfile(emailProfile);
   expectPushRecordTagUpdateRequest(t, emailProfile.subscriptionId, emailProfile.identifierAuthHash);
   expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
-  await OneSignal.sendTags(t.context.simpleTags);
+  await OneSignal.User.addTags(t.context.simpleTags);
 });
 
 test("sendTags sends to push record only without email", async t => {
@@ -134,5 +134,5 @@ test("sendTags sends to push record only without email", async t => {
   await Database.setEmailProfile(new EmailProfile());
 
   expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
-  await OneSignal.sendTags(t.context.simpleTags);
+  await OneSignal.User.addTags(t.context.simpleTags);
 });

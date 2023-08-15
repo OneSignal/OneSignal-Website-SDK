@@ -3,8 +3,8 @@ import nock from "nock";
 import sinon, { SinonSandbox } from "sinon";
 import Random from "../../support/tester/Random";
 import "../../support/polyfills/polyfills";
-import OneSignalApiBase from "../../../src/OneSignalApiBase";
-import Environment from "../../../src/Environment";
+import Environment from "../../../src/shared/helpers/Environment";
+import OneSignalApiBase from "../../../src/shared/api/OneSignalApiBase";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 

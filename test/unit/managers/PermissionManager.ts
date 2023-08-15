@@ -1,13 +1,13 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
+import OneSignal from '../../../src/onesignal/OneSignal';
 import sinon from 'sinon';
-import Context from '../../../src/models/Context';
-import { NotificationPermission } from '../../../src/models/NotificationPermission';
+import Context from '../../../src/page/models/Context';
+import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 import { setUserAgent } from '../../support/tester/browser';
 import Random from '../../support/tester/Random';
-import SdkEnvironment from '../../../src/managers/SdkEnvironment';
+import SdkEnvironment from '../../../src/shared/managers/SdkEnvironment';
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({

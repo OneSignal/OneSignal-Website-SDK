@@ -1,12 +1,11 @@
 import test from "ava";
-import OneSignal from "../../../src/OneSignal";
 import sinon, { SinonSandbox } from "sinon";
-import Event from "../../../src/Event";
-import OneSignalUtils from "../../../src/utils/OneSignalUtils";
+import OneSignalEvent from "../../../src/shared/services/OneSignalEvent";
+import OneSignalUtils from "../../../src/shared/utils/OneSignalUtils";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import * as Utils from "../../../src/utils";
-import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
-import OneSignalApiShared from "../../../src/OneSignalApiShared";
+import * as Utils from "../../../src/shared/utils/utils";
+import { InvalidArgumentError } from '../../../src/shared/errors/InvalidArgumentError';
+import OneSignalApiShared from "../../../src/shared/api/OneSignalApiShared";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const externalUserId = "external_email@example.com";
@@ -34,7 +33,7 @@ test("setExternalUserId - executes after OneSignal is fully initialized", async 
   const promise = OneSignal.setExternalUserId(externalUserId).then(() => { isPromiseDone = true; });
   t.is(isPromiseDone, false);
 
-  Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   await promise;
 
   t.is(isPromiseDone, true);
@@ -124,7 +123,7 @@ test("getExternalUserId - executes after OneSignal is fully initialized", async 
   const promise = OneSignal.getExternalUserId().then(() => { isPromiseDone = true; });
   t.is(isPromiseDone, false);
 
-  Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   await promise;
 
   t.is(isPromiseDone, true);
@@ -151,7 +150,7 @@ test("removeExternalUserId - executes after OneSignal is fully initialized", asy
   const promise = OneSignal.removeExternalUserId().then(() => { isPromiseDone = true; });
   t.is(isPromiseDone, false);
 
-  Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   await promise;
 
   t.is(isPromiseDone, true);

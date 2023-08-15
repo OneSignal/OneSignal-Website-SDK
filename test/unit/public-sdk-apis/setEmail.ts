@@ -1,10 +1,10 @@
 import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
-import Database from "../../../src/services/Database";
+import Database from "../../../src/shared/services/Database";
 import { TestEnvironment, BrowserUserAgent } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/onesignal/OneSignal";
 
-import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
+import { InvalidArgumentError } from '../../../src/shared/errors/InvalidArgumentError';
 import nock from 'nock';
 import Random from "../../support/tester/Random";
 import { setUserAgent } from "../../support/tester/browser";

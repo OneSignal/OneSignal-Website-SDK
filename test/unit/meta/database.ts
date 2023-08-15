@@ -1,10 +1,10 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import Database from '../../../src/services/Database';
+import Database from '../../../src/shared/services/Database';
 import Random from '../../support/tester/Random';
 import { isNullOrUndefined } from "../../support/tester/utils";
-import { initializeNewSession, Session } from "../../../src/models/Session";
+import { initializeNewSession, Session } from "../../../src/shared/models/Session";
 
 test(`database should not be shared across service worker test environment initializations`, async t => {
   let firstAppId;

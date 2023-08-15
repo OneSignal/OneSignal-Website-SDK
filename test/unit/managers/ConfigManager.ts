@@ -1,10 +1,9 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
-import ConfigManager from '../../../src/managers/ConfigManager';
-import { AppUserConfig, AppConfig, ServerAppConfig } from '../../../src/models/AppConfig';
-import { AppUserConfigCustomLinkOptions } from '../../../src/models/Prompts';
+import { ConfigIntegrationKind, AppUserConfig, ServerAppConfig, AppConfig } from '../../../src/shared/models/AppConfig';
+import { AppUserConfigCustomLinkOptions } from '../../../src/shared/models/Prompts';
+import ConfigManager from '../../../src/page/managers/ConfigManager';
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize({

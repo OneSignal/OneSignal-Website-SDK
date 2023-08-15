@@ -1,13 +1,13 @@
 import "../../support/polyfills/polyfills";
 import anyTest, { TestInterface } from "ava";
 import { TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/onesignal/OneSignal";
 import sinon, { SinonStub } from 'sinon';
-import Bell from "../../../src/bell/Bell";
-import { InvalidStateError, InvalidStateReason } from "../../../src/errors/InvalidStateError";
+import Bell from "../../../src/page/bell/Bell";
 import MockLauncher from "../../support/mocks/MockLauncher";
-import { DynamicResourceLoader, ResourceType, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
-import { AppConfig } from '../../../src/models/AppConfig';
+import { DynamicResourceLoader, ResourceType, ResourceLoadState } from '../../../src/page/services/DynamicResourceLoader';
+import { InvalidStateError, InvalidStateReason } from "../../../src/shared/errors/InvalidStateError";
+import { AppConfig } from "../../../src/shared/models/AppConfig";
 
 interface LoadSdkContext {
   appConfig: AppConfig;
@@ -73,7 +73,7 @@ test("loadIfNew called twice should not load the same stylesheet or script more 
   const resourceLoadAttempts = [];
   for (let i = 0; i < 5; i++) {
     resourceLoadAttempts.push(
-      dynamicResourceLoader.loadIfNew(ResourceType.Stylesheet, new URL('https://cdn.onesignal.com/sdks/OneSignalSDKStyles.css'))
+      dynamicResourceLoader.loadIfNew(ResourceType.Stylesheet, new URL('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css'))
     );
   }
   await Promise.all(resourceLoadAttempts);
@@ -81,7 +81,7 @@ test("loadIfNew called twice should not load the same stylesheet or script more 
 
   t.not(Object.keys(cache).length, 5);
   t.is(Object.keys(cache).length, 1);
-  t.is(Object.keys(cache)[0], 'https://cdn.onesignal.com/sdks/OneSignalSDKStyles.css');
+  t.is(Object.keys(cache)[0], 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css');
 });
 
 test("load successfully fetches and installs stylesheet", async t => {

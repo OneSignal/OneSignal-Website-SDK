@@ -3,16 +3,16 @@ import test, { ExecutionContext } from "ava";
 import {
   HttpHttpsEnvironment, TestEnvironment, TestEnvironmentConfig
 } from '../../../support/sdk/TestEnvironment';
-import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
-import { NotificationPermission } from "../../../../src/models/NotificationPermission";
-import { PromptsManager } from '../../../../src/managers/PromptsManager';
-import Slidedown from "../../../../src/slidedown/Slidedown";
+import { ConfigIntegrationKind } from '../../../../src/shared/models/AppConfig';
+import { NotificationPermission } from "../../../../src/shared/models/NotificationPermission";
+import Slidedown from "../../../../src/page/slidedown/Slidedown";
 import EventsTestHelper from "../../../support/tester/EventsTestHelper";
-import { SlidedownManager } from "../../../../src/managers/slidedownManager/SlidedownManager";
+import { SlidedownManager } from "../../../../src/page/managers/slidedownManager/SlidedownManager";
 import { SlidedownPromptingTestHelper } from "./_SlidedownPromptingTestHelpers";
 import { mockGetIcon } from "../../../support/tester/utils";
-import ConfirmationToast from "../../../../src/slidedown/ConfirmationToast";
+import ConfirmationToast from "../../../../src/page/slidedown/ConfirmationToast";
 import { stubServiceWorkerInstallation } from "../../../support/tester/sinonSandboxUtils";
+import { PromptsManager } from "../../../../src/page/managers/PromptsManager";
 
 /**
  * PROMPTING LOGIC UNIT TESTS FOR WEB PROMPTS FEATURE

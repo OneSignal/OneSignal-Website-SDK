@@ -1,9 +1,9 @@
 import test from "ava";
-import TagUtils from '../../../src/utils/TagUtils';
+import TagUtils from '../../../src/shared/utils/TagUtils';
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import { TagCategory, TagsObjectForApi, TagsObjectWithBoolean } from '../../../src/models/Tags';
-import { deepCopy } from '../../../src/utils';
+import { TagCategory, TagsObjectForApi, TagsObjectWithBoolean } from '../../../src/page/models/Tags';
+import { deepCopy } from '../../../src/shared/utils/utils';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 

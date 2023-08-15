@@ -4,20 +4,20 @@ import { TestEnvironment,
   HttpHttpsEnvironment,
   BrowserUserAgent,
   TestEnvironmentConfig } from '../../../support/sdk/TestEnvironment';
-import { getDomElementOrStub } from '../../../../src/utils';
+import { getDomElementOrStub } from '../../../../src/shared/utils/utils';
 import {
   CHANNEL_CAPTURE_CONTAINER_CSS_IDS,
   SLIDEDOWN_CSS_IDS
-} from '../../../../src/slidedown/constants';
-import ChannelCaptureContainer from '../../../../src/slidedown/ChannelCaptureContainer';
+} from '../../../../src/shared/slidedown/constants';
+import ChannelCaptureContainer from '../../../../src/page/slidedown/ChannelCaptureContainer';
 import { SlidedownPromptingTestHelper } from '../SlidedownPrompting/_SlidedownPromptingTestHelpers';
-import { DelayedPromptType } from '../../../../src/models/Prompts';
 import { ChannelCaptureContainerHelper } from './_ChannelCaptureContainerHelper';
 import EventsTestHelper from '../../../support/tester/EventsTestHelper';
-import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
-import { NotificationPermission } from '../../../../src/models/NotificationPermission';
-import Slidedown from '../../../../src/slidedown/Slidedown';
+import { ConfigIntegrationKind } from '../../../../src/shared/models/AppConfig';
+import { NotificationPermission } from '../../../../src/shared/models/NotificationPermission';
+import Slidedown from '../../../../src/page/slidedown/Slidedown';
 import { simulateEventOfTypeOnElement } from '../../../support/tester/utils';
+import { DelayedPromptType } from '../../../../src/shared/models/Prompts';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 

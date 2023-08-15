@@ -1,13 +1,13 @@
 import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import { setupFakePlayerId } from "../../support/tester/utils";
 import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
-import ServiceWorkerHelper from "../../../src/helpers/ServiceWorkerHelper";
-import { initializeNewSession, Session, SessionOrigin } from "../../../src/models/Session";
-import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
-import { DeliveryPlatformKind } from "../../../src/models/DeliveryPlatformKind";
-import Database from "../../../src/services/Database";
+import ServiceWorkerHelper from "../../../src/shared/helpers/ServiceWorkerHelper";
+import { PushDeviceRecord } from "../../../src/shared/models/PushDeviceRecord";
+import { DeliveryPlatformKind } from "../../../src/shared/models/DeliveryPlatformKind";
+import Database from "../../../src/shared/services/Database";
+import { initializeNewSession, Session, SessionOrigin } from "../../../src/shared/models/Session";
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -38,7 +38,7 @@ test("sendOnSessionCallIfNecessary, for push player", async t => {
   const onSessionNockPromise = NockOneSignalHelper.nockPlayerOnSession(pushPlayerId);
 
   // 4. Kick off on_session call
-  await ServiceWorkerHelper.sendOnSessionCallIfNecessary(
+  await ServiceWorkerHelper.sendOnSessionCallIfNotPlayerCreate(
     SessionOrigin.PlayerOnSession,
     pushDeviceRecord.serialize(),
     pushPlayerId,
@@ -90,7 +90,7 @@ test("sendOnSessionCallIfNecessary, for email player", async t => {
 
   // 4. Kick off on_session call.
   //    NOTE: This is ALWAYS expects a push player record by pre-existing design.
-  await ServiceWorkerHelper.sendOnSessionCallIfNecessary(
+  await ServiceWorkerHelper.sendOnSessionCallIfNotPlayerCreate(
     SessionOrigin.PlayerOnSession,
     pushDeviceRecord.serialize(),
     pushPlayerId,

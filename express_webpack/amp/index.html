@@ -19,12 +19,13 @@
     }
 
     const appId = getUrlQueryParam('app_id');
-    var OneSignal = window.OneSignal || [];
-    OneSignal.push(function() {
-      OneSignal.SERVICE_WORKER_PARAM = { scope: "/" + SERVICE_WORKER_PATH };
-      OneSignal.SERVICE_WORKER_PATH = SERVICE_WORKER_PATH + "OneSignalSDKWorker.js";
-
-      OneSignal.init({ appId });
+    var OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(function(onesignal) {
+      onesignal.init({
+        appId,
+        serviceWorkerParam: { scope: "/" + SERVICE_WORKER_PATH },
+        serviceWorkerPath: SERVICE_WORKER_PATH + "OneSignalSDK.sw.js",
+      });
     });
   </script>
 <head>
@@ -104,7 +105,7 @@
     const ampWebPushElement = document.getElementById("amp-web-push");
     ampWebPushElement.setAttribute("helper-iframe-url", "https://localhost:4001/amp/amp-helper-frame.html?appId=" + appId);;
     ampWebPushElement.setAttribute("permission-dialog-url", "https://localhost:4001/amp/amp-permission-dialog.html?appId=" + appId);
-    ampWebPushElement.setAttribute("service-worker-url", "https://localhost:4001/amp/OneSignalSDKWorker.js?appId=" + appId);
+    ampWebPushElement.setAttribute("service-worker-url", "https://localhost:4001/amp/OneSignalSDK.sw.js?appId=" + appId);
   </script>
 
   <!-- Contents -->

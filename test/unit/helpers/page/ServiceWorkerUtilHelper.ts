@@ -1,6 +1,6 @@
 
 import test from 'ava';
-import ServiceWorkerUtilHelper from '../../../../src/helpers/page/ServiceWorkerUtilHelper';
+import ServiceWorkerUtilHelper from '../../../../src/sw/helpers/ServiceWorkerUtilHelper';
 import { MockServiceWorker } from '../../../support/mocks/service-workers/models/MockServiceWorker';
 import { MockServiceWorkerRegistration } from "../../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
 

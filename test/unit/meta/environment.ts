@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
-import { isUsingSubscriptionWorkaround } from '../../../src/utils';
+import { isUsingSubscriptionWorkaround } from '../../../src/shared/utils/utils';
 
 
 test(`can simulate HTTPS site`, async t => {

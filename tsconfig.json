@@ -14,11 +14,13 @@
     "noUnusedParameters": true,
     "strictPropertyInitialization": true,
     "strictFunctionTypes": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "types": ["jest", "node"]
   },
   "include": [
+    "__test__/**/*",
     "src/**/*",
     "test/**/*",
-    "typings/**/*"
+    "typings/**/*",
   ]
 }

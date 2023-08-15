@@ -1,16 +1,17 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { AppUserConfigCustomLinkOptions } from '../../../src/models/Prompts';
-import OneSignalUtils from '../../../src/utils/OneSignalUtils';
-import { ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
-import { hasCssClass } from '../../../src/utils';
-import { DismissHelper } from '../../../src/helpers/DismissHelper';
-import { CUSTOM_LINK_CSS_CLASSES, CUSTOM_LINK_CSS_SELECTORS } from '../../../src/slidedown/constants';
-import { CustomLinkManager } from '../../../src/managers/CustomLinkManager';
+import { AppUserConfigCustomLinkOptions } from '../../../src/shared/models/Prompts';
+import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
+import { ResourceLoadState } from '../../../src/page/services/DynamicResourceLoader';
+import { hasCssClass } from '../../../src/shared/utils/utils';
+import { DismissHelper } from '../../../src/shared/helpers/DismissHelper';
+import { CUSTOM_LINK_CSS_CLASSES, CUSTOM_LINK_CSS_SELECTORS } from '../../../src/shared/slidedown/constants';
+import { CustomLinkManager } from '../../../src/shared/managers/CustomLinkManager';
 import EventsTestHelper from '../../support/tester/EventsTestHelper';
 import { simulateEventOfTypeOnElement } from '../../support/tester/utils';
-import PermissionManager from '../../../src/managers/PermissionManager';
+import PermissionManager from '../../../src/shared/managers/PermissionManager';
+import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 let config: AppUserConfigCustomLinkOptions;
@@ -223,7 +224,7 @@ test('customlink: subscribe: clicked: subscribed -> unsubscribed', async t => {
   sandbox.stub(CustomLinkManager, "isPushEnabled").returns(true);
   sandbox.stub(CustomLinkManager, "isOptedOut").returns(false);
 
-  const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').callsFake(async () => {
+  const subscriptionSpy = sandbox.stub(NotificationsNamespace.prototype, 'disable').callsFake(async () => {
     await setSubscriptionStub();
   });
   sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(false);
@@ -244,7 +245,7 @@ test('customlink: subscribe: clicked: subscribed -> unsubscribed', async t => {
 
     t.is(subscriptionSpy.calledOnce, true);
     t.is(subscriptionSpy.getCall(0).args.length, 1);
-    t.is(subscriptionSpy.getCall(0).args[0], false);
+    t.is(subscriptionSpy.getCall(0).args[0], true);
   }
 });
 
@@ -252,7 +253,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
   const subscriptionPromise = EventsTestHelper.getSubscriptionPromise();
   sandbox.stub(CustomLinkManager, "isPushEnabled").returns(false);
   sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(false);
-  const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').callsFake(async () => {
+  const subscriptionSpy = sandbox.stub(NotificationsNamespace.prototype, 'disable').callsFake(async () => {
     await setSubscriptionStub();
   });
   // TODO: why is this called in custom link
@@ -275,7 +276,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
 
     t.is(subscriptionSpy.calledOnce, true);
     t.is(subscriptionSpy.getCall(0).args.length, 1);
-    t.is(subscriptionSpy.getCall(0).args[0], true);
+    t.is(subscriptionSpy.getCall(0).args[0], false);
   }
 });
 
@@ -341,7 +342,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. http. opted ou
   sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(true);
   sandbox.stub(CustomLinkManager, "isPushEnabled").returns(false);
   sandbox.stub(CustomLinkManager, "isOptedOut").returns(true);
-  const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').callsFake(async () => {
+  const subscriptionSpy = sandbox.stub(NotificationsNamespace.prototype, 'disable').callsFake(async () => {
     await setSubscriptionStub();
   });
 

@@ -1,9 +1,8 @@
 import '../../support/polyfills/polyfills';
 import anyTest, { TestInterface } from 'ava';
-import { ConfigIntegrationKind, ServerAppConfig } from '../../../src/models/AppConfig';
+import { ConfigIntegrationKind, ServerAppConfig } from '../../../src/shared/models/AppConfig';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
-import ConfigManager from '../../../src/managers/ConfigManager';
+import ConfigManager from '../../../src/page/managers/ConfigManager';
 
 interface ConfigContext {
   overrideServerConfig: ServerAppConfig;
@@ -28,13 +27,13 @@ test('should not overwrite a provided service worker parameters', async t => {
     {
       path: '/existing-path',
       serviceWorkerParam: { scope: '/existing-path' },
-      serviceWorkerPath: '/existing-path/OneSignalSDKWorker.js',
+      serviceWorkerPath: '/existing-path/OneSignalSDK.sw.js',
     },
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
   );
   t.is(result.userConfig.path, '/existing-path');
   t.deepEqual(result.userConfig.serviceWorkerParam, { scope: '/existing-path' });
-  t.is(result.userConfig.serviceWorkerPath, '/existing-path/OneSignalSDKWorker.js');
+  t.is(result.userConfig.serviceWorkerPath, '/existing-path/OneSignalSDK.sw.js');
 });
 
 test('should assign the default service worker registration params if not provided', async t => {
@@ -69,25 +68,7 @@ test('should assign the default service worker A filename if not provided', asyn
     {},
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
   );
-  t.is(result.userConfig.serviceWorkerPath, 'OneSignalSDKWorker.js');
-});
-
-test('should not overwrite a provided service worker A filename', async t => {
-  await TestEnvironment.initialize({
-    initOptions: {
-      httpPermissionRequest: {
-        enable: true
-      }
-    },
-    httpOrHttps: HttpHttpsEnvironment.Http
-  });
-
-  OneSignal.SERVICE_WORKER_PATH = 'CustomWorkerA.js';
-  const result = new ConfigManager().getMergedConfig(
-    {},
-    TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
-  );
-  t.is(result.userConfig.serviceWorkerPath, 'CustomWorkerA.js');
+  t.is(result.userConfig.serviceWorkerPath, 'OneSignalSDK.sw.js');
 });
 
 test("should not use server's subdomain if subdomain not specified in user config on HTTPS site", async t => {

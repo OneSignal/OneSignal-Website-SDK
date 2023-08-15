@@ -1,11 +1,11 @@
 import test from 'ava';
-import TaggingContainer from '../../../src/slidedown/TaggingContainer';
+import TaggingContainer from '../../../src/page/slidedown/TaggingContainer';
 import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
-import { TagsObjectWithBoolean } from '../../../src/models/Tags';
-import { getDomElementOrStub } from '../../../src/utils';
-import TagUtils from '../../../src/utils/TagUtils';
-import { TAGGING_CONTAINER_CSS_IDS, SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS } from '../../../src/slidedown/constants';
+import { TagsObjectWithBoolean } from '../../../src/page/models/Tags';
+import { getDomElementOrStub } from '../../../src/shared/utils/utils';
+import TagUtils from '../../../src/shared/utils/TagUtils';
+import { TAGGING_CONTAINER_CSS_IDS, SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS } from '../../../src/shared/slidedown/constants';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 

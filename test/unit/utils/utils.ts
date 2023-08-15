@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 import test from "ava";
-import { timeoutPromise } from "../../../src/utils";
-import TimeoutError from '../../../src/errors/TimeoutError';
+import { timeoutPromise } from "../../../src/shared/utils/utils";
+import TimeoutError from '../../../src/shared/errors/TimeoutError';
 
 
 test(`timeoutPromise should reject after the specified amount of time`, async t => {

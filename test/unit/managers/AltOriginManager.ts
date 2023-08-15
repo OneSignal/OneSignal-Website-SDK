@@ -1,11 +1,11 @@
 import '../../support/polyfills/polyfills';
 import test, { TestInterface } from "ava";
-import AltOriginManager from '../../../src/managers/AltOriginManager';
-import { EnvironmentKind } from '../../../src/models/EnvironmentKind';
+import AltOriginManager from '../../../src/page/managers/AltOriginManager';
 import sinon from 'sinon';
-import ProxyFrameHost from '../../../src/modules/frames/ProxyFrameHost';
+import ProxyFrameHost from '../../../src/page/modules/frames/ProxyFrameHost';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import { AppConfig } from '../../../src/models/AppConfig';
+import { AppConfig } from '../../../src/shared/models/AppConfig';
+import { EnvironmentKind } from '../../../src/shared/models/EnvironmentKind';
 
 interface AltOriginContext {
   appConfig?: AppConfig;

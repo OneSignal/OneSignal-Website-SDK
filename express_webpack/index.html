@@ -7,13 +7,14 @@
     Ensure OneSignal SDK correctly handles this. -->
 <!-- NOTE: This does not work with the relative pathed manifest.json above. -->
 <!--<base href="https://www.example.com/"> -->
-<script src="sdks/Dev-OneSignalSDK.js" defer=""></script>
+<script src="sdks/web/v16/Dev-OneSignalSDK.page.js" defer></script>
 <script>
     // NOTE: Uncomment and open site in Safari on macOS 13+ to simulate
     // a similar JS API as an iOS 16.4 WebApp.
     // window.safari = undefined;
 
     const SERVICE_WORKER_PATH = "push/onesignal/";
+    let showEventAlertToggleSetting = false;
 
     function getUrlQueryParam(name) {
         var url = window.location.href;
@@ -29,12 +30,9 @@
     }
 
     const appId = getUrlQueryParam('app_id');
-    var OneSignal = window.OneSignal || [];
-    OneSignal.push(function() {
-      OneSignal.SERVICE_WORKER_PARAM = { scope: "/" + SERVICE_WORKER_PATH };
-      OneSignal.SERVICE_WORKER_PATH = SERVICE_WORKER_PATH + "OneSignalSDKWorker.js";
-
-      OneSignal.init({
+    var OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(onesignal) {
+      await onesignal.init({
           appId,
           notifyButton: {
               enable: true
@@ -43,7 +41,7 @@
               slidedown: {
                   prompts: [{
                     type: "category",
-                    autoPrompt: true,
+                    autoPrompt: false,
                     categories: [
                             {
                                 tag: "politics",
@@ -80,13 +78,16 @@
                         ]
                   },
                   {
-                      type: "sms"
+                      type: "sms",
+                      autoPrompt: false
                   },
                   {
-                      type: "email"
+                      type: "email",
+                      autoPrompt: false
                   },
                   {
-                      type: "smsAndEmail"
+                      type: "smsAndEmail",
+                      autoPrompt: false
                   }]
               },
               customlink: {
@@ -106,51 +107,108 @@
               }
           }
         });
+        onesignal.User.PushSubscription.addEventListener('subscriptionChange', function (event) {
+          showEventAlert('subscriptionChange', { event });
+        });
+        onesignal.Notifications.addEventListener('click', event => {
+          showEventAlert('click', { event });
+        });
     });
 
+    /* E V E N T   L I S T E N E R S */
+    OneSignalDeferred.push(function(onesignal) {
+      onesignal.Notifications.addEventListener('permissionChange', function (isSubscribed) {
+        showEventAlert('permissionChange', { isSubscribed });
+      });
+    });
+
+    OneSignalDeferred.push(function(onesignal) {
+      onesignal.Notifications.addEventListener('permissionPromptDisplay', function (event) {
+        showEventAlert('permissionPromptDisplay', { event });
+      });
+    });
+
+    OneSignalDeferred.push(function(onesignal) {
+      onesignal.Notifications.addEventListener('dismiss', function (event) {
+        showEventAlert('dismiss', { event });
+      });
+    });
+
+    OneSignalDeferred.push(function(onesignal) {
+      onesignal.Notifications.addEventListener('willDisplay', function (event) {
+        showEventAlert('willDisplay', { event });
+      });
+    });
+
+    OneSignalDeferred.push(function(onesignal) {
+      onesignal.Notifications.addEventListener('click', function (event) {
+        showEventAlert('click', { event });
+      });
+    });
+
+    OneSignalDeferred.push(function(onesignal) {
+      onesignal.Slidedown.addEventListener('slidedownShown', function (event) {
+        showEventAlert('slidedownShown', { event });
+      });
+    });
+
+    /* H E L P E R S */
+
+    function toggleShowEventAlert() {
+      showEventAlertToggleSetting = !showEventAlertToggleSetting;
+      document.getElementById('showEventAlertToggleSetting').innerText = showEventAlertToggleSetting ? 'true' : 'false';
+    }
+
+    function showEventAlert(eventName, payload) {
+      if (!showEventAlertToggleSetting) {
+        return;
+      }
+      alert(`OneSignal event ${eventName} fired!\n\nPayload:\n${JSON.stringify(payload, null, 2)}`);
+    }
+
     function sendUniqueOutcome() {
-        OneSignal.push(function() {
+        OneSignalDeferred.push(function(onesignal) {
             const outcomeName = document.querySelector('#unique_outcome_name').value;
-            OneSignal.sendUniqueOutcome(outcomeName);
+            onesignal.Session.sendUniqueOutcome(outcomeName);
         });
     }
 
     function sendOutcome() {
-        OneSignal.push(function() {
+        OneSignalDeferred.push(function(onesignal) {
             const outcomeName = document.querySelector('#outcome_name').value;
-            OneSignal.sendOutcome(outcomeName);
+            onesignal.Session.sendOutcome(outcomeName);
         });
     }
 
     function sendOutcomeWithWeight() {
-        OneSignal.push(function() {
+        OneSignalDeferred.push(function(onesignal) {
             const outcomeName = document.querySelector('#outcome_name').value;
             const outcomeWeight = parseFloat(document.querySelector('#outcome_weight').value);
-            OneSignal.sendOutcome(outcomeName, outcomeWeight);
+            onesignal.Session.sendOutcome(outcomeName, outcomeWeight);
         });
     }
 
     function showCategorySlidedown() {
-        OneSignal.push(function() {
-            OneSignal.showCategorySlidedown();
+        OneSignalDeferred.push(function(onesignal) {
+            onesignal.Slidedown.promptPushCategories();
         })
     }
 
     function showSmsSlidedown() {
-        OneSignal.push(function() {
-            OneSignal.showSmsSlidedown();
+        OneSignalDeferred.push(function(onesignal) {
+            onesignal.Slidedown.promptSms();
         })
     }
 
     function showEmailSlidedown() {
-        OneSignal.push(function() {
-            OneSignal.showEmailSlidedown();
+        OneSignalDeferred.push(function(onesignal) {
+            onesignal.Slidedown.promptEmail();
         })
     }
 
     function showSmsAndEmailSlidedown() {
-        OneSignal.push(function() {
-            OneSignal.showSmsAndEmailSlidedown();
+        OneSignalDeferred.push(function(onesignal) {
+            onesignal.Slidedown.promptSmsAndEmail();
         })
     }
 
@@ -189,6 +247,9 @@
     <button onclick="javascript:showSmsSlidedown();">Show Sms Slidedown</button>
     <button onclick="javascript:showEmailSlidedown();">Show Email Slidedown</button>
     <button onclick="javascript:showSmsAndEmailSlidedown();">Show Sms & Email Slidedown</button>
+    <br />
+    <br />
+    <button onclick="javascript:toggleShowEventAlert();">Toggle show event alerts</button><p>Currently: <span id="showEventAlertToggleSetting">false</span></p>
     <br />
     <br />
     <div class='onesignal-customlink-container'></div>

@@ -1,12 +1,11 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
 import sinon from 'sinon';
-import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
-import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
-import LocalStorage from '../../../src/utils/LocalStorage';
-import { PageViewManager } from '../../../src/managers/PageViewManager';
+import { SubscriptionManager } from '../../../src/shared/managers/SubscriptionManager';
+import LocalStorage from '../../../src/shared/utils/LocalStorage';
+import { PageViewManager } from '../../../src/shared/managers/PageViewManager';
+import SubscriptionHelper from '../../../src/shared/helpers/SubscriptionHelper';
 
 const sinonSandbox = sinon.sandbox.create();
 

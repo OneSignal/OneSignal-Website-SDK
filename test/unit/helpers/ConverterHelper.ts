@@ -2,12 +2,12 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { AppUserConfig } from '../../../src/models/AppConfig';
+import { AppUserConfig } from '../../../src/shared/models/AppConfig';
 import Random from "../../support/tester/Random";
-import { AppUserConfigPromptOptions, DelayedPromptType } from '../../../src/models/Prompts';
+import { AppUserConfigPromptOptions, DelayedPromptType } from '../../../src/shared/models/Prompts';
 import { getFinalAppConfig } from '../../../test/support/tester/ConfigHelperTestHelper';
 import sinon, { SinonSandbox } from 'sinon';
-import PromptsHelper from '../../../src/helpers/PromptsHelper';
+import PromptsHelper from '../../../src/shared/helpers/PromptsHelper';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 

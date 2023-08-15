@@ -5,7 +5,9 @@ import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import { MockServiceWorkerContainer } from "../../support/mocks/service-workers/models/MockServiceWorkerContainer";
 import { MockServiceWorker } from "../../support/mocks/service-workers/models/MockServiceWorker";
-import { MockServiceWorkerRegistration } from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
+import {
+  MockServiceWorkerRegistration
+} from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
 
 class TestMockServiceWorkerContainer extends MockServiceWorkerContainer {
 }

@@ -1,7 +1,7 @@
-import { NotificationReceived, NotificationClicked } from '../../../src/models/Notification';
 import Random from '../../support/tester/Random';
-import Database from '../../../src/services/Database';
-import { initializeNewSession, Session } from '../../../src/models/Session';
+import Database from '../../../src/shared/services/Database';
+import { initializeNewSession, Session } from '../../../src/shared/models/Session';
+import { OutcomesNotificationClicked, OutcomesNotificationReceived } from "src/shared/models/OutcomesNotificationEvents";
 
 const TEN_MINUTES_MS = 10 * 60 * 1000;
 
@@ -16,10 +16,9 @@ export default class OutcomeTestHelper {
     const receivedNotificationIdsWithinTimeframe: string[] = [];
     for (let i = 0; i < limit + 3; i++) {
       const timestamp = new Date(now - i * TEN_MINUTES_MS).getTime();
-      const notificationReceived: NotificationReceived = {
+      const notificationReceived: OutcomesNotificationReceived = {
         notificationId: Random.getRandomUuid(),
         appId: OneSignal.config!.appId!,
-        url: "https://localhost:3001",
         timestamp,
       };
       if (notificationReceived.timestamp >= maxTimestamp && receivedNotificationIdsWithinTimeframe.length < limit) {
@@ -37,7 +36,7 @@ export default class OutcomeTestHelper {
       appId: OneSignal.config!.appId!,
       url: "https://localhost:3001",
       timestamp: new Date().getTime(),
-    } as NotificationClicked;
+    } as OutcomesNotificationClicked;
   }
 
   static async initializeSession() {

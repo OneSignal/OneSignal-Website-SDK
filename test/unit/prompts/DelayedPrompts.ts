@@ -4,16 +4,16 @@ import sinon, { SinonSandbox } from 'sinon';
 import {
     TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig
 } from '../../support/sdk/TestEnvironment';
-import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
+import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
 import Random from "../../support/tester/Random";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import {
     stubServiceWorkerInstallation,
 } from "../../support/tester/sinonSandboxUtils";
-import LocalStorage from '../../../src/utils/LocalStorage';
-import { PromptsManager } from '../../../src/managers/PromptsManager';
-import InitHelper from '../../../src/helpers/InitHelper';
-import { DelayedPromptType } from "../../../src/models/Prompts";
+import LocalStorage from '../../../src/shared/utils/LocalStorage';
+import InitHelper from '../../../src/shared/helpers/InitHelper';
+import { DelayedPromptType } from "../../../src/shared/models/Prompts";
+import { PromptsManager } from "../../../src/page/managers/PromptsManager";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const appId = Random.getRandomUuid();

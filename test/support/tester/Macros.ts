@@ -1,4 +1,4 @@
-import { InvalidArgumentError } from "../../../src/errors/InvalidArgumentError";
+import { InvalidArgumentError } from "../../../src/shared/errors/InvalidArgumentError";
 import { throws, notThrows } from "../../support/tester/asyncFunctions";
 
 

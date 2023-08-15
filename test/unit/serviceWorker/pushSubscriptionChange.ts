@@ -2,20 +2,20 @@ import test, { ExecutionContext } from 'ava';
 import '../../support/polyfills/polyfills';
 import sinon, { SinonSandbox } from 'sinon';
 
-import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
+import { ServiceWorker } from '../../../src/sw/serviceWorker/ServiceWorker';
 import { setBrowser } from '../../support/tester/browser';
 import { BrowserUserAgent, TestEnvironment } from '../../support/sdk/TestEnvironment';
 
-import Database from '../../../src/services/Database';
-import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
+import Database from '../../../src/shared/services/Database';
+import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
 import Random from "../../support/tester/Random";
-import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
-import OneSignalApiSW from '../../../src/OneSignalApiSW';
+import { SubscriptionManager } from '../../../src/shared/managers/SubscriptionManager';
 import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
 import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
 import {
   MockPushSubscriptionChangeEvent
 } from "../../support/mocks/service-workers/models/MockPushSubscriptionChangeEvent";
+import OneSignalApiSW from '../../../src/shared/api/OneSignalApiSW';
 
 declare var self: ServiceWorkerGlobalScope;
 const appId = Random.getRandomUuid();

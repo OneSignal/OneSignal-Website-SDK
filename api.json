@@ -1,0 +1,521 @@
+{
+  "OneSignal": {
+    "functions": [
+      {
+        "name": "login",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "externalId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "jwtToken",
+            "type": "string",
+            "optional": true
+        }],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "logout",
+        "isAsync": true,
+        "args": [],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "init",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "options",
+            "type": "IInitObject",
+            "optional": false
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "setConsentGiven",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "consent",
+            "type": "boolean",
+            "optional": false
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "setConsentRequired",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "requiresConsent",
+            "type": "boolean",
+            "optional": false
+          }
+        ],
+        "returnType": "Promise<void>"
+      }
+    ],
+    "namespaces": ["Slidedown", "Notifications", "Session", "User", "Debug"]
+  },
+  "Notifications": {
+    "functions": [
+      {
+        "name": "setDefaultUrl",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "url",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "setDefaultTitle",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "title",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "isPushSupported",
+        "isAsync": false,
+        "args": [],
+        "returnType": "boolean"
+      },
+      {
+        "name": "requestPermission",
+        "isAsync": true,
+        "args":[],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "addEventListener",
+        "isAsync": false,
+        "genericTypeParameter": "<K extends NotificationEventName>",
+        "args": [
+          {
+            "name": "event",
+            "type": "K",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(obj: NotificationEventTypeMap[K]) => void",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeEventListener",
+        "isAsync": false,
+        "genericTypeParameter": "<K extends NotificationEventName>",
+        "args": [
+          {
+            "name": "event",
+            "type": "K",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(obj: NotificationEventTypeMap[K]) => void",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      }
+    ],
+    "properties": [
+      {
+        "name": "permissionNative",
+        "type": "NotificationPermission"
+      },
+      {
+        "name": "permission",
+        "type": "boolean"
+      }
+    ]
+  },
+  "Slidedown": {
+    "functions": [
+      {
+        "name": "promptPush",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "options",
+            "type": "AutoPromptOptions",
+            "optional": true
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "promptPushCategories",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "options",
+            "type": "AutoPromptOptions",
+            "optional": true
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "promptSms",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "options",
+            "type": "AutoPromptOptions",
+            "optional": true
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "promptEmail",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "options",
+            "type": "AutoPromptOptions",
+            "optional": true
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "promptSmsAndEmail",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "options",
+            "type": "AutoPromptOptions",
+            "optional": true
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "addEventListener",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "event",
+            "type": "SlidedownEventName",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(wasShown: boolean) => void",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeEventListener",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "event",
+            "type": "SlidedownEventName",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(wasShown: boolean) => void",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      }
+    ]
+  },
+  "Debug": {
+    "functions": [
+      {
+        "name": "setLogLevel",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "logLevel",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      }
+    ]
+  },
+  "Session": {
+    "functions": [
+      {
+        "name": "sendOutcome",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "outcomeName",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "outcomeWeight",
+            "type": "number",
+            "optional": true
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "sendUniqueOutcome",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "outcomeName",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "Promise<void>"
+      }
+    ]
+  },
+  "User": {
+    "functions": [
+      {
+        "name": "addAlias",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "label",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "id",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "addAliases",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "aliases",
+            "type": "{ [key: string]: string }",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeAlias",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "label",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeAliases",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "labels",
+            "type": "string[]",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "addEmail",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "email",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeEmail",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "email",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "addSms",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "smsNumber",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeSms",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "smsNumber",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "addTag",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "key",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "value",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "addTags",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "tags",
+            "type": "{ [key: string]: string }",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeTag",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "key",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeTags",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "keys",
+            "type": "string[]",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      }
+    ],
+    "namespaces": ["PushSubscription"]
+  },
+  "PushSubscription": {
+    "functions": [
+      {
+        "name": "optIn",
+        "isAsync": true,
+        "args": [],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "optOut",
+        "isAsync": true,
+        "args": [],
+        "returnType": "Promise<void>"
+      },
+      {
+        "name": "addEventListener",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "event",
+            "type": "'change'",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(change: SubscriptionChangeEvent) => void",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeEventListener",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "event",
+            "type": "'change'",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(change: SubscriptionChangeEvent) => void",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      }
+    ],
+    "properties": [
+      {
+        "name": "id",
+        "type": "string | null | undefined"
+      },
+      {
+        "name": "token",
+        "type": "string | null | undefined"
+      },
+      {
+        "name": "optedIn",
+        "type": "boolean | undefined"
+      }
+    ]
+  }
+}
