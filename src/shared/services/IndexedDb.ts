@@ -29,9 +29,9 @@ export default class IndexedDb {
       if (!request) {
         return null;
       }
-      request.onerror = this.onDatabaseOpenError;
-      request.onblocked = this.onDatabaseOpenBlocked;
-      request.onupgradeneeded = this.onDatabaseUpgradeNeeded;
+      request.onerror = this.onDatabaseOpenError.bind(this);
+      request.onblocked = this.onDatabaseOpenBlocked.bind(this);
+      request.onupgradeneeded = this.onDatabaseUpgradeNeeded.bind(this);
       request.onsuccess = () => {
         this.database = request.result;
         this.database.onerror = this.onDatabaseError;
