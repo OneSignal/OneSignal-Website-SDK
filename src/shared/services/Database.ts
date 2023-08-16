@@ -42,8 +42,8 @@ interface DatabaseResult {
  * "NotificationOpened" = Pending Notification Click events that haven't fired yet
  */
 
-export const TABLE_OUTCOMES_NOTIFICATION_CLICKED = "NotificationClicked";
-export const TABLE_OUTCOMES_NOTIFICATION_RECEIVED = "NotificationReceived";
+export const TABLE_OUTCOMES_NOTIFICATION_CLICKED = "Outcomes.NotificationClicked";
+export const TABLE_OUTCOMES_NOTIFICATION_RECEIVED = "Outcomes.NotificationReceived";
 
 export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions" |
   "NotificationOpened" | typeof TABLE_OUTCOMES_NOTIFICATION_RECEIVED | typeof TABLE_OUTCOMES_NOTIFICATION_CLICKED | "SentUniqueOutcome" |  ModelName;

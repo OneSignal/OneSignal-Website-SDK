@@ -4,7 +4,7 @@ import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 
-const DATABASE_VERSION = 4;
+const DATABASE_VERSION = 5;
 
 export default class IndexedDb {
 
@@ -102,7 +102,12 @@ export default class IndexedDb {
    */
   private onDatabaseUpgradeNeeded(event: IDBVersionChangeEvent): void {
     Log.debug('IndexedDb: Database is being rebuilt or upgraded (upgradeneeded event).');
-    const db = (event.target as IDBOpenDBRequest).result;
+    const target = event.target as IDBOpenDBRequest;
+    const transaction = target.transaction;
+    if (!transaction) {
+      throw Error("Can't migrate DB without a transaction");
+    }
+    const db = target.result;
     if (event.oldVersion < 1) {
       db.createObjectStore("Ids", { keyPath: "type" });
       db.createObjectStore("NotificationOpened", { keyPath: "url" });
@@ -115,6 +120,7 @@ export default class IndexedDb {
       // "{ keyPath: "notification.id" }". This resulted in DB v4 either
       // having "notificationId" or "notification.id" depending if the visitor
       // was new while this version was live.
+      // DB v5 was create to trigger a migration to fix this bug.
       db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
     }
     if (event.oldVersion < 3) {
@@ -128,12 +134,84 @@ export default class IndexedDb {
       db.createObjectStore(ModelName.EmailSubscriptions, { keyPath: "modelId" });
     }
     if (event.oldVersion < 5) {
+      this.migrateOutcomesNotificationClickedTableForV5(db, transaction);
+      this.migrateOutcomesNotificationReceivedTableForV5(db, transaction);
+    }
+    if (event.oldVersion < 6) {
       // Make sure to update the database version at the top of the file
     }
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
       OneSignal._isNewVisitor = true;
     }
+  }
+
+  // Table rename "NotificationClicked" -> "Outcomes.NotificationClicked"
+  // and migrate existing records.
+  // Motivation: This is done to correct the keyPath, you can't change it
+  // so a new table must be created.
+  // Background: Table was created with wrong keyPath of "notification.id"
+  // for new visitors for versions 160000.beta4 to 160000. Writes were
+  // attempted as "notificationId" in released 160000 however they may
+  // have failed if the visitor was new when those releases were in the wild.
+  // However those new on 160000.beta4 to 160000.beta8 will have records
+  // saved as "notification.id" that will be converted here.
+  private migrateOutcomesNotificationClickedTableForV5(
+    db: IDBDatabase,
+    transaction: IDBTransaction,
+  ) {
+    const newTableName = "Outcomes.NotificationClicked";
+    db.createObjectStore(newTableName, { keyPath: "notificationId" });
+
+    const oldTableName = "NotificationClicked"
+    const cursor = transaction.objectStore(oldTableName).openCursor();
+    cursor.onsuccess = (event: any) => { // Using any here as the TypeScript definition is wrong
+      const cursorResult = event.target.result as IDBCursorWithValue;
+      if (!cursorResult) {
+        // Delete old table once we have gone through all records
+        db.deleteObjectStore(oldTableName);
+        return;
+      }
+      const oldValue = cursorResult.value;
+      transaction
+        .objectStore(newTableName)
+        .put({
+          // notification.id was possible from 160000.beta4 to 160000.beta8
+          notificationId: oldValue.notificationId || oldValue.notification.id,
+          appId: oldValue.appId,
+          timestamp: oldValue.timestamp,
+        });
+      cursorResult.continue();
+    };
+    cursor.onerror = () => { throw cursor.error; };
+  }
+
+  // Table rename "NotificationReceived" -> "Outcomes.NotificationReceived"
+  // and migrate existing records.
+  // Motivation: Consistency of using pre-fix "Outcomes." like we have for
+  // the "Outcomes.NotificationClicked" table.
+  private migrateOutcomesNotificationReceivedTableForV5(
+    db: IDBDatabase,
+    transaction: IDBTransaction,
+  ) {
+    const newTableName = "Outcomes.NotificationReceived";
+    db.createObjectStore(newTableName, { keyPath: "notificationId" });
+
+    const oldTableName = "NotificationReceived"
+    const cursor = transaction.objectStore(oldTableName).openCursor();
+    cursor.onsuccess = (event: any) => { // Using any here as the TypeScript definition is wrong
+      const cursorResult = event.target.result as IDBCursorWithValue;
+      if (!cursorResult) {
+        // Delete old table once we have gone through all records
+        db.deleteObjectStore(oldTableName);
+        return;
+      }
+      transaction
+        .objectStore(newTableName)
+        .put(cursorResult.value);
+      cursorResult.continue();
+    };
+    cursor.onerror = () => { throw cursor.error; };
   }
 
   /**
