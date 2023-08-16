@@ -1,5 +1,5 @@
 import Random from '../../support/tester/Random';
-import Database from '../../../src/shared/services/Database';
+import Database, { TABLE_OUTCOMES_NOTIFICATION_RECEIVED } from '../../../src/shared/services/Database';
 import { initializeNewSession, Session } from '../../../src/shared/models/Session';
 import { OutcomesNotificationClicked, OutcomesNotificationReceived } from "src/shared/models/OutcomesNotificationEvents";
 
@@ -24,7 +24,7 @@ export default class OutcomeTestHelper {
       if (notificationReceived.timestamp >= maxTimestamp && receivedNotificationIdsWithinTimeframe.length < limit) {
         receivedNotificationIdsWithinTimeframe.push(notificationReceived.notificationId);
       }
-      await Database.put("NotificationReceived", notificationReceived);
+      await Database.put(TABLE_OUTCOMES_NOTIFICATION_RECEIVED, notificationReceived);
     }
 
     return receivedNotificationIdsWithinTimeframe;

@@ -5,7 +5,7 @@ import { OutcomeRequestData } from "../../../src/page/models/OutcomeRequestData"
 import { DeliveryPlatformKind } from "../../../src/shared/models/DeliveryPlatformKind";
 import { SubscriptionStateKind } from "../../../src/shared/models/SubscriptionStateKind";
 import Log from "../../../src/shared/libraries/Log";
-import Database from "../../../src/shared/services/Database";
+import Database, { TABLE_OUTCOMES_NOTIFICATION_CLICKED } from "../../../src/shared/services/Database";
 import timemachine from "timemachine";
 import OutcomeTestHelper from '../../support/tester/OutcomeTestHelper';
 import OneSignalApiShared from "../../../src/shared/api/OneSignalApiShared";
@@ -111,7 +111,7 @@ test("when outcome is unattributed and feature enabled and has weight it sends a
 
 test("when outcome is direct and feature enabled it sends an api call", async t => {
   const notificationClicked = OutcomeTestHelper.generateNotification();
-  await Database.put("NotificationClicked", notificationClicked);
+  await Database.put(TABLE_OUTCOMES_NOTIFICATION_CLICKED, notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
@@ -134,7 +134,7 @@ test("when outcome is direct and feature disabled there are no api calls", async
   OneSignal.config!.userConfig.outcomes!.unattributed.enabled = false;
 
   const notificationClicked = OutcomeTestHelper.generateNotification();
-  await Database.put("NotificationClicked", notificationClicked);
+  await Database.put(TABLE_OUTCOMES_NOTIFICATION_CLICKED, notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
@@ -145,7 +145,7 @@ test("when outcome is direct and feature disabled there are no api calls", async
 
 test("when outcome is direct and feature enabled and has weight it sends an api call", async t => {
   const notificationClicked = OutcomeTestHelper.generateNotification();
-  await Database.put("NotificationClicked", notificationClicked);
+  await Database.put(TABLE_OUTCOMES_NOTIFICATION_CLICKED, notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
