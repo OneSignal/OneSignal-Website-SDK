@@ -4,15 +4,15 @@ import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 
-const DATABASE_VERSION = 5;
-
 export default class IndexedDb {
-
   public emitter: Emitter;
   private database: IDBDatabase | undefined;
   private openLock: Promise<IDBDatabase> | undefined;
 
-  constructor(private databaseName: string) {
+  constructor(
+    private readonly databaseName: string,
+    private readonly dbVersion = 5,
+  ) {
     this.emitter = new Emitter();
   }
 
@@ -21,7 +21,7 @@ export default class IndexedDb {
       let request: IDBOpenDBRequest | undefined = undefined;
       try {
         // Open algorithm: https://www.w3.org/TR/IndexedDB/#h-opening
-        request = indexedDB.open(databaseName, DATABASE_VERSION);
+        request = indexedDB.open(databaseName, this.dbVersion);
       } catch (e) {
         // Errors should be thrown on the request.onerror event, but just in case Firefox throws additional errors
         // for profile schema too high
@@ -39,6 +39,14 @@ export default class IndexedDb {
         resolve(this.database);
       };
     });
+  }
+
+  public async close(): Promise<void> {
+    // TODO:CLEANUP: Seems we have always had two DB connections open
+    // one could be delete to clean this up.
+    const dbLock = await this.ensureDatabaseOpen();
+    dbLock.close();
+    this.database?.close();
   }
 
   private async ensureDatabaseOpen(): Promise<IDBDatabase> {
@@ -108,12 +116,13 @@ export default class IndexedDb {
       throw Error("Can't migrate DB without a transaction");
     }
     const db = target.result;
-    if (event.oldVersion < 1) {
+    const newDbVersion = event.newVersion || Number.MAX_SAFE_INTEGER;
+    if (newDbVersion >= 1 && event.oldVersion < 1) {
       db.createObjectStore("Ids", { keyPath: "type" });
       db.createObjectStore("NotificationOpened", { keyPath: "url" });
       db.createObjectStore("Options", { keyPath: "key" });
     }
-    if (event.oldVersion < 2) {
+    if (newDbVersion >= 2 && event.oldVersion < 2) {
       db.createObjectStore("Sessions", { keyPath: "sessionKey" });
       db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
       // NOTE: 160000.beta4 to 160000 releases modified this line below as
@@ -123,21 +132,21 @@ export default class IndexedDb {
       // DB v5 was create to trigger a migration to fix this bug.
       db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
     }
-    if (event.oldVersion < 3) {
+    if (newDbVersion >= 3 && event.oldVersion < 3) {
       db.createObjectStore("SentUniqueOutcome", { keyPath: "outcomeName" });
     }
-    if (event.oldVersion < 4) {
+    if (newDbVersion >= 4 && event.oldVersion < 4) {
       db.createObjectStore(ModelName.Identity, { keyPath: "modelId" });
       db.createObjectStore(ModelName.Properties, { keyPath: "modelId" });
       db.createObjectStore(ModelName.PushSubscriptions, { keyPath: "modelId" });
       db.createObjectStore(ModelName.SmsSubscriptions, { keyPath: "modelId" });
       db.createObjectStore(ModelName.EmailSubscriptions, { keyPath: "modelId" });
     }
-    if (event.oldVersion < 5) {
+    if (newDbVersion >= 5 && event.oldVersion < 5) {
       this.migrateOutcomesNotificationClickedTableForV5(db, transaction);
       this.migrateOutcomesNotificationReceivedTableForV5(db, transaction);
     }
-    if (event.oldVersion < 6) {
+    if (newDbVersion >= 6 && event.oldVersion < 6) {
       // Make sure to update the database version at the top of the file
     }
     // Wrap in conditional for tests
