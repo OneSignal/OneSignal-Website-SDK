@@ -131,7 +131,7 @@ export default class IndexedDb {
       // "{ keyPath: "notification.id" }". This resulted in DB v4 either
       // having "notificationId" or "notification.id" depending if the visitor
       // was new while this version was live.
-      // DB v5 was create to trigger a migration to fix this bug.
+      // DB v5 was created to trigger a migration to fix this bug.
       db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
     }
     if (newDbVersion >= 3 && event.oldVersion < 3) {
@@ -193,7 +193,12 @@ export default class IndexedDb {
         });
       cursor.result.continue();
     };
-    cursor.onerror = () => { throw cursor.error; };
+    cursor.onerror = () => {
+      // If there is an error getting old records nothing we can do but
+      // move on. Old table will stay around so an attempt could be made
+      // later.
+      console.error("Could not migrate NotificationClicked records", cursor.error);
+    };
   }
 
   // Table rename "NotificationReceived" -> "Outcomes.NotificationReceived"
@@ -220,7 +225,12 @@ export default class IndexedDb {
         .put(cursor.result.value);
         cursor.result.continue();
     };
-    cursor.onerror = () => { throw cursor.error; };
+    cursor.onerror = () => {
+      // If there is an error getting old records nothing we can do but
+      // move on. Old table will stay around so an attempt could be made
+      // later.
+      console.error("Could not migrate NotificationReceived records", cursor.error);
+    };
   }
 
   /**
