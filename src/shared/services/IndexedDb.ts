@@ -176,14 +176,13 @@ export default class IndexedDb {
 
     const oldTableName = "NotificationClicked"
     const cursor = transaction.objectStore(oldTableName).openCursor();
-    cursor.onsuccess = (event: any) => { // Using any here as the TypeScript definition is wrong
-      const cursorResult = event.target.result as IDBCursorWithValue;
-      if (!cursorResult) {
+    cursor.onsuccess = () => {
+      if (!cursor.result) {
         // Delete old table once we have gone through all records
         db.deleteObjectStore(oldTableName);
         return;
       }
-      const oldValue = cursorResult.value;
+      const oldValue = cursor.result.value;
       transaction
         .objectStore(newTableName)
         .put({
@@ -192,7 +191,7 @@ export default class IndexedDb {
           appId: oldValue.appId,
           timestamp: oldValue.timestamp,
         });
-      cursorResult.continue();
+      cursor.result.continue();
     };
     cursor.onerror = () => { throw cursor.error; };
   }
@@ -210,17 +209,16 @@ export default class IndexedDb {
 
     const oldTableName = "NotificationReceived"
     const cursor = transaction.objectStore(oldTableName).openCursor();
-    cursor.onsuccess = (event: any) => { // Using any here as the TypeScript definition is wrong
-      const cursorResult = event.target.result as IDBCursorWithValue;
-      if (!cursorResult) {
+    cursor.onsuccess = () => {
+      if (!cursor.result) {
         // Delete old table once we have gone through all records
         db.deleteObjectStore(oldTableName);
         return;
       }
       transaction
         .objectStore(newTableName)
-        .put(cursorResult.value);
-      cursorResult.continue();
+        .put(cursor.result.value);
+        cursor.result.continue();
     };
     cursor.onerror = () => { throw cursor.error; };
   }

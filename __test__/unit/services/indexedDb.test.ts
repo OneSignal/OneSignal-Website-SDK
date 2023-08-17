@@ -78,9 +78,8 @@ describe('migrations', () => {
         openDbRequest.onsuccess = resolve;
       });
       const dbUpgradePromise = new Promise<void>((resolve) => {
-        openDbRequest.onupgradeneeded = function (event: any) {
-          const target = event.target as IDBOpenDBRequest;
-          const db = target.result;
+        openDbRequest.onupgradeneeded = () => {
+          const db = openDbRequest.result;
           db.createObjectStore("NotificationClicked", { keyPath: "notification.id" });
           db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
           resolve();
