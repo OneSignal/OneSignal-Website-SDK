@@ -1,6 +1,6 @@
 import { OutcomesConfig, OutcomeAttribution, OutcomeAttributionType, SentUniqueOutcome } from '../models/Outcomes';
 import { OutcomesNotificationReceived } from "../models/OutcomesNotificationEvents";
-import Database from "../services/Database";
+import Database, { TABLE_OUTCOMES_NOTIFICATION_RECEIVED } from "../services/Database";
 import Log from '../libraries/Log';
 import { Utils } from "../../shared/context/Utils";
 import { logMethodCall, awaitOneSignalInitAndSupported } from '../utils/utils';
@@ -235,7 +235,7 @@ export default class OutcomesHelper {
         const notificationIdsToDelete = allReceivedNotificationSorted
           .filter(notif => matchingNotificationIds.indexOf(notif.notificationId) === -1)
           .map(notif => notif.notificationId);
-        notificationIdsToDelete.forEach(id => Database.remove("NotificationReceived", id));
+        notificationIdsToDelete.forEach(id => Database.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED, id));
         Log.debug(`\t${notificationIdsToDelete.length} received notifications will be deleted.`);
 
         if (matchingNotificationIds.length > 0) {

@@ -40,12 +40,13 @@ interface DatabaseResult {
 
 /**
  * "NotificationOpened" = Pending Notification Click events that haven't fired yet
- * "NotificationClicked" = Outcomes only, notifications part of it's session
- * "NotificationReceived" = Outcomes only, notifications part of it's session
  */
 
+export const TABLE_OUTCOMES_NOTIFICATION_CLICKED = "Outcomes.NotificationClicked";
+export const TABLE_OUTCOMES_NOTIFICATION_RECEIVED = "Outcomes.NotificationReceived";
+
 export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions" |
-  "NotificationOpened" | "NotificationReceived" | "NotificationClicked" | "SentUniqueOutcome" |  ModelName;
+  "NotificationOpened" | typeof TABLE_OUTCOMES_NOTIFICATION_RECEIVED | typeof TABLE_OUTCOMES_NOTIFICATION_CLICKED | "SentUniqueOutcome" |  ModelName;
 
 export default class Database {
 
@@ -443,13 +444,13 @@ export default class Database {
   }
 
   async getAllNotificationClickedForOutcomes(): Promise<OutcomesNotificationClicked[]> {
-    const notifications = await this.getAll<NotificationReceivedForOutcomesSchema>("NotificationClicked");
+    const notifications = await this.getAll<NotificationReceivedForOutcomesSchema>(TABLE_OUTCOMES_NOTIFICATION_CLICKED);
     return notifications.map(notification => NotificationClickedForOutcomesSerializer.fromDatabase(notification));
   }
 
   async putNotificationClickedForOutcomes(appId: string, event: NotificationClickEventInternal): Promise<void> {
     await this.put(
-      "NotificationClicked",
+      TABLE_OUTCOMES_NOTIFICATION_CLICKED,
       NotificationClickedForOutcomesSerializer.toDatabase(appId, event)
     );
   }
@@ -476,17 +477,17 @@ export default class Database {
   }
 
   async removeAllNotificationClickedForOutcomes(): Promise<void> {
-    await this.remove("NotificationClicked");
+    await this.remove(TABLE_OUTCOMES_NOTIFICATION_CLICKED);
   }
 
   async getAllNotificationReceivedForOutcomes(): Promise<OutcomesNotificationReceived[]> {
-    const notifications = await this.getAll<NotificationReceivedForOutcomesSchema>("NotificationReceived");
+    const notifications = await this.getAll<NotificationReceivedForOutcomesSchema>(TABLE_OUTCOMES_NOTIFICATION_RECEIVED);
     return notifications.map(notification => NotificationReceivedForOutcomesSerializer.fromDatabase(notification));
   }
 
   async putNotificationReceivedForOutcomes(appId: string, notification: IOSNotification): Promise<void> {
     await this.put(
-      "NotificationReceived",
+      TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
       NotificationReceivedForOutcomesSerializer.toDatabase(appId, notification, new Date().getTime())
     );
   }
@@ -510,8 +511,8 @@ export default class Database {
       Database.singletonInstance.remove("Ids"),
       Database.singletonInstance.remove("NotificationOpened"),
       Database.singletonInstance.remove("Options"),
-      Database.singletonInstance.remove("NotificationReceived"),
-      Database.singletonInstance.remove("NotificationClicked"),
+      Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED),
+      Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_CLICKED),
       Database.singletonInstance.remove("SentUniqueOutcome")
     ]);
   }
