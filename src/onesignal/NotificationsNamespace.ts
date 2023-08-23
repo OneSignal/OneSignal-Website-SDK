@@ -121,17 +121,17 @@ export default class NotificationsNamespace extends EventListenerBase {
 
   /**
    * Shows a native browser prompt.
+   * Requirement: Must be called from a "user gesture" (click / tap event).
+   *  Otherwise some browsers (Firefox & Safari) won't show anything.
+   * Implementation choice note: We don't have any "error" handling when the
+   *  requirement is not met, as browsers do not provide an API for this, w/o
+   *  requiring be passed to this function that is.
+   *  See https://github.com/OneSignal/OneSignal-Website-SDK/issues/1098
    * @PublicApi
    */
    async requestPermission(): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    const requiresUserInteraction = OneSignal.environmentInfo?.requiresUserInteraction;
-    if (!requiresUserInteraction) {
-      await OneSignal.context.promptsManager.internalShowNativePrompt();
-      return;
-    }
-
-    await OneSignal.Slidedown.promptPush();
+    await OneSignal.context.promptsManager.internalShowNativePrompt();
   }
 
   addEventListener<K extends NotificationEventName>(event: K, listener: (obj: NotificationEventTypeMap[K]) => void): void {
