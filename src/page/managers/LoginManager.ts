@@ -284,7 +284,11 @@ export default class LoginManager {
    */
   static async transferSubscription(appId: string, pushSubscriptionId: string, identity: SupportedIdentity):
     Promise<Partial<UserData>> {
-      Log.info(`identifyUser failed: externalId already exists. Attempting to transfer push subscription...`);
+      Log.error(
+        "^^^ Handling 409 HTTP response reported by the browser above."
+        + " This is an expected result when the User already exists."
+        + " Push subscription is being transferred the existing User."
+      );
 
       const retainPreviousOwner = false;
       const transferResponse = await RequestService.transferSubscription(
