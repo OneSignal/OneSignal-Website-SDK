@@ -17,7 +17,7 @@ import {
 } from "../../support/mocks/service-workers/models/MockPushSubscriptionChangeEvent";
 import OneSignalApiSW from '../../../src/shared/api/OneSignalApiSW';
 
-declare var self: ServiceWorkerGlobalScope;
+declare let self: ServiceWorkerGlobalScope;
 const appId = Random.getRandomUuid();
 const existingDeviceId = Random.getRandomUuid();
 let oldSubscription: PushSubscription;

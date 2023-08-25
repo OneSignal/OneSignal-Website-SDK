@@ -135,6 +135,7 @@ export class ConverterHelper {
       ];
 
       for (let i = 0; i < version0Keys.length; i++) {
+        // eslint-disable-next-line no-prototype-builtins
         if (slidedownConfig.hasOwnProperty(version0Keys[i])) return true;
       }
     }
@@ -185,6 +186,7 @@ export class ConverterHelper {
             ];
 
             for (let i = 0; i < version1Keys.length; i++) {
+                // eslint-disable-next-line no-prototype-builtins
                 if (slidedownConfig.hasOwnProperty(version1Keys[i])) return true;
             }
         }

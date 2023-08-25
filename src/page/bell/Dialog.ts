@@ -53,7 +53,7 @@ export default class Dialog extends AnimatedElement {
         }
         let contents = 'Nothing to show.';
 
-        var footer = '';
+        let footer = '';
         if (this.bell.options.showCredit) {
           footer = `<div class="divider"></div><div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>`;
         }

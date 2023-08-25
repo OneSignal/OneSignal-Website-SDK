@@ -11,7 +11,7 @@ import { SessionOrigin, initializeNewSession, SessionStatus, Session } from "../
 import OneSignalApiSW from "../api/OneSignalApiSW";
 import Path from "../models/Path";
 
-declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
+declare let self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class ServiceWorkerHelper {
   public static getServiceWorkerHref(

@@ -24,9 +24,13 @@ function onesignalSdkInit() {
   // TODO: We might be able to remove this down the line but reasons to keep for now:
   //         * Number of internal SDK code expects window.OneSignal
   //         * Keep JS console usage easier for debugging / testing.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   (<any>window).OneSignal = require('../onesignal/OneSignal').default;
 
+  // TODO: Could we do an import as a different name then assign it instead?
+  // We need to use "require" here has as import would clobber OneSignalDeferred and we
   const existingOneSignalDeferred = (<any>window).OneSignalDeferred;
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   (<any>window).OneSignalDeferred = require('../onesignal/OneSignalDeferred').default;
   ReplayCallsOnOneSignal.processOneSignalDeferredArray(existingOneSignalDeferred);
 }

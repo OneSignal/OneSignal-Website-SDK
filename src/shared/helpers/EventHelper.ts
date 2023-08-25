@@ -244,11 +244,11 @@ export default class EventHelper {
 
         As a workaround, if there are no notifications for https://site.com/, we'll do a check for https://site.com.
       */
-      var pageClickedNotifications = appState.pendingNotificationClickEvents[url];
+      let pageClickedNotifications = appState.pendingNotificationClickEvents[url];
       if (pageClickedNotifications) {
         await fireEventWithNotification(pageClickedNotifications);
       } else if (!pageClickedNotifications && url.endsWith('/')) {
-        var urlWithoutTrailingSlash = url.substring(0, url.length - 1);
+        const urlWithoutTrailingSlash = url.substring(0, url.length - 1);
         pageClickedNotifications = appState.pendingNotificationClickEvents[urlWithoutTrailingSlash];
         if (pageClickedNotifications) {
           await fireEventWithNotification(pageClickedNotifications);

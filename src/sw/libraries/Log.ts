@@ -1,6 +1,6 @@
 import { OSServiceWorkerFields } from "../serviceWorker/types";
 
-declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
+declare let self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class Log {
   static debug(...args: any[]): void {

@@ -51,7 +51,7 @@ export class ServiceWorkerManager {
       const env = SdkEnvironment.getWindowEnv();
       switch (env) {
         case WindowEnvironmentKind.Host:
-        case WindowEnvironmentKind.CustomIframe:
+        case WindowEnvironmentKind.CustomIframe: {
           /* Both these top-ish frames will need to ask the proxy frame to access the service worker
           registration */
           const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
@@ -63,6 +63,7 @@ export class ServiceWorkerManager {
               OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE
             );
           }
+        }
         case WindowEnvironmentKind.OneSignalSubscriptionPopup:
           /* This is a top-level frame, so it can access the service worker registration */
           break;
@@ -121,6 +122,7 @@ export class ServiceWorkerManager {
   }
 
   public async getWorkerVersion(): Promise<number> {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise<number>(async resolve => {
       if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
         const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;

@@ -19,6 +19,7 @@ export class Operation<Model> {
     this.payload = deltas ? this.getPayload(deltas) : undefined;
     this.model = deltas ? deltas[deltas.length-1].model : undefined;
     this.timestamp = Date.now();
+    // eslint-disable-next-line no-async-promise-executor
     this.jwtTokenAvailable = new Promise<void>(async resolve => {
       this.jwtToken = await Database.getJWTToken();
       resolve();
@@ -49,6 +50,7 @@ export class Operation<Model> {
          * 3. Delta 2: { a: { c: 3 } }
          * 4. Result: { a: { b: 2, c: 3 } }
          */
+        // eslint-disable-next-line no-prototype-builtins
         const hasExistingProperty = result.hasOwnProperty(delta.property);
         const newValueIsPureObject = isPureObject(delta.newValue);
         const oldValueIsPureObject = isPureObject(delta.oldValue);

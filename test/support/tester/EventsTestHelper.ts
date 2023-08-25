@@ -29,7 +29,7 @@ export default class EventsTestHelper {
       };
   }
 
-  public getShownPromiseWithEventCounts(resolveAfter: number = 0): Promise<void> {
+  public getShownPromiseWithEventCounts(resolveAfter = 0): Promise<void> {
     return new Promise<void>(resolve => {
         OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
             this.eventCounts.shown += 1;
@@ -38,7 +38,7 @@ export default class EventsTestHelper {
     });
   }
 
-  public getClosedPromiseWithEventCounts(resolveAfter: number = 0): Promise<void> {
+  public getClosedPromiseWithEventCounts(resolveAfter = 0): Promise<void> {
       return new Promise<void>(resolve => {
           OneSignal.on(Slidedown.EVENTS.CLOSED, () => {
               this.eventCounts.closed += 1;

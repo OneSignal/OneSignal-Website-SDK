@@ -22,7 +22,7 @@ export default class OneSignalApiShared {
   }
 
   static sendNotification(appId: string, playerIds: Array<string>, titles, contents, url, icon, data, buttons) {
-    var params = {
+    const params = {
       app_id: appId,
       contents: contents,
       include_player_ids: playerIds,

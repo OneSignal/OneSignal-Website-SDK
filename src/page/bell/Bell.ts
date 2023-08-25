@@ -26,9 +26,9 @@ type BellState = 'uninitialized' | 'subscribed' | 'unsubscribed' | 'blocked';
 export default class Bell {
   public options: AppUserConfigNotifyButton;
   public state: BellState = Bell.STATES.UNINITIALIZED;
-  public _ignoreSubscriptionState: boolean = false;
-  public hovering: boolean = false;
-  public initialized: boolean = false;
+  public _ignoreSubscriptionState = false;
+  public hovering = false;
+  public initialized = false;
   public _launcher: Launcher | undefined;
   public _button: any;
   public _badge: any;
@@ -37,7 +37,7 @@ export default class Bell {
 
   private DEFAULT_SIZE: BellSize = "medium";
   private DEFAULT_POSITION: BellPosition = "bottom-right";
-  private DEFAULT_THEME: string = "default";
+  private DEFAULT_THEME = "default";
 
   static get EVENTS() {
     return {
@@ -105,17 +105,17 @@ export default class Bell {
     if (!this.dialog.shown) {
       this.dialog.show()
         .then(() => {
-          once(document, 'click', (e: Event, destroyEventListener: Function) => {
+          once(document, 'click', (e: Event, destroyEventListener: () => void) => {
             const wasDialogClicked = this.dialog.element.contains(e.target);
             if (wasDialogClicked) {
-            } else {
-              destroyEventListener();
-              if (this.dialog.shown) {
-                this.dialog.hide()
-                  .then(() => {
-                    this.launcher.inactivateIfWasInactive();
-                  });
-              }
+              return;
+            }
+            destroyEventListener();
+            if (this.dialog.shown) {
+              this.dialog.hide()
+                .then(() => {
+                  this.launcher.inactivateIfWasInactive();
+                });
             }
           }, true);
         });

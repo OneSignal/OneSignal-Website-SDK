@@ -28,7 +28,6 @@ import OneSignalApiShared from "../api/OneSignalApiShared";
 import FuturePushSubscriptionRecord from "../../page/userModel/FuturePushSubscriptionRecord";
 import { FutureSubscriptionModel, SupportedSubscription } from "../../core/models/SubscriptionModels";
 import { StringKeys } from "../../core/models/StringKeys";
-import OneSignalError from "../errors/OneSignalError";
 import { SessionOrigin } from "../models/Session";
 import { executeCallback, logMethodCall } from "../utils/utils";
 import UserDirector from "../../onesignal/UserDirector";
@@ -440,14 +439,14 @@ export class SubscriptionManager {
       if (err instanceof ServiceWorkerRegistrationError) {
         if (err.status === 403) {
           await this.context.subscriptionManager.registerFailedSubscription(
-            SubscriptionStateKind.ServiceWorkerStatus403, 
+            SubscriptionStateKind.ServiceWorkerStatus403,
             this.context);
         } else if (err.status === 404) {
           await this.context.subscriptionManager.registerFailedSubscription(
             SubscriptionStateKind.ServiceWorkerStatus404,
             this.context);
-        } 
-      } 
+        }
+      }
       throw err;
     }
 
@@ -682,7 +681,7 @@ export class SubscriptionManager {
         } else {
           return await this.isSubscriptionExpiringForSecureIntegration();
         }
-      case IntegrationKind.InsecureProxy:
+      case IntegrationKind.InsecureProxy: {
         /* If we're in an insecure frame context, check the stored expiration since we can't access
         the actual push subscription. */
         const { expirationTime } = await Database.getSubscription();
@@ -695,6 +694,7 @@ export class SubscriptionManager {
 
         /* The current time (in UTC) is past the expiration time (also in UTC) */
         return new Date().getTime() >= expirationTime;
+      }
     }
   }
 
@@ -754,14 +754,15 @@ export class SubscriptionManager {
     const windowEnv = SdkEnvironment.getWindowEnv();
 
     switch (windowEnv) {
-      case WindowEnvironmentKind.ServiceWorker:
+      case WindowEnvironmentKind.ServiceWorker: {
         const pushSubscription = await (<ServiceWorkerGlobalScope><any>self).registration.pushManager.getSubscription();
         const { optedOut } = await Database.getSubscription();
         return {
           subscribed: !!pushSubscription,
           optedOut: !!optedOut
         };
-      default:
+      }
+      default: {
         /* Regular browser window environments */
         const integration = await SdkEnvironment.getIntegration();
 
@@ -774,19 +775,21 @@ export class SubscriptionManager {
               case WindowEnvironmentKind.OneSignalSubscriptionPopup:
               case WindowEnvironmentKind.OneSignalSubscriptionModal:
                 return this.getSubscriptionStateForSecure();
-              default:
+              default: {
                 /* Re-run this command in the proxy frame */
                 const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
                 const pushSubscriptionState = await proxyFrameHost.runCommand<PushSubscriptionState>(
                   OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE
                 );
                 return pushSubscriptionState;
+              }
             }
           case IntegrationKind.InsecureProxy:
             return await this.getSubscriptionStateForInsecure();
           default:
             throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
         }
+      }
     }
   }
 

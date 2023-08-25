@@ -46,12 +46,10 @@ export class Utils {
    * Only affects keys that the object directly contains (i.e. not those inherited via the object's prototype).
    * @param object
    */
-  public static trimUndefined(object: any) {
+  public static trimUndefined(object: Record<string, unknown>) {
     for (const property in object) {
-      if (object.hasOwnProperty(property)) {
-        if (object[property] === undefined) {
-          delete object[property];
-        }
+      if (object[property] === undefined) {
+        delete object[property];
       }
     }
     return object;
@@ -209,8 +207,8 @@ export class Utils {
   static sortArrayOfObjects<TObject, TProperty>(
     arrayToSort: TObject[],
     predicateForProperty: (obj: TObject) => TProperty,
-    descending: boolean = false,
-    doItInPlace: boolean = true
+    descending = false,
+    doItInPlace = true
   ): TObject[] {
     const internalArrayToSort = doItInPlace ? arrayToSort : arrayToSort.slice();
     internalArrayToSort.sort((a: TObject, b: TObject) => {

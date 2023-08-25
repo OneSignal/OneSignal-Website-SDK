@@ -5,7 +5,7 @@ export default class Random {
    * @param characterSet A string of characters to allow. Each character of the random string will
    * be one character of this set chosen at random.
    */
-  public static getRandomString(length: number, characterSet: string = "abcdefghijklmnopqrstuvwxyz0123456789") {
+  public static getRandomString(length: number, characterSet = "abcdefghijklmnopqrstuvwxyz0123456789") {
     return this.getRandomArray(length, characterSet.length, 0)
       .map(n => characterSet[n])
       .join('');

@@ -54,10 +54,10 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         if (this.targetTransitionEvents.length == 0) {
           return resolve(this);
         } else {
-          var timerId = setTimeout(() => {
+          const timerId = setTimeout(() => {
             Log.debug(`Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`);
           }, this.transitionCheckTimeout);
-          once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
+          once(this.element, 'transitionend', (event: Event, destroyListenerFn: () => void) => {
             if (event.target === this.element &&
               contains(this.targetTransitionEvents, (event as any).propertyName)) {
               clearTimeout(timerId);
@@ -99,15 +99,15 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         if (this.inactiveClass)
           addCssClass(element, this.inactiveClass);
       }
-      
+
       if (this.shown) {
         if (this.targetTransitionEvents.length == 0) {
           return resolve(this);
         } else {
-          var timerId = setTimeout(() => {
+          const timerId = setTimeout(() => {
             Log.debug(`Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`);
           }, this.transitionCheckTimeout);
-          once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
+          once(this.element, 'transitionend', (event: Event, destroyListenerFn: () => void) => {
             if (event.target === this.element &&
               contains(this.targetTransitionEvents, (event as any).propertyName)) {
               clearTimeout(timerId);

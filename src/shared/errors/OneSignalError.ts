@@ -17,6 +17,7 @@ export default class OneSignalError extends Error {
       writable : true,
     });
 
+    // eslint-disable-next-line no-prototype-builtins
     if (Error.hasOwnProperty('captureStackTrace')) {
       Error.captureStackTrace(this, this.constructor);
       return;

@@ -14,8 +14,8 @@ import {
   InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';
 
-let sinonSandbox: SinonSandbox = sinon.sandbox.create();
-let initTestHelper = new InitTestHelper(sinonSandbox);
+const sinonSandbox: SinonSandbox = sinon.sandbox.create();
+const initTestHelper = new InitTestHelper(sinonSandbox);
 
 test.beforeEach(function () {
   nock.disableNetConnect();

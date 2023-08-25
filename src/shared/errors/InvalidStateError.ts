@@ -24,12 +24,13 @@ export class InvalidStateError extends OneSignalError {
       case InvalidStateReason.MissingAppId:
         errorMessage =`Missing required app ID.`;
         break;
-      case InvalidStateReason.RedundantPermissionMessage:
+      case InvalidStateReason.RedundantPermissionMessage: {
         let extraInfo = '';
         if (extra && extra.permissionPromptType)
           extraInfo = `(${PermissionPromptType[extra.permissionPromptType]})`;
         errorMessage = `Another permission message ${extraInfo} is being displayed.`;
         break;
+      }
       case InvalidStateReason.PushPermissionAlreadyGranted:
         errorMessage = `Push permission has already been granted.`;
         break;

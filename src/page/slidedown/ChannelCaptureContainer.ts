@@ -21,8 +21,8 @@ interface TypeSpecificVariablePayload {
 }
 
 export default class ChannelCaptureContainer {
-  public smsInputFieldIsValid: boolean = true;
-  public emailInputFieldIsValid: boolean = true;
+  public smsInputFieldIsValid = true;
+  public emailInputFieldIsValid = true;
   private promptOptions: SlidedownPromptOptions;
   private itiOneSignal: any; // iti library initialization return obj
 

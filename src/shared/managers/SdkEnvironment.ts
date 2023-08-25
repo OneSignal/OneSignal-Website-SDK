@@ -12,7 +12,7 @@ const API_URL_PORT = 3001;
 const TURBINE_API_URL_PORT = 18080;
 const TURBINE_ENDPOINTS = ["outcomes", "on_focus"];
 
-declare var self: ServiceWorkerGlobalScope | undefined;
+declare let self: ServiceWorkerGlobalScope | undefined;
 
 export default class SdkEnvironment {
   /**

@@ -85,7 +85,7 @@ export default class Button extends ActiveAnimatedElement {
       return;
     }
 
-    var optedOut = LimitStore.getLast('subscription.optedOut');
+    const optedOut = LimitStore.getLast('subscription.optedOut');
     if (this.bell.unsubscribed) {
       if (optedOut) {
         // The user is manually opted out, but still "really" subscribed

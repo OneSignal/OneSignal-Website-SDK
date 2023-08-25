@@ -197,7 +197,7 @@ export class ConfigHelper {
     promptOptions: AppUserConfigPromptOptions | undefined,
     defaultsFromServer: ServerAppPromptConfig,
     wholeUserConfig: AppUserConfig,
-    isUsingSubscriptionWorkaround: boolean = false,
+    isUsingSubscriptionWorkaround = false,
   ): AppUserConfigPromptOptions | undefined {
 
     let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
@@ -283,6 +283,7 @@ export class ConfigHelper {
 
     if (promptOptionsConfig.native) {
       promptOptionsConfig.native.enabled = !!promptOptionsConfig.native.enabled;
+      // eslint-disable-next-line no-prototype-builtins
       promptOptionsConfig.native.autoPrompt = promptOptionsConfig.native.hasOwnProperty("autoPrompt") ?
         !!promptOptionsConfig.native.enabled && !!promptOptionsConfig.native.autoPrompt :
         !!promptOptionsConfig.native.enabled;
@@ -379,7 +380,7 @@ export class ConfigHelper {
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig,
-    isUsingSubscriptionWorkaround: boolean = false,
+    isUsingSubscriptionWorkaround = false,
   ): AppUserConfig {
     const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
     switch (integrationCapabilities.configuration) {
@@ -474,7 +475,7 @@ export class ConfigHelper {
             unattributed: serverConfig.config.outcomes.unattributed,
           }
         };
-      case IntegrationConfigurationKind.JavaScript:
+      case IntegrationConfigurationKind.JavaScript: {
         /*
           Ignores dashboard configuration and uses code-based configuration only.
           Except injecting some default values for prompts.
@@ -509,8 +510,10 @@ export class ConfigHelper {
           }
         };
 
+        // eslint-disable-next-line no-prototype-builtins
         if (userConfig.hasOwnProperty("autoResubscribe")) {
           config.autoResubscribe = !!userConfig.autoResubscribe;
+        // eslint-disable-next-line no-prototype-builtins
         } else if (userConfig.hasOwnProperty("autoRegister")) {
           config.autoResubscribe = !!userConfig.autoRegister;
         } else {
@@ -518,6 +521,7 @@ export class ConfigHelper {
         }
 
         return config;
+      }
     }
   }
 

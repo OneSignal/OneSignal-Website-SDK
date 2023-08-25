@@ -8,7 +8,7 @@ import { logMethodCall } from "../../shared/utils/utils";
 
 export default class ModelCache {
   private _mutexPromise: Promise<void> = Promise.resolve();
-  private _mutexLocked: boolean = false;
+  private _mutexLocked = false;
 
   /**
    * Add an entire model to the cache
@@ -45,6 +45,7 @@ export default class ModelCache {
     }
 
     this._mutexLocked = true;
+    // eslint-disable-next-line no-async-promise-executor
     this._mutexPromise = new Promise(async (resolve, reject) => {
       logMethodCall("ModelCache.update", { modelName, modelId, key, value });
       const model = await this.get(modelName, modelId);

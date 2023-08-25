@@ -26,8 +26,8 @@ export default class ProxyFrameHost implements Disposable {
   // Promise to track whether the frame has finished loading
   private loadPromise: {
     promise: Promise<void>,
-    resolver: Function,
-    rejector: Function
+    resolver: (value?: unknown) => void,
+    rejector: (reason?: unknown) => void
   };
 
   /**
@@ -216,6 +216,7 @@ export default class ProxyFrameHost implements Disposable {
    * Shortcut method to messenger.message().
    */
   message(..._) {
+    // eslint-disable-next-line prefer-spread, prefer-rest-params
     this.messenger.message.apply(this.messenger, arguments);
   }
 }

@@ -19,7 +19,7 @@ export function decodeHtmlEntities(text: string) {
 }
 
 export function removeDomElement(selector: string) {
-  var els = document.querySelectorAll(selector);
+  const els = document.querySelectorAll(selector);
   if (els.length > 0) {
     for (let i = 0; i < els.length; i++) {
       const parentNode = els[i].parentNode;
@@ -78,6 +78,7 @@ export function stringify(obj: any) {
 
 export function executeCallback<T>(callback?: Action<T>, ...args: any[]) {
   if (callback) {
+    // eslint-disable-next-line prefer-spread
     return callback.apply(null, args);
   }
 }
@@ -88,6 +89,7 @@ export function logMethodCall(methodName: string, ...args: any[]) {
 
 export function isValidEmail(email: string | undefined | null) {
   return !!email &&
+         // eslint-disable-next-line no-control-regex
          !!email.match(/(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/);
 }
 
@@ -240,8 +242,8 @@ export function isValidUuid(uuid: string) {
 export function getUrlQueryParam(name: string) {
   let url = window.location.href;
   url = url.toLowerCase(); // This is just to avoid case sensitiveness
-  name = name.replace(/[\[\]]/g, "\\$&").toLowerCase(); // This is just to avoid case sensitiveness for query parameter name
-  var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+  name = name.replace(/[[\]]/g, "\\$&").toLowerCase(); // This is just to avoid case sensitiveness for query parameter name
+  const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
     results = regex.exec(url);
   if (!results) return null;
   if (!results[2]) return '';
@@ -328,7 +330,7 @@ export function substringAfter(string: string, search: string) {
   return string.substr(string.indexOf(search) + search.length);
 }
 
-export function once(targetSelectorOrElement: string | string[] | Element | Document, event: string, task: Function, manualDestroy=false) {
+export function once(targetSelectorOrElement: string | string[] | Element | Document, event: string, task?: (e: Event, callback: () => void) => void, manualDestroy=false) {
   if (!event) {
     Log.error('Cannot call on() with no event: ', event);
   }
@@ -347,9 +349,9 @@ export function once(targetSelectorOrElement: string | string[] | Element | Docu
       once((targetSelectorOrElement as string[])[i], event, task);
   }
   else if (typeof targetSelectorOrElement === 'object') {
-    var taskWrapper = (function () {
-      var internalTaskFunction = function (e: Event) {
-        var destroyEventListener = function() {
+    const taskWrapper = (function () {
+      const internalTaskFunction = function (e: Event) {
+        const destroyEventListener = function() {
           (targetSelectorOrElement as Element | Document).removeEventListener(e.type, taskWrapper);
         };
         if (!manualDestroy) {

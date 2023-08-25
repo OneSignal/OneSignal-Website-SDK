@@ -15,10 +15,8 @@ import OneSignalApiShared from "./OneSignalApiShared";
 export class OneSignalApiSW {
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
     Utils.enforceAppId(appId);
-    return await new Promise<ServerAppConfig>(async (resolve, _reject) => {
-      const response = await OneSignalApiBase.get(`sync/${appId}/web`, null);
-      resolve(response?.result);
-    });
+    const response = await OneSignalApiBase.get(`sync/${appId}/web`, null);
+    return response?.result;
   }
 
   /**
@@ -49,7 +47,7 @@ export class OneSignalApiSW {
     });
   }
 
-  static async updatePlayer(appId: string, playerId: string, options?: Object): Promise<void> {
+  static async updatePlayer(appId: string, playerId: string, options?: object): Promise<void> {
     const funcToExecute = async () => {
       await OneSignalApiBase.put(`players/${playerId}`, { app_id: appId, ...options });
     };

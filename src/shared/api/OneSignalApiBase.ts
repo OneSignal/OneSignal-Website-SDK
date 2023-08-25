@@ -71,7 +71,7 @@ export class OneSignalApiBase {
       return OneSignalApiBase.executeFetch(url, contents);
   }
 
-  private static async executeFetch(url: string, contents: RequestInit, retry: number = 5):
+  private static async executeFetch(url: string, contents: RequestInit, retry = 5):
     Promise<OneSignalApiBaseResponse> {
       if (retry === 0) {
         return Promise.reject(new OneSignalApiError(OneSignalApiErrorKind.RetryLimitReached));

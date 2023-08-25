@@ -13,7 +13,7 @@ export function isModelDelta<Model>(delta: CoreDelta<Model>): delta is ModelDelt
   return (delta as ModelDelta<Model>).model !== undefined && (delta as PropertyDelta<Model>).property === undefined;
 }
 
-export function isPureObject(obj: any): obj is Object {
+export function isPureObject(obj: any): obj is Record<string, unknown> {
   return obj !== null && typeof obj === "object" && obj?.constructor === Object;
 }
 

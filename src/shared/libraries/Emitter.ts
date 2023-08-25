@@ -41,10 +41,12 @@ export default class Emitter {
    * execute only once.
    */
   public once(event: string, listener: EventHandler): Emitter {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
 
-    function fn(this: Function) {
+    function fn(this: unknown) {
       that.off(event, fn);
+      // eslint-disable-next-line prefer-rest-params
       listener.apply(this, arguments);
     }
 
@@ -79,13 +81,10 @@ export default class Emitter {
    * Removes all listeners from the collection for a specified event.
    */
   public removeAllListeners(event?: string): Emitter {
-    try {
-      if (event)
-        delete this._events[event];
-      else
-        this._events = {};
-
-    } catch(e) {}
+    if (event)
+      delete this._events[event];
+    else
+      this._events = {};
 
     return this;
   }
@@ -138,7 +137,7 @@ export default class Emitter {
       listeners = listeners.slice(0);
       const len = listeners.length;
       for (let i = 0; i < len; i += 1)
-        await (listeners[i] as Function).apply(this, args);
+        await (listeners[i] as () => void).apply(this, args);
     }
 
     return this;

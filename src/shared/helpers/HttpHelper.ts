@@ -9,7 +9,7 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { getConsoleStyle } from '../utils/utils';
 import OneSignalEvent from '../services/OneSignalEvent';
 
-declare var OneSignal: any;
+declare let OneSignal: any;
 
 export default class HttpHelper {
 

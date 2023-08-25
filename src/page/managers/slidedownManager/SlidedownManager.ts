@@ -50,7 +50,7 @@ export class SlidedownManager {
 
     const slidedownType = options.slidedownPromptOptions?.type;
 
-    let isSlidedownPushDependent: boolean = false;
+    let isSlidedownPushDependent = false;
 
     if (!!slidedownType) {
       isSlidedownPushDependent = PromptsHelper.isSlidedownPushDependent(slidedownType);

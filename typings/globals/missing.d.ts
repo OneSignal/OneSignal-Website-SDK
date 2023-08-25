@@ -30,22 +30,22 @@ interface Window {
  */
 
 
-declare var OneSignal: any;
-declare var OneSignalDeferred: any;
+declare let OneSignal: any;
+declare let OneSignalDeferred: any;
 
 
 // These __*__ variables are defined from Webpack to change resulting JS
-declare var __VERSION__: string;
-declare var __BUILD_TYPE__: string;
-declare var __NO_DEV_PORT__: string;
-declare var __BUILD_ORIGIN__: string;
-declare var __API_TYPE__: string;
-declare var __API_ORIGIN__: string;
-declare var __IS_HTTPS__: boolean;
-declare var __DEV__: string;
-declare var __TEST__: string;
-declare var __STAGING__: string;
-declare var __IS_ES6__: string;
-declare var __SRC_STYLESHEETS_MD5_HASH__: string;
+declare let __VERSION__: string;
+declare let __BUILD_TYPE__: string;
+declare let __NO_DEV_PORT__: string;
+declare let __BUILD_ORIGIN__: string;
+declare let __API_TYPE__: string;
+declare let __API_ORIGIN__: string;
+declare let __IS_HTTPS__: boolean;
+declare let __DEV__: string;
+declare let __TEST__: string;
+declare let __STAGING__: string;
+declare let __IS_ES6__: string;
+declare let __SRC_STYLESHEETS_MD5_HASH__: string;
 
-declare var __LOGGING__: boolean;
+declare let __LOGGING__: boolean;

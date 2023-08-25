@@ -119,7 +119,7 @@ export class CoreModuleDirector {
 
   /* O P E R A T I O N S */
 
-  public add(modelName: ModelName, model: OSModel<SupportedModel>, propagate: boolean = true): void {
+  public add(modelName: ModelName, model: OSModel<SupportedModel>, propagate = true): void {
     logMethodCall("CoreModuleDirector.add", { modelName, model });
     const modelStores = this.getModelStores();
     modelStores[modelName].add(model, propagate);
@@ -225,15 +225,18 @@ export class CoreModuleDirector {
     {
       logMethodCall("CoreModuleDirector.getSubscriptionOfTypeWithToken", { type, token });
       switch (type) {
-        case ModelName.EmailSubscriptions:
+        case ModelName.EmailSubscriptions: {
           const emailSubscriptions = this.getEmailSubscriptionModels();
           return Object.values(emailSubscriptions).find(subscription => subscription.data.token === token);
-        case ModelName.SmsSubscriptions:
+        }
+        case ModelName.SmsSubscriptions: {
           const smsSubscriptions = this.getSmsSubscriptionModels();
           return Object.values(smsSubscriptions).find(subscription => subscription.data.token === token);
-        case ModelName.PushSubscriptions:
+        }
+        case ModelName.PushSubscriptions: {
           const pushSubscriptions = this.getAllPushSubscriptionModels();
           return Object.values(pushSubscriptions).find(subscription => subscription.data.token === token);
+        }
         default:
           return undefined;
       }

@@ -22,7 +22,7 @@ class AppState {
     lastKnownPushId: string | undefined;
 
     // default true
-    lastKnownOptedIn: boolean = true;
+    lastKnownOptedIn = true;
 
     pendingNotificationClickEvents: PendingNotificationClickEvents | undefined;
 }

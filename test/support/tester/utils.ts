@@ -79,7 +79,7 @@ export class InitTestHelper {
 
 // Helper class to ensure the public OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC event fires
 export class AssertInitSDK {
-  private firedSDKInitializedPublic: boolean = false;
+  private firedSDKInitializedPublic = false;
 
   public setupEnsureInitEventFires(t: ExecutionContext) {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {

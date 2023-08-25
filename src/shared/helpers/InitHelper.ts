@@ -26,7 +26,7 @@ import OneSignalEvent from '../services/OneSignalEvent';
 import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
 import { bowserCastle } from '../utils/bowserCastle';
 
-declare var OneSignal: any;
+declare let OneSignal: any;
 
 export interface RegisterOptions extends SubscriptionPopupHostOptions {
   modalPrompt?: boolean;
@@ -60,7 +60,7 @@ export default class InitHelper {
     once(
       document,
       'visibilitychange',
-      (_: any, destroyEventListener: Function) => {
+      (_: unknown, destroyEventListener: () => void) => {
         if (document.visibilityState === 'visible') {
           destroyEventListener();
           InitHelper.sessionInit();
@@ -263,10 +263,11 @@ export default class InitHelper {
         used to not be able to subscribe for push within secure child frames. The common supported
         and safe way is to resubscribe via the service worker.
        */
-      case IntegrationKind.Secure:
+      case IntegrationKind.Secure: {
         const rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
         await context.subscriptionManager.registerSubscription(rawPushSubscription);
         break;
+      }
       case IntegrationKind.SecureProxy:
         if (windowEnv === WindowEnvironmentKind.OneSignalProxyFrame) {
           await this.registerSubscriptionInProxyFrame(context);

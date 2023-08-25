@@ -39,7 +39,7 @@ export default class SubscriptionHelper {
           Log.info(e);
         }
         break;
-      case WindowEnvironmentKind.OneSignalSubscriptionPopup:
+      case WindowEnvironmentKind.OneSignalSubscriptionPopup: {
         /*
           This is the code for the HTTP popup.
          */
@@ -110,6 +110,7 @@ export default class SubscriptionHelper {
           }
         );
         break;
+      }
       default:
         throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
     }

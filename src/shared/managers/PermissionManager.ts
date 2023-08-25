@@ -210,7 +210,7 @@ export default class PermissionManager {
    */
   public async getInterpretedAmbiguousPermission(reportedPermission: NotificationPermission) {
     switch (reportedPermission) {
-      case NotificationPermission.Denied:
+      case NotificationPermission.Denied: {
         const storedPermission = this.getStoredPermission();
 
         if (storedPermission) {
@@ -220,6 +220,7 @@ export default class PermissionManager {
           // If we don't have any stored permission, assume default
           return NotificationPermission.Default;
         }
+      }
       default:
         return reportedPermission;
     }

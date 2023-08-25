@@ -5,7 +5,7 @@ import LocalStorage from '../utils/LocalStorage';
 
 export class PageViewManager {
   private static SESSION_STORAGE_KEY_NAME = "onesignal-pageview-count";
-  private incrementedPageViewCount: boolean = false;
+  private incrementedPageViewCount = false;
 
   getPageViewCount(): number {
     try {

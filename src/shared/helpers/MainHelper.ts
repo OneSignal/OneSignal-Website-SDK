@@ -117,7 +117,7 @@ export default class MainHelper {
     if (promptOptions) {
       const hash = MainHelper.getPromptOptionsPostHash();
       for (const key of Object.keys(hash)) {
-        var value = hash[key];
+        const value = hash[key];
         promptOptionsStr += '&' + key + '=' + value;
       }
     }
@@ -126,8 +126,9 @@ export default class MainHelper {
 
   static getPromptOptionsPostHash() {
     const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
+    const hash = {};
     if (promptOptions) {
-      var legacyParams = {
+      const legacyParams = {
         exampleNotificationTitleDesktop: 'exampleNotificationTitle',
         exampleNotificationMessageDesktop: 'exampleNotificationMessage',
         exampleNotificationTitleMobile: 'exampleNotificationTitle',
@@ -139,7 +140,7 @@ export default class MainHelper {
           promptOptions[legacyParamValue] = promptOptions[legacyParamKey];
         }
       }
-      var allowedPromptOptions = [
+      const allowedPromptOptions = [
         'autoAcceptTitle',
         'siteName',
         'autoAcceptTitle',
@@ -153,11 +154,10 @@ export default class MainHelper {
         'cancelButton',
         'timeout'
       ];
-      var hash = {};
-      for (var i = 0; i < allowedPromptOptions.length; i++) {
-        var key = allowedPromptOptions[i];
-        var value = promptOptions[key];
-        var encoded_value = encodeURIComponent(value);
+      for (let i = 0; i < allowedPromptOptions.length; i++) {
+        const key = allowedPromptOptions[i];
+        const value = promptOptions[key];
+        const encoded_value = encodeURIComponent(value);
         if (value || value === false || value === '') {
           hash[key] = encoded_value;
         }
@@ -182,7 +182,7 @@ export default class MainHelper {
   }
 
   static async createDeviceRecord(
-    appId: string, includeSubscription: boolean = false): Promise<PushDeviceRecord> {
+    appId: string, includeSubscription = false): Promise<PushDeviceRecord> {
     let subscription: RawPushSubscription | undefined;
     if (includeSubscription) {
       // TODO: refactor to replace config with dependency injection

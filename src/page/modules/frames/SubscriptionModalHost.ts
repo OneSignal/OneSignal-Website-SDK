@@ -132,6 +132,7 @@ export default class SubscriptionModalHost implements Disposable {
    * Shortcut method to messenger.message().
    */
   message() {
+    // eslint-disable-next-line prefer-spread, prefer-rest-params
     this.messenger.message.apply(this.messenger, arguments);
   }
 }

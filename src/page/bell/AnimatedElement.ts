@@ -47,10 +47,10 @@ export default class AnimatedElement {
       if (this.targetTransitionEvents.length == 0) {
         return resolve(this);
       } else {
-        var timerId = setTimeout(() => {
+        const timerId = setTimeout(() => {
           Log.debug(`Element did not completely show (state: ${this.state}).`);
         }, this.transitionCheckTimeout);
-        once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
+        once(this.element, 'transitionend', (event: Event, destroyListenerFn: () => void) => {
           if (event.target === this.element &&
             contains(this.targetTransitionEvents, (event as any).propertyName)) {
             clearTimeout(timerId);
@@ -89,8 +89,8 @@ export default class AnimatedElement {
       if (this.targetTransitionEvents.length == 0) {
         return resolve(this);
       } else {
-        once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
-          var timerId = setTimeout(() => {
+        once(this.element, 'transitionend', (event: Event, destroyListenerFn: () => void) => {
+          const timerId = setTimeout(() => {
             Log.debug(`Element did not completely hide (state: ${this.state}).`);
           }, this.transitionCheckTimeout);
           if (event.target === this.element &&

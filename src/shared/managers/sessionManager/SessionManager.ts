@@ -16,7 +16,7 @@ import Utils from "../../../shared/context/Utils";
 
 export class SessionManager implements ISessionManager {
   private context: ContextInterface;
-  private onSessionSent: boolean = false;
+  private onSessionSent = false;
 
   constructor(context: ContextInterface) {
     this.context = context;

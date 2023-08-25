@@ -19,7 +19,7 @@ import { setupFakePlayerId } from '../../../support/tester/utils';
 import * as awaitableTimeout from '../../../../src/shared/utils/AwaitableTimeout';
 import { NockOneSignalHelper } from '../../../../test/support/tester/NockOneSignalHelper';
 
-declare var self: MockServiceWorkerGlobalScope;
+declare let self: MockServiceWorkerGlobalScope;
 
 let sandbox: SinonSandbox;
 const appConfig = TestEnvironment.getFakeAppConfig();

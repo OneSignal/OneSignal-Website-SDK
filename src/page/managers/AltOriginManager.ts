@@ -6,10 +6,6 @@ import { EnvironmentKind } from '../../shared/models/EnvironmentKind';
 
 export default class AltOriginManager {
 
-  constructor() {
-
-  }
-
   /*
   * This loads all possible iframes that a site could be subscribed to
   * (os.tc & onesignal.com) then checks to see we are subscribed to any.
@@ -82,7 +78,7 @@ export default class AltOriginManager {
 
   /**
    * Only used for sites using a OneSignal subdomain (AKA HTTP setup).
-   * 
+   *
    * Returns the array of possible URL in which the push subscription and
    * IndexedDb site data will be stored.
    *
@@ -94,7 +90,7 @@ export default class AltOriginManager {
    * subdomain.os.tc, we have to load both in certain scenarios to determine
    * which the user is subscribed to; hence, this method returns an array of
    * possible URLs.
-   * 
+   *
    * Order of URL is in priority order of one should be used.
    */
   static getCanonicalSubscriptionUrls(config: AppConfig,
@@ -125,8 +121,8 @@ export default class AltOriginManager {
   static getWildcardLegacySubscriptionDomain(buildEnv: EnvironmentKind): string {
     const apiUrl = SdkEnvironment.getOneSignalApiUrl(buildEnv);
 
-    // Prod and Dev support domains like *.onesignal.com and *.localhost 
-    let envSubdomainParts: number = 2;
+    // Prod and Dev support domains like *.onesignal.com and *.localhost
+    let envSubdomainParts = 2;
     if (buildEnv === EnvironmentKind.Staging) {
       // Allow up to 3 parts so *.staging.onesignal.com works.
       envSubdomainParts = 3;

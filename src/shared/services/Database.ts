@@ -18,7 +18,7 @@ import { SentUniqueOutcome } from '../models/Outcomes';
 import { BundleSMS, SMSProfile } from "../models/SMSProfile";
 import { ModelName } from "../../core/models/SupportedModels";
 import Utils from "../context/Utils";
-import { 
+import {
   NotificationClickForOpenHandlingSchema,
   NotificationClickForOpenHandlingSerializer,
   NotificationClickedForOutcomesSerializer,
@@ -120,7 +120,7 @@ export default class Database {
    */
   async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
     if (this.shouldUsePostmam()) {
-      return await new Promise<T>(async resolve => {
+      return await new Promise<T>(resolve => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
           key: key
@@ -138,7 +138,7 @@ export default class Database {
 
   public async getAll<T>(table: OneSignalDbTable): Promise<T[]> {
     if (this.shouldUsePostmam()) {
-      return await new Promise<T[]>(async resolve => {
+      return await new Promise<T[]>(resolve => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, {
           table: table
         }, (reply: any) => {
@@ -158,7 +158,7 @@ export default class Database {
    * @param keypath
    */
   async put(table: OneSignalDbTable, keypath: any): Promise<void> {
-    await new Promise<void>(async (resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
         OneSignalUtils.isUsingSubscriptionWorkaround() &&
         SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
@@ -175,8 +175,7 @@ export default class Database {
           }
         );
       } else {
-        await this.database.put(table, keypath);
-        resolve();
+        this.database.put(table, keypath).then(() => resolve());
       }
     });
     this.emitter.emit(Database.EVENTS.SET, keypath);
@@ -230,7 +229,7 @@ export default class Database {
 
   async setExternalUserId(externalUserId: string | null, authHash: string | null):
     Promise<void> {
-      const emptyString: string = "";
+      const emptyString = "";
       const externalIdToSave = Utils.getValueOrDefault(externalUserId, emptyString);
       const authHashToSave   = Utils.getValueOrDefault(authHash, emptyString);
 
@@ -471,7 +470,7 @@ export default class Database {
       if (!url) {
         continue;
       }
-      clickedNotifications[url] = event; 
+      clickedNotifications[url] = event;
     }
     return clickedNotifications;
   }
@@ -519,6 +518,7 @@ export default class Database {
 
   // START: Static mappings to instance methods
   static async on(...args: any[]) {
+    // eslint-disable-next-line prefer-spread
     return Database.singletonInstance.emitter.on.apply(Database.singletonInstance.emitter, args);
   }
 

@@ -22,6 +22,7 @@ export function supportsSafariPush(): boolean {
 // Does the browser support the standard Push API
 export function supportsVapidPush(): boolean {
   return typeof PushSubscriptionOptions !== "undefined" &&
+         // eslint-disable-next-line no-prototype-builtins
          PushSubscriptionOptions.prototype.hasOwnProperty("applicationServerKey");
 }
 

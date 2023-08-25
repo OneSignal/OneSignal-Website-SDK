@@ -285,7 +285,7 @@ export class PromptsManager {
       }
 
       switch (type) {
-        case DelayedPromptType.Native:
+        case DelayedPromptType.Native: {
           const nativePromptOptions = promptOptions.native;
           return {
             enabled: nativePromptOptions?.enabled,
@@ -293,11 +293,12 @@ export class PromptsManager {
             timeDelay: nativePromptOptions?.timeDelay,
             pageViews: nativePromptOptions?.pageViews
           };
+        }
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
         case DelayedPromptType.Email:
         case DelayedPromptType.Sms:
-        case DelayedPromptType.SmsAndEmail:
+        case DelayedPromptType.SmsAndEmail: {
           const { userConfig } = this.context.appConfig;
           const options = PromptsHelper
             .getFirstSlidedownPromptOptionsWithType(userConfig.promptOptions?.slidedown?.prompts || [], type);
@@ -307,6 +308,7 @@ export class PromptsManager {
             timeDelay: options?.delay?.timeDelay,
             pageViews: options?.delay?.pageViews
           };
+        }
         default:
           return defaultOptions;
       }

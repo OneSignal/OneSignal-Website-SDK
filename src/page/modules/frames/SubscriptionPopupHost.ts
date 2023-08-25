@@ -26,8 +26,8 @@ export default class SubscriptionPopupHost implements Disposable {
   // Promise to track whether the frame has finished loading
   private loadPromise: {
     promise: Promise<void>,
-    resolver: Function,
-    rejector: Function
+    resolver: (value?: unknown) => void,
+    rejector: (reason?: unknown) => void
   };
 
   /**
@@ -74,19 +74,19 @@ export default class SubscriptionPopupHost implements Disposable {
   //  verb : 'GET'|'POST'
   //  target : an optional opening target (a name, or "_blank"), defaults to "_self"
   openWindowViaPost(url: string, data, overrides) {
-    var form = document.createElement("form");
+    const form = document.createElement("form");
     form.action = url;
     form.method = 'POST';
     form.target = "onesignal-http-popup";
 
-    var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : (screen as any).left;
-    var dualScreenTop = window.screenTop != undefined ? window.screenTop : (screen as any).top;
-    var thisWidth = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
-    var thisHeight = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
-    var childWidth = OneSignal._windowWidth;
-    var childHeight = OneSignal._windowHeight;
-    var left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
-    var top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
+    const dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : (screen as any).left;
+    const dualScreenTop = window.screenTop != undefined ? window.screenTop : (screen as any).top;
+    const thisWidth = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+    const thisHeight = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+    let childWidth = OneSignal._windowWidth;
+    let childHeight = OneSignal._windowHeight;
+    let left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
+    let top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
 
     if (overrides) {
       if (overrides.childWidth) {
@@ -105,8 +105,8 @@ export default class SubscriptionPopupHost implements Disposable {
     const windowRef = window.open('about:blank', "onesignal-http-popup", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
 
     if (data) {
-      for (var key in data) {
-        var input = document.createElement("textarea");
+      for (const key in data) {
+        const input = document.createElement("textarea");
         input.name = key;
         input.value = typeof data[key] === "object" ? JSON.stringify(data[key]) : data[key];
         form.appendChild(input);
@@ -206,6 +206,7 @@ export default class SubscriptionPopupHost implements Disposable {
    */
   message() {
     if (this.messenger) {
+      // eslint-disable-next-line prefer-spread, prefer-rest-params
       this.messenger.message.apply(this.messenger, arguments);
     }
   }

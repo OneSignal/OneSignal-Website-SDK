@@ -12,6 +12,7 @@ export class AuthHashOptionsValidatorHelper {
       return undefined;
     }
 
+    // eslint-disable-next-line no-prototype-builtins
     const validKeys = keys.filter(key => options.hasOwnProperty(key));
     if (validKeys.length > 1) {
       Log.error("More than one key provided, please only provide one!", validKeys);

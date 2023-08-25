@@ -12,7 +12,7 @@ import { getDummyIdentityOSModel, getDummyPushSubscriptionOSModel } from "../hel
 import MainHelper from "../../../src/shared/helpers/MainHelper";
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from "../constants";
 
-declare var global: any;
+declare let global: any;
 
 export interface TestEnvironmentConfig {
   userConfig?: AppUserConfig;

@@ -519,7 +519,9 @@ export class ServiceWorker {
         /* HTTPS origin hosts can be used by prefixing the hostname with ssl: */
         const replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;
         return `https://i0.wp.com/${replacedImageUrl}`;
-      } catch (e) { }
+      } catch (e) {
+        Log.error("ensureImageResourceHttps: ", e);
+      }
     } else return null;
   }
 
@@ -771,7 +773,9 @@ export class ServiceWorker {
       try {
         // Check if the launchUrl is valid; it can be null
         launchOrigin = new URL(launchUrl).origin;
-      } catch (e) {}
+      } catch (e) {
+        Log.error(`Failed parse launchUrl:`, e);
+      }
 
       if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
         (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {

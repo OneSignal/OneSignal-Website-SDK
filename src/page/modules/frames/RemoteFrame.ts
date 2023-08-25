@@ -1,7 +1,6 @@
 import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
 import Postmam from '../../../shared/services/Postmam';
 import Context from '../../models/Context';
-import LocalStorage from '../../../shared/utils/LocalStorage';
 import { EnvironmentInfoHelper } from "../../helpers/EnvironmentInfoHelper";
 import ConfigManager from '../../../page/managers/ConfigManager';
 import SubscriptionHelper from '../../../shared/helpers/SubscriptionHelper';
@@ -31,8 +30,8 @@ export default class RemoteFrame implements Disposable {
   // page has finished
   private loadPromise: {
     promise: Promise<void>;
-    resolver: Function;
-    rejector: Function;
+    resolver: (value?: unknown) => void,
+    rejector: (reason?: unknown) => void
   };
 
   constructor(initOptions: RemoteFrameOptions) {
@@ -72,10 +71,8 @@ export default class RemoteFrame implements Disposable {
     // Within this class, we can use them, but when we assign them to
     // OneSignal.config, assign the simple string versions
     const rasterizedOptions = { ...this.options };
-    rasterizedOptions.appId = rasterizedOptions.appId;
     /* This is necessary, otherwise the subdomain is lost after ConfigManager.getAppConfig */
     (rasterizedOptions as any).subdomainName = rasterizedOptions.subdomain;
-    rasterizedOptions.origin = rasterizedOptions.origin;
     OneSignal.config = rasterizedOptions || {};
 
     const appConfig = await new ConfigManager().getAppConfig(rasterizedOptions);
@@ -91,11 +88,8 @@ export default class RemoteFrame implements Disposable {
       this.loadPromise.rejector = reject;
     });
 
-    this.establishCrossOriginMessaging();
     return this.loadPromise.promise;
   }
-
-  establishCrossOriginMessaging(): void {}
 
   dispose(): void {
     // Removes all events

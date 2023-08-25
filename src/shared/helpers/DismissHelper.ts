@@ -7,7 +7,7 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
 import { isUsingSubscriptionWorkaround } from '../utils/utils';
 
-declare var OneSignal: any;
+declare let OneSignal: any;
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,

@@ -16,7 +16,7 @@ export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds:
   let clearTimeoutHandle: (() => void) | undefined = undefined;
 
   const promise = new Promise<void>((resolve, reject) => {
-    let startedExecution: boolean = false;
+    let startedExecution = false;
 
     timerId = self.setTimeout(
       async () => {

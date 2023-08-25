@@ -21,7 +21,7 @@ export default class OneSignalApi {
     return OneSignalApiShared.sendNotification(appId, playerIds, titles, contents, url, icon, data, buttons);
   }
 
-  static jsonpLib(url: string, fn: Function) {
+  static jsonpLib(url: string, fn: (err: unknown, data: ServerAppConfig) => void) {
     JSONP(url, null, fn);
   }
 
@@ -29,7 +29,7 @@ export default class OneSignalApi {
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
       return await new Promise<ServerAppConfig>((resolve, reject) => {
         // Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
-        OneSignalApi.jsonpLib(`${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId}/web`,(err, data) => {
+        OneSignalApi.jsonpLib(`${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId}/web`,(err: unknown, data: ServerAppConfig) => {
           if (err)
             reject(err);
           else {

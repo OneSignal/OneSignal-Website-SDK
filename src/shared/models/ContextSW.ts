@@ -40,7 +40,7 @@ export default class ContextSW implements ContextSWInterface {
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
     this.pageViewManager = new PageViewManager();
-    this.sessionManager = new SessionManager(this);
+    this.sessionManager = new SessionManager();
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);
     this.updateManager = new UpdateManager(this);

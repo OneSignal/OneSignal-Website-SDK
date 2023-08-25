@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import { MockServiceWorkerGlobalScope } from "../mocks/service-workers/models/MockServiceWorkerGlobalScope";
 
 // NodeJS.Global
-declare var global: any;
+declare let global: any;
 
 global.URL = require('url').URL;
 global.indexedDB = require('fake-indexeddb');

@@ -32,10 +32,12 @@ export default class LegacyManager {
 
   static postmams(oneSignal) {
     const postmamMessageFunc = function message(this: any) {
+      // eslint-disable-next-line prefer-spread, prefer-rest-params
       this.messenger.message.apply(this.messenger, arguments);
     };
 
     const postmamPostMessageFunc = function postMessage(this: any) {
+      // eslint-disable-next-line prefer-spread, prefer-rest-params
       this.messenger.postMessage.apply(this.messenger, arguments);
     };
 

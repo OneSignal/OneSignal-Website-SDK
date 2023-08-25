@@ -48,7 +48,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    * We use this method to update the model data.
    * Results in a broadcasted update event.
    */
-  public set(property: StringKeys<Model>, newValue: any, propagate: boolean = true): void {
+  public set(property: StringKeys<Model>, newValue: any, propagate = true): void {
     logMethodCall("set", { property, newValue });
     let oldValue;
 

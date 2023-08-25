@@ -36,7 +36,7 @@ export interface WorkerMessengerMessage {
 }
 
 export interface WorkerMessengerReplyBufferRecord {
-  callback: Function;
+  callback: (param: unknown) => void;
   onceListenerOnly: boolean;
 }
 
@@ -48,7 +48,7 @@ export class WorkerMessengerReplyBuffer {
     this.replies = {};
   }
 
-  public addListener(command: WorkerMessengerCommand, callback: Function, onceListenerOnly: boolean) {
+  public addListener(command: WorkerMessengerCommand, callback: (param: unknown) => void, onceListenerOnly: boolean) {
     const record: WorkerMessengerReplyBufferRecord = { callback, onceListenerOnly };
 
     const replies = this.replies[command.toString()];

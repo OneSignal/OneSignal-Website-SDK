@@ -111,6 +111,7 @@ export default class Postmam {
       reply: this.reply.bind(this, messageBundle),
       ...messageBundle
     };
+    // eslint-disable-next-line no-prototype-builtins
     if (this.replies.hasOwnProperty(messageId)) {
       Log.info('(Postmam) This message is a reply.');
       const replyFn = this.replies[messageId].bind(window);
@@ -190,6 +191,7 @@ export default class Postmam {
       reply: this.reply.bind(this, messageBundle),
       ...messageBundle
     };
+    // eslint-disable-next-line no-prototype-builtins
     if (this.replies.hasOwnProperty(messageId)) {
       const replyFn = this.replies[messageId].bind(window);
       const replyFnReturnValue = replyFn(messageBundleWithReply);
@@ -311,12 +313,15 @@ export default class Postmam {
   }
 
   async on(...args: any[]) {
+    // eslint-disable-next-line prefer-spread
     return this.emitter.on.apply(this.emitter, args);
   }
   async off(...args: any[]) {
+    // eslint-disable-next-line prefer-spread
     return this.emitter.off.apply(this.emitter, args);
   }
   async once(...args: any[]) {
+    // eslint-disable-next-line prefer-spread
     return this.emitter.once.apply(this.emitter, args);
   }
 }

@@ -86,6 +86,7 @@ export default class OneSignalEvent {
       }
       await OneSignal.emitter.emit(eventName, data);
     }
+    // eslint-disable-next-line no-prototype-builtins
     if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
       const legacyEventName = LEGACY_EVENT_MAP[eventName];
       OneSignalEvent._triggerLegacy(legacyEventName, data);
