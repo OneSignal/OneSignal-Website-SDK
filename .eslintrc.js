@@ -1,7 +1,7 @@
 module.exports = {
   root: true,
   rules: {
-    'no-extra-boolean-cast': false,
+    'no-extra-boolean-cast': 0,
   },
   extends: [
     'eslint:recommended',
