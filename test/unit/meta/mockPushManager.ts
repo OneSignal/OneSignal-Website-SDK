@@ -46,9 +46,8 @@ test('mock push manager should subscribe successfully', async (t) => {
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(64).buffer,
   };
-  const subscription = await registration!.pushManager.subscribe(
-    subscriptionOptions,
-  );
+  const subscription =
+    await registration!.pushManager.subscribe(subscriptionOptions);
 
   t.true(subscription instanceof MockPushSubscription);
   t.is(typeof subscription.endpoint, typeof '');

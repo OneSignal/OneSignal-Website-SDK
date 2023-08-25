@@ -18,7 +18,11 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   awaitOneSignalIdAvailable: Promise<string>;
   onesignalIdAvailableCallback?: (onesignalId: string) => void;
 
-  constructor(readonly modelName: ModelName, data: Model, modelId?: string) {
+  constructor(
+    readonly modelName: ModelName,
+    data: Model,
+    modelId?: string,
+  ) {
     super();
     this.modelId = modelId ?? Math.random().toString(36).substring(2);
     this.modelName = modelName;

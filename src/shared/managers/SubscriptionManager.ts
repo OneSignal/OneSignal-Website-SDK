@@ -132,9 +132,8 @@ export class SubscriptionManager {
 
     switch (env) {
       case WindowEnvironmentKind.ServiceWorker:
-        rawPushSubscription = await this.subscribeFcmFromWorker(
-          subscriptionStrategy,
-        );
+        rawPushSubscription =
+          await this.subscribeFcmFromWorker(subscriptionStrategy);
         break;
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
@@ -172,9 +171,8 @@ export class SubscriptionManager {
             Log.error('SW on Safari failed to install.');
           }
         } else {
-          rawPushSubscription = await this.subscribeFcmFromPage(
-            subscriptionStrategy,
-          );
+          rawPushSubscription =
+            await this.subscribeFcmFromPage(subscriptionStrategy);
           await this._updatePushSubscriptionModelWithRawSubscription(
             rawPushSubscription,
           );

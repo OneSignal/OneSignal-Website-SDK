@@ -71,11 +71,12 @@ export class InitTestHelper {
     this.sinonSandbox = sinonSandbox;
   }
   stubJSONP(serverAppConfig: ServerAppConfig) {
-    this.sinonSandbox
-      .stub(OneSignalApi, 'jsonpLib')
-      .callsFake(function (_url: string, callback: Function) {
-        callback(null, serverAppConfig);
-      });
+    this.sinonSandbox.stub(OneSignalApi, 'jsonpLib').callsFake(function (
+      _url: string,
+      callback: Function,
+    ) {
+      callback(null, serverAppConfig);
+    });
   }
 
   mockBasicInitEnv(

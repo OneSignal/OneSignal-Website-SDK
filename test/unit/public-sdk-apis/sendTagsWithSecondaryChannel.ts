@@ -58,7 +58,7 @@ test('sendTags before email, makes PUT call to update Email record', async (t) =
   const emailPlayerId = (await emailPostNock.result).response.body.id;
 
   // 6. Await for the follow up PUT call to set tags on email, ensure it was sent.
-  const emailPutResult = await NockOneSignalHelper.nockPlayerPut(emailPlayerId)
-    .result;
+  const emailPutResult =
+    await NockOneSignalHelper.nockPlayerPut(emailPlayerId).result;
   t.deepEqual(emailPutResult.request.body.tags, TEST_TAGS);
 });

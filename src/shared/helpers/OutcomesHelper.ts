@@ -90,9 +90,8 @@ export default class OutcomesHelper {
    * @returns Promise
    */
   async getAttributedNotifsByUniqueOutcomeName(): Promise<string[]> {
-    const sentOutcomes = await Database.getAll<SentUniqueOutcome>(
-      'SentUniqueOutcome',
-    );
+    const sentOutcomes =
+      await Database.getAll<SentUniqueOutcome>('SentUniqueOutcome');
     return sentOutcomes
       .filter((o) => o.outcomeName === this.outcomeName)
       .reduce((acc: string[], curr: SentUniqueOutcome) => {

@@ -65,9 +65,8 @@ export default class PermissionManager {
   public async getNotificationPermission(
     safariWebId?: string,
   ): Promise<NotificationPermission> {
-    const reportedPermission = await this.getReportedNotificationPermission(
-      safariWebId,
-    );
+    const reportedPermission =
+      await this.getReportedNotificationPermission(safariWebId);
     if (await this.isPermissionEnvironmentAmbiguous(reportedPermission))
       return await this.getInterpretedAmbiguousPermission(reportedPermission);
     return reportedPermission;

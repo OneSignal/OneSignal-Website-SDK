@@ -401,7 +401,8 @@ $desktop-width: 1024px;
     box-sizing: border-box;
     max-width: 100%;
     margin: 0 auto;
-    box-shadow: 0 1px 6px rgba(5, 27, 44, 0.06),
+    box-shadow:
+      0 1px 6px rgba(5, 27, 44, 0.06),
       0 2px 32px rgba(5, 27, 44, 0.16) !important;
     background: white !important;
     color: #051b2c;

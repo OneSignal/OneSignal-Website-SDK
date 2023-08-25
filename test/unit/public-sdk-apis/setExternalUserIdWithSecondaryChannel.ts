@@ -59,8 +59,8 @@ test('setExternalUserId before email, makes PUT call to update Email record', as
   const emailPlayerId = (await emailPostNock.result).response.body.id;
 
   // 6. Await for the follow up PUT call to set external_user_id on email, ensure it was sent.
-  const emailPutResult = await NockOneSignalHelper.nockPlayerPut(emailPlayerId)
-    .result;
+  const emailPutResult =
+    await NockOneSignalHelper.nockPlayerPut(emailPlayerId).result;
   t.is(emailPutResult.request.body.external_user_id, TEST_EXTERNAL_USER_ID);
 });
 

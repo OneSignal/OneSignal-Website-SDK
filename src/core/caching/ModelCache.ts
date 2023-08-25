@@ -80,9 +80,8 @@ export default class ModelCache {
 
     for (let i = 0; i < modelNames.length; i++) {
       const modelName = modelNames[i];
-      const cachedOSModels = await this.getAndDecodeModelsWithModelName(
-        modelName,
-      );
+      const cachedOSModels =
+        await this.getAndDecodeModelsWithModelName(modelName);
 
       if (cachedOSModels) {
         allCachedOSModels[modelName] = cachedOSModels;

@@ -42,7 +42,11 @@ $dialog-border-color: rgba(0, 0, 0, 0.1);
 //$dialog-border-color: rgba($red, 0.1);
 $dialog-shadow: drop-shadow(0px 2px 2px rgba(34, 36, 38, 0.15));
 
-$font-sans-serif: Helvetica Neue, Helvetica, Arial, sans-serif;
+$font-sans-serif:
+  Helvetica Neue,
+  Helvetica,
+  Arial,
+  sans-serif;
 
 $positions: 'bottom-left' 'bottom-right';
 
@@ -74,7 +78,8 @@ $sizes: (
     font-family: $font-sans-serif;
     transform: scale(0.01) translateZ(0);
     opacity: 0;
-    transition: transform $transition-duration ease-in-out,
+    transition:
+      transform $transition-duration ease-in-out,
       opacity $transition-duration ease-in-out;
 
     @each $position in $positions {
@@ -120,8 +125,7 @@ $sizes: (
 
               &:after {
                 #{$leftOrRight}: #{ceil(($size-amount * 0.5)) -
-                  5 -
-                  ceil(($arrow-size * 0.5))};
+                  5 - ceil(($arrow-size * 0.5))};
               }
             }
           }
@@ -150,7 +154,8 @@ $sizes: (
       position: absolute;
       bottom: 0;
       border-radius: 50%;
-      transition: transform $transition-duration ease-in-out,
+      transition:
+        transform $transition-duration ease-in-out,
         border $transition-duration ease-in-out,
         width $transition-duration ease-in-out,
         height $transition-duration ease-in-out;
@@ -182,7 +187,8 @@ $sizes: (
       // TODO: Add this back in once Safari 9.1 beta fixes its bug with drop-shadow making the SVG disappear
       -webkit-filter: $badge-shadow;
       filter: $badge-shadow;
-      transition: transform $transition-duration ease-in-out,
+      transition:
+        transform $transition-duration ease-in-out,
         border $transition-duration ease-in-out,
         opacity $transition-duration * 1.2 ease-in-out,
         width $transition-duration * 1.2 ease-in-out,
@@ -216,7 +222,8 @@ $sizes: (
       transform: translateY(-50%) scaleX(0) translateZ(0);
       opacity: 0;
       pointer-events: none;
-      transition: transform $transition-duration ease-in-out,
+      transition:
+        transform $transition-duration ease-in-out,
         opacity $transition-duration ease-in-out;
       top: 50%;
       z-index: 2147481000;
@@ -260,7 +267,8 @@ $sizes: (
       width: 200px;
 
       transform: scale(0, 0) translateZ(0);
-      transition: transform $transition-duration ease-in-out,
+      transition:
+        transform $transition-duration ease-in-out,
         opacity $transition-duration ease-in-out;
       z-index: 2147481000;
 

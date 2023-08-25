@@ -33,9 +33,10 @@ export default class SubscriptionHelper {
           const rawSubscription = await context.subscriptionManager.subscribe(
             SubscriptionStrategyKind.ResubscribeExisting,
           );
-          subscription = await context.subscriptionManager.registerSubscription(
-            rawSubscription,
-          );
+          subscription =
+            await context.subscriptionManager.registerSubscription(
+              rawSubscription,
+            );
           context.pageViewManager.incrementPageViewCount();
           await PermissionUtils.triggerNotificationPermissionChanged();
           await EventHelper.checkAndTriggerSubscriptionChanged();
