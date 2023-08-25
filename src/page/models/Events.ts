@@ -1,5 +1,5 @@
 const enum Events {
-  DB_REBUILT
+  DB_REBUILT,
 }
 
 export default Events;

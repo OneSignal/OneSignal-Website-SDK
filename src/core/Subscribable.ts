@@ -15,7 +15,7 @@ export default class Subscribable<MessageType> {
    * @param msg The message to publish
    */
   public broadcast(msg: MessageType) {
-    this.subscribers.forEach(callback => {
+    this.subscribers.forEach((callback) => {
       callback(msg);
     });
   }

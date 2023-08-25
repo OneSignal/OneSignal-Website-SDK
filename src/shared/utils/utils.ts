@@ -4,7 +4,7 @@ import Database from '../services/Database';
 import { OneSignalUtils } from './OneSignalUtils';
 import { PermissionUtils } from './PermissionUtils';
 import { BrowserUtils } from './BrowserUtils';
-import { Utils } from "../context/Utils";
+import { Utils } from '../context/Utils';
 import bowser from 'bowser';
 import TimeoutError from '../errors/TimeoutError';
 import Log from '../libraries/Log';
@@ -34,12 +34,11 @@ export function removeDomElement(selector: string) {
  * Helper method for public APIs that waits until OneSignal is initialized, rejects if push notifications are
  * not supported, and wraps these tasks in a Promise.
  */
-export async function awaitOneSignalInitAndSupported(): Promise<object|void> {
-  return new Promise(resolve => {
+export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
+  return new Promise((resolve) => {
     if (!OneSignal.initialized)
       OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
-    else
-      resolve();
+    else resolve();
   });
 }
 
@@ -64,8 +63,12 @@ export function isUsingSubscriptionWorkaround() {
   return OneSignalUtils.isUsingSubscriptionWorkaround();
 }
 
-export async function triggerNotificationPermissionChanged(updateIfIdentical = false) {
-  return PermissionUtils.triggerNotificationPermissionChanged(updateIfIdentical);
+export async function triggerNotificationPermissionChanged(
+  updateIfIdentical = false,
+) {
+  return PermissionUtils.triggerNotificationPermissionChanged(
+    updateIfIdentical,
+  );
 }
 
 /**
@@ -88,13 +91,20 @@ export function logMethodCall(methodName: string, ...args: any[]) {
 }
 
 export function isValidEmail(email: string | undefined | null) {
-  return !!email &&
-         // eslint-disable-next-line no-control-regex
-         !!email.match(/(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/);
+  return (
+    !!email &&
+    !!email.match(
+      // eslint-disable-next-line no-control-regex
+      /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
+    )
+  );
 }
 
-export function addDomElement(targetSelectorOrElement: string | Element,
-  addOrder: InsertPosition, elementHtml: string) {
+export function addDomElement(
+  targetSelectorOrElement: string | Element,
+  addOrder: InsertPosition,
+  elementHtml: string,
+) {
   let targetElement: Element | null;
   if (typeof targetSelectorOrElement === 'string') {
     targetElement = document.querySelector(targetSelectorOrElement);
@@ -106,73 +116,94 @@ export function addDomElement(targetSelectorOrElement: string | Element,
     targetElement.insertAdjacentHTML(addOrder, elementHtml);
     return;
   }
-  throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+  throw new Error(
+    `${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`,
+  );
 }
 
-export function clearDomElementChildren(targetSelectorOrElement: Element | string) {
+export function clearDomElementChildren(
+  targetSelectorOrElement: Element | string,
+) {
   if (typeof targetSelectorOrElement === 'string') {
     const element = document.querySelector(targetSelectorOrElement);
     if (element === null) {
-      throw new Error(`Cannot find element with selector "${targetSelectorOrElement}"`);
+      throw new Error(
+        `Cannot find element with selector "${targetSelectorOrElement}"`,
+      );
     }
     while (element.firstChild) {
       element.removeChild(element.firstChild);
     }
-  }
-  else if (typeof targetSelectorOrElement === 'object') {
+  } else if (typeof targetSelectorOrElement === 'object') {
     while (targetSelectorOrElement.firstChild) {
       targetSelectorOrElement.removeChild(targetSelectorOrElement.firstChild);
     }
-  }
-  else
-    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+  } else
+    throw new Error(
+      `${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`,
+    );
 }
 
-export function addCssClass(targetSelectorOrElement: Element | string, cssClass: string) {
+export function addCssClass(
+  targetSelectorOrElement: Element | string,
+  cssClass: string,
+) {
   if (typeof targetSelectorOrElement === 'string') {
     const element = document.querySelector(targetSelectorOrElement);
     if (element === null) {
-      throw new Error(`Cannot find element with selector "${targetSelectorOrElement}"`);
+      throw new Error(
+        `Cannot find element with selector "${targetSelectorOrElement}"`,
+      );
     }
     element.classList.add(cssClass);
-  }
-  else if (typeof targetSelectorOrElement === 'object') {
+  } else if (typeof targetSelectorOrElement === 'object') {
     targetSelectorOrElement.classList.add(cssClass);
-  }
-  else {
-    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+  } else {
+    throw new Error(
+      `${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`,
+    );
   }
 }
 
-export function removeCssClass(targetSelectorOrElement: Element | string, cssClass: string) {
+export function removeCssClass(
+  targetSelectorOrElement: Element | string,
+  cssClass: string,
+) {
   if (typeof targetSelectorOrElement === 'string') {
     const element = document.querySelector(targetSelectorOrElement);
     if (element === null) {
-      throw new Error(`Cannot find element with selector "${targetSelectorOrElement}"`);
+      throw new Error(
+        `Cannot find element with selector "${targetSelectorOrElement}"`,
+      );
     }
     element.classList.remove(cssClass);
-  }
-  else if (typeof targetSelectorOrElement === 'object') {
+  } else if (typeof targetSelectorOrElement === 'object') {
     targetSelectorOrElement.classList.remove(cssClass);
-  }
-  else {
-    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+  } else {
+    throw new Error(
+      `${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`,
+    );
   }
 }
 
-export function hasCssClass(targetSelectorOrElement: Element | string, cssClass: string) {
+export function hasCssClass(
+  targetSelectorOrElement: Element | string,
+  cssClass: string,
+) {
   if (typeof targetSelectorOrElement === 'string') {
     const element = document.querySelector(targetSelectorOrElement);
     if (element === null) {
-      throw new Error(`Cannot find element with selector "${targetSelectorOrElement}"`);
+      throw new Error(
+        `Cannot find element with selector "${targetSelectorOrElement}"`,
+      );
     }
     return element.classList.contains(cssClass);
-  }
-  else if (typeof targetSelectorOrElement === 'object') {
+  } else if (typeof targetSelectorOrElement === 'object') {
     return targetSelectorOrElement.classList.contains(cssClass);
-  }
-  else {
-    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+  } else {
+    throw new Error(
+      `${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`,
+    );
   }
 }
 
@@ -196,7 +227,7 @@ export function getConsoleStyle(style: string) {
  * @returns {Promise} Returns a promise that resolves when the timeout is complete.
  */
 export function delay(durationMs: number) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(resolve, durationMs);
   });
 }
@@ -205,7 +236,10 @@ export function nothing(): Promise<any> {
   return Promise.resolve();
 }
 
-export function timeoutPromise(promise: Promise<any>, milliseconds: number): Promise<TimeoutError | any> {
+export function timeoutPromise(
+  promise: Promise<any>,
+  milliseconds: number,
+): Promise<TimeoutError | any> {
   return Utils.timeoutPromise(promise, milliseconds);
 }
 
@@ -242,12 +276,12 @@ export function isValidUuid(uuid: string) {
 export function getUrlQueryParam(name: string) {
   let url = window.location.href;
   url = url.toLowerCase(); // This is just to avoid case sensitiveness
-  name = name.replace(/[[\]]/g, "\\$&").toLowerCase(); // This is just to avoid case sensitiveness for query parameter name
-  const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+  name = name.replace(/[[\]]/g, '\\$&').toLowerCase(); // This is just to avoid case sensitiveness for query parameter name
+  const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
     results = regex.exec(url);
   if (!results) return null;
   if (!results[2]) return '';
-  return decodeURIComponent(results[2].replace(/\+/g, " "));
+  return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
 /**
@@ -258,7 +292,7 @@ export function wipeIndexedDb() {
   return Promise.all([
     Database.remove('Ids'),
     Database.remove('NotificationOpened'),
-    Database.remove('Options')
+    Database.remove('Options'),
   ]);
 }
 
@@ -276,48 +310,61 @@ export function capitalize(text: string): string {
 export function unsubscribeFromPush() {
   Log.warn('OneSignal: Unsubscribing from push.');
   if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
-    return (<any>self).registration.pushManager.getSubscription()
-                       .then((subscription: PushSubscription) => {
-                         if (subscription) {
-                           return subscription.unsubscribe();
-                         } else throw new Error('Cannot unsubscribe because not subscribed.');
-                       });
+    return (<any>self).registration.pushManager
+      .getSubscription()
+      .then((subscription: PushSubscription) => {
+        if (subscription) {
+          return subscription.unsubscribe();
+        } else throw new Error('Cannot unsubscribe because not subscribed.');
+      });
   } else {
     if (isUsingSubscriptionWorkaround()) {
       return new Promise<void>((resolve, reject) => {
-        Log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, (reply: any) => {
-          Log.debug("Unsubscribe from push succesfully remotely executed.");
-          if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
-            resolve();
-          } else {
-            reject('Failed to remotely unsubscribe from push.');
-          }
-        });
+        Log.debug(
+          "Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.",
+        );
+        OneSignal.proxyFrameHost.message(
+          OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH,
+          null,
+          (reply: any) => {
+            Log.debug('Unsubscribe from push succesfully remotely executed.');
+            if (
+              reply.data ===
+              OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE
+            ) {
+              resolve();
+            } else {
+              reject('Failed to remotely unsubscribe from push.');
+            }
+          },
+        );
       });
     } else {
-      return OneSignal.context.serviceWorkerManager.getRegistration()
-              .then((serviceWorker : ServiceWorkerRegistration | null | undefined) => {
-                if (!serviceWorker) {
-                  return Promise.resolve();
-                }
-                return serviceWorker;
-              })
-              .then((registration: ServiceWorkerRegistration ) => registration.pushManager)
-              .then((pushManager: PushManager) => pushManager.getSubscription())
-              .then((subscription: any) => {
-                if (subscription) {
-                  return subscription.unsubscribe();
-                } else {
-                  return Promise.resolve();
-                }
-              });
+      return OneSignal.context.serviceWorkerManager
+        .getRegistration()
+        .then((serviceWorker: ServiceWorkerRegistration | null | undefined) => {
+          if (!serviceWorker) {
+            return Promise.resolve();
+          }
+          return serviceWorker;
+        })
+        .then(
+          (registration: ServiceWorkerRegistration) => registration.pushManager,
+        )
+        .then((pushManager: PushManager) => pushManager.getSubscription())
+        .then((subscription: any) => {
+          if (subscription) {
+            return subscription.unsubscribe();
+          } else {
+            return Promise.resolve();
+          }
+        });
     }
   }
 }
 
 export function wait(milliseconds: number) {
-  return new Promise(resolve => setTimeout(resolve, milliseconds));
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 /**
@@ -330,7 +377,12 @@ export function substringAfter(string: string, search: string) {
   return string.substr(string.indexOf(search) + search.length);
 }
 
-export function once(targetSelectorOrElement: string | string[] | Element | Document, event: string, task?: (e: Event, callback: () => void) => void, manualDestroy=false) {
+export function once(
+  targetSelectorOrElement: string | string[] | Element | Document,
+  event: string,
+  task?: (e: Event, callback: () => void) => void,
+  manualDestroy = false,
+) {
   if (!event) {
     Log.error('Cannot call on() with no event: ', event);
   }
@@ -340,19 +392,19 @@ export function once(targetSelectorOrElement: string | string[] | Element | Docu
   if (typeof targetSelectorOrElement === 'string') {
     const els = document.querySelectorAll(targetSelectorOrElement);
     if (els.length > 0) {
-      for (let i = 0; i < els.length; i++)
-        once(els[i], event, task);
+      for (let i = 0; i < els.length; i++) once(els[i], event, task);
     }
-  }
-  else if (isArray(targetSelectorOrElement)) {
+  } else if (isArray(targetSelectorOrElement)) {
     for (let i = 0; i < (targetSelectorOrElement as string[]).length; i++)
       once((targetSelectorOrElement as string[])[i], event, task);
-  }
-  else if (typeof targetSelectorOrElement === 'object') {
+  } else if (typeof targetSelectorOrElement === 'object') {
     const taskWrapper = (function () {
       const internalTaskFunction = function (e: Event) {
-        const destroyEventListener = function() {
-          (targetSelectorOrElement as Element | Document).removeEventListener(e.type, taskWrapper);
+        const destroyEventListener = function () {
+          (targetSelectorOrElement as Element | Document).removeEventListener(
+            e.type,
+            taskWrapper,
+          );
         };
         if (!manualDestroy) {
           destroyEventListener();
@@ -361,10 +413,14 @@ export function once(targetSelectorOrElement: string | string[] | Element | Docu
       };
       return internalTaskFunction;
     })();
-    (targetSelectorOrElement as Element | Document).addEventListener(event, taskWrapper);
-  }
-  else
-    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+    (targetSelectorOrElement as Element | Document).addEventListener(
+      event,
+      taskWrapper,
+    );
+  } else
+    throw new Error(
+      `${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`,
+    );
 }
 
 /**
@@ -376,7 +432,7 @@ export function getSdkLoadCount() {
 }
 
 export async function awaitSdkEvent(eventName: string) {
-  return await new Promise(resolve => {
+  return await new Promise((resolve) => {
     OneSignal.emitter.once(eventName, (event: Event) => {
       resolve(event);
     });
@@ -391,19 +447,22 @@ export function incrementSdkLoadCount() {
   (<any>window).__oneSignalSdkLoadCount = getSdkLoadCount() + 1;
 }
 
-export function getPlatformNotificationIcon(notificationIcons: NotificationIcons | null): string {
-  if (!notificationIcons)
-    return 'default-icon';
+export function getPlatformNotificationIcon(
+  notificationIcons: NotificationIcons | null,
+): string {
+  if (!notificationIcons) return 'default-icon';
 
   if (bowserCastle().name == 'safari' && notificationIcons.safari)
     return notificationIcons.safari;
   else if (bowserCastle().name === 'firefox' && notificationIcons.firefox)
     return notificationIcons.firefox;
 
-  return notificationIcons.chrome ||
+  return (
+    notificationIcons.chrome ||
     notificationIcons.firefox ||
     notificationIcons.safari ||
-    'default-icon';
+    'default-icon'
+  );
 }
 
 export function getDomElementOrStub(selector: string): Element {
@@ -416,5 +475,5 @@ export function getDomElementOrStub(selector: string): Element {
 }
 
 export function deepCopy<T>(obj: T): T {
-    return JSON.parse(JSON.stringify(obj));
-  }
+  return JSON.parse(JSON.stringify(obj));
+}

@@ -1,6 +1,4 @@
-import { Serializable } from "../../page/models/Serializable";
-
-
+import { Serializable } from '../../page/models/Serializable';
 
 export class Subscription implements Serializable {
   /**

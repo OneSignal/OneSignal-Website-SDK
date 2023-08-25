@@ -1,17 +1,27 @@
 import Log from '../../shared/libraries/Log';
-import { decodeHtmlEntities, delay, getConsoleStyle, nothing } from '../../shared/utils/utils';
+import {
+  decodeHtmlEntities,
+  delay,
+  getConsoleStyle,
+  nothing,
+} from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
 export default class Message extends AnimatedElement {
-
   public bell: Bell;
   public contentType: string;
   public queued: any;
 
   constructor(bell: Bell) {
-    super('.onesignal-bell-launcher-message', 'onesignal-bell-launcher-message-opened', undefined, 'hidden',
-          ['opacity', 'transform'], '.onesignal-bell-launcher-message-body');
+    super(
+      '.onesignal-bell-launcher-message',
+      'onesignal-bell-launcher-message-opened',
+      undefined,
+      'hidden',
+      ['opacity', 'transform'],
+      '.onesignal-bell-launcher-message-body',
+    );
 
     this.bell = bell;
     this.contentType = '';
@@ -26,12 +36,15 @@ export default class Message extends AnimatedElement {
     return {
       TIP: 'tip', // Appears on button hover, disappears on button endhover
       MESSAGE: 'message', // Appears manually for a specified duration, site visitor cannot control its display. Messages override tips
-      QUEUED: 'queued' // This message was a user-queued message
+      QUEUED: 'queued', // This message was a user-queued message
     };
   }
 
   display(type, content, duration = 0) {
-    Log.debug(`Calling %cdisplay(${type}, ${content}, ${duration}).`, getConsoleStyle('code'));
+    Log.debug(
+      `Calling %cdisplay(${type}, ${content}, ${duration}).`,
+      getConsoleStyle('code'),
+    );
     return (this.shown ? this.hide() : nothing())
       .then(() => {
         this.content = decodeHtmlEntities(content);
@@ -58,21 +71,21 @@ export default class Message extends AnimatedElement {
       return this.bell.options.text['tip.state.subscribed'];
     else if (this.bell.state === Bell.STATES.BLOCKED)
       return this.bell.options.text['tip.state.blocked'];
-    return "";
+    return '';
   }
 
   enqueue(message: string) {
     this.queued.push(decodeHtmlEntities(message));
-    return new Promise<void>(resolve => {
+    return new Promise<void>((resolve) => {
       if (this.bell.badge.shown) {
-        this.bell.badge.hide()
+        this.bell.badge
+          .hide()
           .then(() => this.bell.badge.increment())
           .then(() => this.bell.badge.show())
           .then(resolve);
       } else {
         this.bell.badge.increment();
-        if (this.bell.initialized)
-          this.bell.badge.show().then(resolve);
+        if (this.bell.initialized) this.bell.badge.show().then(resolve);
         else resolve();
       }
     });
@@ -80,9 +93,10 @@ export default class Message extends AnimatedElement {
 
   dequeue(message: string) {
     const dequeuedMessage = this.queued.pop(message);
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       if (this.bell.badge.shown) {
-        this.bell.badge.hide()
+        this.bell.badge
+          .hide()
           .then(() => this.bell.badge.decrement())
           .then((numMessagesLeft: number) => {
             if (numMessagesLeft > 0) {

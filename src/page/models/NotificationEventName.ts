@@ -1,6 +1,6 @@
-export type NotificationEventName = 
-  "click" |
-  "foregroundWillDisplay" |
-  "dismiss" |
-  "permissionChange" |
-  "permissionPromptDisplay"
+export type NotificationEventName =
+  | 'click'
+  | 'foregroundWillDisplay'
+  | 'dismiss'
+  | 'permissionChange'
+  | 'permissionPromptDisplay';

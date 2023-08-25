@@ -1,4 +1,4 @@
-import { SessionOrigin } from "../../models/Session";
+import { SessionOrigin } from '../../models/Session';
 
 export interface ISessionManager {
   setupSessionEventListeners(): void;

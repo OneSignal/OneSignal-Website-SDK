@@ -1,12 +1,18 @@
-import { ValidatorUtils } from "../page/utils/ValidatorUtils";
-import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
-import Database from "../shared/services/Database";
-import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
-import OneSignal from "./OneSignal";
-import { EventListenerBase } from "../page/userModel/EventListenerBase";
-import { NotificationEventName } from "../page/models/NotificationEventName";
-import { NotificationPermission } from "../shared/models/NotificationPermission";
-import NotificationEventTypeMap from "../page/models/NotificationEventTypeMap";
+import { ValidatorUtils } from '../page/utils/ValidatorUtils';
+import {
+  InvalidArgumentError,
+  InvalidArgumentReason,
+} from '../shared/errors/InvalidArgumentError';
+import Database from '../shared/services/Database';
+import {
+  awaitOneSignalInitAndSupported,
+  logMethodCall,
+} from '../shared/utils/utils';
+import OneSignal from './OneSignal';
+import { EventListenerBase } from '../page/userModel/EventListenerBase';
+import { NotificationEventName } from '../page/models/NotificationEventName';
+import { NotificationPermission } from '../shared/models/NotificationPermission';
+import NotificationEventTypeMap from '../page/models/NotificationEventTypeMap';
 
 export default class NotificationsNamespace extends EventListenerBase {
   private _permission: boolean;
@@ -16,10 +22,13 @@ export default class NotificationsNamespace extends EventListenerBase {
 
     this._permission = _permissionNative === NotificationPermission.Granted;
 
-    OneSignal.emitter.on(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, (permissionNative: NotificationPermission) => {
-      this._permissionNative = permissionNative;
-      this._permission = permissionNative === NotificationPermission.Granted;
-    });
+    OneSignal.emitter.on(
+      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
+      (permissionNative: NotificationPermission) => {
+        this._permissionNative = permissionNative;
+        this._permission = permissionNative === NotificationPermission.Granted;
+      },
+    );
   }
 
   get permissionNative(): NotificationPermission | undefined {
@@ -77,7 +86,6 @@ export default class NotificationsNamespace extends EventListenerBase {
     await Database.setAppState(appState);
   }
 
-
   /**
    * Returns true if the current browser supports web push.
    * @PublicApi
@@ -90,7 +98,6 @@ export default class NotificationsNamespace extends EventListenerBase {
      */
     return true;
   }
-
 
   /*
   async sendSelfPush(title: string = 'OneSignal Test Message',
@@ -129,16 +136,22 @@ export default class NotificationsNamespace extends EventListenerBase {
    *  See https://github.com/OneSignal/OneSignal-Website-SDK/issues/1098
    * @PublicApi
    */
-   async requestPermission(): Promise<void> {
+  async requestPermission(): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowNativePrompt();
   }
 
-  addEventListener<K extends NotificationEventName>(event: K, listener: (obj: NotificationEventTypeMap[K]) => void): void {
+  addEventListener<K extends NotificationEventName>(
+    event: K,
+    listener: (obj: NotificationEventTypeMap[K]) => void,
+  ): void {
     OneSignal.emitter.on(event, listener);
   }
 
-  removeEventListener<K extends NotificationEventName>(event: K, listener: (obj: NotificationEventTypeMap[K]) => void): void {
+  removeEventListener<K extends NotificationEventName>(
+    event: K,
+    listener: (obj: NotificationEventTypeMap[K]) => void,
+  ): void {
     OneSignal.emitter.off(event, listener);
   }
 }

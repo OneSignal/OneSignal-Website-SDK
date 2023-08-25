@@ -1,7 +1,7 @@
 import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
 import Postmam from '../../../shared/services/Postmam';
 import Context from '../../models/Context';
-import { EnvironmentInfoHelper } from "../../helpers/EnvironmentInfoHelper";
+import { EnvironmentInfoHelper } from '../../helpers/EnvironmentInfoHelper';
 import ConfigManager from '../../../page/managers/ConfigManager';
 import SubscriptionHelper from '../../../shared/helpers/SubscriptionHelper';
 
@@ -30,8 +30,8 @@ export default class RemoteFrame implements Disposable {
   // page has finished
   private loadPromise: {
     promise: Promise<void>;
-    resolver: (value?: unknown) => void,
-    rejector: (reason?: unknown) => void
+    resolver: (value?: unknown) => void;
+    rejector: (reason?: unknown) => void;
   };
 
   constructor(initOptions: RemoteFrameOptions) {
@@ -42,9 +42,9 @@ export default class RemoteFrame implements Disposable {
       siteName: initOptions.siteName,
       metrics: {
         enable: false,
-        mixpanelReportingToken: null
+        mixpanelReportingToken: null,
       },
-      userConfig: {}
+      userConfig: {},
     };
   }
 
@@ -63,7 +63,7 @@ export default class RemoteFrame implements Disposable {
     const creator = window.opener || window.parent;
     if (creator == window) {
       document.write(
-        `<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and must be opened as a result of a subscription call.</span>`
+        `<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and must be opened as a result of a subscription call.</span>`,
       );
       return Promise.resolve();
     }
@@ -101,7 +101,8 @@ export default class RemoteFrame implements Disposable {
   }
 
   async subscribe() {
-    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    const isPushEnabled =
+      await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     const windowCreator = opener || parent;
 
     if (!isPushEnabled) {

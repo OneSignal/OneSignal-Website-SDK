@@ -1,10 +1,8 @@
-import { ISessionManager } from "../../../shared/managers/sessionManager/types";
-import { SessionOrigin } from "../../../shared/models/Session";
+import { ISessionManager } from '../../../shared/managers/sessionManager/types';
+import { SessionOrigin } from '../../../shared/models/Session';
 
 export class SessionManager implements ISessionManager {
-  async upsertSession(
-    _sessionOrigin: SessionOrigin
-  ): Promise<void> {
+  async upsertSession(_sessionOrigin: SessionOrigin): Promise<void> {
     // TODO: how should it be implemented if called from inside of service worker???
   }
 

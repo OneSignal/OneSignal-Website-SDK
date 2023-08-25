@@ -1,4 +1,4 @@
 export enum HttpHttpsEnvironment {
   Http,
-  Https
+  Https,
 }

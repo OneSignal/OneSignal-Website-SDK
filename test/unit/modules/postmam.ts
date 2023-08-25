@@ -1,9 +1,12 @@
 import '../../support/polyfills/polyfills';
 import anyTest, { TestInterface } from 'ava';
-import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
+import {
+  TestEnvironment,
+  HttpHttpsEnvironment,
+} from '../../support/sdk/TestEnvironment';
 import Postmam from '../../../src/shared/services/Postmam';
 
-interface PostmamContext{
+interface PostmamContext {
   originalMessageChannel: MessageChannel;
   expectedSafeHttpOrigins: string[];
   expectedSafeHttpsOrigins: string[];
@@ -13,13 +16,13 @@ interface PostmamContext{
 
 const test = anyTest as TestInterface<PostmamContext>;
 
-test.beforeEach(async t => {
+test.beforeEach(async (t) => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   // Stub MessageChannel
-  const fakeClass = class Test { };
+  const fakeClass = class Test {};
   t.context.originalMessageChannel = (global as any).MessageChannel;
   (global as any).MessageChannel = fakeClass;
 
@@ -27,12 +30,12 @@ test.beforeEach(async t => {
     'http://site.com',
     'http://www.site.com',
     'https://site.com',
-    'https://www.site.com'
+    'https://www.site.com',
   ];
 
   t.context.expectedSafeHttpsOrigins = [
     'https://site.com',
-    'https://www.site.com'
+    'https://www.site.com',
   ];
 
   t.context.expectedSafeHttpOriginsForIrregularSubdomains = [
@@ -48,7 +51,7 @@ test.beforeEach(async t => {
   ];
 });
 
-test.afterEach(async t => {
+test.afterEach(async (t) => {
   (global as any).MessageChannel = t.context.originalMessageChannel;
 });
 
@@ -75,50 +78,63 @@ test.afterEach(async t => {
   single origin (the one listed on the dashboard web push config).
  */
 
-test('should generate correct safe HTTP site origins for varying inputs of the same origin', async t => {
+test('should generate correct safe HTTP site origins for varying inputs of the same origin', async (t) => {
   const dashboardConfigSiteOrigins = [
     'http://site.com',
     'http://site.com/',
     'http://www.site.com',
-    'http://www.site.com/'
+    'http://www.site.com/',
   ];
   for (const dashboardConfigSiteOrigin of dashboardConfigSiteOrigins) {
-    const postmam = new Postmam(window, dashboardConfigSiteOrigin, dashboardConfigSiteOrigin);
+    const postmam = new Postmam(
+      window,
+      dashboardConfigSiteOrigin,
+      dashboardConfigSiteOrigin,
+    );
     for (const expectedSafeHttpOrigin of t.context.expectedSafeHttpOrigins) {
       t.true(postmam.isSafeOrigin(expectedSafeHttpOrigin));
     }
   }
 });
 
-test('should generate correct safe HTTPS site origins for varying inputs of the same origin', async t => {
+test('should generate correct safe HTTPS site origins for varying inputs of the same origin', async (t) => {
   const dashboardConfigSiteOrigins = [
     'https://site.com',
     'https://site.com/',
     'https://www.site.com',
-    'https://www.site.com/'
+    'https://www.site.com/',
   ];
   for (const dashboardConfigSiteOrigin of dashboardConfigSiteOrigins) {
-    const postmam = new Postmam(window, dashboardConfigSiteOrigin, dashboardConfigSiteOrigin);
+    const postmam = new Postmam(
+      window,
+      dashboardConfigSiteOrigin,
+      dashboardConfigSiteOrigin,
+    );
     for (const expectedSafeHttpsOrigin of t.context.expectedSafeHttpsOrigins) {
       t.true(postmam.isSafeOrigin(expectedSafeHttpsOrigin));
     }
   }
 });
 
-test('should generate correct safe HTTP site origins for an origin with an irregular subdomain', async t => {
+test('should generate correct safe HTTP site origins for an origin with an irregular subdomain', async (t) => {
   const dashboardConfigSiteOrigins = [
     'http://dev.www.site.com',
     'http://dev.www.site.com/',
   ];
   for (const dashboardConfigSiteOrigin of dashboardConfigSiteOrigins) {
-    const postmam = new Postmam(window, dashboardConfigSiteOrigin, dashboardConfigSiteOrigin);
-    for (const expectedSafeHttpOrigin of t.context.expectedSafeHttpOriginsForIrregularSubdomains) {
+    const postmam = new Postmam(
+      window,
+      dashboardConfigSiteOrigin,
+      dashboardConfigSiteOrigin,
+    );
+    for (const expectedSafeHttpOrigin of t.context
+      .expectedSafeHttpOriginsForIrregularSubdomains) {
       t.true(postmam.isSafeOrigin(expectedSafeHttpOrigin));
     }
   }
 });
 
-test('should generate correct safe HTTP site origins for an origin with a really irregular subdomain', async t => {
+test('should generate correct safe HTTP site origins for an origin with a really irregular subdomain', async (t) => {
   const dashboardConfigSiteOrigins = [
     'http://dev.www2-6.en.site.com',
     'http://dev.www2-6.en.site.com/',
@@ -126,29 +142,33 @@ test('should generate correct safe HTTP site origins for an origin with a really
     'http://www.dev.www2-6.en.site.com/',
   ];
   for (const dashboardConfigSiteOrigin of dashboardConfigSiteOrigins) {
-    const postmam = new Postmam(window, dashboardConfigSiteOrigin, dashboardConfigSiteOrigin);
-    for (const expectedSafeHttpOrigin of t.context.expectedSafeHttpOriginsForReallyIrregularSubdomains) {
+    const postmam = new Postmam(
+      window,
+      dashboardConfigSiteOrigin,
+      dashboardConfigSiteOrigin,
+    );
+    for (const expectedSafeHttpOrigin of t.context
+      .expectedSafeHttpOriginsForReallyIrregularSubdomains) {
       t.true(postmam.isSafeOrigin(expectedSafeHttpOrigin));
     }
   }
 });
 
-test('should generate no safe origins for an invalid origin', async t => {
-  const dashboardConfigSiteOrigins = [
-    'http://*.google.com',
-    'asdf',
-  ];
+test('should generate no safe origins for an invalid origin', async (t) => {
+  const dashboardConfigSiteOrigins = ['http://*.google.com', 'asdf'];
   for (const dashboardConfigSiteOrigin of dashboardConfigSiteOrigins) {
-    const postmam = new Postmam(window, dashboardConfigSiteOrigin, dashboardConfigSiteOrigin);
+    const postmam = new Postmam(
+      window,
+      dashboardConfigSiteOrigin,
+      dashboardConfigSiteOrigin,
+    );
     t.false(postmam.isSafeOrigin('http://site.com'));
   }
 });
 
-test('should allow any origin for legacy wildcard *', async t => {
+test('should allow any origin for legacy wildcard *', async (t) => {
   const postmam = new Postmam(window, '*', '*');
   t.true(postmam.isSafeOrigin('http://site.com'));
   t.true(postmam.isSafeOrigin('http://abcde.com'));
   t.true(postmam.isSafeOrigin('http://1234.com'));
 });
-
-

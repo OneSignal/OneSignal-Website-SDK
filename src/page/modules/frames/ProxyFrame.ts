@@ -6,9 +6,12 @@ import Database, { OneSignalDbTable } from '../../../shared/services/Database';
 import { unsubscribeFromPush } from '../../../shared/utils/utils';
 import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
-import { WorkerMessengerCommand } from "../../../shared/libraries/WorkerMessenger";
+import { WorkerMessengerCommand } from '../../../shared/libraries/WorkerMessenger';
 import { DismissPrompt } from '../../models/Dismiss';
-import { UpsertOrDeactivateSessionPayload, PageVisibilityResponse } from '../../../shared/models/Session';
+import {
+  UpsertOrDeactivateSessionPayload,
+  PageVisibilityResponse,
+} from '../../../shared/models/Session';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import InitHelper from '../../../shared/helpers/InitHelper';
 import Log from '../../../shared/libraries/Log';
@@ -42,49 +45,113 @@ export default class ProxyFrame extends RemoteFrame {
     if (this.messenger) {
       this.messenger.destroy();
     }
-    this.messenger = new Postmam(window, this.options.origin, this.options.origin);
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.CONNECTED, this.onMessengerConnect.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, this.onProxyFrameInitializing.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
-      this.onRemoteNotificationPermission.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, this.onRemoteDatabaseGet.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, this.onRemoteDatabaseGetAll.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, this.onRemoteDatabasePut.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, this.onRemoteDatabaseRemove.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, this.onUnsubscribeFromPush.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, this.onMarkPromptDismissed.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, this.onIsSubscribed.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, this.onUnsubscribeProxyFrame.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE, this.onServiceWorkerState.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_WORKER_VERSION, this.onWorkerVersion.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.SUBSCRIPTION_EXPIRATION_STATE,
-      this.onSubscriptionExpirationState.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS,
-      this.onProcessExpiringSubscriptions.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE,
-      this.onGetSubscriptionState.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, this.onSessionUpsert.bind(this));
+    this.messenger = new Postmam(
+      window,
+      this.options.origin,
+      this.options.origin,
+    );
     this.messenger.on(
-      OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, this.onSessionDeactivate.bind(this));
+      OneSignal.POSTMAM_COMMANDS.CONNECTED,
+      this.onMessengerConnect.bind(this),
+    );
     this.messenger.on(
-      OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, this.onAreYouVisibleRequest.bind(this));
+      OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE,
+      this.onProxyFrameInitializing.bind(this),
+    );
     this.messenger.on(
-      OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_RESPONSE, this.onAreYouVisibleResponse.bind(this));
+      OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
+      this.onRemoteNotificationPermission.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET,
+      this.onRemoteDatabaseGet.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL,
+      this.onRemoteDatabaseGetAll.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT,
+      this.onRemoteDatabasePut.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE,
+      this.onRemoteDatabaseRemove.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH,
+      this.onUnsubscribeFromPush.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED,
+      this.onMarkPromptDismissed.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED,
+      this.onIsSubscribed.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME,
+      this.onUnsubscribeProxyFrame.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE,
+      this.onServiceWorkerState.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.GET_WORKER_VERSION,
+      this.onWorkerVersion.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.SUBSCRIPTION_EXPIRATION_STATE,
+      this.onSubscriptionExpirationState.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS,
+      this.onProcessExpiringSubscriptions.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE,
+      this.onGetSubscriptionState.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT,
+      this.onSessionUpsert.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE,
+      this.onSessionDeactivate.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST,
+      this.onAreYouVisibleRequest.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_RESPONSE,
+      this.onAreYouVisibleResponse.bind(this),
+    );
     this.messenger.listen();
   }
 
   retriggerRemoteEvent(eventName: string, eventData: any) {
-    this.messenger.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, { eventName, eventData });
+    this.messenger.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {
+      eventName,
+      eventData,
+    });
   }
 
   async onMessengerConnect(_: MessengerMessageEvent) {
-    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Successfully established cross-origin communication.`);
+    Log.debug(
+      `(${SdkEnvironment.getWindowEnv().toString()}) Successfully established cross-origin communication.`,
+    );
     this.finishInitialization();
     return false;
   }
 
   async onProxyFrameInitializing(message: MessengerMessageEvent) {
-    Log.info(`(${SdkEnvironment.getWindowEnv().toString()}) The iFrame has just received initOptions from the host page!`);
+    Log.info(
+      `(${SdkEnvironment.getWindowEnv().toString()}) The iFrame has just received initOptions from the host page!`,
+    );
 
     const config: AppConfig = {
       ...message.data.hostInitOptions,
@@ -99,7 +166,10 @@ export default class ProxyFrame extends RemoteFrame {
     // 3/30/16: For HTTP sites, put the host page URL as default URL if one doesn't exist already
     const defaultUrl = await Database.get('Options', 'defaultUrl');
     if (!defaultUrl) {
-      await Database.put('Options', { key: 'defaultUrl', value: new URL(OneSignal.config.pageUrl).origin });
+      await Database.put('Options', {
+        key: 'defaultUrl',
+        value: new URL(OneSignal.config.pageUrl).origin,
+      });
     }
 
     /**
@@ -109,7 +179,10 @@ export default class ProxyFrame extends RemoteFrame {
      * sets the HTTP's origin, this can be modified if users call setDefaultTitle(). lastKnownHostUrl therefore
      * stores the last visited full page URL.
      */
-    await Database.put('Options', { key: 'lastKnownHostUrl', value: OneSignal.config.pageUrl });
+    await Database.put('Options', {
+      key: 'lastKnownHostUrl',
+      value: OneSignal.config.pageUrl,
+    });
     await InitHelper.initSaveState();
     await InitHelper.storeInitialValues();
     await InitHelper.saveInitOptions();
@@ -119,7 +192,10 @@ export default class ProxyFrame extends RemoteFrame {
         const context: Context = OneSignal.context;
         context.serviceWorkerManager.establishServiceWorkerChannel();
       } catch (e) {
-        Log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
+        Log.error(
+          `Error interacting with Service Worker inside an HTTP-hosted iFrame:`,
+          e,
+        );
       }
     }
 
@@ -128,7 +204,10 @@ export default class ProxyFrame extends RemoteFrame {
 
   async onRemoteNotificationPermission(message: MessengerMessageEvent) {
     const context: Context = OneSignal.context;
-    const permission = await context.permissionManager.getReportedNotificationPermission(context.appConfig.safariWebId);
+    const permission =
+      await context.permissionManager.getReportedNotificationPermission(
+        context.appConfig.safariWebId,
+      );
     message.reply(permission);
     return false;
   }
@@ -136,7 +215,8 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabaseGet(message: MessengerMessageEvent) {
     // retrievals is an array of key-value pairs e.g. [{table: 'Ids', keys:
     // 'someId'}, {table: 'Ids', keys: 'someId'}]
-    const retrievals: Array<{table: OneSignalDbTable, key: string}> = message.data;
+    const retrievals: Array<{ table: OneSignalDbTable; key: string }> =
+      message.data;
     const retrievalOpPromises = [];
     for (const retrieval of retrievals) {
       const { table, key } = retrieval;
@@ -150,7 +230,7 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabaseGetAll(message: MessengerMessageEvent) {
     const table: OneSignalDbTable = message.data.table;
     const results = await Database.getAll(table);
-    
+
     message.reply(results);
     return false;
   }
@@ -158,7 +238,8 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabasePut(message: MessengerMessageEvent) {
     // insertions is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
-    const insertions: Array<{table: OneSignalDbTable, keypath: any}> = message.data;
+    const insertions: Array<{ table: OneSignalDbTable; keypath: any }> =
+      message.data;
     const insertionOpPromises = [];
     for (const insertion of insertions) {
       const { table, keypath } = insertion;
@@ -172,7 +253,8 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabaseRemove(message: MessengerMessageEvent) {
     // removals is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
-    const removals: Array<{table: OneSignalDbTable, keypath: any}> = message.data;
+    const removals: Array<{ table: OneSignalDbTable; keypath: any }> =
+      message.data;
     const removalOpPromises = [];
     for (const removal of removals) {
       const { table, keypath } = removal;
@@ -184,7 +266,9 @@ export default class ProxyFrame extends RemoteFrame {
   }
 
   async onUnsubscribeFromPush(message: MessengerMessageEvent) {
-    Log.debug('(Reposted from iFrame -> Host) User unsubscribed but permission granted. Re-prompting the user for push.');
+    Log.debug(
+      '(Reposted from iFrame -> Host) User unsubscribed but permission granted. Re-prompting the user for push.',
+    );
     try {
       await unsubscribeFromPush();
       message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
@@ -263,7 +347,10 @@ export default class ProxyFrame extends RemoteFrame {
   async onSessionUpsert(message: MessengerMessageEvent) {
     const context: Context = OneSignal.context;
     const payload = message.data as UpsertOrDeactivateSessionPayload;
-    context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionUpsert, payload);
+    context.workerMessenger.directPostMessageToSW(
+      WorkerMessengerCommand.SessionUpsert,
+      payload,
+    );
     message.reply(true);
   }
 
@@ -271,20 +358,24 @@ export default class ProxyFrame extends RemoteFrame {
     const context: Context = OneSignal.context;
     const payload = message.data as UpsertOrDeactivateSessionPayload;
     context.workerMessenger.directPostMessageToSW(
-      WorkerMessengerCommand.SessionDeactivate, payload);
+      WorkerMessengerCommand.SessionDeactivate,
+      payload,
+    );
     message.reply(true);
   }
 
   async onAreYouVisibleRequest(message: MessengerMessageEvent) {
-    Log.debug("onAreYouVisibleRequest iframe", message);
+    Log.debug('onAreYouVisibleRequest iframe', message);
   }
 
   async onAreYouVisibleResponse(message: MessengerMessageEvent) {
-    Log.debug("onAreYouVisibleResponse iframe", message);
+    Log.debug('onAreYouVisibleResponse iframe', message);
     const context: Context = OneSignal.context;
     const payload = message.data as PageVisibilityResponse;
     context.workerMessenger.directPostMessageToSW(
-      WorkerMessengerCommand.AreYouVisibleResponse, payload);
+      WorkerMessengerCommand.AreYouVisibleResponse,
+      payload,
+    );
     message.reply(true);
   }
 }

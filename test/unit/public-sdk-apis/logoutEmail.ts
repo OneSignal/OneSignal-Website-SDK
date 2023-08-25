@@ -1,13 +1,12 @@
-import "../../support/polyfills/polyfills";
-import test, { ExecutionContext } from "ava";
+import '../../support/polyfills/polyfills';
+import test, { ExecutionContext } from 'ava';
 import Database from '../../../src/shared/services/Database';
-import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/onesignal/OneSignal";
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
+import OneSignal from '../../../src/onesignal/OneSignal';
 import { Subscription } from '../../../src/shared/models/Subscription';
 
 import nock from 'nock';
-import Random from "../../support/tester/Random";
-
+import Random from '../../support/tester/Random';
 
 interface LogoutEmailTestData {
   existingPushDeviceId: string | null;
@@ -17,11 +16,14 @@ interface LogoutEmailTestData {
 
 async function logoutEmailTest(
   t: ExecutionContext,
-  testData: LogoutEmailTestData
+  testData: LogoutEmailTestData,
 ) {
   await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
-  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
+  await Database.put('Ids', {
+    type: 'appId',
+    id: OneSignal.context.appConfig.appId,
+  });
 
   /* If an existing email device ID is set, create a fake one here */
   if (testData.emailDeviceId) {
@@ -60,28 +62,35 @@ async function expectEmailLogoutRequest(
   pushDevicePlayerId: string | null,
   emailId: string,
   identifierAuthHash: string,
-  newUpdatedPlayerId: string
+  newUpdatedPlayerId: string,
 ) {
   nock('https://onesignal.com')
-    .post(`/api/v1/players/${pushDevicePlayerId ? pushDevicePlayerId : 'fake'}/email_logout`)
+    .post(
+      `/api/v1/players/${
+        pushDevicePlayerId ? pushDevicePlayerId : 'fake'
+      }/email_logout`,
+    )
     .reply(200, (_uri: string, requestBody: any) => {
       t.deepEqual(
         requestBody,
         JSON.stringify({
           app_id: OneSignal.context.appConfig.appId,
           parent_player_id: emailId ? emailId : undefined,
-          identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
-        })
+          identifier_auth_hash: identifierAuthHash
+            ? identifierAuthHash
+            : undefined,
+        }),
       );
       return { success: true, id: newUpdatedPlayerId };
     });
 }
 
-test("logoutEmail returns if not subscribed to web push", async t => {
+test('logoutEmail returns if not subscribed to web push', async (t) => {
   const testData = {
     existingPushDeviceId: null,
     emailDeviceId: Random.getRandomUuid(),
-    identifierAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
+    identifierAuthHash:
+      'b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7',
   };
 
   await logoutEmailTest(t, testData);
@@ -92,20 +101,23 @@ test("logoutEmail returns if not subscribed to web push", async t => {
   t.deepEqual(emailProfile.identifierAuthHash, testData.identifierAuthHash);
 });
 
-test("logoutEmail calls POST email_logout and clears local data", async t => {
+test('logoutEmail calls POST email_logout and clears local data', async (t) => {
   const testData = {
     existingPushDeviceId: Random.getRandomUuid(),
     emailDeviceId: Random.getRandomUuid(),
-    identifierAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
+    identifierAuthHash:
+      'b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7',
   };
   await logoutEmailTest(t, testData);
 
   // Confirm email details have been erased
   const { deviceId: finalPushDeviceId } = await Database.getSubscription();
   const finalEmailProfile = await Database.getEmailProfile();
-  t.deepEqual(finalPushDeviceId, testData.existingPushDeviceId ? testData.existingPushDeviceId : null);
+  t.deepEqual(
+    finalPushDeviceId,
+    testData.existingPushDeviceId ? testData.existingPushDeviceId : null,
+  );
   t.deepEqual(finalEmailProfile.identifier, undefined);
   t.deepEqual(finalEmailProfile.identifierAuthHash, undefined);
   t.deepEqual(finalEmailProfile.subscriptionId, undefined);
 });
-

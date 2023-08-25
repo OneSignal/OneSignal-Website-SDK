@@ -1,4 +1,3 @@
-import bowser from 'bowser';
 import { Serializable } from '../../page/models/Serializable';
 
 import NotImplementedError from '../errors/NotImplementedError';
@@ -59,7 +58,7 @@ export abstract class DeviceRecord implements Serializable {
   getDeliveryPlatform(): DeliveryPlatformKind {
     // For testing purposes, allows changing the browser user agent
     const browser = OneSignalUtils.redetectBrowserUserAgent();
-  
+
     if (Environment.useSafariLegacyPush()) {
       return DeliveryPlatformKind.SafariLegacy;
     } else if (Environment.useSafariVapidPush()) {
@@ -100,5 +99,7 @@ export abstract class DeviceRecord implements Serializable {
     return serializedBundle;
   }
 
-  deserialize(_: object): DeviceRecord { throw new NotImplementedError(); }
+  deserialize(_: object): DeviceRecord {
+    throw new NotImplementedError();
+  }
 }

@@ -14,17 +14,21 @@ export default class Environment {
   // Prefer Legacy Safari if API is available over VAPID until Safari
   // fixes issues with it.
   public static useSafariLegacyPush(): boolean {
-    return this.isBrowser() && window.safari?.pushNotification != undefined
+    return this.isBrowser() && window.safari?.pushNotification != undefined;
   }
 
   // This is the counter part to useSafariLegacyPush(); as it notes only use
   // Safari VAPID if it doesn't have legacy Safari push.
   public static useSafariVapidPush(): boolean {
-    return bowserCastle().name == 'safari' && supportsVapidPush() && !this.useSafariLegacyPush();
+    return (
+      bowserCastle().name == 'safari' &&
+      supportsVapidPush() &&
+      !this.useSafariLegacyPush()
+    );
   }
 
   public static version() {
-    return (typeof __VERSION__ === "undefined" ? 1 : Number(__VERSION__));
+    return typeof __VERSION__ === 'undefined' ? 1 : Number(__VERSION__);
   }
 
   public static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {
@@ -72,8 +76,7 @@ export default class Environment {
       case WindowEnvironmentKind.ServiceWorker:
         return true;
       default:
-        return typeof navigator !== "undefined" &&
-          'serviceWorker' in navigator;
+        return typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
     }
   }
 
@@ -82,6 +85,8 @@ export default class Environment {
     directory.
    */
   public static getSdkStylesVersionHash() {
-    return (typeof __SRC_STYLESHEETS_MD5_HASH__ === "undefined" ? '2' : __SRC_STYLESHEETS_MD5_HASH__);
+    return typeof __SRC_STYLESHEETS_MD5_HASH__ === 'undefined'
+      ? '2'
+      : __SRC_STYLESHEETS_MD5_HASH__;
   }
 }

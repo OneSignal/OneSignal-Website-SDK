@@ -1,9 +1,9 @@
-import OneSignalError from "../../shared/errors/OneSignalError";
+import OneSignalError from '../../shared/errors/OneSignalError';
 
 export enum InvalidChannelInputField {
   InvalidSms,
   InvalidEmail,
-  InvalidEmailAndSms
+  InvalidEmailAndSms,
 }
 
 export class ChannelCaptureError extends OneSignalError {

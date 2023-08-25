@@ -1,9 +1,15 @@
-import { OSModel } from "../core/modelRepo/OSModel";
-import { ModelName, SupportedModel } from "../core/models/SupportedModels";
-import { FutureSubscriptionModel, SubscriptionType } from "../core/models/SubscriptionModels";
-import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
-import { logMethodCall, isValidEmail } from "../shared/utils/utils";
-import UserDirector from "./UserDirector";
+import { OSModel } from '../core/modelRepo/OSModel';
+import { ModelName, SupportedModel } from '../core/models/SupportedModels';
+import {
+  FutureSubscriptionModel,
+  SubscriptionType,
+} from '../core/models/SubscriptionModels';
+import {
+  InvalidArgumentError,
+  InvalidArgumentReason,
+} from '../shared/errors/InvalidArgumentError';
+import { logMethodCall, isValidEmail } from '../shared/utils/utils';
+import UserDirector from './UserDirector';
 
 export default class User {
   hasOneSignalId = false;
@@ -22,10 +28,11 @@ export default class User {
       User.singletonInstance = new User();
       UserDirector.initializeUser(true)
         .then(() => {
-          UserDirector.copyOneSignalIdPromiseFromIdentityModel()
-            .catch((e: Error) => {
+          UserDirector.copyOneSignalIdPromiseFromIdentityModel().catch(
+            (e: Error) => {
               console.error(e);
-            });
+            },
+          );
         })
         .catch((e: Error) => {
           console.error(e);
@@ -66,13 +73,16 @@ export default class User {
       throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
     }
 
-    Object.keys(aliases).forEach(async label => {
+    Object.keys(aliases).forEach(async (label) => {
       if (typeof label !== 'string') {
-        throw new InvalidArgumentError('label', InvalidArgumentReason.WrongType);
+        throw new InvalidArgumentError(
+          'label',
+          InvalidArgumentReason.WrongType,
+        );
       }
     });
 
-    Object.keys(aliases).forEach(async label => {
+    Object.keys(aliases).forEach(async (label) => {
       const identityModel = OneSignal.coreDirector.getIdentityModel();
       identityModel?.set(label, aliases[label]);
     });
@@ -99,7 +109,7 @@ export default class User {
       throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
     }
 
-    aliases.forEach(async alias => {
+    aliases.forEach(async (alias) => {
       const identityModel = OneSignal.coreDirector.getIdentityModel();
       identityModel?.set(alias, undefined);
     });
@@ -124,21 +134,37 @@ export default class User {
       type: SubscriptionType.Email,
       token: email,
     };
-    const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, subscription);
+    const newSubscription = new OSModel<SupportedModel>(
+      ModelName.EmailSubscriptions,
+      subscription,
+    );
 
-    if (User.singletonInstance?.isCreatingUser || User.singletonInstance?.hasOneSignalId) {
+    if (
+      User.singletonInstance?.isCreatingUser ||
+      User.singletonInstance?.hasOneSignalId
+    ) {
       // existing user
       newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
-      OneSignal.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true);
+      OneSignal.coreDirector.add(
+        ModelName.EmailSubscriptions,
+        newSubscription,
+        true,
+      );
     } else {
       // new user
-      OneSignal.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, false);
+      OneSignal.coreDirector.add(
+        ModelName.EmailSubscriptions,
+        newSubscription,
+        false,
+      );
       UserDirector.createUserOnServer();
     }
 
-    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
-      throw e;
-    });
+    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(
+      (e) => {
+        throw e;
+      },
+    );
   }
 
   public addSms(sms: string): void {
@@ -157,21 +183,37 @@ export default class User {
       token: sms,
     };
 
-    const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, subscription);
+    const newSubscription = new OSModel<SupportedModel>(
+      ModelName.SmsSubscriptions,
+      subscription,
+    );
 
-    if (User.singletonInstance?.isCreatingUser || User.singletonInstance?.hasOneSignalId) {
+    if (
+      User.singletonInstance?.isCreatingUser ||
+      User.singletonInstance?.hasOneSignalId
+    ) {
       // existing user
       newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
-      OneSignal.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true);
+      OneSignal.coreDirector.add(
+        ModelName.SmsSubscriptions,
+        newSubscription,
+        true,
+      );
     } else {
       // new user
-      OneSignal.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, false);
+      OneSignal.coreDirector.add(
+        ModelName.SmsSubscriptions,
+        newSubscription,
+        false,
+      );
       UserDirector.createUserOnServer();
     }
 
-    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
-      throw e;
-    });
+    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(
+      (e) => {
+        throw e;
+      },
+    );
   }
 
   public removeEmail(email: string): void {
@@ -185,9 +227,10 @@ export default class User {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
 
-    const emailSubscriptions = OneSignal.coreDirector.getEmailSubscriptionModels();
+    const emailSubscriptions =
+      OneSignal.coreDirector.getEmailSubscriptionModels();
     const modelIds = Object.keys(emailSubscriptions);
-    modelIds.forEach(async modelId => {
+    modelIds.forEach(async (modelId) => {
       const model = emailSubscriptions[modelId];
       if (model.data?.token === email) {
         OneSignal.coreDirector.remove(ModelName.EmailSubscriptions, modelId);
@@ -199,7 +242,10 @@ export default class User {
     logMethodCall('removeSms', { smsNumber });
 
     if (typeof smsNumber !== 'string') {
-      throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.WrongType);
+      throw new InvalidArgumentError(
+        'smsNumber',
+        InvalidArgumentReason.WrongType,
+      );
     }
 
     if (!smsNumber) {
@@ -208,7 +254,7 @@ export default class User {
 
     const smsSubscriptions = OneSignal.coreDirector.getSmsSubscriptionModels();
     const modelIds = Object.keys(smsSubscriptions);
-    modelIds.forEach(async modelId => {
+    modelIds.forEach(async (modelId) => {
       const model = smsSubscriptions[modelId];
       if (model.data?.token === smsNumber) {
         OneSignal.coreDirector.remove(ModelName.SmsSubscriptions, modelId);
@@ -232,13 +278,17 @@ export default class User {
     }
 
     if (!value) {
-      throw new InvalidArgumentError('value', InvalidArgumentReason.Empty, "Did you mean to call removeTag?");
+      throw new InvalidArgumentError(
+        'value',
+        InvalidArgumentReason.Empty,
+        'Did you mean to call removeTag?',
+      );
     }
 
     this.addTags({ [key]: value });
   }
 
-  public addTags(tags: {[key: string]: string}): void {
+  public addTags(tags: { [key: string]: string }): void {
     logMethodCall('addTags', { tags });
 
     if (typeof tags !== 'object') {
@@ -279,8 +329,8 @@ export default class User {
     const tagsCopy = JSON.parse(JSON.stringify(propertiesModel?.data?.tags));
 
     if (tagsCopy) {
-      tagKeys.forEach(tagKey => {
-        tagsCopy[tagKey] = "";
+      tagKeys.forEach((tagKey) => {
+        tagsCopy[tagKey] = '';
       });
       propertiesModel?.set('tags', tagsCopy);
     }

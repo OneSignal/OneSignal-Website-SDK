@@ -1,6 +1,5 @@
-import { InvalidArgumentError } from "../../../src/shared/errors/InvalidArgumentError";
-import { throws, notThrows } from "../../support/tester/asyncFunctions";
-
+import { InvalidArgumentError } from '../../../src/shared/errors/InvalidArgumentError';
+import { throws, notThrows } from '../../support/tester/asyncFunctions';
 
 /* See: https://github.com/avajs/ava#test-macros */
 export default class Macros {

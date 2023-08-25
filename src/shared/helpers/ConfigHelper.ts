@@ -1,19 +1,29 @@
-import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
-import SdkEnvironment from "../managers/SdkEnvironment";
-import OneSignalUtils from "../utils/OneSignalUtils";
-import Utils from "../context/Utils";
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import OneSignalUtils from '../utils/OneSignalUtils';
+import Utils from '../context/Utils';
 import {
   SERVER_CONFIG_DEFAULTS_SESSION,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
   SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
-  CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS
-} from "../config/constants";
+  CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
+} from '../config/constants';
 import TagUtils from '../utils/TagUtils';
 import PromptsHelper from './PromptsHelper';
-import { ConverterHelper } from "./ConverterHelper";
-import { SdkInitError, SdkInitErrorKind } from "../errors/SdkInitError";
-import { AppUserConfig, ServerAppConfig, AppConfig, ConfigIntegrationKind, ServerAppPromptConfig } from "../models/AppConfig";
-import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions, DelayedPromptType } from "../models/Prompts";
+import { ConverterHelper } from './ConverterHelper';
+import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
+import {
+  AppUserConfig,
+  ServerAppConfig,
+  AppConfig,
+  ConfigIntegrationKind,
+  ServerAppPromptConfig,
+} from '../models/AppConfig';
+import {
+  AppUserConfigCustomLinkOptions,
+  AppUserConfigPromptOptions,
+  DelayedPromptType,
+} from '../models/Prompts';
 
 export enum IntegrationConfigurationKind {
   /**
@@ -23,7 +33,7 @@ export enum IntegrationConfigurationKind {
   /**
    * Configuration comes from user-provided JavaScript code only.
    */
-  JavaScript
+  JavaScript,
 }
 
 export interface IntegrationCapabilities {
@@ -33,11 +43,16 @@ export interface IntegrationCapabilities {
 const MAX_CATEGORIES = 10;
 
 export class ConfigHelper {
-
-  public static async getAppConfig(userConfig: AppUserConfig,
-    downloadServerAppConfig: (appId: string) => Promise<ServerAppConfig>): Promise<AppConfig> {
+  public static async getAppConfig(
+    userConfig: AppUserConfig,
+    downloadServerAppConfig: (appId: string) => Promise<ServerAppConfig>,
+  ): Promise<AppConfig> {
     try {
-      if (!userConfig || !userConfig.appId || !OneSignalUtils.isValidUuid(userConfig.appId))
+      if (
+        !userConfig ||
+        !userConfig.appId ||
+        !OneSignalUtils.isValidUuid(userConfig.appId)
+      )
         throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
 
       const serverConfig = await downloadServerAppConfig(userConfig.appId);
@@ -45,11 +60,9 @@ export class ConfigHelper {
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
       this.checkRestrictedOrigin(appConfig);
       return appConfig;
-    }
-    catch (e) {
+    } catch (e) {
       if (e) {
-        if (e.code === 1)
-          throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
+        if (e.code === 1) throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
         else if (e.code === 2)
           throw new SdkInitError(SdkInitErrorKind.AppNotConfiguredForWebPush);
       }
@@ -59,20 +72,26 @@ export class ConfigHelper {
 
   public static checkRestrictedOrigin(appConfig: AppConfig) {
     if (appConfig.restrictedOriginEnabled) {
-      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
-        if (window.top === window &&
-          !Utils.contains(window.location.hostname, ".os.tc") &&
-          !Utils.contains(window.location.hostname, ".onesignal.com") &&
-          !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
+      if (
+        SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker
+      ) {
+        if (
+          window.top === window &&
+          !Utils.contains(window.location.hostname, '.os.tc') &&
+          !Utils.contains(window.location.hostname, '.onesignal.com') &&
+          !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)
+        ) {
           throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
-            siteUrl: appConfig.origin
+            siteUrl: appConfig.origin,
           });
         }
       }
     }
   }
 
-  public static doesCurrentOriginMatchConfigOrigin(configOrigin: string): boolean {
+  public static doesCurrentOriginMatchConfigOrigin(
+    configOrigin: string,
+  ): boolean {
     try {
       return location.origin === new URL(configOrigin).origin;
     } catch (e) {
@@ -80,7 +99,9 @@ export class ConfigHelper {
     }
   }
 
-  public static getIntegrationCapabilities(integration: ConfigIntegrationKind): IntegrationCapabilities {
+  public static getIntegrationCapabilities(
+    integration: ConfigIntegrationKind,
+  ): IntegrationCapabilities {
     switch (integration) {
       case ConfigIntegrationKind.Custom:
       case ConfigIntegrationKind.WordPress:
@@ -90,22 +111,32 @@ export class ConfigHelper {
     }
   }
 
-  public static getMergedConfig(userConfig: AppUserConfig, serverConfig: ServerAppConfig): AppConfig {
+  public static getMergedConfig(
+    userConfig: AppUserConfig,
+    serverConfig: ServerAppConfig,
+  ): AppConfig {
     const configIntegrationKind = this.getConfigIntegrationKind(serverConfig);
 
-    const subdomain = this.getSubdomainForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig);
-    const allowLocalhostAsSecureOrigin = (
-      serverConfig.config.setupBehavior ?
-        serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin :
-        userConfig.allowLocalhostAsSecureOrigin
+    const subdomain = this.getSubdomainForConfigIntegrationKind(
+      configIntegrationKind,
+      userConfig,
+      serverConfig,
     );
-    const isUsingSubscriptionWorkaround = OneSignalUtils.internalIsUsingSubscriptionWorkaround(
-      subdomain,
-      allowLocalhostAsSecureOrigin
-    );
+    const allowLocalhostAsSecureOrigin = serverConfig.config.setupBehavior
+      ? serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin
+      : userConfig.allowLocalhostAsSecureOrigin;
+    const isUsingSubscriptionWorkaround =
+      OneSignalUtils.internalIsUsingSubscriptionWorkaround(
+        subdomain,
+        allowLocalhostAsSecureOrigin,
+      );
 
     const mergedUserConfig = this.getUserConfigForConfigIntegrationKind(
-      configIntegrationKind, userConfig, serverConfig, isUsingSubscriptionWorkaround);
+      configIntegrationKind,
+      userConfig,
+      serverConfig,
+      isUsingSubscriptionWorkaround,
+    );
 
     return {
       appId: serverConfig.app_id,
@@ -113,10 +144,13 @@ export class ConfigHelper {
       siteName: serverConfig.config.siteInfo.name,
       origin: serverConfig.config.origin,
       httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
-      restrictedOriginEnabled: serverConfig.features.restrict_origin && serverConfig.features.restrict_origin.enable,
+      restrictedOriginEnabled:
+        serverConfig.features.restrict_origin &&
+        serverConfig.features.restrict_origin.enable,
       metrics: {
         enable: serverConfig.features.metrics.enable,
-        mixpanelReportingToken: serverConfig.features.metrics.mixpanel_reporting_token
+        mixpanelReportingToken:
+          serverConfig.features.metrics.mixpanel_reporting_token,
       },
       safariWebId: serverConfig.config.safari_web_id,
       vapidPublicKey: serverConfig.config.vapid_public_key,
@@ -124,45 +158,53 @@ export class ConfigHelper {
       userConfig: mergedUserConfig,
       enableOnSession: Utils.valueOrDefault(
         serverConfig.features.enable_on_session,
-        SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed
+        SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed,
       ),
       sessionThreshold: Utils.valueOrDefault(
         serverConfig.features.session_threshold,
-        SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold
+        SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold,
       ),
       enableSessionDuration: Utils.valueOrDefault(
         serverConfig.features.web_on_focus_enabled,
-        SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus
-      )
+        SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
+      ),
     };
   }
 
-  public static getConfigIntegrationKind(serverConfig: ServerAppConfig): ConfigIntegrationKind {
+  public static getConfigIntegrationKind(
+    serverConfig: ServerAppConfig,
+  ): ConfigIntegrationKind {
     if (serverConfig.config.integration)
       return serverConfig.config.integration.kind;
     return ConfigIntegrationKind.Custom;
   }
 
-  public static getCustomLinkConfig(serverConfig: ServerAppConfig): AppUserConfigCustomLinkOptions {
+  public static getCustomLinkConfig(
+    serverConfig: ServerAppConfig,
+  ): AppUserConfigCustomLinkOptions {
     const initialState: AppUserConfigCustomLinkOptions = {
       enabled: false,
-      style: "button",
-      size: "medium",
+      style: 'button',
+      size: 'medium',
       unsubscribeEnabled: false,
       text: {
-        explanation: "",
-        subscribe: "",
-        unsubscribe: "",
+        explanation: '',
+        subscribe: '',
+        unsubscribe: '',
       },
       color: {
-        button: "",
-        text: "",
-      }
+        button: '',
+        text: '',
+      },
     };
 
-    if (!serverConfig || !serverConfig.config ||
-      !serverConfig.config.staticPrompts || !serverConfig.config.staticPrompts.customlink ||
-      !serverConfig.config.staticPrompts.customlink.enabled) {
+    if (
+      !serverConfig ||
+      !serverConfig.config ||
+      !serverConfig.config.staticPrompts ||
+      !serverConfig.config.staticPrompts.customlink ||
+      !serverConfig.config.staticPrompts.customlink.enabled
+    ) {
       return initialState;
     }
 
@@ -173,15 +215,19 @@ export class ConfigHelper {
       style: customlink.style,
       size: customlink.size,
       unsubscribeEnabled: customlink.unsubscribeEnabled,
-      text: customlink.text ? {
-        subscribe: customlink.text.subscribe,
-        unsubscribe: customlink.text.unsubscribe,
-        explanation: customlink.text.explanation,
-      } : initialState.text,
-      color: customlink.color ? {
-        button: customlink.color.button,
-        text: customlink.color.text,
-      } : initialState.color,
+      text: customlink.text
+        ? {
+            subscribe: customlink.text.subscribe,
+            unsubscribe: customlink.text.unsubscribe,
+            explanation: customlink.text.explanation,
+          }
+        : initialState.text,
+      color: customlink.color
+        ? {
+            button: customlink.color.button,
+            text: customlink.color.text,
+          }
+        : initialState.color,
     };
   }
 
@@ -199,7 +245,6 @@ export class ConfigHelper {
     wholeUserConfig: AppUserConfig,
     isUsingSubscriptionWorkaround = false,
   ): AppUserConfigPromptOptions | undefined {
-
     let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
     if (promptOptions && promptOptions.customlink) {
       customlinkUser = promptOptions.customlink;
@@ -208,95 +253,153 @@ export class ConfigHelper {
     const promptOptionsConfig: AppUserConfigPromptOptions = {
       ...promptOptions,
       customlink: {
-        enabled: Utils.getValueOrDefault(customlinkUser.enabled, customlinkDefaults.enabled),
-        style: Utils.getValueOrDefault(customlinkUser.style, customlinkDefaults.style),
-        size: Utils.getValueOrDefault(customlinkUser.size, customlinkDefaults.size),
-        unsubscribeEnabled: Utils.getValueOrDefault(customlinkUser.unsubscribeEnabled,
-          customlinkDefaults.unsubscribeEnabled),
+        enabled: Utils.getValueOrDefault(
+          customlinkUser.enabled,
+          customlinkDefaults.enabled,
+        ),
+        style: Utils.getValueOrDefault(
+          customlinkUser.style,
+          customlinkDefaults.style,
+        ),
+        size: Utils.getValueOrDefault(
+          customlinkUser.size,
+          customlinkDefaults.size,
+        ),
+        unsubscribeEnabled: Utils.getValueOrDefault(
+          customlinkUser.unsubscribeEnabled,
+          customlinkDefaults.unsubscribeEnabled,
+        ),
         text: {
-          subscribe: Utils.getValueOrDefault(customlinkUser.text ? customlinkUser.text.subscribe : undefined,
-            customlinkDefaults.text.subscribe),
-          unsubscribe: Utils.getValueOrDefault(customlinkUser.text ? customlinkUser.text.unsubscribe: undefined,
-            customlinkDefaults.text.unsubscribe),
-          explanation: Utils.getValueOrDefault(customlinkUser.text ? customlinkUser.text.explanation : undefined,
-            customlinkDefaults.text.explanation),
+          subscribe: Utils.getValueOrDefault(
+            customlinkUser.text ? customlinkUser.text.subscribe : undefined,
+            customlinkDefaults.text.subscribe,
+          ),
+          unsubscribe: Utils.getValueOrDefault(
+            customlinkUser.text ? customlinkUser.text.unsubscribe : undefined,
+            customlinkDefaults.text.unsubscribe,
+          ),
+          explanation: Utils.getValueOrDefault(
+            customlinkUser.text ? customlinkUser.text.explanation : undefined,
+            customlinkDefaults.text.explanation,
+          ),
         },
         color: {
-          button: Utils.getValueOrDefault(customlinkUser.color ? customlinkUser.color.button : undefined,
-            customlinkDefaults.color.button),
-          text: Utils.getValueOrDefault(customlinkUser.color ? customlinkUser.color.text : undefined,
-            customlinkDefaults.color.text),
+          button: Utils.getValueOrDefault(
+            customlinkUser.color ? customlinkUser.color.button : undefined,
+            customlinkDefaults.color.button,
+          ),
+          text: Utils.getValueOrDefault(
+            customlinkUser.color ? customlinkUser.color.text : undefined,
+            customlinkDefaults.color.text,
+          ),
         },
-      }
+      },
     };
 
     if (promptOptionsConfig.slidedown) {
-      promptOptionsConfig.slidedown.prompts = promptOptionsConfig.slidedown?.prompts?.map(promptOption => {
-        promptOption.type = Utils.getValueOrDefault(promptOption.type, DelayedPromptType.Push);
+      promptOptionsConfig.slidedown.prompts =
+        promptOptionsConfig.slidedown?.prompts?.map((promptOption) => {
+          promptOption.type = Utils.getValueOrDefault(
+            promptOption.type,
+            DelayedPromptType.Push,
+          );
 
-        if (promptOption.type === DelayedPromptType.Category) {
+          if (promptOption.type === DelayedPromptType.Category) {
+            promptOption.text = {
+              ...promptOption.text,
+              positiveUpdateButton: Utils.getValueOrDefault(
+                promptOption.text?.positiveUpdateButton,
+                SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults
+                  .positiveUpdateButton,
+              ),
+              negativeUpdateButton: Utils.getValueOrDefault(
+                promptOption.text?.negativeUpdateButton,
+                SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults
+                  .negativeUpdateButton,
+              ),
+              updateMessage: Utils.getValueOrDefault(
+                promptOption.text?.updateMessage,
+                SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage,
+              ),
+            };
+          }
+
           promptOption.text = {
             ...promptOption.text,
-            positiveUpdateButton: Utils.getValueOrDefault(promptOption.text?.positiveUpdateButton,
-              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton),
-            negativeUpdateButton: Utils.getValueOrDefault(promptOption.text?.negativeUpdateButton,
-              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton),
-            updateMessage: Utils.getValueOrDefault(promptOption.text?.updateMessage,
-              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage),
+            actionMessage: Utils.getValueOrDefault(
+              promptOption.text?.actionMessage,
+              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
+            ),
+            acceptButton: Utils.getValueOrDefault(
+              promptOption.text?.acceptButton,
+              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
+            ),
+            cancelButton: Utils.getValueOrDefault(
+              promptOption.text?.cancelButton,
+              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
+            ),
+            confirmMessage: Utils.getValueOrDefault(
+              promptOption.text?.confirmMessage,
+              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage,
+            ),
           };
-        }
 
-        promptOption.text = {
-          ...promptOption.text,
-          actionMessage: Utils.getValueOrDefault(promptOption.text?.actionMessage,
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage),
-          acceptButton: Utils.getValueOrDefault(promptOption.text?.acceptButton,
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton),
-          cancelButton: Utils.getValueOrDefault(promptOption.text?.cancelButton,
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton),
-          confirmMessage: Utils.getValueOrDefault(promptOption.text?.confirmMessage,
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage)
-        };
+          // default autoPrompt to true iff slidedown config exists but omitted the autoPrompt setting
+          promptOption.autoPrompt = Utils.getValueOrDefault(
+            promptOption.autoPrompt,
+            true,
+          );
 
-        // default autoPrompt to true iff slidedown config exists but omitted the autoPrompt setting
-        promptOption.autoPrompt = Utils.getValueOrDefault(promptOption.autoPrompt, true);
+          promptOption.delay = {
+            pageViews: Utils.getValueOrDefault(
+              promptOption.delay?.pageViews,
+              SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
+            ),
+            timeDelay: Utils.getValueOrDefault(
+              promptOption.delay?.timeDelay,
+              SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
+            ),
+          };
 
-        promptOption.delay = {
-          pageViews: Utils.getValueOrDefault(promptOption.delay?.pageViews,
-            SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews),
-          timeDelay: Utils.getValueOrDefault(promptOption.delay?.timeDelay,
-            SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay)
-        };
+          if (promptOption.categories) {
+            const { categories } = promptOption;
+            promptOption.categories = TagUtils.limitCategoriesToMaxCount(
+              categories,
+              MAX_CATEGORIES,
+            );
+          }
 
-        if (promptOption.categories) {
-          const { categories } = promptOption;
-          promptOption.categories = TagUtils.limitCategoriesToMaxCount(categories, MAX_CATEGORIES);
-        }
-
-        return promptOption;
-      });
-
+          return promptOption;
+        });
     } else {
       promptOptionsConfig.slidedown = { prompts: [] };
-      promptOptionsConfig.slidedown.prompts = [ CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS ];
+      promptOptionsConfig.slidedown.prompts = [
+        CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
+      ];
     }
 
     if (promptOptionsConfig.native) {
       promptOptionsConfig.native.enabled = !!promptOptionsConfig.native.enabled;
-      // eslint-disable-next-line no-prototype-builtins
-      promptOptionsConfig.native.autoPrompt = promptOptionsConfig.native.hasOwnProperty("autoPrompt") ?
-        !!promptOptionsConfig.native.enabled && !!promptOptionsConfig.native.autoPrompt :
-        !!promptOptionsConfig.native.enabled;
-      promptOptionsConfig.native.pageViews = Utils.getValueOrDefault(promptOptionsConfig.native.pageViews,
-        SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews);
-      promptOptionsConfig.native.timeDelay = Utils.getValueOrDefault(promptOptionsConfig.native.timeDelay,
-        SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay);
+      promptOptionsConfig.native.autoPrompt =
+        // eslint-disable-next-line no-prototype-builtins
+        promptOptionsConfig.native.hasOwnProperty('autoPrompt')
+          ? !!promptOptionsConfig.native.enabled &&
+            !!promptOptionsConfig.native.autoPrompt
+          : !!promptOptionsConfig.native.enabled;
+      promptOptionsConfig.native.pageViews = Utils.getValueOrDefault(
+        promptOptionsConfig.native.pageViews,
+        SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
+      );
+      promptOptionsConfig.native.timeDelay = Utils.getValueOrDefault(
+        promptOptionsConfig.native.timeDelay,
+        SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
+      );
     } else {
       promptOptionsConfig.native = {
         enabled: false,
         autoPrompt: false,
         pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
-        timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay
+        timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
       };
     }
 
@@ -312,11 +415,13 @@ export class ConfigHelper {
 
         // enable slidedown & make it autoPrompt
         const text = {
-          actionMessage : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
-          acceptButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
-          cancelButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
+          actionMessage: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
+          acceptButton: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
+          cancelButton: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
         };
-        promptOptionsConfig.slidedown.prompts = [{ type: DelayedPromptType.Push, autoPrompt: true, text }];
+        promptOptionsConfig.slidedown.prompts = [
+          { type: DelayedPromptType.Push, autoPrompt: true, text },
+        ];
       } else {
         //enable native prompt & make it autoPrompt
         promptOptionsConfig.native.enabled = true;
@@ -327,8 +432,11 @@ export class ConfigHelper {
     }
 
     // sets top level `autoPrompt` to trigger autoprompt codepath in initialization / prompting flow
-    promptOptionsConfig.autoPrompt = promptOptionsConfig.native.autoPrompt ||
-      PromptsHelper.isSlidedownAutoPromptConfigured(promptOptionsConfig.slidedown.prompts);
+    promptOptionsConfig.autoPrompt =
+      promptOptionsConfig.native.autoPrompt ||
+      PromptsHelper.isSlidedownAutoPromptConfigured(
+        promptOptionsConfig.slidedown.prompts,
+      );
 
     return promptOptionsConfig;
   }
@@ -338,29 +446,41 @@ export class ConfigHelper {
    * @param  {ServerAppConfig} serverConfig
    * @returns AppUserConfigPromptOptions
    */
-  private static getPromptOptionsForDashboardConfiguration(serverConfig: ServerAppConfig): AppUserConfigPromptOptions {
+  private static getPromptOptionsForDashboardConfiguration(
+    serverConfig: ServerAppConfig,
+  ): AppUserConfigPromptOptions {
     const staticPrompts = serverConfig.config.staticPrompts;
-    const native = staticPrompts.native ? {
-      enabled: staticPrompts.native.enabled,
-      autoPrompt: staticPrompts.native.enabled && staticPrompts.native.autoPrompt !== false,
-      pageViews: Utils.getValueOrDefault(staticPrompts.native.pageViews,
-          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews),
-      timeDelay: Utils.getValueOrDefault(staticPrompts.native.timeDelay,
-          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay)
-    } : {
-      enabled: false,
-      autoPrompt: false,
-      pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
-      timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay
-    };
+    const native = staticPrompts.native
+      ? {
+          enabled: staticPrompts.native.enabled,
+          autoPrompt:
+            staticPrompts.native.enabled &&
+            staticPrompts.native.autoPrompt !== false,
+          pageViews: Utils.getValueOrDefault(
+            staticPrompts.native.pageViews,
+            SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
+          ),
+          timeDelay: Utils.getValueOrDefault(
+            staticPrompts.native.timeDelay,
+            SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
+          ),
+        }
+      : {
+          enabled: false,
+          autoPrompt: false,
+          pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
+          timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
+        };
 
     const { prompts } = staticPrompts.slidedown;
 
     return {
-      autoPrompt: native.autoPrompt || PromptsHelper.isSlidedownAutoPromptConfigured(prompts),
+      autoPrompt:
+        native.autoPrompt ||
+        PromptsHelper.isSlidedownAutoPromptConfigured(prompts),
       native,
       slidedown: {
-        prompts
+        prompts,
       },
       fullscreen: {
         enabled: staticPrompts.fullscreen.enabled,
@@ -382,10 +502,12 @@ export class ConfigHelper {
     serverConfig: ServerAppConfig,
     isUsingSubscriptionWorkaround = false,
   ): AppUserConfig {
-    const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
+    const integrationCapabilities = this.getIntegrationCapabilities(
+      configIntegrationKind,
+    );
     switch (integrationCapabilities.configuration) {
       case IntegrationConfigurationKind.Dashboard:
-       /*
+        /*
          Ignores code-based initialization configuration and uses dashboard configuration only.
         */
         return {
@@ -394,86 +516,124 @@ export class ConfigHelper {
           autoResubscribe: serverConfig.config.autoResubscribe,
           path: serverConfig.config.serviceWorker.path,
           serviceWorkerPath: serverConfig.config.serviceWorker.workerName,
-          serviceWorkerParam: { scope: serverConfig.config.serviceWorker.registrationScope },
+          serviceWorkerParam: {
+            scope: serverConfig.config.serviceWorker.registrationScope,
+          },
           subdomainName: serverConfig.config.siteInfo.proxyOrigin,
-          promptOptions: this.getPromptOptionsForDashboardConfiguration(serverConfig),
+          promptOptions:
+            this.getPromptOptionsForDashboardConfiguration(serverConfig),
           welcomeNotification: {
             disable: !serverConfig.config.welcomeNotification.enable,
             title: serverConfig.config.welcomeNotification.title,
             message: serverConfig.config.welcomeNotification.message,
-            url: serverConfig.config.welcomeNotification.url
+            url: serverConfig.config.welcomeNotification.url,
           },
           notifyButton: {
             enable: serverConfig.config.staticPrompts.bell.enabled,
-            displayPredicate: serverConfig.config.staticPrompts.bell.hideWhenSubscribed ?
-              () => {
-                return OneSignal.isPushNotificationsEnabled()
-                  .then((isPushEnabled: boolean) => {
+            displayPredicate: serverConfig.config.staticPrompts.bell
+              .hideWhenSubscribed
+              ? () => {
+                  return OneSignal.isPushNotificationsEnabled().then(
+                    (isPushEnabled: boolean) => {
                       /* The user is subscribed, so we want to return "false" to hide the notify button */
                       return !isPushEnabled;
-                  });
-              } :
-              null,
+                    },
+                  );
+                }
+              : null,
             size: serverConfig.config.staticPrompts.bell.size,
             position: serverConfig.config.staticPrompts.bell.location,
             showCredit: false,
             offset: {
               bottom: `${serverConfig.config.staticPrompts.bell.offset.bottom}px`,
               left: `${serverConfig.config.staticPrompts.bell.offset.left}px`,
-              right: `${serverConfig.config.staticPrompts.bell.offset.right}px`
+              right: `${serverConfig.config.staticPrompts.bell.offset.right}px`,
             },
             colors: {
-              'circle.background': serverConfig.config.staticPrompts.bell.color.main,
-              'circle.foreground': serverConfig.config.staticPrompts.bell.color.accent,
+              'circle.background':
+                serverConfig.config.staticPrompts.bell.color.main,
+              'circle.foreground':
+                serverConfig.config.staticPrompts.bell.color.accent,
               'badge.background': 'black',
               'badge.foreground': 'white',
               'badge.bordercolor': 'black',
-              'pulse.color': serverConfig.config.staticPrompts.bell.color.accent,
-              'dialog.button.background.hovering': serverConfig.config.staticPrompts.bell.color.main,
-              'dialog.button.background.active': serverConfig.config.staticPrompts.bell.color.main,
-              'dialog.button.background': serverConfig.config.staticPrompts.bell.color.main,
+              'pulse.color':
+                serverConfig.config.staticPrompts.bell.color.accent,
+              'dialog.button.background.hovering':
+                serverConfig.config.staticPrompts.bell.color.main,
+              'dialog.button.background.active':
+                serverConfig.config.staticPrompts.bell.color.main,
+              'dialog.button.background':
+                serverConfig.config.staticPrompts.bell.color.main,
               'dialog.button.foreground': 'white',
             },
             text: {
-              'tip.state.unsubscribed': serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
-              'tip.state.subscribed': serverConfig.config.staticPrompts.bell.tooltip.subscribed,
-              'tip.state.blocked': serverConfig.config.staticPrompts.bell.tooltip.blocked,
-              'message.prenotify': serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
-              'message.action.subscribing': serverConfig.config.staticPrompts.bell.message.subscribing,
-              'message.action.subscribed': serverConfig.config.staticPrompts.bell.message.subscribing,
-              'message.action.resubscribed': serverConfig.config.staticPrompts.bell.message.subscribing,
-              'message.action.unsubscribed': serverConfig.config.staticPrompts.bell.message.unsubscribing,
-              'dialog.main.title': serverConfig.config.staticPrompts.bell.dialog.main.title,
-              'dialog.main.button.subscribe': serverConfig.config.staticPrompts.bell.dialog.main.subscribeButton,
-              'dialog.main.button.unsubscribe': serverConfig.config.staticPrompts.bell.dialog.main.unsubscribeButton,
-              'dialog.blocked.title': serverConfig.config.staticPrompts.bell.dialog.blocked.title,
-              'dialog.blocked.message': serverConfig.config.staticPrompts.bell.dialog.blocked.message,
+              'tip.state.unsubscribed':
+                serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
+              'tip.state.subscribed':
+                serverConfig.config.staticPrompts.bell.tooltip.subscribed,
+              'tip.state.blocked':
+                serverConfig.config.staticPrompts.bell.tooltip.blocked,
+              'message.prenotify':
+                serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
+              'message.action.subscribing':
+                serverConfig.config.staticPrompts.bell.message.subscribing,
+              'message.action.subscribed':
+                serverConfig.config.staticPrompts.bell.message.subscribing,
+              'message.action.resubscribed':
+                serverConfig.config.staticPrompts.bell.message.subscribing,
+              'message.action.unsubscribed':
+                serverConfig.config.staticPrompts.bell.message.unsubscribing,
+              'dialog.main.title':
+                serverConfig.config.staticPrompts.bell.dialog.main.title,
+              'dialog.main.button.subscribe':
+                serverConfig.config.staticPrompts.bell.dialog.main
+                  .subscribeButton,
+              'dialog.main.button.unsubscribe':
+                serverConfig.config.staticPrompts.bell.dialog.main
+                  .unsubscribeButton,
+              'dialog.blocked.title':
+                serverConfig.config.staticPrompts.bell.dialog.blocked.title,
+              'dialog.blocked.message':
+                serverConfig.config.staticPrompts.bell.dialog.blocked.message,
             },
           },
-          persistNotification: serverConfig.config.notificationBehavior ?
-            serverConfig.config.notificationBehavior.display.persist : undefined,
+          persistNotification: serverConfig.config.notificationBehavior
+            ? serverConfig.config.notificationBehavior.display.persist
+            : undefined,
           webhooks: {
             cors: serverConfig.config.webhooks.corsEnable,
-            'notification.willDisplay': serverConfig.config.webhooks.notificationWillDisplayHook,
-            'notification.clicked': serverConfig.config.webhooks.notificationClickedHook,
-            'notification.dismissed': serverConfig.config.webhooks.notificationDismissedHook,
+            'notification.willDisplay':
+              serverConfig.config.webhooks.notificationWillDisplayHook,
+            'notification.clicked':
+              serverConfig.config.webhooks.notificationClickedHook,
+            'notification.dismissed':
+              serverConfig.config.webhooks.notificationDismissedHook,
           },
-          notificationClickHandlerMatch: serverConfig.config.notificationBehavior ?
-            serverConfig.config.notificationBehavior.click.match : undefined,
-          notificationClickHandlerAction: serverConfig.config.notificationBehavior ?
-            serverConfig.config.notificationBehavior.click.action : undefined,
-          allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior ?
-            serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin : undefined,
+          notificationClickHandlerMatch: serverConfig.config
+            .notificationBehavior
+            ? serverConfig.config.notificationBehavior.click.match
+            : undefined,
+          notificationClickHandlerAction: serverConfig.config
+            .notificationBehavior
+            ? serverConfig.config.notificationBehavior.click.action
+            : undefined,
+          allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior
+            ? serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin
+            : undefined,
           outcomes: {
             direct: serverConfig.config.outcomes.direct,
             indirect: {
               enabled: serverConfig.config.outcomes.indirect.enabled,
               influencedTimePeriodMin:
-                serverConfig.config.outcomes.indirect.notification_attribution.minutes_since_displayed,
-              influencedNotificationsLimit: serverConfig.config.outcomes.indirect.notification_attribution.limit,
+                serverConfig.config.outcomes.indirect.notification_attribution
+                  .minutes_since_displayed,
+              influencedNotificationsLimit:
+                serverConfig.config.outcomes.indirect.notification_attribution
+                  .limit,
             },
             unattributed: serverConfig.config.outcomes.unattributed,
-          }
+          },
         };
       case IntegrationConfigurationKind.JavaScript: {
         /*
@@ -489,32 +649,37 @@ export class ConfigHelper {
             userConfig.promptOptions,
             serverConfig.config.staticPrompts,
             userConfig,
-            isUsingSubscriptionWorkaround
+            isUsingSubscriptionWorkaround,
           ),
           ...{
-            serviceWorkerParam: !!userConfig.serviceWorkerParam ?
-              userConfig.serviceWorkerParam : defaultServiceWorkerParam,
-            serviceWorkerPath: !!userConfig.serviceWorkerPath ?
-              userConfig.serviceWorkerPath : defaultServiceWorkerPath,
-            path: !!userConfig.path ? userConfig.path : '/'
+            serviceWorkerParam: !!userConfig.serviceWorkerParam
+              ? userConfig.serviceWorkerParam
+              : defaultServiceWorkerParam,
+            serviceWorkerPath: !!userConfig.serviceWorkerPath
+              ? userConfig.serviceWorkerPath
+              : defaultServiceWorkerPath,
+            path: !!userConfig.path ? userConfig.path : '/',
           },
           outcomes: {
             direct: serverConfig.config.outcomes.direct,
             indirect: {
               enabled: serverConfig.config.outcomes.indirect.enabled,
               influencedTimePeriodMin:
-                serverConfig.config.outcomes.indirect.notification_attribution.minutes_since_displayed,
-              influencedNotificationsLimit: serverConfig.config.outcomes.indirect.notification_attribution.limit,
+                serverConfig.config.outcomes.indirect.notification_attribution
+                  .minutes_since_displayed,
+              influencedNotificationsLimit:
+                serverConfig.config.outcomes.indirect.notification_attribution
+                  .limit,
             },
             unattributed: serverConfig.config.outcomes.unattributed,
-          }
+          },
         };
 
         // eslint-disable-next-line no-prototype-builtins
-        if (userConfig.hasOwnProperty("autoResubscribe")) {
+        if (userConfig.hasOwnProperty('autoResubscribe')) {
           config.autoResubscribe = !!userConfig.autoResubscribe;
-        // eslint-disable-next-line no-prototype-builtins
-        } else if (userConfig.hasOwnProperty("autoRegister")) {
+          // eslint-disable-next-line no-prototype-builtins
+        } else if (userConfig.hasOwnProperty('autoRegister')) {
           config.autoResubscribe = !!userConfig.autoRegister;
         } else {
           config.autoResubscribe = !!serverConfig.config.autoResubscribe;
@@ -531,24 +696,29 @@ export class ConfigHelper {
   public static getSubdomainForConfigIntegrationKind(
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
-    serverConfig: ServerAppConfig
+    serverConfig: ServerAppConfig,
   ): string | undefined {
-    const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
+    const integrationCapabilities = this.getIntegrationCapabilities(
+      configIntegrationKind,
+    );
     const userValue: string | undefined = userConfig.subdomainName;
     let serverValue: string | undefined = '';
 
     switch (integrationCapabilities.configuration) {
       case IntegrationConfigurationKind.Dashboard:
-        serverValue = serverConfig.config.siteInfo.proxyOriginEnabled ?
-          serverConfig.config.siteInfo.proxyOrigin :
-          undefined;
+        serverValue = serverConfig.config.siteInfo.proxyOriginEnabled
+          ? serverConfig.config.siteInfo.proxyOrigin
+          : undefined;
         break;
       case IntegrationConfigurationKind.JavaScript:
         serverValue = serverConfig.config.subdomain;
         break;
     }
 
-    if (serverValue && !this.shouldUseServerConfigSubdomain(userValue, integrationCapabilities)) {
+    if (
+      serverValue &&
+      !this.shouldUseServerConfigSubdomain(userValue, integrationCapabilities)
+    ) {
       return undefined;
     } else {
       return serverValue;
@@ -557,7 +727,7 @@ export class ConfigHelper {
 
   public static shouldUseServerConfigSubdomain(
     userProvidedSubdomain: string | undefined,
-    capabilities: IntegrationCapabilities
+    capabilities: IntegrationCapabilities,
   ): boolean {
     switch (capabilities.configuration) {
       case IntegrationConfigurationKind.Dashboard:

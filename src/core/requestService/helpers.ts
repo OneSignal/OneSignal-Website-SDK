@@ -1,34 +1,52 @@
-import Database from "../../shared/services/Database";
-import OneSignalError from "../../shared/errors/OneSignalError";
-import { IdentityModel } from "../models/IdentityModel";
-import { SupportedSubscription } from "../models/SubscriptionModels";
-import { Operation } from "../operationRepo/Operation";
-import { isIdentityObject, isFutureSubscriptionObject, isCompleteSubscriptionObject } from "../utils/typePredicates";
-import AliasPair from "./AliasPair";
-import { APIHeaders } from "../../shared/models/APIHeaders";
+import Database from '../../shared/services/Database';
+import OneSignalError from '../../shared/errors/OneSignalError';
+import { IdentityModel } from '../models/IdentityModel';
+import { SupportedSubscription } from '../models/SubscriptionModels';
+import { Operation } from '../operationRepo/Operation';
+import {
+  isIdentityObject,
+  isFutureSubscriptionObject,
+  isCompleteSubscriptionObject,
+} from '../utils/typePredicates';
+import AliasPair from './AliasPair';
+import { APIHeaders } from '../../shared/models/APIHeaders';
 
-export function processSubscriptionOperation<Model>(operation: Operation<Model>): {
+export function processSubscriptionOperation<Model>(
+  operation: Operation<Model>,
+): {
   subscription: SupportedSubscription;
   aliasPair: AliasPair;
   subscriptionId?: string;
-  payload?: Partial<SupportedSubscription>
+  payload?: Partial<SupportedSubscription>;
 } {
   const subscriptionOSModel = operation.model;
   const subscription = subscriptionOSModel?.data;
 
   // fixes typescript errors
   if (!subscriptionOSModel) {
-    throw new OneSignalError(`processSubscriptionModel: bad subscription OSModel<SubscriptionModel>: ${JSON.stringify(subscriptionOSModel)}`);
+    throw new OneSignalError(
+      `processSubscriptionModel: bad subscription OSModel<SubscriptionModel>: ${JSON.stringify(
+        subscriptionOSModel,
+      )}`,
+    );
   }
 
   // fixes typescript errors
   if (!isFutureSubscriptionObject(subscription)) {
-    throw new OneSignalError(`processSubscriptionModel: bad subscription object: ${JSON.stringify(subscription)}`);
+    throw new OneSignalError(
+      `processSubscriptionModel: bad subscription object: ${JSON.stringify(
+        subscription,
+      )}`,
+    );
   }
 
   // fixes typescript errors
   if (!subscriptionOSModel.onesignalId) {
-    throw new OneSignalError(`processSubscriptionModel: missing onesignalId: ${JSON.stringify(subscriptionOSModel)}`);
+    throw new OneSignalError(
+      `processSubscriptionModel: missing onesignalId: ${JSON.stringify(
+        subscriptionOSModel,
+      )}`,
+    );
   }
 
   let subscriptionId;
@@ -38,9 +56,12 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
 
   return {
     subscription,
-    aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, subscriptionOSModel.onesignalId),
+    aliasPair: new AliasPair(
+      AliasPair.ONESIGNAL_ID,
+      subscriptionOSModel.onesignalId,
+    ),
     subscriptionId,
-    payload: operation.payload as Partial<SupportedSubscription>
+    payload: operation.payload as Partial<SupportedSubscription>,
   };
 }
 
@@ -52,7 +73,9 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
 
   // fixes typescript errors
   if (!isIdentityObject(identity)) {
-    throw new OneSignalError(`processIdentityModel: bad identity object: ${JSON.stringify(identity)}`);
+    throw new OneSignalError(
+      `processIdentityModel: bad identity object: ${JSON.stringify(identity)}`,
+    );
   }
 
   const { onesignal_id: onesignalId } = identity;
@@ -62,12 +85,14 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
 
   // fixes typescript errors
   if (!onesignalId) {
-    throw new OneSignalError(`processIdentityModel: missing onesignalId: ${JSON.stringify(identity)}`);
+    throw new OneSignalError(
+      `processIdentityModel: missing onesignalId: ${JSON.stringify(identity)}`,
+    );
   }
 
   return {
     identity: identityCopy,
-    aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
+    aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId),
   };
 }
 

@@ -1,33 +1,39 @@
-import { logMethodCall } from "../shared/utils/utils";
-import Log from "../shared/libraries/Log";
-import CoreModule from "./CoreModule";
-import { OSModel } from "./modelRepo/OSModel";
-import { SupportedIdentity } from "./models/IdentityModel";
-import { ModelStoresMap } from "./models/ModelStoresMap";
-import { SubscriptionModel, SupportedSubscription } from "./models/SubscriptionModels";
-import { ModelName, SupportedModel } from "./models/SupportedModels";
-import { UserPropertiesModel } from "./models/UserPropertiesModel";
-import UserData from "./models/UserData";
-import OneSignalError from "../shared/errors/OneSignalError";
-import MainHelper from "../shared/helpers/MainHelper";
-import { RawPushSubscription } from "../shared/models/RawPushSubscription";
-import FuturePushSubscriptionRecord from "../page/userModel/FuturePushSubscriptionRecord";
-import User from "../onesignal/User";
-import OneSignal from "../onesignal/OneSignal";
-import Database from "../shared/services/Database";
+import { logMethodCall } from '../shared/utils/utils';
+import Log from '../shared/libraries/Log';
+import CoreModule from './CoreModule';
+import { OSModel } from './modelRepo/OSModel';
+import { SupportedIdentity } from './models/IdentityModel';
+import { ModelStoresMap } from './models/ModelStoresMap';
+import {
+  SubscriptionModel,
+  SupportedSubscription,
+} from './models/SubscriptionModels';
+import { ModelName, SupportedModel } from './models/SupportedModels';
+import { UserPropertiesModel } from './models/UserPropertiesModel';
+import UserData from './models/UserData';
+import OneSignalError from '../shared/errors/OneSignalError';
+import MainHelper from '../shared/helpers/MainHelper';
+import { RawPushSubscription } from '../shared/models/RawPushSubscription';
+import FuturePushSubscriptionRecord from '../page/userModel/FuturePushSubscriptionRecord';
+import User from '../onesignal/User';
+import OneSignal from '../onesignal/OneSignal';
+import Database from '../shared/services/Database';
 
 /* Contains OneSignal User-Model-specific logic*/
 
 export class CoreModuleDirector {
-
   constructor(private core: CoreModule) {}
 
-  public generatePushSubscriptionModel(rawPushSubscription: RawPushSubscription): void {
-    logMethodCall("CoreModuleDirector.generatePushSubscriptionModel", { rawPushSubscription });
+  public generatePushSubscriptionModel(
+    rawPushSubscription: RawPushSubscription,
+  ): void {
+    logMethodCall('CoreModuleDirector.generatePushSubscriptionModel', {
+      rawPushSubscription,
+    });
     // new subscription
     const pushModel = new OSModel<SupportedSubscription>(
       ModelName.PushSubscriptions,
-      new FuturePushSubscriptionRecord(rawPushSubscription).serialize()
+      new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
     );
 
     const user = User.createOrGetInstance();
@@ -35,7 +41,11 @@ export class CoreModuleDirector {
       pushModel.setOneSignalId(user.onesignalId);
     }
     // don't propagate since we will be including the subscription in the user create call
-    OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>, false);
+    OneSignal.coreDirector.add(
+      ModelName.PushSubscriptions,
+      pushModel as OSModel<SupportedModel>,
+      false,
+    );
   }
 
   public async resetModelRepoAndCache(): Promise<void> {
@@ -43,7 +53,7 @@ export class CoreModuleDirector {
   }
 
   public hydrateUser(user: UserData): void {
-    logMethodCall("CoreModuleDirector.hydrateUser", { user });
+    logMethodCall('CoreModuleDirector.hydrateUser', { user });
     try {
       const identity = this.getIdentityModel();
       const properties = this.getPropertiesModel();
@@ -51,7 +61,7 @@ export class CoreModuleDirector {
       const { onesignal_id: onesignalId } = user.identity;
 
       if (!onesignalId) {
-        throw new OneSignalError("OneSignal ID is missing from user data");
+        throw new OneSignalError('OneSignal ID is missing from user data');
       }
 
       // set OneSignal ID *before* hydrating models so that the onesignalId is also updated in model cache
@@ -64,14 +74,22 @@ export class CoreModuleDirector {
 
       // subscriptions are duplicable, so we hydrate them separately
       // when hydrating, we should have the full subscription object (i.e. include ID from server)
-      this._hydrateSubscriptions(user.subscriptions as SubscriptionModel[], onesignalId);
+      this._hydrateSubscriptions(
+        user.subscriptions as SubscriptionModel[],
+        onesignalId,
+      );
     } catch (e) {
       Log.error(`Error hydrating user: ${e}`);
     }
   }
 
-  private _hydrateSubscriptions(subscriptions: SubscriptionModel[], onesignalId: string): void {
-    logMethodCall("CoreModuleDirector._hydrateSubscriptions", { subscriptions });
+  private _hydrateSubscriptions(
+    subscriptions: SubscriptionModel[],
+    onesignalId: string,
+  ): void {
+    logMethodCall('CoreModuleDirector._hydrateSubscriptions', {
+      subscriptions,
+    });
 
     if (!subscriptions) {
       return;
@@ -80,24 +98,24 @@ export class CoreModuleDirector {
     const modelStores = this.getModelStores();
 
     const getModelName = (subscription: SupportedSubscription) => {
-      if (subscription.type === "Email") {
+      if (subscription.type === 'Email') {
         return ModelName.EmailSubscriptions;
-      } else if (subscription.type === "SMS") {
+      } else if (subscription.type === 'SMS') {
         return ModelName.SmsSubscriptions;
       } else {
         return ModelName.PushSubscriptions;
       }
     };
 
-    subscriptions.forEach(async subscription => {
+    subscriptions.forEach(async (subscription) => {
       const modelName = getModelName(subscription);
       /* We use the token to identify the model because the subscription ID is not set until the server responds.
        * So when we initially hydrate after init, we may already have a push model with a token, but no ID.
        * We don't want to create a new model in this case, so we use the token to identify the model.
        */
-      const existingSubscription = !!subscription.token ?
-        this.getSubscriptionOfTypeWithToken(modelName, subscription.token) :
-        undefined;
+      const existingSubscription = !!subscription.token
+        ? this.getSubscriptionOfTypeWithToken(modelName, subscription.token)
+        : undefined;
 
       if (existingSubscription) {
         // set onesignalId on existing subscription *before* hydrating so that the onesignalId is updated in model cache
@@ -113,71 +131,103 @@ export class CoreModuleDirector {
 
   // call processDeltaQueue on all executors immediately
   public forceDeltaQueueProcessingOnAllExecutors(): void {
-    logMethodCall("CoreModuleDirector.forceDeltaQueueProcessingOnAllExecutors");
+    logMethodCall('CoreModuleDirector.forceDeltaQueueProcessingOnAllExecutors');
     this.core.forceDeltaQueueProcessingOnAllExecutors();
   }
 
   /* O P E R A T I O N S */
 
-  public add(modelName: ModelName, model: OSModel<SupportedModel>, propagate = true): void {
-    logMethodCall("CoreModuleDirector.add", { modelName, model });
+  public add(
+    modelName: ModelName,
+    model: OSModel<SupportedModel>,
+    propagate = true,
+  ): void {
+    logMethodCall('CoreModuleDirector.add', { modelName, model });
     const modelStores = this.getModelStores();
     modelStores[modelName].add(model, propagate);
   }
 
   public remove(modelName: ModelName, modelId: string): void {
-    logMethodCall("CoreModuleDirector.remove", { modelName, modelId });
+    logMethodCall('CoreModuleDirector.remove', { modelName, modelId });
     const modelStores = this.getModelStores();
     modelStores[modelName].remove(modelId);
   }
 
   /* G E T T E R S */
 
-  public getModelByTypeAndId(modelName: ModelName, modelId: string): OSModel<SupportedModel> | undefined {
-      logMethodCall("CoreModuleDirector.getModelByTypeAndId", { modelName, modelId });
-      const modelStores = this.getModelStores();
-      return modelStores[modelName].models[modelId];
+  public getModelByTypeAndId(
+    modelName: ModelName,
+    modelId: string,
+  ): OSModel<SupportedModel> | undefined {
+    logMethodCall('CoreModuleDirector.getModelByTypeAndId', {
+      modelName,
+      modelId,
+    });
+    const modelStores = this.getModelStores();
+    return modelStores[modelName].models[modelId];
   }
 
-  public getEmailSubscriptionModels(): { [key: string]: OSModel<SupportedSubscription> } {
-    logMethodCall("CoreModuleDirector.getEmailSubscriptionModels");
+  public getEmailSubscriptionModels(): {
+    [key: string]: OSModel<SupportedSubscription>;
+  } {
+    logMethodCall('CoreModuleDirector.getEmailSubscriptionModels');
     const modelStores = this.getModelStores();
-    return modelStores.emailSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
+    return modelStores.emailSubscriptions.models as {
+      [key: string]: OSModel<SupportedSubscription>;
+    };
   }
 
-  public getSmsSubscriptionModels(): { [key: string]: OSModel<SupportedSubscription> } {
-    logMethodCall("CoreModuleDirector.getSmsSubscriptionModels");
+  public getSmsSubscriptionModels(): {
+    [key: string]: OSModel<SupportedSubscription>;
+  } {
+    logMethodCall('CoreModuleDirector.getSmsSubscriptionModels');
     const modelStores = this.getModelStores();
-    return modelStores.smsSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
+    return modelStores.smsSubscriptions.models as {
+      [key: string]: OSModel<SupportedSubscription>;
+    };
   }
 
   /**
    * Returns all push subscription models, including push subscriptions from other browsers.
    */
-  public getAllPushSubscriptionModels(): { [key: string]: OSModel<SupportedSubscription> } {
-    logMethodCall("CoreModuleDirector.getAllPushSubscriptionModels");
+  public getAllPushSubscriptionModels(): {
+    [key: string]: OSModel<SupportedSubscription>;
+  } {
+    logMethodCall('CoreModuleDirector.getAllPushSubscriptionModels');
     const modelStores = this.getModelStores();
-    return modelStores.pushSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
+    return modelStores.pushSubscriptions.models as {
+      [key: string]: OSModel<SupportedSubscription>;
+    };
   }
 
-  private async getPushSubscriptionModelByCurrentToken()
-    :Promise<OSModel<SupportedSubscription> | undefined> {
-      logMethodCall("CoreModuleDirector.getPushSubscriptionModelByCurrentToken");
-      const pushToken = await MainHelper.getCurrentPushToken();
-      if (pushToken) {
-        return this.getSubscriptionOfTypeWithToken(ModelName.PushSubscriptions, pushToken);
-      }
-      return undefined;
+  private async getPushSubscriptionModelByCurrentToken(): Promise<
+    OSModel<SupportedSubscription> | undefined
+  > {
+    logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
+    const pushToken = await MainHelper.getCurrentPushToken();
+    if (pushToken) {
+      return this.getSubscriptionOfTypeWithToken(
+        ModelName.PushSubscriptions,
+        pushToken,
+      );
+    }
+    return undefined;
   }
 
   // Browser may return a different PushToken value, use the last-known value as a fallback.
   //   - This happens if you disable notification permissions then re-enable them.
-  private async getPushSubscriptionModelByLastKnownToken()
-    :Promise<OSModel<SupportedSubscription> | undefined> {
-    logMethodCall("CoreModuleDirector.getPushSubscriptionModelByLastKnownToken");
+  private async getPushSubscriptionModelByLastKnownToken(): Promise<
+    OSModel<SupportedSubscription> | undefined
+  > {
+    logMethodCall(
+      'CoreModuleDirector.getPushSubscriptionModelByLastKnownToken',
+    );
     const { lastKnownPushToken } = await Database.getAppState();
     if (lastKnownPushToken) {
-      return this.getSubscriptionOfTypeWithToken(ModelName.PushSubscriptions, lastKnownPushToken);
+      return this.getSubscriptionOfTypeWithToken(
+        ModelName.PushSubscriptions,
+        lastKnownPushToken,
+      );
     }
     return undefined;
   }
@@ -186,31 +236,38 @@ export class CoreModuleDirector {
    * Gets the current push subscription model for the current browser.
    * @returns The push subscription model for the current browser, or undefined if no push subscription exists.
    */
-  public async getPushSubscriptionModel()
-    :Promise<OSModel<SupportedSubscription> | undefined> {
-    logMethodCall("CoreModuleDirector.getPushSubscriptionModel");
+  public async getPushSubscriptionModel(): Promise<
+    OSModel<SupportedSubscription> | undefined
+  > {
+    logMethodCall('CoreModuleDirector.getPushSubscriptionModel');
     return (
-      await this.getPushSubscriptionModelByCurrentToken() ||
-      await this.getPushSubscriptionModelByLastKnownToken()
+      (await this.getPushSubscriptionModelByCurrentToken()) ||
+      (await this.getPushSubscriptionModelByLastKnownToken())
     );
   }
 
   public getIdentityModel(): OSModel<SupportedIdentity> | undefined {
-    logMethodCall("CoreModuleDirector.getIdentityModel");
+    logMethodCall('CoreModuleDirector.getIdentityModel');
     const modelStores = this.getModelStores();
     const modelKeys = Object.keys(modelStores.identity.models);
-    return modelStores.identity.models[modelKeys[0]] as OSModel<SupportedIdentity>;
+    return modelStores.identity.models[
+      modelKeys[0]
+    ] as OSModel<SupportedIdentity>;
   }
 
   public getPropertiesModel(): OSModel<UserPropertiesModel> | undefined {
-    logMethodCall("CoreModuleDirector.getPropertiesModel");
+    logMethodCall('CoreModuleDirector.getPropertiesModel');
     const modelStores = this.getModelStores();
     const modelKeys = Object.keys(modelStores.properties.models);
-    return modelStores.properties.models[modelKeys[0]] as OSModel<UserPropertiesModel>;
+    return modelStores.properties.models[
+      modelKeys[0]
+    ] as OSModel<UserPropertiesModel>;
   }
 
-  public async getAllSubscriptionsModels(): Promise<OSModel<SupportedSubscription>[]> {
-    logMethodCall("CoreModuleDirector.getAllSubscriptionsModels");
+  public async getAllSubscriptionsModels(): Promise<
+    OSModel<SupportedSubscription>[]
+  > {
+    logMethodCall('CoreModuleDirector.getAllSubscriptionsModels');
     const emailSubscriptions = this.getEmailSubscriptionModels();
     const smsSubscriptions = this.getSmsSubscriptionModels();
     const pushSubscription = await this.getPushSubscriptionModel();
@@ -221,30 +278,41 @@ export class CoreModuleDirector {
     return subscriptions;
   }
 
-  public getSubscriptionOfTypeWithToken(type: ModelName, token: string): OSModel<SupportedSubscription> | undefined
-    {
-      logMethodCall("CoreModuleDirector.getSubscriptionOfTypeWithToken", { type, token });
-      switch (type) {
-        case ModelName.EmailSubscriptions: {
-          const emailSubscriptions = this.getEmailSubscriptionModels();
-          return Object.values(emailSubscriptions).find(subscription => subscription.data.token === token);
-        }
-        case ModelName.SmsSubscriptions: {
-          const smsSubscriptions = this.getSmsSubscriptionModels();
-          return Object.values(smsSubscriptions).find(subscription => subscription.data.token === token);
-        }
-        case ModelName.PushSubscriptions: {
-          const pushSubscriptions = this.getAllPushSubscriptionModels();
-          return Object.values(pushSubscriptions).find(subscription => subscription.data.token === token);
-        }
-        default:
-          return undefined;
+  public getSubscriptionOfTypeWithToken(
+    type: ModelName,
+    token: string,
+  ): OSModel<SupportedSubscription> | undefined {
+    logMethodCall('CoreModuleDirector.getSubscriptionOfTypeWithToken', {
+      type,
+      token,
+    });
+    switch (type) {
+      case ModelName.EmailSubscriptions: {
+        const emailSubscriptions = this.getEmailSubscriptionModels();
+        return Object.values(emailSubscriptions).find(
+          (subscription) => subscription.data.token === token,
+        );
       }
+      case ModelName.SmsSubscriptions: {
+        const smsSubscriptions = this.getSmsSubscriptionModels();
+        return Object.values(smsSubscriptions).find(
+          (subscription) => subscription.data.token === token,
+        );
+      }
+      case ModelName.PushSubscriptions: {
+        const pushSubscriptions = this.getAllPushSubscriptionModels();
+        return Object.values(pushSubscriptions).find(
+          (subscription) => subscription.data.token === token,
+        );
+      }
+      default:
+        return undefined;
+    }
   }
 
   /* P R I V A T E */
 
   private getModelStores(): ModelStoresMap<SupportedModel> {
-    return (this.core.modelRepo?.modelStores as ModelStoresMap<SupportedModel>);
+    return this.core.modelRepo?.modelStores as ModelStoresMap<SupportedModel>;
   }
 }

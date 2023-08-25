@@ -1,10 +1,10 @@
-import OneSignalError from "../../shared/errors/OneSignalError";
-import Database from "../../shared/services/Database";
-import { OSModel } from "../modelRepo/OSModel";
-import { CoreChangeType } from "../models/CoreChangeType";
-import { CoreDelta } from "../models/CoreDeltas";
-import { ModelName, SupportedModel } from "../models/SupportedModels";
-import { isPropertyDelta, isPureObject } from "../utils/typePredicates";
+import OneSignalError from '../../shared/errors/OneSignalError';
+import Database from '../../shared/services/Database';
+import { OSModel } from '../modelRepo/OSModel';
+import { CoreChangeType } from '../models/CoreChangeType';
+import { CoreDelta } from '../models/CoreDeltas';
+import { ModelName, SupportedModel } from '../models/SupportedModels';
+import { isPropertyDelta, isPureObject } from '../utils/typePredicates';
 
 export class Operation<Model> {
   operationId: string;
@@ -14,13 +14,17 @@ export class Operation<Model> {
   jwtTokenAvailable: Promise<void>;
   jwtToken?: string | null;
 
-  constructor(readonly changeType: CoreChangeType, readonly modelName: ModelName, deltas?: CoreDelta<Model>[]) {
+  constructor(
+    readonly changeType: CoreChangeType,
+    readonly modelName: ModelName,
+    deltas?: CoreDelta<Model>[],
+  ) {
     this.operationId = Math.random().toString(36).substring(2);
     this.payload = deltas ? this.getPayload(deltas) : undefined;
-    this.model = deltas ? deltas[deltas.length-1].model : undefined;
+    this.model = deltas ? deltas[deltas.length - 1].model : undefined;
     this.timestamp = Date.now();
     // eslint-disable-next-line no-async-promise-executor
-    this.jwtTokenAvailable = new Promise<void>(async resolve => {
+    this.jwtTokenAvailable = new Promise<void>(async (resolve) => {
       this.jwtToken = await Database.getJWTToken();
       resolve();
     });
@@ -36,10 +40,10 @@ export class Operation<Model> {
     return deltas[0].model.data;
   }
 
-  private aggregateDeltas(deltas: CoreDelta<Model>[]): {[key: string]: any} {
-    const result: {[key: string]: any} = {};
+  private aggregateDeltas(deltas: CoreDelta<Model>[]): { [key: string]: any } {
+    const result: { [key: string]: any } = {};
 
-    deltas.forEach(delta => {
+    deltas.forEach((delta) => {
       if (isPropertyDelta(delta)) {
         /**
          * If the delta is a property delta, we need to check if the property is an object.
@@ -54,40 +58,52 @@ export class Operation<Model> {
         const hasExistingProperty = result.hasOwnProperty(delta.property);
         const newValueIsPureObject = isPureObject(delta.newValue);
         const oldValueIsPureObject = isPureObject(delta.oldValue);
-        const isNewAndOldCompatible = newValueIsPureObject === oldValueIsPureObject || delta.oldValue === undefined;
+        const isNewAndOldCompatible =
+          newValueIsPureObject === oldValueIsPureObject ||
+          delta.oldValue === undefined;
 
         if (!isNewAndOldCompatible) {
-          throw new Error("Cannot merge incompatible values");
+          throw new Error('Cannot merge incompatible values');
         }
 
-        const shouldMergeExistingAndNew = hasExistingProperty && newValueIsPureObject;
+        const shouldMergeExistingAndNew =
+          hasExistingProperty && newValueIsPureObject;
         const mergedObject = { ...result[delta.property], ...delta.newValue };
 
-        result[delta.property] = shouldMergeExistingAndNew ? mergedObject : delta.newValue;
+        result[delta.property] = shouldMergeExistingAndNew
+          ? mergedObject
+          : delta.newValue;
       }
     });
     return result;
   }
 
-  static getInstanceWithModelReference(rawOperation: Operation<SupportedModel>):
-    Operation<SupportedModel> | undefined {
-      const { operationId, payload, modelName, changeType, timestamp, model } = rawOperation;
-      if (!model) {
-        throw new OneSignalError("Operation.fromJSON: model is undefined");
-      }
-      const osModel = OneSignal.coreDirector?.getModelByTypeAndId(modelName, model.modelId);
+  static getInstanceWithModelReference(
+    rawOperation: Operation<SupportedModel>,
+  ): Operation<SupportedModel> | undefined {
+    const { operationId, payload, modelName, changeType, timestamp, model } =
+      rawOperation;
+    if (!model) {
+      throw new OneSignalError('Operation.fromJSON: model is undefined');
+    }
+    const osModel = OneSignal.coreDirector?.getModelByTypeAndId(
+      modelName,
+      model.modelId,
+    );
 
-      if (!!osModel) {
-        const operation = new Operation<SupportedModel>(changeType, modelName);
-        operation.model = osModel;
-        operation.operationId = operationId;
-        operation.timestamp = timestamp;
-        operation.payload = payload;
-        operation.jwtToken = rawOperation.jwtToken;
-        operation.jwtTokenAvailable = Promise.resolve();
-        return operation;
-      } else {
-        throw new Error(`Could not find model with id ${model.modelId} of type ${modelName}. Maybe user logged out?`);
-      }
+    if (!!osModel) {
+      const operation = new Operation<SupportedModel>(changeType, modelName);
+      operation.model = osModel;
+      operation.operationId = operationId;
+      operation.timestamp = timestamp;
+      operation.payload = payload;
+      operation.jwtToken = rawOperation.jwtToken;
+      operation.jwtTokenAvailable = Promise.resolve();
+      return operation;
+    } else {
+      throw new Error(
+        `Could not find model with id ${model.modelId} of type ${modelName}. Maybe user logged out?`,
+      );
+    }
   }
 }

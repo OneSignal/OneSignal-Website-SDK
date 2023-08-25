@@ -1,10 +1,12 @@
-import Log from "../../shared/libraries/Log";
-import OneSignal from "../../onesignal/OneSignal";
-import { OneSignalDeferredLoadedCallback } from "../models/OneSignalDeferredLoadedCallback";
+import Log from '../../shared/libraries/Log';
+import OneSignal from '../../onesignal/OneSignal';
+import { OneSignalDeferredLoadedCallback } from '../models/OneSignalDeferredLoadedCallback';
 
 // TODO: Renaming ReplayCallsOnOneSignal in a future commit
 export class ReplayCallsOnOneSignal {
-  static processOneSignalDeferredArray(onesignalDeferred: OneSignalDeferredLoadedCallback[]): void {
+  static processOneSignalDeferredArray(
+    onesignalDeferred: OneSignalDeferredLoadedCallback[],
+  ): void {
     for (const item of onesignalDeferred) {
       try {
         OneSignal.push(item);

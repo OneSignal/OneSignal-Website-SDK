@@ -4,12 +4,12 @@ import { SubscriptionManager } from '../../shared/managers/SubscriptionManager';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import { PageViewManager } from '../../shared/managers/PageViewManager';
 import PermissionManager from '../../shared/managers/PermissionManager';
-import { ContextSWInterface } from "../../shared/models/ContextSW";
-import ContextHelper from "../../shared/helpers/ContextHelper";
-import { UpdateManager } from "../../shared/managers/UpdateManager";
-import { ISessionManager } from "../../shared/managers/sessionManager/types";
-import { SessionManager } from "../../shared/managers/sessionManager/SessionManager";
-import { EnvironmentInfo } from "./EnvironmentInfo";
+import { ContextSWInterface } from '../../shared/models/ContextSW';
+import ContextHelper from '../../shared/helpers/ContextHelper';
+import { UpdateManager } from '../../shared/managers/UpdateManager';
+import { ISessionManager } from '../../shared/managers/sessionManager/types';
+import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';
+import { EnvironmentInfo } from './EnvironmentInfo';
 import TagManager from '../managers/tagManager/TagManager';
 import { ITagManager } from '../managers/tagManager/types';
 import { ISlidedownManager } from '../managers/slidedownManager/types';
@@ -44,7 +44,7 @@ export default class Context implements ContextInterface {
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
-    if (typeof OneSignal !== "undefined" && !!OneSignal.environmentInfo) {
+    if (typeof OneSignal !== 'undefined' && !!OneSignal.environmentInfo) {
       this.environmentInfo = OneSignal.environmentInfo;
     }
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
@@ -58,6 +58,9 @@ export default class Context implements ContextInterface {
     this.slidedownManager = new SlidedownManager(this);
     this.promptsManager = new PromptsManager(this);
     this.dynamicResourceLoader = new DynamicResourceLoader();
-    this.metricsManager = new MetricsManager(appConfig.metrics.enable, appConfig.metrics.mixpanelReportingToken);
+    this.metricsManager = new MetricsManager(
+      appConfig.metrics.enable,
+      appConfig.metrics.mixpanelReportingToken,
+    );
   }
 }

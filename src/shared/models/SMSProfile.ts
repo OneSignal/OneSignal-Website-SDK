@@ -6,13 +6,18 @@ export interface BundleSMS {
   identifierAuthHash: string;
 }
 
-export class SMSProfile implements SecondaryChannelProfileSerializable<BundleSMS> {
-
+export class SMSProfile
+  implements SecondaryChannelProfileSerializable<BundleSMS>
+{
   subscriptionId: string | null | undefined;
   identifier: string | null | undefined;
   identifierAuthHash: string | null | undefined;
 
-  constructor(smsId?: string | null, smsNumber?: string, identifierAuthHash?: string) {
+  constructor(
+    smsId?: string | null,
+    smsNumber?: string,
+    identifierAuthHash?: string,
+  ) {
     this.subscriptionId = smsId;
     this.identifier = smsNumber;
     this.identifierAuthHash = identifierAuthHash;

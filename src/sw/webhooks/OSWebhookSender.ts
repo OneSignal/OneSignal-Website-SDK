@@ -1,14 +1,19 @@
-import Database from "../../shared/services/Database";
-import Log from "../libraries/Log";
-import { IOSWebhookEventPayload } from "./IOSWebhookEventPayload";
+import Database from '../../shared/services/Database';
+import Log from '../libraries/Log';
+import { IOSWebhookEventPayload } from './IOSWebhookEventPayload';
 
 export class OSWebhookSender {
   async send(payload: IOSWebhookEventPayload): Promise<void> {
-    const webhookTargetUrl = await Database.get<string>('Options', `webhooks.${payload.event}`);
-    if (!webhookTargetUrl)
-      return;
+    const webhookTargetUrl = await Database.get<string>(
+      'Options',
+      `webhooks.${payload.event}`,
+    );
+    if (!webhookTargetUrl) return;
 
-    const isServerCorsEnabled = await Database.get<boolean>('Options', 'webhooks.cors');
+    const isServerCorsEnabled = await Database.get<boolean>(
+      'Options',
+      'webhooks.cors',
+    );
 
     const fetchOptions: RequestInit = {
       method: 'post',
@@ -20,12 +25,14 @@ export class OSWebhookSender {
       fetchOptions.mode = 'cors';
       fetchOptions.headers = {
         'X-OneSignal-Event': payload.event,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
     }
     Log.debug(
-      `Executing ${payload.event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${webhookTargetUrl}`,
-      payload
+      `Executing ${payload.event} webhook ${
+        isServerCorsEnabled ? 'with' : 'without'
+      } CORS %cPOST ${webhookTargetUrl}`,
+      payload,
     );
     await fetch(webhookTargetUrl, fetchOptions);
     return;

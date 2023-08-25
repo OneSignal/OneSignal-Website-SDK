@@ -1,23 +1,36 @@
-import SdkEnvironment from "../../../src/shared/managers/SdkEnvironment";
-import { AppUserConfig, ConfigIntegrationKind, ServerAppConfig } from "../../../src/shared/models/AppConfig";
-import { TestEnvironmentKind } from "../../../src/shared/models/TestEnvironmentKind";
-import BrowserUserAgent from "../models/BrowserUserAgent";
-import { resetDatabase, initOSGlobals, stubDomEnvironment, stubNotification, mockUserAgent } from "./TestEnvironmentHelpers";
-import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
-import OperationCache from "../../../src/core/caching/OperationCache";
-import "fake-indexeddb/auto";
-import { RecursivePartial } from "../../../src/shared/context/Utils";
-import { ModelName } from "../../../src/core/models/SupportedModels";
-import { getDummyIdentityOSModel, getDummyPushSubscriptionOSModel } from "../helpers/core";
-import MainHelper from "../../../src/shared/helpers/MainHelper";
-import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from "../constants";
+import SdkEnvironment from '../../../src/shared/managers/SdkEnvironment';
+import {
+  AppUserConfig,
+  ConfigIntegrationKind,
+  ServerAppConfig,
+} from '../../../src/shared/models/AppConfig';
+import { TestEnvironmentKind } from '../../../src/shared/models/TestEnvironmentKind';
+import BrowserUserAgent from '../models/BrowserUserAgent';
+import {
+  resetDatabase,
+  initOSGlobals,
+  stubDomEnvironment,
+  stubNotification,
+  mockUserAgent,
+} from './TestEnvironmentHelpers';
+import { HttpHttpsEnvironment } from '../models/HttpHttpsEnvironment';
+import OperationCache from '../../../src/core/caching/OperationCache';
+import 'fake-indexeddb/auto';
+import { RecursivePartial } from '../../../src/shared/context/Utils';
+import { ModelName } from '../../../src/core/models/SupportedModels';
+import {
+  getDummyIdentityOSModel,
+  getDummyPushSubscriptionOSModel,
+} from '../helpers/core';
+import MainHelper from '../../../src/shared/helpers/MainHelper';
+import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../constants';
 
 declare let global: any;
 
 export interface TestEnvironmentConfig {
   userConfig?: AppUserConfig;
   initOptions?: any;
-  initUserAndPushSubscription?: boolean;   // default: false - initializes User & PushSubscription in UserNamespace (e.g. creates an anonymous user)
+  initUserAndPushSubscription?: boolean; // default: false - initializes User & PushSubscription in UserNamespace (e.g. creates an anonymous user)
   environment?: string;
   permission?: NotificationPermission;
   addPrompts?: boolean;
@@ -45,19 +58,27 @@ export class TestEnvironment {
       // set on the model instance
       identityModel.setOneSignalId(DUMMY_ONESIGNAL_ID);
       // set on the model data
-      identityModel.set("onesignal_id", DUMMY_ONESIGNAL_ID);
-      OneSignal.coreDirector.add(ModelName.Identity,identityModel, false);
+      identityModel.set('onesignal_id', DUMMY_ONESIGNAL_ID);
+      OneSignal.coreDirector.add(ModelName.Identity, identityModel, false);
     }
 
     if (config.useMockPushSubscriptionModel) {
-      OneSignal.coreDirector.add(ModelName.PushSubscriptions, getDummyPushSubscriptionOSModel(), false);
-      test.stub(MainHelper, "getCurrentPushToken", Promise.resolve(DUMMY_PUSH_TOKEN))
+      OneSignal.coreDirector.add(
+        ModelName.PushSubscriptions,
+        getDummyPushSubscriptionOSModel(),
+        false,
+      );
+      test.stub(
+        MainHelper,
+        'getCurrentPushToken',
+        Promise.resolve(DUMMY_PUSH_TOKEN),
+      );
     }
 
     SdkEnvironment.getTestEnv = () => TestEnvironmentKind.UnitTesting;
 
     await stubDomEnvironment(config);
-    config.environment = "dom";
+    config.environment = 'dom';
     stubNotification(config);
     return oneSignal;
   }

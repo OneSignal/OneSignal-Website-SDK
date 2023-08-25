@@ -1,5 +1,5 @@
-import Random from "../../utils/Random";
-import { MockPushManager } from "./MockPushManager";
+import Random from '../../utils/Random';
+import { MockPushManager } from './MockPushManager';
 
 /**
  * The PushSubscription interface of the Push API provides a subcription's URL endpoint and allows
@@ -32,14 +32,15 @@ export class MockPushSubscription implements PushSubscription {
   private p256dhArray: Uint8Array;
   private authArray: Uint8Array;
   private readonly ENDPOINT_LENGTH = 152;
-  private readonly ENDPOINT_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_:';
+  private readonly ENDPOINT_CHARSET =
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_:';
   private readonly P256DH_BYTE_LENGTH = 65;
   private readonly AUTH_BYTE_LENGTH = 16;
 
   private static str2ab(str: any): ArrayBuffer {
     const buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
     const bufView = new Uint16Array(buf);
-    for(let i = 0, strLen=str.length; i < strLen; i++) {
+    for (let i = 0, strLen = str.length; i < strLen; i++) {
       bufView[i] = str.charCodeAt(i);
     }
     return buf;
@@ -53,36 +54,52 @@ export class MockPushSubscription implements PushSubscription {
    *
    * @param options: Options passed to PushManager.subscribe().
    */
-  constructor(pushManager: MockPushManager, options: PushSubscriptionOptionsInit) {
+  constructor(
+    pushManager: MockPushManager,
+    options: PushSubscriptionOptionsInit,
+  ) {
     this.pushManager = pushManager;
 
     let applicationServerKey: ArrayBuffer | null;
     if (options.applicationServerKey instanceof ArrayBuffer)
       applicationServerKey = options.applicationServerKey;
     else if (options.applicationServerKey instanceof String)
-      applicationServerKey = MockPushSubscription.str2ab(options.applicationServerKey);
+      applicationServerKey = MockPushSubscription.str2ab(
+        options.applicationServerKey,
+      );
     else
-      throw new Error("Mock not implemented type options.applicationServerKey");
+      throw new Error('Mock not implemented type options.applicationServerKey');
 
     this.options = {
       applicationServerKey: applicationServerKey,
-      userVisibleOnly: options.userVisibleOnly || true
+      userVisibleOnly: options.userVisibleOnly || true,
     };
 
     if (!options.applicationServerKey) {
-      throw new Error("An applicationServerKey must be passed. If you're subscribing via GCM sender ID, " +
-        "that can be the applicationServerKey encoded as an ArrayBuffer.");
+      throw new Error(
+        "An applicationServerKey must be passed. If you're subscribing via GCM sender ID, " +
+          'that can be the applicationServerKey encoded as an ArrayBuffer.',
+      );
     }
 
     // Keep the options constant; this is what the user passed in to subscribe
-    if (this.options.applicationServerKey && this.options.applicationServerKey.byteLength >= 65) {
+    if (
+      this.options.applicationServerKey &&
+      this.options.applicationServerKey.byteLength >= 65
+    ) {
       // We are subscribing via VAPID
-      const suffix = Random.getRandomString(this.ENDPOINT_LENGTH, this.ENDPOINT_CHARSET);
+      const suffix = Random.getRandomString(
+        this.ENDPOINT_LENGTH,
+        this.ENDPOINT_CHARSET,
+      );
       this.endpoint = `https://fcm.googleapis.com/fcm/send/${suffix}`;
     } else {
       // TODO: Remove this legacy mock
       // We are subscribing via legacy GCM sender ID
-      const suffix = Random.getRandomString(this.ENDPOINT_LENGTH, this.ENDPOINT_CHARSET);
+      const suffix = Random.getRandomString(
+        this.ENDPOINT_LENGTH,
+        this.ENDPOINT_CHARSET,
+      );
       this.endpoint = `https://android.googleapis.com/gcm/send/${suffix}`;
     }
 
@@ -112,7 +129,7 @@ export class MockPushSubscription implements PushSubscription {
   toJSON(): any {
     return {
       endpoint: this.endpoint,
-      options: this.options
+      options: this.options,
     };
   }
 

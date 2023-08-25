@@ -1,15 +1,23 @@
-import Log from "../../sw/libraries/Log";
-import { OneSignalUtils } from "../utils/OneSignalUtils";
-import Database from "../services/Database";
-import { OutcomesConfig } from "../models/Outcomes";
-import { cancelableTimeout, CancelableTimeoutPromise } from '../../sw/helpers/CancelableTimeout';
-import Utils from "../context/Utils";
-import OutcomesHelper from "./OutcomesHelper";
-import { OSServiceWorkerFields } from "../../sw/serviceWorker/types";
-import { OutcomesNotificationClicked } from "../models/OutcomesNotificationEvents";
-import { SessionOrigin, initializeNewSession, SessionStatus, Session } from "../models/Session";
-import OneSignalApiSW from "../api/OneSignalApiSW";
-import Path from "../models/Path";
+import Log from '../../sw/libraries/Log';
+import { OneSignalUtils } from '../utils/OneSignalUtils';
+import Database from '../services/Database';
+import { OutcomesConfig } from '../models/Outcomes';
+import {
+  cancelableTimeout,
+  CancelableTimeoutPromise,
+} from '../../sw/helpers/CancelableTimeout';
+import Utils from '../context/Utils';
+import OutcomesHelper from './OutcomesHelper';
+import { OSServiceWorkerFields } from '../../sw/serviceWorker/types';
+import { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
+import {
+  SessionOrigin,
+  initializeNewSession,
+  SessionStatus,
+  Session,
+} from '../models/Session';
+import OneSignalApiSW from '../api/OneSignalApiSW';
+import Path from '../models/Path';
 
 declare let self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -17,15 +25,25 @@ export default class ServiceWorkerHelper {
   public static getServiceWorkerHref(
     config: ServiceWorkerManagerConfig,
     appId: string,
-    sdkVersion: number
-    ): string {
-    return ServiceWorkerHelper.appendServiceWorkerParams(config.workerPath.getFullPath(), appId, sdkVersion);
+    sdkVersion: number,
+  ): string {
+    return ServiceWorkerHelper.appendServiceWorkerParams(
+      config.workerPath.getFullPath(),
+      appId,
+      sdkVersion,
+    );
   }
 
-  private static appendServiceWorkerParams(workerFullPath: string, appId: string, sdkVersion: number): string {
+  private static appendServiceWorkerParams(
+    workerFullPath: string,
+    appId: string,
+    sdkVersion: number,
+  ): string {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
-    const appIdAsQueryParam      = Utils.encodeHashAsUriComponent({ appId });
-    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({ sdkVersion });
+    const appIdAsQueryParam = Utils.encodeHashAsUriComponent({ appId });
+    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({
+      sdkVersion,
+    });
     return `${fullPath}?${appIdAsQueryParam}&${sdkVersionAsQueryParam}`;
   }
 
@@ -33,18 +51,19 @@ export default class ServiceWorkerHelper {
     appId: string,
     onesignalId: string,
     subscriptionId: string,
-    sessionThresholdInSeconds: number, sendOnFocusEnabled: boolean,
-    sessionOrigin: SessionOrigin, outcomesConfig: OutcomesConfig
+    sessionThresholdInSeconds: number,
+    sendOnFocusEnabled: boolean,
+    sessionOrigin: SessionOrigin,
+    outcomesConfig: OutcomesConfig,
   ): Promise<void> {
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
-      const session: Session = initializeNewSession(
-        { appId }
-      );
+      const session: Session = initializeNewSession({ appId });
 
       // if there is a record about a clicked notification in our database, attribute session to it.
-      const clickedNotification: OutcomesNotificationClicked | null = await Database.getLastNotificationClickedForOutcomes(appId);
+      const clickedNotification: OutcomesNotificationClicked | null =
+        await Database.getLastNotificationClickedForOutcomes(appId);
       if (clickedNotification) {
         session.notificationId = clickedNotification.notificationId;
       }
@@ -55,25 +74,28 @@ export default class ServiceWorkerHelper {
         onesignalId,
         subscriptionId,
         sessionOrigin,
-        session
+        session,
       );
       return;
     }
 
     if (existingSession.status === SessionStatus.Active) {
-      Log.debug("Session already active", existingSession);
+      Log.debug('Session already active', existingSession);
       return;
     }
 
     if (!existingSession.lastDeactivatedTimestamp) {
-      Log.debug("Session is in invalid state", existingSession);
+      Log.debug('Session is in invalid state', existingSession);
       // TODO: possibly recover by re-starting session if deviceId is present?
       return;
     }
 
     const currentTimestamp = new Date().getTime();
-    const timeSinceLastDeactivatedInSeconds: number = ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
-      currentTimestamp, existingSession.lastDeactivatedTimestamp);
+    const timeSinceLastDeactivatedInSeconds: number =
+      ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
+        currentTimestamp,
+        existingSession.lastDeactivatedTimestamp,
+      );
 
     if (timeSinceLastDeactivatedInSeconds <= sessionThresholdInSeconds) {
       existingSession.status = SessionStatus.Active;
@@ -92,7 +114,7 @@ export default class ServiceWorkerHelper {
       subscriptionId,
       existingSession,
       sendOnFocusEnabled,
-      outcomesConfig
+      outcomesConfig,
     );
     const session: Session = initializeNewSession({ appId });
     await Database.upsertSession(session);
@@ -101,7 +123,7 @@ export default class ServiceWorkerHelper {
       onesignalId,
       subscriptionId,
       sessionOrigin,
-      session
+      session,
     );
   }
 
@@ -111,23 +133,24 @@ export default class ServiceWorkerHelper {
     subscriptionId: string,
     thresholdInSeconds: number,
     sendOnFocusEnabled: boolean,
-    outcomesConfig: OutcomesConfig
+    outcomesConfig: OutcomesConfig,
   ): Promise<CancelableTimeoutPromise | undefined> {
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
-      Log.debug("No active session found. Cannot deactivate.");
+      Log.debug('No active session found. Cannot deactivate.');
       return undefined;
     }
 
-    const finalizeSession = () => ServiceWorkerHelper.finalizeSession(
-      appId,
-      onesignalId,
-      subscriptionId,
-      existingSession,
-      sendOnFocusEnabled,
-      outcomesConfig
-    );
+    const finalizeSession = () =>
+      ServiceWorkerHelper.finalizeSession(
+        appId,
+        onesignalId,
+        subscriptionId,
+        existingSession,
+        sendOnFocusEnabled,
+        outcomesConfig,
+      );
 
     /**
      * For 2 subsequent deactivate requests we need to make sure there is an active finalization timeout.
@@ -135,10 +158,7 @@ export default class ServiceWorkerHelper {
      * No update needed for the session, early return.
      */
     if (existingSession.status === SessionStatus.Inactive) {
-      return cancelableTimeout(
-        finalizeSession,
-        thresholdInSeconds
-      );
+      return cancelableTimeout(finalizeSession, thresholdInSeconds);
     }
 
     /**
@@ -146,13 +166,18 @@ export default class ServiceWorkerHelper {
      * For anything but active, logging a warning and doing early return.
      */
     if (existingSession.status !== SessionStatus.Active) {
-      Log.warn(`Session in invalid state ${existingSession.status}. Cannot deactivate.`);
+      Log.warn(
+        `Session in invalid state ${existingSession.status}. Cannot deactivate.`,
+      );
       return undefined;
     }
 
     const currentTimestamp = new Date().getTime();
-    const timeSinceLastActivatedInSeconds: number = ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
-      currentTimestamp, existingSession.lastActivatedTimestamp);
+    const timeSinceLastActivatedInSeconds: number =
+      ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
+        currentTimestamp,
+        existingSession.lastActivatedTimestamp,
+      );
 
     existingSession.lastDeactivatedTimestamp = currentTimestamp;
     existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
@@ -160,7 +185,7 @@ export default class ServiceWorkerHelper {
 
     const cancelableFinalize = cancelableTimeout(
       finalizeSession,
-      thresholdInSeconds
+      thresholdInSeconds,
     );
 
     await Database.upsertSession(existingSession);
@@ -178,7 +203,8 @@ export default class ServiceWorkerHelper {
     onesignalId: string,
     subscriptionId: string,
     sessionOrigin: SessionOrigin,
-    session: Session) {
+    session: Session,
+  ) {
     if (sessionOrigin === SessionOrigin.PlayerCreate) {
       return;
     }
@@ -207,38 +233,43 @@ export default class ServiceWorkerHelper {
     subscriptionId: string,
     session: Session,
     sendOnFocusEnabled: boolean,
-    outcomesConfig: OutcomesConfig
+    outcomesConfig: OutcomesConfig,
   ): Promise<void> {
     Log.debug(
-      "Finalize session",
+      'Finalize session',
       `started: ${new Date(session.startTimestamp)}`,
-      `duration: ${session.accumulatedDuration}s`
+      `duration: ${session.accumulatedDuration}s`,
     );
 
     if (sendOnFocusEnabled) {
-      Log.debug(`send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+      Log.debug(
+        `send on_focus reporting session duration -> ${session.accumulatedDuration}s`,
+      );
       const attribution = await OutcomesHelper.getAttribution(outcomesConfig);
-      Log.debug("send on_focus with attribution", attribution);
+      Log.debug('send on_focus with attribution', attribution);
       await OneSignalApiSW.sendSessionDuration(
         appId,
         onesignalId,
         subscriptionId,
         session.accumulatedDuration,
-        attribution
+        attribution,
       );
     }
 
     await Promise.all([
       Database.cleanupCurrentSession(),
-      Database.removeAllNotificationClickedForOutcomes()
+      Database.removeAllNotificationClickedForOutcomes(),
     ]);
     Log.debug(
-      "Finalize session finished",
-      `started: ${new Date(session.startTimestamp)}`
+      'Finalize session finished',
+      `started: ${new Date(session.startTimestamp)}`,
     );
   }
 
-  static timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {
+  static timeInSecondsBetweenTimestamps(
+    timestamp1: number,
+    timestamp2: number,
+  ): number {
     if (timestamp1 <= timestamp2) {
       return 0;
     }
@@ -265,7 +296,7 @@ export enum ServiceWorkerActiveState {
    * on HTTP pages where it isn't possible to know whether a service worker is
    * installed or not or in any of the other states.
    */
-  Indeterminate = 'Indeterminate'
+  Indeterminate = 'Indeterminate',
 }
 
 export interface ServiceWorkerManagerConfig {

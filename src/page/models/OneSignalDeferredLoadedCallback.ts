@@ -1,3 +1,3 @@
-import OneSignal from "../../onesignal/OneSignal";
+import OneSignal from '../../onesignal/OneSignal';
 
 export type OneSignalDeferredLoadedCallback = (onesignal: OneSignal) => void;

@@ -1,7 +1,10 @@
-import { ModelName } from "../../../src/core/models/SupportedModels";
-import { SubscriptionModel, SubscriptionType } from "../../../src/core/models/SubscriptionModels";
-import { generateNewSubscription } from "../../support/helpers/core";
-import { OSModel } from "../../../src/core/modelRepo/OSModel";
+import { ModelName } from '../../../src/core/models/SupportedModels';
+import {
+  SubscriptionModel,
+  SubscriptionType,
+} from '../../../src/core/models/SubscriptionModels';
+import { generateNewSubscription } from '../../support/helpers/core';
+import { OSModel } from '../../../src/core/modelRepo/OSModel';
 
 describe('OSModel tests', () => {
   afterAll(() => {
@@ -60,6 +63,10 @@ describe('OSModel tests', () => {
     };
 
     // upstream bug workaround https://github.com/facebook/jest/issues/8475
-    expect(JSON.stringify(decodedSub)).toEqual(JSON.stringify(new OSModel(ModelName.EmailSubscriptions, model, '0000000000')));
+    expect(JSON.stringify(decodedSub)).toEqual(
+      JSON.stringify(
+        new OSModel(ModelName.EmailSubscriptions, model, '0000000000'),
+      ),
+    );
   });
 });

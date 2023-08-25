@@ -81,5 +81,5 @@ export const ONESIGNAL_EVENTS = {
   TEST_WOULD_DISPLAY: 'testWouldDisplay',
   TEST_FINISHED_ALLOW_CLICK_HANDLING: 'testFinishedAllowClickHandling',
   POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
-  SESSION_STARTED: "os.sessionStarted",
+  SESSION_STARTED: 'os.sessionStarted',
 };

@@ -1,17 +1,21 @@
-import OneSignalError from "./OneSignalError";
+import OneSignalError from './OneSignalError';
 
 export enum InvalidArgumentReason {
   Empty,
   Malformed,
   EnumOutOfRange,
-  WrongType
+  WrongType,
 }
 
 export class InvalidArgumentError extends OneSignalError {
   argument: string;
   reason: string;
 
-  constructor(argName: string, reason: InvalidArgumentReason, message?: string) {
+  constructor(
+    argName: string,
+    reason: InvalidArgumentReason,
+    message?: string,
+  ) {
     let errorMessage;
     switch (reason) {
       case InvalidArgumentReason.Empty:

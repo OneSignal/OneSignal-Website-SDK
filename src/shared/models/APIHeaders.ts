@@ -1,4 +1,4 @@
 export type APIHeaders = {
-  "Authorization"?: string;
+  Authorization?: string;
   [key: string]: any;
 };

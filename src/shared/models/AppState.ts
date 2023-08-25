@@ -1,4 +1,4 @@
-import { NotificationClickEventInternal } from "./NotificationEvent";
+import { NotificationClickEventInternal } from './NotificationEvent';
 
 // NotificationsClickEvents that are waiting to fire until these conditions are meet:
 // 1. Page is opened to the result.url; that is once a page is open to the intended URL
@@ -8,23 +8,23 @@ export interface PendingNotificationClickEvents {
 }
 
 class AppState {
-    defaultNotificationUrl: string | undefined;
-    defaultNotificationTitle: string | undefined;
+  defaultNotificationUrl: string | undefined;
+  defaultNotificationTitle: string | undefined;
 
-    /**
-     * Whether the user is currently completely subscribed, including not opted out. Database cached version of
-     * isPushNotificationsEnabled().
-     */
-    lastKnownPushEnabled: boolean | undefined;
+  /**
+   * Whether the user is currently completely subscribed, including not opted out. Database cached version of
+   * isPushNotificationsEnabled().
+   */
+  lastKnownPushEnabled: boolean | undefined;
 
-    lastKnownPushToken: string | undefined;
+  lastKnownPushToken: string | undefined;
 
-    lastKnownPushId: string | undefined;
+  lastKnownPushId: string | undefined;
 
-    // default true
-    lastKnownOptedIn = true;
+  // default true
+  lastKnownOptedIn = true;
 
-    pendingNotificationClickEvents: PendingNotificationClickEvents | undefined;
+  pendingNotificationClickEvents: PendingNotificationClickEvents | undefined;
 }
 
 export { AppState };

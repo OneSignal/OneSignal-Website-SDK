@@ -1,4 +1,4 @@
-import Environment from "../../shared/helpers/Environment";
+import Environment from '../../shared/helpers/Environment';
 
 export interface ServiceWorkerDebugScope {
   environment: Environment;

@@ -1,7 +1,7 @@
-import { 
+import {
   IOSNotification,
   IOSNotificationActionButton,
-} from "../../shared/models/OSNotification";
+} from '../../shared/models/OSNotification';
 
 // This is the raw payload that OneSignal sends
 export interface OSMinifiedNotificationPayload {
@@ -27,18 +27,20 @@ export interface OSMinifiedButtonsPayload {
   readonly i: string;
   readonly n: string;
   readonly p?: string;
-  readonly u?: string
+  readonly u?: string;
 }
 
 export class OSMinifiedNotificationPayloadHelper {
-  static toOSNotification(payload: OSMinifiedNotificationPayload): IOSNotification {
+  static toOSNotification(
+    payload: OSMinifiedNotificationPayload,
+  ): IOSNotification {
     return {
       notificationId: payload.custom.i,
       title: payload.title,
       body: payload.alert,
       additionalData: payload.custom.a,
       launchURL: payload.custom.u,
-      confirmDelivery: payload.custom.rr === "y",
+      confirmDelivery: payload.custom.rr === 'y',
       icon: payload.icon,
       image: payload.image,
       actionButtons: this.convertButtons(payload.o),
@@ -46,21 +48,21 @@ export class OSMinifiedNotificationPayloadHelper {
       badgeIcon: payload.badge,
     };
   }
-  
+
   private static convertButtons(
-    payloadButtons?: OSMinifiedButtonsPayload[]
+    payloadButtons?: OSMinifiedButtonsPayload[],
   ): IOSNotificationActionButton[] | undefined {
     return payloadButtons?.map(
       (button): IOSNotificationActionButton => ({
         actionId: button.i,
         text: button.n,
         icon: button.p,
-        launchURL: button.u
-      })
+        launchURL: button.u,
+      }),
     );
   }
 
   static isValid(payload: any): boolean {
-    return typeof payload?.custom?.i === "string";
+    return typeof payload?.custom?.i === 'string';
   }
 }

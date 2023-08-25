@@ -1,6 +1,10 @@
-import { AppUserConfig, SlidedownOptionsVersion1 } from "../models/AppConfig";
-import { AppUserConfigPromptOptions, SlidedownOptions, DelayedPromptType } from "../models/Prompts";
-import PromptsHelper from "./PromptsHelper";
+import { AppUserConfig, SlidedownOptionsVersion1 } from '../models/AppConfig';
+import {
+  AppUserConfigPromptOptions,
+  SlidedownOptions,
+  DelayedPromptType,
+} from '../models/Prompts';
+import PromptsHelper from './PromptsHelper';
 
 export class ConverterHelper {
   /**
@@ -9,17 +13,24 @@ export class ConverterHelper {
    */
   public static upgradeConfigToVersionTwo(userConfig: AppUserConfig) {
     if (ConverterHelper.isPromptOptionsVersion0(userConfig.promptOptions)) {
-      userConfig.promptOptions = ConverterHelper.convertConfigToVersionOne(userConfig.promptOptions);
+      userConfig.promptOptions = ConverterHelper.convertConfigToVersionOne(
+        userConfig.promptOptions,
+      );
     }
 
-    if (ConverterHelper.isSlidedownConfigVersion1(userConfig.promptOptions?.slidedown)) {
-      if (userConfig.promptOptions?.slidedown){
+    if (
+      ConverterHelper.isSlidedownConfigVersion1(
+        userConfig.promptOptions?.slidedown,
+      )
+    ) {
+      if (userConfig.promptOptions?.slidedown) {
         userConfig.promptOptions.slidedown =
-          ConverterHelper.convertConfigToVersionTwo(userConfig.promptOptions?.slidedown);
+          ConverterHelper.convertConfigToVersionTwo(
+            userConfig.promptOptions?.slidedown,
+          );
       }
     }
   }
-
 
   /**
    * convertConfigToVersionOne - converts v0 schema to v1 schema format
@@ -48,17 +59,22 @@ export class ConverterHelper {
    * @param  {any} promptOptions
    * @returns AppUserConfigPromptOptions
    */
-  public static convertConfigToVersionOne(promptOptions: any) : AppUserConfigPromptOptions {
+  public static convertConfigToVersionOne(
+    promptOptions: any,
+  ): AppUserConfigPromptOptions {
     if (!promptOptions.slidedown) {
       promptOptions.slidedown = {};
     }
 
-    const { acceptButtonText, cancelButtonText, actionMessage } = promptOptions.slidedown;
+    const { acceptButtonText, cancelButtonText, actionMessage } =
+      promptOptions.slidedown;
 
     // we may have supported both of these keys in the past (with and without "Text" postfix)
     // so we're leaving here and checking in case it is being used this way
-    const higherLevelAcceptButtonText = promptOptions.acceptButtonText || promptOptions.acceptButton;
-    const higherLevelCancelButtonText = promptOptions.cancelButtonText || promptOptions.cancelButton;
+    const higherLevelAcceptButtonText =
+      promptOptions.acceptButtonText || promptOptions.acceptButton;
+    const higherLevelCancelButtonText =
+      promptOptions.cancelButtonText || promptOptions.cancelButton;
 
     /**
      * we should give preference to the lower level ("slidedown" level) text settings in the case that
@@ -74,18 +90,25 @@ export class ConverterHelper {
      *      }
      * }
      */
-    promptOptions.slidedown.acceptButtonText = acceptButtonText  || higherLevelAcceptButtonText;
-    promptOptions.slidedown.cancelButtonText = cancelButtonText  || higherLevelCancelButtonText;
-    promptOptions.slidedown.actionMessage    = actionMessage     || promptOptions.actionMessage;
+    promptOptions.slidedown.acceptButtonText =
+      acceptButtonText || higherLevelAcceptButtonText;
+    promptOptions.slidedown.cancelButtonText =
+      cancelButtonText || higherLevelCancelButtonText;
+    promptOptions.slidedown.actionMessage =
+      actionMessage || promptOptions.actionMessage;
 
     return promptOptions;
   }
 
-  public static convertConfigToVersionTwo(slidedownConfig: SlidedownOptionsVersion1 & SlidedownOptions)
-    : SlidedownOptions {
+  public static convertConfigToVersionTwo(
+    slidedownConfig: SlidedownOptionsVersion1 & SlidedownOptions,
+  ): SlidedownOptions {
     // determine if the slidedown is category type or regular push
-    const promptType = PromptsHelper.isCategorySlidedownConfiguredVersion1(slidedownConfig) ?
-      DelayedPromptType.Category : DelayedPromptType.Push;
+    const promptType = PromptsHelper.isCategorySlidedownConfiguredVersion1(
+      slidedownConfig,
+    )
+      ? DelayedPromptType.Category
+      : DelayedPromptType.Push;
 
     let positiveUpdateButton, negativeUpdateButton: string | undefined;
     if (promptType === DelayedPromptType.Category) {
@@ -96,27 +119,29 @@ export class ConverterHelper {
     const existingPromptsConfig = slidedownConfig.prompts || [];
 
     return {
-        prompts: [
-            ...existingPromptsConfig,
-            {
-                type: promptType,
-                autoPrompt: slidedownConfig.autoPrompt,
-                text: {
-                  actionMessage: slidedownConfig.actionMessage,
-                  acceptButton: slidedownConfig.acceptButton || slidedownConfig.acceptButtonText,
-                  cancelButton: slidedownConfig.cancelButton || slidedownConfig.cancelButtonText,
-                  // categories-specific...
-                  positiveUpdateButton,
-                  negativeUpdateButton,
-                  updateMessage:  slidedownConfig?.categories?.updateMessage
-                },
-                delay: {
-                  pageViews: slidedownConfig.pageViews,
-                  timeDelay: slidedownConfig.timeDelay
-                },
-                categories: slidedownConfig?.categories?.tags
-            }
-        ]
+      prompts: [
+        ...existingPromptsConfig,
+        {
+          type: promptType,
+          autoPrompt: slidedownConfig.autoPrompt,
+          text: {
+            actionMessage: slidedownConfig.actionMessage,
+            acceptButton:
+              slidedownConfig.acceptButton || slidedownConfig.acceptButtonText,
+            cancelButton:
+              slidedownConfig.cancelButton || slidedownConfig.cancelButtonText,
+            // categories-specific...
+            positiveUpdateButton,
+            negativeUpdateButton,
+            updateMessage: slidedownConfig?.categories?.updateMessage,
+          },
+          delay: {
+            pageViews: slidedownConfig.pageViews,
+            timeDelay: slidedownConfig.timeDelay,
+          },
+          categories: slidedownConfig?.categories?.tags,
+        },
+      ],
     } as SlidedownOptions;
   }
 
@@ -126,12 +151,12 @@ export class ConverterHelper {
    * @param  {any} slidedownConfig
    * @returns boolean
    */
-  public static isPromptOptionsVersion0(slidedownConfig: any) : boolean {
+  public static isPromptOptionsVersion0(slidedownConfig: any): boolean {
     if (!!slidedownConfig) {
       const version0Keys = [
         'acceptButtonText',
         'cancelButtonText',
-        'actionMessage'
+        'actionMessage',
       ];
 
       for (let i = 0; i < version0Keys.length; i++) {
@@ -169,28 +194,28 @@ export class ConverterHelper {
    * @param slidedownConfig
    */
   public static isSlidedownConfigVersion1(
-    slidedownConfig: any) : slidedownConfig is SlidedownOptionsVersion1 {
-        if (!!slidedownConfig) {
-            const version1Keys = [
-                'enabled',
-                'autoPrompt',
-                'pageViews',
-                'timeDelay',
-                'acceptButton',
-                'acceptButtonText',
-                'cancelButton',
-                'cancelButtonText',
-                'actionMessage',
-                'customizeTextEnabled',
-                'categories'
-            ];
+    slidedownConfig: any,
+  ): slidedownConfig is SlidedownOptionsVersion1 {
+    if (!!slidedownConfig) {
+      const version1Keys = [
+        'enabled',
+        'autoPrompt',
+        'pageViews',
+        'timeDelay',
+        'acceptButton',
+        'acceptButtonText',
+        'cancelButton',
+        'cancelButtonText',
+        'actionMessage',
+        'customizeTextEnabled',
+        'categories',
+      ];
 
-            for (let i = 0; i < version1Keys.length; i++) {
-                // eslint-disable-next-line no-prototype-builtins
-                if (slidedownConfig.hasOwnProperty(version1Keys[i])) return true;
-            }
-        }
-        return false;
+      for (let i = 0; i < version1Keys.length; i++) {
+        // eslint-disable-next-line no-prototype-builtins
+        if (slidedownConfig.hasOwnProperty(version1Keys[i])) return true;
+      }
     }
-
+    return false;
+  }
 }

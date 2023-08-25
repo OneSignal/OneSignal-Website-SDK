@@ -1,16 +1,22 @@
-import { NotificationClickEventInternal } from "../models/NotificationEvent";
-import { IOSNotification, IOSNotificationActionButton } from "../models/OSNotification";
-import { OutcomesNotificationClicked, OutcomesNotificationReceived } from "../models/OutcomesNotificationEvents";
+import { NotificationClickEventInternal } from '../models/NotificationEvent';
+import {
+  IOSNotification,
+  IOSNotificationActionButton,
+} from '../models/OSNotification';
+import {
+  OutcomesNotificationClicked,
+  OutcomesNotificationReceived,
+} from '../models/OutcomesNotificationEvents';
 /**
  * Purpose: This file defines mapping so any changes to the public
  * classes don't break indexDb serialization.
- * 
+ *
  * Naming Rules:
  *    1. All classes that convert types to / from the db
  *    must end in Serialize.
  *    2. All interfaces used with classes ending in Serialize
  *    must end in Schema.
- * 
+ *
  * NOTE: Any change made to interfaces that end in Schema require
  *       bumping the indexDb.ts version and creating a migration.
  */
@@ -60,19 +66,19 @@ export class NotificationClickForOpenHandlingSerializer {
       action: result.actionId,
       buttons: this.toDatabaseButtons(notification.actionButtons),
       timestamp: event.timestamp,
-    }
+    };
   }
 
   private static toDatabaseButtons(
-    actionButtons?: IOSNotificationActionButton[]
+    actionButtons?: IOSNotificationActionButton[],
   ): NotificationButtonsClickForOpenHandlingSchema[] | undefined {
     return actionButtons?.map(
       (button): NotificationButtonsClickForOpenHandlingSchema => ({
         action: button.actionId,
         title: button.text,
         icon: button.icon,
-        url: button.launchURL
-      })
+        url: button.launchURL,
+      }),
     );
   }
 
@@ -82,7 +88,7 @@ export class NotificationClickForOpenHandlingSerializer {
     return {
       result: {
         actionId: record.action,
-        url: record.url
+        url: record.url,
       },
       notification: {
         notificationId: record.id,
@@ -102,15 +108,15 @@ export class NotificationClickForOpenHandlingSerializer {
   }
 
   private static toOSNotificationButtons(
-    buttons?: NotificationButtonsClickForOpenHandlingSchema[]
+    buttons?: NotificationButtonsClickForOpenHandlingSchema[],
   ): IOSNotificationActionButton[] | undefined {
     return buttons?.map(
       (button): IOSNotificationActionButton => ({
         actionId: button.action,
         text: button.title,
         icon: button.icon,
-        launchURL: button.url
-      })
+        launchURL: button.url,
+      }),
     );
   }
 }
@@ -143,7 +149,6 @@ export class NotificationClickedForOutcomesSerializer {
     };
   }
 }
-
 
 export interface NotificationReceivedForOutcomesSchema {
   readonly appId: string;

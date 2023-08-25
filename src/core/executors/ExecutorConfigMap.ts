@@ -1,8 +1,8 @@
-import { ExecutorConfigMap as ExecutorConfigMap } from "../models/ExecutorConfig";
-import { ModelName } from "../models/SupportedModels";
-import IdentityRequests from "../requestService/IdentityRequests";
-import SubscriptionRequests from "../requestService/SubscriptionRequests";
-import UserPropertyRequests from "../requestService/UserPropertyRequests";
+import { ExecutorConfigMap as ExecutorConfigMap } from '../models/ExecutorConfig';
+import { ModelName } from '../models/SupportedModels';
+import IdentityRequests from '../requestService/IdentityRequests';
+import SubscriptionRequests from '../requestService/SubscriptionRequests';
+import UserPropertyRequests from '../requestService/UserPropertyRequests';
 
 const subscriptionConfig = {
   add: SubscriptionRequests.addSubscription,
@@ -22,14 +22,14 @@ export const EXECUTOR_CONFIG_MAP: ExecutorConfigMap = {
   },
   [ModelName.PushSubscriptions]: {
     modelName: ModelName.PushSubscriptions,
-    ...subscriptionConfig
+    ...subscriptionConfig,
   },
   [ModelName.EmailSubscriptions]: {
     modelName: ModelName.EmailSubscriptions,
-    ...subscriptionConfig
+    ...subscriptionConfig,
   },
   [ModelName.SmsSubscriptions]: {
     modelName: ModelName.SmsSubscriptions,
-    ...subscriptionConfig
-  }
+    ...subscriptionConfig,
+  },
 };

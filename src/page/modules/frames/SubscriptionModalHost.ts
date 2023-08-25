@@ -35,12 +35,20 @@ export default class SubscriptionModalHost implements Disposable {
    * forever for the first handshake message.
    */
   async load(): Promise<void> {
-    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-    const notificationPermission = await OneSignal.context.permissionManager.getPermissionStatus();
+    const isPushEnabled =
+      await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    const notificationPermission =
+      await OneSignal.context.permissionManager.getPermissionStatus();
     this.url = SdkEnvironment.getOneSignalApiUrl();
     this.url.pathname = 'webPushModal';
-    this.url.search = `${MainHelper.getPromptOptionsQueryString()}&id=${this.appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${(notificationPermission as any) === 'denied'}&promptType=modal`;
-    Log.info(`Loading iFrame for HTTPS subscription modal at ${this.url.toString()}`);
+    this.url.search = `${MainHelper.getPromptOptionsQueryString()}&id=${
+      this.appId
+    }&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${
+      (notificationPermission as any) === 'denied'
+    }&promptType=modal`;
+    Log.info(
+      `Loading iFrame for HTTPS subscription modal at ${this.url.toString()}`,
+    );
 
     this.modal = this.createHiddenSubscriptionDomModal(this.url.toString());
 
@@ -51,7 +59,8 @@ export default class SubscriptionModalHost implements Disposable {
     const iframeContainer = document.createElement('div');
     iframeContainer.setAttribute('id', 'OneSignal-iframe-modal');
     iframeContainer.setAttribute('style', 'display:none !important');
-    iframeContainer.innerHTML = '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed;' +
+    iframeContainer.innerHTML =
+      '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed;' +
       ' top: 0; left: 0; right: 0; bottom: 0; z-index: 3000000000; display: flex;' +
       ' align-items: center; justify-content: center;"></div>';
     document.body.appendChild(iframeContainer);
@@ -60,14 +69,14 @@ export default class SubscriptionModalHost implements Disposable {
     iframeContainerStyle.innerHTML = `@media (max-width: 560px) { .OneSignal-permission-iframe { width: 100%; height: 100%;} }`;
     document.getElementsByTagName('head')[0].appendChild(iframeContainerStyle);
 
-    const iframe = document.createElement("iframe");
-    iframe.className = "OneSignal-permission-iframe";
+    const iframe = document.createElement('iframe');
+    iframe.className = 'OneSignal-permission-iframe';
     iframe.setAttribute('frameborder', '0');
     iframe.width = OneSignal._windowWidth.toString();
     iframe.height = OneSignal._windowHeight.toString();
     iframe.src = url;
 
-    document.getElementById("notif-permission").appendChild(iframe);
+    document.getElementById('notif-permission').appendChild(iframe);
     return iframe;
   }
 
@@ -87,10 +96,22 @@ export default class SubscriptionModalHost implements Disposable {
     this.messenger = new Postmam(this.modal, this.url.origin, this.url.origin);
     this.messenger.startPostMessageReceive();
 
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.MODAL_LOADED, this.onModalLoaded.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_ACCEPTED, this.onModalAccepted.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED, this.onModalRejected.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, this.onModalClosing.bind(this));
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.MODAL_LOADED,
+      this.onModalLoaded.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_ACCEPTED,
+      this.onModalAccepted.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED,
+      this.onModalRejected.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING,
+      this.onModalClosing.bind(this),
+    );
   }
 
   onModalLoaded(_: MessengerMessageEvent) {

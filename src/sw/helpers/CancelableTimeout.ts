@@ -1,4 +1,4 @@
-import Log from "../../sw/libraries/Log";
+import Log from '../../sw/libraries/Log';
 
 export interface CancelableTimeoutPromise {
   cancel: () => void;
@@ -6,10 +6,13 @@ export interface CancelableTimeoutPromise {
 }
 
 const doNothing = () => {
-  Log.debug("Do nothing");
+  Log.debug('Do nothing');
 };
 
-export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds: number): CancelableTimeoutPromise {
+export function cancelableTimeout(
+  callback: () => Promise<void>,
+  delayInSeconds: number,
+): CancelableTimeoutPromise {
   const delayInMilliseconds = delayInSeconds * 1000;
 
   let timerId: number | undefined;
@@ -18,22 +21,20 @@ export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds:
   const promise = new Promise<void>((resolve, reject) => {
     let startedExecution = false;
 
-    timerId = self.setTimeout(
-      async () => {
-        startedExecution = true;
-        try {
-          await callback();
-          resolve();
-        } catch(e) {
-          Log.error("Failed to execute callback", e);
-          reject();
-        }
-      }, 
-      delayInMilliseconds);
-    
+    timerId = self.setTimeout(async () => {
+      startedExecution = true;
+      try {
+        await callback();
+        resolve();
+      } catch (e) {
+        Log.error('Failed to execute callback', e);
+        reject();
+      }
+    }, delayInMilliseconds);
+
     clearTimeoutHandle = () => {
-      Log.debug("Cancel called");
-      self.clearTimeout(timerId); 
+      Log.debug('Cancel called');
+      self.clearTimeout(timerId);
       if (!startedExecution) {
         resolve();
       }
@@ -41,7 +42,7 @@ export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds:
   });
 
   if (!clearTimeoutHandle) {
-    Log.warn("clearTimeoutHandle was not assigned.");
+    Log.warn('clearTimeoutHandle was not assigned.');
     return {
       promise,
       cancel: doNothing,

@@ -1,10 +1,10 @@
-import bowser, { IBowser } from "bowser";
-import SdkEnvironment from "../managers/SdkEnvironment";
-import Environment from "../helpers/Environment";
-import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
-import { Utils } from "../context/Utils";
-import Log from "../libraries/Log";
-import { bowserCastle } from "./bowserCastle";
+import bowser, { IBowser } from 'bowser';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import Environment from '../helpers/Environment';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import { Utils } from '../context/Utils';
+import Log from '../libraries/Log';
+import { bowserCastle } from './bowserCastle';
 
 export class OneSignalUtils {
   public static getBaseUrl() {
@@ -40,43 +40,48 @@ export class OneSignalUtils {
 
     if (!OneSignal.config) {
       throw new Error(
-        `(${windowEnv.toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`
+        `(${windowEnv.toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`,
       );
     }
     if (bowserCastle().name == 'safari') {
       return false;
     }
 
-    const allowLocalhostAsSecureOrigin: boolean = this.isLocalhostAllowedAsSecureOrigin();
+    const allowLocalhostAsSecureOrigin: boolean =
+      this.isLocalhostAllowedAsSecureOrigin();
 
     return OneSignalUtils.internalIsUsingSubscriptionWorkaround(
-      OneSignal.config.subdomain, allowLocalhostAsSecureOrigin
+      OneSignal.config.subdomain,
+      allowLocalhostAsSecureOrigin,
     );
   }
 
   public static internalIsUsingSubscriptionWorkaround(
     subdomain: string | undefined,
-    allowLocalhostAsSecureOrigin: boolean | undefined
+    allowLocalhostAsSecureOrigin: boolean | undefined,
   ): boolean {
     if (bowserCastle().name == 'safari') {
       return false;
     }
 
-    if (allowLocalhostAsSecureOrigin === true &&
-      (location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+    if (
+      allowLocalhostAsSecureOrigin === true &&
+      (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ) {
       return false;
     }
 
     const windowEnv = SdkEnvironment.getWindowEnv();
     return (
-      (windowEnv === WindowEnvironmentKind.Host || windowEnv === WindowEnvironmentKind.CustomIframe) &&
-      (!!subdomain || location.protocol === "http:")
+      (windowEnv === WindowEnvironmentKind.Host ||
+        windowEnv === WindowEnvironmentKind.CustomIframe) &&
+      (!!subdomain || location.protocol === 'http:')
     );
   }
 
   public static redetectBrowserUserAgent(): IBowser {
     // During testing, the browser object may be initialized before the userAgent is injected
-    if (bowserCastle().name === "" && bowserCastle().version === "") {
+    if (bowserCastle().name === '' && bowserCastle().version === '') {
       return bowser._detect(navigator.userAgent);
     }
     return bowser;
@@ -88,41 +93,56 @@ export class OneSignalUtils {
    * @returns {*|boolean}
    */
   public static isValidUuid(uuid: string) {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(uuid);
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(
+      uuid,
+    );
   }
 
   public static getRandomUuid(): string {
     let uuidStr = '';
-    const crypto = typeof window === 'undefined' ? (global as any).crypto : window.crypto || (<any>window).msCrypto;
+    const crypto =
+      typeof window === 'undefined'
+        ? (global as any).crypto
+        : window.crypto || (<any>window).msCrypto;
     if (crypto) {
-      uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = (crypto.getRandomValues(new Uint8Array(1))[0] % 16) | 0,
-          v = c == 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      });
+      uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+        /[xy]/g,
+        function (c) {
+          const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16 | 0,
+            v = c == 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        },
+      );
     } else {
-      uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = (Math.random() * 16) | 0,
-          v = c == 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      });
+      uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+        /[xy]/g,
+        function (c) {
+          const r = (Math.random() * 16) | 0,
+            v = c == 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        },
+      );
     }
     return uuidStr;
   }
 
   public static logMethodCall(methodName: string, ...args: any[]) {
-    return Log.debug(`Called %c${methodName}(${args.map(Utils.stringify).join(', ')})`, Utils.getConsoleStyle('code'), '.');
+    return Log.debug(
+      `Called %c${methodName}(${args.map(Utils.stringify).join(', ')})`,
+      Utils.getConsoleStyle('code'),
+      '.',
+    );
   }
 
   static isHttps(): boolean {
     if (OneSignalUtils.isSafari()) {
-      return window.location.protocol === "https:";
+      return window.location.protocol === 'https:';
     }
     return !OneSignalUtils.isUsingSubscriptionWorkaround();
   }
 
   static isSafari(): boolean {
-    return Environment.isBrowser() && typeof window.safari !== "undefined";
+    return Environment.isBrowser() && typeof window.safari !== 'undefined';
   }
 }
 

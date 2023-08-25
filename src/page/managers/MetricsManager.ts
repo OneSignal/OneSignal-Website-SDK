@@ -1,6 +1,5 @@
-import Environment from "../../shared/helpers/Environment";
-import { base64Encode } from "../../shared/utils/Encoding";
-
+import Environment from '../../shared/helpers/Environment';
+import { base64Encode } from '../../shared/utils/Encoding';
 
 abstract class MetricEvent {
   abstract getEventName();
@@ -9,7 +8,7 @@ abstract class MetricEvent {
     return {
       origin: location.origin,
       url: location.href,
-      sdkVersion: Environment.version()
+      sdkVersion: Environment.version(),
     };
   }
 }
@@ -21,7 +20,7 @@ abstract class MetricEngagement {
 
 export enum ApiUsageMetricKind {
   HttpPermissionRequest = 'HttpPermissionRequest',
-  SyncHashedEmail = 'SyncHashedEmail'
+  SyncHashedEmail = 'SyncHashedEmail',
 }
 
 export class ApiUsageMetricEvent extends MetricEvent {
@@ -36,7 +35,7 @@ export class ApiUsageMetricEvent extends MetricEvent {
   getPropertiesAsJson() {
     return {
       api: this.apiName.toString(),
-      ...super.getPropertiesAsJson()
+      ...super.getPropertiesAsJson(),
     };
   }
 }
@@ -47,20 +46,20 @@ export class PageViewMetricEngagement extends MetricEngagement {
   }
 
   getProfileName() {
-    return "all_websites";
+    return 'all_websites';
   }
 
   getDateUtc() {
     const date = new Date();
-    return `${date.getUTCMonth() + 1}_${date.getUTCDate()}_${date.getUTCFullYear()}`;
+    return `${
+      date.getUTCMonth() + 1
+    }_${date.getUTCDate()}_${date.getUTCFullYear()}`;
   }
 
   getOperationData() {
     const payload = {
-      $add: {
-
-      },
-      $ignore_time: true
+      $add: {},
+      $ignore_time: true,
     };
 
     payload[`$add`][`pageview_${this.getDateUtc()}`] = 1;
@@ -73,7 +72,10 @@ export default class MetricsManager {
   private isFeatureEnabled: boolean;
   private mixpanelReportingToken: string | undefined | null;
 
-  constructor(isFeatureEnabled: boolean, mixpanelReportingToken?: string | null) {
+  constructor(
+    isFeatureEnabled: boolean,
+    mixpanelReportingToken?: string | null,
+  ) {
     this.isFeatureEnabled = isFeatureEnabled;
     this.mixpanelReportingToken = mixpanelReportingToken;
   }
@@ -95,8 +97,8 @@ export default class MetricsManager {
       event: event.getEventName(),
       properties: {
         token: this.mixpanelReportingToken,
-        ...event.getPropertiesAsJson()
-      }
+        ...event.getPropertiesAsJson(),
+      },
     };
     const queryParams = base64Encode(JSON.stringify(queryParamsData));
 
@@ -106,7 +108,10 @@ export default class MetricsManager {
       cache: 'no-cache',
     };
 
-    return fetch(`${MetricsManager.MIXPANEL_REPORTING_URL}/track/?data=${queryParams}`, requestOptions);
+    return fetch(
+      `${MetricsManager.MIXPANEL_REPORTING_URL}/track/?data=${queryParams}`,
+      requestOptions,
+    );
   }
 
   reportEngagement(engagement: MetricEngagement) {
@@ -127,16 +132,19 @@ export default class MetricsManager {
       cache: 'no-cache',
     };
 
-    return fetch(`${MetricsManager.MIXPANEL_REPORTING_URL}/engage/?data=${queryParams}`, requestOptions);
+    return fetch(
+      `${MetricsManager.MIXPANEL_REPORTING_URL}/engage/?data=${queryParams}`,
+      requestOptions,
+    );
   }
 
   shouldCollectPageView() {
     const date = new Date();
     return (
-      (date.getUTCMonth() + 1) <= 2 &&
+      date.getUTCMonth() + 1 <= 2 &&
       date.getUTCDate() <= 10 &&
       date.getUTCFullYear() <= 2018 &&
-      (date.getUTCMonth() + 1) >= 2 &&
+      date.getUTCMonth() + 1 >= 2 &&
       date.getUTCDate() >= 8 &&
       date.getUTCFullYear() >= 2018
     );

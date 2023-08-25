@@ -1,4 +1,4 @@
-import OneSignalError from "./OneSignalError";
+import OneSignalError from './OneSignalError';
 
 export class ServiceWorkerRegistrationError extends OneSignalError {
   public readonly status: number;

@@ -1,15 +1,15 @@
-import { Serializable } from "../../page/models/Serializable";
+import { Serializable } from '../../page/models/Serializable';
 
 export class RawPushSubscription implements Serializable {
   /**
-     * The GCM/FCM registration token, along with the full URL. Not used for Safari.
-     */
+   * The GCM/FCM registration token, along with the full URL. Not used for Safari.
+   */
   w3cEndpoint: URL | undefined;
   w3cP256dh: string | undefined;
   w3cAuth: string | undefined;
   /**
-     * A Safari-only push subscription device token. Not used for Chrome/Firefox.
-  */
+   * A Safari-only push subscription device token. Not used for Chrome/Firefox.
+   */
   safariDeviceToken: string | undefined;
 
   /**
@@ -18,7 +18,9 @@ export class RawPushSubscription implements Serializable {
    *
    * @param pushSubscription A native browser W3C push subscription.
    */
-  public static setFromW3cSubscription(pushSubscription: PushSubscription): RawPushSubscription {
+  public static setFromW3cSubscription(
+    pushSubscription: PushSubscription,
+  ): RawPushSubscription {
     const rawPushSubscription = new RawPushSubscription();
 
     if (pushSubscription) {
@@ -42,12 +44,16 @@ export class RawPushSubscription implements Serializable {
 
         if (p256dh) {
           // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-          const p256dh_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(p256dh)));
+          const p256dh_base64encoded = btoa(
+            String.fromCharCode.apply(null, new Uint8Array(p256dh)),
+          );
           rawPushSubscription.w3cP256dh = p256dh_base64encoded;
         }
         if (auth) {
           // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-          const auth_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(auth)));
+          const auth_base64encoded = btoa(
+            String.fromCharCode.apply(null, new Uint8Array(auth)),
+          );
           rawPushSubscription.w3cAuth = auth_base64encoded;
         }
       }

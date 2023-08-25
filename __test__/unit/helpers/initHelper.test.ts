@@ -1,7 +1,7 @@
-import OneSignalUtils from "../../../src/shared/utils/OneSignalUtils";
-import InitHelper from "../../../src/shared/helpers/InitHelper";
-import { TestEnvironment } from "../../support/environment/TestEnvironment";
-import { MessageChannel } from "worker_threads";
+import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
+import InitHelper from '../../../src/shared/helpers/InitHelper';
+import { TestEnvironment } from '../../support/environment/TestEnvironment';
+import { MessageChannel } from 'worker_threads';
 
 describe('InitHelper', () => {
   beforeEach(async () => {
@@ -22,8 +22,12 @@ describe('InitHelper', () => {
   });
 
   test('registerForPushNotifications: load fullscreen popup when using subscription workaround', async () => {
-    const utilsStub = jest.spyOn(OneSignalUtils, 'isUsingSubscriptionWorkaround').mockReturnValue(true);
-    const loadStub = jest.spyOn(InitHelper, 'loadSubscriptionPopup').mockResolvedValue(undefined);
+    const utilsStub = jest
+      .spyOn(OneSignalUtils, 'isUsingSubscriptionWorkaround')
+      .mockReturnValue(true);
+    const loadStub = jest
+      .spyOn(InitHelper, 'loadSubscriptionPopup')
+      .mockResolvedValue(undefined);
 
     await InitHelper.registerForPushNotifications();
 
@@ -32,7 +36,7 @@ describe('InitHelper', () => {
   });
 
   /** onSdkInitialized */
-  test("onSdkInitialized: ensure public sdk initialized triggered", async () => {
+  test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
     OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       expect(true).toBe(true);
     });
@@ -40,15 +44,25 @@ describe('InitHelper', () => {
     expect.assertions(1);
   });
 
-  test("onSdkInitialized: processes expiring subscriptions", async () => {
-    const spy = test.stub(InitHelper, "processExpiringSubscriptions", Promise.resolve(undefined));
+  test('onSdkInitialized: processes expiring subscriptions', async () => {
+    const spy = test.stub(
+      InitHelper,
+      'processExpiringSubscriptions',
+      Promise.resolve(undefined),
+    );
     await InitHelper.onSdkInitialized();
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  test("onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false", async () => {
-    const spy = jest.spyOn(OneSignal.context.updateManager, "sendOnSessionUpdate").mockResolvedValue(undefined);
-    test.stub(OneSignalUtils, "isUsingSubscriptionWorkaround", Promise.resolve(false));
+  test('onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false', async () => {
+    const spy = jest
+      .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
+      .mockResolvedValue(undefined);
+    test.stub(
+      OneSignalUtils,
+      'isUsingSubscriptionWorkaround',
+      Promise.resolve(false),
+    );
 
     OneSignal.config.userConfig.promptOptions.autoPrompt = false;
     OneSignal.config.userConfig.autoResubscribe = false;
@@ -58,9 +72,15 @@ describe('InitHelper', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  test("onSdkInitialized: does not send on session update", async () => {
-    const spy = jest.spyOn(OneSignal.context.updateManager, "sendOnSessionUpdate").mockResolvedValue(undefined);
-    test.stub(OneSignalUtils, "isUsingSubscriptionWorkaround", Promise.resolve(false));
+  test('onSdkInitialized: does not send on session update', async () => {
+    const spy = jest
+      .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
+      .mockResolvedValue(undefined);
+    test.stub(
+      OneSignalUtils,
+      'isUsingSubscriptionWorkaround',
+      Promise.resolve(false),
+    );
 
     OneSignal.config.userConfig.promptOptions.autoPrompt = true;
     OneSignal.config.userConfig.autoResubscribe = true;

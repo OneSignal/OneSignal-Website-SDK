@@ -1,4 +1,4 @@
-import Log from "../shared/libraries/Log";
+import Log from '../shared/libraries/Log';
 
 export default class DebugNamespace {
   /**

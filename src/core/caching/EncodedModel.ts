@@ -1,4 +1,4 @@
-import { ModelName } from "../models/SupportedModels";
+import { ModelName } from '../models/SupportedModels';
 
 /**
  * IndexedDB expects a flattened object with a designated property to index the object

@@ -3,9 +3,14 @@ import {
   addCssClass,
   once,
   removeDomElement,
-  getDomElementOrStub
+  getDomElementOrStub,
 } from '../../shared/utils/utils';
-import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, TOAST_CLASSES, TOAST_IDS } from "../../shared/slidedown/constants";
+import {
+  SLIDEDOWN_CSS_CLASSES,
+  SLIDEDOWN_CSS_IDS,
+  TOAST_CLASSES,
+  TOAST_IDS,
+} from '../../shared/slidedown/constants';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 
 export default class ConfirmationToast {
@@ -16,14 +21,14 @@ export default class ConfirmationToast {
   }
 
   async show(): Promise<void> {
-    const toastElement = document.createElement("div");
-    const toastText    = document.createElement("p");
+    const toastElement = document.createElement('div');
+    const toastText = document.createElement('p');
 
     toastText.innerText = this.message;
     toastElement.appendChild(toastText);
 
-    const slidedownContainer = document.createElement("div");
-    const dialogContainer    = document.createElement("div");
+    const slidedownContainer = document.createElement('div');
+    const dialogContainer = document.createElement('div');
 
     // Insert the container
     slidedownContainer.id = SLIDEDOWN_CSS_IDS.container;
@@ -40,7 +45,12 @@ export default class ConfirmationToast {
     this.container.appendChild(dialogContainer);
 
     // Animate it in depending on environment
-    addCssClass(this.container, bowserCastle().mobile ? SLIDEDOWN_CSS_CLASSES.slideUp : SLIDEDOWN_CSS_CLASSES.slideDown);
+    addCssClass(
+      this.container,
+      bowserCastle().mobile
+        ? SLIDEDOWN_CSS_CLASSES.slideUp
+        : SLIDEDOWN_CSS_CLASSES.slideDown,
+    );
 
     ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.SHOWN);
   }
@@ -51,14 +61,22 @@ export default class ConfirmationToast {
 
   close(): void {
     addCssClass(this.container, SLIDEDOWN_CSS_CLASSES.closeSlidedown);
-    once(this.dialog, 'animationend', (event: any, destroyListenerFn: () => void) => {
-      if (event.target === this.dialog &&
-          (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')) {
-            // Uninstall the event listener for animationend
-            removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
-            destroyListenerFn();
-      }
-    }, true);
+    once(
+      this.dialog,
+      'animationend',
+      (event: any, destroyListenerFn: () => void) => {
+        if (
+          event.target === this.dialog &&
+          (event.animationName === 'slideDownExit' ||
+            event.animationName === 'slideUpExit')
+        ) {
+          // Uninstall the event listener for animationend
+          removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
+          destroyListenerFn();
+        }
+      },
+      true,
+    );
   }
 
   get container() {

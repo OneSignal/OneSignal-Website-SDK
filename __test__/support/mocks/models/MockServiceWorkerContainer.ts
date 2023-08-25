@@ -1,25 +1,32 @@
-import { DispatchEventUtil } from "../../utils/DispatchEventUtil";
-import { MockServiceWorker } from "./MockServiceWorker";
-import { MockServiceWorkerRegistration } from "./MockServiceWorkerRegistration";
+import { DispatchEventUtil } from '../../utils/DispatchEventUtil';
+import { MockServiceWorker } from './MockServiceWorker';
+import { MockServiceWorkerRegistration } from './MockServiceWorkerRegistration';
 
 // abstract to indicate this isn't designed to be used directly as part of the tests. (expect for the meta one)
 // This is a generic mock.
 //   - no OneSignal specifics, see MockServiceWorkerContainerWithAPIBan
-export abstract class MockServiceWorkerContainer implements ServiceWorkerContainer {
+export abstract class MockServiceWorkerContainer
+  implements ServiceWorkerContainer
+{
   protected _controller: ServiceWorker | null;
   get controller(): ServiceWorker | null {
     return this._controller;
   }
 
   get ready(): Promise<ServiceWorkerRegistration> {
-    return new Promise<ServiceWorkerRegistration>(resolve => (resolve(new MockServiceWorkerRegistration())));
+    return new Promise<ServiceWorkerRegistration>((resolve) =>
+      resolve(new MockServiceWorkerRegistration()),
+    );
   }
 
-  set oncontrollerchange(event: ((this: ServiceWorkerContainer, ev: Event) => any) | null) {
-  }
+  set oncontrollerchange(
+    event: ((this: ServiceWorkerContainer, ev: Event) => any) | null,
+  ) {}
 
   onmessage: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
-  onmessageerror: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
+  onmessageerror:
+    | ((this: ServiceWorkerContainer, ev: MessageEvent) => any)
+    | null;
 
   private dispatchEventUtil: DispatchEventUtil = new DispatchEventUtil();
   private serviceWorkerRegistrations: Map<string, ServiceWorkerRegistration>;
@@ -31,8 +38,19 @@ export abstract class MockServiceWorkerContainer implements ServiceWorkerContain
     this.onmessageerror = null;
   }
 
-  addEventListener<K extends keyof ServiceWorkerContainerEventMap>(type: K, listener: (this: ServiceWorkerContainer, ev: ServiceWorkerContainerEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void {
+  addEventListener<K extends keyof ServiceWorkerContainerEventMap>(
+    type: K,
+    listener: (
+      this: ServiceWorkerContainer,
+      ev: ServiceWorkerContainerEventMap[K],
+    ) => any,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): void {
     this.dispatchEventUtil.addEventListener(type, listener, options);
   }
 
@@ -41,10 +59,12 @@ export abstract class MockServiceWorkerContainer implements ServiceWorkerContain
   }
 
   // clientURL can be relative or a full URL
-  async getRegistration(clientURL?: string): Promise<ServiceWorkerRegistration | undefined> {
-    const scope = clientURL ?
-      clientURL.replace(location.origin, "") : // Turn a possible full URL into a scope
-      "/";
+  async getRegistration(
+    clientURL?: string,
+  ): Promise<ServiceWorkerRegistration | undefined> {
+    const scope = clientURL
+      ? clientURL.replace(location.origin, '') // Turn a possible full URL into a scope
+      : '/';
 
     // 1. If we find an exact path match
     let registration = this.serviceWorkerRegistrations.get(scope);
@@ -67,7 +87,10 @@ export abstract class MockServiceWorkerContainer implements ServiceWorkerContain
     return Array.from(this.serviceWorkerRegistrations.values());
   }
 
-  async register(scriptURL: string, options?: RegistrationOptions): Promise<ServiceWorkerRegistration> {
+  async register(
+    scriptURL: string,
+    options?: RegistrationOptions,
+  ): Promise<ServiceWorkerRegistration> {
     if (scriptURL.startsWith('/')) {
       const fakeScriptUrl = new URL(window.location.toString());
       scriptURL = fakeScriptUrl.origin + scriptURL;
@@ -92,26 +115,44 @@ export abstract class MockServiceWorkerContainer implements ServiceWorkerContain
   // This will always give us a pathname, defaulting to "/" if falsely.
   private static getScopeAsPathname(options?: RegistrationOptions): string {
     if (!options?.scope) {
-      return "/";
+      return '/';
     }
 
     try {
       return new URL(options.scope).pathname;
-    } catch(_e) {
+    } catch (_e) {
       // Not a valid URL, assuming it's a path
       return options.scope;
     }
   }
 
-  removeEventListener<K extends keyof ServiceWorkerContainerEventMap>(type: K, listener: (this: ServiceWorkerContainer, ev: ServiceWorkerContainerEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-  removeEventListener(type: string, listener: EventListener | EventListenerObject, options?: boolean | EventListenerOptions): void;
-  removeEventListener(type: string, listener?: EventListener | EventListenerObject | null, options?: EventListenerOptions | boolean): void;
-  removeEventListener(type: string, listener?: EventListener | EventListenerObject | null, options?: boolean | EventListenerOptions): void {
+  removeEventListener<K extends keyof ServiceWorkerContainerEventMap>(
+    type: K,
+    listener: (
+      this: ServiceWorkerContainer,
+      ev: ServiceWorkerContainerEventMap[K],
+    ) => any,
+    options?: boolean | EventListenerOptions,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListener | EventListenerObject,
+    options?: boolean | EventListenerOptions,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener?: EventListener | EventListenerObject | null,
+    options?: EventListenerOptions | boolean,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener?: EventListener | EventListenerObject | null,
+    options?: boolean | EventListenerOptions,
+  ): void {
     this.dispatchEventUtil.removeEventListener(type, listener, options);
   }
 
-  startMessages(): void {
-  }
+  startMessages(): void {}
 
   mockUnregister(scope: string) {
     this.serviceWorkerRegistrations.delete(scope);

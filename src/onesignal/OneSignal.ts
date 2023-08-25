@@ -1,48 +1,51 @@
-import { EnvironmentInfoHelper } from "../page/helpers/EnvironmentInfoHelper";
-import AltOriginManager from "../page/managers/AltOriginManager";
-import ConfigManager from "../page/managers/ConfigManager";
-import LegacyManager from "../page/managers/LegacyManager";
-import Context from "../page/models/Context";
-import { EnvironmentInfo } from "../page/models/EnvironmentInfo";
-import ProxyFrame from "../page/modules/frames/ProxyFrame";
-import ProxyFrameHost from "../page/modules/frames/ProxyFrameHost";
-import SubscriptionModal from "../page/modules/frames/SubscriptionModal";
-import SubscriptionModalHost from "../page/modules/frames/SubscriptionModalHost";
-import SubscriptionPopup from "../page/modules/frames/SubscriptionPopup";
-import SubscriptionPopupHost from "../page/modules/frames/SubscriptionPopupHost";
-import TimedLocalStorage from "../page/modules/TimedLocalStorage";
-import { ProcessOneSignalPushCalls } from "../page/utils/ProcessOneSignalPushCalls";
-import { SdkInitError, SdkInitErrorKind } from "../shared/errors/SdkInitError";
-import Environment from "../shared/helpers/Environment";
-import EventHelper from "../shared/helpers/EventHelper";
-import HttpHelper from "../shared/helpers/HttpHelper";
-import InitHelper from "../shared/helpers/InitHelper";
-import MainHelper from "../shared/helpers/MainHelper";
-import Emitter from "../shared/libraries/Emitter";
-import Log from "../shared/libraries/Log";
-import SdkEnvironment from "../shared/managers/SdkEnvironment";
-import { SessionManager } from "../shared/managers/sessionManager/SessionManager";
-import { AppUserConfig, AppConfig } from "../shared/models/AppConfig";
-import { DeviceRecord } from "../shared/models/DeviceRecord";
-import { AppUserConfigNotifyButton } from "../shared/models/Prompts";
-import { WindowEnvironmentKind } from "../shared/models/WindowEnvironmentKind";
-import Database from "../shared/services/Database";
-import OneSignalUtils from "../shared/utils/OneSignalUtils";
-import { logMethodCall, getConsoleStyle } from "../shared/utils/utils";
-import OneSignalEvent from "../shared/services/OneSignalEvent";
-import NotificationsNamespace from "./NotificationsNamespace";
-import CoreModule from "../core/CoreModule";
-import { CoreModuleDirector } from "../core/CoreModuleDirector";
-import UserNamespace from "./UserNamespace";
-import SlidedownNamespace from "./SlidedownNamespace";
-import LocalStorage from "../shared/utils/LocalStorage";
-import LoginManager from "../page/managers/LoginManager";
-import { SessionNamespace } from "./SessionNamespace";
-import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferredLoadedCallback";
-import DebugNamespace from "./DebugNamesapce";
-import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
-import { ONESIGNAL_EVENTS } from "./OneSignalEvents";
-import { bowserCastle } from "../shared/utils/bowserCastle";
+import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
+import AltOriginManager from '../page/managers/AltOriginManager';
+import ConfigManager from '../page/managers/ConfigManager';
+import LegacyManager from '../page/managers/LegacyManager';
+import Context from '../page/models/Context';
+import { EnvironmentInfo } from '../page/models/EnvironmentInfo';
+import ProxyFrame from '../page/modules/frames/ProxyFrame';
+import ProxyFrameHost from '../page/modules/frames/ProxyFrameHost';
+import SubscriptionModal from '../page/modules/frames/SubscriptionModal';
+import SubscriptionModalHost from '../page/modules/frames/SubscriptionModalHost';
+import SubscriptionPopup from '../page/modules/frames/SubscriptionPopup';
+import SubscriptionPopupHost from '../page/modules/frames/SubscriptionPopupHost';
+import TimedLocalStorage from '../page/modules/TimedLocalStorage';
+import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
+import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
+import Environment from '../shared/helpers/Environment';
+import EventHelper from '../shared/helpers/EventHelper';
+import HttpHelper from '../shared/helpers/HttpHelper';
+import InitHelper from '../shared/helpers/InitHelper';
+import MainHelper from '../shared/helpers/MainHelper';
+import Emitter from '../shared/libraries/Emitter';
+import Log from '../shared/libraries/Log';
+import SdkEnvironment from '../shared/managers/SdkEnvironment';
+import { SessionManager } from '../shared/managers/sessionManager/SessionManager';
+import { AppUserConfig, AppConfig } from '../shared/models/AppConfig';
+import { DeviceRecord } from '../shared/models/DeviceRecord';
+import { AppUserConfigNotifyButton } from '../shared/models/Prompts';
+import { WindowEnvironmentKind } from '../shared/models/WindowEnvironmentKind';
+import Database from '../shared/services/Database';
+import OneSignalUtils from '../shared/utils/OneSignalUtils';
+import { logMethodCall, getConsoleStyle } from '../shared/utils/utils';
+import OneSignalEvent from '../shared/services/OneSignalEvent';
+import NotificationsNamespace from './NotificationsNamespace';
+import CoreModule from '../core/CoreModule';
+import { CoreModuleDirector } from '../core/CoreModuleDirector';
+import UserNamespace from './UserNamespace';
+import SlidedownNamespace from './SlidedownNamespace';
+import LocalStorage from '../shared/utils/LocalStorage';
+import LoginManager from '../page/managers/LoginManager';
+import { SessionNamespace } from './SessionNamespace';
+import { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
+import DebugNamespace from './DebugNamesapce';
+import {
+  InvalidArgumentError,
+  InvalidArgumentReason,
+} from '../shared/errors/InvalidArgumentError';
+import { ONESIGNAL_EVENTS } from './OneSignalEvents';
+import { bowserCastle } from '../shared/utils/bowserCastle';
 
 export default class OneSignal {
   static EVENTS = ONESIGNAL_EVENTS;
@@ -52,14 +55,22 @@ export default class OneSignal {
     await core.initPromise;
     OneSignal.coreDirector = new CoreModuleDirector(core);
     const subscription = await Database.getSubscription();
-    const permission = await OneSignal.context.permissionManager.getPermissionStatus();
+    const permission =
+      await OneSignal.context.permissionManager.getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);
     this.Notifications = new NotificationsNamespace(permission);
   }
 
   private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await new ConfigManager().getAppConfig(options);
-    Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
+    Log.debug(
+      `OneSignal: Final web app config: %c${JSON.stringify(
+        appConfig,
+        null,
+        4,
+      )}`,
+      getConsoleStyle('code'),
+    );
 
     // TODO: environmentInfo is explicitly dependent on existence of OneSignal.config. Needs refactor.
     // Workaround to temp assign config so that it can be used in context.
@@ -102,11 +113,17 @@ export default class OneSignal {
     }
 
     if (typeof externalId !== 'string') {
-      throw new InvalidArgumentError('externalId', InvalidArgumentReason.WrongType);
+      throw new InvalidArgumentError(
+        'externalId',
+        InvalidArgumentReason.WrongType,
+      );
     }
 
     if (jwtToken !== undefined && typeof jwtToken !== 'string') {
-      throw new InvalidArgumentError('jwtToken', InvalidArgumentReason.WrongType);
+      throw new InvalidArgumentError(
+        'jwtToken',
+        InvalidArgumentReason.WrongType,
+      );
     }
 
     LoginManager.login(externalId, jwtToken);
@@ -123,7 +140,9 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
-    Log.debug(`Browser Environment: ${bowserCastle().name} ${bowserCastle().version}`);
+    Log.debug(
+      `Browser Environment: ${bowserCastle().name} ${bowserCastle().version}`,
+    );
 
     LocalStorage.removeLegacySubscriptionOptions();
 
@@ -132,7 +151,7 @@ export default class OneSignal {
     await OneSignal._initializeConfig(options);
 
     if (!OneSignal.config) {
-      throw new Error("OneSignal config not initialized!");
+      throw new Error('OneSignal config not initialized!');
     }
 
     if (bowserCastle().name == 'safari' && !OneSignal.config.safariWebId) {
@@ -164,15 +183,22 @@ export default class OneSignal {
     OneSignal.context.workerMessenger.listen();
 
     async function __init() {
-      if (OneSignal.__initAlreadyCalled)
-        return;
+      if (OneSignal.__initAlreadyCalled) return;
 
       OneSignal.__initAlreadyCalled = true;
 
-      OneSignal.emitter.on(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-        EventHelper.onNotificationPermissionChange);
-      OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
-      OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
+      OneSignal.emitter.on(
+        OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
+        EventHelper.onNotificationPermissionChange,
+      );
+      OneSignal.emitter.on(
+        OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
+        EventHelper._onSubscriptionChanged,
+      );
+      OneSignal.emitter.on(
+        OneSignal.EVENTS.SDK_INITIALIZED,
+        InitHelper.onSdkInitialized,
+      );
 
       if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
         /**
@@ -192,7 +218,8 @@ export default class OneSignal {
          * is initiated.
          */
         OneSignal.emitter.on(
-          OneSignal.EVENTS.SESSION_STARTED, SessionManager.setupSessionEventListenersForHttp
+          OneSignal.EVENTS.SESSION_STARTED,
+          SessionManager.setupSessionEventListenersForHttp,
         );
 
         /**
@@ -201,7 +228,9 @@ export default class OneSignal {
          * good thing! We don't want to access IndexedDb before we know which
          * origin to store data on.
          */
-        OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(OneSignal.config);
+        OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(
+          OneSignal.config,
+        );
       }
 
       window.addEventListener('focus', () => {
@@ -214,18 +243,27 @@ export default class OneSignal {
       await InitHelper.saveInitOptions();
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
         await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      else
-        await InitHelper.internalInit();
+      else await InitHelper.internalInit();
     }
 
-    if (document.readyState === 'complete' || document.readyState === 'interactive')
+    if (
+      document.readyState === 'complete' ||
+      document.readyState === 'interactive'
+    )
       await __init();
     else {
-      Log.debug('OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
-        ' initialization...');
-      window.addEventListener('DOMContentLoaded', () => { __init(); });
+      Log.debug(
+        'OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
+          ' initialization...',
+      );
+      window.addEventListener('DOMContentLoaded', () => {
+        __init();
+      });
       document.onreadystatechange = () => {
-        if (document.readyState === 'complete' || document.readyState === 'interactive')
+        if (
+          document.readyState === 'complete' ||
+          document.readyState === 'interactive'
+        )
           __init();
       };
     }
@@ -243,23 +281,31 @@ export default class OneSignal {
     }
 
     if (typeof consent !== 'boolean') {
-      throw new InvalidArgumentError('consent', InvalidArgumentReason.WrongType);
+      throw new InvalidArgumentError(
+        'consent',
+        InvalidArgumentReason.WrongType,
+      );
     }
 
     await Database.setConsentGiven(consent);
-    if (consent && OneSignal.pendingInit)
-      await OneSignal._delayedInit();
+    if (consent && OneSignal.pendingInit) await OneSignal._delayedInit();
   }
 
   static async setConsentRequired(requiresConsent: boolean): Promise<void> {
     logMethodCall('setConsentRequired', { requiresConsent });
 
     if (typeof requiresConsent === 'undefined') {
-      throw new InvalidArgumentError('requiresConsent', InvalidArgumentReason.Empty);
+      throw new InvalidArgumentError(
+        'requiresConsent',
+        InvalidArgumentReason.Empty,
+      );
     }
 
     if (typeof requiresConsent !== 'boolean') {
-      throw new InvalidArgumentError('requiresConsent', InvalidArgumentReason.WrongType);
+      throw new InvalidArgumentError(
+        'requiresConsent',
+        InvalidArgumentReason.WrongType,
+      );
     }
 
     LocalStorage.setConsentRequired(requiresConsent);
@@ -349,14 +395,16 @@ export default class OneSignal {
     POPUP_ACCEPTED: 'postmam.popup.accepted',
     POPUP_REJECTED: 'postmam.popup.canceled',
     POPUP_CLOSING: 'postman.popup.closing',
-    REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
+    REMOTE_NOTIFICATION_PERMISSION_CHANGED:
+      'postmam.remoteNotificationPermissionChanged',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
     SET_SESSION_COUNT: 'postmam.setSessionCount',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
     WINDOW_TIMEOUT: 'postmam.windowTimeout',
     FINISH_REMOTE_REGISTRATION: 'postmam.finishRemoteRegistration',
-    FINISH_REMOTE_REGISTRATION_IN_PROGRESS: 'postmam.finishRemoteRegistrationInProgress',
+    FINISH_REMOTE_REGISTRATION_IN_PROGRESS:
+      'postmam.finishRemoteRegistrationInProgress',
     POPUP_BEGIN_MESSAGEPORT_COMMS: 'postmam.beginMessagePortComms',
     SERVICEWORKER_COMMAND_REDIRECT: 'postmam.command.redirect',
     MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed',
@@ -377,6 +425,13 @@ export default class OneSignal {
 
 LegacyManager.ensureBackwardsCompatibility(OneSignal);
 
-Log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION},
-  ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
-Log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
+Log.info(
+  `%cOneSignal Web SDK loaded (version ${OneSignal._VERSION},
+  ${SdkEnvironment.getWindowEnv().toString()} environment).`,
+  getConsoleStyle('bold'),
+);
+Log.debug(
+  `Current Page URL: ${
+    typeof location === 'undefined' ? 'NodeJS' : location.href
+  }`,
+);

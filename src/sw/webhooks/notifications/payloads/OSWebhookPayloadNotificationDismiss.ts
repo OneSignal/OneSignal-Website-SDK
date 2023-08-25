@@ -1,8 +1,10 @@
-import { IOSWebhookEventPayload } from "../../IOSWebhookEventPayload";
-import { IOSNotification } from "../../../../shared/models/OSNotification";
+import { IOSWebhookEventPayload } from '../../IOSWebhookEventPayload';
+import { IOSNotification } from '../../../../shared/models/OSNotification';
 
-export class OSWebhookPayloadNotificationDismiss implements IOSWebhookEventPayload {
-  readonly event: string = "notification.dismiss";
+export class OSWebhookPayloadNotificationDismiss
+  implements IOSWebhookEventPayload
+{
+  readonly event: string = 'notification.dismiss';
   readonly notificationId: string;
   readonly heading?: string;
   readonly content: string;

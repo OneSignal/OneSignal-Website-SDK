@@ -1,23 +1,23 @@
-import Database from "../../../src/shared/services/Database";
-import Random from "../utils/Random";
-import Emitter from "../../../src/shared/libraries/Emitter";
-import { TestEnvironmentConfig } from "./TestEnvironment";
-import MockNotification from "../mocks/MockNotification";
-import { DOMWindow, JSDOM, ResourceLoader } from "jsdom";
-import OneSignal from "../../../src/onesignal/OneSignal";
-import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
-import { getSlidedownElement } from "../../../src/page/slidedown/SlidedownElement";
-import { MockServiceWorkerContainerWithAPIBan } from "../mocks/models/MockServiceWorkerContainerWithAPIBan";
-import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
-import BrowserUserAgent from "../models/BrowserUserAgent";
-import TestContext from "./TestContext";
-import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
-import CoreModule from "../../../src/core/CoreModule";
-import Context from "../../../src/page/models/Context";
-import NotificationsNamespace from "../../../src/onesignal/NotificationsNamespace";
-import UserNamespace from "../../../src/onesignal/UserNamespace";
-import { ONESIGNAL_EVENTS } from "../../../src/onesignal/OneSignalEvents";
-import bowser from "bowser";
+import Database from '../../../src/shared/services/Database';
+import Random from '../utils/Random';
+import Emitter from '../../../src/shared/libraries/Emitter';
+import { TestEnvironmentConfig } from './TestEnvironment';
+import MockNotification from '../mocks/MockNotification';
+import { DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
+import OneSignal from '../../../src/onesignal/OneSignal';
+import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
+import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElement';
+import { MockServiceWorkerContainerWithAPIBan } from '../mocks/models/MockServiceWorkerContainerWithAPIBan';
+import { HttpHttpsEnvironment } from '../models/HttpHttpsEnvironment';
+import BrowserUserAgent from '../models/BrowserUserAgent';
+import TestContext from './TestContext';
+import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
+import CoreModule from '../../../src/core/CoreModule';
+import Context from '../../../src/page/models/Context';
+import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
+import UserNamespace from '../../../src/onesignal/UserNamespace';
+import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
+import bowser from 'bowser';
 
 declare const global: any;
 
@@ -56,18 +56,24 @@ export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
   const core = new CoreModule();
   await core.init();
   global.OneSignal.coreDirector = new CoreModuleDirector(core);
-  global.OneSignal.User = new UserNamespace(!!config.initUserAndPushSubscription); // TO DO: pass in subscription, and permission
-  global.OneSignal.Notifications = new NotificationsNamespace(config.permission);
+  global.OneSignal.User = new UserNamespace(
+    !!config.initUserAndPushSubscription,
+  ); // TO DO: pass in subscription, and permission
+  global.OneSignal.Notifications = new NotificationsNamespace(
+    config.permission,
+  );
 
   return global.OneSignal;
 }
 
 export function stubNotification(config: TestEnvironmentConfig) {
   global.Notification = MockNotification;
-  global.Notification.permission = config.permission ? config.permission : global.Notification.permission;
+  global.Notification.permission = config.permission
+    ? config.permission
+    : global.Notification.permission;
 
   // window is only defined in dom environment, not in SW
-  if (config.environment === "dom") {
+  if (config.environment === 'dom') {
     global.window.Notification = global.Notification;
   }
 }
@@ -119,7 +125,8 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   const windowDef = dom.window;
   // Node has its own console; overwriting it will cause issues
   delete (windowDef as any)['console'];
-  (windowDef as any).navigator.serviceWorker = new MockServiceWorkerContainerWithAPIBan();
+  (windowDef as any).navigator.serviceWorker =
+    new MockServiceWorkerContainerWithAPIBan();
   // (windowDef as any).TextEncoder = TextEncoder;
   // (windowDef as any).TextDecoder = TextDecoder;
   (windowDef as any).isSecureContext = isSecureContext;
@@ -127,13 +134,17 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
 
   addCustomEventPolyfill(windowDef);
 
-  const windowTop: DOMWindow = config.initializeAsIframe ? {
-    location: {
-      get origin() {
-        throw new Error("SecurityError: Permission denied to access property 'origin' on cross-origin object");
-      }
-    }
-  } as any : windowDef;
+  const windowTop: DOMWindow = config.initializeAsIframe
+    ? ({
+        location: {
+          get origin() {
+            throw new Error(
+              "SecurityError: Permission denied to access property 'origin' on cross-origin object",
+            );
+          },
+        },
+      } as any)
+    : windowDef;
   dom.reconfigure({ url, windowTop });
   global.window = windowDef;
   global.document = windowDef.document;
@@ -143,25 +154,36 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
 function addCustomEventPolyfill(windowDef) {
   function CustomEvent(event: any, params: any) {
     params = params || { bubbles: false, cancelable: false, detail: undefined };
-    const evt = document.createEvent( 'CustomEvent' );
-    evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
+    const evt = document.createEvent('CustomEvent');
+    evt.initCustomEvent(
+      event,
+      params.bubbles,
+      params.cancelable,
+      params.detail,
+    );
     return evt;
   }
   CustomEvent.prototype = windowDef.Event.prototype;
   global.CustomEvent = CustomEvent;
 }
 
-
 /**
  * Intercepts requests to our virtual DOM to return fake responses.
  */
-function onVirtualDomResourceRequested(resource: any, callback: (arg1: any, arg2?: string) => any) {
+function onVirtualDomResourceRequested(
+  resource: any,
+  callback: (arg1: any, arg2?: string) => any,
+) {
   const pathname = resource.url.pathname;
   if (pathname.startsWith('https://test.node/scripts/')) {
     if (pathname.startsWith('https://test.node/scripts/delayed')) {
       onVirtualDomDelayedResourceRequested(
         resource,
-        callback.bind(null, null, `window.__NODE_TEST_SCRIPT = true; window.__DELAYED = true;`)
+        callback.bind(
+          null,
+          null,
+          `window.__NODE_TEST_SCRIPT = true; window.__DELAYED = true;`,
+        ),
       );
     } else {
       callback(null, `window.__NODE_TEST_SCRIPT = true;`);
@@ -170,14 +192,18 @@ function onVirtualDomResourceRequested(resource: any, callback: (arg1: any, arg2
     if (pathname.startsWith('https://test.node/scripts/delayed')) {
       onVirtualDomDelayedResourceRequested(
         resource,
-        callback.bind(null, null, `html { margin: 0; padding: 0; font-size: 16px; }`)
+        callback.bind(
+          null,
+          null,
+          `html { margin: 0; padding: 0; font-size: 16px; }`,
+        ),
       );
     } else {
       callback(null, `html { margin: 0; padding: 0; font-size: 16px; }`);
     }
   } else if (pathname.startsWith('https://test.node/codes/')) {
     if (pathname.startsWith('https://test.node/codes/500')) {
-      callback(new Error("Virtual DOM error response."));
+      callback(new Error('Virtual DOM error response.'));
     } else {
       callback(null, `html { margin: 0; padding: 0; font-size: 16px; }`);
     }
@@ -186,7 +212,10 @@ function onVirtualDomResourceRequested(resource: any, callback: (arg1: any, arg2
   }
 }
 
-function onVirtualDomDelayedResourceRequested(resource: any, callback: () => any) {
+function onVirtualDomDelayedResourceRequested(
+  resource: any,
+  callback: () => any,
+) {
   const pathname = resource.url.pathname;
   const delay = pathname.match(/\d+/) || 1000;
   // Simulate a delayed request
@@ -196,6 +225,6 @@ function onVirtualDomDelayedResourceRequested(resource: any, callback: () => any
   return {
     abort: function () {
       clearTimeout(timeout);
-    }
+    },
   };
 }

@@ -5,14 +5,15 @@ import { AppConfig } from '../../shared/models/AppConfig';
 import { EnvironmentKind } from '../../shared/models/EnvironmentKind';
 
 export default class AltOriginManager {
-
   /*
-  * This loads all possible iframes that a site could be subscribed to
-  * (os.tc & onesignal.com) then checks to see we are subscribed to any.
-  * If we find what we are subscribed to both unsubscribe from onesignal.com.
-  * This method prefers os.tc over onesignal.com where possible.
-  */
-  static async discoverAltOrigin(appConfig: AppConfig): Promise<ProxyFrameHost> {
+   * This loads all possible iframes that a site could be subscribed to
+   * (os.tc & onesignal.com) then checks to see we are subscribed to any.
+   * If we find what we are subscribed to both unsubscribe from onesignal.com.
+   * This method prefers os.tc over onesignal.com where possible.
+   */
+  static async discoverAltOrigin(
+    appConfig: AppConfig,
+  ): Promise<ProxyFrameHost> {
     const iframeUrls = AltOriginManager.getOneSignalProxyIframeUrls(appConfig);
 
     const allProxyFrameHosts: ProxyFrameHost[] = [];
@@ -23,8 +24,11 @@ export default class AltOriginManager {
       allProxyFrameHosts.push(proxyFrameHost);
     }
 
-    const subscribedProxyFrameHosts = await AltOriginManager.subscribedProxyFrameHosts(allProxyFrameHosts);
-    await AltOriginManager.removeDuplicatedAltOriginSubscription(subscribedProxyFrameHosts);
+    const subscribedProxyFrameHosts =
+      await AltOriginManager.subscribedProxyFrameHosts(allProxyFrameHosts);
+    await AltOriginManager.removeDuplicatedAltOriginSubscription(
+      subscribedProxyFrameHosts,
+    );
 
     let preferredProxyFrameHost: ProxyFrameHost;
     if (subscribedProxyFrameHosts.length === 0) {
@@ -45,7 +49,9 @@ export default class AltOriginManager {
     return preferredProxyFrameHost;
   }
 
-  static async subscribedProxyFrameHosts(proxyFrameHosts: ProxyFrameHost[]): Promise<ProxyFrameHost[]> {
+  static async subscribedProxyFrameHosts(
+    proxyFrameHosts: ProxyFrameHost[],
+  ): Promise<ProxyFrameHost[]> {
     const subscribed: ProxyFrameHost[] = [];
     for (const proxyFrameHost of proxyFrameHosts) {
       if (await proxyFrameHost.isSubscribed()) {
@@ -56,12 +62,12 @@ export default class AltOriginManager {
   }
 
   /*
-  * If the user is subscribed to more than OneSignal subdomain (AKA HTTP setup)
-  * unsubscribe them from ones lower in the list.
-  * Example: Such as being being subscribed to mysite.os.tc & mysite.onesignal.com
-  */
+   * If the user is subscribed to more than OneSignal subdomain (AKA HTTP setup)
+   * unsubscribe them from ones lower in the list.
+   * Example: Such as being being subscribed to mysite.os.tc & mysite.onesignal.com
+   */
   static async removeDuplicatedAltOriginSubscription(
-    subscribedProxyFrameHosts: ProxyFrameHost[]
+    subscribedProxyFrameHosts: ProxyFrameHost[],
   ): Promise<void> {
     // Not subscribed or subscribed to just one domain, nothing to do, no duplicates
     if (subscribedProxyFrameHosts.length < 2) {
@@ -93,11 +99,15 @@ export default class AltOriginManager {
    *
    * Order of URL is in priority order of one should be used.
    */
-  static getCanonicalSubscriptionUrls(config: AppConfig,
-                                      buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()
-                                     ): Array<URL> {
-    const subscriptionDomain = AltOriginManager.getWildcardLegacySubscriptionDomain(buildEnv);
-    const legacyDomainUrl = new URL(`https://${config.subdomain}.${subscriptionDomain}`);
+  static getCanonicalSubscriptionUrls(
+    config: AppConfig,
+    buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv(),
+  ): Array<URL> {
+    const subscriptionDomain =
+      AltOriginManager.getWildcardLegacySubscriptionDomain(buildEnv);
+    const legacyDomainUrl = new URL(
+      `https://${config.subdomain}.${subscriptionDomain}`,
+    );
 
     // Staging and Dev don't support going through the os.tc domain
     if (buildEnv !== EnvironmentKind.Production) {
@@ -118,7 +128,9 @@ export default class AltOriginManager {
    * Get the wildcard part of the legacy subscription domain.
    * Examples: onesignal.com, staging.onesignal.com, or localhost
    */
-  static getWildcardLegacySubscriptionDomain(buildEnv: EnvironmentKind): string {
+  static getWildcardLegacySubscriptionDomain(
+    buildEnv: EnvironmentKind,
+  ): string {
     const apiUrl = SdkEnvironment.getOneSignalApiUrl(buildEnv);
 
     // Prod and Dev support domains like *.onesignal.com and *.localhost
@@ -128,7 +140,7 @@ export default class AltOriginManager {
       envSubdomainParts = 3;
     }
 
-    return Utils.lastParts(apiUrl.host, ".", envSubdomainParts);
+    return Utils.lastParts(apiUrl.host, '.', envSubdomainParts);
   }
 
   /**

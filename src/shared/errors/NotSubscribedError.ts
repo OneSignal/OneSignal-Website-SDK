@@ -1,11 +1,11 @@
-import OneSignalError from "./OneSignalError";
+import OneSignalError from './OneSignalError';
 
 export enum NotSubscribedReason {
   Unknown,
   NoDeviceId,
   NoEmailSet,
   NoSMSSet,
-  OptedOut
+  OptedOut,
 }
 
 export class NotSubscribedError extends OneSignalError {
@@ -15,7 +15,8 @@ export class NotSubscribedError extends OneSignalError {
     let errorMessage;
     switch (reason) {
       case NotSubscribedReason.Unknown || NotSubscribedReason.NoDeviceId:
-        errorMessage = 'This operation can only be performed after the user is subscribed.';
+        errorMessage =
+          'This operation can only be performed after the user is subscribed.';
         break;
       case NotSubscribedReason.NoEmailSet:
         errorMessage = 'No email is currently set.';
@@ -24,8 +25,9 @@ export class NotSubscribedError extends OneSignalError {
         errorMessage = 'No sms is currently set.';
         break;
       case NotSubscribedReason.OptedOut:
-        errorMessage = `The user has manually opted out of receiving of notifications. ` +
-        `This operation can only be performed after the user is fully resubscribed.`;
+        errorMessage =
+          `The user has manually opted out of receiving of notifications. ` +
+          `This operation can only be performed after the user is fully resubscribed.`;
         break;
     }
     super(errorMessage);

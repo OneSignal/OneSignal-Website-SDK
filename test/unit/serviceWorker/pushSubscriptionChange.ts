@@ -4,17 +4,18 @@ import sinon, { SinonSandbox } from 'sinon';
 
 import { ServiceWorker } from '../../../src/sw/serviceWorker/ServiceWorker';
 import { setBrowser } from '../../support/tester/browser';
-import { BrowserUserAgent, TestEnvironment } from '../../support/sdk/TestEnvironment';
+import {
+  BrowserUserAgent,
+  TestEnvironment,
+} from '../../support/sdk/TestEnvironment';
 
 import Database from '../../../src/shared/services/Database';
 import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
-import Random from "../../support/tester/Random";
+import Random from '../../support/tester/Random';
 import { SubscriptionManager } from '../../../src/shared/managers/SubscriptionManager';
-import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
-import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
-import {
-  MockPushSubscriptionChangeEvent
-} from "../../support/mocks/service-workers/models/MockPushSubscriptionChangeEvent";
+import { setupBrowserWithPushAPIWithVAPIDEnv } from '../../support/tester/utils';
+import { MockPushManager } from '../../support/mocks/service-workers/models/MockPushManager';
+import { MockPushSubscriptionChangeEvent } from '../../support/mocks/service-workers/models/MockPushSubscriptionChangeEvent';
 import OneSignalApiSW from '../../../src/shared/api/OneSignalApiSW';
 
 declare let self: ServiceWorkerGlobalScope;
@@ -25,40 +26,42 @@ let newSubscription: PushSubscription;
 
 let sinonSandbox: SinonSandbox;
 
-test.beforeEach(async() => {
+test.beforeEach(async () => {
   sinonSandbox = sinon.sandbox.create();
-  sinonSandbox.stub(OneSignalApiSW, 'downloadServerAppConfig')
-    .resolves(TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom));
+  sinonSandbox
+    .stub(OneSignalApiSW, 'downloadServerAppConfig')
+    .resolves(
+      TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom),
+    );
   sinonSandbox.stub(OneSignalApiSW, 'updatePlayer').resolves();
 
   oldSubscription = await new MockPushManager().subscribe({
     userVisibleOnly: true,
-    applicationServerKey: Random.getRandomUint8Array(65).buffer
+    applicationServerKey: Random.getRandomUint8Array(65).buffer,
   });
 
   newSubscription = await new MockPushManager().subscribe({
     userVisibleOnly: true,
-    applicationServerKey: Random.getRandomUint8Array(65).buffer
+    applicationServerKey: Random.getRandomUint8Array(65).buffer,
   });
 
   await TestEnvironment.initializeForServiceWorker({
-    url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
+    url: new URL(`https://site.com/service-worker.js?appId=${appId}`),
   });
 
   setBrowser(BrowserUserAgent.ChromeMacSupported);
 
   // Service worker does not have "window"
-  sinonSandbox.stub((<any>global), "window").value(undefined);
+  sinonSandbox.stub(<any>global, 'window').value(undefined);
 
   setupBrowserWithPushAPIWithVAPIDEnv(sinonSandbox);
-
 });
 
 test.afterEach(function (_t: ExecutionContext) {
   sinonSandbox.restore();
 });
 
-test(`called with an old and new subscription successfully updates the subscription`, async t => {
+test(`called with an old and new subscription successfully updates the subscription`, async (t) => {
   /*
     For this test, pretend the user revoked permissions, pushsubscriptionchange's event provides
     an oldSubscription but not a new subscription, and the service worker tries to resubscribe
@@ -76,14 +79,14 @@ test(`called with an old and new subscription successfully updates the subscript
   let subscription = await Database.getSubscription();
   t.deepEqual(subscription.deviceId, existingDeviceId);
   t.deepEqual(subscription.subscriptionToken, oldSubscription.endpoint);
-  
+
   const event = new MockPushSubscriptionChangeEvent();
   event.oldSubscription = oldSubscription;
   event.newSubscription = newSubscription;
 
   // navigator.permissions is undefined in Firefox service worker context, lets simulate that here
   sinonSandbox.stub(navigator, 'permissions').value(undefined);
-  
+
   await runPushSubscriptionChange(event);
 
   // After pushsubscriptionchange
@@ -94,9 +97,11 @@ test(`called with an old and new subscription successfully updates the subscript
   t.deepEqual(subscription.subscriptionToken, newSubscription.endpoint);
 });
 
-test(`without an existing device ID, lookup existing device ID, updates the looked-up record`, async t => {
+test(`without an existing device ID, lookup existing device ID, updates the looked-up record`, async (t) => {
   const idReturnedByLookupCall = Random.getRandomUuid();
-  sinonSandbox.stub(OneSignalApiSW, 'getUserIdFromSubscriptionIdentifier').resolves(idReturnedByLookupCall);
+  sinonSandbox
+    .stub(OneSignalApiSW, 'getUserIdFromSubscriptionIdentifier')
+    .resolves(idReturnedByLookupCall);
 
   // Before pushsubscriptionchange
   let subscription = await Database.getSubscription();
@@ -117,13 +122,14 @@ test(`without an existing device ID, lookup existing device ID, updates the look
   t.deepEqual(subscription.subscriptionToken, newSubscription.endpoint);
 });
 
-test(`called with an old and without a new subscription, custom resubscription succeeds and updates record endpoint`,
-  async t => {
+test(`called with an old and without a new subscription, custom resubscription succeeds and updates record endpoint`, async (t) => {
   const newSubscriptionByReregistration = newSubscription;
 
-  sinonSandbox.stub(MockPushManager.prototype, 'subscribe')
+  sinonSandbox
+    .stub(MockPushManager.prototype, 'subscribe')
     .callsFake(async (_options?: PushSubscriptionOptionsInit) => {
-      const subscription = await self.registration.pushManager.getSubscription();
+      const subscription =
+        await self.registration.pushManager.getSubscription();
       if (!subscription) {
         return newSubscriptionByReregistration;
       } else {
@@ -146,13 +152,16 @@ test(`called with an old and without a new subscription, custom resubscription s
   // After pushsubscriptionchange
   subscription = await Database.getSubscription();
   t.deepEqual(subscription.deviceId, existingDeviceId);
-  t.deepEqual(subscription.subscriptionToken, newSubscriptionByReregistration.endpoint);
+  t.deepEqual(
+    subscription.subscriptionToken,
+    newSubscriptionByReregistration.endpoint,
+  );
 });
 
 test(
   `called with an existing device ID, with old and without new subscription, custom resubscription fails ` +
-  `and updates existing device record to clear subscription`,
-  async t => {
+    `and updates existing device record to clear subscription`,
+  async (t) => {
     sinonSandbox
       .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
       .throws('some-error');
@@ -172,45 +181,56 @@ test(
     subscription = await Database.getSubscription();
     t.deepEqual(subscription.deviceId, existingDeviceId);
     t.deepEqual(subscription.subscriptionToken, null);
-});
+  },
+);
 
-test(`called without an existing device ID, without old and new subscription, custom resubscription fails ` +
-`and local data is cleared`, async t => {
-  sinonSandbox
-    .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
-    .throws('some-error');
+test(
+  `called without an existing device ID, without old and new subscription, custom resubscription fails ` +
+    `and local data is cleared`,
+  async (t) => {
+    sinonSandbox
+      .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
+      .throws('some-error');
 
-  // Before pushsubscriptionchange
-  let subscription = await Database.getSubscription();
-  t.deepEqual(subscription.deviceId, null);
-  t.deepEqual(subscription.subscriptionToken, null);
+    // Before pushsubscriptionchange
+    let subscription = await Database.getSubscription();
+    t.deepEqual(subscription.deviceId, null);
+    t.deepEqual(subscription.subscriptionToken, null);
 
-  const event = new MockPushSubscriptionChangeEvent();
-  await runPushSubscriptionChange(event);
+    const event = new MockPushSubscriptionChangeEvent();
+    await runPushSubscriptionChange(event);
 
-  // After pushsubscriptionchange
-  subscription = await Database.getSubscription();
-  t.deepEqual(subscription.deviceId, null);
-  t.deepEqual(subscription.subscriptionToken, null);
-});
-
+    // After pushsubscriptionchange
+    subscription = await Database.getSubscription();
+    t.deepEqual(subscription.deviceId, null);
+    t.deepEqual(subscription.subscriptionToken, null);
+  },
+);
 
 /**
  * Helpers
  */
-async function setInitialDatabaseState(deviceId?: string, subscriptionToken?: string) {
+async function setInitialDatabaseState(
+  deviceId?: string,
+  subscriptionToken?: string,
+) {
   const subscription = await Database.getSubscription();
   subscription.deviceId = deviceId;
   subscription.subscriptionToken = subscriptionToken;
   await Database.setSubscription(subscription);
 }
 
-async function runPushSubscriptionChange(event: PushSubscriptionChangeEvent): Promise<void> {
-  const testPromise = new Promise<void>(resolve => {
-    self.addEventListener("pushsubscriptionchange", async (evt: PushSubscriptionChangeEvent) => {
-      await ServiceWorker.onPushSubscriptionChange(evt);
-      resolve();
-    });
+async function runPushSubscriptionChange(
+  event: PushSubscriptionChangeEvent,
+): Promise<void> {
+  const testPromise = new Promise<void>((resolve) => {
+    self.addEventListener(
+      'pushsubscriptionchange',
+      async (evt: PushSubscriptionChangeEvent) => {
+        await ServiceWorker.onPushSubscriptionChange(evt);
+        resolve();
+      },
+    );
   });
   self.dispatchEvent(event);
   await testPromise;

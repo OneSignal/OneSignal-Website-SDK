@@ -6,5 +6,5 @@ export const enum UnsubscriptionStrategy {
   /**
    * Mute the user from receiving notifications by marking a flag in our database.
    */
-  MarkUnsubscribed
+  MarkUnsubscribed,
 }

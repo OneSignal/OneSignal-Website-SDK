@@ -1,14 +1,18 @@
-import "../../support/polyfills/polyfills";
-import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import { WorkerMessenger, WorkerMessengerCommand } from '../../../src/shared/libraries/WorkerMessenger';
+import '../../support/polyfills/polyfills';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
+import {
+  WorkerMessenger,
+  WorkerMessengerCommand,
+} from '../../../src/shared/libraries/WorkerMessenger';
 import ContextSW from '../../../src/shared/models/ContextSW';
-import test from "ava";
-import Random from "../../support/tester/Random";
+import test from 'ava';
+import Random from '../../support/tester/Random';
 
-
-test('service worker should gracefully handle unexpected page messages', async t => {
+test('service worker should gracefully handle unexpected page messages', async (t) => {
   await TestEnvironment.initializeForServiceWorker({
-    url: new URL(`https://site.com/service-worker.js?a=1&b=2&appId=${Random.getRandomUuid()}&c=3`)
+    url: new URL(
+      `https://site.com/service-worker.js?a=1&b=2&appId=${Random.getRandomUuid()}&c=3`,
+    ),
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -17,14 +21,14 @@ test('service worker should gracefully handle unexpected page messages', async t
 
   /* We should be guaranteed a MessageEvent with at least an `event.data` property. */
   const undefinedData: any = {
-    data: undefined
+    data: undefined,
   };
 
   try {
     workerMessenger.onWorkerMessageReceivedFromPage(undefinedData);
     workerMessenger.onPageMessageReceivedFromServiceWorker(undefinedData);
   } catch (e) {
-    t.fail("message function raised exception:" + e);
+    t.fail('message function raised exception:' + e);
   }
 
   /*
@@ -34,52 +38,51 @@ test('service worker should gracefully handle unexpected page messages', async t
   const unexpectedData: any = {
     event: {
       data: {
-        ACTION: "something-random"
-      }
-    }
+        ACTION: 'something-random',
+      },
+    },
   };
 
   try {
     workerMessenger.onWorkerMessageReceivedFromPage(unexpectedData);
     workerMessenger.onPageMessageReceivedFromServiceWorker(unexpectedData);
   } catch (e) {
-    t.fail("message function raised exception:" + e);
+    t.fail('message function raised exception:' + e);
   }
 
   t.pass();
 });
 
-test(
-  'service worker should accept AMP web push commands',
-  async t => {
-    await TestEnvironment.initializeForServiceWorker({
-      url: new URL(`https://site.com/service-worker.js?a=1&b=2&appId=${Random.getRandomUuid()}&c=3`)
+test('service worker should accept AMP web push commands', async (t) => {
+  await TestEnvironment.initializeForServiceWorker({
+    url: new URL(
+      `https://site.com/service-worker.js?a=1&b=2&appId=${Random.getRandomUuid()}&c=3`,
+    ),
+  });
+
+  const appConfig = TestEnvironment.getFakeAppConfig();
+  const context = new ContextSW(appConfig);
+  const workerMessenger = new WorkerMessenger(context);
+
+  /* We should be guaranteed a MessageEvent with at least an `event.data` property. */
+  const data: any = {
+    data: {
+      command: WorkerMessengerCommand.AmpSubscribe,
+    },
+  };
+
+  const testPromise = new Promise<void>((resolve) => {
+    workerMessenger.on(WorkerMessengerCommand.AmpSubscribe, () => {
+      resolve();
     });
+  });
 
-    const appConfig = TestEnvironment.getFakeAppConfig();
-    const context = new ContextSW(appConfig);
-    const workerMessenger = new WorkerMessenger(context);
-
-    /* We should be guaranteed a MessageEvent with at least an `event.data` property. */
-    const data: any = {
-      data: {
-        command: WorkerMessengerCommand.AmpSubscribe
-      }
-    };
-
-    const testPromise = new Promise<void>(resolve => {
-      workerMessenger.on(WorkerMessengerCommand.AmpSubscribe, () => {
-        resolve();
-      });
-    });
-
-    try {
-      workerMessenger.onWorkerMessageReceivedFromPage(data);
-    } catch (e) {
-      t.fail("message function raised exception:" + e);
-    }
-
-    await testPromise;
-    t.pass();
+  try {
+    workerMessenger.onWorkerMessageReceivedFromPage(data);
+  } catch (e) {
+    t.fail('message function raised exception:' + e);
   }
-);
+
+  await testPromise;
+  t.pass();
+});

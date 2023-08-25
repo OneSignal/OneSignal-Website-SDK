@@ -3,7 +3,9 @@ import OneSignalError from '../../shared/errors/OneSignalError';
 
 export default class ExistingChannelError extends OneSignalError {
   constructor(type: DelayedPromptType) {
-    super(`This operation can only be performed when the channel '${type}' does not yet exist.`);
+    super(
+      `This operation can only be performed when the channel '${type}' does not yet exist.`,
+    );
 
     /**
      * Important! Required to make sure the correct error type is detected during instanceof checks.

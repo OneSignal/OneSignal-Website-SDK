@@ -1,10 +1,10 @@
 import { NotificationPermission } from '../models/NotificationPermission';
 import PermissionManager from '../managers/PermissionManager';
 
-const IS_OPTED_OUT = "isOptedOut";
-const IS_PUSH_NOTIFICATIONS_ENABLED = "isPushNotificationsEnabled";
-const PAGE_VIEWS = "os_pageViews";
-const REQUIRES_PRIVACY_CONSENT = "requiresPrivacyConsent";
+const IS_OPTED_OUT = 'isOptedOut';
+const IS_PUSH_NOTIFICATIONS_ENABLED = 'isPushNotificationsEnabled';
+const PAGE_VIEWS = 'os_pageViews';
+const REQUIRES_PRIVACY_CONSENT = 'requiresPrivacyConsent';
 
 export default class LocalStorage {
   /**
@@ -21,7 +21,7 @@ export default class LocalStorage {
   }
 
   static getConsentRequired(): boolean {
-    return localStorage.getItem(REQUIRES_PRIVACY_CONSENT) === "true";
+    return localStorage.getItem(REQUIRES_PRIVACY_CONSENT) === 'true';
   }
 
   public static setStoredPermission(value: NotificationPermission): void {
@@ -29,14 +29,16 @@ export default class LocalStorage {
   }
 
   public static getStoredPermission(): NotificationPermission {
-    const permission = localStorage.getItem(PermissionManager.STORED_PERMISSION_KEY) || "default";
-    switch(permission) {
-        case "granted":
-            return NotificationPermission.Granted;
-        case "denied":
-            return NotificationPermission.Denied;
-        default:
-            return NotificationPermission.Default;
+    const permission =
+      localStorage.getItem(PermissionManager.STORED_PERMISSION_KEY) ||
+      'default';
+    switch (permission) {
+      case 'granted':
+        return NotificationPermission.Granted;
+      case 'denied':
+        return NotificationPermission.Denied;
+      default:
+        return NotificationPermission.Default;
     }
   }
 
