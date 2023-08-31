@@ -42,13 +42,13 @@ export default class Emitter {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
 
-    function fn(this: unknown) {
+    function fn(this: EventHandler) {
       that.off(event, fn);
       // eslint-disable-next-line prefer-rest-params
       listener.apply(this, arguments);
     }
 
-    (fn as any).listener = listener;
+    fn.listener = listener;
     this.on(event, fn);
 
     return this;
