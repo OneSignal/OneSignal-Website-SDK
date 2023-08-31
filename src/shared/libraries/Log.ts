@@ -1,20 +1,24 @@
+type ConsoleLog = (message?: unknown, ...optionalParams: unknown[]) => void;
+
 export default class Log {
-  static debug: Function;
-  static trace: Function;
-  static info: Function;
-  static warn: Function;
-  static error: Function;
+  static debug: ConsoleLog;
+  static trace: ConsoleLog;
+  static info: ConsoleLog;
+  static warn: ConsoleLog;
+  static error: ConsoleLog;
 
   private static proxyMethodsCreated: boolean;
 
   private static shouldLog(): boolean {
     try {
-      if (typeof window === "undefined" ||
-          typeof window.localStorage === "undefined") {
+      if (
+        typeof window === 'undefined' ||
+        typeof window.localStorage === 'undefined'
+      ) {
         return false;
       }
-      const level = window.localStorage.getItem("loglevel");
-      if (level && level.toLowerCase() === "trace") {
+      const level = window.localStorage.getItem('loglevel');
+      if (level && level.toLowerCase() === 'trace') {
         return true;
       } else {
         return false;
@@ -26,12 +30,14 @@ export default class Log {
   }
 
   public static setLevel(level: string) {
-    if (typeof window === "undefined" ||
-        typeof window.localStorage === "undefined") {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.localStorage === 'undefined'
+    ) {
       return;
     }
     try {
-      window.localStorage.setItem("loglevel", level);
+      window.localStorage.setItem('loglevel', level);
       Log.proxyMethodsCreated = undefined;
       Log.createProxyMethods();
     } catch (e) {
@@ -41,33 +47,34 @@ export default class Log {
   }
 
   public static createProxyMethods() {
-    if (typeof Log.proxyMethodsCreated !== "undefined") {
+    if (typeof Log.proxyMethodsCreated !== 'undefined') {
       return;
     } else {
       Log.proxyMethodsCreated = true;
     }
 
     const methods = {
-      log: "debug",
-      trace: "trace",
-      info: "info",
-      warn: "warn",
-      error: "error"
+      log: 'debug',
+      trace: 'trace',
+      info: 'info',
+      warn: 'warn',
+      error: 'error',
     };
     for (const nativeMethod of Object.keys(methods)) {
-      const nativeMethodExists = typeof console[nativeMethod] !== "undefined";
+      const nativeMethodExists = typeof console[nativeMethod] !== 'undefined';
       const methodToMapTo = methods[nativeMethod];
-      const shouldMap = nativeMethodExists &&
-        (
-          (typeof __LOGGING__ !== "undefined" && __LOGGING__ === true) ||
-          (Log.shouldLog()) ||
-          methodToMapTo === "error"
-        );
+      const shouldMap =
+        nativeMethodExists &&
+        ((typeof __LOGGING__ !== 'undefined' && __LOGGING__ === true) ||
+          Log.shouldLog() ||
+          methodToMapTo === 'error');
 
       if (shouldMap) {
         Log[methodToMapTo] = console[nativeMethod].bind(console);
       } else {
-        Log[methodToMapTo] = function() {};
+        // We want to skip logging, so this is internally an empty function.
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        Log[methodToMapTo] = function () {};
       }
     }
   }

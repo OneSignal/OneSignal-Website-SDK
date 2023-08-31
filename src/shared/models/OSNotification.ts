@@ -1,12 +1,12 @@
 // Public SDK API
 export interface IOSNotification {
-  /** 
+  /**
    * The OneSignal notification id;
    *  - Primary id on OneSignal's REST API and dashboard
    */
   readonly notificationId: string;
 
-  /** 
+  /**
    * Visible title text on the notification
    */
   readonly title?: string;
@@ -29,19 +29,19 @@ export interface IOSNotification {
 
   /**
    * Visible image on the notification; URL format
-   */ 
+   */
   readonly image?: string;
 
   /**
    * Visible buttons on the notification
    */
   readonly actionButtons?: IOSNotificationActionButton[];
-  
+
   /**
    * If this value is the same as existing notification, it will replace it
    * Can be set when creating the notification with "Web Push Topic" on the dashboard
    * or web_push_topic from the REST API.
-  */
+   */
   readonly topic?: string;
 
   /**
@@ -50,7 +50,7 @@ export interface IOSNotification {
    */
   readonly additionalData?: object;
 
-  /** 
+  /**
    * URL to open when clicking or tapping on the notification
    */
   readonly launchURL?: string;
@@ -82,7 +82,6 @@ export interface IOSNotificationActionButton {
   readonly launchURL?: string;
 }
 
-
 export interface IMutableOSNotification extends IOSNotification {
   title?: string;
   body: string;
@@ -96,7 +95,8 @@ export interface IMutableOSNotification extends IOSNotification {
   confirmDelivery: boolean;
 }
 
-export interface IMutableOSNotificationActionButton extends IOSNotificationActionButton {
+export interface IMutableOSNotificationActionButton
+  extends IOSNotificationActionButton {
   actionId: string;
   text: string;
   icon?: string;

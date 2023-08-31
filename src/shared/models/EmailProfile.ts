@@ -1,4 +1,4 @@
-import { SecondaryChannelProfileSerializable } from "../../page/models/SecondaryChannelProfile";
+import { SecondaryChannelProfileSerializable } from '../../page/models/SecondaryChannelProfile';
 
 export interface BundleEmail {
   emailId?: string;
@@ -6,13 +6,18 @@ export interface BundleEmail {
   identifierAuthHash: string;
 }
 
-export class EmailProfile implements SecondaryChannelProfileSerializable<BundleEmail> {
-
+export class EmailProfile
+  implements SecondaryChannelProfileSerializable<BundleEmail>
+{
   subscriptionId: string | null | undefined;
   identifier: string | null | undefined;
   identifierAuthHash: string | null | undefined;
 
-  constructor(emailId?: string | null, emailAddress?: string, identifierAuthHash?: string) {
+  constructor(
+    emailId?: string | null,
+    emailAddress?: string,
+    identifierAuthHash?: string,
+  ) {
     this.subscriptionId = emailId;
     this.identifier = emailAddress;
     this.identifierAuthHash = identifierAuthHash;

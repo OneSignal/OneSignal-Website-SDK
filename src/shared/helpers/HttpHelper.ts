@@ -9,13 +9,15 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { getConsoleStyle } from '../utils/utils';
 import OneSignalEvent from '../services/OneSignalEvent';
 
-declare var OneSignal: any;
+declare let OneSignal: any;
 
 export default class HttpHelper {
-
   // Http only - Only called from iframe's init.js
   static async initHttp(options: RemoteFrameOptions) {
-    Log.debug(`Called %cinitHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
+    Log.debug(
+      `Called %cinitHttp(${JSON.stringify(options, null, 4)})`,
+      getConsoleStyle('code'),
+    );
 
     switch (SdkEnvironment.getWindowEnv()) {
       case WindowEnvironmentKind.OneSignalProxyFrame:
@@ -65,7 +67,7 @@ export default class HttpHelper {
         OneSignalEvent.trigger('httpInitialize');
         break;
       default:
-        Log.error("Unsupported HTTP initialization branch.");
+        Log.error('Unsupported HTTP initialization branch.');
         break;
     }
   }

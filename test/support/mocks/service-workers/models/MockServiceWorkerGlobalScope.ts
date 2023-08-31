@@ -1,17 +1,17 @@
-import { MockServiceWorkerRegistration } from "./MockServiceWorkerRegistration";
-import { MockWorkerNavigator } from "./MockWorkerNavigator";
-import { DispatchEventUtil } from "../utils/DispatchEventUtil";
-import { MockClients } from "./MockClients";
-import NotImplementedError from "../../../../../src/shared/errors/NotImplementedError";
-
+import { MockServiceWorkerRegistration } from './MockServiceWorkerRegistration';
+import { MockWorkerNavigator } from './MockWorkerNavigator';
+import { DispatchEventUtil } from '../utils/DispatchEventUtil';
+import { MockClients } from './MockClients';
+import NotImplementedError from '../../../../../src/shared/errors/NotImplementedError';
 
 /**
  * NOTE: Some of the methods are defined from ployfill.ts, NodeJS.Global, or other places
  * Check if addServiceWorkerGlobalScopeToGlobal is omitting them if additional logic is added here.
-  */
+ */
 
 export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
-  public registration: ServiceWorkerRegistration = new MockServiceWorkerRegistration();
+  public registration: ServiceWorkerRegistration =
+    new MockServiceWorkerRegistration();
   private dispatchEventUtil: DispatchEventUtil = new DispatchEventUtil();
 
   get mockRegistration(): MockServiceWorkerRegistration {
@@ -27,41 +27,84 @@ export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
   readonly location: WorkerLocation;
   readonly msIndexedDB: IDBFactory;
   readonly navigator: WorkerNavigator = new MockWorkerNavigator(
-      "Mozilla",
-      "Netscape",
-      "5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36",
-      "MacIntel",
-      "Gecko",
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36"
-    );
+    'Mozilla',
+    'Netscape',
+    '5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36',
+    'MacIntel',
+    'Gecko',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36',
+  );
   readonly serviceWorker: ServiceWorker;
   readonly crypto: Crypto;
 
   onlanguagechange: ((this: WorkerGlobalScope, ev: Event) => any) | null = null;
   onoffline: ((this: WorkerGlobalScope, ev: Event) => any) | null = null;
-  onactivate: ((this: ServiceWorkerGlobalScope, ev: ExtendableEvent) => any) | null = null;
+  onactivate:
+    | ((this: ServiceWorkerGlobalScope, ev: ExtendableEvent) => any)
+    | null = null;
   onerror: ((this: WorkerGlobalScope, ev: ErrorEvent) => any) | null = null;
-  onfetch: ((this: ServiceWorkerGlobalScope, ev: FetchEvent) => any) | null = null;
-  oninstall: ((this: ServiceWorkerGlobalScope, ev: ExtendableEvent) => any) | null = null;
-  onmessage: ((this: ServiceWorkerGlobalScope, ev: ExtendableMessageEvent) => any) | null = null;
+  onfetch: ((this: ServiceWorkerGlobalScope, ev: FetchEvent) => any) | null =
+    null;
+  oninstall:
+    | ((this: ServiceWorkerGlobalScope, ev: ExtendableEvent) => any)
+    | null = null;
+  onmessage:
+    | ((this: ServiceWorkerGlobalScope, ev: ExtendableMessageEvent) => any)
+    | null = null;
   ononline: ((this: WorkerGlobalScope, ev: Event) => any) | null = null;
-  onmessageerror: ((this: ServiceWorkerGlobalScope, ev: MessageEvent) => any) | null = null;
-  onnotificationclick: ((this: ServiceWorkerGlobalScope, ev: NotificationEvent) => any) | null = null;
-  onnotificationclose: ((this: ServiceWorkerGlobalScope, ev: NotificationEvent) => any) | null = null;
-  onrejectionhandled: ((this: WorkerGlobalScope, ev: PromiseRejectionEvent) => any) | null = null;
-  onpush: ((this: ServiceWorkerGlobalScope, ev: PushEvent) => any) | null = null;
-  onpushsubscriptionchange: ((this: ServiceWorkerGlobalScope, ev: PushSubscriptionChangeEvent) => any) | null = null;
-  onsync: ((this: ServiceWorkerGlobalScope, ev: SyncEvent) => any) | null = null;
-  onunhandledrejection: ((this: WorkerGlobalScope, ev: PromiseRejectionEvent) => any) | null = null;
+  onmessageerror:
+    | ((this: ServiceWorkerGlobalScope, ev: MessageEvent) => any)
+    | null = null;
+  onnotificationclick:
+    | ((this: ServiceWorkerGlobalScope, ev: NotificationEvent) => any)
+    | null = null;
+  onnotificationclose:
+    | ((this: ServiceWorkerGlobalScope, ev: NotificationEvent) => any)
+    | null = null;
+  onrejectionhandled:
+    | ((this: WorkerGlobalScope, ev: PromiseRejectionEvent) => any)
+    | null = null;
+  onpush: ((this: ServiceWorkerGlobalScope, ev: PushEvent) => any) | null =
+    null;
+  onpushsubscriptionchange:
+    | ((this: ServiceWorkerGlobalScope, ev: PushSubscriptionChangeEvent) => any)
+    | null = null;
+  onsync: ((this: ServiceWorkerGlobalScope, ev: SyncEvent) => any) | null =
+    null;
+  onunhandledrejection:
+    | ((this: WorkerGlobalScope, ev: PromiseRejectionEvent) => any)
+    | null = null;
   queueMicrotask(callback: VoidFunction): void {}
 
   readonly performance: Performance;
   readonly self: WorkerGlobalScope & typeof globalThis;
 
-  addEventListener<K extends keyof ServiceWorkerGlobalScopeEventMap>(type: K, listener: (this: ServiceWorkerGlobalScope, ev: ServiceWorkerGlobalScopeEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-  addEventListener(type: string, listener: EventListener | EventListenerObject, options?: boolean | AddEventListenerOptions): void;
-  addEventListener<K extends keyof WorkerGlobalScopeEventMap>(type: K, listener: (this: WorkerGlobalScope, ev: WorkerGlobalScopeEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-  addEventListener(type: string, listener: EventListener | EventListenerObject | null, options?: boolean | AddEventListenerOptions): void {
+  addEventListener<K extends keyof ServiceWorkerGlobalScopeEventMap>(
+    type: K,
+    listener: (
+      this: ServiceWorkerGlobalScope,
+      ev: ServiceWorkerGlobalScopeEventMap[K],
+    ) => any,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListener | EventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  addEventListener<K extends keyof WorkerGlobalScopeEventMap>(
+    type: K,
+    listener: (
+      this: WorkerGlobalScope,
+      ev: WorkerGlobalScopeEventMap[K],
+    ) => any,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListener | EventListenerObject | null,
+    options?: boolean | AddEventListenerOptions,
+  ): void {
     this.dispatchEventUtil.addEventListener(type, listener, options);
   }
 
@@ -87,9 +130,26 @@ export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
     throw new NotImplementedError();
   }
 
-  createImageBitmap(image: ImageBitmap | ImageData | Blob, options?: ImageBitmapOptions): Promise<ImageBitmap>;
-  createImageBitmap(image: ImageBitmap | ImageData | Blob, sx: number, sy: number, sw: number, sh: number, options?: ImageBitmapOptions): Promise<ImageBitmap>;
-  createImageBitmap(_image: ImageBitmap | ImageData | Blob, _options?: ImageBitmapOptions | number, _sy?: number, _sw?: number, _sh?: number, _options2?: ImageBitmapOptions): Promise<ImageBitmap> {
+  createImageBitmap(
+    image: ImageBitmap | ImageData | Blob,
+    options?: ImageBitmapOptions,
+  ): Promise<ImageBitmap>;
+  createImageBitmap(
+    image: ImageBitmap | ImageData | Blob,
+    sx: number,
+    sy: number,
+    sw: number,
+    sh: number,
+    options?: ImageBitmapOptions,
+  ): Promise<ImageBitmap>;
+  createImageBitmap(
+    _image: ImageBitmap | ImageData | Blob,
+    _options?: ImageBitmapOptions | number,
+    _sy?: number,
+    _sw?: number,
+    _sh?: number,
+    _options2?: ImageBitmapOptions,
+  ): Promise<ImageBitmap> {
     throw new NotImplementedError();
   }
 
@@ -110,10 +170,32 @@ export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
     throw new NotImplementedError();
   }
 
-  removeEventListener<K extends keyof ServiceWorkerGlobalScopeEventMap>(type: K, listener: (this: ServiceWorkerGlobalScope, ev: ServiceWorkerGlobalScopeEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-  removeEventListener(type: string, listener: EventListener | EventListenerObject, options?: boolean | EventListenerOptions): void;
-  removeEventListener<K extends keyof WorkerGlobalScopeEventMap>(type: K, listener: (this: WorkerGlobalScope, ev: WorkerGlobalScopeEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-  removeEventListener(type: string, listener?: EventListener | EventListenerObject | null, options?: EventListenerOptions | boolean): void {
+  removeEventListener<K extends keyof ServiceWorkerGlobalScopeEventMap>(
+    type: K,
+    listener: (
+      this: ServiceWorkerGlobalScope,
+      ev: ServiceWorkerGlobalScopeEventMap[K],
+    ) => any,
+    options?: boolean | EventListenerOptions,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListener | EventListenerObject,
+    options?: boolean | EventListenerOptions,
+  ): void;
+  removeEventListener<K extends keyof WorkerGlobalScopeEventMap>(
+    type: K,
+    listener: (
+      this: WorkerGlobalScope,
+      ev: WorkerGlobalScopeEventMap[K],
+    ) => any,
+    options?: boolean | EventListenerOptions,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener?: EventListener | EventListenerObject | null,
+    options?: EventListenerOptions | boolean,
+  ): void {
     this.dispatchEventUtil.removeEventListener(type, listener, options);
   }
 
@@ -132,5 +214,4 @@ export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
   async skipWaiting(): Promise<void> {
     throw new NotImplementedError();
   }
-
 }

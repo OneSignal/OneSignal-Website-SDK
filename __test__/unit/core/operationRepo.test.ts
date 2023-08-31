@@ -1,32 +1,47 @@
-import { DELTA_QUEUE_TIME_ADVANCE, DUMMY_MODEL_ID, DUMMY_ONESIGNAL_ID } from "../../support/constants";
-import ModelCache from "../../../src/core/caching/ModelCache";
-import ExecutorBase from "../../../src/core/executors/ExecutorBase";
-import { OSModel } from "../../../src/core/modelRepo/OSModel";
-import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
-import { CoreDelta } from "../../../src/core/models/CoreDeltas";
-import { IdentityModel } from "../../../src/core/models/IdentityModel";
-import { ModelName, SupportedModel } from "../../../src/core/models/SupportedModels";
-import { UserPropertiesModel } from "../../../src/core/models/UserPropertiesModel";
-import { OperationRepo } from "../../../src/core/operationRepo/OperationRepo";
-import { generateNewSubscription, getDummyIdentityOSModel, passIfBroadcastNTimes } from "../../support/helpers/core";
-import { TestEnvironment } from "../../support/environment/TestEnvironment";
-import { Operation } from "../../../src/core/operationRepo/Operation";
+import {
+  DELTA_QUEUE_TIME_ADVANCE,
+  DUMMY_MODEL_ID,
+  DUMMY_ONESIGNAL_ID,
+} from '../../support/constants';
+import ModelCache from '../../../src/core/caching/ModelCache';
+import ExecutorBase from '../../../src/core/executors/ExecutorBase';
+import { OSModel } from '../../../src/core/modelRepo/OSModel';
+import { CoreChangeType } from '../../../src/core/models/CoreChangeType';
+import { CoreDelta } from '../../../src/core/models/CoreDeltas';
+import { IdentityModel } from '../../../src/core/models/IdentityModel';
+import {
+  ModelName,
+  SupportedModel,
+} from '../../../src/core/models/SupportedModels';
+import { UserPropertiesModel } from '../../../src/core/models/UserPropertiesModel';
+import { OperationRepo } from '../../../src/core/operationRepo/OperationRepo';
+import {
+  generateNewSubscription,
+  getDummyIdentityOSModel,
+  passIfBroadcastNTimes,
+} from '../../support/helpers/core';
+import { TestEnvironment } from '../../support/environment/TestEnvironment';
+import { Operation } from '../../../src/core/operationRepo/Operation';
 
 let broadcastCount = 0;
 
 // class mocks
-jest.mock('../../../src/shared/services/Database')
+jest.mock('../../../src/shared/services/Database');
 
 describe('OperationRepo tests', () => {
-
-  let spyProcessOperationQueue: jest.SpyInstance<void, [(() => Promise<void>)], any> | jest.SpyInstance<void>;
+  let spyProcessOperationQueue:
+    | jest.SpyInstance<void, [() => Promise<void>], any>
+    | jest.SpyInstance<void>;
 
   beforeEach(async () => {
-    spyProcessOperationQueue = jest.spyOn(ExecutorBase.prototype as any, '_processOperationQueue');
+    spyProcessOperationQueue = jest.spyOn(
+      ExecutorBase.prototype as any,
+      '_processOperationQueue',
+    );
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
     test.nock({
       onesignal_id: '123',
-    })
+    });
     jest.useFakeTimers();
     TestEnvironment.initialize();
     broadcastCount = 0;
@@ -34,7 +49,11 @@ describe('OperationRepo tests', () => {
 
   afterEach(async () => {
     jest.runOnlyPendingTimers();
-    await Promise.all(spyProcessOperationQueue.mock.results.map(element => { return element.value }));
+    await Promise.all(
+      spyProcessOperationQueue.mock.results.map((element) => {
+        return element.value;
+      }),
+    );
     jest.clearAllMocks();
   });
 
@@ -45,22 +64,28 @@ describe('OperationRepo tests', () => {
   test('OperationRepo executor store has executor for each model name', async () => {
     const { operationRepo } = OneSignal.coreDirector.core;
     const executorStore = operationRepo?.executorStore;
-    Object.values(ModelName).forEach(modelName => {
-      const executor = executorStore?.store ? executorStore.store[modelName] : null;
+    Object.values(ModelName).forEach((modelName) => {
+      const executor = executorStore?.store
+        ? executorStore.store[modelName]
+        : null;
       expect(executor).toBeTruthy();
     });
   });
 
   test('Model repo delta broadcast is received and processed by operation repo', (done: jest.DoneCallback) => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
-    const executor = operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
+    const executor =
+      operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
 
     modelRepo?.subscribe(() => {
-      broadcastCount+=1;
+      broadcastCount += 1;
       passIfBroadcastNTimes(1, broadcastCount, done);
     });
 
-    const processDeltaSpy = jest.spyOn(OperationRepo.prototype as any, "_processDelta");
+    const processDeltaSpy = jest.spyOn(
+      OperationRepo.prototype as any,
+      '_processDelta',
+    );
     const subscriptionModel = generateNewSubscription();
     subscriptionModel.setOneSignalId('123');
 
@@ -78,9 +103,13 @@ describe('OperationRepo tests', () => {
 
   test('Add Subscriptions: multiple delta broadcasts -> two operations of change type: add', (done: jest.DoneCallback) => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
-    const executor = operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
+    const executor =
+      operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
 
-    const processDeltaSpy = jest.spyOn(OperationRepo.prototype as any, "_processDelta");
+    const processDeltaSpy = jest.spyOn(
+      OperationRepo.prototype as any,
+      '_processDelta',
+    );
 
     const subscriptionModel1 = generateNewSubscription('123');
     subscriptionModel1.setOneSignalId(DUMMY_ONESIGNAL_ID);
@@ -113,13 +142,18 @@ describe('OperationRepo tests', () => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Identity];
 
-    const processDeltaSpy = jest.spyOn(OperationRepo.prototype as any, "_processDelta");
-    const processOperationQueueSpy = jest.spyOn(ExecutorBase.prototype as any, "_processOperationQueue");
+    const processDeltaSpy = jest.spyOn(
+      OperationRepo.prototype as any,
+      '_processDelta',
+    );
+    const processOperationQueueSpy = jest.spyOn(
+      ExecutorBase.prototype as any,
+      '_processOperationQueue',
+    );
 
     const identityModel = getDummyIdentityOSModel();
     identityModel.setOneSignalId(DUMMY_ONESIGNAL_ID);
     identityModel.data.onesignal_id = DUMMY_ONESIGNAL_ID;
-
 
     const delta1: CoreDelta<IdentityModel> = {
       changeType: CoreChangeType.Update,
@@ -152,7 +186,10 @@ describe('OperationRepo tests', () => {
 
     const operation = executor?.operationQueue[0];
     expect(operation?.model?.modelName).toBe(ModelName.Identity);
-    expect(operation?.payload).toEqual({ myAlias: 'newAlias', myAlias2: 'newAlias2' });
+    expect(operation?.payload).toEqual({
+      myAlias: 'newAlias',
+      myAlias2: 'newAlias2',
+    });
     expect(operation?.changeType).toBe(CoreChangeType.Add);
 
     done();
@@ -164,10 +201,20 @@ describe('OperationRepo tests', () => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Properties];
 
-    const processDeltaSpy = jest.spyOn(OperationRepo.prototype as any, "_processDelta");
-    const processOperationQueueSpy = jest.spyOn(ExecutorBase.prototype as any, "_processOperationQueue");
+    const processDeltaSpy = jest.spyOn(
+      OperationRepo.prototype as any,
+      '_processDelta',
+    );
+    const processOperationQueueSpy = jest.spyOn(
+      ExecutorBase.prototype as any,
+      '_processOperationQueue',
+    );
 
-    const propertiesModel = new OSModel<UserPropertiesModel>(ModelName.Properties, {}, DUMMY_MODEL_ID);
+    const propertiesModel = new OSModel<UserPropertiesModel>(
+      ModelName.Properties,
+      {},
+      DUMMY_MODEL_ID,
+    );
     propertiesModel.setOneSignalId(DUMMY_ONESIGNAL_ID);
 
     const delta1: CoreDelta<UserPropertiesModel> = {
@@ -201,7 +248,9 @@ describe('OperationRepo tests', () => {
 
     const operation = executor?.operationQueue[0];
     expect(operation?.model?.modelName).toBe(ModelName.Properties);
-    expect(operation?.payload).toEqual({ tags: { tag1: 'tag1', tag2: 'tag2' } });
+    expect(operation?.payload).toEqual({
+      tags: { tag1: 'tag1', tag2: 'tag2' },
+    });
     expect(operation?.changeType).toBe(CoreChangeType.Update);
 
     done();

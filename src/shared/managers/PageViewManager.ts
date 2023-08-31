@@ -1,11 +1,11 @@
-import SdkEnvironment from "./SdkEnvironment";
-import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
-import Log from "../libraries/Log";
+import SdkEnvironment from './SdkEnvironment';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import Log from '../libraries/Log';
 import LocalStorage from '../utils/LocalStorage';
 
 export class PageViewManager {
-  private static SESSION_STORAGE_KEY_NAME = "onesignal-pageview-count";
-  private incrementedPageViewCount: boolean = false;
+  private static SESSION_STORAGE_KEY_NAME = 'onesignal-pageview-count';
+  private incrementedPageViewCount = false;
 
   getPageViewCount(): number {
     try {
@@ -14,7 +14,9 @@ export class PageViewManager {
         as an API in incognito mode and in cases where the user disables
         third-party cookies on some browsers.
        */
-      const pageViewCountStr = sessionStorage.getItem(PageViewManager.SESSION_STORAGE_KEY_NAME);
+      const pageViewCountStr = sessionStorage.getItem(
+        PageViewManager.SESSION_STORAGE_KEY_NAME,
+      );
       const pageViewCount = pageViewCountStr ? parseInt(pageViewCountStr) : 0;
       if (isNaN(pageViewCount)) {
         return 0;
@@ -32,13 +34,21 @@ export class PageViewManager {
 
   setPageViewCount(sessionCount: number) {
     try {
-      sessionStorage.setItem(PageViewManager.SESSION_STORAGE_KEY_NAME, sessionCount.toString());
+      sessionStorage.setItem(
+        PageViewManager.SESSION_STORAGE_KEY_NAME,
+        sessionCount.toString(),
+      );
 
-      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
+      if (
+        SdkEnvironment.getWindowEnv() ===
+        WindowEnvironmentKind.OneSignalSubscriptionPopup
+      ) {
         // If we're setting sessionStorage and we're in an Popup, we need to also set sessionStorage on the
         // main page
         if (OneSignal.subscriptionPopup) {
-          OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.SET_SESSION_COUNT);
+          OneSignal.subscriptionPopup.message(
+            OneSignal.POSTMAM_COMMANDS.SET_SESSION_COUNT,
+          );
         }
       }
     } catch (e) {
@@ -50,9 +60,9 @@ export class PageViewManager {
 
   /**
    * Increments:
-   *    - session pageView count AND 
-   *    - total pageView count 
-   * 
+   *    - session pageView count AND
+   *    - total pageView count
+   *
    * at most once for the current page view.
    *
    * A flag is set to prevent incrementing the session count more than once for
@@ -60,7 +70,7 @@ export class PageViewManager {
    * will be automatically reset. Because of this, regardless of the number of
    * times this method is called on the current page view, the page view count
    * will only be incremented once.
-   * 
+   *
    * LocalStorage pageView count added for use in Delayed Prompts feature. This
    * pageView count persists even past sessions since it is saved to local stor-
    * age (as opposed to Session Storage which persists only for that tab)
@@ -103,7 +113,7 @@ export class PageViewManager {
   }
 
   /**
-   * Sets Page Views to Local Storage 
+   * Sets Page Views to Local Storage
    */
   setLocalPageViewCount(count: number) {
     LocalStorage.setLocalPageViewCount(count);

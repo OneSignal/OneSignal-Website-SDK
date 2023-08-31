@@ -1,8 +1,7 @@
-import Database from "../services/Database";
+import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
 
 export class PermissionUtils {
-
   // This flag prevents firing the NOTIFICATION_PERMISSION_CHANGED_AS_STRING event twice
   // We use multiple APIs:
   //    1. Notification.requestPermission callback
@@ -18,25 +17,40 @@ export class PermissionUtils {
     PermissionUtils.executing = true;
     try {
       await PermissionUtils.privateTriggerNotificationPermissionChanged(force);
-    }
-    finally {
+    } finally {
       PermissionUtils.executing = false;
     }
   }
 
-  private static async privateTriggerNotificationPermissionChanged(force: boolean) {
-    const newPermission: NotificationPermission = await OneSignal.context.permissionManager.getPermissionStatus();
-    const previousPermission: NotificationPermission = await Database.get('Options', 'notificationPermission');
+  private static async privateTriggerNotificationPermissionChanged(
+    force: boolean,
+  ) {
+    const newPermission: NotificationPermission =
+      await OneSignal.context.permissionManager.getPermissionStatus();
+    const previousPermission: NotificationPermission = await Database.get(
+      'Options',
+      'notificationPermission',
+    );
 
     const triggerEvent = newPermission !== previousPermission || force;
     if (!triggerEvent) {
       return;
     }
 
-    await Database.put('Options', { key: 'notificationPermission', value: newPermission });
+    await Database.put('Options', {
+      key: 'notificationPermission',
+      value: newPermission,
+    });
 
-    OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, newPermission);
-    this.triggerBooleanPermissionChangeEvent(previousPermission, newPermission, force);
+    OneSignalEvent.trigger(
+      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
+      newPermission,
+    );
+    this.triggerBooleanPermissionChangeEvent(
+      previousPermission,
+      newPermission,
+      force,
+    );
   }
 
   private static triggerBooleanPermissionChangeEvent(
@@ -46,10 +60,14 @@ export class PermissionUtils {
   ): void {
     const newPermissionBoolean = newPermission === 'granted';
     const previousPermissionBoolean = previousPermission === 'granted';
-    const triggerEvent = newPermissionBoolean !== previousPermissionBoolean || force;
+    const triggerEvent =
+      newPermissionBoolean !== previousPermissionBoolean || force;
     if (!triggerEvent) {
       return;
     }
-    OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN, newPermissionBoolean);
+    OneSignalEvent.trigger(
+      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN,
+      newPermissionBoolean,
+    );
   }
 }

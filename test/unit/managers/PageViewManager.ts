@@ -1,14 +1,17 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
+import {
+  TestEnvironment,
+  HttpHttpsEnvironment,
+} from '../../support/sdk/TestEnvironment';
 import OneSignal from '../../../src/onesignal/OneSignal';
 
 import Context from '../../../src/page/models/Context';
 import Random from '../../support/tester/Random';
 
-test.beforeEach(async _t => {
+test.beforeEach(async (_t) => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -16,17 +19,17 @@ test.beforeEach(async _t => {
   OneSignal.context = new Context(appConfig);
 });
 
-test('page view count for first page view should be zero', async t => {
+test('page view count for first page view should be zero', async (t) => {
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 0);
 });
 
-test('page view count should increment', async t => {
+test('page view count should increment', async (t) => {
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 0);
   OneSignal.context.pageViewManager.incrementPageViewCount();
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
 });
 
-test('page view count should only increment once for the current page view', async t => {
+test('page view count should only increment once for the current page view', async (t) => {
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 0);
   for (let i = 0; i < 5; i++) {
     // Even though we're calling this 5 times
@@ -36,7 +39,7 @@ test('page view count should only increment once for the current page view', asy
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
 });
 
-test('page view count should increment per page-refresh', async t => {
+test('page view count should increment per page-refresh', async (t) => {
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 0);
   OneSignal.context.pageViewManager.incrementPageViewCount();
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
@@ -53,4 +56,3 @@ test('page view count should increment per page-refresh', async t => {
   OneSignal.context.pageViewManager.incrementPageViewCount();
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 3);
 });
-

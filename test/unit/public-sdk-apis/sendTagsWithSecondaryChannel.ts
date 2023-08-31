@@ -1,19 +1,22 @@
-import test from "ava";
-import Database from "../../../src/shared/services/Database";
-import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
-import { setupFakePlayerId } from "../../support/tester/utils";
+import test from 'ava';
+import Database from '../../../src/shared/services/Database';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
+import { NockOneSignalHelper } from '../../support/tester/NockOneSignalHelper';
+import { setupFakePlayerId } from '../../support/tester/utils';
 
-const TEST_TAGS = { key: "value" };
-const TEST_EMAIL_ADDRESS = "test@test.com";
+const TEST_TAGS = { key: 'value' };
+const TEST_EMAIL_ADDRESS = 'test@test.com';
 
-test.beforeEach(async _t => {
+test.beforeEach(async (_t) => {
   await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
-  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
+  await Database.put('Ids', {
+    type: 'appId',
+    id: OneSignal.context.appConfig.appId,
+  });
 });
 
-test("sendTags after email, makes PUT call to update Email record", async t => {
+test('sendTags after email, makes PUT call to update Email record', async (t) => {
   // 1. Nock out email create
   const emailPostNock = NockOneSignalHelper.nockPlayerPost();
   await OneSignal.setEmail(TEST_EMAIL_ADDRESS);
@@ -29,16 +32,13 @@ test("sendTags after email, makes PUT call to update Email record", async t => {
   const tagsUpdateOnEmail = NockOneSignalHelper.nockPlayerPut(emailPlayerId);
   await OneSignal.User.addTags(TEST_TAGS);
 
-  t.deepEqual(
-    (await tagsUpdateOnEmail.result).request.body,
-    {
-      app_id: OneSignal.context.appConfig.appId,
-      tags: TEST_TAGS
-    }
-  );
+  t.deepEqual((await tagsUpdateOnEmail.result).request.body, {
+    app_id: OneSignal.context.appConfig.appId,
+    tags: TEST_TAGS,
+  });
 });
 
-test("sendTags before email, makes PUT call to update Email record", async t => {
+test('sendTags before email, makes PUT call to update Email record', async (t) => {
   // 1. Create a push player id in the DB
   const pushPlayerId = await setupFakePlayerId();
 
@@ -58,10 +58,7 @@ test("sendTags before email, makes PUT call to update Email record", async t => 
   const emailPlayerId = (await emailPostNock.result).response.body.id;
 
   // 6. Await for the follow up PUT call to set tags on email, ensure it was sent.
-  const emailPutResult = await NockOneSignalHelper.nockPlayerPut(emailPlayerId).result;
-  t.deepEqual(
-    emailPutResult.request.body.tags,
-    TEST_TAGS
-  );
+  const emailPutResult =
+    await NockOneSignalHelper.nockPlayerPut(emailPlayerId).result;
+  t.deepEqual(emailPutResult.request.body.tags, TEST_TAGS);
 });
-

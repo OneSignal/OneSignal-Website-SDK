@@ -1,8 +1,6 @@
 export default class Subscribable<MessageType> {
   protected subscribers = new Set<(msg: MessageType) => void>();
 
-  constructor() {}
-
   /**
    * Subscribe to the message stream.
    * @param  {(msg:MessageType)=>void} callback
@@ -17,7 +15,7 @@ export default class Subscribable<MessageType> {
    * @param msg The message to publish
    */
   public broadcast(msg: MessageType) {
-    this.subscribers.forEach(callback => {
+    this.subscribers.forEach((callback) => {
       callback(msg);
     });
   }

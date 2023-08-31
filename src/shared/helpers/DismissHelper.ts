@@ -1,22 +1,24 @@
-
-
-import { DismissPrompt, DismissCountKey, DismissTimeKey } from '../../page/models/Dismiss';
+import {
+  DismissPrompt,
+  DismissCountKey,
+  DismissTimeKey,
+} from '../../page/models/Dismiss';
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
 import { isUsingSubscriptionWorkaround } from '../utils/utils';
 
-declare var OneSignal: any;
+declare let OneSignal: any;
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
-  [DismissPrompt.NonPush]: DismissCountKey.NonPushPromptsDismissCount
+  [DismissPrompt.NonPush]: DismissCountKey.NonPushPromptsDismissCount,
 };
 
 const DISMISS_TYPE_TIME_MAP = {
-  [DismissPrompt.Push] : DismissTimeKey.OneSignalNotificationPrompt,
-  [DismissPrompt.NonPush] : DismissTimeKey.OneSignalNonPushPrompt
+  [DismissPrompt.Push]: DismissTimeKey.OneSignalNotificationPrompt,
+  [DismissPrompt.NonPush]: DismissTimeKey.OneSignalNonPushPrompt,
 };
 
 export class DismissHelper {
@@ -35,21 +37,31 @@ export class DismissHelper {
     if (isUsingSubscriptionWorkaround()) {
       try {
         await new Promise<void>((resolve, reject) => {
-          OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, {}, reply => {
-            if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
-              resolve();
-            } else {
-              reject();
-            }
-          });
+          OneSignal.proxyFrameHost.message(
+            OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED,
+            {},
+            (reply) => {
+              if (
+                reply.data ===
+                OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE
+              ) {
+                resolve();
+              } else {
+                reject();
+              }
+            },
+          );
         });
-      } catch(e) {
-        Log.debug("Proxy Frame possibly didn't not receive MARK_PROMPT_DISMISSED message", e || "");
+      } catch (e) {
+        Log.debug(
+          "Proxy Frame possibly didn't not receive MARK_PROMPT_DISMISSED message",
+          e || '',
+        );
       }
     }
 
     const countKey = DISMISS_TYPE_COUNT_MAP[type];
-    const timeKey  = DISMISS_TYPE_TIME_MAP[type];
+    const timeKey = DISMISS_TYPE_TIME_MAP[type];
 
     let dismissCount = await Database.get<number>('Options', countKey);
     if (!dismissCount) {
@@ -68,8 +80,10 @@ export class DismissHelper {
     } else if (dismissCount > 2) {
       dismissDays = 30;
     }
-    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the ${type} ` +
-      `notification prompt; reprompt after ${dismissDays} days.`);
+    Log.debug(
+      `(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the ${type} ` +
+        `notification prompt; reprompt after ${dismissDays} days.`,
+    );
     await Database.put('Options', { key: countKey, value: dismissCount });
 
     const dismissMinutes = dismissDays * 24 * 60;
@@ -82,9 +96,16 @@ export class DismissHelper {
   static wasPromptOfTypeDismissed(type: DismissPrompt): boolean {
     switch (type) {
       case DismissPrompt.Push:
-        return TimedLocalStorage.getItem(DismissTimeKey.OneSignalNotificationPrompt) === 'dismissed';
+        return (
+          TimedLocalStorage.getItem(
+            DismissTimeKey.OneSignalNotificationPrompt,
+          ) === 'dismissed'
+        );
       case DismissPrompt.NonPush:
-        return TimedLocalStorage.getItem(DismissTimeKey.OneSignalNonPushPrompt) === 'dismissed';
+        return (
+          TimedLocalStorage.getItem(DismissTimeKey.OneSignalNonPushPrompt) ===
+          'dismissed'
+        );
       default:
         break;
     }

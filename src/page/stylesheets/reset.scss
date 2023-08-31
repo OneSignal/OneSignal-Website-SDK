@@ -22,484 +22,764 @@
 /* == BLANKET RESET RULES == */
 
 /* HTML 4.01 */
-.onesignal-reset:not([class^="iti"]), .onesignal-reset h1, .onesignal-reset h2, .onesignal-reset h3, .onesignal-reset h4, .onesignal-reset h5, .onesignal-reset h6, .onesignal-reset p, .onesignal-reset td, .onesignal-reset dl, .onesignal-reset tr, .onesignal-reset dt, .onesignal-reset ol, .onesignal-reset form, .onesignal-reset select, .onesignal-reset option, .onesignal-reset pre, .onesignal-reset div:not([class^="iti"]), .onesignal-reset table, .onesignal-reset th, .onesignal-reset tbody, .onesignal-reset tfoot, .onesignal-reset caption, .onesignal-reset thead, .onesignal-reset ul:not([class^="iti"]), .onesignal-reset address, .onesignal-reset blockquote, .onesignal-reset dd, .onesignal-reset fieldset, .onesignal-reset li:not([class^="iti"]), .onesignal-reset iframe, .onesignal-reset strong, .onesignal-reset legend, .onesignal-reset em, .onesignal-reset summary, .onesignal-reset cite, .onesignal-reset span:not([class^="iti"]), .onesignal-reset input:not([class^="iti"]), .onesignal-reset sup, .onesignal-reset label, .onesignal-reset dfn, .onesignal-reset object, .onesignal-reset big, .onesignal-reset q, .onesignal-reset samp, .onesignal-reset acronym, .onesignal-reset small, .onesignal-reset img, .onesignal-reset strike, .onesignal-reset code, .onesignal-reset sub, .onesignal-reset ins, .onesignal-reset textarea, .onesignal-reset button, .onesignal-reset var, .onesignal-reset a, .onesignal-reset abbr, .onesignal-reset applet, .onesignal-reset del, .onesignal-reset kbd, .onesignal-reset tt, .onesignal-reset b, .onesignal-reset i, .onesignal-reset hr,
-.onesignal-reset article, .onesignal-reset aside, .onesignal-reset figure, .onesignal-reset figcaption, .onesignal-reset footer, .onesignal-reset header, .onesignal-reset menu, .onesignal-reset nav, .onesignal-reset section, .onesignal-reset time, .onesignal-reset mark, .onesignal-reset audio, .onesignal-reset video, .onesignal-reset abbr, .onesignal-reset address, .onesignal-reset area, .onesignal-reset blockquote, .onesignal-reset canvas, .onesignal-reset caption, .onesignal-reset cite, .onesignal-reset code, .onesignal-reset colgroup, .onesignal-reset col, .onesignal-reset datalist, .onesignal-reset fieldset, .onesignal-reset main, .onesignal-reset map, .onesignal-reset meta, .onesignal-reset optgroup, .onesignal-reset output, .onesignal-reset progress {
-    background-attachment: scroll ;
-    background-color: transparent ;
-    background-image: none ; /* This rule affects the use of pngfix JavaScript http://dillerdesign.com/experiment/DD_BelatedPNG for IE6, which is used to force the browser to recognise alpha-transparent PNGs files that replace the IE6 lack of PNG transparency. (The rule overrides the VML image that is used to replace the given CSS background-image). If you don't know what that means, then you probably haven't used the pngfix script, and this comment may be ignored :) */
-    background-position: 0 0 ;
-    background-repeat: repeat ;
-    border-color: black ;
-    border-color: currentColor ; /* `border-color` should match font color. Modern browsers (incl. IE9) allow the use of "currentColor" to match the current font 'color' value <http://www.w3.org/TR/css3-color/#currentcolor>. For older browsers, a default of 'black' is given before this rule. Guideline to support older browsers: if you haven't already declared a border-color for an element, be sure to do so, e.g. when you first declare the border-width. */
-    border-radius: 0 ;
-    border-style: none ;
-    border-width: medium ;
-    bottom: auto ;
-    clear: none ;
-    clip: auto ;
-    color: inherit ;
-    counter-increment: none ;
-    counter-reset: none ;
-    cursor: auto ;
-    direction: inherit ;
-    display: inline ;
-    float: none ;
-    font-family: inherit ; /* As with other inherit values, this needs to be set on the root container element */
-    font-size: inherit ;
-    font-style: inherit ;
-    font-variant: normal ;
-    font-weight: inherit ;
-    left: auto ;
-    letter-spacing: normal ;
-    line-height: inherit ;
-    list-style-type: inherit ; /* Could set list-style-type to none */
-    list-style-position: outside ;
-    list-style-image: none ;
-    margin: 0 ;
-    max-height: none ;
-    max-width: none ;
-    min-height: 0 ;
-    min-width: 0 ;
-    opacity: 1;
-    outline: invert none medium ;
-    overflow: visible ;
-    padding: 0 ;
-    position: static ;
-    quotes: "" "" ;
-    right: auto ;
-    table-layout: auto ;
-    text-align: inherit ;
-    text-decoration: inherit ;
-    text-indent: 0 ;
-    text-transform: none ;
-    top: auto ;
-    unicode-bidi: normal ;
-    vertical-align: baseline ;
-    visibility: inherit ;
-    white-space: normal ;
-    width: auto ;
-    word-spacing: normal ;
-    z-index: auto ;
-    /* CSS3 */
-    /* Including all prefixes according to http://caniuse.com/ */
-    /* CSS Animations don't cascade, so don't require resetting */
-    -webkit-background-origin: padding-box ;
-    background-origin: padding-box ;
-    -webkit-background-clip: border-box ;
-    background-clip: border-box ;
-    -webkit-background-size: auto ;
-    -moz-background-size: auto ;
-    background-size: auto ;
-    -webkit-border-image: none ;
-    -moz-border-image: none ;
-    -o-border-image: none ;
-    border-image: none ;
-    -webkit-border-radius: 0 ;
-    -moz-border-radius: 0 ;
-    border-radius: 0 ;
-    -webkit-box-shadow: none ;
-    box-shadow: none ;
-    -webkit-box-sizing: content-box ;
-    -moz-box-sizing: content-box ;
-    box-sizing: content-box ;
-    -webkit-column-count: auto ;
-    -moz-column-count: auto ;
-    column-count: auto ;
-    -webkit-column-gap: normal ;
-    -moz-column-gap: normal ;
-    column-gap: normal ;
-    -webkit-column-rule: medium none black ;
-    -moz-column-rule: medium none black ;
-    column-rule: medium none black ;
-    -webkit-column-span: 1 ;
-    -moz-column-span: 1 ; /* doesn't exist yet but probably will */
-    column-span: 1 ;
-    -webkit-column-width: auto ;
-    -moz-column-width: auto ;
-    column-width: auto ;
-    font-feature-settings: normal ;
-    overflow-x: visible ;
-    overflow-y: visible ;
-    -webkit-hyphens: manual ;
-    -moz-hyphens: manual ;
-    hyphens: manual ;
-    -webkit-perspective: none ;
-    -moz-perspective: none ;
-    -ms-perspective: none ;
-    -o-perspective: none ;
-    perspective: none ;
-    -webkit-perspective-origin: 50% 50% ;
-    -moz-perspective-origin: 50% 50% ;
-    -ms-perspective-origin: 50% 50% ;
-    -o-perspective-origin: 50% 50% ;
-    perspective-origin: 50% 50% ;
-    -webkit-backface-visibility: visible ;
-    -moz-backface-visibility: visible ;
-    -ms-backface-visibility: visible ;
-    -o-backface-visibility: visible ;
-    backface-visibility: visible ;
-    text-shadow: none ;
-    -webkit-transition: all 0s ease 0s ;
-    transition: all 0s ease 0s ;
-    -webkit-transform: none ;
-    -moz-transform: none ;
-    -ms-transform: none ;
-    -o-transform: none ;
-    transform: none ;
-    -webkit-transform-origin: 50% 50% ;
-    -moz-transform-origin: 50% 50% ;
-    -ms-transform-origin: 50% 50% ;
-    -o-transform-origin: 50% 50% ;
-    transform-origin: 50% 50% ;
-    -webkit-transform-style: flat ;
-    -moz-transform-style: flat ;
-    -ms-transform-style: flat ;
-    -o-transform-style: flat ;
-    transform-style: flat ;
-    word-break: normal ;
+.onesignal-reset:not([class^='iti']),
+.onesignal-reset h1,
+.onesignal-reset h2,
+.onesignal-reset h3,
+.onesignal-reset h4,
+.onesignal-reset h5,
+.onesignal-reset h6,
+.onesignal-reset p,
+.onesignal-reset td,
+.onesignal-reset dl,
+.onesignal-reset tr,
+.onesignal-reset dt,
+.onesignal-reset ol,
+.onesignal-reset form,
+.onesignal-reset select,
+.onesignal-reset option,
+.onesignal-reset pre,
+.onesignal-reset div:not([class^='iti']),
+.onesignal-reset table,
+.onesignal-reset th,
+.onesignal-reset tbody,
+.onesignal-reset tfoot,
+.onesignal-reset caption,
+.onesignal-reset thead,
+.onesignal-reset ul:not([class^='iti']),
+.onesignal-reset address,
+.onesignal-reset blockquote,
+.onesignal-reset dd,
+.onesignal-reset fieldset,
+.onesignal-reset li:not([class^='iti']),
+.onesignal-reset iframe,
+.onesignal-reset strong,
+.onesignal-reset legend,
+.onesignal-reset em,
+.onesignal-reset summary,
+.onesignal-reset cite,
+.onesignal-reset span:not([class^='iti']),
+.onesignal-reset input:not([class^='iti']),
+.onesignal-reset sup,
+.onesignal-reset label,
+.onesignal-reset dfn,
+.onesignal-reset object,
+.onesignal-reset big,
+.onesignal-reset q,
+.onesignal-reset samp,
+.onesignal-reset acronym,
+.onesignal-reset small,
+.onesignal-reset img,
+.onesignal-reset strike,
+.onesignal-reset code,
+.onesignal-reset sub,
+.onesignal-reset ins,
+.onesignal-reset textarea,
+.onesignal-reset button,
+.onesignal-reset var,
+.onesignal-reset a,
+.onesignal-reset abbr,
+.onesignal-reset applet,
+.onesignal-reset del,
+.onesignal-reset kbd,
+.onesignal-reset tt,
+.onesignal-reset b,
+.onesignal-reset i,
+.onesignal-reset hr,
+.onesignal-reset article,
+.onesignal-reset aside,
+.onesignal-reset figure,
+.onesignal-reset figcaption,
+.onesignal-reset footer,
+.onesignal-reset header,
+.onesignal-reset menu,
+.onesignal-reset nav,
+.onesignal-reset section,
+.onesignal-reset time,
+.onesignal-reset mark,
+.onesignal-reset audio,
+.onesignal-reset video,
+.onesignal-reset abbr,
+.onesignal-reset address,
+.onesignal-reset area,
+.onesignal-reset blockquote,
+.onesignal-reset canvas,
+.onesignal-reset caption,
+.onesignal-reset cite,
+.onesignal-reset code,
+.onesignal-reset colgroup,
+.onesignal-reset col,
+.onesignal-reset datalist,
+.onesignal-reset fieldset,
+.onesignal-reset main,
+.onesignal-reset map,
+.onesignal-reset meta,
+.onesignal-reset optgroup,
+.onesignal-reset output,
+.onesignal-reset progress {
+  background-attachment: scroll;
+  background-color: transparent;
+  background-image: none; /* This rule affects the use of pngfix JavaScript http://dillerdesign.com/experiment/DD_BelatedPNG for IE6, which is used to force the browser to recognise alpha-transparent PNGs files that replace the IE6 lack of PNG transparency. (The rule overrides the VML image that is used to replace the given CSS background-image). If you don't know what that means, then you probably haven't used the pngfix script, and this comment may be ignored :) */
+  background-position: 0 0;
+  background-repeat: repeat;
+  border-color: black;
+  border-color: currentColor; /* `border-color` should match font color. Modern browsers (incl. IE9) allow the use of "currentColor" to match the current font 'color' value <http://www.w3.org/TR/css3-color/#currentcolor>. For older browsers, a default of 'black' is given before this rule. Guideline to support older browsers: if you haven't already declared a border-color for an element, be sure to do so, e.g. when you first declare the border-width. */
+  border-radius: 0;
+  border-style: none;
+  border-width: medium;
+  bottom: auto;
+  clear: none;
+  clip: auto;
+  color: inherit;
+  counter-increment: none;
+  counter-reset: none;
+  cursor: auto;
+  direction: inherit;
+  display: inline;
+  float: none;
+  font-family: inherit; /* As with other inherit values, this needs to be set on the root container element */
+  font-size: inherit;
+  font-style: inherit;
+  font-variant: normal;
+  font-weight: inherit;
+  left: auto;
+  letter-spacing: normal;
+  line-height: inherit;
+  list-style-type: inherit; /* Could set list-style-type to none */
+  list-style-position: outside;
+  list-style-image: none;
+  margin: 0;
+  max-height: none;
+  max-width: none;
+  min-height: 0;
+  min-width: 0;
+  opacity: 1;
+  outline: invert none medium;
+  overflow: visible;
+  padding: 0;
+  position: static;
+  quotes: '' '';
+  right: auto;
+  table-layout: auto;
+  text-align: inherit;
+  text-decoration: inherit;
+  text-indent: 0;
+  text-transform: none;
+  top: auto;
+  unicode-bidi: normal;
+  vertical-align: baseline;
+  visibility: inherit;
+  white-space: normal;
+  width: auto;
+  word-spacing: normal;
+  z-index: auto;
+  /* CSS3 */
+  /* Including all prefixes according to http://caniuse.com/ */
+  /* CSS Animations don't cascade, so don't require resetting */
+  -webkit-background-origin: padding-box;
+  background-origin: padding-box;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-background-size: auto;
+  -moz-background-size: auto;
+  background-size: auto;
+  -webkit-border-image: none;
+  -moz-border-image: none;
+  -o-border-image: none;
+  border-image: none;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  -webkit-column-count: auto;
+  -moz-column-count: auto;
+  column-count: auto;
+  -webkit-column-gap: normal;
+  -moz-column-gap: normal;
+  column-gap: normal;
+  -webkit-column-rule: medium none black;
+  -moz-column-rule: medium none black;
+  column-rule: medium none black;
+  -webkit-column-span: 1;
+  -moz-column-span: 1; /* doesn't exist yet but probably will */
+  column-span: 1;
+  -webkit-column-width: auto;
+  -moz-column-width: auto;
+  column-width: auto;
+  font-feature-settings: normal;
+  overflow-x: visible;
+  overflow-y: visible;
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
+  hyphens: manual;
+  -webkit-perspective: none;
+  -moz-perspective: none;
+  -ms-perspective: none;
+  -o-perspective: none;
+  perspective: none;
+  -webkit-perspective-origin: 50% 50%;
+  -moz-perspective-origin: 50% 50%;
+  -ms-perspective-origin: 50% 50%;
+  -o-perspective-origin: 50% 50%;
+  perspective-origin: 50% 50%;
+  -webkit-backface-visibility: visible;
+  -moz-backface-visibility: visible;
+  -ms-backface-visibility: visible;
+  -o-backface-visibility: visible;
+  backface-visibility: visible;
+  text-shadow: none;
+  -webkit-transition: all 0s ease 0s;
+  transition: all 0s ease 0s;
+  -webkit-transform: none;
+  -moz-transform: none;
+  -ms-transform: none;
+  -o-transform: none;
+  transform: none;
+  -webkit-transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -ms-transform-origin: 50% 50%;
+  -o-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+  -webkit-transform-style: flat;
+  -moz-transform-style: flat;
+  -ms-transform-style: flat;
+  -o-transform-style: flat;
+  transform-style: flat;
+  word-break: normal;
 }
 
 /* == BLOCK-LEVEL == */
 /* Actually, some of these should be inline-block and other values, but block works fine */
 /* HTML 4.01 */
-.onesignal-reset:not([class^="iti"]), .onesignal-reset h3, .onesignal-reset h5, .onesignal-reset p, .onesignal-reset h1, .onesignal-reset dl, .onesignal-reset dt, .onesignal-reset h6, .onesignal-reset ol, .onesignal-reset form, .onesignal-reset option, .onesignal-reset pre, .onesignal-reset div:not([class^="iti"]), .onesignal-reset h2, .onesignal-reset caption, .onesignal-reset h4, .onesignal-reset ul:not([class^="iti"]), .onesignal-reset address, .onesignal-reset blockquote, .onesignal-reset dd, .onesignal-reset fieldset, .onesignal-reset hr,
-.onesignal-reset article, .onesignal-reset dialog, .onesignal-reset figure, .onesignal-reset footer, .onesignal-reset header, .onesignal-reset hgroup, .onesignal-reset menu, .onesignal-reset nav, .onesignal-reset section, .onesignal-reset audio, .onesignal-reset video, .onesignal-reset address, .onesignal-reset blockquote, .onesignal-reset colgroup, .onesignal-reset main, .onesignal-reset progress, .onesignal-reset summary {
-    display: block ;
+.onesignal-reset:not([class^='iti']),
+.onesignal-reset h3,
+.onesignal-reset h5,
+.onesignal-reset p,
+.onesignal-reset h1,
+.onesignal-reset dl,
+.onesignal-reset dt,
+.onesignal-reset h6,
+.onesignal-reset ol,
+.onesignal-reset form,
+.onesignal-reset option,
+.onesignal-reset pre,
+.onesignal-reset div:not([class^='iti']),
+.onesignal-reset h2,
+.onesignal-reset caption,
+.onesignal-reset h4,
+.onesignal-reset ul:not([class^='iti']),
+.onesignal-reset address,
+.onesignal-reset blockquote,
+.onesignal-reset dd,
+.onesignal-reset fieldset,
+.onesignal-reset hr,
+.onesignal-reset article,
+.onesignal-reset dialog,
+.onesignal-reset figure,
+.onesignal-reset footer,
+.onesignal-reset header,
+.onesignal-reset hgroup,
+.onesignal-reset menu,
+.onesignal-reset nav,
+.onesignal-reset section,
+.onesignal-reset audio,
+.onesignal-reset video,
+.onesignal-reset address,
+.onesignal-reset blockquote,
+.onesignal-reset colgroup,
+.onesignal-reset main,
+.onesignal-reset progress,
+.onesignal-reset summary {
+  display: block;
 }
 
-.onesignal-reset h1, .onesignal-reset h2, .onesignal-reset h3, .onesignal-reset h4, .onesignal-reset h5, .onesignal-reset h6 {
-    font-weight: bold ;
+.onesignal-reset h1,
+.onesignal-reset h2,
+.onesignal-reset h3,
+.onesignal-reset h4,
+.onesignal-reset h5,
+.onesignal-reset h6 {
+  font-weight: bold;
 }
 
 .onesignal-reset h1 {
-    font-size: 2em ;
-    padding: .67em 0 ;
+  font-size: 2em;
+  padding: 0.67em 0;
 }
 
 .onesignal-reset h2 {
-    font-size: 1.5em ;
-    padding: .83em 0 ;
+  font-size: 1.5em;
+  padding: 0.83em 0;
 }
 
 .onesignal-reset h3 {
-    font-size: 1.17em ;
-    padding: .83em 0 ;
+  font-size: 1.17em;
+  padding: 0.83em 0;
 }
 
 .onesignal-reset h4 {
-    font-size: 1em ;
+  font-size: 1em;
 }
 
 .onesignal-reset h5 {
-    font-size: .83em ;
+  font-size: 0.83em;
 }
 
 .onesignal-reset p {
-    margin: 1em 0 ;
+  margin: 1em 0;
 }
 
 .onesignal-reset table {
-    display: table ;
+  display: table;
 }
 
 .onesignal-reset thead {
-    display: table-header-group ;
+  display: table-header-group;
 }
 
 .onesignal-reset tbody {
-    display: table-row-group ;
+  display: table-row-group;
 }
 
 .onesignal-reset tfoot {
-    display: table-footer-group ;
+  display: table-footer-group;
 }
 
 .onesignal-reset tr {
-    display: table-row ;
+  display: table-row;
 }
 
-.onesignal-reset th, .onesignal-reset td {
-    display: table-cell ;
-    padding: 2px ;
+.onesignal-reset th,
+.onesignal-reset td {
+  display: table-cell;
+  padding: 2px;
 }
 
 /* == SPECIFIC ELEMENTS == */
 /* Some of these are browser defaults; some are just useful resets */
 
-.onesignal-reset ol, .onesignal-reset ul:not([class^="iti"]) {
-    margin: 1em 0 ;
+.onesignal-reset ol,
+.onesignal-reset ul:not([class^='iti']) {
+  margin: 1em 0;
 }
 
-.onesignal-reset ul li:not([class^="iti"]), .onesignal-reset ul ul li, .onesignal-reset ul ul ul li, .onesignal-reset ol li, .onesignal-reset ol ol li, .onesignal-reset ol ol ol li, .onesignal-reset ul ol ol li, .onesignal-reset ul ul ol li, .onesignal-reset ol ul ul li, .onesignal-reset ol ol ul li {
-    list-style-position: inside ;
-    margin-top: .08em ;
+.onesignal-reset ul li:not([class^='iti']),
+.onesignal-reset ul ul li,
+.onesignal-reset ul ul ul li,
+.onesignal-reset ol li,
+.onesignal-reset ol ol li,
+.onesignal-reset ol ol ol li,
+.onesignal-reset ul ol ol li,
+.onesignal-reset ul ul ol li,
+.onesignal-reset ol ul ul li,
+.onesignal-reset ol ol ul li {
+  list-style-position: inside;
+  margin-top: 0.08em;
 }
 
-.onesignal-reset ol ol, .onesignal-reset ol ol ol, .onesignal-reset ul ul, .onesignal-reset ul ul ul, .onesignal-reset ol ul, .onesignal-reset ol ul ul, .onesignal-reset ol ol ul, .onesignal-reset ul ol, .onesignal-reset ul ol ol, .onesignal-reset ul ul ol {
-    padding-left: 40px ;
-    margin: 0 ;
+.onesignal-reset ol ol,
+.onesignal-reset ol ol ol,
+.onesignal-reset ul ul,
+.onesignal-reset ul ul ul,
+.onesignal-reset ol ul,
+.onesignal-reset ol ul ul,
+.onesignal-reset ol ol ul,
+.onesignal-reset ul ol,
+.onesignal-reset ul ol ol,
+.onesignal-reset ul ul ol {
+  padding-left: 40px;
+  margin: 0;
 }
 
 /* helper for general navigation */
-.onesignal-reset nav ul, .onesignal-reset nav ol {
-    list-style-type: none ;
+.onesignal-reset nav ul,
+.onesignal-reset nav ol {
+  list-style-type: none;
 }
 
-.onesignal-reset ul:not([class^="iti"]), .onesignal-reset menu {
-    list-style-type: disc ;
+.onesignal-reset ul:not([class^='iti']),
+.onesignal-reset menu {
+  list-style-type: disc;
 }
 
 .onesignal-reset ol {
-    list-style-type: decimal ;
+  list-style-type: decimal;
 }
 
-.onesignal-reset ol ul, .onesignal-reset ul ul, .onesignal-reset menu ul, .onesignal-reset ol menu, .onesignal-reset ul menu, .onesignal-reset menu menu {
-    list-style-type: circle ;
+.onesignal-reset ol ul,
+.onesignal-reset ul ul,
+.onesignal-reset menu ul,
+.onesignal-reset ol menu,
+.onesignal-reset ul menu,
+.onesignal-reset menu menu {
+  list-style-type: circle;
 }
 
-.onesignal-reset ol ol ul, .onesignal-reset ol ul ul, .onesignal-reset ol menu ul, .onesignal-reset ol ol menu, .onesignal-reset ol ul menu, .onesignal-reset ol menu menu, .onesignal-reset ul ol ul, .onesignal-reset ul ul ul, .onesignal-reset ul menu ul, .onesignal-reset ul ol menu, .onesignal-reset ul ul menu, .onesignal-reset ul menu menu, .onesignal-reset menu ol ul, .onesignal-reset menu ul ul, .onesignal-reset menu menu ul, .onesignal-reset menu ol menu, .onesignal-reset menu ul menu, .onesignal-reset menu menu menu {
-    list-style-type: square ;
+.onesignal-reset ol ol ul,
+.onesignal-reset ol ul ul,
+.onesignal-reset ol menu ul,
+.onesignal-reset ol ol menu,
+.onesignal-reset ol ul menu,
+.onesignal-reset ol menu menu,
+.onesignal-reset ul ol ul,
+.onesignal-reset ul ul ul,
+.onesignal-reset ul menu ul,
+.onesignal-reset ul ol menu,
+.onesignal-reset ul ul menu,
+.onesignal-reset ul menu menu,
+.onesignal-reset menu ol ul,
+.onesignal-reset menu ul ul,
+.onesignal-reset menu menu ul,
+.onesignal-reset menu ol menu,
+.onesignal-reset menu ul menu,
+.onesignal-reset menu menu menu {
+  list-style-type: square;
 }
 
-.onesignal-reset li:not([class^="iti"]) {
-    display: list-item ;
-    /* Fixes IE7 issue with positioning of nested bullets */
-    min-height: auto ;
-    min-width: auto ;
-    padding-left: 20px ; /* replace -webkit-padding-start: 40px; */
+.onesignal-reset li:not([class^='iti']) {
+  display: list-item;
+  /* Fixes IE7 issue with positioning of nested bullets */
+  min-height: auto;
+  min-width: auto;
+  padding-left: 20px; /* replace -webkit-padding-start: 40px; */
 }
 
 .onesignal-reset strong {
-    font-weight: bold ;
+  font-weight: bold;
 }
 
 .onesignal-reset em {
-    font-style: italic ;
+  font-style: italic;
 }
 
-.onesignal-reset kbd, .onesignal-reset samp, .onesignal-reset code, .onesignal-reset pre {
-    font-family: monospace ;
+.onesignal-reset kbd,
+.onesignal-reset samp,
+.onesignal-reset code,
+.onesignal-reset pre {
+  font-family: monospace;
 }
 
 .onesignal-reset a {
-    color: blue ;
-    text-decoration: underline ;
+  color: blue;
+  text-decoration: underline;
 }
 
 .onesignal-reset a:visited {
-    color: #529 ;
+  color: #529;
 }
 
-.onesignal-reset a, .onesignal-reset a *, .onesignal-reset input[type=submit], .onesignal-reset input[type=radio], .onesignal-reset input[type=checkbox], .onesignal-reset select {
-    cursor: pointer ;
+.onesignal-reset a,
+.onesignal-reset a *,
+.onesignal-reset input[type='submit'],
+.onesignal-reset input[type='radio'],
+.onesignal-reset input[type='checkbox'],
+.onesignal-reset select {
+  cursor: pointer;
 }
 
-.onesignal-reset button, .onesignal-reset input[type=submit] {
-    text-align: center ;
-    padding: 2px 6px 3px ;
-    border-radius: 4px ;
-    text-decoration: none ;
-    font-family: arial, helvetica, sans-serif ;
-    font-size: small ;
-    background: white ;
-    -webkit-appearance: push-button ;
-    color: buttontext ;
-    border: 1px #a6a6a6 solid ;
-    background: lightgrey ; /* Old browsers */
-    background: rgb(255, 255, 255); /* Old browsers */
-    background: -moz-linear-gradient(top, rgba(255, 255, 255, 1) 0%, rgba(221, 221, 221, 1) 100%, rgba(209, 209, 209, 1) 100%, rgba(221, 221, 221, 1) 100%) ; /* FF3.6+ */
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(255, 255, 255, 1)), color-stop(100%, rgba(221, 221, 221, 1)), color-stop(100%, rgba(209, 209, 209, 1)), color-stop(100%, rgba(221, 221, 221, 1))) ; /* Chrome,Safari4+ */
-    background: -webkit-linear-gradient(top, rgba(255, 255, 255, 1) 0%, rgba(221, 221, 221, 1) 100%, rgba(209, 209, 209, 1) 100%, rgba(221, 221, 221, 1) 100%) ; /* Chrome10+,Safari5.1+ */
-    background: -o-linear-gradient(top, rgba(255, 255, 255, 1) 0%, rgba(221, 221, 221, 1) 100%, rgba(209, 209, 209, 1) 100%, rgba(221, 221, 221, 1) 100%) ; /* Opera 11.10+ */
-    background: -ms-linear-gradient(top, rgba(255, 255, 255, 1) 0%, rgba(221, 221, 221, 1) 100%, rgba(209, 209, 209, 1) 100%, rgba(221, 221, 221, 1) 100%) ; /* IE10+ */
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 1) 0%, rgba(221, 221, 221, 1) 100%, rgba(209, 209, 209, 1) 100%, rgba(221, 221, 221, 1) 100%) ; /* W3C */
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#dddddd',GradientType=0 ) ; /* IE6-9 */
-    -webkit-box-shadow: 1px 1px 0px #eee ;
-    -moz-box-shadow: 1px 1px 0px #eee ;
-    -o-box-shadow: 1px 1px 0px #eee ;
-    box-shadow: 1px 1px 0px #eee ;
-    outline: initial ;
+.onesignal-reset button,
+.onesignal-reset input[type='submit'] {
+  text-align: center;
+  padding: 2px 6px 3px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-family: arial, helvetica, sans-serif;
+  font-size: small;
+  background: white;
+  -webkit-appearance: push-button;
+  color: buttontext;
+  border: 1px #a6a6a6 solid;
+  background: lightgrey; /* Old browsers */
+  background: rgb(255, 255, 255); /* Old browsers */
+  background: -moz-linear-gradient(
+    top,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(221, 221, 221, 1) 100%,
+    rgba(209, 209, 209, 1) 100%,
+    rgba(221, 221, 221, 1) 100%
+  ); /* FF3.6+ */
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(0%, rgba(255, 255, 255, 1)),
+    color-stop(100%, rgba(221, 221, 221, 1)),
+    color-stop(100%, rgba(209, 209, 209, 1)),
+    color-stop(100%, rgba(221, 221, 221, 1))
+  ); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(
+    top,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(221, 221, 221, 1) 100%,
+    rgba(209, 209, 209, 1) 100%,
+    rgba(221, 221, 221, 1) 100%
+  ); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(
+    top,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(221, 221, 221, 1) 100%,
+    rgba(209, 209, 209, 1) 100%,
+    rgba(221, 221, 221, 1) 100%
+  ); /* Opera 11.10+ */
+  background: -ms-linear-gradient(
+    top,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(221, 221, 221, 1) 100%,
+    rgba(209, 209, 209, 1) 100%,
+    rgba(221, 221, 221, 1) 100%
+  ); /* IE10+ */
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(221, 221, 221, 1) 100%,
+    rgba(209, 209, 209, 1) 100%,
+    rgba(221, 221, 221, 1) 100%
+  ); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#dddddd',GradientType=0 ); /* IE6-9 */
+  -webkit-box-shadow: 1px 1px 0px #eee;
+  -moz-box-shadow: 1px 1px 0px #eee;
+  -o-box-shadow: 1px 1px 0px #eee;
+  box-shadow: 1px 1px 0px #eee;
+  outline: initial;
 }
 
 .onesignal-reset button {
-    padding: 1px 6px 2px 6px ;
-    margin-right: 5px ;
+  padding: 1px 6px 2px 6px;
+  margin-right: 5px;
 }
 
-.onesignal-reset input[type=hidden]:not([class^="iti"]) {
-    display: none ;
+.onesignal-reset input[type='hidden']:not([class^='iti']) {
+  display: none;
 }
 
 /* restore form defaults */
 .onesignal-reset textarea {
-    -webkit-appearance: textarea ;
-    background: white ;
-    padding: 2px ;
-    margin-left: 4px ;
-    word-wrap: break-word ;
-    white-space: pre-wrap ;
-    font-size: 11px ;
-    font-family: arial, helvetica, sans-serif ;
-    line-height: 13px ;
-    resize: both ;
+  -webkit-appearance: textarea;
+  background: white;
+  padding: 2px;
+  margin-left: 4px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  font-size: 11px;
+  font-family: arial, helvetica, sans-serif;
+  line-height: 13px;
+  resize: both;
 }
 
-.onesignal-reset select, .onesignal-reset textarea, .onesignal-reset input {
-    border: 1px solid #ccc ;
+.onesignal-reset select,
+.onesignal-reset textarea,
+.onesignal-reset input {
+  border: 1px solid #ccc;
 }
 
 .onesignal-reset select {
-    font-size: 11px ;
-    font-family: helvetica, arial, sans-serif ;
-    display: inline-block;
+  font-size: 11px;
+  font-family: helvetica, arial, sans-serif;
+  display: inline-block;
 }
 
-.onesignal-reset textarea:focus, .onesignal-reset input:focus {
-    outline: auto 5px -webkit-focus-ring-color ;
-    outline: initial ;
+.onesignal-reset textarea:focus,
+.onesignal-reset input:focus {
+  outline: auto 5px -webkit-focus-ring-color;
+  outline: initial;
 }
 
-.onesignal-reset input[type=text] {
-    background: white ;
-    padding: 1px ;
-    font-family: initial ;
-    font-size: small ;
+.onesignal-reset input[type='text'] {
+  background: white;
+  padding: 1px;
+  font-family: initial;
+  font-size: small;
 }
 
-.onesignal-reset input[type=checkbox], .onesignal-reset input[type=radio] {
-    border: 1px #2b2b2b solid ;
-    border-radius: 4px ;
+.onesignal-reset input[type='checkbox'],
+.onesignal-reset input[type='radio'] {
+  border: 1px #2b2b2b solid;
+  border-radius: 4px;
 }
 
-.onesignal-reset input[type=checkbox], .onesignal-reset input[type=radio] {
-    outline: intial ;
+.onesignal-reset input[type='checkbox'],
+.onesignal-reset input[type='radio'] {
+  outline: intial;
 }
 
-.onesignal-reset input[type=radio] {
-    margin: 2px 2px 3px 2px ;
+.onesignal-reset input[type='radio'] {
+  margin: 2px 2px 3px 2px;
 }
 
-.onesignal-reset input[type=submit]:active, .onesignal-reset button:active {
-    background: rgb(59, 103, 158) ; /* Old browsers */
-    background: -moz-linear-gradient(top, rgba(59, 103, 158, 1) 0%, rgba(43, 136, 217, 1) 50%, rgba(32, 124, 202, 1) 51%, rgba(125, 185, 232, 1) 100%) ; /* FF3.6+ */
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(59, 103, 158, 1)), color-stop(50%, rgba(43, 136, 217, 1)), color-stop(51%, rgba(32, 124, 202, 1)), color-stop(100%, rgba(125, 185, 232, 1))) ; /* Chrome,Safari4+ */
-    background: -webkit-linear-gradient(top, rgba(59, 103, 158, 1) 0%, rgba(43, 136, 217, 1) 50%, rgba(32, 124, 202, 1) 51%, rgba(125, 185, 232, 1) 100%) ; /* Chrome10+,Safari5.1+ */
-    background: -o-linear-gradient(top, rgba(59, 103, 158, 1) 0%, rgba(43, 136, 217, 1) 50%, rgba(32, 124, 202, 1) 51%, rgba(125, 185, 232, 1) 100%) ; /* Opera 11.10+ */
-    background: -ms-linear-gradient(top, rgba(59, 103, 158, 1) 0%, rgba(43, 136, 217, 1) 50%, rgba(32, 124, 202, 1) 51%, rgba(125, 185, 232, 1) 100%) ; /* IE10+ */
-    background: linear-gradient(to bottom, rgba(59, 103, 158, 1) 0%, rgba(43, 136, 217, 1) 50%, rgba(32, 124, 202, 1) 51%, rgba(125, 185, 232, 1) 100%) ; /* W3C */
-    border-color: #5259b0 ;
+.onesignal-reset input[type='submit']:active,
+.onesignal-reset button:active {
+  background: rgb(59, 103, 158); /* Old browsers */
+  background: -moz-linear-gradient(
+    top,
+    rgba(59, 103, 158, 1) 0%,
+    rgba(43, 136, 217, 1) 50%,
+    rgba(32, 124, 202, 1) 51%,
+    rgba(125, 185, 232, 1) 100%
+  ); /* FF3.6+ */
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(0%, rgba(59, 103, 158, 1)),
+    color-stop(50%, rgba(43, 136, 217, 1)),
+    color-stop(51%, rgba(32, 124, 202, 1)),
+    color-stop(100%, rgba(125, 185, 232, 1))
+  ); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(
+    top,
+    rgba(59, 103, 158, 1) 0%,
+    rgba(43, 136, 217, 1) 50%,
+    rgba(32, 124, 202, 1) 51%,
+    rgba(125, 185, 232, 1) 100%
+  ); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(
+    top,
+    rgba(59, 103, 158, 1) 0%,
+    rgba(43, 136, 217, 1) 50%,
+    rgba(32, 124, 202, 1) 51%,
+    rgba(125, 185, 232, 1) 100%
+  ); /* Opera 11.10+ */
+  background: -ms-linear-gradient(
+    top,
+    rgba(59, 103, 158, 1) 0%,
+    rgba(43, 136, 217, 1) 50%,
+    rgba(32, 124, 202, 1) 51%,
+    rgba(125, 185, 232, 1) 100%
+  ); /* IE10+ */
+  background: linear-gradient(
+    to bottom,
+    rgba(59, 103, 158, 1) 0%,
+    rgba(43, 136, 217, 1) 50%,
+    rgba(32, 124, 202, 1) 51%,
+    rgba(125, 185, 232, 1) 100%
+  ); /* W3C */
+  border-color: #5259b0;
 }
 
-.onesignal-reset abbr[title], .onesignal-reset acronym[title], .onesignal-reset dfn[title] {
-    cursor: help ;
-    border-bottom-width: 1px ;
-    border-bottom-style: dotted ;
+.onesignal-reset abbr[title],
+.onesignal-reset acronym[title],
+.onesignal-reset dfn[title] {
+  cursor: help;
+  border-bottom-width: 1px;
+  border-bottom-style: dotted;
 }
 
 .onesignal-reset ins {
-    background-color: #ff9 ;
-    color: black ;
+  background-color: #ff9;
+  color: black;
 }
 
 .onesignal-reset del {
-    text-decoration: line-through ;
+  text-decoration: line-through;
 }
 
-.onesignal-reset blockquote, .onesignal-reset q {
-    quotes: none ; /* HTML5 */
+.onesignal-reset blockquote,
+.onesignal-reset q {
+  quotes: none; /* HTML5 */
 }
 
-.onesignal-reset blockquote:before, .onesignal-reset blockquote:after, .onesignal-reset q:before, .onesignal-reset q:after, .onesignal-reset li:before, .onesignal-reset li:after {
-    content: "" ;
+.onesignal-reset blockquote:before,
+.onesignal-reset blockquote:after,
+.onesignal-reset q:before,
+.onesignal-reset q:after,
+.onesignal-reset li:before,
+.onesignal-reset li:after {
+  content: '';
 }
 
-.onesignal-reset input, .onesignal-reset select {
-    vertical-align: middle ;
+.onesignal-reset input,
+.onesignal-reset select {
+  vertical-align: middle;
 }
 
 .onesignal-reset table {
-    border-collapse: collapse ;
-    border-spacing: 0 ;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
 
 .onesignal-reset hr {
-    display: block ;
-    height: 1px ;
-    border: 0 ;
-    border-top: 1px solid #ccc ;
-    margin: 1em 0 ;
+  display: block;
+  height: 1px;
+  border: 0;
+  border-top: 1px solid #ccc;
+  margin: 1em 0;
 }
 
-.onesignal-reset *[dir=rtl] {
-    direction: rtl ;
+.onesignal-reset *[dir='rtl'] {
+  direction: rtl;
 }
 
 .onesignal-reset mark {
-    background-color: #ff9 ;
-    color: black ;
-    font-style: italic ;
-    font-weight: bold ;
+  background-color: #ff9;
+  color: black;
+  font-style: italic;
+  font-weight: bold;
 }
 
 .onesignal-reset menu {
-    padding-left: 40px ;
-    padding-top: 8px ;
+  padding-left: 40px;
+  padding-top: 8px;
 }
 
 /* additional helpers */
 .onesignal-reset [hidden],
 .onesignal-reset template {
-    display: none ;
+  display: none;
 }
 
 .onesignal-reset abbr[title] {
-    border-bottom: 1px dotted ;
+  border-bottom: 1px dotted;
 }
 
-.onesignal-reset sub, .onesignal-reset sup {
-    font-size: 75% ;
-    line-height: 0 ;
-    position: relative ;
-    vertical-align: baseline ;
+.onesignal-reset sub,
+.onesignal-reset sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
 }
 
 .onesignal-reset sup {
-    top: -0.5em ;
+  top: -0.5em;
 }
 
 .onesignal-reset sub {
-    bottom: -0.25em ;
+  bottom: -0.25em;
 }
 
 .onesignal-reset img {
-    border: 0 ;
+  border: 0;
 }
 
 .onesignal-reset figure {
-    margin: 0 ;
+  margin: 0;
 }
 
 .onesignal-reset textarea {
-    overflow: auto ;
-    vertical-align: top ;
+  overflow: auto;
+  vertical-align: top;
 }
 
 /* == ROOT CONTAINER ELEMENT == */
 /* This contains default values for child elements to inherit  */
 .onesignal-reset {
-    font-size: medium ;
-    line-height: 1 ;
-    direction: ltr ;
-    text-align: left ; /* for IE, Opera */
-    text-align: start ; /* recommended W3C Spec */
-    font-family: "Times New Roman", Times, serif ; /* Override this with whatever font-family is required */
-    color: black ;
-    font-style: normal ;
-    font-weight: normal ;
-    text-decoration: none ;
-    list-style-type: disc ;
+  font-size: medium;
+  line-height: 1;
+  direction: ltr;
+  text-align: left; /* for IE, Opera */
+  text-align: start; /* recommended W3C Spec */
+  font-family: 'Times New Roman', Times, serif; /* Override this with whatever font-family is required */
+  color: black;
+  font-style: normal;
+  font-weight: normal;
+  text-decoration: none;
+  list-style-type: disc;
 }
 
 .onesignal-reset pre {
-    white-space: pre ;
+  white-space: pre;
 }

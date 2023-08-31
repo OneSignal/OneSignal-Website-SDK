@@ -1,20 +1,20 @@
-import OneSignalError from "../../shared/errors/OneSignalError";
-import { logMethodCall } from "../../shared/utils/utils";
-import OneSignal from "../../onesignal/OneSignal";
-import UserData from "../../core/models/UserData";
-import { RequestService } from "../../core/requestService/RequestService";
-import AliasPair from "../../core/requestService/AliasPair";
-import Log from "../../shared/libraries/Log";
-import { OSModel } from "../../core/modelRepo/OSModel";
-import { SupportedIdentity } from "../../core/models/IdentityModel";
-import MainHelper from "../../shared/helpers/MainHelper";
-import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
-import { RETRY_BACKOFF } from "../../shared/api/RetryBackoff";
-import { isCompleteSubscriptionObject } from "../../core/utils/typePredicates";
-import UserDirector from "../../onesignal/UserDirector";
-import Database from "../../shared/services/Database";
-import LocalStorage from "../../shared/utils/LocalStorage";
-import { ModelName, SupportedModel } from "../../core/models/SupportedModels";
+import OneSignalError from '../../shared/errors/OneSignalError';
+import { logMethodCall } from '../../shared/utils/utils';
+import OneSignal from '../../onesignal/OneSignal';
+import UserData from '../../core/models/UserData';
+import { RequestService } from '../../core/requestService/RequestService';
+import AliasPair from '../../core/requestService/AliasPair';
+import Log from '../../shared/libraries/Log';
+import { OSModel } from '../../core/modelRepo/OSModel';
+import { SupportedIdentity } from '../../core/models/IdentityModel';
+import MainHelper from '../../shared/helpers/MainHelper';
+import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
+import { RETRY_BACKOFF } from '../../shared/api/RetryBackoff';
+import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
+import UserDirector from '../../onesignal/UserDirector';
+import Database from '../../shared/services/Database';
+import LocalStorage from '../../shared/utils/LocalStorage';
+import { ModelName, SupportedModel } from '../../core/models/SupportedModels';
 
 export default class LoginManager {
   static async login(externalId: string, token?: string): Promise<void> {
@@ -22,7 +22,9 @@ export default class LoginManager {
     const consentGiven = await Database.getConsentGiven();
 
     if (consentRequired && !consentGiven) {
-      throw new OneSignalError('Login: Consent required but not given, skipping login');
+      throw new OneSignalError(
+        'Login: Consent required but not given, skipping login',
+      );
     }
 
     try {
@@ -48,7 +50,8 @@ export default class LoginManager {
         return;
       }
 
-      const pushSubModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+      const pushSubModel =
+        await OneSignal.coreDirector.getPushSubscriptionModel();
       let currentPushSubscriptionId;
 
       if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
@@ -70,10 +73,11 @@ export default class LoginManager {
         userData = {
           identity: {
             external_id: externalId,
-          }
+          },
         };
 
-        const pushSubscription = await OneSignal.coreDirector.getPushSubscriptionModel();
+        const pushSubscription =
+          await OneSignal.coreDirector.getPushSubscriptionModel();
         if (pushSubscription) {
           userData.subscriptions = [pushSubscription.data];
         }
@@ -84,16 +88,24 @@ export default class LoginManager {
       await UserDirector.initializeUser(true);
 
       try {
-        const result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
+        const result = await LoginManager.identifyOrUpsertUser(
+          userData,
+          isIdentified,
+          currentPushSubscriptionId,
+        );
         const onesignalId = result?.identity?.onesignal_id;
 
         if (!onesignalId) {
-          Log.info("Caching login call, waiting on network or subscription creation.");
+          Log.info(
+            'Caching login call, waiting on network or subscription creation.',
+          );
           return;
         }
         await LoginManager.fetchAndHydrate(onesignalId);
       } catch (e) {
-        Log.error(`Login: Error while identifying/upserting user: ${e.message}`);
+        Log.error(
+          `Login: Error while identifying/upserting user: ${e.message}`,
+        );
         // if the login fails, restore the old user data
         if (onesignalIdBackup) {
           Log.debug('Login: Restoring old user data');
@@ -101,7 +113,9 @@ export default class LoginManager {
           try {
             await LoginManager.fetchAndHydrate(onesignalIdBackup);
           } catch (e) {
-            Log.error(`Login: Error while restoring old user data: ${e.message}`);
+            Log.error(
+              `Login: Error while restoring old user data: ${e.message}`,
+            );
           }
         }
         throw e;
@@ -114,7 +128,11 @@ export default class LoginManager {
   static async logout(): Promise<void> {
     // check if user is already logged out
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-    if (!identityModel || !identityModel.data || !identityModel.data.external_id) {
+    if (
+      !identityModel ||
+      !identityModel.data ||
+      !identityModel.data.external_id
+    ) {
       Log.debug('Logout: User is not logged in, skipping logout');
       return;
     }
@@ -122,15 +140,23 @@ export default class LoginManager {
     // before, logging out, process anything waiting in the delta queue so it's not lost
     OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
     UserDirector.resetUserMetaProperties();
-    const pushSubModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushSubModel =
+      await OneSignal.coreDirector.getPushSubscriptionModel();
     await OneSignal.coreDirector.resetModelRepoAndCache();
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
-    OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);
+    OneSignal.coreDirector.add(
+      ModelName.PushSubscriptions,
+      pushSubModel as OSModel<SupportedModel>,
+      false,
+    );
     await UserDirector.initializeUser(false);
   }
 
-  static setExternalId(identityOSModel: OSModel<SupportedIdentity>, externalId: string): void {
-    logMethodCall("LoginManager.setExternalId", { externalId });
+  static setExternalId(
+    identityOSModel: OSModel<SupportedIdentity>,
+    externalId: string,
+  ): void {
+    logMethodCall('LoginManager.setExternalId', { externalId });
 
     if (!identityOSModel) {
       throw new OneSignalError('login: no identity model found');
@@ -140,32 +166,42 @@ export default class LoginManager {
   }
 
   static isIdentified(identity: SupportedIdentity): boolean {
-    logMethodCall("LoginManager.isIdentified", { identity });
+    logMethodCall('LoginManager.isIdentified', { identity });
 
     return identity.external_id !== undefined;
   }
 
-  static async identifyOrUpsertUser(userData: Partial<UserData>, isIdentified: boolean, subscriptionId?: string)
-    : Promise<Partial<UserData>> {
-      logMethodCall("LoginManager.identifyOrUpsertUser", { userData, isIdentified, subscriptionId });
-      let result: Partial<UserData>;
+  static async identifyOrUpsertUser(
+    userData: Partial<UserData>,
+    isIdentified: boolean,
+    subscriptionId?: string,
+  ): Promise<Partial<UserData>> {
+    logMethodCall('LoginManager.identifyOrUpsertUser', {
+      userData,
+      isIdentified,
+      subscriptionId,
+    });
+    let result: Partial<UserData>;
 
-      if (isIdentified) {
-        // if started off identified, upsert a user
-        result = await this.upsertUser(userData);
-      } else {
-        // promoting anonymous user to identified user
-        // from user data, we only use identity (and we remove all aliases except external_id)
-        result = await this.identifyUser(userData as UserData, subscriptionId);
-      }
-      return result;
+    if (isIdentified) {
+      // if started off identified, upsert a user
+      result = await this.upsertUser(userData);
+    } else {
+      // promoting anonymous user to identified user
+      // from user data, we only use identity (and we remove all aliases except external_id)
+      result = await this.identifyUser(userData as UserData, subscriptionId);
+    }
+    return result;
   }
 
-  static async upsertUser(userData: Partial<UserData>, retry = 5): Promise<UserData> {
-    logMethodCall("LoginManager.upsertUser", { userData });
+  static async upsertUser(
+    userData: Partial<UserData>,
+    retry = 5,
+  ): Promise<UserData> {
+    logMethodCall('LoginManager.upsertUser', { userData });
 
     if (retry === 0) {
-      throw new OneSignalError("Login: upsertUser failed: max retries reached");
+      throw new OneSignalError('Login: upsertUser failed: max retries reached');
     }
 
     const appId = await MainHelper.getAppId();
@@ -179,11 +215,11 @@ export default class LoginManager {
     const status = response?.status;
 
     if (status >= 200 && status < 300) {
-      Log.info("Successfully created user", result);
+      Log.info('Successfully created user', result);
     } else if (status >= 400 && status < 500) {
-      Log.error("Malformed request", result);
+      Log.error('Malformed request', result);
     } else if (status >= 500) {
-      Log.error("Server error. Retrying...");
+      Log.error('Server error. Retrying...');
       await awaitableTimeout(RETRY_BACKOFF[retry]);
       return this.upsertUser(userDataCopy, retry - 1);
     }
@@ -191,63 +227,82 @@ export default class LoginManager {
     return result;
   }
 
-  static async identifyUser(userData: UserData, pushSubscriptionId?: string, retry = 5):
-    Promise<Partial<UserData>> {
-      logMethodCall("LoginManager.identifyUser", { userData, pushSubscriptionId });
+  static async identifyUser(
+    userData: UserData,
+    pushSubscriptionId?: string,
+    retry = 5,
+  ): Promise<Partial<UserData>> {
+    logMethodCall('LoginManager.identifyUser', {
+      userData,
+      pushSubscriptionId,
+    });
 
-      if (retry === 0) {
-        throw new OneSignalError("Login: identifyUser failed: max retries reached");
-      }
+    if (retry === 0) {
+      throw new OneSignalError(
+        'Login: identifyUser failed: max retries reached',
+      );
+    }
 
-      const { onesignal_id: onesignalId } = userData.identity;
-      const userDataCopy = JSON.parse(JSON.stringify(userData));
+    const { onesignal_id: onesignalId } = userData.identity;
+    const userDataCopy = JSON.parse(JSON.stringify(userData));
 
-      // only accepts one alias, so remove other aliases only leaving external_id
-      this.stripAliasesOtherThanExternalId(userData);
+    // only accepts one alias, so remove other aliases only leaving external_id
+    this.stripAliasesOtherThanExternalId(userData);
 
-      const { identity } = userData;
+    const { identity } = userData;
 
+    if (!identity) {
+      throw new OneSignalError('identifyUser failed: no identity found');
+    }
 
-      if (!identity) {
-        throw new OneSignalError("identifyUser failed: no identity found");
-      }
+    if (!onesignalId) {
+      // Persist to disk so it is used once we have the opportunity to create a User.
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      identityModel?.set(AliasPair.EXTERNAL_ID, identity.external_id, false);
+      return userData;
+    }
 
-      if (!onesignalId) {
-        // Persist to disk so it is used once we have the opportunity to create a User.
-        const identityModel = OneSignal.coreDirector.getIdentityModel();
-        identityModel?.set(AliasPair.EXTERNAL_ID, identity.external_id, false);
-        return userData;
-      }
+    const appId = await MainHelper.getAppId();
+    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
 
-      const appId = await MainHelper.getAppId();
-      const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+    // identify user
+    const identifyUserResponse = await RequestService.addAlias(
+      { appId },
+      aliasPair,
+      identity,
+    );
+    const identifyResponseStatus = identifyUserResponse?.status;
 
-      // identify user
-      const identifyUserResponse = await RequestService.addAlias({ appId }, aliasPair, identity);
-      const identifyResponseStatus = identifyUserResponse?.status;
+    if (identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
+      Log.info('identifyUser succeeded');
+    } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
+      return await this.transferSubscription(
+        appId,
+        pushSubscriptionId,
+        identity,
+      );
+    } else if (identifyResponseStatus >= 400 && identifyResponseStatus < 500) {
+      throw new OneSignalError(
+        `identifyUser: malformed request: ${JSON.stringify(
+          identifyUserResponse?.result,
+        )}`,
+      );
+    } else if (identifyResponseStatus >= 500) {
+      Log.error('identifyUser failed: server error. Retrying...');
+      await awaitableTimeout(RETRY_BACKOFF[retry]);
+      return this.identifyUser(userDataCopy, pushSubscriptionId, retry - 1);
+    }
 
-      if (identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
-        Log.info("identifyUser succeeded");
-      } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
-        return await this.transferSubscription(appId, pushSubscriptionId, identity);
-      } else if (identifyResponseStatus >= 400 && identifyResponseStatus < 500) {
-        throw new OneSignalError(`identifyUser: malformed request: ${JSON.stringify(identifyUserResponse?.result)}`);
-      } else if (identifyResponseStatus >= 500) {
-        Log.error("identifyUser failed: server error. Retrying...");
-        await awaitableTimeout(RETRY_BACKOFF[retry]);
-        return this.identifyUser(userDataCopy, pushSubscriptionId, retry - 1);
-      }
-
-      const identityResult = identifyUserResponse?.result?.identity;
-      return { identity: identityResult };
+    const identityResult = identifyUserResponse?.result?.identity;
+    return { identity: identityResult };
   }
 
   static async fetchAndHydrate(onesignalId: string): Promise<void> {
-    logMethodCall("LoginManager.fetchAndHydrate", { onesignalId });
+    logMethodCall('LoginManager.fetchAndHydrate', { onesignalId });
 
     const fetchUserResponse = await RequestService.getUser(
       { appId: await MainHelper.getAppId() },
-      new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
+      new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId),
     );
 
     OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result);
@@ -259,16 +314,20 @@ export default class LoginManager {
    * otherwise contain any existing user a aliases
    */
   static stripAliasesOtherThanExternalId(userData: Partial<UserData>): void {
-    logMethodCall("LoginManager.stripAliasesOtherThanExternalId", { userData });
+    logMethodCall('LoginManager.stripAliasesOtherThanExternalId', { userData });
 
     const { identity } = userData;
     if (!identity) {
-      throw new OneSignalError("stripAliasesOtherThanExternalId failed: no identity found");
+      throw new OneSignalError(
+        'stripAliasesOtherThanExternalId failed: no identity found',
+      );
     }
 
     const { external_id } = identity;
     if (!external_id) {
-      throw new OneSignalError("stripAliasesOtherThanExternalId failed: no external_id found");
+      throw new OneSignalError(
+        'stripAliasesOtherThanExternalId failed: no external_id found',
+      );
     }
 
     const newIdentity = { external_id };
@@ -282,30 +341,39 @@ export default class LoginManager {
    * @param identity
    * @returns Promise<Partial<UserData>>
    */
-  static async transferSubscription(appId: string, pushSubscriptionId: string, identity: SupportedIdentity):
-    Promise<Partial<UserData>> {
-      Log.error(
-        "^^^ Handling 409 HTTP response reported by the browser above."
-        + " This is an expected result when the User already exists."
-        + " Push subscription is being transferred the existing User."
-      );
+  static async transferSubscription(
+    appId: string,
+    pushSubscriptionId: string,
+    identity: SupportedIdentity,
+  ): Promise<Partial<UserData>> {
+    Log.error(
+      '^^^ Handling 409 HTTP response reported by the browser above.' +
+        ' This is an expected result when the User already exists.' +
+        ' Push subscription is being transferred the existing User.',
+    );
 
-      const retainPreviousOwner = false;
-      const transferResponse = await RequestService.transferSubscription(
-        { appId },
-        pushSubscriptionId,
-        identity,
-        retainPreviousOwner
-      );
-      const transferResponseStatus = transferResponse?.status;
-      const tansferResult = transferResponse?.result;
+    const retainPreviousOwner = false;
+    const transferResponse = await RequestService.transferSubscription(
+      { appId },
+      pushSubscriptionId,
+      identity,
+      retainPreviousOwner,
+    );
+    const transferResponseStatus = transferResponse?.status;
+    const tansferResult = transferResponse?.result;
 
-      if (transferResponseStatus && transferResponseStatus >= 200 && transferResponseStatus < 300) {
-        Log.info("transferSubscription succeeded");
-        const transferResultIdentity = tansferResult?.identity;
-        return { identity: transferResultIdentity };
-      } else {
-        throw new OneSignalError(`transferSubscription failed: ${JSON.stringify(tansferResult)}}`);
-      }
+    if (
+      transferResponseStatus &&
+      transferResponseStatus >= 200 &&
+      transferResponseStatus < 300
+    ) {
+      Log.info('transferSubscription succeeded');
+      const transferResultIdentity = tansferResult?.identity;
+      return { identity: transferResultIdentity };
+    } else {
+      throw new OneSignalError(
+        `transferSubscription failed: ${JSON.stringify(tansferResult)}}`,
+      );
+    }
   }
 }

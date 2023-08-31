@@ -1,21 +1,21 @@
 export interface TagCategory {
-    tag: string;
-    label: string;
-    checked?: boolean;
+  tag: string;
+  label: string;
+  checked?: boolean;
 }
-type PossibleTagValueValues = "0" | "1";
+type PossibleTagValueValues = '0' | '1';
 export interface TagsObject<T> {
-    [key: string]: T;
+  [key: string]: T;
 }
 export type TagsObjectWithBoolean = TagsObject<boolean>;
 export type TagsObjectForApi = TagsObject<PossibleTagValueValues>;
 
 // deprecating in config schema version 2+
 export interface Categories {
-    positiveUpdateButton: string;
-    negativeUpdateButton: string;
-    savingButton: string;
-    errorButton: string;
-    updateMessage: string;
-    tags: TagCategory[];
+  positiveUpdateButton: string;
+  negativeUpdateButton: string;
+  savingButton: string;
+  errorButton: string;
+  updateMessage: string;
+  tags: TagCategory[];
 }

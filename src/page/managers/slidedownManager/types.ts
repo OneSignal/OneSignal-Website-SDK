@@ -1,5 +1,5 @@
-import Slidedown from "../../slidedown/Slidedown";
-import { AutoPromptOptions } from "../PromptsManager";
+import Slidedown from '../../slidedown/Slidedown';
+import { AutoPromptOptions } from '../PromptsManager';
 
 export interface ISlidedownManager {
   slidedown?: Slidedown;

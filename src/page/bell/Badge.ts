@@ -1,11 +1,16 @@
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import AnimatedElement from './AnimatedElement';
 
-
 export default class Badge extends ActiveAnimatedElement {
-
   constructor() {
-    super('.onesignal-bell-launcher-badge', 'onesignal-bell-launcher-badge-opened', null, 'onesignal-bell-launcher-badge-active', null, 'hidden');
+    super(
+      '.onesignal-bell-launcher-badge',
+      'onesignal-bell-launcher-badge-opened',
+      null,
+      'onesignal-bell-launcher-badge-active',
+      null,
+      'hidden',
+    );
   }
 
   increment(): void {
@@ -28,10 +33,8 @@ export default class Badge extends ActiveAnimatedElement {
     if (!isNaN(this.content as any)) {
       let badgeNumber = +this.content; // Coerce to int
       badgeNumber -= 1;
-      if (badgeNumber > 0)
-        this.content = badgeNumber.toString();
-      else
-        this.content = '';
+      if (badgeNumber > 0) this.content = badgeNumber.toString();
+      else this.content = '';
     }
   }
 }

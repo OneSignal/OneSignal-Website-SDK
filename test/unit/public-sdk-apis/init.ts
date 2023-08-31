@@ -1,21 +1,22 @@
-import "../../support/polyfills/polyfills";
-import test, { ExecutionContext } from "ava";
+import '../../support/polyfills/polyfills';
+import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
-import Database from "../../../src/shared/services/Database";
-import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
+import Database from '../../../src/shared/services/Database';
+import {
+  TestEnvironment,
+  HttpHttpsEnvironment,
+} from '../../support/sdk/TestEnvironment';
 import Context from '../../../src/page/models/Context';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
 import { AppConfig } from '../../../src/shared/models/AppConfig';
 import nock from 'nock';
-import Random from "../../support/tester/Random";
-import OneSignalApiBase from "../../../src/shared/api/OneSignalApiBase";
-import { SdkInitError } from "../../../src/shared/errors/SdkInitError";
-import {
-  InitTestHelper, AssertInitSDK
-} from '../../support/tester/utils';
+import Random from '../../support/tester/Random';
+import OneSignalApiBase from '../../../src/shared/api/OneSignalApiBase';
+import { SdkInitError } from '../../../src/shared/errors/SdkInitError';
+import { InitTestHelper, AssertInitSDK } from '../../support/tester/utils';
 
-let sinonSandbox: SinonSandbox = sinon.sandbox.create();
-let initTestHelper = new InitTestHelper(sinonSandbox);
+const sinonSandbox: SinonSandbox = sinon.sandbox.create();
+const initTestHelper = new InitTestHelper(sinonSandbox);
 
 test.beforeEach(function () {
   nock.disableNetConnect();
@@ -29,10 +30,10 @@ test.afterEach(function (_t: ExecutionContext) {
   OneSignal._sessionInitAlreadyRunning = false;
 });
 
-test("correct degree of persistNotification setting should be stored", async t => {
+test('correct degree of persistNotification setting should be stored', async (t) => {
   await TestEnvironment.initialize({
-    initOptions: { },
-    httpOrHttps: HttpHttpsEnvironment.Https
+    initOptions: {},
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -44,7 +45,10 @@ test("correct degree of persistNotification setting should be stored", async t =
   {
     delete config.userConfig.persistNotification;
     await InitHelper.saveInitOptions();
-    const persistNotification = await Database.get('Options', 'persistNotification');
+    const persistNotification = await Database.get(
+      'Options',
+      'persistNotification',
+    );
     t.true(persistNotification);
   }
 
@@ -52,7 +56,10 @@ test("correct degree of persistNotification setting should be stored", async t =
   {
     config.userConfig.persistNotification = false;
     await InitHelper.saveInitOptions();
-    const persistNotification = await Database.get('Options', 'persistNotification');
+    const persistNotification = await Database.get(
+      'Options',
+      'persistNotification',
+    );
     t.false(persistNotification);
   }
 
@@ -60,36 +67,40 @@ test("correct degree of persistNotification setting should be stored", async t =
   {
     config.userConfig.persistNotification = true;
     await InitHelper.saveInitOptions();
-    const persistNotification = await Database.get('Options', 'persistNotification');
+    const persistNotification = await Database.get(
+      'Options',
+      'persistNotification',
+    );
     t.is(persistNotification, true);
   }
 });
 
-test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => {
+test('Test OneSignal.init, Custom, with requiresUserPrivacyConsent', async (t) => {
   const testConfig = {
     initOptions: {},
     httpOrHttps: HttpHttpsEnvironment.Https,
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
-    stubSetTimeout: true
+    stubSetTimeout: true,
   };
   await TestEnvironment.initialize(testConfig);
 
   initTestHelper.mockBasicInitEnv(testConfig);
 
   let delayInit = true;
-  OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, function() {
-    if (delayInit)
-      t.fail();
+  OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, function () {
+    if (delayInit) t.fail();
   });
 
   TestEnvironment.mockInternalOneSignal();
 
   const assertInit = new AssertInitSDK();
   assertInit.setupEnsureInitEventFires(t);
-  sinonSandbox.stub(OneSignalApiBase, "post").resolves({ success: true, id: Random.getRandomUuid() });
+  sinonSandbox
+    .stub(OneSignalApiBase, 'post')
+    .resolves({ success: true, id: Random.getRandomUuid() });
   await OneSignal.init({
     appId: Random.getRandomUuid(),
-    requiresUserPrivacyConsent: true
+    requiresUserPrivacyConsent: true,
   });
 
   delayInit = false;
@@ -97,23 +108,21 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
   assertInit.ensureInitEventFired();
 });
 
-test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async t => {
+test('Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent', async (t) => {
   const testConfig = {
-    initOptions: { },
+    initOptions: {},
     httpOrHttps: HttpHttpsEnvironment.Https,
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
-    stubSetTimeout: true
+    stubSetTimeout: true,
   };
   await TestEnvironment.initialize(testConfig);
 
   initTestHelper.mockBasicInitEnv(testConfig);
 
   let delayInit = true;
-  OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, function() {
-    if (delayInit)
-      t.fail();
-    else
-      t.pass();
+  OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, function () {
+    if (delayInit) t.fail();
+    else t.pass();
   });
   // Don't need to mock create call, autoRegister not settable with TypicalSite
 
@@ -121,7 +130,7 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
   assertInit.setupEnsureInitEventFires(t);
   await OneSignal.init({
     appId: Random.getRandomUuid(),
-    requiresUserPrivacyConsent: true
+    requiresUserPrivacyConsent: true,
   });
 
   delayInit = false;
@@ -129,21 +138,27 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
   assertInit.ensureInitEventFired();
 });
 
-test("Test OneSignal.init, No app id or wrong format of app id", async t => {
+test('Test OneSignal.init, No app id or wrong format of app id', async (t) => {
   const testConfig = {
     initOptions: {},
     httpOrHttps: HttpHttpsEnvironment.Https,
-    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
+    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
   };
   await TestEnvironment.initialize(testConfig);
   OneSignal.initialized = false;
 
-  sinonSandbox.stub(document, "visibilityState").value("visible");
-  sinonSandbox.stub(InitHelper, "errorIfInitAlreadyCalled").returns(false);
+  sinonSandbox.stub(document, 'visibilityState').value('visible');
+  sinonSandbox.stub(InitHelper, 'errorIfInitAlreadyCalled').returns(false);
 
-  await t.throwsAsync(async () => OneSignal.init({}), { instanceOf: SdkInitError });
-  await t.throwsAsync(async () => OneSignal.init({ appId: "" }), { instanceOf: SdkInitError });
-  await t.throwsAsync(async () => OneSignal.init({ appId: "wrong-format" }), { instanceOf: SdkInitError });
+  await t.throwsAsync(async () => OneSignal.init({}), {
+    instanceOf: SdkInitError,
+  });
+  await t.throwsAsync(async () => OneSignal.init({ appId: '' }), {
+    instanceOf: SdkInitError,
+  });
+  await t.throwsAsync(async () => OneSignal.init({ appId: 'wrong-format' }), {
+    instanceOf: SdkInitError,
+  });
 });
 
 // more init tests in onSession.ts

@@ -1,11 +1,11 @@
-import { DeliveryPlatformKind } from "./DeliveryPlatformKind";
-import { DeviceRecord } from "./DeviceRecord";
-import { OutcomesConfig } from "./Outcomes";
+import { DeliveryPlatformKind } from './DeliveryPlatformKind';
+import { DeviceRecord } from './DeviceRecord';
+import { OutcomesConfig } from './Outcomes';
 
 export enum SessionStatus {
-  Active = "active",
-  Inactive = "inactive",
-  Expired = "expired"
+  Active = 'active',
+  Inactive = 'inactive',
+  Expired = 'expired',
 }
 
 export enum SessionOrigin {
@@ -56,11 +56,11 @@ export interface PageVisibilityResponse extends PageVisibilityRequest {
   focused: boolean;
 }
 
-export const ONESIGNAL_SESSION_KEY = "oneSignalSession";
+export const ONESIGNAL_SESSION_KEY = 'oneSignalSession';
 
 export function initializeNewSession(options: NewSessionOptions): Session {
   const currentTimestamp = new Date().getTime();
-  const sessionKey = options && options.sessionKey || ONESIGNAL_SESSION_KEY;
+  const sessionKey = (options && options.sessionKey) || ONESIGNAL_SESSION_KEY;
   const notificationId = (options && options.notificationId) || null;
   const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 

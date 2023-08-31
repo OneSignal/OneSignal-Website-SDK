@@ -1,8 +1,8 @@
-import { IOSNotificationActionButton } from "../../shared/models/OSNotification";
+import { IOSNotificationActionButton } from '../../shared/models/OSNotification';
 
 export class OSNotificationButtonsConverter {
   static toNative(
-    actionPayload?: IOSNotificationActionButton[]
+    actionPayload?: IOSNotificationActionButton[],
   ): NotificationAction[] | undefined {
     return actionPayload?.map(
       (payload): NotificationAction => ({
@@ -12,7 +12,7 @@ export class OSNotificationButtonsConverter {
         // launchURL not a native browser feature.
         // When clicked, we get the action to map it back to the specific
         // IOSNotificationActionButton
-      })
+      }),
     );
   }
 }

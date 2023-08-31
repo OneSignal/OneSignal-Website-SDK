@@ -1,12 +1,18 @@
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
+import {
+  InvalidStateError,
+  InvalidStateReason,
+} from '../errors/InvalidStateError';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { AppUserConfigPromptOptions, SlidedownOptions } from '../models/Prompts';
+import {
+  AppUserConfigPromptOptions,
+  SlidedownOptions,
+} from '../models/Prompts';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { NotificationPermission } from "../models/NotificationPermission";
-import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import { RawPushSubscription } from "../models/RawPushSubscription";
-import SubscriptionHelper from "./SubscriptionHelper";
+import { NotificationPermission } from '../models/NotificationPermission';
+import { PushDeviceRecord } from '../models/PushDeviceRecord';
+import { RawPushSubscription } from '../models/RawPushSubscription';
+import SubscriptionHelper from './SubscriptionHelper';
 import Utils from '../context/Utils';
 import Database from '../services/Database';
 import OneSignalUtils from '../utils/OneSignalUtils';
@@ -15,10 +21,11 @@ import OneSignalEvent from '../services/OneSignalEvent';
 import Environment from './Environment';
 
 export default class MainHelper {
-
   public static async getCurrentNotificationType(): Promise<SubscriptionStateKind> {
     const currentPermission: NotificationPermission =
-      await OneSignal.context.permissionManager.getNotificationPermission(OneSignal.context.appConfig.safariWebId);
+      await OneSignal.context.permissionManager.getNotificationPermission(
+        OneSignal.context.appConfig.safariWebId,
+      );
 
     if (currentPermission === NotificationPermission.Default) {
       return SubscriptionStateKind.NoNativePermission;
@@ -28,15 +35,19 @@ export default class MainHelper {
       // Due to this issue https://github.com/OneSignal/OneSignal-Website-SDK/issues/289 we cannot reliably detect
       // "default" permission in HTTP context. Browser reports denied for both "default" and "denied" statuses.
       // Returning SubscriptionStateKind.NoNativePermission for this case.
-      return (OneSignalUtils.isUsingSubscriptionWorkaround()) ?
-        SubscriptionStateKind.NoNativePermission :
-        SubscriptionStateKind.NotSubscribed;
+      return OneSignalUtils.isUsingSubscriptionWorkaround()
+        ? SubscriptionStateKind.NoNativePermission
+        : SubscriptionStateKind.NotSubscribed;
     }
 
-    const existingUser = await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    const existingUser =
+      await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (currentPermission === NotificationPermission.Granted && existingUser) {
-      const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-      return  isPushEnabled ? SubscriptionStateKind.Subscribed : SubscriptionStateKind.UserOptedOut;
+      const isPushEnabled =
+        await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+      return isPushEnabled
+        ? SubscriptionStateKind.Subscribed
+        : SubscriptionStateKind.UserOptedOut;
     }
 
     return SubscriptionStateKind.NoNativePermission;
@@ -58,13 +69,17 @@ export default class MainHelper {
   }
 
   static async checkAndTriggerNotificationPermissionChanged() {
-    const previousPermission = await Database.get('Options', 'notificationPermission');
-    const currentPermission = await OneSignal.context.permissionManager.getPermissionStatus();
+    const previousPermission = await Database.get(
+      'Options',
+      'notificationPermission',
+    );
+    const currentPermission =
+      await OneSignal.context.permissionManager.getPermissionStatus();
     if (previousPermission !== currentPermission) {
       await PermissionUtils.triggerNotificationPermissionChanged();
       await Database.put('Options', {
         key: 'notificationPermission',
-        value: currentPermission
+        value: currentPermission,
       });
     }
   }
@@ -78,19 +93,26 @@ export default class MainHelper {
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
-      Log.error(`API call %c${url}`, Utils.getConsoleStyle('code'), 'failed with:', data.errors);
+      Log.error(
+        `API call %c${url}`,
+        Utils.getConsoleStyle('code'),
+        'failed with:',
+        data.errors,
+      );
       throw new Error('Failed to get notification icons.');
     }
     return data;
   }
 
-  public static getSlidedownOptions(promptOptions: AppUserConfigPromptOptions):
-    SlidedownOptions {
-      return Utils.getValueOrDefault(promptOptions.slidedown, { prompts: [] });
-    }
+  public static getSlidedownOptions(
+    promptOptions: AppUserConfigPromptOptions,
+  ): SlidedownOptions {
+    return Utils.getValueOrDefault(promptOptions.slidedown, { prompts: [] });
+  }
 
-  static getFullscreenPermissionMessageOptions(promptOptions: AppUserConfigPromptOptions):
-    AppUserConfigPromptOptions | null {
+  static getFullscreenPermissionMessageOptions(
+    promptOptions: AppUserConfigPromptOptions,
+  ): AppUserConfigPromptOptions | null {
     if (!promptOptions) {
       return null;
     }
@@ -112,12 +134,14 @@ export default class MainHelper {
   }
 
   static getPromptOptionsQueryString() {
-    const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
+    const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(
+      OneSignal.config.userConfig.promptOptions,
+    );
     let promptOptionsStr = '';
     if (promptOptions) {
       const hash = MainHelper.getPromptOptionsPostHash();
       for (const key of Object.keys(hash)) {
-        var value = hash[key];
+        const value = hash[key];
         promptOptionsStr += '&' + key + '=' + value;
       }
     }
@@ -125,13 +149,16 @@ export default class MainHelper {
   }
 
   static getPromptOptionsPostHash() {
-    const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
+    const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(
+      OneSignal.config.userConfig.promptOptions,
+    );
+    const hash = {};
     if (promptOptions) {
-      var legacyParams = {
+      const legacyParams = {
         exampleNotificationTitleDesktop: 'exampleNotificationTitle',
         exampleNotificationMessageDesktop: 'exampleNotificationMessage',
         exampleNotificationTitleMobile: 'exampleNotificationTitle',
-        exampleNotificationMessageMobile: 'exampleNotificationMessage'
+        exampleNotificationMessageMobile: 'exampleNotificationMessage',
       };
       for (const legacyParamKey of Object.keys(legacyParams)) {
         const legacyParamValue = legacyParams[legacyParamKey];
@@ -139,7 +166,7 @@ export default class MainHelper {
           promptOptions[legacyParamValue] = promptOptions[legacyParamKey];
         }
       }
-      var allowedPromptOptions = [
+      const allowedPromptOptions = [
         'autoAcceptTitle',
         'siteName',
         'autoAcceptTitle',
@@ -151,13 +178,12 @@ export default class MainHelper {
         'exampleNotificationCaption',
         'acceptButton',
         'cancelButton',
-        'timeout'
+        'timeout',
       ];
-      var hash = {};
-      for (var i = 0; i < allowedPromptOptions.length; i++) {
-        var key = allowedPromptOptions[i];
-        var value = promptOptions[key];
-        var encoded_value = encodeURIComponent(value);
+      for (let i = 0; i < allowedPromptOptions.length; i++) {
+        const key = allowedPromptOptions[i];
+        const value = promptOptions[key];
+        const encoded_value = encodeURIComponent(value);
         if (value || value === false || value === '') {
           hash[key] = encoded_value;
         }
@@ -168,7 +194,7 @@ export default class MainHelper {
 
   static triggerCustomPromptClicked(clickResult) {
     OneSignalEvent.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
-      result: clickResult
+      result: clickResult,
     });
   }
 
@@ -182,12 +208,15 @@ export default class MainHelper {
   }
 
   static async createDeviceRecord(
-    appId: string, includeSubscription: boolean = false): Promise<PushDeviceRecord> {
+    appId: string,
+    includeSubscription = false,
+  ): Promise<PushDeviceRecord> {
     let subscription: RawPushSubscription | undefined;
     if (includeSubscription) {
       // TODO: refactor to replace config with dependency injection
       const rawSubscription = await SubscriptionHelper.getRawPushSubscription(
-        OneSignal.environmentInfo!, OneSignal.config.safariWebId
+        OneSignal.environmentInfo!,
+        OneSignal.config.safariWebId,
       );
       if (rawSubscription) {
         subscription = rawSubscription;
@@ -195,7 +224,8 @@ export default class MainHelper {
     }
     const deviceRecord = new PushDeviceRecord(subscription);
     deviceRecord.appId = appId;
-    deviceRecord.subscriptionState = await MainHelper.getCurrentNotificationType();
+    deviceRecord.subscriptionState =
+      await MainHelper.getCurrentNotificationType();
     return deviceRecord;
   }
 
@@ -207,11 +237,14 @@ export default class MainHelper {
   // TO DO: unit test
   static async getCurrentPushToken(): Promise<string | undefined> {
     if (Environment.useSafariLegacyPush()) {
-      const safariToken = window.safari?.pushNotification?.permission(OneSignal.config.safariWebId).deviceToken;
+      const safariToken = window.safari?.pushNotification?.permission(
+        OneSignal.config.safariWebId,
+      ).deviceToken;
       return safariToken?.toLowerCase() || undefined;
     }
 
-    const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
+    const registration =
+      await OneSignal.context.serviceWorkerManager.getRegistration();
     if (!registration) {
       return undefined;
     }

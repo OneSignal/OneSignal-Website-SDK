@@ -10,7 +10,6 @@ import Log from '../../../shared/libraries/Log';
  * subdomain.os.tc/webPushIFrame. *
  */
 export default class SubscriptionPopup extends RemoteFrame {
-
   constructor(initOptions: any) {
     super(initOptions);
   }
@@ -26,18 +25,30 @@ export default class SubscriptionPopup extends RemoteFrame {
    * There is no load timeout here; the iFrame initializes it scripts and waits
    * forever for the first handshake message.
    */
-   // initialize() is implemented by base RemoteFrame class
+  // initialize() is implemented by base RemoteFrame class
 
   establishCrossOriginMessaging() {
-    this.messenger = new Postmam(window.opener, this.options.origin, this.options.origin);
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.CONNECTED, this.onMessengerConnected.bind(this));
+    this.messenger = new Postmam(
+      window.opener,
+      this.options.origin,
+      this.options.origin,
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.CONNECTED,
+      this.onMessengerConnected.bind(this),
+    );
     // The host page will receive this event, and then call connect()
-    this.messenger.postMessage(OneSignal.POSTMAM_COMMANDS.POPUP_BEGIN_MESSAGEPORT_COMMS, null);
+    this.messenger.postMessage(
+      OneSignal.POSTMAM_COMMANDS.POPUP_BEGIN_MESSAGEPORT_COMMS,
+      null,
+    );
     this.messenger.listen();
   }
 
   onMessengerConnected(_: MessengerMessageEvent) {
-    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) The host page is now ready to receive commands from the HTTP popup.`);
+    Log.debug(
+      `(${SdkEnvironment.getWindowEnv().toString()}) The host page is now ready to receive commands from the HTTP popup.`,
+    );
     this.finishInitialization();
   }
 }

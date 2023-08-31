@@ -1,4 +1,4 @@
-import { SubscriptionModel } from "../../core/models/SubscriptionModels";
+import { SubscriptionModel } from '../../core/models/SubscriptionModels';
 
 export interface OutcomeRequestData {
   app_id: string;

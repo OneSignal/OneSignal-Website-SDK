@@ -1,11 +1,11 @@
-import Environment from "../helpers/Environment";
+import Environment from '../helpers/Environment';
 
 export class BrowserUtils {
   private static decodeTextArea: HTMLTextAreaElement | null = null;
   public static decodeHtmlEntities(text: string) {
     if (Environment.isBrowser()) {
       if (!BrowserUtils.decodeTextArea) {
-        BrowserUtils.decodeTextArea = document.createElement("textarea");
+        BrowserUtils.decodeTextArea = document.createElement('textarea');
       }
     }
     if (BrowserUtils.decodeTextArea) {

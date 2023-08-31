@@ -1,8 +1,10 @@
-import { NotificationClickEvent } from "../../../../shared/models/NotificationEvent";
-import { IOSWebhookEventPayload } from "../../IOSWebhookEventPayload";
+import { NotificationClickEvent } from '../../../../shared/models/NotificationEvent';
+import { IOSWebhookEventPayload } from '../../IOSWebhookEventPayload';
 
-export class OSWebhookPayloadNotificationClick implements IOSWebhookEventPayload {
-  readonly event: string = "notification.clicked";
+export class OSWebhookPayloadNotificationClick
+  implements IOSWebhookEventPayload
+{
+  readonly event: string = 'notification.clicked';
   readonly notificationId: string;
   readonly heading?: string;
   readonly content: string;

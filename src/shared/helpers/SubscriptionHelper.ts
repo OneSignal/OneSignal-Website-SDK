@@ -2,11 +2,14 @@ import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedErr
 import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import EventHelper from './EventHelper';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
+import {
+  InvalidStateError,
+  InvalidStateReason,
+} from '../errors/InvalidStateError';
 import { Subscription } from '../models/Subscription';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { RawPushSubscription } from '../models/RawPushSubscription';
-import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
+import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
@@ -23,15 +26,17 @@ export default class SubscriptionHelper {
     const context: ContextSWInterface = OneSignal.context;
     let subscription: Subscription | null = null;
 
-
     switch (SdkEnvironment.getWindowEnv()) {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         try {
           const rawSubscription = await context.subscriptionManager.subscribe(
-            SubscriptionStrategyKind.ResubscribeExisting
+            SubscriptionStrategyKind.ResubscribeExisting,
           );
-          subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
+          subscription =
+            await context.subscriptionManager.registerSubscription(
+              rawSubscription,
+            );
           context.pageViewManager.incrementPageViewCount();
           await PermissionUtils.triggerNotificationPermissionChanged();
           await EventHelper.checkAndTriggerSubscriptionChanged();
@@ -39,7 +44,7 @@ export default class SubscriptionHelper {
           Log.info(e);
         }
         break;
-      case WindowEnvironmentKind.OneSignalSubscriptionPopup:
+      case WindowEnvironmentKind.OneSignalSubscriptionPopup: {
         /*
           This is the code for the HTTP popup.
          */
@@ -52,7 +57,9 @@ export default class SubscriptionHelper {
 
         try {
           /* If the user doesn't grant permissions, a PushPermissionNotGrantedError will be thrown here. */
-          rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+          rawSubscription = await context.subscriptionManager.subscribe(
+            SubscriptionStrategyKind.SubscribeNew,
+          );
 
           // Update the permission to granted
           await context.permissionManager.updateStoredPermission();
@@ -67,19 +74,27 @@ export default class SubscriptionHelper {
                 /* Force update false, because the iframe installs a native
                 permission change handler that will be triggered when the user
                 clicks out of the popup back to the parent page */
-                (OneSignal.subscriptionPopup as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
-                  permission: NotificationPermission.Denied,
-                  forceUpdatePermission: false
-                });
+                (OneSignal.subscriptionPopup as any).message(
+                  OneSignal.POSTMAM_COMMANDS
+                    .REMOTE_NOTIFICATION_PERMISSION_CHANGED,
+                  {
+                    permission: NotificationPermission.Denied,
+                    forceUpdatePermission: false,
+                  },
+                );
                 break;
               case PushPermissionNotGrantedErrorReason.Dismissed:
                 /* Force update true because default permissions (before
                 prompting) -> default permissions (after prompting) isn't a
                 change, but we still want to be notified about it */
-                (OneSignal.subscriptionPopup as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
-                  permission: NotificationPermission.Default,
-                  forceUpdatePermission: true
-                });
+                (OneSignal.subscriptionPopup as any).message(
+                  OneSignal.POSTMAM_COMMANDS
+                    .REMOTE_NOTIFICATION_PERMISSION_CHANGED,
+                  {
+                    permission: NotificationPermission.Default,
+                    forceUpdatePermission: true,
+                  },
+                );
                 break;
             }
           }
@@ -96,20 +111,25 @@ export default class SubscriptionHelper {
         OneSignal.subscriptionPopup.message(
           OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION,
           {
-            rawPushSubscription: rawSubscription.serialize()
+            rawPushSubscription: rawSubscription.serialize(),
           },
           (message: any) => {
             if (message.data.progress === true) {
-              Log.debug('Got message from host page that remote reg. is in progress, closing popup.');
+              Log.debug(
+                'Got message from host page that remote reg. is in progress, closing popup.',
+              );
               if (windowCreator) {
                 window.close();
               }
             } else {
-              Log.debug('Got message from host page that remote reg. could not be finished.');
+              Log.debug(
+                'Got message from host page that remote reg. could not be finished.',
+              );
             }
-          }
+          },
         );
         break;
+      }
       default:
         throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
     }
@@ -117,16 +137,21 @@ export default class SubscriptionHelper {
     return subscription;
   }
 
-  static getRawPushSubscriptionForLegacySafari(safariWebId: string): RawPushSubscription {
+  static getRawPushSubscriptionForLegacySafari(
+    safariWebId: string,
+  ): RawPushSubscription {
     const subscription = new RawPushSubscription();
 
-    const { deviceToken } = window.safari.pushNotification.permission(safariWebId);
+    const { deviceToken } =
+      window.safari.pushNotification.permission(safariWebId);
     subscription.setFromSafariSubscription(deviceToken);
 
     return subscription;
   }
 
-  static async getRawPushSubscriptionFromServiceWorkerRegistration(registration?: ServiceWorkerRegistration): Promise<RawPushSubscription | null> {
+  static async getRawPushSubscriptionFromServiceWorkerRegistration(
+    registration?: ServiceWorkerRegistration,
+  ): Promise<RawPushSubscription | null> {
     if (!registration) {
       return null;
     }
@@ -143,10 +168,13 @@ export default class SubscriptionHelper {
   }
 
   static async getRawPushSubscription(
-    environmentInfo: EnvironmentInfo, safariWebId: string
-  ):Promise<RawPushSubscription | null> {
+    environmentInfo: EnvironmentInfo,
+    safariWebId: string,
+  ): Promise<RawPushSubscription | null> {
     if (Environment.useSafariLegacyPush()) {
-      return SubscriptionHelper.getRawPushSubscriptionForLegacySafari(safariWebId);
+      return SubscriptionHelper.getRawPushSubscriptionForLegacySafari(
+        safariWebId,
+      );
     }
 
     if (environmentInfo.isUsingSubscriptionWorkaround) {
@@ -154,8 +182,11 @@ export default class SubscriptionHelper {
     }
 
     if (environmentInfo.isBrowserAndSupportsServiceWorkers) {
-      const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
-      return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration(registration);
+      const registration =
+        await OneSignal.context.serviceWorkerManager.getRegistration();
+      return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration(
+        registration,
+      );
     }
 
     return null;

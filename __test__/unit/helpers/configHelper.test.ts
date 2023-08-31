@@ -1,4 +1,7 @@
-import { AppUserConfig, ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
+import {
+  AppUserConfig,
+  ConfigIntegrationKind,
+} from '../../../src/shared/models/AppConfig';
 import Random from '../../support/utils/Random';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { HttpHttpsEnvironment } from '../../support/models/HttpHttpsEnvironment';
@@ -7,7 +10,7 @@ import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
 import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
 import TestContext from '../../support/environment/TestContext';
 
-describe("ConfigHelper Tests", () => {
+describe('ConfigHelper Tests', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize({
       httpOrHttps: HttpHttpsEnvironment.Https,
@@ -19,25 +22,28 @@ describe("ConfigHelper Tests", () => {
     jest.restoreAllMocks();
   });
 
-  test('promptOptions 1 - autoRegister = true backwards compatibility for custom integration shows native on HTTPS',
-    async () => {
-      const fakeUserConfig: AppUserConfig = {
-        appId: Random.getRandomUuid(),
-        autoRegister: true,
-      };
+  test('promptOptions 1 - autoRegister = true backwards compatibility for custom integration shows native on HTTPS', async () => {
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: true,
+    };
 
-      const appConfig = await getFinalAppConfig(fakeUserConfig);
-      const finalPromptOptions = appConfig.userConfig.promptOptions;
+    const appConfig = await getFinalAppConfig(fakeUserConfig);
+    const finalPromptOptions = appConfig.userConfig.promptOptions;
 
-      expect(finalPromptOptions?.native?.enabled).toBe(true);
-      expect(finalPromptOptions?.native?.autoPrompt).toBe(true);
+    expect(finalPromptOptions?.native?.enabled).toBe(true);
+    expect(finalPromptOptions?.native?.autoPrompt).toBe(true);
 
-      expect(finalPromptOptions?.slidedown?.prompts[0].autoPrompt).toBe(false);
-      expect(finalPromptOptions?.autoPrompt).toBe(true);
+    expect(finalPromptOptions?.slidedown?.prompts[0].autoPrompt).toBe(false);
+    expect(finalPromptOptions?.autoPrompt).toBe(true);
   });
 
   test('promptOptions 2 - autoRegister = true backwards compatibility for custom integration (shows slidedown on HTTP)', async () => {
-    test.stub(OneSignalUtils, "internalIsUsingSubscriptionWorkaround", Promise.resolve(true));
+    test.stub(
+      OneSignalUtils,
+      'internalIsUsingSubscriptionWorkaround',
+      Promise.resolve(true),
+    );
 
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
@@ -78,7 +84,7 @@ describe("ConfigHelper Tests", () => {
     (fakeUserConfig as any).promptOptions = {
       slidedown: {
         enabled: true,
-      }
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -92,7 +98,11 @@ describe("ConfigHelper Tests", () => {
   });
 
   test(`promptOptions 5 - autoRegister backwards compatibility for custom integration (ignores config, shows slidedown on HTTP)`, async () => {
-    const internalIsUsingSubscriptionWorkaround = test.stub(OneSignalUtils, "internalIsUsingSubscriptionWorkaround", Promise.resolve(true));
+    const internalIsUsingSubscriptionWorkaround = test.stub(
+      OneSignalUtils,
+      'internalIsUsingSubscriptionWorkaround',
+      Promise.resolve(true),
+    );
 
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
@@ -102,7 +112,7 @@ describe("ConfigHelper Tests", () => {
     (fakeUserConfig as any).promptOptions = {
       slidedown: {
         enabled: true,
-      }
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -127,7 +137,7 @@ describe("ConfigHelper Tests", () => {
       slidedown: {
         enabled: true,
         autoPrompt: false,
-      }
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -141,7 +151,11 @@ describe("ConfigHelper Tests", () => {
   });
 
   test(`promptOptions 7 - autoRegister = true backwards compatibility for custom integration (ignores config, shows slidedown on HTTP)`, async () => {
-    const internalIsUsingSubscriptionWorkaround = test.stub(OneSignalUtils, "internalIsUsingSubscriptionWorkaround", Promise.resolve(true));
+    const internalIsUsingSubscriptionWorkaround = test.stub(
+      OneSignalUtils,
+      'internalIsUsingSubscriptionWorkaround',
+      Promise.resolve(true),
+    );
 
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
@@ -152,7 +166,7 @@ describe("ConfigHelper Tests", () => {
       slidedown: {
         enabled: true,
         autoPrompt: false,
-      }
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -181,7 +195,7 @@ describe("ConfigHelper Tests", () => {
       slidedown: {
         enabled: true,
         autoPrompt: false,
-      }
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -208,7 +222,7 @@ describe("ConfigHelper Tests", () => {
       slidedown: {
         enabled: true,
         autoPrompt: false,
-      }
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -222,7 +236,11 @@ describe("ConfigHelper Tests", () => {
   });
 
   test(`promptOptions 10 - autoRegister backwards compatibility for custom integration (ignores config, shows slidedown on HTTP)`, async () => {
-    test.stub(OneSignalUtils, 'internalIsUsingSubscriptionWorkaround', Promise.resolve(true));
+    test.stub(
+      OneSignalUtils,
+      'internalIsUsingSubscriptionWorkaround',
+      Promise.resolve(true),
+    );
 
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
@@ -236,8 +254,8 @@ describe("ConfigHelper Tests", () => {
       },
       slidedown: {
         enabled: true,
-        autoPrompt: false
-      }
+        autoPrompt: false,
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -256,11 +274,13 @@ describe("ConfigHelper Tests", () => {
       autoRegister: true,
     };
 
-    const fakeServerConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+    const fakeServerConfig = TestContext.getFakeServerAppConfig(
+      ConfigIntegrationKind.Custom,
+    );
     const finalConfig = ConfigHelper.getUserConfigForConfigIntegrationKind(
       ConfigIntegrationKind.Custom,
       fakeUserConfig,
-      fakeServerConfig
+      fakeServerConfig,
     );
     expect(finalConfig.autoResubscribe).toBe(true);
   });
@@ -270,27 +290,33 @@ describe("ConfigHelper Tests", () => {
       appId: Random.getRandomUuid(),
     };
 
-    const fakeServerConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+    const fakeServerConfig = TestContext.getFakeServerAppConfig(
+      ConfigIntegrationKind.Custom,
+    );
     const finalConfig = ConfigHelper.getUserConfigForConfigIntegrationKind(
       ConfigIntegrationKind.Custom,
       fakeUserConfig,
-      fakeServerConfig
+      fakeServerConfig,
     );
-    expect(finalConfig.autoResubscribe).toBe(fakeServerConfig.config.autoResubscribe);
+    expect(finalConfig.autoResubscribe).toBe(
+      fakeServerConfig.config.autoResubscribe,
+    );
   });
 
   test('autoResubscribe - autoRegister backwards compatibility for custom integration 3', () => {
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
       autoRegister: false,
-      autoResubscribe: true
+      autoResubscribe: true,
     };
 
-    const fakeServerConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+    const fakeServerConfig = TestContext.getFakeServerAppConfig(
+      ConfigIntegrationKind.Custom,
+    );
     const finalConfig = ConfigHelper.getUserConfigForConfigIntegrationKind(
       ConfigIntegrationKind.Custom,
       fakeUserConfig,
-      fakeServerConfig
+      fakeServerConfig,
     );
     expect(finalConfig.autoResubscribe).toBe(true);
   });

@@ -1,6 +1,5 @@
-import SdkEnvironment from "../../shared/managers/SdkEnvironment";
-import { WindowEnvironmentKind } from "../../shared/models/WindowEnvironmentKind";
-
+import SdkEnvironment from '../../shared/managers/SdkEnvironment';
+import { WindowEnvironmentKind } from '../../shared/models/WindowEnvironmentKind';
 
 /**
  * Creates method proxies for once-supported methods.
@@ -9,7 +8,7 @@ export default class LegacyManager {
   static promiseStub() {
     return {
       then: LegacyManager.promiseStub,
-      catch: LegacyManager.promiseStub
+      catch: LegacyManager.promiseStub,
     };
   }
 
@@ -21,21 +20,31 @@ export default class LegacyManager {
 
   static environmentPolyfill(oneSignal) {
     oneSignal.environment = {};
-    oneSignal.environment.getEnv = function () { return ''; };
+    oneSignal.environment.getEnv = function () {
+      return '';
+    };
     oneSignal.environment.isPopup = function () {
-      return SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup;
+      return (
+        SdkEnvironment.getWindowEnv() ===
+        WindowEnvironmentKind.OneSignalSubscriptionPopup
+      );
     };
     oneSignal.environment.isIframe = function () {
-      return SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame;
+      return (
+        SdkEnvironment.getWindowEnv() ===
+        WindowEnvironmentKind.OneSignalProxyFrame
+      );
     };
   }
 
   static postmams(oneSignal) {
     const postmamMessageFunc = function message(this: any) {
+      // eslint-disable-next-line prefer-spread, prefer-rest-params
       this.messenger.message.apply(this.messenger, arguments);
     };
 
     const postmamPostMessageFunc = function postMessage(this: any) {
+      // eslint-disable-next-line prefer-spread, prefer-rest-params
       this.messenger.postMessage.apply(this.messenger, arguments);
     };
 

@@ -6,7 +6,7 @@ export class MockClients implements Clients {
   }
 
   get(id: string): Promise<any> {
-    const client = this.clients.find(cli => id === cli.id);
+    const client = this.clients.find((cli) => id === cli.id);
     return Promise.resolve(client || null);
   }
 
@@ -21,5 +21,4 @@ export class MockClients implements Clients {
   async claim(): Promise<void> {
     return;
   }
-
 }

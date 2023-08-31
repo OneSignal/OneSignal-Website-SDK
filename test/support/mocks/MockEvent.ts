@@ -4,14 +4,14 @@ export class MockEvent implements Event {
   readonly CAPTURING_PHASE: number = 0;
   readonly NONE: number = 0;
   readonly bubbles: boolean = true;
-  cancelBubble: boolean = false;
+  cancelBubble = false;
   readonly cancelable: boolean = true;
   readonly composed: boolean = false;
   readonly currentTarget: EventTarget | null = null;
   readonly defaultPrevented: boolean = false;
   readonly eventPhase: number = 0;
   readonly isTrusted: boolean = true;
-  returnValue: boolean = false;
+  returnValue = false;
   readonly scoped: boolean = false;
   readonly srcElement: Element | null = null;
   readonly target: EventTarget | null = null;
@@ -30,16 +30,11 @@ export class MockEvent implements Event {
     return [];
   }
 
-  initEvent(_type: string, _bubbles?: boolean, _cancelable?: boolean): void {
-  }
+  initEvent(_type: string, _bubbles?: boolean, _cancelable?: boolean): void {}
 
-  preventDefault(): void {
-  }
+  preventDefault(): void {}
 
-  stopImmediatePropagation(): void {
-  }
+  stopImmediatePropagation(): void {}
 
-  stopPropagation(): void {
-  }
-
+  stopPropagation(): void {}
 }

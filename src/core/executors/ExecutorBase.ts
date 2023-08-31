@@ -1,14 +1,14 @@
-import OperationCache from "../caching/OperationCache";
-import { CoreChangeType } from "../models/CoreChangeType";
-import { CoreDelta } from "../models/CoreDeltas";
-import { ExecutorConfig } from "../models/ExecutorConfig";
-import { Operation } from "../operationRepo/Operation";
-import { logMethodCall } from "../../shared/utils/utils";
-import { SupportedModel } from "../models/SupportedModels";
-import { ExecutorResult } from "./ExecutorResult";
-import Log from "../../shared/libraries/Log";
-import Database from "../../shared/services/Database";
-import LocalStorage from "../../shared/utils/LocalStorage";
+import OperationCache from '../caching/OperationCache';
+import { CoreChangeType } from '../models/CoreChangeType';
+import { CoreDelta } from '../models/CoreDeltas';
+import { ExecutorConfig } from '../models/ExecutorConfig';
+import { Operation } from '../operationRepo/Operation';
+import { logMethodCall } from '../../shared/utils/utils';
+import { SupportedModel } from '../models/SupportedModels';
+import { ExecutorResult } from './ExecutorResult';
+import Log from '../../shared/libraries/Log';
+import Database from '../../shared/services/Database';
+import LocalStorage from '../../shared/utils/LocalStorage';
 
 const RETRY_AFTER = 5_000;
 
@@ -16,9 +16,15 @@ export default abstract class ExecutorBase {
   protected _deltaQueue: CoreDelta<SupportedModel>[] = [];
   protected _operationQueue: Operation<SupportedModel>[] = [];
 
-  protected _executeAdd?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
-  protected _executeUpdate?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
-  protected _executeRemove?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
+  protected _executeAdd?: (
+    operation: Operation<SupportedModel>,
+  ) => Promise<ExecutorResult<SupportedModel>>;
+  protected _executeUpdate?: (
+    operation: Operation<SupportedModel>,
+  ) => Promise<ExecutorResult<SupportedModel>>;
+  protected _executeRemove?: (
+    operation: Operation<SupportedModel>,
+  ) => Promise<ExecutorResult<SupportedModel>>;
 
   private onlineStatus = true;
 
@@ -34,7 +40,7 @@ export default abstract class ExecutorBase {
     }, ExecutorBase.DELTAS_BATCH_PROCESSING_TIME * 1_000);
 
     setInterval(() => {
-      Log.debug("OneSignal: checking for operations to process from cache");
+      Log.debug('OneSignal: checking for operations to process from cache');
       const cachedOperations = this.getOperationsFromCache();
       this._operationQueue = [...cachedOperations, ...this._operationQueue];
 
@@ -43,8 +49,8 @@ export default abstract class ExecutorBase {
       }
     }, ExecutorBase.OPERATIONS_BATCH_PROCESSING_TIME * 1_000);
 
-    window.addEventListener("online", this._onNetworkChange.bind(this, true));
-    window.addEventListener("offline", this._onNetworkChange.bind(this, false));
+    window.addEventListener('online', this._onNetworkChange.bind(this, true));
+    window.addEventListener('offline', this._onNetworkChange.bind(this, false));
 
     this._executeAdd = executorConfig.add;
     this._executeUpdate = executorConfig.update;
@@ -55,7 +61,7 @@ export default abstract class ExecutorBase {
   abstract getOperationsFromCache(): Operation<SupportedModel>[];
 
   public enqueueDelta(delta: CoreDelta<SupportedModel>): void {
-    logMethodCall("ExecutorBase.enqueueDelta", { delta });
+    logMethodCall('ExecutorBase.enqueueDelta', { delta });
     /**
      * deep copy (snapshot)
      * if we add alias and then login to a user, we want to ensure that the external id of the
@@ -74,25 +80,26 @@ export default abstract class ExecutorBase {
   }
 
   protected _enqueueOperation(operation: Operation<SupportedModel>): void {
-    logMethodCall("ExecutorBase.enqueueOperation", { operation });
+    logMethodCall('ExecutorBase.enqueueOperation', { operation });
     this._operationQueue.push(operation);
   }
 
   protected _flushDeltas(): void {
-    logMethodCall("ExecutorBase._flushDeltas");
+    logMethodCall('ExecutorBase._flushDeltas');
     this._deltaQueue = [];
   }
 
   protected _flushOperations(): void {
-    logMethodCall("ExecutorBase._flushOperations");
+    logMethodCall('ExecutorBase._flushOperations');
     this._operationQueue = [];
   }
 
   protected _getChangeType(oldValue: any, newValue: any): CoreChangeType {
-    logMethodCall("ExecutorBase._getChangeType", { oldValue, newValue });
+    logMethodCall('ExecutorBase._getChangeType', { oldValue, newValue });
     const wasPropertyAdded = !oldValue && !!newValue;
     const wasPropertyRemoved = !!oldValue && !newValue;
-    const wasPropertyUpdated = oldValue !== newValue && !!newValue && !!oldValue;
+    const wasPropertyUpdated =
+      oldValue !== newValue && !!newValue && !!oldValue;
 
     let finalChangeType;
 
@@ -103,14 +110,16 @@ export default abstract class ExecutorBase {
     } else if (wasPropertyUpdated) {
       finalChangeType = CoreChangeType.Update;
     } else {
-      throw new Error("Unsupported change type");
+      throw new Error('Unsupported change type');
     }
 
     return finalChangeType;
   }
 
   protected async _processOperationQueue(): Promise<void> {
-    const consentRequired = OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired();
+    const consentRequired =
+      OneSignal.config.userConfig.requiresUserPrivacyConsent ||
+      LocalStorage.getConsentRequired();
     const consentGiven = await Database.getConsentGiven();
 
     if (consentRequired && !consentGiven) {
@@ -124,22 +133,30 @@ export default abstract class ExecutorBase {
         OperationCache.enqueue(operation);
 
         if (this.onlineStatus) {
-          this._processOperation(operation, ExecutorBase.RETRY_COUNT).catch(err => {
-            Log.error(err);
-          });
+          this._processOperation(operation, ExecutorBase.RETRY_COUNT).catch(
+            (err) => {
+              Log.error(err);
+            },
+          );
         }
       }
     }
   }
 
-  private async _processOperation(operation: Operation<SupportedModel>, retries: number): Promise<void> {
-    logMethodCall("ExecutorBase._processOperation", { operation, retries });
+  private async _processOperation(
+    operation: Operation<SupportedModel>,
+    retries: number,
+  ): Promise<void> {
+    logMethodCall('ExecutorBase._processOperation', { operation, retries });
 
     // TO DO: fix optional model object. should always be defined on operation
     await operation.model?.awaitOneSignalIdAvailable;
     await operation.jwtTokenAvailable;
 
-    let res: ExecutorResult<SupportedModel> = { success: false, retriable: true };
+    let res: ExecutorResult<SupportedModel> = {
+      success: false,
+      retriable: true,
+    };
 
     if (operation?.changeType === CoreChangeType.Add) {
       res = await this._executeAdd?.call(this, operation);
@@ -152,17 +169,17 @@ export default abstract class ExecutorBase {
     if (res.success) {
       if (res.result) {
         // since we took a snapshot of the operation, we get a new instance with the correct model reference
-        const operationInstance = await Operation.getInstanceWithModelReference(operation);
+        const operationInstance =
+          await Operation.getInstanceWithModelReference(operation);
         operationInstance?.model?.hydrate(res.result as SupportedModel);
       }
       OperationCache.delete(operation?.operationId);
     } else {
       if (res.retriable && retries > 0) {
         setTimeout(() => {
-          this._processOperation(operation, retries - 1)
-            .catch(err => {
-              Log.error(err);
-            });
+          this._processOperation(operation, retries - 1).catch((err) => {
+            Log.error(err);
+          });
         }, RETRY_AFTER);
       } else {
         OperationCache.delete(operation?.operationId);
@@ -171,7 +188,7 @@ export default abstract class ExecutorBase {
   }
 
   private _onNetworkChange(online: boolean): void {
-    logMethodCall("ExecutorBase._onNetworkChange", { online });
+    logMethodCall('ExecutorBase._onNetworkChange', { online });
     this.onlineStatus = online;
 
     if (online) {

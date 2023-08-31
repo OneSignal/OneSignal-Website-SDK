@@ -1,22 +1,35 @@
-import ModelCache from "../caching/ModelCache";
-import Subscribable from "../Subscribable";
-import { CoreChangeType } from "../models/CoreChangeType";
-import { CoreDelta } from "../models/CoreDeltas";
-import { ModelStoresMap } from "../models/ModelStoresMap";
-import { SupportedModel, ModelName } from "../models/SupportedModels";
-import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated, ModelStoreHydrated } from "../models/ModelStoreChange";
-import { logMethodCall } from "../../shared/utils/utils";
+import ModelCache from '../caching/ModelCache';
+import Subscribable from '../Subscribable';
+import { CoreChangeType } from '../models/CoreChangeType';
+import { CoreDelta } from '../models/CoreDeltas';
+import { ModelStoresMap } from '../models/ModelStoresMap';
+import { SupportedModel, ModelName } from '../models/SupportedModels';
+import {
+  ModelStoreChange,
+  ModelStoreAdded,
+  ModelStoreRemoved,
+  ModelStoreUpdated,
+  ModelStoreHydrated,
+} from '../models/ModelStoreChange';
+import { logMethodCall } from '../../shared/utils/utils';
 
 export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
-  constructor(private modelCache: ModelCache, public modelStores: ModelStoresMap<SupportedModel>) {
+  constructor(
+    private modelCache: ModelCache,
+    public modelStores: ModelStoresMap<SupportedModel>,
+  ) {
     super();
-    Object.keys(modelStores).forEach(modelName => {
-      modelStores[modelName as ModelName].subscribe(this.processModelChange.bind(this));
+    Object.keys(modelStores).forEach((modelName) => {
+      modelStores[modelName as ModelName].subscribe(
+        this.processModelChange.bind(this),
+      );
     });
   }
 
-  private processModelChange(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    logMethodCall("processModelChange", { modelStoreChange });
+  private processModelChange(
+    modelStoreChange: ModelStoreChange<SupportedModel>,
+  ): void {
+    logMethodCall('processModelChange', { modelStoreChange });
     if (modelStoreChange.type === CoreChangeType.Add) {
       this.processModelAdded(modelStoreChange);
     }
@@ -34,8 +47,10 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
     }
   }
 
-  private processModelAdded(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    logMethodCall("processModelAdded", { modelStoreChange });
+  private processModelAdded(
+    modelStoreChange: ModelStoreChange<SupportedModel>,
+  ): void {
+    logMethodCall('processModelAdded', { modelStoreChange });
     const { payload } = modelStoreChange as ModelStoreAdded<SupportedModel>;
 
     // sync to cache
@@ -48,9 +63,12 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
     });
   }
 
-  private processModelRemoved(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    logMethodCall("processModelRemoved", { modelStoreChange });
-    const { modelId, payload } = modelStoreChange as ModelStoreRemoved<SupportedModel>;
+  private processModelRemoved(
+    modelStoreChange: ModelStoreChange<SupportedModel>,
+  ): void {
+    logMethodCall('processModelRemoved', { modelStoreChange });
+    const { modelId, payload } =
+      modelStoreChange as ModelStoreRemoved<SupportedModel>;
 
     // sync to cache
     this.modelCache.remove(payload.modelName, modelId);
@@ -62,12 +80,20 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
     });
   }
 
-  private processModelUpdated(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    logMethodCall("processModelUpdated", { modelStoreChange });
-    const { modelId, payload } = modelStoreChange as ModelStoreUpdated<SupportedModel>;
+  private processModelUpdated(
+    modelStoreChange: ModelStoreChange<SupportedModel>,
+  ): void {
+    logMethodCall('processModelUpdated', { modelStoreChange });
+    const { modelId, payload } =
+      modelStoreChange as ModelStoreUpdated<SupportedModel>;
 
     // sync to cache
-    this.modelCache.update(payload.model.modelName, modelId, payload.property, payload.newValue);
+    this.modelCache.update(
+      payload.model.modelName,
+      modelId,
+      payload.property,
+      payload.newValue,
+    );
 
     // broadcast deltas
     if (payload.oldValue !== payload.newValue) {
@@ -83,8 +109,9 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   }
 
   processModelHydrated(modelStoreChange: ModelStoreChange<SupportedModel>) {
-    logMethodCall("processModelHydrated", { modelStoreChange });
-    const { modelId, payload } = modelStoreChange as ModelStoreHydrated<SupportedModel>;
+    logMethodCall('processModelHydrated', { modelStoreChange });
+    const { modelId, payload } =
+      modelStoreChange as ModelStoreHydrated<SupportedModel>;
 
     // sync to cache
     this.modelCache.remove(payload.modelName, modelId);

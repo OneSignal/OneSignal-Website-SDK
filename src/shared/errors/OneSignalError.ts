@@ -5,18 +5,19 @@ export default class OneSignalError extends Error {
     // extending Error is weird and does not propagate `message`
     Object.defineProperty(this, 'message', {
       configurable: true,
-      enumerable : false,
-      value : message,
-      writable : true,
+      enumerable: false,
+      value: message,
+      writable: true,
     });
 
     Object.defineProperty(this, 'name', {
       configurable: true,
-      enumerable : false,
-      value : this.constructor.name,
-      writable : true,
+      enumerable: false,
+      value: this.constructor.name,
+      writable: true,
     });
 
+    // eslint-disable-next-line no-prototype-builtins
     if (Error.hasOwnProperty('captureStackTrace')) {
       Error.captureStackTrace(this, this.constructor);
       return;
@@ -24,9 +25,9 @@ export default class OneSignalError extends Error {
 
     Object.defineProperty(this, 'stack', {
       configurable: true,
-      enumerable : false,
-      value : (new Error(message)).stack,
-      writable : true,
+      enumerable: false,
+      value: new Error(message).stack,
+      writable: true,
     });
 
     /**

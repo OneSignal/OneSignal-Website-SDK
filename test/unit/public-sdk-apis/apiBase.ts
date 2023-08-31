@@ -1,10 +1,10 @@
-import test from "ava";
-import nock from "nock";
-import sinon, { SinonSandbox } from "sinon";
-import Random from "../../support/tester/Random";
-import "../../support/polyfills/polyfills";
-import Environment from "../../../src/shared/helpers/Environment";
-import OneSignalApiBase from "../../../src/shared/api/OneSignalApiBase";
+import test from 'ava';
+import nock from 'nock';
+import sinon, { SinonSandbox } from 'sinon';
+import Random from '../../support/tester/Random';
+import '../../support/polyfills/polyfills';
+import Environment from '../../../src/shared/helpers/Environment';
+import OneSignalApiBase from '../../../src/shared/api/OneSignalApiBase';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -44,52 +44,52 @@ test.afterEach(() => {
   sinonSandbox.restore();
 });
 
-test("OneSignalApiBase.call should include app_id header for get requests", async t => {
+test('OneSignalApiBase.call should include app_id header for get requests', async (t) => {
   mockGetPlayers();
   try {
-    await OneSignalApiBase.get("players");
+    await OneSignalApiBase.get('players');
     t.fail();
-  } catch(e) {
+  } catch (e) {
     t.pass();
   }
 });
 
-test("OneSignalApiBase.call should include app_id header for post requests", async t => {
+test('OneSignalApiBase.call should include app_id header for post requests', async (t) => {
   mockPostPlayers();
   try {
-    await OneSignalApiBase.post("players");
+    await OneSignalApiBase.post('players');
     t.fail();
-  } catch(e) {
+  } catch (e) {
     t.pass();
   }
 });
 
-test("OneSignalApiBase.call should include app_id header for put requests", async t => {
+test('OneSignalApiBase.call should include app_id header for put requests', async (t) => {
   mockPutPlayers();
   try {
-    await OneSignalApiBase.post("players");
+    await OneSignalApiBase.post('players');
     t.fail();
-  } catch(e) {
+  } catch (e) {
     t.pass();
   }
 });
 
-test("OneSignalApiBase.call should include app_id header for delete requests", async t => {
+test('OneSignalApiBase.call should include app_id header for delete requests', async (t) => {
   mockDeletePlayers();
   try {
-    await OneSignalApiBase.post("players");
+    await OneSignalApiBase.post('players');
     t.fail();
-  } catch(e) {
+  } catch (e) {
     t.pass();
   }
 });
 
-test("OneSignalApiBase.call should add a custom header", async t => {
-  sinonSandbox.stub(Environment, "version").returns(150500);
+test('OneSignalApiBase.call should add a custom header', async (t) => {
+  sinonSandbox.stub(Environment, 'version').returns(150500);
 
   const appId = Random.getRandomUuid();
   const playerId = Random.getRandomUuid();
-  const promise = new Promise<void>(async resolve => {
+  const promise = new Promise<void>(async (resolve) => {
     nock('https://onesignal.com')
       .get(`/api/v1/players/${playerId}?app_id=${appId}`)
       // .get(`/api/v1/players/${playerId}?app_id=${appId}`, {
@@ -97,7 +97,7 @@ test("OneSignalApiBase.call should add a custom header", async t => {
       //     'SDK-Version': `onesignal/web/${Environment.version()}`
       //   }
       // })
-      .reply(function(_uri: string, _requestBody: any) {
+      .reply(function (_uri: string, _requestBody: any) {
         // @ts-ignore
         console.log('headers:', this.req.headers);
         resolve();
@@ -109,7 +109,7 @@ test("OneSignalApiBase.call should add a custom header", async t => {
   try {
     await promise;
     t.pass();
-  } catch(_e) {
+  } catch (_e) {
     t.fail();
   }
 });

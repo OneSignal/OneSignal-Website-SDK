@@ -2,31 +2,41 @@ import bowser from 'bowser';
 
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import SdkEnvironment from '../../shared/managers/SdkEnvironment';
-import { addDomElement, clearDomElementChildren, getPlatformNotificationIcon } from '../../shared/utils/utils';
+import {
+  addDomElement,
+  clearDomElementChildren,
+  getPlatformNotificationIcon,
+} from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 
 export default class Dialog extends AnimatedElement {
-
   public bell: Bell;
   public subscribeButtonId: string;
   public unsubscribeButtonId: string;
   public notificationIcons: NotificationIcons | null;
 
   constructor(bell: Bell) {
-    super('.onesignal-bell-launcher-dialog', 'onesignal-bell-launcher-dialog-opened', undefined, 'hidden',
-         ['opacity', 'transform'], '.onesignal-bell-launcher-dialog-body');
+    super(
+      '.onesignal-bell-launcher-dialog',
+      'onesignal-bell-launcher-dialog-opened',
+      undefined,
+      'hidden',
+      ['opacity', 'transform'],
+      '.onesignal-bell-launcher-dialog-body',
+    );
 
     this.bell = bell;
-    this.subscribeButtonId = '#onesignal-bell-container .onesignal-bell-launcher #subscribe-button';
-    this.unsubscribeButtonId = '#onesignal-bell-container .onesignal-bell-launcher #unsubscribe-button';
+    this.subscribeButtonId =
+      '#onesignal-bell-container .onesignal-bell-launcher #subscribe-button';
+    this.unsubscribeButtonId =
+      '#onesignal-bell-container .onesignal-bell-launcher #unsubscribe-button';
     this.notificationIcons = null;
   }
 
   show() {
-    return this.updateBellLauncherDialogBody()
-      .then(() => super.show());
+    return this.updateBellLauncherDialogBody().then(() => super.show());
   }
 
   get subscribeButtonSelectorId() {
@@ -38,29 +48,37 @@ export default class Dialog extends AnimatedElement {
   }
 
   get subscribeButton() {
-    return this.element ? this.element.querySelector('#' + this.subscribeButtonSelectorId) : null;
+    return this.element
+      ? this.element.querySelector('#' + this.subscribeButtonSelectorId)
+      : null;
   }
 
   get unsubscribeButton() {
-    return this.element ? this.element.querySelector('#' + this.unsubscribeButtonSelectorId) : null;
+    return this.element
+      ? this.element.querySelector('#' + this.unsubscribeButtonSelectorId)
+      : null;
   }
 
   updateBellLauncherDialogBody() {
-    return OneSignal.context.subscriptionManager.isPushNotificationsEnabled()
+    return OneSignal.context.subscriptionManager
+      .isPushNotificationsEnabled()
       .then((currentSetSubscription: boolean) => {
         if (this.nestedContentSelector) {
           clearDomElementChildren(this.nestedContentSelector);
         }
         let contents = 'Nothing to show.';
 
-        var footer = '';
+        let footer = '';
         if (this.bell.options.showCredit) {
           footer = `<div class="divider"></div><div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>`;
         }
 
-        if (this.bell.state === Bell.STATES.SUBSCRIBED && currentSetSubscription === true ||
-          this.bell.state === Bell.STATES.UNSUBSCRIBED && currentSetSubscription === false) {
-
+        if (
+          (this.bell.state === Bell.STATES.SUBSCRIBED &&
+            currentSetSubscription === true) ||
+          (this.bell.state === Bell.STATES.UNSUBSCRIBED &&
+            currentSetSubscription === false)
+        ) {
           let notificationIconHtml = '';
           const imageUrl = getPlatformNotificationIcon(this.notificationIcons);
           if (imageUrl != 'default-icon') {
@@ -76,14 +94,12 @@ export default class Dialog extends AnimatedElement {
             buttonHtml = `<button type="button" class="action" id="${this.unsubscribeButtonSelectorId}">${this.bell.options.text['dialog.main.button.unsubscribe']}</button>`;
 
           contents = `<h1>${this.bell.options.text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${notificationIconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container">${buttonHtml}</div>${footer}`;
-        }
-        else if (this.bell.state === Bell.STATES.BLOCKED) {
+        } else if (this.bell.state === Bell.STATES.BLOCKED) {
           let imageUrl = null;
           if (bowserCastle().name === 'chrome') {
             if (!bowserCastle().mobile && !bowserCastle().tablet)
               imageUrl = '/bell/chrome-unblock.jpg';
-          }
-          else if (bowserCastle().name === 'firefox')
+          } else if (bowserCastle().name === 'firefox')
             imageUrl = '/bell/firefox-unblock.jpg';
           else if (bowserCastle().name == 'safari')
             imageUrl = '/bell/safari-unblock.jpg';
@@ -92,11 +108,15 @@ export default class Dialog extends AnimatedElement {
 
           let instructionsHtml = '';
           if (imageUrl) {
-            imageUrl = SdkEnvironment.getOneSignalStaticResourcesUrl() + imageUrl;
+            imageUrl =
+              SdkEnvironment.getOneSignalStaticResourcesUrl() + imageUrl;
             instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>`;
           }
 
-          if ((bowserCastle().mobile || bowserCastle().tablet) && bowserCastle().name === 'chrome') {
+          if (
+            (bowserCastle().mobile || bowserCastle().tablet) &&
+            bowserCastle().name === 'chrome'
+          ) {
             instructionsHtml = `<ol><li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li><li>Click <strong>Site settings</strong> under Advanced.</li><li>Click <strong>Notifications</strong>.</li><li>Find and click this entry for this website.</li><li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li></ol>`;
           }
           contents = `<h1>${this.bell.options.text['dialog.blocked.title']}</h1><div class="divider"></div><div class="instructions"><p>${this.bell.options.text['dialog.blocked.message']}</p>${instructionsHtml}</div>${footer}`;
@@ -120,9 +140,11 @@ export default class Dialog extends AnimatedElement {
           });
         }
         if (this.unsubscribeButton) {
-          this.unsubscribeButton.addEventListener('click', () => OneSignalEvent.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK));
+          this.unsubscribeButton.addEventListener('click', () =>
+            OneSignalEvent.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK),
+          );
         }
         this.bell.setCustomColorsIfSpecified();
-    });
+      });
   }
 }

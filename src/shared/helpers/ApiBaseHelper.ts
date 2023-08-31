@@ -1,4 +1,6 @@
-export const convertHeadersToPlainObjectForUnitTesting = (headers: HeadersInit): IndexableByString<string> => {
+export const convertHeadersToPlainObjectForUnitTesting = (
+  headers: HeadersInit,
+): IndexableByString<string> => {
   // Convert the headers object into a plain object for unit testing purposes
   const headersObject: IndexableByString<string> = {};
 

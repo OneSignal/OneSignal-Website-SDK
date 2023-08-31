@@ -3,5 +3,5 @@ export interface MessengerMessageEvent {
   command: string;
   data: any;
   source: string;
-  reply: Function;
+  reply: (param: unknown) => void;
 }

@@ -13,5 +13,5 @@ export enum SubscriptionStateKind {
   PermissionRevoked = -21,
   PushSubscriptionRevoked = -22,
   ServiceWorkerStatus403 = -23,
-  ServiceWorkerStatus404 = -24
+  ServiceWorkerStatus404 = -24,
 }

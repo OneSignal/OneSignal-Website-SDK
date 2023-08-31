@@ -1,10 +1,14 @@
-import { OSModelUpdatedArgs } from "./OSModelUpdatedArgs";
-import Subscribable from "../Subscribable";
-import EncodedModel from "../caching/EncodedModel";
-import { StringKeys } from "../models/StringKeys";
-import { ModelName, SupportedModel } from "../models/SupportedModels";
-import { ModelStoreChange, ModelStoreHydrated, ModelStoreUpdated } from "../models/ModelStoreChange";
-import { logMethodCall } from "../../shared/utils/utils";
+import { OSModelUpdatedArgs } from './OSModelUpdatedArgs';
+import Subscribable from '../Subscribable';
+import EncodedModel from '../caching/EncodedModel';
+import { StringKeys } from '../models/StringKeys';
+import { ModelName, SupportedModel } from '../models/SupportedModels';
+import {
+  ModelStoreChange,
+  ModelStoreHydrated,
+  ModelStoreUpdated,
+} from '../models/ModelStoreChange';
+import { logMethodCall } from '../../shared/utils/utils';
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   data: Model;
@@ -17,17 +21,17 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   constructor(
     readonly modelName: ModelName,
     data: Model,
-    modelId?: string
-    ) {
-      super();
-      this.modelId = modelId ?? Math.random().toString(36).substring(2);
-      this.modelName = modelName;
-      this.data = data;
-      this.onesignalId = undefined;
+    modelId?: string,
+  ) {
+    super();
+    this.modelId = modelId ?? Math.random().toString(36).substring(2);
+    this.modelName = modelName;
+    this.data = data;
+    this.onesignalId = undefined;
 
-      this.awaitOneSignalIdAvailable = new Promise<string>(resolve => {
-        this.onesignalIdAvailableCallback = resolve;
-      });
+    this.awaitOneSignalIdAvailable = new Promise<string>((resolve) => {
+      this.onesignalIdAvailableCallback = resolve;
+    });
   }
 
   /**
@@ -36,7 +40,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    * @param onesignalId - The OneSignal ID to set.
    */
   public setOneSignalId(onesignalId?: string): void {
-    logMethodCall("setOneSignalId", { onesignalId });
+    logMethodCall('setOneSignalId', { onesignalId });
     this.onesignalId = onesignalId;
 
     if (onesignalId) {
@@ -48,8 +52,12 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    * We use this method to update the model data.
    * Results in a broadcasted update event.
    */
-  public set(property: StringKeys<Model>, newValue: any, propagate: boolean = true): void {
-    logMethodCall("set", { property, newValue });
+  public set(
+    property: StringKeys<Model>,
+    newValue: any,
+    propagate = true,
+  ): void {
+    logMethodCall('set', { property, newValue });
     let oldValue;
 
     if (this.data) {
@@ -58,7 +66,10 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     }
 
     if (propagate) {
-      const change = new ModelStoreUpdated(this.modelId, new OSModelUpdatedArgs(this, property, oldValue, newValue));
+      const change = new ModelStoreUpdated(
+        this.modelId,
+        new OSModelUpdatedArgs(this, property, oldValue, newValue),
+      );
       this.broadcast(change);
     }
   }
@@ -68,7 +79,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    * To be called when updating the data with a remote sync.
    */
   public hydrate(data: Model): void {
-    logMethodCall("hydrate", { data });
+    logMethodCall('hydrate', { data });
     this.data = data;
     this.broadcast(new ModelStoreHydrated(this.modelId, this));
   }
@@ -90,13 +101,13 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    * @returns OSModel object
    */
   static decode(encodedModel: EncodedModel): OSModel<SupportedModel> {
-    logMethodCall("decode", { encodedModel });
+    logMethodCall('decode', { encodedModel });
     const { modelId, modelName, onesignalId, ...data } = encodedModel;
 
     const decodedModel = new OSModel<SupportedModel>(
       modelName as ModelName,
       data,
-      modelId
+      modelId,
     );
 
     decodedModel.setOneSignalId(onesignalId);

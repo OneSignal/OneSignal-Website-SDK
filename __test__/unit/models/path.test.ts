@@ -1,4 +1,4 @@
-import Path from "../../../src/shared/models/Path";
+import Path from '../../../src/shared/models/Path';
 
 describe('Path tests', () => {
   test(`should return correct components for a simple web path`, () => {
@@ -11,7 +11,9 @@ describe('Path tests', () => {
   test(`should return correct components for a file-based path`, () => {
     const path = new Path('file:///c:/web-folder/assets/service-worker.js');
     expect(path.getFileName()).toBe('service-worker.js');
-    expect(path.getFullPath()).toBe('file:///c:/web-folder/assets/service-worker.js');
+    expect(path.getFullPath()).toBe(
+      'file:///c:/web-folder/assets/service-worker.js',
+    );
     expect(path.getPathWithoutFileName()).toBe('file:///c:/web-folder/assets');
   });
 
@@ -39,26 +41,38 @@ describe('Path tests', () => {
   test(`should return correct components for an absolute web path`, () => {
     const path = new Path('https://site.com/web-folder/service-worker.js');
     expect(path.getFileName()).toBe('service-worker.js');
-    expect(path.getFullPath()).toBe('https://site.com/web-folder/service-worker.js');
+    expect(path.getFullPath()).toBe(
+      'https://site.com/web-folder/service-worker.js',
+    );
     expect(path.getPathWithoutFileName()).toBe('https://site.com/web-folder');
   });
 
   test('should include query string in full path', () => {
-    const path = new Path('https://site.com/web-folder/service-worker.js?appId=12345');
-    expect(path.getFullPath()).toBe('https://site.com/web-folder/service-worker.js?appId=12345');
+    const path = new Path(
+      'https://site.com/web-folder/service-worker.js?appId=12345',
+    );
+    expect(path.getFullPath()).toBe(
+      'https://site.com/web-folder/service-worker.js?appId=12345',
+    );
   });
   test(`should include query string in path with query`, () => {
-    const path = new Path('https://site.com/web-folder/service-worker.js?appId=12345');
+    const path = new Path(
+      'https://site.com/web-folder/service-worker.js?appId=12345',
+    );
     expect(path.getFileNameWithQuery()).toBe('service-worker.js?appId=12345');
   });
 
   test(`should not include query string in path filename`, () => {
-    const path = new Path('https://site.com/web-folder/service-worker.js?appId=12345');
+    const path = new Path(
+      'https://site.com/web-folder/service-worker.js?appId=12345',
+    );
     expect(path.getFileName()).toBe('service-worker.js');
   });
 
   test(`should not include query string in path without filename`, () => {
-    const path = new Path('https://site.com/web-folder/service-worker.js?appId=12345');
+    const path = new Path(
+      'https://site.com/web-folder/service-worker.js?appId=12345',
+    );
     expect(path.getPathWithoutFileName()).toBe('https://site.com/web-folder');
   });
 });

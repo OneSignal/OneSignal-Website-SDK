@@ -9,20 +9,27 @@ export function isPushNotificationsSupported() {
 
 export function isMacOSSafariInIframe(): boolean {
   // Fallback detection for Safari on macOS in an iframe context
-  return window.top !== window && // isContextIframe
-  navigator.vendor === "Apple Computer, Inc." && // isSafari
-  navigator.platform === "MacIntel"; // isMacOS
+  return (
+    window.top !== window && // isContextIframe
+    navigator.vendor === 'Apple Computer, Inc.' && // isSafari
+    navigator.platform === 'MacIntel'
+  ); // isMacOS
 }
 
 export function supportsSafariPush(): boolean {
-  return (window.safari && typeof window.safari.pushNotification !== "undefined") ||
-          isMacOSSafariInIframe();
+  return (
+    (window.safari && typeof window.safari.pushNotification !== 'undefined') ||
+    isMacOSSafariInIframe()
+  );
 }
 
 // Does the browser support the standard Push API
 export function supportsVapidPush(): boolean {
-  return typeof PushSubscriptionOptions !== "undefined" &&
-         PushSubscriptionOptions.prototype.hasOwnProperty("applicationServerKey");
+  return (
+    typeof PushSubscriptionOptions !== 'undefined' &&
+    // eslint-disable-next-line no-prototype-builtins
+    PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey')
+  );
 }
 
 /* Notes on browser results which lead the logic of the functions above */

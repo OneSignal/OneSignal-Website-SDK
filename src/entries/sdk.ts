@@ -7,6 +7,6 @@
  */
 
 // NOTE: Careful if adding imports, ES5 targets can't clean up functions never called.
-import { OneSignalShimLoader } from "../page/utils/OneSignalShimLoader";
+import { OneSignalShimLoader } from '../page/utils/OneSignalShimLoader';
 
 OneSignalShimLoader.start();

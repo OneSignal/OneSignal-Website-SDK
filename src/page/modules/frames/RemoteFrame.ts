@@ -1,8 +1,7 @@
 import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
 import Postmam from '../../../shared/services/Postmam';
 import Context from '../../models/Context';
-import LocalStorage from '../../../shared/utils/LocalStorage';
-import { EnvironmentInfoHelper } from "../../helpers/EnvironmentInfoHelper";
+import { EnvironmentInfoHelper } from '../../helpers/EnvironmentInfoHelper';
 import ConfigManager from '../../../page/managers/ConfigManager';
 import SubscriptionHelper from '../../../shared/helpers/SubscriptionHelper';
 
@@ -31,8 +30,8 @@ export default class RemoteFrame implements Disposable {
   // page has finished
   private loadPromise: {
     promise: Promise<void>;
-    resolver: Function;
-    rejector: Function;
+    resolver: (value?: unknown) => void;
+    rejector: (reason?: unknown) => void;
   };
 
   constructor(initOptions: RemoteFrameOptions) {
@@ -43,9 +42,9 @@ export default class RemoteFrame implements Disposable {
       siteName: initOptions.siteName,
       metrics: {
         enable: false,
-        mixpanelReportingToken: null
+        mixpanelReportingToken: null,
       },
-      userConfig: {}
+      userConfig: {},
     };
   }
 
@@ -64,7 +63,7 @@ export default class RemoteFrame implements Disposable {
     const creator = window.opener || window.parent;
     if (creator == window) {
       document.write(
-        `<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and must be opened as a result of a subscription call.</span>`
+        `<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and must be opened as a result of a subscription call.</span>`,
       );
       return Promise.resolve();
     }
@@ -72,10 +71,8 @@ export default class RemoteFrame implements Disposable {
     // Within this class, we can use them, but when we assign them to
     // OneSignal.config, assign the simple string versions
     const rasterizedOptions = { ...this.options };
-    rasterizedOptions.appId = rasterizedOptions.appId;
     /* This is necessary, otherwise the subdomain is lost after ConfigManager.getAppConfig */
     (rasterizedOptions as any).subdomainName = rasterizedOptions.subdomain;
-    rasterizedOptions.origin = rasterizedOptions.origin;
     OneSignal.config = rasterizedOptions || {};
 
     const appConfig = await new ConfigManager().getAppConfig(rasterizedOptions);
@@ -91,11 +88,8 @@ export default class RemoteFrame implements Disposable {
       this.loadPromise.rejector = reject;
     });
 
-    this.establishCrossOriginMessaging();
     return this.loadPromise.promise;
   }
-
-  establishCrossOriginMessaging(): void {}
 
   dispose(): void {
     // Removes all events
@@ -107,7 +101,8 @@ export default class RemoteFrame implements Disposable {
   }
 
   async subscribe() {
-    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    const isPushEnabled =
+      await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     const windowCreator = opener || parent;
 
     if (!isPushEnabled) {

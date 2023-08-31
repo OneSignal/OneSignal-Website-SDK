@@ -1,4 +1,4 @@
-import { MockPushSubscription } from "./MockPushSubscription";
+import { MockPushSubscription } from './MockPushSubscription';
 
 export class MockPushManager implements PushManager {
   private subscription: MockPushSubscription | null;
@@ -12,17 +12,24 @@ export class MockPushManager implements PushManager {
     return this.subscription;
   }
 
-  public async permissionState(_options?: PushSubscriptionOptionsInit): Promise<PushPermissionState> {
-    return "granted";
+  public async permissionState(
+    _options?: PushSubscriptionOptionsInit,
+  ): Promise<PushPermissionState> {
+    return 'granted';
   }
 
-  public async subscribe(options: PushSubscriptionOptionsInit): Promise<PushSubscription> {
+  public async subscribe(
+    options: PushSubscriptionOptionsInit,
+  ): Promise<PushSubscription> {
     if (this.subscription) {
-      if (this.subscription.options.applicationServerKey != options.applicationServerKey) {
+      if (
+        this.subscription.options.applicationServerKey !=
+        options.applicationServerKey
+      ) {
         // Simulate browser throwing if you don't unsubscribe first if applicationServerKey has changed.
         throw {
-          name: "InvalidStateError",
-          message: "Can not change keys without calling unsubscribe first!"
+          name: 'InvalidStateError',
+          message: 'Can not change keys without calling unsubscribe first!',
         };
       }
     }
@@ -35,7 +42,7 @@ export class MockPushManager implements PushManager {
    */
   public __unsubscribe() {
     if (!this.subscription) {
-      throw new Error("No Existing subscription!");
+      throw new Error('No Existing subscription!');
     }
     this.subscription = null;
   }

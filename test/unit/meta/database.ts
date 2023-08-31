@@ -3,10 +3,13 @@ import test from 'ava';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import Database from '../../../src/shared/services/Database';
 import Random from '../../support/tester/Random';
-import { isNullOrUndefined } from "../../support/tester/utils";
-import { initializeNewSession, Session } from "../../../src/shared/models/Session";
+import { isNullOrUndefined } from '../../support/tester/utils';
+import {
+  initializeNewSession,
+  Session,
+} from '../../../src/shared/models/Session';
 
-test(`database should not be shared across service worker test environment initializations`, async t => {
+test(`database should not be shared across service worker test environment initializations`, async (t) => {
   let firstAppId;
   let firstDatabaseInstance;
   let firstDatabaseInstanceName;
@@ -36,7 +39,7 @@ test(`database should not be shared across service worker test environment initi
   }
 });
 
-test(`database should not be shared across DOM test environment initializations`, async t => {
+test(`database should not be shared across DOM test environment initializations`, async (t) => {
   let firstAppId;
   let firstDatabaseInstance;
   let firstDatabaseInstanceName;
@@ -66,9 +69,9 @@ test(`database should not be shared across DOM test environment initializations`
   }
 });
 
-const externalUserId = "my_test_external_id";
+const externalUserId = 'my_test_external_id';
 
-test('setExternalUserId saves value into database', async t => {
+test('setExternalUserId saves value into database', async (t) => {
   await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
 
@@ -91,11 +94,11 @@ test('setExternalUserId saves value into database', async t => {
   await Database.setExternalUserId(externalUserId);
   t.is(await Database.getExternalUserId(), externalUserId);
 
-  await Database.setExternalUserId("");
+  await Database.setExternalUserId('');
   t.is(isNullOrUndefined(await Database.getExternalUserId()), true);
 });
 
-test("getExternalUserId retrieves correct value from the database", async t => {
+test('getExternalUserId retrieves correct value from the database', async (t) => {
   await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
 
@@ -111,7 +114,7 @@ const newDeviceId = Random.getRandomUuid();
 const deviceType = 1;
 const session: Session = initializeNewSession({ deviceId, appId, deviceType });
 
-test("upsertSession - insert & update", async t => {
+test('upsertSession - insert & update', async (t) => {
   await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
 
@@ -137,7 +140,7 @@ test("upsertSession - insert & update", async t => {
   t.is(currentSession!.deviceType, deviceType);
 });
 
-test("cleanupCurrentSession", async t => {
+test('cleanupCurrentSession', async (t) => {
   await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
 
@@ -159,7 +162,7 @@ test("cleanupCurrentSession", async t => {
   t.is(currentSession, null);
 });
 
-test("setDeviceId", async t => {
+test('setDeviceId', async (t) => {
   let subscription = await Database.getSubscription();
   t.is(subscription.deviceId, null);
 

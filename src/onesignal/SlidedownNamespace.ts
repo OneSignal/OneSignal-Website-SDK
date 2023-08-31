@@ -1,8 +1,8 @@
-import { AutoPromptOptions } from "../page/managers/PromptsManager";
-import { DelayedPromptType } from "../shared/models/Prompts";
-import { awaitOneSignalInitAndSupported } from "../shared/utils/utils";
-import OneSignal from "./OneSignal";
-import { EventListenerBase } from "../page/userModel/EventListenerBase";
+import { AutoPromptOptions } from '../page/managers/PromptsManager';
+import { DelayedPromptType } from '../shared/models/Prompts';
+import { awaitOneSignalInitAndSupported } from '../shared/utils/utils';
+import OneSignal from './OneSignal';
+import { EventListenerBase } from '../page/userModel/EventListenerBase';
 
 export default class SlidedownNamespace extends EventListenerBase {
   constructor() {
@@ -15,15 +15,19 @@ export default class SlidedownNamespace extends EventListenerBase {
    */
   async promptPush(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowParticularSlidedown(DelayedPromptType.Push, options);
+    await OneSignal.context.promptsManager.internalShowParticularSlidedown(
+      DelayedPromptType.Push,
+      options,
+    );
   }
 
   async promptPushCategories(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    const isPushEnabled =
+      await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     await OneSignal.context.promptsManager.internalShowCategorySlidedown({
       ...options,
-      isInUpdateMode: isPushEnabled
+      isInUpdateMode: isPushEnabled,
     });
   }
 
@@ -48,11 +52,17 @@ export default class SlidedownNamespace extends EventListenerBase {
     });
   }
 
-  addEventListener(event: "slidedownShown", listener: (wasShown: boolean) => void): void {
+  addEventListener(
+    event: 'slidedownShown',
+    listener: (wasShown: boolean) => void,
+  ): void {
     OneSignal.emitter.on(event, listener);
   }
 
-  removeEventListener(event: "slidedownShown", listener: (wasShown: boolean) => void): void {
+  removeEventListener(
+    event: 'slidedownShown',
+    listener: (wasShown: boolean) => void,
+  ): void {
     OneSignal.emitter.off(event, listener);
   }
 }

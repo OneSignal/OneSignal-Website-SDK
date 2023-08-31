@@ -12,10 +12,10 @@ export default class TimedLocalStorage {
    */
   public static isLocalStorageSupported(): boolean {
     try {
-      if (typeof localStorage === "undefined") {
+      if (typeof localStorage === 'undefined') {
         return false;
       }
-      localStorage.getItem("test");
+      localStorage.getItem('test');
       return true;
     } catch (e) {
       return false;
@@ -25,18 +25,24 @@ export default class TimedLocalStorage {
   /**
    * Sets a key in LocalStorage with an expiration time measured in minutes.
    */
-  public static setItem(key: string, value: any, expirationInMinutes?: number): void {
+  public static setItem(
+    key: string,
+    value: any,
+    expirationInMinutes?: number,
+  ): void {
     if (!TimedLocalStorage.isLocalStorageSupported()) {
       return;
     }
-    const expirationInMilliseconds = typeof expirationInMinutes !== "undefined" ?
-      expirationInMinutes * 60 * 1000 :
-      0;
+    const expirationInMilliseconds =
+      typeof expirationInMinutes !== 'undefined'
+        ? expirationInMinutes * 60 * 1000
+        : 0;
     const record = {
       value: JSON.stringify(value),
-      timestamp: typeof expirationInMinutes !== "undefined" ?
-        new Date().getTime() + expirationInMilliseconds :
-        undefined,
+      timestamp:
+        typeof expirationInMinutes !== 'undefined'
+          ? new Date().getTime() + expirationInMilliseconds
+          : undefined,
     };
     localStorage.setItem(key, JSON.stringify(record));
   }
@@ -45,7 +51,7 @@ export default class TimedLocalStorage {
    * Retrieves a key from LocalStorage if the expiration time when the key was set hasn't already
    * expired.
    */
-  public static getItem(key: string): any | null  {
+  public static getItem(key: string): any | null {
     if (!TimedLocalStorage.isLocalStorageSupported()) {
       return null;
     }
@@ -60,8 +66,10 @@ export default class TimedLocalStorage {
       return null;
     }
 
-    if (parsedRecord.timestamp &&
-      new Date().getTime() >= parsedRecord.timestamp) {
+    if (
+      parsedRecord.timestamp &&
+      new Date().getTime() >= parsedRecord.timestamp
+    ) {
       localStorage.removeItem(key);
       return null;
     }
@@ -78,7 +86,7 @@ export default class TimedLocalStorage {
   /**
    * Removes an item from LocalStorage.
    */
-  public static removeItem(key: string): void  {
+  public static removeItem(key: string): void {
     if (!TimedLocalStorage.isLocalStorageSupported()) {
       return null;
     }

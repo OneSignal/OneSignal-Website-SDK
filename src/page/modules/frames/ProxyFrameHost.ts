@@ -2,8 +2,12 @@ import Environment from '../../../shared/helpers/Environment';
 import OneSignalEvent from '../../../shared/services/OneSignalEvent';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../../shared/services/Postmam';
-import { timeoutPromise, triggerNotificationPermissionChanged, deepCopy } from '../../../shared/utils/utils';
-import { ServiceWorkerActiveState } from "../../../shared/helpers/ServiceWorkerHelper";
+import {
+  timeoutPromise,
+  triggerNotificationPermissionChanged,
+  deepCopy,
+} from '../../../shared/utils/utils';
+import { ServiceWorkerActiveState } from '../../../shared/helpers/ServiceWorkerHelper';
 import { PageVisibilityRequest } from '../../../shared/models/Session';
 import Log from '../../../shared/libraries/Log';
 
@@ -18,16 +22,15 @@ interface Reply {
  * subdomain.os.tc/webPushIFrame. *
  */
 export default class ProxyFrameHost implements Disposable {
-
   public url: URL;
   private element: HTMLIFrameElement;
   private messenger: Postmam;
 
   // Promise to track whether the frame has finished loading
   private loadPromise: {
-    promise: Promise<void>,
-    resolver: Function,
-    rejector: Function
+    promise: Promise<void>;
+    resolver: (value?: unknown) => void;
+    rejector: (reason?: unknown) => void;
   };
 
   /**
@@ -61,35 +64,43 @@ export default class ProxyFrameHost implements Disposable {
     Log.debug('Opening an iFrame to', this.url.toString());
     this.removeFrame();
 
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
     iframe.src = this.url.toString();
-    (iframe as any).sandbox = 'allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation';
+    (iframe as any).sandbox =
+      'allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation';
     (this as any).loadPromise = {};
     (this as any).loadPromise.promise = new Promise((resolve, reject) => {
-        this.loadPromise.resolver = resolve;
-        this.loadPromise.rejector = reject;
+      this.loadPromise.resolver = resolve;
+      this.loadPromise.rejector = reject;
     });
     document.body.appendChild(iframe);
     iframe.onload = this.onFrameLoad.bind(this);
 
     this.element = iframe;
     // Display a timeout warning if frame doesn't load in time, but don't prevent it from loading if the network is just slow
-    timeoutPromise(this.loadPromise.promise, ProxyFrameHost.LOAD_TIMEOUT_MS).catch(() => {
+    timeoutPromise(
+      this.loadPromise.promise,
+      ProxyFrameHost.LOAD_TIMEOUT_MS,
+    ).catch(() => {
       if (window === window.top) {
-        Log.warn(`OneSignal: Loading the required iFrame ${this.url.toString()} timed out. Check that the Site URL onesignal.com dashboard web config is ${location.origin}. Only the Site URL specified there is allowed to use load the iFrame.`);
+        Log.warn(
+          `OneSignal: Loading the required iFrame ${this.url.toString()} timed out. Check that the Site URL onesignal.com dashboard web config is ${
+            location.origin
+          }. Only the Site URL specified there is allowed to use load the iFrame.`,
+        );
       }
     });
     return this.loadPromise.promise;
   }
 
   removeFrame() {
-    if (!Environment.isBrowser())
-      return;
+    if (!Environment.isBrowser()) return;
 
-    const existingInstance = document.querySelector(`iframe[src='${this.url.toString()}']`);
-    if (existingInstance)
-      existingInstance.remove();
+    const existingInstance = document.querySelector(
+      `iframe[src='${this.url.toString()}']`,
+    );
+    if (existingInstance) existingInstance.remove();
   }
 
   onFrameLoad(_: UIEvent): void {
@@ -101,14 +112,39 @@ export default class ProxyFrameHost implements Disposable {
       // Remove all previous events; window message events should not go to any previous listeners
       this.messenger.destroy();
     }
-    this.messenger = new Postmam(this.element.contentWindow, this.url.toString(), this.url.toString());
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.CONNECTED, this.onMessengerConnect.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, this.onRemoteRetriggerEvent.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, this.onRemoteNotificationPermissionChanged.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, this.onRequestHostUrl.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, this.onServiceWorkerCommandRedirect.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT, this.onGetEventListenerCount.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, this.onAreYouVisibleRequest.bind(this));
+    this.messenger = new Postmam(
+      this.element.contentWindow,
+      this.url.toString(),
+      this.url.toString(),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.CONNECTED,
+      this.onMessengerConnect.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
+      this.onRemoteRetriggerEvent.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED,
+      this.onRemoteNotificationPermissionChanged.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL,
+      this.onRequestHostUrl.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT,
+      this.onServiceWorkerCommandRedirect.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT,
+      this.onGetEventListenerCount.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST,
+      this.onAreYouVisibleRequest.bind(this),
+    );
     this.messenger.connect();
   }
 
@@ -121,31 +157,39 @@ export default class ProxyFrameHost implements Disposable {
   }
 
   async onMessengerConnect(_: MessengerMessageEvent) {
-    Log.debug(`Successfully established cross-origin communication for iFrame at ${this.url.toString()}`);
+    Log.debug(
+      `Successfully established cross-origin communication for iFrame at ${this.url.toString()}`,
+    );
 
-    this.messenger.message(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, {
-      hostInitOptions: deepCopy(OneSignal.config), // Removes functions and unmessageable objects
-      pageUrl: window.location.href,
-    }, (reply: Reply) => {
-      if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
-        this.loadPromise.resolver();
-        // This needs to be initialized so that isSubscribed() can be called to
-        // determine whether the user is subscribed to Frame A or B
-        //Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      }
-      return false;
-    });
+    this.messenger.message(
+      OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE,
+      {
+        hostInitOptions: deepCopy(OneSignal.config), // Removes functions and unmessageable objects
+        pageUrl: window.location.href,
+      },
+      (reply: Reply) => {
+        if (
+          reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE
+        ) {
+          this.loadPromise.resolver();
+          // This needs to be initialized so that isSubscribed() can be called to
+          // determine whether the user is subscribed to Frame A or B
+          //Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+        }
+        return false;
+      },
+    );
   }
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {
     // e.g. { eventName: 'subscriptionChange', eventData: true}
-    const { eventName, eventData } = (message.data as any);
+    const { eventName, eventData } = message.data as any;
     OneSignalEvent.trigger(eventName, eventData, message.source);
     return false;
   }
 
   onRemoteNotificationPermissionChanged(message: MessengerMessageEvent) {
-    const { forceUpdatePermission } = (message.data as any);
+    const { forceUpdatePermission } = message.data as any;
     triggerNotificationPermissionChanged(forceUpdatePermission);
     return false;
   }
@@ -156,8 +200,8 @@ export default class ProxyFrameHost implements Disposable {
   }
 
   onServiceWorkerCommandRedirect(message: MessengerMessageEvent) {
-    const url = (message.data as any);
-    if (url && url.startsWith("http")) {
+    const url = message.data as any;
+    if (url && url.startsWith('http')) {
       window.location.href = url;
     }
     return false;
@@ -165,32 +209,47 @@ export default class ProxyFrameHost implements Disposable {
 
   onGetEventListenerCount(message: MessengerMessageEvent) {
     const eventName: string = message.data;
-    Log.debug('(Reposted from iFrame -> Host) Getting event listener count for ', eventName);
+    Log.debug(
+      '(Reposted from iFrame -> Host) Getting event listener count for ',
+      eventName,
+    );
     message.reply(OneSignal.emitter.numberOfListeners(eventName));
     return false;
   }
 
   isSubscribed(): Promise<boolean> {
-    return new Promise(resolve => {
-      this.messenger.message(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, null, (reply: Reply) => {
-        resolve(reply.data);
-      });
+    return new Promise((resolve) => {
+      this.messenger.message(
+        OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED,
+        null,
+        (reply: Reply) => {
+          resolve(reply.data);
+        },
+      );
     });
   }
 
   unsubscribeFromPush(): Promise<void> {
-    return new Promise<void>(resolve => {
+    return new Promise<void>((resolve) => {
       this.messenger.message(
-        OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, null,
-        (_reply: Reply) => { resolve(); });
+        OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME,
+        null,
+        (_reply: Reply) => {
+          resolve();
+        },
+      );
     });
   }
 
   getProxyServiceWorkerActiveState() {
     return new Promise<ServiceWorkerActiveState>((resolve, reject) => {
-      this.message(OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE, null, (reply: Reply) => {
-        resolve(reply.data);
-      });
+      this.message(
+        OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE,
+        null,
+        (reply: Reply) => {
+          resolve(reply.data);
+        },
+      );
     });
   }
 
@@ -203,8 +262,8 @@ export default class ProxyFrameHost implements Disposable {
     return result;
   }
 
-  onAreYouVisibleRequest(event: {data: PageVisibilityRequest}) {
-    Log.debug("onAreYouVisibleRequest page", event);
+  onAreYouVisibleRequest(event: { data: PageVisibilityRequest }) {
+    Log.debug('onAreYouVisibleRequest page', event);
     const response = {
       timestamp: event.data.timestamp,
       focused: document.hasFocus(),
@@ -216,6 +275,7 @@ export default class ProxyFrameHost implements Disposable {
    * Shortcut method to messenger.message().
    */
   message(..._) {
+    // eslint-disable-next-line prefer-spread, prefer-rest-params
     this.messenger.message.apply(this.messenger, arguments);
   }
 }

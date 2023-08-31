@@ -1,4 +1,4 @@
-import { ONESIGNAL_EVENTS } from "../../../src/onesignal/OneSignalEvents";
+import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
 
 test('Test uniqueness of OneSignal event names', () => {
   const events = Object.values(ONESIGNAL_EVENTS);

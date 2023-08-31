@@ -1,4 +1,4 @@
-import { DeliveryPlatformKind } from "../../../src/shared/models/DeliveryPlatformKind";
+import { DeliveryPlatformKind } from '../../../src/shared/models/DeliveryPlatformKind';
 
 describe('DeliveryPlatformKind', () => {
   test('delivery platform constants should be correct', async () => {

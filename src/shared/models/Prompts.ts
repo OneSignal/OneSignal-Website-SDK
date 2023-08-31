@@ -1,13 +1,12 @@
-import { TagCategory } from "../../page/models/Tags";
+import { TagCategory } from '../../page/models/Tags';
 
 export enum DelayedPromptType {
-  Native      = "native",     // native push
-  Push        = "push",       // slidedown w/ push only
-  Category    = "category",   // slidedown w/ push + categories
-  Sms         = "sms",        // sms only
-  Email       = "email",      // email only
-  SmsAndEmail = "smsAndEmail" // sms and email only
-
+  Native = 'native', // native push
+  Push = 'push', // slidedown w/ push only
+  Category = 'category', // slidedown w/ push + categories
+  Sms = 'sms', // sms only
+  Email = 'email', // email only
+  SmsAndEmail = 'smsAndEmail', // sms and email only
 }
 
 interface BasePromptOptions {
@@ -21,28 +20,28 @@ export interface DelayedPromptOptions extends BasePromptOptions {
 }
 
 export interface SlidedownOptions {
-  prompts : SlidedownPromptOptions[];
+  prompts: SlidedownPromptOptions[];
 }
 
 export interface SlidedownPromptOptions {
-  type              : DelayedPromptType;
-  text              : SlidedownTextOptions;
-  autoPrompt        : boolean;
-  icon             ?: string | null; // url
-  delay            ?: SlidedownDelayOptions;
-  categories       ?: TagCategory[];
+  type: DelayedPromptType;
+  text: SlidedownTextOptions;
+  autoPrompt: boolean;
+  icon?: string | null; // url
+  delay?: SlidedownDelayOptions;
+  categories?: TagCategory[];
 }
 
 export interface SlidedownTextOptions {
-  actionMessage         : string;
-  acceptButton          : string;
-  cancelButton          : string;
-  negativeUpdateButton ?: string;
-  positiveUpdateButton ?: string;
-  updateMessage        ?: string;
-  confirmMessage       ?: string;
-  smsLabel             ?: string;
-  emailLabel           ?: string;
+  actionMessage: string;
+  acceptButton: string;
+  cancelButton: string;
+  negativeUpdateButton?: string;
+  positiveUpdateButton?: string;
+  updateMessage?: string;
+  confirmMessage?: string;
+  smsLabel?: string;
+  emailLabel?: string;
 }
 
 export interface SlidedownDelayOptions {
@@ -50,7 +49,8 @@ export interface SlidedownDelayOptions {
   timeDelay: number;
 }
 
-export interface FullscreenPermissionMessageOptions extends DelayedPromptOptions {
+export interface FullscreenPermissionMessageOptions
+  extends DelayedPromptOptions {
   autoAcceptTitle?: string;
   actionMessage: string;
   acceptButton: string;
@@ -60,8 +60,8 @@ export interface FullscreenPermissionMessageOptions extends DelayedPromptOptions
   caption: string;
 }
 
-export type CustomLinkStyle = "button" | "link";
-export type CustomLinkSize = "large" | "medium" | "small";
+export type CustomLinkStyle = 'button' | 'link';
+export type CustomLinkSize = 'large' | 'medium' | 'small';
 
 export interface AppUserConfigCustomLinkOptions extends BasePromptOptions {
   style?: CustomLinkStyle;
@@ -92,8 +92,8 @@ export interface AppUserConfigPromptOptions {
   exampleNotificationCaption?: string;
   acceptButton?: string;
   cancelButton?: string;
-  acceptButtonText?: string;  // legacy
-  cancelButtonText?: string;  // legacy
+  acceptButtonText?: string; // legacy
+  cancelButtonText?: string; // legacy
   showCredit?: string;
   native?: DelayedPromptOptions;
   slidedown?: SlidedownOptions;
@@ -123,7 +123,7 @@ export interface BellText {
 export interface AppUserConfigNotifyButton {
   options?: AppUserConfigNotifyButton;
   enable: boolean;
-  displayPredicate?: Function | null | undefined;
+  displayPredicate?: () => void | null | undefined;
   size?: BellSize;
   position?: BellPosition;
   offset?: { bottom: string; left: string; right: string };

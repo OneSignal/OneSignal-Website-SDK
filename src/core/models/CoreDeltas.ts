@@ -1,6 +1,6 @@
-import { OSModel } from "../modelRepo/OSModel";
-import { CoreChangeType } from "./CoreChangeType";
-import { StringKeys } from "./StringKeys";
+import { OSModel } from '../modelRepo/OSModel';
+import { CoreChangeType } from './CoreChangeType';
+import { StringKeys } from './StringKeys';
 
 export type ModelDelta<Model> = {
   model: OSModel<Model>;

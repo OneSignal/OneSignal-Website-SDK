@@ -1,4 +1,7 @@
-import { InvalidArgumentError, InvalidArgumentReason } from "../errors/InvalidArgumentError";
+import {
+  InvalidArgumentError,
+  InvalidArgumentReason,
+} from '../errors/InvalidArgumentError';
 
 /**
  * Represents a normalized path.
@@ -53,7 +56,7 @@ export default class Path {
     const newPath = this.getWithoutQueryString();
     const fileNameIndex = newPath.lastIndexOf(this.getFileName());
     let pathWithoutFileName = newPath.substring(0, fileNameIndex);
-    pathWithoutFileName = pathWithoutFileName.replace(/[\\\/]$/, '');
+    pathWithoutFileName = pathWithoutFileName.replace(/[\\/]$/, '');
     return pathWithoutFileName;
   }
 }

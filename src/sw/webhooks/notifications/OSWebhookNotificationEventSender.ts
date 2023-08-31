@@ -1,10 +1,10 @@
-import { NotificationClickEvent } from "../../../shared/models/NotificationEvent";
-import { OSWebhookSender } from "./../OSWebhookSender";
+import { NotificationClickEvent } from '../../../shared/models/NotificationEvent';
+import { OSWebhookSender } from './../OSWebhookSender';
 
-import { OSWebhookPayloadNotificationClick } from "./payloads/OSWebhookPayloadNotificationClick";
-import { OSWebhookPayloadNotificationWillDisplay } from "./payloads/OSWebhookPayloadNotificationWillDisplay";
-import { OSWebhookPayloadNotificationDismiss } from "./payloads/OSWebhookPayloadNotificationDismiss";
-import { IOSNotification } from "../../../shared/models/OSNotification";
+import { OSWebhookPayloadNotificationClick } from './payloads/OSWebhookPayloadNotificationClick';
+import { OSWebhookPayloadNotificationWillDisplay } from './payloads/OSWebhookPayloadNotificationWillDisplay';
+import { OSWebhookPayloadNotificationDismiss } from './payloads/OSWebhookPayloadNotificationDismiss';
+import { IOSNotification } from '../../../shared/models/OSNotification';
 
 export class OSWebhookNotificationEventSender {
   constructor(
@@ -16,10 +16,14 @@ export class OSWebhookNotificationEventSender {
   }
 
   async willDisplay(notification: IOSNotification): Promise<void> {
-    return await this.sender.send(new OSWebhookPayloadNotificationWillDisplay(notification));
+    return await this.sender.send(
+      new OSWebhookPayloadNotificationWillDisplay(notification),
+    );
   }
 
   async dismiss(notification: IOSNotification): Promise<void> {
-    return await this.sender.send(new OSWebhookPayloadNotificationDismiss(notification));
+    return await this.sender.send(
+      new OSWebhookPayloadNotificationDismiss(notification),
+    );
   }
 }

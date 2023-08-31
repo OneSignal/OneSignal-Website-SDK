@@ -1,8 +1,8 @@
-import OneSignalError from "./OneSignalError";
+import OneSignalError from './OneSignalError';
 
 export enum OneSignalApiErrorKind {
   MissingAppId,
-  RetryLimitReached
+  RetryLimitReached,
 }
 
 export class OneSignalApiError extends OneSignalError {

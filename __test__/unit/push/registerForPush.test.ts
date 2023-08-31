@@ -1,9 +1,8 @@
-import { HttpHttpsEnvironment } from "../../support/models/HttpHttpsEnvironment";
-import { TestEnvironment } from "../../support/environment/TestEnvironment";
-import InitHelper from "../../../src/shared/helpers/InitHelper";
-import OneSignalEvent from "../../../src/shared/services/OneSignalEvent";
-import BrowserUserAgent from "../../support/models/BrowserUserAgent";
-
+import { HttpHttpsEnvironment } from '../../support/models/HttpHttpsEnvironment';
+import { TestEnvironment } from '../../support/environment/TestEnvironment';
+import InitHelper from '../../../src/shared/helpers/InitHelper';
+import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
+import BrowserUserAgent from '../../support/models/BrowserUserAgent';
 
 //stub dismisshelper
 jest.mock('../../../src/shared/helpers/DismissHelper');
@@ -26,7 +25,7 @@ describe('Register for push', () => {
     (global as any).OneSignal.initialized = false;
     (global as any).OneSignal._initCalled = false;
 
-    const spy = jest.spyOn(InitHelper, 'registerForPushNotifications')
+    const spy = jest.spyOn(InitHelper, 'registerForPushNotifications');
     const promise = OneSignal.User.PushSubscription.optIn();
 
     expect(spy).not.toHaveBeenCalled();
@@ -40,9 +39,8 @@ describe('Register for push', () => {
     (global as any).OneSignal.initialized = true;
     (global as any).OneSignal._initCalled = false;
 
-    const spy = jest.spyOn(InitHelper, 'registerForPushNotifications')
+    const spy = jest.spyOn(InitHelper, 'registerForPushNotifications');
     await InitHelper.registerForPushNotifications();
     expect(spy).toHaveBeenCalledTimes(1);
   });
 });
-

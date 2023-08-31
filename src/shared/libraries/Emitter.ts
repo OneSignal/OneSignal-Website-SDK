@@ -1,11 +1,10 @@
-
 /**
  * Source: https://github.com/pazguille/emitter-es6
  */
 
 export type EventHandler = (...args: any[]) => any;
 export type OnceEventHandler = {
-  listener: EventHandler
+  listener: EventHandler;
 };
 
 interface ListenerMap {
@@ -20,7 +19,6 @@ interface ListenerMap {
  * var emitter = new Emitter();
  */
 export default class Emitter {
-
   private _events: ListenerMap;
 
   constructor() {
@@ -41,14 +39,16 @@ export default class Emitter {
    * execute only once.
    */
   public once(event: string, listener: EventHandler): Emitter {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
 
-    function fn(this: Function) {
+    function fn(this: EventHandler) {
       that.off(event, fn);
+      // eslint-disable-next-line prefer-rest-params
       listener.apply(this, arguments);
     }
 
-    (fn as any).listener = listener;
+    fn.listener = listener;
     this.on(event, fn);
 
     return this;
@@ -62,14 +62,16 @@ export default class Emitter {
 
     if (listeners !== undefined) {
       for (let j = 0; j < listeners.length; j += 1) {
-        if (listeners[j] === listener || (listeners[j] as OnceEventHandler).listener === listener) {
+        if (
+          listeners[j] === listener ||
+          (listeners[j] as OnceEventHandler).listener === listener
+        ) {
           listeners.splice(j, 1);
           break;
         }
       }
 
-      if (listeners.length === 0)
-        this.removeAllListeners(event);
+      if (listeners.length === 0) this.removeAllListeners(event);
     }
 
     return this;
@@ -79,13 +81,8 @@ export default class Emitter {
    * Removes all listeners from the collection for a specified event.
    */
   public removeAllListeners(event?: string): Emitter {
-    try {
-      if (event)
-        delete this._events[event];
-      else
-        this._events = {};
-
-    } catch(e) {}
+    if (event) delete this._events[event];
+    else this._events = {};
 
     return this;
   }
@@ -100,7 +97,9 @@ export default class Emitter {
    * @example
    * me.listeners('ready');
    */
-  public listeners(event: string): (EventHandler | OnceEventHandler)[] | undefined {
+  public listeners(
+    event: string,
+  ): (EventHandler | OnceEventHandler)[] | undefined {
     try {
       return this._events[event];
     } catch (e) {
@@ -120,8 +119,7 @@ export default class Emitter {
    */
   public numberOfListeners(event: string): number {
     const listeners = this.listeners(event);
-    if (listeners)
-      return listeners.length;
+    if (listeners) return listeners.length;
     return 0;
   }
 
@@ -138,10 +136,9 @@ export default class Emitter {
       listeners = listeners.slice(0);
       const len = listeners.length;
       for (let i = 0; i < len; i += 1)
-        await (listeners[i] as Function).apply(this, args);
+        await (listeners[i] as () => void).apply(this, args);
     }
 
     return this;
   }
-
 }

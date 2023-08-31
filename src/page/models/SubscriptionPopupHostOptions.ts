@@ -26,6 +26,6 @@ interface PromptOptionsPostData {
 }
 
 interface PostData extends PromptOptionsPostData, SubscriptionPopupHostOptions {
-  promptType: "popup" | "modal";
+  promptType: 'popup' | 'modal';
   parentHostname: string;
 }

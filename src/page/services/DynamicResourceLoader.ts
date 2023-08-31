@@ -1,10 +1,9 @@
-
 import SdkEnvironment from '../../shared/managers/SdkEnvironment';
 import Environment from '../../shared/helpers/Environment';
 
 export const enum ResourceType {
   Stylesheet,
-  Script
+  Script,
 }
 
 export const enum ResourceLoadState {
@@ -15,7 +14,7 @@ export const enum ResourceLoadState {
   /**
    * The remote resource failed to be loaded (e.g. not found or network offline).
    */
-  Failed
+  Failed,
 }
 
 interface DynamicResourceLoaderCache {
@@ -39,14 +38,18 @@ export class DynamicResourceLoader {
     const cssFileForEnv = SdkEnvironment.getOneSignalCssFileName();
     return await this.loadIfNew(
       ResourceType.Stylesheet,
-      new URL(`${pathForEnv}/${cssFileForEnv}?v=${Environment.getSdkStylesVersionHash()}`)
+      new URL(
+        `${pathForEnv}/${cssFileForEnv}?v=${Environment.getSdkStylesVersionHash()}`,
+      ),
     );
   }
 
   async loadFetchPolyfill(): Promise<ResourceLoadState> {
     return await this.loadIfNew(
       ResourceType.Script,
-      new URL('https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js')
+      new URL(
+        'https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js',
+      ),
     );
   }
 

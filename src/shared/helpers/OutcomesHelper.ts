@@ -1,13 +1,20 @@
-import { OutcomesConfig, OutcomeAttribution, OutcomeAttributionType, SentUniqueOutcome } from '../models/Outcomes';
-import { OutcomesNotificationReceived } from "../models/OutcomesNotificationEvents";
-import Database, { TABLE_OUTCOMES_NOTIFICATION_RECEIVED } from "../services/Database";
+import {
+  OutcomesConfig,
+  OutcomeAttribution,
+  OutcomeAttributionType,
+  SentUniqueOutcome,
+} from '../models/Outcomes';
+import { OutcomesNotificationReceived } from '../models/OutcomesNotificationEvents';
+import Database, {
+  TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
+} from '../services/Database';
 import Log from '../libraries/Log';
-import { Utils } from "../../shared/context/Utils";
+import { Utils } from '../../shared/context/Utils';
 import { logMethodCall, awaitOneSignalInitAndSupported } from '../utils/utils';
 import OutcomeProps from '../models/OutcomeProps';
 
-const SEND_OUTCOME = "sendOutcome";
-const SEND_UNIQUE_OUTCOME = "sendUniqueOutcome";
+const SEND_OUTCOME = 'sendOutcome';
+const SEND_UNIQUE_OUTCOME = 'sendUniqueOutcome';
 
 export default class OutcomesHelper {
   private outcomeName: string;
@@ -21,7 +28,12 @@ export default class OutcomesHelper {
    * @param  {boolean} isUnique
    * @param  {string} outcomeName
    */
-  constructor(appId: string, config: OutcomesConfig, outcomeName: string, isUnique: boolean) {
+  constructor(
+    appId: string,
+    config: OutcomesConfig,
+    outcomeName: string,
+    isUnique: boolean,
+  ) {
     this.outcomeName = outcomeName;
     this.config = config;
     this.appId = appId;
@@ -45,25 +57,28 @@ export default class OutcomesHelper {
    * @param  {boolean} isUnique
    * @returns Promise
    */
-  async beforeOutcomeSend(): Promise<boolean>{
-    const outcomeMethodString = this.isUnique ? SEND_UNIQUE_OUTCOME : SEND_OUTCOME;
+  async beforeOutcomeSend(): Promise<boolean> {
+    const outcomeMethodString = this.isUnique
+      ? SEND_UNIQUE_OUTCOME
+      : SEND_OUTCOME;
     logMethodCall(outcomeMethodString, this.outcomeName);
 
     if (!this.config) {
-      Log.debug("Outcomes feature not supported by main application yet.");
+      Log.debug('Outcomes feature not supported by main application yet.');
       return false;
     }
 
     if (!this.outcomeName) {
-      Log.error("Outcome name is required");
+      Log.error('Outcome name is required');
       return false;
     }
 
     await awaitOneSignalInitAndSupported();
 
-    const isSubscribed = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    const isSubscribed =
+      await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     if (!isSubscribed) {
-      Log.warn("Reporting outcomes is supported only for subscribed users.");
+      Log.warn('Reporting outcomes is supported only for subscribed users.');
       return false;
     }
     return true;
@@ -74,10 +89,11 @@ export default class OutcomesHelper {
    * @param  {string} outcomeName
    * @returns Promise
    */
-   async getAttributedNotifsByUniqueOutcomeName(): Promise<string[]> {
-    const sentOutcomes = await Database.getAll<SentUniqueOutcome>("SentUniqueOutcome");
+  async getAttributedNotifsByUniqueOutcomeName(): Promise<string[]> {
+    const sentOutcomes =
+      await Database.getAll<SentUniqueOutcome>('SentUniqueOutcome');
     return sentOutcomes
-      .filter(o => o.outcomeName === this.outcomeName)
+      .filter((o) => o.outcomeName === this.outcomeName)
       .reduce((acc: string[], curr: SentUniqueOutcome) => {
         const notificationIds = curr.notificationIds || [];
         return [...acc, ...notificationIds];
@@ -89,10 +105,13 @@ export default class OutcomesHelper {
    * @param  {string} outcomeName
    * @param  {string[]} notificationIds
    */
-   async getNotifsToAttributeWithUniqueOutcome(notificationIds: string[]) {
-    const previouslyAttributedArr: string[] = await this.getAttributedNotifsByUniqueOutcomeName();
+  async getNotifsToAttributeWithUniqueOutcome(notificationIds: string[]) {
+    const previouslyAttributedArr: string[] =
+      await this.getAttributedNotifsByUniqueOutcomeName();
 
-    return notificationIds.filter(id => (previouslyAttributedArr.indexOf(id) === -1));
+    return notificationIds.filter(
+      (id) => previouslyAttributedArr.indexOf(id) === -1,
+    );
   }
 
   shouldSendUnique(outcomeAttribution: OutcomeAttribution, notifArr: string[]) {
@@ -103,24 +122,32 @@ export default class OutcomesHelper {
     return notifArr.length > 0;
   }
 
-   async saveSentUniqueOutcome(newNotificationIds: string[]): Promise<void>{
+  async saveSentUniqueOutcome(newNotificationIds: string[]): Promise<void> {
     const outcomeName = this.outcomeName;
-    const existingSentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
+    const existingSentOutcome = await Database.get<SentUniqueOutcome>(
+      'SentUniqueOutcome',
+      outcomeName,
+    );
     const currentSession = await Database.getCurrentSession();
 
-    const existingNotificationIds = !!existingSentOutcome ? existingSentOutcome.notificationIds : [];
+    const existingNotificationIds = !!existingSentOutcome
+      ? existingSentOutcome.notificationIds
+      : [];
     const notificationIds = [...existingNotificationIds, ...newNotificationIds];
 
     const timestamp = currentSession ? currentSession.startTimestamp : null;
-    await Database.put("SentUniqueOutcome", {
+    await Database.put('SentUniqueOutcome', {
       outcomeName,
       notificationIds,
-      sentDuringSession: timestamp
+      sentDuringSession: timestamp,
     });
   }
 
   async wasSentDuringSession() {
-    const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", this.outcomeName);
+    const sentOutcome = await Database.get<SentUniqueOutcome>(
+      'SentUniqueOutcome',
+      this.outcomeName,
+    );
 
     if (!sentOutcome) {
       return false;
@@ -128,13 +155,17 @@ export default class OutcomesHelper {
 
     const session = await Database.getCurrentSession();
 
-    const sessionExistsAndWasPreviouslySent = session && sentOutcome.sentDuringSession === session.startTimestamp;
-    const sessionWasClearedButWasPreviouslySent = !session && !!sentOutcome.sentDuringSession;
+    const sessionExistsAndWasPreviouslySent =
+      session && sentOutcome.sentDuringSession === session.startTimestamp;
+    const sessionWasClearedButWasPreviouslySent =
+      !session && !!sentOutcome.sentDuringSession;
 
-    return sessionExistsAndWasPreviouslySent || sessionWasClearedButWasPreviouslySent;
+    return (
+      sessionExistsAndWasPreviouslySent || sessionWasClearedButWasPreviouslySent
+    );
   }
 
-  async send(outcomeProps: OutcomeProps): Promise<void>{
+  async send(outcomeProps: OutcomeProps): Promise<void> {
     const { type, notificationIds, weight } = outcomeProps;
 
     switch (type) {
@@ -143,7 +174,10 @@ export default class OutcomesHelper {
           await this.saveSentUniqueOutcome(notificationIds);
         }
         await OneSignal.context.updateManager.sendOutcomeDirect(
-          this.appId, notificationIds, this.outcomeName, weight
+          this.appId,
+          notificationIds,
+          this.outcomeName,
+          weight,
         );
         return;
       case OutcomeAttributionType.Indirect:
@@ -151,22 +185,32 @@ export default class OutcomesHelper {
           await this.saveSentUniqueOutcome(notificationIds);
         }
         await OneSignal.context.updateManager.sendOutcomeInfluenced(
-          this.appId, notificationIds, this.outcomeName, weight
+          this.appId,
+          notificationIds,
+          this.outcomeName,
+          weight,
         );
         return;
       case OutcomeAttributionType.Unattributed:
         if (this.isUnique) {
           if (await this.wasSentDuringSession()) {
-            Log.warn(`(Unattributed) unique outcome was already sent during this session`);
+            Log.warn(
+              `(Unattributed) unique outcome was already sent during this session`,
+            );
             return;
           }
           await this.saveSentUniqueOutcome([]);
         }
         await OneSignal.context.updateManager.sendOutcomeUnattributed(
-          this.appId, this.outcomeName, weight);
+          this.appId,
+          this.outcomeName,
+          weight,
+        );
         return;
       default:
-        Log.warn("You are on a free plan. Please upgrade to use this functionality.");
+        Log.warn(
+          'You are on a free plan. Please upgrade to use this functionality.',
+        );
         return;
     }
   }
@@ -183,7 +227,9 @@ export default class OutcomesHelper {
    * @param  {OutcomesConfig} config
    * @returns Promise
    */
-  static async getAttribution(config: OutcomesConfig): Promise<OutcomeAttribution> {
+  static async getAttribution(
+    config: OutcomesConfig,
+  ): Promise<OutcomeAttribution> {
     /**
      * Flow:
      * 1. check if the url was opened as a result of a notif;
@@ -197,11 +243,12 @@ export default class OutcomesHelper {
 
     /* direct notifications */
     if (config.direct && config.direct.enabled) {
-      const clickedNotifications = await Database.getAllNotificationClickedForOutcomes();
+      const clickedNotifications =
+        await Database.getAllNotificationClickedForOutcomes();
       if (clickedNotifications.length > 0) {
         return {
           type: OutcomeAttributionType.Direct,
-          notificationIds: [clickedNotifications[0].notificationId]
+          notificationIds: [clickedNotifications[0].notificationId],
         };
       }
     }
@@ -212,8 +259,11 @@ export default class OutcomesHelper {
       const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
       const maxTimestamp = beginningOfTimeframe.getTime();
 
-      const allReceivedNotification = await Database.getAllNotificationReceivedForOutcomes();
-      Log.debug(`\tFound total of ${allReceivedNotification.length} received notifications`);
+      const allReceivedNotification =
+        await Database.getAllNotificationReceivedForOutcomes();
+      Log.debug(
+        `\tFound total of ${allReceivedNotification.length} received notifications`,
+      );
 
       if (allReceivedNotification.length > 0) {
         const max: number = config.indirect.influencedNotificationsLimit;
@@ -223,20 +273,32 @@ export default class OutcomesHelper {
          */
 
         const allReceivedNotificationSorted = Utils.sortArrayOfObjects(
-          allReceivedNotification, (notif: OutcomesNotificationReceived) => notif.timestamp, true, false
+          allReceivedNotification,
+          (notif: OutcomesNotificationReceived) => notif.timestamp,
+          true,
+          false,
         );
         const matchingNotificationIds = allReceivedNotificationSorted
-          .filter(notif => notif.timestamp >= maxTimestamp)
+          .filter((notif) => notif.timestamp >= maxTimestamp)
           .slice(0, max)
-          .map(notif => notif.notificationId);
-        Log.debug(`\tTotal of ${matchingNotificationIds.length} received notifications are within reporting window.`);
+          .map((notif) => notif.notificationId);
+        Log.debug(
+          `\tTotal of ${matchingNotificationIds.length} received notifications are within reporting window.`,
+        );
 
         // Deleting all unmatched received notifications
         const notificationIdsToDelete = allReceivedNotificationSorted
-          .filter(notif => matchingNotificationIds.indexOf(notif.notificationId) === -1)
-          .map(notif => notif.notificationId);
-        notificationIdsToDelete.forEach(id => Database.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED, id));
-        Log.debug(`\t${notificationIdsToDelete.length} received notifications will be deleted.`);
+          .filter(
+            (notif) =>
+              matchingNotificationIds.indexOf(notif.notificationId) === -1,
+          )
+          .map((notif) => notif.notificationId);
+        notificationIdsToDelete.forEach((id) =>
+          Database.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED, id),
+        );
+        Log.debug(
+          `\t${notificationIdsToDelete.length} received notifications will be deleted.`,
+        );
 
         if (matchingNotificationIds.length > 0) {
           return {
@@ -251,7 +313,7 @@ export default class OutcomesHelper {
     if (config.unattributed && config.unattributed.enabled) {
       return {
         type: OutcomeAttributionType.Unattributed,
-        notificationIds: []
+        notificationIds: [],
       };
     }
 

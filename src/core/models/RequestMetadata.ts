@@ -1,4 +1,4 @@
-import { APIHeaders } from "../../shared/models/APIHeaders";
+import { APIHeaders } from '../../shared/models/APIHeaders';
 
 export type RequestMetadata = {
   appId: string;

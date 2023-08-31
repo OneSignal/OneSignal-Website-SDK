@@ -1,7 +1,12 @@
 module.exports = {
   root: true,
   rules: {
-    'no-extra-boolean-cast': false,
+    'no-extra-boolean-cast': 0,
+    'quotes': [
+      'error',
+      'single',
+      { 'avoidEscape': true, 'allowTemplateLiterals': true }
+    ]
   },
   extends: [
     'eslint:recommended',

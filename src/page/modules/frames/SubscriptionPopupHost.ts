@@ -17,7 +17,6 @@ import { RawPushSubscription } from '../../../shared/models/RawPushSubscription'
  * subdomain.os.tc/webPushIFrame. *
  */
 export default class SubscriptionPopupHost implements Disposable {
-
   public url: URL;
   private popupWindow: Window | undefined | null;
   private messenger: Postmam | undefined;
@@ -25,9 +24,9 @@ export default class SubscriptionPopupHost implements Disposable {
 
   // Promise to track whether the frame has finished loading
   private loadPromise: {
-    promise: Promise<void>,
-    resolver: Function,
-    rejector: Function
+    promise: Promise<void>;
+    resolver: (value?: unknown) => void;
+    rejector: (reason?: unknown) => void;
   };
 
   /**
@@ -50,20 +49,27 @@ export default class SubscriptionPopupHost implements Disposable {
       ...MainHelper.getPromptOptionsPostHash(),
       ...{
         promptType: 'popup',
-        parentHostname: encodeURIComponent(location.hostname)
+        parentHostname: encodeURIComponent(location.hostname),
       },
     };
     if (this.options.autoAccept) {
       postData.autoAccept = true;
     }
-    Log.info(`Opening a popup to ${this.url.toString()} with POST data:`, postData);
-    this.popupWindow = this.openWindowViaPost(this.url.toString(), postData, null);
+    Log.info(
+      `Opening a popup to ${this.url.toString()} with POST data:`,
+      postData,
+    );
+    this.popupWindow = this.openWindowViaPost(
+      this.url.toString(),
+      postData,
+      null,
+    );
 
     this.establishCrossOriginMessaging();
     (this as any).loadPromise = {};
     (this as any).loadPromise.promise = new Promise((resolve, reject) => {
-        this.loadPromise.resolver = resolve;
-        this.loadPromise.rejector = reject;
+      this.loadPromise.resolver = resolve;
+      this.loadPromise.rejector = reject;
     });
 
     // This can throw a TimeoutError, which should go up the stack
@@ -74,19 +80,29 @@ export default class SubscriptionPopupHost implements Disposable {
   //  verb : 'GET'|'POST'
   //  target : an optional opening target (a name, or "_blank"), defaults to "_self"
   openWindowViaPost(url: string, data, overrides) {
-    var form = document.createElement("form");
+    const form = document.createElement('form');
     form.action = url;
     form.method = 'POST';
-    form.target = "onesignal-http-popup";
+    form.target = 'onesignal-http-popup';
 
-    var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : (screen as any).left;
-    var dualScreenTop = window.screenTop != undefined ? window.screenTop : (screen as any).top;
-    var thisWidth = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
-    var thisHeight = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
-    var childWidth = OneSignal._windowWidth;
-    var childHeight = OneSignal._windowHeight;
-    var left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
-    var top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
+    const dualScreenLeft =
+      window.screenLeft != undefined ? window.screenLeft : (screen as any).left;
+    const dualScreenTop =
+      window.screenTop != undefined ? window.screenTop : (screen as any).top;
+    const thisWidth = window.innerWidth
+      ? window.innerWidth
+      : document.documentElement.clientWidth
+      ? document.documentElement.clientWidth
+      : screen.width;
+    const thisHeight = window.innerHeight
+      ? window.innerHeight
+      : document.documentElement.clientHeight
+      ? document.documentElement.clientHeight
+      : screen.height;
+    let childWidth = OneSignal._windowWidth;
+    let childHeight = OneSignal._windowHeight;
+    let left = thisWidth / 2 - childWidth / 2 + dualScreenLeft;
+    let top = thisHeight / 2 - childHeight / 2 + dualScreenTop;
 
     if (overrides) {
       if (overrides.childWidth) {
@@ -102,13 +118,18 @@ export default class SubscriptionPopupHost implements Disposable {
         top = overrides.top;
       }
     }
-    const windowRef = window.open('about:blank', "onesignal-http-popup", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
+    const windowRef = window.open(
+      'about:blank',
+      'onesignal-http-popup',
+      `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`,
+    );
 
     if (data) {
-      for (var key in data) {
-        var input = document.createElement("textarea");
+      for (const key in data) {
+        const input = document.createElement('textarea');
         input.name = key;
-        input.value = typeof data[key] === "object" ? JSON.stringify(data[key]) : data[key];
+        input.value =
+          typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key];
         form.appendChild(input);
       }
     }
@@ -121,16 +142,47 @@ export default class SubscriptionPopupHost implements Disposable {
   }
 
   establishCrossOriginMessaging() {
-    this.messenger = new Postmam(this.popupWindow, this.url.toString(), this.url.toString());
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.POPUP_BEGIN_MESSAGEPORT_COMMS, this.onBeginMessagePortCommunications.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_LOADED, this.onPopupLoaded.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, this.onPopupAccepted.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, this.onPopupRejected.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, this.onPopupClosing.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.SET_SESSION_COUNT, this.onSetSessionCount.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT, this.onWindowTimeout.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, this.onFinishingRegistrationRemotely.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, this.onRemoteRetriggerEvent.bind(this));
+    this.messenger = new Postmam(
+      this.popupWindow,
+      this.url.toString(),
+      this.url.toString(),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.POPUP_BEGIN_MESSAGEPORT_COMMS,
+      this.onBeginMessagePortCommunications.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.POPUP_LOADED,
+      this.onPopupLoaded.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED,
+      this.onPopupAccepted.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED,
+      this.onPopupRejected.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING,
+      this.onPopupClosing.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.SET_SESSION_COUNT,
+      this.onSetSessionCount.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT,
+      this.onWindowTimeout.bind(this),
+    );
+    this.messenger.once(
+      OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION,
+      this.onFinishingRegistrationRemotely.bind(this),
+    );
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
+      this.onRemoteRetriggerEvent.bind(this),
+    );
     this.messenger.startPostMessageReceive();
   }
 
@@ -140,7 +192,9 @@ export default class SubscriptionPopupHost implements Disposable {
   }
 
   async onBeginMessagePortCommunications(_: MessengerMessageEvent) {
-    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Successfully established cross-origin messaging with the popup window.`);
+    Log.debug(
+      `(${SdkEnvironment.getWindowEnv().toString()}) Successfully established cross-origin messaging with the popup window.`,
+    );
     this.messenger.connect();
     return false;
   }
@@ -165,29 +219,42 @@ export default class SubscriptionPopupHost implements Disposable {
   }
 
   async onSetSessionCount(message: MessengerMessageEvent) {
-    Log.debug(SdkEnvironment.getWindowEnv().toString() + " Marking current session as a continuing browsing session.");
+    Log.debug(
+      SdkEnvironment.getWindowEnv().toString() +
+        ' Marking current session as a continuing browsing session.',
+    );
     const { sessionCount }: { sessionCount: number } = message.data;
     const context: Context = OneSignal.context;
     context.pageViewManager.setPageViewCount(sessionCount);
   }
 
   async onWindowTimeout(_: MessengerMessageEvent) {
-    Log.debug(SdkEnvironment.getWindowEnv().toString() + " Popup window timed out and was closed.");
+    Log.debug(
+      SdkEnvironment.getWindowEnv().toString() +
+        ' Popup window timed out and was closed.',
+    );
     OneSignalEvent.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
   }
 
   async onFinishingRegistrationRemotely(message: MessengerMessageEvent) {
-    Log.debug(location.origin, SdkEnvironment.getWindowEnv().toString() + " Finishing HTTP popup registration inside the iFrame, sent from popup.");
+    Log.debug(
+      location.origin,
+      SdkEnvironment.getWindowEnv().toString() +
+        ' Finishing HTTP popup registration inside the iFrame, sent from popup.',
+    );
 
     message.reply({ progress: true });
 
-    const { rawPushSubscription }: { rawPushSubscription: RawPushSubscription } = message.data;
+    const {
+      rawPushSubscription,
+    }: { rawPushSubscription: RawPushSubscription } = message.data;
 
     if (this.messenger) {
       this.messenger.stopPostMessageReceive();
     }
 
-    const subscriptionManager: SubscriptionManager = OneSignal.context.subscriptionManager;
+    const subscriptionManager: SubscriptionManager =
+      OneSignal.context.subscriptionManager;
     await subscriptionManager.registerSubscription(rawPushSubscription);
 
     await EventHelper.checkAndTriggerSubscriptionChanged();
@@ -196,7 +263,7 @@ export default class SubscriptionPopupHost implements Disposable {
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {
     // e.g. { eventName: 'subscriptionChange', eventData: true}
-    const { eventName, eventData } = (message.data as any);
+    const { eventName, eventData } = message.data as any;
     OneSignalEvent.trigger(eventName, eventData, message.source);
     return false;
   }
@@ -206,6 +273,7 @@ export default class SubscriptionPopupHost implements Disposable {
    */
   message() {
     if (this.messenger) {
+      // eslint-disable-next-line prefer-spread, prefer-rest-params
       this.messenger.message.apply(this.messenger, arguments);
     }
   }
