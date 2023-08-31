@@ -11,7 +11,7 @@ export interface UpdatePlayerOptions {
   sdk?: string;
   device_model?: string;
   app_id?: string;
-  tags?: Record<string, unknown> | null;
+  tags?: Record<string, string> | null;
   external_user_id?: string;
   external_user_id_auth_hash?: string;
   identifier_auth_hash?: string | null;

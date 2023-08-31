@@ -45,7 +45,7 @@ export default class OneSignalApi {
 
   static jsonpLib(
     url: string,
-    fn: (err: unknown, data: ServerAppConfig) => void,
+    fn: (err: Error, data: ServerAppConfig) => void,
   ) {
     JSONP(url, null, fn);
   }
@@ -58,7 +58,7 @@ export default class OneSignalApi {
         // Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
         OneSignalApi.jsonpLib(
           `${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId}/web`,
-          (err: unknown, data: ServerAppConfig) => {
+          (err: Error, data: ServerAppConfig) => {
             if (err) reject(err);
             else {
               if (data.success) resolve(data);
