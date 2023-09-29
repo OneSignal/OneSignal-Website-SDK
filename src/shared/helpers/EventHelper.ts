@@ -115,7 +115,6 @@ export default class EventHelper {
    * include_player_ids. This field will be dropped by 2025 so a
    * replacement will needed by then.
    */
-  private static sendingOrSentWelcomeNotification = false;
   private static async onSubscriptionChanged_showWelcomeNotification(
     isSubscribed: boolean | undefined,
     pushSubscriptionId: string | undefined | null,
@@ -143,13 +142,6 @@ export default class EventHelper {
     if (!pushSubscriptionId) {
       return;
     }
-
-    // Workaround only for this v15 branch; There are race conditions in the SDK
-    // that result in the onSubscriptionChanged firing more than once sometimes.
-    if (EventHelper.sendingOrSentWelcomeNotification) {
-      return;
-    }
-    EventHelper.sendingOrSentWelcomeNotification = true;
 
     const { appId } = await Database.getAppConfig();
     let title =
