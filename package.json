@@ -38,7 +38,7 @@
     "build:dev-dev": "./build/scripts/build.sh -f development -t development",
     "build:dev-prod": "./build/scripts/build.sh -f development -t production",
     "build:dev-stag": "./build/scripts/build.sh -f development -t staging",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettier --check src test __test__",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx; yarn prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig",
     "jest": "jest --coverage"
   },
   "config": {
@@ -97,6 +97,7 @@
     "nyc": "^11.1.0",
     "postcss-loader": "^7.2.4",
     "prettier": "3.0.2",
+    "prettylint": "^2.0.0",
     "sass-loader": "^13.2.2",
     "sinon": "^2.4.1",
     "style-loader": "^3.3.2",
