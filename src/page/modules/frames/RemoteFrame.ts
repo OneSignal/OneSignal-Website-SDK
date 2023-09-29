@@ -22,7 +22,7 @@ export interface RemoteFrameOptions {
   isModal?: boolean;
 }
 
-export default class RemoteFrame implements Disposable {
+export default class RemoteFrame implements OSDisposable {
   protected messenger: Postmam;
   protected options: ProxyFrameInitOptions;
 

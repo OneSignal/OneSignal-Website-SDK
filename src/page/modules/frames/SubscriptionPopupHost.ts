@@ -16,7 +16,7 @@ import { RawPushSubscription } from '../../../shared/models/RawPushSubscription'
  * This is loaded as subdomain.onesignal.com/webPushIFrame or
  * subdomain.os.tc/webPushIFrame. *
  */
-export default class SubscriptionPopupHost implements Disposable {
+export default class SubscriptionPopupHost implements OSDisposable {
   public url: URL;
   private popupWindow: Window | undefined | null;
   private messenger: Postmam | undefined;

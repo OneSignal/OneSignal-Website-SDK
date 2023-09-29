@@ -1,3 +1,3 @@
-interface Disposable {
+interface OSDisposable {
   dispose();
 }
