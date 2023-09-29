@@ -7,16 +7,12 @@ jobs:
   test_build_deploy:
     runs-on: ubuntu-22.04
 
-    strategy:
-      matrix:
-        node-version: [14.x]
-
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: '.nvmrc'
       - name: "[Setup] Install dependencies"
         run: yarn
       - name: "[Build] Staging"
