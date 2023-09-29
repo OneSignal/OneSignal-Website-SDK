@@ -74,7 +74,7 @@
     "@typescript-eslint/parser": "^5.36.1",
     "autoprefixer": "^10.4.14",
     "ava": "^3.8.2",
-    "bundlesize": "^0.18.0",
+    "bundlesize2": "^0.0.31",
     "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^6.7.3",
     "css-minimizer-webpack-plugin": "^5.0.0",
