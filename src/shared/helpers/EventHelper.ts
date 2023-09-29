@@ -85,7 +85,10 @@ export default class EventHelper {
   static async _onSubscriptionChanged(
     change: SubscriptionChangeEvent | undefined,
   ) {
-    // EventHelper.onSubscriptionChanged_showWelcomeNotification(change?.current.enabled);
+    EventHelper.onSubscriptionChanged_showWelcomeNotification(
+      change?.current?.optedIn,
+      change?.current?.id,
+    );
     EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(
       change?.current?.optedIn,
     );
@@ -107,9 +110,14 @@ export default class EventHelper {
     }
   }
 
-  private static sendingOrSentWelcomeNotification = false;
+  /**
+   * NOTE: This uses the OneSignal REST API POST /notifications with
+   * include_player_ids. This field will be dropped by 2025 so a
+   * replacement will needed by then.
+   */
   private static async onSubscriptionChanged_showWelcomeNotification(
     isSubscribed: boolean | undefined,
+    pushSubscriptionId: string | undefined | null,
   ) {
     if (OneSignal.__doNotShowWelcomeNotification) {
       Log.debug(
@@ -131,14 +139,10 @@ export default class EventHelper {
       return;
     }
 
-    // Workaround only for this v15 branch; There are race conditions in the SDK
-    // that result in the onSubscriptionChanged firing more than once sometimes.
-    if (EventHelper.sendingOrSentWelcomeNotification) {
+    if (!pushSubscriptionId) {
       return;
     }
-    EventHelper.sendingOrSentWelcomeNotification = true;
 
-    const { deviceId } = await Database.getSubscription();
     const { appId } = await Database.getAppConfig();
     let title =
       welcome_notification_opts !== undefined &&
@@ -167,7 +171,7 @@ export default class EventHelper {
     Log.debug('Sending welcome notification.');
     OneSignalApiShared.sendNotification(
       appId,
-      [deviceId],
+      [pushSubscriptionId],
       { en: title },
       { en: message },
       url,
