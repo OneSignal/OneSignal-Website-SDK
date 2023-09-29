@@ -21,7 +21,7 @@ interface Reply {
  * This is loaded as subdomain.onesignal.com/webPushIFrame or
  * subdomain.os.tc/webPushIFrame. *
  */
-export default class ProxyFrameHost implements Disposable {
+export default class ProxyFrameHost implements OSDisposable {
   public url: URL;
   private element: HTMLIFrameElement;
   private messenger: Postmam;

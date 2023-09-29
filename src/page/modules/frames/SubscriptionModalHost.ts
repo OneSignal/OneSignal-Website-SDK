@@ -11,7 +11,7 @@ import Log from '../../../shared/libraries/Log';
  * into the iFrame URL as subdomain.onesignal.com/webPushIFrame or
  * subdomain.os.tc/webPushIFrame. *
  */
-export default class SubscriptionModalHost implements Disposable {
+export default class SubscriptionModalHost implements OSDisposable {
   private messenger: Postmam;
   private appId: string;
   private modal: HTMLIFrameElement;
