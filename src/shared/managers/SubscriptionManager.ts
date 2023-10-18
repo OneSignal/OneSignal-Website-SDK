@@ -401,23 +401,29 @@ export class SubscriptionManager {
 
     const { deviceToken: existingDeviceToken } =
       window.safari.pushNotification.permission(this.config.safariWebId);
-    if (!existingDeviceToken) {
-      /*
-        We're about to show the Safari native permission request. It can fail for a number of
-        reasons, e.g.:
-          - Setup-related reasons when developers just starting to get set up
-            - Address bar URL doesn't match safari certificate allowed origins (case-sensitive)
-            - Safari web ID doesn't match provided web ID
-            - Browsing in a Safari private window
-            - Bad icon DPI
 
-        but shouldn't fail for sites that have already gotten Safari working.
-
-        We'll show the permissionPromptDisplay event if the Safari user isn't already subscribed,
-        otherwise an already subscribed Safari user would not see the permission request again.
-       */
-      OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+    if (existingDeviceToken) {
+      pushSubscriptionDetails.setFromSafariSubscription(
+        existingDeviceToken.toLowerCase(),
+      );
+      return pushSubscriptionDetails;
     }
+
+    /*
+      We're about to show the Safari native permission request. It can fail for a number of
+      reasons, e.g.:
+        - Setup-related reasons when developers just starting to get set up
+          - Address bar URL doesn't match safari certificate allowed origins (case-sensitive)
+          - Safari web ID doesn't match provided web ID
+          - Browsing in a Safari private window
+          - Bad icon DPI
+
+      but shouldn't fail for sites that have already gotten Safari working.
+
+      We'll show the permissionPromptDisplay event if the Safari user isn't already subscribed,
+      otherwise an already subscribed Safari user would not see the permission request again.
+    */
+    OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     const deviceToken = await this.subscribeSafariPromptPermission();
     PermissionUtils.triggerNotificationPermissionChanged();
     if (deviceToken) {
