@@ -146,9 +146,7 @@ export class CustomLinkManager {
   }
 
   private async handleClick(element: HTMLElement): Promise<void> {
-    const isPushEnabled =
-      await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-    if (isPushEnabled) {
+    if (OneSignal.User.PushSubscription.optedIn) {
       await OneSignal.User.PushSubscription.optOut();
       await this.setTextFromPushStatus(element);
     } else {
