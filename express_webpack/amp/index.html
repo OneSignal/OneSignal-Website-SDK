@@ -6,16 +6,8 @@
     const SERVICE_WORKER_PATH = "push/onesignal/";
 
     function getUrlQueryParam(name) {
-        var url = window.location.href;
-        // This is just to avoid case sensitiveness
-        url = url.toLowerCase();
-        // This is just to avoid case sensitiveness for query parameter name
-        name = name.replace(/[\[\]]/g, "\\$&").toLowerCase();
-        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-            results = regex.exec(url);
-        if (!results) return null;
-        if (!results[2]) return '';
-        return decodeURIComponent(results[2].replace(/\+/g, " "));
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
     }
 
     const appId = getUrlQueryParam('app_id');

@@ -273,17 +273,6 @@ export function isValidUuid(uuid: string) {
   return OneSignalUtils.isValidUuid(uuid);
 }
 
-export function getUrlQueryParam(name: string) {
-  let url = window.location.href;
-  url = url.toLowerCase(); // This is just to avoid case sensitiveness
-  name = name.replace(/[[\]]/g, '\\$&').toLowerCase(); // This is just to avoid case sensitiveness for query parameter name
-  const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-    results = regex.exec(url);
-  if (!results) return null;
-  if (!results[2]) return '';
-  return decodeURIComponent(results[2].replace(/\+/g, ' '));
-}
-
 /**
  * Wipe OneSignal-related IndexedDB data on the "correct" computed origin, but OneSignal must be initialized first to use.
  */
