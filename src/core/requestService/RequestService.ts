@@ -10,6 +10,11 @@ import { UpdateUserPayload } from './UpdateUserPayload';
 import UserData from '../models/UserData';
 import { RequestMetadata } from '../models/RequestMetadata';
 import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
+import OneSignalUtils from '../../shared/utils/OneSignalUtils';
+import {
+  SdkInitError,
+  SdkInitErrorKind,
+} from '../../shared/errors/SdkInitError';
 
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
@@ -62,6 +67,10 @@ export class RequestService {
     payload: UpdateUserPayload,
   ): Promise<OneSignalApiBaseResponse> {
     const { appId, subscriptionId } = requestMetadata;
+    if (!OneSignalUtils.isValidUuid(appId)) {
+      throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
+    }
+
     const subscriptionHeader = subscriptionId
       ? { 'OneSignal-Subscription-Id': subscriptionId }
       : undefined;
