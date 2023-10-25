@@ -12,6 +12,7 @@
 name: "CodeQL"
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main", "better-tests-refactoring-serviceworker" ]
   pull_request:
