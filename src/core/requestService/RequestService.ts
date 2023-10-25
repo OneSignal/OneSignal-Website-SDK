@@ -9,6 +9,7 @@ import AliasPair from './AliasPair';
 import { UpdateUserPayload } from './UpdateUserPayload';
 import UserData from '../models/UserData';
 import { RequestMetadata } from '../models/RequestMetadata';
+import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
 
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
@@ -75,8 +76,13 @@ export class RequestService {
       headers = { ...headers, ...requestMetadata.jwtHeader };
     }
 
+    const sanitizedAlias = {
+      label: encodeRFC3986URIComponent(alias.label),
+      id: encodeRFC3986URIComponent(alias.id),
+    };
+
     return OneSignalApiBase.patch(
-      `apps/${appId}/users/by/${alias.label}/${alias.id}`,
+      `apps/${appId}/users/by/${sanitizedAlias.label}/${sanitizedAlias.id}`,
       payload,
       headers,
     );
