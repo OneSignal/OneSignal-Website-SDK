@@ -2148,6 +2148,11 @@ expand-tilde@^2.0.0, expand-tilde@^2.0.2:
   dependencies:
     homedir-polyfill "^1.0.1"
 
+express-rate-limit@^7.1.2:
+  version "7.1.2"
+  resolved "https://registry.yarnpkg.com/express-rate-limit/-/express-rate-limit-7.1.2.tgz#42156c9135ca7b77d4e0d74b06162bfe02cd45f7"
+  integrity sha512-uvkFt5JooXDhUhrfgqXLyIsAMRCtU1o8W/p0Q2p5U2ude7fEOfFaP0kSYbHOHmPbA9ZEm1JqrRne3vL9pVCBXA==
+
 express@^4.17.3:
   version "4.17.3"
   resolved "https://registry.yarnpkg.com/express/-/express-4.17.3.tgz#f6c7302194a4fb54271b73a1fe7a06478c8f85a1"

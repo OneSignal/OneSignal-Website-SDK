@@ -3,10 +3,20 @@ const express = require('express');
 const https = require('https');
 const fs = require('fs');
 var sanitize = require("sanitize-filename");
+
 const app = express(),
             DIST_DIR = __dirname,
             HTML_FILE = path.join(DIST_DIR, 'index.html'),
             SDK_FILES = path.join(DIST_DIR, '../build/releases/');
+
+var RateLimit = require('express-rate-limit');
+var limiter = RateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // max 100 requests per windowMs
+});
+// apply rate limiter to all requests
+app.use(limiter);
+
 const options = {
     key: fs.readFileSync('certs/dev-ssl.key'),
     cert: fs.readFileSync('certs/dev-ssl.crt')
