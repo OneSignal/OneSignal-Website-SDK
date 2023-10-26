@@ -1,10 +1,6 @@
+import BrowserUtils from '../../shared/utils/BrowserUtils';
 import Log from '../../shared/libraries/Log';
-import {
-  decodeHtmlEntities,
-  delay,
-  getConsoleStyle,
-  nothing,
-} from '../../shared/utils/utils';
+import { delay, getConsoleStyle, nothing } from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
@@ -47,7 +43,7 @@ export default class Message extends AnimatedElement {
     );
     return (this.shown ? this.hide() : nothing())
       .then(() => {
-        this.content = decodeHtmlEntities(content);
+        this.content = BrowserUtils.decodeHtmlEntities(content);
         this.contentType = type;
       })
       .then(() => {
@@ -75,7 +71,7 @@ export default class Message extends AnimatedElement {
   }
 
   enqueue(message: string) {
-    this.queued.push(decodeHtmlEntities(message));
+    this.queued.push(BrowserUtils.decodeHtmlEntities(message));
     return new Promise<void>((resolve) => {
       if (this.bell.badge.shown) {
         this.bell.badge

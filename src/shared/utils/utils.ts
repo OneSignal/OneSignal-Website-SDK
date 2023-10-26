@@ -3,19 +3,13 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Database from '../services/Database';
 import { OneSignalUtils } from './OneSignalUtils';
 import { PermissionUtils } from './PermissionUtils';
-import { BrowserUtils } from './BrowserUtils';
 import { Utils } from '../context/Utils';
-import bowser from 'bowser';
 import TimeoutError from '../errors/TimeoutError';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';
-}
-
-export function decodeHtmlEntities(text: string) {
-  return BrowserUtils.decodeHtmlEntities(text);
 }
 
 export function removeDomElement(selector: string) {
