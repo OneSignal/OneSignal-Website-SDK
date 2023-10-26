@@ -99,30 +99,18 @@ export class OneSignalUtils {
   }
 
   public static getRandomUuid(): string {
-    let uuidStr = '';
     const crypto =
       typeof window === 'undefined'
         ? (global as any).crypto
         : window.crypto || (<any>window).msCrypto;
-    if (crypto) {
-      uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-        /[xy]/g,
-        function (c) {
-          const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16 | 0,
-            v = c == 'x' ? r : (r & 0x3) | 0x8;
-          return v.toString(16);
-        },
-      );
-    } else {
-      uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-        /[xy]/g,
-        function (c) {
-          const r = (Math.random() * 16) | 0,
-            v = c == 'x' ? r : (r & 0x3) | 0x8;
-          return v.toString(16);
-        },
-      );
-    }
+    const uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+      /[xy]/g,
+      function (c) {
+        const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16 | 0,
+          v = c == 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      },
+    );
     return uuidStr;
   }
 

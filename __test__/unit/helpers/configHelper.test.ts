@@ -2,7 +2,7 @@ import {
   AppUserConfig,
   ConfigIntegrationKind,
 } from '../../../src/shared/models/AppConfig';
-import Random from '../../support/utils/Random';
+import { getRandomUuid } from '../../../src/shared/utils/utils';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { HttpHttpsEnvironment } from '../../support/models/HttpHttpsEnvironment';
 import { getFinalAppConfig } from '../../support/helpers/configHelper';
@@ -24,7 +24,7 @@ describe('ConfigHelper Tests', () => {
 
   test('promptOptions 1 - autoRegister = true backwards compatibility for custom integration shows native on HTTPS', async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
 
@@ -46,7 +46,7 @@ describe('ConfigHelper Tests', () => {
     );
 
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
 
@@ -62,7 +62,7 @@ describe('ConfigHelper Tests', () => {
 
   test('promptOptions 3 - autoRegister = false backwards compatibility for custom integration (no enabled prompts)', async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: false,
     };
 
@@ -78,7 +78,7 @@ describe('ConfigHelper Tests', () => {
 
   test(`promptOptions 4 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
     (fakeUserConfig as any).promptOptions = {
@@ -105,7 +105,7 @@ describe('ConfigHelper Tests', () => {
     );
 
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
 
@@ -129,7 +129,7 @@ describe('ConfigHelper Tests', () => {
 
   test(`promptOptions 6 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
 
@@ -158,7 +158,7 @@ describe('ConfigHelper Tests', () => {
     );
 
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
 
@@ -183,7 +183,7 @@ describe('ConfigHelper Tests', () => {
 
   test(`promptOptions 8 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
 
@@ -210,7 +210,7 @@ describe('ConfigHelper Tests', () => {
 
   test(`promptOptions 9 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
 
@@ -243,7 +243,7 @@ describe('ConfigHelper Tests', () => {
     );
 
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
 
@@ -270,7 +270,7 @@ describe('ConfigHelper Tests', () => {
 
   test('autoResubscribe - autoRegister backwards compatibility for custom integration 1', () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: true,
     };
 
@@ -287,7 +287,7 @@ describe('ConfigHelper Tests', () => {
 
   test('autoResubscribe - autoRegister backwards compatibility for custom integration 2', () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
     };
 
     const fakeServerConfig = TestContext.getFakeServerAppConfig(
@@ -305,7 +305,7 @@ describe('ConfigHelper Tests', () => {
 
   test('autoResubscribe - autoRegister backwards compatibility for custom integration 3', () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: Random.getRandomUuid(),
+      appId: getRandomUuid(),
       autoRegister: false,
       autoResubscribe: true,
     };
