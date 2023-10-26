@@ -208,10 +208,10 @@ export default class AnimatedElement {
         this.nestedContentSelector,
       );
       if (nestedContent) {
-        nestedContent.innerHTML = value;
+        nestedContent.textContent = value;
       }
     } else {
-      this.element.innerHTML = value;
+      this.element.textContent = value;
     }
   }
 
