@@ -1,20 +1,12 @@
-import Environment from '../helpers/Environment';
-
 export class BrowserUtils {
-  private static decodeTextArea: HTMLTextAreaElement | null = null;
-  public static decodeHtmlEntities(text: string) {
-    if (Environment.isBrowser()) {
-      if (!BrowserUtils.decodeTextArea) {
-        BrowserUtils.decodeTextArea = document.createElement('textarea');
-      }
-    }
-    if (BrowserUtils.decodeTextArea) {
-      BrowserUtils.decodeTextArea.innerHTML = text;
-      return BrowserUtils.decodeTextArea.value;
-    } else {
-      // Not running in a browser environment, text cannot be decoded
+  // Decodes HTML encoded characters (like &amp;) into their displayed value.
+  // Example: "&lt;b&gt;test&lt;/b&gt" becomes "<b>test</b>"
+  public static decodeHtmlEntities(text: string): string {
+    if (typeof DOMParser === 'undefined') {
       return text;
     }
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    return doc.documentElement.textContent || '';
   }
 }
 

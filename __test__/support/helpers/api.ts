@@ -9,18 +9,14 @@ export function isAsyncFunction(fn: () => any): boolean {
   );
 }
 
-export const getFunctionSignature = (func: () => any) => {
-  // Convert the function to a string
-  const funcStr = func.toString();
-
-  // Use a regular expression to match the function signature
-  const signatureRegex =
-    /^(async\s*)?(public\s*)?(protected\s*)?(private\s*)?(static\s*)?(function)?(\s*\w*\s*\(([^)]*(?:\s*:\s*[^,]+,?)*)\))/;
-  const match = funcStr.match(signatureRegex);
-
-  // Return the matched signature, or null if not found
-  return match ? match[0] : null;
-};
+const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm;
+const ARGUMENT_NAMES = /([^\s,]+)/g;
+function getParamNames(func: () => unknown): null | string[] {
+  const fnStr = func.toString().replace(STRIP_COMMENTS, '');
+  return fnStr
+    .slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')'))
+    .match(ARGUMENT_NAMES);
+}
 
 export const matchNestedProperties = (
   api: any,
@@ -83,11 +79,9 @@ export const matchNestedFunctions = (
     expect(typeof parentObject[namespaceName][name]).toBe('function');
     expect(parentObject[namespaceName][name].length).toBe(args.length);
 
-    // for each argument, check the name and type
+    const expectedArgs = getParamNames(parentObject[namespaceName][name]);
     for (let i = 0; i < args.length; i++) {
-      const arg = args[i];
-      const funcSig = getFunctionSignature(parentObject[namespaceName][name]);
-      expect(funcSig).toContain(arg.name);
+      expect(expectedArgs?.[i]).toContain(args[i].name);
       // to do: check the type
     }
 

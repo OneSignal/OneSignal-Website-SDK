@@ -286,7 +286,9 @@ export default class Postmam {
     if (typeof onReply === 'function') {
       this.replies[messageBundle.id] = onReply;
     }
-    this.windowReference.postMessage(messageBundle, '*');
+
+    // This is a dead code path, this file will be deleted in the future.
+    // this.windowReference.postMessage(messageBundle, '*');
   }
 
   /**

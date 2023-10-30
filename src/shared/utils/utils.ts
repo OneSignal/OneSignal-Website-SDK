@@ -3,19 +3,13 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Database from '../services/Database';
 import { OneSignalUtils } from './OneSignalUtils';
 import { PermissionUtils } from './PermissionUtils';
-import { BrowserUtils } from './BrowserUtils';
 import { Utils } from '../context/Utils';
-import bowser from 'bowser';
 import TimeoutError from '../errors/TimeoutError';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';
-}
-
-export function decodeHtmlEntities(text: string) {
-  return BrowserUtils.decodeHtmlEntities(text);
 }
 
 export function removeDomElement(selector: string) {
@@ -95,7 +89,7 @@ export function isValidEmail(email: string | undefined | null) {
     !!email &&
     !!email.match(
       // eslint-disable-next-line no-control-regex
-      /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
+      /^([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22))*\x40([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d))*$/,
     )
   );
 }
@@ -271,17 +265,6 @@ export function getRandomUuid(): string {
  */
 export function isValidUuid(uuid: string) {
   return OneSignalUtils.isValidUuid(uuid);
-}
-
-export function getUrlQueryParam(name: string) {
-  let url = window.location.href;
-  url = url.toLowerCase(); // This is just to avoid case sensitiveness
-  name = name.replace(/[[\]]/g, '\\$&').toLowerCase(); // This is just to avoid case sensitiveness for query parameter name
-  const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-    results = regex.exec(url);
-  if (!results) return null;
-  if (!results[2]) return '';
-  return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
 /**

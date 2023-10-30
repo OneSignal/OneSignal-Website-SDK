@@ -13,9 +13,11 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.3",
+    "express-rate-limit": "^7.1.2",
     "fs": "0.0.1-security",
     "https": "^1.0.0",
-    "nodemon": "^1.19.3"
+    "nodemon": "^1.19.3",
+    "sanitize-filename": "^1.6.3"
   },
   "devDependencies": {
     "@babel/core": "^7.6.2",
