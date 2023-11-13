@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-# Installs all dependencies
+# Installs dependencies to build SDK
 yarn
 
 cd express_webpack
+
+# Installs dependencies to run Sandbox for dev env
+yarn
 
 # Sandbox cert generation
 yarn certs
