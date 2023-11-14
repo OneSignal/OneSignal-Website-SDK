@@ -5,14 +5,14 @@ const fs = require('fs');
 var sanitize = require("sanitize-filename");
 
 const app = express(),
-            DIST_DIR = __dirname,
-            HTML_FILE = path.join(DIST_DIR, 'index.html'),
-            SDK_FILES = path.join(DIST_DIR, '../build/releases/');
+    DIST_DIR = __dirname,
+    HTML_FILE = path.join(DIST_DIR, 'index.html'),
+    SDK_FILES = path.join(DIST_DIR, '../build/releases/');
 
 var RateLimit = require('express-rate-limit');
 var limiter = RateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // max 100 requests per windowMs
+    max: 1000, // max 1000 requests per windowMs
 });
 // apply rate limiter to all requests
 app.use(limiter);
