@@ -126,7 +126,7 @@ export default class OneSignal {
       );
     }
 
-    LoginManager.login(externalId, jwtToken);
+    await LoginManager.login(externalId, jwtToken);
   }
 
   static async logout(): Promise<void> {
