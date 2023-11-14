@@ -115,7 +115,7 @@ export default class User {
     });
   }
 
-  public addEmail(email: string): void {
+  public async addEmail(email: string): Promise<void> {
     logMethodCall('addEmail', { email });
 
     if (typeof email !== 'string') {
@@ -157,7 +157,7 @@ export default class User {
         newSubscription,
         false,
       );
-      UserDirector.createUserOnServer();
+      await UserDirector.createAndHydrateUser();
     }
 
     UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(
@@ -167,7 +167,7 @@ export default class User {
     );
   }
 
-  public addSms(sms: string): void {
+  public async addSms(sms: string): Promise<void> {
     logMethodCall('addSms', { sms });
 
     if (typeof sms !== 'string') {
@@ -206,7 +206,7 @@ export default class User {
         newSubscription,
         false,
       );
-      UserDirector.createUserOnServer();
+      await UserDirector.createAndHydrateUser();
     }
 
     UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(

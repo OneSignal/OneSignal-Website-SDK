@@ -192,10 +192,7 @@ export class SubscriptionManager {
 
     if (!pushModel) {
       OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
-      const userData = await UserDirector.createUserOnServer();
-      if (userData) {
-        OneSignal.coreDirector.hydrateUser(userData);
-      }
+      await UserDirector.createAndHydrateUser();
       return;
     } else {
       // resubscribing. update existing push subscription model
