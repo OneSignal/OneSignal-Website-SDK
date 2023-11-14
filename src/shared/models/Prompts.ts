@@ -123,7 +123,7 @@ export interface BellText {
 export interface AppUserConfigNotifyButton {
   options?: AppUserConfigNotifyButton;
   enable: boolean;
-  displayPredicate?: () => void | null | undefined;
+  displayPredicate?: null | (() => void | null | undefined | boolean);
   size?: BellSize;
   position?: BellPosition;
   offset?: { bottom: string; left: string; right: string };
