@@ -102,9 +102,6 @@
         onesignal.User.PushSubscription.addEventListener('subscriptionChange', function (event) {
           showEventAlert('subscriptionChange', { event });
         });
-        onesignal.Notifications.addEventListener('click', event => {
-          showEventAlert('click', { event });
-        });
     });
 
     /* E V E N T   L I S T E N E R S */
@@ -127,8 +124,8 @@
     });
 
     OneSignalDeferred.push(function(onesignal) {
-      onesignal.Notifications.addEventListener('willDisplay', function (event) {
-        showEventAlert('willDisplay', { event });
+      onesignal.Notifications.addEventListener('foregroundWillDisplay', function (event) {
+        showEventAlert('foregroundWillDisplay', event);
       });
     });
 
@@ -152,6 +149,7 @@
     }
 
     function showEventAlert(eventName, payload) {
+      console.log(`OneSignal event ${eventName} fired!`, payload);
       if (!showEventAlertToggleSetting) {
         return;
       }

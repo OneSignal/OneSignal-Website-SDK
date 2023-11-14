@@ -13,6 +13,7 @@ import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { NotificationEventName } from '../page/models/NotificationEventName';
 import { NotificationPermission } from '../shared/models/NotificationPermission';
 import NotificationEventTypeMap from '../page/models/NotificationEventTypeMap';
+import EventHelper from '../shared/helpers/EventHelper';
 
 export default class NotificationsNamespace extends EventListenerBase {
   private _permission: boolean;
@@ -146,6 +147,10 @@ export default class NotificationsNamespace extends EventListenerBase {
     listener: (obj: NotificationEventTypeMap[K]) => void,
   ): void {
     OneSignal.emitter.on(event, listener);
+
+    if (event === 'click') {
+      EventHelper.fireStoredNotificationClicks();
+    }
   }
 
   removeEventListener<K extends NotificationEventName>(

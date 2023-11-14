@@ -14,6 +14,7 @@ import {
   NotificationClickEvent,
   NotificationClickEventInternal,
 } from '../models/NotificationEvent';
+import { awaitOneSignalInitAndSupported } from '../utils/utils';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -243,7 +244,13 @@ export default class EventHelper {
    * This method is fired for both HTTPS and HTTP sites, so for HTTP sites, the host URL needs to be used, not the
    * subdomain.onesignal.com URL.
    */
-  static async fireStoredNotificationClicks(url: string = document.URL) {
+  static async fireStoredNotificationClicks() {
+    await awaitOneSignalInitAndSupported();
+    const url =
+      OneSignal.config.pageUrl ||
+      OneSignal.config.userConfig.pageUrl ||
+      document.URL;
+
     async function fireEventWithNotification(
       selectedEvent: NotificationClickEventInternal,
     ) {
