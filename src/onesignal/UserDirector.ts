@@ -104,6 +104,13 @@ export default class UserDirector {
     }
   }
 
+  static async createAndHydrateUser(): Promise<void> {
+    const userData = await UserDirector.createUserOnServer();
+    if (userData) {
+      OneSignal.coreDirector.hydrateUser(userData);
+    }
+  }
+
   static async getAllUserData(): Promise<UserData> {
     logMethodCall('LoginManager.getAllUserData');
 
