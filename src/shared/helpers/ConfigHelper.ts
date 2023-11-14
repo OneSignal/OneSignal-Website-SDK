@@ -532,14 +532,7 @@ export class ConfigHelper {
             enable: serverConfig.config.staticPrompts.bell.enabled,
             displayPredicate: serverConfig.config.staticPrompts.bell
               .hideWhenSubscribed
-              ? () => {
-                  return OneSignal.isPushNotificationsEnabled().then(
-                    (isPushEnabled: boolean) => {
-                      /* The user is subscribed, so we want to return "false" to hide the notify button */
-                      return !isPushEnabled;
-                    },
-                  );
-                }
+              ? () => !OneSignal.User.PushSubscription.optedIn
               : null,
             size: serverConfig.config.staticPrompts.bell.size,
             position: serverConfig.config.staticPrompts.bell.location,
