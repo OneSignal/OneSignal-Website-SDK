@@ -33,4 +33,29 @@ export default class ServiceWorkerUtilHelper {
     }
     return availableWorker;
   }
+
+  // Allows waiting for the service worker registration to become active.
+  // Some APIs, like registration.pushManager.subscribe, required it be active
+  // otherwise it throws.
+  static waitForServiceWorkerToActive(
+    registration: ServiceWorkerRegistration,
+  ): Promise<void> {
+    return new Promise((resolver) => {
+      // IMPORTANT: checking non-active instances first,
+      // otherwise the 'statechange' event could be missed.
+      const inactiveWorker = registration.installing || registration.waiting;
+      if (inactiveWorker) {
+        inactiveWorker.addEventListener('statechange', () => {
+          Log.debug(
+            'OneSignal Service Worker state changed:',
+            inactiveWorker.state,
+          );
+          if (registration.active) {
+            resolver();
+          }
+        });
+      }
+      if (registration.active) resolver();
+    });
+  }
 }

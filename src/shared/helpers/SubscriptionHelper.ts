@@ -41,7 +41,7 @@ export default class SubscriptionHelper {
           await PermissionUtils.triggerNotificationPermissionChanged();
           await EventHelper.checkAndTriggerSubscriptionChanged();
         } catch (e) {
-          Log.info(e);
+          Log.error(e);
         }
         break;
       case WindowEnvironmentKind.OneSignalSubscriptionPopup: {
