@@ -1,4 +1,7 @@
-import { isPushNotificationsSupported } from './BrowserSupportsPush';
+import {
+  isIosSafari,
+  isPushNotificationsSupported,
+} from './BrowserSupportsPush';
 // NOTE: Careful if adding imports, ES5 targets can't clean up functions never called.
 
 // See sdk.ts for what entry points this handles
@@ -55,7 +58,16 @@ export class OneSignalShimLoader {
     if (isPushNotificationsSupported()) {
       OneSignalShimLoader.loadFullPageSDK();
     } else {
-      console.log('OneSignal: SDK is not compatible with this browser.');
+      this.printEnvironmentNotSupported();
     }
+  }
+
+  private static printEnvironmentNotSupported() {
+    let logMessage = 'OneSignal: SDK is not compatible with this browser.';
+    if (isIosSafari()) {
+      logMessage +=
+        ' To support iOS please install as a Web App. See the OneSignal guide https://documentation.onesignal.com/docs/safari-web-push-for-ios';
+    }
+    console.log(logMessage);
   }
 }
