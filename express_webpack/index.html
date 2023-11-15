@@ -8,12 +8,19 @@
 <!-- NOTE: This does not work with the relative pathed manifest.json above. -->
 <!--<base href="https://www.example.com/"> -->
 <script src="sdks/web/v16/Dev-OneSignalSDK.page.js" defer></script>
+
+<script>
+  // Example of a root service worker a site may have.
+  // This is common for a PWA.
+  navigator.serviceWorker.register('sw.js');
+</script>
+
 <script>
     // NOTE: Uncomment and open site in Safari on macOS 13+ to simulate
     // a similar JS API as an iOS 16.4 WebApp.
     // window.safari = undefined;
 
-    const SERVICE_WORKER_PATH = "push/onesignal/";
+    const SERVICE_WORKER_PATH = 'push/onesignal/';
     let showEventAlertToggleSetting = false;
 
     function getUrlQueryParam(name) {
@@ -26,6 +33,8 @@
     OneSignalDeferred.push(async function(onesignal) {
       await onesignal.init({
           appId,
+          serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
+          serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
           notifyButton: {
               enable: true
           },
