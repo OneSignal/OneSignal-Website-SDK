@@ -11,7 +11,7 @@ export function isMacOSSafariInIframe(): boolean {
   // Fallback detection for Safari on macOS in an iframe context
   return (
     window.top !== window && // isContextIframe
-    navigator.vendor === 'Apple Computer, Inc.' && // isSafari
+    isSafariBrowser() &&
     navigator.platform === 'MacIntel'
   ); // isMacOS
 }
@@ -30,6 +30,19 @@ export function supportsVapidPush(): boolean {
     // eslint-disable-next-line no-prototype-builtins
     PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey')
   );
+}
+
+// Is Safari on iOS or iPadOS
+export function isIosSafari(): boolean {
+  // Safari's "Request Desktop Website" (default for iPad) masks the
+  // userAgent as macOS. So we are using maxTouchPoints to assume it is
+  // iOS, since there are no touch screen Macs.
+  return isSafariBrowser() && navigator.maxTouchPoints > 0;
+}
+
+// Is any Safari browser, includes macOS and iOS.
+function isSafariBrowser(): boolean {
+  return navigator.vendor === 'Apple Computer, Inc.';
 }
 
 /* Notes on browser results which lead the logic of the functions above */
