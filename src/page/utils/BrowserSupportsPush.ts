@@ -1,3 +1,5 @@
+// Light weight JS to detect browsers push notification capabilities
+//
 // This is used by the OneSignalSDK.page.js shim
 // DO NOT add other imports since it is an ES5 target and dead code imports can't be clean up.
 
@@ -7,8 +9,9 @@ export function isPushNotificationsSupported() {
   return supportsVapidPush() || supportsSafariPush();
 }
 
+// Fallback detection for Safari on macOS in an iframe context
+//   - window.safari is undefined in this context
 export function isMacOSSafariInIframe(): boolean {
-  // Fallback detection for Safari on macOS in an iframe context
   return (
     window.top !== window && // isContextIframe
     isSafariBrowser() &&
@@ -16,6 +19,7 @@ export function isMacOSSafariInIframe(): boolean {
   ); // isMacOS
 }
 
+// Does the browser support legacy Safari push? (only available on macOS)
 export function supportsSafariPush(): boolean {
   return (
     (window.safari && typeof window.safari.pushNotification !== 'undefined') ||
@@ -56,4 +60,3 @@ function isSafariBrowser(): boolean {
 // Firefox
 //   Normal - typeof PushSubscriptionOptions == "function"
 //     HTTP & HTTPS - typeof PushSubscriptionOptions == "function"
-//   ESR - typeof PushSubscriptionOptions == "undefined"
