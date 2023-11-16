@@ -23,11 +23,7 @@ import { DynamicResourceLoader } from '../../page/services/DynamicResourceLoader
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
 import OneSignalUtils from '../utils/OneSignalUtils';
-import {
-  getConsoleStyle,
-  once,
-  triggerNotificationPermissionChanged,
-} from '../utils/utils';
+import { once, triggerNotificationPermissionChanged } from '../utils/utils';
 import Environment from './Environment';
 import OneSignalEvent from '../services/OneSignalEvent';
 import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
@@ -45,7 +41,7 @@ export default class InitHelper {
   /** Main methods */
 
   public static async internalInit() {
-    Log.debug('Called %cinternalInit()', getConsoleStyle('code'));
+    Log.debug('Called internalInit()');
 
     // Always check for an updated service worker
     await OneSignal.context.serviceWorkerManager.installWorker();
@@ -80,7 +76,7 @@ export default class InitHelper {
   }
 
   public static async sessionInit(): Promise<void> {
-    Log.debug(`Called %csessionInit()`, getConsoleStyle('code'));
+    Log.debug(`Called sessionInit()`);
 
     if (OneSignal._sessionInitAlreadyRunning) {
       Log.debug(

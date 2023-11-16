@@ -6,7 +6,6 @@ import SubscriptionPopup from '../../page/modules/frames/SubscriptionPopup';
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import { getConsoleStyle } from '../utils/utils';
 import OneSignalEvent from '../services/OneSignalEvent';
 
 declare let OneSignal: any;
@@ -14,10 +13,7 @@ declare let OneSignal: any;
 export default class HttpHelper {
   // Http only - Only called from iframe's init.js
   static async initHttp(options: RemoteFrameOptions) {
-    Log.debug(
-      `Called %cinitHttp(${JSON.stringify(options, null, 4)})`,
-      getConsoleStyle('code'),
-    );
+    Log.debug(`Called initHttp(${JSON.stringify(options, null, 4)})`);
 
     switch (SdkEnvironment.getWindowEnv()) {
       case WindowEnvironmentKind.OneSignalProxyFrame:
