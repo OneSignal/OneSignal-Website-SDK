@@ -372,20 +372,34 @@ export class SubscriptionManager {
   }
 
   private subscribeSafariPromptPermission(): Promise<string | null> {
-    return new Promise<string>((resolve) => {
-      window.safari.pushNotification.requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
-        this.config.safariWebId,
-        {
-          app_id: this.config.appId,
-        },
-        (response) => {
-          if ((response as any).deviceToken) {
-            resolve((response as any).deviceToken.toLowerCase());
-          } else {
-            resolve(null);
-          }
-        },
+    return new Promise<string | null>((resolve) => {
+      const requestPermission = (url: string) => {
+        window.safari.pushNotification.requestPermission(
+          url,
+          this.config.safariWebId,
+          { app_id: this.config.appId },
+          (response) => {
+            if ((response as any).deviceToken) {
+              resolve((response as any).deviceToken.toLowerCase());
+            } else {
+              // If there's no token and the new URL was used,
+              // retry with the legacy URL
+              if (url.includes('/safari/apps/')) {
+                requestPermission(
+                  `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
+                );
+              } else {
+                resolve(null);
+              }
+            }
+          },
+        );
+      };
+
+      requestPermission(
+        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari/apps/${
+          this.config.appId
+        }`,
       );
     });
   }
