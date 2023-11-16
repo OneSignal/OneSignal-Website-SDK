@@ -211,10 +211,6 @@ export function hasCssClass(
  * };
  */
 
-export function getConsoleStyle(style: string) {
-  return Utils.getConsoleStyle(style);
-}
-
 /**
  * Returns a promise for the setTimeout() method.
  * @param durationMs

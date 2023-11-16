@@ -72,13 +72,9 @@ export default class OneSignalEvent {
       }
 
       if (displayData || displayData === false) {
-        Log.debug(
-          `(${env}) » %c${eventName}:`,
-          Utils.getConsoleStyle('event'),
-          displayData,
-        );
+        Log.debug(`(${env}) » ${eventName}:`, displayData);
       } else {
-        Log.debug(`(${env}) » %c${eventName}`, Utils.getConsoleStyle('event'));
+        Log.debug(`(${env}) » ${eventName}`);
       }
     }
 

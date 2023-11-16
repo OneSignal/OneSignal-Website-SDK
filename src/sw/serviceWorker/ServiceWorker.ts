@@ -358,8 +358,7 @@ export class ServiceWorker {
    */
   static onPushReceived(event: PushEvent): void {
     Log.debug(
-      `Called %conPushReceived(${JSON.stringify(event, null, 4)}):`,
-      Utils.getConsoleStyle('code'),
+      `Called onPushReceived(${JSON.stringify(event, null, 4)}):`,
       event,
     );
 
@@ -462,12 +461,7 @@ export class ServiceWorker {
     };
 
     Log.debug(
-      `Called %csendConfirmedDelivery(${JSON.stringify(
-        notification,
-        null,
-        4,
-      )})`,
-      Utils.getConsoleStyle('code'),
+      `Called sendConfirmedDelivery(${JSON.stringify(notification, null, 4)})`,
     );
 
     await awaitableTimeout(
@@ -745,8 +739,7 @@ export class ServiceWorker {
    */
   static async displayNotification(notification: IMutableOSNotification) {
     Log.debug(
-      `Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`,
-      Utils.getConsoleStyle('code'),
+      `Called displayNotification(${JSON.stringify(notification, null, 4)}):`,
       notification,
     );
 
@@ -854,8 +847,7 @@ export class ServiceWorker {
    */
   static onNotificationClosed(event) {
     Log.debug(
-      `Called %conNotificationClosed(${JSON.stringify(event, null, 4)}):`,
-      Utils.getConsoleStyle('code'),
+      `Called onNotificationClosed(${JSON.stringify(event, null, 4)}):`,
       event,
     );
     const notification = event.notification.data as IOSNotification;
@@ -906,8 +898,7 @@ export class ServiceWorker {
    */
   static async onNotificationClicked(event: NotificationEvent) {
     Log.debug(
-      `Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`,
-      Utils.getConsoleStyle('code'),
+      `Called onNotificationClicked(${JSON.stringify(event, null, 4)}):`,
       event,
     );
 
@@ -1198,8 +1189,7 @@ export class ServiceWorker {
 
   static async onPushSubscriptionChange(event: SubscriptionChangeEvent) {
     Log.debug(
-      `Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`,
-      Utils.getConsoleStyle('code'),
+      `Called onPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`,
       event,
     );
 

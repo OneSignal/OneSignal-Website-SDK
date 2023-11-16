@@ -116,9 +116,7 @@ export class OneSignalUtils {
 
   public static logMethodCall(methodName: string, ...args: any[]) {
     return Log.debug(
-      `Called %c${methodName}(${args.map(Utils.stringify).join(', ')})`,
-      Utils.getConsoleStyle('code'),
-      '.',
+      `Called ${methodName}(${args.map(Utils.stringify).join(', ')})`,
     );
   }
 
