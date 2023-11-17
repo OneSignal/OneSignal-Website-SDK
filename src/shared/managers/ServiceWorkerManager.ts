@@ -174,6 +174,8 @@ export class ServiceWorkerManager {
     });
   }
 
+  // Returns false if the OneSignal service worker can't be installed
+  // or is already installed and doesn't need updating.
   private async shouldInstallWorker(): Promise<boolean> {
     // 1. Does the browser support ServiceWorkers?
     if (!Environment.supportsServiceWorkers()) return false;
@@ -486,9 +488,11 @@ export class ServiceWorkerManager {
    * additional query parameters, but this must then stay consistent.
    */
 
-  public async installWorker() {
+  public async installWorker(): Promise<
+    ServiceWorkerRegistration | undefined | null
+  > {
     if (!(await this.shouldInstallWorker())) {
-      return;
+      return this.getRegistration();
     }
 
     Log.info('Installing worker...');
@@ -512,8 +516,12 @@ export class ServiceWorkerManager {
     Log.info(
       `[Service Worker Installation] Installing service worker ${workerHref} ${scope}.`,
     );
+
+    let registration: ServiceWorkerRegistration;
     try {
-      await navigator.serviceWorker.register(workerHref, { scope });
+      registration = await navigator.serviceWorker.register(workerHref, {
+        scope,
+      });
     } catch (error) {
       Log.error(
         `[Service Worker Installation] Installing service worker failed ${error}`,
@@ -527,14 +535,21 @@ export class ServiceWorkerManager {
         throw error;
       }
 
-      await this.fallbackToUserModelBetaWorker();
+      registration = await this.fallbackToUserModelBetaWorker();
     }
-    Log.debug(`[Service Worker Installation] Service worker installed.`);
+    Log.debug(
+      `[Service Worker Installation] Service worker installed. Waiting for activation`,
+    );
+
+    await ServiceWorkerUtilHelper.waitUntilActive(registration);
+
+    Log.debug(`[Service Worker Installation] Service worker active`);
 
     await this.establishServiceWorkerChannel();
+    return registration;
   }
 
-  async fallbackToUserModelBetaWorker() {
+  async fallbackToUserModelBetaWorker(): Promise<ServiceWorkerRegistration> {
     const BETA_WORKER_NAME = 'OneSignalSDK.sw.js';
 
     const configWithBetaWorkerName: ServiceWorkerManagerConfig = {
@@ -557,7 +572,9 @@ export class ServiceWorkerManager {
     );
 
     try {
-      await navigator.serviceWorker.register(workerHref, { scope });
+      const registration = await navigator.serviceWorker.register(workerHref, {
+        scope,
+      });
 
       const DEPRECATION_ERROR = `
         [Service Worker Installation] Successfully installed v16 Beta Worker.
@@ -568,6 +585,7 @@ export class ServiceWorkerManager {
       `;
 
       Log.error(DEPRECATION_ERROR);
+      return registration;
     } catch (error) {
       const response = await fetch(workerHref);
       if (response.status === 403 || response.status === 404) {

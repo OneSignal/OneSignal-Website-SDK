@@ -487,8 +487,10 @@ export class SubscriptionManager {
     }
 
     /* Now that permissions have been granted, install the service worker */
+    let workerRegistration: ServiceWorkerRegistration | undefined | null;
     try {
-      await this.context.serviceWorkerManager.installWorker();
+      workerRegistration =
+        await this.context.serviceWorkerManager.installWorker();
     } catch (err) {
       if (err instanceof ServiceWorkerRegistrationError) {
         if (err.status === 403) {
@@ -506,9 +508,6 @@ export class SubscriptionManager {
       throw err;
     }
 
-    Log.debug('[Subscription Manager] Getting OneSignal service Worker...');
-    const workerRegistration =
-      await this.context.serviceWorkerManager.getRegistration();
     if (!workerRegistration) {
       throw new Error('OneSignal service worker not found!');
     }
