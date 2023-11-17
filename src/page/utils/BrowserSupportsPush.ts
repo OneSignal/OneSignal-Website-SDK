@@ -1,3 +1,5 @@
+// Light weight JS to detect browsers push notification capabilities
+//
 // This is used by the OneSignalSDK.page.js shim
 // DO NOT add other imports since it is an ES5 target and dead code imports can't be clean up.
 
@@ -7,15 +9,17 @@ export function isPushNotificationsSupported() {
   return supportsVapidPush() || supportsSafariPush();
 }
 
+// Fallback detection for Safari on macOS in an iframe context
+//   - window.safari is undefined in this context
 export function isMacOSSafariInIframe(): boolean {
-  // Fallback detection for Safari on macOS in an iframe context
   return (
     window.top !== window && // isContextIframe
-    navigator.vendor === 'Apple Computer, Inc.' && // isSafari
+    isSafariBrowser() &&
     navigator.platform === 'MacIntel'
   ); // isMacOS
 }
 
+// Does the browser support legacy Safari push? (only available on macOS)
 export function supportsSafariPush(): boolean {
   return (
     (window.safari && typeof window.safari.pushNotification !== 'undefined') ||
@@ -32,6 +36,19 @@ export function supportsVapidPush(): boolean {
   );
 }
 
+// Is Safari on iOS or iPadOS
+export function isIosSafari(): boolean {
+  // Safari's "Request Desktop Website" (default for iPad) masks the
+  // userAgent as macOS. So we are using maxTouchPoints to assume it is
+  // iOS, since there are no touch screen Macs.
+  return isSafariBrowser() && navigator.maxTouchPoints > 0;
+}
+
+// Is any Safari browser, includes macOS and iOS.
+function isSafariBrowser(): boolean {
+  return navigator.vendor === 'Apple Computer, Inc.';
+}
+
 /* Notes on browser results which lead the logic of the functions above */
 // Safari
 //   macOS - typeof safari.pushNotification == "object"
@@ -43,4 +60,3 @@ export function supportsVapidPush(): boolean {
 // Firefox
 //   Normal - typeof PushSubscriptionOptions == "function"
 //     HTTP & HTTPS - typeof PushSubscriptionOptions == "function"
-//   ESR - typeof PushSubscriptionOptions == "undefined"
