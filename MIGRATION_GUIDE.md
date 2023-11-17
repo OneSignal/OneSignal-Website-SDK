@@ -168,6 +168,7 @@ All user functions are synchronous.
 | `addTags`       | Adds multiple tags for the current user.       | `tags: { [key: string]: string }`    |
 | `removeTag`     | Removes a tag for the current user.            | `key: string`                        |
 | `removeTags`    | Removes multiple tags for the current user.    | `keys: string[]`                     |
+| `getTags`       | Gets the current user's tags.                  |                                      |
 
 ### Notifications Namespace
 
