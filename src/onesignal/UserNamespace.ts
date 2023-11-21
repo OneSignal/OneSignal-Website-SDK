@@ -72,6 +72,6 @@ export default class UserNamespace {
   }
 
   public getTags(): { [key: string]: string } {
-    return this._currentUser?.getTags() ? this._currentUser.getTags() : {};
+    return this._currentUser?.getTags() || {};
   }
 }
