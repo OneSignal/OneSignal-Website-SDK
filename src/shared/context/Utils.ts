@@ -27,24 +27,6 @@ export class Utils {
     return indexOfAble.indexOf(match) !== -1;
   }
 
-  public static getConsoleStyle(style: string) {
-    if (style == 'code') {
-      return `padding: 0 1px 1px 5px;border: 1px solid #ddd;border-radius: 3px;font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;color: #444;`;
-    } else if (style == 'bold') {
-      return `font-weight: 600;color: rgb(51, 51, 51);`;
-    } else if (style == 'alert') {
-      return `font-weight: 600;color: red;`;
-    } else if (style == 'event') {
-      return `color: green;`;
-    } else if (style == 'postmessage') {
-      return `color: orange;`;
-    } else if (style == 'serviceworkermessage') {
-      return `color: purple;`;
-    } else {
-      return '';
-    }
-  }
-
   /**
    * Returns the current object without keys that have undefined values.
    * Regardless of whether the return result is used, the passed-in object is destructively modified.

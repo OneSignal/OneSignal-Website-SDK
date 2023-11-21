@@ -1,6 +1,6 @@
 import BrowserUtils from '../../shared/utils/BrowserUtils';
 import Log from '../../shared/libraries/Log';
-import { delay, getConsoleStyle, nothing } from '../../shared/utils/utils';
+import { delay, nothing } from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
@@ -37,10 +37,7 @@ export default class Message extends AnimatedElement {
   }
 
   display(type, content, duration = 0) {
-    Log.debug(
-      `Calling %cdisplay(${type}, ${content}, ${duration}).`,
-      getConsoleStyle('code'),
-    );
+    Log.debug(`Calling display(${type}, ${content}, ${duration}).`);
     return (this.shown ? this.hide() : nothing())
       .then(() => {
         this.content = BrowserUtils.decodeHtmlEntities(content);

@@ -28,7 +28,7 @@ import { AppUserConfigNotifyButton } from '../shared/models/Prompts';
 import { WindowEnvironmentKind } from '../shared/models/WindowEnvironmentKind';
 import Database from '../shared/services/Database';
 import OneSignalUtils from '../shared/utils/OneSignalUtils';
-import { logMethodCall, getConsoleStyle } from '../shared/utils/utils';
+import { logMethodCall } from '../shared/utils/utils';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
 import NotificationsNamespace from './NotificationsNamespace';
 import CoreModule from '../core/CoreModule';
@@ -63,14 +63,7 @@ export default class OneSignal {
 
   private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await new ConfigManager().getAppConfig(options);
-    Log.debug(
-      `OneSignal: Final web app config: %c${JSON.stringify(
-        appConfig,
-        null,
-        4,
-      )}`,
-      getConsoleStyle('code'),
-    );
+    Log.debug('OneSignal: Final web app config:', appConfig);
 
     // TODO: environmentInfo is explicitly dependent on existence of OneSignal.config. Needs refactor.
     // Workaround to temp assign config so that it can be used in context.
@@ -426,9 +419,8 @@ export default class OneSignal {
 LegacyManager.ensureBackwardsCompatibility(OneSignal);
 
 Log.info(
-  `%cOneSignal Web SDK loaded (version ${OneSignal._VERSION},
+  `OneSignal Web SDK loaded (version ${OneSignal._VERSION},
   ${SdkEnvironment.getWindowEnv().toString()} environment).`,
-  getConsoleStyle('bold'),
 );
 Log.debug(
   `Current Page URL: ${

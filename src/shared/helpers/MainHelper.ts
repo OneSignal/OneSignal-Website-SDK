@@ -93,12 +93,7 @@ export default class MainHelper {
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
-      Log.error(
-        `API call %c${url}`,
-        Utils.getConsoleStyle('code'),
-        'failed with:',
-        data.errors,
-      );
+      Log.error(`API call ${url}`, 'failed with:', data.errors);
       throw new Error('Failed to get notification icons.');
     }
     return data;

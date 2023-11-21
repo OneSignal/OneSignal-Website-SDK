@@ -31,7 +31,7 @@ export class OSWebhookSender {
     Log.debug(
       `Executing ${payload.event} webhook ${
         isServerCorsEnabled ? 'with' : 'without'
-      } CORS %cPOST ${webhookTargetUrl}`,
+      } CORS POST ${webhookTargetUrl}`,
       payload,
     );
     await fetch(webhookTargetUrl, fetchOptions);
