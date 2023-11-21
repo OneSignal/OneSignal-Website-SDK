@@ -70,4 +70,8 @@ export default class UserNamespace {
   public removeTags(keys: string[]): void {
     this._currentUser?.removeTags(keys);
   }
+
+  public getTags(): { [key: string]: string } {
+    return this._currentUser?.getTags() || {};
+  }
 }

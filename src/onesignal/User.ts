@@ -335,4 +335,10 @@ export default class User {
       propertiesModel?.set('tags', tagsCopy);
     }
   }
+
+  public getTags(): { [key: string]: string } {
+    logMethodCall('getTags');
+
+    return OneSignal.coreDirector.getPropertiesModel()?.data?.tags;
+  }
 }
