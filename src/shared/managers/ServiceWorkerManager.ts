@@ -149,28 +149,15 @@ export class ServiceWorkerManager {
   public async getWorkerVersion(): Promise<number> {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<number>(async (resolve) => {
-      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
-        if (!proxyFrameHost) {
-          /* On init, this function may be called. Return a null state for now */
-          resolve(NaN);
-        } else {
-          const proxyWorkerVersion = await proxyFrameHost.runCommand<number>(
-            OneSignal.POSTMAM_COMMANDS.GET_WORKER_VERSION,
-          );
-          resolve(proxyWorkerVersion);
-        }
-      } else {
-        this.context.workerMessenger.once(
-          WorkerMessengerCommand.WorkerVersion,
-          (workerVersion) => {
-            resolve(workerVersion);
-          },
-        );
-        await this.context.workerMessenger.unicast(
-          WorkerMessengerCommand.WorkerVersion,
-        );
-      }
+      this.context.workerMessenger.once(
+        WorkerMessengerCommand.WorkerVersion,
+        (workerVersion) => {
+          resolve(workerVersion);
+        },
+      );
+      await this.context.workerMessenger.unicast(
+        WorkerMessengerCommand.WorkerVersion,
+      );
     });
   }
 

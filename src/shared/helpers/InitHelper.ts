@@ -104,14 +104,7 @@ export default class InitHelper {
     const subscription = await Database.getSubscription();
     subscription.optedOut = isOptedOut;
     await Database.setSubscription(subscription);
-
-    /**
-     * Auto-resubscribe is working only on HTTPS (and in safari)
-     * Should be called before autoprompting to make sure user gets a chance to be re-subscribed first.
-     */
-    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
-      await InitHelper.handleAutoResubscribe(isOptedOut);
-    }
+    await InitHelper.handleAutoResubscribe(isOptedOut);
 
     const isSubscribed =
       await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
@@ -138,28 +131,6 @@ export default class InitHelper {
         options,
       );
       await OneSignal.subscriptionModalHost.load();
-      return;
-    }
-
-    if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-      if (options.httpPermissionRequest) {
-        /*
-         * Do not throw an error because it may cause the parent event handler to
-         * throw and stop processing the rest of their code. Typically, for this
-         * prompt sequence, a custom modal is being shown thanking the user for
-         * granting permissions. Throwing an error might cause the modal to stay
-         * on screen and not close.
-         *
-         * Only log an error for HTTP sites. A few HTTPS sites are mistakenly be
-         * using this API instead of the parameter-less version to register for
-         * push notifications.
-         */
-        Log.error(
-          new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest),
-        );
-        return;
-      }
-      await InitHelper.loadSubscriptionPopup(options);
       return;
     }
 

@@ -101,21 +101,14 @@ export default class PermissionManager {
     if (Environment.useSafariLegacyPush())
       return PermissionManager.getSafariNotificationPermission(safariWebId);
 
-    // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
-    if (OneSignalUtils.isUsingSubscriptionWorkaround())
-      return await this.getOneSignalSubdomainNotificationPermission(
-        safariWebId,
-      );
-    else {
-      const reportedPermission: NotificationPermission =
-        this.getW3cNotificationPermission();
+    const reportedPermission: NotificationPermission =
+      this.getW3cNotificationPermission();
 
-      if (await this.isPermissionEnvironmentAmbiguous(reportedPermission)) {
-        return await this.getInterpretedAmbiguousPermission(reportedPermission);
-      }
-
-      return this.getW3cNotificationPermission();
+    if (await this.isPermissionEnvironmentAmbiguous(reportedPermission)) {
+      return await this.getInterpretedAmbiguousPermission(reportedPermission);
     }
+
+    return this.getW3cNotificationPermission();
   }
 
   /**
@@ -186,8 +179,7 @@ export default class PermissionManager {
       !browser.firefox &&
       permission === NotificationPermission.Denied &&
       (this.isCurrentFrameContextCrossOrigin() ||
-        (await SdkEnvironment.isFrameContextInsecure()) ||
-        OneSignalUtils.isUsingSubscriptionWorkaround())
+        (await SdkEnvironment.isFrameContextInsecure()))
     );
   }
 

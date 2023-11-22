@@ -193,39 +193,6 @@ export default class OneSignal {
         InitHelper.onSdkInitialized,
       );
 
-      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        /**
-         * The user may have forgot to choose a subdomain in his web app setup.
-         *
-         * Or, the user may have an HTTP & HTTPS site while using an HTTPS-only
-         * config on both variants. This would cause the HTTPS site to work
-         * perfectly, while causing errors and preventing web push from working
-         * on the HTTP site.
-         */
-        if (!OneSignal.config || !OneSignal.config.subdomain)
-          throw new SdkInitError(SdkInitErrorKind.MissingSubdomain);
-
-        /**
-         * We'll need to set up page activity tracking events on the main page but we can do so
-         * only after the main initialization in the iframe is successful and a new session
-         * is initiated.
-         */
-        OneSignal.emitter.on(
-          OneSignal.EVENTS.SESSION_STARTED,
-          SessionManager.setupSessionEventListenersForHttp,
-        );
-
-        /**
-         * The iFrame may never load (e.g. OneSignal might be down), in which
-         * case the rest of the SDK's initialization will be blocked. This is a
-         * good thing! We don't want to access IndexedDb before we know which
-         * origin to store data on.
-         */
-        OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(
-          OneSignal.config,
-        );
-      }
-
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,
         //     since a user has to click out of and back on the page to check permissions

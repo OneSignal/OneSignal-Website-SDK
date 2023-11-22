@@ -1,7 +1,6 @@
 import bowser from 'bowser';
 import { EnvironmentInfo } from '../models/EnvironmentInfo';
 import { Browser } from '../../shared/models/Browser';
-import { OneSignalUtils } from '../../shared/utils/OneSignalUtils';
 import { isMacOSSafariInIframe } from '../utils/BrowserSupportsPush';
 import Utils from '../../shared/context/Utils';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
@@ -17,7 +16,7 @@ export class EnvironmentInfoHelper {
       browserType: this.getBrowser(),
       browserVersion: this.getBrowserVersion(),
       isHttps: this.isHttps(),
-      isUsingSubscriptionWorkaround: this.isUsingSubscriptionWorkaround(),
+      isUsingSubscriptionWorkaround: false,
       isBrowserAndSupportsServiceWorkers: this.supportsServiceWorkers(),
       requiresUserInteraction: this.requiresUserInteraction(),
       osVersion: this.getOsVersion(),
@@ -63,10 +62,6 @@ export class EnvironmentInfoHelper {
     return window
       ? window.location && window.location.protocol === 'https:'
       : false;
-  }
-
-  private static isUsingSubscriptionWorkaround(): boolean {
-    return OneSignalUtils.isUsingSubscriptionWorkaround();
   }
 
   private static supportsServiceWorkers(): boolean {

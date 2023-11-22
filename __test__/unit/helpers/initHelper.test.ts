@@ -21,20 +21,6 @@ describe('InitHelper', () => {
     expect(OneSignal.subscriptionModalHost.modal).not.toBeUndefined();
   });
 
-  test('registerForPushNotifications: load fullscreen popup when using subscription workaround', async () => {
-    const utilsStub = jest
-      .spyOn(OneSignalUtils, 'isUsingSubscriptionWorkaround')
-      .mockReturnValue(true);
-    const loadStub = jest
-      .spyOn(InitHelper, 'loadSubscriptionPopup')
-      .mockResolvedValue(undefined);
-
-    await InitHelper.registerForPushNotifications();
-
-    expect(utilsStub).toHaveBeenCalledTimes(1);
-    expect(loadStub).toHaveBeenCalledTimes(1);
-  });
-
   /** onSdkInitialized */
   test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
     OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
@@ -58,11 +44,6 @@ describe('InitHelper', () => {
     const spy = jest
       .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
       .mockResolvedValue(undefined);
-    test.stub(
-      OneSignalUtils,
-      'isUsingSubscriptionWorkaround',
-      Promise.resolve(false),
-    );
 
     OneSignal.config.userConfig.promptOptions.autoPrompt = false;
     OneSignal.config.userConfig.autoResubscribe = false;
@@ -76,11 +57,6 @@ describe('InitHelper', () => {
     const spy = jest
       .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
       .mockResolvedValue(undefined);
-    test.stub(
-      OneSignalUtils,
-      'isUsingSubscriptionWorkaround',
-      Promise.resolve(false),
-    );
 
     OneSignal.config.userConfig.promptOptions.autoPrompt = true;
     OneSignal.config.userConfig.autoResubscribe = true;

@@ -15,7 +15,6 @@ import { RawPushSubscription } from '../models/RawPushSubscription';
 import SubscriptionHelper from './SubscriptionHelper';
 import Utils from '../context/Utils';
 import Database from '../services/Database';
-import OneSignalUtils from '../utils/OneSignalUtils';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import OneSignalEvent from '../services/OneSignalEvent';
 import Environment from './Environment';
@@ -32,12 +31,7 @@ export default class MainHelper {
     }
 
     if (currentPermission === NotificationPermission.Denied) {
-      // Due to this issue https://github.com/OneSignal/OneSignal-Website-SDK/issues/289 we cannot reliably detect
-      // "default" permission in HTTP context. Browser reports denied for both "default" and "denied" statuses.
-      // Returning SubscriptionStateKind.NoNativePermission for this case.
-      return OneSignalUtils.isUsingSubscriptionWorkaround()
-        ? SubscriptionStateKind.NoNativePermission
-        : SubscriptionStateKind.NotSubscribed;
+      return SubscriptionStateKind.NotSubscribed;
     }
 
     const existingUser =

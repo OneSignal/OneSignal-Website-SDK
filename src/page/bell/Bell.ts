@@ -9,7 +9,6 @@ import {
   nothing,
   once,
   removeDomElement,
-  isUsingSubscriptionWorkaround,
 } from '../../shared/utils/utils';
 import Badge from './Badge';
 import Button from './Button';
@@ -524,20 +523,7 @@ export default class Bell {
       })
       .then(() => delay(this.options.showLauncherAfter || 0))
       .then(() => {
-        if (
-          isUsingSubscriptionWorkaround() &&
-          doNotPrompt !== true &&
-          !isPushEnabled &&
-          OneSignal.config?.userConfig.promptOptions?.autoPrompt === true &&
-          !MainHelper.isHttpPromptAlreadyShown()
-        ) {
-          Log.debug(
-            'Not showing notify button because slidedown will be shown.',
-          );
-          return nothing();
-        } else {
-          return this.launcher.show();
-        }
+        return this.launcher.show();
       })
       .then(() => {
         return delay(this.options.showBadgeAfter || 0);

@@ -19,40 +19,6 @@ export class OneSignalUtils {
     );
   }
 
-  /**
-   * Returns true if web push subscription occurs on a subdomain of OneSignal.
-   * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user"s site.
-   * @remarks
-   *   This method returns true if:
-   *     - The browser is not Safari
-   *         - Safari uses a different method of subscription and does not require our workaround
-   *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
-   *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
-   *        - The protocol of the current webpage is http:
-   *   Exceptions are:
-   *     - Safe hostnames like localhost and 127.0.0.1
-   *          - Because we don"t want users to get the wrong idea when testing on localhost that direct permission
-   *            is supported on HTTP, we"ll ignore these exceptions. HTTPS will always be required for direct permission
-   *        - We are already in popup or iFrame mode, or this is called from the service worker
-   */
-  public static isUsingSubscriptionWorkaround(): boolean {
-    const windowEnv = SdkEnvironment.getWindowEnv();
-
-    if (!OneSignal.config) {
-      throw new Error(
-        `(${windowEnv.toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`,
-      );
-    }
-    if (bowserCastle().name == 'safari') {
-      return false;
-    }
-
-    const allowLocalhostAsSecureOrigin: boolean =
-      this.isLocalhostAllowedAsSecureOrigin();
-
-    return false;
-  }
-
   public static redetectBrowserUserAgent(): IBowser {
     // During testing, the browser object may be initialized before the userAgent is injected
     if (bowserCastle().name === '' && bowserCastle().version === '') {
@@ -95,10 +61,7 @@ export class OneSignalUtils {
   }
 
   static isHttps(): boolean {
-    if (OneSignalUtils.isSafari()) {
-      return window.location.protocol === 'https:';
-    }
-    return !OneSignalUtils.isUsingSubscriptionWorkaround();
+    return window.location.protocol === 'https:';
   }
 
   static isSafari(): boolean {

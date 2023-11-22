@@ -112,14 +112,6 @@ export default class Database {
     }
   }
 
-  private shouldUsePostmam(): boolean {
-    return (
-      SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-      OneSignalUtils.isUsingSubscriptionWorkaround() &&
-      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None
-    );
-  }
-
   /**
    * Asynchronously retrieves the value of the key at the table (if key is specified), or the entire table
    * (if key is not specified).
@@ -129,47 +121,14 @@ export default class Database {
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
   async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
-    if (this.shouldUsePostmam()) {
-      return await new Promise<T>((resolve) => {
-        OneSignal.proxyFrameHost.message(
-          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET,
-          [
-            {
-              table: table,
-              key: key,
-            },
-          ],
-          (reply: any) => {
-            const result = reply.data[0];
-            resolve(result);
-          },
-        );
-      });
-    } else {
-      const result = await this.database.get(table, key);
-      const cleanResult = Database.applyDbResultFilter(table, key, result);
-      return cleanResult;
-    }
+    const result = await this.database.get(table, key);
+    const cleanResult = Database.applyDbResultFilter(table, key, result);
+    return cleanResult;
   }
 
   public async getAll<T>(table: OneSignalDbTable): Promise<T[]> {
-    if (this.shouldUsePostmam()) {
-      return await new Promise<T[]>((resolve) => {
-        OneSignal.proxyFrameHost.message(
-          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL,
-          {
-            table: table,
-          },
-          (reply: any) => {
-            const result = reply.data;
-            resolve(result);
-          },
-        );
-      });
-    } else {
-      const result = await this.database.getAll<T>(table);
-      return result;
-    }
+    const result = await this.database.getAll<T>(table);
+    return result;
   }
 
   /**
@@ -179,31 +138,7 @@ export default class Database {
    */
   async put(table: OneSignalDbTable, keypath: any): Promise<void> {
     await new Promise<void>((resolve, reject) => {
-      if (
-        SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-        OneSignalUtils.isUsingSubscriptionWorkaround() &&
-        SdkEnvironment.getTestEnv() === TestEnvironmentKind.None
-      ) {
-        OneSignal.proxyFrameHost.message(
-          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT,
-          [{ table: table, keypath: keypath }],
-          (reply: any) => {
-            if (
-              reply.data ===
-              OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE
-            ) {
-              resolve();
-            } else {
-              reject(
-                `(Database) Attempted remote IndexedDB put(${table}, ${keypath}),` +
-                  `but did not get success response.`,
-              );
-            }
-          },
-        );
-      } else {
-        this.database.put(table, keypath).then(() => resolve());
-      }
+      this.database.put(table, keypath).then(() => resolve());
     });
     this.emitter.emit(Database.EVENTS.SET, keypath);
   }
@@ -214,33 +149,7 @@ export default class Database {
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   remove(table: OneSignalDbTable, keypath?: string) {
-    if (
-      SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-      OneSignalUtils.isUsingSubscriptionWorkaround() &&
-      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None
-    ) {
-      return new Promise<void>((resolve, reject) => {
-        OneSignal.proxyFrameHost.message(
-          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE,
-          [{ table: table, keypath: keypath }],
-          (reply: any) => {
-            if (
-              reply.data ===
-              OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE
-            ) {
-              resolve();
-            } else {
-              reject(
-                `(Database) Attempted remote IndexedDB remove(${table}, ${keypath}),` +
-                  `but did not get success response.`,
-              );
-            }
-          },
-        );
-      });
-    } else {
-      return this.database.remove(table, keypath);
-    }
+    return this.database.remove(table, keypath);
   }
 
   async getAppConfig(): Promise<AppConfig> {

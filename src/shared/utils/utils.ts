@@ -36,27 +36,6 @@ export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
   });
 }
 
-/**
- * Returns true if web push subscription occurs on a subdomain of OneSignal.
- * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user's site.
- * @remarks
- *   This method returns true if:
- *     - The browser is not Safari
- *         - Safari uses a different method of subscription and does not require our workaround
- *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
- *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
- *        - The protocol of the current webpage is http:
- *   Exceptions are:
- *     - Safe hostnames like localhost and 127.0.0.1
- *          - Because we don't want users to get the wrong idea when testing on localhost that
- *            direct permission is supported on HTTP, we'll ignore these exceptions. HTTPS will
- *            always be required for direct permission
- *        - We are already in popup or iFrame mode, or this is called from the service worker
- */
-export function isUsingSubscriptionWorkaround() {
-  return OneSignalUtils.isUsingSubscriptionWorkaround();
-}
-
 export async function triggerNotificationPermissionChanged(
   updateIfIdentical = false,
 ) {
@@ -297,48 +276,25 @@ export function unsubscribeFromPush() {
         } else throw new Error('Cannot unsubscribe because not subscribed.');
       });
   } else {
-    if (isUsingSubscriptionWorkaround()) {
-      return new Promise<void>((resolve, reject) => {
-        Log.debug(
-          "Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.",
-        );
-        OneSignal.proxyFrameHost.message(
-          OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH,
-          null,
-          (reply: any) => {
-            Log.debug('Unsubscribe from push succesfully remotely executed.');
-            if (
-              reply.data ===
-              OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE
-            ) {
-              resolve();
-            } else {
-              reject('Failed to remotely unsubscribe from push.');
-            }
-          },
-        );
+    return OneSignal.context.serviceWorkerManager
+      .getRegistration()
+      .then((serviceWorker: ServiceWorkerRegistration | null | undefined) => {
+        if (!serviceWorker) {
+          return Promise.resolve();
+        }
+        return serviceWorker;
+      })
+      .then(
+        (registration: ServiceWorkerRegistration) => registration.pushManager,
+      )
+      .then((pushManager: PushManager) => pushManager.getSubscription())
+      .then((subscription: any) => {
+        if (subscription) {
+          return subscription.unsubscribe();
+        } else {
+          return Promise.resolve();
+        }
       });
-    } else {
-      return OneSignal.context.serviceWorkerManager
-        .getRegistration()
-        .then((serviceWorker: ServiceWorkerRegistration | null | undefined) => {
-          if (!serviceWorker) {
-            return Promise.resolve();
-          }
-          return serviceWorker;
-        })
-        .then(
-          (registration: ServiceWorkerRegistration) => registration.pushManager,
-        )
-        .then((pushManager: PushManager) => pushManager.getSubscription())
-        .then((subscription: any) => {
-          if (subscription) {
-            return subscription.unsubscribe();
-          } else {
-            return Promise.resolve();
-          }
-        });
-    }
   }
 }
 

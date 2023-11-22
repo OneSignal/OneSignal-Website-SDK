@@ -27,7 +27,6 @@ jest.mock('../../../src/core/operationRepo/Operation');
 describe('ModelRepo tests', () => {
   beforeEach(async () => {
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
-    test.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround', () => false);
     jest.useFakeTimers();
     core = new CoreModule();
     coreDirector = new CoreModuleDirector(core);

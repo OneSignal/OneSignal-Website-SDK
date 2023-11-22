@@ -1,8 +1,4 @@
-import {
-  removeDomElement,
-  addDomElement,
-  isUsingSubscriptionWorkaround,
-} from '../../shared/utils/utils';
+import { removeDomElement, addDomElement } from '../../shared/utils/utils';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Bell from './Bell';
@@ -138,14 +134,9 @@ export default class Button extends ActiveAnimatedElement {
         this.bell.showDialogProcedure();
       });
     } else if (this.bell.blocked) {
-      if (isUsingSubscriptionWorkaround()) {
-        // Show the HTTP popup so users can re-allow notifications
-        InitHelper.registerForPushNotifications();
-      } else {
-        this.bell.launcher.activateIfInactive().then(() => {
-          this.bell.showDialogProcedure();
-        });
-      }
+      this.bell.launcher.activateIfInactive().then(() => {
+        this.bell.showDialogProcedure();
+      });
     }
     return this.bell.message.hide();
   }
