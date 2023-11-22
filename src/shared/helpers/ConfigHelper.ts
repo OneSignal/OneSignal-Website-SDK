@@ -146,20 +146,11 @@ export class ConfigHelper {
       userConfig,
       serverConfig,
     );
-    const allowLocalhostAsSecureOrigin = serverConfig.config.setupBehavior
-      ? serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin
-      : userConfig.allowLocalhostAsSecureOrigin;
-    const isUsingSubscriptionWorkaround =
-      OneSignalUtils.internalIsUsingSubscriptionWorkaround(
-        subdomain,
-        allowLocalhostAsSecureOrigin,
-      );
 
     const mergedUserConfig = this.getUserConfigForConfigIntegrationKind(
       configIntegrationKind,
       userConfig,
       serverConfig,
-      isUsingSubscriptionWorkaround,
     );
 
     return {
@@ -267,7 +258,6 @@ export class ConfigHelper {
     promptOptions: AppUserConfigPromptOptions | undefined,
     defaultsFromServer: ServerAppPromptConfig,
     wholeUserConfig: AppUserConfig,
-    isUsingSubscriptionWorkaround = false,
   ): AppUserConfigPromptOptions | undefined {
     let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
     if (promptOptions && promptOptions.customlink) {
@@ -432,27 +422,11 @@ export class ConfigHelper {
      * prompt options.
      */
     if (wholeUserConfig.autoRegister === true) {
-      if (isUsingSubscriptionWorkaround) {
-        // disable native prompt
-        promptOptionsConfig.native.enabled = false;
-        promptOptionsConfig.native.autoPrompt = false;
+      //enable native prompt & make it autoPrompt
+      promptOptionsConfig.native.enabled = true;
+      promptOptionsConfig.native.autoPrompt = true;
 
-        // enable slidedown & make it autoPrompt
-        const text = {
-          actionMessage: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
-          acceptButton: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
-          cancelButton: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
-        };
-        promptOptionsConfig.slidedown.prompts = [
-          { type: DelayedPromptType.Push, autoPrompt: true, text },
-        ];
-      } else {
-        //enable native prompt & make it autoPrompt
-        promptOptionsConfig.native.enabled = true;
-        promptOptionsConfig.native.autoPrompt = true;
-
-        //leave slidedown settings without change
-      }
+      //leave slidedown settings without change
     }
 
     // sets top level `autoPrompt` to trigger autoprompt codepath in initialization / prompting flow
@@ -524,7 +498,6 @@ export class ConfigHelper {
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig,
-    isUsingSubscriptionWorkaround = false,
   ): AppUserConfig {
     const integrationCapabilities = this.getIntegrationCapabilities(
       configIntegrationKind,
@@ -666,7 +639,6 @@ export class ConfigHelper {
             userConfig.promptOptions,
             serverConfig.config.staticPrompts,
             userConfig,
-            isUsingSubscriptionWorkaround,
           ),
           ...{
             serviceWorkerParam: !!userConfig.serviceWorkerParam

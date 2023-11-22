@@ -50,27 +50,6 @@ export class OneSignalUtils {
     const allowLocalhostAsSecureOrigin: boolean =
       this.isLocalhostAllowedAsSecureOrigin();
 
-    return OneSignalUtils.internalIsUsingSubscriptionWorkaround(
-      OneSignal.config.subdomain,
-      allowLocalhostAsSecureOrigin,
-    );
-  }
-
-  public static internalIsUsingSubscriptionWorkaround(
-    subdomain: string | undefined,
-    allowLocalhostAsSecureOrigin: boolean | undefined,
-  ): boolean {
-    if (bowserCastle().name == 'safari') {
-      return false;
-    }
-
-    if (
-      allowLocalhostAsSecureOrigin === true &&
-      (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-    ) {
-      return false;
-    }
-
     return false;
   }
 

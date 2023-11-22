@@ -38,28 +38,6 @@ describe('ConfigHelper Tests', () => {
     expect(finalPromptOptions?.autoPrompt).toBe(true);
   });
 
-  test('promptOptions 2 - autoRegister = true backwards compatibility for custom integration (shows slidedown on HTTP)', async () => {
-    test.stub(
-      OneSignalUtils,
-      'internalIsUsingSubscriptionWorkaround',
-      Promise.resolve(true),
-    );
-
-    const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
-      autoRegister: true,
-    };
-
-    const appConfig = await getFinalAppConfig(fakeUserConfig);
-    const finalPromptOptions = appConfig.userConfig.promptOptions;
-
-    expect(finalPromptOptions?.native?.enabled).toBe(false);
-    expect(finalPromptOptions?.native?.autoPrompt).toBe(false);
-
-    expect(finalPromptOptions?.slidedown?.prompts[0].autoPrompt).toBe(true);
-    expect(finalPromptOptions?.autoPrompt).toBe(true);
-  });
-
   test('promptOptions 3 - autoRegister = false backwards compatibility for custom integration (no enabled prompts)', async () => {
     const fakeUserConfig: AppUserConfig = {
       appId: getRandomUuid(),
@@ -97,36 +75,6 @@ describe('ConfigHelper Tests', () => {
     expect(finalPromptOptions?.autoPrompt).toBe(true);
   });
 
-  test(`promptOptions 5 - autoRegister backwards compatibility for custom integration (ignores config, shows slidedown on HTTP)`, async () => {
-    const internalIsUsingSubscriptionWorkaround = test.stub(
-      OneSignalUtils,
-      'internalIsUsingSubscriptionWorkaround',
-      Promise.resolve(true),
-    );
-
-    const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
-      autoRegister: true,
-    };
-
-    (fakeUserConfig as any).promptOptions = {
-      slidedown: {
-        enabled: true,
-      },
-    };
-
-    const appConfig = await getFinalAppConfig(fakeUserConfig);
-    const finalPromptOptions = appConfig.userConfig.promptOptions;
-
-    expect(finalPromptOptions?.native?.enabled).toBe(false);
-    expect(finalPromptOptions?.native?.autoPrompt).toBe(false);
-
-    expect(finalPromptOptions?.slidedown?.prompts[0].autoPrompt).toBe(true);
-    expect(finalPromptOptions?.autoPrompt).toBe(true);
-
-    internalIsUsingSubscriptionWorkaround.mockRestore();
-  });
-
   test(`promptOptions 6 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
     const fakeUserConfig: AppUserConfig = {
       appId: getRandomUuid(),
@@ -148,37 +96,6 @@ describe('ConfigHelper Tests', () => {
 
     expect(finalPromptOptions?.slidedown?.prompts[0].autoPrompt).toBe(false);
     expect(finalPromptOptions?.autoPrompt).toBe(true);
-  });
-
-  test(`promptOptions 7 - autoRegister = true backwards compatibility for custom integration (ignores config, shows slidedown on HTTP)`, async () => {
-    const internalIsUsingSubscriptionWorkaround = test.stub(
-      OneSignalUtils,
-      'internalIsUsingSubscriptionWorkaround',
-      Promise.resolve(true),
-    );
-
-    const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
-      autoRegister: true,
-    };
-
-    (fakeUserConfig as any).promptOptions = {
-      slidedown: {
-        enabled: true,
-        autoPrompt: false,
-      },
-    };
-
-    const appConfig = await getFinalAppConfig(fakeUserConfig);
-    const finalPromptOptions = appConfig.userConfig.promptOptions;
-
-    expect(finalPromptOptions?.native?.enabled).toBe(false);
-    expect(finalPromptOptions?.native?.autoPrompt).toBe(false);
-
-    expect(finalPromptOptions?.slidedown?.prompts[0].autoPrompt).toBe(true);
-    expect(finalPromptOptions?.autoPrompt).toBe(true);
-
-    internalIsUsingSubscriptionWorkaround.mockRestore();
   });
 
   test(`promptOptions 8 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
@@ -232,39 +149,6 @@ describe('ConfigHelper Tests', () => {
     expect(finalPromptOptions?.native?.autoPrompt).toBe(true);
 
     expect(finalPromptOptions?.slidedown?.prompts[0].autoPrompt).toBe(false);
-    expect(finalPromptOptions?.autoPrompt).toBe(true);
-  });
-
-  test(`promptOptions 10 - autoRegister backwards compatibility for custom integration (ignores config, shows slidedown on HTTP)`, async () => {
-    test.stub(
-      OneSignalUtils,
-      'internalIsUsingSubscriptionWorkaround',
-      Promise.resolve(true),
-    );
-
-    const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
-      autoRegister: true,
-    };
-
-    (fakeUserConfig as any).promptOptions = {
-      native: {
-        enabled: true,
-        autoPrompt: false,
-      },
-      slidedown: {
-        enabled: true,
-        autoPrompt: false,
-      },
-    };
-
-    const appConfig = await getFinalAppConfig(fakeUserConfig);
-    const finalPromptOptions = appConfig.userConfig.promptOptions;
-
-    expect(finalPromptOptions?.native?.enabled).toBe(false);
-    expect(finalPromptOptions?.native?.autoPrompt).toBe(false);
-
-    expect(finalPromptOptions?.slidedown?.prompts[0].autoPrompt).toBe(true);
     expect(finalPromptOptions?.autoPrompt).toBe(true);
   });
 
