@@ -398,49 +398,6 @@ test('Service worker failed to install due to 404 on host page. Send notificatio
   });
 });
 
-test('Service worker failed to install in popup. No handling.', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
-  sandbox.stub(Notification, <any>'permission').value('granted');
-
-  const context = OneSignal.context;
-
-  const workerPath = 'Worker-does-not-exist.js';
-  const manager = new ServiceWorkerManager(context, {
-    workerPath: new Path(workerPath),
-    registrationOptions: {
-      scope: '/',
-    },
-  });
-
-  const origin = 'https://onesignal.com';
-  nock(origin)
-    .get(function (uri) {
-      return uri.indexOf(workerPath) !== -1;
-    })
-    .reply(404, (_uri: string, _requestBody: any) => {
-      return {
-        status: 404,
-        statusText: '404 Not Found',
-      };
-    });
-
-  const workerRegistrationError = new Error('Registration failed');
-
-  sandbox
-    .stub(navigator.serviceWorker, 'register')
-    .throws(workerRegistrationError);
-  sandbox.stub(location, 'origin').returns(origin);
-  sandbox
-    .stub(SdkEnvironment, 'getWindowEnv')
-    .returns(WindowEnvironmentKind.OneSignalSubscriptionPopup);
-  const error = await t.throwsAsync(async () => manager.installWorker(), {
-    instanceOf: Error,
-  });
-  t.is(error.message, workerRegistrationError.message);
-});
-
 test('installWorker() should not install when on an HTTPS site with a subdomain set', async (t) => {
   // 1. Mock site page as HTTPS
   await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });

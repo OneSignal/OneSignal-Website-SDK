@@ -11,7 +11,6 @@ import {
 import { ServiceWorkerState } from '../models/ServiceWorkerState';
 import { Subscription } from '../models/Subscription';
 import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { BundleEmail, EmailProfile } from '../models/EmailProfile';
 import { Session, ONESIGNAL_SESSION_KEY } from '../models/Session';
 import SdkEnvironment from '../managers/SdkEnvironment';

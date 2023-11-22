@@ -74,12 +74,8 @@ export class ConfigHelper {
   // The os.tc domain feature is no longer supported in v16, so throw if the
   // OneSignal app is still configured this way after they migrated from v15.
   private static checkUnsupportedSubdomain(appConfig: AppConfig): void {
-    const windowEnv = SdkEnvironment.getWindowEnv();
-    const isHttp = location.protocol === 'http:';
-    const useSubdomain =
-      (windowEnv === WindowEnvironmentKind.Host ||
-        windowEnv === WindowEnvironmentKind.CustomIframe) &&
-      (!!appConfig.subdomain || isHttp);
+    const isHttp = !window.isSecureContext;
+    const useSubdomain = !!appConfig.subdomain || isHttp;
 
     if (useSubdomain) {
       if (isHttp) {
@@ -96,9 +92,7 @@ export class ConfigHelper {
 
   public static checkRestrictedOrigin(appConfig: AppConfig) {
     if (appConfig.restrictedOriginEnabled) {
-      if (
-        SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker
-      ) {
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host) {
         if (
           window.top === window &&
           !Utils.contains(window.location.hostname, '.os.tc') &&

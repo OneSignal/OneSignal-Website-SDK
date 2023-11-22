@@ -53,7 +53,7 @@ export default class OneSignalApi {
   static async downloadServerAppConfig(
     appId: string,
   ): Promise<ServerAppConfig> {
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+    if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host) {
       return await new Promise<ServerAppConfig>((resolve, reject) => {
         // Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
         OneSignalApi.jsonpLib(

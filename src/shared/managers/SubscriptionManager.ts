@@ -119,13 +119,6 @@ export class SubscriptionManager {
   ): Promise<RawPushSubscription> {
     const env = SdkEnvironment.getWindowEnv();
 
-    switch (env) {
-      case WindowEnvironmentKind.CustomIframe:
-      case WindowEnvironmentKind.Unknown:
-      case WindowEnvironmentKind.OneSignalProxyFrame:
-        throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
-    }
-
     let rawPushSubscription: RawPushSubscription;
 
     switch (env) {
@@ -134,8 +127,6 @@ export class SubscriptionManager {
           await this.subscribeFcmFromWorker(subscriptionStrategy);
         break;
       case WindowEnvironmentKind.Host:
-      case WindowEnvironmentKind.OneSignalSubscriptionModal:
-      case WindowEnvironmentKind.OneSignalSubscriptionPopup:
         /*
           Check our notification permission before subscribing.
 
@@ -457,7 +448,7 @@ export class SubscriptionManager {
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (
-      SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host &&
       Notification.permission === NotificationPermission.Default
     ) {
       await OneSignalEvent.trigger(

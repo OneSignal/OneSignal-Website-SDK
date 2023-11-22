@@ -1,6 +1,5 @@
 import Environment from '../helpers/Environment';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Utils from '../context/Utils';
 import Log from '../libraries/Log';
 
@@ -90,37 +89,6 @@ export default class OneSignalEvent {
     if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
       const legacyEventName = LEGACY_EVENT_MAP[eventName];
       OneSignalEvent._triggerLegacy(legacyEventName, data);
-    }
-
-    // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
-    if (
-      Environment.isBrowser() &&
-      (SdkEnvironment.getWindowEnv() ===
-        WindowEnvironmentKind.OneSignalSubscriptionPopup ||
-        SdkEnvironment.getWindowEnv() ===
-          WindowEnvironmentKind.OneSignalProxyFrame)
-    ) {
-      const creator = opener || parent;
-      if (!creator) {
-        Log.error(
-          `Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`,
-        );
-      } else {
-        // But only if the event matches certain events
-        if (Utils.contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
-          if (
-            SdkEnvironment.getWindowEnv() ===
-            WindowEnvironmentKind.OneSignalSubscriptionPopup
-          ) {
-            OneSignal.subscriptionPopup.message(
-              OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
-              { eventName: eventName, eventData: data },
-            );
-          } else {
-            OneSignal.proxyFrame.retriggerRemoteEvent(eventName, data);
-          }
-        }
-      }
     }
   }
 

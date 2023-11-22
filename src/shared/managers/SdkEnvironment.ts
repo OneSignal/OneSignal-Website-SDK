@@ -112,32 +112,10 @@ export default class SdkEnvironment {
       ) {
         return WindowEnvironmentKind.ServiceWorker;
       } else {
-        return WindowEnvironmentKind.Unknown;
-      }
-    } else {
-      // If the window is the root top-most level
-      if (window === window.top) {
-        if (
-          location.href.indexOf('initOneSignal') !== -1 ||
-          (location.pathname === '/subscribe' &&
-            location.search === '' &&
-            (location.hostname.endsWith('.onesignal.com') ||
-              location.hostname.endsWith('.os.tc') ||
-              (location.hostname.indexOf('.localhost') !== -1 &&
-                SdkEnvironment.getBuildEnv() === EnvironmentKind.Development)))
-        ) {
-          return WindowEnvironmentKind.OneSignalSubscriptionPopup;
-        } else {
-          return WindowEnvironmentKind.Host;
-        }
-      } else if (location.pathname === '/webPushIframe') {
-        return WindowEnvironmentKind.OneSignalProxyFrame;
-      } else if (location.pathname === '/webPushModal') {
-        return WindowEnvironmentKind.OneSignalSubscriptionModal;
-      } else {
-        return WindowEnvironmentKind.CustomIframe;
+        throw Error('OneSignalSDK: Unsupported JS runtime!');
       }
     }
+    return WindowEnvironmentKind.Host;
   }
 
   /**

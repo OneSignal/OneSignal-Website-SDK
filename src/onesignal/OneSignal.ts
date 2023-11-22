@@ -13,7 +13,6 @@ import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCal
 import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
 import Environment from '../shared/helpers/Environment';
 import EventHelper from '../shared/helpers/EventHelper';
-import HttpHelper from '../shared/helpers/HttpHelper';
 import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
@@ -23,7 +22,6 @@ import { SessionManager } from '../shared/managers/sessionManager/SessionManager
 import { AppUserConfig, AppConfig } from '../shared/models/AppConfig';
 import { DeviceRecord } from '../shared/models/DeviceRecord';
 import { AppUserConfigNotifyButton } from '../shared/models/Prompts';
-import { WindowEnvironmentKind } from '../shared/models/WindowEnvironmentKind';
 import Database from '../shared/services/Database';
 import OneSignalUtils from '../shared/utils/OneSignalUtils';
 import { logMethodCall } from '../shared/utils/utils';
@@ -199,9 +197,7 @@ export default class OneSignal {
 
       await InitHelper.initSaveState();
       await InitHelper.saveInitOptions();
-      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
-        await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      else await InitHelper.internalInit();
+      await InitHelper.internalInit();
     }
 
     if (
@@ -324,12 +320,6 @@ export default class OneSignal {
   static User = new UserNamespace(false);
   static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
-
-  /**
-   * Used by Rails-side HTTP popup. Must keep the same name.
-   * @InternalApi
-   */
-  static _initHttp = HttpHelper.initHttp;
 
   /**
    * Used by Rails-side HTTP popup. Must keep the same name.

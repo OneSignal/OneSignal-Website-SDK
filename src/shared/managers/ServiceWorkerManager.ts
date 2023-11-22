@@ -282,28 +282,8 @@ export class ServiceWorkerManager {
     workerMessenger.on(
       WorkerMessengerCommand.NotificationClicked,
       async (event: NotificationClickEventInternal) => {
-        let clickedListenerCallbackCount: number;
-        if (
-          SdkEnvironment.getWindowEnv() ===
-          WindowEnvironmentKind.OneSignalProxyFrame
-        ) {
-          clickedListenerCallbackCount = await new Promise<number>(
-            (resolve) => {
-              const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
-              if (proxyFrame) {
-                proxyFrame.messenger.message(
-                  OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT,
-                  OneSignal.EVENTS.NOTIFICATION_CLICKED,
-                  (reply: any) => {
-                    const callbackCount: number = reply.data;
-                    resolve(callbackCount);
-                  },
-                );
-              }
-            },
-          );
-        } else
-          clickedListenerCallbackCount = OneSignal.emitter.numberOfListeners(
+        const clickedListenerCallbackCount =
+          OneSignal.emitter.numberOfListeners(
             OneSignal.EVENTS.NOTIFICATION_CLICKED,
           );
 
@@ -474,15 +454,6 @@ export class ServiceWorkerManager {
       Log.error(
         `[Service Worker Installation] Installing service worker failed ${error}`,
       );
-      // Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.
-
-      // If we are inside the popup and service worker fails to register, it's not developer's fault.
-      // No need to report it to the api then.
-      const env = SdkEnvironment.getWindowEnv();
-      if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
-        throw error;
-      }
-
       registration = await this.fallbackToUserModelBetaWorker();
     }
     Log.debug(

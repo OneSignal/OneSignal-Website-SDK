@@ -1,7 +1,5 @@
 import bowser, { IBowser } from 'bowser';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import Environment from '../helpers/Environment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { Utils } from '../context/Utils';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';

@@ -1,5 +1,3 @@
-import SdkEnvironment from './SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Log from '../libraries/Log';
 import LocalStorage from '../utils/LocalStorage';
 
@@ -38,19 +36,6 @@ export class PageViewManager {
         PageViewManager.SESSION_STORAGE_KEY_NAME,
         sessionCount.toString(),
       );
-
-      if (
-        SdkEnvironment.getWindowEnv() ===
-        WindowEnvironmentKind.OneSignalSubscriptionPopup
-      ) {
-        // If we're setting sessionStorage and we're in an Popup, we need to also set sessionStorage on the
-        // main page
-        if (OneSignal.subscriptionPopup) {
-          OneSignal.subscriptionPopup.message(
-            OneSignal.POSTMAM_COMMANDS.SET_SESSION_COUNT,
-          );
-        }
-      }
     } catch (e) {
       /*
         If sessionStorage isn't available, don't error.
