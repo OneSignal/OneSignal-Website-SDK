@@ -5,9 +5,7 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
-import { IntegrationKind } from '../models/IntegrationKind';
 import Environment from '../helpers/Environment';
-import OneSignalUtils from '../utils/OneSignalUtils';
 
 const RESOURCE_HTTP_PORT = 4000;
 const RESOURCE_HTTPS_PORT = 4001;
@@ -58,109 +56,6 @@ export default class SdkEnvironment {
         return EnvironmentKind.Production;
       default:
         return EnvironmentKind.Production;
-    }
-  }
-
-  /**
-   * Determines whether the current frame context executing this function is part of a:
-   *
-   *  a) HTTP site using a proxy subscription origin
-   *
-   *  b) or, HTTPS site using a proxy subscription origin
-   *
-   *  c) or, HTTPS site using its own origin for subscribing
-   *
-   * The determination affects permissions and subscription:
-   *
-   *  a) Because the parent (top frame) of the proxy origin frame is HTTP, the entire context is
-   *  insecure. In the proxy origin frame, notification permissions are always "denied", access to
-   *  the service worker's registration throws a security error, and no service worker controls the
-   *  proxy origin frame.
-   *
-   *  b) The context is secure. In the proxy origin frame, notification permissions are "granted" if
-   *  actually granted otherwise "denied" if either unprompted or blocked. The service worker
-   *  controls the proxy origin frame and access to the service worker's registration is allowed.
-   *  Requesting permissions from child frames is not allowed. Subscribing from child frames wasn't
-   *  allowed but is now allowed.
-   *
-   *  c) All features are allowed.
-   *
-   * @param usingProxyOrigin Using a subdomain of os.tc or onesignal.com for subscribing to push.
-   */
-  public static async getIntegration(
-    usingProxyOrigin?: boolean,
-  ): Promise<IntegrationKind> {
-    if (Environment.useSafariLegacyPush()) {
-      /* Safari Legacy works on HTTP sites */
-      return IntegrationKind.Secure;
-    }
-
-    const isTopFrame = window === window.top;
-    const isHttpsProtocol = window.location.protocol === 'https:';
-
-    // For convenience, try to look up usingProxyOrigin instead of requiring it to be passed in
-    if (usingProxyOrigin === undefined) {
-      if (
-        typeof OneSignal !== 'undefined' &&
-        OneSignal.context &&
-        OneSignal.context.appConfig
-      ) {
-        usingProxyOrigin = !!OneSignal.context.appConfig.subdomain;
-      } else {
-        throw new InvalidArgumentError(
-          'usingProxyOrigin',
-          InvalidArgumentReason.Empty,
-        );
-      }
-    }
-
-    /*
-      Executing from the top frame, we can easily determine whether we're HTTPS or HTTP.
-
-      Executing from a child frame of any depth, we can check the current frame's protocol. If it's
-      HTTP it's definitely insecure. If it's HTTPS, we attempt to call
-      ServiceWorkerContainer.getRegistration and see if the call throws an error or succeeds. If the
-      call throws an error, we can assume some parent frame in the chain above us is insecure.
-     */
-    if (isTopFrame) {
-      if (isHttpsProtocol) {
-        return usingProxyOrigin
-          ? IntegrationKind.SecureProxy
-          : IntegrationKind.Secure;
-      } else {
-        // If localhost and allowLocalhostAsSecureOrigin, it's still considered secure
-        if (
-          OneSignalUtils.isLocalhostAllowedAsSecureOrigin() &&
-          (location.hostname === 'localhost' ||
-            location.hostname === '127.0.0.1')
-        ) {
-          return IntegrationKind.Secure;
-        }
-
-        /* The case of HTTP and not using a proxy origin isn't possible, because the SDK will throw
-        an initialization error stating a proxy origin is required for HTTP sites. */
-        return IntegrationKind.InsecureProxy;
-      }
-    } else {
-      if (isHttpsProtocol) {
-        /* Check whether any parent frames are insecure */
-        const isFrameContextInsecure =
-          await SdkEnvironment.isFrameContextInsecure();
-        if (isFrameContextInsecure) {
-          return IntegrationKind.InsecureProxy;
-        } else {
-          return usingProxyOrigin
-            ? IntegrationKind.SecureProxy
-            : IntegrationKind.Secure;
-        }
-      } else {
-        /*
-        Because this frame is insecure, the entire chain is insecure.
-
-        The case of HTTP and not using a proxy origin isn't possible, because the SDK will throw an
-        initialization error stating a proxy origin is required for HTTP sites. */
-        return IntegrationKind.InsecureProxy;
-      }
     }
   }
 

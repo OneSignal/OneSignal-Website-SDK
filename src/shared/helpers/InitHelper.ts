@@ -1,32 +1,24 @@
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { AppConfig } from '../models/AppConfig';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from '../models/Subscription';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import Bell from '../../page/bell/Bell';
-import {
-  DeprecatedApiError,
-  DeprecatedApiReason,
-} from '../../page/errors/DeprecatedApiError';
 import { ContextInterface } from '../../page/models/Context';
 import SubscriptionModalHost from '../../page/modules/frames/SubscriptionModalHost';
 import SubscriptionPopupHost from '../../page/modules/frames/SubscriptionPopupHost';
 import { DynamicResourceLoader } from '../../page/services/DynamicResourceLoader';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
-import OneSignalUtils from '../utils/OneSignalUtils';
 import { once, triggerNotificationPermissionChanged } from '../utils/utils';
 import Environment from './Environment';
 import OneSignalEvent from '../services/OneSignalEvent';
-import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
 import { bowserCastle } from '../utils/bowserCastle';
 
 declare let OneSignal: any;
@@ -250,51 +242,11 @@ export default class InitHelper {
       return false;
     }
 
-    const integrationKind = await SdkEnvironment.getIntegration();
-    const windowEnv = SdkEnvironment.getWindowEnv();
-
-    Log.debug(
-      'Subscription is considered expiring. Current Integration:',
-      integrationKind,
+    Log.debug('Subscription is considered expiring.');
+    const rawPushSubscription = await context.subscriptionManager.subscribe(
+      SubscriptionStrategyKind.SubscribeNew,
     );
-    switch (integrationKind) {
-      /*
-        Resubscribe via the service worker.
-
-        For Secure, we can definitely resubscribe via the current page, but for SecureProxy, we
-        used to not be able to subscribe for push within secure child frames. The common supported
-        and safe way is to resubscribe via the service worker.
-       */
-      case IntegrationKind.Secure: {
-        const rawPushSubscription = await context.subscriptionManager.subscribe(
-          SubscriptionStrategyKind.SubscribeNew,
-        );
-        await context.subscriptionManager.registerSubscription(
-          rawPushSubscription,
-        );
-        break;
-      }
-      case IntegrationKind.SecureProxy:
-        if (windowEnv === WindowEnvironmentKind.OneSignalProxyFrame) {
-          await this.registerSubscriptionInProxyFrame(context);
-        } else {
-          const proxyFrame: ProxyFrameHost = OneSignal.proxyFrameHost;
-          await proxyFrame.runCommand(
-            OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS,
-          );
-        }
-        break;
-      case IntegrationKind.InsecureProxy:
-        /*
-          We can't really do anything here except remove a value checked by
-          isPushNotificationsEnabled to simulate unsubscribing.
-         */
-        await Database.remove('Ids', 'registrationId');
-        Log.debug(
-          'Unsubscribed expiring HTTP subscription by removing registration ID.',
-        );
-        break;
-    }
+    await context.subscriptionManager.registerSubscription(rawPushSubscription);
     return true;
   }
 

@@ -3,10 +3,7 @@ import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import Path from '../models/Path';
 import SdkEnvironment from './SdkEnvironment';
 import Database from '../services/Database';
-import { IntegrationKind } from '../models/IntegrationKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import NotImplementedError from '../errors/NotImplementedError';
-import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
 import OneSignalEvent from '../services/OneSignalEvent';
 import ProxyFrame from '../../page/modules/frames/ProxyFrame';
@@ -49,42 +46,6 @@ export class ServiceWorkerManager {
   }
 
   public async getActiveState(): Promise<ServiceWorkerActiveState> {
-    /*
-      Note: This method can only be called on a secure origin. On an insecure
-      origin, it'll throw on getRegistration().
-    */
-
-    const integration = await SdkEnvironment.getIntegration();
-    if (integration === IntegrationKind.InsecureProxy) {
-      /* Service workers are not accessible on insecure origins */
-      return ServiceWorkerActiveState.Indeterminate;
-    } else if (integration === IntegrationKind.SecureProxy) {
-      /* If the site setup is secure proxy, we're either on the top frame without access to the
-      registration, or the child proxy frame that does have access to the registration. */
-      const env = SdkEnvironment.getWindowEnv();
-      switch (env) {
-        case WindowEnvironmentKind.Host:
-        case WindowEnvironmentKind.CustomIframe: {
-          /* Both these top-ish frames will need to ask the proxy frame to access the service worker
-          registration */
-          const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
-          if (!proxyFrameHost) {
-            /* On init, this function may be called. Return a null state for now */
-            return ServiceWorkerActiveState.Indeterminate;
-          } else {
-            return await proxyFrameHost.runCommand<ServiceWorkerActiveState>(
-              OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE,
-            );
-          }
-        }
-        case WindowEnvironmentKind.OneSignalSubscriptionPopup:
-          /* This is a top-level frame, so it can access the service worker registration */
-          break;
-        case WindowEnvironmentKind.OneSignalSubscriptionModal:
-          throw new NotImplementedError();
-      }
-    }
-
     const workerRegistration =
       await this.context.serviceWorkerManager.getRegistration();
     if (!workerRegistration) {

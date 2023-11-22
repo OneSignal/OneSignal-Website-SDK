@@ -3,15 +3,12 @@ import Environment from '../helpers/Environment';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import SdkEnvironment from './SdkEnvironment';
-
-import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { Subscription } from '../models/Subscription';
 import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { IntegrationKind } from '../models/IntegrationKind';
 
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { base64ToUint8Array } from '../utils/Encoding';
@@ -773,40 +770,7 @@ export class SubscriptionManager {
   }
 
   public async isSubscriptionExpiring(): Promise<boolean> {
-    const integrationKind = await SdkEnvironment.getIntegration();
-    const windowEnv = SdkEnvironment.getWindowEnv();
-
-    switch (integrationKind) {
-      case IntegrationKind.Secure:
-        return await this.isSubscriptionExpiringForSecureIntegration();
-      case IntegrationKind.SecureProxy:
-        if (windowEnv === WindowEnvironmentKind.Host) {
-          const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
-          if (!proxyFrameHost) {
-            throw new InvalidStateError(InvalidStateReason.NoProxyFrame);
-          } else {
-            return await proxyFrameHost.runCommand<boolean>(
-              OneSignal.POSTMAM_COMMANDS.SUBSCRIPTION_EXPIRATION_STATE,
-            );
-          }
-        } else {
-          return await this.isSubscriptionExpiringForSecureIntegration();
-        }
-      case IntegrationKind.InsecureProxy: {
-        /* If we're in an insecure frame context, check the stored expiration since we can't access
-        the actual push subscription. */
-        const { expirationTime } = await Database.getSubscription();
-        if (!expirationTime) {
-          /* If an existing subscription does not have a stored expiration time, do not
-          treat it as expired. The subscription may have been created before this feature was added,
-          or the browser may not assign any expiration time. */
-          return false;
-        }
-
-        /* The current time (in UTC) is past the expiration time (also in UTC) */
-        return new Date().getTime() >= expirationTime;
-      }
-    }
+    return await this.isSubscriptionExpiringForSecureIntegration();
   }
 
   private async isSubscriptionExpiringForSecureIntegration(): Promise<boolean> {
@@ -878,34 +842,7 @@ export class SubscriptionManager {
       }
       default: {
         /* Regular browser window environments */
-        const integration = await SdkEnvironment.getIntegration();
-
-        switch (integration) {
-          case IntegrationKind.Secure:
-            return this.getSubscriptionStateForSecure();
-          case IntegrationKind.SecureProxy:
-            switch (windowEnv) {
-              case WindowEnvironmentKind.OneSignalProxyFrame:
-              case WindowEnvironmentKind.OneSignalSubscriptionPopup:
-              case WindowEnvironmentKind.OneSignalSubscriptionModal:
-                return this.getSubscriptionStateForSecure();
-              default: {
-                /* Re-run this command in the proxy frame */
-                const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
-                const pushSubscriptionState =
-                  await proxyFrameHost.runCommand<PushSubscriptionState>(
-                    OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE,
-                  );
-                return pushSubscriptionState;
-              }
-            }
-          case IntegrationKind.InsecureProxy:
-            return await this.getSubscriptionStateForInsecure();
-          default:
-            throw new InvalidStateError(
-              InvalidStateReason.UnsupportedEnvironment,
-            );
-        }
+        return this.getSubscriptionStateForSecure();
       }
     }
   }
