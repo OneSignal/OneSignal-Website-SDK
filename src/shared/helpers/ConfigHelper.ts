@@ -58,6 +58,7 @@ export class ConfigHelper {
       const serverConfig = await downloadServerAppConfig(userConfig.appId);
       ConverterHelper.upgradeConfigToVersionTwo(userConfig);
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
+      this.checkUnsupportedSubdomain(appConfig);
       this.checkRestrictedOrigin(appConfig);
       return appConfig;
     } catch (e) {
@@ -67,6 +68,29 @@ export class ConfigHelper {
           throw new SdkInitError(SdkInitErrorKind.AppNotConfiguredForWebPush);
       }
       throw e;
+    }
+  }
+
+  // The os.tc domain feature is no longer supported in v16, so throw if the
+  // OneSignal app is still configured this way after they migrated from v15.
+  private static checkUnsupportedSubdomain(appConfig: AppConfig): void {
+    const windowEnv = SdkEnvironment.getWindowEnv();
+    const isHttp = location.protocol === 'http:';
+    const useSubdomain =
+      (windowEnv === WindowEnvironmentKind.Host ||
+        windowEnv === WindowEnvironmentKind.CustomIframe) &&
+      (!!appConfig.subdomain || isHttp);
+
+    if (useSubdomain) {
+      if (isHttp) {
+        throw new Error(
+          "OneSignalSDK: HTTP sites are no longer supported starting with version 16 (User Model), your public site must start with https://. Please visit the OneSignal dashboard's Settings > Web Configuration to find this option.",
+        );
+      } else {
+        throw new Error(
+          'OneSignalSDK: The "My site is not fully HTTPS" option is no longer supported starting with version 16 (User Model) of the OneSignal SDK. Please visit the OneSignal dashboard\'s Settings > Web Configuration to find this option.',
+        );
+      }
     }
   }
 

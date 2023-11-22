@@ -71,26 +71,6 @@ export class OneSignalUtils {
       return false;
     }
 
-    const windowEnv = SdkEnvironment.getWindowEnv();
-
-    const isHttp = location.protocol === 'http:';
-    const useSubdomain =
-      (windowEnv === WindowEnvironmentKind.Host ||
-        windowEnv === WindowEnvironmentKind.CustomIframe) &&
-      (!!subdomain || isHttp);
-
-    if (useSubdomain) {
-      if (isHttp) {
-        throw new Error(
-          "OneSignalSDK: HTTP sites are no longer supported starting with version 16 (User Model), your public site must start with https://. Please visit the OneSignal dashboard's Settings > Web Configuration to find this option.",
-        );
-      } else {
-        throw new Error(
-          'OneSignalSDK: The "My site is not fully HTTPS" option is no longer supported starting with version 16 (User Model) of the OneSignal SDK. Please visit the OneSignal dashboard\'s Settings > Web Configuration to find this option.',
-        );
-      }
-    }
-
     return false;
   }
 
