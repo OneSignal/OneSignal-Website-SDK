@@ -251,7 +251,6 @@ export class ConfigHelper {
    * @param  {AppUserConfigPromptOptions|undefined} promptOptions
    * @param  {ServerAppPromptConfig} defaultsFromServer
    * @param  {AppUserConfig} wholeUserConfig
-   * @param  {boolean=false} isUsingSubscriptionWorkaround
    * @returns AppUserConfigPromptOptions
    */
   public static injectDefaultsIntoPromptOptions(

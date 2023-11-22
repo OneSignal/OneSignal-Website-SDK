@@ -43,22 +43,10 @@ export class SessionManager implements ISessionManager {
       isSafari: OneSignalUtils.isSafari(),
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
-    if (
-      this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers &&
-      !this.context.environmentInfo?.isUsingSubscriptionWorkaround
-    ) {
+    if (this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
       Log.debug('Notify SW to upsert session');
       await this.context.workerMessenger.unicast(
         WorkerMessengerCommand.SessionUpsert,
-        payload,
-      );
-    } else if (
-      this.context.environmentInfo?.canTalkToServiceWorker &&
-      this.context.environmentInfo?.isUsingSubscriptionWorkaround
-    ) {
-      Log.debug('Notify iframe to notify SW to upsert session');
-      await OneSignal.proxyFrameHost.runCommand(
-        OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT,
         payload,
       );
     } else {
@@ -86,22 +74,10 @@ export class SessionManager implements ISessionManager {
       isSafari: OneSignalUtils.isSafari(),
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
-    if (
-      this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers &&
-      !this.context.environmentInfo?.isUsingSubscriptionWorkaround
-    ) {
+    if (this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
       Log.debug('Notify SW to deactivate session');
       await this.context.workerMessenger.unicast(
         WorkerMessengerCommand.SessionDeactivate,
-        payload,
-      );
-    } else if (
-      this.context.environmentInfo?.canTalkToServiceWorker &&
-      this.context.environmentInfo?.isUsingSubscriptionWorkaround
-    ) {
-      Log.debug('Notify SW to deactivate session');
-      await OneSignal.proxyFrameHost.runCommand(
-        OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE,
         payload,
       );
     } else {
@@ -309,20 +285,14 @@ export class SessionManager implements ISessionManager {
       );
     }
 
-    if (
-      this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers ||
-      this.context.environmentInfo?.isUsingSubscriptionWorkaround
-    ) {
+    if (this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
       if (!this.context.environmentInfo?.canTalkToServiceWorker) {
         this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
         OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
       } else {
         this.setupSessionEventListeners();
       }
-    } else if (
-      !this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers &&
-      !this.context.environmentInfo?.isUsingSubscriptionWorkaround
-    ) {
+    } else {
       this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
       OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
     }
@@ -330,10 +300,7 @@ export class SessionManager implements ISessionManager {
 
   setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
-    if (
-      !this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers &&
-      !this.context.environmentInfo?.isUsingSubscriptionWorkaround
-    ) {
+    if (!this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
       Log.debug(
         'Not setting session event listeners. No service worker possible.',
       );

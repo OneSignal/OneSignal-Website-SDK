@@ -162,11 +162,6 @@ export default class SubscriptionHelper {
     return RawPushSubscription.setFromW3cSubscription(swSubscription);
   }
 
-  static async getRawPushSubscriptionWhenUsingSubscriptionWorkaround(): Promise<RawPushSubscription | null> {
-    // we would need to message service worker to get it. we'll get it from inside if necessary
-    return null;
-  }
-
   static async getRawPushSubscription(
     environmentInfo: EnvironmentInfo,
     safariWebId: string,
@@ -175,10 +170,6 @@ export default class SubscriptionHelper {
       return SubscriptionHelper.getRawPushSubscriptionForLegacySafari(
         safariWebId,
       );
-    }
-
-    if (environmentInfo.isUsingSubscriptionWorkaround) {
-      return SubscriptionHelper.getRawPushSubscriptionWhenUsingSubscriptionWorkaround();
     }
 
     if (environmentInfo.isBrowserAndSupportsServiceWorkers) {

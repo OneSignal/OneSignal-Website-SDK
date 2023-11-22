@@ -16,7 +16,6 @@ export class EnvironmentInfoHelper {
       browserType: this.getBrowser(),
       browserVersion: this.getBrowserVersion(),
       isHttps: this.isHttps(),
-      isUsingSubscriptionWorkaround: false,
       isBrowserAndSupportsServiceWorkers: this.supportsServiceWorkers(),
       requiresUserInteraction: this.requiresUserInteraction(),
       osVersion: this.getOsVersion(),
