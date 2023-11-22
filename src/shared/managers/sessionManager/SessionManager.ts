@@ -286,12 +286,7 @@ export class SessionManager implements ISessionManager {
     }
 
     if (this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
-      if (!this.context.environmentInfo?.canTalkToServiceWorker) {
-        this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
-        OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
-      } else {
-        this.setupSessionEventListeners();
-      }
+      this.setupSessionEventListeners();
     } else {
       this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
       OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
@@ -303,13 +298,6 @@ export class SessionManager implements ISessionManager {
     if (!this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
       Log.debug(
         'Not setting session event listeners. No service worker possible.',
-      );
-      return;
-    }
-
-    if (!this.context.environmentInfo?.canTalkToServiceWorker) {
-      Log.debug(
-        "Not setting session event listeners. Can't talk to ServiceWorker due being hosted on an HTTP page.",
       );
       return;
     }

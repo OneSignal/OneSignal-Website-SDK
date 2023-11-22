@@ -19,7 +19,6 @@ export class EnvironmentInfoHelper {
       isBrowserAndSupportsServiceWorkers: this.supportsServiceWorkers(),
       requiresUserInteraction: this.requiresUserInteraction(),
       osVersion: this.getOsVersion(),
-      canTalkToServiceWorker: this.canTalkToServiceWorker(),
     };
   }
 
@@ -83,9 +82,5 @@ export class EnvironmentInfoHelper {
 
   private static getOsVersion(): string | number {
     return bowser.osversion;
-  }
-
-  private static canTalkToServiceWorker(): boolean {
-    return !!window.isSecureContext;
   }
 }
