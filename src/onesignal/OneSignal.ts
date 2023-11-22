@@ -1,6 +1,5 @@
 import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
 import ConfigManager from '../page/managers/ConfigManager';
-import LegacyManager from '../page/managers/LegacyManager';
 import Context from '../page/models/Context';
 import { EnvironmentInfo } from '../page/models/EnvironmentInfo';
 import ProxyFrame from '../page/modules/frames/ProxyFrame';
@@ -381,8 +380,6 @@ export default class OneSignal {
     ARE_YOU_VISIBLE_RESPONSE: 'postmam.areYouVisibleResponse',
   };
 }
-
-LegacyManager.ensureBackwardsCompatibility(OneSignal);
 
 Log.info(
   `OneSignal Web SDK loaded (version ${OneSignal._VERSION},

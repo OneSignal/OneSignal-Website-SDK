@@ -18,28 +18,6 @@ abstract class MetricEngagement {
   abstract getOperationData();
 }
 
-export enum ApiUsageMetricKind {
-  HttpPermissionRequest = 'HttpPermissionRequest',
-  SyncHashedEmail = 'SyncHashedEmail',
-}
-
-export class ApiUsageMetricEvent extends MetricEvent {
-  constructor(public apiName: ApiUsageMetricKind) {
-    super();
-  }
-
-  getEventName() {
-    return 'api-usage';
-  }
-
-  getPropertiesAsJson() {
-    return {
-      api: this.apiName.toString(),
-      ...super.getPropertiesAsJson(),
-    };
-  }
-}
-
 export class PageViewMetricEngagement extends MetricEngagement {
   constructor() {
     super();
