@@ -57,66 +57,12 @@ test('should assign the default service worker registration params if not provid
   t.deepEqual(result.userConfig.serviceWorkerParam, { scope: '/' });
 });
 
-test('should not overwrite a provided service worker registration params', async (t) => {
-  await TestEnvironment.initialize({
-    initOptions: {
-      httpPermissionRequest: {
-        enable: true,
-      },
-    },
-    httpOrHttps: HttpHttpsEnvironment.Http,
-  });
-
-  OneSignal.SERVICE_WORKER_PARAM = { scope: 'customValue' };
-  const result = new ConfigManager().getMergedConfig(
-    {},
-    TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom),
-  );
-  t.deepEqual(result.userConfig.serviceWorkerParam, { scope: 'customValue' });
-});
-
 test('should assign the default service worker A filename if not provided', async (t) => {
   const result = new ConfigManager().getMergedConfig(
     {},
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom),
   );
   t.is(result.userConfig.serviceWorkerPath, 'OneSignalSDK.sw.js');
-});
-
-test("should not use server's subdomain if subdomain not specified in user config on HTTPS site", async (t) => {
-  await TestEnvironment.initialize({
-    initOptions: {
-      httpPermissionRequest: {
-        enable: true,
-      },
-    },
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
-
-  const serverConfig = TestEnvironment.getFakeServerAppConfig(
-    ConfigIntegrationKind.Custom,
-  );
-  serverConfig.config.subdomain = 'test-subdomain';
-  const result = new ConfigManager().getMergedConfig({}, serverConfig);
-  t.is(result.subdomain, undefined);
-});
-
-test("should use server's subdomain if subdomain not specified in user config but on HTTP site", async (t) => {
-  await TestEnvironment.initialize({
-    initOptions: {
-      httpPermissionRequest: {
-        enable: true,
-      },
-    },
-    httpOrHttps: HttpHttpsEnvironment.Http,
-  });
-
-  const serverConfig = TestEnvironment.getFakeServerAppConfig(
-    ConfigIntegrationKind.Custom,
-  );
-  serverConfig.config.subdomain = 'test-subdomain';
-  const result = new ConfigManager().getMergedConfig({}, serverConfig);
-  t.is(result.subdomain, 'test-subdomain');
 });
 
 test('should not overwrite provided subdomain', async (t) => {

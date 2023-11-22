@@ -25,7 +25,6 @@ declare let OneSignal: any;
 
 export interface RegisterOptions extends SubscriptionPopupHostOptions {
   modalPrompt?: boolean;
-  httpPermissionRequest?: boolean;
   slidedown?: boolean;
 }
 
