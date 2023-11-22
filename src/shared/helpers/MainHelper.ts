@@ -47,21 +47,6 @@ export default class MainHelper {
     return SubscriptionStateKind.NoNativePermission;
   }
 
-  /**
-   * Stores a flag in sessionStorage that we've already shown the HTTP slidedown to this user and that we should not
-   * show it again until they open a new window or tab to the site.
-   */
-  static markHttpSlidedownShown() {
-    sessionStorage.setItem('ONESIGNAL_HTTP_PROMPT_SHOWN', 'true');
-  }
-
-  /**
-   * Returns true if the HTTP slidedown was already shown inside the same session.
-   */
-  static isHttpPromptAlreadyShown() {
-    return sessionStorage.getItem('ONESIGNAL_HTTP_PROMPT_SHOWN') == 'true';
-  }
-
   static async checkAndTriggerNotificationPermissionChanged() {
     const previousPermission = await Database.get(
       'Options',
