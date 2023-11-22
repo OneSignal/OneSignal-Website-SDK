@@ -1,7 +1,5 @@
 import { SinonSandbox } from 'sinon';
 import nock from 'nock';
-import ProxyFrameHost from '../../../src/page/modules/frames/ProxyFrameHost';
-import AltOriginManager from '../../../src/page/managers/AltOriginManager';
 import OneSignalApi from '../../../src/shared/api/OneSignalApi';
 import {
   TestEnvironment,
@@ -30,30 +28,6 @@ export function stubMessageChannel(
   const fakeClass = class Test {};
   t.context.originalMessageChannel = (global as any).MessageChannel;
   (global as any).MessageChannel = fakeClass;
-}
-
-// Mocks out any messages going to the *.os.tc iframe.
-export function mockIframeMessaging(sinonSandbox: SinonSandbox) {
-  sinonSandbox.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
-  sinonSandbox
-    .stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription')
-    .resolves(undefined);
-  sinonSandbox
-    .stub(ProxyFrameHost.prototype, 'isSubscribed')
-    .callsFake(() => {});
-  sinonSandbox.stub(ProxyFrameHost.prototype, 'runCommand').resolves(undefined);
-
-  const mockIframeMessageReceiver = function (
-    _msg: string,
-    _data: object,
-    resolve: Function,
-  ) {
-    // OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION
-    resolve(true);
-  };
-  sinonSandbox
-    .stub(ProxyFrameHost.prototype, 'message')
-    .callsFake(mockIframeMessageReceiver);
 }
 
 export function mockGetIcon() {

@@ -1,5 +1,4 @@
 import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
-import AltOriginManager from '../page/managers/AltOriginManager';
 import ConfigManager from '../page/managers/ConfigManager';
 import LegacyManager from '../page/managers/LegacyManager';
 import Context from '../page/models/Context';
