@@ -135,27 +135,6 @@ export default class PermissionManager {
   }
 
   /**
-   * Returns the notification permission as reported by the browser for the OneSignal subdomain
-   * iframe.
-   *
-   * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
-   */
-  public async getOneSignalSubdomainNotificationPermission(
-    safariWebId?: string,
-  ): Promise<NotificationPermission> {
-    return new Promise<NotificationPermission>((resolve) => {
-      OneSignal.proxyFrameHost.message(
-        OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
-        { safariWebId: safariWebId },
-        (reply: any) => {
-          const remoteNotificationPermission = reply.data;
-          resolve(remoteNotificationPermission);
-        },
-      );
-    });
-  }
-
-  /**
    * To interpret the browser's reported notification permission, we need to know whether we're in
    * an environment where the returned permission should be treated ambiguously.
    *

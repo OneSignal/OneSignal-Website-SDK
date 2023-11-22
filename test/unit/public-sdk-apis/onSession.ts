@@ -16,7 +16,6 @@ import InitHelper from '../../../src/shared/helpers/InitHelper';
 import {
   markUserAsOptedOut,
   markUserAsSubscribed,
-  markUserAsSubscribedOnHttp,
   stubServiceWorkerInstallation,
 } from '../../support/tester/sinonSandboxUtils';
 import { createSubscription } from '../../support/tester/utils';
@@ -886,89 +885,6 @@ test.serial(
     await initPromise;
     await initializePromise;
     t.is(subscribeSpy.callCount, 0);
-  },
-);
-
-test.serial(
-  `HTTP: User subscribed => first page view => expiring subscription => sends player update`,
-  async (t) => {
-    const testConfig: TestEnvironmentConfig = {
-      httpOrHttps: HttpHttpsEnvironment.Http,
-      integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Granted,
-      pushIdentifier: 'granted',
-    };
-
-    const stubs = await TestEnvironment.setupOneSignalPageWithStubs(
-      sinonSandbox,
-      testConfig,
-      t,
-    );
-    sinonSandbox
-      .stub(InitHelper, 'registerSubscriptionInProxyFrame')
-      .resolves(createSubscription());
-
-    await markUserAsSubscribedOnHttp(sinonSandbox, playerId, true);
-    stubServiceWorkerInstallation(sinonSandbox);
-
-    const initializePromise = new Promise<void>((resolve) => {
-      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-        // t.is(registerStub.callCount, 1);
-        t.is(stubs.onSessionStub.callCount, 0);
-        t.is(stubs.createPlayerPostStub.callCount, 0);
-        resolve();
-      });
-    });
-
-    const initPromise = OneSignal.init({
-      appId,
-      autoResubscribe: true,
-      promptOptions: {
-        slidedown: defaultSlidedownOptions,
-      },
-    });
-    await initPromise;
-    t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
-    await initializePromise;
-  },
-);
-
-test.serial(
-  `HTTP: User subscribed => first page view => sends on session`,
-  async (t) => {
-    const testConfig: TestEnvironmentConfig = {
-      httpOrHttps: HttpHttpsEnvironment.Http,
-      integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Granted,
-      pushIdentifier: 'granted',
-    };
-
-    const stubs = await TestEnvironment.setupOneSignalPageWithStubs(
-      sinonSandbox,
-      testConfig,
-      t,
-    );
-    await markUserAsSubscribedOnHttp(sinonSandbox, playerId);
-    stubServiceWorkerInstallation(sinonSandbox);
-
-    const initializePromise = new Promise<void>((resolve) => {
-      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-        t.is(stubs.onSessionStub.callCount, 1);
-        t.is(stubs.createPlayerPostStub.callCount, 0);
-        resolve();
-      });
-    });
-
-    const initPromise = OneSignal.init({
-      appId,
-      autoResubscribe: true,
-      promptOptions: {
-        slidedown: defaultSlidedownOptions,
-      },
-    });
-    await initPromise;
-    t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
-    await initializePromise;
   },
 );
 
