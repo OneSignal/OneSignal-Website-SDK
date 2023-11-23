@@ -30,8 +30,6 @@ export class SessionManager implements ISessionManager {
     subscriptionId: string,
     sessionOrigin: SessionOrigin,
   ): Promise<void> {
-    const isHttps = OneSignalUtils.isHttps();
-
     const payload: UpsertOrDeactivateSessionPayload = {
       onesignalId,
       subscriptionId,
@@ -39,7 +37,6 @@ export class SessionManager implements ISessionManager {
       sessionThreshold: this.context.appConfig.sessionThreshold || 0,
       enableSessionDuration: !!this.context.appConfig.enableSessionDuration,
       sessionOrigin,
-      isHttps,
       isSafari: OneSignalUtils.isSafari(),
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
@@ -61,8 +58,6 @@ export class SessionManager implements ISessionManager {
     subscriptionId: string,
     sessionOrigin: SessionOrigin,
   ): Promise<void> {
-    const isHttps = OneSignalUtils.isHttps();
-
     const payload: UpsertOrDeactivateSessionPayload = {
       appId: this.context.appConfig.appId,
       subscriptionId,
@@ -70,7 +65,6 @@ export class SessionManager implements ISessionManager {
       sessionThreshold: this.context.appConfig.sessionThreshold!,
       enableSessionDuration: this.context.appConfig.enableSessionDuration!,
       sessionOrigin,
-      isHttps,
       isSafari: OneSignalUtils.isSafari(),
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
@@ -183,7 +177,6 @@ export class SessionManager implements ISessionManager {
     try {
       // don't have much time on before unload
       // have to skip adding device record to the payload
-      const isHttps = OneSignalUtils.isHttps();
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
       const payload: UpsertOrDeactivateSessionPayload = {
@@ -193,26 +186,15 @@ export class SessionManager implements ISessionManager {
         sessionThreshold: this.context.appConfig.sessionThreshold!,
         enableSessionDuration: this.context.appConfig.enableSessionDuration!,
         sessionOrigin: SessionOrigin.BeforeUnload,
-        isHttps,
         isSafari: OneSignalUtils.isSafari(),
         outcomesConfig: this.context.appConfig.userConfig.outcomes!,
       };
 
-      if (isHttps) {
-        Log.debug('Notify SW to deactivate session (beforeunload)');
-        this.context.workerMessenger.directPostMessageToSW(
-          WorkerMessengerCommand.SessionDeactivate,
-          payload,
-        );
-      } else {
-        Log.debug(
-          'Notify iframe to notify SW to deactivate session (beforeunload)',
-        );
-        await OneSignal.proxyFrameHost.runCommand(
-          OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE,
-          payload,
-        );
-      }
+      Log.debug('Notify SW to deactivate session (beforeunload)');
+      this.context.workerMessenger.directPostMessageToSW(
+        WorkerMessengerCommand.SessionDeactivate,
+        payload,
+      );
     } catch (e) {
       Log.error('Error handling onbeforeunload:', e);
     }
@@ -350,17 +332,6 @@ export class SessionManager implements ISessionManager {
       window.addEventListener('blur', OneSignal.cache.blurHandler, true);
       OneSignal.cache.isBlurEventSetup = true;
     }
-  }
-
-  static setupSessionEventListenersForHttp(): void {
-    if (!OneSignal.context || !OneSignal.context.sessionManager) {
-      Log.error(
-        'OneSignal.context not available for http to setup session event listeners.',
-      );
-      return;
-    }
-
-    OneSignal.context.sessionManager.setupSessionEventListeners();
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.

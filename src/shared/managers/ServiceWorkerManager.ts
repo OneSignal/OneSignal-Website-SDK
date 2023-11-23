@@ -330,7 +330,6 @@ export class ServiceWorkerManager {
       },
     );
 
-    const isHttps = OneSignalUtils.isHttps();
     const isSafari = OneSignalUtils.isSafari();
 
     workerMessenger.on(
@@ -338,7 +337,7 @@ export class ServiceWorkerManager {
       async (incomingPayload: PageVisibilityRequest) => {
         // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
         // For Safari, unfortunately, we need this messaging workaround because SW always gets false.
-        if (isHttps && isSafari) {
+        if (isSafari) {
           const payload: PageVisibilityResponse = {
             timestamp: incomingPayload.timestamp,
             focused: document.hasFocus(),

@@ -15,7 +15,6 @@ export class EnvironmentInfoHelper {
     return {
       browserType: this.getBrowser(),
       browserVersion: this.getBrowserVersion(),
-      isHttps: this.isHttps(),
       isBrowserAndSupportsServiceWorkers: this.supportsServiceWorkers(),
       requiresUserInteraction: this.requiresUserInteraction(),
       osVersion: this.getOsVersion(),
@@ -54,12 +53,6 @@ export class EnvironmentInfoHelper {
 
   private static getBrowserVersion(): number {
     return Utils.parseVersionString(bowserCastle().version);
-  }
-
-  private static isHttps(): boolean {
-    return window
-      ? window.location && window.location.protocol === 'https:'
-      : false;
   }
 
   private static supportsServiceWorkers(): boolean {

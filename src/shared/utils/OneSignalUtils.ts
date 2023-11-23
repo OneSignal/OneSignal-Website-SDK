@@ -58,10 +58,6 @@ export class OneSignalUtils {
     );
   }
 
-  static isHttps(): boolean {
-    return window.location.protocol === 'https:';
-  }
-
   static isSafari(): boolean {
     return Environment.isBrowser() && typeof window.safari !== 'undefined';
   }

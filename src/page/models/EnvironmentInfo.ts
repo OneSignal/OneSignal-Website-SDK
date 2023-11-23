@@ -4,7 +4,6 @@ import { Browser } from '../../shared/models/Browser';
 export interface EnvironmentInfo {
   browserType: Browser;
   browserVersion: number;
-  isHttps: boolean;
   isBrowserAndSupportsServiceWorkers: boolean;
   requiresUserInteraction: boolean;
   osVersion: string | number;
