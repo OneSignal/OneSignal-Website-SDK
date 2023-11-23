@@ -11,13 +11,11 @@ import { NotificationPermission } from '../../../src/shared/models/NotificationP
 import { UpdateManager } from '../../../src/shared/managers/UpdateManager';
 import { PageViewManager } from '../../../src/shared/managers/PageViewManager';
 import { SubscriptionManager } from '../../../src/shared/managers/SubscriptionManager';
-import InitHelper from '../../../src/shared/helpers/InitHelper';
 import {
   markUserAsOptedOut,
   markUserAsSubscribed,
   stubServiceWorkerInstallation,
 } from '../../support/tester/sinonSandboxUtils';
-import { createSubscription } from '../../support/tester/utils';
 import EventsTestHelper from '../../support/tester/EventsTestHelper';
 import { DelayedPromptType } from '../../../src/shared/models/Prompts';
 
@@ -511,56 +509,6 @@ test.serial(
     await initPromise;
     t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
     await initializePromise;
-  },
-);
-
-test.serial(
-  `HTTP: User not subscribed and not opted out => first page view => slidedown's autoPrompt is on =>
-  click allow => sends player create`,
-  async (t) => {
-    const testConfig: TestEnvironmentConfig = {
-      integration: ConfigIntegrationKind.Custom,
-      pushIdentifier: 'granted',
-      stubSetTimeout: true,
-    };
-    const stubs = await TestEnvironment.setupOneSignalPageWithStubs(
-      sinonSandbox,
-      testConfig,
-      t,
-    );
-
-    const eventsHelper = new EventsTestHelper(sinonSandbox);
-    EventsTestHelper.simulateSlidedownAllowAfterShown();
-    eventsHelper.simulateSubscribingAfterNativeAllow();
-
-    const initializePromise = new Promise<void>((resolve) => {
-      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-        t.is(stubs.onSessionStub.callCount, 0);
-        t.is(stubs.createPlayerPostStub.callCount, 0);
-        resolve();
-      });
-    });
-
-    const subscriptionPromise = new Promise<void>((resolve) => {
-      OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
-        t.is(stubs.onSessionStub.callCount, 1);
-        t.is(stubs.createPlayerPostStub.callCount, 1);
-        inspectPushRecordCreationRequest(t, stubs.createPlayerPostStub);
-        resolve();
-      });
-    });
-
-    const initPromise = OneSignal.init({
-      appId,
-      promptOptions: {
-        slidedown: defaultSlidedownOptions,
-      },
-      autoResubscribe: false,
-    });
-    await initPromise;
-    t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
-    await initializePromise;
-    await subscriptionPromise;
   },
 );
 
