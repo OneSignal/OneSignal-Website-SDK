@@ -59,10 +59,6 @@ export default class SdkEnvironment {
     }
   }
 
-  public static isInsecureOrigin() {
-    return !window.isSecureContext;
-  }
-
   static getOrigin(): string {
     if (Environment.isBrowser()) {
       return window.location.origin;
