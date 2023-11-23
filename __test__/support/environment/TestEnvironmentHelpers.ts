@@ -8,7 +8,6 @@ import OneSignal from '../../../src/onesignal/OneSignal';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
 import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElement';
 import { MockServiceWorkerContainerWithAPIBan } from '../mocks/models/MockServiceWorkerContainerWithAPIBan';
-import { HttpHttpsEnvironment } from '../models/HttpHttpsEnvironment';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import TestContext from './TestContext';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';

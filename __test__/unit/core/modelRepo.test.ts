@@ -1,4 +1,3 @@
-import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
 import ModelCache from '../../../src/core/caching/ModelCache';
 import CoreModule from '../../../src/core/CoreModule';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';

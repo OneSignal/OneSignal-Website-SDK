@@ -1,6 +1,3 @@
-import { NotificationPermission } from '../models/NotificationPermission';
-import PermissionManager from '../managers/PermissionManager';
-
 const IS_OPTED_OUT = 'isOptedOut';
 const IS_PUSH_NOTIFICATIONS_ENABLED = 'isPushNotificationsEnabled';
 const PAGE_VIEWS = 'os_pageViews';

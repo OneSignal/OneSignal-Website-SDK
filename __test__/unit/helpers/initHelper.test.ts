@@ -1,4 +1,3 @@
-import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { MessageChannel } from 'worker_threads';

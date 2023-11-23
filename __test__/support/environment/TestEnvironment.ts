@@ -13,7 +13,6 @@ import {
   stubNotification,
   mockUserAgent,
 } from './TestEnvironmentHelpers';
-import { HttpHttpsEnvironment } from '../models/HttpHttpsEnvironment';
 import OperationCache from '../../../src/core/caching/OperationCache';
 import 'fake-indexeddb/auto';
 import { RecursivePartial } from '../../../src/shared/context/Utils';
