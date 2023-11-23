@@ -16,9 +16,10 @@ export interface AppConfig {
   appId: string;
 
   /**
-   * The subdomain chosen on the dashboard for non-HTTPS apps.
+   * Is the app configured for a subdomain (AKA os.tc) that
+   * is no longer supported by OneSignal.
    */
-  subdomain?: string;
+  hasUnsupportedSubdomain: boolean;
 
   /**
    * The allowed origin this web push config is allowed to run on.

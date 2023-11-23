@@ -75,9 +75,9 @@ export class ConfigHelper {
   // OneSignal app is still configured this way after they migrated from v15.
   private static checkUnsupportedSubdomain(appConfig: AppConfig): void {
     const isHttp = !window.isSecureContext;
-    const useSubdomain = !!appConfig.subdomain || isHttp;
+    const unsupportedEnv = appConfig.hasUnsupportedSubdomain || isHttp;
 
-    if (useSubdomain) {
+    if (unsupportedEnv) {
       if (isHttp) {
         throw new Error(
           "OneSignalSDK: HTTP sites are no longer supported starting with version 16 (User Model), your public site must start with https://. Please visit the OneSignal dashboard's Settings > Web Configuration to find this option.",
@@ -134,11 +134,12 @@ export class ConfigHelper {
   ): AppConfig {
     const configIntegrationKind = this.getConfigIntegrationKind(serverConfig);
 
-    const subdomain = this.getSubdomainForConfigIntegrationKind(
-      configIntegrationKind,
-      userConfig,
-      serverConfig,
-    );
+    const hasUnsupportedSubdomain =
+      this.hasUnsupportedSubdomainForConfigIntegrationKind(
+        configIntegrationKind,
+        userConfig,
+        serverConfig,
+      );
 
     const mergedUserConfig = this.getUserConfigForConfigIntegrationKind(
       configIntegrationKind,
@@ -148,7 +149,7 @@ export class ConfigHelper {
 
     return {
       appId: serverConfig.app_id,
-      subdomain,
+      hasUnsupportedSubdomain,
       siteName: serverConfig.config.siteInfo.name,
       origin: serverConfig.config.origin,
       httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
@@ -674,73 +675,19 @@ export class ConfigHelper {
   /**
    * Describes how to merge a dashboard-set subdomain with a/lack of user-supplied subdomain.
    */
-  public static getSubdomainForConfigIntegrationKind(
+  public static hasUnsupportedSubdomainForConfigIntegrationKind(
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig,
-  ): string | undefined {
+  ): boolean {
     const integrationCapabilities = this.getIntegrationCapabilities(
       configIntegrationKind,
     );
-    const userValue: string | undefined = userConfig.subdomainName;
-    let serverValue: string | undefined = '';
-
     switch (integrationCapabilities.configuration) {
       case IntegrationConfigurationKind.Dashboard:
-        serverValue = serverConfig.config.siteInfo.proxyOriginEnabled
-          ? serverConfig.config.siteInfo.proxyOrigin
-          : undefined;
-        break;
+        return serverConfig.config.siteInfo.proxyOriginEnabled;
       case IntegrationConfigurationKind.JavaScript:
-        serverValue = serverConfig.config.subdomain;
-        break;
-    }
-
-    if (
-      serverValue &&
-      !this.shouldUseServerConfigSubdomain(userValue, integrationCapabilities)
-    ) {
-      return undefined;
-    } else {
-      return serverValue;
-    }
-  }
-
-  public static shouldUseServerConfigSubdomain(
-    userProvidedSubdomain: string | undefined,
-    capabilities: IntegrationCapabilities,
-  ): boolean {
-    switch (capabilities.configuration) {
-      case IntegrationConfigurationKind.Dashboard:
-        /*
-          Dashboard config using the new web config editor always takes precedence.
-         */
-        return true;
-      case IntegrationConfigurationKind.JavaScript:
-        /*
-         * An HTTPS site may be using either a native push integration or a fallback
-         * subdomain integration. Our SDK decides the integration based on whether
-         * init option subdomainName appears and the site's protocol.
-         *
-         * To avoid having developers write JavaScript to customize the SDK,
-         * configuration properties like subdomainName are downloaded on page start.
-         *
-         * New developers setting up web push can omit subdomainName, but existing
-         * developers already having written code to configure OneSignal aren't
-         * removing their code.
-         *
-         * When an HTTPS site is configured with a subdomain on the server-side, we do
-         * not apply it even though we've downloaded this configuration unless the
-         * user also declares it manually in their initialization code.
-         */
-        switch (location.protocol) {
-          case 'https:':
-            return !!userProvidedSubdomain;
-          case 'http:':
-            return true;
-          default:
-            return false;
-        }
+        return !!userConfig.subdomainName;
     }
   }
 }

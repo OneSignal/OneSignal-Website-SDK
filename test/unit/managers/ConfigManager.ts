@@ -48,7 +48,7 @@ test('should use server-provided subdomain if enabled', async (t) => {
     fakeServerConfig,
   );
 
-  t.deepEqual(fakeMergedConfig.subdomain, 'some-subdomain');
+  t.deepEqual(fakeMergedConfig.hasUnsupportedSubdomain, true);
 });
 
 test('should not use server-provided subdomain if not enabled', async (t) => {
@@ -66,7 +66,7 @@ test('should not use server-provided subdomain if not enabled', async (t) => {
     fakeServerConfig,
   );
 
-  t.deepEqual(fakeMergedConfig.subdomain, undefined);
+  t.deepEqual(fakeMergedConfig.hasUnsupportedSubdomain, false);
 });
 
 test('should initialize custom link config for typical setup', (t) => {

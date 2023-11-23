@@ -4,10 +4,7 @@ import {
   ConfigIntegrationKind,
   ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import ConfigManager from '../../../src/page/managers/ConfigManager';
 
 interface ConfigContext {
@@ -76,7 +73,7 @@ test('should not overwrite provided subdomain', async (t) => {
     },
     serverConfig,
   );
-  t.is(result.subdomain, 'test-subdomain');
+  t.is(result.hasUnsupportedSubdomain, true);
 });
 
 test('should assign downloaded safari web ID if not provided', async (t) => {

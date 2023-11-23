@@ -372,29 +372,6 @@ test('Service worker failed to install due to 404 on host page. Send notificatio
   });
 });
 
-test('installWorker() should not install when on an HTTPS site with a subdomain set', async (t) => {
-  // 1. Mock site page as HTTPS
-  await TestEnvironment.initialize();
-  TestEnvironment.mockInternalOneSignal();
-  // 2. Set is set to use our subdomain however
-  const subdomain = 'abc';
-  const testConfig: TestEnvironmentConfig = {
-    integration: ConfigIntegrationKind.TypicalSite,
-    overrideServerConfig: {
-      config: {
-        subdomain: subdomain,
-        siteInfo: { proxyOriginEnabled: true, proxyOrigin: subdomain },
-      },
-    },
-  };
-  TestEnvironment.mockInternalOneSignal(testConfig);
-
-  const manager = LocalHelpers.getServiceWorkerManager();
-  await manager.installWorker();
-  // Since ServiceWorker will be installed in the iframe on os.tc Indeterminate is expected
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.Indeterminate);
-});
-
 test('ServiceWorkerManager.getRegistration() returns valid instance when sw is registered', async (t) => {
   await navigator.serviceWorker.register('/Worker.js');
   const result = await OneSignal.context.serviceWorkerManager.getRegistration();

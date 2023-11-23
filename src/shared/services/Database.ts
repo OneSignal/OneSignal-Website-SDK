@@ -155,7 +155,6 @@ export default class Database {
     const config: any = {};
     const appIdStr: string = await this.get<string>('Ids', 'appId');
     config.appId = appIdStr;
-    config.subdomain = await this.get<string>('Options', 'subdomain');
     config.vapidPublicKey = await this.get<string>('Options', 'vapidPublicKey');
     return config;
   }
@@ -198,11 +197,6 @@ export default class Database {
   async setAppConfig(appConfig: AppConfig): Promise<void> {
     if (appConfig.appId)
       await this.put('Ids', { type: 'appId', id: appConfig.appId });
-    if (appConfig.subdomain)
-      await this.put('Options', {
-        key: 'subdomain',
-        value: appConfig.subdomain,
-      });
     if (appConfig.httpUseOneSignalCom === true)
       await this.put('Options', { key: 'httpUseOneSignalCom', value: true });
     else if (appConfig.httpUseOneSignalCom === false)
