@@ -197,10 +197,6 @@ export default class Database {
   async setAppConfig(appConfig: AppConfig): Promise<void> {
     if (appConfig.appId)
       await this.put('Ids', { type: 'appId', id: appConfig.appId });
-    if (appConfig.httpUseOneSignalCom === true)
-      await this.put('Options', { key: 'httpUseOneSignalCom', value: true });
-    else if (appConfig.httpUseOneSignalCom === false)
-      await this.put('Options', { key: 'httpUseOneSignalCom', value: false });
     if (appConfig.vapidPublicKey)
       await this.put('Options', {
         key: 'vapidPublicKey',

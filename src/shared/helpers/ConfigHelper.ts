@@ -152,7 +152,6 @@ export class ConfigHelper {
       hasUnsupportedSubdomain,
       siteName: serverConfig.config.siteInfo.name,
       origin: serverConfig.config.origin,
-      httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
       restrictedOriginEnabled:
         serverConfig.features.restrict_origin &&
         serverConfig.features.restrict_origin.enable,

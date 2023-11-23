@@ -26,11 +26,6 @@ export interface AppConfig {
    */
   origin: string;
 
-  /**
-   * Describes whether the subdomain HTTP users subscribe to should belong to
-   * the legacy domain onesignal.com, or the newer domain os.tc.
-   */
-  httpUseOneSignalCom?: boolean;
   restrictedOriginEnabled?: boolean | null;
   metrics: {
     enable: boolean;
