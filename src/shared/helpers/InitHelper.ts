@@ -1,5 +1,4 @@
 import { NotificationPermission } from '../models/NotificationPermission';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import { AppConfig } from '../models/AppConfig';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
@@ -176,11 +175,7 @@ export default class InitHelper {
   }
 
   protected static async establishServiceWorkerChannel(): Promise<void> {
-    if (
-      navigator.serviceWorker &&
-      window.location.protocol === 'https:' &&
-      !(await SdkEnvironment.isFrameContextInsecure())
-    ) {
+    if (navigator.serviceWorker && window.isSecureContext) {
       try {
         await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
       } catch (e) {
