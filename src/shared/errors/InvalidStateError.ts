@@ -8,7 +8,6 @@ export enum InvalidStateReason {
   UnsupportedEnvironment,
   MissingDomElement,
   ServiceWorkerNotActivated,
-  NoProxyFrame,
 }
 
 export class InvalidStateError extends OneSignalError {
@@ -41,9 +40,6 @@ export class InvalidStateError extends OneSignalError {
         break;
       case InvalidStateReason.ServiceWorkerNotActivated:
         errorMessage = `The service worker must be activated first.`;
-        break;
-      case InvalidStateReason.NoProxyFrame:
-        errorMessage = `No proxy frame.`;
         break;
     }
 

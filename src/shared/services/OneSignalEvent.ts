@@ -22,28 +22,6 @@ const SILENT_EVENTS = [
   'testEvent',
 ];
 
-const RETRIGGER_REMOTE_EVENTS = [
-  'onesignal.prompt.custom.clicked',
-  'onesignal.prompt.native.permissionchanged',
-  'onesignal.subscription.changed',
-  'onesignal.internal.subscriptionset',
-  'dbRebuilt',
-  'initialize',
-  'subscriptionSet',
-  'sendWelcomeNotification',
-  'subscriptionChange',
-  'permissionChange', // notification
-  'dbSet',
-  'register',
-  'willDisplay', // notification
-  'dismiss', // notification
-  'click', // notification
-  'permissionPromptDisplay',
-  'testWouldDisplay',
-  'testInitOptionDisabled',
-  'popupWindowTimeout',
-];
-
 const LEGACY_EVENT_MAP: { [key: string]: string } = {
   permissionChange: 'onesignal.prompt.native.permissionchanged',
   subscriptionChange: 'onesignal.subscription.changed',
@@ -55,20 +33,11 @@ export default class OneSignalEvent {
    * Triggers the specified event with optional custom data.
    * @param eventName The string event name to be emitted.
    * @param data Any JavaScript variable to be passed with the event.
-   * @param remoteTriggerEnv If this method is being called in a different environment (e.g. was triggered
-   *  in iFrame but now retriggered on main host), this is the string of the original environment for logging purposes.
    */
-  static async trigger(
-    eventName: string,
-    data?: any,
-    remoteTriggerEnv: string | null = null,
-  ) {
+  static async trigger(eventName: string, data?: any) {
     if (!Utils.contains(SILENT_EVENTS, eventName)) {
       const displayData = data;
       let env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
-      if (remoteTriggerEnv) {
-        env = `${env} ⬸ ${Utils.capitalize(remoteTriggerEnv)}`;
-      }
 
       if (displayData || displayData === false) {
         Log.debug(`(${env}) » ${eventName}:`, displayData);

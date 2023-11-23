@@ -51,10 +51,6 @@ export const ONESIGNAL_EVENTS = {
    */
   REGISTERED: 'register',
   /**
-   * Occurs as the HTTP popup is closing.
-   */
-  POPUP_CLOSING: 'popupClose',
-  /**
    * Occurs when the native permission prompt is displayed.
    */
   PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplay',
@@ -69,9 +65,6 @@ export const ONESIGNAL_EVENTS = {
   /**
    * For internal testing only. Used for all sorts of things.
    */
-  TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
-  TEST_WOULD_DISPLAY: 'testWouldDisplay',
   TEST_FINISHED_ALLOW_CLICK_HANDLING: 'testFinishedAllowClickHandling',
-  POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
   SESSION_STARTED: 'os.sessionStarted',
 };

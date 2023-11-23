@@ -35,7 +35,6 @@ export interface TestEnvironmentConfig {
   permission?: NotificationPermission;
   addPrompts?: boolean;
   url?: string;
-  initializeAsIframe?: boolean;
   userAgent?: BrowserUserAgent;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
   integration?: ConfigIntegrationKind;

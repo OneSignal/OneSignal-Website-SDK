@@ -278,10 +278,7 @@ export default class OneSignal {
   static environmentInfo?: EnvironmentInfo;
   static config: AppConfig | null = null;
   static _sessionInitAlreadyRunning = false;
-  static _windowWidth = 650;
-  static _windowHeight = 568;
   static _isNewVisitor = false;
-  static _channel = null;
   static timedLocalStorage = TimedLocalStorage;
   static initialized = false;
   static _didLoadITILibrary = false;
