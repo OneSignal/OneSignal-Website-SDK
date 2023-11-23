@@ -3,7 +3,7 @@ import EventHelper from '../../../src/shared/helpers/EventHelper';
 
 describe('Notification Events', () => {
   beforeEach(async () => {
-    TestEnvironment.initialize();
+    await TestEnvironment.initialize();
   });
 
   afterEach(() => {
