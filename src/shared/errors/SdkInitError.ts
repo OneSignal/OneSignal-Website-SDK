@@ -3,7 +3,6 @@ import OneSignalError from './OneSignalError';
 export enum SdkInitErrorKind {
   InvalidAppId,
   AppNotConfiguredForWebPush,
-  MissingSubdomain,
   WrongSiteUrl,
   MultipleInitialization,
   MissingSafariWebId,
@@ -29,9 +28,6 @@ export class SdkInitError extends OneSignalError {
         errorMessage =
           `OneSignal: This app ID does not have any web platforms enabled. Double check your app` +
           ` ID, or see step 1 on our setup guide (https://tinyurl.com/2x5jzk83).`;
-        break;
-      case SdkInitErrorKind.MissingSubdomain:
-        errorMessage = `Non-HTTPS pages require the subdomainName parameter within the label set within the OneSignal Web configuration (https://tinyurl.com/ry39x7mk).`;
         break;
       case SdkInitErrorKind.WrongSiteUrl:
         if (extra && extra.siteUrl) {
