@@ -91,19 +91,18 @@ export class ConfigHelper {
   }
 
   public static checkRestrictedOrigin(appConfig: AppConfig) {
-    if (appConfig.restrictedOriginEnabled) {
-      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host) {
-        if (
-          window.top === window &&
-          !Utils.contains(window.location.hostname, '.os.tc') &&
-          !Utils.contains(window.location.hostname, '.onesignal.com') &&
-          !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)
-        ) {
-          throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
-            siteUrl: appConfig.origin,
-          });
-        }
-      }
+    if (!appConfig.restrictedOriginEnabled) {
+      return;
+    }
+
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.Host) {
+      return;
+    }
+
+    if (!this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
+      throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
+        siteUrl: appConfig.origin,
+      });
     }
   }
 
