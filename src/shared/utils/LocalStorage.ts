@@ -24,24 +24,6 @@ export default class LocalStorage {
     return localStorage.getItem(REQUIRES_PRIVACY_CONSENT) === 'true';
   }
 
-  public static setStoredPermission(value: NotificationPermission): void {
-    localStorage.setItem(PermissionManager.STORED_PERMISSION_KEY, value);
-  }
-
-  public static getStoredPermission(): NotificationPermission {
-    const permission =
-      localStorage.getItem(PermissionManager.STORED_PERMISSION_KEY) ||
-      'default';
-    switch (permission) {
-      case 'granted':
-        return NotificationPermission.Granted;
-      case 'denied':
-        return NotificationPermission.Denied;
-      default:
-        return NotificationPermission.Default;
-    }
-  }
-
   public static setLocalPageViewCount(count: number): void {
     localStorage.setItem(PAGE_VIEWS, count.toString());
   }
