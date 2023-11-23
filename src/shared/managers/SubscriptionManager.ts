@@ -813,13 +813,7 @@ export class SubscriptionManager {
    * Returns an object describing the user's actual push subscription state and opt-out status.
    */
   public async getSubscriptionState(): Promise<PushSubscriptionState> {
-    /* Safari Legacy supports HTTP so we don't have to use the subdomain workaround. */
-    if (Environment.useSafariLegacyPush()) {
-      return this.getSubscriptionStateForSecure();
-    }
-
     const windowEnv = SdkEnvironment.getWindowEnv();
-
     switch (windowEnv) {
       case WindowEnvironmentKind.ServiceWorker: {
         const pushSubscription = await (<ServiceWorkerGlobalScope>(
