@@ -1,7 +1,6 @@
 import bowser from 'bowser';
 import { EnvironmentInfo } from '../models/EnvironmentInfo';
 import { Browser } from '../../shared/models/Browser';
-import { isMacOSSafariInIframe } from '../utils/BrowserSupportsPush';
 import Utils from '../../shared/context/Utils';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 
@@ -44,11 +43,7 @@ export class EnvironmentInfoHelper {
 
   // NOTE: Returns false in a ServiceWorker context
   private static isMacOSSafari(): boolean {
-    if (typeof window.safari !== 'undefined') {
-      return true;
-    }
-
-    return isMacOSSafariInIframe();
+    return typeof window.safari !== 'undefined';
   }
 
   private static getBrowserVersion(): number {
