@@ -1,4 +1,3 @@
-import { HttpHttpsEnvironment } from '../../support/models/HttpHttpsEnvironment';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
 import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
@@ -12,7 +11,6 @@ describe('Register for push', () => {
     jest.useFakeTimers();
     await TestEnvironment.initialize({
       addPrompts: true,
-      httpOrHttps: HttpHttpsEnvironment.Https,
       userAgent: BrowserUserAgent.Default,
     });
   });

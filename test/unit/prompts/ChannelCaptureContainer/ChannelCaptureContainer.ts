@@ -2,7 +2,6 @@ import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import {
   TestEnvironment,
-  HttpHttpsEnvironment,
   BrowserUserAgent,
   TestEnvironmentConfig,
 } from '../../../support/sdk/TestEnvironment';
@@ -28,7 +27,6 @@ test.beforeEach(async () => {
   (global as any).location = new URL('https://localhost:4001');
   const userConfig = TestEnvironment.getFakeMergedConfig({});
   const options = {
-    httpOrHttps: HttpHttpsEnvironment.Https,
     initOptions: userConfig,
     addPrompts: true,
   };
@@ -98,7 +96,6 @@ test('resetting validation styles works correctly', async (t) => {
 });
 
 const testConfig: TestEnvironmentConfig = {
-  httpOrHttps: HttpHttpsEnvironment.Https,
   integration: ConfigIntegrationKind.Custom,
   permission: NotificationPermission.Default,
   pushIdentifier: 'granted',

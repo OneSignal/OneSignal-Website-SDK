@@ -3,7 +3,6 @@ import TaggingContainer from '../../../src/page/slidedown/TaggingContainer';
 import sinon, { SinonSandbox } from 'sinon';
 import {
   TestEnvironment,
-  HttpHttpsEnvironment,
   BrowserUserAgent,
 } from '../../support/sdk/TestEnvironment';
 import { TagsObjectWithBoolean } from '../../../src/page/models/Tags';
@@ -22,7 +21,6 @@ test.beforeEach(async () => {
   (global as any).location = new URL('https://localhost:4001');
   const userConfig = TestEnvironment.getFakeMergedConfig({});
   const options = {
-    httpOrHttps: HttpHttpsEnvironment.Https,
     initOptions: userConfig,
     addPrompts: true,
   };

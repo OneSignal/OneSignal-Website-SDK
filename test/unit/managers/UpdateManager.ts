@@ -1,9 +1,6 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { UpdateManager } from '../../../src/shared/managers/UpdateManager';
 import Database from '../../../src/shared/services/Database';
 import Random from '../../support/tester/Random';
@@ -23,7 +20,6 @@ const sandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async (t) => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
     permission: NotificationPermission.Granted,
   });
   TestEnvironment.mockInternalOneSignal();

@@ -8,7 +8,6 @@ import { ServiceWorkerManager } from '../../../src/shared/managers/ServiceWorker
 import { ServiceWorkerActiveState } from '../../../src/shared/helpers/ServiceWorkerHelper';
 import {
   TestEnvironment,
-  HttpHttpsEnvironment,
   BrowserUserAgent,
 } from '../../support/sdk/TestEnvironment';
 import Database from '../../../src/shared/services/Database';
@@ -39,9 +38,7 @@ import Environment from '../../../src/Environment';
 const sandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 
   TestEnvironment.mockInternalOneSignal();
   timemachine.reset();

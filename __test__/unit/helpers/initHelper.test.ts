@@ -13,14 +13,6 @@ describe('InitHelper', () => {
     jest.restoreAllMocks();
   });
 
-  /** registerForPushNotifications */
-  test('registerForPushNotifications: requesting a modal prompt', async () => {
-    await InitHelper.registerForPushNotifications({ modalPrompt: true });
-
-    expect(OneSignal.subscriptionModalHost).not.toBeUndefined();
-    expect(OneSignal.subscriptionModalHost.modal).not.toBeUndefined();
-  });
-
   /** onSdkInitialized */
   test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
     OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {

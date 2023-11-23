@@ -2,10 +2,7 @@ import '../../support/polyfills/polyfills';
 
 import test from 'ava';
 
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { MockServiceWorkerContainer } from '../../support/mocks/service-workers/models/MockServiceWorkerContainer';
 import { MockServiceWorker } from '../../support/mocks/service-workers/models/MockServiceWorker';
 import { MockServiceWorkerRegistration } from '../../support/mocks/service-workers/models/MockServiceWorkerRegistration';
@@ -13,9 +10,7 @@ import { MockServiceWorkerRegistration } from '../../support/mocks/service-worke
 class TestMockServiceWorkerContainer extends MockServiceWorkerContainer {}
 
 test.beforeEach(async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   (global as any).navigator.serviceWorker =
     new TestMockServiceWorkerContainer();
 });

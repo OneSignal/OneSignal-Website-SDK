@@ -1,15 +1,10 @@
 import test from 'ava';
 
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { MockServiceWorkerContainerWithAPIBan } from '../../support/mocks/service-workers/models/MockServiceWorkerContainerWithAPIBan';
 
 test.beforeEach(async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 });
 
 test('mock service worker browser API properties should exist', async (t) => {

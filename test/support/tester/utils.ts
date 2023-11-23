@@ -4,7 +4,6 @@ import OneSignalApi from '../../../src/shared/api/OneSignalApi';
 import {
   TestEnvironment,
   TestEnvironmentConfig,
-  HttpHttpsEnvironment,
 } from '../../support/sdk/TestEnvironment';
 import { ServerAppConfig } from '../../../src/shared/models/AppConfig';
 import Random from '../../support/tester/Random';
@@ -60,15 +59,10 @@ export class InitTestHelper {
     OneSignal.initialized = false;
 
     this.sinonSandbox.stub(document, 'visibilityState').value('visible');
-
-    const isHttps = testEnvironmentConfig.httpOrHttps
-      ? testEnvironmentConfig.httpOrHttps == HttpHttpsEnvironment.Https
-      : undefined;
     const serverAppConfig =
       customServerAppConfig ||
       TestEnvironment.getFakeServerAppConfig(
         testEnvironmentConfig.integration!,
-        isHttps,
       );
     this.stubJSONP(serverAppConfig);
     this.sinonSandbox.stub(OneSignalApiBase, 'get').resolves({});

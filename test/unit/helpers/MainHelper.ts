@@ -2,19 +2,14 @@ import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 
 let sinonSandbox: SinonSandbox;
 
 test.beforeEach(async () => {
   sinonSandbox = sinon.sandbox.create();
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 
   // Required for sessionContext, not async
   TestEnvironment.mockInternalOneSignal();

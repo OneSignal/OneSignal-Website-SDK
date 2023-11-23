@@ -2,10 +2,7 @@ import '../../support/polyfills/polyfills';
 import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import Database from '../../../src/shared/services/Database';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import Context from '../../../src/page/models/Context';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
 import { AppConfig } from '../../../src/shared/models/AppConfig';
@@ -33,7 +30,6 @@ test.afterEach(function (_t: ExecutionContext) {
 test('correct degree of persistNotification setting should be stored', async (t) => {
   await TestEnvironment.initialize({
     initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -78,7 +74,6 @@ test('correct degree of persistNotification setting should be stored', async (t)
 test('Test OneSignal.init, Custom, with requiresUserPrivacyConsent', async (t) => {
   const testConfig = {
     initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
     stubSetTimeout: true,
   };
@@ -111,7 +106,6 @@ test('Test OneSignal.init, Custom, with requiresUserPrivacyConsent', async (t) =
 test('Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent', async (t) => {
   const testConfig = {
     initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
     stubSetTimeout: true,
   };
@@ -141,7 +135,6 @@ test('Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent', async 
 test('Test OneSignal.init, No app id or wrong format of app id', async (t) => {
   const testConfig = {
     initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
   };
   await TestEnvironment.initialize(testConfig);

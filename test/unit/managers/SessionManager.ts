@@ -3,10 +3,7 @@ import { DeliveryPlatformKind } from '../../../src/shared/models/DeliveryPlatfor
 import { SessionManager } from '../../../src/shared/managers/sessionManager/SessionManager';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 import Database from '../../../src/shared/services/Database';
-import {
-  HttpHttpsEnvironment,
-  TestEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { NockOneSignalHelper } from '../../support/tester/NockOneSignalHelper';
 import { setupFakePlayerId } from '../../support/tester/utils';
 
@@ -14,7 +11,6 @@ let pushPlayerId: string;
 
 test.beforeEach(async (t) => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
     permission: NotificationPermission.Granted,
   });
   TestEnvironment.mockInternalOneSignal();

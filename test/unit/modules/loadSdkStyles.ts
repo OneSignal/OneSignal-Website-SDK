@@ -2,7 +2,6 @@ import '../../support/polyfills/polyfills';
 import anyTest, { TestInterface } from 'ava';
 import {
   TestEnvironment,
-  HttpHttpsEnvironment,
   TestEnvironmentConfig,
 } from '../../support/sdk/TestEnvironment';
 import OneSignal from '../../../src/onesignal/OneSignal';
@@ -44,7 +43,6 @@ test.afterEach.always((t) => {
 
 test('should call loadSdkStylesheet if notify button is used', async (t) => {
   const testConfig: TestEnvironmentConfig = {
-    httpOrHttps: HttpHttpsEnvironment.Https,
     userConfig: {
       notifyButton: {
         enable: true,
@@ -64,7 +62,6 @@ test('should call loadSdkStylesheet if notify button is used', async (t) => {
 test('should call loadSdkStylesheet if slidedown permission message is used', async (t) => {
   await TestEnvironment.initialize({
     initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   TestEnvironment.mockInternalOneSignal();
   try {
@@ -86,7 +83,6 @@ test('loadIfNew called twice should not load the same stylesheet or script more 
 
   await TestEnvironment.initialize({
     initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   const dynamicResourceLoader = new DynamicResourceLoader();
   const resourceLoadAttempts = [];
@@ -114,7 +110,6 @@ test('loadIfNew called twice should not load the same stylesheet or script more 
 test('load successfully fetches and installs stylesheet', async (t) => {
   await TestEnvironment.initialize({
     initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   await DynamicResourceLoader.load(
     ResourceType.Stylesheet,
@@ -129,7 +124,6 @@ test('load successfully fetches and installs stylesheet', async (t) => {
 test('load successfully fetches and executes script', async (t) => {
   await TestEnvironment.initialize({
     initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   await DynamicResourceLoader.load(
     ResourceType.Script,

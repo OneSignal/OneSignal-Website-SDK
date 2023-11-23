@@ -4,7 +4,6 @@ import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 import {
   TestEnvironmentConfig,
-  HttpHttpsEnvironment,
   TestEnvironment,
 } from '../../support/sdk/TestEnvironment';
 import EventsTestHelper from '../../support/tester/EventsTestHelper';
@@ -42,7 +41,6 @@ test.afterEach(function (_t: ExecutionContext) {
 });
 
 const testConfig: TestEnvironmentConfig = {
-  httpOrHttps: HttpHttpsEnvironment.Https,
   integration: ConfigIntegrationKind.Custom,
   permission: NotificationPermission.Default,
   pushIdentifier: 'granted',

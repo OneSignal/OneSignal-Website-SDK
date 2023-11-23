@@ -83,15 +83,7 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
     config = {};
   }
 
-  let url: string | undefined = undefined;
-  let isSecureContext: boolean | undefined = undefined;
-  if (config.httpOrHttps == HttpHttpsEnvironment.Http) {
-    url = 'http://localhost:3000/webpush/sandbox?http=1';
-    isSecureContext = false;
-  } else {
-    url = 'https://localhost:3001/webpush/sandbox?https=1';
-    isSecureContext = true;
-  }
+  let url = 'https://localhost:3001/webpush/sandbox?https=1';
 
   if (config.url) {
     url = config.url.toString();
@@ -129,24 +121,14 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
     new MockServiceWorkerContainerWithAPIBan();
   // (windowDef as any).TextEncoder = TextEncoder;
   // (windowDef as any).TextDecoder = TextDecoder;
-  (windowDef as any).isSecureContext = isSecureContext;
   (windowDef as any).location = url;
 
   addCustomEventPolyfill(windowDef);
 
-  const windowTop: DOMWindow = config.initializeAsIframe
-    ? ({
-        location: {
-          get origin() {
-            throw new Error(
-              "SecurityError: Permission denied to access property 'origin' on cross-origin object",
-            );
-          },
-        },
-      } as any)
-    : windowDef;
+  const windowTop: DOMWindow = windowDef;
   dom.reconfigure({ url, windowTop });
   global.window = windowDef;
+  global.window.isSecureContext = true;
   global.document = windowDef.document;
   return dom;
 }

@@ -4,17 +4,13 @@ import {
 } from '../../../src/shared/models/AppConfig';
 import { getRandomUuid } from '../../../src/shared/utils/utils';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
-import { HttpHttpsEnvironment } from '../../support/models/HttpHttpsEnvironment';
 import { getFinalAppConfig } from '../../support/helpers/configHelper';
 import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
-import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
 import TestContext from '../../support/environment/TestContext';
 
 describe('ConfigHelper Tests', () => {
   beforeEach(async () => {
-    await TestEnvironment.initialize({
-      httpOrHttps: HttpHttpsEnvironment.Https,
-    });
+    await TestEnvironment.initialize();
     test.stub(ConfigHelper, 'checkRestrictedOrigin');
   });
 

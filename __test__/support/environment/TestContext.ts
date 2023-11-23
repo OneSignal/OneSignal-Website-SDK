@@ -11,18 +11,16 @@ import { DelayedPromptType } from '../../../src/shared/models/Prompts';
 import { APP_ID } from '../constants';
 import deepmerge from 'deepmerge';
 import ConfigManager from '../../../src/page/managers/ConfigManager';
-import { HttpHttpsEnvironment } from '../models/HttpHttpsEnvironment';
 import { TestEnvironmentConfig } from './TestEnvironment';
 
 export default class TestContext {
   static getFakeServerAppConfig(
     configIntegrationKind: ConfigIntegrationKind,
-    isHttps = true,
     overrideServerConfig: RecursivePartial<ServerAppConfig> | null = null,
     appId: string = APP_ID,
   ): ServerAppConfig {
     if (configIntegrationKind === ConfigIntegrationKind.Custom) {
-      const customConfigHttps: ServerAppConfig = {
+      return {
         success: true,
         version: 2,
         app_id: appId,
@@ -171,31 +169,6 @@ export default class TestContext {
           },
         },
         generated_at: 1531177265,
-      };
-      if (isHttps) {
-        return customConfigHttps;
-      }
-      return {
-        ...customConfigHttps,
-        config: {
-          ...customConfigHttps.config,
-          subdomain: 'helloworld123',
-          origin: 'http://localhost:3000',
-          siteInfo: {
-            name: 'localhost http',
-            origin: 'http://localhost:3000',
-            proxyOrigin: 'helloworld123',
-            defaultIconUrl: null,
-            proxyOriginEnabled: true,
-          },
-          welcomeNotification: {
-            enable: true,
-            url: 'http://localhost:3000/?_osp=do_not_open',
-            title: 'localhost http',
-            message: 'Thanks for subscribing!',
-            urlEnabled: false,
-          },
-        },
       };
     }
 
@@ -495,9 +468,6 @@ export default class TestContext {
     const fakeUserConfig = config.userConfig || this.getFakeAppUserConfig();
     const fakeServerConfig = this.getFakeServerAppConfig(
       config.integration || ConfigIntegrationKind.Custom,
-      config.httpOrHttps
-        ? config.httpOrHttps === HttpHttpsEnvironment.Https
-        : undefined,
       config.overrideServerConfig,
     );
     const configManager = new ConfigManager();

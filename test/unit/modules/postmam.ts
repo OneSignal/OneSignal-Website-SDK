@@ -1,9 +1,6 @@
 import '../../support/polyfills/polyfills';
 import anyTest, { TestInterface } from 'ava';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import Postmam from '../../../src/shared/services/Postmam';
 
 interface PostmamContext {
@@ -17,9 +14,7 @@ interface PostmamContext {
 const test = anyTest as TestInterface<PostmamContext>;
 
 test.beforeEach(async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 
   // Stub MessageChannel
   const fakeClass = class Test {};

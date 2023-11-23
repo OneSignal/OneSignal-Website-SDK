@@ -37,7 +37,6 @@ export interface TestEnvironmentConfig {
   url?: string;
   initializeAsIframe?: boolean;
   userAgent?: BrowserUserAgent;
-  httpOrHttps?: HttpHttpsEnvironment;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
   integration?: ConfigIntegrationKind;
   useMockIdentityModel?: boolean;

@@ -1,9 +1,6 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { AppUserConfigCustomLinkOptions } from '../../../src/shared/models/Prompts';
 import { ResourceLoadState } from '../../../src/page/services/DynamicResourceLoader';
 import { hasCssClass } from '../../../src/shared/utils/utils';
@@ -43,7 +40,6 @@ test.beforeEach(async () => {
 
   await TestEnvironment.initialize({
     addPrompts: true,
-    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   TestEnvironment.mockInternalOneSignal();
   sandbox

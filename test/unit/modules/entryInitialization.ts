@@ -1,9 +1,6 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import {
-  HttpHttpsEnvironment,
-  TestEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 
 import '../../support/sdk/TestEnvironment';
 import { ReplayCallsOnOneSignal } from '../../../src/page/utils/ReplayCallsOnOneSignal';
@@ -22,9 +19,7 @@ let sandbox: SinonSandbox;
 
 test.beforeEach(async function () {
   sandbox = sinon.sandbox.create();
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.stubDomEnvironment();
 });
 
 test.afterEach(function () {

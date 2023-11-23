@@ -1,9 +1,6 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { AppUserConfig } from '../../../src/shared/models/AppConfig';
 import Random from '../../support/tester/Random';
 import {
@@ -17,9 +14,7 @@ import PromptsHelper from '../../../src/shared/helpers/PromptsHelper';
 const sandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async () => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 });
 
 test.afterEach(() => {
