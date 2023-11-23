@@ -1,7 +1,3 @@
-export interface OSWindowClient extends WindowClient {
-  isSubdomainIframe: boolean;
-}
-
 export interface ClientStatus {
   timestamp: number;
   sentRequestsCount: number;

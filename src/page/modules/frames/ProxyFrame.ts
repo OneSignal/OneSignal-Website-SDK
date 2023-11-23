@@ -171,18 +171,6 @@ export default class ProxyFrame extends RemoteFrame {
         value: new URL(OneSignal.config.pageUrl).origin,
       });
     }
-
-    /**
-     * When a user is on http://example.com and receives a notification, we want to open a new window only if the
-     * notification's URL is different from http://example.com. The service worker, which only controls
-     * subdomain.onesignal.com, doesn't know that the host URL is http://example.com. Although defaultUrl above
-     * sets the HTTP's origin, this can be modified if users call setDefaultTitle(). lastKnownHostUrl therefore
-     * stores the last visited full page URL.
-     */
-    await Database.put('Options', {
-      key: 'lastKnownHostUrl',
-      value: OneSignal.config.pageUrl,
-    });
     await InitHelper.initSaveState();
     await InitHelper.storeInitialValues();
     await InitHelper.saveInitOptions();
