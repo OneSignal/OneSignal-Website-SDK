@@ -896,27 +896,6 @@ export class SubscriptionManager {
     };
   }
 
-  private async getSubscriptionStateForInsecure(): Promise<PushSubscriptionState> {
-    /* For HTTP, we need to rely on stored values; we never have access to the actual data */
-    const { deviceId, subscriptionToken, optedOut } =
-      await Database.getSubscription();
-    const notificationPermission =
-      await this.context.permissionManager.getNotificationPermission(
-        this.context.appConfig.safariWebId,
-      );
-
-    const isPushEnabled = !!(
-      deviceId &&
-      subscriptionToken &&
-      notificationPermission === NotificationPermission.Granted
-    );
-
-    return {
-      subscribed: isPushEnabled,
-      optedOut: !!optedOut,
-    };
-  }
-
   /**
    * Broadcasting to the server the fact user tried to subscribe but there was an error during service worker registration.
    * Do it only once for the first page view.
