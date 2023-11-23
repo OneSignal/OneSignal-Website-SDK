@@ -761,10 +761,6 @@ export class SubscriptionManager {
   }
 
   public async isSubscriptionExpiring(): Promise<boolean> {
-    return await this.isSubscriptionExpiringForSecureIntegration();
-  }
-
-  private async isSubscriptionExpiringForSecureIntegration(): Promise<boolean> {
     const serviceWorkerState =
       await this.context.serviceWorkerManager.getActiveState();
     if (!(serviceWorkerState === ServiceWorkerActiveState.OneSignalWorker)) {
@@ -827,12 +823,12 @@ export class SubscriptionManager {
       }
       default: {
         /* Regular browser window environments */
-        return this.getSubscriptionStateForSecure();
+        return this.getSubscriptionStateFromBrowserContext();
       }
     }
   }
 
-  private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
+  private async getSubscriptionStateFromBrowserContext(): Promise<PushSubscriptionState> {
     const { optedOut, subscriptionToken } = await Database.getSubscription();
 
     const pushSubscriptionOSModel: OSModel<SupportedSubscription> | undefined =
