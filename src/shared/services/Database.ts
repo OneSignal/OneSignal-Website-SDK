@@ -114,7 +114,6 @@ export default class Database {
   /**
    * Asynchronously retrieves the value of the key at the table (if key is specified), or the entire table
    * (if key is not specified).
-   * If on an iFrame or popup environment, retrieves from the correct IndexedDB database using cross-domain messaging.
    * @param table The table to retrieve the value from.
    * @param key The key in the table to retrieve the value of. Leave blank to get the entire table.
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.

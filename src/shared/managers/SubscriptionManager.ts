@@ -109,10 +109,8 @@ export class SubscriptionManager {
   /**
    * Subscribes for a web push subscription.
    *
-   * This method is aware of different subscription environments like subscribing from a webpage,
-   * service worker, or OneSignal HTTP popup and will select the correct method. This is intended to
-   * be the single public API for obtaining a raw web push subscription (i.e. what the browser
-   * returns from a successful subscription).
+   * This method can be called from the page context or a webpage a service worker context
+   * and will select the correct method.
    */
   public async subscribe(
     subscriptionStrategy: SubscriptionStrategyKind,

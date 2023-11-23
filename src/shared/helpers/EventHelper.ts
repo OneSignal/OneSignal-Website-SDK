@@ -240,9 +240,6 @@ export default class EventHelper {
   /**
    * When notifications are clicked, because the site isn't open, the notification is stored in the database. The next
    * time the page opens, the event is triggered if its less than 5 minutes (usually page opens instantly from click).
-   *
-   * This method is fired for both HTTPS and HTTP sites, so for HTTP sites, the host URL needs to be used, not the
-   * subdomain.onesignal.com URL.
    */
   static async fireStoredNotificationClicks() {
     await awaitOneSignalInitAndSupported();

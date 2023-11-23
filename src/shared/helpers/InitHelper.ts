@@ -106,9 +106,6 @@ export default class InitHelper {
 
   /**
    * This event occurs after init.
-   * For HTTPS sites, this event is called after init.
-   * For HTTP sites, this event is called after the iFrame is created,
-   *    and a message is received from the iFrame signaling cross-origin messaging is ready.
    * @private
    */
   public static async onSdkInitialized() {
@@ -209,8 +206,6 @@ export default class InitHelper {
 
     // Store initial values of notification permission, user ID, and manual subscription status
     // This is done so that the values can be later compared to see if anything changed
-    // This is done here for HTTPS, it is done after the call to _addSessionIframe in sessionInit for HTTP sites,
-    // since the iframe is needed for communication
     promises.push(InitHelper.storeInitialValues());
     promises.push(InitHelper.installNativePromptPermissionChangedHook());
     promises.push(InitHelper.setWelcomeNotificationFlag());

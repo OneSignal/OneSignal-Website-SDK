@@ -55,9 +55,6 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
  * The main service worker script fetching and displaying notifications to users in the background even when the client
  * site is not running. The worker is registered via the navigator.serviceWorker.register() call after the user first
  * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
- *
- * For HTTPS sites, the service worker is registered site-wide at the top-level scope. For HTTP sites, the service
- * worker is registered to the iFrame pointing to subdomain.onesignal.com.
  */
 export class ServiceWorker {
   static UNSUBSCRIBED_FROM_NOTIFICATIONS: boolean | undefined;
@@ -104,9 +101,9 @@ export class ServiceWorker {
 
   /**
    * Allows message passing between this service worker and pages on the same domain.
-   * Clients include any HTTPS site page, or the nested iFrame pointing to OneSignal on any HTTP site. This allows
-   * events like notification dismissed, clicked, and displayed to be fired on the clients. It also allows the
-   * clients to communicate with the service worker to close all active notifications.
+   * This allows events like notification dismissed, clicked, and displayed to be
+   * fired on the clients. It also allows the clients to communicate with the
+   * service worker to close all active notifications.
    */
   static get workerMessenger(): WorkerMessenger {
     if (!(self as any).workerMessenger) {

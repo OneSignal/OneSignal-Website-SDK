@@ -19,8 +19,7 @@ export class Subscription implements Serializable {
    */
   createdAt: number | undefined;
   /**
-   * For HTTP sites only. This property is stored on the native PushSubscription object, but it's inaccessible
-   * in cross-origin frames.
+   * This property is stored on the native PushSubscription object.
    */
   expirationTime: number | null | undefined;
 
