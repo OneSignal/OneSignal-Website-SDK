@@ -4,15 +4,11 @@ import { AppConfig } from '../models/AppConfig';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { Subscription } from '../models/Subscription';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import Bell from '../../page/bell/Bell';
 import { ContextInterface } from '../../page/models/Context';
-import SubscriptionModalHost from '../../page/modules/frames/SubscriptionModalHost';
-import SubscriptionPopupHost from '../../page/modules/frames/SubscriptionPopupHost';
 import { DynamicResourceLoader } from '../../page/services/DynamicResourceLoader';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
@@ -22,11 +18,6 @@ import OneSignalEvent from '../services/OneSignalEvent';
 import { bowserCastle } from '../utils/bowserCastle';
 
 declare let OneSignal: any;
-
-export interface RegisterOptions extends SubscriptionPopupHostOptions {
-  modalPrompt?: boolean;
-  slidedown?: boolean;
-}
 
 export default class InitHelper {
   /** Main methods */
@@ -110,21 +101,7 @@ export default class InitHelper {
     await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   }
 
-  // In-Addition to registering for push, this shows a native browser
-  // notification permission prompt, if needed.
-  public static async registerForPushNotifications(
-    options: RegisterOptions = {},
-  ): Promise<void> {
-    if (options && options.modalPrompt) {
-      /* Show the HTTPS fullscreen modal permission message. */
-      OneSignal.subscriptionModalHost = new SubscriptionModalHost(
-        OneSignal.config.appId,
-        options,
-      );
-      await OneSignal.subscriptionModalHost.load();
-      return;
-    }
-
+  public static async registerForPushNotifications(): Promise<void> {
     await SubscriptionHelper.registerForPush();
   }
 
@@ -162,23 +139,6 @@ export default class InitHelper {
     }
 
     await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
-  }
-
-  public static async loadSubscriptionPopup(
-    options?: SubscriptionPopupHostOptions,
-  ) {
-    /**
-     * Users may be subscribed to either .onesignal.com or .os.tc. By this time
-     * that they are subscribing to the popup, the Proxy Frame has already been
-     * loaded and the user's subscription status has been obtained. We can then
-     * use the Proxy Frame present now and check its URL to see whether the user
-     * is finally subscribed to .onesignal.com or .os.tc.
-     */
-    OneSignal.subscriptionPopupHost = new SubscriptionPopupHost(
-      OneSignal.proxyFrameHost.url,
-      options,
-    );
-    await OneSignal.subscriptionPopupHost.load();
   }
 
   /** Helper methods */
@@ -247,25 +207,6 @@ export default class InitHelper {
     );
     await context.subscriptionManager.registerSubscription(rawPushSubscription);
     return true;
-  }
-
-  public static async registerSubscriptionInProxyFrame(
-    context: ContextInterface,
-  ): Promise<Subscription> {
-    const newSubscription = await new Promise<Subscription>((resolve) => {
-      context.workerMessenger.once(
-        WorkerMessengerCommand.SubscribeNew,
-        (subscription) => {
-          resolve(Subscription.deserialize(subscription));
-        },
-      );
-      context.workerMessenger.unicast(
-        WorkerMessengerCommand.SubscribeNew,
-        context.appConfig,
-      );
-    });
-    Log.debug('Finished registering brand new subscription:', newSubscription);
-    return newSubscription;
   }
 
   public static async doInitialize(): Promise<void> {

@@ -6,7 +6,6 @@ import Database from '../services/Database';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Log from '../libraries/Log';
 import OneSignalEvent from '../services/OneSignalEvent';
-import ProxyFrame from '../../page/modules/frames/ProxyFrame';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import ServiceWorkerHelper, {
@@ -321,19 +320,6 @@ export class ServiceWorkerManager {
       },
     );
 
-    workerMessenger.on(WorkerMessengerCommand.RedirectPage, (data) => {
-      Log.debug(
-        `${SdkEnvironment.getWindowEnv().toString()} Picked up command.redirect to ${data}, forwarding to host page.`,
-      );
-      const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
-      if (proxyFrame) {
-        proxyFrame.messenger.message(
-          OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT,
-          data,
-        );
-      }
-    });
-
     workerMessenger.on(
       WorkerMessengerCommand.NotificationDismissed,
       async (data) => {
@@ -361,17 +347,6 @@ export class ServiceWorkerManager {
             WorkerMessengerCommand.AreYouVisibleResponse,
             payload,
           );
-        } else {
-          const httpPayload: PageVisibilityRequest = {
-            timestamp: incomingPayload.timestamp,
-          };
-          const proxyFrame: ProxyFrame | undefined = OneSignal.proxyFrame;
-          if (proxyFrame) {
-            proxyFrame.messenger.message(
-              OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST,
-              httpPayload,
-            );
-          }
         }
       },
     );

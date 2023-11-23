@@ -2,12 +2,6 @@ import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
 import ConfigManager from '../page/managers/ConfigManager';
 import Context from '../page/models/Context';
 import { EnvironmentInfo } from '../page/models/EnvironmentInfo';
-import ProxyFrame from '../page/modules/frames/ProxyFrame';
-import ProxyFrameHost from '../page/modules/frames/ProxyFrameHost';
-import SubscriptionModal from '../page/modules/frames/SubscriptionModal';
-import SubscriptionModalHost from '../page/modules/frames/SubscriptionModalHost';
-import SubscriptionPopup from '../page/modules/frames/SubscriptionPopup';
-import SubscriptionPopupHost from '../page/modules/frames/SubscriptionPopupHost';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
 import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
@@ -297,12 +291,6 @@ export default class OneSignal {
   static event = OneSignalEvent;
   private static pendingInit = true;
 
-  static subscriptionPopup: SubscriptionPopup;
-  static subscriptionPopupHost: SubscriptionPopupHost;
-  static subscriptionModal: SubscriptionModal;
-  static subscriptionModalHost: SubscriptionModalHost;
-  static proxyFrameHost: ProxyFrameHost;
-  static proxyFrame: ProxyFrame;
   static emitter: Emitter = new Emitter();
   static cache: any = {};
   static _LOGGING = false;
@@ -320,12 +308,6 @@ export default class OneSignal {
   static User = new UserNamespace(false);
   static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
-
-  /**
-   * Used by Rails-side HTTP popup. Must keep the same name.
-   * @InternalApi
-   */
-  static _initPopup = () => OneSignal.subscriptionPopup.subscribe();
 
   static POSTMAM_COMMANDS = {
     CONNECTED: 'connect',

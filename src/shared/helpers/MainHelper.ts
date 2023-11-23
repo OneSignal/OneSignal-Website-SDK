@@ -166,12 +166,6 @@ export default class MainHelper {
     return hash;
   }
 
-  static triggerCustomPromptClicked(clickResult) {
-    OneSignalEvent.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
-      result: clickResult,
-    });
-  }
-
   static async getAppId(): Promise<string> {
     if (OneSignal.config.appId) {
       return Promise.resolve(OneSignal.config.appId);
