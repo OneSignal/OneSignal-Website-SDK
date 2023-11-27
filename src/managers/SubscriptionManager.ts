@@ -51,6 +51,7 @@ export type SubscriptionStateServiceWorkerNotIntalled =
 export class SubscriptionManager {
   private context: ContextSWInterface;
   private config: SubscriptionManagerConfig;
+  private safariPermissionPromptFailed = false;
 
   constructor(context: ContextSWInterface, config: SubscriptionManagerConfig) {
     this.context = context;
@@ -258,23 +259,36 @@ export class SubscriptionManager {
     return !!deviceId;
   }
 
-  private subscribeSafariPromptPermission(): Promise<string | null> {
-    return new Promise<string>(resolve => {
-      window.safari.pushNotification.requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
-        this.config.safariWebId,
-        {
-          app_id: this.config.appId
-        },
-        response => {
-          if ((response as any).deviceToken) {
-            resolve((response as any).deviceToken.toLowerCase());
-          } else {
-            resolve(null);
-          }
-        }
+  private async subscribeSafariPromptPermission(): Promise<string | null> {
+    const requestPermission = (url: string) => {
+      return new Promise<string | null>((resolve) => {
+        window.safari.pushNotification.requestPermission(
+          url,
+          this.config.safariWebId,
+          { app_id: this.config.appId },
+          (response) => {
+            if (response && response.deviceToken) {
+              resolve(response.deviceToken.toLowerCase());
+            } else {
+              resolve(null);
+            }
+          },
+        );
+      });
+    };
+
+    if (!this.safariPermissionPromptFailed) {
+      return requestPermission(
+        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari/apps/${
+          this.config.appId
+        }`,
       );
-    });
+    } else {
+      // If last attempt failed, retry with the legacy URL
+      return requestPermission(
+        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
+      );
+    }
   }
 
   private async subscribeSafari(): Promise<RawPushSubscription> {
@@ -308,6 +322,7 @@ export class SubscriptionManager {
     if (deviceToken) {
       pushSubscriptionDetails.setFromSafariSubscription(deviceToken);
     } else {
+      this.safariPermissionPromptFailed = true;
       throw new SubscriptionError(SubscriptionErrorReason.InvalidSafariSetup);
     }
     return pushSubscriptionDetails;
