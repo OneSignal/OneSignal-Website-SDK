@@ -12,6 +12,7 @@ import OneSignalApiShared from '../api/OneSignalApiShared';
 import User from '../../onesignal/User';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
+import { logMethodCall } from '../utils/utils';
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -84,30 +85,6 @@ export class UpdateManager {
       Log.error(
         `Failed to update user session. Error "${e.message}" ${e.stack}`,
       );
-    }
-  }
-
-  public async sendPlayerCreate(
-    deviceRecord: PushDeviceRecord,
-  ): Promise<string | undefined> {
-    try {
-      const deviceId = await OneSignalApiShared.createUser(deviceRecord);
-      if (deviceId) {
-        Log.info(
-          'Subscribed to web push and registered with OneSignal',
-          deviceRecord,
-          deviceId,
-        );
-        this.onSessionSent = true;
-        // Not awaiting here on purpose
-        this.context.sessionManager.upsertSession(SessionOrigin.PlayerCreate);
-        return deviceId;
-      }
-      Log.error(`Failed to create user.`);
-      return undefined;
-    } catch (e) {
-      Log.error(`Failed to create user. Error "${e.message}" ${e.stack}`);
-      return undefined;
     }
   }
 

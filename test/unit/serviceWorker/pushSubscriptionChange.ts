@@ -33,7 +33,6 @@ test.beforeEach(async () => {
     .resolves(
       TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom),
     );
-  sinonSandbox.stub(OneSignalApiSW, 'updatePlayer').resolves();
 
   oldSubscription = await new MockPushManager().subscribe({
     userVisibleOnly: true,

@@ -2,7 +2,7 @@ import { Serializable } from '../../page/models/Serializable';
 
 export class Subscription implements Serializable {
   /**
-   * The OneSignal player ID.
+   * The OneSignal subscription id.
    */
   deviceId: string | undefined;
   /**

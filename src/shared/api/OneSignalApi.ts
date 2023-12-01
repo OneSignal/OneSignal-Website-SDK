@@ -3,23 +3,9 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import OneSignalApiSW from './OneSignalApiSW';
 import OneSignalApiShared from './OneSignalApiShared';
-import { UpdatePlayerOptions } from '../models/UpdatePlayerOptions';
 import { ServerAppConfig } from '../models/AppConfig';
-import { DeviceRecord } from '../models/DeviceRecord';
 
 export default class OneSignalApi {
-  static getPlayer(appId: string, playerId: string) {
-    return OneSignalApiShared.getPlayer(appId, playerId);
-  }
-
-  static updatePlayer(
-    appId: string,
-    playerId: string,
-    options?: UpdatePlayerOptions,
-  ) {
-    return OneSignalApiShared.updatePlayer(appId, playerId, options);
-  }
-
   static sendNotification(
     appId: string,
     playerIds: Array<string>,
@@ -70,9 +56,5 @@ export default class OneSignalApi {
     } else {
       return await OneSignalApiSW.downloadServerAppConfig(appId);
     }
-  }
-
-  static async createUser(deviceRecord: DeviceRecord): Promise<string | null> {
-    return await OneSignalApiShared.createUser(deviceRecord);
   }
 }
