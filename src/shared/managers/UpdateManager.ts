@@ -77,10 +77,6 @@ export class UpdateManager {
     }
   }
 
-  public onSessionAlreadyCalled() {
-    return this.onSessionSent;
-  }
-
   public async sendOutcomeDirect(
     appId: string,
     notificationIds: string[],
