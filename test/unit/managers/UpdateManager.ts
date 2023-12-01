@@ -4,9 +4,7 @@ import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { UpdateManager } from '../../../src/shared/managers/UpdateManager';
 import Database from '../../../src/shared/services/Database';
 import Random from '../../support/tester/Random';
-import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
-import MainHelper from '../../../src/shared/helpers/MainHelper';
 
 // manually create and restore the sandbox
 const sandbox: SinonSandbox = sinon.sandbox.create();
@@ -64,9 +62,6 @@ test("sendOnSessionUpdate triggers on_session for existing subscribed user if ha
       'isAlreadyRegisteredWithOneSignal',
     )
     .resolves(true);
-  sandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   const onSessionSpy = sandbox
     .stub(OneSignal.context.sessionManager, 'upsertSession')
     .resolves();
@@ -93,7 +88,6 @@ test("sendOnSessionUpdate triggers on_session for existing subscribed user if ha
 
 //   // 3. Make on_session call
 //   sandbox.stub(OneSignal.context.sessionManager, "isFirstPageView").returns(true);
-//   sandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
 //   await OneSignal.context.updateManager.sendOnSessionUpdate();
 
 //   // 4. Ensure we have the new playe_id saved in indexDB
@@ -114,9 +108,6 @@ test("sendOnSessionUpdate triggers on_session for existing unsubscribed user if 
       'isAlreadyRegisteredWithOneSignal',
     )
     .resolves(true);
-  sandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.UserOptedOut);
   OneSignal.config.enableOnSession = true;
 
   const onSessionSpy = sandbox
@@ -143,9 +134,6 @@ test(`sendOnSessionUpdate triggers on_session for existing unsubscribed user if 
       'isAlreadyRegisteredWithOneSignal',
     )
     .resolves(true);
-  sandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.UserOptedOut);
   OneSignal.config.enableOnSession = false;
 
   const onSessionSpy = sandbox

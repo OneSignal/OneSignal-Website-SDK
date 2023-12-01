@@ -4,7 +4,6 @@ import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { OutcomeRequestData } from '../../../src/page/models/OutcomeRequestData';
 import { DeliveryPlatformKind } from '../../../src/shared/models/DeliveryPlatformKind';
-import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
 import Log from '../../../src/shared/libraries/Log';
 import Database, {
   TABLE_OUTCOMES_NOTIFICATION_CLICKED,
@@ -14,7 +13,6 @@ import timemachine from 'timemachine';
 import { SentUniqueOutcome } from '../../../src/shared/models/Outcomes';
 import OutcomeTestHelper from '../../support/tester/OutcomeTestHelper';
 import OneSignalApiShared from '../../../src/shared/api/OneSignalApiShared';
-import MainHelper from '../../../src/shared/helpers/MainHelper';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const OUTCOME_NAME = 'test_outcome';
@@ -53,9 +51,6 @@ test('reporting outcome requires the sdk to be initialized', async (t) => {
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   const sendOutcomePromise = OneSignal.sendUniqueOutcome(OUTCOME_NAME);
   t.is(apiSpy.callCount, 0);
 
@@ -83,9 +78,6 @@ test('when outcome is unattributed and feature enabled it sends an api call', as
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 1);
@@ -115,9 +107,6 @@ test('when outcome is direct and feature enabled it sends an api call', async (t
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 1);
@@ -146,9 +135,6 @@ test('when outcome is direct and feature disabled there are no api calls', async
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 0);
@@ -164,9 +150,6 @@ test('when outcome is indirect and feature enabled it sends an api call', async 
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 1);
@@ -199,9 +182,6 @@ test('when outcome is indirect and feature disabled there are no api calls', asy
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 0);
@@ -217,9 +197,6 @@ test('when direct outcome is sent twice, there is only one api call', async (t) 
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
@@ -236,9 +213,6 @@ test('when indirect outcome is sent twice, there is only one api call', async (t
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
@@ -255,9 +229,6 @@ test('indirect outcome sent -> receive new notification -> indirect outcome sent
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
   await OutcomeTestHelper.setupReceivedNotifications();
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
@@ -275,9 +246,6 @@ test('when unattributed outcome is sent twice, there is only one api call', asyn
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
@@ -293,9 +261,6 @@ test('when new session starts between unattributed outcome sends, there are two 
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
   await OutcomeTestHelper.initializeSession();
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
@@ -309,9 +274,6 @@ test('attribution of an outcome with multiple notifications happens correctly', 
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
 
   const notificationArr = [];
   let notificationReceived = OutcomeTestHelper.generateNotification();

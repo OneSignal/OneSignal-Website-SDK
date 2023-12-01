@@ -8,41 +8,12 @@ import {
   SlidedownOptions,
 } from '../models/Prompts';
 import Log from '../libraries/Log';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { NotificationPermission } from '../models/NotificationPermission';
 import Utils from '../context/Utils';
 import Database from '../services/Database';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import Environment from './Environment';
 
 export default class MainHelper {
-  public static async getCurrentNotificationType(): Promise<SubscriptionStateKind> {
-    const currentPermission: NotificationPermission =
-      await OneSignal.context.permissionManager.getNotificationPermission(
-        OneSignal.context.appConfig.safariWebId,
-      );
-
-    if (currentPermission === NotificationPermission.Default) {
-      return SubscriptionStateKind.NoNativePermission;
-    }
-
-    if (currentPermission === NotificationPermission.Denied) {
-      return SubscriptionStateKind.NotSubscribed;
-    }
-
-    const existingUser =
-      await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-    if (currentPermission === NotificationPermission.Granted && existingUser) {
-      const isPushEnabled =
-        await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-      return isPushEnabled
-        ? SubscriptionStateKind.Subscribed
-        : SubscriptionStateKind.UserOptedOut;
-    }
-
-    return SubscriptionStateKind.NoNativePermission;
-  }
-
   static async checkAndTriggerNotificationPermissionChanged() {
     const previousPermission = await Database.get(
       'Options',
