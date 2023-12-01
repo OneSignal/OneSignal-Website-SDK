@@ -40,6 +40,7 @@ import UserDirector from '../../onesignal/UserDirector';
 import { OSModel } from '../../core/modelRepo/OSModel';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import { bowserCastle } from '../utils/bowserCastle';
+import { PushSubscriptionState } from '../models/PushSubscriptionState';
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;

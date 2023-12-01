@@ -35,6 +35,7 @@ import {
   NotSubscribedReason,
 } from '../../../shared/errors/NotSubscribedError';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
+import { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 
 export class SlidedownManager {
   private context: ContextInterface;
