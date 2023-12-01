@@ -27,10 +27,6 @@ export interface AppConfig {
   origin: string;
 
   restrictedOriginEnabled?: boolean | null;
-  metrics: {
-    enable: boolean;
-    mixpanelReportingToken: string | null;
-  };
   enableOnSession?: boolean;
   enableSessionDuration?: boolean;
   safariWebId?: string;

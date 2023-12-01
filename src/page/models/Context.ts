@@ -15,12 +15,10 @@ import { ITagManager } from '../managers/tagManager/types';
 import { ISlidedownManager } from '../managers/slidedownManager/types';
 import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
 import { AppConfig } from '../../shared/models/AppConfig';
-import MetricsManager from '../managers/MetricsManager';
 import { PromptsManager } from '../managers/PromptsManager';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
-  metricsManager: MetricsManager;
   environmentInfo?: EnvironmentInfo;
   tagManager: ITagManager;
   slidedownManager: ISlidedownManager;
@@ -35,7 +33,6 @@ export default class Context implements ContextInterface {
   public workerMessenger: WorkerMessenger;
   public pageViewManager: PageViewManager;
   public permissionManager: PermissionManager;
-  public metricsManager: MetricsManager;
   public updateManager: UpdateManager;
   public promptsManager: PromptsManager;
   public sessionManager: ISessionManager;
@@ -58,9 +55,5 @@ export default class Context implements ContextInterface {
     this.slidedownManager = new SlidedownManager(this);
     this.promptsManager = new PromptsManager(this);
     this.dynamicResourceLoader = new DynamicResourceLoader();
-    this.metricsManager = new MetricsManager(
-      appConfig.metrics.enable,
-      appConfig.metrics.mixpanelReportingToken,
-    );
   }
 }
