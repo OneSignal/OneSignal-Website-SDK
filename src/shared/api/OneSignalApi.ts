@@ -4,8 +4,7 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import OneSignalApiSW from './OneSignalApiSW';
 import OneSignalApiShared from './OneSignalApiShared';
 import { UpdatePlayerOptions } from '../models/UpdatePlayerOptions';
-import { EmailProfile } from '../models/EmailProfile';
-import { ServerAppConfig, AppConfig } from '../models/AppConfig';
+import { ServerAppConfig } from '../models/AppConfig';
 import { DeviceRecord } from '../models/DeviceRecord';
 
 export default class OneSignalApi {
@@ -75,17 +74,5 @@ export default class OneSignalApi {
 
   static async createUser(deviceRecord: DeviceRecord): Promise<string | null> {
     return await OneSignalApiShared.createUser(deviceRecord);
-  }
-
-  static async logoutEmail(
-    appConfig: AppConfig,
-    emailProfile: EmailProfile,
-    deviceId: string,
-  ): Promise<boolean> {
-    return await OneSignalApiShared.logoutEmail(
-      appConfig,
-      emailProfile,
-      deviceId,
-    );
   }
 }

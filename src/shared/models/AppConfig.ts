@@ -213,9 +213,6 @@ export interface ServerAppConfig {
     restrict_origin: {
       enable: boolean;
     };
-    email?: {
-      require_auth: boolean;
-    };
     enable_on_session?: boolean;
     receive_receipts_enable?: boolean;
     web_on_focus_enabled: boolean;

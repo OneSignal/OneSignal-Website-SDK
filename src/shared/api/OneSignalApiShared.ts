@@ -5,9 +5,7 @@ import {
   OneSignalApiErrorKind,
 } from '../errors/OneSignalApiError';
 import Log from '../libraries/Log';
-import { AppConfig } from '../models/AppConfig';
 import { DeviceRecord } from '../models/DeviceRecord';
-import { EmailProfile } from '../models/EmailProfile';
 import { UpdatePlayerOptions } from '../models/UpdatePlayerOptions';
 import OneSignalApiBase from './OneSignalApiBase';
 
@@ -72,30 +70,6 @@ export default class OneSignalApiShared {
     );
     if (response && response.result.success) return response.result.id;
     return null;
-  }
-
-  static async logoutEmail(
-    appConfig: AppConfig,
-    emailProfile: EmailProfile,
-    deviceId: string,
-  ): Promise<boolean> {
-    Utils.enforceAppId(appConfig.appId);
-    Utils.enforcePlayerId(deviceId);
-    const response = await OneSignalApiBase.post(
-      `players/${deviceId}/email_logout`,
-      {
-        app_id: appConfig.appId,
-        parent_player_id: emailProfile.subscriptionId,
-        identifier_auth_hash: emailProfile.identifierAuthHash
-          ? emailProfile.identifierAuthHash
-          : undefined,
-      },
-    );
-    if (response && response.result.success) {
-      return true;
-    } else {
-      return false;
-    }
   }
 
   static async updateUserSession(

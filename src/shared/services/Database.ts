@@ -10,7 +10,6 @@ import {
 } from '../models/OutcomesNotificationEvents';
 import { ServiceWorkerState } from '../models/ServiceWorkerState';
 import { Subscription } from '../models/Subscription';
-import { BundleEmail, EmailProfile } from '../models/EmailProfile';
 import { Session, ONESIGNAL_SESSION_KEY } from '../models/Session';
 import Log from '../libraries/Log';
 import { SentUniqueOutcome } from '../models/Outcomes';
@@ -384,24 +383,6 @@ export default class Database {
     return await this.get<string>('Ids', 'jwtToken');
   }
 
-  async getEmailProfile(): Promise<EmailProfile> {
-    const profileJson = await this.get<BundleEmail>('Ids', 'emailProfile');
-    if (profileJson) {
-      return EmailProfile.deserialize(profileJson);
-    } else {
-      return new EmailProfile();
-    }
-  }
-
-  async setEmailProfile(emailProfile: EmailProfile): Promise<void> {
-    if (emailProfile) {
-      await this.put('Ids', {
-        type: 'emailProfile',
-        id: emailProfile.serialize(),
-      });
-    }
-  }
-
   async getSMSProfile(): Promise<SMSProfile> {
     const profileJson = await this.get<BundleSMS>('Ids', 'smsProfile');
     if (profileJson) {
@@ -579,14 +560,6 @@ export default class Database {
 
   public static async cleanupCurrentSession(): Promise<void> {
     await Database.singletonInstance.removeSession(ONESIGNAL_SESSION_KEY);
-  }
-
-  static async setEmailProfile(emailProfile: EmailProfile) {
-    return await Database.singletonInstance.setEmailProfile(emailProfile);
-  }
-
-  static async getEmailProfile(): Promise<EmailProfile> {
-    return await Database.singletonInstance.getEmailProfile();
   }
 
   static async setSMSProfile(smsProfile: SMSProfile) {

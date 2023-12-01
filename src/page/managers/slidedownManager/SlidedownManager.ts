@@ -34,6 +34,7 @@ import {
   NotSubscribedError,
   NotSubscribedReason,
 } from '../../../shared/errors/NotSubscribedError';
+import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 
 export class SlidedownManager {
   private context: ContextInterface;
@@ -99,8 +100,9 @@ export class SlidedownManager {
     } else {
       if (!options.force) {
         const smsSubscribed = !!(await Database.getSMSProfile()).subscriptionId;
-        const emailSubscribed = !!(await Database.getEmailProfile())
-          .subscriptionId;
+        const emailSubscribed = await (
+          OneSignal.coreDirector as CoreModuleDirector
+        ).hasEmail();
         const bothSubscribed = smsSubscribed && emailSubscribed;
 
         if (smsSubscribed && slidedownType === DelayedPromptType.Sms) {

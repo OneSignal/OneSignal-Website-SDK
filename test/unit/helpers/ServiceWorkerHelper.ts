@@ -74,59 +74,6 @@ test('sendOnSessionCallIfNecessary, for push player', async (t) => {
   });
 });
 
-const TEST_EMAIL = 'test@test.com';
-
-test('sendOnSessionCallIfNecessary, for email player', async (t) => {
-  // 1.1 Nock out email create
-  const emailPostNock = NockOneSignalHelper.nockPlayerPost();
-  await OneSignal.setEmail(TEST_EMAIL);
-  const emailPlayerId = (await emailPostNock.result).response.body.id;
-  // 1.2 Create a push player id in the DB
-  const pushPlayerId = await setupFakePlayerId();
-
-  // 2. Setup a raw subscription, push record, and session
-  const rawSubscription = TestEnvironment.getFakeRawPushSubscription();
-  const pushDeviceRecord = new PushDeviceRecord(rawSubscription);
-  pushDeviceRecord.appId = OneSignal.config.appId;
-  const session: Session = initializeNewSession({
-    deviceId: pushPlayerId,
-    appId: pushDeviceRecord.appId!,
-    deviceType: DeliveryPlatformKind.ChromeLike,
-  });
-
-  // 3.1 Nock out push player on session, not testing push in this test so ignore it.
-  NockOneSignalHelper.nockPlayerOnSession(pushPlayerId);
-  // 3.2 Nock out Email player on session before the network call is made.
-  const onSessionNockPromise =
-    NockOneSignalHelper.nockPlayerOnSession(emailPlayerId);
-
-  // 4. Kick off on_session call.
-  //    NOTE: This is ALWAYS expects a push player record by pre-existing design.
-  await ServiceWorkerHelper.sendOnSessionCallIfNotPlayerCreate(
-    SessionOrigin.PlayerOnSession,
-    pushDeviceRecord.serialize(),
-    pushPlayerId,
-    session,
-  );
-
-  // 5. Ensure the correct params were sent in the network call.
-  t.is(
-    (await onSessionNockPromise.result).request.url,
-    `/api/v1/players/${emailPlayerId}/on_session`,
-  );
-  t.deepEqual((await onSessionNockPromise.result).request.body, {
-    app_id: OneSignal.config.appId,
-    device_model: '',
-    device_os: -1,
-    device_type: DeliveryPlatformKind.Email,
-    language: 'en',
-    identifier: TEST_EMAIL,
-    sdk: '1',
-    timezone: 0,
-    timezone_id: 'UTC',
-  });
-});
-
 /**
  * END: SW on_session tests
  */
@@ -167,51 +114,6 @@ test('finalizeSession, for push player', async (t) => {
   t.deepEqual((await onSessionNockPromise.result).request.body, {
     app_id: OneSignal.config.appId,
     device_type: DeliveryPlatformKind.ChromeLike,
-    state: 'ping',
-    type: 1,
-    active_time: 0,
-  });
-});
-
-test('finalizeSession, for email player', async (t) => {
-  // 1.1 Nock out email create
-  const emailPostNock = NockOneSignalHelper.nockPlayerPost();
-  await OneSignal.setEmail(TEST_EMAIL);
-  const emailPlayerId = (await emailPostNock.result).response.body.id;
-  // 1.2 Create a push player id in the DB
-  const pushPlayerId = await setupFakePlayerId();
-
-  // 2. Setup a push record and session
-  const pushDeviceRecord = new PushDeviceRecord();
-  pushDeviceRecord.appId = OneSignal.config.appId;
-  const session = initializeNewSession({
-    deviceId: pushPlayerId,
-    appId: pushDeviceRecord.appId!,
-    deviceType: DeliveryPlatformKind.ChromeLike,
-  });
-
-  // 3.1 Nock out push player on_focus, ignore.
-  NockOneSignalHelper.nockPlayerOnFocus(pushPlayerId);
-  // 3.2 Nock out email player on_focus before the network call is made.
-  const onSessionNockPromise =
-    NockOneSignalHelper.nockPlayerOnFocus(emailPlayerId);
-
-  // 4. Kick off on_focus call
-  //    NOTE: This is ALWAYS expects a push player session instance by pre-existing design.
-  await ServiceWorkerHelper.finalizeSession(
-    session,
-    true,
-    OneSignal.context.appConfig.userConfig.outcomes,
-  );
-
-  // 5. Ensure the correct url and params were sent in the network call.
-  t.is(
-    (await onSessionNockPromise.result).request.url,
-    `/api/v1/players/${emailPlayerId}/on_focus`,
-  );
-  t.deepEqual((await onSessionNockPromise.result).request.body, {
-    app_id: OneSignal.config.appId,
-    device_type: DeliveryPlatformKind.Email,
     state: 'ping',
     type: 1,
     active_time: 0,

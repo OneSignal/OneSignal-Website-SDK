@@ -4,10 +4,6 @@ declare module "OneSignal" {
     export var emit: any;
 }
 
-interface SetEmailOptions {
-  identifierAuthHash?: string;
-  emailAuthHash?: string; // backwards compatibility
-}
 
 interface SetSMSOptions {
   identifierAuthHash?: string;

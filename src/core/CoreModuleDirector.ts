@@ -177,6 +177,11 @@ export class CoreModuleDirector {
     };
   }
 
+  public async hasEmail(): Promise<boolean> {
+    const emails = await this.getEmailSubscriptionModels();
+    return Object.keys(emails).length > 0;
+  }
+
   public getSmsSubscriptionModels(): {
     [key: string]: OSModel<SupportedSubscription>;
   } {

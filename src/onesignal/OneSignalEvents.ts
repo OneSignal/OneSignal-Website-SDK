@@ -55,10 +55,6 @@ export const ONESIGNAL_EVENTS = {
    */
   PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplay',
   /**
-   * Occurs when the email subscription changes
-   */
-  EMAIL_SUBSCRIPTION_CHANGED: 'emailSubscriptionChanged',
-  /**
    * Occurs when the SMS subscription changes
    */
   SMS_SUBSCRIPTION_CHANGED: 'smsSubscriptionChanged',
