@@ -3,12 +3,10 @@ import {
   OneSignalApiErrorKind,
 } from '../errors/OneSignalApiError';
 import OneSignalError from '../errors/OneSignalError';
-import { convertHeadersToPlainObjectForUnitTesting } from '../helpers/ApiBaseHelper';
 import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { APIHeaders } from '../models/APIHeaders';
-import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import { isValidUuid } from '../utils/utils';
 import OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
@@ -105,16 +103,6 @@ export class OneSignalApiBase {
       );
     }
     try {
-      if (
-        !!contents.headers &&
-        SdkEnvironment.getTestEnv() === TestEnvironmentKind.UnitTesting
-      ) {
-        contents.headers = convertHeadersToPlainObjectForUnitTesting(
-          contents.headers,
-        );
-      }
-
-      // continue with fetch
       const response = await fetch(url, contents);
       const { status } = response;
       const json = await response.json();

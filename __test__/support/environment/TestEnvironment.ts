@@ -1,10 +1,8 @@
-import SdkEnvironment from '../../../src/shared/managers/SdkEnvironment';
 import {
   AppUserConfig,
   ConfigIntegrationKind,
   ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
-import { TestEnvironmentKind } from '../../../src/shared/models/TestEnvironmentKind';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import {
   resetDatabase,
@@ -71,8 +69,6 @@ export class TestEnvironment {
         Promise.resolve(DUMMY_PUSH_TOKEN),
       );
     }
-
-    SdkEnvironment.getTestEnv = () => TestEnvironmentKind.UnitTesting;
 
     await stubDomEnvironment(config);
     config.environment = 'dom';
