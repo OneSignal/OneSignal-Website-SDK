@@ -13,7 +13,6 @@ import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';
 import { awaitableTimeout } from '../../../shared/utils/AwaitableTimeout';
 import { DismissPrompt } from '../../models/Dismiss';
-import Database from '../../../shared/services/Database';
 import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
 import {
   ChannelCaptureError,
