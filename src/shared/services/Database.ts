@@ -14,7 +14,6 @@ import { Session, ONESIGNAL_SESSION_KEY } from '../models/Session';
 import Log from '../libraries/Log';
 import { SentUniqueOutcome } from '../models/Outcomes';
 import { ModelName } from '../../core/models/SupportedModels';
-import Utils from '../context/Utils';
 import {
   NotificationClickForOpenHandlingSchema,
   NotificationClickForOpenHandlingSerializer,
@@ -151,41 +150,6 @@ export default class Database {
     config.appId = appIdStr;
     config.vapidPublicKey = await this.get<string>('Options', 'vapidPublicKey');
     return config;
-  }
-
-  async getExternalUserId(): Promise<string | undefined | null> {
-    return await this.get<string>('Ids', 'externalUserId');
-  }
-
-  async getExternalUserIdAuthHash(): Promise<string | undefined | null> {
-    return await this.get<string>('Ids', 'externalUserIdAuthHash');
-  }
-
-  async setExternalUserId(
-    externalUserId: string | null,
-    authHash: string | null,
-  ): Promise<void> {
-    const emptyString = '';
-    const externalIdToSave = Utils.getValueOrDefault(
-      externalUserId,
-      emptyString,
-    );
-    const authHashToSave = Utils.getValueOrDefault(authHash, emptyString);
-
-    if (externalIdToSave === emptyString) {
-      await this.remove('Ids', 'externalUserId');
-    } else {
-      await this.put('Ids', { type: 'externalUserId', id: externalIdToSave });
-    }
-
-    if (authHashToSave === emptyString) {
-      await this.remove('Ids', 'externalUserIdAuthHash');
-    } else {
-      await this.put('Ids', {
-        type: 'externalUserIdAuthHash',
-        id: authHashToSave,
-      });
-    }
   }
 
   async setAppConfig(appConfig: AppConfig): Promise<void> {
@@ -594,14 +558,6 @@ export default class Database {
     return await Database.singletonInstance.getAppConfig();
   }
 
-  static async getExternalUserId(): Promise<string | undefined | null> {
-    return await Database.singletonInstance.getExternalUserId();
-  }
-
-  static async getExternalUserIdAuthHash(): Promise<string | undefined | null> {
-    return await Database.singletonInstance.getExternalUserIdAuthHash();
-  }
-
   static async getLastNotificationClickedForOutcomes(
     appId: string,
   ): Promise<OutcomesNotificationClicked | null> {
@@ -656,16 +612,6 @@ export default class Database {
 
   static async resetSentUniqueOutcomes(): Promise<void> {
     return await Database.singletonInstance.resetSentUniqueOutcomes();
-  }
-
-  static async setExternalUserId(
-    externalUserId?: string | null,
-    authHash?: string | null,
-  ): Promise<void> {
-    await Database.singletonInstance.setExternalUserId(
-      externalUserId,
-      authHash,
-    );
   }
 
   static async setDeviceId(deviceId: string | null): Promise<void> {

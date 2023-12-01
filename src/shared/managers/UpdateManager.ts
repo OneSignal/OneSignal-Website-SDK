@@ -4,15 +4,9 @@ import MainHelper from '../helpers/MainHelper';
 import Database from '../services/Database';
 import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
-import Utils from '../context/Utils';
+
 import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
-import { awaitSdkEvent, logMethodCall } from '../utils/utils';
-import {
-  UpdatePlayerExternalUserId,
-  UpdatePlayerOptions,
-} from '../models/UpdatePlayerOptions';
-import { ExternalUserIdHelper } from '../helpers/ExternalUserIdHelper';
-import { TagsObject } from '../../page/models/Tags';
+
 import { SessionOrigin } from '../models/Session';
 import OneSignalApiShared from '../api/OneSignalApiShared';
 import User from '../../onesignal/User';
@@ -96,7 +90,6 @@ export class UpdateManager {
   public async sendPlayerCreate(
     deviceRecord: PushDeviceRecord,
   ): Promise<string | undefined> {
-    await ExternalUserIdHelper.addExternalUserIdToDeviceRecord(deviceRecord);
     try {
       const deviceId = await OneSignalApiShared.createUser(deviceRecord);
       if (deviceId) {
@@ -120,61 +113,6 @@ export class UpdateManager {
 
   public onSessionAlreadyCalled() {
     return this.onSessionSent;
-  }
-
-  public async sendExternalUserIdUpdate(
-    externalUserId: string | undefined | null,
-    authHash?: string | null,
-  ): Promise<any> {
-    if (!authHash) {
-      authHash = await Database.getExternalUserIdAuthHash();
-    }
-
-    const payload: UpdatePlayerExternalUserId = {
-      external_user_id: Utils.getValueOrDefault(externalUserId, ''),
-      external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined),
-    };
-
-    /* tslint:enable:no-floating-promises */
-
-    // 2. Update push player with external_user_id
-    const pushUpdatePromise = this.sendPushPlayerUpdate(payload);
-    if (await this.isDeviceIdAvailable()) {
-      await pushUpdatePromise;
-    }
-  }
-
-  public async sendTagsUpdate(tags: TagsObject<any>): Promise<void> {
-    const options: UpdatePlayerOptions = { tags };
-    const authHash = await Database.getExternalUserIdAuthHash();
-    if (!!authHash) {
-      options.external_user_id_auth_hash = authHash;
-    }
-
-    const pushUpdatePromise = this.sendPushPlayerUpdate(options);
-    if (await this.isDeviceIdAvailable()) {
-      await pushUpdatePromise;
-    }
-  }
-
-  // Send REST API payload to update the push player record.
-  // Await until we have a push playerId, which is require to make a PUT call.
-  private async sendPushPlayerUpdate(
-    payload: UpdatePlayerOptions,
-  ): Promise<void> {
-    let { deviceId } = await Database.getSubscription();
-    if (!deviceId) {
-      await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
-      ({ deviceId } = await Database.getSubscription());
-    }
-
-    if (deviceId) {
-      await OneSignalApiShared.updatePlayer(
-        this.context.appConfig.appId,
-        deviceId,
-        payload,
-      );
-    }
   }
 
   public async sendOutcomeDirect(
