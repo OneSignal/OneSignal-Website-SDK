@@ -1,7 +1,4 @@
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
-import MainHelper from '../helpers/MainHelper';
-import Database from '../services/Database';
 import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
 
@@ -22,14 +19,6 @@ export class UpdateManager {
   constructor(context: ContextSWInterface) {
     this.context = context;
     this.onSessionSent = context.pageViewManager.getPageViewCount() > 1;
-  }
-
-  private async isDeviceIdAvailable(): Promise<boolean> {
-    return (await Database.getSubscription()).deviceId != null;
-  }
-
-  private async createDeviceRecord(): Promise<PushDeviceRecord> {
-    return MainHelper.createDeviceRecord(this.context.appConfig.appId);
   }
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {

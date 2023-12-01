@@ -209,17 +209,6 @@ export default class ServiceWorkerHelper {
       return;
     }
 
-    /* TO DO: will need update token for Safari 16 migration path
-    if (!deviceRecord.identifier) {
-      const subscription = await self.registration.pushManager.getSubscription();
-      if (subscription) {
-        const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
-        const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();
-        deviceRecord.identifier = fullDeviceRecord.identifier;
-      }
-    }
-    */
-
     Database.upsertSession(session);
     Database.resetSentUniqueOutcomes();
 

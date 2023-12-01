@@ -1,7 +1,6 @@
 import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import Utils from '../context/Utils';
 import Log from '../libraries/Log';
-import { DeviceRecord } from '../models/DeviceRecord';
 import OneSignalApiBase from './OneSignalApiBase';
 
 export default class OneSignalApiShared {

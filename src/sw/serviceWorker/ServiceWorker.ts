@@ -5,7 +5,6 @@ import Database from '../../shared/services/Database';
 import { UnsubscriptionStrategy } from '../../shared/models/UnsubscriptionStrategy';
 import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
 import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
-import { PushDeviceRecord } from '../../shared/models/PushDeviceRecord';
 import Log from '../libraries/Log';
 import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import { Utils } from '../../shared/context/Utils';
