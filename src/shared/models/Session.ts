@@ -3,12 +3,11 @@ import { OutcomesConfig } from './Outcomes';
 export enum SessionStatus {
   Active = 'active',
   Inactive = 'inactive',
-  Expired = 'expired',
 }
 
 export enum SessionOrigin {
-  PlayerCreate = 1,
-  PlayerOnSession = 2,
+  UserCreate = 1,
+  UserNewSession = 2,
   VisibilityVisible = 3,
   VisibilityHidden = 4,
   BeforeUnload = 5,

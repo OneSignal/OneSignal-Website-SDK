@@ -268,7 +268,7 @@ export class SubscriptionManager {
     if (await this.isAlreadyRegisteredWithOneSignal()) {
       await this.context.updateManager.sendPushDeviceRecordUpdate();
     } else {
-      this.context.sessionManager.upsertSession(SessionOrigin.PlayerCreate);
+      this.context.sessionManager.upsertSession(SessionOrigin.UserCreate);
     }
 
     const subscription = await Database.getSubscription();
