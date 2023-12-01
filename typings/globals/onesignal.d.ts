@@ -4,11 +4,6 @@ declare module "OneSignal" {
     export var emit: any;
 }
 
-
-interface SetSMSOptions {
-  identifierAuthHash?: string;
-}
-
 interface PushSubscriptionState {
   subscribed: boolean;
   optedOut: boolean;

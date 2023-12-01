@@ -192,6 +192,11 @@ export class CoreModuleDirector {
     };
   }
 
+  public async hasSms(): Promise<boolean> {
+    const smsModels = await this.getSmsSubscriptionModels();
+    return Object.keys(smsModels).length > 0;
+  }
+
   /**
    * Returns all push subscription models, including push subscriptions from other browsers.
    */

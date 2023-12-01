@@ -13,7 +13,6 @@ import { Subscription } from '../models/Subscription';
 import { Session, ONESIGNAL_SESSION_KEY } from '../models/Session';
 import Log from '../libraries/Log';
 import { SentUniqueOutcome } from '../models/Outcomes';
-import { BundleSMS, SMSProfile } from '../models/SMSProfile';
 import { ModelName } from '../../core/models/SupportedModels';
 import Utils from '../context/Utils';
 import {
@@ -383,21 +382,6 @@ export default class Database {
     return await this.get<string>('Ids', 'jwtToken');
   }
 
-  async getSMSProfile(): Promise<SMSProfile> {
-    const profileJson = await this.get<BundleSMS>('Ids', 'smsProfile');
-    if (profileJson) {
-      return SMSProfile.deserialize(profileJson);
-    } else {
-      return new SMSProfile();
-    }
-  }
-
-  async setSMSProfile(profile: SMSProfile): Promise<void> {
-    if (profile) {
-      await this.put('Ids', { type: 'smsProfile', id: profile.serialize() });
-    }
-  }
-
   async setProvideUserConsent(consent: boolean): Promise<void> {
     await this.put('Options', { key: 'userConsent', value: consent });
   }
@@ -560,14 +544,6 @@ export default class Database {
 
   public static async cleanupCurrentSession(): Promise<void> {
     await Database.singletonInstance.removeSession(ONESIGNAL_SESSION_KEY);
-  }
-
-  static async setSMSProfile(smsProfile: SMSProfile) {
-    return await Database.singletonInstance.setSMSProfile(smsProfile);
-  }
-
-  static async getSMSProfile(): Promise<SMSProfile> {
-    return await Database.singletonInstance.getSMSProfile();
   }
 
   static async setSubscription(subscription: Subscription) {

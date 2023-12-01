@@ -99,7 +99,9 @@ export class SlidedownManager {
       }
     } else {
       if (!options.force) {
-        const smsSubscribed = !!(await Database.getSMSProfile()).subscriptionId;
+        const smsSubscribed = await (
+          OneSignal.coreDirector as CoreModuleDirector
+        ).hasSms();
         const emailSubscribed = await (
           OneSignal.coreDirector as CoreModuleDirector
         ).hasEmail();

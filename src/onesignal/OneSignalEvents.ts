@@ -55,10 +55,6 @@ export const ONESIGNAL_EVENTS = {
    */
   PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplay',
   /**
-   * Occurs when the SMS subscription changes
-   */
-  SMS_SUBSCRIPTION_CHANGED: 'smsSubscriptionChanged',
-  /**
    * For internal testing only. Used for all sorts of things.
    */
   TEST_FINISHED_ALLOW_CLICK_HANDLING: 'testFinishedAllowClickHandling',
