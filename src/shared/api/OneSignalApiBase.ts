@@ -10,6 +10,7 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import { APIHeaders } from '../models/APIHeaders';
 import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
+import { isValidUuid } from '../utils/utils';
 import OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';
 
@@ -62,23 +63,13 @@ export class OneSignalApiBase {
     data: any,
     headers: APIHeaders | undefined,
   ): Promise<OneSignalApiBaseResponse> {
-    if (method === 'GET') {
-      if (action.indexOf('players') > -1 && action.indexOf('app_id=') === -1) {
-        console.error('Calls to player api are not permitted without app_id');
-        return Promise.reject(
-          new OneSignalApiError(OneSignalApiErrorKind.MissingAppId),
-        );
-      }
-    } else {
-      if (action.indexOf('players') > -1 && (!data || !data['app_id'])) {
-        console.error('Calls to player api are not permitted without app_id');
-        return Promise.reject(
-          new OneSignalApiError(OneSignalApiErrorKind.MissingAppId),
-        );
-      }
+    if (!this.requestHasAppId(action, data)) {
+      return Promise.reject(
+        new OneSignalApiError(OneSignalApiErrorKind.MissingAppId),
+      );
     }
 
-    const callHeaders: any = new Headers();
+    const callHeaders = new Headers();
     callHeaders.append('Origin', SdkEnvironment.getOrigin());
     callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
@@ -144,6 +135,23 @@ export class OneSignalApiBase {
         `OneSignalApiBase: failed to execute HTTP call: ${e}`,
       );
     }
+  }
+
+  // OneSignal's backend requires that all request have a
+  // have a app_id in the UUID format in the request
+  private static requestHasAppId(
+    url: string,
+    body?: Record<string, unknown>,
+  ): boolean {
+    if (url.startsWith('apps/')) {
+      const parts = url.split('/');
+      return isValidUuid(parts[1]);
+    }
+
+    if (body && typeof body['app_id'] === 'string') {
+      return isValidUuid(body['app_id']);
+    }
+    return false;
   }
 }
 
