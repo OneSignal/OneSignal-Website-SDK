@@ -13,7 +13,6 @@ import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
 import SdkEnvironment from '../shared/managers/SdkEnvironment';
 import { AppUserConfig, AppConfig } from '../shared/models/AppConfig';
-import { DeviceRecord } from '../shared/models/DeviceRecord';
 import { AppUserConfigNotifyButton } from '../shared/models/Prompts';
 import Database from '../shared/services/Database';
 import { logMethodCall } from '../shared/utils/utils';
@@ -293,7 +292,6 @@ export default class OneSignal {
   static _initCalled = false;
   static __initAlreadyCalled = false;
   static context: Context;
-  static DeviceRecord = DeviceRecord;
 
   /* NEW USER MODEL CHANGES */
   static coreDirector: CoreModuleDirector;

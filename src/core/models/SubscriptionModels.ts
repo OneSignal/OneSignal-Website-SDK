@@ -3,20 +3,13 @@ import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind
 export type SupportedSubscription = SubscriptionModel | FutureSubscriptionModel;
 
 export enum SubscriptionType {
-  iOS = 'iOS',
-  Android = 'Android',
-  FireOS = 'FireOS',
-  ChromeExtension = 'ChromeExtension',
   ChromePush = 'ChromePush',
-  WindowPush = 'WindowPush',
   SafariPush = 'SafariPush',
   SafariLegacyPush = 'SafariLegacyPush',
   FirefoxPush = 'FirefoxPush',
-  HuaweiPush = 'HuaweiPush',
-  macOSPush = 'macOSPush',
-  AlexaPush = 'AlexaPush',
   Email = 'Email',
   SMS = 'SMS',
+  // There are other OneSignal types, but only including ones used here.
 }
 
 export interface FutureSubscriptionModel {

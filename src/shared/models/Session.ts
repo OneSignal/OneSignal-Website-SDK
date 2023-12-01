@@ -1,5 +1,5 @@
+import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import { DeliveryPlatformKind } from './DeliveryPlatformKind';
-import { DeviceRecord } from './DeviceRecord';
 import { OutcomesConfig } from './Outcomes';
 
 export enum SessionStatus {
@@ -61,7 +61,7 @@ export function initializeNewSession(options: NewSessionOptions): Session {
   const currentTimestamp = new Date().getTime();
   const sessionKey = (options && options.sessionKey) || ONESIGNAL_SESSION_KEY;
   const notificationId = (options && options.notificationId) || null;
-  const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
+  const deviceType = FuturePushSubscriptionRecord.getDeviceType();
 
   return {
     sessionKey,
