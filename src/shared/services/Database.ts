@@ -8,7 +8,6 @@ import {
   OutcomesNotificationClicked,
   OutcomesNotificationReceived,
 } from '../models/OutcomesNotificationEvents';
-import { ServiceWorkerState } from '../models/ServiceWorkerState';
 import { Subscription } from '../models/Subscription';
 import { Session, ONESIGNAL_SESSION_KEY } from '../models/Session';
 import Log from '../libraries/Log';
@@ -245,23 +244,6 @@ export default class Database {
         }
       }
     }
-  }
-
-  async getServiceWorkerState(): Promise<ServiceWorkerState> {
-    const state = new ServiceWorkerState();
-    state.workerVersion = await this.get<number>(
-      'Ids',
-      'WORKER1_ONE_SIGNAL_SW_VERSION',
-    );
-    return state;
-  }
-
-  async setServiceWorkerState(state: ServiceWorkerState) {
-    if (state.workerVersion)
-      await this.put('Ids', {
-        type: 'WORKER1_ONE_SIGNAL_SW_VERSION',
-        id: state.workerVersion,
-      });
   }
 
   async getSubscription(): Promise<Subscription> {
@@ -532,14 +514,6 @@ export default class Database {
 
   static async getConsentGiven(): Promise<boolean> {
     return await Database.singletonInstance.getConsentGiven();
-  }
-
-  static async setServiceWorkerState(workerState: ServiceWorkerState) {
-    return await Database.singletonInstance.setServiceWorkerState(workerState);
-  }
-
-  static async getServiceWorkerState(): Promise<ServiceWorkerState> {
-    return await Database.singletonInstance.getServiceWorkerState();
   }
 
   static async setAppState(appState: AppState) {
