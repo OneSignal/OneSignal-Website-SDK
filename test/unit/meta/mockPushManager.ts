@@ -2,10 +2,7 @@ import '../../support/polyfills/polyfills';
 
 import test from 'ava';
 
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import Random from '../../support/tester/Random';
 import { MockPushManager } from '../../support/mocks/service-workers/models/MockPushManager';
 import { MockPushSubscription } from '../../support/mocks/service-workers/models/MockPushSubscription';
@@ -17,9 +14,7 @@ async function getServiceWorkerRegistration(): Promise<
 }
 
 test.beforeEach(async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 
   await navigator.serviceWorker.register('/worker.js');
 });

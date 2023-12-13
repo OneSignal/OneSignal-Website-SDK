@@ -1,8 +1,6 @@
 import bowser from 'bowser';
 import { EnvironmentInfo } from '../models/EnvironmentInfo';
 import { Browser } from '../../shared/models/Browser';
-import { OneSignalUtils } from '../../shared/utils/OneSignalUtils';
-import { isMacOSSafariInIframe } from '../utils/BrowserSupportsPush';
 import Utils from '../../shared/context/Utils';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 
@@ -16,12 +14,9 @@ export class EnvironmentInfoHelper {
     return {
       browserType: this.getBrowser(),
       browserVersion: this.getBrowserVersion(),
-      isHttps: this.isHttps(),
-      isUsingSubscriptionWorkaround: this.isUsingSubscriptionWorkaround(),
       isBrowserAndSupportsServiceWorkers: this.supportsServiceWorkers(),
       requiresUserInteraction: this.requiresUserInteraction(),
       osVersion: this.getOsVersion(),
-      canTalkToServiceWorker: this.canTalkToServiceWorker(),
     };
   }
 
@@ -48,25 +43,11 @@ export class EnvironmentInfoHelper {
 
   // NOTE: Returns false in a ServiceWorker context
   private static isMacOSSafari(): boolean {
-    if (typeof window.safari !== 'undefined') {
-      return true;
-    }
-
-    return isMacOSSafariInIframe();
+    return typeof window.safari !== 'undefined';
   }
 
   private static getBrowserVersion(): number {
     return Utils.parseVersionString(bowserCastle().version);
-  }
-
-  private static isHttps(): boolean {
-    return window
-      ? window.location && window.location.protocol === 'https:'
-      : false;
-  }
-
-  private static isUsingSubscriptionWorkaround(): boolean {
-    return OneSignalUtils.isUsingSubscriptionWorkaround();
   }
 
   private static supportsServiceWorkers(): boolean {
@@ -89,9 +70,5 @@ export class EnvironmentInfoHelper {
 
   private static getOsVersion(): string | number {
     return bowser.osversion;
-  }
-
-  private static canTalkToServiceWorker(): boolean {
-    return !!window.isSecureContext;
   }
 }

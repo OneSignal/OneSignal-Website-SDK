@@ -4,7 +4,6 @@ import {
   CUSTOM_LINK_CSS_SELECTORS,
 } from '../slidedown/constants';
 import { addCssClass } from '../utils/utils';
-import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import Log from '../libraries/Log';
 import { AppUserConfigCustomLinkOptions } from '../models/Prompts';
 

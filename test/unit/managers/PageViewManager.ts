@@ -1,18 +1,13 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from '../../../src/onesignal/OneSignal';
 
 import Context from '../../../src/page/models/Context';
 import Random from '../../support/tester/Random';
 
 test.beforeEach(async (_t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Random.getRandomUuid();

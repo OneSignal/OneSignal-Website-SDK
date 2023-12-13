@@ -8,7 +8,6 @@ import {
 import '../../support/polyfills/polyfills';
 import {
   TestEnvironment,
-  HttpHttpsEnvironment,
   BrowserUserAgent,
 } from '../../support/sdk/TestEnvironment';
 import { setUserAgent } from '../../support/tester/browser';
@@ -27,9 +26,7 @@ const options: SlidedownPromptOptions = {
 
 test.beforeEach(async () => {
   (global as any).BrowserUserAgent = BrowserUserAgent;
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.stubDomEnvironment();
 });
 
 test.afterEach(function () {

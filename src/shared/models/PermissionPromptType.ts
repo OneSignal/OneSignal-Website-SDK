@@ -4,14 +4,6 @@ export enum PermissionPromptType {
    */
   HttpsPermissionRequest = <any>'HTTPS permission request',
   /**
-   * The "popup" to subdomain.onesignal.com.
-   */
-  FullscreenHttpPermissionMessage = <any>'fullscreen HTTP permission message',
-  /**
-   * The full-screen HTTPS modal with a dimmed backdrop.
-   */
-  FullscreenHttpsPermissionMessage = <any>'fullscreen HTTPS permission message',
-  /**
    * The "sliding down" prompt.
    */
   SlidedownPermissionMessage = <any>'slidedown permission message',

@@ -1,7 +1,6 @@
 import sinon, { SinonSandbox } from 'sinon';
 import test, { ExecutionContext } from 'ava';
 import {
-  HttpHttpsEnvironment,
   TestEnvironment,
   TestEnvironmentConfig,
 } from '../../../support/sdk/TestEnvironment';
@@ -48,7 +47,6 @@ test.afterEach(function (_t: ExecutionContext) {
 });
 
 const testConfig: TestEnvironmentConfig = {
-  httpOrHttps: HttpHttpsEnvironment.Https,
   integration: ConfigIntegrationKind.Custom,
   permission: NotificationPermission.Default,
   pushIdentifier: 'granted',

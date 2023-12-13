@@ -1,11 +1,5 @@
 export const ONESIGNAL_EVENTS = {
   /**
-   * Occurs when the user clicks the "Continue" or "No Thanks" button on the HTTP popup or HTTPS modal prompt.
-   * For HTTP sites (and HTTPS sites using the modal prompt), this event is fired before the native permission
-   * prompt is shown. This event is mostly used for HTTP sites.
-   */
-  CUSTOM_PROMPT_CLICKED: 'customPromptClick',
-  /**
    * Occurs immediately when the notification permission changes for the domain at the browser level.
    * This normally happens when the user clicks "Allow" or "Block" on the native permission prompt
    * on Chrome, Firefox, etc, however it also changes if the end-user clicks on the lock icon and
@@ -43,9 +37,7 @@ export const ONESIGNAL_EVENTS = {
    */
   NOTIFICATION_CLICKED: 'click',
   /**
-   * Occurs after the document ready event fires and, for HTTP sites, the iFrame to subdomain.onesignal.com has
-   * loaded.
-   * Before this event, IndexedDB access is not possible for HTTP sites.
+   * Occurs after the document ready event fires
    */
   SDK_INITIALIZED: 'initializeInternal',
   /**
@@ -58,10 +50,6 @@ export const ONESIGNAL_EVENTS = {
    * OneSignal's server.
    */
   REGISTERED: 'register',
-  /**
-   * Occurs as the HTTP popup is closing.
-   */
-  POPUP_CLOSING: 'popupClose',
   /**
    * Occurs when the native permission prompt is displayed.
    */
@@ -77,9 +65,6 @@ export const ONESIGNAL_EVENTS = {
   /**
    * For internal testing only. Used for all sorts of things.
    */
-  TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
-  TEST_WOULD_DISPLAY: 'testWouldDisplay',
   TEST_FINISHED_ALLOW_CLICK_HANDLING: 'testFinishedAllowClickHandling',
-  POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
   SESSION_STARTED: 'os.sessionStarted',
 };

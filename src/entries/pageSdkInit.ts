@@ -21,10 +21,7 @@ function onesignalSdkInit() {
     return;
   }
 
-  // We're running in the host page, iFrame of the host page, or popup window
   // Load OneSignal's web SDK
-  // TODO: A new iFrame and popup window pages probably need to be created for this major release?
-
   // TODO: We might be able to remove this down the line but reasons to keep for now:
   //         * Number of internal SDK code expects window.OneSignal
   //         * Keep JS console usage easier for debugging / testing.

@@ -1,9 +1,6 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import {
   ConfigIntegrationKind,
   AppUserConfig,
@@ -14,9 +11,7 @@ import { AppUserConfigCustomLinkOptions } from '../../../src/shared/models/Promp
 import ConfigManager from '../../../src/page/managers/ConfigManager';
 
 test.beforeEach(async () => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 });
 
 test('can customize initialization options', async (t) => {
@@ -53,7 +48,7 @@ test('should use server-provided subdomain if enabled', async (t) => {
     fakeServerConfig,
   );
 
-  t.deepEqual(fakeMergedConfig.subdomain, 'some-subdomain');
+  t.deepEqual(fakeMergedConfig.hasUnsupportedSubdomain, true);
 });
 
 test('should not use server-provided subdomain if not enabled', async (t) => {
@@ -71,7 +66,7 @@ test('should not use server-provided subdomain if not enabled', async (t) => {
     fakeServerConfig,
   );
 
-  t.deepEqual(fakeMergedConfig.subdomain, undefined);
+  t.deepEqual(fakeMergedConfig.hasUnsupportedSubdomain, false);
 });
 
 test('should initialize custom link config for typical setup', (t) => {

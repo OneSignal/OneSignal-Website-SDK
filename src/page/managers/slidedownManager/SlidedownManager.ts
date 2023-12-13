@@ -24,9 +24,7 @@ import PushPermissionNotGrantedError, {
   PushPermissionNotGrantedErrorReason,
 } from '../../../shared/errors/PushPermissionNotGrantedError';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
-import InitHelper, {
-  RegisterOptions,
-} from '../../../shared/helpers/InitHelper';
+import InitHelper from '../../../shared/helpers/InitHelper';
 import PromptsHelper from '../../../shared/helpers/PromptsHelper';
 import Log from '../../../shared/libraries/Log';
 import { DelayedPromptType } from '../../../shared/models/Prompts';
@@ -135,9 +133,7 @@ export class SlidedownManager {
   }
 
   private registerForPush(): void {
-    const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-    const options: RegisterOptions = { autoAccept, slidedown: true };
-    InitHelper.registerForPushNotifications(options);
+    InitHelper.registerForPushNotifications();
   }
 
   private async handleAllowForCategoryType(): Promise<void> {

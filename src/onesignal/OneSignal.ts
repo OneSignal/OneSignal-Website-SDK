@@ -1,33 +1,21 @@
 import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
-import AltOriginManager from '../page/managers/AltOriginManager';
 import ConfigManager from '../page/managers/ConfigManager';
-import LegacyManager from '../page/managers/LegacyManager';
 import Context from '../page/models/Context';
 import { EnvironmentInfo } from '../page/models/EnvironmentInfo';
-import ProxyFrame from '../page/modules/frames/ProxyFrame';
-import ProxyFrameHost from '../page/modules/frames/ProxyFrameHost';
-import SubscriptionModal from '../page/modules/frames/SubscriptionModal';
-import SubscriptionModalHost from '../page/modules/frames/SubscriptionModalHost';
-import SubscriptionPopup from '../page/modules/frames/SubscriptionPopup';
-import SubscriptionPopupHost from '../page/modules/frames/SubscriptionPopupHost';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
 import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
 import Environment from '../shared/helpers/Environment';
 import EventHelper from '../shared/helpers/EventHelper';
-import HttpHelper from '../shared/helpers/HttpHelper';
 import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
 import SdkEnvironment from '../shared/managers/SdkEnvironment';
-import { SessionManager } from '../shared/managers/sessionManager/SessionManager';
 import { AppUserConfig, AppConfig } from '../shared/models/AppConfig';
 import { DeviceRecord } from '../shared/models/DeviceRecord';
 import { AppUserConfigNotifyButton } from '../shared/models/Prompts';
-import { WindowEnvironmentKind } from '../shared/models/WindowEnvironmentKind';
 import Database from '../shared/services/Database';
-import OneSignalUtils from '../shared/utils/OneSignalUtils';
 import { logMethodCall } from '../shared/utils/utils';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
 import NotificationsNamespace from './NotificationsNamespace';
@@ -193,39 +181,6 @@ export default class OneSignal {
         InitHelper.onSdkInitialized,
       );
 
-      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        /**
-         * The user may have forgot to choose a subdomain in his web app setup.
-         *
-         * Or, the user may have an HTTP & HTTPS site while using an HTTPS-only
-         * config on both variants. This would cause the HTTPS site to work
-         * perfectly, while causing errors and preventing web push from working
-         * on the HTTP site.
-         */
-        if (!OneSignal.config || !OneSignal.config.subdomain)
-          throw new SdkInitError(SdkInitErrorKind.MissingSubdomain);
-
-        /**
-         * We'll need to set up page activity tracking events on the main page but we can do so
-         * only after the main initialization in the iframe is successful and a new session
-         * is initiated.
-         */
-        OneSignal.emitter.on(
-          OneSignal.EVENTS.SESSION_STARTED,
-          SessionManager.setupSessionEventListenersForHttp,
-        );
-
-        /**
-         * The iFrame may never load (e.g. OneSignal might be down), in which
-         * case the rest of the SDK's initialization will be blocked. This is a
-         * good thing! We don't want to access IndexedDb before we know which
-         * origin to store data on.
-         */
-        OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(
-          OneSignal.config,
-        );
-      }
-
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,
         //     since a user has to click out of and back on the page to check permissions
@@ -234,9 +189,7 @@ export default class OneSignal {
 
       await InitHelper.initSaveState();
       await InitHelper.saveInitOptions();
-      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
-        await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      else await InitHelper.internalInit();
+      await InitHelper.internalInit();
     }
 
     if (
@@ -323,10 +276,7 @@ export default class OneSignal {
   static environmentInfo?: EnvironmentInfo;
   static config: AppConfig | null = null;
   static _sessionInitAlreadyRunning = false;
-  static _windowWidth = 650;
-  static _windowHeight = 568;
   static _isNewVisitor = false;
-  static _channel = null;
   static timedLocalStorage = TimedLocalStorage;
   static initialized = false;
   static _didLoadITILibrary = false;
@@ -336,12 +286,6 @@ export default class OneSignal {
   static event = OneSignalEvent;
   private static pendingInit = true;
 
-  static subscriptionPopup: SubscriptionPopup;
-  static subscriptionPopupHost: SubscriptionPopupHost;
-  static subscriptionModal: SubscriptionModal;
-  static subscriptionModalHost: SubscriptionModalHost;
-  static proxyFrameHost: ProxyFrameHost;
-  static proxyFrame: ProxyFrame;
   static emitter: Emitter = new Emitter();
   static cache: any = {};
   static _LOGGING = false;
@@ -359,64 +303,7 @@ export default class OneSignal {
   static User = new UserNamespace(false);
   static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
-
-  /**
-   * Used by Rails-side HTTP popup. Must keep the same name.
-   * @InternalApi
-   */
-  static _initHttp = HttpHelper.initHttp;
-
-  /**
-   * Used by Rails-side HTTP popup. Must keep the same name.
-   * @InternalApi
-   */
-  static _initPopup = () => OneSignal.subscriptionPopup.subscribe();
-
-  static POSTMAM_COMMANDS = {
-    CONNECTED: 'connect',
-    REMOTE_NOTIFICATION_PERMISSION: 'postmam.remoteNotificationPermission',
-    REMOTE_DATABASE_GET: 'postmam.remoteDatabaseGet',
-    REMOTE_DATABASE_GET_ALL: 'postmam.remoteDatabaseGetAll',
-    REMOTE_DATABASE_PUT: 'postmam.remoteDatabasePut',
-    REMOTE_DATABASE_REMOVE: 'postmam.remoteDatabaseRemove',
-    REMOTE_OPERATION_COMPLETE: 'postman.operationComplete',
-    REMOTE_RETRIGGER_EVENT: 'postmam.remoteRetriggerEvent',
-    MODAL_LOADED: 'postmam.modalPrompt.loaded',
-    MODAL_PROMPT_ACCEPTED: 'postmam.modalPrompt.accepted',
-    MODAL_PROMPT_REJECTED: 'postmam.modalPrompt.canceled',
-    POPUP_LOADED: 'postmam.popup.loaded',
-    POPUP_ACCEPTED: 'postmam.popup.accepted',
-    POPUP_REJECTED: 'postmam.popup.canceled',
-    POPUP_CLOSING: 'postman.popup.closing',
-    REMOTE_NOTIFICATION_PERMISSION_CHANGED:
-      'postmam.remoteNotificationPermissionChanged',
-    IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
-    UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
-    SET_SESSION_COUNT: 'postmam.setSessionCount',
-    REQUEST_HOST_URL: 'postmam.requestHostUrl',
-    WINDOW_TIMEOUT: 'postmam.windowTimeout',
-    FINISH_REMOTE_REGISTRATION: 'postmam.finishRemoteRegistration',
-    FINISH_REMOTE_REGISTRATION_IN_PROGRESS:
-      'postmam.finishRemoteRegistrationInProgress',
-    POPUP_BEGIN_MESSAGEPORT_COMMS: 'postmam.beginMessagePortComms',
-    SERVICEWORKER_COMMAND_REDIRECT: 'postmam.command.redirect',
-    MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed',
-    IS_SUBSCRIBED: 'postmam.isSubscribed',
-    UNSUBSCRIBE_PROXY_FRAME: 'postman.unsubscribeProxyFrame',
-    GET_EVENT_LISTENER_COUNT: 'postmam.getEventListenerCount',
-    SERVICE_WORKER_STATE: 'postmam.serviceWorkerState',
-    GET_WORKER_VERSION: 'postmam.getWorkerVersion',
-    SUBSCRIPTION_EXPIRATION_STATE: 'postmam.subscriptionExpirationState',
-    PROCESS_EXPIRING_SUBSCRIPTIONS: 'postmam.processExpiringSubscriptions',
-    GET_SUBSCRIPTION_STATE: 'postmam.getSubscriptionState',
-    SESSION_UPSERT: 'postmam.sessionUpsert',
-    SESSION_DEACTIVATE: 'postmam.sessionDeactivate',
-    ARE_YOU_VISIBLE_REQUEST: 'postmam.areYouVisibleRequest',
-    ARE_YOU_VISIBLE_RESPONSE: 'postmam.areYouVisibleResponse',
-  };
 }
-
-LegacyManager.ensureBackwardsCompatibility(OneSignal);
 
 Log.info(
   `OneSignal Web SDK loaded (version ${OneSignal._VERSION},

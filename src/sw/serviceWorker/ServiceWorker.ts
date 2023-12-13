@@ -9,11 +9,7 @@ import { PushDeviceRecord } from '../../shared/models/PushDeviceRecord';
 import Log from '../libraries/Log';
 import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import { Utils } from '../../shared/context/Utils';
-import {
-  OSWindowClient,
-  OSServiceWorkerFields,
-  SubscriptionChangeEvent,
-} from './types';
+import { OSServiceWorkerFields, SubscriptionChangeEvent } from './types';
 import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
@@ -59,9 +55,6 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
  * The main service worker script fetching and displaying notifications to users in the background even when the client
  * site is not running. The worker is registered via the navigator.serviceWorker.register() call after the user first
  * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
- *
- * For HTTPS sites, the service worker is registered site-wide at the top-level scope. For HTTP sites, the service
- * worker is registered to the iFrame pointing to subdomain.onesignal.com.
  */
 export class ServiceWorker {
   static UNSUBSCRIBED_FROM_NOTIFICATIONS: boolean | undefined;
@@ -108,9 +101,9 @@ export class ServiceWorker {
 
   /**
    * Allows message passing between this service worker and pages on the same domain.
-   * Clients include any HTTPS site page, or the nested iFrame pointing to OneSignal on any HTTP site. This allows
-   * events like notification dismissed, clicked, and displayed to be fired on the clients. It also allows the
-   * clients to communicate with the service worker to close all active notifications.
+   * This allows events like notification dismissed, clicked, and displayed to be
+   * fired on the clients. It also allows the clients to communicate with the
+   * service worker to close all active notifications.
    */
   static get workerMessenger(): WorkerMessenger {
     if (!(self as any).workerMessenger) {
@@ -487,38 +480,14 @@ export class ServiceWorker {
   }
 
   /**
-   * Gets an array of active window clients along with whether each window client is the HTTP site's iFrame or an
-   * HTTPS site page.
-   * An active window client is a browser tab that is controlled by the service worker.
-   * Technically, this list should only ever contain clients that are iFrames, or clients that are HTTPS site pages,
-   * and not both. This doesn't really matter though.
+   * Gets an array of window clients
    * @returns {Promise}
    */
-  static async getActiveClients(): Promise<Array<OSWindowClient>> {
-    const windowClients: ReadonlyArray<Client> = await self.clients.matchAll({
+  static async getWindowClients(): Promise<ReadonlyArray<WindowClient>> {
+    return await self.clients.matchAll({
       type: 'window',
       includeUncontrolled: true,
     });
-    const activeClients: Array<OSWindowClient> = [];
-
-    for (const client of windowClients) {
-      const windowClient: OSWindowClient = client as OSWindowClient;
-      windowClient.isSubdomainIframe = false;
-      // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
-      if (client.frameType && client.frameType === 'nested') {
-        // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
-        if (
-          !Utils.contains(client.url, '.os.tc') &&
-          !Utils.contains(client.url, '.onesignal.com')
-        ) {
-          continue;
-        }
-        // Indicates this window client is an HTTP subdomain iFrame
-        windowClient.isSubdomainIframe = true;
-      }
-      activeClients.push(windowClient);
-    }
-    return activeClients;
   }
 
   static async updateSessionBasedOnHasActive(
@@ -558,45 +527,26 @@ export class ServiceWorker {
   ): Promise<void> {
     Log.debug('[Service Worker] refreshSession');
     /**
-     * if https -> getActiveClients -> check for the first focused
+     * getWindowClients -> check for the first focused
      * unfortunately, not enough for safari, it always returns false for focused state of a client
      * have to workaround it with messaging to the client.
-     *
-     * if http, also have to workaround with messaging:
-     *   SW to iframe -> iframe to page -> page to iframe -> iframe to SW
      */
-    if (options.isHttps) {
-      const windowClients: ReadonlyArray<Client> = await self.clients.matchAll({
-        type: 'window',
-        includeUncontrolled: true,
-      });
+    const windowClients = await this.getWindowClients();
 
-      if (options.isSafari) {
-        await ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(
-          event,
-          windowClients,
-          options,
-        );
-      } else {
-        const hasAnyActiveSessions: boolean = windowClients.some(
-          (w) => (w as WindowClient).focused,
-        );
-        Log.debug(
-          '[Service Worker] isHttps hasAnyActiveSessions',
-          hasAnyActiveSessions,
-        );
-        await ServiceWorker.updateSessionBasedOnHasActive(
-          event,
-          hasAnyActiveSessions,
-          options,
-        );
-      }
-      return;
-    } else {
-      const osClients = await ServiceWorker.getActiveClients();
+    if (options.isSafari) {
       await ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(
         event,
-        osClients,
+        windowClients,
+        options,
+      );
+    } else {
+      const hasAnyActiveSessions: boolean = windowClients.some(
+        (w) => (w as WindowClient).focused,
+      );
+      Log.debug('[Service Worker] hasAnyActiveSessions', hasAnyActiveSessions);
+      await ServiceWorker.updateSessionBasedOnHasActive(
+        event,
+        hasAnyActiveSessions,
         options,
       );
     }
@@ -983,23 +933,10 @@ export class ServiceWorker {
      an identical new tab being created. With a special setting, any existing tab matching the origin will
      be focused instead of an identical new tab being created.
      */
-    const activeClients = await ServiceWorker.getActiveClients();
+    const activeClients = await ServiceWorker.getWindowClients();
     let doNotOpenLink = false;
     for (const client of activeClients) {
-      let clientUrl = client.url;
-      if ((client as any).isSubdomainIframe) {
-        const lastKnownHostUrl = await Database.get<string>(
-          'Options',
-          'lastKnownHostUrl',
-        );
-        // TODO: clientUrl is being overwritten by defaultUrl and lastKnownHostUrl.
-        //       Should only use clientUrl if it is not null.
-        //       Also need to decide which to use over the other.
-        clientUrl = lastKnownHostUrl;
-        if (!lastKnownHostUrl) {
-          clientUrl = await Database.get<string>('Options', 'defaultUrl');
-        }
-      }
+      const clientUrl = client.url;
       let clientOrigin = '';
       try {
         clientOrigin = new URL(clientUrl).origin;
@@ -1021,8 +958,7 @@ export class ServiceWorker {
           clientOrigin === launchOrigin)
       ) {
         if (
-          (client['isSubdomainIframe'] && clientUrl === launchUrl) ||
-          (!client['isSubdomainIframe'] && client.url === launchUrl) ||
+          client.url === launchUrl ||
           (notificationClickHandlerAction === 'focus' &&
             clientOrigin === launchOrigin)
         ) {
@@ -1043,29 +979,7 @@ export class ServiceWorker {
 
           client.navigate() is available on Chrome 49+ and Firefox 50+.
            */
-          if (client['isSubdomainIframe']) {
-            try {
-              Log.debug(
-                'Client is subdomain iFrame. Attempting to focus() client.',
-              );
-              if (client instanceof WindowClient) await client.focus();
-            } catch (e) {
-              Log.error('Failed to focus:', client, e);
-            }
-            if (notificationOpensLink) {
-              Log.debug(`Redirecting HTTP site to ${launchUrl}.`);
-              await Database.putNotificationClickedEventPendingUrlOpening(
-                notificationClickEvent,
-              );
-              ServiceWorker.workerMessenger.unicast(
-                WorkerMessengerCommand.RedirectPage,
-                launchUrl,
-                client,
-              );
-            } else {
-              Log.debug('Not navigating because link is special.');
-            }
-          } else if (client instanceof WindowClient && client.navigate) {
+          if (client instanceof WindowClient && client.navigate) {
             try {
               Log.debug(
                 'Client is standard HTTPS site. Attempting to focus() client.',

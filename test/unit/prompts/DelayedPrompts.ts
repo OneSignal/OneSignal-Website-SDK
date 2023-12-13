@@ -3,7 +3,6 @@ import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import {
   TestEnvironment,
-  HttpHttpsEnvironment,
   TestEnvironmentConfig,
 } from '../../support/sdk/TestEnvironment';
 import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
@@ -34,7 +33,6 @@ test.afterEach(function (_t: ExecutionContext) {
  *    setTimeout doesn't work as intended in testing environment due to jsdom bugs
  */
 const testConfig: TestEnvironmentConfig = {
-  httpOrHttps: HttpHttpsEnvironment.Https,
   integration: ConfigIntegrationKind.Custom,
   permission: NotificationPermission.Default,
 };

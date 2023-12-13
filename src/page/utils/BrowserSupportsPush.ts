@@ -6,24 +6,14 @@
 // Checks if the browser supports push notifications by checking if specific
 //   classes and properties on them exist
 export function isPushNotificationsSupported() {
-  return supportsVapidPush() || supportsSafariPush();
-}
-
-// Fallback detection for Safari on macOS in an iframe context
-//   - window.safari is undefined in this context
-export function isMacOSSafariInIframe(): boolean {
-  return (
-    window.top !== window && // isContextIframe
-    isSafariBrowser() &&
-    navigator.platform === 'MacIntel'
-  ); // isMacOS
+  return supportsVapidPush() || supportsSafariLegacyPush();
 }
 
 // Does the browser support legacy Safari push? (only available on macOS)
-export function supportsSafariPush(): boolean {
+export function supportsSafariLegacyPush(): boolean {
   return (
-    (window.safari && typeof window.safari.pushNotification !== 'undefined') ||
-    isMacOSSafariInIframe()
+    typeof window.safari !== 'undefined' &&
+    typeof window.safari.pushNotification !== 'undefined'
   );
 }
 

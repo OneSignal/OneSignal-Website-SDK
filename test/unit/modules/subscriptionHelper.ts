@@ -1,9 +1,6 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import sinon from 'sinon';
 import { SubscriptionManager } from '../../../src/shared/managers/SubscriptionManager';
 import LocalStorage from '../../../src/shared/utils/LocalStorage';
@@ -13,9 +10,7 @@ import SubscriptionHelper from '../../../src/shared/helpers/SubscriptionHelper';
 const sinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async () => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
 });
 

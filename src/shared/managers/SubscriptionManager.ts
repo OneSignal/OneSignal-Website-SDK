@@ -3,15 +3,12 @@ import Environment from '../helpers/Environment';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import SdkEnvironment from './SdkEnvironment';
-
-import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { Subscription } from '../models/Subscription';
 import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { IntegrationKind } from '../models/IntegrationKind';
 
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { base64ToUint8Array } from '../utils/Encoding';
@@ -112,22 +109,13 @@ export class SubscriptionManager {
   /**
    * Subscribes for a web push subscription.
    *
-   * This method is aware of different subscription environments like subscribing from a webpage,
-   * service worker, or OneSignal HTTP popup and will select the correct method. This is intended to
-   * be the single public API for obtaining a raw web push subscription (i.e. what the browser
-   * returns from a successful subscription).
+   * This method can be called from the page context or a webpage a service worker context
+   * and will select the correct method.
    */
   public async subscribe(
     subscriptionStrategy: SubscriptionStrategyKind,
   ): Promise<RawPushSubscription> {
     const env = SdkEnvironment.getWindowEnv();
-
-    switch (env) {
-      case WindowEnvironmentKind.CustomIframe:
-      case WindowEnvironmentKind.Unknown:
-      case WindowEnvironmentKind.OneSignalProxyFrame:
-        throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
-    }
 
     let rawPushSubscription: RawPushSubscription;
 
@@ -137,8 +125,6 @@ export class SubscriptionManager {
           await this.subscribeFcmFromWorker(subscriptionStrategy);
         break;
       case WindowEnvironmentKind.Host:
-      case WindowEnvironmentKind.OneSignalSubscriptionModal:
-      case WindowEnvironmentKind.OneSignalSubscriptionPopup:
         /*
           Check our notification permission before subscribing.
 
@@ -460,7 +446,7 @@ export class SubscriptionManager {
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (
-      SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host &&
       Notification.permission === NotificationPermission.Default
     ) {
       await OneSignalEvent.trigger(
@@ -773,43 +759,6 @@ export class SubscriptionManager {
   }
 
   public async isSubscriptionExpiring(): Promise<boolean> {
-    const integrationKind = await SdkEnvironment.getIntegration();
-    const windowEnv = SdkEnvironment.getWindowEnv();
-
-    switch (integrationKind) {
-      case IntegrationKind.Secure:
-        return await this.isSubscriptionExpiringForSecureIntegration();
-      case IntegrationKind.SecureProxy:
-        if (windowEnv === WindowEnvironmentKind.Host) {
-          const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
-          if (!proxyFrameHost) {
-            throw new InvalidStateError(InvalidStateReason.NoProxyFrame);
-          } else {
-            return await proxyFrameHost.runCommand<boolean>(
-              OneSignal.POSTMAM_COMMANDS.SUBSCRIPTION_EXPIRATION_STATE,
-            );
-          }
-        } else {
-          return await this.isSubscriptionExpiringForSecureIntegration();
-        }
-      case IntegrationKind.InsecureProxy: {
-        /* If we're in an insecure frame context, check the stored expiration since we can't access
-        the actual push subscription. */
-        const { expirationTime } = await Database.getSubscription();
-        if (!expirationTime) {
-          /* If an existing subscription does not have a stored expiration time, do not
-          treat it as expired. The subscription may have been created before this feature was added,
-          or the browser may not assign any expiration time. */
-          return false;
-        }
-
-        /* The current time (in UTC) is past the expiration time (also in UTC) */
-        return new Date().getTime() >= expirationTime;
-      }
-    }
-  }
-
-  private async isSubscriptionExpiringForSecureIntegration(): Promise<boolean> {
     const serviceWorkerState =
       await this.context.serviceWorkerManager.getActiveState();
     if (!(serviceWorkerState === ServiceWorkerActiveState.OneSignalWorker)) {
@@ -858,13 +807,7 @@ export class SubscriptionManager {
    * Returns an object describing the user's actual push subscription state and opt-out status.
    */
   public async getSubscriptionState(): Promise<PushSubscriptionState> {
-    /* Safari Legacy supports HTTP so we don't have to use the subdomain workaround. */
-    if (Environment.useSafariLegacyPush()) {
-      return this.getSubscriptionStateForSecure();
-    }
-
     const windowEnv = SdkEnvironment.getWindowEnv();
-
     switch (windowEnv) {
       case WindowEnvironmentKind.ServiceWorker: {
         const pushSubscription = await (<ServiceWorkerGlobalScope>(
@@ -878,39 +821,12 @@ export class SubscriptionManager {
       }
       default: {
         /* Regular browser window environments */
-        const integration = await SdkEnvironment.getIntegration();
-
-        switch (integration) {
-          case IntegrationKind.Secure:
-            return this.getSubscriptionStateForSecure();
-          case IntegrationKind.SecureProxy:
-            switch (windowEnv) {
-              case WindowEnvironmentKind.OneSignalProxyFrame:
-              case WindowEnvironmentKind.OneSignalSubscriptionPopup:
-              case WindowEnvironmentKind.OneSignalSubscriptionModal:
-                return this.getSubscriptionStateForSecure();
-              default: {
-                /* Re-run this command in the proxy frame */
-                const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
-                const pushSubscriptionState =
-                  await proxyFrameHost.runCommand<PushSubscriptionState>(
-                    OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE,
-                  );
-                return pushSubscriptionState;
-              }
-            }
-          case IntegrationKind.InsecureProxy:
-            return await this.getSubscriptionStateForInsecure();
-          default:
-            throw new InvalidStateError(
-              InvalidStateReason.UnsupportedEnvironment,
-            );
-        }
+        return this.getSubscriptionStateFromBrowserContext();
       }
     }
   }
 
-  private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
+  private async getSubscriptionStateFromBrowserContext(): Promise<PushSubscriptionState> {
     const { optedOut, subscriptionToken } = await Database.getSubscription();
 
     const pushSubscriptionOSModel: OSModel<SupportedSubscription> | undefined =
@@ -972,27 +888,6 @@ export class SubscriptionManager {
       subscriptionToken &&
       notificationPermission === NotificationPermission.Granted &&
       isWorkerActive
-    );
-
-    return {
-      subscribed: isPushEnabled,
-      optedOut: !!optedOut,
-    };
-  }
-
-  private async getSubscriptionStateForInsecure(): Promise<PushSubscriptionState> {
-    /* For HTTP, we need to rely on stored values; we never have access to the actual data */
-    const { deviceId, subscriptionToken, optedOut } =
-      await Database.getSubscription();
-    const notificationPermission =
-      await this.context.permissionManager.getNotificationPermission(
-        this.context.appConfig.safariWebId,
-      );
-
-    const isPushEnabled = !!(
-      deviceId &&
-      subscriptionToken &&
-      notificationPermission === NotificationPermission.Granted
     );
 
     return {

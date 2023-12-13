@@ -1,7 +1,5 @@
 import bowser, { IBowser } from 'bowser';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import Environment from '../helpers/Environment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { Utils } from '../context/Utils';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';
@@ -17,81 +15,6 @@ export class OneSignalUtils {
       OneSignal.config.userConfig &&
       OneSignal.config.userConfig.allowLocalhostAsSecureOrigin === true
     );
-  }
-
-  /**
-   * Returns true if web push subscription occurs on a subdomain of OneSignal.
-   * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user"s site.
-   * @remarks
-   *   This method returns true if:
-   *     - The browser is not Safari
-   *         - Safari uses a different method of subscription and does not require our workaround
-   *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
-   *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
-   *        - The protocol of the current webpage is http:
-   *   Exceptions are:
-   *     - Safe hostnames like localhost and 127.0.0.1
-   *          - Because we don"t want users to get the wrong idea when testing on localhost that direct permission
-   *            is supported on HTTP, we"ll ignore these exceptions. HTTPS will always be required for direct permission
-   *        - We are already in popup or iFrame mode, or this is called from the service worker
-   */
-  public static isUsingSubscriptionWorkaround(): boolean {
-    const windowEnv = SdkEnvironment.getWindowEnv();
-
-    if (!OneSignal.config) {
-      throw new Error(
-        `(${windowEnv.toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`,
-      );
-    }
-    if (bowserCastle().name == 'safari') {
-      return false;
-    }
-
-    const allowLocalhostAsSecureOrigin: boolean =
-      this.isLocalhostAllowedAsSecureOrigin();
-
-    return OneSignalUtils.internalIsUsingSubscriptionWorkaround(
-      OneSignal.config.subdomain,
-      allowLocalhostAsSecureOrigin,
-    );
-  }
-
-  public static internalIsUsingSubscriptionWorkaround(
-    subdomain: string | undefined,
-    allowLocalhostAsSecureOrigin: boolean | undefined,
-  ): boolean {
-    if (bowserCastle().name == 'safari') {
-      return false;
-    }
-
-    if (
-      allowLocalhostAsSecureOrigin === true &&
-      (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-    ) {
-      return false;
-    }
-
-    const windowEnv = SdkEnvironment.getWindowEnv();
-
-    const isHttp = location.protocol === 'http:';
-    const useSubdomain =
-      (windowEnv === WindowEnvironmentKind.Host ||
-        windowEnv === WindowEnvironmentKind.CustomIframe) &&
-      (!!subdomain || isHttp);
-
-    if (useSubdomain) {
-      if (isHttp) {
-        throw new Error(
-          "OneSignalSDK: HTTP sites are no longer supported starting with version 16 (User Model), your public site must start with https://. Please visit the OneSignal dashboard's Settings > Web Configuration to find this option.",
-        );
-      } else {
-        throw new Error(
-          'OneSignalSDK: The "My site is not fully HTTPS" option is no longer supported starting with version 16 (User Model) of the OneSignal SDK. Please visit the OneSignal dashboard\'s Settings > Web Configuration to find this option.',
-        );
-      }
-    }
-
-    return false;
   }
 
   public static redetectBrowserUserAgent(): IBowser {
@@ -133,13 +56,6 @@ export class OneSignalUtils {
     return Log.debug(
       `Called ${methodName}(${args.map(Utils.stringify).join(', ')})`,
     );
-  }
-
-  static isHttps(): boolean {
-    if (OneSignalUtils.isSafari()) {
-      return window.location.protocol === 'https:';
-    }
-    return !OneSignalUtils.isUsingSubscriptionWorkaround();
   }
 
   static isSafari(): boolean {

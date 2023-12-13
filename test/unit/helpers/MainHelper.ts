@@ -2,20 +2,14 @@ import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
-import { OneSignalUtils } from '../../../src/shared/utils/OneSignalUtils';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 
 let sinonSandbox: SinonSandbox;
 
 test.beforeEach(async () => {
   sinonSandbox = sinon.sandbox.create();
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 
   // Required for sessionContext, not async
   TestEnvironment.mockInternalOneSignal();
@@ -36,27 +30,10 @@ test('getCurrentNotificationType for default permission', async (t) => {
   );
 });
 
-test('getCurrentNotificationType for denied permission in HTTP context', async (t) => {
-  sinonSandbox
-    .stub(OneSignal.context.permissionManager, 'getNotificationPermission')
-    .resolves(NotificationPermission.Denied);
-  sinonSandbox
-    .stub(OneSignalUtils, 'isUsingSubscriptionWorkaround')
-    .returns(true);
-
-  t.is(
-    await MainHelper.getCurrentNotificationType(),
-    SubscriptionStateKind.NoNativePermission,
-  );
-});
-
 test('getCurrentNotificationType for denied permission in HTTPS context', async (t) => {
   sinonSandbox
     .stub(OneSignal.context.permissionManager, 'getNotificationPermission')
     .resolves(NotificationPermission.Denied);
-  sinonSandbox
-    .stub(OneSignalUtils, 'isUsingSubscriptionWorkaround')
-    .returns(false);
 
   t.is(
     await MainHelper.getCurrentNotificationType(),

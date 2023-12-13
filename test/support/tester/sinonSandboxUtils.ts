@@ -44,20 +44,6 @@ export async function markUserAsSubscribed(
   }
 }
 
-export async function markUserAsSubscribedOnHttp(
-  sinonSandbox: SinonSandbox,
-  playerId?: string,
-  expired?: boolean,
-) {
-  markUserAsSubscribed(sinonSandbox, playerId, expired);
-  sinonSandbox
-    .stub(
-      PermissionManager.prototype,
-      'getOneSignalSubdomainNotificationPermission',
-    )
-    .resolves(NotificationPermission.Granted);
-}
-
 export function stubServiceWorkerInstallation(sinonSandbox: SinonSandbox) {
   const swRegistration = new MockServiceWorkerRegistration();
 

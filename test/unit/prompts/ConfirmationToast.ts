@@ -6,7 +6,6 @@ import { getDomElementOrStub } from '../../../src/shared/utils/utils';
 import {
   BrowserUserAgent,
   TestEnvironment,
-  HttpHttpsEnvironment,
 } from '../../../test/support/sdk/TestEnvironment';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
@@ -16,7 +15,6 @@ test.beforeEach(async () => {
   (global as any).location = new URL('https://localhost:4001');
   const userConfig = TestEnvironment.getFakeMergedConfig({});
   const options = {
-    httpOrHttps: HttpHttpsEnvironment.Https,
     initOptions: userConfig,
     addPrompts: true,
   };

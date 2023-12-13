@@ -15,7 +15,6 @@ import { RawPushSubscription } from '../models/RawPushSubscription';
 import SubscriptionHelper from './SubscriptionHelper';
 import Utils from '../context/Utils';
 import Database from '../services/Database';
-import OneSignalUtils from '../utils/OneSignalUtils';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import OneSignalEvent from '../services/OneSignalEvent';
 import Environment from './Environment';
@@ -32,12 +31,7 @@ export default class MainHelper {
     }
 
     if (currentPermission === NotificationPermission.Denied) {
-      // Due to this issue https://github.com/OneSignal/OneSignal-Website-SDK/issues/289 we cannot reliably detect
-      // "default" permission in HTTP context. Browser reports denied for both "default" and "denied" statuses.
-      // Returning SubscriptionStateKind.NoNativePermission for this case.
-      return OneSignalUtils.isUsingSubscriptionWorkaround()
-        ? SubscriptionStateKind.NoNativePermission
-        : SubscriptionStateKind.NotSubscribed;
+      return SubscriptionStateKind.NotSubscribed;
     }
 
     const existingUser =
@@ -51,21 +45,6 @@ export default class MainHelper {
     }
 
     return SubscriptionStateKind.NoNativePermission;
-  }
-
-  /**
-   * Stores a flag in sessionStorage that we've already shown the HTTP slidedown to this user and that we should not
-   * show it again until they open a new window or tab to the site.
-   */
-  static markHttpSlidedownShown() {
-    sessionStorage.setItem('ONESIGNAL_HTTP_PROMPT_SHOWN', 'true');
-  }
-
-  /**
-   * Returns true if the HTTP slidedown was already shown inside the same session.
-   */
-  static isHttpPromptAlreadyShown() {
-    return sessionStorage.getItem('ONESIGNAL_HTTP_PROMPT_SHOWN') == 'true';
   }
 
   static async checkAndTriggerNotificationPermissionChanged() {
@@ -185,12 +164,6 @@ export default class MainHelper {
       }
     }
     return hash;
-  }
-
-  static triggerCustomPromptClicked(clickResult) {
-    OneSignalEvent.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
-      result: clickResult,
-    });
   }
 
   static async getAppId(): Promise<string> {

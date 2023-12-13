@@ -1,11 +1,7 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { AppUserConfigCustomLinkOptions } from '../../../src/shared/models/Prompts';
-import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
 import { ResourceLoadState } from '../../../src/page/services/DynamicResourceLoader';
 import { hasCssClass } from '../../../src/shared/utils/utils';
 import { DismissHelper } from '../../../src/shared/helpers/DismissHelper';
@@ -16,7 +12,6 @@ import {
 import { CustomLinkManager } from '../../../src/shared/managers/CustomLinkManager';
 import EventsTestHelper from '../../support/tester/EventsTestHelper';
 import { simulateEventOfTypeOnElement } from '../../support/tester/utils';
-import PermissionManager from '../../../src/shared/managers/PermissionManager';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
@@ -45,7 +40,6 @@ test.beforeEach(async () => {
 
   await TestEnvironment.initialize({
     addPrompts: true,
-    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   TestEnvironment.mockInternalOneSignal();
   sandbox
@@ -271,7 +265,6 @@ test('customlink: subscribe: clicked: subscribed -> unsubscribed', async (t) => 
     .callsFake(async () => {
       await setSubscriptionStub();
     });
-  sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(false);
   sandbox
     .stub(OneSignal.context.subscriptionManager, 'getSubscriptionState')
     .returns({
@@ -302,7 +295,6 @@ test('customlink: subscribe: clicked: subscribed -> unsubscribed', async (t) => 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted out', async (t) => {
   const subscriptionPromise = EventsTestHelper.getSubscriptionPromise();
   sandbox.stub(CustomLinkManager, 'isPushEnabled').returns(false);
-  sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(false);
   const subscriptionSpy = sandbox
     .stub(NotificationsNamespace.prototype, 'disable')
     .callsFake(async () => {
@@ -347,7 +339,6 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never s
     .callsFake(async () => {
       await setSubscriptionStub();
     });
-  sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(false);
   sandbox.stub(CustomLinkManager, 'isOptedOut').returns(false);
 
   sandbox
@@ -370,70 +361,6 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never s
   if (subscribeElement && explanationElement) {
     simulateEventOfTypeOnElement('click', subscribeElement);
     await subscriptionPromise;
-    t.is(subscriptionSpy.calledOnce, true);
-  }
-});
-
-test('customlink: subscribe: clicked: unsubscribed -> subscribed. http. never subscribed.', async (t) => {
-  const subscriptionPromise = EventsTestHelper.getSubscriptionPromise();
-  TestEnvironment.overrideEnvironmentInfo({ requiresUserInteraction: false });
-  sandbox.stub(CustomLinkManager, 'isPushEnabled').returns(false);
-  const registerSpy = sandbox
-    .stub(OneSignal, 'registerForPushNotifications')
-    .callsFake(async () => {
-      await setSubscriptionStub();
-    });
-  sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(true);
-  sandbox.stub(CustomLinkManager, 'isOptedOut').returns(false);
-
-  await new CustomLinkManager(config).initialize();
-  const subscribeElement = document.querySelector<HTMLElement>(
-    CUSTOM_LINK_CSS_SELECTORS.subscribeSelector,
-  );
-  const explanationElement = document.querySelector<HTMLElement>(
-    CUSTOM_LINK_CSS_SELECTORS.explanationSelector,
-  );
-  t.not(subscribeElement, null);
-  t.not(explanationElement, null);
-
-  if (subscribeElement && explanationElement) {
-    simulateEventOfTypeOnElement('click', subscribeElement);
-    await subscriptionPromise;
-
-    t.is(registerSpy.calledOnce, true);
-    t.is(registerSpy.getCall(0).args.length, 1);
-    t.is(registerSpy.getCall(0).args[0].autoAccept, true);
-  }
-});
-
-test('customlink: subscribe: clicked: unsubscribed -> subscribed. http. opted out.', async (t) => {
-  const subscriptionPromise = EventsTestHelper.getSubscriptionPromise();
-  sandbox
-    .stub(PermissionManager.prototype, 'getReportedNotificationPermission')
-    .returns(false);
-  sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(true);
-  sandbox.stub(CustomLinkManager, 'isPushEnabled').returns(false);
-  sandbox.stub(CustomLinkManager, 'isOptedOut').returns(true);
-  const subscriptionSpy = sandbox
-    .stub(NotificationsNamespace.prototype, 'disable')
-    .callsFake(async () => {
-      await setSubscriptionStub();
-    });
-
-  await new CustomLinkManager(config).initialize();
-  const subscribeElement = document.querySelector<HTMLElement>(
-    CUSTOM_LINK_CSS_SELECTORS.subscribeSelector,
-  );
-  const explanationElement = document.querySelector<HTMLElement>(
-    CUSTOM_LINK_CSS_SELECTORS.explanationSelector,
-  );
-  t.not(subscribeElement, null);
-  t.not(explanationElement, null);
-
-  if (subscribeElement && explanationElement) {
-    simulateEventOfTypeOnElement('click', subscribeElement);
-    await subscriptionPromise;
-
     t.is(subscriptionSpy.calledOnce, true);
   }
 });

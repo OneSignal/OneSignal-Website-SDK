@@ -8,7 +8,6 @@ import { ServiceWorkerManager } from '../../../src/shared/managers/ServiceWorker
 import { ServiceWorkerActiveState } from '../../../src/shared/helpers/ServiceWorkerHelper';
 import {
   TestEnvironment,
-  HttpHttpsEnvironment,
   BrowserUserAgent,
 } from '../../support/sdk/TestEnvironment';
 import Database from '../../../src/shared/services/Database';
@@ -24,7 +23,6 @@ import {
 import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from '../../../src/shared/models/SubscriptionStrategyKind';
-import { IntegrationKind } from '../../../src/shared/models/IntegrationKind';
 import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../../../src/shared/models/WindowEnvironmentKind';
 import SdkEnvironment from '../../../src/shared/managers/SdkEnvironment';
@@ -40,9 +38,7 @@ import Environment from '../../../src/Environment';
 const sandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 
   TestEnvironment.mockInternalOneSignal();
   timemachine.reset();
@@ -464,9 +460,6 @@ test('safari 11.1+ with service worker but not pushManager', async (t) => {
   await TestEnvironment.mockInternalOneSignal();
 
   sandbox
-    .stub(SdkEnvironment, 'getIntegration')
-    .returns(IntegrationKind.Secure);
-  sandbox
     .stub(SdkEnvironment, 'getWindowEnv')
     .returns(WindowEnvironmentKind.ServiceWorker);
   sandbox
@@ -600,7 +593,6 @@ async function expirationTestCase(
   subscriptionExpirationTime: number,
   expirationCheckTime: number,
   skipCreationDateSet: boolean,
-  env: IntegrationKind,
 ) {
   const initialVapidKeys = generateVapidKeys();
 
@@ -608,9 +600,6 @@ async function expirationTestCase(
   const stub = sandbox
     .stub(ServiceWorkerManager.prototype, 'getActiveState')
     .resolves(ServiceWorkerActiveState.OneSignalWorker);
-  const integrationStub = sandbox
-    .stub(SdkEnvironment, 'getIntegration')
-    .resolves(env);
 
   // Set the initial datetime, which is used internally for the subscription created at
   timemachine.config({
@@ -645,29 +634,14 @@ async function expirationTestCase(
       const isExpiring = await subscriptionManager.isSubscriptionExpiring();
 
       if (subscriptionExpirationTime) {
-        if (
-          env === IntegrationKind.Secure ||
-          env === IntegrationKind.SecureProxy
-        ) {
-          // Checks in an HTTPS environment expire at the midpoint because we can silently
-          // resubscribe (HTTPS top frame silently resubscribe, HTTPS in child frame send message to
-          // SW to resubscribe)
-          const midpointExpirationTime =
-            subscriptionCreationTime +
-            (subscriptionExpirationTime - subscriptionCreationTime) / 2;
-          if (expirationCheckTime >= midpointExpirationTime) {
-            t.true(isExpiring);
-          } else {
-            t.false(isExpiring);
-          }
+        // Checks expire at the midpoint because we can silently resubscribe
+        const midpointExpirationTime =
+          subscriptionCreationTime +
+          (subscriptionExpirationTime - subscriptionCreationTime) / 2;
+        if (expirationCheckTime >= midpointExpirationTime) {
+          t.true(isExpiring);
         } else {
-          // Checks in an HTTP environment only expire at or after the expiration time, since we
-          // can't silently resubscribe
-          if (expirationCheckTime >= subscriptionExpirationTime) {
-            t.true(isExpiring);
-          } else {
-            t.false(isExpiring);
-          }
+          t.false(isExpiring);
         }
       } else {
         return t.false(isExpiring);
@@ -694,7 +668,6 @@ test('a subscription expiring in 30 days is not refreshed before the midpoint', 
     subscriptionExpirationTime,
     newTimeBeforeMidpoint,
     false,
-    IntegrationKind.Secure,
   );
 });
 
@@ -711,7 +684,6 @@ test('a subscription expiring in 30 days is refreshed at the midpoint', async (t
     subscriptionExpirationTime,
     newTimeAfterMidpoint,
     false,
-    IntegrationKind.Secure,
   );
 });
 
@@ -729,7 +701,6 @@ test('a subscription expiring in 30 days is refreshed after the midpoint', async
     subscriptionExpirationTime,
     newTimeAfterMidpoint,
     false,
-    IntegrationKind.Secure,
   );
 });
 
@@ -745,7 +716,6 @@ test('a subscription without a recorded creation date is always considered expir
     subscriptionExpirationTime,
     subscriptionCreationTime,
     true,
-    IntegrationKind.Secure,
   );
 });
 
@@ -760,7 +730,6 @@ test('a subscription without an expiration time is never considered expired', as
     null,
     subscriptionCreationTime,
     false,
-    IntegrationKind.Secure,
   );
 });
 
@@ -784,20 +753,6 @@ test('the subscription expiration time should be recorded', async (t) => {
 
       t.deepEqual(subscription.expirationTime, expirationTime);
     },
-  );
-});
-
-test('for HTTP, a subscription expiring in 30 days only expires after 30 days and not before', async (t) => {
-  const THIRTY_DAYS_MS = 1000 * 60 * 60 * 24 * 30;
-  const subscriptionCreationTime = 1;
-
-  await expirationTestCase(
-    t,
-    subscriptionCreationTime,
-    subscriptionCreationTime + THIRTY_DAYS_MS,
-    subscriptionCreationTime + THIRTY_DAYS_MS - 10,
-    false,
-    IntegrationKind.InsecureProxy,
   );
 });
 

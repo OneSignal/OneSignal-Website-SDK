@@ -6,7 +6,6 @@ import nock from 'nock';
 import { ServiceWorkerManager } from '../../../src/shared/managers/ServiceWorkerManager';
 import { ServiceWorkerActiveState } from '../../../src/shared/helpers/ServiceWorkerHelper';
 import {
-  HttpHttpsEnvironment,
   TestEnvironment,
   TestEnvironmentConfig,
 } from '../../support/sdk/TestEnvironment';
@@ -126,7 +125,6 @@ test('getActiveState() should detect Akamai akam-sw.js as 3rd party if othersw= 
 
 test('notification clicked - While page is opened in background', async (t) => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
     initOptions: {
       pageUrl: 'https://localhost:3001/',
     },
@@ -163,25 +161,13 @@ test('notification clicked - While page is opened in background', async (t) => {
     listenerRecord.callback.apply(null, ['test']);
 });
 
-test('getActiveState() returns an indeterminate status for insecure HTTP pages', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Http,
-  });
-
-  const manager = LocalHelpers.getServiceWorkerManager();
-
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.Indeterminate);
-});
-
 /***************************************************
  * installWorker()
  ***************************************************
  */
 
 test('installWorker() installs worker A with the correct file name and query parameter when no service worker exists', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   sandbox.stub(Notification, <any>'permission').value('granted');
 
   const manager = LocalHelpers.getServiceWorkerManager();
@@ -203,9 +189,7 @@ test('installWorker() installs worker A with the correct file name and query par
 });
 
 test('installWorker() does NOT install ServiceWorker when permission has NOT been granted', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
 
   const manager = LocalHelpers.getServiceWorkerManager();
 
@@ -216,9 +200,7 @@ test('installWorker() does NOT install ServiceWorker when permission has NOT bee
 });
 
 test('installWorker() installs worker A when a third party service worker exists', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   sandbox.stub(Notification, <any>'permission').value('granted');
 
   await navigator.serviceWorker.register('/another-service-worker.js');
@@ -234,9 +216,7 @@ test('installWorker() installs worker A when a third party service worker exists
 });
 
 test('installWorker() installs worker 1 -> simulate SDK upgrade -> install worker 2', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   sandbox.stub(Notification, <any>'permission').value('granted');
 
   const manager = new ServiceWorkerManager(OneSignal.context, {
@@ -287,9 +267,7 @@ test('installWorker() installs worker 1 -> simulate SDK upgrade -> install worke
 });
 
 test('installWorker() installs Worker new scope when it changes', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   sandbox.stub(Notification, 'permission').value('granted');
   // We don't want the version number check from "workerNeedsUpdate" interfering with this test.
   sandbox
@@ -335,9 +313,7 @@ test('installWorker() installs Worker new scope when it changes', async (t) => {
 });
 
 test('Service worker register URL correct when service worker path is an absolute URL', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   sandbox.stub(Notification, <any>'permission').value('granted');
 
   const manager = new ServiceWorkerManager(OneSignal.context, {
@@ -357,9 +333,7 @@ test('Service worker register URL correct when service worker path is an absolut
 });
 
 test('Service worker failed to install due to 404 on host page. Send notification to OneSignal api', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   sandbox.stub(Notification, <any>'permission').value('granted');
 
   const context = OneSignal.context;
@@ -396,72 +370,6 @@ test('Service worker failed to install due to 404 on host page. Send notificatio
   await t.throwsAsync(async () => manager.installWorker(), {
     instanceOf: ServiceWorkerRegistrationError,
   });
-});
-
-test('Service worker failed to install in popup. No handling.', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
-  sandbox.stub(Notification, <any>'permission').value('granted');
-
-  const context = OneSignal.context;
-
-  const workerPath = 'Worker-does-not-exist.js';
-  const manager = new ServiceWorkerManager(context, {
-    workerPath: new Path(workerPath),
-    registrationOptions: {
-      scope: '/',
-    },
-  });
-
-  const origin = 'https://onesignal.com';
-  nock(origin)
-    .get(function (uri) {
-      return uri.indexOf(workerPath) !== -1;
-    })
-    .reply(404, (_uri: string, _requestBody: any) => {
-      return {
-        status: 404,
-        statusText: '404 Not Found',
-      };
-    });
-
-  const workerRegistrationError = new Error('Registration failed');
-
-  sandbox
-    .stub(navigator.serviceWorker, 'register')
-    .throws(workerRegistrationError);
-  sandbox.stub(location, 'origin').returns(origin);
-  sandbox
-    .stub(SdkEnvironment, 'getWindowEnv')
-    .returns(WindowEnvironmentKind.OneSignalSubscriptionPopup);
-  const error = await t.throwsAsync(async () => manager.installWorker(), {
-    instanceOf: Error,
-  });
-  t.is(error.message, workerRegistrationError.message);
-});
-
-test('installWorker() should not install when on an HTTPS site with a subdomain set', async (t) => {
-  // 1. Mock site page as HTTPS
-  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
-  TestEnvironment.mockInternalOneSignal();
-  // 2. Set is set to use our subdomain however
-  const subdomain = 'abc';
-  const testConfig: TestEnvironmentConfig = {
-    integration: ConfigIntegrationKind.TypicalSite,
-    overrideServerConfig: {
-      config: {
-        subdomain: subdomain,
-        siteInfo: { proxyOriginEnabled: true, proxyOrigin: subdomain },
-      },
-    },
-  };
-  TestEnvironment.mockInternalOneSignal(testConfig);
-
-  const manager = LocalHelpers.getServiceWorkerManager();
-  await manager.installWorker();
-  // Since ServiceWorker will be installed in the iframe on os.tc Indeterminate is expected
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.Indeterminate);
 });
 
 test('ServiceWorkerManager.getRegistration() returns valid instance when sw is registered', async (t) => {

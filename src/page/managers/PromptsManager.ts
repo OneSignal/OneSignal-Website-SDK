@@ -186,7 +186,6 @@ export class PromptsManager {
     }
 
     this.isNativePromptShowing = true;
-    MainHelper.markHttpSlidedownShown();
     await InitHelper.registerForPushNotifications();
     this.isNativePromptShowing = false;
     DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
@@ -201,7 +200,6 @@ export class PromptsManager {
       options.slidedownPromptOptions = CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
     }
 
-    MainHelper.markHttpSlidedownShown();
     const sdkStylesLoadResult =
       await this.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {

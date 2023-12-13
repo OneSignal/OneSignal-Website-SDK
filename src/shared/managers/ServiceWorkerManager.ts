@@ -3,13 +3,9 @@ import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import Path from '../models/Path';
 import SdkEnvironment from './SdkEnvironment';
 import Database from '../services/Database';
-import { IntegrationKind } from '../models/IntegrationKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import NotImplementedError from '../errors/NotImplementedError';
-import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
 import OneSignalEvent from '../services/OneSignalEvent';
-import ProxyFrame from '../../page/modules/frames/ProxyFrame';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import ServiceWorkerHelper, {
@@ -49,42 +45,6 @@ export class ServiceWorkerManager {
   }
 
   public async getActiveState(): Promise<ServiceWorkerActiveState> {
-    /*
-      Note: This method can only be called on a secure origin. On an insecure
-      origin, it'll throw on getRegistration().
-    */
-
-    const integration = await SdkEnvironment.getIntegration();
-    if (integration === IntegrationKind.InsecureProxy) {
-      /* Service workers are not accessible on insecure origins */
-      return ServiceWorkerActiveState.Indeterminate;
-    } else if (integration === IntegrationKind.SecureProxy) {
-      /* If the site setup is secure proxy, we're either on the top frame without access to the
-      registration, or the child proxy frame that does have access to the registration. */
-      const env = SdkEnvironment.getWindowEnv();
-      switch (env) {
-        case WindowEnvironmentKind.Host:
-        case WindowEnvironmentKind.CustomIframe: {
-          /* Both these top-ish frames will need to ask the proxy frame to access the service worker
-          registration */
-          const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
-          if (!proxyFrameHost) {
-            /* On init, this function may be called. Return a null state for now */
-            return ServiceWorkerActiveState.Indeterminate;
-          } else {
-            return await proxyFrameHost.runCommand<ServiceWorkerActiveState>(
-              OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE,
-            );
-          }
-        }
-        case WindowEnvironmentKind.OneSignalSubscriptionPopup:
-          /* This is a top-level frame, so it can access the service worker registration */
-          break;
-        case WindowEnvironmentKind.OneSignalSubscriptionModal:
-          throw new NotImplementedError();
-      }
-    }
-
     const workerRegistration =
       await this.context.serviceWorkerManager.getRegistration();
     if (!workerRegistration) {
@@ -149,28 +109,15 @@ export class ServiceWorkerManager {
   public async getWorkerVersion(): Promise<number> {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<number>(async (resolve) => {
-      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
-        if (!proxyFrameHost) {
-          /* On init, this function may be called. Return a null state for now */
-          resolve(NaN);
-        } else {
-          const proxyWorkerVersion = await proxyFrameHost.runCommand<number>(
-            OneSignal.POSTMAM_COMMANDS.GET_WORKER_VERSION,
-          );
-          resolve(proxyWorkerVersion);
-        }
-      } else {
-        this.context.workerMessenger.once(
-          WorkerMessengerCommand.WorkerVersion,
-          (workerVersion) => {
-            resolve(workerVersion);
-          },
-        );
-        await this.context.workerMessenger.unicast(
-          WorkerMessengerCommand.WorkerVersion,
-        );
-      }
+      this.context.workerMessenger.once(
+        WorkerMessengerCommand.WorkerVersion,
+        (workerVersion) => {
+          resolve(workerVersion);
+        },
+      );
+      await this.context.workerMessenger.unicast(
+        WorkerMessengerCommand.WorkerVersion,
+      );
     });
   }
 
@@ -183,19 +130,7 @@ export class ServiceWorkerManager {
     // 2. Is OneSignal initialized?
     if (!OneSignal.config) return false;
 
-    // 3. Will the service worker be installed on os.tc instead of the current domain?
-    if (OneSignal.config.subdomain) {
-      // No, if configured to use our subdomain (AKA HTTP setup) AND this is on their page (HTTP or HTTPS).
-      // But since safari does not need subscription workaround, installing SW for session tracking.
-      if (
-        OneSignal.environmentInfo.browserType !== 'safari' &&
-        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host
-      ) {
-        return false;
-      }
-    }
-
-    // 4. Is a OneSignal ServiceWorker not installed now?
+    // 3. Is a OneSignal ServiceWorker not installed now?
     // If not and notification permissions are enabled we should install.
     // This prevents an unnecessary install of the OneSignal worker which saves bandwidth
     const workerState = await this.getActiveState();
@@ -217,12 +152,12 @@ export class ServiceWorkerManager {
       return notificationsEnabled;
     }
 
-    // 5. We have a OneSignal ServiceWorker installed, but did the path or scope of the ServiceWorker change?
+    // 4. We have a OneSignal ServiceWorker installed, but did the path or scope of the ServiceWorker change?
     if (await this.haveParamsChanged()) {
       return true;
     }
 
-    // 6. We have a OneSignal ServiceWorker installed, is there an update?
+    // 5. We have a OneSignal ServiceWorker installed, is there an update?
     return this.workerNeedsUpdate();
   }
 
@@ -334,28 +269,8 @@ export class ServiceWorkerManager {
     workerMessenger.on(
       WorkerMessengerCommand.NotificationClicked,
       async (event: NotificationClickEventInternal) => {
-        let clickedListenerCallbackCount: number;
-        if (
-          SdkEnvironment.getWindowEnv() ===
-          WindowEnvironmentKind.OneSignalProxyFrame
-        ) {
-          clickedListenerCallbackCount = await new Promise<number>(
-            (resolve) => {
-              const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
-              if (proxyFrame) {
-                proxyFrame.messenger.message(
-                  OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT,
-                  OneSignal.EVENTS.NOTIFICATION_CLICKED,
-                  (reply: any) => {
-                    const callbackCount: number = reply.data;
-                    resolve(callbackCount);
-                  },
-                );
-              }
-            },
-          );
-        } else
-          clickedListenerCallbackCount = OneSignal.emitter.numberOfListeners(
+        const clickedListenerCallbackCount =
+          OneSignal.emitter.numberOfListeners(
             OneSignal.EVENTS.NOTIFICATION_CLICKED,
           );
 
@@ -393,19 +308,6 @@ export class ServiceWorkerManager {
       },
     );
 
-    workerMessenger.on(WorkerMessengerCommand.RedirectPage, (data) => {
-      Log.debug(
-        `${SdkEnvironment.getWindowEnv().toString()} Picked up command.redirect to ${data}, forwarding to host page.`,
-      );
-      const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
-      if (proxyFrame) {
-        proxyFrame.messenger.message(
-          OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT,
-          data,
-        );
-      }
-    });
-
     workerMessenger.on(
       WorkerMessengerCommand.NotificationDismissed,
       async (data) => {
@@ -416,7 +318,6 @@ export class ServiceWorkerManager {
       },
     );
 
-    const isHttps = OneSignalUtils.isHttps();
     const isSafari = OneSignalUtils.isSafari();
 
     workerMessenger.on(
@@ -424,7 +325,7 @@ export class ServiceWorkerManager {
       async (incomingPayload: PageVisibilityRequest) => {
         // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
         // For Safari, unfortunately, we need this messaging workaround because SW always gets false.
-        if (isHttps && isSafari) {
+        if (isSafari) {
           const payload: PageVisibilityResponse = {
             timestamp: incomingPayload.timestamp,
             focused: document.hasFocus(),
@@ -433,17 +334,6 @@ export class ServiceWorkerManager {
             WorkerMessengerCommand.AreYouVisibleResponse,
             payload,
           );
-        } else {
-          const httpPayload: PageVisibilityRequest = {
-            timestamp: incomingPayload.timestamp,
-          };
-          const proxyFrame: ProxyFrame | undefined = OneSignal.proxyFrame;
-          if (proxyFrame) {
-            proxyFrame.messenger.message(
-              OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST,
-              httpPayload,
-            );
-          }
         }
       },
     );
@@ -526,15 +416,6 @@ export class ServiceWorkerManager {
       Log.error(
         `[Service Worker Installation] Installing service worker failed ${error}`,
       );
-      // Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.
-
-      // If we are inside the popup and service worker fails to register, it's not developer's fault.
-      // No need to report it to the api then.
-      const env = SdkEnvironment.getWindowEnv();
-      if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
-        throw error;
-      }
-
       registration = await this.fallbackToUserModelBetaWorker();
     }
     Log.debug(

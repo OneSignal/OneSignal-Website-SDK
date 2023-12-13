@@ -37,7 +37,6 @@ interface BaseSessionPayload {
   sessionThreshold: number;
   enableSessionDuration: boolean;
   sessionOrigin: SessionOrigin;
-  isHttps: boolean;
   isSafari: boolean;
   outcomesConfig: OutcomesConfig;
 }

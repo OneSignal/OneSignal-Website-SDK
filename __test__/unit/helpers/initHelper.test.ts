@@ -1,4 +1,3 @@
-import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { MessageChannel } from 'worker_threads';
@@ -11,28 +10,6 @@ describe('InitHelper', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-  });
-
-  /** registerForPushNotifications */
-  test('registerForPushNotifications: requesting a modal prompt', async () => {
-    await InitHelper.registerForPushNotifications({ modalPrompt: true });
-
-    expect(OneSignal.subscriptionModalHost).not.toBeUndefined();
-    expect(OneSignal.subscriptionModalHost.modal).not.toBeUndefined();
-  });
-
-  test('registerForPushNotifications: load fullscreen popup when using subscription workaround', async () => {
-    const utilsStub = jest
-      .spyOn(OneSignalUtils, 'isUsingSubscriptionWorkaround')
-      .mockReturnValue(true);
-    const loadStub = jest
-      .spyOn(InitHelper, 'loadSubscriptionPopup')
-      .mockResolvedValue(undefined);
-
-    await InitHelper.registerForPushNotifications();
-
-    expect(utilsStub).toHaveBeenCalledTimes(1);
-    expect(loadStub).toHaveBeenCalledTimes(1);
   });
 
   /** onSdkInitialized */
@@ -58,11 +35,6 @@ describe('InitHelper', () => {
     const spy = jest
       .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
       .mockResolvedValue(undefined);
-    test.stub(
-      OneSignalUtils,
-      'isUsingSubscriptionWorkaround',
-      Promise.resolve(false),
-    );
 
     OneSignal.config.userConfig.promptOptions.autoPrompt = false;
     OneSignal.config.userConfig.autoResubscribe = false;
@@ -76,11 +48,6 @@ describe('InitHelper', () => {
     const spy = jest
       .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
       .mockResolvedValue(undefined);
-    test.stub(
-      OneSignalUtils,
-      'isUsingSubscriptionWorkaround',
-      Promise.resolve(false),
-    );
 
     OneSignal.config.userConfig.promptOptions.autoPrompt = true;
     OneSignal.config.userConfig.autoResubscribe = true;

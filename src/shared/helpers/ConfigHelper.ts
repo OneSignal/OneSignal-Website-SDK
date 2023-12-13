@@ -58,6 +58,7 @@ export class ConfigHelper {
       const serverConfig = await downloadServerAppConfig(userConfig.appId);
       ConverterHelper.upgradeConfigToVersionTwo(userConfig);
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
+      this.checkUnsupportedSubdomain(appConfig);
       this.checkRestrictedOrigin(appConfig);
       return appConfig;
     } catch (e) {
@@ -70,22 +71,38 @@ export class ConfigHelper {
     }
   }
 
-  public static checkRestrictedOrigin(appConfig: AppConfig) {
-    if (appConfig.restrictedOriginEnabled) {
-      if (
-        SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker
-      ) {
-        if (
-          window.top === window &&
-          !Utils.contains(window.location.hostname, '.os.tc') &&
-          !Utils.contains(window.location.hostname, '.onesignal.com') &&
-          !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)
-        ) {
-          throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
-            siteUrl: appConfig.origin,
-          });
-        }
+  // The os.tc domain feature is no longer supported in v16, so throw if the
+  // OneSignal app is still configured this way after they migrated from v15.
+  private static checkUnsupportedSubdomain(appConfig: AppConfig): void {
+    const isHttp = !window.isSecureContext;
+    const unsupportedEnv = appConfig.hasUnsupportedSubdomain || isHttp;
+
+    if (unsupportedEnv) {
+      if (isHttp) {
+        throw new Error(
+          "OneSignalSDK: HTTP sites are no longer supported starting with version 16 (User Model), your public site must start with https://. Please visit the OneSignal dashboard's Settings > Web Configuration to find this option.",
+        );
+      } else {
+        throw new Error(
+          'OneSignalSDK: The "My site is not fully HTTPS" option is no longer supported starting with version 16 (User Model) of the OneSignal SDK. Please visit the OneSignal dashboard\'s Settings > Web Configuration to find this option.',
+        );
       }
+    }
+  }
+
+  public static checkRestrictedOrigin(appConfig: AppConfig) {
+    if (!appConfig.restrictedOriginEnabled) {
+      return;
+    }
+
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.Host) {
+      return;
+    }
+
+    if (!this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
+      throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
+        siteUrl: appConfig.origin,
+      });
     }
   }
 
@@ -117,33 +134,24 @@ export class ConfigHelper {
   ): AppConfig {
     const configIntegrationKind = this.getConfigIntegrationKind(serverConfig);
 
-    const subdomain = this.getSubdomainForConfigIntegrationKind(
-      configIntegrationKind,
-      userConfig,
-      serverConfig,
-    );
-    const allowLocalhostAsSecureOrigin = serverConfig.config.setupBehavior
-      ? serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin
-      : userConfig.allowLocalhostAsSecureOrigin;
-    const isUsingSubscriptionWorkaround =
-      OneSignalUtils.internalIsUsingSubscriptionWorkaround(
-        subdomain,
-        allowLocalhostAsSecureOrigin,
+    const hasUnsupportedSubdomain =
+      this.hasUnsupportedSubdomainForConfigIntegrationKind(
+        configIntegrationKind,
+        userConfig,
+        serverConfig,
       );
 
     const mergedUserConfig = this.getUserConfigForConfigIntegrationKind(
       configIntegrationKind,
       userConfig,
       serverConfig,
-      isUsingSubscriptionWorkaround,
     );
 
     return {
       appId: serverConfig.app_id,
-      subdomain,
+      hasUnsupportedSubdomain,
       siteName: serverConfig.config.siteInfo.name,
       origin: serverConfig.config.origin,
-      httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
       restrictedOriginEnabled:
         serverConfig.features.restrict_origin &&
         serverConfig.features.restrict_origin.enable,
@@ -236,14 +244,12 @@ export class ConfigHelper {
    * @param  {AppUserConfigPromptOptions|undefined} promptOptions
    * @param  {ServerAppPromptConfig} defaultsFromServer
    * @param  {AppUserConfig} wholeUserConfig
-   * @param  {boolean=false} isUsingSubscriptionWorkaround
    * @returns AppUserConfigPromptOptions
    */
   public static injectDefaultsIntoPromptOptions(
     promptOptions: AppUserConfigPromptOptions | undefined,
     defaultsFromServer: ServerAppPromptConfig,
     wholeUserConfig: AppUserConfig,
-    isUsingSubscriptionWorkaround = false,
   ): AppUserConfigPromptOptions | undefined {
     let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
     if (promptOptions && promptOptions.customlink) {
@@ -408,27 +414,11 @@ export class ConfigHelper {
      * prompt options.
      */
     if (wholeUserConfig.autoRegister === true) {
-      if (isUsingSubscriptionWorkaround) {
-        // disable native prompt
-        promptOptionsConfig.native.enabled = false;
-        promptOptionsConfig.native.autoPrompt = false;
+      //enable native prompt & make it autoPrompt
+      promptOptionsConfig.native.enabled = true;
+      promptOptionsConfig.native.autoPrompt = true;
 
-        // enable slidedown & make it autoPrompt
-        const text = {
-          actionMessage: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
-          acceptButton: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
-          cancelButton: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
-        };
-        promptOptionsConfig.slidedown.prompts = [
-          { type: DelayedPromptType.Push, autoPrompt: true, text },
-        ];
-      } else {
-        //enable native prompt & make it autoPrompt
-        promptOptionsConfig.native.enabled = true;
-        promptOptionsConfig.native.autoPrompt = true;
-
-        //leave slidedown settings without change
-      }
+      //leave slidedown settings without change
     }
 
     // sets top level `autoPrompt` to trigger autoprompt codepath in initialization / prompting flow
@@ -500,7 +490,6 @@ export class ConfigHelper {
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig,
-    isUsingSubscriptionWorkaround = false,
   ): AppUserConfig {
     const integrationCapabilities = this.getIntegrationCapabilities(
       configIntegrationKind,
@@ -642,7 +631,6 @@ export class ConfigHelper {
             userConfig.promptOptions,
             serverConfig.config.staticPrompts,
             userConfig,
-            isUsingSubscriptionWorkaround,
           ),
           ...{
             serviceWorkerParam: !!userConfig.serviceWorkerParam
@@ -686,73 +674,19 @@ export class ConfigHelper {
   /**
    * Describes how to merge a dashboard-set subdomain with a/lack of user-supplied subdomain.
    */
-  public static getSubdomainForConfigIntegrationKind(
+  public static hasUnsupportedSubdomainForConfigIntegrationKind(
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig,
-  ): string | undefined {
+  ): boolean {
     const integrationCapabilities = this.getIntegrationCapabilities(
       configIntegrationKind,
     );
-    const userValue: string | undefined = userConfig.subdomainName;
-    let serverValue: string | undefined = '';
-
     switch (integrationCapabilities.configuration) {
       case IntegrationConfigurationKind.Dashboard:
-        serverValue = serverConfig.config.siteInfo.proxyOriginEnabled
-          ? serverConfig.config.siteInfo.proxyOrigin
-          : undefined;
-        break;
+        return serverConfig.config.siteInfo.proxyOriginEnabled;
       case IntegrationConfigurationKind.JavaScript:
-        serverValue = serverConfig.config.subdomain;
-        break;
-    }
-
-    if (
-      serverValue &&
-      !this.shouldUseServerConfigSubdomain(userValue, integrationCapabilities)
-    ) {
-      return undefined;
-    } else {
-      return serverValue;
-    }
-  }
-
-  public static shouldUseServerConfigSubdomain(
-    userProvidedSubdomain: string | undefined,
-    capabilities: IntegrationCapabilities,
-  ): boolean {
-    switch (capabilities.configuration) {
-      case IntegrationConfigurationKind.Dashboard:
-        /*
-          Dashboard config using the new web config editor always takes precedence.
-         */
-        return true;
-      case IntegrationConfigurationKind.JavaScript:
-        /*
-         * An HTTPS site may be using either a native push integration or a fallback
-         * subdomain integration. Our SDK decides the integration based on whether
-         * init option subdomainName appears and the site's protocol.
-         *
-         * To avoid having developers write JavaScript to customize the SDK,
-         * configuration properties like subdomainName are downloaded on page start.
-         *
-         * New developers setting up web push can omit subdomainName, but existing
-         * developers already having written code to configure OneSignal aren't
-         * removing their code.
-         *
-         * When an HTTPS site is configured with a subdomain on the server-side, we do
-         * not apply it even though we've downloaded this configuration unless the
-         * user also declares it manually in their initialization code.
-         */
-        switch (location.protocol) {
-          case 'https:':
-            return !!userProvidedSubdomain;
-          case 'http:':
-            return true;
-          default:
-            return false;
-        }
+        return !!userConfig.subdomainName;
     }
   }
 }

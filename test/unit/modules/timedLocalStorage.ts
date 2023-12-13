@@ -1,16 +1,11 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import TimedLocalStorage from '../../../src/page/modules/TimedLocalStorage';
 import timemachine from 'timemachine';
 
 test('should not throw and return null if LocalStorage is not supported', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   delete (window as any).localStorage;
   t.deepEqual(window.localStorage, undefined);
   const value = TimedLocalStorage.getItem('test');
@@ -18,9 +13,7 @@ test('should not throw and return null if LocalStorage is not supported', async 
 });
 
 test('should set and get item without expiration', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   TimedLocalStorage.setItem('my-key', 'my-value');
   t.deepEqual(TimedLocalStorage.getItem('my-key'), 'my-value');
   timemachine.config({
@@ -31,9 +24,7 @@ test('should set and get item without expiration', async (t) => {
 });
 
 test('should set and get complex item without expiration', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   const hash = {
     number: 4,
     string: 'text',
@@ -49,9 +40,7 @@ test('should set and get complex item without expiration', async (t) => {
 });
 
 test('should set and get item with expiration', async (t) => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-  });
+  await TestEnvironment.initialize();
   TimedLocalStorage.setItem('my-key', 'my-value', 3);
   t.deepEqual(TimedLocalStorage.getItem('my-key'), 'my-value');
   timemachine.config({

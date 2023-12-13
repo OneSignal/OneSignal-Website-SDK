@@ -1,41 +1,22 @@
 import { NotificationPermission } from '../models/NotificationPermission';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import { AppConfig } from '../models/AppConfig';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { IntegrationKind } from '../models/IntegrationKind';
-import { Subscription } from '../models/Subscription';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import Bell from '../../page/bell/Bell';
-import {
-  DeprecatedApiError,
-  DeprecatedApiReason,
-} from '../../page/errors/DeprecatedApiError';
 import { ContextInterface } from '../../page/models/Context';
-import SubscriptionModalHost from '../../page/modules/frames/SubscriptionModalHost';
-import SubscriptionPopupHost from '../../page/modules/frames/SubscriptionPopupHost';
 import { DynamicResourceLoader } from '../../page/services/DynamicResourceLoader';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
-import OneSignalUtils from '../utils/OneSignalUtils';
 import { once, triggerNotificationPermissionChanged } from '../utils/utils';
 import Environment from './Environment';
 import OneSignalEvent from '../services/OneSignalEvent';
-import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
 import { bowserCastle } from '../utils/bowserCastle';
 
 declare let OneSignal: any;
-
-export interface RegisterOptions extends SubscriptionPopupHostOptions {
-  modalPrompt?: boolean;
-  httpPermissionRequest?: boolean;
-  slidedown?: boolean;
-}
 
 export default class InitHelper {
   /** Main methods */
@@ -104,14 +85,7 @@ export default class InitHelper {
     const subscription = await Database.getSubscription();
     subscription.optedOut = isOptedOut;
     await Database.setSubscription(subscription);
-
-    /**
-     * Auto-resubscribe is working only on HTTPS (and in safari)
-     * Should be called before autoprompting to make sure user gets a chance to be re-subscribed first.
-     */
-    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
-      await InitHelper.handleAutoResubscribe(isOptedOut);
-    }
+    await InitHelper.handleAutoResubscribe(isOptedOut);
 
     const isSubscribed =
       await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
@@ -126,51 +100,12 @@ export default class InitHelper {
     await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   }
 
-  // In-Addition to registering for push, this shows a native browser
-  // notification permission prompt, if needed.
-  public static async registerForPushNotifications(
-    options: RegisterOptions = {},
-  ): Promise<void> {
-    if (options && options.modalPrompt) {
-      /* Show the HTTPS fullscreen modal permission message. */
-      OneSignal.subscriptionModalHost = new SubscriptionModalHost(
-        OneSignal.config.appId,
-        options,
-      );
-      await OneSignal.subscriptionModalHost.load();
-      return;
-    }
-
-    if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-      if (options.httpPermissionRequest) {
-        /*
-         * Do not throw an error because it may cause the parent event handler to
-         * throw and stop processing the rest of their code. Typically, for this
-         * prompt sequence, a custom modal is being shown thanking the user for
-         * granting permissions. Throwing an error might cause the modal to stay
-         * on screen and not close.
-         *
-         * Only log an error for HTTP sites. A few HTTPS sites are mistakenly be
-         * using this API instead of the parameter-less version to register for
-         * push notifications.
-         */
-        Log.error(
-          new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest),
-        );
-        return;
-      }
-      await InitHelper.loadSubscriptionPopup(options);
-      return;
-    }
-
+  public static async registerForPushNotifications(): Promise<void> {
     await SubscriptionHelper.registerForPush();
   }
 
   /**
    * This event occurs after init.
-   * For HTTPS sites, this event is called after init.
-   * For HTTP sites, this event is called after the iFrame is created,
-   *    and a message is received from the iFrame signaling cross-origin messaging is ready.
    * @private
    */
   public static async onSdkInitialized() {
@@ -200,23 +135,6 @@ export default class InitHelper {
     }
 
     await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
-  }
-
-  public static async loadSubscriptionPopup(
-    options?: SubscriptionPopupHostOptions,
-  ) {
-    /**
-     * Users may be subscribed to either .onesignal.com or .os.tc. By this time
-     * that they are subscribing to the popup, the Proxy Frame has already been
-     * loaded and the user's subscription status has been obtained. We can then
-     * use the Proxy Frame present now and check its URL to see whether the user
-     * is finally subscribed to .onesignal.com or .os.tc.
-     */
-    OneSignal.subscriptionPopupHost = new SubscriptionPopupHost(
-      OneSignal.proxyFrameHost.url,
-      options,
-    );
-    await OneSignal.subscriptionPopupHost.load();
   }
 
   /** Helper methods */
@@ -254,11 +172,7 @@ export default class InitHelper {
   }
 
   protected static async establishServiceWorkerChannel(): Promise<void> {
-    if (
-      navigator.serviceWorker &&
-      window.location.protocol === 'https:' &&
-      !(await SdkEnvironment.isFrameContextInsecure())
-    ) {
+    if (navigator.serviceWorker && window.isSecureContext) {
       try {
         await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
       } catch (e) {
@@ -279,71 +193,12 @@ export default class InitHelper {
       return false;
     }
 
-    const integrationKind = await SdkEnvironment.getIntegration();
-    const windowEnv = SdkEnvironment.getWindowEnv();
-
-    Log.debug(
-      'Subscription is considered expiring. Current Integration:',
-      integrationKind,
+    Log.debug('Subscription is considered expiring.');
+    const rawPushSubscription = await context.subscriptionManager.subscribe(
+      SubscriptionStrategyKind.SubscribeNew,
     );
-    switch (integrationKind) {
-      /*
-        Resubscribe via the service worker.
-
-        For Secure, we can definitely resubscribe via the current page, but for SecureProxy, we
-        used to not be able to subscribe for push within secure child frames. The common supported
-        and safe way is to resubscribe via the service worker.
-       */
-      case IntegrationKind.Secure: {
-        const rawPushSubscription = await context.subscriptionManager.subscribe(
-          SubscriptionStrategyKind.SubscribeNew,
-        );
-        await context.subscriptionManager.registerSubscription(
-          rawPushSubscription,
-        );
-        break;
-      }
-      case IntegrationKind.SecureProxy:
-        if (windowEnv === WindowEnvironmentKind.OneSignalProxyFrame) {
-          await this.registerSubscriptionInProxyFrame(context);
-        } else {
-          const proxyFrame: ProxyFrameHost = OneSignal.proxyFrameHost;
-          await proxyFrame.runCommand(
-            OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS,
-          );
-        }
-        break;
-      case IntegrationKind.InsecureProxy:
-        /*
-          We can't really do anything here except remove a value checked by
-          isPushNotificationsEnabled to simulate unsubscribing.
-         */
-        await Database.remove('Ids', 'registrationId');
-        Log.debug(
-          'Unsubscribed expiring HTTP subscription by removing registration ID.',
-        );
-        break;
-    }
+    await context.subscriptionManager.registerSubscription(rawPushSubscription);
     return true;
-  }
-
-  public static async registerSubscriptionInProxyFrame(
-    context: ContextInterface,
-  ): Promise<Subscription> {
-    const newSubscription = await new Promise<Subscription>((resolve) => {
-      context.workerMessenger.once(
-        WorkerMessengerCommand.SubscribeNew,
-        (subscription) => {
-          resolve(Subscription.deserialize(subscription));
-        },
-      );
-      context.workerMessenger.unicast(
-        WorkerMessengerCommand.SubscribeNew,
-        context.appConfig,
-      );
-    });
-    Log.debug('Finished registering brand new subscription:', newSubscription);
-    return newSubscription;
   }
 
   public static async doInitialize(): Promise<void> {
@@ -351,8 +206,6 @@ export default class InitHelper {
 
     // Store initial values of notification permission, user ID, and manual subscription status
     // This is done so that the values can be later compared to see if anything changed
-    // This is done here for HTTPS, it is done after the call to _addSessionIframe in sessionInit for HTTP sites,
-    // since the iframe is needed for communication
     promises.push(InitHelper.storeInitialValues());
     promises.push(InitHelper.installNativePromptPermissionChangedHook());
     promises.push(InitHelper.setWelcomeNotificationFlag());

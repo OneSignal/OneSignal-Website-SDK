@@ -1,8 +1,5 @@
 import test from 'ava';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 import { setupFakePlayerId } from '../../support/tester/utils';
 import { NockOneSignalHelper } from '../../support/tester/NockOneSignalHelper';
@@ -18,7 +15,6 @@ import {
 
 test.beforeEach(async (t) => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
     permission: NotificationPermission.Granted,
   });
   TestEnvironment.mockInternalOneSignal();
