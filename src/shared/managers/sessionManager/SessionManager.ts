@@ -270,7 +270,7 @@ export class SessionManager implements ISessionManager {
     if (this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
       this.setupSessionEventListeners();
     } else {
-      this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
+      this.onSessionSent = sessionOrigin === SessionOrigin.UserCreate;
       OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
     }
   }

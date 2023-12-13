@@ -3,7 +3,6 @@ import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { OutcomeRequestData } from '../../../src/page/models/OutcomeRequestData';
 import { DeliveryPlatformKind } from '../../../src/shared/models/DeliveryPlatformKind';
-import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
 import Log from '../../../src/shared/libraries/Log';
 import Database, {
   TABLE_OUTCOMES_NOTIFICATION_CLICKED,
@@ -11,7 +10,6 @@ import Database, {
 import timemachine from 'timemachine';
 import OutcomeTestHelper from '../../support/tester/OutcomeTestHelper';
 import OneSignalApiShared from '../../../src/shared/api/OneSignalApiShared';
-import MainHelper from '../../../src/shared/helpers/MainHelper';
 
 const OUTCOME_WEIGHT = 55.6;
 const OUTCOME_NAME = 'test_outcome';
@@ -62,9 +60,6 @@ test('reporting outcome requires the sdk to be initialized', async (t) => {
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   const sendOutcomePromise = OneSignal.sendOutcome(OUTCOME_NAME);
   t.is(apiSpy.callCount, 0);
 
@@ -92,9 +87,6 @@ test('when outcome is unattributed and feature enabled it sends an api call', as
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 1);
@@ -122,9 +114,6 @@ test('when outcome is unattributed and feature enabled and has weight it sends a
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendOutcome(OUTCOME_NAME, OUTCOME_WEIGHT);
 
   t.is(apiSpy.callCount, 1);
@@ -146,9 +135,6 @@ test('when outcome is direct and feature enabled it sends an api call', async (t
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 1);
@@ -178,9 +164,6 @@ test('when outcome is direct and feature disabled there are no api calls', async
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 0);
@@ -195,9 +178,6 @@ test('when outcome is direct and feature enabled and has weight it sends an api 
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendOutcome(OUTCOME_NAME, OUTCOME_WEIGHT);
 
   t.is(apiSpy.callCount, 1);
@@ -224,9 +204,6 @@ test('when outcome is indirect and feature enabled it sends an api call', async 
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 1);
@@ -260,9 +237,6 @@ test('when outcome is indirect and feature disabled there are no api calls', asy
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 0);
@@ -277,9 +251,6 @@ test('when outcome is indirect and feature enabled and has weight it sends an ap
   sinonSandbox
     .stub(OneSignal, 'privateIsPushNotificationsEnabled')
     .resolves(true);
-  sinonSandbox
-    .stub(MainHelper, 'getCurrentNotificationType')
-    .resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 1);

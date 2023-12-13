@@ -8,6 +8,7 @@ import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
 import Environment from '../../shared/helpers/Environment';
+import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
   readonly type: SubscriptionType;
@@ -61,7 +62,10 @@ export default class FuturePushSubscriptionRecord implements Serializable {
 
   /* S T A T I C */
 
-  static getSubscriptionType(): SubscriptionType {
+  /**
+   * Get the User Model Subscription type based on browser detection.
+   */
+  public static getSubscriptionType(): SubscriptionType {
     const browser = OneSignalUtils.redetectBrowserUserAgent();
     if (browser.firefox) {
       return SubscriptionType.FirefoxPush;
@@ -72,9 +76,23 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     if (Environment.useSafariLegacyPush()) {
       return SubscriptionType.SafariLegacyPush;
     }
-    if (browser.msedge) {
-      return SubscriptionType.WindowPush;
-    }
+    // Other browsers, like Edge, are Chromium based so we consider them "Chrome".
     return SubscriptionType.ChromePush;
+  }
+
+  /**
+   * Get the legacy player.device_type
+   * NOTE: Use getSubscriptionType() instead when possible.
+   */
+  public static getDeviceType(): DeliveryPlatformKind {
+    switch (this.getSubscriptionType()) {
+      case SubscriptionType.FirefoxPush:
+        return DeliveryPlatformKind.Firefox;
+      case SubscriptionType.SafariLegacyPush:
+        return DeliveryPlatformKind.SafariLegacy;
+      case SubscriptionType.SafariPush:
+        return DeliveryPlatformKind.SafariVapid;
+    }
+    return DeliveryPlatformKind.ChromeLike;
   }
 }

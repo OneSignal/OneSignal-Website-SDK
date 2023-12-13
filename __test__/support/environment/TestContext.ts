@@ -184,9 +184,6 @@ export default class TestContext {
           enable: true,
           mixpanel_reporting_token: '7c2582e45a6ecf1501aa3ca7887f3673',
         },
-        email: {
-          require_auth: true,
-        },
         web_on_focus_enabled: true,
         session_threshold: 30,
       },

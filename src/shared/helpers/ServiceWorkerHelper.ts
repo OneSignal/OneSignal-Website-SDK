@@ -194,9 +194,8 @@ export default class ServiceWorkerHelper {
   }
 
   /**
-   * Sends on_session call on each new session initialization except the case
-   * when player create call occurs, e.g. first subscribed or re-subscribed cases after clearing cookies,
-   * since player#create call updates last_session field on player.
+   * Updates session only if it isn't from the result of a user create,
+   * as it already initializes it with the first session.
    */
   public static async sendOnSessionCallIfNotPlayerCreate(
     appId: string,
@@ -205,20 +204,9 @@ export default class ServiceWorkerHelper {
     sessionOrigin: SessionOrigin,
     session: Session,
   ) {
-    if (sessionOrigin === SessionOrigin.PlayerCreate) {
+    if (sessionOrigin === SessionOrigin.UserCreate) {
       return;
     }
-
-    /* TO DO: will need update token for Safari 16 migration path
-    if (!deviceRecord.identifier) {
-      const subscription = await self.registration.pushManager.getSubscription();
-      if (subscription) {
-        const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
-        const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();
-        deviceRecord.identifier = fullDeviceRecord.identifier;
-      }
-    }
-    */
 
     Database.upsertSession(session);
     Database.resetSentUniqueOutcomes();

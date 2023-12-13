@@ -28,7 +28,6 @@ import SubscriptionError, {
 } from '../errors/SubscriptionError';
 import Log from '../libraries/Log';
 import { RawPushSubscription } from '../models/RawPushSubscription';
-import OneSignalApiShared from '../api/OneSignalApiShared';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import {
   FutureSubscriptionModel,
@@ -41,6 +40,7 @@ import UserDirector from '../../onesignal/UserDirector';
 import { OSModel } from '../../core/modelRepo/OSModel';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import { bowserCastle } from '../utils/bowserCastle';
+import { PushSubscriptionState } from '../models/PushSubscriptionState';
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -268,7 +268,7 @@ export class SubscriptionManager {
     if (await this.isAlreadyRegisteredWithOneSignal()) {
       await this.context.updateManager.sendPushDeviceRecordUpdate();
     } else {
-      this.context.sessionManager.upsertSession(SessionOrigin.PlayerCreate);
+      this.context.sessionManager.upsertSession(SessionOrigin.UserCreate);
     }
 
     const subscription = await Database.getSubscription();
@@ -334,23 +334,6 @@ export class SubscriptionManager {
     // TODO: Clean up our custom NotificationPermission enum
     //         in favor of TS union type NotificationPermission instead of converting
     return NotificationPermission[results];
-  }
-
-  /**
-   * Called after registering a subscription with OneSignal to associate this subscription with an
-   * email record if one exists.
-   */
-  public async associateSubscriptionWithEmail(newDeviceId: string) {
-    const emailProfile = await Database.getEmailProfile();
-    if (!emailProfile.subscriptionId) {
-      return;
-    }
-
-    // Update the push device record with a reference to the new email ID and email address
-    await OneSignalApiShared.updatePlayer(this.config.appId, newDeviceId, {
-      parent_player_id: emailProfile.subscriptionId,
-      email: emailProfile.identifier,
-    });
   }
 
   public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {

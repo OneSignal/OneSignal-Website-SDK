@@ -1,15 +1,12 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 
 import '../../support/sdk/TestEnvironment';
-import { ReplayCallsOnOneSignal } from '../../../src/page/utils/ReplayCallsOnOneSignal';
 import { ProcessOneSignalPushCalls } from '../../../src/page/utils/ProcessOneSignalPushCalls';
 import { OneSignalShimLoader } from '../../../src/page/utils/OneSignalShimLoader';
 import { SinonSandbox } from 'sinon';
 import sinon from 'sinon';
 import { setupBrowserWithPushAPIWithVAPIDEnv } from '../../support/tester/utils';
-import OneSignal from '../../../src/onesignal/OneSignal';
 import { OneSignalDeferredLoadedCallback } from '../../../src/page/models/OneSignalDeferredLoadedCallback';
 
 // TODO: We still need some tests like this, but they will be much different. Testing to ensure the
@@ -46,31 +43,6 @@ class MockOneSignal implements IOneSignal {
     });
   }
 }
-
-test('Test ReplayCallsOnOneSignal fires functions ', async (t) => {
-  // Setup OneSignalDeferred, as an array as a customer would
-  const onesignalDeferred = [];
-  // Call OneSignal.push(function(){}) like a site developer should be doing.
-
-  let delayedPromise: DelayedPromise<any> | undefined = undefined;
-  const promise = new Promise((resolve, reject) => {
-    delayedPromise = { resolve, reject };
-  });
-
-  onesignalDeferred.push(async function (_onesignal: OneSignal) {
-    delayedPromise!.resolve();
-  });
-
-  // Set our fake mock to as window.OneSignal
-  const mockOneSignal = new MockOneSignal();
-  (global as any).OneSignal = mockOneSignal;
-
-  // Replay function calls we called on the stub on our mock
-  ReplayCallsOnOneSignal.processOneSignalDeferredArray(onesignalDeferred);
-
-  // Ensure our function gets called.
-  await promise;
-});
 
 test('OneSignalSDK.page.js add OneSignalSDK.page.es6.js script tag on a browser supports push', async (t) => {
   setupBrowserWithPushAPIWithVAPIDEnv(sandbox);

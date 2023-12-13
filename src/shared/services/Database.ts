@@ -8,15 +8,11 @@ import {
   OutcomesNotificationClicked,
   OutcomesNotificationReceived,
 } from '../models/OutcomesNotificationEvents';
-import { ServiceWorkerState } from '../models/ServiceWorkerState';
 import { Subscription } from '../models/Subscription';
-import { BundleEmail, EmailProfile } from '../models/EmailProfile';
 import { Session, ONESIGNAL_SESSION_KEY } from '../models/Session';
 import Log from '../libraries/Log';
 import { SentUniqueOutcome } from '../models/Outcomes';
-import { BundleSMS, SMSProfile } from '../models/SMSProfile';
 import { ModelName } from '../../core/models/SupportedModels';
-import Utils from '../context/Utils';
 import {
   NotificationClickForOpenHandlingSchema,
   NotificationClickForOpenHandlingSerializer,
@@ -155,41 +151,6 @@ export default class Database {
     return config;
   }
 
-  async getExternalUserId(): Promise<string | undefined | null> {
-    return await this.get<string>('Ids', 'externalUserId');
-  }
-
-  async getExternalUserIdAuthHash(): Promise<string | undefined | null> {
-    return await this.get<string>('Ids', 'externalUserIdAuthHash');
-  }
-
-  async setExternalUserId(
-    externalUserId: string | null,
-    authHash: string | null,
-  ): Promise<void> {
-    const emptyString = '';
-    const externalIdToSave = Utils.getValueOrDefault(
-      externalUserId,
-      emptyString,
-    );
-    const authHashToSave = Utils.getValueOrDefault(authHash, emptyString);
-
-    if (externalIdToSave === emptyString) {
-      await this.remove('Ids', 'externalUserId');
-    } else {
-      await this.put('Ids', { type: 'externalUserId', id: externalIdToSave });
-    }
-
-    if (authHashToSave === emptyString) {
-      await this.remove('Ids', 'externalUserIdAuthHash');
-    } else {
-      await this.put('Ids', {
-        type: 'externalUserIdAuthHash',
-        id: authHashToSave,
-      });
-    }
-  }
-
   async setAppConfig(appConfig: AppConfig): Promise<void> {
     if (appConfig.appId)
       await this.put('Ids', { type: 'appId', id: appConfig.appId });
@@ -285,23 +246,6 @@ export default class Database {
     }
   }
 
-  async getServiceWorkerState(): Promise<ServiceWorkerState> {
-    const state = new ServiceWorkerState();
-    state.workerVersion = await this.get<number>(
-      'Ids',
-      'WORKER1_ONE_SIGNAL_SW_VERSION',
-    );
-    return state;
-  }
-
-  async setServiceWorkerState(state: ServiceWorkerState) {
-    if (state.workerVersion)
-      await this.put('Ids', {
-        type: 'WORKER1_ONE_SIGNAL_SW_VERSION',
-        id: state.workerVersion,
-      });
-  }
-
   async getSubscription(): Promise<Subscription> {
     const subscription = new Subscription();
     subscription.deviceId = await this.get<string>('Ids', 'userId');
@@ -382,39 +326,6 @@ export default class Database {
 
   async getJWTToken(): Promise<string | null> {
     return await this.get<string>('Ids', 'jwtToken');
-  }
-
-  async getEmailProfile(): Promise<EmailProfile> {
-    const profileJson = await this.get<BundleEmail>('Ids', 'emailProfile');
-    if (profileJson) {
-      return EmailProfile.deserialize(profileJson);
-    } else {
-      return new EmailProfile();
-    }
-  }
-
-  async setEmailProfile(emailProfile: EmailProfile): Promise<void> {
-    if (emailProfile) {
-      await this.put('Ids', {
-        type: 'emailProfile',
-        id: emailProfile.serialize(),
-      });
-    }
-  }
-
-  async getSMSProfile(): Promise<SMSProfile> {
-    const profileJson = await this.get<BundleSMS>('Ids', 'smsProfile');
-    if (profileJson) {
-      return SMSProfile.deserialize(profileJson);
-    } else {
-      return new SMSProfile();
-    }
-  }
-
-  async setSMSProfile(profile: SMSProfile): Promise<void> {
-    if (profile) {
-      await this.put('Ids', { type: 'smsProfile', id: profile.serialize() });
-    }
   }
 
   async setProvideUserConsent(consent: boolean): Promise<void> {
@@ -581,22 +492,6 @@ export default class Database {
     await Database.singletonInstance.removeSession(ONESIGNAL_SESSION_KEY);
   }
 
-  static async setEmailProfile(emailProfile: EmailProfile) {
-    return await Database.singletonInstance.setEmailProfile(emailProfile);
-  }
-
-  static async getEmailProfile(): Promise<EmailProfile> {
-    return await Database.singletonInstance.getEmailProfile();
-  }
-
-  static async setSMSProfile(smsProfile: SMSProfile) {
-    return await Database.singletonInstance.setSMSProfile(smsProfile);
-  }
-
-  static async getSMSProfile(): Promise<SMSProfile> {
-    return await Database.singletonInstance.getSMSProfile();
-  }
-
   static async setSubscription(subscription: Subscription) {
     return await Database.singletonInstance.setSubscription(subscription);
   }
@@ -621,14 +516,6 @@ export default class Database {
     return await Database.singletonInstance.getConsentGiven();
   }
 
-  static async setServiceWorkerState(workerState: ServiceWorkerState) {
-    return await Database.singletonInstance.setServiceWorkerState(workerState);
-  }
-
-  static async getServiceWorkerState(): Promise<ServiceWorkerState> {
-    return await Database.singletonInstance.getServiceWorkerState();
-  }
-
   static async setAppState(appState: AppState) {
     return await Database.singletonInstance.setAppState(appState);
   }
@@ -643,14 +530,6 @@ export default class Database {
 
   static async getAppConfig(): Promise<AppConfig> {
     return await Database.singletonInstance.getAppConfig();
-  }
-
-  static async getExternalUserId(): Promise<string | undefined | null> {
-    return await Database.singletonInstance.getExternalUserId();
-  }
-
-  static async getExternalUserIdAuthHash(): Promise<string | undefined | null> {
-    return await Database.singletonInstance.getExternalUserIdAuthHash();
   }
 
   static async getLastNotificationClickedForOutcomes(
@@ -707,16 +586,6 @@ export default class Database {
 
   static async resetSentUniqueOutcomes(): Promise<void> {
     return await Database.singletonInstance.resetSentUniqueOutcomes();
-  }
-
-  static async setExternalUserId(
-    externalUserId?: string | null,
-    authHash?: string | null,
-  ): Promise<void> {
-    await Database.singletonInstance.setExternalUserId(
-      externalUserId,
-      authHash,
-    );
   }
 
   static async setDeviceId(deviceId: string | null): Promise<void> {

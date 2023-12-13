@@ -5,7 +5,6 @@ import Database from '../../shared/services/Database';
 import { UnsubscriptionStrategy } from '../../shared/models/UnsubscriptionStrategy';
 import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
 import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
-import { PushDeviceRecord } from '../../shared/models/PushDeviceRecord';
 import Log from '../libraries/Log';
 import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import { Utils } from '../../shared/context/Utils';
@@ -30,7 +29,7 @@ import {
   WorkerMessengerMessage,
   WorkerMessengerCommand,
 } from '../../../src/shared/libraries/WorkerMessenger';
-import { DeviceRecord } from '../../../src/shared/models/DeviceRecord';
+import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import {
@@ -450,7 +449,7 @@ export class ServiceWorker {
     const postData = {
       player_id: pushSubscriptionId,
       app_id: appId,
-      device_type: DeviceRecord.prototype.getDeliveryPlatform(),
+      device_type: FuturePushSubscriptionRecord.getDeviceType(),
     };
 
     Log.debug(
@@ -879,7 +878,7 @@ export class ServiceWorker {
     const notificationOpensLink: boolean =
       ServiceWorker.shouldOpenNotificationUrl(launchUrl);
     const appId = await ServiceWorker.getAppId();
-    const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
+    const deviceType = FuturePushSubscriptionRecord.getDeviceType();
 
     const notificationClickEvent: NotificationClickEventInternal = {
       notification: osNotification,
@@ -1131,7 +1130,7 @@ export class ServiceWorker {
         // We don't have the device ID stored, but we can look it up from our old subscription
         deviceId = await OneSignalApiSW.getUserIdFromSubscriptionIdentifier(
           appId,
-          PushDeviceRecord.prototype.getDeliveryPlatform(),
+          FuturePushSubscriptionRecord.getDeviceType(),
           event.oldSubscription.endpoint,
         );
 

@@ -6,7 +6,6 @@ import Log from '../libraries/Log';
 const SILENT_EVENTS = [
   'notifyButtonHovering',
   'notifyButtonHover',
-
   'notifyButtonButtonClick',
   'notifyButtonLauncherClick',
   'animatedElementHiding',
@@ -17,20 +16,11 @@ const SILENT_EVENTS = [
   'activeAnimatedElementActive',
   'activeAnimatedElementInactivating',
   'activeAnimatedElementInactive',
-  'dbRetrieved',
-  'dbSet',
-  'testEvent',
 ];
-
-const LEGACY_EVENT_MAP: { [key: string]: string } = {
-  permissionChange: 'onesignal.prompt.native.permissionchanged',
-  subscriptionChange: 'onesignal.subscription.changed',
-  customPromptClick: 'onesignal.prompt.custom.clicked',
-};
 
 export default class OneSignalEvent {
   /**
-   * Triggers the specified event with optional custom data.
+   * Triggers an internal event with optional custom data.
    * @param eventName The string event name to be emitted.
    * @param data Any JavaScript variable to be passed with the event.
    */
@@ -46,7 +36,7 @@ export default class OneSignalEvent {
       }
     }
 
-    // Actually fire the event that can be listened to via OneSignal.on()
+    // Fire internal event to those listening via OneSignal.emitter.on()
     if (Environment.isBrowser()) {
       if (eventName === OneSignal.EVENTS.SDK_INITIALIZED) {
         if (OneSignal.initialized) return;
@@ -54,26 +44,5 @@ export default class OneSignalEvent {
       }
       await OneSignal.emitter.emit(eventName, data);
     }
-    // eslint-disable-next-line no-prototype-builtins
-    if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
-      const legacyEventName = LEGACY_EVENT_MAP[eventName];
-      OneSignalEvent._triggerLegacy(legacyEventName, data);
-    }
-  }
-
-  /**
-   * Fires the event to be listened to via window.addEventListener().
-   * @param eventName The string event name.
-   * @param data Any JavaScript variable to be passed with the event.
-   * @private
-   */
-  static _triggerLegacy(eventName: string, data: any) {
-    const event = new CustomEvent(eventName, {
-      bubbles: true,
-      cancelable: true,
-      detail: data,
-    });
-    // Fire the event that listeners can listen to via 'window.addEventListener()'
-    window.dispatchEvent(event);
   }
 }

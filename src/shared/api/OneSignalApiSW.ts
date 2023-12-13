@@ -51,20 +51,6 @@ export class OneSignalApiSW {
       });
   }
 
-  static async updatePlayer(
-    appId: string,
-    playerId: string,
-    options?: object,
-  ): Promise<void> {
-    const funcToExecute = async () => {
-      await OneSignalApiBase.put(`players/${playerId}`, {
-        app_id: appId,
-        ...options,
-      });
-    };
-    return await Utils.enforceAppIdAndPlayerId(appId, playerId, funcToExecute);
-  }
-
   /**
    *  Main on_session call
    * @returns

@@ -177,6 +177,11 @@ export class CoreModuleDirector {
     };
   }
 
+  public async hasEmail(): Promise<boolean> {
+    const emails = await this.getEmailSubscriptionModels();
+    return Object.keys(emails).length > 0;
+  }
+
   public getSmsSubscriptionModels(): {
     [key: string]: OSModel<SupportedSubscription>;
   } {
@@ -185,6 +190,11 @@ export class CoreModuleDirector {
     return modelStores.smsSubscriptions.models as {
       [key: string]: OSModel<SupportedSubscription>;
     };
+  }
+
+  public async hasSms(): Promise<boolean> {
+    const smsModels = await this.getSmsSubscriptionModels();
+    return Object.keys(smsModels).length > 0;
   }
 
   /**

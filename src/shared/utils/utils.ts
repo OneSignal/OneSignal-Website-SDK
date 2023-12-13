@@ -181,16 +181,6 @@ export function hasCssClass(
 }
 
 /**
- * var DEVICE_TYPES = {
- *  CHROME: 5,
- *  SAFARI: 7,
- *  FIREFOX: 8,
- *  EDGE: 12,
- *  UNKNOWN: -99
- * };
- */
-
-/**
  * Returns a promise for the setTimeout() method.
  * @param durationMs
  * @returns {Promise} Returns a promise that resolves when the timeout is complete.
@@ -240,18 +230,6 @@ export function getRandomUuid(): string {
  */
 export function isValidUuid(uuid: string) {
   return OneSignalUtils.isValidUuid(uuid);
-}
-
-/**
- * Wipe OneSignal-related IndexedDB data on the "correct" computed origin, but OneSignal must be initialized first to use.
- */
-export function wipeIndexedDb() {
-  Log.warn('OneSignal: Wiping IndexedDB data.');
-  return Promise.all([
-    Database.remove('Ids'),
-    Database.remove('NotificationOpened'),
-    Database.remove('Options'),
-  ]);
 }
 
 /**

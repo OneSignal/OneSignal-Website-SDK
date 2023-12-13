@@ -2,7 +2,6 @@ import NotImplementedError from '../../../../src/shared/errors/NotImplementedErr
 
 export class MockServiceWorker implements ServiceWorker {
   scriptURL: string;
-  state: ServiceWorkerState;
 
   constructor() {}
 

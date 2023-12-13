@@ -155,11 +155,6 @@ export class ConfigHelper {
       restrictedOriginEnabled:
         serverConfig.features.restrict_origin &&
         serverConfig.features.restrict_origin.enable,
-      metrics: {
-        enable: serverConfig.features.metrics.enable,
-        mixpanelReportingToken:
-          serverConfig.features.metrics.mixpanel_reporting_token,
-      },
       safariWebId: serverConfig.config.safari_web_id,
       vapidPublicKey: serverConfig.config.vapid_public_key,
       onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,

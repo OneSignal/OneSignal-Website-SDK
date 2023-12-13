@@ -27,10 +27,6 @@ export interface AppConfig {
   origin: string;
 
   restrictedOriginEnabled?: boolean | null;
-  metrics: {
-    enable: boolean;
-    mixpanelReportingToken: string | null;
-  };
   enableOnSession?: boolean;
   enableSessionDuration?: boolean;
   safariWebId?: string;
@@ -212,9 +208,6 @@ export interface ServerAppConfig {
     };
     restrict_origin: {
       enable: boolean;
-    };
-    email?: {
-      require_auth: boolean;
     };
     enable_on_session?: boolean;
     receive_receipts_enable?: boolean;

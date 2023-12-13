@@ -1,5 +1,4 @@
 import { EnvironmentKind } from '../models/EnvironmentKind';
-import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import {
   InvalidArgumentError,
@@ -86,17 +85,6 @@ export default class SdkEnvironment {
       }
     }
     return WindowEnvironmentKind.Host;
-  }
-
-  /**
-   * Describes whether the SDK is built in tests mode or not.
-   *
-   * This method is overriden when tests are run.
-   */
-  public static getTestEnv(): TestEnvironmentKind {
-    return typeof __TEST__ === 'undefined'
-      ? TestEnvironmentKind.UnitTesting
-      : TestEnvironmentKind.None;
   }
 
   /**

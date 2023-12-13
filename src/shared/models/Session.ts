@@ -1,16 +1,13 @@
-import { DeliveryPlatformKind } from './DeliveryPlatformKind';
-import { DeviceRecord } from './DeviceRecord';
 import { OutcomesConfig } from './Outcomes';
 
 export enum SessionStatus {
   Active = 'active',
   Inactive = 'inactive',
-  Expired = 'expired',
 }
 
 export enum SessionOrigin {
-  PlayerCreate = 1,
-  PlayerOnSession = 2,
+  UserCreate = 1,
+  UserNewSession = 2,
   VisibilityVisible = 3,
   VisibilityHidden = 4,
   BeforeUnload = 5,
@@ -20,9 +17,8 @@ export enum SessionOrigin {
 }
 
 export interface Session {
-  sessionKey: string;
+  sessionKey: string; // indexDb keyPath, always ONESIGNAL_SESSION_KEY
   appId: string;
-  deviceType: DeliveryPlatformKind;
   startTimestamp: number;
   accumulatedDuration: number;
   notificationId: string | null; // for direct clicks
@@ -59,14 +55,11 @@ export const ONESIGNAL_SESSION_KEY = 'oneSignalSession';
 
 export function initializeNewSession(options: NewSessionOptions): Session {
   const currentTimestamp = new Date().getTime();
-  const sessionKey = (options && options.sessionKey) || ONESIGNAL_SESSION_KEY;
   const notificationId = (options && options.notificationId) || null;
-  const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
   return {
-    sessionKey,
+    sessionKey: ONESIGNAL_SESSION_KEY,
     appId: options.appId,
-    deviceType,
     startTimestamp: currentTimestamp,
     accumulatedDuration: 0,
     notificationId,

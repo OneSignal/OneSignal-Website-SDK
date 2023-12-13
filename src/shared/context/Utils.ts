@@ -1,8 +1,4 @@
 import AliasPair from '../../core/requestService/AliasPair';
-import {
-  OneSignalApiError,
-  OneSignalApiErrorKind,
-} from '../errors/OneSignalApiError';
 import TimeoutError from '../errors/TimeoutError';
 
 type Nullable = undefined | null;
@@ -176,12 +172,6 @@ export class Utils {
     }
   }
 
-  public static enforcePlayerId(playerId: string | undefined | null): void {
-    if (!playerId) {
-      throw new Error('Player id cannot be empty');
-    }
-  }
-
   public static enforceAlias(aliasPair: AliasPair): void {
     if (!aliasPair.label) {
       throw new Error('Alias label cannot be empty');
@@ -189,27 +179,6 @@ export class Utils {
 
     if (!aliasPair.id) {
       throw new Error('Alias id cannot be empty');
-    }
-  }
-
-  public static async enforceAppIdAndPlayerId<T>(
-    appId: string | Nullable,
-    playerId: string | Nullable,
-    funcToExecute: () => Promise<T>,
-  ): Promise<T> {
-    Utils.enforceAppId(appId);
-    Utils.enforcePlayerId(playerId);
-    try {
-      return await funcToExecute();
-    } catch (e) {
-      if (
-        e &&
-        Array.isArray(e.errors) &&
-        e.errors.length > 0 &&
-        Utils.contains(e.errors[0], 'app_id not found')
-      ) {
-        throw new OneSignalApiError(OneSignalApiErrorKind.MissingAppId);
-      } else throw e;
     }
   }
 
