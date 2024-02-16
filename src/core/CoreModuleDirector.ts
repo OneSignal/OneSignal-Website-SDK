@@ -18,6 +18,7 @@ import FuturePushSubscriptionRecord from '../page/userModel/FuturePushSubscripti
 import User from '../onesignal/User';
 import OneSignal from '../onesignal/OneSignal';
 import Database from '../shared/services/Database';
+import EventHelper from '../shared/helpers/EventHelper';
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -78,6 +79,7 @@ export class CoreModuleDirector {
         user.subscriptions as SubscriptionModel[],
         onesignalId,
       );
+      EventHelper.checkAndTriggerUserChanged();
     } catch (e) {
       Log.error(`Error hydrating user: ${e}`);
     }

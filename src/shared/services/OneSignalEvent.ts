@@ -2,6 +2,7 @@ import Environment from '../helpers/Environment';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Utils from '../context/Utils';
 import Log from '../libraries/Log';
+import Emitter from '../libraries/Emitter';
 
 const SILENT_EVENTS = [
   'notifyButtonHovering',
@@ -24,7 +25,7 @@ export default class OneSignalEvent {
    * @param eventName The string event name to be emitted.
    * @param data Any JavaScript variable to be passed with the event.
    */
-  static async trigger(eventName: string, data?: any) {
+  static async trigger(eventName: string, data?: any, emitter?: Emitter) {
     if (!Utils.contains(SILENT_EVENTS, eventName)) {
       const displayData = data;
       let env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
@@ -42,7 +43,11 @@ export default class OneSignalEvent {
         if (OneSignal.initialized) return;
         else OneSignal.initialized = true;
       }
-      await OneSignal.emitter.emit(eventName, data);
+      if (emitter) {
+        await emitter.emit(eventName, data);
+      } else {
+        await OneSignal.emitter.emit(eventName, data);
+      }
     }
   }
 }

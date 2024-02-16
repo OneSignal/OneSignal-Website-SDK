@@ -1,17 +1,23 @@
 import User from './User';
 import PushSubscriptionNamespace from './PushSubscriptionNamespace';
 import { Subscription } from '../shared/models/Subscription';
+import { EventListenerBase } from '../page/userModel/EventListenerBase';
+import UserChangeEvent from '../page/models/UserChangeEvent';
+import Emitter from '../shared/libraries/Emitter';
 
-export default class UserNamespace {
+export default class UserNamespace extends EventListenerBase {
   private _currentUser?: User;
 
   readonly PushSubscription = new PushSubscriptionNamespace(false);
+
+  static emitter = new Emitter();
 
   constructor(
     initialize: boolean,
     subscription?: Subscription,
     permission?: NotificationPermission,
   ) {
+    super();
     if (initialize) {
       this._currentUser = User.createOrGetInstance();
       this.PushSubscription = new PushSubscriptionNamespace(
@@ -23,6 +29,16 @@ export default class UserNamespace {
   }
 
   /* P U B L I C   A P I  */
+
+  get onesignalId(): string | undefined {
+    return this._currentUser?.onesignalId;
+  }
+
+  get externalId(): string | undefined {
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    return identityModel?.data?.external_id;
+  }
+
   public addAlias(label: string, id: string): void {
     this._currentUser?.addAlias(label, id);
   }
@@ -73,5 +89,19 @@ export default class UserNamespace {
 
   public getTags(): { [key: string]: string } {
     return this._currentUser?.getTags() || {};
+  }
+
+  addEventListener(
+    event: 'change',
+    listener: (userChange: UserChangeEvent) => void,
+  ): void {
+    UserNamespace.emitter.on(event, listener);
+  }
+
+  removeEventListener(
+    event: 'change',
+    listener: (userChange: UserChangeEvent) => void,
+  ): void {
+    UserNamespace.emitter.on(event, listener);
   }
 }
