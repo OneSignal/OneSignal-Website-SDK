@@ -227,7 +227,11 @@ export default class EventHelper {
   }
 
   static triggerUserChanged(change: UserChangeEvent) {
-    OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change, UserNamespace.emitter);
+    OneSignalEvent.trigger(
+      OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
+      change,
+      UserNamespace.emitter,
+    );
   }
 
   static triggerNotificationClick(
@@ -326,10 +330,7 @@ export default class EventHelper {
     OneSignalUtils.logMethodCall('checkAndTriggerUserChanged');
 
     const userState = await Database.getUserState();
-    const {
-      previousOneSignalId,
-      previousExternalId,
-    } = userState;
+    const { previousOneSignalId, previousExternalId } = userState;
 
     const identityModel = await OneSignal.coreDirector.getIdentityModel();
     const currentOneSignalId = identityModel?.onesignalId;

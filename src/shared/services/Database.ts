@@ -249,8 +249,8 @@ export default class Database {
 
   async getUserState(): Promise<UserState> {
     const userState = new UserState();
-    userState.previousOneSignalId = "";
-    userState.previousExternalId = "";
+    userState.previousOneSignalId = '';
+    userState.previousExternalId = '';
     // previous<OneSignalId|ExternalId> are used to track changes to the user's state.
     // Displayed in the `current` & `previous` fields of the `userChange` event.
     userState.previousOneSignalId = await this.get<string>(
