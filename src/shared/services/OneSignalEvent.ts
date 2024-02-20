@@ -24,6 +24,7 @@ export default class OneSignalEvent {
    * Triggers an internal event with optional custom data.
    * @param eventName The string event name to be emitted.
    * @param data Any JavaScript variable to be passed with the event.
+   * @param emitter Emitter to emit the event from.
    */
   static async trigger(eventName: string, data?: any, emitter?: Emitter) {
     if (!Utils.contains(SILENT_EVENTS, eventName)) {
