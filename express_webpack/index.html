@@ -108,12 +108,22 @@
               }
           }
         });
-        onesignal.User.PushSubscription.addEventListener('subscriptionChange', function (event) {
-          showEventAlert('subscriptionChange', { event });
-        });
     });
 
     /* E V E N T   L I S T E N E R S */
+
+    OneSignalDeferred.push(function(onesignal) {
+        onesignal.User.PushSubscription.addEventListener('change', function (event) {
+          showEventAlert('change', { event });
+        });
+    });
+
+    OneSignalDeferred.push(function(onesignal) {
+        onesignal.User.addEventListener('change', function (event) {
+          showEventAlert('change', { event });
+        });
+    });
+
     OneSignalDeferred.push(function(onesignal) {
       onesignal.Notifications.addEventListener('permissionChange', function (isSubscribed) {
         showEventAlert('permissionChange', { isSubscribed });

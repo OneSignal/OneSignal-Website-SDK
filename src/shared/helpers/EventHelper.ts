@@ -9,12 +9,14 @@ import OneSignalUtils from '../utils/OneSignalUtils';
 import PromptsHelper from './PromptsHelper';
 import OneSignalEvent from '../services/OneSignalEvent';
 import SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
+import UserChangeEvent from '../../page/models/UserChangeEvent';
 import MainHelper from './MainHelper';
 import {
   NotificationClickEvent,
   NotificationClickEventInternal,
 } from '../models/NotificationEvent';
 import { awaitOneSignalInitAndSupported } from '../utils/utils';
+import UserNamespace from '../../onesignal/UserNamespace';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -224,6 +226,14 @@ export default class EventHelper {
     OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
   }
 
+  static triggerUserChanged(change: UserChangeEvent) {
+    OneSignalEvent.trigger(
+      OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
+      change,
+      UserNamespace.emitter,
+    );
+  }
+
   static triggerNotificationClick(
     event: NotificationClickEventInternal,
   ): Promise<void> {
@@ -314,5 +324,36 @@ export default class EventHelper {
         }
       }
     }
+  }
+
+  static async checkAndTriggerUserChanged() {
+    OneSignalUtils.logMethodCall('checkAndTriggerUserChanged');
+
+    const userState = await Database.getUserState();
+    const { previousOneSignalId, previousExternalId } = userState;
+
+    const identityModel = await OneSignal.coreDirector.getIdentityModel();
+    const currentOneSignalId = identityModel?.onesignalId;
+    const currentExternalId = identityModel?.data?.external_id;
+
+    const didStateChange =
+      currentOneSignalId !== previousOneSignalId ||
+      currentExternalId !== previousExternalId;
+    if (!didStateChange) {
+      return;
+    }
+
+    userState.previousOneSignalId = currentOneSignalId;
+    userState.previousExternalId = currentExternalId;
+    await Database.setUserState(userState);
+
+    const change: UserChangeEvent = {
+      current: {
+        onesignalId: currentOneSignalId,
+        externalId: currentExternalId,
+      },
+    };
+    Log.info('User state changed: ', change);
+    EventHelper.triggerUserChanged(change);
   }
 }

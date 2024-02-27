@@ -3,6 +3,7 @@ import IndexedDb from './IndexedDb';
 
 import { AppConfig } from '../models/AppConfig';
 import { AppState, PendingNotificationClickEvents } from '../models/AppState';
+import { UserState } from '../models/UserState';
 import { IOSNotification } from '../models/OSNotification';
 import {
   OutcomesNotificationClicked,
@@ -244,6 +245,34 @@ export default class Database {
         }
       }
     }
+  }
+
+  async getUserState(): Promise<UserState> {
+    const userState = new UserState();
+    userState.previousOneSignalId = '';
+    userState.previousExternalId = '';
+    // previous<OneSignalId|ExternalId> are used to track changes to the user's state.
+    // Displayed in the `current` & `previous` fields of the `userChange` event.
+    userState.previousOneSignalId = await this.get<string>(
+      'Options',
+      'previousOneSignalId',
+    );
+    userState.previousExternalId = await this.get<string>(
+      'Options',
+      'previousExternalId',
+    );
+    return userState;
+  }
+
+  async setUserState(userState: UserState) {
+    await this.put('Options', {
+      key: 'previousOneSignalId',
+      value: userState.previousOneSignalId,
+    });
+    await this.put('Options', {
+      key: 'previousExternalId',
+      value: userState.previousExternalId,
+    });
   }
 
   async getSubscription(): Promise<Subscription> {
@@ -522,6 +551,14 @@ export default class Database {
 
   static async getAppState(): Promise<AppState> {
     return await Database.singletonInstance.getAppState();
+  }
+
+  static async setUserState(userState: UserState) {
+    return await Database.singletonInstance.setUserState(userState);
+  }
+
+  static async getUserState(): Promise<UserState> {
+    return await Database.singletonInstance.getUserState();
   }
 
   static async setAppConfig(appConfig: AppConfig) {

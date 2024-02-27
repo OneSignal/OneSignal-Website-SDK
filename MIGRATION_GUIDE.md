@@ -154,21 +154,25 @@ OneSignal.User.addAlias("my_alias", "1234");
 
 All user functions are synchronous.
 
-| Function Name   | Description                                    | Argument List                        |
+| Property/Function | Description                                    | Argument List                        |
 | --------------- | ---------------------------------------------- | ------------------------------------ |
-| `addAlias`      | Adds a new alias for the current user.         | `label: string, id: string`          |
-| `addAliases`    | Adds multiple aliases for the current user.    | `aliases: { [key: string]: string }` |
-| `removeAlias`   | Removes an alias for the current user.         | `label: string`                      |
-| `removeAliases` | Removes multiple aliases for the current user. | `labels: string[]`                   |
-| `addEmail`      | Adds an email address for the current user.    | `email: string`                      |
-| `removeEmail`   | Removes an email address for the current user. | `email: string`                      |
-| `addSms`        | Adds an SMS number for the current user.       | `smsNumber: string`                  |
-| `removeSms`     | Removes an SMS number for the current user.    | `smsNumber: string`                  |
-| `addTag`        | Adds a tag for the current user.               | `key: string, value: string`         |
-| `addTags`       | Adds multiple tags for the current user.       | `tags: { [key: string]: string }`    |
-| `removeTag`     | Removes a tag for the current user.            | `key: string`                        |
-| `removeTags`    | Removes multiple tags for the current user.    | `keys: string[]`                     |
-| `getTags`       | Gets the current user's tags.                  |                                      |
+| `addAlias()`      | Adds a new alias for the current user.         | `label: string, id: string`          |
+| `addAliases()`    | Adds multiple aliases for the current user.    | `aliases: { [key: string]: string }` |
+| `removeAlias()`   | Removes an alias for the current user.         | `label: string`                      |
+| `removeAliases()` | Removes multiple aliases for the current user. | `labels: string[]`                   |
+| `addEmail()`      | Adds an email address for the current user.    | `email: string`                      |
+| `removeEmail()`   | Removes an email address for the current user. | `email: string`                      |
+| `addSms()`        | Adds an SMS number for the current user.       | `smsNumber: string`                  |
+| `removeSms()`     | Removes an SMS number for the current user.    | `smsNumber: string`                  |
+| `addTag()`        | Adds a tag for the current user.               | `key: string, value: string`         |
+| `addTags()`       | Adds multiple tags for the current user.       | `tags: { [key: string]: string }`    |
+| `removeTag()`     | Removes a tag for the current user.            | `key: string`                        |
+| `removeTags()`    | Removes multiple tags for the current user.    | `keys: string[]`                     |
+| `getTags()`       | Returns the local tags on the current user.    |                                      |
+| `onesignalId`     | Returns the local OneSignal Id for the current user. |                                |
+| `externalId`      | Returns the local external Id for the current user. |                                 |
+| `addEventListener()` | Adds an event listener for the `change` event. | - `event` ("change")<br>- `listener` ((change: UserChangeEvent) => void) |
+| `removeEventListener()` | Removes an event listener for the `change` event. | - `event` ("change")<br>- `listener` ((change: UserChangeEvent) => void) |
 
 ### Notifications Namespace
 

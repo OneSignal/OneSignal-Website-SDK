@@ -456,6 +456,50 @@
         "isAsync": false,
         "args": [],
         "returnType": "{ [key: string]: string }"
+      },
+      {
+        "name": "addEventListener",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "event",
+            "type": "'change'",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(change: UserChangeEvent) => void",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeEventListener",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "event",
+            "type": "'change'",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(change: UserChangeEvent) => void",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      }
+    ],
+    "properties": [
+      {
+        "name": "onesignalId",
+        "type": "string | undefined"
+      },
+      {
+        "name": "externalId",
+        "type": "string | undefined"
       }
     ],
     "namespaces": ["PushSubscription"]

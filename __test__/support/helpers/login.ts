@@ -6,6 +6,7 @@ import {
   DUMMY_GET_USER_REQUEST_WITH_PUSH_SUB,
 } from '../constants';
 import { RequestService } from '../../../src/core/requestService/RequestService';
+import { WindowEnvironmentKind } from '../../../src/shared/models/WindowEnvironmentKind';
 
 export function setupLoginStubs() {
   test.stub(
@@ -13,7 +14,7 @@ export function setupLoginStubs() {
     'getUser',
     Promise.resolve(DUMMY_GET_USER_REQUEST_WITH_PUSH_SUB),
   );
-  test.stub(SdkEnvironment, 'getWindowEnv');
+  test.stub(SdkEnvironment, 'getWindowEnv', WindowEnvironmentKind.Host);
   test.stub(
     MainHelper,
     'getCurrentPushToken',
