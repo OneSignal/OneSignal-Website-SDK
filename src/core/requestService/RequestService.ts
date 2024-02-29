@@ -28,12 +28,26 @@ export class RequestService {
     requestMetadata: RequestMetadata,
     requestBody: Partial<UserData>,
   ): Promise<OneSignalApiBaseResponse> {
-    const { appId } = requestMetadata;
-    return OneSignalApiBase.post(
-      `apps/${appId}/users`,
-      requestBody,
-      requestMetadata.jwtHeader,
-    );
+    const { appId, subscriptionId } = requestMetadata;
+
+    const subscriptionHeader = subscriptionId
+      ? { 'OneSignal-Subscription-Id': subscriptionId }
+      : undefined;
+
+    let headers = {};
+
+    if (subscriptionHeader) {
+      headers = { ...headers, ...subscriptionHeader };
+    }
+
+    if (requestMetadata.jwtHeader) {
+      headers = { ...headers, ...requestMetadata.jwtHeader };
+    }
+
+    const refreshMetadata = { refresh_device_metadata: true };
+    requestBody = { ...requestBody, ...refreshMetadata };
+
+    return OneSignalApiBase.post(`apps/${appId}/users`, requestBody, headers);
   }
 
   /**
