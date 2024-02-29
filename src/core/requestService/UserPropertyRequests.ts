@@ -13,6 +13,7 @@ import { RequestService } from './RequestService';
 import MainHelper from '../../shared/helpers/MainHelper';
 import OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
 import Log from '../../shared/libraries/Log';
+import { isCompleteSubscriptionObject } from '../utils/typePredicates';
 
 /**
  * This class contains logic for all the UserProperty model related requests that can be made to the OneSignal API
@@ -44,9 +45,21 @@ export default class UserPropertyRequests {
     );
 
     const appId = await MainHelper.getAppId();
-    const response = await RequestService.updateUser({ appId }, aliasPair, {
-      properties,
-    });
+    const pushSubscription =
+      await OneSignal.coreDirector.getPushSubscriptionModel();
+
+    let subscriptionId;
+    if (isCompleteSubscriptionObject(pushSubscription?.data)) {
+      subscriptionId = pushSubscription?.data.id;
+    }
+
+    const response = await RequestService.updateUser(
+      { appId, subscriptionId },
+      aliasPair,
+      {
+        properties,
+      },
+    );
     return UserPropertyRequests._processUserPropertyResponse(response);
   }
 

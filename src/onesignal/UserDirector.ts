@@ -9,6 +9,7 @@ import { logMethodCall } from '../shared/utils/utils';
 import User from './User';
 import { RequestService } from '../core/requestService/RequestService';
 import { SupportedSubscription } from '../core/models/SubscriptionModels';
+import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 
 export default class UserDirector {
   static async initializeUser(isTemporary?: boolean): Promise<void> {
@@ -95,8 +96,19 @@ export default class UserDirector {
 
     try {
       const appId = await MainHelper.getAppId();
+      const pushSubscription =
+        await OneSignal.coreDirector.getPushSubscriptionModel();
+
+      let subscriptionId;
+      if (isCompleteSubscriptionObject(pushSubscription?.data)) {
+        subscriptionId = pushSubscription?.data.id;
+      }
+
       const userData = await UserDirector.getAllUserData();
-      const response = await RequestService.createUser({ appId }, userData);
+      const response = await RequestService.createUser(
+        { appId, subscriptionId },
+        userData,
+      );
       user.isCreatingUser = false;
       return response.result as UserData;
     } catch (e) {

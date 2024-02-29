@@ -205,12 +205,23 @@ export default class LoginManager {
     }
 
     const appId = await MainHelper.getAppId();
+    const pushSubscription =
+      await OneSignal.coreDirector.getPushSubscriptionModel();
+
+    let subscriptionId;
+    if (isCompleteSubscriptionObject(pushSubscription?.data)) {
+      subscriptionId = pushSubscription?.data.id;
+    }
+
     const userDataCopy = JSON.parse(JSON.stringify(userData));
 
     // only accepts one alias, so remove other aliases only leaving external_id
     this.stripAliasesOtherThanExternalId(userData);
 
-    const response = await RequestService.createUser({ appId }, userData);
+    const response = await RequestService.createUser(
+      { appId, subscriptionId },
+      userData,
+    );
     const result = response?.result;
     const status = response?.status;
 
