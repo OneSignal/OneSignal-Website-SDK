@@ -7,7 +7,7 @@ import {
 } from '../models/SubscriptionModels';
 import AliasPair from './AliasPair';
 import { UpdateUserPayload } from './UpdateUserPayload';
-import UserData from '../models/UserData';
+import { CreateUserPayload } from './CreateUserPayload';
 import { RequestMetadata } from '../models/RequestMetadata';
 import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
@@ -26,7 +26,7 @@ export class RequestService {
    */
   static async createUser(
     requestMetadata: RequestMetadata,
-    requestBody: Partial<UserData>,
+    requestBody: CreateUserPayload,
   ): Promise<OneSignalApiBaseResponse> {
     const { appId, subscriptionId } = requestMetadata;
 
@@ -44,8 +44,7 @@ export class RequestService {
       headers = { ...headers, ...requestMetadata.jwtHeader };
     }
 
-    const refreshMetadata = { refresh_device_metadata: true };
-    requestBody = { ...requestBody, ...refreshMetadata };
+    requestBody['refresh_device_metadata'] = true;
 
     return OneSignalApiBase.post(`apps/${appId}/users`, requestBody, headers);
   }
