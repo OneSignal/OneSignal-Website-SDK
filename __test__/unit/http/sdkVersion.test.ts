@@ -1,6 +1,10 @@
 import Environment from '../../../src/shared/helpers/Environment';
 import { RequestService } from '../../../src/core/requestService/RequestService';
-import { APP_ID, DUMMY_EXTERNAL_ID } from '../../support/constants';
+import {
+  APP_ID,
+  DUMMY_EXTERNAL_ID,
+  DUMMY_SUBSCRIPTION_ID,
+} from '../../support/constants';
 import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
 import AliasPair from '../../../src/core/requestService/AliasPair';
 import { getDummyPushSubscriptionOSModel } from '../../support/helpers/core';
@@ -46,6 +50,20 @@ describe('Sdk Version Header Tests', () => {
     RequestService.createUser({ appId: APP_ID }, {});
     expectHeaderToBeSent();
   });
+  test('POST /users: header is sent', () => {
+    RequestService.createUser(
+      { appId: APP_ID },
+      { refresh_device_metadata: true },
+    );
+    expectHeaderToBeSent();
+  });
+  test('POST /users: header is sent with subscription id', () => {
+    RequestService.createUser(
+      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
+      {},
+    );
+    expectHeaderToBeSent();
+  });
   test('GET /users/by/<alias_label>/<alias_id>: header is sent', () => {
     RequestService.getUser(
       { appId: APP_ID },
@@ -56,6 +74,14 @@ describe('Sdk Version Header Tests', () => {
   test('PATCH /users/by/<alias_label>/<alias_id>: header is sent', () => {
     RequestService.updateUser(
       { appId: APP_ID },
+      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
+      {},
+    );
+    expectHeaderToBeSent();
+  });
+  test('PATCH /users/by/<alias_label>/<alias_id>: header is sent with subscription id', () => {
+    RequestService.updateUser(
+      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
       new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
       {},
     );
