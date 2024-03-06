@@ -7,7 +7,7 @@ import {
 } from '../models/SubscriptionModels';
 import AliasPair from './AliasPair';
 import { UpdateUserPayload } from './UpdateUserPayload';
-import UserData from '../models/UserData';
+import { CreateUserPayload } from './CreateUserPayload';
 import { RequestMetadata } from '../models/RequestMetadata';
 import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
@@ -26,14 +26,27 @@ export class RequestService {
    */
   static async createUser(
     requestMetadata: RequestMetadata,
-    requestBody: Partial<UserData>,
+    requestBody: CreateUserPayload,
   ): Promise<OneSignalApiBaseResponse> {
-    const { appId } = requestMetadata;
-    return OneSignalApiBase.post(
-      `apps/${appId}/users`,
-      requestBody,
-      requestMetadata.jwtHeader,
-    );
+    const { appId, subscriptionId } = requestMetadata;
+
+    const subscriptionHeader = subscriptionId
+      ? { 'OneSignal-Subscription-Id': subscriptionId }
+      : undefined;
+
+    let headers = {};
+
+    if (subscriptionHeader) {
+      headers = { ...headers, ...subscriptionHeader };
+    }
+
+    if (requestMetadata.jwtHeader) {
+      headers = { ...headers, ...requestMetadata.jwtHeader };
+    }
+
+    requestBody['refresh_device_metadata'] = true;
+
+    return OneSignalApiBase.post(`apps/${appId}/users`, requestBody, headers);
   }
 
   /**

@@ -185,7 +185,7 @@ export default class LoginManager {
 
     if (isIdentified) {
       // if started off identified, upsert a user
-      result = await this.upsertUser(userData);
+      result = await this.upsertUser(userData, subscriptionId);
     } else {
       // promoting anonymous user to identified user
       // from user data, we only use identity (and we remove all aliases except external_id)
@@ -196,9 +196,10 @@ export default class LoginManager {
 
   static async upsertUser(
     userData: Partial<UserData>,
+    subscriptionId?: string,
     retry = 5,
   ): Promise<UserData> {
-    logMethodCall('LoginManager.upsertUser', { userData });
+    logMethodCall('LoginManager.upsertUser', { userData, subscriptionId });
 
     if (retry === 0) {
       throw new OneSignalError('Login: upsertUser failed: max retries reached');
@@ -210,7 +211,10 @@ export default class LoginManager {
     // only accepts one alias, so remove other aliases only leaving external_id
     this.stripAliasesOtherThanExternalId(userData);
 
-    const response = await RequestService.createUser({ appId }, userData);
+    const response = await RequestService.createUser(
+      { appId, subscriptionId },
+      userData,
+    );
     const result = response?.result;
     const status = response?.status;
 
@@ -221,7 +225,7 @@ export default class LoginManager {
     } else if (status >= 500) {
       Log.error('Server error. Retrying...');
       await awaitableTimeout(RETRY_BACKOFF[retry]);
-      return this.upsertUser(userDataCopy, retry - 1);
+      return this.upsertUser(userDataCopy, subscriptionId, retry - 1);
     }
 
     return result;
