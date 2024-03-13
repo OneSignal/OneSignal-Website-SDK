@@ -27,7 +27,7 @@ test('getWindowEnv should get host window environment', async (t) => {
 test('API URL should be valid for development environment', async (t) => {
   t.is(
     SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Development).toString(),
-    'https://localhost:3001/api/v1',
+    'https://localhost:3000/api/v1',
   );
 });
 

@@ -8,7 +8,7 @@ import Environment from '../helpers/Environment';
 
 const RESOURCE_HTTP_PORT = 4000;
 const RESOURCE_HTTPS_PORT = 4001;
-const API_URL_PORT = 3001;
+const API_URL_PORT = 3000;
 const TURBINE_API_URL_PORT = 18080;
 const TURBINE_ENDPOINTS = ['outcomes', 'on_focus'];
 
@@ -128,9 +128,9 @@ export default class SdkEnvironment {
     switch (buildEnv) {
       case EnvironmentKind.Development:
         if (SdkEnvironment.isTurbineEndpoint(action)) {
-          return new URL(`https://${apiOrigin}:${TURBINE_API_URL_PORT}/api/v1`);
+          return new URL(`http://${apiOrigin}:${TURBINE_API_URL_PORT}/api/v1`);
         }
-        return new URL(`https://${apiOrigin}:${API_URL_PORT}/api/v1`);
+        return new URL(`http://${apiOrigin}:${API_URL_PORT}/api/v1`);
       case EnvironmentKind.Staging:
         return new URL(`https://${apiOrigin}/api/v1`);
       case EnvironmentKind.Production:
