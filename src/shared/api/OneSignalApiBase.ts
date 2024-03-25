@@ -11,6 +11,7 @@ import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import { isValidUuid } from '../utils/utils';
 import OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';
+import Database from '../services/Database';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -55,7 +56,7 @@ export class OneSignalApiBase {
     return OneSignalApiBase.call('PATCH', action, data, headers);
   }
 
-  private static call(
+  private static async call(
     method: SupportedMethods,
     action: string,
     data: any,
@@ -71,6 +72,15 @@ export class OneSignalApiBase {
     callHeaders.append('Origin', SdkEnvironment.getOrigin());
     callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
+
+    const appConfig = await Database.getAppConfig();
+    if (appConfig.identityVerificationEnabled && method != "PUT") {
+      const jwtToken = await Database.getJWTToken();
+      if (jwtToken) {
+        callHeaders.append('Authorization', `Bearer ${jwtToken}`);
+      }
+    }
+
     if (headers) {
       for (const key of Object.keys(headers)) {
         callHeaders.append(key, headers[key]);
