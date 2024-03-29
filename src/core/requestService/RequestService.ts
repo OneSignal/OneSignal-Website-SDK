@@ -30,19 +30,9 @@ export class RequestService {
   ): Promise<OneSignalApiBaseResponse> {
     const { appId, subscriptionId } = requestMetadata;
 
-    const subscriptionHeader = subscriptionId
+    const headers = subscriptionId
       ? { 'OneSignal-Subscription-Id': subscriptionId }
       : undefined;
-
-    let headers = {};
-
-    if (subscriptionHeader) {
-      headers = { ...headers, ...subscriptionHeader };
-    }
-
-    if (requestMetadata.jwtHeader) {
-      headers = { ...headers, ...requestMetadata.jwtHeader };
-    }
 
     requestBody['refresh_device_metadata'] = true;
 
@@ -62,7 +52,6 @@ export class RequestService {
     const { appId } = requestMetadata;
     return OneSignalApiBase.get(
       `apps/${appId}/users/by/${alias.label}/${alias.id}`,
-      requestMetadata.jwtHeader,
     );
   }
 
@@ -84,19 +73,9 @@ export class RequestService {
       throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
     }
 
-    const subscriptionHeader = subscriptionId
+    const headers = subscriptionId
       ? { 'OneSignal-Subscription-Id': subscriptionId }
       : undefined;
-
-    let headers = {};
-
-    if (subscriptionHeader) {
-      headers = { ...headers, ...subscriptionHeader };
-    }
-
-    if (requestMetadata.jwtHeader) {
-      headers = { ...headers, ...requestMetadata.jwtHeader };
-    }
 
     const sanitizedAlias = {
       label: encodeRFC3986URIComponent(alias.label),
@@ -122,7 +101,6 @@ export class RequestService {
     const { appId } = requestMetadata;
     return OneSignalApiBase.delete(
       `apps/${appId}/users/by/${alias.label}/${alias.id}`,
-      requestMetadata.jwtHeader,
     );
   }
 
@@ -143,7 +121,6 @@ export class RequestService {
     return OneSignalApiBase.patch(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
       { identity },
-      requestMetadata.jwtHeader,
     );
   }
 
@@ -159,7 +136,6 @@ export class RequestService {
     const { appId } = requestMetadata;
     return OneSignalApiBase.get(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
-      requestMetadata.jwtHeader,
     );
   }
 
@@ -177,7 +153,6 @@ export class RequestService {
     const { appId } = requestMetadata;
     return OneSignalApiBase.delete(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
-      requestMetadata.jwtHeader,
     );
   }
 
@@ -199,7 +174,6 @@ export class RequestService {
     return OneSignalApiBase.post(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
       subscription,
-      requestMetadata.jwtHeader,
     );
   }
 
@@ -267,7 +241,6 @@ export class RequestService {
     return OneSignalApiBase.patch(
       `apps/${appId}/users/by/subscriptions/${subscriptionId}/identity`,
       { identity },
-      requestMetadata.jwtHeader,
     );
   }
 
@@ -294,7 +267,6 @@ export class RequestService {
         identity: { ...identity },
         retain_previous_owner: retainPreviousOwner,
       },
-      requestMetadata.jwtHeader,
     );
   }
 }

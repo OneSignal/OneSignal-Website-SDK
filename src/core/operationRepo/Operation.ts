@@ -11,7 +11,6 @@ export class Operation<Model> {
   timestamp: number;
   payload?: Partial<SupportedModel>;
   model?: OSModel<Model>;
-  jwtTokenAvailable: Promise<void>;
   jwtToken?: string | null;
 
   constructor(
@@ -23,11 +22,6 @@ export class Operation<Model> {
     this.payload = deltas ? this.getPayload(deltas) : undefined;
     this.model = deltas ? deltas[deltas.length - 1].model : undefined;
     this.timestamp = Date.now();
-    // eslint-disable-next-line no-async-promise-executor
-    this.jwtTokenAvailable = new Promise<void>(async (resolve) => {
-      this.jwtToken = await Database.getJWTToken();
-      resolve();
-    });
   }
 
   private getPayload(deltas: CoreDelta<Model>[]): any {
@@ -98,7 +92,6 @@ export class Operation<Model> {
       operation.timestamp = timestamp;
       operation.payload = payload;
       operation.jwtToken = rawOperation.jwtToken;
-      operation.jwtTokenAvailable = Promise.resolve();
       return operation;
     } else {
       throw new Error(
