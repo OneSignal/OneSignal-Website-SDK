@@ -17,6 +17,7 @@ import {
 } from '../models/NotificationEvent';
 import { awaitOneSignalInitAndSupported } from '../utils/utils';
 import UserNamespace from '../../onesignal/UserNamespace';
+import UserJwtInvalidatedEvent from '../../page/models/UserJwtInvalidatedEvent';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -247,6 +248,10 @@ export default class EventHelper {
     );
   }
 
+  static triggerUserJwtInvalidated(event: UserJwtInvalidatedEvent) {
+    OneSignalEvent.trigger(OneSignal.EVENTS.USER_JWT_INVALIDATED, event);
+  }
+
   /**
    * When notifications are clicked, because the site isn't open, the notification is stored in the database. The next
    * time the page opens, the event is triggered if its less than 5 minutes (usually page opens instantly from click).
@@ -355,5 +360,18 @@ export default class EventHelper {
     };
     Log.info('User state changed: ', change);
     EventHelper.triggerUserChanged(change);
+  }
+
+  static async onUserJwtInvalidated() {
+    OneSignalUtils.logMethodCall('onUserJwtInvalidated');
+
+    const identityModel = await OneSignal.coreDirector.getIdentityModel();
+    const currentExternalId = identityModel?.data?.external_id;
+
+    const event: UserJwtInvalidatedEvent = {
+      externalId: currentExternalId, // The user Jwt that has expired
+    };
+    Log.info('User Jwt invalidated: ', event);
+    EventHelper.triggerUserJwtInvalidated(event);
   }
 }

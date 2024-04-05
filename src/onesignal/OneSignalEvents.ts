@@ -55,6 +55,12 @@ export const ONESIGNAL_EVENTS = {
    */
   PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplay',
   /**
+   * Occurs when the OneSignal SDK gets a response from the OneSignal Server indicating the JWT isn’t valid.
+   * It is expected that the app/site developer listens to this event, regenerates the JWT on their server, then 
+   * calls OneSignal.updateUserJwt.
+   */
+  USER_JWT_INVALIDATED: `userJwtInvalidated`,
+  /**
    * For internal testing only. Used for all sorts of things.
    */
   TEST_FINISHED_ALLOW_CLICK_HANDLING: 'testFinishedAllowClickHandling',

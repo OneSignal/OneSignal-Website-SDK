@@ -33,8 +33,10 @@ import {
 } from '../shared/errors/InvalidArgumentError';
 import { ONESIGNAL_EVENTS } from './OneSignalEvents';
 import { bowserCastle } from '../shared/utils/bowserCastle';
+import { EventListenerBase } from '../page/userModel/EventListenerBase';
+import UserJwtInvalidatedEvent from '../page/models/UserJwtInvalidatedEvent';
 
-export default class OneSignal {
+export default class OneSignal extends EventListenerBase {
   static EVENTS = ONESIGNAL_EVENTS;
 
   private static async _initializeCoreModuleAndOSNamespaces() {
@@ -254,6 +256,20 @@ export default class OneSignal {
     }
 
     LocalStorage.setConsentRequired(requiresConsent);
+  }
+
+  addEventListener(
+    event: 'userJwtInvalidated',
+    listener: (userJwtInvalidated: UserJwtInvalidatedEvent) => void,
+  ): void {
+    OneSignal.emitter.on(event, listener);
+  }
+
+  removeEventListener(
+    event: 'userJwtInvalidated',
+    listener: (userJwtInvalidated: UserJwtInvalidatedEvent) => void,
+  ): void {
+    OneSignal.emitter.off(event, listener);
   }
 
   /**
