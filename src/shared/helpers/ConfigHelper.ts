@@ -171,8 +171,10 @@ export class ConfigHelper {
         serverConfig.features.web_on_focus_enabled,
         SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
       ),
-      // TODO: make not optional in AppConfig & add to ServerAppConfig
-      // identityVerificationEnabled = serverConfig.[tba prop name]
+      jwtRequired: Utils.valueOrDefault(
+        serverConfig.jwt_required,
+        false
+      ),
     };
   }
 

@@ -74,7 +74,7 @@ export class OneSignalApiBase {
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
 
     const appConfig = await Database.getAppConfig();
-    if (appConfig.identityVerificationEnabled && method != 'PUT') {
+    if (appConfig.jwtRequired) {
       const jwtToken = await Database.getJWTToken();
       if (jwtToken) {
         callHeaders.append('Authorization', `Bearer ${jwtToken}`);

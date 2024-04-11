@@ -51,10 +51,10 @@ export interface AppConfig {
   siteName: string;
 
   /**
-   * The OneSignal dashboard setting for identity verification. Indicates if Jwt is enabled for the app.
-   * TODO: get value from server & make non optional
+   * The OneSignal dashboard setting for identity verification. Indicates if Jwt
+   * is enabled for the app.
    */
-  identityVerificationEnabled?: boolean;
+  jwtRequired: boolean;
 }
 
 export enum ConfigIntegrationKind {
@@ -204,10 +204,10 @@ export interface ServerAppPromptConfig {
 }
 
 export interface ServerAppConfig {
-  // TODO: get indentiyVerificationEnabled from server here & use server json name
   success: boolean;
   app_id: string;
   version: number;
+  jwt_required: boolean | undefined;
   features: {
     metrics: {
       enable: boolean;
