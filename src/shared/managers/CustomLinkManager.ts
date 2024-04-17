@@ -114,6 +114,10 @@ export class CustomLinkManager {
         await this.handleClick(subscribeButton);
       });
 
+      // Adds type="button" to the Custom Link Button.
+      // This prevents this button submitting if included in a form.
+      subscribeButton.setAttribute('type', 'button');
+
       element.appendChild(subscribeButton);
     }
   }
