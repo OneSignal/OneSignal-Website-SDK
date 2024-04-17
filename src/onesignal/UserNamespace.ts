@@ -102,6 +102,6 @@ export default class UserNamespace extends EventListenerBase {
     event: 'change',
     listener: (userChange: UserChangeEvent) => void,
   ): void {
-    UserNamespace.emitter.on(event, listener);
+    UserNamespace.emitter.off(event, listener);
   }
 }
