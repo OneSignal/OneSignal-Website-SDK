@@ -6,12 +6,10 @@ import OneSignalError from '../errors/OneSignalError';
 import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { APIHeaders } from '../models/APIHeaders';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import { isValidUuid } from '../utils/utils';
 import OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';
-import Database from '../services/Database';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -19,7 +17,7 @@ export class OneSignalApiBase {
   static get(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('GET', action, data, headers);
   }
@@ -27,7 +25,7 @@ export class OneSignalApiBase {
   static post(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('POST', action, data, headers);
   }
@@ -35,7 +33,7 @@ export class OneSignalApiBase {
   static put(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('PUT', action, data, headers);
   }
@@ -43,7 +41,7 @@ export class OneSignalApiBase {
   static delete(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('DELETE', action, data, headers);
   }
@@ -51,7 +49,7 @@ export class OneSignalApiBase {
   static patch(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('PATCH', action, data, headers);
   }
@@ -60,7 +58,7 @@ export class OneSignalApiBase {
     method: SupportedMethods,
     action: string,
     data: any,
-    headers: APIHeaders | undefined,
+    headers: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     if (!this.requestHasAppId(action, data)) {
       return Promise.reject(
@@ -73,18 +71,11 @@ export class OneSignalApiBase {
     callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
 
-    const appConfig = await Database.getAppConfig();
-    if (appConfig.jwtRequired) {
-      const jwtToken = await Database.getJWTToken();
-      if (jwtToken) {
-        callHeaders.append('Authorization', `Bearer ${jwtToken}`);
-      }
-    }
 
     if (headers) {
-      for (const key of Object.keys(headers)) {
-        callHeaders.append(key, headers[key]);
-      }
+      headers.forEach((value, key) => {
+        callHeaders.append(key, value);
+      });
     }
 
     const contents: RequestInit = {

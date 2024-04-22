@@ -1,3 +1,4 @@
+import Database from '../../shared/services/Database';
 import OneSignalError from '../../shared/errors/OneSignalError';
 import { IdentityModel } from '../models/IdentityModel';
 import { SupportedSubscription } from '../models/SubscriptionModels';
@@ -91,4 +92,23 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
     identity: identityCopy,
     aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId),
   };
+}
+
+export async function addJwtHeader(header: Headers) {
+  const appConfig = await Database.getAppConfig();
+  if (appConfig.jwtRequired) {
+    const jwtToken = await Database.getJWTToken();
+    if (jwtToken) {
+      header.append('Authorization', `Bearer ${jwtToken}`);
+    }
+  }
+}
+
+export function addOneSignalSubscriptionIdHeader(
+  header: Headers,
+  subscriptionId: string | undefined,
+) {
+  if (subscriptionId) {
+    header.append('OneSignal-Subscription-Id', subscriptionId);
+  }
 }
