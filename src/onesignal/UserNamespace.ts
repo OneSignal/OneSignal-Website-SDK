@@ -95,7 +95,7 @@ export default class UserNamespace extends EventListenerBase {
     this._currentUser?.setLanguage(language);
   }
 
-  getLanguage(): string {
+  public getLanguage(): string {
     return this._currentUser?.getLanguage() || '';
   }
 
