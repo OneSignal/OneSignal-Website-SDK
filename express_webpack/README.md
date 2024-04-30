@@ -13,11 +13,10 @@
       ```
       docker cp "$(docker-compose ps -q onesignal-web-sdk-dev)":sdk/express_webpack/certs/dev-ssl.crt .
       ```
-   - If you're running the container in a VM, get the cert file onto the VM's host (e.g: use `scp`)
-   - add cert to keychain (mac OSX):
-      ```
-      sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain dev-ssl.crt
-      ```
+      - If you're running the container in a VM, get the cert file onto the VM's host (e.g: use `scp`)
+   - Add cert to system's trusted store
+        - macOS: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain dev-ssl.crt`
+        - Windows: `Import-Certificate -FilePath dev-ssl.crt -CertStoreLocation cert:\CurrentUser\Root`
 3. Make sure the common name (e.g: localhost, texas, oregon, etc...) maps to the correct IP in your `/etc/hosts` file
 4. Visit [https://localhost:4001?app_id=](https://localhost:4001?app_id=) and insert your app id as a URL query parameter
 
