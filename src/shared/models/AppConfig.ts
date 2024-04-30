@@ -234,7 +234,7 @@ export interface ServerAppConfig {
       corsEnable?: boolean;
       notificationClickedHook?: string;
       notificationDismissedHook?: string;
-      notificationWillDisplayHook?: string;
+      notificationDisplayedHook?: string;
     };
     integration: {
       kind: ConfigIntegrationKind;
