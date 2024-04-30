@@ -581,7 +581,7 @@ export class ConfigHelper {
           webhooks: {
             cors: serverConfig.config.webhooks.corsEnable,
             'notification.willDisplay':
-              serverConfig.config.webhooks.notificationWillDisplayHook,
+              serverConfig.config.webhooks.notificationDisplayedHook,
             'notification.clicked':
               serverConfig.config.webhooks.notificationClickedHook,
             'notification.dismissed':
