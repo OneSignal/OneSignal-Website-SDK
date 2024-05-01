@@ -117,9 +117,8 @@ export class ServiceWorker {
   static run() {
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('push', ServiceWorker.onPushReceived);
-    self.addEventListener(
-      'notificationclose',
-      ServiceWorker.onNotificationClosed,
+    self.addEventListener('notificationclose', (event: NotificationEvent) =>
+      event.waitUntil(ServiceWorker.onNotificationClosed(event)),
     );
     self.addEventListener('notificationclick', (event: NotificationEvent) =>
       event.waitUntil(ServiceWorker.onNotificationClicked(event)),
@@ -392,8 +391,11 @@ export class ServiceWorker {
                       event,
                     )
                     .catch((e) => Log.error(e));
+                  const pushSubscriptionId =
+                    await ServiceWorker.getPushSubscriptionId();
                   ServiceWorker.webhookNotificationEventSender.willDisplay(
                     notif,
+                    pushSubscriptionId,
                   );
 
                   return ServiceWorker.displayNotification(notif)
@@ -794,7 +796,7 @@ export class ServiceWorker {
    * Occurs when a notification is dismissed by the user (clicking the 'X') or all notifications are cleared.
    * Supported on: Chrome 50+ only
    */
-  static onNotificationClosed(event) {
+  static async onNotificationClosed(event: NotificationEvent) {
     Log.debug(
       `Called onNotificationClosed(${JSON.stringify(event, null, 4)}):`,
       event,
@@ -804,8 +806,10 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger
       .broadcast(WorkerMessengerCommand.NotificationDismissed, notification)
       .catch((e) => Log.error(e));
-    event.waitUntil(
-      ServiceWorker.webhookNotificationEventSender.dismiss(notification),
+    const pushSubscriptionId = await ServiceWorker.getPushSubscriptionId();
+    ServiceWorker.webhookNotificationEventSender.dismiss(
+      notification,
+      pushSubscriptionId,
     );
   }
 
@@ -1066,6 +1070,7 @@ export class ServiceWorker {
 
     await ServiceWorker.webhookNotificationEventSender.click(
       notificationClickEvent,
+      pushSubscriptionId,
     );
     if (onesignalRestPromise) await onesignalRestPromise;
   }

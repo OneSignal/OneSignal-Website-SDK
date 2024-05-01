@@ -10,11 +10,20 @@ export class OSWebhookPayloadNotificationWillDisplay
   readonly content: string;
   readonly additionalData?: object;
   readonly actionId?: string;
+  readonly url?: string;
 
-  constructor(notification: IOSNotification) {
+  readonly subscriptionId?: string;
+
+  constructor(
+    notification: IOSNotification,
+    subscriptionId: string | undefined,
+  ) {
     this.notificationId = notification.notificationId;
     this.heading = notification.title;
     this.content = notification.body;
     this.additionalData = notification.additionalData;
+    this.url = notification.launchURL;
+
+    this.subscriptionId = subscriptionId;
   }
 }

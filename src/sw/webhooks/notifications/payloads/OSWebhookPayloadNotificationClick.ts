@@ -10,8 +10,14 @@ export class OSWebhookPayloadNotificationClick
   readonly content: string;
   readonly additionalData?: object;
   readonly actionId?: string;
+  readonly url?: string;
 
-  constructor(notificationClickEvent: NotificationClickEvent) {
+  readonly subscriptionId?: string;
+
+  constructor(
+    notificationClickEvent: NotificationClickEvent,
+    subscriptionId: string | undefined,
+  ) {
     const notification = notificationClickEvent.notification;
     this.notificationId = notification.notificationId;
     this.heading = notification.title;
@@ -19,5 +25,8 @@ export class OSWebhookPayloadNotificationClick
     this.additionalData = notification.additionalData;
 
     this.actionId = notificationClickEvent.result.actionId;
+    this.url = notificationClickEvent.result.url;
+
+    this.subscriptionId = subscriptionId;
   }
 }

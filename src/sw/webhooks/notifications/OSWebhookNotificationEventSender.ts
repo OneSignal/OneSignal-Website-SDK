@@ -11,19 +11,30 @@ export class OSWebhookNotificationEventSender {
     private readonly sender: OSWebhookSender = new OSWebhookSender(),
   ) {}
 
-  async click(event: NotificationClickEvent): Promise<void> {
-    return await this.sender.send(new OSWebhookPayloadNotificationClick(event));
-  }
-
-  async willDisplay(notification: IOSNotification): Promise<void> {
+  async click(
+    event: NotificationClickEvent,
+    subscriptionId: string | undefined,
+  ): Promise<void> {
     return await this.sender.send(
-      new OSWebhookPayloadNotificationWillDisplay(notification),
+      new OSWebhookPayloadNotificationClick(event, subscriptionId),
     );
   }
 
-  async dismiss(notification: IOSNotification): Promise<void> {
+  async willDisplay(
+    notification: IOSNotification,
+    subscriptionId: string | undefined,
+  ): Promise<void> {
     return await this.sender.send(
-      new OSWebhookPayloadNotificationDismiss(notification),
+      new OSWebhookPayloadNotificationWillDisplay(notification, subscriptionId),
+    );
+  }
+
+  async dismiss(
+    notification: IOSNotification,
+    subscriptionId: string | undefined,
+  ): Promise<void> {
+    return await this.sender.send(
+      new OSWebhookPayloadNotificationDismiss(notification, subscriptionId),
     );
   }
 }
