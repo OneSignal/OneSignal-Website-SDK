@@ -258,14 +258,14 @@ export default class OneSignal extends EventListenerBase {
     LocalStorage.setConsentRequired(requiresConsent);
   }
 
-  addEventListener(
+  static addEventListener(
     event: 'userJwtInvalidated',
     listener: (userJwtInvalidated: UserJwtInvalidatedEvent) => void,
   ): void {
     OneSignal.emitter.on(event, listener);
   }
 
-  removeEventListener(
+  static removeEventListener(
     event: 'userJwtInvalidated',
     listener: (userJwtInvalidated: UserJwtInvalidatedEvent) => void,
   ): void {
