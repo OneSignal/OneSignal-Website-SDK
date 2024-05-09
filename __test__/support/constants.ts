@@ -21,10 +21,10 @@ export const APP_ID = '34fcbe85-278d-4fd2-a4ec-0f80e95072c5';
 
 export const DUMMY_PUSH_TOKEN =
   'https://fcm.googleapis.com/fcm/send/01010101010101';
-export const DUMMY_ONESIGNAL_ID = '1111111111-2222222222-3333333333';
+export const DUMMY_ONESIGNAL_ID = '0000000a-000b-000c-000d-00000000000e';
 export const DUMMY_EXTERNAL_ID = 'rodrigo';
 export const DUMMY_EXTERNAL_ID_2 = 'iryna';
-export const DUMMY_SUBSCRIPTION_ID = '4444444444-5555555555-6666666666';
+export const DUMMY_SUBSCRIPTION_ID = '1111111a-111b-111c-111d-11111111111e';
 export const DUMMY_MODEL_ID = '0000000000';
 
 /* REQUEST CONSTANTS */
