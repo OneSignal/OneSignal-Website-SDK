@@ -5,7 +5,10 @@ import {
   DUMMY_EXTERNAL_ID,
   DUMMY_SUBSCRIPTION_ID,
 } from '../../support/constants';
-import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
+import {
+  expectHeaderToBeSent,
+  expectOneSignalSubscriptionIdHeaderToBeSent,
+} from '../../support/helpers/sdkVersion';
 import AliasPair from '../../../src/core/requestService/AliasPair';
 import { getDummyPushSubscriptionOSModel } from '../../support/helpers/core';
 
@@ -46,56 +49,34 @@ describe('Sdk Version Header Tests', () => {
     test.stub(Environment, 'version', '160000');
   });
 
-  test('POST /users: SDK-Version header is sent', () => {
-    RequestService.createUser({ appId: APP_ID }, {});
+  test('POST /users: SDK-Version header is sent', async () => {
+    await RequestService.createUser({ appId: APP_ID }, {});
     expectHeaderToBeSent();
   });
-  test('POST /users: header is sent', () => {
-    RequestService.createUser(
-      { appId: APP_ID },
-      { refresh_device_metadata: true },
-    );
-    expectHeaderToBeSent();
-  });
-  test('POST /users: header is sent with subscription id', () => {
-    RequestService.createUser(
-      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
-      {},
-    );
-    expectHeaderToBeSent();
-  });
-  test('GET /users/by/<alias_label>/<alias_id>: header is sent', () => {
-    RequestService.getUser(
+  test('GET /users/by/<alias_label>/<alias_id>: header is sent', async () => {
+    await RequestService.getUser(
       { appId: APP_ID },
       new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
     );
     expectHeaderToBeSent();
   });
-  test('PATCH /users/by/<alias_label>/<alias_id>: header is sent', () => {
-    RequestService.updateUser(
+  test('PATCH /users/by/<alias_label>/<alias_id>: header is sent', async () => {
+    await RequestService.updateUser(
       { appId: APP_ID },
       new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
       {},
     );
     expectHeaderToBeSent();
   });
-  test('PATCH /users/by/<alias_label>/<alias_id>: header is sent with subscription id', () => {
-    RequestService.updateUser(
-      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
-      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
-      {},
-    );
-    expectHeaderToBeSent();
-  });
-  test('DELETE /users/by/<alias_label>/<alias_id>: header is sent', () => {
-    RequestService.deleteUser(
+  test('DELETE /users/by/<alias_label>/<alias_id>: header is sent', async () => {
+    await RequestService.deleteUser(
       { appId: APP_ID },
       new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
     );
     expectHeaderToBeSent();
   });
-  test('POST /users/by/<alias_label>/<alias_id>/subscription: header is sent', () => {
-    RequestService.createSubscription(
+  test('POST /users/by/<alias_label>/<alias_id>/subscription: header is sent', async () => {
+    await RequestService.createSubscription(
       { appId: APP_ID },
       new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
       {
@@ -104,27 +85,50 @@ describe('Sdk Version Header Tests', () => {
     );
     expectHeaderToBeSent();
   });
-  test('GET /users/by/<alias_label>/<alias_id>/identity: header is sent', () => {
-    RequestService.getUserIdentity(
+  test('GET /users/by/<alias_label>/<alias_id>/identity: header is sent', async () => {
+    await RequestService.getUserIdentity(
       { appId: APP_ID },
       new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
     );
     expectHeaderToBeSent();
   });
-  test('DELETE /users/by/<alias_label>/<alias_id>/identity/<alias_label_to_delete>: header is sent', () => {
-    RequestService.deleteAlias(
+  test('DELETE /users/by/<alias_label>/<alias_id>/identity/<alias_label_to_delete>: header is sent', async () => {
+    await RequestService.deleteAlias(
       { appId: APP_ID },
       new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
       AliasPair.EXTERNAL_ID,
     );
     expectHeaderToBeSent();
   });
-  test('PATCH /subscriptions/<subscription_id>: header is sent', () => {
-    RequestService.updateSubscription({ appId: APP_ID }, DUMMY_EXTERNAL_ID, {});
+  test('PATCH /subscriptions/<subscription_id>: header is sent', async () => {
+    await RequestService.updateSubscription(
+      { appId: APP_ID },
+      DUMMY_EXTERNAL_ID,
+      {},
+    );
     expectHeaderToBeSent();
   });
-  test('DELETE /subscriptions/<subscription_id>: header is sent', () => {
-    RequestService.deleteSubscription({ appId: APP_ID }, DUMMY_EXTERNAL_ID);
+  test('DELETE /subscriptions/<subscription_id>: header is sent', async () => {
+    await RequestService.deleteSubscription(
+      { appId: APP_ID },
+      DUMMY_EXTERNAL_ID,
+    );
     expectHeaderToBeSent();
+  });
+  test('POST /users: header is sent with subscription id', async () => {
+    await RequestService.createUser(
+      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
+      {},
+    );
+    expectOneSignalSubscriptionIdHeaderToBeSent();
+  });
+
+  test('PATCH /users/by/<alias_label>/<alias_id>: header is sent with subscription id', async () => {
+    await RequestService.updateUser(
+      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
+      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
+      {},
+    );
+    expectOneSignalSubscriptionIdHeaderToBeSent();
   });
 });
