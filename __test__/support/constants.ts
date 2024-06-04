@@ -14,7 +14,7 @@
  * @constant {number} DELTA_QUEUE_TIME_ADVANCE - The time advance for the delta queue.
  */
 export const OPERATION_QUEUE_TIME_ADVANCE = 5001;
-export const DELTA_QUEUE_TIME_ADVANCE = 1001;
+export const DELTA_QUEUE_TIME_ADVANCE = 5001;
 
 /* S T R I N G   C O N S T A N T S */
 export const APP_ID = '34fcbe85-278d-4fd2-a4ec-0f80e95072c5';
