@@ -60,11 +60,8 @@ export class OperationRepo {
       this.executorStore.store[modelName]?.enqueueDelta(delta);
     });
 
-    // for each executor
-    // TODO: fires SubscriptionExecutor.processDeltaQueue and SubscriptionExecutor._flushDeltas 3 times
-    // ExecutorStore has 3 ModelName for Subscriptions: smsSubscription, emailSubscription, pushSubscription
+    // for each executor: processDeltaQueue and flush
     this.forceDeltaQueueProcessingOnAllExecutors();
-    // executors flush is in the above method
 
     this._flushDeltas();
   }
