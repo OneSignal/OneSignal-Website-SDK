@@ -46,6 +46,14 @@ describe('OperationRepo tests', () => {
     jest.useFakeTimers();
     await TestEnvironment.initialize();
     broadcastCount = 0;
+
+    test.stub(
+      Database,
+      'getAppConfig',
+      Promise.resolve({
+        jwtRequired: false,
+      }),
+    );
   });
 
   afterEach(async () => {
