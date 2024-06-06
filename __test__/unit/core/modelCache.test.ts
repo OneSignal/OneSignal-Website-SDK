@@ -7,7 +7,7 @@ import { ModelName } from '../../../src/core/models/SupportedModels';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 
 describe('ModelCache tests', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.useFakeTimers();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
     test.stub(
@@ -25,7 +25,7 @@ describe('ModelCache tests', () => {
       'getOperationsFromCache',
       Promise.resolve([]),
     );
-    TestEnvironment.initialize();
+    await TestEnvironment.initialize();
   });
 
   afterAll(() => {

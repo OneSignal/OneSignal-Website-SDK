@@ -23,7 +23,7 @@ describe('Executor tests', () => {
     | jest.SpyInstance<void, [() => Promise<void>], any>
     | jest.SpyInstance<void>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     spyProcessOperationQueue = jest.spyOn(
       ExecutorBase.prototype as any,
       '_processOperationQueue',
@@ -34,7 +34,7 @@ describe('Executor tests', () => {
     test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', []);
     test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', []);
     test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', []);
-    TestEnvironment.initialize();
+    await TestEnvironment.initialize();
   });
 
   afterAll(async () => {
