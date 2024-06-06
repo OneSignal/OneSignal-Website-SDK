@@ -20,7 +20,7 @@ export class ExecutorStore {
 
   // call processDeltaQueue on all executors immediately
   public forceDeltaQueueProcessingOnAllExecutors(): void {
-    var didSubscriptionExecutorProcessDeltaQueue = false;
+    let didSubscriptionExecutorProcessDeltaQueue = false;
 
     Object.values(this.store).forEach((executor) => {
       if (

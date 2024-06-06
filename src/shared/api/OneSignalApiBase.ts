@@ -71,7 +71,6 @@ export class OneSignalApiBase {
     callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
 
-
     if (headers) {
       headers.forEach((value, key) => {
         callHeaders.append(key, value);
