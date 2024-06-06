@@ -2,6 +2,7 @@ import {
   DELTA_QUEUE_TIME_ADVANCE,
   DUMMY_MODEL_ID,
   DUMMY_ONESIGNAL_ID,
+  DUMMY_PUSH_TOKEN,
 } from '../../support/constants';
 import ModelCache from '../../../src/core/caching/ModelCache';
 import ExecutorBase from '../../../src/core/executors/ExecutorBase';
@@ -22,6 +23,7 @@ import {
 } from '../../support/helpers/core';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { Operation } from '../../../src/core/operationRepo/Operation';
+import Database from '../../../src/shared/services/Database';
 
 let broadcastCount = 0;
 
@@ -197,6 +199,14 @@ describe('OperationRepo tests', () => {
 
   test('Update User Properties: -> one operation of change type: update', (done: jest.DoneCallback) => {
     test.stub(Operation, 'getInstanceWithModelReference');
+
+    test.stub(
+      Database,
+      'getAppState',
+      Promise.resolve({
+        lastKnownPushToken: DUMMY_PUSH_TOKEN,
+      }),
+    );
 
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Properties];
