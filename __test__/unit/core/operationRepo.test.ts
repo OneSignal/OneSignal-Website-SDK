@@ -22,6 +22,7 @@ import {
 } from '../../support/helpers/core';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { Operation } from '../../../src/core/operationRepo/Operation';
+import Database from '../../../src/shared/services/Database';
 
 let broadcastCount = 0;
 
@@ -203,6 +204,14 @@ describe('OperationRepo tests', () => {
 
   test('Update User Properties: -> one operation of change type: update', (done: jest.DoneCallback) => {
     test.stub(Operation, 'getInstanceWithModelReference');
+
+    test.stub(
+      Database,
+      'getAppState',
+      Promise.resolve({
+        lastKnownPushToken: 'dummy_lastKnownPushToken',
+      }),
+    );
 
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Properties];
