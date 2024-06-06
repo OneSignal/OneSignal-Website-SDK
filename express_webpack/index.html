@@ -162,7 +162,7 @@
 
     OneSignalDeferred.push(function(onesignal) {
       onesignal.addEventListener('userJwtInvalidated', function (event) {
-        showEventAlert('slidedownShown', { event });
+        showEventAlert('userJwtInvalidated', { event });
       });
     });
 
