@@ -5,6 +5,7 @@ import {
 import OneSignalError from '../errors/OneSignalError';
 import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
+import EventHelper from '../helpers/EventHelper';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import { isValidUuid } from '../utils/utils';
@@ -106,6 +107,11 @@ export class OneSignalApiBase {
       const response = await fetch(url, contents);
       const { status } = response;
       const json = await response.json();
+
+      if (status == 401) {
+        await EventHelper.onUserJwtInvalidated();
+        // TODO: move to [ExecutorBase]Requests.ts?
+      }
 
       return {
         result: json,
