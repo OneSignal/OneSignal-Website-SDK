@@ -44,7 +44,7 @@ describe('OperationRepo tests', () => {
       onesignal_id: '123',
     });
     jest.useFakeTimers();
-    TestEnvironment.initialize();
+    await TestEnvironment.initialize();
     broadcastCount = 0;
   });
 
