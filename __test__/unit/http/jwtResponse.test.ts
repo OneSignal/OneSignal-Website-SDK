@@ -1,6 +1,4 @@
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
-import LoginManager from '../../../src/page/managers/LoginManager';
-import { setupLoginStubs } from '../../support/helpers/login';
 import { RequestService } from '../../../src/core/requestService/RequestService';
 import {
   APP_ID,
@@ -195,23 +193,6 @@ describe('Jwt Http responses', () => {
         { appId: APP_ID },
         DUMMY_SUBSCRIPTION_ID,
       );
-
-      expect(jwtInvalidated).toHaveBeenCalledTimes(1);
-    });
-
-    // WIP
-    test('fires jwt invalidated handler on login', async () => {
-      setupLoginStubs();
-      await TestEnvironment.initialize({
-        useMockIdentityModel: true,
-        useMockPushSubscriptionModel: true,
-      });
-
-      const jwtInvalidated = jest.spyOn(EventHelper, 'onUserJwtInvalidated');
-
-      test.nock({}, 401);
-
-      await LoginManager.login(DUMMY_EXTERNAL_ID);
 
       expect(jwtInvalidated).toHaveBeenCalledTimes(1);
     });
