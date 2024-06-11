@@ -171,6 +171,7 @@ export class ConfigHelper {
         serverConfig.features.web_on_focus_enabled,
         SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
       ),
+      jwtRequired: Utils.valueOrDefault(serverConfig.jwt_required, false),
     };
   }
 

@@ -12,7 +12,7 @@ describe('Notification Events', () => {
 
   test('Adding click listener fires internal EventHelper', async () => {
     const stub = test.stub(EventHelper, 'fireStoredNotificationClicks');
-    OneSignal.Notifications.addEventListener('click', null);
+    await OneSignal.Notifications.addEventListener('click', null);
     expect(stub).toHaveBeenCalledTimes(1);
   });
 });

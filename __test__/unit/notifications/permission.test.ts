@@ -22,7 +22,7 @@ describe('Notifications namespace permission properties', () => {
   beforeEach(async () => {
     jest.useFakeTimers();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
-    TestEnvironment.initialize();
+    await TestEnvironment.initialize();
   });
 
   afterEach(() => {
