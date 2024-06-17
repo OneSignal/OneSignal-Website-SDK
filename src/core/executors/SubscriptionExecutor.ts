@@ -12,6 +12,10 @@ export class SubscriptionExecutor extends ExecutorBase {
   }
 
   processDeltaQueue(): void {
+    if (this._deltaQueue.length === 0) {
+      return;
+    }
+
     const modelSpecificDeltasArrays = this.separateDeltasByModelId();
 
     modelSpecificDeltasArrays.forEach((deltasArray) => {
