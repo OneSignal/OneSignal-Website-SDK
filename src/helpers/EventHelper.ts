@@ -1,6 +1,5 @@
 import Event from '../Event';
 import LimitStore from '../LimitStore';
-import OneSignalApiShared from '../OneSignalApiShared';
 import Database from '../services/Database';
 import { ContextSWInterface } from "../models/ContextSW";
 import Log from '../libraries/Log';
@@ -84,8 +83,6 @@ export default class EventHelper {
     }
     EventHelper.sendingOrSentWelcomeNotification = true;
 
-    const { deviceId } = await Database.getSubscription();
-    const { appId } = await Database.getAppConfig();
     let title =
       welcome_notification_opts !== undefined &&
         welcome_notification_opts['title'] !== undefined &&
@@ -108,13 +105,11 @@ export default class EventHelper {
     message = BrowserUtils.decodeHtmlEntities(message);
 
     Log.debug('Sending welcome notification.');
-    OneSignalApiShared.sendNotification(
-      appId,
-      [deviceId],
-      { en: title },
-      { en: message },
+    OneSignal.sendSelfNotification(
+      title,
+      message,
       url,
-      null,
+      undefined,
       { __isOneSignalWelcomeNotification: true },
       undefined
     );

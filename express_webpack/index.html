@@ -154,6 +154,12 @@
         })
     }
 
+    function sendSelfNotification() {
+        OneSignal.push(function() {
+            OneSignal.sendSelfNotification();
+        });
+    }
+
   </script>
 <head>
     <meta charset="utf-8">
@@ -189,6 +195,7 @@
     <button onclick="javascript:showSmsSlidedown();">Show Sms Slidedown</button>
     <button onclick="javascript:showEmailSlidedown();">Show Email Slidedown</button>
     <button onclick="javascript:showSmsAndEmailSlidedown();">Show Sms & Email Slidedown</button>
+    <button onclick="javascript:sendSelfNotification();">Send Self Notification</button>
     <br />
     <br />
     <div class='onesignal-customlink-container'></div>
