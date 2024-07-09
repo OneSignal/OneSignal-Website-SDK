@@ -36,6 +36,7 @@ import {
   awaitOneSignalInitAndSupported,
   executeCallback,
   getConsoleStyle,
+  getPlatformNotificationIcon,
   isValidEmail,
   logMethodCall,
 } from './utils';
@@ -713,16 +714,16 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async sendSelfNotification(title: string = 'OneSignal Test Message',
-                              message: string = 'This is an example notification.',
-                              url: string = `${new URL(location.href).origin}?_osp=do_not_open`,
-                              icon: URL,
-                              data: Map<String, any>,
-                              buttons: Array<NotificationActionButton>): Promise<void> {
+  static async sendSelfNotification(title = 'OneSignal Test Message',
+                              message = 'This is an example notification.',
+                              url = `${new URL(location.href).origin}?_osp=do_not_open`,
+                              icon?: string,
+                              data?: Record<string, any>,
+                              buttons?: Array<any>): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('sendSelfNotification', title, message, url, icon, data, buttons);
     const appConfig = await Database.getAppConfig();
-    const subscription = await Database.getSubscription();
+
     if (!appConfig.appId)
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!(await OneSignal.isPushNotificationsEnabled()))
@@ -731,11 +732,48 @@ export default class OneSignal {
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     if (!ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true }))
       throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
-
-    if (subscription.deviceId) {
-      await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], { en : title }, { en : message },
-                                               url, icon, data, buttons);
+    if (!icon) {
+      // get default icon
+      const icons = await MainHelper.getNotificationIcons();
+      icon = getPlatformNotificationIcon(icons);
     }
+
+    const convertButtonsToNotificationActionType = (buttons: Array<any>) => {
+      const convertedButtons = [];
+
+      for (let i=0; i<buttons.length; i++) {
+        const button = buttons[i];
+        convertedButtons.push({
+          action: button.id,
+          title: button.text,
+          icon: button.icon,
+          url: button.url
+        });
+      }
+
+      return convertedButtons;
+    };
+
+    const dataPayload = {
+      data,
+      url,
+      buttons: buttons ? convertButtonsToNotificationActionType(buttons) : undefined
+    }
+
+    this.context.serviceWorkerManager.getRegistration().then(async (registration) => {
+      if (!registration) {
+        Log.error("Service worker registration not available.");
+        return;
+      }
+
+      const options = {
+        body: message,
+        data: dataPayload,
+        icon: icon,
+        actions: buttons ? convertButtonsToNotificationActionType(buttons) : [],
+      };
+      registration.showNotification(title, options);
+    });
   }
 
   /**

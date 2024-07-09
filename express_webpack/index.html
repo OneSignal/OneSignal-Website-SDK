@@ -154,6 +154,17 @@
         })
     }
 
+    function sendSelfNotification() {
+        OneSignal.push(function() {
+          OneSignal.sendSelfNotification('Title', 'message', `https://localhost:4001/?app_id=${appId}`, 'https://t3.ftcdn.net/jpg/03/08/73/34/360_F_308733458_QBzwMVu8ZzdGEp9Wwq1fAYaDgtP3UVwl.jpg', { test: 'foo' }, [{
+            id: 'like-button',
+            text: 'Like',
+            icon: 'https://image.similarpng.com/very-thumbnail/2020/06/Icon-like-button-transparent-PNG.png',
+            url: 'https://onesignal.com'
+        }]);
+        });
+    }
+
   </script>
 <head>
     <meta charset="utf-8">
@@ -189,6 +200,7 @@
     <button onclick="javascript:showSmsSlidedown();">Show Sms Slidedown</button>
     <button onclick="javascript:showEmailSlidedown();">Show Email Slidedown</button>
     <button onclick="javascript:showSmsAndEmailSlidedown();">Show Sms & Email Slidedown</button>
+    <button onclick="javascript:sendSelfNotification();">Send Self Notification</button>
     <br />
     <br />
     <div class='onesignal-customlink-container'></div>
