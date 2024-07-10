@@ -98,7 +98,7 @@ export class ServiceWorker {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
     self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
-    self.addEventListener('pushsubscriptionchange', (event: PushSubscriptionChangeEvent) => {
+    self.addEventListener('pushsubscriptionchange', (event: any) => {
       event.waitUntil(ServiceWorker.onPushSubscriptionChange(event));
     });
 
@@ -1007,7 +1007,7 @@ export class ServiceWorker {
     event.waitUntil(self.clients.claim());
   }
 
-  static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {
+  static async onPushSubscriptionChange(event: any) {
     Log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     const appId = await ServiceWorker.getAppId();

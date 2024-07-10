@@ -8,6 +8,7 @@ import Context from '../../models/Context';
 import ConfigManager from '../../managers/ConfigManager';
 import LocalStorage from '../../utils/LocalStorage';
 import { EnvironmentInfoHelper } from "../../context/browser/helpers/EnvironmentInfoHelper";
+import { Disposable } from '../../models/Disposable';
 
 /*
   These options are passed from the Rails app as plain raw untyped values.

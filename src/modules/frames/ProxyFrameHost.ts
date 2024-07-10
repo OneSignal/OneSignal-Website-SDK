@@ -6,6 +6,7 @@ import { timeoutPromise, triggerNotificationPermissionChanged, deepCopy } from '
 import { ServiceWorkerActiveState } from "../../helpers/ServiceWorkerHelper";
 import Log from '../../libraries/Log';
 import { PageVisibilityRequest } from "../../models/Session";
+import { Disposable } from '../../models/Disposable';
 
 interface Reply {
   data: any;

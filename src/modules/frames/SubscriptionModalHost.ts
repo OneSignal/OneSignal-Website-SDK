@@ -7,6 +7,7 @@ import SdkEnvironment from '../../managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
 import Log from '../../libraries/Log';
+import { Disposable } from '../../models/Disposable';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
