@@ -20,7 +20,8 @@ $customlink-base-padding-vertical: 8px;
 .onesignal-customlink-subscribe {
   display: inline-block;
   transition: all 0.1s;
-  font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
 
   &:hover {
     filter: brightness(0.9);
@@ -31,7 +32,8 @@ $customlink-base-padding-vertical: 8px;
   }
 
   &.onesignal-reset {
-    font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial,
+      sans-serif;
     display: inline-block;
     transition: all 0.1s;
   }
@@ -41,7 +43,9 @@ $customlink-base-padding-vertical: 8px;
     font-weight: 600px;
     border-radius: 4px;
     cursor: pointer;
-    &:hover, &:focus, &:active {
+    &:hover,
+    &:focus,
+    &:active {
       text-decoration: none;
     }
     &.state-subscribed {
@@ -57,7 +61,9 @@ $customlink-base-padding-vertical: 8px;
       text-transform: none;
       font-weight: 400;
     }
-    &:hover, &:focus, &:active {
+    &:hover,
+    &:focus,
+    &:active {
       text-decoration: underline;
     }
   }
@@ -91,15 +97,17 @@ $customlink-base-padding-vertical: 8px;
 }
 
 .onesignal-customlink-explanation {
-  color: rgba(0,0,0,0.64);
+  color: rgba(0, 0, 0, 0.64);
   transition: all 0.1s;
-  font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+  font-family: 'Proxima-Nova', 'Proxima Nova', 'Open Sans', Arial, Helvetica,
+    sans-serif;
   margin-bottom: 12px;
 
   &.onesignal-reset {
-    color: rgba(0,0,0,0.64);
+    color: rgba(0, 0, 0, 0.64);
     transition: all 0.1s;
-    font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+    font-family: 'Proxima-Nova', 'Proxima Nova', 'Open Sans', Arial, Helvetica,
+      sans-serif;
     margin-bottom: 12px;
   }
 
