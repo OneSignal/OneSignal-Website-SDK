@@ -1,12 +1,12 @@
 const webpack = require('webpack');
 const path = require('path');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-const { CheckerPlugin } = require('awesome-typescript-loader');
 const dir = require('node-dir');
 const md5file = require('md5-file');
 const crypto = require('crypto');
+const TerserPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 const env = process.env.ENV || "production";
 const buildOrigin = process.env.BUILD_ORIGIN || "localhost";
@@ -55,9 +55,7 @@ async function getStylesheetsHash() {
 
 async function getWebpackPlugins() {
   const plugins = [
-    new CheckerPlugin(),
-      new webpack.optimize.ModuleConcatenationPlugin(),
-      new ExtractTextPlugin("OneSignalSDKStyles.css"),
+      new MiniCssExtractPlugin({ filename: 'OneSignalSDKStyles.css' }),
       new webpack.DefinePlugin({
         __BUILD_TYPE__: JSON.stringify(env),
         __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
@@ -112,7 +110,7 @@ async function generateWebpackConfig() {
     target: 'web',
     entry: {
       'OneSignalSDK.js': path.resolve('build/ts-to-es6/src/entries/sdk.js'),
-      'OneSignalSDKStyles.css': path.resolve('src/entries/stylesheet.scss')
+      'OneSignalSDKStyles.js': path.resolve('src/entries/stylesheet.js'),
     },
     output: {
       path: path.resolve('build/bundles'),
@@ -121,9 +119,8 @@ async function generateWebpackConfig() {
     mode: process.env.ENV === "production" ? "production" : "development",
     optimization: {
       minimizer: [
-        new UglifyJsPlugin({
-          sourceMap: true,
-          uglifyOptions: {
+        new TerserPlugin({
+          terserOptions: {
             sourceMap: true,
             compress: {
               drop_console: false,
@@ -148,7 +145,8 @@ async function generateWebpackConfig() {
               comments: false
             }
           }
-        })
+        }),
+        ...(env === 'production' ? [new CssMinimizerPlugin()] : []),
       ]
     },
     module: {
@@ -158,35 +156,35 @@ async function generateWebpackConfig() {
           exclude: /node_modules/,
           use: [
             {
-              loader: 'awesome-typescript-loader',
+              loader: 'ts-loader',
               options: {
-                configFileName: "build/config/tsconfig.es5.json"
+                configFile: "build/config/tsconfig.es5.json"
               }
             },
           ]
         },
         {
           test: /\.scss$/,
-          use: ExtractTextPlugin.extract({
-            use: [
-              {
-                loader: 'css-loader',
-                options: {
-                  sourceMap: true,
-                  minimize: true
-                }
+          use: [
+            MiniCssExtractPlugin.loader,
+            {
+              loader: 'css-loader',
+              options: {
+                sourceMap: true,
               },
-              {
-                loader: 'postcss-loader',
-                options: {
-                  plugins: function() {
-                    return [require('autoprefixer')];
-                  }
-                }
+            },
+            {
+              loader: 'postcss-loader',
+              options: {
+                postcssOptions: {
+                  plugins: [
+                    require('autoprefixer'),
+                  ],
+                },
               },
-              'sass-loader'
-            ]
-          })
+            },
+            'sass-loader',
+          ],
         }
       ]
     },
