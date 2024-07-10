@@ -719,7 +719,7 @@ export default class OneSignal {
                               url = `${new URL(location.href).origin}?_osp=do_not_open`,
                               icon?: string,
                               data?: Record<string, any>,
-                              buttons?: Array<NotificationActionButton>): Promise<void> {
+                              buttons?: Array<NotificationAction>): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('sendSelfNotification', title, message, url, icon, data, buttons);
     const appConfig = await Database.getAppConfig();
@@ -738,16 +738,23 @@ export default class OneSignal {
       icon = getPlatformNotificationIcon(icons);
     }
 
+    data = {
+      ...data,
+      url,
+      buttons
+    }
+
     this.context.serviceWorkerManager.getRegistration().then(async (registration) => {
       if (!registration) {
         Log.error("Service worker registration not available.");
         return;
       }
 
-      const options: NotificationOptions = {
+      const options = {
         body: message,
         data: data,
         icon: icon,
+        actions: buttons,
       };
       registration.showNotification(title, options);
     });
