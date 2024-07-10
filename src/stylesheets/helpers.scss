@@ -1,48 +1,50 @@
 /* http://stackoverflow.com/a/6900392 */
 @mixin unselectable() {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 @mixin default-cursor() {
-    cursor: default;
+  cursor: default;
 }
 
 @mixin debug() {
-    border: 2px solid magenta !important;
+  border: 2px solid magenta !important;
 }
 
 @mixin size($width, $height: $width) {
-    width: $width;
-    height: $height;
+  width: $width;
+  height: $height;
 }
 
 @function opposite-direction($directions) {
-    $opposite-directions: ();
-    $direction-map: (
-            'top': 'bottom',
-            'right': 'left',
-            'bottom': 'top',
-            'left': 'right',
-            'ltr': 'rtl',
-            'rtl': 'ltr'
-    );
+  $opposite-directions: ();
+  $direction-map: (
+    'top': 'bottom',
+    'right': 'left',
+    'bottom': 'top',
+    'left': 'right',
+    'ltr': 'rtl',
+    'rtl': 'ltr',
+  );
 
-    @each $direction in $directions {
-        $opposite-direction: map-get($direction-map, $direction);
-        @if $opposite-direction != null {
-            $opposite-directions: append($opposite-directions, #{$opposite-direction});
-        }
-        @else {
-            @warn "No opposite direction can be found for `#{$direction}`.";
-        }
+  @each $direction in $directions {
+    $opposite-direction: map-get($direction-map, $direction);
+    @if $opposite-direction != null {
+      $opposite-directions: append(
+        $opposite-directions,
+        #{$opposite-direction}
+      );
+    } @else {
+      @warn "No opposite direction can be found for `#{$direction}`.";
     }
+  }
 
-    @return $opposite-directions;
+  @return $opposite-directions;
 }
 
 // [Private]
@@ -53,15 +55,14 @@
 // @param [list] $args: list of offsets and values
 // ---
 @mixin _position($position, $args) {
-    @each $o in top right bottom left {
-        $i: index($args, $o);
-        @if $i
-    and $i + 1 <= length($args)
-    and type-of( nth($args, $i + 1) ) == number {
-            #{$o}: nth($args, $i + 1);
-        }
+  @each $o in top right bottom left {
+    $i: index($args, $o);
+    @if $i and $i + 1 <= length($args) and type-of(nth($args, $i + 1)) == number
+    {
+      #{$o}: nth($args, $i + 1);
     }
-    position: $position;
+  }
+  position: $position;
 }
 
 // Absolute positioning helper mixin
@@ -70,7 +71,7 @@
 // @param [list] $args: list of offsets and values
 // ---
 @mixin absolute($args) {
-    @include _position(absolute, $args);
+  @include _position(absolute, $args);
 }
 
 // Arrow helper mixin
@@ -81,23 +82,23 @@
 // @param [number] $size (1em): arrow size
 // ---
 @mixin triangle($direction, $position, $color: currentColor, $size: 1em) {
-    // Make sure the direction is valid
-    @if not index(top right bottom left, $direction) {
-        @warn "Direction must be one of top, right, bottom or left.";
-    } @else {
-        @include absolute($position); // Position
-        @include size(0); // Size
-        content: '';
-        z-index: 2;
-        border-#{opposite-position($direction)}: $size * 1.5 solid $color;
-        $perpendicular-borders: $size solid transparent;
+  // Make sure the direction is valid
+  @if not index(top right bottom left, $direction) {
+    @warn "Direction must be one of top, right, bottom or left.";
+  } @else {
+    @include absolute($position); // Position
+    @include size(0); // Size
+    content: '';
+    z-index: 2;
+    border-#{opposite-position($direction)}: $size * 1.5 solid $color;
+    $perpendicular-borders: $size solid transparent;
 
-        @if $direction == top or $direction == bottom {
-            border-left: $perpendicular-borders;
-            border-right: $perpendicular-borders;
-        } @else if $direction == right or $direction == left {
-            border-bottom: $perpendicular-borders;
-            border-top: $perpendicular-borders;
-        }
+    @if $direction == top or $direction == bottom {
+      border-left: $perpendicular-borders;
+      border-right: $perpendicular-borders;
+    } @else if $direction == right or $direction == left {
+      border-bottom: $perpendicular-borders;
+      border-top: $perpendicular-borders;
     }
+  }
 }
