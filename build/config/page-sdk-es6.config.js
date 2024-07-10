@@ -1,9 +1,9 @@
 const webpack = require('webpack');
 const path = require('path');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-const { CheckerPlugin } = require('awesome-typescript-loader');
+const TerserPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 const env = process.env.ENV || "production";
 const buildOrigin = process.env.BUILD_ORIGIN || "localhost";
@@ -18,21 +18,18 @@ const sdkVersion = process.env.npm_package_config_sdkVersion;
 
 async function getWebpackPlugins() {
   const plugins = [
-    new CheckerPlugin(),
-      new webpack.optimize.ModuleConcatenationPlugin(),
-      new ExtractTextPlugin("OneSignalSDKStyles.css"),
-      new webpack.DefinePlugin({
-        __BUILD_TYPE__: JSON.stringify(env),
-        __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
-        __API_TYPE__: JSON.stringify(apiEnv),
-        __API_ORIGIN__: JSON.stringify(apiOrigin),
-        __IS_HTTPS__: isHttps === "true",
-        __NO_DEV_PORT__: noDevPort === "true",
-        __TEST__: !!tests,
-        __VERSION__: sdkVersion,
-        __LOGGING__: env === "development",
-        "process.env.NODE_ENV": JSON.stringify(nodeEnv),
-      })
+    new webpack.DefinePlugin({
+      __BUILD_TYPE__: JSON.stringify(env),
+      __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
+      __API_TYPE__: JSON.stringify(apiEnv),
+      __API_ORIGIN__: JSON.stringify(apiOrigin),
+      __IS_HTTPS__: isHttps === "true",
+      __NO_DEV_PORT__: noDevPort === "true",
+      __TEST__: !!tests,
+      __VERSION__: sdkVersion,
+      __LOGGING__: env === "development",
+      "process.env.NODE_ENV": JSON.stringify(nodeEnv),
+    })
   ];
   if (!!process.env.ANALYZE) {
     const sizeAnalysisReportPath = path.resolve(path.join('build', 'size-analysis.html'));
@@ -79,12 +76,11 @@ async function generateWebpackConfig() {
       path: path.resolve('build/bundles'),
       filename: '[name]'
     },
-    mode: process.env.ENV === "production" ? "production" : "development",
+    mode: env === "production" ? "production" : "development",
     optimization: {
       minimizer: [
-        new UglifyJsPlugin({
-          sourceMap: true,
-          uglifyOptions: {
+        new TerserPlugin({
+          terserOptions: {
             sourceMap: true,
             compress: {
               drop_console: false,
@@ -101,14 +97,14 @@ async function generateWebpackConfig() {
                 'PushNotSupportedError',
                 'PushPermissionNotGrantedError',
                 'SdkInitError',
-                'TimeoutError'
-              ]
+                'TimeoutError',
+              ],
             } : false,
             output: {
-              comments: false
-            }
-          }
-        })
+              comments: false,
+            },
+          },
+        }),
       ]
     },
     module: {
@@ -118,36 +114,13 @@ async function generateWebpackConfig() {
           exclude: /node_modules/,
           use: [
             {
-              loader: 'awesome-typescript-loader',
+              loader: 'ts-loader',
               options: {
-                configFileName: "build/config/tsconfig.es6.json"
+                configFile: "build/config/tsconfig.es6.json"
               }
             },
           ]
         },
-        {
-          test: /\.scss$/,
-          use: ExtractTextPlugin.extract({
-            use: [
-              {
-                loader: 'css-loader',
-                options: {
-                  sourceMap: true,
-                  minimize: true
-                }
-              },
-              {
-                loader: 'postcss-loader',
-                options: {
-                  plugins: function() {
-                    return [require('autoprefixer')];
-                  }
-                }
-              },
-              'sass-loader'
-            ]
-          })
-        }
       ]
     },
     resolve: {
