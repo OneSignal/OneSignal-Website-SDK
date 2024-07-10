@@ -6,20 +6,14 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
-    container:
-      image: python:2.7.18-buster
-
-    strategy:
-      matrix:
-        node-version: [14.x]
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: '.nvmrc'
       - name: Install Yarn
         run: npm install -g yarn
       - name: "[Setup] Install dependencies"
