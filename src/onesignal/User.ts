@@ -145,6 +145,10 @@ export default class User {
     ) {
       // existing user
       newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      if (identityModel.data.external_id) {
+        newSubscription.setExternalId(identityModel.data.external_id);
+      }
       OneSignal.coreDirector.add(
         ModelName.EmailSubscriptions,
         newSubscription,
@@ -165,6 +169,10 @@ export default class User {
         throw e;
       },
     );
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    if (identityModel.data.external_id) {
+      newSubscription.setExternalId(identityModel.data.external_id);
+    }
   }
 
   public async addSms(sms: string): Promise<void> {
@@ -194,6 +202,10 @@ export default class User {
     ) {
       // existing user
       newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      if (identityModel.data.external_id) {
+        newSubscription.setExternalId(identityModel.data.external_id);
+      }
       OneSignal.coreDirector.add(
         ModelName.SmsSubscriptions,
         newSubscription,
@@ -214,6 +226,10 @@ export default class User {
         throw e;
       },
     );
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    if (identityModel.data.external_id) {
+      newSubscription.setExternalId(identityModel.data.external_id);
+    }
   }
 
   public removeEmail(email: string): void {
