@@ -17,6 +17,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   onesignalId?: string;
   awaitOneSignalIdAvailable: Promise<string>;
   onesignalIdAvailableCallback?: (onesignalId: string) => void;
+  externalId?: string;
 
   constructor(
     readonly modelName: ModelName,
@@ -28,6 +29,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     this.modelName = modelName;
     this.data = data;
     this.onesignalId = undefined;
+    this.externalId = undefined;
 
     this.awaitOneSignalIdAvailable = new Promise<string>((resolve) => {
       this.onesignalIdAvailableCallback = resolve;
@@ -46,6 +48,11 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     if (onesignalId) {
       this.onesignalIdAvailableCallback?.(onesignalId);
     }
+  }
+
+  public setExternalId(externalId?: string): void {
+    logMethodCall('setExternalId', { externalId });
+    this.externalId = externalId;
   }
 
   /**
@@ -92,7 +99,8 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     const modelId = this.modelId as string;
     const modelName = this.modelName;
     const onesignalId = this.onesignalId;
-    return { modelId, modelName, onesignalId, ...this.data };
+    const externalId = this.externalId;
+    return { modelId, modelName, onesignalId, externalId, ...this.data };
   }
 
   /**
@@ -102,7 +110,8 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    */
   static decode(encodedModel: EncodedModel): OSModel<SupportedModel> {
     logMethodCall('decode', { encodedModel });
-    const { modelId, modelName, onesignalId, ...data } = encodedModel;
+    const { modelId, modelName, onesignalId, externalId, ...data } =
+      encodedModel;
 
     const decodedModel = new OSModel<SupportedModel>(
       modelName as ModelName,
@@ -111,6 +120,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     );
 
     decodedModel.setOneSignalId(onesignalId);
+    decodedModel.setExternalId(externalId);
     return decodedModel;
   }
 }

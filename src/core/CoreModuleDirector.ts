@@ -41,6 +41,13 @@ export class CoreModuleDirector {
     if (user.hasOneSignalId) {
       pushModel.setOneSignalId(user.onesignalId);
     }
+
+    const identity = this.getIdentityModel();
+    const externalId = identity?.data.external_id;
+    if (externalId) {
+      pushModel.setExternalId(externalId);
+    }
+
     // don't propagate since we will be including the subscription in the user create call
     OneSignal.coreDirector.add(
       ModelName.PushSubscriptions,
@@ -59,7 +66,8 @@ export class CoreModuleDirector {
       const identity = this.getIdentityModel();
       const properties = this.getPropertiesModel();
 
-      const { onesignal_id: onesignalId } = user.identity;
+      const { onesignal_id: onesignalId, external_id: externalId } =
+        user.identity;
 
       if (!onesignalId) {
         throw new OneSignalError('OneSignal ID is missing from user data');
@@ -68,6 +76,11 @@ export class CoreModuleDirector {
       // set OneSignal ID *before* hydrating models so that the onesignalId is also updated in model cache
       identity?.setOneSignalId(onesignalId);
       properties?.setOneSignalId(onesignalId);
+
+      if (externalId) {
+        identity?.setExternalId(externalId);
+        properties?.setExternalId(externalId);
+      }
 
       // identity and properties models are always single, so we hydrate immediately (i.e. replace existing data)
       identity?.hydrate(user.identity);
@@ -78,6 +91,7 @@ export class CoreModuleDirector {
       this._hydrateSubscriptions(
         user.subscriptions as SubscriptionModel[],
         onesignalId,
+        externalId,
       );
       EventHelper.checkAndTriggerUserChanged();
     } catch (e) {
@@ -88,6 +102,7 @@ export class CoreModuleDirector {
   private _hydrateSubscriptions(
     subscriptions: SubscriptionModel[],
     onesignalId: string,
+    externalId?: string,
   ): void {
     logMethodCall('CoreModuleDirector._hydrateSubscriptions', {
       subscriptions,
@@ -122,10 +137,16 @@ export class CoreModuleDirector {
       if (existingSubscription) {
         // set onesignalId on existing subscription *before* hydrating so that the onesignalId is updated in model cache
         existingSubscription.setOneSignalId(onesignalId);
+        if (externalId) {
+          existingSubscription?.setExternalId(externalId);
+        }
         existingSubscription.hydrate(subscription);
       } else {
         const model = new OSModel<SupportedModel>(modelName, subscription);
         model.setOneSignalId(onesignalId);
+        if (externalId) {
+          model?.setExternalId(externalId);
+        }
         modelStores[modelName].add(model, false); // don't propagate to server
       }
     });
