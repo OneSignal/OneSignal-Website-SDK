@@ -156,7 +156,12 @@
 
     function sendSelfNotification() {
         OneSignal.push(function() {
-            OneSignal.sendSelfNotification();
+          OneSignal.sendSelfNotification('Title', 'message', 'https://localhost:4001/?app_id=90ab655e-f1b6-4a72-9b0e-69e842f24033', 'https://t3.ftcdn.net/jpg/03/08/73/34/360_F_308733458_QBzwMVu8ZzdGEp9Wwq1fAYaDgtP3UVwl.jpg', { test: 'foo' }, [{
+            id: 'like-button',
+            text: 'Like',
+            icon: 'https://image.similarpng.com/very-thumbnail/2020/06/Icon-like-button-transparent-PNG.png',
+            url: 'https://onesignal.com'
+        }]);
         });
     }
 

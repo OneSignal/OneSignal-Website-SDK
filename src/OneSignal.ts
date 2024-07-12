@@ -719,7 +719,7 @@ export default class OneSignal {
                               url = `${new URL(location.href).origin}?_osp=do_not_open`,
                               icon?: string,
                               data?: Record<string, any>,
-                              buttons?: Array<NotificationAction>): Promise<void> {
+                              buttons?: Array<any>): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('sendSelfNotification', title, message, url, icon, data, buttons);
     const appConfig = await Database.getAppConfig();
@@ -738,10 +738,26 @@ export default class OneSignal {
       icon = getPlatformNotificationIcon(icons);
     }
 
-    data = {
-      ...data,
+    const convertButtonsToNotificationActionType = (buttons: Array<any>) => {
+      const convertedButtons = [];
+
+      for (let i=0; i<buttons.length; i++) {
+        const button = buttons[i];
+        convertedButtons.push({
+          action: button.id,
+          title: button.text,
+          icon: button.icon,
+          url: button.url
+        });
+      }
+
+      return convertedButtons;
+    };
+
+    const dataPayload = {
+      data,
       url,
-      buttons
+      buttons: buttons ? convertButtonsToNotificationActionType(buttons) : undefined
     }
 
     this.context.serviceWorkerManager.getRegistration().then(async (registration) => {
@@ -752,9 +768,9 @@ export default class OneSignal {
 
       const options = {
         body: message,
-        data: data,
+        data: dataPayload,
         icon: icon,
-        actions: buttons,
+        actions: buttons ? convertButtonsToNotificationActionType(buttons) : [],
       };
       registration.showNotification(title, options);
     });
