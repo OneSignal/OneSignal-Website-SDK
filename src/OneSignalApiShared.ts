@@ -21,29 +21,6 @@ export default class OneSignalApiShared {
     return OneSignalApiBase.put(`players/${playerId}`, { app_id: appId, ...options });
   }
 
-  static sendNotification(appId: string, playerIds: Array<string>, titles, contents, url, icon, data, buttons) {
-    var params = {
-      app_id: appId,
-      contents: contents,
-      include_player_ids: playerIds,
-      isAnyWeb: true,
-      data: data,
-      web_buttons: buttons
-    };
-    if (titles) {
-      (params as any).headings = titles;
-    }
-    if (url) {
-      (params as any).url = url;
-    }
-    if (icon) {
-      (params as any).chrome_web_icon = icon;
-      (params as any).firefox_icon = icon;
-    }
-    Utils.trimUndefined(params);
-    return OneSignalApiBase.post('notifications', params);
-  }
-
   static async createUser(deviceRecord: DeviceRecord): Promise<string | null> {
     const serializedDeviceRecord = deviceRecord.serialize();
     Utils.enforceAppId(serializedDeviceRecord.app_id);
