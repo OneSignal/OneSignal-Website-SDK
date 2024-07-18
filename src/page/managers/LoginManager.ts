@@ -142,6 +142,7 @@ export default class LoginManager {
     UserDirector.resetUserMetaProperties();
     const pushSubModel =
       await OneSignal.coreDirector.getPushSubscriptionModel();
+    pushSubModel?.setExternalId(undefined);
     await OneSignal.coreDirector.resetModelRepoAndCache();
 
     // Initialize as a local User, as we don't have a push subscription to create a remote anonymous user.
