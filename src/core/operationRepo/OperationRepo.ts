@@ -8,7 +8,7 @@ export class OperationRepo {
   public executorStore: ExecutorStore;
   private _unsubscribeFromModelRepo: () => void;
   private _deltaQueue: CoreDelta<SupportedModel>[] = [];
-  static DELTAS_BATCH_PROCESSING_TIME = 5;
+  static DELTAS_BATCH_PROCESSING_TIME = 1;
 
   constructor(private modelRepo: ModelRepo) {
     this.executorStore = new ExecutorStore();
