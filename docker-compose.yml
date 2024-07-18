@@ -1,4 +1,3 @@
-version: '3.4'
 services:
   onesignal-web-sdk-dev:
       image: onesignal/web-sdk-dev
