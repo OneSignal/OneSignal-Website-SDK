@@ -7,9 +7,11 @@ import { getDummyPropertyOSModel } from '../../support/helpers/core';
 jest.mock('../../../src/shared/libraries/Log');
 
 describe('User tests', () => {
-  test('getTags called without a properties model should return undefined tags', async () => {
+  beforeEach(async () => {
     await TestEnvironment.initialize();
+  });
 
+  test('getTags called without a properties model should return undefined tags', async () => {
     const user = User.createOrGetInstance();
     const tags = user.getTags();
 
@@ -17,8 +19,6 @@ describe('User tests', () => {
   });
 
   test('getTags called with undefined tags in properties model should return undefined tags', async () => {
-    await TestEnvironment.initialize();
-
     OneSignal.coreDirector.add(ModelName.Properties, getDummyPropertyOSModel());
 
     const user = User.createOrGetInstance();
@@ -28,8 +28,6 @@ describe('User tests', () => {
   });
 
   test('getTags called with empty tags in properties model should return empty tags', async () => {
-    await TestEnvironment.initialize();
-
     const propertyModel = getDummyPropertyOSModel();
     propertyModel.set('tags', {});
     OneSignal.coreDirector.add(ModelName.Properties, propertyModel);
@@ -41,8 +39,6 @@ describe('User tests', () => {
   });
 
   test('getTags called with tags in properties model should return tags', async () => {
-    await TestEnvironment.initialize();
-
     const tagsSample = { key1: 'value1' };
 
     const propertyModel = getDummyPropertyOSModel();
