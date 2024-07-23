@@ -33,6 +33,12 @@
     OneSignalDeferred.push(async function(onesignal) {
       await onesignal.init({
           appId,
+          welcomeNotification: {
+            disable: false,
+            title: "Custom Welcome Notification Title",
+            message: "Custom Welcome Notification Message",
+            url: "https://example.com",
+          },
           serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
           serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
           notifyButton: {
