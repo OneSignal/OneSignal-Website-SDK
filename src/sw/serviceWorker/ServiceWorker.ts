@@ -193,7 +193,7 @@ export class ServiceWorker {
   static setupMessageListeners() {
     ServiceWorker.workerMessenger.on(
       WorkerMessengerCommand.WorkerVersion,
-      (_) => {
+      () => {
         Log.debug('[Service Worker] Received worker version message.');
         ServiceWorker.workerMessenger.broadcast(
           WorkerMessengerCommand.WorkerVersion,
@@ -241,7 +241,7 @@ export class ServiceWorker {
     );
     ServiceWorker.workerMessenger.on(
       WorkerMessengerCommand.AmpSubscriptionState,
-      async (_appConfigBundle: any) => {
+      async () => {
         Log.debug('[Service Worker] Received AMP subscription state message.');
         const pushSubscription =
           await self.registration.pushManager.getSubscription();

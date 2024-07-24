@@ -177,7 +177,7 @@ export default class EventHelper {
       url,
       undefined,
       { __isOneSignalWelcomeNotification: true },
-      undefined
+      undefined,
     );
     OneSignalEvent.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
       title: title,

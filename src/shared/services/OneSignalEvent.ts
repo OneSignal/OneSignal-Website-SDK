@@ -29,7 +29,7 @@ export default class OneSignalEvent {
   static async trigger(eventName: string, data?: any, emitter?: Emitter) {
     if (!Utils.contains(SILENT_EVENTS, eventName)) {
       const displayData = data;
-      let env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
+      const env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
 
       if (displayData || displayData === false) {
         Log.debug(`(${env}) » ${eventName}:`, displayData);
