@@ -22,6 +22,7 @@ import {
 } from '../../support/helpers/core';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { Operation } from '../../../src/core/operationRepo/Operation';
+import Database from '../../../src/shared/services/Database';
 
 let broadcastCount = 0;
 
@@ -43,8 +44,16 @@ describe('OperationRepo tests', () => {
       onesignal_id: '123',
     });
     jest.useFakeTimers();
-    TestEnvironment.initialize();
+    await TestEnvironment.initialize();
     broadcastCount = 0;
+
+    test.stub(
+      Database,
+      'getAppConfig',
+      Promise.resolve({
+        jwtRequired: false,
+      }),
+    );
   });
 
   afterEach(async () => {
@@ -77,6 +86,8 @@ describe('OperationRepo tests', () => {
     const executor =
       operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
 
+    executor._operationQueue = [];
+
     modelRepo?.subscribe(() => {
       broadcastCount += 1;
       passIfBroadcastNTimes(1, broadcastCount, done);
@@ -105,6 +116,8 @@ describe('OperationRepo tests', () => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor =
       operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
+
+    executor._operationQueue = [];
 
     const processDeltaSpy = jest.spyOn(
       OperationRepo.prototype as any,
@@ -141,6 +154,8 @@ describe('OperationRepo tests', () => {
 
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Identity];
+
+    executor._operationQueue = [];
 
     const processDeltaSpy = jest.spyOn(
       OperationRepo.prototype as any,
@@ -198,8 +213,18 @@ describe('OperationRepo tests', () => {
   test('Update User Properties: -> one operation of change type: update', (done: jest.DoneCallback) => {
     test.stub(Operation, 'getInstanceWithModelReference');
 
+    test.stub(
+      Database,
+      'getAppState',
+      Promise.resolve({
+        lastKnownPushToken: 'dummy_lastKnownPushToken',
+      }),
+    );
+
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Properties];
+
+    executor._operationQueue = [];
 
     const processDeltaSpy = jest.spyOn(
       OperationRepo.prototype as any,

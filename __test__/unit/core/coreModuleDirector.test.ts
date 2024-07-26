@@ -8,8 +8,8 @@ import {
 } from '../../support/helpers/core';
 
 describe('CoreModuleDirector tests', () => {
-  beforeEach(() => {
-    TestEnvironment.initialize();
+  beforeEach(async () => {
+    await TestEnvironment.initialize();
   });
   describe('getPushSubscriptionModel', () => {
     beforeEach(() => {

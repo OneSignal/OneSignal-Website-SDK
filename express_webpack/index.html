@@ -166,6 +166,12 @@
       });
     });
 
+    OneSignalDeferred.push(function(onesignal) {
+      onesignal.addEventListener('userJwtInvalidated', function (event) {
+        showEventAlert('userJwtInvalidated', { event });
+      });
+    });
+
     /* H E L P E R S */
 
     function toggleShowEventAlert() {

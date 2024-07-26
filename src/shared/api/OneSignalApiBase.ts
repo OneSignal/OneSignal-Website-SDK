@@ -5,8 +5,8 @@ import {
 import OneSignalError from '../errors/OneSignalError';
 import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
+import EventHelper from '../helpers/EventHelper';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { APIHeaders } from '../models/APIHeaders';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import { isValidUuid } from '../utils/utils';
 import OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
@@ -18,7 +18,7 @@ export class OneSignalApiBase {
   static get(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('GET', action, data, headers);
   }
@@ -26,7 +26,7 @@ export class OneSignalApiBase {
   static post(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('POST', action, data, headers);
   }
@@ -34,7 +34,7 @@ export class OneSignalApiBase {
   static put(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('PUT', action, data, headers);
   }
@@ -42,7 +42,7 @@ export class OneSignalApiBase {
   static delete(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('DELETE', action, data, headers);
   }
@@ -50,16 +50,16 @@ export class OneSignalApiBase {
   static patch(
     action: string,
     data?: any,
-    headers?: APIHeaders | undefined,
+    headers?: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('PATCH', action, data, headers);
   }
 
-  private static call(
+  private static async call(
     method: SupportedMethods,
     action: string,
     data: any,
-    headers: APIHeaders | undefined,
+    headers: Headers | undefined,
   ): Promise<OneSignalApiBaseResponse> {
     if (!this.requestHasAppId(action, data)) {
       return Promise.reject(
@@ -71,10 +71,11 @@ export class OneSignalApiBase {
     callHeaders.append('Origin', SdkEnvironment.getOrigin());
     callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
+
     if (headers) {
-      for (const key of Object.keys(headers)) {
-        callHeaders.append(key, headers[key]);
-      }
+      headers.forEach((value, key) => {
+        callHeaders.append(key, value);
+      });
     }
 
     const contents: RequestInit = {
@@ -106,6 +107,11 @@ export class OneSignalApiBase {
       const response = await fetch(url, contents);
       const { status } = response;
       const json = await response.json();
+
+      if (status == 401) {
+        await EventHelper.onUserJwtInvalidated();
+        // TODO: move to [ExecutorBase]Requests.ts?
+      }
 
       return {
         result: json,
