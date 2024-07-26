@@ -330,7 +330,8 @@ export default class IndexedDb {
     await this.ensureDatabaseOpen();
     return await new Promise((resolve, reject) => {
       try {
-        const request = this.database?.transaction([table], 'readwrite')
+        const request = this.database
+          ?.transaction([table], 'readwrite')
           .objectStore(table)
           .put(key);
 

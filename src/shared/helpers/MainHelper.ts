@@ -17,7 +17,10 @@ import {
   NotSubscribedError,
   NotSubscribedReason,
 } from '../errors/NotSubscribedError';
-import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
+import {
+  InvalidArgumentError,
+  InvalidArgumentReason,
+} from '../errors/InvalidArgumentError';
 import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
 
 export default class MainHelper {
