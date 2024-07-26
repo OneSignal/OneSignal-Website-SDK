@@ -146,7 +146,6 @@ export default class EventHelper {
       return;
     }
 
-    const { appId } = await Database.getAppConfig();
     let title =
       welcome_notification_opts !== undefined &&
       welcome_notification_opts['title'] !== undefined &&
@@ -172,13 +171,11 @@ export default class EventHelper {
     message = BrowserUtils.decodeHtmlEntities(message);
 
     Log.debug('Sending welcome notification.');
-    OneSignalApiShared.sendNotification(
-      appId,
-      [pushSubscriptionId],
-      { en: title },
-      { en: message },
+    MainHelper.showLocalNotification(
+      title,
+      message,
       url,
-      null,
+      undefined,
       { __isOneSignalWelcomeNotification: true },
       undefined,
     );

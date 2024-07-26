@@ -129,7 +129,7 @@ export default class Database {
    * @param keypath
    */
   async put(table: OneSignalDbTable, keypath: any): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve) => {
       this.database.put(table, keypath).then(() => resolve());
     });
     this.emitter.emit(Database.EVENTS.SET, keypath);

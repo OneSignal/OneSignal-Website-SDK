@@ -109,7 +109,7 @@ export default class IndexedDb {
    *
    * Ref: https://developer.mozilla.org/en-US/docs/Web/API/IDBDatabase/onversionchange
    */
-  private onDatabaseVersionChange(_: IDBVersionChangeEvent): void {
+  private onDatabaseVersionChange(): void {
     Log.debug('IndexedDb: versionchange event');
   }
 
@@ -330,16 +330,20 @@ export default class IndexedDb {
     await this.ensureDatabaseOpen();
     return await new Promise((resolve, reject) => {
       try {
-        const request = this.database!.transaction([table], 'readwrite')
+        const request = this.database
+          ?.transaction([table], 'readwrite')
           .objectStore(table)
           .put(key);
-        request.onsuccess = () => {
-          resolve(key);
-        };
-        request.onerror = (e) => {
-          Log.error('Database PUT Transaction Error:', e);
-          reject(e);
-        };
+
+        if (request) {
+          request.onsuccess = () => {
+            resolve(key);
+          };
+          request.onerror = (e) => {
+            Log.error('Database PUT Transaction Error:', e);
+            reject(e);
+          };
+        }
       } catch (e) {
         Log.error('Database PUT Error:', e);
         reject(e);

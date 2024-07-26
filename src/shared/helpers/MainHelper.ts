@@ -12,8 +12,97 @@ import Utils from '../context/Utils';
 import Database from '../services/Database';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import Environment from './Environment';
+import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
+import {
+  NotSubscribedError,
+  NotSubscribedReason,
+} from '../errors/NotSubscribedError';
+import {
+  InvalidArgumentError,
+  InvalidArgumentReason,
+} from '../errors/InvalidArgumentError';
+import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
 
 export default class MainHelper {
+  static async showLocalNotification(
+    title: string,
+    message: string,
+    url: string,
+    icon?: string,
+    data?: Record<string, any>,
+    buttons?: Array<any>,
+  ): Promise<void> {
+    logMethodCall(
+      'MainHelper:showLocalNotification: ',
+      title,
+      message,
+      url,
+      icon,
+      data,
+      buttons,
+    );
+
+    const appConfig = await Database.getAppConfig();
+
+    if (!appConfig.appId)
+      throw new InvalidStateError(InvalidStateReason.MissingAppId);
+    if (!OneSignal.Notifications.permission)
+      throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
+    if (!ValidatorUtils.isValidUrl(url))
+      throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
+    if (
+      !ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true })
+    )
+      throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
+    if (!icon) {
+      // get default icon
+      const icons = await MainHelper.getNotificationIcons();
+      icon = getPlatformNotificationIcon(icons);
+    }
+
+    const convertButtonsToNotificationActionType = (buttons: Array<any>) => {
+      const convertedButtons = [];
+
+      for (let i = 0; i < buttons.length; i++) {
+        const button = buttons[i];
+        convertedButtons.push({
+          action: button.id,
+          title: button.text,
+          icon: button.icon,
+          url: button.url,
+        });
+      }
+
+      return convertedButtons;
+    };
+    const dataPayload = {
+      data,
+      url,
+      buttons: buttons
+        ? convertButtonsToNotificationActionType(buttons)
+        : undefined,
+    };
+
+    OneSignal.context.serviceWorkerManager
+      .getRegistration()
+      .then(async (registration?: ServiceWorkerRegistration | null) => {
+        if (!registration) {
+          Log.error('Service worker registration not available.');
+          return;
+        }
+
+        const options = {
+          body: message,
+          data: dataPayload,
+          icon: icon,
+          actions: buttons
+            ? convertButtonsToNotificationActionType(buttons)
+            : [],
+        };
+        registration.showNotification(title, options);
+      });
+  }
+
   static async checkAndTriggerNotificationPermissionChanged() {
     const previousPermission = await Database.get(
       'Options',

@@ -2,32 +2,9 @@ import JSONP from 'jsonp';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import OneSignalApiSW from './OneSignalApiSW';
-import OneSignalApiShared from './OneSignalApiShared';
 import { ServerAppConfig } from '../models/AppConfig';
 
 export default class OneSignalApi {
-  static sendNotification(
-    appId: string,
-    playerIds: Array<string>,
-    titles,
-    contents,
-    url,
-    icon,
-    data,
-    buttons,
-  ) {
-    return OneSignalApiShared.sendNotification(
-      appId,
-      playerIds,
-      titles,
-      contents,
-      url,
-      icon,
-      data,
-      buttons,
-    );
-  }
-
   static jsonpLib(
     url: string,
     fn: (err: Error, data: ServerAppConfig) => void,
