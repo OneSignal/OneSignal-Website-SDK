@@ -45,8 +45,21 @@ describe('OperationRepo tests', () => {
       onesignal_id: '123',
     });
     jest.useFakeTimers();
-    TestEnvironment.initialize();
+    await TestEnvironment.initialize();
     broadcastCount = 0;
+
+    const { operationRepo } = OneSignal.coreDirector.core;
+
+    const identityExecutor =
+      operationRepo?.executorStore.store[ModelName.Identity];
+    const propertiesExecutor =
+      operationRepo?.executorStore.store[ModelName.Properties];
+    const subscriptionExecutor =
+      operationRepo?.executorStore.store[ModelName.Subscriptions];
+
+    identityExecutor._operationQueue = [];
+    propertiesExecutor._operationQueue = [];
+    subscriptionExecutor._operationQueue = [];
   });
 
   afterEach(async () => {
@@ -79,8 +92,6 @@ describe('OperationRepo tests', () => {
     const executor =
       operationRepo?.executorStore.store[ModelName.Subscriptions];
 
-    executor._operationQueue = [];
-
     modelRepo?.subscribe(() => {
       broadcastCount += 1;
       passIfBroadcastNTimes(1, broadcastCount, done);
@@ -109,8 +120,6 @@ describe('OperationRepo tests', () => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor =
       operationRepo?.executorStore.store[ModelName.Subscriptions];
-
-    executor._operationQueue = [];
 
     const processDeltaSpy = jest.spyOn(
       OperationRepo.prototype as any,
@@ -147,8 +156,6 @@ describe('OperationRepo tests', () => {
 
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Identity];
-
-    executor._operationQueue = [];
 
     const processDeltaSpy = jest.spyOn(
       OperationRepo.prototype as any,
@@ -216,8 +223,6 @@ describe('OperationRepo tests', () => {
 
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Properties];
-
-    executor._operationQueue = [];
 
     const processDeltaSpy = jest.spyOn(
       OperationRepo.prototype as any,
