@@ -39,7 +39,7 @@ describe('OSModel tests', () => {
     const encodedSub = newSub.encode();
     expect(encodedSub).toEqual({
       modelId: '0000000000',
-      modelName: ModelName.EmailSubscriptions,
+      modelName: ModelName.Subscriptions,
       type: SubscriptionType.Email,
       id: '123',
       token: 'myToken',
@@ -49,7 +49,7 @@ describe('OSModel tests', () => {
   test('Decode function returns decoded model', async () => {
     const encodedSub = {
       modelId: '0000000000',
-      modelName: ModelName.EmailSubscriptions,
+      modelName: ModelName.Subscriptions,
       type: SubscriptionType.Email,
       id: '123',
       token: 'myToken',
@@ -64,9 +64,7 @@ describe('OSModel tests', () => {
 
     // upstream bug workaround https://github.com/facebook/jest/issues/8475
     expect(JSON.stringify(decodedSub)).toEqual(
-      JSON.stringify(
-        new OSModel(ModelName.EmailSubscriptions, model, '0000000000'),
-      ),
+      JSON.stringify(new OSModel(ModelName.Subscriptions, model, '0000000000')),
     );
   });
 });

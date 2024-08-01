@@ -64,7 +64,7 @@ describe('Executor tests', () => {
 
     core.modelRepo?.broadcast({
       changeType: CoreChangeType.Add,
-      model: new OSModel(ModelName.EmailSubscriptions, {}),
+      model: new OSModel(ModelName.Subscriptions, {}),
     });
 
     jest.runOnlyPendingTimers();
