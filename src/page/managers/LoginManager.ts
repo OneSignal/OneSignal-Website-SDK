@@ -153,7 +153,7 @@ export default class LoginManager {
 
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
     OneSignal.coreDirector.add(
-      ModelName.PushSubscriptions,
+      ModelName.Subscriptions,
       pushSubModel as OSModel<SupportedModel>,
       false,
     );

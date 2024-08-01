@@ -6,23 +6,14 @@ import { PropertiesExecutor } from './PropertiesExecutor';
 import { SubscriptionExecutor } from './SubscriptionExecutor';
 
 export class ExecutorFactory {
-  static subscriptionExecutor?: SubscriptionExecutor = undefined;
-
   static build(executorConfig: ExecutorConfig<SupportedModel>): Executor {
     switch (executorConfig.modelName) {
       case ModelName.Identity:
         return new IdentityExecutor(executorConfig);
       case ModelName.Properties:
         return new PropertiesExecutor(executorConfig);
-      case ModelName.PushSubscriptions:
-      case ModelName.EmailSubscriptions:
-      case ModelName.SmsSubscriptions:
-        if (!ExecutorFactory.subscriptionExecutor) {
-          ExecutorFactory.subscriptionExecutor = new SubscriptionExecutor(
-            executorConfig,
-          );
-        }
-        return ExecutorFactory.subscriptionExecutor;
+      case ModelName.Subscriptions:
+        return new SubscriptionExecutor(executorConfig);
     }
   }
 }
