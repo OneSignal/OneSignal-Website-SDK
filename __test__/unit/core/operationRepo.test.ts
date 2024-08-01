@@ -75,7 +75,7 @@ describe('OperationRepo tests', () => {
   test('Model repo delta broadcast is received and processed by operation repo', (done: jest.DoneCallback) => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor =
-      operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
+      operationRepo?.executorStore.store[ModelName.Subscriptions];
 
     executor._operationQueue = [];
 
@@ -106,7 +106,7 @@ describe('OperationRepo tests', () => {
   test('Add Subscriptions: multiple delta broadcasts -> two operations of change type: add', (done: jest.DoneCallback) => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor =
-      operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
+      operationRepo?.executorStore.store[ModelName.Subscriptions];
 
     executor._operationQueue = [];
 

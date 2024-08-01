@@ -22,7 +22,7 @@ export async function initializeWithPermission(
 
   const pushModel = getDummyPushSubscriptionOSModel();
   OneSignal.coreDirector.add(
-    ModelName.PushSubscriptions,
+    ModelName.Subscriptions,
     pushModel as OSModel<SupportedModel>,
     false,
   );
