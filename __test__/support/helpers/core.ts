@@ -18,7 +18,7 @@ import { UserPropertiesModel } from '../../../src/core/models/UserPropertiesMode
 
 export function generateNewSubscription(modelId = '0000000000') {
   return new OSModel<SupportedSubscription>(
-    ModelName.EmailSubscriptions,
+    ModelName.Subscriptions,
     {
       type: SubscriptionType.Email,
       id: '123', // subscription id
@@ -51,7 +51,7 @@ export function getDummyPropertyOSModel(
 
 export function getDummyPushSubscriptionOSModel(): OSModel<SupportedSubscription> {
   return new OSModel<SupportedSubscription>(
-    ModelName.PushSubscriptions,
+    ModelName.Subscriptions,
     {
       type: SubscriptionType.ChromePush,
       id: DUMMY_SUBSCRIPTION_ID,

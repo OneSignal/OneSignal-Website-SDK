@@ -6,6 +6,7 @@ import { SupportedIdentity } from './models/IdentityModel';
 import { ModelStoresMap } from './models/ModelStoresMap';
 import {
   SubscriptionModel,
+  SubscriptionType,
   SupportedSubscription,
 } from './models/SubscriptionModels';
 import { ModelName, SupportedModel } from './models/SupportedModels';
@@ -33,7 +34,7 @@ export class CoreModuleDirector {
     });
     // new subscription
     const pushModel = new OSModel<SupportedSubscription>(
-      ModelName.PushSubscriptions,
+      ModelName.Subscriptions,
       new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
     );
 
@@ -41,9 +42,16 @@ export class CoreModuleDirector {
     if (user.hasOneSignalId) {
       pushModel.setOneSignalId(user.onesignalId);
     }
+
+    const identity = this.getIdentityModel();
+    const externalId = identity?.data.external_id;
+    if (externalId) {
+      pushModel.setExternalId(externalId);
+    }
+
     // don't propagate since we will be including the subscription in the user create call
     OneSignal.coreDirector.add(
-      ModelName.PushSubscriptions,
+      ModelName.Subscriptions,
       pushModel as OSModel<SupportedModel>,
       false,
     );
@@ -59,7 +67,8 @@ export class CoreModuleDirector {
       const identity = this.getIdentityModel();
       const properties = this.getPropertiesModel();
 
-      const { onesignal_id: onesignalId } = user.identity;
+      const { onesignal_id: onesignalId, external_id: externalId } =
+        user.identity;
 
       if (!onesignalId) {
         throw new OneSignalError('OneSignal ID is missing from user data');
@@ -68,6 +77,11 @@ export class CoreModuleDirector {
       // set OneSignal ID *before* hydrating models so that the onesignalId is also updated in model cache
       identity?.setOneSignalId(onesignalId);
       properties?.setOneSignalId(onesignalId);
+
+      if (externalId) {
+        identity?.setExternalId(externalId);
+        properties?.setExternalId(externalId);
+      }
 
       // identity and properties models are always single, so we hydrate immediately (i.e. replace existing data)
       identity?.hydrate(user.identity);
@@ -78,6 +92,7 @@ export class CoreModuleDirector {
       this._hydrateSubscriptions(
         user.subscriptions as SubscriptionModel[],
         onesignalId,
+        externalId,
       );
       EventHelper.checkAndTriggerUserChanged();
     } catch (e) {
@@ -88,6 +103,7 @@ export class CoreModuleDirector {
   private _hydrateSubscriptions(
     subscriptions: SubscriptionModel[],
     onesignalId: string,
+    externalId?: string,
   ): void {
     logMethodCall('CoreModuleDirector._hydrateSubscriptions', {
       subscriptions,
@@ -99,33 +115,32 @@ export class CoreModuleDirector {
 
     const modelStores = this.getModelStores();
 
-    const getModelName = (subscription: SupportedSubscription) => {
-      if (subscription.type === 'Email') {
-        return ModelName.EmailSubscriptions;
-      } else if (subscription.type === 'SMS') {
-        return ModelName.SmsSubscriptions;
-      } else {
-        return ModelName.PushSubscriptions;
-      }
-    };
-
     subscriptions.forEach(async (subscription) => {
-      const modelName = getModelName(subscription);
+      const modelName = ModelName.Subscriptions;
       /* We use the token to identify the model because the subscription ID is not set until the server responds.
        * So when we initially hydrate after init, we may already have a push model with a token, but no ID.
        * We don't want to create a new model in this case, so we use the token to identify the model.
        */
       const existingSubscription = !!subscription.token
-        ? this.getSubscriptionOfTypeWithToken(modelName, subscription.token)
+        ? this.getSubscriptionOfTypeWithToken(
+            subscription.type,
+            subscription.token,
+          )
         : undefined;
 
       if (existingSubscription) {
         // set onesignalId on existing subscription *before* hydrating so that the onesignalId is updated in model cache
         existingSubscription.setOneSignalId(onesignalId);
+        if (externalId) {
+          existingSubscription?.setExternalId(externalId);
+        }
         existingSubscription.hydrate(subscription);
       } else {
         const model = new OSModel<SupportedModel>(modelName, subscription);
         model.setOneSignalId(onesignalId);
+        if (externalId) {
+          model?.setExternalId(externalId);
+        }
         modelStores[modelName].add(model, false); // don't propagate to server
       }
     });
@@ -174,13 +189,21 @@ export class CoreModuleDirector {
   } {
     logMethodCall('CoreModuleDirector.getEmailSubscriptionModels');
     const modelStores = this.getModelStores();
-    return modelStores.emailSubscriptions.models as {
+    const subscriptionModels = modelStores.subscriptions.models as {
       [key: string]: OSModel<SupportedSubscription>;
     };
+
+    const emailSubscriptions = Object.fromEntries(
+      Object.entries(subscriptionModels).filter(
+        ([, model]) => model.data?.type === SubscriptionType.Email,
+      ),
+    );
+
+    return emailSubscriptions;
   }
 
   public async hasEmail(): Promise<boolean> {
-    const emails = await this.getEmailSubscriptionModels();
+    const emails = this.getEmailSubscriptionModels();
     return Object.keys(emails).length > 0;
   }
 
@@ -189,13 +212,21 @@ export class CoreModuleDirector {
   } {
     logMethodCall('CoreModuleDirector.getSmsSubscriptionModels');
     const modelStores = this.getModelStores();
-    return modelStores.smsSubscriptions.models as {
+    const subscriptionModels = modelStores.subscriptions.models as {
       [key: string]: OSModel<SupportedSubscription>;
     };
+
+    let smsSubscriptions = Object.fromEntries(
+      Object.entries(subscriptionModels).filter(
+        ([, model]) => model.data?.type === SubscriptionType.SMS,
+      ),
+    );
+
+    return smsSubscriptions;
   }
 
   public async hasSms(): Promise<boolean> {
-    const smsModels = await this.getSmsSubscriptionModels();
+    const smsModels = this.getSmsSubscriptionModels();
     return Object.keys(smsModels).length > 0;
   }
 
@@ -207,9 +238,17 @@ export class CoreModuleDirector {
   } {
     logMethodCall('CoreModuleDirector.getAllPushSubscriptionModels');
     const modelStores = this.getModelStores();
-    return modelStores.pushSubscriptions.models as {
+    const subscriptionModels = modelStores.subscriptions.models as {
       [key: string]: OSModel<SupportedSubscription>;
     };
+
+    let pushSubscriptions = Object.fromEntries(
+      Object.entries(subscriptionModels).filter(([, model]) =>
+        this.isPushSubscriptionType(model.data?.type),
+      ),
+    );
+
+    return pushSubscriptions;
   }
 
   private async getPushSubscriptionModelByCurrentToken(): Promise<
@@ -218,9 +257,9 @@ export class CoreModuleDirector {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
     const pushToken = await MainHelper.getCurrentPushToken();
     if (pushToken) {
-      return this.getSubscriptionOfTypeWithToken(
-        ModelName.PushSubscriptions,
-        pushToken,
+      const pushSubscriptions = this.getAllPushSubscriptionModels();
+      return Object.values(pushSubscriptions).find(
+        (subscription) => subscription.data.token === pushToken,
       );
     }
     return undefined;
@@ -236,9 +275,9 @@ export class CoreModuleDirector {
     );
     const { lastKnownPushToken } = await Database.getAppState();
     if (lastKnownPushToken) {
-      return this.getSubscriptionOfTypeWithToken(
-        ModelName.PushSubscriptions,
-        lastKnownPushToken,
+      const pushSubscriptions = this.getAllPushSubscriptionModels();
+      return Object.values(pushSubscriptions).find(
+        (subscription) => subscription.data.token === lastKnownPushToken,
       );
     }
     return undefined;
@@ -291,7 +330,7 @@ export class CoreModuleDirector {
   }
 
   public getSubscriptionOfTypeWithToken(
-    type: ModelName,
+    type: SubscriptionType,
     token: string,
   ): OSModel<SupportedSubscription> | undefined {
     logMethodCall('CoreModuleDirector.getSubscriptionOfTypeWithToken', {
@@ -299,19 +338,22 @@ export class CoreModuleDirector {
       token,
     });
     switch (type) {
-      case ModelName.EmailSubscriptions: {
+      case SubscriptionType.Email: {
         const emailSubscriptions = this.getEmailSubscriptionModels();
         return Object.values(emailSubscriptions).find(
           (subscription) => subscription.data.token === token,
         );
       }
-      case ModelName.SmsSubscriptions: {
+      case SubscriptionType.SMS: {
         const smsSubscriptions = this.getSmsSubscriptionModels();
         return Object.values(smsSubscriptions).find(
           (subscription) => subscription.data.token === token,
         );
       }
-      case ModelName.PushSubscriptions: {
+      case SubscriptionType.ChromePush:
+      case SubscriptionType.SafariPush:
+      case SubscriptionType.SafariLegacyPush:
+      case SubscriptionType.FirefoxPush: {
         const pushSubscriptions = this.getAllPushSubscriptionModels();
         return Object.values(pushSubscriptions).find(
           (subscription) => subscription.data.token === token,
@@ -326,5 +368,20 @@ export class CoreModuleDirector {
 
   private getModelStores(): ModelStoresMap<SupportedModel> {
     return this.core.modelRepo?.modelStores as ModelStoresMap<SupportedModel>;
+  }
+
+  /**
+   * Helper that checks if a given SubscriptionType is a push subscription.
+   */
+  public isPushSubscriptionType(type: SubscriptionType): boolean {
+    switch (type) {
+      case SubscriptionType.ChromePush:
+      case SubscriptionType.SafariPush:
+      case SubscriptionType.SafariLegacyPush:
+      case SubscriptionType.FirefoxPush:
+        return true;
+      default:
+        return false;
+    }
   }
 }

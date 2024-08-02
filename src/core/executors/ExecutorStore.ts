@@ -2,6 +2,7 @@ import { ModelName } from '../models/SupportedModels';
 import OSExecutor from './ExecutorBase';
 import { EXECUTOR_CONFIG_MAP } from './ExecutorConfigMap';
 import { ExecutorFactory } from './ExecutorFactory';
+import { SubscriptionExecutor } from './SubscriptionExecutor';
 
 type ExecutorStoreInterface = {
   [key in ModelName]?: OSExecutor;

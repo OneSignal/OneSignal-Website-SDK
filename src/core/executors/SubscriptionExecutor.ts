@@ -35,17 +35,7 @@ export class SubscriptionExecutor extends ExecutorBase {
   }
 
   getOperationsFromCache(): Operation<SupportedModel>[] {
-    const smsOperations = OperationCache.getOperationsWithModelName(
-      ModelName.SmsSubscriptions,
-    );
-    const emailOperations = OperationCache.getOperationsWithModelName(
-      ModelName.EmailSubscriptions,
-    );
-    const pushSubOperations = OperationCache.getOperationsWithModelName(
-      ModelName.PushSubscriptions,
-    );
-
-    return [...smsOperations, ...emailOperations, ...pushSubOperations];
+    return OperationCache.getOperationsWithModelName(ModelName.Subscriptions);
   }
 
   private separateDeltasByChangeType(deltas: CoreDelta<SupportedModel>[]): {

@@ -142,10 +142,11 @@ export default class LoginManager {
     UserDirector.resetUserMetaProperties();
     const pushSubModel =
       await OneSignal.coreDirector.getPushSubscriptionModel();
+    pushSubModel?.setExternalId(undefined);
     await OneSignal.coreDirector.resetModelRepoAndCache();
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
     OneSignal.coreDirector.add(
-      ModelName.PushSubscriptions,
+      ModelName.Subscriptions,
       pushSubModel as OSModel<SupportedModel>,
       false,
     );

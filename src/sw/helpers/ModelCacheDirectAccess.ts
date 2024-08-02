@@ -12,7 +12,7 @@ export class ModelCacheDirectAccess {
     token: string,
   ): Promise<string | undefined> {
     const pushSubscriptions = await Database.getAll<EncodedModel>(
-      ModelName.PushSubscriptions,
+      ModelName.Subscriptions,
     );
     for (const pushSubscription of pushSubscriptions) {
       if (pushSubscription['token'] === token) {

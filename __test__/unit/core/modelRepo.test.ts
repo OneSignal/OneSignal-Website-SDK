@@ -47,15 +47,18 @@ describe('ModelRepo tests', () => {
       'processModelAdded',
     );
     const newSub = generateNewSubscription();
-    const emailSubModels = coreDirector.getEmailSubscriptionModels();
+    let emailSubModels = coreDirector.getEmailSubscriptionModels();
 
     expect(Object.keys(emailSubModels).length).toBe(0);
 
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );
+
+    emailSubModels = coreDirector.getEmailSubscriptionModels();
+
     expect(processModelAddedSpy).toHaveBeenCalledTimes(1);
     expect(Object.keys(emailSubModels).length).toBe(1);
   });
@@ -66,16 +69,20 @@ describe('ModelRepo tests', () => {
       'processModelRemoved',
     );
     const newSub = generateNewSubscription();
-    const emailSubModels = coreDirector.getEmailSubscriptionModels();
 
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );
+
+    let emailSubModels = coreDirector.getEmailSubscriptionModels();
+
     expect(Object.keys(emailSubModels).length).toBe(1);
 
-    coreDirector.remove(ModelName.EmailSubscriptions, newSub.modelId);
+    coreDirector.remove(ModelName.Subscriptions, newSub.modelId);
+    emailSubModels = coreDirector.getEmailSubscriptionModels();
+
     expect(processModelRemovedSpy).toHaveBeenCalledTimes(1);
     expect(Object.keys(emailSubModels).length).toBe(0);
   });
@@ -88,7 +95,7 @@ describe('ModelRepo tests', () => {
     );
     const newSub = generateNewSubscription();
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );
@@ -109,7 +116,7 @@ describe('ModelRepo tests', () => {
     });
     const newSub = generateNewSubscription();
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );
@@ -124,11 +131,11 @@ describe('ModelRepo tests', () => {
     });
 
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );
-    coreDirector.remove(ModelName.EmailSubscriptions, newSub.modelId);
+    coreDirector.remove(ModelName.Subscriptions, newSub.modelId);
   });
 
   test('ModelRepo update subscription -> delta is broadcasted twice', (done: jest.DoneCallback) => {
@@ -140,7 +147,7 @@ describe('ModelRepo tests', () => {
     });
 
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );
@@ -156,7 +163,7 @@ describe('ModelRepo tests', () => {
       done();
     });
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );
@@ -179,11 +186,11 @@ describe('ModelRepo tests', () => {
     });
 
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );
-    coreDirector.remove(ModelName.EmailSubscriptions, newSub.modelId);
+    coreDirector.remove(ModelName.Subscriptions, newSub.modelId);
   });
 
   test('ModelRepo update subscription -> delta is broadcasted with correct change type and payload', (done: jest.DoneCallback) => {
@@ -201,7 +208,7 @@ describe('ModelRepo tests', () => {
     });
 
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );
@@ -218,7 +225,7 @@ describe('ModelRepo tests', () => {
     const modelCacheAddSpy = jest.spyOn(ModelCache.prototype as any, 'add');
 
     coreDirector.add(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       newSub as OSModel<SupportedModel>,
       true,
     );

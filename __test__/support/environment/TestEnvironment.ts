@@ -59,7 +59,7 @@ export class TestEnvironment {
 
     if (config.useMockPushSubscriptionModel) {
       OneSignal.coreDirector.add(
-        ModelName.PushSubscriptions,
+        ModelName.Subscriptions,
         getDummyPushSubscriptionOSModel(),
         false,
       );

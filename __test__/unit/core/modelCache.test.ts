@@ -119,10 +119,10 @@ describe('ModelCache tests', () => {
     const modelCache = new ModelCache();
     const model1 = new OSModel(ModelName.Identity, { id: 'test1' });
     const model2 = new OSModel(ModelName.Identity, { id: 'test2' });
-    const model3 = new OSModel(ModelName.EmailSubscriptions, { id: 'test3' });
+    const model3 = new OSModel(ModelName.Subscriptions, { id: 'test3' });
     await modelCache.add(ModelName.Identity, model1);
     await modelCache.add(ModelName.Identity, model2);
-    await modelCache.add(ModelName.EmailSubscriptions, model3);
+    await modelCache.add(ModelName.Subscriptions, model3);
     const cachedModels = await modelCache.getAndDecodeModelsWithModelName(
       ModelName.Identity,
     );

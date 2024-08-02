@@ -1,3 +1,7 @@
+import {
+  LegacyModelName,
+  ModelName,
+} from '../../../src/core/models/SupportedModels';
 import IndexedDb from '../../../src/shared/services/IndexedDb';
 import Random from '../../support/utils/Random';
 
@@ -112,6 +116,78 @@ describe('migrations', () => {
       // 4. Expect the that data is brought over to the new table.
       expect(result).toEqual([
         { appId: undefined, notificationId: '1', timestamp: undefined },
+      ]);
+    });
+  });
+  describe('v6', () => {
+    test('can write to new subscriptions table', async () => {
+      const db = newOSIndexedDb('testDbv6', 6);
+      const result = await db.put(ModelName.Subscriptions, {
+        modelId: '1',
+      });
+      expect(result).toEqual({ modelId: '1' });
+    });
+
+    test('migrates emailSubscriptions records into subscriptions', async () => {
+      const dbName = 'testDbV5upgradeToV6' + Random.getRandomString(10);
+      const db = newOSIndexedDb(dbName, 5);
+      await db.put(LegacyModelName.EmailSubscriptions, {
+        modelId: '1',
+        modelName: LegacyModelName.EmailSubscriptions,
+      });
+      db.close();
+
+      const db2 = newOSIndexedDb(dbName, 6);
+      const result = await db2.getAll(ModelName.Subscriptions);
+      expect(result).toEqual([
+        {
+          modelId: '1',
+          modelName: ModelName.Subscriptions,
+          externalId: undefined,
+          onesignalId: undefined,
+        },
+      ]);
+    });
+
+    test('migrates pushSubscriptions records into subscriptions', async () => {
+      const dbName = 'testDbV5upgradeToV6' + Random.getRandomString(10);
+      const db = newOSIndexedDb(dbName, 5);
+      await db.put(LegacyModelName.PushSubscriptions, {
+        modelId: '1',
+        modelName: LegacyModelName.PushSubscriptions,
+      });
+      db.close();
+
+      const db2 = newOSIndexedDb(dbName, 6);
+      const result = await db2.getAll(ModelName.Subscriptions);
+      expect(result).toEqual([
+        {
+          modelId: '1',
+          modelName: ModelName.Subscriptions,
+          externalId: undefined,
+          onesignalId: undefined,
+        },
+      ]);
+    });
+
+    test('migrates smsSubscriptions records into subscriptions', async () => {
+      const dbName = 'testDbV5upgradeToV6' + Random.getRandomString(10);
+      const db = newOSIndexedDb(dbName, 5);
+      await db.put(LegacyModelName.SmsSubscriptions, {
+        modelId: '1',
+        modelName: LegacyModelName.SmsSubscriptions,
+      });
+      db.close();
+
+      const db2 = newOSIndexedDb(dbName, 6);
+      const result = await db2.getAll(ModelName.Subscriptions);
+      expect(result).toEqual([
+        {
+          modelId: '1',
+          modelName: ModelName.Subscriptions,
+          externalId: undefined,
+          onesignalId: undefined,
+        },
       ]);
     });
   });

@@ -20,16 +20,8 @@ export const EXECUTOR_CONFIG_MAP: ExecutorConfigMap = {
     modelName: ModelName.Properties,
     update: UserPropertyRequests.updateUserProperties,
   },
-  [ModelName.PushSubscriptions]: {
-    modelName: ModelName.PushSubscriptions,
-    ...subscriptionConfig,
-  },
-  [ModelName.EmailSubscriptions]: {
-    modelName: ModelName.EmailSubscriptions,
-    ...subscriptionConfig,
-  },
-  [ModelName.SmsSubscriptions]: {
-    modelName: ModelName.SmsSubscriptions,
+  [ModelName.Subscriptions]: {
+    modelName: ModelName.Subscriptions,
     ...subscriptionConfig,
   },
 };
