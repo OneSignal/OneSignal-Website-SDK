@@ -20,9 +20,7 @@ export class OperationRepo {
     );
 
     setInterval(() => {
-      if (this._deltaQueue.length > 0) {
-        this._processDeltaQueue();
-      }
+      this._processDeltaQueue();
     }, OperationRepo.DELTAS_BATCH_PROCESSING_TIME * 1_000);
   }
 
