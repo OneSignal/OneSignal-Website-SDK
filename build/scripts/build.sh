@@ -43,7 +43,7 @@ esac
 done
 
 BUILD_ORIGIN=${BUILD_ORIGIN:-"localhost"}
-API_ORIGIN=${API_ORIGIN:-"onesignal.com"}
+API_ORIGIN=${API_ORIGIN:-"api.onesignal.com"}
 ENV=${ENV:-"development"}
 API=${API:-"production"}
 HTTPS=${HTTPS:-true}

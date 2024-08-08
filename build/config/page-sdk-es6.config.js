@@ -8,7 +8,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const env = process.env.ENV || "production";
 const buildOrigin = process.env.BUILD_ORIGIN || "localhost";
 const apiEnv = process.env.API || "production";
-const apiOrigin = process.env.API_ORIGIN || "onesignal.com"
+const apiOrigin = process.env.API_ORIGIN || "api.onesignal.com"
 const isProdBuild = process.env.ENV === "production";
 const nodeEnv = isProdBuild ? "production" : "development";
 const isHttps = process.env.HTTPS;
