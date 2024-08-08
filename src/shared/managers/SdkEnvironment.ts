@@ -128,13 +128,13 @@ export default class SdkEnvironment {
     switch (buildEnv) {
       case EnvironmentKind.Development:
         if (SdkEnvironment.isTurbineEndpoint(action)) {
-          return new URL(`http://${apiOrigin}:${TURBINE_API_URL_PORT}/api/v1`);
+          return new URL(`http://${apiOrigin}:${TURBINE_API_URL_PORT}`);
         }
-        return new URL(`http://${apiOrigin}:${API_URL_PORT}/api/v1`);
+        return new URL(`http://${apiOrigin}:${API_URL_PORT}`);
       case EnvironmentKind.Staging:
-        return new URL(`https://${apiOrigin}/api/v1`);
+        return new URL(`https://${apiOrigin}`);
       case EnvironmentKind.Production:
-        return new URL('https://onesignal.com/api/v1');
+        return new URL('https://api.onesignal.com');
       default:
         throw new InvalidArgumentError(
           'buildEnv',

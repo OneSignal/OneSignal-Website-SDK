@@ -13,6 +13,7 @@ import OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+const OS_API_VERSION = '1';
 
 export class OneSignalApiBase {
   static get(
@@ -71,6 +72,10 @@ export class OneSignalApiBase {
     callHeaders.append('Origin', SdkEnvironment.getOrigin());
     callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
+    callHeaders.append(
+      'Accept',
+      `application/vnd.onesignal.v/${OS_API_VERSION}json`,
+    );
     if (headers) {
       for (const key of Object.keys(headers)) {
         callHeaders.append(key, headers[key]);
@@ -84,10 +89,14 @@ export class OneSignalApiBase {
     };
     if (data) contents.body = JSON.stringify(data);
 
-    const url = `${SdkEnvironment.getOneSignalApiUrl(
-      undefined,
-      action,
-    ).toString()}/${action}`;
+    const apiUrl = SdkEnvironment.getOneSignalApiUrl(undefined, action);
+    let url = '';
+
+    if (apiUrl.pathname === '/') {
+      url = `${apiUrl.toString()}${action}`;
+    } else {
+      url = `${apiUrl.toString()}/${action}`;
+    }
 
     return OneSignalApiBase.executeFetch(url, contents);
   }
