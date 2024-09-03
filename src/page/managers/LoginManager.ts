@@ -224,10 +224,32 @@ export default class LoginManager {
       { appId, subscriptionId },
       userData,
     );
-    const result = response?.result;
+    const result = response?.result as UserData;
     const status = response?.status;
 
     if (status >= 200 && status < 300) {
+      const onesignalId = userData.identity?.onesignal_id;
+
+      const newRecordsState = OneSignal.coreDirector.getNewRecordsState();
+
+      if (!newRecordsState) {
+        Log.error(`UpsertUser: NewRecordsState is undefined`);
+      }
+
+      if (onesignalId) {
+        newRecordsState?.add(onesignalId);
+      }
+
+      const payloadSubcriptionToken = userData.subscriptions?.[0]?.token;
+      const resultSubscription = result.subscriptions?.find(
+        (sub) => sub.token === payloadSubcriptionToken,
+      );
+
+      if (resultSubscription) {
+        if (isCompleteSubscriptionObject(resultSubscription)) {
+          newRecordsState?.add(resultSubscription.id);
+        }
+      }
       Log.info('Successfully created user', result);
     } else if (status >= 400 && status < 500) {
       Log.error('Malformed request', result);
@@ -288,6 +310,15 @@ export default class LoginManager {
 
     if (identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
       Log.info('identifyUser succeeded');
+
+      const newRecordsState = OneSignal.coreDirector.getNewRecordsState();
+
+      if (!newRecordsState) {
+        Log.error(`IdentifyUser: NewRecordsState is undefined`);
+      }
+
+      // External id takes time to update on server. Include as new record with current time
+      newRecordsState?.add(onesignalId, true);
     } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
       return await this.transferSubscription(
         appId,

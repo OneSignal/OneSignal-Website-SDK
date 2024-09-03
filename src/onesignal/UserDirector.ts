@@ -110,7 +110,30 @@ export default class UserDirector {
         userData,
       );
       user.isCreatingUser = false;
-      return response.result as UserData;
+      const status = response.status;
+      const result = response.result as UserData;
+
+      if (status >= 200 && status < 300) {
+        const onesignalId = userData.identity?.onesignal_id;
+
+        if (onesignalId) {
+          OneSignal.coreDirector.getNewRecordsState().add(onesignalId);
+        }
+
+        const payloadSubcriptionToken = userData.subscriptions[0].token;
+        const resultSubscription = result.subscriptions.find(
+          (sub) => sub.token === payloadSubcriptionToken,
+        );
+
+        if (resultSubscription) {
+          if (isCompleteSubscriptionObject(resultSubscription)) {
+            OneSignal.coreDirector
+              .getNewRecordsState()
+              .add(resultSubscription.id);
+          }
+        }
+      }
+      return result;
     } catch (e) {
       Log.error(e);
     }

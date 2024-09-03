@@ -25,13 +25,20 @@ export default class SubscriptionRequests {
     logMethodCall('SubscriptionRequests.addSubscription', operation);
 
     const appId = await MainHelper.getAppId();
-    const { subscription, aliasPair } = processSubscriptionOperation(operation);
+    const { subscription, aliasPair, subscriptionId } =
+      processSubscriptionOperation(operation);
 
     const response = await RequestService.createSubscription(
       { appId },
       aliasPair,
       { subscription },
     );
+
+    const status = response.status;
+    if (status >= 200 && status < 300) {
+      OneSignal.coreDirector.getNewRecordsState().add(subscriptionId);
+    }
+
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
 
