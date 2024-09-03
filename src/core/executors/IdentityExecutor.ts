@@ -1,3 +1,4 @@
+import { NewRecordsState } from '../../shared/models/NewRecordsState';
 import OperationCache from '../caching/OperationCache';
 import { CoreChangeType } from '../models/CoreChangeType';
 import { PropertyDelta } from '../models/CoreDeltas';
@@ -8,8 +9,11 @@ import { isPropertyDelta } from '../utils/typePredicates';
 import ExecutorBase from './ExecutorBase';
 
 export class IdentityExecutor extends ExecutorBase {
-  constructor(executorConfig: ExecutorConfig<SupportedModel>) {
-    super(executorConfig);
+  constructor(
+    executorConfig: ExecutorConfig<SupportedModel>,
+    newRecordsState: NewRecordsState,
+  ) {
+    super(executorConfig, newRecordsState);
   }
 
   processDeltaQueue(): void {

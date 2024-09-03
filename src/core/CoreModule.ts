@@ -5,11 +5,13 @@ import { OSModelStoreFactory } from './modelRepo/OSModelStoreFactory';
 import Log from '../shared/libraries/Log';
 import { logMethodCall } from '../shared/utils/utils';
 import { SupportedModel } from './models/SupportedModels';
+import { NewRecordsState } from '../shared/models/NewRecordsState';
 
 export default class CoreModule {
   public modelRepo?: ModelRepo;
   public operationRepo?: OperationRepo;
   public initPromise: Promise<void>;
+  public newRecordsState?: NewRecordsState;
 
   private modelCache: ModelCache;
   private initResolver: () => void = () => null;
@@ -25,7 +27,11 @@ export default class CoreModule {
       .then((allCachedOSModels) => {
         const modelStores = OSModelStoreFactory.build(allCachedOSModels);
         this.modelRepo = new ModelRepo(this.modelCache, modelStores);
-        this.operationRepo = new OperationRepo(this.modelRepo);
+        this.newRecordsState = new NewRecordsState();
+        this.operationRepo = new OperationRepo(
+          this.modelRepo,
+          this.newRecordsState,
+        );
         this.initResolver();
       })
       .catch((e) => {
