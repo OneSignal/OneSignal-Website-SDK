@@ -350,16 +350,14 @@ export class CoreModuleDirector {
           (subscription) => subscription.data.token === token,
         );
       }
-      case SubscriptionType.ChromePush:
-      case SubscriptionType.SafariPush:
-      case SubscriptionType.SafariLegacyPush:
-      case SubscriptionType.FirefoxPush: {
-        const pushSubscriptions = this.getAllPushSubscriptionModels();
-        return Object.values(pushSubscriptions).find(
-          (subscription) => subscription.data.token === token,
-        );
-      }
       default:
+        if (this.isPushSubscriptionType(type)) {
+          const pushSubscriptions = this.getAllPushSubscriptionModels();
+          return Object.values(pushSubscriptions).find(
+            (subscription) => subscription.data.token === token,
+          );
+        }
+
         return undefined;
     }
   }
