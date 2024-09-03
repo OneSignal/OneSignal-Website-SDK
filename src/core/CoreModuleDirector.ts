@@ -216,7 +216,7 @@ export class CoreModuleDirector {
       [key: string]: OSModel<SupportedSubscription>;
     };
 
-    let smsSubscriptions = Object.fromEntries(
+    const smsSubscriptions = Object.fromEntries(
       Object.entries(subscriptionModels).filter(
         ([, model]) => model.data?.type === SubscriptionType.SMS,
       ),
@@ -242,7 +242,7 @@ export class CoreModuleDirector {
       [key: string]: OSModel<SupportedSubscription>;
     };
 
-    let pushSubscriptions = Object.fromEntries(
+    const pushSubscriptions = Object.fromEntries(
       Object.entries(subscriptionModels).filter(([, model]) =>
         this.isPushSubscriptionType(model.data?.type),
       ),
