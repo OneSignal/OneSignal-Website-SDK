@@ -13,6 +13,7 @@ export class Operation<Model> {
   model?: OSModel<Model>;
   jwtTokenAvailable: Promise<void>;
   jwtToken?: string | null;
+  applyToRecordId: string | undefined;
 
   constructor(
     readonly changeType: CoreChangeType,

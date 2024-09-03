@@ -1,3 +1,4 @@
+import { NewRecordsState } from '../../shared/models/NewRecordsState';
 import OperationCache from '../caching/OperationCache';
 import { CoreChangeType } from '../models/CoreChangeType';
 import { CoreDelta } from '../models/CoreDeltas';
@@ -7,8 +8,11 @@ import { Operation } from '../operationRepo/Operation';
 import ExecutorBase from './ExecutorBase';
 
 export class SubscriptionExecutor extends ExecutorBase {
-  constructor(executorConfig: ExecutorConfig<SupportedModel>) {
-    super(executorConfig);
+  constructor(
+    executorConfig: ExecutorConfig<SupportedModel>,
+    newRecordsState: NewRecordsState,
+  ) {
+    super(executorConfig, newRecordsState);
   }
 
   processDeltaQueue(): void {

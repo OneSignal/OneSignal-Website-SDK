@@ -1,3 +1,4 @@
+import { NewRecordsState } from '../../shared/models/NewRecordsState';
 import ExecutorBase from './ExecutorBase';
 import { Operation } from '../operationRepo/Operation';
 import { CoreChangeType } from '../models/CoreChangeType';
@@ -6,8 +7,11 @@ import { ModelName, SupportedModel } from '../models/SupportedModels';
 import OperationCache from '../caching/OperationCache';
 
 export class PropertiesExecutor extends ExecutorBase {
-  constructor(executorConfig: ExecutorConfig<SupportedModel>) {
-    super(executorConfig);
+  constructor(
+    executorConfig: ExecutorConfig<SupportedModel>,
+    newRecordsState: NewRecordsState,
+  ) {
+    super(executorConfig, newRecordsState);
   }
 
   processDeltaQueue(): void {

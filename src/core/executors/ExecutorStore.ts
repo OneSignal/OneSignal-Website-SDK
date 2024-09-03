@@ -1,3 +1,4 @@
+import { NewRecordsState } from '../../shared/models/NewRecordsState';
 import { ModelName } from '../models/SupportedModels';
 import OSExecutor from './ExecutorBase';
 import { EXECUTOR_CONFIG_MAP } from './ExecutorConfigMap';
@@ -10,10 +11,10 @@ type ExecutorStoreInterface = {
 export class ExecutorStore {
   store: ExecutorStoreInterface = {};
 
-  constructor() {
+  constructor(newRecordsState: NewRecordsState) {
     Object.values(ModelName).forEach((modelName) => {
       const config = EXECUTOR_CONFIG_MAP[modelName as ModelName];
-      this.store[modelName] = ExecutorFactory.build(config);
+      this.store[modelName] = ExecutorFactory.build(config, newRecordsState);
     });
   }
 
