@@ -20,6 +20,7 @@ import User from '../onesignal/User';
 import OneSignal from '../onesignal/OneSignal';
 import Database from '../shared/services/Database';
 import EventHelper from '../shared/helpers/EventHelper';
+import { NewRecordsState } from '../shared/models/NewRecordsState';
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -171,6 +172,9 @@ export class CoreModuleDirector {
   }
 
   /* G E T T E R S */
+  public getNewRecordsState(): NewRecordsState {
+    return this.core.newRecordsState;
+  }
 
   public getModelByTypeAndId(
     modelName: ModelName,

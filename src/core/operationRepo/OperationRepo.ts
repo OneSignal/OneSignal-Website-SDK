@@ -3,15 +3,21 @@ import { ExecutorStore } from '../executors/ExecutorStore';
 import { CoreDelta } from '../models/CoreDeltas';
 import { SupportedModel } from '../models/SupportedModels';
 import { logMethodCall } from '../../shared/utils/utils';
+import { NewRecordsState } from '../../shared/models/NewRecordsState';
 
 export class OperationRepo {
   public executorStore: ExecutorStore;
+  public newRecordsState: NewRecordsState;
   private _unsubscribeFromModelRepo: () => void;
   private _deltaQueue: CoreDelta<SupportedModel>[] = [];
   static DELTAS_BATCH_PROCESSING_TIME = 1;
 
-  constructor(private modelRepo: ModelRepo) {
-    this.executorStore = new ExecutorStore();
+  constructor(
+    private modelRepo: ModelRepo,
+    newRecordsState: NewRecordsState,
+  ) {
+    this.newRecordsState = newRecordsState;
+    this.executorStore = new ExecutorStore(this.newRecordsState);
 
     this._unsubscribeFromModelRepo = this.modelRepo.subscribe(
       (delta: CoreDelta<SupportedModel>) => {

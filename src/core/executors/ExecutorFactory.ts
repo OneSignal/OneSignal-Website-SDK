@@ -1,3 +1,4 @@
+import { NewRecordsState } from '../../shared/models/NewRecordsState';
 import { Executor } from '../models/Executor';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
@@ -6,14 +7,17 @@ import { PropertiesExecutor } from './PropertiesExecutor';
 import { SubscriptionExecutor } from './SubscriptionExecutor';
 
 export class ExecutorFactory {
-  static build(executorConfig: ExecutorConfig<SupportedModel>): Executor {
+  static build(
+    executorConfig: ExecutorConfig<SupportedModel>,
+    newRecordsState: NewRecordsState,
+  ): Executor {
     switch (executorConfig.modelName) {
       case ModelName.Identity:
-        return new IdentityExecutor(executorConfig);
+        return new IdentityExecutor(executorConfig, newRecordsState);
       case ModelName.Properties:
-        return new PropertiesExecutor(executorConfig);
+        return new PropertiesExecutor(executorConfig, newRecordsState);
       case ModelName.Subscriptions:
-        return new SubscriptionExecutor(executorConfig);
+        return new SubscriptionExecutor(executorConfig, newRecordsState);
     }
   }
 }
