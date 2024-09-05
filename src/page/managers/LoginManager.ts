@@ -222,8 +222,14 @@ export default class LoginManager {
     if (status >= 200 && status < 300) {
       const onesignalId = userData.identity?.onesignal_id;
 
+      const newRecordsState = OneSignal.coreDirector.getNewRecordsState();
+
+      if (newRecordsState) {
+        Log.error(`UpsertUser: NewRecordsState is undefined`);
+      }
+
       if (onesignalId) {
-        OneSignal.coreDirector.getNewRecordsState().add(onesignalId);
+        newRecordsState?.add(onesignalId);
       }
 
       const payloadSubcriptionToken = userData.subscriptions?.[0]?.token;
@@ -233,9 +239,7 @@ export default class LoginManager {
 
       if (resultSubscription) {
         if (isCompleteSubscriptionObject(resultSubscription)) {
-          OneSignal.coreDirector
-            .getNewRecordsState()
-            .add(resultSubscription.id);
+          newRecordsState?.add(resultSubscription.id);
         }
       }
       Log.info('Successfully created user', result);
@@ -299,7 +303,13 @@ export default class LoginManager {
     if (identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
       Log.info('identifyUser succeeded');
 
-      OneSignal.coreDirector.getNewRecordsState().add(onesignalId, true);
+      const newRecordsState = OneSignal.coreDirector.getNewRecordsState();
+
+      if (!newRecordsState) {
+        Log.error(`IdentifyUser: NewRecordsState is undefined`);
+      }
+
+      newRecordsState?.add(onesignalId, true);
     } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
       return await this.transferSubscription(
         appId,

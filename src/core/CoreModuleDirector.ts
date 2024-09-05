@@ -172,7 +172,7 @@ export class CoreModuleDirector {
   }
 
   /* G E T T E R S */
-  public getNewRecordsState(): NewRecordsState {
+  public getNewRecordsState(): NewRecordsState | undefined {
     return this.core.newRecordsState;
   }
 
