@@ -309,6 +309,7 @@ export default class LoginManager {
         Log.error(`IdentifyUser: NewRecordsState is undefined`);
       }
 
+      // External id takes time to update on server. Include as new record with current time
       newRecordsState?.add(onesignalId, true);
     } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
       return await this.transferSubscription(
