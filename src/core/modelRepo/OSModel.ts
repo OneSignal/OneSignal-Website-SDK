@@ -13,11 +13,11 @@ import { logMethodCall } from '../../shared/utils/utils';
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   data: Model;
   modelId: string;
-
   onesignalId?: string;
   awaitOneSignalIdAvailable: Promise<string>;
   onesignalIdAvailableCallback?: (onesignalId: string) => void;
   externalId?: string;
+  applyToRecordId?: string;
 
   constructor(
     readonly modelName: ModelName,
@@ -53,6 +53,11 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   public setExternalId(externalId?: string): void {
     logMethodCall('setExternalId', { externalId });
     this.externalId = externalId;
+  }
+
+  public setApplyToRecordId(applyToRecordId: string): void {
+    logMethodCall('setapplyToRecordId', { applyToRecordId });
+    this.applyToRecordId = applyToRecordId;
   }
 
   /**
