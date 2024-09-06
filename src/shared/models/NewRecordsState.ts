@@ -4,12 +4,13 @@
  * requests are ready to be accepted by the backend.
  */
 export class NewRecordsState {
+  // time in ms
   OP_REPO_POST_CREATE_DELAY: number;
   // Key = a string id
   // Value = A Timestamp in ms of when the id was created
   private records: Map<string, number> = new Map();
 
-  constructor(time = 3) {
+  constructor(time = 3000) {
     this.OP_REPO_POST_CREATE_DELAY = time;
   }
 
