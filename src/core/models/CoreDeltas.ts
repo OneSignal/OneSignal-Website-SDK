@@ -5,6 +5,7 @@ import { StringKeys } from './StringKeys';
 export type ModelDelta<Model> = {
   model: OSModel<Model>;
   changeType: CoreChangeType;
+  applyToRecordId?: string;
 };
 
 export interface PropertyDelta<Model> extends ModelDelta<Model> {
