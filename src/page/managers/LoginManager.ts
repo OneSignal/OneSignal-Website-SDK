@@ -336,6 +336,7 @@ export default class LoginManager {
   static async fetchAndHydrate(onesignalId: string): Promise<void> {
     logMethodCall('LoginManager.fetchAndHydrate', { onesignalId });
 
+    await awaitableTimeout(3000);
     const fetchUserResponse = await RequestService.getUser(
       { appId: await MainHelper.getAppId() },
       new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId),
