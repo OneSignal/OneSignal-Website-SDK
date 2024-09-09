@@ -336,7 +336,15 @@ export default class LoginManager {
   static async fetchAndHydrate(onesignalId: string): Promise<void> {
     logMethodCall('LoginManager.fetchAndHydrate', { onesignalId });
 
-    await awaitableTimeout(3000);
+    const newRecordsState = OneSignal.coreDirector.getNewRecordsState();
+
+    if (!newRecordsState) {
+      Log.error(`fetchAndHydrate: NewRecordsState is undefined`);
+    } else {
+      const delay = newRecordsState.OP_REPO_POST_CREATE_DELAY;
+      await awaitableTimeout(delay);
+    }
+
     const fetchUserResponse = await RequestService.getUser(
       { appId: await MainHelper.getAppId() },
       new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId),
