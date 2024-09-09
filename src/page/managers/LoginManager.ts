@@ -224,7 +224,7 @@ export default class LoginManager {
 
       const newRecordsState = OneSignal.coreDirector.getNewRecordsState();
 
-      if (newRecordsState) {
+      if (!newRecordsState) {
         Log.error(`UpsertUser: NewRecordsState is undefined`);
       }
 
