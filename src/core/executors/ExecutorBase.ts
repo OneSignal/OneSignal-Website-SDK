@@ -78,7 +78,6 @@ export default abstract class ExecutorBase {
   }
 
   protected _flushDeltas(): void {
-    logMethodCall('ExecutorBase._flushDeltas');
     this._deltaQueue = [];
   }
 

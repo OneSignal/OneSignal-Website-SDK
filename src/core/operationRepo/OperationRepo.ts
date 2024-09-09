@@ -40,7 +40,6 @@ export class OperationRepo {
   }
 
   private _flushDeltas(): void {
-    logMethodCall('OperationRepo._flushDeltas');
     this._deltaQueue = [];
   }
 
