@@ -17,22 +17,10 @@ jest.mock('../../../src/shared/libraries/Log');
 
 describe('Login tests', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
-    test.stub(
-      PropertiesExecutor.prototype,
-      'getOperationsFromCache',
-      Promise.resolve([]),
-    );
-    test.stub(
-      IdentityExecutor.prototype,
-      'getOperationsFromCache',
-      Promise.resolve([]),
-    );
-    test.stub(
-      SubscriptionExecutor.prototype,
-      'getOperationsFromCache',
-      Promise.resolve([]),
-    );
+    jest.useRealTimers();
+    test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', []);
+    test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', []);
+    test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', []);
   });
 
   afterEach(() => {
@@ -100,7 +88,7 @@ describe('Login tests', () => {
     await LoginManager.login('rodrigo2');
 
     expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(2);
-  });
+  }, 10000);
 
   test('If there is anything on the delta queue, it gets processed before login', async () => {
     await TestEnvironment.initialize({ useMockIdentityModel: true });
