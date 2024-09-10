@@ -257,9 +257,9 @@ export class CoreModuleDirector {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
     const pushToken = await MainHelper.getCurrentPushToken();
     if (pushToken) {
-      const pushSubscriptions = this.getAllPushSubscriptionModels();
-      return Object.values(pushSubscriptions).find(
-        (subscription) => subscription.data.token === pushToken,
+      return this.getSubscriptionOfTypeWithToken(
+        ModelName.Subscriptions,
+        pushToken,
       );
     }
     return undefined;
@@ -330,36 +330,38 @@ export class CoreModuleDirector {
   }
 
   public getSubscriptionOfTypeWithToken(
-    type: SubscriptionType,
+    type: SubscriptionType | ModelName.Subscriptions,
     token: string,
   ): OSModel<SupportedSubscription> | undefined {
     logMethodCall('CoreModuleDirector.getSubscriptionOfTypeWithToken', {
       type,
       token,
     });
+
+    let subscriptions: Record<string, OSModel<SupportedSubscription>>;
+
     switch (type) {
-      case SubscriptionType.Email: {
-        const emailSubscriptions = this.getEmailSubscriptionModels();
-        return Object.values(emailSubscriptions).find(
-          (subscription) => subscription.data.token === token,
-        );
-      }
-      case SubscriptionType.SMS: {
-        const smsSubscriptions = this.getSmsSubscriptionModels();
-        return Object.values(smsSubscriptions).find(
-          (subscription) => subscription.data.token === token,
-        );
-      }
+      case SubscriptionType.Email:
+        subscriptions = this.getEmailSubscriptionModels();
+        break;
+      case SubscriptionType.SMS:
+        subscriptions = this.getSmsSubscriptionModels();
+        break;
+      case ModelName.Subscriptions:
+        subscriptions = this.getAllPushSubscriptionModels();
+        break;
       default:
         if (this.isPushSubscriptionType(type)) {
-          const pushSubscriptions = this.getAllPushSubscriptionModels();
-          return Object.values(pushSubscriptions).find(
-            (subscription) => subscription.data.token === token,
-          );
+          subscriptions = this.getAllPushSubscriptionModels();
+          break;
         }
 
         return undefined;
     }
+
+    return Object.values(subscriptions).find(
+      (subscription) => subscription.data.token === token,
+    );
   }
 
   /* P R I V A T E */
