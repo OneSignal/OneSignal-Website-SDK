@@ -333,7 +333,7 @@ export class SubscriptionManager {
     const results = await window.Notification.requestPermission();
     // TODO: Clean up our custom NotificationPermission enum
     //         in favor of TS union type NotificationPermission instead of converting
-    return NotificationPermission[results];
+    return results as NotificationPermission;
   }
 
   public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
