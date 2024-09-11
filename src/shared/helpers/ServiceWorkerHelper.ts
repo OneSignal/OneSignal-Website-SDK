@@ -279,12 +279,6 @@ export enum ServiceWorkerActiveState {
    * No service worker is installed.
    */
   None = 'None',
-  /**
-   * Service workers are not supported in this environment. This status is used
-   * on HTTP pages where it isn't possible to know whether a service worker is
-   * installed or not or in any of the other states.
-   */
-  Indeterminate = 'Indeterminate',
 }
 
 export interface ServiceWorkerManagerConfig {
