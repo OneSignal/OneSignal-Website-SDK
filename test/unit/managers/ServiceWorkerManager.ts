@@ -5,10 +5,7 @@ import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import nock from 'nock';
 import { ServiceWorkerManager } from '../../../src/shared/managers/ServiceWorkerManager';
 import { ServiceWorkerActiveState } from '../../../src/shared/helpers/ServiceWorkerHelper';
-import {
-  TestEnvironment,
-  TestEnvironmentConfig,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import Context from '../../../src/page/models/Context';
 import SdkEnvironment from '../../../src/shared/managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../../../src/shared/models/WindowEnvironmentKind';
@@ -25,7 +22,6 @@ import { ServiceWorkerRegistrationError } from '../../../src/shared/errors/Servi
 import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
 import { MockServiceWorkerRegistration } from '../../support/mocks/service-workers/models/MockServiceWorkerRegistration';
 import { MockServiceWorker } from '../../support/mocks/service-workers/models/MockServiceWorker';
-import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
 import Environment from '../../../src/shared/helpers/Environment';
 import { MockServiceWorkerContainerWithAPIBan } from '../../support/mocks/service-workers/models/MockServiceWorkerContainerWithAPIBan';
 import Path from '../../../src/shared/models/Path';
@@ -374,12 +370,14 @@ test('Service worker failed to install due to 404 on host page. Send notificatio
 
 test('ServiceWorkerManager.getRegistration() returns valid instance when sw is registered', async (t) => {
   await navigator.serviceWorker.register('/Worker.js');
-  const result = await OneSignal.context.serviceWorkerManager.getRegistration();
+  const result =
+    await OneSignal.context.serviceWorkerManager.getOneSignalRegistration();
   t.truthy(result);
 });
 
 test('ServiceWorkerManager.getRegistration() returns undefined when sw is not registered ', async (t) => {
-  const result = await OneSignal.context.serviceWorkerManager.getRegistration();
+  const result =
+    await OneSignal.context.serviceWorkerManager.getOneSignalRegistration();
   t.is(result, undefined);
 });
 
@@ -395,6 +393,7 @@ test('ServiceWorkerManager.getRegistration() handles throws by returning null', 
       throw new Error('HTTP NOT SUPPORTED');
     }),
   );
-  const result = await OneSignal.context.serviceWorkerManager.getRegistration();
+  const result =
+    await OneSignal.context.serviceWorkerManager.getOneSignalRegistration();
   t.is(result, null);
 });

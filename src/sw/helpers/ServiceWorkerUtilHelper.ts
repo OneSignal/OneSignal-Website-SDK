@@ -5,7 +5,7 @@ export default class ServiceWorkerUtilHelper {
   // A  relative scope is required as a domain can have none to many service workers installed.
   static async getRegistration(
     scope: string,
-  ): Promise<ServiceWorkerRegistration | null | undefined> {
+  ): Promise<ServiceWorkerRegistration | undefined> {
     try {
       // Adding location.origin to negate the effects of a possible <base> html tag the page may have.
       const url = location.origin + scope;
@@ -17,7 +17,7 @@ export default class ServiceWorkerUtilHelper {
         scope,
         e,
       );
-      return null;
+      return undefined;
     }
   }
 

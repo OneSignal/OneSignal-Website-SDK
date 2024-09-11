@@ -333,7 +333,7 @@ export class SubscriptionManager {
     const results = await window.Notification.requestPermission();
     // TODO: Clean up our custom NotificationPermission enum
     //         in favor of TS union type NotificationPermission instead of converting
-    return NotificationPermission[results];
+    return results as NotificationPermission;
   }
 
   public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
@@ -750,7 +750,7 @@ export class SubscriptionManager {
     }
 
     const serviceWorkerRegistration =
-      await this.context.serviceWorkerManager.getRegistration();
+      await this.context.serviceWorkerManager.getOneSignalRegistration();
     if (!serviceWorkerRegistration) return false;
 
     // It's possible to get here in Safari 11.1+ version
@@ -834,17 +834,12 @@ export class SubscriptionManager {
       };
     }
 
-    const workerState =
-      await this.context.serviceWorkerManager.getActiveState();
     const workerRegistration =
-      await this.context.serviceWorkerManager.getRegistration();
+      await this.context.serviceWorkerManager.getOneSignalRegistration();
     const notificationPermission =
       await this.context.permissionManager.getNotificationPermission(
         this.context.appConfig.safariWebId,
       );
-    const isWorkerActive =
-      workerState === ServiceWorkerActiveState.OneSignalWorker;
-
     if (!workerRegistration) {
       /* You can't be subscribed without a service worker registration */
       return {
@@ -861,16 +856,14 @@ export class SubscriptionManager {
      * const isPushEnabled = !!(
      *   pushSubscription &&
      *   deviceId &&
-     *   notificationPermission === NotificationPermission.Granted &&
-     *   isWorkerActive
+     *   notificationPermission === NotificationPermission.Granted
      * );
      */
 
     const isPushEnabled = !!(
       isValidPushSubscription &&
       subscriptionToken &&
-      notificationPermission === NotificationPermission.Granted &&
-      isWorkerActive
+      notificationPermission === NotificationPermission.Granted
     );
 
     return {

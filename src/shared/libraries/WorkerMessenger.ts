@@ -197,7 +197,7 @@ export class WorkerMessenger {
     );
 
     const workerRegistration =
-      await this.context?.serviceWorkerManager.getRegistration();
+      await this.context?.serviceWorkerManager.getOneSignalRegistration();
     if (!workerRegistration) {
       Log.error(
         '`[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!',

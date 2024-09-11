@@ -1,9 +1,7 @@
 import Environment from '../helpers/Environment';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import Path from '../models/Path';
-import SdkEnvironment from './SdkEnvironment';
 import Database from '../services/Database';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Log from '../libraries/Log';
 import OneSignalEvent from '../services/OneSignalEvent';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
@@ -35,18 +33,35 @@ export class ServiceWorkerManager {
     this.config = config;
   }
 
-  // Gets details on the OneSignal service-worker (if any)
-  public async getRegistration(): Promise<
-    ServiceWorkerRegistration | null | undefined
+  /**
+   * Gets the current ServiceWorkerRegistration in the scoped configured
+   * in OneSignal.
+   * WARNING: This might be a non-OneSignal service worker, use
+   * getOneSignalRegistration() instead if you need this guarantee.
+   */
+  private async getRegistration(): Promise<
+    ServiceWorkerRegistration | undefined
   > {
-    return await ServiceWorkerUtilHelper.getRegistration(
+    return ServiceWorkerUtilHelper.getRegistration(
       this.config.registrationOptions.scope,
     );
   }
 
+  /**
+   *  Gets the OneSignal ServiceWorkerRegistration reference, if it was registered
+   */
+  public async getOneSignalRegistration(): Promise<
+    ServiceWorkerRegistration | undefined
+  > {
+    const state = await this.getActiveState();
+    if (state === ServiceWorkerActiveState.OneSignalWorker) {
+      return this.getRegistration();
+    }
+    return undefined;
+  }
+
   public async getActiveState(): Promise<ServiceWorkerActiveState> {
-    const workerRegistration =
-      await this.context.serviceWorkerManager.getRegistration();
+    const workerRegistration = await this.getRegistration();
     if (!workerRegistration) {
       return ServiceWorkerActiveState.None;
     }
@@ -163,8 +178,7 @@ export class ServiceWorkerManager {
 
   private async haveParamsChanged(): Promise<boolean> {
     // 1. No workerRegistration
-    const workerRegistration =
-      await this.context.serviceWorkerManager.getRegistration();
+    const workerRegistration = await this.getRegistration();
     if (!workerRegistration) {
       Log.info(
         '[changedServiceWorkerParams] workerRegistration not found at scope',
@@ -382,7 +396,7 @@ export class ServiceWorkerManager {
     ServiceWorkerRegistration | undefined | null
   > {
     if (!(await this.shouldInstallWorker())) {
-      return this.getRegistration();
+      return this.getOneSignalRegistration();
     }
 
     Log.info('Installing worker...');
