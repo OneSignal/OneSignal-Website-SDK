@@ -19,5 +19,8 @@ module.exports = async () => {
         },
       },
     },
+    collectCoverage: true,
+    coverageDirectory: 'coverage',
+    coverageReporters: ['json', 'text', 'lcov'],
   };
 };
