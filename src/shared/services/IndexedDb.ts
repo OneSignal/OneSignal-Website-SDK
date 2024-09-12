@@ -265,31 +265,46 @@ export default class IndexedDb {
     const newTableName = ModelName.Subscriptions;
     db.createObjectStore(newTableName, { keyPath: 'modelId' });
 
+    let currentExternalId: string;
+    const identityCursor = transaction
+      .objectStore(ModelName.Identity)
+      .openCursor();
+    identityCursor.onsuccess = () => {
+      if (identityCursor.result) {
+        currentExternalId = identityCursor.result.value.externalId;
+      }
+    };
+    identityCursor.onerror = () => {
+      console.error(
+        'Could not find ' + ModelName.Identity + ' records',
+        identityCursor.error,
+      );
+    };
+
     Object.values(LegacyModelName).forEach((oldTableName) => {
-      const cursor = transaction.objectStore(oldTableName).openCursor();
-      cursor.onsuccess = () => {
-        if (!cursor.result) {
+      const legacyCursor = transaction.objectStore(oldTableName).openCursor();
+      legacyCursor.onsuccess = () => {
+        if (!legacyCursor.result) {
           // Delete old table once we have gone through all records
           db.deleteObjectStore(oldTableName);
           return;
         }
-        const oldValue = cursor.result.value;
+        const oldValue = legacyCursor.result.value;
+
         transaction.objectStore(newTableName).put({
-          modelId: oldValue.modelId,
+          ...oldValue,
           modelName: ModelName.Subscriptions,
-          onesignalId: oldValue.onesignalId,
-          externalId: oldValue.externalId,
-          data: oldValue.data,
+          externalId: currentExternalId,
         });
-        cursor.result.continue();
+        legacyCursor.result.continue();
       };
-      cursor.onerror = () => {
+      legacyCursor.onerror = () => {
         // If there is an error getting old records nothing we can do but
         // move on. Old table will stay around so an attempt could be made
         // later.
         console.error(
           'Could not migrate ' + oldTableName + ' records',
-          cursor.error,
+          legacyCursor.error,
         );
       };
     });
