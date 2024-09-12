@@ -1,9 +1,11 @@
+import { DUMMY_EXTERNAL_ID, DUMMY_ONESIGNAL_ID } from '../../support/constants';
 import {
   LegacyModelName,
   ModelName,
 } from '../../../src/core/models/SupportedModels';
 import IndexedDb from '../../../src/shared/services/IndexedDb';
 import Random from '../../support/utils/Random';
+import { SubscriptionType } from '../../../src/core/models/SubscriptionModels';
 
 require('fake-indexeddb/auto');
 
@@ -128,33 +130,26 @@ describe('migrations', () => {
       expect(result).toEqual({ modelId: '1' });
     });
 
-    test('migrates emailSubscriptions records into subscriptions', async () => {
+    test('migrates v5 email, push, sms subscriptions records to v6 subscriptions record', async () => {
       const dbName = 'testDbV5upgradeToV6' + Random.getRandomString(10);
       const db = newOSIndexedDb(dbName, 5);
       await db.put(LegacyModelName.EmailSubscriptions, {
         modelId: '1',
         modelName: LegacyModelName.EmailSubscriptions,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        type: SubscriptionType.Email,
       });
-      db.close();
-
-      const db2 = newOSIndexedDb(dbName, 6);
-      const result = await db2.getAll(ModelName.Subscriptions);
-      expect(result).toEqual([
-        {
-          modelId: '1',
-          modelName: ModelName.Subscriptions,
-          externalId: undefined,
-          onesignalId: undefined,
-        },
-      ]);
-    });
-
-    test('migrates pushSubscriptions records into subscriptions', async () => {
-      const dbName = 'testDbV5upgradeToV6' + Random.getRandomString(10);
-      const db = newOSIndexedDb(dbName, 5);
       await db.put(LegacyModelName.PushSubscriptions, {
-        modelId: '1',
+        modelId: '2',
         modelName: LegacyModelName.PushSubscriptions,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        type: SubscriptionType.ChromePush,
+      });
+      await db.put(LegacyModelName.SmsSubscriptions, {
+        modelId: '3',
+        modelName: LegacyModelName.SmsSubscriptions,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        type: SubscriptionType.SMS,
       });
       db.close();
 
@@ -165,17 +160,53 @@ describe('migrations', () => {
           modelId: '1',
           modelName: ModelName.Subscriptions,
           externalId: undefined,
-          onesignalId: undefined,
+          onesignalId: DUMMY_ONESIGNAL_ID,
+          type: SubscriptionType.Email,
+        },
+        {
+          modelId: '2',
+          modelName: ModelName.Subscriptions,
+          externalId: undefined,
+          onesignalId: DUMMY_ONESIGNAL_ID,
+          type: SubscriptionType.ChromePush,
+        },
+        {
+          modelId: '3',
+          modelName: ModelName.Subscriptions,
+          externalId: undefined,
+          onesignalId: DUMMY_ONESIGNAL_ID,
+          type: SubscriptionType.SMS,
         },
       ]);
     });
 
-    test('migrates smsSubscriptions records into subscriptions', async () => {
+    test('migrates v5 email, push, sms subscriptions records of logged in user to v6 subscriptions record with external id', async () => {
       const dbName = 'testDbV5upgradeToV6' + Random.getRandomString(10);
       const db = newOSIndexedDb(dbName, 5);
-      await db.put(LegacyModelName.SmsSubscriptions, {
+      await db.put(LegacyModelName.EmailSubscriptions, {
         modelId: '1',
+        modelName: LegacyModelName.EmailSubscriptions,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        type: SubscriptionType.Email,
+      });
+      await db.put(LegacyModelName.PushSubscriptions, {
+        modelId: '2',
+        modelName: LegacyModelName.PushSubscriptions,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        type: SubscriptionType.ChromePush,
+      });
+      await db.put(LegacyModelName.SmsSubscriptions, {
+        modelId: '3',
         modelName: LegacyModelName.SmsSubscriptions,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        type: SubscriptionType.SMS,
+      });
+      // user is logged in
+      await db.put(ModelName.Identity, {
+        modelId: '4',
+        modelName: ModelName.Identity,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        externalId: DUMMY_EXTERNAL_ID,
       });
       db.close();
 
@@ -185,8 +216,23 @@ describe('migrations', () => {
         {
           modelId: '1',
           modelName: ModelName.Subscriptions,
-          externalId: undefined,
-          onesignalId: undefined,
+          externalId: DUMMY_EXTERNAL_ID,
+          onesignalId: DUMMY_ONESIGNAL_ID,
+          type: SubscriptionType.Email,
+        },
+        {
+          modelId: '2',
+          modelName: ModelName.Subscriptions,
+          externalId: DUMMY_EXTERNAL_ID,
+          onesignalId: DUMMY_ONESIGNAL_ID,
+          type: SubscriptionType.ChromePush,
+        },
+        {
+          modelId: '3',
+          modelName: ModelName.Subscriptions,
+          externalId: DUMMY_EXTERNAL_ID,
+          onesignalId: DUMMY_ONESIGNAL_ID,
+          type: SubscriptionType.SMS,
         },
       ]);
     });
