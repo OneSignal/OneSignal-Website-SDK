@@ -131,7 +131,13 @@ export default abstract class ExecutorBase {
       if (operation) {
         OperationCache.enqueue(operation);
 
-        this._prepareforExecution(operation);
+        if (this._canExecute(operation)) {
+          this._processOperation(operation, ExecutorBase.RETRY_COUNT).catch(
+            (err) => {
+              Log.error(err);
+            },
+          );
+        }
       }
     }
   }
@@ -189,19 +195,17 @@ export default abstract class ExecutorBase {
     }
   }
 
-  private _prepareforExecution(operation: Operation<SupportedModel>): void {
+  private _canExecute(operation: Operation<SupportedModel>): boolean {
     if (!this.onlineStatus) {
-      return;
+      return false;
     }
 
     if (operation.applyToRecordId) {
       if (!this._newRecordsState.canAccess(operation.applyToRecordId)) {
-        return;
+        return false;
       }
     }
 
-    this._processOperation(operation, ExecutorBase.RETRY_COUNT).catch((err) => {
-      Log.error(err);
-    });
+    return true;
   }
 }
