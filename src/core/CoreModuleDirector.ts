@@ -116,7 +116,6 @@ export class CoreModuleDirector {
     const modelStores = this.getModelStores();
 
     subscriptions.forEach(async (subscription) => {
-      const modelName = ModelName.Subscriptions;
       /* We use the token to identify the model because the subscription ID is not set until the server responds.
        * So when we initially hydrate after init, we may already have a push model with a token, but no ID.
        * We don't want to create a new model in this case, so we use the token to identify the model.
@@ -136,12 +135,15 @@ export class CoreModuleDirector {
         }
         existingSubscription.hydrate(subscription);
       } else {
-        const model = new OSModel<SupportedModel>(modelName, subscription);
+        const model = new OSModel<SupportedModel>(
+          ModelName.Subscriptions,
+          subscription,
+        );
         model.setOneSignalId(onesignalId);
         if (externalId) {
           model?.setExternalId(externalId);
         }
-        modelStores[modelName].add(model, false); // don't propagate to server
+        modelStores[ModelName.Subscriptions].add(model, false); // don't propagate to server
       }
     });
   }
