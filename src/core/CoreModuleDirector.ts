@@ -5,6 +5,7 @@ import { OSModel } from './modelRepo/OSModel';
 import { SupportedIdentity } from './models/IdentityModel';
 import { ModelStoresMap } from './models/ModelStoresMap';
 import {
+  SubscriptionChannel,
   SubscriptionModel,
   SubscriptionType,
   SupportedSubscription,
@@ -122,7 +123,7 @@ export class CoreModuleDirector {
        */
       const existingSubscription = !!subscription.token
         ? this.getSubscriptionOfTypeWithToken(
-            subscription.type,
+            this.toSubscriptionChannel(subscription.type),
             subscription.token,
           )
         : undefined;
@@ -260,7 +261,7 @@ export class CoreModuleDirector {
     const pushToken = await MainHelper.getCurrentPushToken();
     if (pushToken) {
       return this.getSubscriptionOfTypeWithToken(
-        ModelName.Subscriptions,
+        SubscriptionChannel.Push,
         pushToken,
       );
     }
@@ -278,7 +279,7 @@ export class CoreModuleDirector {
     const { lastKnownPushToken } = await Database.getAppState();
     if (lastKnownPushToken) {
       return this.getSubscriptionOfTypeWithToken(
-        ModelName.Subscriptions,
+        SubscriptionChannel.Push,
         lastKnownPushToken,
       );
     }
@@ -332,7 +333,7 @@ export class CoreModuleDirector {
   }
 
   public getSubscriptionOfTypeWithToken(
-    type: SubscriptionType | ModelName.Subscriptions,
+    type: SubscriptionChannel | undefined,
     token: string,
   ): OSModel<SupportedSubscription> | undefined {
     logMethodCall('CoreModuleDirector.getSubscriptionOfTypeWithToken', {
@@ -343,21 +344,16 @@ export class CoreModuleDirector {
     let subscriptions: Record<string, OSModel<SupportedSubscription>>;
 
     switch (type) {
-      case SubscriptionType.Email:
+      case SubscriptionChannel.Email:
         subscriptions = this.getEmailSubscriptionModels();
         break;
-      case SubscriptionType.SMS:
+      case SubscriptionChannel.SMS:
         subscriptions = this.getSmsSubscriptionModels();
         break;
-      case ModelName.Subscriptions:
+      case SubscriptionChannel.Push:
         subscriptions = this.getAllPushSubscriptionModels();
         break;
       default:
-        if (this.isPushSubscriptionType(type)) {
-          subscriptions = this.getAllPushSubscriptionModels();
-          break;
-        }
-
         return undefined;
     }
 
@@ -384,6 +380,21 @@ export class CoreModuleDirector {
         return true;
       default:
         return false;
+    }
+  }
+
+  public toSubscriptionChannel(type: SubscriptionType) {
+    switch (type) {
+      case SubscriptionType.Email:
+        return SubscriptionChannel.Email;
+      case SubscriptionType.SMS:
+        return SubscriptionChannel.SMS;
+      default:
+        if (this.isPushSubscriptionType(type)) {
+          return SubscriptionChannel.Push;
+        }
+
+        return undefined;
     }
   }
 }
