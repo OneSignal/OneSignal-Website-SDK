@@ -277,9 +277,9 @@ export class CoreModuleDirector {
     );
     const { lastKnownPushToken } = await Database.getAppState();
     if (lastKnownPushToken) {
-      const pushSubscriptions = this.getAllPushSubscriptionModels();
-      return Object.values(pushSubscriptions).find(
-        (subscription) => subscription.data.token === lastKnownPushToken,
+      return this.getSubscriptionOfTypeWithToken(
+        ModelName.Subscriptions,
+        lastKnownPushToken,
       );
     }
     return undefined;
