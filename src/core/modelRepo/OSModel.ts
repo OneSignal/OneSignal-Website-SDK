@@ -10,6 +10,12 @@ import {
 } from '../models/ModelStoreChange';
 import { logMethodCall } from '../../shared/utils/utils';
 
+// Use this OSModelType<T> over OSModel<T> if T = type union.
+//  - This is needed to pass strictFunctionTypes=true.
+// Example: Use OSModelType<TypeA | TypeB> instead of OSModel<TypeA | TypeB>
+// See: https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
+export type OSModelType<T> = T extends object ? OSModel<T> : never;
+
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   data: Model;
   modelId: string;

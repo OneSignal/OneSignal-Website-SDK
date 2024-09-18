@@ -1,7 +1,7 @@
 import { logMethodCall } from '../shared/utils/utils';
 import Log from '../shared/libraries/Log';
 import CoreModule from './CoreModule';
-import { OSModel } from './modelRepo/OSModel';
+import { OSModel, OSModelType } from './modelRepo/OSModel';
 import { SupportedIdentity } from './models/IdentityModel';
 import { ModelStoresMap } from './models/ModelStoresMap';
 import {
@@ -42,11 +42,9 @@ export class CoreModuleDirector {
       pushModel.setOneSignalId(user.onesignalId);
     }
     // don't propagate since we will be including the subscription in the user create call
-    OneSignal.coreDirector.add(
-      ModelName.PushSubscriptions,
-      pushModel as OSModel<SupportedModel>,
-      false,
-    );
+    if (pushModel !== undefined) {
+      OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel, false);
+    }
   }
 
   public async resetModelRepoAndCache(): Promise<void> {
@@ -124,7 +122,7 @@ export class CoreModuleDirector {
         existingSubscription.setOneSignalId(onesignalId);
         existingSubscription.hydrate(subscription);
       } else {
-        const model = new OSModel<SupportedModel>(modelName, subscription);
+        const model = new OSModel(modelName, subscription);
         model.setOneSignalId(onesignalId);
         modelStores[modelName].add(model, false); // don't propagate to server
       }
@@ -141,7 +139,7 @@ export class CoreModuleDirector {
 
   public add(
     modelName: ModelName,
-    model: OSModel<SupportedModel>,
+    model: OSModelType<SupportedModel>,
     propagate = true,
   ): void {
     logMethodCall('CoreModuleDirector.add', { modelName, model });

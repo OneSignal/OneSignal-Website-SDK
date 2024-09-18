@@ -1,4 +1,4 @@
-import { OSModel } from './OSModel';
+import { OSModel, OSModelType } from './OSModel';
 import Subscribable from '../Subscribable';
 import {
   ModelStoreChange,
@@ -22,7 +22,7 @@ export class OSModelStore<Model> extends Subscribable<ModelStoreChange<Model>> {
     });
   }
 
-  public add(model: OSModel<Model>, propagate: boolean): void {
+  public add(model: OSModelType<Model>, propagate: boolean): void {
     this.subscribeUpdateListener(model);
     this.models[model.modelId] = model;
 

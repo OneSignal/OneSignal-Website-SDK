@@ -14,7 +14,7 @@ import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import UserDirector from '../../onesignal/UserDirector';
 import Database from '../../shared/services/Database';
 import LocalStorage from '../../shared/utils/LocalStorage';
-import { ModelName, SupportedModel } from '../../core/models/SupportedModels';
+import { ModelName } from '../../core/models/SupportedModels';
 
 export default class LoginManager {
   static async login(externalId: string, token?: string): Promise<void> {
@@ -144,11 +144,13 @@ export default class LoginManager {
       await OneSignal.coreDirector.getPushSubscriptionModel();
     await OneSignal.coreDirector.resetModelRepoAndCache();
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
-    OneSignal.coreDirector.add(
-      ModelName.PushSubscriptions,
-      pushSubModel as OSModel<SupportedModel>,
-      false,
-    );
+    if (pushSubModel !== undefined) {
+      OneSignal.coreDirector.add(
+        ModelName.PushSubscriptions,
+        pushSubModel,
+        false,
+      );
+    }
     await UserDirector.initializeUser(false);
   }
 
