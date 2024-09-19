@@ -180,6 +180,29 @@ describe('migrations', () => {
       ]);
     });
 
+    test('removes v5 email, push, sms subscriptions tables', async () => {
+      const dbName = 'testDbV5upgradeToV6' + Random.getRandomString(10);
+      const db = newOSIndexedDb(dbName, 5);
+      db.close();
+
+      const db2 = newOSIndexedDb(dbName, 6);
+      await expect(
+        db2.getAll(LegacyModelName.EmailSubscriptions),
+      ).rejects.toThrow(
+        'No objectStore named emailSubscriptions in this database',
+      );
+      await expect(
+        db2.getAll(LegacyModelName.SmsSubscriptions),
+      ).rejects.toThrow(
+        'No objectStore named smsSubscriptions in this database',
+      );
+      await expect(
+        db2.getAll(LegacyModelName.PushSubscriptions),
+      ).rejects.toThrow(
+        'No objectStore named pushSubscriptions in this database',
+      );
+    });
+
     test('migrates v5 email, push, sms subscriptions records of logged in user to v6 subscriptions record with external id', async () => {
       const dbName = 'testDbV5upgradeToV6' + Random.getRandomString(10);
       const db = newOSIndexedDb(dbName, 5);
