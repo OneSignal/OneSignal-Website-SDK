@@ -25,7 +25,12 @@ export default class UserDirector {
     }
 
     UserDirector.createUserPropertiesModel();
-    await UserDirector.createAnonymousUser(isTemporary);
+    const identityOSModel = new OSModel<SupportedIdentity>(
+      ModelName.Identity,
+      {},
+    );
+    OneSignal.coreDirector.add(ModelName.Identity, identityOSModel, false);
+    await this.copyOneSignalIdPromiseFromIdentityModel();
   }
 
   static resetUserMetaProperties() {
@@ -33,36 +38,6 @@ export default class UserDirector {
     user.hasOneSignalId = false;
     user.awaitOneSignalIdAvailable = undefined;
     user.isCreatingUser = false;
-  }
-
-  static async createAnonymousUser(isTemporary?: boolean): Promise<void> {
-    let identity;
-
-    if (isTemporary) {
-      identity = {};
-    } else {
-      const userData = await UserDirector.createUserOnServer();
-
-      if (userData) {
-        identity = userData.identity;
-        OneSignal.coreDirector.hydrateUser(userData);
-      } else {
-        return;
-      }
-    }
-
-    const identityOSModel = new OSModel<SupportedIdentity>(
-      ModelName.Identity,
-      identity,
-    );
-    identityOSModel.setOneSignalId(identity.onesignal_id);
-
-    OneSignal.coreDirector.add(
-      ModelName.Identity,
-      identityOSModel as OSModel<SupportedModel>,
-      false,
-    );
-    await this.copyOneSignalIdPromiseFromIdentityModel();
   }
 
   static createUserPropertiesModel(): OSModel<SupportedIdentity> {
@@ -85,11 +60,11 @@ export default class UserDirector {
     return propertiesOSModel;
   }
 
-  static async createUserOnServer(): Promise<UserData | void> {
+  static async createUserOnServer(): Promise<UserData | undefined> {
     const user = User.createOrGetInstance();
 
     if (user.isCreatingUser) {
-      return;
+      return undefined;
     }
 
     user.isCreatingUser = true;
@@ -109,18 +84,27 @@ export default class UserDirector {
         { appId, subscriptionId },
         userData,
       );
-      user.isCreatingUser = false;
+
+      if (response.status >= 400) {
+        Log.error('createUserOnServer: Failed to create user.');
+        return undefined;
+      }
+
       return response.result as UserData;
     } catch (e) {
       Log.error(e);
+      return undefined;
+    } finally {
+      user.isCreatingUser = false;
     }
   }
 
-  static async createAndHydrateUser(): Promise<void> {
+  static async createAndHydrateUser(): Promise<UserData | undefined> {
     const userData = await UserDirector.createUserOnServer();
     if (userData) {
       OneSignal.coreDirector.hydrateUser(userData);
     }
+    return userData;
   }
 
   static async getAllUserData(): Promise<UserData> {

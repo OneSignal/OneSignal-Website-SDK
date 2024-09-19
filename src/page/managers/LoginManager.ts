@@ -142,16 +142,28 @@ export default class LoginManager {
     UserDirector.resetUserMetaProperties();
     const pushSubModel =
       await OneSignal.coreDirector.getPushSubscriptionModel();
+    // Removes all Models; Identity, UserProperties, and Subscriptions
     await OneSignal.coreDirector.resetModelRepoAndCache();
+    await UserDirector.initializeUser(false);
+
+    // If we don't have a push subscription we can't create a new anonymous user.
+    if (pushSubModel === undefined) {
+      return;
+    }
+
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
-    if (pushSubModel !== undefined) {
-      OneSignal.coreDirector.add(
-        ModelName.PushSubscriptions,
-        pushSubModel,
-        false,
+    OneSignal.coreDirector.add(
+      ModelName.PushSubscriptions,
+      pushSubModel,
+      false,
+    );
+
+    const userData = await UserDirector.createAndHydrateUser();
+    if (userData === undefined) {
+      Log.error(
+        'FATAL ERROR: Failed creating an anonymous user, which means we also failed to move the push subscription off the original user.',
       );
     }
-    await UserDirector.initializeUser(false);
   }
 
   static setExternalId(
