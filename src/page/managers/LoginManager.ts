@@ -143,12 +143,20 @@ export default class LoginManager {
     const pushSubModel =
       await OneSignal.coreDirector.getPushSubscriptionModel();
     await OneSignal.coreDirector.resetModelRepoAndCache();
+
+    // Initialize as a local User, as we don't have a push subscription to create a remote anonymous user.
+    if (pushSubModel === undefined) {
+      await UserDirector.initializeUser(true);
+      return;
+    }
+
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
     OneSignal.coreDirector.add(
       ModelName.PushSubscriptions,
       pushSubModel as OSModel<SupportedModel>,
       false,
     );
+    // Initialize as non-local, make a request to OneSignal to create a new anonymous user
     await UserDirector.initializeUser(false);
   }
 
