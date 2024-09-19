@@ -18,114 +18,46 @@ import { ModelName } from '../../core/models/SupportedModels';
 
 export default class LoginManager {
   static async login(externalId: string, token?: string): Promise<void> {
-    const consentRequired = LocalStorage.getConsentRequired();
-    const consentGiven = await Database.getConsentGiven();
-
-    if (consentRequired && !consentGiven) {
-      throw new OneSignalError(
-        'Login: Consent required but not given, skipping login',
-      );
-    }
-
+    logMethodCall('LoginManager.login', { externalId, token });
+    await this._checkConsent();
     try {
-      // before, logging in, process anything waiting in the delta queue so it's not lost
       OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
 
-      if (token) {
-        await Database.setJWTToken(token);
-      }
+      if (token) await Database.setJWTToken(token);
 
       const identityModel = OneSignal.coreDirector.getIdentityModel();
-      const onesignalIdBackup = identityModel?.onesignalId;
 
-      if (!identityModel) {
-        throw new OneSignalError('Login: No identity model found');
-      }
-
-      const currentExternalId = identityModel?.data?.external_id;
-
-      // if the current externalId is the same as the one we're trying to set, do nothing
-      if (currentExternalId === externalId) {
-        Log.debug('Login: External ID already set, skipping login');
-        return;
-      }
-
-      const pushSubModel =
-        await OneSignal.coreDirector.getPushSubscriptionModel();
-      let currentPushSubscriptionId;
-
-      if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
-        currentPushSubscriptionId = pushSubModel.data.id;
-      }
-
-      const isIdentified = LoginManager.isIdentified(identityModel.data);
-
-      // set the external id on the user locally
-      LoginManager.setExternalId(identityModel, externalId);
-
-      let userData: Partial<UserData>;
-      if (!isIdentified) {
-        // Guest User -> Logged In User
-        //    If login was not called before we want to keep all data from the "Guest User".
-        userData = await UserDirector.getAllUserData();
-      } else {
-        // Stripping all other Aliases, The REST API POST /users API only allows one. (as of 2023/07/19)
-        userData = {
-          identity: {
-            external_id: externalId,
-          },
-        };
-
-        const pushSubscription =
-          await OneSignal.coreDirector.getPushSubscriptionModel();
-        if (pushSubscription) {
-          userData.subscriptions = [pushSubscription.data];
+      if (this._validateIdentityModel(identityModel)) {
+        if (this._externalIdNotChanging(identityModel, externalId)) {
+          Log.debug('Login: External ID already set, skipping login');
+          return;
         }
-        // We don't want to carry over tags and other properties from the current User if we are switching Users.
-        //   - Example switching from User A to User B.
-      }
-      await OneSignal.coreDirector.resetModelRepoAndCache();
-      await UserDirector.initializeUser(true);
 
-      try {
-        const result = await LoginManager.identifyOrUpsertUser(
+        const currentPushSubscriptionId = await this._getCurrentPushSubscriptionId();
+        const isIdentified = this.isIdentified(identityModel.data);
+        const onesignalIdBackup = identityModel.onesignalId;
+
+        // set the external id on the user locally
+        this.setExternalId(identityModel, externalId);
+
+        const userData = await this._prepareUserData(externalId, isIdentified);
+
+        await this._resetAndInitializeUser();
+
+        await this._identifyOrRestoreUser(
           userData,
           isIdentified,
           currentPushSubscriptionId,
+          onesignalIdBackup
         );
-        const onesignalId = result?.identity?.onesignal_id;
-
-        if (!onesignalId) {
-          Log.info(
-            'Caching login call, waiting on network or subscription creation.',
-          );
-          return;
-        }
-        await LoginManager.fetchAndHydrate(onesignalId);
-      } catch (e) {
-        Log.error(
-          `Login: Error while identifying/upserting user: ${e.message}`,
-        );
-        // if the login fails, restore the old user data
-        if (onesignalIdBackup) {
-          Log.debug('Login: Restoring old user data');
-
-          try {
-            await LoginManager.fetchAndHydrate(onesignalIdBackup);
-          } catch (e) {
-            Log.error(
-              `Login: Error while restoring old user data: ${e.message}`,
-            );
-          }
-        }
-        throw e;
       }
     } catch (e) {
-      Log.error(e);
+      Log.error(`Login: Error while logging in: ${e.message}`);
     }
   }
 
   static async logout(): Promise<void> {
+    logMethodCall('LoginManager.logout');
     // check if user is already logged out
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     if (
@@ -392,6 +324,107 @@ export default class LoginManager {
       throw new OneSignalError(
         `transferSubscription failed: ${JSON.stringify(tansferResult)}}`,
       );
+    }
+  }
+
+  /* P R I V A T E */
+  private static async _checkConsent(): Promise<void> {
+    const consentRequired = LocalStorage.getConsentRequired();
+    const consentGiven = await Database.getConsentGiven();
+
+    if (consentRequired && !consentGiven) {
+      throw new OneSignalError(
+        'Login: Consent required but not given, skipping login',
+      );
+    }
+  }
+
+  private static _isIdentityModelDefined(identityModel: OSModel<SupportedIdentity> | undefined): identityModel is OSModel<SupportedIdentity> {
+    if (!identityModel) {
+      return false;
+    }
+    return true;
+  }
+
+  private static _validateIdentityModel(identityModel: OSModel<SupportedIdentity> | undefined): identityModel is OSModel<SupportedIdentity> {
+    if (!this._isIdentityModelDefined(identityModel)) {
+      throw new OneSignalError('Login: No identity model found');
+    }
+    return true;
+  }
+
+  private static _externalIdNotChanging(identityModel: OSModel<SupportedIdentity>, externalId: string): boolean {
+    const currentExternalId = identityModel.data.external_id;
+    return currentExternalId === externalId;
+  }
+
+  private static async _getCurrentPushSubscriptionId(): Promise<string | undefined> {
+    const pushSubModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    return pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)
+      ? pushSubModel.data.id
+      : undefined;
+  }
+
+  private static async _prepareUserData(externalId: string, isIdentified: boolean): Promise<Partial<UserData>> {
+    let userData: Partial<UserData>;
+    if (!isIdentified) {
+      // Guest User -> Logged In User
+      //    If login was not called before we want to keep all data from the "Guest User".
+      userData = await UserDirector.getAllUserData();
+    } else {
+      // Stripping all other Aliases, The REST API POST /users API only allows one. (as of 2023/07/19)
+      userData = {
+        identity: {
+          external_id: externalId,
+        },
+      };
+
+      const pushSubscription =
+        await OneSignal.coreDirector.getPushSubscriptionModel();
+      if (pushSubscription) {
+        userData.subscriptions = [pushSubscription.data];
+      }
+      // We don't want to carry over tags and other properties from the current User if we are switching Users.
+      //   - Example switching from User A to User B.
+    }
+    return userData;
+  }
+
+  private static async _resetAndInitializeUser(): Promise<void> {
+    await OneSignal.coreDirector.resetModelRepoAndCache();
+    await UserDirector.initializeUser(true);
+  }
+
+  private static async _identifyOrRestoreUser(
+    userData: Partial<UserData>,
+    isIdentified: boolean,
+    currentPushSubscriptionId: string | undefined,
+    onesignalIdBackup: string | undefined
+  ): Promise<void> {
+    try {
+      const result = await this.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
+      const onesignalId = result?.identity?.onesignal_id;
+
+      if (!onesignalId) {
+        Log.info('Caching login call, waiting on network or subscription creation.');
+        return;
+      }
+      await this.fetchAndHydrate(onesignalId);
+    } catch (e) {
+      Log.error(`Login: Error while identifying/upserting user: ${e.message}`);
+      if (onesignalIdBackup) {
+        await this._restoreOldUserData(onesignalIdBackup);
+      }
+      throw e;
+    }
+  }
+
+  private static async _restoreOldUserData(onesignalIdBackup: string): Promise<void> {
+    Log.debug('Login: Restoring old user data');
+    try {
+      await this.fetchAndHydrate(onesignalIdBackup);
+    } catch (e) {
+      Log.error(`Login: Error while restoring old user data: ${e.message}`);
     }
   }
 }
