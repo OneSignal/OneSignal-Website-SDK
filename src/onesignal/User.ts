@@ -26,17 +26,9 @@ export default class User {
   static createOrGetInstance(): User {
     if (!User.singletonInstance) {
       User.singletonInstance = new User();
-      UserDirector.initializeUser(true)
-        .then(() => {
-          UserDirector.copyOneSignalIdPromiseFromIdentityModel().catch(
-            (e: Error) => {
-              console.error(e);
-            },
-          );
-        })
-        .catch((e: Error) => {
-          console.error(e);
-        });
+      UserDirector.initializeUser(true).catch((e: Error) => {
+        console.error(e);
+      });
     }
 
     return User.singletonInstance;
