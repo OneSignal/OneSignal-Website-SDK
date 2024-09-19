@@ -10,6 +10,7 @@ import User from './User';
 import { RequestService } from '../core/requestService/RequestService';
 import { SupportedSubscription } from '../core/models/SubscriptionModels';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
+import { UserPropertiesModel } from '../core/models/UserPropertiesModel';
 
 export default class UserDirector {
   static async initializeUser(isTemporary?: boolean): Promise<void> {
@@ -40,23 +41,14 @@ export default class UserDirector {
     user.isCreatingUser = false;
   }
 
-  static createUserPropertiesModel(): OSModel<SupportedIdentity> {
-    const properties = {
+  static createUserPropertiesModel(): OSModel<UserPropertiesModel> {
+    const properties: UserPropertiesModel = {
       language: Environment.getLanguage(),
       timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
 
-    const propertiesOSModel = new OSModel<SupportedIdentity>(
-      ModelName.Properties,
-      properties,
-    );
-
-    OneSignal.coreDirector.add(
-      ModelName.Properties,
-      propertiesOSModel as OSModel<SupportedModel>,
-      false,
-    );
-
+    const propertiesOSModel = new OSModel(ModelName.Properties, properties);
+    OneSignal.coreDirector.add(ModelName.Properties, propertiesOSModel, false);
     return propertiesOSModel;
   }
 
