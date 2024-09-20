@@ -97,7 +97,9 @@ describe('Login tests', () => {
     );
 
     await LoginManager.login(DUMMY_EXTERNAL_ID);
+    console.log(OneSignal.coreDirector.getIdentityModel());
     await LoginManager.login('rodrigo2');
+    console.log(OneSignal.coreDirector.getIdentityModel());
 
     expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(2);
   });
@@ -123,6 +125,7 @@ describe('Login tests', () => {
     );
 
     await LoginManager.login(external_id);
+    console.log(OneSignal.coreDirector.getIdentityModel());
 
     // TO DO: test the order of operations (force process deltas should occur at beginning of login process)
     expect(forceProcessSpy).toHaveBeenCalledTimes(1);
