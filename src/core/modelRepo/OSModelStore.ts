@@ -9,6 +9,13 @@ import {
 } from '../models/ModelStoreChange';
 import { CoreChangeType } from '../models/CoreChangeType';
 import { isOSModel, isOSModelUpdatedArgs } from '../utils/typePredicates';
+import { OSModelType } from '../models/SupportedModels';
+
+// Use this OSModelType<T> over OSModel<T> if T = type union.
+//  - This is needed to pass strictFunctionTypes=true.
+// Example: Use OSModelType<TypeA | TypeB> instead of OSModel<TypeA | TypeB>
+// See: https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
+export type OSModelStoreType<T> = T extends object ? OSModelStore<T> : never;
 
 export class OSModelStore<Model> extends Subscribable<ModelStoreChange<Model>> {
   public models: { [key: string]: OSModel<Model> } = {};

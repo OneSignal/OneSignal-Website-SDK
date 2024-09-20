@@ -27,6 +27,7 @@ export function isPureObject(obj: any): obj is Record<string, unknown> {
   return obj !== null && typeof obj === 'object' && obj?.constructor === Object;
 }
 
+// TODO: Why not do instanceof OSModel instead?
 export function isOSModel<Model>(obj: any): obj is OSModel<Model> {
   return (
     obj !== null && typeof obj === 'object' && obj?.constructor === OSModel

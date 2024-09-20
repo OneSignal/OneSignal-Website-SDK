@@ -128,6 +128,7 @@ export default class LoginManager {
   static async logout(): Promise<void> {
     // check if user is already logged out
     const identityModel = OneSignal.coreDirector.getIdentityModel();
+    // Why not use isIdentified?
     if (
       !identityModel ||
       !identityModel.data ||
@@ -153,7 +154,7 @@ export default class LoginManager {
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
     OneSignal.coreDirector.add(
       ModelName.PushSubscriptions,
-      pushSubModel as OSModel<SupportedModel>,
+      pushSubModel,
       false,
     );
     // Initialize as non-local, make a request to OneSignal to create a new anonymous user

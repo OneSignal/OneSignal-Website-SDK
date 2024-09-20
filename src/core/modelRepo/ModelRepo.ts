@@ -16,7 +16,7 @@ import { logMethodCall } from '../../shared/utils/utils';
 export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   constructor(
     private modelCache: ModelCache,
-    public modelStores: ModelStoresMap<SupportedModel>,
+    public modelStores: ModelStoresMap,
   ) {
     super();
     Object.keys(modelStores).forEach((modelName) => {

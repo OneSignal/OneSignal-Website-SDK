@@ -2,7 +2,7 @@ import { OSModelUpdatedArgs } from './OSModelUpdatedArgs';
 import Subscribable from '../Subscribable';
 import EncodedModel from '../caching/EncodedModel';
 import { StringKeys } from '../models/StringKeys';
-import { ModelName, SupportedModel } from '../models/SupportedModels';
+import { ModelName, OSModelType, SupportedModel } from '../models/SupportedModels';
 import {
   ModelStoreChange,
   ModelStoreHydrated,
@@ -100,15 +100,15 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    * @param encodedModel - An encoded model from IndexedDB.
    * @returns OSModel object
    */
-  static decode(encodedModel: EncodedModel): OSModel<SupportedModel> {
+  static decode(encodedModel: EncodedModel): OSModelType<SupportedModel> {
     logMethodCall('decode', { encodedModel });
     const { modelId, modelName, onesignalId, ...data } = encodedModel;
 
-    const decodedModel = new OSModel<SupportedModel>(
+    const decodedModel = new OSModel(
       modelName as ModelName,
       data,
       modelId,
-    );
+    ) as OSModelType<SupportedModel>;
 
     decodedModel.setOneSignalId(onesignalId);
     return decodedModel;

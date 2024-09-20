@@ -1,6 +1,6 @@
 import { OSModel } from '../core/modelRepo/OSModel';
 import { SupportedIdentity } from '../core/models/IdentityModel';
-import { ModelName, SupportedModel } from '../core/models/SupportedModels';
+import { ModelName, OSModelType, SupportedModel } from '../core/models/SupportedModels';
 import UserData from '../core/models/UserData';
 import Environment from '../shared/helpers/Environment';
 import MainHelper from '../shared/helpers/MainHelper';
@@ -59,7 +59,7 @@ export default class UserDirector {
 
     OneSignal.coreDirector.add(
       ModelName.Identity,
-      identityOSModel as OSModel<SupportedModel>,
+      identityOSModel,
       false,
     );
     await this.copyOneSignalIdPromiseFromIdentityModel();
@@ -78,7 +78,7 @@ export default class UserDirector {
 
     OneSignal.coreDirector.add(
       ModelName.Properties,
-      propertiesOSModel as OSModel<SupportedModel>,
+      propertiesOSModel,
       false,
     );
 
@@ -154,7 +154,7 @@ export default class UserDirector {
   }
 
   static async updateModelWithCurrentUserOneSignalId(
-    model: OSModel<SupportedModel>,
+    model: OSModelType<SupportedModel>,
   ): Promise<void> {
     const user = User.createOrGetInstance();
     // wait for the user's onesignal id to be loaded

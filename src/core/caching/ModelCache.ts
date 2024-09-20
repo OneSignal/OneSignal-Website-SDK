@@ -1,7 +1,7 @@
 import { OSModel } from '../modelRepo/OSModel';
 import EncodedModel from './EncodedModel';
 import { StringIndexable } from '../models/StringIndexable';
-import { ModelName, SupportedModel } from '../models/SupportedModels';
+import { ModelName, OSModelType, SupportedModel } from '../models/SupportedModels';
 import Database from '../../shared/services/Database';
 import { logMethodCall } from '../../shared/utils/utils';
 
@@ -123,7 +123,7 @@ export default class ModelCache {
    */
   async getAndDecodeModelsWithModelName(
     modelName: ModelName,
-  ): Promise<OSModel<SupportedModel>[] | void> {
+  ): Promise<OSModelType<SupportedModel>[] | void> {
     logMethodCall('ModelCache.getAndDecodeModelsWithModelName', { modelName });
     const models = await this.getCachedEncodedModels(modelName);
 

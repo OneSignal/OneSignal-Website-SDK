@@ -2,13 +2,13 @@ import { logMethodCall } from '../shared/utils/utils';
 import Log from '../shared/libraries/Log';
 import CoreModule from './CoreModule';
 import { OSModel } from './modelRepo/OSModel';
-import { SupportedIdentity } from './models/IdentityModel';
-import { ModelStoresMap } from './models/ModelStoresMap';
+import { FutureIdentityModel, SupportedIdentity } from './models/IdentityModel';
+import { ModelStoresMap, ModelStoresMapMap, ModelStoresMapMapValues } from './models/ModelStoresMap';
 import {
   SubscriptionModel,
   SupportedSubscription,
 } from './models/SubscriptionModels';
-import { ModelName, SupportedModel } from './models/SupportedModels';
+import { ModelName, OSModelType, SupportedModel } from './models/SupportedModels';
 import { UserPropertiesModel } from './models/UserPropertiesModel';
 import UserData from './models/UserData';
 import OneSignalError from '../shared/errors/OneSignalError';
@@ -32,7 +32,7 @@ export class CoreModuleDirector {
       rawPushSubscription,
     });
     // new subscription
-    const pushModel = new OSModel<SupportedSubscription>(
+    const pushModel = new OSModel(
       ModelName.PushSubscriptions,
       new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
     );
@@ -44,7 +44,7 @@ export class CoreModuleDirector {
     // don't propagate since we will be including the subscription in the user create call
     OneSignal.coreDirector.add(
       ModelName.PushSubscriptions,
-      pushModel as OSModel<SupportedModel>,
+      pushModel,
       false,
     );
   }
@@ -124,9 +124,10 @@ export class CoreModuleDirector {
         existingSubscription.setOneSignalId(onesignalId);
         existingSubscription.hydrate(subscription);
       } else {
-        const model = new OSModel<SupportedModel>(modelName, subscription);
+        const model = new OSModel(modelName, subscription);
         model.setOneSignalId(onesignalId);
-        modelStores[modelName].add(model, false); // don't propagate to server
+        const store = modelStores[modelName];
+        store.add(model, false); // don't propagate to server
       }
     });
   }
@@ -139,14 +140,33 @@ export class CoreModuleDirector {
 
   /* O P E R A T I O N S */
 
-  public add(
-    modelName: ModelName,
-    model: OSModel<SupportedModel>,
+  // TODO: I believe this needs the same restriction as the following:
+    // export interface ModelStoresMap<T extends SupportedModel> {
+    //   identity: OSModelStore<FutureIdentityModel> | OSModelStore<IdentityModel>;  // TODO: Consider the Future types like Sub models below?
+    //   properties: OSModelStore<UserPropertiesModel>;
+    //   pushSubscriptions: OSModelStore<SubscriptionModel>; // TODO: Add this too? | OSModelStore<FutureSubscriptionModel>
+    //   emailSubscriptions: OSModelStore<SubscriptionModel>;
+    //   smsSubscriptions: OSModelStore<SubscriptionModel>;
+    // }
+
+
+  // addEventListener<K extends NotificationEventName>(event: K, listener: (obj: NotificationEventTypeMap[K]) => void): void {
+
+  public add<K extends ModelStoresMapMapValues>(
+    modelName: K,
+    model: ModelStoresMapMap[K],
     propagate = true,
   ): void {
     logMethodCall('CoreModuleDirector.add', { modelName, model });
     const modelStores = this.getModelStores();
-    modelStores[modelName].add(model, propagate);
+    const store = modelStores[modelName];
+    store.add(model, propagate);
+  }
+
+  public testAddIdentity() {
+    const modelStores = this.getModelStores();
+    const model = new OSModel<FutureIdentityModel>(ModelName.Identity, {}, 'modelId');
+    modelStores.identity.add(model, false)
   }
 
   public remove(modelName: ModelName, modelId: string): void {
@@ -324,7 +344,11 @@ export class CoreModuleDirector {
 
   /* P R I V A T E */
 
-  private getModelStores(): ModelStoresMap<SupportedModel> {
-    return this.core.modelRepo?.modelStores as ModelStoresMap<SupportedModel>;
+  private getModelStores(): ModelStoresMap {
+    const stores = this.core.modelRepo?.modelStores;
+    if (stores === undefined) {
+      throw new Error('getModelStores(): modelRepo undefined');
+    }
+    return stores; // as ModelStoresMap<SupportedModel>;
   }
 }

@@ -23,6 +23,7 @@
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
     "sourceMap": true,
+    "strictFunctionTypes": true,
     "outDir": "../ts-to-es6",
     "sourceRoot": "../..",
     "rootDir": "../..",
