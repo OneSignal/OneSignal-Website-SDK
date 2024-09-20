@@ -13,7 +13,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "strictPropertyInitialization": true,
-    "strictFunctionTypes": true,
     "baseUrl": ".",
     "types": ["jest", "node"]
   },

@@ -27,6 +27,7 @@
     "sourceRoot": "../..",
     "rootDir": "../..",
     "esModuleInterop": true,
+    "strictFunctionTypes": true,
     "baseUrl": "../..",
     "types": [
       "node"
