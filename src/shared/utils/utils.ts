@@ -1,6 +1,5 @@
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import Database from '../services/Database';
 import { OneSignalUtils } from './OneSignalUtils';
 import { PermissionUtils } from './PermissionUtils';
 import { Utils } from '../context/Utils';

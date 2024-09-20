@@ -494,9 +494,7 @@ export default class Bell {
 
     const isPushEnabled =
       await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-    const doNotPrompt = DismissHelper.wasPromptOfTypeDismissed(
-      DismissPrompt.Push,
-    );
+    DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
     // where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small

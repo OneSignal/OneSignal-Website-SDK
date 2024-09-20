@@ -6,7 +6,6 @@ import {
 } from '../../shared/config/constants';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import InitHelper from '../../shared/helpers/InitHelper';
-import MainHelper from '../../shared/helpers/MainHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import Log from '../../shared/libraries/Log';
 import {
