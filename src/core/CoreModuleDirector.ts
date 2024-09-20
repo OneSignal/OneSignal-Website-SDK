@@ -362,12 +362,6 @@ export class CoreModuleDirector {
     );
   }
 
-  /* P R I V A T E */
-
-  private getModelStores(): ModelStoresMap<SupportedModel> {
-    return this.core.modelRepo?.modelStores as ModelStoresMap<SupportedModel>;
-  }
-
   /**
    * Helper that checks if a given SubscriptionType is a push subscription.
    */
@@ -396,5 +390,11 @@ export class CoreModuleDirector {
 
         return undefined;
     }
+  }
+
+  /* P R I V A T E */
+
+  private getModelStores(): ModelStoresMap<SupportedModel> {
+    return this.core.modelRepo?.modelStores as ModelStoresMap<SupportedModel>;
   }
 }
