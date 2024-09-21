@@ -242,7 +242,9 @@ export class SubscriptionManager {
    * @param rawPushSubscription The raw push subscription obtained from calling subscribe(). This
    * can be null, in which case OneSignal's device record is set to unsubscribed.
    *
-   * @param subscriptionState Describes whether the device record is subscribed, unsubscribed, or in
+   * @param subscriptionState TODO: This is no longer used here and needs some refactoring to
+   * put this back into place.
+   * Describes whether the device record is subscribed, unsubscribed, or in
    * another state. By default, this is set from the availability of rawPushSubscription (exists:
    * Subscribed, null: Unsubscribed). Other use cases may result in creation of a device record that
    * warrants a special subscription state. For example, a device ID can be retrieved by providing
@@ -251,7 +253,7 @@ export class SubscriptionManager {
    */
   public async registerSubscription(
     pushSubscription: RawPushSubscription,
-    subscriptionState?: SubscriptionStateKind,
+    _subscriptionState?: SubscriptionStateKind,
   ): Promise<Subscription> {
     /*
       This may be called after the RawPushSubscription has been serialized across a postMessage
@@ -477,6 +479,10 @@ export class SubscriptionManager {
         await this.context.serviceWorkerManager.installWorker();
     } catch (err) {
       if (err instanceof ServiceWorkerRegistrationError) {
+        // TODO: This doesn't register the subscription any more, most likely broke
+        // in some refactoring in the v16 major release. It would be useful if a
+        // subscription was created so the customer knows this failed by seeing
+        // subscriptions in this state on the OneSignal dashboard.
         if (err.status === 403) {
           await this.context.subscriptionManager.registerFailedSubscription(
             SubscriptionStateKind.ServiceWorkerStatus403,

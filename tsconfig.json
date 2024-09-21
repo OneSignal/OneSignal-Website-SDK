@@ -10,7 +10,6 @@
     "strictNullChecks": true,
     "checkJs": true,
     "noImplicitAny": true,
-    "noUnusedParameters": true,
     "strictPropertyInitialization": true,
     "baseUrl": ".",
     "types": ["jest", "node"]
