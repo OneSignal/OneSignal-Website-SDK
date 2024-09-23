@@ -224,7 +224,7 @@ export default class LoginManager {
       { appId, subscriptionId },
       userData,
     );
-    const result = response?.result as UserData;
+    const result = response?.result;
     const status = response?.status;
 
     if (status >= 200 && status < 300) {
@@ -242,7 +242,8 @@ export default class LoginManager {
 
       const payloadSubcriptionToken = userData.subscriptions?.[0]?.token;
       const resultSubscription = result.subscriptions?.find(
-        (sub) => sub.token === payloadSubcriptionToken,
+        (sub: { token: string | undefined }) =>
+          sub.token === payloadSubcriptionToken,
       );
 
       if (resultSubscription) {
