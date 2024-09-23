@@ -101,7 +101,8 @@ export default class LoginManager {
           );
           return;
         }
-        await LoginManager.fetchAndHydrate(onesignalId);
+        // hydrating with local externalId as server could still be updating
+        await LoginManager.fetchAndHydrate(onesignalId, externalId);
       } catch (e) {
         Log.error(
           `Login: Error while identifying/upserting user: ${e.message}`,
@@ -111,7 +112,10 @@ export default class LoginManager {
           Log.debug('Login: Restoring old user data');
 
           try {
-            await LoginManager.fetchAndHydrate(onesignalIdBackup);
+            await LoginManager.fetchAndHydrate(
+              onesignalIdBackup,
+              currentExternalId,
+            );
           } catch (e) {
             Log.error(
               `Login: Error while restoring old user data: ${e.message}`,
@@ -342,7 +346,10 @@ export default class LoginManager {
     return { identity: identityResult };
   }
 
-  static async fetchAndHydrate(onesignalId: string): Promise<void> {
+  static async fetchAndHydrate(
+    onesignalId: string,
+    externalId?: string,
+  ): Promise<void> {
     logMethodCall('LoginManager.fetchAndHydrate', { onesignalId });
 
     const fetchUserResponse = await RequestService.getUser(
@@ -350,7 +357,7 @@ export default class LoginManager {
       new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId),
     );
 
-    OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result);
+    OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result, externalId);
   }
 
   /**
