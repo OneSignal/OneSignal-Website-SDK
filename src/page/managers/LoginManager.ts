@@ -350,7 +350,7 @@ export default class LoginManager {
     onesignalId: string,
     externalId?: string,
   ): Promise<void> {
-    logMethodCall('LoginManager.fetchAndHydrate', { onesignalId });
+    logMethodCall('LoginManager.fetchAndHydrate', { onesignalId, externalId });
 
     const fetchUserResponse = await RequestService.getUser(
       { appId: await MainHelper.getAppId() },

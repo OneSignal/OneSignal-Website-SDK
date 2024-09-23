@@ -64,7 +64,7 @@ export class CoreModuleDirector {
   }
 
   public hydrateUser(user: UserData, externalId?: string): void {
-    logMethodCall('CoreModuleDirector.hydrateUser', { user });
+    logMethodCall('CoreModuleDirector.hydrateUser', { user, externalId });
     try {
       const identity = this.getIdentityModel();
       const properties = this.getPropertiesModel();
@@ -109,6 +109,8 @@ export class CoreModuleDirector {
   ): void {
     logMethodCall('CoreModuleDirector._hydrateSubscriptions', {
       subscriptions,
+      onesignalId,
+      externalId,
     });
 
     if (!subscriptions) {
