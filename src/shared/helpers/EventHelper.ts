@@ -1,4 +1,3 @@
-import OneSignalApiShared from '../api/OneSignalApiShared';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { ContextSWInterface } from '../models/ContextSW';

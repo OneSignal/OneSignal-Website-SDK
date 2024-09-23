@@ -8,8 +8,8 @@
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
@@ -27,6 +27,7 @@
     "sourceRoot": "../..",
     "rootDir": "../..",
     "esModuleInterop": true,
+    "strictFunctionTypes": true,
     "baseUrl": "../..",
     "types": [
       "node"

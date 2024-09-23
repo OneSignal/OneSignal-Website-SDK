@@ -10,10 +10,7 @@
     "strictNullChecks": true,
     "checkJs": true,
     "noImplicitAny": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "strictPropertyInitialization": true,
-    "strictFunctionTypes": true,
     "baseUrl": ".",
     "types": ["jest", "node"]
   },

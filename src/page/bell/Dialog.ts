@@ -1,5 +1,3 @@
-import bowser from 'bowser';
-
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import SdkEnvironment from '../../shared/managers/SdkEnvironment';
 import {
