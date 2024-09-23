@@ -82,6 +82,7 @@ export class CoreModuleDirector {
       if (externalId) {
         identity?.setExternalId(externalId);
         properties?.setExternalId(externalId);
+        user.identity.external_id = externalId;
       }
 
       // identity and properties models are always single, so we hydrate immediately (i.e. replace existing data)
