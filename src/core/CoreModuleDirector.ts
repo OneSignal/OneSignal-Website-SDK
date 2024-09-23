@@ -63,14 +63,13 @@ export class CoreModuleDirector {
     await this.core.resetModelRepoAndCache();
   }
 
-  public hydrateUser(user: UserData): void {
+  public hydrateUser(user: UserData, externalId?: string): void {
     logMethodCall('CoreModuleDirector.hydrateUser', { user });
     try {
       const identity = this.getIdentityModel();
       const properties = this.getPropertiesModel();
 
-      const { onesignal_id: onesignalId, external_id: externalId } =
-        user.identity;
+      const { onesignal_id: onesignalId } = user.identity;
 
       if (!onesignalId) {
         throw new OneSignalError('OneSignal ID is missing from user data');
