@@ -6,7 +6,11 @@ import { setupLoginStubs } from '../../support/helpers/login';
 import { RequestService } from '../../../src/core/requestService/RequestService';
 import { getDummyIdentityOSModel } from '../../support/helpers/core';
 import { ModelName } from '../../../src/core/models/SupportedModels';
-import { DUMMY_EXTERNAL_ID, DUMMY_ONESIGNAL_ID } from '../../support/constants';
+import {
+  DUMMY_EXTERNAL_ID,
+  DUMMY_EXTERNAL_ID_2,
+  DUMMY_ONESIGNAL_ID,
+} from '../../support/constants';
 import { IdentityExecutor } from '../../../src/core/executors/IdentityExecutor';
 import { PropertiesExecutor } from '../../../src/core/executors/PropertiesExecutor';
 import { SubscriptionExecutor } from '../../../src/core/executors/SubscriptionExecutor';
@@ -88,12 +92,6 @@ describe('Login tests', () => {
     const identifyOrUpsertUserSpy = test.stub(
       LoginManager,
       'identifyOrUpsertUser',
-      Promise.resolve({
-        identity: {
-          external_id: DUMMY_EXTERNAL_ID,
-          onesignal_id: '1234567890',
-        },
-      }),
     );
 
     await LoginManager.login(DUMMY_EXTERNAL_ID);
@@ -230,23 +228,97 @@ describe('Login tests', () => {
   });
 
   test('If login with JWT token, save it to the database', async () => {});
-});
 
-test('Login called before any Subscriptions, should save external_id but not create User', async () => {
-  setupLoginStubs();
-  await TestEnvironment.initialize();
-  test.nock({});
+  test('Login called before any Subscriptions, should save external_id but not create User', async () => {
+    setupLoginStubs();
+    await TestEnvironment.initialize();
+    test.nock({});
 
-  OneSignal.coreDirector.add(ModelName.Identity, getDummyIdentityOSModel());
+    OneSignal.coreDirector.add(ModelName.Identity, getDummyIdentityOSModel());
 
-  const createUserSpy = jest.spyOn(RequestService, 'createUser');
+    const createUserSpy = jest.spyOn(RequestService, 'createUser');
 
-  await LoginManager.login(DUMMY_EXTERNAL_ID);
+    await LoginManager.login(DUMMY_EXTERNAL_ID);
 
-  expect(OneSignal.coreDirector.getIdentityModel().data.external_id).toBe(
-    DUMMY_EXTERNAL_ID,
-  );
+    expect(OneSignal.coreDirector.getIdentityModel().data.external_id).toBe(
+      DUMMY_EXTERNAL_ID,
+    );
 
-  // User should NOT be created, as we have no subscriptions yet.
-  expect(createUserSpy.mock.calls.length).toBe(0);
+    // User should NOT be created, as we have no subscriptions yet.
+    expect(createUserSpy.mock.calls.length).toBe(0);
+  });
+
+  test('Login updates externalId on all models', async () => {
+    setupLoginStubs();
+    await TestEnvironment.initialize({
+      useMockIdentityModel: true,
+      useMockPushSubscriptionModel: true,
+    });
+
+    test.stub(
+      LoginManager,
+      'identifyOrUpsertUser',
+      Promise.resolve({
+        identity: {
+          external_id: DUMMY_EXTERNAL_ID,
+          onesignal_id: DUMMY_ONESIGNAL_ID,
+        },
+      }),
+    );
+
+    await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+    expect(OneSignal.coreDirector.getIdentityModel().externalId).toBe(
+      DUMMY_EXTERNAL_ID,
+    );
+
+    expect(OneSignal.coreDirector.getPropertiesModel().externalId).toBe(
+      DUMMY_EXTERNAL_ID,
+    );
+
+    const subs = await OneSignal.coreDirector.getAllSubscriptionsModels();
+
+    expect(
+      subs.every(
+        (sub: { externalId: string }) => sub.externalId === DUMMY_EXTERNAL_ID,
+      ),
+    ).toBe(true);
+  });
+
+  test('Login twice updates current externalId on all models', async () => {
+    setupLoginStubs();
+    await TestEnvironment.initialize({
+      useMockIdentityModel: true,
+    });
+
+    test.stub(
+      LoginManager,
+      'identifyOrUpsertUser',
+      Promise.resolve({
+        identity: {
+          external_id: DUMMY_EXTERNAL_ID,
+          onesignal_id: DUMMY_ONESIGNAL_ID,
+        },
+      }),
+    );
+
+    await LoginManager.login(DUMMY_EXTERNAL_ID);
+    await LoginManager.login(DUMMY_EXTERNAL_ID_2);
+
+    expect(OneSignal.coreDirector.getIdentityModel().externalId).toBe(
+      DUMMY_EXTERNAL_ID_2,
+    );
+
+    expect(OneSignal.coreDirector.getPropertiesModel().externalId).toBe(
+      DUMMY_EXTERNAL_ID_2,
+    );
+
+    const subs = await OneSignal.coreDirector.getAllSubscriptionsModels();
+
+    expect(
+      subs.every(
+        (sub: { externalId: string }) => sub.externalId === DUMMY_EXTERNAL_ID_2,
+      ),
+    ).toBe(true);
+  });
 });
