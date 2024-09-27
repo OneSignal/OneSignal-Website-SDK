@@ -5,6 +5,7 @@ import { OSModel } from './modelRepo/OSModel';
 import { SupportedIdentity } from './models/IdentityModel';
 import { ModelStoresMap } from './models/ModelStoresMap';
 import {
+  SubscriptionChannel,
   SubscriptionModel,
   SubscriptionType,
   SupportedSubscription,
@@ -122,7 +123,7 @@ export class CoreModuleDirector {
        */
       const existingSubscription = !!subscription.token
         ? this.getSubscriptionOfTypeWithToken(
-            subscription.type,
+            this.toSubscriptionChannel(subscription.type),
             subscription.token,
           )
         : undefined;
@@ -259,9 +260,9 @@ export class CoreModuleDirector {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
     const pushToken = await MainHelper.getCurrentPushToken();
     if (pushToken) {
-      const pushSubscriptions = this.getAllPushSubscriptionModels();
-      return Object.values(pushSubscriptions).find(
-        (subscription) => subscription.data.token === pushToken,
+      return this.getSubscriptionOfTypeWithToken(
+        SubscriptionChannel.Push,
+        pushToken,
       );
     }
     return undefined;
@@ -277,9 +278,9 @@ export class CoreModuleDirector {
     );
     const { lastKnownPushToken } = await Database.getAppState();
     if (lastKnownPushToken) {
-      const pushSubscriptions = this.getAllPushSubscriptionModels();
-      return Object.values(pushSubscriptions).find(
-        (subscription) => subscription.data.token === lastKnownPushToken,
+      return this.getSubscriptionOfTypeWithToken(
+        SubscriptionChannel.Push,
+        lastKnownPushToken,
       );
     }
     return undefined;
@@ -332,38 +333,33 @@ export class CoreModuleDirector {
   }
 
   public getSubscriptionOfTypeWithToken(
-    type: SubscriptionType,
+    type: SubscriptionChannel | undefined,
     token: string,
   ): OSModel<SupportedSubscription> | undefined {
     logMethodCall('CoreModuleDirector.getSubscriptionOfTypeWithToken', {
       type,
       token,
     });
+
+    let subscriptions: Record<string, OSModel<SupportedSubscription>>;
+
     switch (type) {
-      case SubscriptionType.Email: {
-        const emailSubscriptions = this.getEmailSubscriptionModels();
-        return Object.values(emailSubscriptions).find(
-          (subscription) => subscription.data.token === token,
-        );
-      }
-      case SubscriptionType.SMS: {
-        const smsSubscriptions = this.getSmsSubscriptionModels();
-        return Object.values(smsSubscriptions).find(
-          (subscription) => subscription.data.token === token,
-        );
-      }
-      case SubscriptionType.ChromePush:
-      case SubscriptionType.SafariPush:
-      case SubscriptionType.SafariLegacyPush:
-      case SubscriptionType.FirefoxPush: {
-        const pushSubscriptions = this.getAllPushSubscriptionModels();
-        return Object.values(pushSubscriptions).find(
-          (subscription) => subscription.data.token === token,
-        );
-      }
+      case SubscriptionChannel.Email:
+        subscriptions = this.getEmailSubscriptionModels();
+        break;
+      case SubscriptionChannel.SMS:
+        subscriptions = this.getSmsSubscriptionModels();
+        break;
+      case SubscriptionChannel.Push:
+        subscriptions = this.getAllPushSubscriptionModels();
+        break;
       default:
         return undefined;
     }
+
+    return Object.values(subscriptions).find(
+      (subscription) => subscription.data.token === token,
+    );
   }
 
   /* P R I V A T E */
@@ -384,6 +380,21 @@ export class CoreModuleDirector {
         return true;
       default:
         return false;
+    }
+  }
+
+  public toSubscriptionChannel(type: SubscriptionType) {
+    switch (type) {
+      case SubscriptionType.Email:
+        return SubscriptionChannel.Email;
+      case SubscriptionType.SMS:
+        return SubscriptionChannel.SMS;
+      default:
+        if (this.isPushSubscriptionType(type)) {
+          return SubscriptionChannel.Push;
+        }
+
+        return undefined;
     }
   }
 }
