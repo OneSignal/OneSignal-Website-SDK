@@ -10,6 +10,10 @@ import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { PermissionUtils } from '../utils/PermissionUtils';
+import {
+  SubscriptionChannel,
+  SubscriptionType,
+} from '../../../src/core/models/SubscriptionModels';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -42,5 +46,36 @@ export default class SubscriptionHelper {
     }
 
     return subscription;
+  }
+
+  /**
+   * Helper that checks if a given SubscriptionType is a push subscription.
+   */
+  public static isPushSubscriptionType(type: SubscriptionType): boolean {
+    switch (type) {
+      case SubscriptionType.ChromePush:
+      case SubscriptionType.SafariPush:
+      case SubscriptionType.SafariLegacyPush:
+      case SubscriptionType.FirefoxPush:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  public static toSubscriptionChannel(
+    type: SubscriptionType,
+  ): SubscriptionChannel | undefined {
+    switch (type) {
+      case SubscriptionType.Email:
+        return SubscriptionChannel.Email;
+      case SubscriptionType.SMS:
+        return SubscriptionChannel.SMS;
+      default:
+        if (this.isPushSubscriptionType(type)) {
+          return SubscriptionChannel.Push;
+        }
+        return undefined;
+    }
   }
 }

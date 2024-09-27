@@ -21,6 +21,7 @@ import User from '../onesignal/User';
 import OneSignal from '../onesignal/OneSignal';
 import Database from '../shared/services/Database';
 import EventHelper from '../shared/helpers/EventHelper';
+import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -123,7 +124,7 @@ export class CoreModuleDirector {
        */
       const existingSubscription = !!subscription.token
         ? this.getSubscriptionOfTypeWithToken(
-            this.toSubscriptionChannel(subscription.type),
+            SubscriptionHelper.toSubscriptionChannel(subscription.type),
             subscription.token,
           )
         : undefined;
@@ -247,7 +248,7 @@ export class CoreModuleDirector {
 
     const pushSubscriptions = Object.fromEntries(
       Object.entries(subscriptionModels).filter(([, model]) =>
-        this.isPushSubscriptionType(model.data?.type),
+        SubscriptionHelper.isPushSubscriptionType(model.data?.type),
       ),
     );
 
@@ -366,35 +367,5 @@ export class CoreModuleDirector {
 
   private getModelStores(): ModelStoresMap<SupportedModel> {
     return this.core.modelRepo?.modelStores as ModelStoresMap<SupportedModel>;
-  }
-
-  /**
-   * Helper that checks if a given SubscriptionType is a push subscription.
-   */
-  public isPushSubscriptionType(type: SubscriptionType): boolean {
-    switch (type) {
-      case SubscriptionType.ChromePush:
-      case SubscriptionType.SafariPush:
-      case SubscriptionType.SafariLegacyPush:
-      case SubscriptionType.FirefoxPush:
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  public toSubscriptionChannel(type: SubscriptionType) {
-    switch (type) {
-      case SubscriptionType.Email:
-        return SubscriptionChannel.Email;
-      case SubscriptionType.SMS:
-        return SubscriptionChannel.SMS;
-      default:
-        if (this.isPushSubscriptionType(type)) {
-          return SubscriptionChannel.Push;
-        }
-
-        return undefined;
-    }
   }
 }
