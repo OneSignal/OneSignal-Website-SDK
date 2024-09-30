@@ -60,6 +60,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
     this.broadcast({
       model: payload,
       changeType: CoreChangeType.Add,
+      applyToRecordId: payload?.applyToRecordId,
     });
   }
 
@@ -77,6 +78,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
     this.broadcast({
       model: payload,
       changeType: CoreChangeType.Remove,
+      applyToRecordId: payload?.applyToRecordId,
     });
   }
 
@@ -103,6 +105,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
         property: payload.property,
         oldValue: payload.oldValue,
         newValue: payload.newValue,
+        applyToRecordId: payload.model?.applyToRecordId,
       };
       this.broadcast(delta);
     }

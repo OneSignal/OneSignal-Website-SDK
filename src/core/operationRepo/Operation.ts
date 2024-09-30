@@ -11,6 +11,7 @@ export class Operation<Model> {
   timestamp: number;
   payload?: Partial<SupportedModel>;
   model?: OSModel<Model>;
+  applyToRecordId?: string;
   jwtTokenAvailable: Promise<void>;
   jwtToken?: string | null;
 
@@ -22,6 +23,7 @@ export class Operation<Model> {
     this.operationId = Math.random().toString(36).substring(2);
     this.payload = deltas ? this.getPayload(deltas) : undefined;
     this.model = deltas ? deltas[deltas.length - 1].model : undefined;
+    this.applyToRecordId = deltas?.[deltas.length - 1]?.applyToRecordId;
     this.timestamp = Date.now();
     // eslint-disable-next-line no-async-promise-executor
     this.jwtTokenAvailable = new Promise<void>(async (resolve) => {

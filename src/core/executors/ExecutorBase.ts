@@ -9,12 +9,14 @@ import { ExecutorResult } from './ExecutorResult';
 import Log from '../../shared/libraries/Log';
 import Database from '../../shared/services/Database';
 import LocalStorage from '../../shared/utils/LocalStorage';
+import { NewRecordsState } from '../../shared/models/NewRecordsState';
 
 const RETRY_AFTER = 5_000;
 
 export default abstract class ExecutorBase {
   protected _deltaQueue: CoreDelta<SupportedModel>[] = [];
   protected _operationQueue: Operation<SupportedModel>[] = [];
+  protected _newRecordsState: NewRecordsState;
 
   protected _executeAdd?: (
     operation: Operation<SupportedModel>,
@@ -31,7 +33,10 @@ export default abstract class ExecutorBase {
   static OPERATIONS_BATCH_PROCESSING_TIME = 5;
   static RETRY_COUNT = 5;
 
-  constructor(executorConfig: ExecutorConfig<SupportedModel>) {
+  constructor(
+    executorConfig: ExecutorConfig<SupportedModel>,
+    newRecordsState: NewRecordsState,
+  ) {
     setInterval(() => {
       Log.debug('OneSignal: checking for operations to process from cache');
       const cachedOperations = this.getOperationsFromCache();
@@ -48,6 +53,8 @@ export default abstract class ExecutorBase {
     this._executeAdd = executorConfig.add;
     this._executeUpdate = executorConfig.update;
     this._executeRemove = executorConfig.remove;
+
+    this._newRecordsState = newRecordsState;
   }
 
   abstract processDeltaQueue(): void;
@@ -124,7 +131,7 @@ export default abstract class ExecutorBase {
       if (operation) {
         OperationCache.enqueue(operation);
 
-        if (this.onlineStatus) {
+        if (this._canExecute(operation)) {
           this._processOperation(operation, ExecutorBase.RETRY_COUNT).catch(
             (err) => {
               Log.error(err);
@@ -186,5 +193,19 @@ export default abstract class ExecutorBase {
     if (online) {
       this._processOperationQueue.call(this);
     }
+  }
+
+  private _canExecute(operation: Operation<SupportedModel>): boolean {
+    if (!this.onlineStatus) {
+      return false;
+    }
+
+    if (operation.applyToRecordId) {
+      if (!this._newRecordsState.canAccess(operation.applyToRecordId)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

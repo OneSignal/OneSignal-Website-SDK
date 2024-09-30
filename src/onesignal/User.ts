@@ -82,8 +82,10 @@ export default class User {
       }
     });
 
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    identityModel?.setApplyToRecordId(identityModel?.onesignalId);
+
     Object.keys(aliases).forEach(async (label) => {
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
       identityModel?.set(label, aliases[label]);
     });
   }
@@ -109,8 +111,10 @@ export default class User {
       throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
     }
 
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    identityModel?.setApplyToRecordId(identityModel?.onesignalId);
+
     aliases.forEach(async (alias) => {
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
       identityModel?.set(alias, undefined);
     });
   }
@@ -349,6 +353,7 @@ export default class User {
       tagKeys.forEach((tagKey) => {
         tagsCopy[tagKey] = '';
       });
+      propertiesModel?.setApplyToRecordId(propertiesModel?.onesignalId);
       propertiesModel?.set('tags', tagsCopy);
     }
   }

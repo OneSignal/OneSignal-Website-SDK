@@ -22,24 +22,13 @@ jest.mock('../../../src/shared/libraries/Log');
 describe('Login tests', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    test.stub(
-      PropertiesExecutor.prototype,
-      'getOperationsFromCache',
-      Promise.resolve([]),
-    );
-    test.stub(
-      IdentityExecutor.prototype,
-      'getOperationsFromCache',
-      Promise.resolve([]),
-    );
-    test.stub(
-      SubscriptionExecutor.prototype,
-      'getOperationsFromCache',
-      Promise.resolve([]),
-    );
+    test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', []);
+    test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', []);
+    test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', []);
   });
 
   afterEach(() => {
+    jest.runOnlyPendingTimers();
     jest.resetAllMocks();
   });
 

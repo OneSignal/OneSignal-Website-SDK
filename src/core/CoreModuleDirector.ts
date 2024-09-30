@@ -63,14 +63,13 @@ export class CoreModuleDirector {
     await this.core.resetModelRepoAndCache();
   }
 
-  public hydrateUser(user: UserData): void {
-    logMethodCall('CoreModuleDirector.hydrateUser', { user });
+  public hydrateUser(user: UserData, externalId?: string): void {
+    logMethodCall('CoreModuleDirector.hydrateUser', { user, externalId });
     try {
       const identity = this.getIdentityModel();
       const properties = this.getPropertiesModel();
 
-      const { onesignal_id: onesignalId, external_id: externalId } =
-        user.identity;
+      const { onesignal_id: onesignalId } = user.identity;
 
       if (!onesignalId) {
         throw new OneSignalError('OneSignal ID is missing from user data');
@@ -83,6 +82,7 @@ export class CoreModuleDirector {
       if (externalId) {
         identity?.setExternalId(externalId);
         properties?.setExternalId(externalId);
+        user.identity.external_id = externalId;
       }
 
       // identity and properties models are always single, so we hydrate immediately (i.e. replace existing data)
@@ -109,6 +109,8 @@ export class CoreModuleDirector {
   ): void {
     logMethodCall('CoreModuleDirector._hydrateSubscriptions', {
       subscriptions,
+      onesignalId,
+      externalId,
     });
 
     if (!subscriptions) {
@@ -175,6 +177,9 @@ export class CoreModuleDirector {
   }
 
   /* G E T T E R S */
+  public getNewRecordsState(): NewRecordsState | undefined {
+    return this.core.newRecordsState;
+  }
 
   public getModelByTypeAndId(
     modelName: ModelName,

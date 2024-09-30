@@ -101,7 +101,8 @@ export default class LoginManager {
           );
           return;
         }
-        await LoginManager.fetchAndHydrate(onesignalId);
+        // hydrating with local externalId as server could still be updating
+        await LoginManager.fetchAndHydrate(onesignalId, externalId);
       } catch (e) {
         Log.error(
           `Login: Error while identifying/upserting user: ${e.message}`,
@@ -111,7 +112,10 @@ export default class LoginManager {
           Log.debug('Login: Restoring old user data');
 
           try {
-            await LoginManager.fetchAndHydrate(onesignalIdBackup);
+            await LoginManager.fetchAndHydrate(
+              onesignalIdBackup,
+              currentExternalId,
+            );
           } catch (e) {
             Log.error(
               `Login: Error while restoring old user data: ${e.message}`,
@@ -228,6 +232,29 @@ export default class LoginManager {
     const status = response?.status;
 
     if (status >= 200 && status < 300) {
+      const onesignalId = userData.identity?.onesignal_id;
+
+      const newRecordsState = OneSignal.coreDirector.getNewRecordsState();
+
+      if (!newRecordsState) {
+        Log.error(`UpsertUser: NewRecordsState is undefined`);
+      }
+
+      if (onesignalId) {
+        newRecordsState?.add(onesignalId);
+      }
+
+      const payloadSubcriptionToken = userData.subscriptions?.[0]?.token;
+      const resultSubscription = result.subscriptions?.find(
+        (sub: { token: string | undefined }) =>
+          sub.token === payloadSubcriptionToken,
+      );
+
+      if (resultSubscription) {
+        if (isCompleteSubscriptionObject(resultSubscription)) {
+          newRecordsState?.add(resultSubscription.id);
+        }
+      }
       Log.info('Successfully created user', result);
     } else if (status >= 400 && status < 500) {
       Log.error('Malformed request', result);
@@ -288,6 +315,15 @@ export default class LoginManager {
 
     if (identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
       Log.info('identifyUser succeeded');
+
+      const newRecordsState = OneSignal.coreDirector.getNewRecordsState();
+
+      if (!newRecordsState) {
+        Log.error(`IdentifyUser: NewRecordsState is undefined`);
+      }
+
+      // External id takes time to update on server. Include as new record with current time
+      newRecordsState?.add(onesignalId, true);
     } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
       return await this.transferSubscription(
         appId,
@@ -310,15 +346,18 @@ export default class LoginManager {
     return { identity: identityResult };
   }
 
-  static async fetchAndHydrate(onesignalId: string): Promise<void> {
-    logMethodCall('LoginManager.fetchAndHydrate', { onesignalId });
+  static async fetchAndHydrate(
+    onesignalId: string,
+    externalId?: string,
+  ): Promise<void> {
+    logMethodCall('LoginManager.fetchAndHydrate', { onesignalId, externalId });
 
     const fetchUserResponse = await RequestService.getUser(
       { appId: await MainHelper.getAppId() },
       new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId),
     );
 
-    OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result);
+    OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result, externalId);
   }
 
   /**
