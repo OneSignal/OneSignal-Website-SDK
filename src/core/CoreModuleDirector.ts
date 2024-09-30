@@ -22,6 +22,7 @@ import OneSignal from '../onesignal/OneSignal';
 import Database from '../shared/services/Database';
 import EventHelper from '../shared/helpers/EventHelper';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
+import { NewRecordsState } from '../../src/shared/models/NewRecordsState';
 
 /* Contains OneSignal User-Model-specific logic*/
 
