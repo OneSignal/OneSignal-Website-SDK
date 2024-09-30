@@ -42,7 +42,7 @@
     "jest": "jest --coverage"
   },
   "config": {
-    "sdkVersion": "160202"
+    "sdkVersion": "160203"
   },
   "repository": {
     "type": "git",
