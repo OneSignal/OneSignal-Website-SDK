@@ -28,17 +28,10 @@ export default abstract class ExecutorBase {
 
   private onlineStatus = true;
 
-  static DELTAS_BATCH_PROCESSING_TIME = 1;
   static OPERATIONS_BATCH_PROCESSING_TIME = 5;
   static RETRY_COUNT = 5;
 
   constructor(executorConfig: ExecutorConfig<SupportedModel>) {
-    setInterval(() => {
-      if (this._deltaQueue.length > 0) {
-        this.processDeltaQueue.call(this);
-      }
-    }, ExecutorBase.DELTAS_BATCH_PROCESSING_TIME * 1_000);
-
     setInterval(() => {
       Log.debug('OneSignal: checking for operations to process from cache');
       const cachedOperations = this.getOperationsFromCache();
@@ -85,7 +78,6 @@ export default abstract class ExecutorBase {
   }
 
   protected _flushDeltas(): void {
-    logMethodCall('ExecutorBase._flushDeltas');
     this._deltaQueue = [];
   }
 

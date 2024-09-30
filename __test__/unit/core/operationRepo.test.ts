@@ -45,8 +45,21 @@ describe('OperationRepo tests', () => {
       onesignal_id: '123',
     });
     jest.useFakeTimers();
-    TestEnvironment.initialize();
+    await TestEnvironment.initialize();
     broadcastCount = 0;
+
+    const { operationRepo } = OneSignal.coreDirector.core;
+
+    const identityExecutor =
+      operationRepo?.executorStore.store[ModelName.Identity];
+    const propertiesExecutor =
+      operationRepo?.executorStore.store[ModelName.Properties];
+    const subscriptionExecutor =
+      operationRepo?.executorStore.store[ModelName.Subscriptions];
+
+    identityExecutor._operationQueue = [];
+    propertiesExecutor._operationQueue = [];
+    subscriptionExecutor._operationQueue = [];
   });
 
   afterEach(async () => {
@@ -77,7 +90,7 @@ describe('OperationRepo tests', () => {
   test('Model repo delta broadcast is received and processed by operation repo', (done: jest.DoneCallback) => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor =
-      operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
+      operationRepo?.executorStore.store[ModelName.Subscriptions];
 
     modelRepo?.subscribe(() => {
       broadcastCount += 1;
@@ -106,7 +119,7 @@ describe('OperationRepo tests', () => {
   test('Add Subscriptions: multiple delta broadcasts -> two operations of change type: add', (done: jest.DoneCallback) => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor =
-      operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
+      operationRepo?.executorStore.store[ModelName.Subscriptions];
 
     const processDeltaSpy = jest.spyOn(
       OperationRepo.prototype as any,

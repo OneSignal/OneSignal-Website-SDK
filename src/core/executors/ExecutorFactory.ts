@@ -12,9 +12,7 @@ export class ExecutorFactory {
         return new IdentityExecutor(executorConfig);
       case ModelName.Properties:
         return new PropertiesExecutor(executorConfig);
-      case ModelName.PushSubscriptions:
-      case ModelName.EmailSubscriptions:
-      case ModelName.SmsSubscriptions:
+      case ModelName.Subscriptions:
         return new SubscriptionExecutor(executorConfig);
     }
   }

@@ -135,7 +135,7 @@ export default class User {
       token: email,
     };
     const newSubscription = new OSModel<SupportedModel>(
-      ModelName.EmailSubscriptions,
+      ModelName.Subscriptions,
       subscription,
     );
 
@@ -145,15 +145,19 @@ export default class User {
     ) {
       // existing user
       newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      if (identityModel.data.external_id) {
+        newSubscription.setExternalId(identityModel.data.external_id);
+      }
       OneSignal.coreDirector.add(
-        ModelName.EmailSubscriptions,
+        ModelName.Subscriptions,
         newSubscription,
         true,
       );
     } else {
       // new user
       OneSignal.coreDirector.add(
-        ModelName.EmailSubscriptions,
+        ModelName.Subscriptions,
         newSubscription,
         false,
       );
@@ -165,6 +169,10 @@ export default class User {
         throw e;
       },
     );
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    if (identityModel.data.external_id) {
+      newSubscription.setExternalId(identityModel.data.external_id);
+    }
   }
 
   public async addSms(sms: string): Promise<void> {
@@ -184,7 +192,7 @@ export default class User {
     };
 
     const newSubscription = new OSModel<SupportedModel>(
-      ModelName.SmsSubscriptions,
+      ModelName.Subscriptions,
       subscription,
     );
 
@@ -194,15 +202,19 @@ export default class User {
     ) {
       // existing user
       newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      if (identityModel.data.external_id) {
+        newSubscription.setExternalId(identityModel.data.external_id);
+      }
       OneSignal.coreDirector.add(
-        ModelName.SmsSubscriptions,
+        ModelName.Subscriptions,
         newSubscription,
         true,
       );
     } else {
       // new user
       OneSignal.coreDirector.add(
-        ModelName.SmsSubscriptions,
+        ModelName.Subscriptions,
         newSubscription,
         false,
       );
@@ -214,6 +226,11 @@ export default class User {
         throw e;
       },
     );
+
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    if (identityModel.data.external_id) {
+      newSubscription.setExternalId(identityModel.data.external_id);
+    }
   }
 
   public removeEmail(email: string): void {
@@ -233,7 +250,7 @@ export default class User {
     modelIds.forEach(async (modelId) => {
       const model = emailSubscriptions[modelId];
       if (model.data?.token === email) {
-        OneSignal.coreDirector.remove(ModelName.EmailSubscriptions, modelId);
+        OneSignal.coreDirector.remove(ModelName.Subscriptions, modelId);
       }
     });
   }
@@ -257,7 +274,7 @@ export default class User {
     modelIds.forEach(async (modelId) => {
       const model = smsSubscriptions[modelId];
       if (model.data?.token === smsNumber) {
-        OneSignal.coreDirector.remove(ModelName.SmsSubscriptions, modelId);
+        OneSignal.coreDirector.remove(ModelName.Subscriptions, modelId);
       }
     });
   }

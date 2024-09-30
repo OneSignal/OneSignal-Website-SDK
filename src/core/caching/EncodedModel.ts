@@ -8,5 +8,6 @@ export default interface EncodedModel {
   modelId: string;
   modelName: ModelName;
   onesignalId?: string;
+  externalId?: string;
   [key: string]: unknown;
 }

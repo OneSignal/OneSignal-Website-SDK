@@ -12,6 +12,12 @@ export enum SubscriptionType {
   // There are other OneSignal types, but only including ones used here.
 }
 
+export enum SubscriptionChannel {
+  Email = 'Email',
+  SMS = 'SMS',
+  Push = 'Push',
+}
+
 export interface FutureSubscriptionModel {
   type: SubscriptionType;
   token?: string; // maps to legacy player.identifier

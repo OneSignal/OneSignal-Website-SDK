@@ -1,9 +1,9 @@
-import { ModelName } from '../../core/models/SupportedModels';
+import { ModelName, LegacyModelName } from '../../core/models/SupportedModels';
 import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 
-const DATABASE_VERSION = 5;
+const DATABASE_VERSION = 6;
 
 export default class IndexedDb {
   public emitter: Emitter;
@@ -155,9 +155,13 @@ export default class IndexedDb {
     if (newDbVersion >= 4 && event.oldVersion < 4) {
       db.createObjectStore(ModelName.Identity, { keyPath: 'modelId' });
       db.createObjectStore(ModelName.Properties, { keyPath: 'modelId' });
-      db.createObjectStore(ModelName.PushSubscriptions, { keyPath: 'modelId' });
-      db.createObjectStore(ModelName.SmsSubscriptions, { keyPath: 'modelId' });
-      db.createObjectStore(ModelName.EmailSubscriptions, {
+      db.createObjectStore(LegacyModelName.PushSubscriptions, {
+        keyPath: 'modelId',
+      });
+      db.createObjectStore(LegacyModelName.SmsSubscriptions, {
+        keyPath: 'modelId',
+      });
+      db.createObjectStore(LegacyModelName.EmailSubscriptions, {
         keyPath: 'modelId',
       });
     }
@@ -166,6 +170,9 @@ export default class IndexedDb {
       this.migrateOutcomesNotificationReceivedTableForV5(db, transaction);
     }
     if (newDbVersion >= 6 && event.oldVersion < 6) {
+      this.migrateModelNameSubscriptionsTableForV6(db, transaction);
+    }
+    if (newDbVersion >= 7 && event.oldVersion < 7) {
       // Make sure to update the database version at the top of the file
     }
     // Wrap in conditional for tests
@@ -250,6 +257,57 @@ export default class IndexedDb {
         cursor.error,
       );
     };
+  }
+  private migrateModelNameSubscriptionsTableForV6(
+    db: IDBDatabase,
+    transaction: IDBTransaction,
+  ) {
+    const newTableName = ModelName.Subscriptions;
+    db.createObjectStore(newTableName, { keyPath: 'modelId' });
+
+    let currentExternalId: string;
+    const identityCursor = transaction
+      .objectStore(ModelName.Identity)
+      .openCursor();
+    identityCursor.onsuccess = () => {
+      if (identityCursor.result) {
+        currentExternalId = identityCursor.result.value.externalId;
+      }
+    };
+    identityCursor.onerror = () => {
+      console.error(
+        'Could not find ' + ModelName.Identity + ' records',
+        identityCursor.error,
+      );
+    };
+
+    Object.values(LegacyModelName).forEach((oldTableName) => {
+      const legacyCursor = transaction.objectStore(oldTableName).openCursor();
+      legacyCursor.onsuccess = () => {
+        if (!legacyCursor.result) {
+          // Delete old table once we have gone through all records
+          db.deleteObjectStore(oldTableName);
+          return;
+        }
+        const oldValue = legacyCursor.result.value;
+
+        transaction.objectStore(newTableName).put({
+          ...oldValue,
+          modelName: ModelName.Subscriptions,
+          externalId: currentExternalId,
+        });
+        legacyCursor.result.continue();
+      };
+      legacyCursor.onerror = () => {
+        // If there is an error getting old records nothing we can do but
+        // move on. Old table will stay around so an attempt could be made
+        // later.
+        console.error(
+          'Could not migrate ' + oldTableName + ' records',
+          legacyCursor.error,
+        );
+      };
+    });
   }
 
   /**
