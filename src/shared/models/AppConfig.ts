@@ -49,6 +49,12 @@ export interface AppConfig {
   sessionThreshold?: number;
 
   siteName: string;
+
+  /**
+   * The OneSignal dashboard setting for identity verification. Indicates if Jwt
+   * is enabled for the app.
+   */
+  jwtRequired?: boolean;
 }
 
 export enum ConfigIntegrationKind {
@@ -270,6 +276,7 @@ export interface ServerAppConfig {
     http_use_onesignal_com?: boolean;
     safari_web_id?: string;
     subdomain: string | undefined;
+    jwt_required?: boolean;
   };
 
   generated_at: number;
