@@ -349,14 +349,6 @@ export default class Database {
     }
   }
 
-  async setJWTToken(token: string): Promise<void> {
-    await this.put('Ids', { type: 'jwtToken', id: token });
-  }
-
-  async getJWTToken(): Promise<string | null> {
-    return await this.get<string>('Ids', 'jwtToken');
-  }
-
   async setProvideUserConsent(consent: boolean): Promise<void> {
     await this.put('Options', { key: 'userConsent', value: consent });
   }
@@ -527,14 +519,6 @@ export default class Database {
 
   static async getSubscription(): Promise<Subscription> {
     return await Database.singletonInstance.getSubscription();
-  }
-
-  static async setJWTToken(token: string) {
-    return await Database.singletonInstance.setJWTToken(token);
-  }
-
-  static async getJWTToken(): Promise<string | null> {
-    return await Database.singletonInstance.getJWTToken();
   }
 
   static async setConsentGiven(consent: boolean): Promise<void> {

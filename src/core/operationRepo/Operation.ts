@@ -12,8 +12,6 @@ export class Operation<Model> {
   payload?: Partial<SupportedModel>;
   model?: OSModel<Model>;
   applyToRecordId?: string;
-  jwtTokenAvailable: Promise<void>;
-  jwtToken?: string | null;
 
   constructor(
     readonly changeType: CoreChangeType,
@@ -25,11 +23,6 @@ export class Operation<Model> {
     this.model = deltas ? deltas[deltas.length - 1].model : undefined;
     this.applyToRecordId = deltas?.[deltas.length - 1]?.applyToRecordId;
     this.timestamp = Date.now();
-    // eslint-disable-next-line no-async-promise-executor
-    this.jwtTokenAvailable = new Promise<void>(async (resolve) => {
-      this.jwtToken = await Database.getJWTToken();
-      resolve();
-    });
   }
 
   private getPayload(deltas: CoreDelta<Model>[]): any {
@@ -99,8 +92,6 @@ export class Operation<Model> {
       operation.operationId = operationId;
       operation.timestamp = timestamp;
       operation.payload = payload;
-      operation.jwtToken = rawOperation.jwtToken;
-      operation.jwtTokenAvailable = Promise.resolve();
       return operation;
     } else {
       throw new Error(

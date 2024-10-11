@@ -31,8 +31,9 @@ export default class LoginManager {
       // before, logging in, process anything waiting in the delta queue so it's not lost
       OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
 
+      // set Jwt and send Jwt header regardless if jwtRequired
       if (token) {
-        await Database.setJWTToken(token);
+        this._setJwtTokenOnAllModels(token);
       }
 
       const identityModel = OneSignal.coreDirector.getIdentityModel();
@@ -427,5 +428,19 @@ export default class LoginManager {
         `transferSubscription failed: ${JSON.stringify(tansferResult)}}`,
       );
     }
+  }
+
+  /* Helper methods */
+  private static async _setJwtTokenOnAllModels(token?: string): Promise<void> {
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const subscriptionModels =
+      await OneSignal.coreDirector.getAllSubscriptionsModels();
+
+    identityModel?.setJwtToken(token);
+    propertiesModel?.setJwtToken(token);
+    subscriptionModels.forEach((sub) => {
+      sub.setJwtToken(token);
+    });
   }
 }

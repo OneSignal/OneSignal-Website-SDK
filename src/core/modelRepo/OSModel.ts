@@ -18,6 +18,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   onesignalIdAvailableCallback?: (onesignalId: string) => void;
   externalId?: string;
   applyToRecordId?: string;
+  jwtToken?: string;
 
   constructor(
     readonly modelName: ModelName,
@@ -30,6 +31,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     this.data = data;
     this.onesignalId = undefined;
     this.externalId = undefined;
+    this.jwtToken = undefined;
 
     this.awaitOneSignalIdAvailable = new Promise<string>((resolve) => {
       this.onesignalIdAvailableCallback = resolve;
@@ -53,6 +55,11 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   public setExternalId(externalId?: string): void {
     logMethodCall('setExternalId', { externalId });
     this.externalId = externalId;
+  }
+
+  public setJwtToken(jwtToken?: string): void {
+    logMethodCall('setJwtToken', { jwtToken });
+    this.jwtToken = jwtToken;
   }
 
   public setApplyToRecordId(applyToRecordId: string): void {
@@ -105,7 +112,15 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     const modelName = this.modelName;
     const onesignalId = this.onesignalId;
     const externalId = this.externalId;
-    return { modelId, modelName, onesignalId, externalId, ...this.data };
+    const jwtToken = this.jwtToken;
+    return {
+      modelId,
+      modelName,
+      onesignalId,
+      externalId,
+      jwtToken,
+      ...this.data,
+    };
   }
 
   /**
@@ -115,7 +130,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    */
   static decode(encodedModel: EncodedModel): OSModel<SupportedModel> {
     logMethodCall('decode', { encodedModel });
-    const { modelId, modelName, onesignalId, externalId, ...data } =
+    const { modelId, modelName, onesignalId, externalId, jwtToken, ...data } =
       encodedModel;
 
     const decodedModel = new OSModel<SupportedModel>(
@@ -126,6 +141,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
 
     decodedModel.setOneSignalId(onesignalId);
     decodedModel.setExternalId(externalId);
+    decodedModel.setJwtToken(jwtToken);
     return decodedModel;
   }
 }
