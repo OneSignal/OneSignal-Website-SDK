@@ -150,7 +150,6 @@ export default abstract class ExecutorBase {
 
     // TO DO: fix optional model object. should always be defined on operation
     await operation.model?.awaitOneSignalIdAvailable;
-    await operation.jwtTokenAvailable;
 
     let res: ExecutorResult<SupportedModel> = {
       success: false,
@@ -169,7 +168,7 @@ export default abstract class ExecutorBase {
       if (res.result) {
         // since we took a snapshot of the operation, we get a new instance with the correct model reference
         const operationInstance =
-          await Operation.getInstanceWithModelReference(operation);
+          Operation.getInstanceWithModelReference(operation);
         operationInstance?.model?.hydrate(res.result as SupportedModel);
       }
       OperationCache.delete(operation?.operationId);

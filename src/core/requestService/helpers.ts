@@ -95,8 +95,3 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
     aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId),
   };
 }
-
-export async function getJWTHeader(): Promise<APIHeaders | undefined> {
-  const jwtToken = await Database.getJWTToken();
-  return !!jwtToken ? { Authorization: `Bearer ${jwtToken}` } : undefined;
-}

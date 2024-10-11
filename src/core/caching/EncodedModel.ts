@@ -9,5 +9,6 @@ export default interface EncodedModel {
   modelName: ModelName;
   onesignalId?: string;
   externalId?: string;
+  jwtToken?: string;
   [key: string]: unknown;
 }
