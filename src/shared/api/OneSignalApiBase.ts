@@ -5,91 +5,93 @@ import {
 import OneSignalError from '../errors/OneSignalError';
 import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
+import EventHelper from '../helpers/EventHelper';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { APIHeaders } from '../models/APIHeaders';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import { isValidUuid } from '../utils/utils';
 import OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+const OS_API_VERSION = '1';
 
 export class OneSignalApiBase {
   static get(
-    action: string,
-    data?: any,
-    headers?: APIHeaders | undefined,
+    url: string,
+    headers?: Headers,
   ): Promise<OneSignalApiBaseResponse> {
-    return OneSignalApiBase.call('GET', action, data, headers);
+    return OneSignalApiBase.makeRequest('GET', url, undefined, headers);
   }
 
   static post(
-    action: string,
-    data?: any,
-    headers?: APIHeaders | undefined,
+    url: string,
+    body?: any,
+    headers?: Headers,
   ): Promise<OneSignalApiBaseResponse> {
-    return OneSignalApiBase.call('POST', action, data, headers);
+    return OneSignalApiBase.makeRequest('POST', url, body, headers);
   }
 
   static put(
-    action: string,
-    data?: any,
-    headers?: APIHeaders | undefined,
+    url: string,
+    body?: any,
+    headers?: Headers,
   ): Promise<OneSignalApiBaseResponse> {
-    return OneSignalApiBase.call('PUT', action, data, headers);
+    return OneSignalApiBase.makeRequest('PUT', url, body, headers);
   }
 
   static delete(
-    action: string,
-    data?: any,
-    headers?: APIHeaders | undefined,
+    url: string,
+    headers?: Headers,
   ): Promise<OneSignalApiBaseResponse> {
-    return OneSignalApiBase.call('DELETE', action, data, headers);
+    return OneSignalApiBase.makeRequest('DELETE', url, undefined, headers);
   }
 
   static patch(
-    action: string,
-    data?: any,
-    headers?: APIHeaders | undefined,
+    url: string,
+    body?: any,
+    headers?: Headers,
   ): Promise<OneSignalApiBaseResponse> {
-    return OneSignalApiBase.call('PATCH', action, data, headers);
+    return OneSignalApiBase.makeRequest('PATCH', url, body, headers);
   }
 
-  private static call(
+  private static async makeRequest(
     method: SupportedMethods,
-    action: string,
-    data: any,
-    headers: APIHeaders | undefined,
+    url: string,
+    body?: any,
+    headers?: Headers,
   ): Promise<OneSignalApiBaseResponse> {
-    if (!this.requestHasAppId(action, data)) {
+    if (!this.requestHasAppId(url, body)) {
       return Promise.reject(
         new OneSignalApiError(OneSignalApiErrorKind.MissingAppId),
       );
     }
 
-    const callHeaders = new Headers();
-    callHeaders.append('Origin', SdkEnvironment.getOrigin());
-    callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
-    callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
+    const requestHeaders = new Headers({
+      Origin: SdkEnvironment.getOrigin(),
+      'SDK-Version': `onesignal/web/${Environment.version()}`,
+      'Content-Type': 'application/json;charset=UTF-8',
+    });
+
     if (headers) {
-      for (const key of Object.keys(headers)) {
-        callHeaders.append(key, headers[key]);
-      }
+      headers.forEach((value, key) => {
+        requestHeaders.append(key, value);
+      });
     }
 
     const contents: RequestInit = {
       method: method || 'NO_METHOD_SPECIFIED',
-      headers: callHeaders,
+      headers: requestHeaders,
       cache: 'no-cache',
     };
-    if (data) contents.body = JSON.stringify(data);
 
-    const url = `${SdkEnvironment.getOneSignalApiUrl(
+    if (body) contents.body = JSON.stringify(body);
+
+    const requestUrl = `${SdkEnvironment.getOneSignalApiUrl(
       undefined,
-      action,
-    ).toString()}/${action}`;
+      url,
+    ).toString()}/${url}`;
 
-    return OneSignalApiBase.executeFetch(url, contents);
+    return OneSignalApiBase.executeFetch(requestUrl, contents);
   }
 
   private static async executeFetch(
