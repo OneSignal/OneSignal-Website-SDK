@@ -56,10 +56,10 @@ export default class SubscriptionRequests {
     }
     const appId = await MainHelper.getAppId();
 
-    const response = await RequestService.deleteSubscription(
-      { appId },
+    const response = await RequestService.deleteSubscription({
+      appId,
       subscriptionId,
-    );
+    });
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
 
@@ -83,8 +83,7 @@ export default class SubscriptionRequests {
     const appId = await MainHelper.getAppId();
 
     const response = await RequestService.updateSubscription(
-      { appId },
-      subscriptionId,
+      { appId, subscriptionId },
       payload,
     );
     return SubscriptionRequests._processSubscriptionResponse(response);

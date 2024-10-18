@@ -407,8 +407,7 @@ export default class LoginManager {
 
     const retainPreviousOwner = false;
     const transferResponse = await RequestService.transferSubscription(
-      { appId },
-      pushSubscriptionId,
+      { appId, subscriptionId: pushSubscriptionId },
       identity,
       retainPreviousOwner,
     );

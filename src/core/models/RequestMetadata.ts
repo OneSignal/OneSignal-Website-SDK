@@ -1,7 +1,7 @@
-import { APIHeaders } from '../../shared/models/APIHeaders';
-
 export type RequestMetadata = {
+  // path parameters
   appId: string;
   subscriptionId?: string;
-  jwtHeader?: APIHeaders;
+  // sent as header
+  jwtToken?: string;
 };
