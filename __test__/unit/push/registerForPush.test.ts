@@ -1,6 +1,7 @@
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
 import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
+import Log from '../../../src/shared/libraries/Log';
 import BrowserUserAgent from '../../support/models/BrowserUserAgent';
 
 //stub dismisshelper
@@ -9,6 +10,7 @@ jest.mock('../../../src/shared/helpers/DismissHelper');
 describe('Register for push', () => {
   beforeEach(async () => {
     jest.useFakeTimers();
+    jest.spyOn(Log, 'error').mockImplementation(() => {})
     await TestEnvironment.initialize({
       addPrompts: true,
       userAgent: BrowserUserAgent.Default,
