@@ -77,7 +77,7 @@ export default class MainHelper {
     };
     const dataPayload = {
       data,
-      url,
+      launchURL: url,
       buttons: buttons
         ? convertButtonsToNotificationActionType(buttons)
         : undefined,
