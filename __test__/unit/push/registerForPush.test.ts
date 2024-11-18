@@ -1,10 +1,20 @@
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
 import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
+import Log from '../../../src/shared/libraries/Log';
 import BrowserUserAgent from '../../support/models/BrowserUserAgent';
 
 //stub dismisshelper
 jest.mock('../../../src/shared/helpers/DismissHelper');
+
+//stub log
+jest.mock('../../../src/shared/libraries/Log', () => ({
+  debug: jest.fn(),
+  trace: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+}));
 
 describe('Register for push', () => {
   beforeEach(async () => {
@@ -29,6 +39,7 @@ describe('Register for push', () => {
     expect(spy).not.toHaveBeenCalled();
     OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
     await promise;
+    expect(Log.error).toHaveBeenCalled();
     expect(OneSignal.initialized).toBe(true);
     expect(spy).toHaveBeenCalledTimes(1);
   });
@@ -39,6 +50,7 @@ describe('Register for push', () => {
 
     const spy = jest.spyOn(InitHelper, 'registerForPushNotifications');
     await InitHelper.registerForPushNotifications();
+    expect(Log.error).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledTimes(1);
   });
 });
