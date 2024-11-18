@@ -127,3 +127,22 @@ npm rebuild node-sass
 ```
 
 from *inside* the docker container shell.
+
+
+## Debugging Tips for OneSignal WebSDK Sandbox
+
+### To clear your state:
+1) Inspect -> Application -> Clear Site Data button
+
+![image](https://github.com/user-attachments/assets/701e3da1-0c15-4940-a47b-feab55e2b953)
+
+2) Click button left of URL, remove notification permission
+
+![image](https://github.com/user-attachments/assets/72d718a6-15da-4261-8919-2a2b565d1db3)
+
+### In the event of weird errors (can not find your application, it is not configured correctly, etc):
+1) Inspect -> Network -> Disable Cache
+
+![image](https://github.com/user-attachments/assets/83950e91-7278-4f96-8c75-577797cc9697)
+
+2) Refresh
