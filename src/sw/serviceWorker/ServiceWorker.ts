@@ -773,10 +773,27 @@ export class ServiceWorker {
       badge: notification.badgeIcon,
     };
 
-    return self.registration.showNotification(
+    await self.registration.showNotification(
       notification.title,
       notificationOptions,
     );
+
+    await this.afterNotificationDisplayMacOS15ChromiumWorkaround();
+  }
+
+  // Workaround: For Chromium browsers displaying an extra notification, even
+  // when background rules are followed.
+  // For reference, the notification body is "This site has been updated in the background".
+  // https://issues.chromium.org/issues/378103918
+  static async afterNotificationDisplayMacOS15ChromiumWorkaround(): Promise<void> {
+    const userAgentData = (navigator as any).userAgentData;
+    const isMacOS = userAgentData?.platform === 'macOS';
+    const isChromium = !!userAgentData?.brands?.some(
+      (item: { brand: string }) => item.brand === 'Chromium',
+    );
+    if (isMacOS && isChromium) {
+      await awaitableTimeout(1_000);
+    }
   }
 
   /**
