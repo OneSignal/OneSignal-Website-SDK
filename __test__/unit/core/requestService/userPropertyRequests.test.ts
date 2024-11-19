@@ -5,14 +5,8 @@ import { ModelName } from '../../../../src/core/models/SupportedModels';
 import { UserPropertiesModel } from '../../../../src/core/models/UserPropertiesModel';
 import { OSModel } from '../../../../src/core/modelRepo/OSModel';
 import { ExecutorResultFailNotRetriable } from '../../../../src/core/executors/ExecutorResult';
-import Database from '../../../../src/shared/services/Database';
 
 describe('User Property Request tests', () => {
-  beforeAll(() => {
-    // Required for Operation class
-    test.stub(Database.prototype, 'getJWTToken', Promise.resolve([]));
-  });
-
   test('updateUserProperties returns no retry failure result', async () => {
     const delta = {
       changeType: CoreChangeType.Update,

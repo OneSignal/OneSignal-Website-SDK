@@ -17,7 +17,7 @@ export class OneSignalApiSW {
     appId: string,
   ): Promise<ServerAppConfig> {
     Utils.enforceAppId(appId);
-    const response = await OneSignalApiBase.get(`sync/${appId}/web`, null);
+    const response = await OneSignalApiBase.get(`sync/${appId}/web`);
     return response?.result;
   }
 
