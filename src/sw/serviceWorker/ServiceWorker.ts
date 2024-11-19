@@ -773,10 +773,27 @@ export class ServiceWorker {
       badge: notification.badgeIcon,
     };
 
-    return self.registration.showNotification(
+    await self.registration.showNotification(
       notification.title,
       notificationOptions,
     );
+
+    if (this.requiresMacOS15ChromiumAfterDisplayWorkaround()) {
+      await awaitableTimeout(1_000);
+    }
+  }
+
+  // Workaround: For Chromium browsers displaying an extra notification, even
+  // when background rules are followed.
+  // For reference, the notification body is "This site has been updated in the background".
+  // https://issues.chromium.org/issues/378103918
+  static requiresMacOS15ChromiumAfterDisplayWorkaround(): boolean {
+    const userAgentData = (navigator as any).userAgentData;
+    const isMacOS = userAgentData?.platform === 'macOS';
+    const isChromium = !!userAgentData?.brands?.some(
+      (item: { brand: string }) => item.brand === 'Chromium',
+    );
+    return isMacOS && isChromium;
   }
 
   /**
