@@ -363,4 +363,27 @@ export default class User {
 
     return OneSignal.coreDirector.getPropertiesModel()?.data?.tags;
   }
+
+  public setLanguage(language: string): void {
+    logMethodCall('setLanguage', { language });
+
+    if (typeof language !== 'string') {
+      throw new InvalidArgumentError(
+        'language',
+        InvalidArgumentReason.WrongType,
+      );
+    }
+
+    if (!language) {
+      throw new InvalidArgumentError('language', InvalidArgumentReason.Empty);
+    }
+
+    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    propertiesModel?.set('language', language);
+  }
+
+  public getLanguage(): string {
+    logMethodCall('getLanguage');
+    return OneSignal.coreDirector.getPropertiesModel()?.data?.language;
+  }
 }

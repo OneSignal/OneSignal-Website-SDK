@@ -54,4 +54,20 @@ describe('User tests', () => {
 
     expect(tags).toBe(tagsSample);
   });
+
+
+  test('getLanguage should return the correct user language', async () => {
+    await TestEnvironment.initialize();
+
+    const languageSample = 'fr'
+
+    const propertyModel = getDummyPropertyOSModel();
+    propertyModel.set('language', languageSample);
+    OneSignal.coreDirector.add(ModelName.Properties, propertyModel);
+
+    const user = User.createOrGetInstance();
+    const language = user.getLanguage();
+
+    expect(language).toBe(languageSample);
+  });
 });
