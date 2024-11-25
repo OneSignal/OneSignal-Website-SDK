@@ -20,6 +20,27 @@ function chromeUserAgentDataBrands(): Array<{
 }
 
 describe('ServiceWorker', () => {
+  // Define the ServiceWorker global scope type
+  declare const self: ServiceWorkerGlobalScope;
+
+  // Create a mock self object
+  const mockSelf = {
+    registration: {
+      showNotification: jest.fn().mockResolvedValue(undefined),
+    },
+    clients: {
+      openWindow: jest.fn(),
+    }
+  } as unknown as ServiceWorkerGlobalScope;
+
+  beforeAll(() => {
+    // Set up the global ServiceWorker scope
+    Object.defineProperty(global, 'self', {
+      value: mockSelf,
+      writable: true
+    });
+  });
+
   describe('requiresMacOS15ChromiumAfterDisplayWorkaround', () => {
     test('navigator.userAgentData undefined', async () => {
       delete (navigator as any).userAgentData;
