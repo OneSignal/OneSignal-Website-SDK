@@ -170,7 +170,8 @@ describe('ServiceWorker', () => {
           'Test Title',
           expect.objectContaining({
             data: expect.objectContaining({
-              id: expect.any(String)
+              title: "Test Title",
+              notificationId: "test-uuid"
             })
           })
         );
@@ -178,17 +179,25 @@ describe('ServiceWorker', () => {
     });
 
     describe('displayNotification', () => {
-      it('should set requireInteraction to true when persistNotification is true', async () => {
-        (Database.get as jest.Mock).mockResolvedValue({ value: true });
+      beforeEach(() => {
+        // Reset mocks before each test
+        jest.clearAllMocks();
 
+        // Mock Database methods
+        (Database.get as jest.Mock).mockResolvedValue({ value: true });
+        (Database.getAppConfig as jest.Mock).mockResolvedValue({ appId: 'test-app-id' });
+      });
+
+      it('should set requireInteraction to true when persistNotification is true', async () => {
         await ServiceWorker.displayNotification({
           body: '',
+          title: 'Test Title',
           confirmDelivery: false,
           notificationId: 'test-id'
         });
 
         expect(mockSelf.registration.showNotification).toHaveBeenCalledWith(
-          expect.any(String),
+          'Test Title',
           expect.objectContaining({
             requireInteraction: true
           })
@@ -200,12 +209,13 @@ describe('ServiceWorker', () => {
 
         await ServiceWorker.displayNotification({
           body: '',
+          title: 'Test Title',
           confirmDelivery: false,
           notificationId: 'test-id'
         });
 
         expect(mockSelf.registration.showNotification).toHaveBeenCalledWith(
-          expect.any(String),
+          'Test Title',
           expect.objectContaining({
             requireInteraction: true
           })
@@ -217,12 +227,13 @@ describe('ServiceWorker', () => {
 
         await ServiceWorker.displayNotification({
           body: '',
+          title: 'Test Title',
           confirmDelivery: false,
           notificationId: 'test-id'
         });
 
         expect(mockSelf.registration.showNotification).toHaveBeenCalledWith(
-          expect.any(String),
+          'Test Title',
           expect.objectContaining({
             requireInteraction: true
           })
@@ -234,12 +245,13 @@ describe('ServiceWorker', () => {
 
         await ServiceWorker.displayNotification({
           body: '',
+          title: 'Test Title',
           confirmDelivery: false,
           notificationId: 'test-id'
         });
 
         expect(mockSelf.registration.showNotification).toHaveBeenCalledWith(
-          expect.any(String),
+          'Test Title',
           expect.objectContaining({
             requireInteraction: false
           })
