@@ -78,21 +78,8 @@ describe('ServiceWorker', () => {
   });
 
   describe('API', () => {
-    let mockSelf: any;
 
-    beforeEach(() => {
-      // Setup mock ServiceWorker global scope
-      mockSelf = {
-        registration: {
-          showNotification: jest.fn().mockResolvedValue(undefined),
-        },
-        clients: {
-          openWindow: jest.fn(),
-        }
-      };
-      global.self = mockSelf;
-
-      // Reset mocks between tests
+    afterEach(() => {
       jest.clearAllMocks();
     });
 
