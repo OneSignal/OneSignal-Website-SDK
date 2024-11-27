@@ -185,6 +185,7 @@ describe('ServiceWorker', () => {
 
         // Mock Database methods
         (Database.get as jest.Mock).mockResolvedValue({ value: true });
+        (Database.put as jest.Mock).mockResolvedValue({ value: false });
         (Database.getAppConfig as jest.Mock).mockResolvedValue({ appId: 'test-app-id' });
       });
 
@@ -241,13 +242,11 @@ describe('ServiceWorker', () => {
       });
 
       it('should set requireInteraction to false when persistNotification is false', async () => {
-        (Database.get as jest.Mock).mockResolvedValue({ value: false });
-
+        await Database.put('Options', { key: 'persistNotification', value: false });
         await ServiceWorker.displayNotification({
           body: '',
-          title: 'Test Title',
           confirmDelivery: false,
-          notificationId: 'test-id'
+          notificationId: ''
         });
 
         expect(mockSelf.registration.showNotification).toHaveBeenCalledWith(
