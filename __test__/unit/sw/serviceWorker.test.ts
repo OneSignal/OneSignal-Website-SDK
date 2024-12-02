@@ -27,6 +27,7 @@ describe('ServiceWorker', () => {
   const mockSelf = {
     registration: {
       showNotification: jest.fn().mockResolvedValue(undefined),
+      displayNotification: jest.fn().mockResolvedValue(undefined),
     },
     clients: {
       openWindow: jest.fn(),
@@ -180,16 +181,19 @@ describe('ServiceWorker', () => {
 
     describe('displayNotification', () => {
       beforeEach(() => {
-        // Reset mocks before each test
-        jest.clearAllMocks();
+        jest.spyOn(mockSelf.registration, 'showNotification').mockResolvedValue(undefined);
 
-        // Mock Database methods
-        (Database.get as jest.Mock).mockResolvedValue({ value: true });
-        (Database.put as jest.Mock).mockResolvedValue({ value: false });
         (Database.getAppConfig as jest.Mock).mockResolvedValue({ appId: 'test-app-id' });
       });
 
       it('should set requireInteraction to true when persistNotification is true', async () => {
+        (Database.get as jest.Mock).mockImplementation((table: string, key: string) => {
+          if (table === 'Options' && key === 'persistNotification') {
+            return Promise.resolve(true); // This will make requireInteraction false
+          }
+          return Promise.resolve({ value: true }); // Default return value for other keys
+        });
+
         await ServiceWorker.displayNotification({
           body: '',
           title: 'Test Title',
@@ -206,7 +210,12 @@ describe('ServiceWorker', () => {
       });
 
       it('should set requireInteraction to true when persistNotification is undefined', async () => {
-        (Database.get as jest.Mock).mockResolvedValue(undefined);
+        (Database.get as jest.Mock).mockImplementation((table: string, key: string) => {
+          if (table === 'Options' && key === 'persistNotification') {
+            return Promise.resolve(undefined); // This will make requireInteraction false
+          }
+          return Promise.resolve({ value: true }); // Default return value for other keys
+        });
 
         await ServiceWorker.displayNotification({
           body: '',
@@ -224,7 +233,12 @@ describe('ServiceWorker', () => {
       });
 
       it('should set requireInteraction to true when persistNotification is "force"', async () => {
-        (Database.get as jest.Mock).mockResolvedValue({ value: 'force' });
+        (Database.get as jest.Mock).mockImplementation((table: string, key: string) => {
+          if (table === 'Options' && key === 'persistNotification') {
+            return Promise.resolve('force'); // This will make requireInteraction false
+          }
+          return Promise.resolve({ value: true }); // Default return value for other keys
+        });
 
         await ServiceWorker.displayNotification({
           body: '',
@@ -242,9 +256,16 @@ describe('ServiceWorker', () => {
       });
 
       it('should set requireInteraction to false when persistNotification is false', async () => {
-        await Database.put('Options', { key: 'persistNotification', value: false });
+        (Database.get as jest.Mock).mockImplementation((table: string, key: string) => {
+          if (table === 'Options' && key === 'persistNotification') {
+            return Promise.resolve(false); // This will make requireInteraction false
+          }
+          return Promise.resolve({ value: true }); // Default return value for other keys
+        });
+
         await ServiceWorker.displayNotification({
           body: '',
+          title: 'Test Title',
           confirmDelivery: false,
           notificationId: ''
         });
