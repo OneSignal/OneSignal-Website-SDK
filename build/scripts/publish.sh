@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
+
 getPrefix() {
   if [ "$ENV" = "production" ]; then
     echo ""
   elif [ "$ENV" = "staging" ]; then
     echo "Staging-"
-  else [ "$ENV" = "development" ]
+  else
     echo "Dev-"
   fi
 }
@@ -14,10 +15,13 @@ set -x
 
 pwd
 
-mkdir build/releases
+rm -rf build/releases
+mkdir -p build/releases
 
+# Copy files with the prefix
 cp build/bundles/OneSignalSDK.page.js build/releases/$PREFIX"OneSignalSDK.page.js"
 cp build/bundles/OneSignalSDK.page.js.map build/releases/$PREFIX"OneSignalSDK.page.js.map"
+
 cp build/bundles/OneSignalSDK.page.es6.js build/releases/$PREFIX"OneSignalSDK.page.es6.js"
 cp build/bundles/OneSignalSDK.page.es6.js.map build/releases/$PREFIX"OneSignalSDK.page.es6.js.map"
 
@@ -27,7 +31,10 @@ cp build/bundles/OneSignalSDK.sw.js.map build/releases/$PREFIX"OneSignalSDK.sw.j
 cp build/bundles/OneSignalSDK.page.styles.css build/releases/$PREFIX"OneSignalSDK.page.styles.css"
 cp build/bundles/OneSignalSDK.page.styles.css.map build/releases/$PREFIX"OneSignalSDK.page.styles.css.map"
 
-if [ "$ENV" = "staging" ]; then
-  sed -i 's/sourceMappingURL=OneSignal/sourceMappingURL=Staging-OneSignal/' build/releases/Staging-*.js
-  sed -i 's/sourceMappingURL=OneSignal/sourceMappingURL=Staging-OneSignal/' build/releases/Staging-*.css
-fi
+# Update sourceMappingURL to include the prefix
+for file in build/releases/$PREFIX*.js build/releases/$PREFIX*.css; do
+  # Ensure we're only updating files with a sourceMappingURL
+  if grep -q "sourceMappingURL=" "$file"; then
+    sed -i "s|sourceMappingURL=OneSignal|sourceMappingURL=${PREFIX}OneSignal|g" "$file"
+  fi
+done
