@@ -8,6 +8,8 @@ import { getFinalAppConfig } from '../../support/helpers/configHelper';
 import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
 import TestContext from '../../support/environment/TestContext';
 
+const SERVICE_WORKER_PATH = 'push/onesignal/';
+
 describe('ConfigHelper Tests', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize();
@@ -200,4 +202,48 @@ describe('ConfigHelper Tests', () => {
     );
     expect(finalConfig.autoResubscribe).toBe(true);
   });
+
+  test('service worker config override (true) for typical site works', () => {
+    const fakeUserConfig: AppUserConfig = {
+      appId: getRandomUuid(),
+      serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
+      serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
+      serviceWorkerOverrideForTypical: true,
+    }
+
+    const fakeServerConfig = TestContext.getFakeServerAppConfig(
+      ConfigIntegrationKind.TypicalSite,
+    );
+
+    const finalConfig = ConfigHelper.getUserConfigForConfigIntegrationKind(
+      ConfigIntegrationKind.TypicalSite,
+      fakeUserConfig,
+      fakeServerConfig,
+    );
+
+    expect(finalConfig.serviceWorkerPath).toBe('push/onesignal/OneSignalSDKWorker.js');
+    expect(finalConfig.serviceWorkerParam).toEqual({ scope: '/push/onesignal/' });
+  })
+
+  test('service worker config override (false) for typical site works', () => {
+    const fakeUserConfig: AppUserConfig = {
+      appId: getRandomUuid(),
+      serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
+      serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
+      serviceWorkerOverrideForTypical: false,
+    }
+
+    const fakeServerConfig = TestContext.getFakeServerAppConfig(
+      ConfigIntegrationKind.TypicalSite,
+    );
+
+    const finalConfig = ConfigHelper.getUserConfigForConfigIntegrationKind(
+      ConfigIntegrationKind.TypicalSite,
+      fakeUserConfig,
+      fakeServerConfig,
+    );
+
+    expect(finalConfig.serviceWorkerPath).toBe('OneSignalSDKWorker.js');
+    expect(finalConfig.serviceWorkerParam).toEqual({ scope: '/' });
+  })
 });

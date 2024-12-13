@@ -294,10 +294,10 @@ export default class TestContext {
           kind: configIntegrationKind,
         },
         serviceWorker: {
-          path: undefined,
-          workerName: undefined,
-          registrationScope: undefined,
-          customizationEnabled: true,
+          customizationEnabled: false,
+          path: '/',
+          workerName: 'OneSignalSDKWorker.js',
+          registrationScope: '/',
         },
         setupBehavior: {
           allowLocalhostAsSecureOrigin: false,
