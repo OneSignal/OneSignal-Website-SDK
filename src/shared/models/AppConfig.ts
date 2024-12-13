@@ -94,6 +94,7 @@ export interface AppUserConfig {
   allowLocalhostAsSecureOrigin?: boolean;
   pageUrl?: string;
   outcomes?: OutcomesConfig;
+  serviceWorkerOverrideForTypical?: boolean;
 }
 
 export interface AppUserConfigWelcomeNotification {
@@ -274,3 +275,9 @@ export interface ServerAppConfig {
 
   generated_at: number;
 }
+
+export type ServiceWorkerConfigParams = {
+  path?: string;
+  serviceWorkerParam?: { scope: string },
+  serviceWorkerPath?: string;
+};
