@@ -120,11 +120,17 @@ describe('Sdk Version Header Tests', () => {
     expectHeaderToBeSent();
   });
   test('PATCH /subscriptions/<subscription_id>: header is sent', () => {
-    RequestService.updateSubscription({ appId: APP_ID }, DUMMY_EXTERNAL_ID, {});
+    RequestService.updateSubscription(
+      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
+      {},
+    );
     expectHeaderToBeSent();
   });
   test('DELETE /subscriptions/<subscription_id>: header is sent', () => {
-    RequestService.deleteSubscription({ appId: APP_ID }, DUMMY_EXTERNAL_ID);
+    RequestService.updateSubscription(
+      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
+      {},
+    );
     expectHeaderToBeSent();
   });
 });

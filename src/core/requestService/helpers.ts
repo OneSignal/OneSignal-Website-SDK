@@ -9,8 +9,6 @@ import {
   isCompleteSubscriptionObject,
 } from '../utils/typePredicates';
 import AliasPair from './AliasPair';
-import { APIHeaders } from '../../shared/models/APIHeaders';
-
 export function processSubscriptionOperation<Model>(
   operation: Operation<Model>,
 ): {
@@ -96,7 +94,17 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
   };
 }
 
-export async function getJWTHeader(): Promise<APIHeaders | undefined> {
-  const jwtToken = await Database.getJWTToken();
-  return !!jwtToken ? { Authorization: `Bearer ${jwtToken}` } : undefined;
+export function addJwtHeader(header: Headers, jwtToken?: string) {
+  if (jwtToken) {
+    header.append('Authorization', `Bearer ${jwtToken}`);
+  }
+}
+
+export function addOneSignalSubscriptionIdHeader(
+  header: Headers,
+  subscriptionId?: string,
+) {
+  if (subscriptionId) {
+    header.append('OneSignal-Subscription-Id', subscriptionId);
+  }
 }
