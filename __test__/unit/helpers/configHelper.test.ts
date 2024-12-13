@@ -209,7 +209,7 @@ describe('ConfigHelper Tests', () => {
       serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
       serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
       serviceWorkerOverrideForTypical: true,
-    }
+    };
 
     const fakeServerConfig = TestContext.getFakeServerAppConfig(
       ConfigIntegrationKind.TypicalSite,
@@ -221,9 +221,13 @@ describe('ConfigHelper Tests', () => {
       fakeServerConfig,
     );
 
-    expect(finalConfig.serviceWorkerPath).toBe('push/onesignal/OneSignalSDKWorker.js');
-    expect(finalConfig.serviceWorkerParam).toEqual({ scope: '/push/onesignal/' });
-  })
+    expect(finalConfig.serviceWorkerPath).toBe(
+      'push/onesignal/OneSignalSDKWorker.js',
+    );
+    expect(finalConfig.serviceWorkerParam).toEqual({
+      scope: '/push/onesignal/',
+    });
+  });
 
   test('service worker config override (false) for typical site works', () => {
     const fakeUserConfig: AppUserConfig = {
@@ -231,7 +235,7 @@ describe('ConfigHelper Tests', () => {
       serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
       serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
       serviceWorkerOverrideForTypical: false,
-    }
+    };
 
     const fakeServerConfig = TestContext.getFakeServerAppConfig(
       ConfigIntegrationKind.TypicalSite,
@@ -245,5 +249,5 @@ describe('ConfigHelper Tests', () => {
 
     expect(finalConfig.serviceWorkerPath).toBe('OneSignalSDKWorker.js');
     expect(finalConfig.serviceWorkerParam).toEqual({ scope: '/' });
-  })
+  });
 });

@@ -277,6 +277,6 @@ export interface ServerAppConfig {
 
 export type ServiceWorkerConfigParams = {
   path?: string;
-  serviceWorkerParam?: { scope: string },
+  serviceWorkerParam?: { scope: string };
   serviceWorkerPath?: string;
 };

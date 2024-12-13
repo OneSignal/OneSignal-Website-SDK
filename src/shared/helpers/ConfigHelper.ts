@@ -489,7 +489,10 @@ export class ConfigHelper {
     const useUserOverride = userConfig.serviceWorkerOverrideForTypical;
 
     const path = useUserOverride
-      ? Utils.getValueOrDefault(userConfig.path, serverConfig.config.serviceWorker.path)
+      ? Utils.getValueOrDefault(
+          userConfig.path,
+          serverConfig.config.serviceWorker.path,
+        )
       : serverConfig.config.serviceWorker.path;
 
     const serviceWorkerParam = useUserOverride
@@ -499,7 +502,10 @@ export class ConfigHelper {
       : { scope: serverConfig.config.serviceWorker.registrationScope };
 
     const serviceWorkerPath = useUserOverride
-      ? Utils.getValueOrDefault(userConfig.serviceWorkerPath, serverConfig.config.serviceWorker.workerName)
+      ? Utils.getValueOrDefault(
+          userConfig.serviceWorkerPath,
+          serverConfig.config.serviceWorker.workerName,
+        )
       : serverConfig.config.serviceWorker.workerName;
 
     return {
@@ -522,11 +528,8 @@ export class ConfigHelper {
         /*
          Ignores code-based initialization configuration and uses dashboard configuration only.
         */
-        const {
-          path,
-          serviceWorkerPath,
-          serviceWorkerParam,
-        } = this.getServiceWorkerValues(userConfig, serverConfig);
+        const { path, serviceWorkerPath, serviceWorkerParam } =
+          this.getServiceWorkerValues(userConfig, serverConfig);
 
         return {
           appId: serverConfig.app_id,
