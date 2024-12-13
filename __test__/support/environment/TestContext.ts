@@ -134,7 +134,6 @@ export default class TestContext {
             enable: false,
           },
           serviceWorker: {
-            customizationEnabled: false,
             path: '/',
             workerName: 'OneSignalSDKWorker.js',
             registrationScope: '/',
@@ -294,10 +293,9 @@ export default class TestContext {
           kind: configIntegrationKind,
         },
         serviceWorker: {
-          path: undefined,
-          workerName: undefined,
-          registrationScope: undefined,
-          customizationEnabled: true,
+          path: '/',
+          workerName: 'OneSignalSDKWorker.js',
+          registrationScope: '/',
         },
         setupBehavior: {
           allowLocalhostAsSecureOrigin: false,

@@ -18,6 +18,7 @@ import {
   AppConfig,
   ConfigIntegrationKind,
   ServerAppPromptConfig,
+  ServiceWorkerConfigParams,
 } from '../models/AppConfig';
 import {
   AppUserConfigCustomLinkOptions,
@@ -481,6 +482,39 @@ export class ConfigHelper {
     };
   }
 
+  public static getServiceWorkerValues(
+    userConfig: AppUserConfig,
+    serverConfig: ServerAppConfig,
+  ): ServiceWorkerConfigParams {
+    const useUserOverride = userConfig.serviceWorkerOverrideForTypical;
+
+    const path = useUserOverride
+      ? Utils.getValueOrDefault(
+          userConfig.path,
+          serverConfig.config.serviceWorker.path,
+        )
+      : serverConfig.config.serviceWorker.path;
+
+    const serviceWorkerParam = useUserOverride
+      ? Utils.getValueOrDefault(userConfig.serviceWorkerParam, {
+          scope: serverConfig.config.serviceWorker.registrationScope,
+        })
+      : { scope: serverConfig.config.serviceWorker.registrationScope };
+
+    const serviceWorkerPath = useUserOverride
+      ? Utils.getValueOrDefault(
+          userConfig.serviceWorkerPath,
+          serverConfig.config.serviceWorker.workerName,
+        )
+      : serverConfig.config.serviceWorker.workerName;
+
+    return {
+      path,
+      serviceWorkerParam,
+      serviceWorkerPath,
+    };
+  }
+
   public static getUserConfigForConfigIntegrationKind(
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
@@ -490,19 +524,20 @@ export class ConfigHelper {
       configIntegrationKind,
     );
     switch (integrationCapabilities.configuration) {
-      case IntegrationConfigurationKind.Dashboard:
+      case IntegrationConfigurationKind.Dashboard: {
         /*
          Ignores code-based initialization configuration and uses dashboard configuration only.
         */
+        const { path, serviceWorkerPath, serviceWorkerParam } =
+          this.getServiceWorkerValues(userConfig, serverConfig);
+
         return {
           appId: serverConfig.app_id,
           autoRegister: false,
           autoResubscribe: serverConfig.config.autoResubscribe,
-          path: serverConfig.config.serviceWorker.path,
-          serviceWorkerPath: serverConfig.config.serviceWorker.workerName,
-          serviceWorkerParam: {
-            scope: serverConfig.config.serviceWorker.registrationScope,
-          },
+          path,
+          serviceWorkerPath,
+          serviceWorkerParam,
           subdomainName: serverConfig.config.siteInfo.proxyOrigin,
           promptOptions:
             this.getPromptOptionsForDashboardConfiguration(serverConfig),
@@ -612,6 +647,7 @@ export class ConfigHelper {
             unattributed: serverConfig.config.outcomes.unattributed,
           },
         };
+      }
       case IntegrationConfigurationKind.JavaScript: {
         /*
           Ignores dashboard configuration and uses code-based configuration only.
