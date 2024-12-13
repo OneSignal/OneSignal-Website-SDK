@@ -15,7 +15,6 @@ set -x
 
 pwd
 
-rm -rf build/releases
 mkdir -p build/releases
 
 # Copy files with the prefix
