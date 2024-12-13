@@ -244,7 +244,6 @@ export interface ServerAppConfig {
       path?: string;
       workerName?: string;
       registrationScope?: string;
-      customizationEnabled: boolean;
     };
     setupBehavior?: {
       allowLocalhostAsSecureOrigin: false;
