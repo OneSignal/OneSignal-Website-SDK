@@ -490,6 +490,24 @@
           }
         ],
         "returnType": "void"
+      },
+      {
+        "name": "setLanguage",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "language",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "getLanguage",
+        "isAsync": false,
+        "args": [],
+        "returnType": "string"
       }
     ],
     "properties": [
