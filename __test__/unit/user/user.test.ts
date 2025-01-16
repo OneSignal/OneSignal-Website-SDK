@@ -69,4 +69,19 @@ describe('User tests', () => {
 
     expect(language).toBe(languageSample);
   });
+
+  test('setLanguage should call the properties model set method', async () => {
+    await TestEnvironment.initialize();
+
+    const languageSample = 'fr';
+
+    const propertyModel = getDummyPropertyOSModel();
+    const setLanguageSpy = jest.spyOn(propertyModel, 'set');
+    OneSignal.coreDirector.add(ModelName.Properties, propertyModel);
+
+    const user = User.createOrGetInstance();
+    user.setLanguage(languageSample);
+
+    expect(setLanguageSpy).toHaveBeenCalledWith('language', languageSample);
+  });
 });
