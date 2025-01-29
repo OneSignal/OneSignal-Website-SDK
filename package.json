@@ -13,7 +13,7 @@
     "postcss-discard-comments": "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-2.0.4.tgz",
     "postcss-filter-plugins": "https://registry.npmjs.org/postcss-filter-plugins/-/postcss-filter-plugins-2.0.2.tgz",
     "regenerator-runtime": "^0.13.2",
-    "sass": "^1.62.0",
+    "sass": "^1.83.4",
     "terser-webpack-plugin": "^5.3.7",
     "tslib": "^2.5.0",
     "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz"
@@ -94,7 +94,6 @@
     "nock": "^9.1.6",
     "node-dir": "^0.1.16",
     "node-fetch": "^2.6.1",
-    "node-sass": "^8.0.0",
     "nyc": "^11.1.0",
     "postcss-loader": "^7.2.4",
     "prettier": "3.0.2",

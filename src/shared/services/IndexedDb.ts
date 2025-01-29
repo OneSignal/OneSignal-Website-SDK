@@ -84,6 +84,10 @@ export default class IndexedDb {
     }
   }
 
+  public objectStoreNames(): string[] {
+    return Array.from(this.database?.objectStoreNames || []);
+  }
+
   /**
    * Error events bubble. Error events are targeted at the request that generated the error, then the event bubbles to
    * the transaction, and then finally to the database object. If you want to avoid adding error handlers to every
@@ -186,7 +190,7 @@ export default class IndexedDb {
   // Motivation: This is done to correct the keyPath, you can't change it
   // so a new table must be created.
   // Background: Table was created with wrong keyPath of "notification.id"
-  // for new visitors for versions 160000.beta4 to 160000. Writes were
+  // for new visitors for versions 160000.beta4 to 160000.beta8. Writes were
   // attempted as "notificationId" in released 160000 however they may
   // have failed if the visitor was new when those releases were in the wild.
   // However those new on 160000.beta4 to 160000.beta8 will have records
@@ -258,6 +262,7 @@ export default class IndexedDb {
       );
     };
   }
+
   private migrateModelNameSubscriptionsTableForV6(
     db: IDBDatabase,
     transaction: IDBTransaction,
@@ -310,6 +315,44 @@ export default class IndexedDb {
     });
   }
 
+  private async dbOperation<T>(
+    table: string,
+    method: 'get' | 'getAll' | 'put' | 'delete' | 'clear',
+    keyOrValue?: IDBValidKey,
+  ): Promise<T> {
+    const database = await this.ensureDatabaseOpen();
+    return await new Promise<T>((resolve, reject) => {
+      try {
+        const store = database
+          .transaction(
+            table,
+            method === 'get' || method === 'getAll' ? 'readonly' : 'readwrite',
+          )
+          .objectStore(table);
+
+        const request: IDBRequest =
+          method === 'getAll' || method === 'clear'
+            ? store[method]()
+            : store[method](keyOrValue as IDBValidKey);
+
+        request.onsuccess = () => {
+          // resolve(method === 'put' ? keyOrValue : request.result);
+          resolve(request.result);
+        };
+        request.onerror = (e) => {
+          Log.error(
+            'Database ' + method.toUpperCase() + ' Transaction Error:',
+            e,
+          );
+          reject(e);
+        };
+      } catch (e) {
+        Log.error('Database ' + method.toUpperCase() + ' Error:', e);
+        reject(e);
+      }
+    });
+  }
+
   /**
    * Asynchronously retrieves the value of the key at the table (if key is specified), or the entire table
    * (if key is not specified).
@@ -318,95 +361,20 @@ export default class IndexedDb {
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
   public async get(table: string, key?: string): Promise<any> {
-    const database = await this.ensureDatabaseOpen();
-    if (key) {
-      // Return a table-key value
-      return await new Promise((resolve, reject) => {
-        const request: IDBRequest = database
-          .transaction(table)
-          .objectStore(table)
-          .get(key);
-        request.onsuccess = () => {
-          resolve(request.result);
-        };
-        request.onerror = () => {
-          reject(request.error);
-        };
-      });
-    } else {
-      // Return all values in table
-      return await new Promise((resolve, reject) => {
-        const jsonResult: { [key: string]: any } = {};
-        const cursor = database
-          .transaction(table)
-          .objectStore(table)
-          .openCursor();
-        cursor.onsuccess = (event: any) => {
-          const cursorResult: IDBCursorWithValue = event.target.result;
-          if (cursorResult) {
-            const cursorResultKey: string = cursorResult.key as string;
-            jsonResult[cursorResultKey] = cursorResult.value;
-            cursorResult.continue();
-          } else {
-            resolve(jsonResult);
-          }
-        };
-        cursor.onerror = () => {
-          reject(cursor.error);
-        };
-      });
-    }
+    return key
+      ? this.dbOperation(table, 'get', key)
+      : this.dbOperation(table, 'getAll');
   }
 
   public async getAll<T>(table: string): Promise<T[]> {
-    const database = await this.ensureDatabaseOpen();
-    return await new Promise<T[]>((resolve, reject) => {
-      const cursor = database
-        .transaction(table)
-        .objectStore(table)
-        .openCursor();
-      const result: T[] = [];
-      cursor.onsuccess = (event: any) => {
-        const cursorResult: IDBCursorWithValue = event.target.result;
-        if (cursorResult) {
-          result.push(cursorResult.value as T);
-          cursorResult.continue();
-        } else {
-          resolve(result);
-        }
-      };
-      cursor.onerror = () => {
-        reject(cursor.error);
-      };
-    });
+    return this.dbOperation(table, 'getAll');
   }
 
   /**
    * Asynchronously puts the specified value in the specified table.
    */
-  public async put(table: string, key: any) {
-    await this.ensureDatabaseOpen();
-    return await new Promise((resolve, reject) => {
-      try {
-        const request = this.database
-          ?.transaction([table], 'readwrite')
-          .objectStore(table)
-          .put(key);
-
-        if (request) {
-          request.onsuccess = () => {
-            resolve(key);
-          };
-          request.onerror = (e) => {
-            Log.error('Database PUT Transaction Error:', e);
-            reject(e);
-          };
-        }
-      } catch (e) {
-        Log.error('Database PUT Error:', e);
-        reject(e);
-      }
-    });
+  public async put(table: string, value: any) {
+    return this.dbOperation(table, 'put', value);
   }
 
   /**
@@ -415,26 +383,8 @@ export default class IndexedDb {
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   public async remove(table: string, key?: string) {
-    const database = await this.ensureDatabaseOpen();
-    return new Promise((resolve, reject) => {
-      try {
-        const store = database
-          .transaction([table], 'readwrite')
-          .objectStore(table);
-        // If key is present remove a single key from a table.
-        // Otherwise wipe the table
-        const request = key ? store.delete(key) : store.clear();
-        request.onsuccess = () => {
-          resolve(key);
-        };
-        request.onerror = (e) => {
-          Log.error('Database REMOVE Transaction Error:', e);
-          reject(e);
-        };
-      } catch (e) {
-        Log.error('Database REMOVE Error:', e);
-        reject(e);
-      }
-    });
+    return key
+      ? this.dbOperation(table, 'delete', key)
+      : this.dbOperation(table, 'clear');
   }
 }

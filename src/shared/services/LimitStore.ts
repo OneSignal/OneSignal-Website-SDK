@@ -9,10 +9,10 @@
  ["national", "park"]
  */
 export default class LimitStore {
-  static store = {};
+  static store: Record<string, Array<unknown>> = {};
   static LIMIT = 2;
 
-  static put(key, value) {
+  static put<T>(key: string, value: T) {
     if (LimitStore.store[key] === undefined) {
       LimitStore.store[key] = [null, null];
     }
@@ -23,26 +23,26 @@ export default class LimitStore {
     return LimitStore.store[key];
   }
 
-  static get(key) {
+  static get<T>(key: string): T[] {
     if (LimitStore.store[key] === undefined) {
       LimitStore.store[key] = [null, null];
     }
-    return LimitStore.store[key];
+    return LimitStore.store[key] as T[];
   }
 
-  static getFirst(key) {
-    return LimitStore.get(key)[0];
+  static getFirst<T>(key: string) {
+    return LimitStore.get<T>(key)[0];
   }
 
-  static getLast(key) {
-    return LimitStore.get(key)[1];
+  static getLast<T>(key: string) {
+    return LimitStore.get<T>(key)[1];
   }
 
-  static remove(key) {
+  static remove(key: string) {
     delete LimitStore.store[key];
   }
 
-  static isEmpty(key) {
+  static isEmpty(key: string) {
     const values = LimitStore.get(key);
     return values[0] === null && values[1] === null;
   }
