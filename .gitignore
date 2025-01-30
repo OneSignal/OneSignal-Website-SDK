@@ -6,7 +6,7 @@ build/bundles
 build/releases
 build/size-analysis.html
 /config.json
-
+package-lock.json
 
 .DS_STORE
 *.pem
