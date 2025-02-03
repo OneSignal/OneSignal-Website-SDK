@@ -33,7 +33,7 @@ describe('Sdk Version Header Tests', () => {
   // Set up the fetch spy before each test
   beforeEach(() => {
     originalFetch = global.fetch;
-    global.fetch = jest.fn();
+    global.fetch = vi.fn();
   });
 
   // Restore the original fetch method after each test
@@ -43,7 +43,7 @@ describe('Sdk Version Header Tests', () => {
 
   beforeAll(() => {
     test.nock({});
-    test.stub(Environment, 'version', '160000');
+    vi.spyOn(Environment, 'version').mockReturnValue(160000);
   });
 
   test('POST /users: SDK-Version header is sent', () => {

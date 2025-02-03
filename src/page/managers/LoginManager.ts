@@ -21,6 +21,8 @@ export default class LoginManager {
     const consentRequired = LocalStorage.getConsentRequired();
     const consentGiven = await Database.getConsentGiven();
 
+    console.log('consentRequired', consentRequired);
+
     if (consentRequired && !consentGiven) {
       throw new OneSignalError(
         'Login: Consent required but not given, skipping login',
@@ -189,6 +191,7 @@ export default class LoginManager {
     isIdentified: boolean,
     subscriptionId?: string,
   ): Promise<Partial<UserData>> {
+    console.log('identifyOrUpsertUser', userData, isIdentified, subscriptionId);
     logMethodCall('LoginManager.identifyOrUpsertUser', {
       userData,
       isIdentified,
@@ -214,6 +217,7 @@ export default class LoginManager {
   ): Promise<UserData> {
     logMethodCall('LoginManager.upsertUser', { userData, subscriptionId });
 
+    console.log('upsertUser', userData);
     if (retry === 0) {
       throw new OneSignalError('Login: upsertUser failed: max retries reached');
     }
@@ -224,6 +228,7 @@ export default class LoginManager {
     // only accepts one alias, so remove other aliases only leaving external_id
     this.stripAliasesOtherThanExternalId(userData);
 
+    console.log('userData', appId, userData);
     const response = await RequestService.createUser(
       { appId, subscriptionId },
       userData,
@@ -313,6 +318,7 @@ export default class LoginManager {
     );
     const identifyResponseStatus = identifyUserResponse?.status;
 
+    console.log('identifyResponseStatus', identifyResponseStatus);
     if (identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
       Log.info('identifyUser succeeded');
 

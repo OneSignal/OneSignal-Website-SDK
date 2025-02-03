@@ -20,19 +20,18 @@ function expectPermissionChangeEvent(
 
 describe('Notifications namespace permission properties', () => {
   beforeEach(async () => {
-    jest.useFakeTimers();
-    test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    vi.useFakeTimers();
+    vi.spyOn(ModelCache.prototype, 'load').mockResolvedValue({});
     TestEnvironment.initialize();
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   test('When permission changes to granted, ensure permissionChange fires with true', async () => {
     const expectedPromise = expectPermissionChangeEvent(true);
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Granted,
     );
     await expectedPromise;
@@ -40,13 +39,11 @@ describe('Notifications namespace permission properties', () => {
 
   test('When permission changes to Denied, ensure permissionChange fires with false', async () => {
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Granted,
     );
 
     const expectedPromise = expectPermissionChangeEvent(false);
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Denied,
     );
     await expectedPromise;
@@ -54,13 +51,11 @@ describe('Notifications namespace permission properties', () => {
 
   test('When permission changes to Default, ensure permissionChange fires with false', async () => {
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Granted,
     );
 
     const expectedPromise = expectPermissionChangeEvent(false);
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Default,
     );
     await expectedPromise;
@@ -68,7 +63,6 @@ describe('Notifications namespace permission properties', () => {
 
   test('When permission changes to granted, we update the permission properties on the Notifications namespace', async () => {
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Granted,
     );
 
@@ -80,7 +74,6 @@ describe('Notifications namespace permission properties', () => {
 
   test('When permission changes to default, we update the permission properties on the Notifications namespace', async () => {
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Default,
     );
 
@@ -92,7 +85,6 @@ describe('Notifications namespace permission properties', () => {
 
   test('When permission changes to denied, we update the permission properties on the Notifications namespace', async () => {
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Denied,
     );
 
@@ -113,15 +105,12 @@ describe('Notifications namespace permission properties', () => {
 
     // Change permissions through all possible states to ensure the event has had a chance to fire
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Granted,
     );
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Default,
     );
     await PermissionManager.mockNotificationPermissionChange(
-      test,
       NotificationPermission.Denied,
     );
   });

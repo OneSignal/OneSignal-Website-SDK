@@ -12,50 +12,57 @@ import {
 import { DELTA_QUEUE_TIME_ADVANCE } from '../../support/constants';
 import { CoreDelta } from '../../../src/core/models/CoreDeltas';
 import { generateNewSubscription } from '../../support/helpers/core';
-import 'jest-localstorage-mock';
 import ExecutorBase from '../../../src/core/executors/ExecutorBase';
+import { MockInstance } from 'vitest';
 
 // class mocks
-jest.mock('../../../src/core/operationRepo/Operation');
+vi.mock('../../../src/core/operationRepo/Operation');
 
 describe('Executor tests', () => {
-  let spyProcessOperationQueue:
-    | jest.SpyInstance<void, [() => Promise<void>], any>
-    | jest.SpyInstance<void>;
+  let spyProcessOperationQueue: MockInstance;
 
   beforeEach(async () => {
-    spyProcessOperationQueue = jest.spyOn(
+    spyProcessOperationQueue = vi.spyOn(
       ExecutorBase.prototype as any,
       '_processOperationQueue',
     );
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
-    test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
-    test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', []);
-    test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', []);
-    test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', []);
+    vi.spyOn(ModelCache.prototype, 'load').mockResolvedValue({});
+    vi.spyOn(
+      PropertiesExecutor.prototype,
+      'getOperationsFromCache',
+    ).mockReturnValue([]);
+    vi.spyOn(
+      IdentityExecutor.prototype,
+      'getOperationsFromCache',
+    ).mockReturnValue([]);
+    vi.spyOn(
+      SubscriptionExecutor.prototype,
+      'getOperationsFromCache',
+    ).mockReturnValue([]);
     await TestEnvironment.initialize();
   });
 
   afterAll(async () => {
-    jest.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers();
     await Promise.all(
       spyProcessOperationQueue.mock.results.map((element) => {
         return element.value;
       }),
     );
 
-    jest.resetModules();
+    vi.resetModules();
   });
 
   /* F L U S H */
   test('Subscriptions executor flushes deltas at end of `processDeltaQueue`', async () => {
-    const processDeltaQueueSpy = jest.spyOn(
+    const processDeltaQueueSpy = vi.spyOn(
       SubscriptionExecutor.prototype,
       'processDeltaQueue',
     );
-    const flushDeltasSpy = jest.spyOn(
+    const flushDeltasSpy = vi.spyOn(
       SubscriptionExecutor.prototype as any,
       '_flushDeltas',
     );
@@ -66,18 +73,18 @@ describe('Executor tests', () => {
       model: new OSModel(ModelName.Subscriptions, {}),
     });
 
-    jest.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
+    vi.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
 
     expect(processDeltaQueueSpy).toHaveBeenCalledTimes(1);
     expect(flushDeltasSpy).toHaveBeenCalledTimes(1);
   });
 
   test('Identity executor flushes deltas at end of `processDeltaQueue`', async () => {
-    const processDeltaQueueSpy = jest.spyOn(
+    const processDeltaQueueSpy = vi.spyOn(
       IdentityExecutor.prototype,
       'processDeltaQueue',
     );
-    const flushDeltasSpy = jest.spyOn(
+    const flushDeltasSpy = vi.spyOn(
       IdentityExecutor.prototype as any,
       '_flushDeltas',
     );
@@ -88,18 +95,18 @@ describe('Executor tests', () => {
       model: new OSModel(ModelName.Identity, {}),
     });
 
-    jest.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
+    vi.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
 
     expect(processDeltaQueueSpy).toHaveBeenCalledTimes(1);
     expect(flushDeltasSpy).toHaveBeenCalledTimes(1);
   });
 
   test('User Properties executor flushes deltas at end of `processDeltaQueue`', async () => {
-    const processDeltaQueueSpy = jest.spyOn(
+    const processDeltaQueueSpy = vi.spyOn(
       PropertiesExecutor.prototype,
       'processDeltaQueue',
     );
-    const flushDeltasSpy = jest.spyOn(
+    const flushDeltasSpy = vi.spyOn(
       PropertiesExecutor.prototype as any,
       '_flushDeltas',
     );
@@ -110,7 +117,7 @@ describe('Executor tests', () => {
       model: new OSModel(ModelName.Properties, {}),
     });
 
-    jest.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
+    vi.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
 
     expect(processDeltaQueueSpy).toHaveBeenCalledTimes(1);
     expect(flushDeltasSpy).toHaveBeenCalledTimes(1);
@@ -119,7 +126,7 @@ describe('Executor tests', () => {
   /* S U B S C R I P T I O N   E X E C U T O R   H E L P E R S */
   test('separateDeltasByModelId returns correct delta matrix', async () => {
     const model = generateNewSubscription();
-    const separateDeltasByModelIdSpy = jest.spyOn(
+    const separateDeltasByModelIdSpy = vi.spyOn(
       SubscriptionExecutor.prototype as any,
       'separateDeltasByModelId',
     );
@@ -132,7 +139,7 @@ describe('Executor tests', () => {
     const { modelRepo } = OneSignal.coreDirector.core;
     modelRepo?.broadcast(delta);
 
-    jest.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers();
 
     const expectedResult: CoreDelta<SupportedModel>[][] = [[delta]];
     expect(separateDeltasByModelIdSpy).toHaveReturnedWith(
@@ -142,7 +149,7 @@ describe('Executor tests', () => {
 
   test('separateDeltasByChangeType returns correct delta array map', async () => {
     const model = generateNewSubscription();
-    const separateDeltasByChangeTypeSpy = jest.spyOn(
+    const separateDeltasByChangeTypeSpy = vi.spyOn(
       SubscriptionExecutor.prototype as any,
       'separateDeltasByChangeType',
     );
@@ -154,7 +161,7 @@ describe('Executor tests', () => {
     const { modelRepo } = OneSignal.coreDirector.core;
     modelRepo?.broadcast(delta);
 
-    jest.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers();
 
     const expectedResult: Partial<{
       [key in CoreChangeType]: CoreDelta<SupportedModel>[];

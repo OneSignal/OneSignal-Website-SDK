@@ -12,7 +12,6 @@ import {
   mockUserAgent,
 } from './TestEnvironmentHelpers';
 import OperationCache from '../../../src/core/caching/OperationCache';
-import 'fake-indexeddb/auto';
 import { RecursivePartial } from '../../../src/shared/context/Utils';
 import { ModelName } from '../../../src/core/models/SupportedModels';
 import {
@@ -63,10 +62,8 @@ export class TestEnvironment {
         getDummyPushSubscriptionOSModel(),
         false,
       );
-      test.stub(
-        MainHelper,
-        'getCurrentPushToken',
-        Promise.resolve(DUMMY_PUSH_TOKEN),
+      vi.spyOn(MainHelper, 'getCurrentPushToken').mockResolvedValue(
+        DUMMY_PUSH_TOKEN,
       );
     }
 

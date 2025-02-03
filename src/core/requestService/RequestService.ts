@@ -46,6 +46,7 @@ export class RequestService {
 
     requestBody['refresh_device_metadata'] = true;
 
+    console.log('requestBody', appId, requestBody);
     return OneSignalApiBase.post(`apps/${appId}/users`, requestBody, headers);
   }
 
@@ -140,6 +141,10 @@ export class RequestService {
     identity: SupportedIdentity,
   ): Promise<OneSignalApiBaseResponse> {
     const { appId } = requestMetadata;
+    console.log(
+      'addAlias',
+      `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
+    );
     return OneSignalApiBase.patch(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
       { identity },

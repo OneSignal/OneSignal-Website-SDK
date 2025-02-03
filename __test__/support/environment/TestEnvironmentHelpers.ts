@@ -17,15 +17,13 @@ import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespac
 import UserNamespace from '../../../src/onesignal/UserNamespace';
 import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
 import bowser from 'bowser';
+import { bowserCastle } from '../../../src/shared/utils/bowserCastle';
 
 declare const global: any;
 
-jest.mock('../../../src/shared/utils/bowserCastle', () => ({
-  bowserCastle: jest.fn(),
+vi.mock('../../../src/shared/utils/bowserCastle', () => ({
+  bowserCastle: vi.fn(),
 }));
-
-// Import the mocked module
-const { bowserCastle } = require('../../../src/shared/utils/bowserCastle');
 
 export function resetDatabase() {
   // Erase and reset IndexedDb database name to something random

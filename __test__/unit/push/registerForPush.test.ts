@@ -5,20 +5,22 @@ import Log from '../../../src/shared/libraries/Log';
 import BrowserUserAgent from '../../support/models/BrowserUserAgent';
 
 //stub dismisshelper
-jest.mock('../../../src/shared/helpers/DismissHelper');
+vi.mock('../../../src/shared/helpers/DismissHelper');
 
 //stub log
-jest.mock('../../../src/shared/libraries/Log', () => ({
-  debug: jest.fn(),
-  trace: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
+vi.mock('../../../src/shared/libraries/Log', () => ({
+  default: {
+    debug: vi.fn(),
+    trace: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 describe('Register for push', () => {
   beforeEach(async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     await TestEnvironment.initialize({
       addPrompts: true,
       userAgent: BrowserUserAgent.Default,
@@ -26,14 +28,14 @@ describe('Register for push', () => {
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   test('registerForPushNotifications: before OneSignal.initialized', async () => {
     (global as any).OneSignal.initialized = false;
     (global as any).OneSignal._initCalled = false;
 
-    const spy = jest.spyOn(InitHelper, 'registerForPushNotifications');
+    const spy = vi.spyOn(InitHelper, 'registerForPushNotifications');
     const promise = OneSignal.User.PushSubscription.optIn();
 
     expect(spy).not.toHaveBeenCalled();
@@ -48,7 +50,7 @@ describe('Register for push', () => {
     (global as any).OneSignal.initialized = true;
     (global as any).OneSignal._initCalled = false;
 
-    const spy = jest.spyOn(InitHelper, 'registerForPushNotifications');
+    const spy = vi.spyOn(InitHelper, 'registerForPushNotifications');
     await InitHelper.registerForPushNotifications();
     expect(Log.error).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledTimes(1);

@@ -61,6 +61,7 @@ export class OneSignalApiBase {
     data: any,
     headers: APIHeaders | undefined,
   ): Promise<OneSignalApiBaseResponse> {
+    console.log('call', { action, data, method });
     if (!this.requestHasAppId(action, data)) {
       return Promise.reject(
         new OneSignalApiError(OneSignalApiErrorKind.MissingAppId),

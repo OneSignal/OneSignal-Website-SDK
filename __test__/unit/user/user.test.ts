@@ -1,10 +1,11 @@
+import { describe, expect, test, vi } from "vitest";
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import User from '../../../src/onesignal/User';
 import { ModelName } from '../../../src/core/models/SupportedModels';
 import { getDummyPropertyOSModel } from '../../support/helpers/core';
 
 // suppress all internal logging
-jest.mock('../../../src/shared/libraries/Log');
+vi.mock('../../../src/shared/libraries/Log');
 
 describe('User tests', () => {
   test('getTags called without a properties model should return undefined tags', async () => {
@@ -76,7 +77,7 @@ describe('User tests', () => {
     const languageSample = 'fr';
 
     const propertyModel = getDummyPropertyOSModel();
-    const setLanguageSpy = jest.spyOn(propertyModel, 'set');
+    const setLanguageSpy = vi.spyOn(propertyModel, 'set');
     OneSignal.coreDirector.add(ModelName.Properties, propertyModel);
 
     const user = User.createOrGetInstance();
