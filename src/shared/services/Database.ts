@@ -38,17 +38,18 @@ interface DatabaseResult {
  * "NotificationOpened" = Pending Notification Click events that haven't fired yet
  */
 
+export const INDEXED_DB_NAME = 'ONE_SIGNAL_SDK_DB';
 export const TABLE_OUTCOMES_NOTIFICATION_CLICKED =
   'Outcomes.NotificationClicked';
 export const TABLE_OUTCOMES_NOTIFICATION_RECEIVED =
   'Outcomes.NotificationReceived';
+export const TABLE_NOTIFICATION_OPENED = 'NotificationOpened';
 
 export type OneSignalDbTable =
   | 'Options'
   | 'Ids'
-  | 'NotificationOpened'
   | 'Sessions'
-  | 'NotificationOpened'
+  | typeof TABLE_NOTIFICATION_OPENED
   | typeof TABLE_OUTCOMES_NOTIFICATION_RECEIVED
   | typeof TABLE_OUTCOMES_NOTIFICATION_CLICKED
   | 'SentUniqueOutcome'
@@ -76,7 +77,7 @@ export default class Database {
 
   public static get singletonInstance(): Database {
     if (!Database.databaseInstanceName) {
-      Database.databaseInstanceName = 'ONE_SIGNAL_SDK_DB';
+      Database.databaseInstanceName = INDEXED_DB_NAME;
     }
     if (!Database.databaseInstance) {
       Database.databaseInstance = new Database(Database.databaseInstanceName);
@@ -232,7 +233,7 @@ export default class Database {
         const notificationDetails =
           appState.pendingNotificationClickEvents[url];
         if (notificationDetails) {
-          await this.put('NotificationOpened', {
+          await this.put(TABLE_NOTIFICATION_OPENED, {
             url: url,
             data: (notificationDetails as any).data,
             timestamp: (notificationDetails as any).timestamp,
@@ -241,7 +242,7 @@ export default class Database {
           // If we get an object like:
           // { "http://site.com/page": null}
           // It means we need to remove that entry
-          await this.remove('NotificationOpened', url);
+          await this.remove(TABLE_NOTIFICATION_OPENED, url);
         }
       }
     }
@@ -418,7 +419,7 @@ export default class Database {
     event: NotificationClickEventInternal,
   ): Promise<void> {
     await this.put(
-      'NotificationOpened',
+      TABLE_NOTIFICATION_OPENED,
       NotificationClickForOpenHandlingSerializer.toDatabase(event),
     );
   }
@@ -427,7 +428,7 @@ export default class Database {
     const clickedNotifications: PendingNotificationClickEvents = {};
     const eventsFromDb =
       await this.getAll<NotificationClickForOpenHandlingSchema>(
-        'NotificationOpened',
+        TABLE_NOTIFICATION_OPENED,
       );
     for (const eventFromDb of eventsFromDb) {
       const event =
@@ -488,7 +489,7 @@ export default class Database {
   static async rebuild() {
     return Promise.all([
       Database.singletonInstance.remove('Ids'),
-      Database.singletonInstance.remove('NotificationOpened'),
+      Database.singletonInstance.remove(TABLE_NOTIFICATION_OPENED),
       Database.singletonInstance.remove('Options'),
       Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED),
       Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_CLICKED),

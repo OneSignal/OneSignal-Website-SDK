@@ -15,3 +15,7 @@ declare namespace jest {
     nock: (responseBody: any, status?: number) => void;
   }
 }
+
+declare namespace global {
+  const flushPromises: () => Promise<void>;
+}

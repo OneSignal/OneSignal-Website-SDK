@@ -1,3 +1,7 @@
+import { setImmediate } from 'timers';
+require('fake-indexeddb/auto');
+require('core-js/actual/structured-clone');
+
 test.stub = (obj: any, method: string, returnValue?: any) => {
   const stub = jest.spyOn(obj, method);
   stub.mockReturnValue(returnValue);
@@ -19,3 +23,7 @@ test.nock = (responseBody: any, status = 200) => {
 import { TextEncoder, TextDecoder } from 'util';
 (global as any).TextEncoder = TextEncoder;
 (global as any).TextDecoder = TextDecoder;
+(global as any).setImmediate = setImmediate;
+(global as any).flushPromises = () => {
+  return new Promise((resolve) => setImmediate(resolve));
+};
