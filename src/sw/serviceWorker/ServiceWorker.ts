@@ -56,6 +56,7 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
  * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
  */
 export class ServiceWorker {
+  // TODO: remove? UNSUBSCRIBED_FROM_NOTIFICATIONS is not set anywhere
   static UNSUBSCRIBED_FROM_NOTIFICATIONS: boolean | undefined;
 
   /**
@@ -393,6 +394,7 @@ export class ServiceWorker {
                     .catch((e) => Log.error(e));
                   const pushSubscriptionId =
                     await ServiceWorker.getPushSubscriptionId();
+
                   ServiceWorker.webhookNotificationEventSender.willDisplay(
                     notif,
                     pushSubscriptionId,
@@ -429,7 +431,7 @@ export class ServiceWorker {
    */
   static async sendConfirmedDelivery(
     notification: IOSNotification,
-  ): Promise<void> {
+  ): Promise<void | null> {
     if (!notification) return;
 
     if (!ServiceWorker.browserSupportsConfirmedDelivery()) return null;
@@ -801,7 +803,7 @@ export class ServiceWorker {
    * notification. Otherwise returns true and the link will be opened.
    * @param url
    */
-  static shouldOpenNotificationUrl(url) {
+  static shouldOpenNotificationUrl(url: string) {
     return (
       url !== 'javascript:void(0);' &&
       url !== 'do_not_open' &&
@@ -824,6 +826,7 @@ export class ServiceWorker {
       .broadcast(WorkerMessengerCommand.NotificationDismissed, notification)
       .catch((e) => Log.error(e));
     const pushSubscriptionId = await ServiceWorker.getPushSubscriptionId();
+
     ServiceWorker.webhookNotificationEventSender.dismiss(
       notification,
       pushSubscriptionId,
