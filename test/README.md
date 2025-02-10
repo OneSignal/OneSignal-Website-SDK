@@ -73,12 +73,12 @@ If you need to configure any advanced parameters in the test edit `.vscode/launc
 
 Run these from `Terminal` > `New Terminal` in VSCode.
 
-- Run all and watch file changes: `yarn test`
-- Run all with no watch: `yarn test:noWatch`
+- Run all and watch file changes: `npm run test`
+- Run all with no watch: `npm run test:noWatch`
 - Run specific file: `<one of above commands> <path to file>`
-  - e.g: `yarn test:noWatch test/unit/context/sw/ServiceWorker.ts`
+  - e.g: `npm run test:noWatch test/unit/context/sw/ServiceWorker.ts`
 - Run specific test in a file: `<one of above commands> <path to file> -m "name of test here"`
-  - e.g: `yarn test:noWatch test/unit/context/sw/ServiceWorker.ts -m "onPushReceived - Ensure undefined payload does not show"`
+  - e.g: `npm run test:noWatch test/unit/context/sw/ServiceWorker.ts -m "onPushReceived - Ensure undefined payload does not show"`
 
 ![image](https://user-images.githubusercontent.com/645861/111320621-69fc0200-8624-11eb-80cd-bedf8c57a063.png)
 

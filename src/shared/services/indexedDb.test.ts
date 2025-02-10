@@ -7,7 +7,6 @@ import IndexedDb from './IndexedDb';
 import Random from '../../../__test__/support/utils/Random';
 import { SubscriptionType } from '../../core/models/SubscriptionModels';
 import Log from '../../shared/libraries/Log';
-require('fake-indexeddb/auto');
 
 function newOSIndexedDb(
   dbName = Random.getRandomString(10),

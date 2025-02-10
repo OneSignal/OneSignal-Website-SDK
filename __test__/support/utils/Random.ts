@@ -29,7 +29,7 @@ export default class Random {
   ) {
     return new Array(length)
       .fill(0)
-      .map((n) =>
+      .map(() =>
         Math.floor(
           Math.random() * (exclusiveMax - inclusiveMin) + inclusiveMin,
         ),

@@ -1,3 +1,5 @@
+require('fake-indexeddb/auto');
+
 test.stub = (obj: any, method: string, returnValue?: any) => {
   const stub = jest.spyOn(obj, method);
   stub.mockReturnValue(returnValue);
