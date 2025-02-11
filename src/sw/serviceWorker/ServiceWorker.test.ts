@@ -1,3 +1,4 @@
+import { flushPromises } from '__test__/support/helpers/general';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
@@ -51,7 +52,7 @@ describe('ServiceWorker', () => {
       await self.dispatchEvent(new PushEvent('push'));
 
       // missing event.data
-      await global.flushPromises();
+      await flushPromises();
       expect(logDebugSpy).toHaveBeenCalledWith(
         'Failed to display a notification:',
         'Missing event.data on push payload!',
@@ -60,7 +61,7 @@ describe('ServiceWorker', () => {
       // malformed event.data
       logDebugSpy.mockClear();
       await self.dispatchEvent(new PushEvent('push', 'some message'));
-      await global.flushPromises();
+      await flushPromises();
       expect(logDebugSpy).toHaveBeenCalledWith(
         'Failed to display a notification:',
         'Unexpected push message payload received: some message',
@@ -69,7 +70,7 @@ describe('ServiceWorker', () => {
       // with missing notification id
       logDebugSpy.mockClear();
       await self.dispatchEvent(new PushEvent('push', {}));
-      await global.flushPromises();
+      await flushPromises();
       expect(logDebugSpy).toHaveBeenCalledWith(
         'isValidPushPayload: Valid JSON but missing notification UUID:',
         {},
@@ -157,7 +158,7 @@ describe('ServiceWorker', () => {
         },
       });
       await self.dispatchEvent(event);
-      await global.flushPromises();
+      await flushPromises();
 
       expect(
         ServiceWorker.webhookNotificationEventSender.dismiss,
@@ -178,7 +179,7 @@ describe('ServiceWorker', () => {
         },
       });
       await self.dispatchEvent(event);
-      await global.flushPromises();
+      await flushPromises();
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // should close the notification since it was clicked
@@ -220,7 +221,7 @@ describe('ServiceWorker', () => {
           },
           result: {
             actionId: undefined,
-            url: 'http://localhost',
+            url: 'http://localhost:3000',
           },
           timestamp: expect.any(Number),
         },
@@ -234,13 +235,15 @@ describe('ServiceWorker', () => {
           expect.objectContaining({
             id: notificationId,
             timestamp: expect.any(Number),
-            url: 'http://localhost',
+            url: 'http://localhost:3000',
           }),
         ]),
       );
 
       // should open url
-      expect(self.clients.openWindow).toHaveBeenCalledWith('http://localhost');
+      expect(self.clients.openWindow).toHaveBeenCalledWith(
+        'http://localhost:3000',
+      );
     });
   });
 });
@@ -248,9 +251,9 @@ describe('ServiceWorker', () => {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Spys
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const logDebugSpy = jest.spyOn(Log, 'debug');
+const logDebugSpy = vi.spyOn(Log, 'debug');
 // -- one signal api base mock
-const apiPutSpy = jest.spyOn(OneSignalApiBase, 'put').mockResolvedValue({
+const apiPutSpy = vi.spyOn(OneSignalApiBase, 'put').mockResolvedValue({
   result: {},
   status: 200,
 });
@@ -260,14 +263,14 @@ const apiPutSpy = jest.spyOn(OneSignalApiBase, 'put').mockResolvedValue({
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // -- webhook notification event sender mock
 const mockSender = {
-  willDisplay: jest.fn(),
-  dismiss: jest.fn(),
-  click: jest.fn(),
+  willDisplay: vi.fn(),
+  dismiss: vi.fn(),
+  click: vi.fn(),
 };
-jest.mock(
+vi.mock(
   'src/sw/webhooks/notifications/OSWebhookNotificationEventSender',
   () => ({
-    OSWebhookNotificationEventSender: jest
+    OSWebhookNotificationEventSender: vi
       .fn()
       .mockImplementation(() => mockSender),
   }),
@@ -275,26 +278,26 @@ jest.mock(
 
 // -- push subscription id mock
 const pushSubscriptionId = '1234';
-jest.mock('../helpers/ModelCacheDirectAccess', () => ({
+vi.mock('../helpers/ModelCacheDirectAccess', () => ({
   ModelCacheDirectAccess: {
-    getPushSubscriptionIdByToken: jest
+    getPushSubscriptionIdByToken: vi
       .fn()
       .mockImplementation(() => pushSubscriptionId),
   },
 }));
 
 // -- browser info mock
-const mockBowser = jest.fn().mockReturnValue({
+const mockBowser = vi.fn().mockReturnValue({
   name: 'Safari',
   version: '18',
 });
-jest.mock('../../../src/shared/utils/bowserCastle', () => ({
+vi.mock('../../../src/shared/utils/bowserCastle', () => ({
   bowserCastle: () => mockBowser(),
 }));
 
 // -- awaitable timeout mock
-jest.mock('../../../src/shared/utils/AwaitableTimeout', () => ({
-  awaitableTimeout: jest.fn().mockResolvedValue(undefined),
+vi.mock('../../../src/shared/utils/AwaitableTimeout', () => ({
+  awaitableTimeout: vi.fn().mockResolvedValue(undefined),
 }));
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -306,7 +309,7 @@ class ExtendableEvent extends Event {
   }
 }
 
-const notificationClose = jest.fn();
+const notificationClose = vi.fn();
 class NotificationEvent extends ExtendableEvent {
   notification: {
     data: { id: string };
@@ -352,15 +355,15 @@ global.ExtendableEvent = class extends Event {
 Object.defineProperty(self, 'registration', {
   value: {
     pushManager: {
-      getSubscription: jest.fn().mockResolvedValue({
+      getSubscription: vi.fn().mockResolvedValue({
         endpoint,
       }),
-      permissionState: jest.fn().mockResolvedValue('granted'),
-      subscribe: jest.fn().mockResolvedValue({
+      permissionState: vi.fn().mockResolvedValue('granted'),
+      subscribe: vi.fn().mockResolvedValue({
         endpoint,
       }),
     } satisfies PushManager,
-    showNotification: jest.fn(),
+    showNotification: vi.fn(),
   },
   writable: true,
 });
@@ -377,9 +380,9 @@ const mockClient = new Client('http://some-client-url.com');
 
 Object.defineProperty(self, 'clients', {
   value: {
-    claim: jest.fn(),
+    claim: vi.fn(),
     matchAll: () => Promise.resolve([mockClient]),
-    openWindow: jest.fn(),
+    openWindow: vi.fn(),
   },
   writable: true, // Allow further modifications if needed
 });

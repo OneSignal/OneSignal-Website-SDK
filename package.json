@@ -5,7 +5,6 @@
   "dependencies": {
     "@types/intl-tel-input": "^17.0.1",
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
-    "core-js": "^3.40.0",
     "glob": "^10.2.2",
     "jsonp": "github:OneSignal/jsonp#onesignal",
     "npm-css": "https://registry.npmjs.org/npm-css/-/npm-css-0.2.3.tgz",
