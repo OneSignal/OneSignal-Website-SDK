@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 
 getPrefix() {
-  if [ "$ENV" = "production" ]; then
-    echo ""
-  elif [ "$ENV" = "staging" ]; then
-    echo "Staging-"
-  else
-    echo "Dev-"
-  fi
+   echo "Dev-"
 }
 
 PREFIX=$(getPrefix)
