@@ -22,6 +22,12 @@ describe('My tests', () => {
 });
 ```
 
+# Extension
+
+You can use the [ms-playwright](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) extension to run individual by running a "Play" button next to the test case.
+
+You can even right click the "Play" and click "Debug Test" to open a debugger. You can either set a breakpoint or put a `debugger` statement in the src file.
+
 # Common Usages
 
 ## Suppress Internal Logging
@@ -33,17 +39,21 @@ Your test may result in an error being printed but the test still succeeds. To s
 vi.mock('../../../src/shared/libraries/Log');
 ```
 
-# Jest Customizations
-
-This directory includes changes used for extending Jest to do things like stub and spy on private functions.
-
-Followed instructions from [here](https://spin.atomicobject.com/2020/01/30/jest-add-custom-functions/).
-
-To add more custom testing functions, add them to `jest/jest.setupt.ts` and `jest.d.ts`.
-
 ## API
 
-### `nock`
+### `nock` (Not Recommended)
+
+Can leverage our custom nock helper to mock a response for some fetch call. E.g,
+
+```ts
+import { nock } from '__test__/support/mocks/nock';
+
+nock({}, 400);
+
+await someFetchCall();
+```
+
+### `msw`
 
 Mocks all HTTP requests by leveraging msw. If omitted, the status defaults to 200.
 

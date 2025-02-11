@@ -1,4 +1,3 @@
-import { describe, expect, test } from "vitest";
 import Path from '../../../src/shared/models/Path';
 
 describe('Path tests', () => {

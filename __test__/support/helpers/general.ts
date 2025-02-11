@@ -4,18 +4,18 @@ export function flushPromises() {
   });
 }
 
-export function delay(timeout = 100) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, timeout);
-  });
-}
-
+/**
+ * @deprecated This is a hacky approach to mock network requests. Use msw instead.
+ */
 export const nock = (responseBody: any, status = 200) =>
   vi.spyOn(global, 'fetch').mockResolvedValue({
     status,
     json: vi.fn().mockResolvedValue(responseBody),
   });
 
+/**
+ * @deprecated Use vi.spyOn instead
+ */
 export const stub = (obj: any, method: string, returnValue?: any) => {
   const stub = vi.spyOn(obj, method);
   stub.mockReturnValue(returnValue);
