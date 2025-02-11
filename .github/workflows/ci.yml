@@ -2,7 +2,7 @@ name: Run Tests
 on:
   pull_request:
     branches:
-      - "**"
+      - '**'
 
 jobs:
   test:
@@ -14,9 +14,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
-      - name: "[Setup] Install dependencies"
-        run: yarn
-      - name: "[Test] Run linters"
-        run: yarn lint
-      - name: "[Test] Run all jest tests"
-        run: yarn test
+      - name: '[Setup] Install dependencies'
+        run: npm ci
+      - name: '[Test] Run linters'
+        run: npm run lint
+      - name: '[Test] Run all jest tests'
+        run: npm run test

@@ -13,25 +13,25 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
-      - name: "[Setup] Install dependencies"
-        run: yarn
-      - name: "[Build] Staging"
+      - name: '[Setup] Install dependencies'
+        run: npm ci
+      - name: '[Build] Staging'
         env:
           STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
-        run: BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} yarn build:staging
-      - name: "[Build] Production"
-        run: yarn build:prod
+        run: BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} npm run build:staging
+      - name: '[Build] Production'
+        run: npm run build:prod
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-      - name: "[Deploy] Upload SDK Files to GCS"
+      - name: '[Deploy] Upload SDK Files to GCS'
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
           path: 'build/releases'
           destination: 'sdk-builds-persistence-onesignal/web-sdk/${{ github.sha }}'
           parent: false
-      - name: "[Deploy] Upload AMP SDK Files to GCS"
+      - name: '[Deploy] Upload AMP SDK Files to GCS'
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
           path: 'build/amp'

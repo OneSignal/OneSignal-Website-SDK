@@ -1,14 +1,10 @@
 {
-  // Used for yarn transpile:tests
+  // Used for transpile:tests
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
     "importHelpers": false,
     "noEmitHelpers": false
   },
-  "include": [
-    "../../src/**/*",
-    "../../test/**/*",
-    "../../typings/**/*"
-  ]
+  "include": ["../../src/**/*", "../../test/**/*", "../../typings/**/*"]
 }

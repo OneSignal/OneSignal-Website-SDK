@@ -40,7 +40,7 @@ buildSDK() {
     # Build the SDK
     echo -e "Building SDK with build origin $url\n"
     # If you want to test with staging, change to build:dev-stag and add -a MY_API_URL
-    docker-compose exec onesignal-web-sdk-dev yarn build:dev-prod -b $url --no-port
+    docker-compose exec onesignal-web-sdk-dev npm run build:dev-prod -b $url --no-port
 
     echo -e "BuildSDK() Done.\n"
 }

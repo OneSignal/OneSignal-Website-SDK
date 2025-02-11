@@ -1,8 +1,5 @@
 {
-  // Used for yarn transpile:sources
+  // Used for transpile:sources
   "extends": "./tsconfig.base.json",
-  "include": [
-    "../../src/**/*",
-    "../../typings/**/*"
-  ]
+  "include": ["../../src/**/*", "../../typings/**/*"]
 }

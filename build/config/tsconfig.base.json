@@ -29,17 +29,7 @@
     "esModuleInterop": true,
     "strictFunctionTypes": true,
     "baseUrl": "../..",
-    "types": [
-      "node"
-    ],
-    "lib": [
-      "webworker",
-      "es6",
-      "es2017",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ],
+    "lib": ["webworker", "es6", "es2017", "dom", "dom.iterable", "scripthost"],
     "target": "ES2017"
   }
 }

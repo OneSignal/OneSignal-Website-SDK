@@ -6,13 +6,11 @@ build/bundles
 build/releases
 build/size-analysis.html
 /config.json
-package-lock.json
 
 .DS_STORE
 *.pem
 *.key
 *.crt
-yarn-error.log
 dist/Dev-OneSignalSDK.page.js
 dist/Dev-OneSignalSDK.page.js.map
 .vscode/**
