@@ -13,11 +13,11 @@ const SERVICE_WORKER_PATH = 'push/onesignal/';
 describe('ConfigHelper Tests', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize();
-    test.stub(ConfigHelper, 'checkRestrictedOrigin');
+    vi.spyOn(ConfigHelper, 'checkRestrictedOrigin').mockReturnValue();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   test('promptOptions 1 - autoRegister = true backwards compatibility for custom integration shows native on HTTPS', async () => {

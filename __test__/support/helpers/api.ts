@@ -96,7 +96,6 @@ export const matchApiToSpec = async (parent: object, namespace: string) => {
     __dirname + '/../../../api.json',
   );
   const api = JSON.parse(rawJson);
-
   matchNestedProperties(api, parent, namespace);
   matchNestedNamespaces(api, parent, namespace);
   matchNestedFunctions(api, parent, namespace);
