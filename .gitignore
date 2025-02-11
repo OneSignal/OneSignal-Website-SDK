@@ -11,8 +11,6 @@ build/size-analysis.html
 *.pem
 *.key
 *.crt
-yarn.lock
-yarn-error.log
 dist/Dev-OneSignalSDK.page.js
 dist/Dev-OneSignalSDK.page.js.map
 .vscode/**

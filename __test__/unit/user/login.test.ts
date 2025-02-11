@@ -28,7 +28,6 @@ describe('Login tests', () => {
   });
 
   afterEach(() => {
-    // jest.runOnlyPendingTimers();
     jest.resetAllMocks();
   });
 
@@ -216,8 +215,6 @@ describe('Login tests', () => {
       expect(fetchAndHydrateSpy).toHaveBeenCalledTimes(1);
     }
   });
-
-  // test('If login with JWT token, save it to the database', async () => {});
 
   test.skip('Login called before any Subscriptions, should save external_id but not create User', async () => {
     setupLoginStubs();
