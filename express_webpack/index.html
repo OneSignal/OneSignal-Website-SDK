@@ -28,7 +28,7 @@
       return urlParams.get(name);
     }
 
-    const appId = getUrlQueryParam('app_id');
+    const appId = getUrlQueryParam('app_id') || 'a3268fe7-cc94-4f25-ab09-867b957d7fe2';
     var OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function (onesignal) {
       await onesignal.init({

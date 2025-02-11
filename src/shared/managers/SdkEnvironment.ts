@@ -94,21 +94,9 @@ export default class SdkEnvironment {
    * Staging-OneSignalSDKWorker.js.
    */
   public static getBuildEnvPrefix(
-    buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
+    _buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
   ): string {
-    switch (buildEnv) {
-      case EnvironmentKind.Development:
         return 'Dev-';
-      case EnvironmentKind.Staging:
-        return 'Staging-';
-      case EnvironmentKind.Production:
-        return '';
-      default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
-    }
   }
 
   /**
@@ -150,7 +138,7 @@ export default class SdkEnvironment {
   }
 
   public static getOneSignalResourceUrlPath(
-    buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
+    _buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
   ): URL {
     const buildOrigin =
       typeof __BUILD_ORIGIN__ !== 'undefined'
@@ -161,46 +149,16 @@ export default class SdkEnvironment {
     const protocol = isHttps ? 'https' : 'http';
     const port = isHttps ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;
 
-    switch (buildEnv) {
-      case EnvironmentKind.Development:
-        origin = __NO_DEV_PORT__
-          ? `${protocol}://${buildOrigin}`
-          : `${protocol}://${buildOrigin}:${port}`;
-        break;
-      case EnvironmentKind.Staging:
-        origin = `https://${buildOrigin}`;
-        break;
-      case EnvironmentKind.Production:
-        origin = 'https://onesignal.com';
-        break;
-      default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
-    }
+    origin =`${protocol}://${buildOrigin}:${port}`;
 
     return new URL(`${origin}/sdks/web/v16`);
   }
 
   public static getOneSignalCssFileName(
-    buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
+    _buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
   ): string {
     const baseFileName = 'OneSignalSDK.page.styles.css';
-
-    switch (buildEnv) {
-      case EnvironmentKind.Development:
-        return `Dev-${baseFileName}`;
-      case EnvironmentKind.Staging:
-        return `Staging-${baseFileName}`;
-      case EnvironmentKind.Production:
-        return baseFileName;
-      default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
-    }
+    return `Dev-${baseFileName}`;
   }
 
   static isTurbineEndpoint(action?: string): boolean {
