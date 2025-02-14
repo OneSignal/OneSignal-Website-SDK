@@ -24,7 +24,7 @@ describe('My tests', () => {
 
 # Extension
 
-You can use the [ms-playwright](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) extension to run individual by running a "Play" button next to the test case.
+You can use the [ms-playwright](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) extension to run individual tests by running a "Play" button next to the test case.
 
 You can even right click the "Play" and click "Debug Test" to open a debugger. You can either set a breakpoint or put a `debugger` statement in the src file.
 
