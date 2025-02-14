@@ -136,6 +136,12 @@ export class OneSignalApiBase {
       return isValidUuid(parts[1]);
     }
 
+    // special case for sync
+    if (url.startsWith('sync/')) {
+      const parts = url.split('/');
+      return isValidUuid(parts[1]);
+    }
+
     if (body && typeof body['app_id'] === 'string') {
       return isValidUuid(body['app_id']);
     }
