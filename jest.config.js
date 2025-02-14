@@ -8,6 +8,10 @@ module.exports = async () => {
     forceExit: true,
     bail: true,
     testEnvironment: 'jsdom',
+    moduleNameMapper: {
+      '^src/(.*)$': '<rootDir>/src/$1',
+      '^__test__/(.*)$': '<rootDir>/__test__/$1',
+    },
     // Run these files after jest has been
     // installed in the environment
     setupFilesAfterEnv: ['<rootDir>/__test__/jest/jest.setup.ts'], // use .js if you prefer JavaScript,
