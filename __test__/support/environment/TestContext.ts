@@ -19,8 +19,9 @@ export default class TestContext {
     overrideServerConfig: RecursivePartial<ServerAppConfig> | null = null,
     appId: string = APP_ID,
   ): ServerAppConfig {
+    let remoteConfigMockDefaults: ServerAppConfig;
     if (configIntegrationKind === ConfigIntegrationKind.Custom) {
-      return {
+      remoteConfigMockDefaults = {
         success: true,
         version: 2,
         app_id: appId,
@@ -171,7 +172,7 @@ export default class TestContext {
       };
     }
 
-    const remoteConfigMockDefaults: ServerAppConfig = {
+    remoteConfigMockDefaults = {
       success: true,
       version: 2,
       app_id: appId,

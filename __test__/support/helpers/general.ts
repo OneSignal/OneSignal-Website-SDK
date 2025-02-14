@@ -1,6 +1,6 @@
 export function flushPromises() {
   return new Promise((resolve) => {
-    setImmediate(resolve);
+    setTimeout(resolve, 100);
   });
 }
 

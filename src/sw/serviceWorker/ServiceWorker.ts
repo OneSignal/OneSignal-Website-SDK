@@ -59,6 +59,7 @@ export class ServiceWorker {
   // TODO: remove? UNSUBSCRIBED_FROM_NOTIFICATIONS is not set anywhere
   static UNSUBSCRIBED_FROM_NOTIFICATIONS: boolean | undefined;
 
+  // TODO: remove?
   /**
    * An incrementing integer defined in package.json. Value doesn't matter as long as it's different from the
    * previous version.
@@ -67,6 +68,7 @@ export class ServiceWorker {
     return Environment.version();
   }
 
+  // TODO: remove?
   /**
    * Describes what context the JavaScript code is running in and whether we're running in local development mode.
    */
@@ -74,6 +76,7 @@ export class ServiceWorker {
     return Environment;
   }
 
+  // TODO: remove?
   static get log() {
     return Log;
   }
@@ -923,6 +926,7 @@ export class ServiceWorker {
         ) {
           return;
         }
+
         await Database.putNotificationClickedForOutcomes(
           appId,
           notificationClickEvent,
@@ -1149,7 +1153,10 @@ export class ServiceWorker {
     // Get our current device ID
     let deviceIdExists: boolean;
     {
-      let { deviceId } = await Database.getSubscription();
+      let deviceId: string | null | undefined = (
+        await Database.getSubscription()
+      ).deviceId;
+
       deviceIdExists = !!deviceId;
       if (!deviceIdExists && event.oldSubscription) {
         // We don't have the device ID stored, but we can look it up from our old subscription

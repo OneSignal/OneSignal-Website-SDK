@@ -53,19 +53,19 @@ export class NotificationClickForOpenHandlingSerializer {
     const notification = event.notification;
     const result = event.result;
     return {
-      id: notification.notificationId,
-      heading: notification.title,
+      action: result.actionId,
+      badge: notification.badgeIcon,
+      buttons: this.toDatabaseButtons(notification.actionButtons),
       content: notification.body,
       data: notification.additionalData,
-      url: result.url,
-      rr: notification.confirmDelivery,
+      heading: notification.title,
       icon: notification.icon,
+      id: notification.notificationId,
       image: notification.image,
+      rr: notification.confirmDelivery,
       tag: notification.topic,
-      badge: notification.badgeIcon,
-      action: result.actionId,
-      buttons: this.toDatabaseButtons(notification.actionButtons),
       timestamp: event.timestamp,
+      url: result.url,
     };
   }
 

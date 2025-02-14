@@ -336,7 +336,6 @@ export default class IndexedDb {
             : store[method](keyOrValue as IDBValidKey);
 
         request.onsuccess = () => {
-          // resolve(method === 'put' ? keyOrValue : request.result);
           resolve(request.result);
         };
         request.onerror = (e) => {

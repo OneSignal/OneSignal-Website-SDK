@@ -1,7 +1,19 @@
+import { APP_ID } from '__test__/support/constants';
+import TestContext from '__test__/support/environment/TestContext';
 import { flushPromises } from '__test__/support/helpers/general';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
+import { server } from '__test__/support/mocks/server';
+import { http, HttpResponse } from 'msw';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import {
+  DEFAULT_DEVICE_ID,
+  SubscriptionManager,
+} from 'src/shared/managers/SubscriptionManager';
+import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
+import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
+import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import Database, {
   TABLE_NOTIFICATION_OPENED,
   TABLE_OUTCOMES_NOTIFICATION_CLICKED,
@@ -9,36 +21,47 @@ import Database, {
 } from 'src/shared/services/Database';
 import Log from '../libraries/Log';
 import { ServiceWorker } from './ServiceWorker';
+import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
 declare const self: ServiceWorkerGlobalScope;
 
 const endpoint = 'https://example.com';
-const appId = 'test-app-id';
+const appId = APP_ID;
 const notificationId = 'test-notification-id';
+
+// server.use(http.post(`**/players`, () => HttpResponse.json({})));
 
 describe('ServiceWorker', () => {
   beforeAll(async () => {
-    const db = Database.singletonInstance;
-    await db.put('Ids', {
+    await TestEnvironment.initialize();
+    await Database.cleanupCurrentSession();
+    await Database.put('Ids', {
       type: 'appId',
       id: appId,
     });
+
+    // @ts-expect-error - Notification is not defined in the global scope
+    global.Notification = {
+      permission: 'granted',
+    };
   });
 
   beforeEach(() => {
-    window.location.search = '';
+    // @ts-expect-error - search is readonly but we need to set it for testing
+    self.location.search = '';
   });
 
   describe('getAppId', () => {
     test('can return appId from url', async () => {
-      window.location.search = '?appId=some-app-id';
+      // @ts-expect-error - search is readonly but we need to set it for testing
+      self.location.search = '?appId=some-app-id';
 
       const appId = await ServiceWorker.getAppId();
       expect(appId).toBe('some-app-id');
     });
   });
 
-  describe('activate', () => {
+  describe('activate event', () => {
     test('should call claim on activate', () => {
       const event = new ExtendableEvent('activate');
       self.dispatchEvent(event);
@@ -47,7 +70,7 @@ describe('ServiceWorker', () => {
     });
   });
 
-  describe('push', () => {
+  describe('push event', () => {
     test('should handle push event errors', async () => {
       await self.dispatchEvent(new PushEvent('push'));
 
@@ -85,8 +108,7 @@ describe('ServiceWorker', () => {
       const notificationId = payload.custom.i;
 
       // db should mark the notification as received
-      const db = Database.singletonInstance;
-      const notifcationReceived = await db.getAll(
+      const notifcationReceived = await Database.getAll(
         TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
       );
       expect(notifcationReceived).toEqual(
@@ -173,21 +195,22 @@ describe('ServiceWorker', () => {
 
   describe('notificationclick', () => {
     test('should handle notificationclick event', async () => {
+      const launchURL = 'http://some-launch-url.com';
       const event = new NotificationEvent('notificationclick', {
+        action: 'test-action',
         data: {
+          launchURL,
           notificationId,
         },
       });
       await self.dispatchEvent(event);
       await flushPromises();
-      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // should close the notification since it was clicked
       expect(notificationClose).toHaveBeenCalled();
 
       // should save clicked info to db
-      const db = Database.singletonInstance;
-      const notificationClicked = await db.getAll(
+      const notificationClicked = await Database.getAll(
         TABLE_OUTCOMES_NOTIFICATION_CLICKED,
       );
       expect(notificationClicked).toEqual(
@@ -217,11 +240,12 @@ describe('ServiceWorker', () => {
       ).toHaveBeenCalledWith(
         {
           notification: {
+            launchURL,
             notificationId,
           },
           result: {
             actionId: undefined,
-            url: 'http://localhost:3000',
+            url: launchURL,
           },
           timestamp: expect.any(Number),
         },
@@ -229,23 +253,145 @@ describe('ServiceWorker', () => {
       );
 
       // should update DB and call open url
-      const pendingUrlOpening = await db.getAll(TABLE_NOTIFICATION_OPENED);
+      const pendingUrlOpening = await Database.getAll(
+        TABLE_NOTIFICATION_OPENED,
+      );
       expect(pendingUrlOpening).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             id: notificationId,
             timestamp: expect.any(Number),
-            url: 'http://localhost:3000',
+            url: launchURL,
           }),
         ]),
       );
 
       // should open url
-      expect(self.clients.openWindow).toHaveBeenCalledWith(
-        'http://localhost:3000',
+      expect(self.clients.openWindow).toHaveBeenCalledWith(launchURL);
+    });
+  });
+
+  describe('pushsubscriptionchange', () => {
+    const registerSubscriptionCall = vi.spyOn(
+      SubscriptionManager.prototype,
+      'registerSubscription',
+    );
+
+    const someDeviceId = '123';
+
+    beforeEach(() => {
+      const serverConfig = TestContext.getFakeServerAppConfig(
+        ConfigIntegrationKind.Custom,
+        {
+          features: {
+            restrict_origin: {
+              enable: false,
+            },
+          },
+        },
+      );
+
+      server.use(
+        http.get(`**/sync/*/web`, () => HttpResponse.json(serverConfig)),
+      );
+      server.use(
+        http.post(`**/players`, () => HttpResponse.json({ id: someDeviceId })),
+      );
+    });
+
+    test('with old subscription and no device id', async () => {
+      server.use(
+        http.post(`**/players`, () => HttpResponse.json({ id: null })),
+      );
+
+      await Database.put('Ids', {
+        type: 'userId',
+        id: null,
+      });
+      await Database.put('Ids', {
+        type: 'registrationId',
+        id: '456',
+      });
+
+      const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
+        oldSubscription: {},
+      });
+      await self.dispatchEvent(event);
+      await flushPromises();
+
+      // should remove previous ids
+      const ids = await Database.getAll('Ids');
+      expect(ids).toEqual([
+        {
+          type: 'appId',
+          id: appId,
+        },
+      ]);
+    });
+
+    test('with old subscription and a device id', async () => {
+      const subscribeCall = vi.spyOn(
+        SubscriptionManager.prototype,
+        'subscribe',
+      );
+
+      const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
+        oldSubscription: {},
+      });
+
+      await self.dispatchEvent(event);
+      await flushPromises();
+
+      expect(subscribeCall).toHaveBeenCalledWith(
+        SubscriptionStrategyKind.SubscribeNew,
+      );
+      expect(registerSubscriptionCall).toHaveBeenCalledWith(
+        undefined,
+        SubscriptionStateKind.PermissionRevoked,
+      );
+
+      // the device id will be reset regardless of the old subscription state
+      const subscription = await Database.getSubscription();
+      expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
+    });
+
+    test.only('with new subscription ', async () => {
+      server.use(
+        http.post(`**/players`, () => HttpResponse.json({ id: null })),
+      );
+
+      // @ts-expect-error - normally readonly but doing this for testing
+      global.Notification.permission = 'granted';
+
+      const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
+        newSubscription: {},
+      });
+
+      await self.dispatchEvent(event);
+      await flushPromises();
+
+      const [rawSubscription, subscriptionState] =
+        registerSubscriptionCall.mock.calls[0];
+      expect(rawSubscription).toBeInstanceOf(RawPushSubscription);
+      expect(rawSubscription.w3cEndpoint?.href).toBe('https://example.com/');
+      expect(rawSubscription.safariDeviceToken).toBeUndefined();
+      expect(subscriptionState).toBe(
+        SubscriptionStateKind.PushSubscriptionRevoked,
       );
     });
   });
+
+  // describe('message event', () => {
+  //   test('session upsert event', async () => {
+  //     const event = new MessageEvent('message', {
+  //       data: {
+  //         command: WorkerMessengerCommand.SessionUpsert,
+  //       },
+  //     });
+  //     await self.dispatchEvent(event);
+  //     await flushPromises();
+  //   });
+  // });
 });
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -301,7 +447,7 @@ vi.mock('../../../src/shared/utils/AwaitableTimeout', () => ({
 }));
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Dom classes
+// Web api classes
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class ExtendableEvent extends Event {
   waitUntil(promise: Promise<any>) {
@@ -336,14 +482,42 @@ class PushEvent extends ExtendableEvent {
   }
 }
 
-// window properties
-const windowLocation = window.location;
-Object.defineProperty(window, 'location', {
-  value: {
-    ...windowLocation,
+const baseSubscription = {
+  endpoint: 'https://example.com',
+  expirationTime: 1234567890,
+  options: {
+    applicationServerKey: null,
+    userVisibleOnly: true,
   },
-  writable: true,
-});
+  getKey: vi.fn(),
+  toJSON: vi.fn(),
+  unsubscribe: vi.fn(),
+};
+class SubscriptionChangeEvent extends ExtendableEvent {
+  oldSubscription: PushSubscription | null;
+  newSubscription: PushSubscription | null;
+
+  constructor(
+    type: string,
+    data?: {
+      oldSubscription?: Partial<PushSubscription>;
+      newSubscription?: Partial<PushSubscription>;
+    },
+  ) {
+    super(type);
+    this.oldSubscription = data?.oldSubscription
+      ? { ...baseSubscription, ...data?.oldSubscription }
+      : null;
+    this.newSubscription = data?.newSubscription
+      ? { ...baseSubscription, ...data?.newSubscription }
+      : null;
+  }
+}
+
+// Object.defineProperty(window, 'isSecureContext', {
+//   value: true,
+//   writable: true,
+// });
 
 // Mock ExtendableEvent
 global.ExtendableEvent = class extends Event {
@@ -385,4 +559,11 @@ Object.defineProperty(self, 'clients', {
     openWindow: vi.fn(),
   },
   writable: true, // Allow further modifications if needed
+});
+
+Object.defineProperty(self, 'location', {
+  value: {
+    search: '',
+  },
+  writable: true,
 });
