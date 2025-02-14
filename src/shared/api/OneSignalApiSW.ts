@@ -29,18 +29,18 @@ export class OneSignalApiSW {
     appId: string,
     deviceType: DeliveryPlatformKind,
     identifier: string,
-  ): Promise<string> {
+  ): Promise<string | null> {
     // Calling POST /players with an existing identifier returns us that player ID
     Utils.enforceAppId(appId);
-    return OneSignalApiBase.post('players', {
+    return OneSignalApiBase.post<{ id: string }>('players', {
       app_id: appId,
       device_type: deviceType,
       identifier: identifier,
       notification_types: SubscriptionStateKind.TemporaryWebRecord,
     })
-      .then((response: any) => {
-        if (response && response.id) {
-          return response.id;
+      .then((response) => {
+        if (response?.result?.id) {
+          return response.result.id;
         } else {
           return null;
         }

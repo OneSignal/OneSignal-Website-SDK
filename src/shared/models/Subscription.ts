@@ -4,7 +4,7 @@ export class Subscription implements Serializable {
   /**
    * The OneSignal subscription id.
    */
-  deviceId: string | undefined;
+  deviceId: string | null | undefined;
   /**
    * The GCM/FCM registration token, as a stringified URL, or the Safari device token.
    */
