@@ -1,6 +1,7 @@
 module.exports = {
   root: true,
   rules: {
+    '@typescript-eslint/no-non-null-assertion': 'warn',
     'no-extra-boolean-cast': 0,
     quotes: [
       'error',

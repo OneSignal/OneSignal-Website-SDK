@@ -58,13 +58,13 @@ export function initializeNewSession(options: NewSessionOptions): Session {
   const notificationId = (options && options.notificationId) || null;
 
   return {
-    sessionKey: ONESIGNAL_SESSION_KEY,
-    appId: options.appId,
-    startTimestamp: currentTimestamp,
     accumulatedDuration: 0,
-    notificationId,
-    status: SessionStatus.Active,
-    lastDeactivatedTimestamp: null,
+    appId: options.appId,
     lastActivatedTimestamp: currentTimestamp,
+    lastDeactivatedTimestamp: null,
+    notificationId,
+    sessionKey: ONESIGNAL_SESSION_KEY,
+    startTimestamp: currentTimestamp,
+    status: SessionStatus.Active,
   };
 }

@@ -11,37 +11,6 @@ import { getDummyPushSubscriptionOSModel } from '../../support/helpers/core';
 import { nock } from '__test__/support/helpers/general';
 
 describe('Sdk Version Header Tests', () => {
-  let originalFetch: {
-    (
-      input: RequestInfo | URL,
-      init?: RequestInit | undefined,
-    ): Promise<Response>;
-    (
-      input: RequestInfo | URL,
-      init?: RequestInit | undefined,
-    ): Promise<Response>;
-  } & {
-    (
-      input: RequestInfo | URL,
-      init?: RequestInit | undefined,
-    ): Promise<Response>;
-    (
-      input: RequestInfo | URL,
-      init?: RequestInit | undefined,
-    ): Promise<Response>;
-  };
-
-  // Set up the fetch spy before each test
-  beforeEach(() => {
-    originalFetch = global.fetch;
-    global.fetch = vi.fn();
-  });
-
-  // Restore the original fetch method after each test
-  afterEach(() => {
-    global.fetch = originalFetch;
-  });
-
   beforeAll(() => {
     nock({});
     vi.spyOn(Environment, 'version').mockReturnValue(160000);
