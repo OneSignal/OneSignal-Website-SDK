@@ -42,6 +42,8 @@ import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import { bowserCastle } from '../utils/bowserCastle';
 import { PushSubscriptionState } from '../models/PushSubscriptionState';
 
+export const DEFAULT_DEVICE_ID = '99999999-9999-9999-9999-999999999999';
+
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
   appId: string;
@@ -275,7 +277,7 @@ export class SubscriptionManager {
 
     const subscription = await Database.getSubscription();
     // User Model: TO DO: Remove this once we have a better way to determine if the user is subscribed
-    subscription.deviceId = '99999999-9999-9999-9999-999999999999';
+    subscription.deviceId = DEFAULT_DEVICE_ID;
     subscription.optedOut = false;
     if (pushSubscription) {
       if (Environment.useSafariLegacyPush()) {

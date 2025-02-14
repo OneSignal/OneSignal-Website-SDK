@@ -1,6 +1,10 @@
+/**
+ * DON'T use with vi.useFakeTimers()
+ * Flushes promises within some window
+ */
 export function flushPromises() {
   return new Promise((resolve) => {
-    setImmediate(resolve);
+    setTimeout(resolve, 100);
   });
 }
 

@@ -228,7 +228,6 @@ export default class ServiceWorkerHelper {
       `started: ${new Date(session.startTimestamp)}`,
       `duration: ${session.accumulatedDuration}s`,
     );
-
     if (sendOnFocusEnabled) {
       Log.debug(
         `send on_focus reporting session duration -> ${session.accumulatedDuration}s`,

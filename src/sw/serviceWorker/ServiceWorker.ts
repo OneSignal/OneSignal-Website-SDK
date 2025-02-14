@@ -133,12 +133,9 @@ export class ServiceWorker {
 
     self.addEventListener('message', (event: ExtendableMessageEvent) => {
       const data: WorkerMessengerMessage = event.data;
-      if (!data || !data.command) {
-        return;
-      }
-      const payload = data.payload;
+      const payload = data?.payload;
 
-      switch (data.command) {
+      switch (data?.command) {
         case WorkerMessengerCommand.SessionUpsert:
           Log.debug('[Service Worker] Received SessionUpsert', payload);
           ServiceWorker.debounceRefreshSession(
@@ -568,24 +565,15 @@ export class ServiceWorker {
     };
     const payload: PageVisibilityRequest = { timestamp };
     windowClients.forEach((c) => {
-      if (self.clientsStatus) {
-        // keeping track of number of sent requests mostly for debugging purposes
-        self.clientsStatus.sentRequestsCount++;
-      }
+      // keeping track of number of sent requests mostly for debugging purposes
+      self.clientsStatus!.sentRequestsCount++;
       c.postMessage({ command: WorkerMessengerCommand.AreYouVisible, payload });
     });
     const updateOnHasActive = async () => {
-      if (!self.clientsStatus) {
-        return;
-      }
-      if (self.clientsStatus.timestamp !== timestamp) {
-        return;
-      }
-
       Log.debug('updateSessionBasedOnHasActive', self.clientsStatus);
       await ServiceWorker.updateSessionBasedOnHasActive(
         event,
-        self.clientsStatus.hasAnyActiveSessions,
+        self.clientsStatus!.hasAnyActiveSessions,
         sessionInfo,
       );
       self.clientsStatus = undefined;
@@ -627,7 +615,7 @@ export class ServiceWorker {
    * If the image protocol is HTTPS, or origin contains localhost or starts with 192.168.*.*, we do not proxy the image.
    * @param imageUrl An HTTP or HTTPS image URL.
    */
-  static ensureImageResourceHttps(imageUrl) {
+  static ensureImageResourceHttps(imageUrl: URL) {
     if (imageUrl) {
       try {
         const parsedImageUrl = new URL(imageUrl);
@@ -654,7 +642,8 @@ export class ServiceWorker {
       } catch (e) {
         Log.error('ensureImageResourceHttps: ', e);
       }
-    } else return null;
+    }
+    return null;
   }
 
   /**
@@ -922,6 +911,7 @@ export class ServiceWorker {
         ) {
           return;
         }
+
         await Database.putNotificationClickedForOutcomes(
           appId,
           notificationClickEvent,
@@ -1148,7 +1138,10 @@ export class ServiceWorker {
     // Get our current device ID
     let deviceIdExists: boolean;
     {
-      let { deviceId } = await Database.getSubscription();
+      let deviceId: string | null | undefined = (
+        await Database.getSubscription()
+      ).deviceId;
+
       deviceIdExists = !!deviceId;
       if (!deviceIdExists && event.oldSubscription) {
         // We don't have the device ID stored, but we can look it up from our old subscription

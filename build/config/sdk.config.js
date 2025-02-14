@@ -1,39 +1,40 @@
 const webpack = require('webpack');
 const path = require('path');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin =
+  require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const dir = require('node-dir');
 const md5file = require('md5-file');
 const crypto = require('crypto');
 const TerserPlugin = require('terser-webpack-plugin');
 
-const env = process.env.ENV || "production";
-const buildOrigin = process.env.BUILD_ORIGIN || "localhost";
+const env = process.env.ENV || 'production';
+const buildOrigin = process.env.BUILD_ORIGIN || 'localhost';
 const apiEnv = process.env.API;
-const apiOrigin = process.env.API_ORIGIN || "localhost";
-const isProdBuild = process.env.ENV === "production";
-const nodeEnv = isProdBuild ? "production" : "development";
+const apiOrigin = process.env.API_ORIGIN || 'localhost';
+const isProdBuild = process.env.ENV === 'production';
+const nodeEnv = isProdBuild ? 'production' : 'development';
 const isHttps = process.env.HTTPS;
 const noDevPort = process.env.NO_DEV_PORT;
 const tests = process.env.TESTS;
 const sdkVersion = process.env.npm_package_config_sdkVersion;
 
 async function getStylesheetsHash() {
-  const styleSheetsPath = "src/page/stylesheets";
+  const styleSheetsPath = 'src/page/stylesheets';
 
   return await new Promise((resolve, reject) => {
     dir.files(styleSheetsPath, async (err, files) => {
       if (err) throw err;
-      const filteredFiles = files.filter(filePath => {
-        console.log("CSS Stylesheet:", filePath);
+      const filteredFiles = files.filter((filePath) => {
+        console.info('CSS Stylesheet:', filePath);
         const fileName = path.basename(filePath);
-        if (fileName.endsWith(".scss")) {
+        if (fileName.endsWith('.scss')) {
           // Only hash SCSS source files
           return true;
         }
       });
       if (filteredFiles.length === 0) {
         reject(
-          `No .scss files were found in ${styleSheetsPath}, but SCSS files were expected. SCSS stylesheets in this directory are MD5 hashed and added as a build-time variable so loading the stylesheet from the global CDN always loads the correct version.`
+          `No .scss files were found in ${styleSheetsPath}, but SCSS files were expected. SCSS stylesheets in this directory are MD5 hashed and added as a build-time variable so loading the stylesheet from the global CDN always loads the correct version.`,
         );
       }
       let hashes = [];
@@ -43,9 +44,14 @@ async function getStylesheetsHash() {
       }
       // Strangely enough, the order is inconsistent so we have to sort the hashes
       hashes = hashes.sort();
-      const joinedHashesStr = hashes.join("-");
-      const combinedHash = crypto.createHash("md5").update(joinedHashesStr).digest("hex");
-      console.log(`MD5 hash of SCSS source files in ${styleSheetsPath} is ${combinedHash}.`);
+      const joinedHashesStr = hashes.join('-');
+      const combinedHash = crypto
+        .createHash('md5')
+        .update(joinedHashesStr)
+        .digest('hex');
+      console.info(
+        `MD5 hash of SCSS source files in ${styleSheetsPath} is ${combinedHash}.`,
+      );
       resolve(combinedHash);
     });
   });
@@ -53,22 +59,24 @@ async function getStylesheetsHash() {
 
 async function getWebpackPlugins() {
   const plugins = [
-      new webpack.DefinePlugin({
-        __BUILD_TYPE__: JSON.stringify(env),
-        __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
-        __API_TYPE__: JSON.stringify(apiEnv),
-        __API_ORIGIN__: JSON.stringify(apiOrigin),
-        __IS_HTTPS__: isHttps === "true",
-        __NO_DEV_PORT__: noDevPort === "true",
-        __TEST__: !!tests,
-        __VERSION__: sdkVersion,
-        __LOGGING__: env === "development",
-        __SRC_STYLESHEETS_MD5_HASH__: JSON.stringify(await getStylesheetsHash()),
-        "process.env.NODE_ENV": JSON.stringify(nodeEnv),
-      })
+    new webpack.DefinePlugin({
+      __BUILD_TYPE__: JSON.stringify(env),
+      __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
+      __API_TYPE__: JSON.stringify(apiEnv),
+      __API_ORIGIN__: JSON.stringify(apiOrigin),
+      __IS_HTTPS__: isHttps === 'true',
+      __NO_DEV_PORT__: noDevPort === 'true',
+      __TEST__: !!tests,
+      __VERSION__: sdkVersion,
+      __LOGGING__: env === 'development',
+      __SRC_STYLESHEETS_MD5_HASH__: JSON.stringify(await getStylesheetsHash()),
+      'process.env.NODE_ENV': JSON.stringify(nodeEnv),
+    }),
   ];
   if (!!process.env.ANALYZE) {
-    const sizeAnalysisReportPath = path.resolve(path.join('build', 'size-analysis.html'));
+    const sizeAnalysisReportPath = path.resolve(
+      path.join('build', 'size-analysis.html'),
+    );
     plugins.push(
       new BundleAnalyzerPlugin({
         // Can be `server`, `static` or `disabled`.
@@ -95,8 +103,8 @@ async function getWebpackPlugins() {
         // See more options here: https://github.com/webpack/webpack/blob/webpack-1/lib/Stats.js#L21
         statsOptions: null,
         // Log level. Can be 'info', 'warn', 'error' or 'silent'.
-        logLevel: 'info'
-      })
+        logLevel: 'info',
+      }),
     );
   }
   return plugins;
@@ -106,13 +114,15 @@ async function generateWebpackConfig() {
   return {
     target: 'web',
     entry: {
-      'OneSignalSDK.page.js': path.resolve('build/ts-to-es6/src/entries/sdk.js'),
+      'OneSignalSDK.page.js': path.resolve(
+        'build/ts-to-es6/src/entries/sdk.js',
+      ),
     },
     output: {
       path: path.resolve('build/bundles'),
-      filename: '[name]'
+      filename: '[name]',
     },
-    mode: process.env.ENV === "production" ? "production" : "development",
+    mode: process.env.ENV === 'production' ? 'production' : 'development',
     optimization: {
       minimizer: [
         new TerserPlugin({
@@ -123,25 +133,28 @@ async function generateWebpackConfig() {
               drop_debugger: false,
               warnings: false,
             },
-            mangle: process.env.ENV === 'production' ? {
-              reserved: [
-                'AlreadySubscribedError',
-                'InvalidArgumentError',
-                'InvalidStateError',
-                'NotSubscribedError',
-                'PermissionMessageDismissedError',
-                'PushNotSupportedError',
-                'PushPermissionNotGrantedError',
-                'SdkInitError',
-                'TimeoutError'
-              ]
-            } : false,
+            mangle:
+              process.env.ENV === 'production'
+                ? {
+                    reserved: [
+                      'AlreadySubscribedError',
+                      'InvalidArgumentError',
+                      'InvalidStateError',
+                      'NotSubscribedError',
+                      'PermissionMessageDismissedError',
+                      'PushNotSupportedError',
+                      'PushPermissionNotGrantedError',
+                      'SdkInitError',
+                      'TimeoutError',
+                    ],
+                  }
+                : false,
             output: {
-              comments: false
-            }
-          }
-        })
-      ]
+              comments: false,
+            },
+          },
+        }),
+      ],
     },
     module: {
       rules: [
@@ -152,24 +165,20 @@ async function generateWebpackConfig() {
             {
               loader: 'ts-loader',
               options: {
-                configFile: "build/config/tsconfig.es5.json"
-              }
+                configFile: 'build/config/tsconfig.es5.json',
+              },
             },
-          ]
+          ],
         },
-      ]
+      ],
     },
     resolve: {
       extensions: ['.js', '.ts'],
-      modules: [
-        'build/ts-to-es6',
-        'build/ts-to-es6/src',
-        'node_modules'
-      ]
+      modules: ['build/ts-to-es6', 'build/ts-to-es6/src', 'node_modules'],
     },
     devtool: 'source-map',
     plugins: await getWebpackPlugins(),
-  }
+  };
 }
 
 module.exports = generateWebpackConfig();
