@@ -62,10 +62,8 @@ export class TestEnvironment {
         getDummyPushSubscriptionOSModel(),
         false,
       );
-      test.stub(
-        MainHelper,
-        'getCurrentPushToken',
-        Promise.resolve(DUMMY_PUSH_TOKEN),
+      vi.spyOn(MainHelper, 'getCurrentPushToken').mockResolvedValue(
+        DUMMY_PUSH_TOKEN,
       );
     }
 

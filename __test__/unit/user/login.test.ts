@@ -15,20 +15,23 @@ import { IdentityExecutor } from '../../../src/core/executors/IdentityExecutor';
 import { PropertiesExecutor } from '../../../src/core/executors/PropertiesExecutor';
 import { SubscriptionExecutor } from '../../../src/core/executors/SubscriptionExecutor';
 import LocalStorage from '../../../src/shared/utils/LocalStorage';
+import { nock, stub } from '__test__/support/helpers/general';
 
 // suppress all internal logging
-jest.mock('../../../src/shared/libraries/Log');
+vi.useFakeTimers();
+vi.mock('../../../src/shared/libraries/Log');
+stub(PropertiesExecutor.prototype, 'getOperationsFromCache', []);
+stub(IdentityExecutor.prototype, 'getOperationsFromCache', []);
+stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', []);
 
 describe('Login tests', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
-    test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', []);
-    test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', []);
-    test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', []);
+    localStorage.clear();
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.runOnlyPendingTimers();
+    vi.resetAllMocks();
   });
 
   test('If privacy consent is required but not given, do not login', async () => {
@@ -37,16 +40,11 @@ describe('Login tests', () => {
     });
     LocalStorage.setConsentRequired(true);
 
-    test.stub(Database, 'getConsentGiven', Promise.resolve(false));
+    stub(Database, 'getConsentGiven', Promise.resolve(false));
 
-    try {
-      await LoginManager.login('rodrigo');
-      test.fail('Should have thrown an error');
-    } catch (e) {
-      expect(e.message).toBe(
-        'Login: Consent required but not given, skipping login',
-      );
-    }
+    await expect(LoginManager.login('rodrigo')).rejects.toThrow(
+      'Login: Consent required but not given, skipping login',
+    );
   });
 
   test('Login twice with same user -> only one call to identify user', async () => {
@@ -56,7 +54,7 @@ describe('Login tests', () => {
     });
     setupLoginStubs();
 
-    const identifyOrUpsertUserSpy = test.stub(
+    const identifyOrUpsertUserSpy = stub(
       LoginManager,
       'identifyOrUpsertUser',
       Promise.resolve({
@@ -77,10 +75,7 @@ describe('Login tests', () => {
     await TestEnvironment.initialize({ useMockIdentityModel: true });
     setupLoginStubs();
 
-    const identifyOrUpsertUserSpy = test.stub(
-      LoginManager,
-      'identifyOrUpsertUser',
-    );
+    const identifyOrUpsertUserSpy = stub(LoginManager, 'identifyOrUpsertUser');
 
     await LoginManager.login(DUMMY_EXTERNAL_ID);
     await LoginManager.login('rodrigo2');
@@ -92,7 +87,7 @@ describe('Login tests', () => {
     await TestEnvironment.initialize({ useMockIdentityModel: true });
     setupLoginStubs();
     const external_id = DUMMY_EXTERNAL_ID;
-    test.stub(
+    stub(
       LoginManager,
       'identifyOrUpsertUser',
       Promise.resolve({
@@ -103,7 +98,7 @@ describe('Login tests', () => {
       }),
     );
 
-    const forceProcessSpy = jest.spyOn(
+    const forceProcessSpy = vi.spyOn(
       CoreModuleDirector.prototype,
       'forceDeltaQueueProcessingOnAllExecutors',
     );
@@ -114,12 +109,11 @@ describe('Login tests', () => {
     expect(forceProcessSpy).toHaveBeenCalledTimes(1);
   });
 
-  // Revisit these tests below with Vitest change
-  test.skip('Upsert user payload only contains one alias', async () => {
+  test('Upsert user payload only contains one alias', async () => {
     setupLoginStubs();
     await TestEnvironment.initialize();
     const identityModel = getDummyIdentityOSModel();
-    test.nock({});
+    nock({});
 
     // to upsert, the user must already be identified (have an external_id)
     identityModel.set('external_id', 'pavel');
@@ -127,11 +121,11 @@ describe('Login tests', () => {
 
     OneSignal.coreDirector.add(ModelName.Identity, identityModel);
 
-    const identifyOrUpsertUserSpy = jest.spyOn(
+    const identifyOrUpsertUserSpy = vi.spyOn(
       LoginManager,
       'identifyOrUpsertUser',
     );
-    const createUserSpy = jest.spyOn(RequestService, 'createUser');
+    const createUserSpy = vi.spyOn(RequestService, 'createUser');
 
     await LoginManager.login(DUMMY_EXTERNAL_ID);
 
@@ -141,25 +135,21 @@ describe('Login tests', () => {
     // second argument to createUser is the payload object
     const payload = createUserSpy.mock.calls[0][1];
 
-    if (payload.identity) {
-      expect(Object.keys(payload.identity).length).toBe(1);
-    } else {
-      test.fail('Payload does not contain identity');
-    }
+    expect(Object.keys(payload.identity!).length).toBe(1);
   });
 
-  test.skip('Identify user payload only contains one alias', async () => {
+  test('Identify user payload only contains one alias', async () => {
     setupLoginStubs();
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
     });
-    test.nock({});
+    nock({});
 
-    const identifyOrUpsertUserSpy = jest.spyOn(
+    const identifyOrUpsertUserSpy = vi.spyOn(
       LoginManager,
       'identifyOrUpsertUser',
     );
-    const identifyUserSpy = jest.spyOn(RequestService, 'addAlias');
+    const identifyUserSpy = vi.spyOn(RequestService, 'addAlias');
 
     await LoginManager.login(DUMMY_EXTERNAL_ID);
 
@@ -169,61 +159,52 @@ describe('Login tests', () => {
     // second argument to identifyUser is the payload object
     const identity = identifyUserSpy.mock.calls[0][2];
 
-    if (identity) {
-      expect(JSON.parse(JSON.stringify(identity))).toEqual({
-        external_id: DUMMY_EXTERNAL_ID,
-      });
-    } else {
-      test.fail('Payload does not contain identity');
-    }
+    expect(JSON.parse(JSON.stringify(identity))).toEqual({
+      external_id: DUMMY_EXTERNAL_ID,
+    });
   });
 
-  test.skip('If we login with an existing alias 409 we transfer the push subscription', async () => {
+  test('If we login with an existing alias 409 we transfer the push subscription', async () => {
     setupLoginStubs();
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
       useMockPushSubscriptionModel: true,
     });
 
-    const transferSubscriptionSpy = jest.spyOn(
+    const transferSubscriptionSpy = vi.spyOn(
       LoginManager,
       'transferSubscription',
     );
 
-    test.nock({}, 409);
-
+    nock({}, 409);
     await LoginManager.login(DUMMY_EXTERNAL_ID);
 
     expect(transferSubscriptionSpy).toHaveBeenCalledTimes(1);
   });
 
-  test.skip('If login fails, we fetch and hydrate the previous user', async () => {
+  test('If login fails, we fetch and hydrate the previous user', async () => {
     setupLoginStubs();
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
       useMockPushSubscriptionModel: true,
     });
 
-    const fetchAndHydrateSpy = jest.spyOn(LoginManager, 'fetchAndHydrate');
+    const fetchAndHydrateSpy = vi.spyOn(LoginManager, 'fetchAndHydrate');
 
-    test.nock({}, 400);
+    nock({}, 400);
 
-    try {
-      await LoginManager.login(DUMMY_EXTERNAL_ID);
-      test.fail('Should have thrown an error');
-    } catch (e) {
-      expect(fetchAndHydrateSpy).toHaveBeenCalledTimes(1);
-    }
+    await LoginManager.login(DUMMY_EXTERNAL_ID);
+    expect(fetchAndHydrateSpy).toHaveBeenCalledTimes(1);
   });
 
-  test.skip('Login called before any Subscriptions, should save external_id but not create User', async () => {
+  test('Login called before any Subscriptions, should save external_id but not create User', async () => {
     setupLoginStubs();
     await TestEnvironment.initialize();
-    test.nock({});
+    nock({});
 
     OneSignal.coreDirector.add(ModelName.Identity, getDummyIdentityOSModel());
 
-    const createUserSpy = jest.spyOn(RequestService, 'createUser');
+    const createUserSpy = vi.spyOn(RequestService, 'createUser');
 
     await LoginManager.login(DUMMY_EXTERNAL_ID);
 
@@ -235,14 +216,14 @@ describe('Login tests', () => {
     expect(createUserSpy.mock.calls.length).toBe(0);
   });
 
-  test.skip('Login updates externalId on all models', async () => {
+  test('Login updates externalId on all models', async () => {
     setupLoginStubs();
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
       useMockPushSubscriptionModel: true,
     });
 
-    test.stub(
+    stub(
       LoginManager,
       'identifyOrUpsertUser',
       Promise.resolve({
@@ -272,13 +253,13 @@ describe('Login tests', () => {
     ).toBe(true);
   });
 
-  test.skip('Login twice updates current externalId on all models', async () => {
+  test('Login twice updates current externalId on all models', async () => {
     setupLoginStubs();
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
     });
 
-    test.stub(
+    stub(
       LoginManager,
       'identifyOrUpsertUser',
       Promise.resolve({

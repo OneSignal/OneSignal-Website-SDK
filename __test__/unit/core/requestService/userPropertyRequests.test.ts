@@ -7,10 +7,12 @@ import { OSModel } from '../../../../src/core/modelRepo/OSModel';
 import { ExecutorResultFailNotRetriable } from '../../../../src/core/executors/ExecutorResult';
 import Database from '../../../../src/shared/services/Database';
 
+const getJWTTokenSpy = vi.spyOn(Database.prototype, 'getJWTToken');
+
 describe('User Property Request tests', () => {
   beforeAll(() => {
     // Required for Operation class
-    test.stub(Database.prototype, 'getJWTToken', Promise.resolve([]));
+    getJWTTokenSpy.mockResolvedValue([]);
   });
 
   test('updateUserProperties returns no retry failure result', async () => {

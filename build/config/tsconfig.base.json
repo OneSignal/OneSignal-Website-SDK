@@ -30,6 +30,7 @@
     "strictFunctionTypes": true,
     "baseUrl": "../..",
     "lib": ["webworker", "es6", "es2017", "dom", "dom.iterable", "scripthost"],
-    "target": "ES2017"
+    "target": "ES2017",
+    "types": ["node", "vitest/globals"]
   }
 }

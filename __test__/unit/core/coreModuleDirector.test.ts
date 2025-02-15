@@ -11,9 +11,10 @@ describe('CoreModuleDirector tests', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
   });
+
   describe('getPushSubscriptionModel', () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     async function getPushSubscriptionModel(): Promise<
@@ -28,38 +29,34 @@ describe('CoreModuleDirector tests', () => {
 
     test('returns current subscription when available', async () => {
       const pushModelCurrent = getDummyPushSubscriptionOSModel();
-      test.stub(
+      vi.spyOn(
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByCurrentToken',
-        Promise.resolve(pushModelCurrent),
-      );
+      ).mockResolvedValue(pushModelCurrent);
       expect(await getPushSubscriptionModel()).toBe(pushModelCurrent);
     });
 
     test('returns last known subscription when current is unavailable', async () => {
       const pushModelLastKnown = getDummyPushSubscriptionOSModel();
-      test.stub(
+      vi.spyOn(
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByLastKnownToken',
-        Promise.resolve(pushModelLastKnown),
-      );
+      ).mockResolvedValue(pushModelLastKnown);
       expect(await getPushSubscriptionModel()).toBe(pushModelLastKnown);
     });
 
     test('returns current subscription over last known', async () => {
       const pushModelCurrent = getDummyPushSubscriptionOSModel();
-      test.stub(
+      vi.spyOn(
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByCurrentToken',
-        Promise.resolve(pushModelCurrent),
-      );
+      ).mockResolvedValue(pushModelCurrent);
 
       const pushModelLastKnown = getDummyPushSubscriptionOSModel();
-      test.stub(
+      vi.spyOn(
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByLastKnownToken',
-        Promise.resolve(pushModelLastKnown),
-      );
+      ).mockResolvedValue(pushModelLastKnown);
 
       expect(await getPushSubscriptionModel()).toBe(pushModelCurrent);
     });

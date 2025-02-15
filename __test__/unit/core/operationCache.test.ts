@@ -11,15 +11,15 @@ import { TestEnvironment } from '../../support/environment/TestEnvironment';
 
 describe('OperationCache: operation results in correct operation queue result', () => {
   beforeEach(async () => {
-    jest.useFakeTimers();
-    test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    vi.useFakeTimers();
+    vi.spyOn(ModelCache.prototype, 'load').mockResolvedValue({});
     await TestEnvironment.initialize();
     OneSignal.coreDirector.add(ModelName.Identity, getDummyIdentityOSModel());
-    jest.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers();
   });
 
   afterAll(() => {
-    jest.resetModules();
+    vi.resetModules();
   });
 
   test('Add operation to cache -> operation queue +1', async () => {

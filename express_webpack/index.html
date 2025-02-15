@@ -1,21 +1,21 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<!-- This Web Application Manifest is required for iOS 16.4 WebPush -->
-<link rel="manifest" href="manifest.json" />
+  <!-- This Web Application Manifest is required for iOS 16.4 WebPush -->
+  <link rel="manifest" href="manifest.json" />
 
-<!-- Some sites use this HTML base tag to change the origin for all relative links.
+  <!-- Some sites use this HTML base tag to change the origin for all relative links.
     Ensure OneSignal SDK correctly handles this. -->
-<!-- NOTE: This does not work with the relative pathed manifest.json above. -->
-<!--<base href="https://www.example.com/"> -->
-<script src="sdks/web/v16/Dev-OneSignalSDK.page.js" defer></script>
+  <!-- NOTE: This does not work with the relative pathed manifest.json above. -->
+  <!--<base href="https://www.example.com/"> -->
+  <script src="sdks/web/v16/Dev-OneSignalSDK.page.js" defer></script>
 
-<script>
-  // Example of a root service worker a site may have.
-  // This is common for a PWA.
-  navigator.serviceWorker.register('sw.js');
-</script>
+  <script>
+    // Example of a root service worker a site may have.
+    // This is common for a PWA.
+    navigator.serviceWorker.register('sw.js');
+  </script>
 
-<script>
+  <script>
     // NOTE: Uncomment and open site in Safari on macOS 13+ to simulate
     // a similar JS API as an iOS 16.4 WebApp.
     // window.safari = undefined;
@@ -30,138 +30,156 @@
 
     const appId = getUrlQueryParam('app_id');
     var OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(onesignal) {
+    OneSignalDeferred.push(async function (onesignal) {
       await onesignal.init({
-          appId,
-          welcomeNotification: {
-            disable: false,
-            title: "Custom Welcome Notification Title",
-            message: "Custom Welcome Notification Message",
-            url: "https://example.com",
-          },
-          serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
-          serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
-          //serviceWorkerOverrideForTypical: true, // keep as example
-          notifyButton: {
-              enable: true
-          },
-          promptOptions: {
-              slidedown: {
-                  prompts: [{
-                    type: "category",
-                    autoPrompt: false,
-                    categories: [
-                            {
-                                tag: "politics",
-                                label: "Politics",
-                            },
-                            {
-                                tag: "usa_news",
-                                label: "USA News",
-                            },
-                            {
-                                tag: "world_news",
-                                label: "World News",
-                            },
-                            {
-                                tag: "culture",
-                                label: "Culture",
-                            },
-                            {
-                                tag: "technology",
-                                label: "Technology",
-                            },
-                            {
-                                tag: "fashion",
-                                label: "Fashion",
-                            },
-                            {
-                                tag: "art",
-                                label: "Art",
-                            },
-                            {
-                                tag: "long_category",
-                                label: "Very Long Category",
-                            }
-                        ]
+        appId,
+        welcomeNotification: {
+          disable: false,
+          title: 'Custom Welcome Notification Title',
+          message: 'Custom Welcome Notification Message',
+          url: 'https://example.com',
+        },
+        serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
+        serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
+        //serviceWorkerOverrideForTypical: true, // keep as example
+        notifyButton: {
+          enable: true,
+        },
+        promptOptions: {
+          slidedown: {
+            prompts: [
+              {
+                type: 'category',
+                autoPrompt: false,
+                categories: [
+                  {
+                    tag: 'politics',
+                    label: 'Politics',
                   },
                   {
-                      type: "sms",
-                      autoPrompt: false
+                    tag: 'usa_news',
+                    label: 'USA News',
                   },
                   {
-                      type: "email",
-                      autoPrompt: false
+                    tag: 'world_news',
+                    label: 'World News',
                   },
                   {
-                      type: "smsAndEmail",
-                      autoPrompt: false
-                  }]
+                    tag: 'culture',
+                    label: 'Culture',
+                  },
+                  {
+                    tag: 'technology',
+                    label: 'Technology',
+                  },
+                  {
+                    tag: 'fashion',
+                    label: 'Fashion',
+                  },
+                  {
+                    tag: 'art',
+                    label: 'Art',
+                  },
+                  {
+                    tag: 'long_category',
+                    label: 'Very Long Category',
+                  },
+                ],
               },
-              customlink: {
-                enabled: true, /* Required to use the Custom Link */
-                style: "button", /* Has value of 'button' or 'link' */
-                size: "medium", /* One of 'small', 'medium', or 'large' */
-                color: {
-                    button: '#e54b4d', /* Color of the button background if style = "button" */
-                    text: '#FFFFFF', /* Color of the prompt's text */
-                },
-                text: {
-                    subscribe: "Subscribe to push notifications", /* Prompt's text when not subscribed */
-                    unsubscribe: "Unsubscribe from push notifications", /* Prompt's text when subscribed */
-                    explanation: "Get updates from all sorts of things that matter to you", /* Optional text appearing before the prompt button */
-                },
-                unsubscribeEnabled: true, /* Controls whether the prompt is visible after subscription */
-              }
-          }
-        });
+              {
+                type: 'sms',
+                autoPrompt: false,
+              },
+              {
+                type: 'email',
+                autoPrompt: false,
+              },
+              {
+                type: 'smsAndEmail',
+                autoPrompt: false,
+              },
+            ],
+          },
+          customlink: {
+            enabled: true /* Required to use the Custom Link */,
+            style: 'button' /* Has value of 'button' or 'link' */,
+            size: 'medium' /* One of 'small', 'medium', or 'large' */,
+            color: {
+              button:
+                '#e54b4d' /* Color of the button background if style = "button" */,
+              text: '#FFFFFF' /* Color of the prompt's text */,
+            },
+            text: {
+              subscribe:
+                'Subscribe to push notifications' /* Prompt's text when not subscribed */,
+              unsubscribe:
+                'Unsubscribe from push notifications' /* Prompt's text when subscribed */,
+              explanation:
+                'Get updates from all sorts of things that matter to you' /* Optional text appearing before the prompt button */,
+            },
+            unsubscribeEnabled: true /* Controls whether the prompt is visible after subscription */,
+          },
+        },
+      });
     });
 
     /* E V E N T   L I S T E N E R S */
 
-    OneSignalDeferred.push(function(onesignal) {
-        onesignal.User.PushSubscription.addEventListener('change', function (event) {
+    OneSignalDeferred.push(function (onesignal) {
+      onesignal.User.PushSubscription.addEventListener(
+        'change',
+        function (event) {
           showEventAlert('change', { event });
-        });
+        },
+      );
     });
 
-    OneSignalDeferred.push(function(onesignal) {
-        onesignal.User.addEventListener('change', function (event) {
-          showEventAlert('change', { event });
-        });
-    });
-
-    OneSignalDeferred.push(function(onesignal) {
-      onesignal.Notifications.addEventListener('permissionChange', function (isSubscribed) {
-        showEventAlert('permissionChange', { isSubscribed });
+    OneSignalDeferred.push(function (onesignal) {
+      onesignal.User.addEventListener('change', function (event) {
+        showEventAlert('change', { event });
       });
     });
 
-    OneSignalDeferred.push(function(onesignal) {
-      onesignal.Notifications.addEventListener('permissionPromptDisplay', function (event) {
-        showEventAlert('permissionPromptDisplay', { event });
-      });
+    OneSignalDeferred.push(function (onesignal) {
+      onesignal.Notifications.addEventListener(
+        'permissionChange',
+        function (isSubscribed) {
+          showEventAlert('permissionChange', { isSubscribed });
+        },
+      );
     });
 
-    OneSignalDeferred.push(function(onesignal) {
+    OneSignalDeferred.push(function (onesignal) {
+      onesignal.Notifications.addEventListener(
+        'permissionPromptDisplay',
+        function (event) {
+          showEventAlert('permissionPromptDisplay', { event });
+        },
+      );
+    });
+
+    OneSignalDeferred.push(function (onesignal) {
       onesignal.Notifications.addEventListener('dismiss', function (event) {
         showEventAlert('dismiss', { event });
       });
     });
 
-    OneSignalDeferred.push(function(onesignal) {
-      onesignal.Notifications.addEventListener('foregroundWillDisplay', function (event) {
-        showEventAlert('foregroundWillDisplay', event);
-      });
+    OneSignalDeferred.push(function (onesignal) {
+      onesignal.Notifications.addEventListener(
+        'foregroundWillDisplay',
+        function (event) {
+          showEventAlert('foregroundWillDisplay', event);
+        },
+      );
     });
 
-    OneSignalDeferred.push(function(onesignal) {
+    OneSignalDeferred.push(function (onesignal) {
       onesignal.Notifications.addEventListener('click', function (event) {
         showEventAlert('click', { event });
       });
     });
 
-    OneSignalDeferred.push(function(onesignal) {
+    OneSignalDeferred.push(function (onesignal) {
       onesignal.Slidedown.addEventListener('slidedownShown', function (event) {
         showEventAlert('slidedownShown', { event });
       });
@@ -171,103 +189,126 @@
 
     function toggleShowEventAlert() {
       showEventAlertToggleSetting = !showEventAlertToggleSetting;
-      document.getElementById('showEventAlertToggleSetting').innerText = showEventAlertToggleSetting ? 'true' : 'false';
+      document.getElementById('showEventAlertToggleSetting').innerText =
+        showEventAlertToggleSetting ? 'true' : 'false';
     }
 
     function showEventAlert(eventName, payload) {
-      console.log(`OneSignal event ${eventName} fired!`, payload);
+      console.info(`OneSignal event ${eventName} fired!`, payload);
       if (!showEventAlertToggleSetting) {
         return;
       }
-      alert(`OneSignal event ${eventName} fired!\n\nPayload:\n${JSON.stringify(payload, null, 2)}`);
+      alert(
+        `OneSignal event ${eventName} fired!\n\nPayload:\n${JSON.stringify(
+          payload,
+          null,
+          2,
+        )}`,
+      );
     }
 
     function sendUniqueOutcome() {
-        OneSignalDeferred.push(function(onesignal) {
-            const outcomeName = document.querySelector('#unique_outcome_name').value;
-            onesignal.Session.sendUniqueOutcome(outcomeName);
-        });
+      OneSignalDeferred.push(function (onesignal) {
+        const outcomeName = document.querySelector(
+          '#unique_outcome_name',
+        ).value;
+        onesignal.Session.sendUniqueOutcome(outcomeName);
+      });
     }
 
     function sendOutcome() {
-        OneSignalDeferred.push(function(onesignal) {
-            const outcomeName = document.querySelector('#outcome_name').value;
-            onesignal.Session.sendOutcome(outcomeName);
-        });
+      OneSignalDeferred.push(function (onesignal) {
+        const outcomeName = document.querySelector('#outcome_name').value;
+        onesignal.Session.sendOutcome(outcomeName);
+      });
     }
 
     function sendOutcomeWithWeight() {
-        OneSignalDeferred.push(function(onesignal) {
-            const outcomeName = document.querySelector('#outcome_name').value;
-            const outcomeWeight = parseFloat(document.querySelector('#outcome_weight').value);
-            onesignal.Session.sendOutcome(outcomeName, outcomeWeight);
-        });
+      OneSignalDeferred.push(function (onesignal) {
+        const outcomeName = document.querySelector('#outcome_name').value;
+        const outcomeWeight = parseFloat(
+          document.querySelector('#outcome_weight').value,
+        );
+        onesignal.Session.sendOutcome(outcomeName, outcomeWeight);
+      });
     }
 
     function showCategorySlidedown() {
-        OneSignalDeferred.push(function(onesignal) {
-            onesignal.Slidedown.promptPushCategories();
-        })
+      OneSignalDeferred.push(function (onesignal) {
+        onesignal.Slidedown.promptPushCategories();
+      });
     }
 
     function showSmsSlidedown() {
-        OneSignalDeferred.push(function(onesignal) {
-            onesignal.Slidedown.promptSms();
-        })
+      OneSignalDeferred.push(function (onesignal) {
+        onesignal.Slidedown.promptSms();
+      });
     }
 
     function showEmailSlidedown() {
-        OneSignalDeferred.push(function(onesignal) {
-            onesignal.Slidedown.promptEmail();
-        })
+      OneSignalDeferred.push(function (onesignal) {
+        onesignal.Slidedown.promptEmail();
+      });
     }
 
     function showSmsAndEmailSlidedown() {
-        OneSignalDeferred.push(function(onesignal) {
-            onesignal.Slidedown.promptSmsAndEmail();
-        })
+      OneSignalDeferred.push(function (onesignal) {
+        onesignal.Slidedown.promptSmsAndEmail();
+      });
     }
-
   </script>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OneSignal WebSDK Sandbox</title>
-    <link rel="shortcut icon" href="#">
+    <link rel="shortcut icon" href="#" />
     <script>
-        addEventListener("load", () => {
-          new PerformanceObserver((list) => {
-              list.getEntries().forEach((entry) => {
-                if (entry.hadRecentInput) return;
-                console.log('layout-shift detected', {entry});
-              });
-          }).observe({type: "layout-shift", buffered: true});
-        });
+      addEventListener('load', () => {
+        new PerformanceObserver((list) => {
+          list.getEntries().forEach((entry) => {
+            if (entry.hadRecentInput) return;
+            console.info('layout-shift detected', { entry });
+          });
+        }).observe({ type: 'layout-shift', buffered: true });
+      });
     </script>
-</head>
-<body>
+  </head>
+  <body>
     <h1>OneSignal WebSDK Sandbox</h1>
     <p class="description">WebSDK Sandbox Environment</p>
     <input id="unique_outcome_name" value="TestUnique" />
-    <button onclick="javascript:sendUniqueOutcome();">Send unique outcome</button>
+    <button onclick="javascript:sendUniqueOutcome();">
+      Send unique outcome
+    </button>
     <br />
     <br />
     <input id="outcome_name" value="Rodrigo" />
     <button onclick="javascript:sendOutcome();">Send outcome</button>
     <br />
-    <input id="outcome_weight" value=""/>
-    <button onclick="javascript:sendOutcomeWithWeight();">Send outcome with weight</button>
+    <input id="outcome_weight" value="" />
+    <button onclick="javascript:sendOutcomeWithWeight();">
+      Send outcome with weight
+    </button>
     <br />
     <br />
-    <button onclick="javascript:showCategorySlidedown();">Show Category Slidedown</button>
+    <button onclick="javascript:showCategorySlidedown();">
+      Show Category Slidedown
+    </button>
     <button onclick="javascript:showSmsSlidedown();">Show Sms Slidedown</button>
-    <button onclick="javascript:showEmailSlidedown();">Show Email Slidedown</button>
-    <button onclick="javascript:showSmsAndEmailSlidedown();">Show Sms & Email Slidedown</button>
+    <button onclick="javascript:showEmailSlidedown();">
+      Show Email Slidedown
+    </button>
+    <button onclick="javascript:showSmsAndEmailSlidedown();">
+      Show Sms & Email Slidedown
+    </button>
     <br />
     <br />
-    <button onclick="javascript:toggleShowEventAlert();">Toggle show event alerts</button><p>Currently: <span id="showEventAlertToggleSetting">false</span></p>
+    <button onclick="javascript:toggleShowEventAlert();">
+      Toggle show event alerts
+    </button>
+    <p>Currently: <span id="showEventAlertToggleSetting">false</span></p>
     <br />
     <br />
-    <div class='onesignal-customlink-container'></div>
-</body>
+    <div class="onesignal-customlink-container"></div>
+  </body>
 </html>

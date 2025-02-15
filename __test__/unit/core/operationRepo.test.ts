@@ -1,9 +1,4 @@
-import {
-  DELTA_QUEUE_TIME_ADVANCE,
-  DUMMY_MODEL_ID,
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_PUSH_TOKEN,
-} from '../../support/constants';
+import { MockInstance } from 'vitest';
 import ModelCache from '../../../src/core/caching/ModelCache';
 import ExecutorBase from '../../../src/core/executors/ExecutorBase';
 import { OSModel } from '../../../src/core/modelRepo/OSModel';
@@ -15,36 +10,41 @@ import {
   SupportedModel,
 } from '../../../src/core/models/SupportedModels';
 import { UserPropertiesModel } from '../../../src/core/models/UserPropertiesModel';
+import { Operation } from '../../../src/core/operationRepo/Operation';
 import { OperationRepo } from '../../../src/core/operationRepo/OperationRepo';
+import Database from '../../../src/shared/services/Database';
+import {
+  DELTA_QUEUE_TIME_ADVANCE,
+  DUMMY_MODEL_ID,
+  DUMMY_ONESIGNAL_ID,
+  DUMMY_PUSH_TOKEN,
+} from '../../support/constants';
+import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import {
   generateNewSubscription,
   getDummyIdentityOSModel,
   passIfBroadcastNTimes,
 } from '../../support/helpers/core';
-import { TestEnvironment } from '../../support/environment/TestEnvironment';
-import { Operation } from '../../../src/core/operationRepo/Operation';
-import Database from '../../../src/shared/services/Database';
+import { nock, stub } from '__test__/support/helpers/general';
 
 let broadcastCount = 0;
 
 // class mocks
-jest.mock('../../../src/shared/services/Database');
+vi.mock('../../../src/shared/services/Database');
 
 describe('OperationRepo tests', () => {
-  let spyProcessOperationQueue:
-    | jest.SpyInstance<void, [() => Promise<void>], any>
-    | jest.SpyInstance<void>;
+  let spyProcessOperationQueue: MockInstance;
 
   beforeEach(async () => {
-    spyProcessOperationQueue = jest.spyOn(
+    spyProcessOperationQueue = vi.spyOn(
       ExecutorBase.prototype as any,
       '_processOperationQueue',
     );
-    test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
-    test.nock({
+    stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    nock({
       onesignal_id: '123',
     });
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     await TestEnvironment.initialize();
     broadcastCount = 0;
 
@@ -63,17 +63,17 @@ describe('OperationRepo tests', () => {
   });
 
   afterEach(async () => {
-    jest.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers();
     await Promise.all(
       spyProcessOperationQueue.mock.results.map((element) => {
         return element.value;
       }),
     );
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterAll(() => {
-    jest.resetModules();
+    vi.resetModules();
   });
 
   test('OperationRepo executor store has executor for each model name', async () => {
@@ -87,41 +87,43 @@ describe('OperationRepo tests', () => {
     });
   });
 
-  test('Model repo delta broadcast is received and processed by operation repo', (done: jest.DoneCallback) => {
-    const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
-    const executor =
-      operationRepo?.executorStore.store[ModelName.Subscriptions];
+  test('Model repo delta broadcast is received and processed by operation repo', async () => {
+    return new Promise<void>((resolve) => {
+      const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
+      const executor =
+        operationRepo?.executorStore.store[ModelName.Subscriptions];
 
-    modelRepo?.subscribe(() => {
-      broadcastCount += 1;
-      passIfBroadcastNTimes(1, broadcastCount, done);
+      modelRepo?.subscribe(() => {
+        broadcastCount += 1;
+        passIfBroadcastNTimes(1, broadcastCount, resolve);
+      });
+
+      const processDeltaSpy = vi.spyOn(
+        OperationRepo.prototype as any,
+        '_processDelta',
+      );
+      const subscriptionModel = generateNewSubscription();
+      subscriptionModel.setOneSignalId('123');
+
+      modelRepo?.broadcast({
+        changeType: CoreChangeType.Add,
+        model: subscriptionModel as OSModel<SupportedModel>,
+      });
+
+      vi.runOnlyPendingTimers();
+
+      expect(processDeltaSpy).toHaveBeenCalledTimes(1);
+      expect(executor?.operationQueue.length).toBe(1);
+      expect(executor?.deltaQueue.length).toBe(0);
     });
-
-    const processDeltaSpy = jest.spyOn(
-      OperationRepo.prototype as any,
-      '_processDelta',
-    );
-    const subscriptionModel = generateNewSubscription();
-    subscriptionModel.setOneSignalId('123');
-
-    modelRepo?.broadcast({
-      changeType: CoreChangeType.Add,
-      model: subscriptionModel as OSModel<SupportedModel>,
-    });
-
-    jest.runOnlyPendingTimers();
-
-    expect(processDeltaSpy).toHaveBeenCalledTimes(1);
-    expect(executor?.operationQueue.length).toBe(1);
-    expect(executor?.deltaQueue.length).toBe(0);
   });
 
-  test('Add Subscriptions: multiple delta broadcasts -> two operations of change type: add', (done: jest.DoneCallback) => {
+  test('Add Subscriptions: multiple delta broadcasts -> two operations of change type: add', () => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor =
       operationRepo?.executorStore.store[ModelName.Subscriptions];
 
-    const processDeltaSpy = jest.spyOn(
+    const processDeltaSpy = vi.spyOn(
       OperationRepo.prototype as any,
       '_processDelta',
     );
@@ -142,26 +144,25 @@ describe('OperationRepo tests', () => {
       model: subscriptionModel2 as OSModel<SupportedModel>,
     });
 
-    jest.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers();
 
     expect(processDeltaSpy).toHaveBeenCalledTimes(2);
     expect(executor?.deltaQueue.length).toBe(0);
     expect(executor?.operationQueue.length).toBe(2);
-    done();
   });
 
-  test('Update Identity -> one operation of change type: update', (done: jest.DoneCallback) => {
-    test.stub(Operation, 'getInstanceWithModelReference');
-    test.nock({ identity: { onesignal_id: DUMMY_ONESIGNAL_ID } });
+  test('Update Identity -> one operation of change type: update', () => {
+    stub(Operation, 'getInstanceWithModelReference');
+    nock({ identity: { onesignal_id: DUMMY_ONESIGNAL_ID } });
 
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Identity];
 
-    const processDeltaSpy = jest.spyOn(
+    const processDeltaSpy = vi.spyOn(
       OperationRepo.prototype as any,
       '_processDelta',
     );
-    const processOperationQueueSpy = jest.spyOn(
+    const processOperationQueueSpy = vi.spyOn(
       ExecutorBase.prototype as any,
       '_processOperationQueue',
     );
@@ -190,7 +191,7 @@ describe('OperationRepo tests', () => {
     modelRepo?.broadcast(delta2 as CoreDelta<SupportedModel>);
 
     // advance enough to process all deltas but not enough to process operation queue
-    jest.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
+    vi.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
 
     // check process operation queue not called. we may change processing intervals in future
     expect(processOperationQueueSpy).toHaveBeenCalledTimes(0);
@@ -206,14 +207,12 @@ describe('OperationRepo tests', () => {
       myAlias2: 'newAlias2',
     });
     expect(operation?.changeType).toBe(CoreChangeType.Add);
-
-    done();
   });
 
-  test('Update User Properties: -> one operation of change type: update', (done: jest.DoneCallback) => {
-    test.stub(Operation, 'getInstanceWithModelReference');
+  test('Update User Properties: -> one operation of change type: update', () => {
+    stub(Operation, 'getInstanceWithModelReference');
 
-    test.stub(
+    stub(
       Database,
       'getAppState',
       Promise.resolve({
@@ -224,11 +223,11 @@ describe('OperationRepo tests', () => {
     const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Properties];
 
-    const processDeltaSpy = jest.spyOn(
+    const processDeltaSpy = vi.spyOn(
       OperationRepo.prototype as any,
       '_processDelta',
     );
-    const processOperationQueueSpy = jest.spyOn(
+    const processOperationQueueSpy = vi.spyOn(
       ExecutorBase.prototype as any,
       '_processOperationQueue',
     );
@@ -260,7 +259,7 @@ describe('OperationRepo tests', () => {
     modelRepo?.broadcast(delta2 as CoreDelta<SupportedModel>);
 
     // advance enough to process all deltas but not enough to process operation queue
-    jest.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
+    vi.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
 
     // check process operation queue not called. we may change processing intervals in future
     expect(processOperationQueueSpy).toHaveBeenCalledTimes(0);
@@ -275,7 +274,5 @@ describe('OperationRepo tests', () => {
       tags: { tag1: 'tag1', tag2: 'tag2' },
     });
     expect(operation?.changeType).toBe(CoreChangeType.Update);
-
-    done();
   });
 });

@@ -68,6 +68,6 @@ export class OneSignalShimLoader {
       logMessage +=
         ' To support iOS please install as a Web App. See the OneSignal guide https://documentation.onesignal.com/docs/safari-web-push-for-ios';
     }
-    console.log(logMessage);
+    console.info(logMessage);
   }
 }

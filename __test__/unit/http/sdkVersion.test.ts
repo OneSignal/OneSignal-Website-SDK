@@ -8,6 +8,7 @@ import {
 import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
 import AliasPair from '../../../src/core/requestService/AliasPair';
 import { getDummyPushSubscriptionOSModel } from '../../support/helpers/core';
+import { nock } from '__test__/support/helpers/general';
 
 describe('Sdk Version Header Tests', () => {
   let originalFetch: {
@@ -33,7 +34,7 @@ describe('Sdk Version Header Tests', () => {
   // Set up the fetch spy before each test
   beforeEach(() => {
     originalFetch = global.fetch;
-    global.fetch = jest.fn();
+    global.fetch = vi.fn();
   });
 
   // Restore the original fetch method after each test
@@ -42,8 +43,8 @@ describe('Sdk Version Header Tests', () => {
   });
 
   beforeAll(() => {
-    test.nock({});
-    test.stub(Environment, 'version', '160000');
+    nock({});
+    vi.spyOn(Environment, 'version').mockReturnValue(160000);
   });
 
   test('POST /users: SDK-Version header is sent', () => {

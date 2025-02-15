@@ -8,28 +8,25 @@ import { TestEnvironment } from '../../support/environment/TestEnvironment';
 
 describe('ModelCache tests', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
-    test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
-    test.stub(
+    vi.useFakeTimers();
+    vi.spyOn(ModelCache.prototype, 'load').mockResolvedValue({});
+    vi.spyOn(
       PropertiesExecutor.prototype,
       'getOperationsFromCache',
-      Promise.resolve([]),
-    );
-    test.stub(
+    ).mockResolvedValue([]);
+    vi.spyOn(
       IdentityExecutor.prototype,
       'getOperationsFromCache',
-      Promise.resolve([]),
-    );
-    test.stub(
+    ).mockResolvedValue([]);
+    vi.spyOn(
       SubscriptionExecutor.prototype,
       'getOperationsFromCache',
-      Promise.resolve([]),
-    );
+    ).mockResolvedValue([]);
     TestEnvironment.initialize();
   });
 
   afterAll(() => {
-    jest.resetModules();
+    vi.resetModules();
   });
 
   test('ModelCache adds model to IndexedDB', async () => {

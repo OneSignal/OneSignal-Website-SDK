@@ -11,9 +11,8 @@ export async function initializeWithPermission(
 ) {
   const mockNotification = {
     permission,
-    requestPermission: jest.fn(),
+    requestPermission: vi.fn(),
   };
-  // @ts-ignore
   global.Notification = mockNotification;
 
   await TestEnvironment.initialize({

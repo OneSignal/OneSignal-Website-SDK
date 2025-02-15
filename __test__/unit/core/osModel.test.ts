@@ -7,10 +7,6 @@ import { generateNewSubscription } from '../../support/helpers/core';
 import { OSModel } from '../../../src/core/modelRepo/OSModel';
 
 describe('OSModel tests', () => {
-  afterAll(() => {
-    jest.resetModules();
-  });
-
   test('Set function updates data', async () => {
     const newSub = generateNewSubscription();
     expect(newSub.data?.enabled).toBe(undefined);

@@ -7,11 +7,11 @@ describe('Notification Events', () => {
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   test('Adding click listener fires internal EventHelper', async () => {
-    const stub = test.stub(EventHelper, 'fireStoredNotificationClicks');
+    const stub = vi.spyOn(EventHelper, 'fireStoredNotificationClicks');
     OneSignal.Notifications.addEventListener('click', null);
     expect(stub).toHaveBeenCalledTimes(1);
   });

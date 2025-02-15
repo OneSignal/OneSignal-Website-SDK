@@ -17,15 +17,13 @@ import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespac
 import UserNamespace from '../../../src/onesignal/UserNamespace';
 import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
 import bowser from 'bowser';
+import { bowserCastle } from '../../../src/shared/utils/bowserCastle';
 
 declare const global: any;
 
-jest.mock('../../../src/shared/utils/bowserCastle', () => ({
-  bowserCastle: jest.fn(),
+vi.mock('../../../src/shared/utils/bowserCastle', () => ({
+  bowserCastle: vi.fn(),
 }));
-
-// Import the mocked module
-const { bowserCastle } = require('../../../src/shared/utils/bowserCastle');
 
 export function resetDatabase() {
   // Erase and reset IndexedDb database name to something random
@@ -146,66 +144,4 @@ function addCustomEventPolyfill(windowDef) {
   }
   CustomEvent.prototype = windowDef.Event.prototype;
   global.CustomEvent = CustomEvent;
-}
-
-/**
- * Intercepts requests to our virtual DOM to return fake responses.
- */
-function onVirtualDomResourceRequested(
-  resource: any,
-  callback: (arg1: any, arg2?: string) => any,
-) {
-  const pathname = resource.url.pathname;
-  if (pathname.startsWith('https://test.node/scripts/')) {
-    if (pathname.startsWith('https://test.node/scripts/delayed')) {
-      onVirtualDomDelayedResourceRequested(
-        resource,
-        callback.bind(
-          null,
-          null,
-          `window.__NODE_TEST_SCRIPT = true; window.__DELAYED = true;`,
-        ),
-      );
-    } else {
-      callback(null, `window.__NODE_TEST_SCRIPT = true;`);
-    }
-  } else if (pathname.startsWith('https://test.node/styles/')) {
-    if (pathname.startsWith('https://test.node/scripts/delayed')) {
-      onVirtualDomDelayedResourceRequested(
-        resource,
-        callback.bind(
-          null,
-          null,
-          `html { margin: 0; padding: 0; font-size: 16px; }`,
-        ),
-      );
-    } else {
-      callback(null, `html { margin: 0; padding: 0; font-size: 16px; }`);
-    }
-  } else if (pathname.startsWith('https://test.node/codes/')) {
-    if (pathname.startsWith('https://test.node/codes/500')) {
-      callback(new Error('Virtual DOM error response.'));
-    } else {
-      callback(null, `html { margin: 0; padding: 0; font-size: 16px; }`);
-    }
-  } else {
-    return resource.defaultFetch(callback);
-  }
-}
-
-function onVirtualDomDelayedResourceRequested(
-  resource: any,
-  callback: () => any,
-) {
-  const pathname = resource.url.pathname;
-  const delay = pathname.match(/\d+/) || 1000;
-  // Simulate a delayed request
-  const timeout = setTimeout(function () {
-    callback();
-  }, delay);
-  return {
-    abort: function () {
-      clearTimeout(timeout);
-    },
-  };
 }

@@ -295,7 +295,18 @@ export default class OneSignal {
 
   /* NEW USER MODEL CHANGES */
   static coreDirector: CoreModuleDirector;
-  static Notifications = new NotificationsNamespace();
+
+  static _notifications: NotificationsNamespace;
+  static get Notifications() {
+    if (!this._notifications) {
+      this._notifications = new NotificationsNamespace();
+    }
+    return this._notifications;
+  }
+  static set Notifications(value: NotificationsNamespace) {
+    this._notifications = value;
+  }
+
   static Slidedown = new SlidedownNamespace();
   static Session = new SessionNamespace();
   static User = new UserNamespace(false);

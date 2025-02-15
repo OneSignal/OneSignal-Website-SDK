@@ -3,14 +3,12 @@ import RealPermissionManager from '../../../src/shared/managers/PermissionManage
 
 export class PermissionManager {
   public static async mockNotificationPermissionChange(
-    test: jest.It,
     nativePermission: NotificationPermission,
   ): Promise<void> {
-    test.stub(
+    vi.spyOn(
       RealPermissionManager.prototype,
       'getPermissionStatus',
-      nativePermission,
-    );
+    ).mockResolvedValue(nativePermission);
     // mimick native permission change
     await PermissionUtils.triggerNotificationPermissionChanged();
   }

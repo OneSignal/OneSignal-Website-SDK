@@ -1,7 +1,7 @@
 import { ServiceWorker } from '../../../src/sw/serviceWorker/ServiceWorker';
 
 // suppress all internal logging
-jest.mock('../../../src/shared/libraries/Log');
+vi.mock('../../../src/shared/libraries/Log');
 
 function chromeUserAgentDataBrands(): Array<{
   brand: string;
