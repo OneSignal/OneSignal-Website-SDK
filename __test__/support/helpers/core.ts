@@ -71,9 +71,9 @@ export async function getCoreModuleDirector(): Promise<CoreModuleDirector> {
 export const passIfBroadcastNTimes = (
   target: number,
   broadcastCount: number,
-  pass: () => void,
+  resolve: () => void,
 ) => {
   if (broadcastCount === target) {
-    pass();
+    resolve();
   }
 };

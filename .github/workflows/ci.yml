@@ -18,5 +18,5 @@ jobs:
         run: npm ci
       - name: '[Test] Run linters'
         run: npm run lint
-      - name: '[Test] Run all jest tests'
+      - name: '[Test] Run all tests'
         run: npm run test

@@ -1,5 +1,5 @@
 export function expectHeaderToBeSent() {
-  jest.mocked(window.fetch).mock.calls.forEach((params) => {
+  vi.mocked(window.fetch).mock.calls.forEach((params) => {
     expect(typeof params[0]).toBe('string');
 
     const requestInit = params[1] as RequestInit;

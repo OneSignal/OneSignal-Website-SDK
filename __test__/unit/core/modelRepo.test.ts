@@ -21,28 +21,24 @@ let coreDirector: CoreModuleDirector;
 let broadcastCount = 0;
 
 // class mocks
-jest.mock('../../../src/core/operationRepo/Operation');
+vi.mock('../../../src/core/operationRepo/Operation');
 
 describe('ModelRepo tests', () => {
   beforeEach(async () => {
-    test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
-    jest.useFakeTimers();
+    vi.spyOn(ModelCache.prototype, 'load').mockResolvedValue({});
+    vi.useFakeTimers();
     core = new CoreModule();
     coreDirector = new CoreModuleDirector(core);
     await core.init();
     broadcastCount = 0;
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   afterAll(() => {
-    jest.resetModules();
+    vi.resetModules();
   });
 
   test('ModelRepo add subscription -> +1 subscription model in model store', async () => {
-    const processModelAddedSpy = jest.spyOn(
+    const processModelAddedSpy = vi.spyOn(
       ModelRepo.prototype as any,
       'processModelAdded',
     );
@@ -64,7 +60,7 @@ describe('ModelRepo tests', () => {
   });
 
   test('ModelRepo remove subscription -> -1 subscription model in model store', async () => {
-    const processModelRemovedSpy = jest.spyOn(
+    const processModelRemovedSpy = vi.spyOn(
       ModelRepo.prototype as any,
       'processModelRemoved',
     );
@@ -89,7 +85,7 @@ describe('ModelRepo tests', () => {
 
   test('ModelRepo update subscription property -> change is processed correctly', async () => {
     const TOKEN = 'myToken';
-    const processModelUpdatedSpy = jest.spyOn(
+    const processModelUpdatedSpy = vi.spyOn(
       ModelRepo.prototype as any,
       'processModelUpdated',
     );
@@ -109,120 +105,129 @@ describe('ModelRepo tests', () => {
   });
 
   /* D E L T A S */
-  test('ModelRepo add subscription -> delta is broadcasted once', (done: jest.DoneCallback) => {
-    core.modelRepo?.subscribe(() => {
-      broadcastCount += 1;
-      passIfBroadcastNTimes(1, broadcastCount, done);
+  test('ModelRepo add subscription -> delta is broadcasted once', async () => {
+    await new Promise<void>((resolve) => {
+      core.modelRepo?.subscribe(() => {
+        broadcastCount += 1;
+        passIfBroadcastNTimes(1, broadcastCount, resolve);
+      });
+      const newSub = generateNewSubscription();
+      coreDirector.add(
+        ModelName.Subscriptions,
+        newSub as OSModel<SupportedModel>,
+        true,
+      );
     });
-    const newSub = generateNewSubscription();
-    coreDirector.add(
-      ModelName.Subscriptions,
-      newSub as OSModel<SupportedModel>,
-      true,
-    );
   });
 
-  test('ModelRepo remove subscription -> delta is broadcasted twice', (done: jest.DoneCallback) => {
+  test('ModelRepo remove subscription -> delta is broadcasted twice', async () => {
     const newSub = generateNewSubscription();
 
-    core.modelRepo?.subscribe(() => {
-      broadcastCount += 1;
-      passIfBroadcastNTimes(2, broadcastCount, done);
-    });
+    await new Promise<void>((resolve) => {
+      core.modelRepo?.subscribe(() => {
+        broadcastCount += 1;
+        passIfBroadcastNTimes(2, broadcastCount, resolve);
+      });
 
-    coreDirector.add(
-      ModelName.Subscriptions,
-      newSub as OSModel<SupportedModel>,
-      true,
-    );
-    coreDirector.remove(ModelName.Subscriptions, newSub.modelId);
+      coreDirector.add(
+        ModelName.Subscriptions,
+        newSub as OSModel<SupportedModel>,
+        true,
+      );
+      coreDirector.remove(ModelName.Subscriptions, newSub.modelId);
+    });
   });
 
-  test('ModelRepo update subscription -> delta is broadcasted twice', (done: jest.DoneCallback) => {
+  test('ModelRepo update subscription -> delta is broadcasted twice', async () => {
     const newSub = generateNewSubscription();
 
-    core.modelRepo?.subscribe(() => {
-      broadcastCount += 1;
-      passIfBroadcastNTimes(2, broadcastCount, done);
-    });
+    await new Promise<void>((resolve) => {
+      core.modelRepo?.subscribe(() => {
+        broadcastCount += 1;
+        passIfBroadcastNTimes(2, broadcastCount, resolve);
+      });
 
-    coreDirector.add(
-      ModelName.Subscriptions,
-      newSub as OSModel<SupportedModel>,
-      true,
-    );
-    newSub.set('sdk', 'mySdk');
+      coreDirector.add(
+        ModelName.Subscriptions,
+        newSub as OSModel<SupportedModel>,
+        true,
+      );
+      newSub.set('sdk', 'mySdk');
+    });
   });
 
-  test('ModelRepo add subscription -> delta is broadcasted with correct change type and payload', (done: jest.DoneCallback) => {
+  test('ModelRepo add subscription -> delta is broadcasted with correct change type and payload', async () => {
     const newSub = generateNewSubscription();
 
-    core.modelRepo?.subscribe((delta: CoreDelta<SupportedModel>) => {
-      expect(delta.changeType).toBe(CoreChangeType.Add);
-      expect(delta.model).toEqual(newSub);
-      done();
-    });
-    coreDirector.add(
-      ModelName.Subscriptions,
-      newSub as OSModel<SupportedModel>,
-      true,
-    );
-  });
-  test('ModelRepo remove subscription -> delta is broadcasted with correct change type and payload', (done: jest.DoneCallback) => {
-    const newSub = generateNewSubscription();
-
-    core.modelRepo?.subscribe((delta: CoreDelta<SupportedModel>) => {
-      broadcastCount += 1;
-
-      if (broadcastCount === 1) {
+    await new Promise<void>((resolve) => {
+      core.modelRepo?.subscribe((delta: CoreDelta<SupportedModel>) => {
         expect(delta.changeType).toBe(CoreChangeType.Add);
         expect(delta.model).toEqual(newSub);
-        expect(delta.model.modelId).toBe(newSub.modelId);
-        expect(delta.model.modelName).toBe(newSub.modelName);
-      } else if (broadcastCount === 2) {
-        expect(delta.changeType).toBe(CoreChangeType.Remove);
-        done();
-      }
+        resolve();
+      });
+      coreDirector.add(
+        ModelName.Subscriptions,
+        newSub as OSModel<SupportedModel>,
+        true,
+      );
     });
-
-    coreDirector.add(
-      ModelName.Subscriptions,
-      newSub as OSModel<SupportedModel>,
-      true,
-    );
-    coreDirector.remove(ModelName.Subscriptions, newSub.modelId);
   });
-
-  test('ModelRepo update subscription -> delta is broadcasted with correct change type and payload', (done: jest.DoneCallback) => {
+  test('ModelRepo remove subscription -> delta is broadcasted with correct change type and payload', async () => {
     const newSub = generateNewSubscription();
 
-    core.modelRepo?.subscribe((delta: CoreDelta<SupportedModel>) => {
-      broadcastCount += 1;
-      if (isPropertyDelta(delta)) {
-        expect(delta.changeType).toBe(CoreChangeType.Update);
-        expect(delta.model).toEqual(newSub);
-        expect(delta.property).toBe('sdk');
-        expect(delta.newValue).toBe('mySdk');
-        done();
-      }
-    });
+    await new Promise<void>((resolve) => {
+      core.modelRepo?.subscribe((delta: CoreDelta<SupportedModel>) => {
+        broadcastCount += 1;
 
-    coreDirector.add(
-      ModelName.Subscriptions,
-      newSub as OSModel<SupportedModel>,
-      true,
-    );
-    newSub.set('sdk', 'mySdk');
+        if (broadcastCount === 1) {
+          expect(delta.changeType).toBe(CoreChangeType.Add);
+          expect(delta.model).toEqual(newSub);
+          expect(delta.model.modelId).toBe(newSub.modelId);
+          expect(delta.model.modelName).toBe(newSub.modelName);
+        } else if (broadcastCount === 2) {
+          expect(delta.changeType).toBe(CoreChangeType.Remove);
+          resolve();
+        }
+      });
+
+      coreDirector.add(
+        ModelName.Subscriptions,
+        newSub as OSModel<SupportedModel>,
+        true,
+      );
+      coreDirector.remove(ModelName.Subscriptions, newSub.modelId);
+    });
+  });
+
+  test('ModelRepo update subscription -> delta is broadcasted with correct change type and payload', async () => {
+    const newSub = generateNewSubscription();
+
+    await new Promise<void>((resolve) => {
+      core.modelRepo?.subscribe((delta: CoreDelta<SupportedModel>) => {
+        broadcastCount += 1;
+        if (isPropertyDelta(delta)) {
+          expect(delta.changeType).toBe(CoreChangeType.Update);
+          expect(delta.model).toEqual(newSub);
+          expect(delta.property).toBe('sdk');
+          expect(delta.newValue).toBe('mySdk');
+        }
+        resolve();
+      });
+
+      coreDirector.add(
+        ModelName.Subscriptions,
+        newSub as OSModel<SupportedModel>,
+        true,
+      );
+      newSub.set('sdk', 'mySdk');
+    });
   });
 
   test('ModelRepo hydrate model -> model is synced to the model cache', () => {
     const newSub = generateNewSubscription();
 
-    const modelCacheRemoveSpy = jest.spyOn(
-      ModelCache.prototype as any,
-      'remove',
-    );
-    const modelCacheAddSpy = jest.spyOn(ModelCache.prototype as any, 'add');
+    const modelCacheRemoveSpy = vi.spyOn(ModelCache.prototype as any, 'remove');
+    const modelCacheAddSpy = vi.spyOn(ModelCache.prototype as any, 'add');
 
     coreDirector.add(
       ModelName.Subscriptions,

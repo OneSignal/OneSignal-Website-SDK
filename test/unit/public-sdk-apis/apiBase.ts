@@ -99,7 +99,7 @@ test('OneSignalApiBase.call should add a custom header', async (t) => {
       // })
       .reply(function (_uri: string, _requestBody: any) {
         // @ts-ignore
-        console.log('headers:', this.req.headers);
+        console.info('headers:', this.req.headers);
         resolve();
         return { success: true, id: playerId };
       });

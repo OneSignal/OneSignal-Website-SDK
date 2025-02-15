@@ -2,14 +2,15 @@ import InitHelper from '../../../src/shared/helpers/InitHelper';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { MessageChannel } from 'worker_threads';
 
+vi.stubGlobal('MessageChannel', MessageChannel);
+
 describe('InitHelper', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize();
-    (global as any).MessageChannel = MessageChannel;
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   /** onSdkInitialized */
@@ -22,19 +23,17 @@ describe('InitHelper', () => {
   });
 
   test('onSdkInitialized: processes expiring subscriptions', async () => {
-    const spy = test.stub(
-      InitHelper,
-      'processExpiringSubscriptions',
-      Promise.resolve(undefined),
-    );
+    const spy = vi
+      .spyOn(InitHelper, 'processExpiringSubscriptions')
+      .mockResolvedValue(false);
     await InitHelper.onSdkInitialized();
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
   test('onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false', async () => {
-    const spy = jest
+    const spy = vi
       .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
-      .mockResolvedValue(undefined);
+      .mockResolvedValue(false);
 
     OneSignal.config.userConfig.promptOptions.autoPrompt = false;
     OneSignal.config.userConfig.autoResubscribe = false;
@@ -45,7 +44,7 @@ describe('InitHelper', () => {
   });
 
   test('onSdkInitialized: does not send on session update', async () => {
-    const spy = jest
+    const spy = vi
       .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
       .mockResolvedValue(undefined);
 
