@@ -12,12 +12,7 @@
     "noImplicitAny": true,
     "strictPropertyInitialization": true,
     "baseUrl": ".",
-    "types": ["jest", "node"]
+    "types": ["node", "vitest/globals"]
   },
-  "include": [
-    "__test__/**/*",
-    "src/**/*",
-    "test/**/*",
-    "typings/**/*",
-  ]
+  "include": ["__test__/**/*", "src/**/*", "test/**/*", "typings/**/*"]
 }

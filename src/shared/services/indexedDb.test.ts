@@ -15,7 +15,7 @@ function newOSIndexedDb(
   return new IndexedDb(dbName, dbVersion);
 }
 
-const LogErrorSpy = jest.spyOn(Log, 'error').mockImplementation(() => '');
+const LogErrorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 
 describe('IndexedDB Service', () => {
   beforeEach(() => {
