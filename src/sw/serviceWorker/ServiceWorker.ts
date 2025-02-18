@@ -56,7 +56,6 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
  * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
  */
 export class ServiceWorker {
-  // TODO: remove? UNSUBSCRIBED_FROM_NOTIFICATIONS is not set anywhere
   static UNSUBSCRIBED_FROM_NOTIFICATIONS: boolean | undefined;
 
   /**
