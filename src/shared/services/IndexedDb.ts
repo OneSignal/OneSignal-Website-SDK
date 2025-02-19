@@ -3,7 +3,7 @@ import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 
-export const DATABASE_VERSION = 6;
+const DATABASE_VERSION = 6;
 
 export default class IndexedDb {
   public emitter: Emitter;
