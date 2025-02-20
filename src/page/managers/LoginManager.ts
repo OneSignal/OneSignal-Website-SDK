@@ -246,8 +246,7 @@ export default class LoginManager {
 
       const payloadSubcriptionToken = userData.subscriptions?.[0]?.token;
       const resultSubscription = result.subscriptions?.find(
-        (sub: { token: string | undefined }) =>
-          sub.token === payloadSubcriptionToken,
+        (sub) => sub.token === payloadSubcriptionToken,
       );
 
       if (resultSubscription) {
@@ -412,7 +411,7 @@ export default class LoginManager {
       retainPreviousOwner,
     );
     const transferResponseStatus = transferResponse?.status;
-    const tansferResult = transferResponse?.result;
+    const transferResult = transferResponse?.result;
 
     if (
       transferResponseStatus &&
@@ -420,11 +419,11 @@ export default class LoginManager {
       transferResponseStatus < 300
     ) {
       Log.info('transferSubscription succeeded');
-      const transferResultIdentity = tansferResult?.identity;
+      const transferResultIdentity = transferResult?.identity;
       return { identity: transferResultIdentity };
     } else {
       throw new OneSignalError(
-        `transferSubscription failed: ${JSON.stringify(tansferResult)}}`,
+        `transferSubscription failed: ${JSON.stringify(transferResult)}}`,
       );
     }
   }

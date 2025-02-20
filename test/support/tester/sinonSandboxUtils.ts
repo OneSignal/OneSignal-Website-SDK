@@ -4,8 +4,6 @@ import { createSubscription } from '../../support/tester/utils';
 import Database from '../../../src/shared/services/Database';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
 import { MockServiceWorkerRegistration } from '../../support/mocks/service-workers/models/MockServiceWorkerRegistration';
-import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
-import PermissionManager from '../../../src/shared/managers/PermissionManager';
 import { ServiceWorkerActiveState } from '../../../src/shared/helpers/ServiceWorkerHelper';
 import { ServiceWorkerManager } from '../../../src/shared/managers/ServiceWorkerManager';
 import { Subscription } from '../../../src/shared/models/Subscription';

@@ -15,11 +15,11 @@ import { RETRY_BACKOFF } from './RetryBackoff';
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 export class OneSignalApiBase {
-  static get(
+  static get<T = unknown>(
     action: string,
     data?: any,
     headers?: APIHeaders | undefined,
-  ): Promise<OneSignalApiBaseResponse> {
+  ): Promise<OneSignalApiBaseResponse<T>> {
     return OneSignalApiBase.call('GET', action, data, headers);
   }
 
@@ -39,19 +39,19 @@ export class OneSignalApiBase {
     return OneSignalApiBase.call('PUT', action, data, headers);
   }
 
-  static delete(
+  static delete<T = unknown>(
     action: string,
     data?: any,
     headers?: APIHeaders | undefined,
-  ): Promise<OneSignalApiBaseResponse> {
+  ): Promise<OneSignalApiBaseResponse<T>> {
     return OneSignalApiBase.call('DELETE', action, data, headers);
   }
 
-  static patch(
+  static patch<T = unknown>(
     action: string,
     data?: any,
     headers?: APIHeaders | undefined,
-  ): Promise<OneSignalApiBaseResponse> {
+  ): Promise<OneSignalApiBaseResponse<T>> {
     return OneSignalApiBase.call('PATCH', action, data, headers);
   }
 

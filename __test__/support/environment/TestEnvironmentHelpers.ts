@@ -7,7 +7,6 @@ import { DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
 import OneSignal from '../../../src/onesignal/OneSignal';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
 import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElement';
-import { MockServiceWorkerContainerWithAPIBan } from '../mocks/models/MockServiceWorkerContainerWithAPIBan';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import TestContext from './TestContext';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
@@ -17,13 +16,14 @@ import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespac
 import UserNamespace from '../../../src/onesignal/UserNamespace';
 import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
 import bowser from 'bowser';
-import { bowserCastle } from '../../../src/shared/utils/bowserCastle';
+import * as bowerCastleHelpers from '../../../src/shared/utils/bowserCastle';
 
 declare const global: any;
 
 vi.mock('../../../src/shared/utils/bowserCastle', () => ({
   bowserCastle: vi.fn(),
 }));
+const bowserCastleSpy = vi.spyOn(bowerCastleHelpers, 'bowserCastle');
 
 export function resetDatabase() {
   // Erase and reset IndexedDb database name to something random
@@ -35,12 +35,12 @@ export function mockUserAgent(config: TestEnvironmentConfig = {}): void {
   const info = bowser._detect(config.userAgent ?? BrowserUserAgent.Default);
 
   // Modify the mock implementation
-  bowserCastle.mockImplementation(() => ({
+  bowserCastleSpy.mockReturnValue({
     mobile: info.mobile,
     tablet: info.tablet,
     name: info.name.toLowerCase(),
     version: info.version,
-  }));
+  });
 }
 
 export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
@@ -112,12 +112,6 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   });
 
   const windowDef = dom.window;
-  // Node has its own console; overwriting it will cause issues
-  delete (windowDef as any)['console'];
-  (windowDef as any).navigator.serviceWorker =
-    new MockServiceWorkerContainerWithAPIBan();
-  // (windowDef as any).TextEncoder = TextEncoder;
-  // (windowDef as any).TextDecoder = TextDecoder;
   (windowDef as any).location = url;
 
   addCustomEventPolyfill(windowDef);

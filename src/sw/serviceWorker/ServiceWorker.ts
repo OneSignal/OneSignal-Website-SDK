@@ -45,6 +45,7 @@ import { bowserCastle } from '../../shared/utils/bowserCastle';
 import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
 import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
+import { AppConfig } from 'src/shared/models/AppConfig';
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -56,8 +57,6 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
  * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
  */
 export class ServiceWorker {
-  static UNSUBSCRIBED_FROM_NOTIFICATIONS: boolean | undefined;
-
   /**
    * An incrementing integer defined in package.json. Value doesn't matter as long as it's different from the
    * previous version.
@@ -92,9 +91,7 @@ export class ServiceWorker {
     const pushSubscription =
       await self.registration.pushManager.getSubscription();
     const pushToken = pushSubscription?.endpoint;
-    if (!pushToken) {
-      return undefined;
-    }
+    if (!pushToken) return undefined;
     return ModelCacheDirectAccess.getPushSubscriptionIdByToken(pushToken);
   }
 
@@ -168,10 +165,15 @@ export class ServiceWorker {
       Also see: https://github.com/w3c/ServiceWorker/issues/1156
     */
     Log.debug('Setting up message listeners.');
-    // self.addEventListener('message') is statically added inside the listen() method
-    ServiceWorker.workerMessenger.listen();
-    // Install messaging event handlers for page <-> service worker communication
-    ServiceWorker.setupMessageListeners();
+
+    // delay for setting up test mocks like global.ServiceWorkerGlobalScope
+    setTimeout(() => {
+      // self.addEventListener('message') is statically added inside the listen() method
+      ServiceWorker.workerMessenger.listen();
+
+      // Install messaging event handlers for page <-> service worker communication
+      ServiceWorker.setupMessageListeners();
+    }, 0);
   }
 
   static async getAppId(): Promise<string> {
@@ -200,7 +202,7 @@ export class ServiceWorker {
     );
     ServiceWorker.workerMessenger.on(
       WorkerMessengerCommand.Subscribe,
-      async (appConfigBundle: any) => {
+      async (appConfigBundle: AppConfig) => {
         const appConfig = appConfigBundle;
         Log.debug('[Service Worker] Received subscribe message.');
         const context = new ContextSW(appConfig);
@@ -219,7 +221,7 @@ export class ServiceWorker {
     );
     ServiceWorker.workerMessenger.on(
       WorkerMessengerCommand.SubscribeNew,
-      async (appConfigBundle: any) => {
+      async (appConfigBundle: AppConfig) => {
         const appConfig = appConfigBundle;
         Log.debug('[Service Worker] Received subscribe new message.');
         const context = new ContextSW(appConfig);
@@ -230,6 +232,7 @@ export class ServiceWorker {
           await context.subscriptionManager.registerSubscription(
             rawSubscription,
           );
+
         ServiceWorker.workerMessenger.broadcast(
           WorkerMessengerCommand.SubscribeNew,
           subscription.serialize(),
@@ -280,6 +283,7 @@ export class ServiceWorker {
             rawSubscription,
           );
         await Database.put('Ids', { type: 'appId', id: appId });
+
         ServiceWorker.workerMessenger.broadcast(
           WorkerMessengerCommand.AmpSubscribe,
           subscription.deviceId,
@@ -312,12 +316,9 @@ export class ServiceWorker {
           '[Service Worker] Received response for AreYouVisible',
           payload,
         );
-        if (!self.clientsStatus) {
-          return;
-        }
 
         const timestamp = payload.timestamp;
-        if (self.clientsStatus.timestamp !== timestamp) {
+        if (self.clientsStatus?.timestamp !== timestamp) {
           return;
         }
 
@@ -410,12 +411,6 @@ export class ServiceWorker {
         )
         .catch((e) => {
           Log.debug('Failed to display a notification:', e);
-          if (ServiceWorker.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
-            Log.debug(
-              'Because we have just unsubscribed from notifications, we will not show anything.',
-            );
-            return undefined;
-          }
         }),
     );
   }
@@ -440,9 +435,7 @@ export class ServiceWorker {
     // app and notification ids are required, decided to exclude deviceId from required params
     // In rare case we don't have it we can still report as confirmed to backend to increment count
     const hasRequiredParams = !!(appId && notification.notificationId);
-    if (!hasRequiredParams) {
-      return;
-    }
+    if (!hasRequiredParams) return;
 
     // JSON.stringify() does not include undefined values
     // Our response will not contain those fields here which have undefined values
@@ -615,7 +608,7 @@ export class ServiceWorker {
    * If the image protocol is HTTPS, or origin contains localhost or starts with 192.168.*.*, we do not proxy the image.
    * @param imageUrl An HTTP or HTTPS image URL.
    */
-  static ensureImageResourceHttps(imageUrl: URL) {
+  static ensureImageResourceHttps(imageUrl?: string) {
     if (imageUrl) {
       try {
         const parsedImageUrl = new URL(imageUrl);
@@ -643,7 +636,7 @@ export class ServiceWorker {
         Log.error('ensureImageResourceHttps: ', e);
       }
     }
-    return null;
+    return undefined;
   }
 
   /**

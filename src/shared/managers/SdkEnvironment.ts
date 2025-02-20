@@ -74,15 +74,11 @@ export default class SdkEnvironment {
    * Describes the current frame context.
    */
   public static getWindowEnv(): WindowEnvironmentKind {
-    if (typeof window === 'undefined') {
-      if (
-        typeof self !== 'undefined' &&
-        typeof ServiceWorkerGlobalScope !== 'undefined'
-      ) {
-        return WindowEnvironmentKind.ServiceWorker;
-      } else {
-        throw Error('OneSignalSDK: Unsupported JS runtime!');
-      }
+    if (
+      typeof self !== 'undefined' &&
+      typeof ServiceWorkerGlobalScope !== 'undefined'
+    ) {
+      return WindowEnvironmentKind.ServiceWorker;
     }
     return WindowEnvironmentKind.Host;
   }

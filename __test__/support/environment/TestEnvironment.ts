@@ -20,8 +20,7 @@ import {
 } from '../helpers/core';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../constants';
-
-declare let global: any;
+import { NotificationPermission } from 'src/shared/models/NotificationPermission';
 
 export interface TestEnvironmentConfig {
   userConfig?: AppUserConfig;

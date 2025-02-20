@@ -1,4 +1,3 @@
-import OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
 import { logMethodCall } from '../../shared/utils/utils';
 import OneSignalError from '../../shared/errors/OneSignalError';
 import {
@@ -65,7 +64,7 @@ export default class IdentityRequests {
   }
 
   private static _processIdentityResponse(
-    response?: OneSignalApiBaseResponse,
+    response?: Awaited<ReturnType<typeof RequestService.deleteAlias>>,
   ): ExecutorResult<IdentityModel> {
     if (!response) {
       throw new OneSignalError(

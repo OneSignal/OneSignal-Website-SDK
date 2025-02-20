@@ -76,7 +76,7 @@ export default class Environment {
       case WindowEnvironmentKind.ServiceWorker:
         return true;
       default:
-        return typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
+        return !!navigator.serviceWorker;
     }
   }
 
