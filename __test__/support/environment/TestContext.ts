@@ -19,8 +19,9 @@ export default class TestContext {
     overrideServerConfig: RecursivePartial<ServerAppConfig> | null = null,
     appId: string = APP_ID,
   ): ServerAppConfig {
+    let remoteConfigMockDefaults: ServerAppConfig;
     if (configIntegrationKind === ConfigIntegrationKind.Custom) {
-      return {
+      remoteConfigMockDefaults = {
         success: true,
         version: 2,
         app_id: appId,
@@ -169,177 +170,178 @@ export default class TestContext {
         },
         generated_at: 1531177265,
       };
-    }
-
-    const remoteConfigMockDefaults: ServerAppConfig = {
-      success: true,
-      version: 2,
-      app_id: appId,
-      features: {
-        restrict_origin: {
-          enable: false,
-        },
-        metrics: {
-          enable: true,
-          mixpanel_reporting_token: '7c2582e45a6ecf1501aa3ca7887f3673',
-        },
-        web_on_focus_enabled: true,
-        session_threshold: 30,
-      },
-      config: {
-        origin: 'https://example.com',
-        subdomain: undefined,
-        http_use_onesignal_com: false,
-        autoResubscribe: false,
-        staticPrompts: {
-          native: {
-            enabled: false,
-            autoPrompt: false,
+    } else {
+      remoteConfigMockDefaults = {
+        success: true,
+        version: 2,
+        app_id: appId,
+        features: {
+          restrict_origin: {
+            enable: false,
           },
-          bell: {
-            size: 'large',
-            color: {
-              main: 'red',
-              accent: 'white',
-            },
-            dialog: {
-              main: {
-                title: 'Manage Notifications',
-                subscribeButton: 'Subscribe',
-                unsubscribeButton: 'Unsubscribe',
-              },
-              blocked: {
-                title: 'Unblock Notifications',
-                message: 'Click here to learn how to unblock notifications.',
-              },
-            },
-            offset: {
-              left: 0,
-              right: 0,
-              bottom: 0,
-            },
-            enabled: true,
-            message: {
-              subscribing: 'Thanks for subscribing!',
-              unsubscribing: "You won't receive notifications again",
-            },
-            tooltip: {
-              blocked: "You've blocked notifications",
-              subscribed: "You're subscribed to notifications",
-              unsubscribed: 'Subscribe to notifications',
-            },
-            location: 'bottom-right',
-            hideWhenSubscribed: false,
-            customizeTextEnabled: true,
+          metrics: {
+            enable: true,
+            mixpanel_reporting_token: '7c2582e45a6ecf1501aa3ca7887f3673',
           },
-          slidedown: {
-            prompts: [
-              {
-                type: DelayedPromptType.Push,
-                autoPrompt: true,
-                text: {
-                  acceptButton: 'Allow',
-                  cancelButton: 'No Thanks',
-                  actionMessage:
-                    "We'd like to send you notifications for the latest news and updates.",
+          web_on_focus_enabled: true,
+          session_threshold: 30,
+        },
+        config: {
+          origin: 'https://example.com',
+          subdomain: undefined,
+          http_use_onesignal_com: false,
+          autoResubscribe: false,
+          staticPrompts: {
+            native: {
+              enabled: false,
+              autoPrompt: false,
+            },
+            bell: {
+              size: 'large',
+              color: {
+                main: 'red',
+                accent: 'white',
+              },
+              dialog: {
+                main: {
+                  title: 'Manage Notifications',
+                  subscribeButton: 'Subscribe',
+                  unsubscribeButton: 'Unsubscribe',
+                },
+                blocked: {
+                  title: 'Unblock Notifications',
+                  message: 'Click here to learn how to unblock notifications.',
                 },
               },
-            ],
-          },
-          fullscreen: {
-            title: 'example.com',
-            caption: 'You can unsubscribe anytime',
-            enabled: true,
-            message: 'This is an example notification message.',
-            acceptButton: 'Continue',
-            cancelButton: 'No Thanks',
-            actionMessage:
-              "We'd like to send you notifications for the latest news and updates.",
-            autoAcceptTitle: 'Click Allow',
-            customizeTextEnabled: true,
-          },
-          customlink: {
-            enabled: true,
-            style: 'button',
-            size: 'medium',
-            color: {
-              button: '#e54b4d',
-              text: '#ffffff',
+              offset: {
+                left: 0,
+                right: 0,
+                bottom: 0,
+              },
+              enabled: true,
+              message: {
+                subscribing: 'Thanks for subscribing!',
+                unsubscribing: "You won't receive notifications again",
+              },
+              tooltip: {
+                blocked: "You've blocked notifications",
+                subscribed: "You're subscribed to notifications",
+                unsubscribed: 'Subscribe to notifications',
+              },
+              location: 'bottom-right',
+              hideWhenSubscribed: false,
+              customizeTextEnabled: true,
             },
-            text: {
-              subscribe: 'Subscribe to push notifications',
-              unsubscribe: 'Unsubscribe from push notifications',
-              explanation:
-                'Get updates from all sorts of things that matter to you',
+            slidedown: {
+              prompts: [
+                {
+                  type: DelayedPromptType.Push,
+                  autoPrompt: true,
+                  text: {
+                    acceptButton: 'Allow',
+                    cancelButton: 'No Thanks',
+                    actionMessage:
+                      "We'd like to send you notifications for the latest news and updates.",
+                  },
+                },
+              ],
             },
-            unsubscribeEnabled: true,
-          },
-        },
-        siteInfo: {
-          name: 'My Website',
-          origin: 'https://www.site.com',
-          proxyOrigin: undefined,
-          defaultIconUrl: 'https://onesignal.com/images/notification_logo.png',
-          proxyOriginEnabled: false,
-        },
-        webhooks: {
-          enable: false,
-          corsEnable: false,
-          notificationClickedHook: undefined,
-          notificationDismissedHook: undefined,
-          notificationDisplayedHook: undefined,
-        },
-        integration: {
-          kind: configIntegrationKind,
-        },
-        serviceWorker: {
-          path: '/',
-          workerName: 'OneSignalSDKWorker.js',
-          registrationScope: '/',
-        },
-        setupBehavior: {
-          allowLocalhostAsSecureOrigin: false,
-        },
-        welcomeNotification: {
-          url: undefined,
-          title: undefined,
-          enable: false,
-          message: undefined,
-          urlEnabled: undefined,
-        },
-        notificationBehavior: {
-          click: {
-            match: NotificationClickMatchBehavior.Exact,
-            action: NotificationClickActionBehavior.Navigate,
-          },
-          display: {
-            persist: false,
-          },
-        },
-        vapid_public_key:
-          'BLJozaErc0QXdS7ykMyqniAcvfmdoziwfoSN-Mde_OckAbN_XrOC9Zt2Sfz4pD0UnYT5w3frWjF2iTTtjqEBgbE',
-        onesignal_vapid_public_key:
-          'BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0',
-        safari_web_id:
-          'web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d',
-        outcomes: {
-          direct: {
-            enabled: true,
-          },
-          indirect: {
-            enabled: true,
-            notification_attribution: {
-              minutes_since_displayed: 60,
-              limit: 5,
+            fullscreen: {
+              title: 'example.com',
+              caption: 'You can unsubscribe anytime',
+              enabled: true,
+              message: 'This is an example notification message.',
+              acceptButton: 'Continue',
+              cancelButton: 'No Thanks',
+              actionMessage:
+                "We'd like to send you notifications for the latest news and updates.",
+              autoAcceptTitle: 'Click Allow',
+              customizeTextEnabled: true,
+            },
+            customlink: {
+              enabled: true,
+              style: 'button',
+              size: 'medium',
+              color: {
+                button: '#e54b4d',
+                text: '#ffffff',
+              },
+              text: {
+                subscribe: 'Subscribe to push notifications',
+                unsubscribe: 'Unsubscribe from push notifications',
+                explanation:
+                  'Get updates from all sorts of things that matter to you',
+              },
+              unsubscribeEnabled: true,
             },
           },
-          unattributed: {
-            enabled: true,
+          siteInfo: {
+            name: 'My Website',
+            origin: 'https://www.site.com',
+            proxyOrigin: undefined,
+            defaultIconUrl:
+              'https://onesignal.com/images/notification_logo.png',
+            proxyOriginEnabled: false,
+          },
+          webhooks: {
+            enable: false,
+            corsEnable: false,
+            notificationClickedHook: undefined,
+            notificationDismissedHook: undefined,
+            notificationDisplayedHook: undefined,
+          },
+          integration: {
+            kind: configIntegrationKind,
+          },
+          serviceWorker: {
+            path: '/',
+            workerName: 'OneSignalSDKWorker.js',
+            registrationScope: '/',
+          },
+          setupBehavior: {
+            allowLocalhostAsSecureOrigin: false,
+          },
+          welcomeNotification: {
+            url: undefined,
+            title: undefined,
+            enable: false,
+            message: undefined,
+            urlEnabled: undefined,
+          },
+          notificationBehavior: {
+            click: {
+              match: NotificationClickMatchBehavior.Exact,
+              action: NotificationClickActionBehavior.Navigate,
+            },
+            display: {
+              persist: false,
+            },
+          },
+          vapid_public_key:
+            'BLJozaErc0QXdS7ykMyqniAcvfmdoziwfoSN-Mde_OckAbN_XrOC9Zt2Sfz4pD0UnYT5w3frWjF2iTTtjqEBgbE',
+          onesignal_vapid_public_key:
+            'BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0',
+          safari_web_id:
+            'web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d',
+          outcomes: {
+            direct: {
+              enabled: true,
+            },
+            indirect: {
+              enabled: true,
+              notification_attribution: {
+                minutes_since_displayed: 60,
+                limit: 5,
+              },
+            },
+            unattributed: {
+              enabled: true,
+            },
           },
         },
-      },
-      generated_at: 1511912065,
-    };
+        generated_at: 1511912065,
+      };
+    }
 
     return deepmerge(
       (<ServerAppConfig>remoteConfigMockDefaults) as Partial<ServerAppConfig>,

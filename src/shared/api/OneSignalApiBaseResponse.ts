@@ -1,4 +1,4 @@
-export default interface OneSignalApiBaseResponse {
-  result: any;
+export default interface OneSignalApiBaseResponse<T = unknown> {
+  result: T;
   status: number;
 }

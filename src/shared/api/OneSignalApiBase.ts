@@ -23,11 +23,11 @@ export class OneSignalApiBase {
     return OneSignalApiBase.call('GET', action, data, headers);
   }
 
-  static post(
+  static post<T = unknown>(
     action: string,
     data?: any,
     headers?: APIHeaders | undefined,
-  ): Promise<OneSignalApiBaseResponse> {
+  ): Promise<OneSignalApiBaseResponse<T>> {
     return OneSignalApiBase.call('POST', action, data, headers);
   }
 
@@ -55,12 +55,12 @@ export class OneSignalApiBase {
     return OneSignalApiBase.call('PATCH', action, data, headers);
   }
 
-  private static call(
+  private static call<T = unknown>(
     method: SupportedMethods,
     action: string,
     data: any,
     headers: APIHeaders | undefined,
-  ): Promise<OneSignalApiBaseResponse> {
+  ): Promise<OneSignalApiBaseResponse<T>> {
     if (!this.requestHasAppId(action, data)) {
       return Promise.reject(
         new OneSignalApiError(OneSignalApiErrorKind.MissingAppId),
@@ -92,11 +92,11 @@ export class OneSignalApiBase {
     return OneSignalApiBase.executeFetch(url, contents);
   }
 
-  private static async executeFetch(
+  private static async executeFetch<T = unknown>(
     url: string,
     contents: RequestInit,
     retry = 5,
-  ): Promise<OneSignalApiBaseResponse> {
+  ): Promise<OneSignalApiBaseResponse<T>> {
     if (retry === 0) {
       return Promise.reject(
         new OneSignalApiError(OneSignalApiErrorKind.RetryLimitReached),

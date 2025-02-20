@@ -44,11 +44,12 @@ export const TABLE_OUTCOMES_NOTIFICATION_CLICKED =
 export const TABLE_OUTCOMES_NOTIFICATION_RECEIVED =
   'Outcomes.NotificationReceived';
 export const TABLE_NOTIFICATION_OPENED = 'NotificationOpened';
+export const TABLE_SESSIONS = 'Sessions';
 
 export type OneSignalDbTable =
   | 'Options'
   | 'Ids'
-  | 'Sessions'
+  | typeof TABLE_SESSIONS
   | typeof TABLE_NOTIFICATION_OPENED
   | typeof TABLE_OUTCOMES_NOTIFICATION_RECEIVED
   | typeof TABLE_OUTCOMES_NOTIFICATION_CLICKED
@@ -367,15 +368,15 @@ export default class Database {
   }
 
   private async getSession(sessionKey: string): Promise<Session | null> {
-    return await this.get<Session | null>('Sessions', sessionKey);
+    return await this.get<Session | null>(TABLE_SESSIONS, sessionKey);
   }
 
   private async setSession(session: Session): Promise<void> {
-    await this.put('Sessions', session);
+    await this.put(TABLE_SESSIONS, session);
   }
 
   private async removeSession(sessionKey: string): Promise<void> {
-    await this.remove('Sessions', sessionKey);
+    await this.remove(TABLE_SESSIONS, sessionKey);
   }
 
   async getLastNotificationClickedForOutcomes(
