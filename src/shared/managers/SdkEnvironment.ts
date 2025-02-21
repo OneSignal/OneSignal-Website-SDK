@@ -80,6 +80,9 @@ export default class SdkEnvironment {
     ) {
       return WindowEnvironmentKind.ServiceWorker;
     }
+    if (typeof window === 'undefined') {
+      throw Error('OneSignalSDK: Unsupported JS runtime!');
+    }
     return WindowEnvironmentKind.Host;
   }
 
