@@ -106,6 +106,8 @@ export type WorkerMessengerPayload =
   | number
   | string
   | object
+  | null
+  | undefined
   | boolean;
 
 /**

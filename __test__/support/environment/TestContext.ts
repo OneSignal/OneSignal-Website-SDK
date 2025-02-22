@@ -449,7 +449,7 @@ export default class TestContext {
       persistNotification: false,
       webhooks: {
         cors: true,
-        'notification.displayed':
+        'notification.willDisplay':
           'https://fake-config.com/notification-displayed',
         'notification.clicked': 'https://fake-config.com/notification-clicked',
         'notification.dismissed':

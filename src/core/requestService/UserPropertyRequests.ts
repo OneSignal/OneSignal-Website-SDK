@@ -64,7 +64,9 @@ export default class UserPropertyRequests {
   }
 
   private static _processUserPropertyResponse(
-    response?: OneSignalApiBaseResponse,
+    response?: OneSignalApiBaseResponse<{
+      properties: UserPropertiesModel;
+    }>,
   ): ExecutorResult<UserPropertiesModel> {
     if (!response) {
       throw new Error('processUserPropertyResponse: response is not defined');

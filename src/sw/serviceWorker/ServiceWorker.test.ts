@@ -5,16 +5,18 @@ import {
 } from '__test__/support/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
+import Environment from 'src/shared/helpers/Environment';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
 import {
   DEFAULT_DEVICE_ID,
   SubscriptionManager,
 } from 'src/shared/managers/SubscriptionManager';
-import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
+import { AppConfig, ConfigIntegrationKind } from 'src/shared/models/AppConfig';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import {
@@ -34,25 +36,31 @@ import Database, {
 } from 'src/shared/services/Database';
 import Log from '../libraries/Log';
 import { ServiceWorker } from './ServiceWorker';
-import Environment from 'src/shared/helpers/Environment';
 
 declare const self: ServiceWorkerGlobalScope;
 
 const endpoint = 'https://example.com';
 const appId = APP_ID;
 const notificationId = 'test-notification-id';
+const version = 1;
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
 
+const serverConfig = TestContext.getFakeServerAppConfig(
+  ConfigIntegrationKind.Custom,
+  {
+    features: {
+      restrict_origin: {
+        enable: false,
+      },
+    },
+  },
+);
+
 describe('ServiceWorker', () => {
   beforeAll(async () => {
     await TestEnvironment.initialize();
-    await Database.cleanupCurrentSession();
-    await Database.put('Ids', {
-      type: 'appId',
-      id: appId,
-    });
 
     // @ts-expect-error - Notification is not defined in the global scope
     global.Notification = {
@@ -60,13 +68,25 @@ describe('ServiceWorker', () => {
     };
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await Database.cleanupCurrentSession();
+    await Database.put('Ids', {
+      type: 'appId',
+      id: appId,
+    });
+    server.use(
+      http.get(`**/sync/*/web`, () => HttpResponse.json(serverConfig)),
+    );
+
     // @ts-expect-error - search is readonly but we need to set it for testing
     self.location.search = '';
+
+    // @ts-expect-error - for setting sdk env to SW
+    global.ServiceWorkerGlobalScope = {};
   });
 
   test('should have basic properties', () => {
-    expect(ServiceWorker.VERSION).toBe(1);
+    expect(ServiceWorker.VERSION).toBe(version);
     expect(ServiceWorker.environment).toBe(Environment);
     expect(ServiceWorker.database).toBe(Database);
     expect(ServiceWorker.log).toBe(Log);
@@ -301,23 +321,11 @@ describe('ServiceWorker', () => {
     const someDeviceId = '123';
 
     beforeEach(() => {
-      const serverConfig = TestContext.getFakeServerAppConfig(
-        ConfigIntegrationKind.Custom,
-        {
-          features: {
-            restrict_origin: {
-              enable: false,
-            },
-          },
-        },
-      );
-
-      server.use(
-        http.get(`**/sync/*/web`, () => HttpResponse.json(serverConfig)),
-      );
       server.use(
         http.post(`**/players`, () => HttpResponse.json({ id: someDeviceId })),
       );
+
+      global.ServiceWorkerGlobalScope = undefined;
     });
 
     test('with old subscription and no device id', async () => {
@@ -455,6 +463,7 @@ describe('ServiceWorker', () => {
     describe('session upsert event', () => {
       test('with safari client', async () => {
         const cancel = vi.fn();
+        // @ts-expect-error - custom property, not part of the spec
         self.cancel = cancel;
 
         await Database.put(TABLE_SESSIONS, session);
@@ -570,10 +579,191 @@ describe('ServiceWorker', () => {
       });
     });
   });
+
+  describe('worker messenger', () => {
+    const newAppID = '32f13333-a0d2-4ce8-bcd9-b1754e242756';
+    const appConfig: AppConfig = {
+      appId,
+      hasUnsupportedSubdomain: false,
+      origin: 'https://some-origin.com',
+      siteName: 'Example',
+      vapidPublicKey: '1234567890',
+      userConfig: TestContext.getFakeAppUserConfig(),
+    };
+    const serializedSubscription = {
+      createdAt: null,
+      deviceId: DEFAULT_DEVICE_ID,
+      expirationTime: null,
+      optedOut: false,
+      subscriptionToken: endpoint + '/',
+    };
+
+    test('should send worker version message', async () => {
+      const event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand.WorkerVersion,
+      });
+      await self.dispatchEvent(event);
+      await vi.runOnlyPendingTimersAsync();
+
+      // should send a message to all clients
+      expect(postMessageFn).toHaveBeenCalledWith({
+        command: WorkerMessengerCommand.WorkerVersion,
+        payload: version,
+      });
+    });
+
+    test('should send subscribe message', async () => {
+      const event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand.Subscribe,
+        payload: appConfig,
+      });
+      await self.dispatchEvent(event);
+      await vi.advanceTimersByTimeAsync(20000);
+
+      expect(postMessageFn).toHaveBeenCalledWith({
+        command: WorkerMessengerCommand.Subscribe,
+        payload: serializedSubscription,
+      });
+    });
+
+    test('should send subscribe new message', async () => {
+      const event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand.SubscribeNew,
+        payload: appConfig,
+      });
+
+      await self.dispatchEvent(event);
+      await vi.waitUntil(() => postMessageFn.mock.calls.length > 0);
+
+      expect(postMessageFn).toHaveBeenCalledWith({
+        command: WorkerMessengerCommand.SubscribeNew,
+        payload: serializedSubscription,
+      });
+    });
+
+    describe('AMP subscription state', () => {
+      test('with no push subscription', async () => {
+        getSubscriptionMock.mockResolvedValueOnce(null);
+
+        const event = new ExtendableMessageEvent('message', {
+          command: WorkerMessengerCommand.AmpSubscriptionState,
+        });
+        await self.dispatchEvent(event);
+        await vi.runOnlyPendingTimersAsync();
+
+        expect(postMessageFn).toHaveBeenCalledWith({
+          command: WorkerMessengerCommand.AmpSubscriptionState,
+          payload: false, // is not subscribed
+        });
+      });
+
+      test('with push subscription', async () => {
+        const event = new ExtendableMessageEvent('message', {
+          command: WorkerMessengerCommand.AmpSubscriptionState,
+        });
+        await self.dispatchEvent(event);
+        await vi.runOnlyPendingTimersAsync();
+
+        expect(postMessageFn).toHaveBeenCalledWith({
+          command: WorkerMessengerCommand.AmpSubscriptionState,
+          payload: true, // is subscribed
+        });
+      });
+    });
+
+    test('AMP subscribe', async () => {
+      // @ts-expect-error - search is readonly but we need to set it for testing
+      self.location.search = `?appId=${newAppID}`;
+
+      const event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand.AmpSubscribe,
+      });
+      await self.dispatchEvent(event);
+      await vi.advanceTimersByTimeAsync(20000);
+
+      // should update app id
+      const dbAppId = await Database.get('Ids', 'appId');
+      expect(dbAppId).toBe(newAppID);
+
+      expect(postMessageFn).toHaveBeenCalledWith({
+        command: WorkerMessengerCommand.AmpSubscribe,
+        payload: DEFAULT_DEVICE_ID,
+      });
+    });
+
+    test('AMP unsubscribe', async () => {
+      // @ts-expect-error - search is readonly but we need to set it for testing
+      self.location.search = `?appId=${newAppID}`;
+
+      const event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand.AmpUnsubscribe,
+      });
+      await self.dispatchEvent(event);
+      await vi.advanceTimersByTimeAsync(20000);
+
+      // should set opted out
+      const optedOut = await Database.get('Options', 'optedOut');
+      expect(optedOut).toBe(true);
+
+      expect(postMessageFn).toHaveBeenCalledWith({
+        command: WorkerMessengerCommand.AmpUnsubscribe,
+        payload: null,
+      });
+    });
+
+    describe('are you visible response', () => {
+      test('with no clients status', async () => {
+        const event = new ExtendableMessageEvent('message', {
+          command: WorkerMessengerCommand.AreYouVisibleResponse,
+          payload: { focused: false, timestamp: Date.now() },
+        });
+        await self.dispatchEvent(event);
+        await vi.runOnlyPendingTimersAsync();
+
+        expect(postMessageFn).not.toHaveBeenCalled();
+      });
+
+      test('with clients status', async () => {
+        const timestamp = Date.now();
+
+        self.clientsStatus = {
+          hasAnyActiveSessions: false,
+          timestamp,
+          receivedResponsesCount: 0,
+        };
+
+        const event = new ExtendableMessageEvent('message', {
+          command: WorkerMessengerCommand.AreYouVisibleResponse,
+          payload: { focused: true, timestamp },
+        });
+        await self.dispatchEvent(event);
+        await vi.runOnlyPendingTimersAsync();
+
+        // should set client status as active
+        expect(postMessageFn).not.toHaveBeenCalled();
+        expect(self.clientsStatus.receivedResponsesCount).toBe(1);
+        expect(self.clientsStatus.hasAnyActiveSessions).toBe(true);
+      });
+    });
+
+    test('should set logging', async () => {
+      let event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand.SetLogging,
+        payload: { shouldLog: true },
+      });
+      await self.dispatchEvent(event);
+      expect(self.shouldLog).toBe(true);
+
+      event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand.SetLogging,
+        payload: { shouldLog: false },
+      });
+      await self.dispatchEvent(event);
+      expect(self.shouldLog).toBe(undefined);
+    });
+  });
 });
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Spys
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const logDebugSpy = vi.spyOn(Log, 'debug');
 // -- one signal api base mock
@@ -627,6 +817,17 @@ vi.mock('../../../src/shared/utils/AwaitableTimeout', () => ({
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Web api classes
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+declare global {
+  interface ServiceWorkerGlobalScope {
+    clientsStatus?: {
+      hasAnyActiveSessions: boolean;
+      timestamp: number;
+      receivedResponsesCount: number;
+    };
+    shouldLog?: boolean;
+  }
+}
+
 class ExtendableEvent extends Event {
   waitUntil(promise: Promise<any>) {
     return promise;
@@ -708,12 +909,25 @@ global.ExtendableEvent = class extends Event {
   }
 };
 
+const mockServiceWorker = {};
+const getSubscriptionMock = vi
+  .fn<() => Promise<PushSubscription | null>>()
+  .mockResolvedValue({
+    endpoint,
+    expirationTime: Date.now(),
+    options: {
+      applicationServerKey: null,
+      userVisibleOnly: true,
+    },
+    getKey: vi.fn(),
+    toJSON: vi.fn(),
+    unsubscribe: vi.fn().mockResolvedValue(true),
+  });
 Object.defineProperty(self, 'registration', {
   value: {
+    active: mockServiceWorker,
     pushManager: {
-      getSubscription: vi.fn().mockResolvedValue({
-        endpoint,
-      }),
+      getSubscription: getSubscriptionMock,
       permissionState: vi.fn().mockResolvedValue('granted'),
       subscribe: vi.fn().mockResolvedValue({
         endpoint,
@@ -753,10 +967,17 @@ Object.defineProperty(self, 'clients', {
   },
   writable: true, // Allow further modifications if needed
 });
-
 Object.defineProperty(self, 'location', {
   value: {
     search: '',
   },
+  writable: true,
+});
+Object.defineProperty(global.navigator, 'serviceWorker', {
+  value: new MockServiceWorker(),
+  writable: true,
+});
+Object.defineProperty(self, 'isSecureContext', {
+  value: true,
   writable: true,
 });

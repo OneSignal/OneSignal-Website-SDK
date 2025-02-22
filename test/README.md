@@ -1,5 +1,7 @@
 # Running WebSDK Test Suite
 
+These are legacy tests and are not being used and should be migrated to using Vitest.
+
 ## Overview
 
 Tests are built to run with the [AVA test runner](https://github.com/avajs/ava) with Node.js. The test suite can be run via docker or directly on your machine as we will cover both options below.

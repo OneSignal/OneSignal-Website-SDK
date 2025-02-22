@@ -15,6 +15,8 @@ import {
   SdkInitError,
   SdkInitErrorKind,
 } from '../../shared/errors/SdkInitError';
+import UserData from '../models/UserData';
+import { UserPropertiesModel } from '../models/UserPropertiesModel';
 
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
@@ -27,7 +29,7 @@ export class RequestService {
   static async createUser(
     requestMetadata: RequestMetadata,
     requestBody: CreateUserPayload,
-  ): Promise<OneSignalApiBaseResponse> {
+  ) {
     const { appId, subscriptionId } = requestMetadata;
 
     const subscriptionHeader = subscriptionId
@@ -46,7 +48,11 @@ export class RequestService {
 
     requestBody['refresh_device_metadata'] = true;
 
-    return OneSignalApiBase.post(`apps/${appId}/users`, requestBody, headers);
+    return OneSignalApiBase.post<UserData>(
+      `apps/${appId}/users`,
+      requestBody,
+      headers,
+    );
   }
 
   /**
@@ -55,12 +61,9 @@ export class RequestService {
    * @param alias - The user's alias
    * @returns - A promise that resolves with the user's properties, identity, and subscriptions
    */
-  static async getUser(
-    requestMetadata: RequestMetadata,
-    alias: AliasPair,
-  ): Promise<OneSignalApiBaseResponse> {
+  static async getUser(requestMetadata: RequestMetadata, alias: AliasPair) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.get(
+    return OneSignalApiBase.get<UserData>(
       `apps/${appId}/users/by/${alias.label}/${alias.id}`,
       requestMetadata.jwtHeader,
     );
@@ -78,7 +81,7 @@ export class RequestService {
     requestMetadata: RequestMetadata,
     alias: AliasPair,
     payload: UpdateUserPayload,
-  ): Promise<OneSignalApiBaseResponse> {
+  ) {
     const { appId, subscriptionId } = requestMetadata;
     if (!OneSignalUtils.isValidUuid(appId)) {
       throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
@@ -103,7 +106,7 @@ export class RequestService {
       id: encodeRFC3986URIComponent(alias.id),
     };
 
-    return OneSignalApiBase.patch(
+    return OneSignalApiBase.patch<{ properties: UserPropertiesModel }>(
       `apps/${appId}/users/by/${sanitizedAlias.label}/${sanitizedAlias.id}`,
       payload,
       headers,
@@ -138,9 +141,9 @@ export class RequestService {
     requestMetadata: RequestMetadata,
     alias: AliasPair,
     identity: SupportedIdentity,
-  ): Promise<OneSignalApiBaseResponse> {
+  ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.patch(
+    return OneSignalApiBase.patch<{ identity: SupportedIdentity }>(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
       { identity },
       requestMetadata.jwtHeader,
@@ -173,9 +176,9 @@ export class RequestService {
     requestMetadata: RequestMetadata,
     alias: AliasPair,
     labelToRemove: string,
-  ): Promise<OneSignalApiBaseResponse> {
+  ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.delete(
+    return OneSignalApiBase.delete<{ identity: SupportedIdentity }>(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
       requestMetadata.jwtHeader,
     );
@@ -194,9 +197,9 @@ export class RequestService {
     requestMetadata: RequestMetadata,
     alias: AliasPair,
     subscription: { subscription: FutureSubscriptionModel },
-  ): Promise<OneSignalApiBaseResponse> {
+  ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.post(
+    return OneSignalApiBase.post<object | { subscription: object }>(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
       subscription,
       requestMetadata.jwtHeader,
@@ -213,12 +216,11 @@ export class RequestService {
     requestMetadata: RequestMetadata,
     subscriptionId: string,
     subscription: Partial<SubscriptionModel>,
-  ): Promise<OneSignalApiBaseResponse> {
+  ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.patch(
-      `apps/${appId}/subscriptions/${subscriptionId}`,
-      { subscription },
-    );
+    return OneSignalApiBase.patch<{
+      subscription: SubscriptionModel;
+    }>(`apps/${appId}/subscriptions/${subscriptionId}`, { subscription });
   }
 
   /**
@@ -230,9 +232,9 @@ export class RequestService {
   static async deleteSubscription(
     requestMetadata: RequestMetadata,
     subscriptionId: string,
-  ): Promise<OneSignalApiBaseResponse> {
+  ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.delete(
+    return OneSignalApiBase.delete<object>(
       `apps/${appId}/subscriptions/${subscriptionId}`,
     );
   }
@@ -286,9 +288,9 @@ export class RequestService {
     subscriptionId: string,
     identity: SupportedIdentity,
     retainPreviousOwner: boolean,
-  ): Promise<OneSignalApiBaseResponse> {
+  ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.patch(
+    return OneSignalApiBase.patch<{ identity: SupportedIdentity }>(
       `apps/${appId}/subscriptions/${subscriptionId}/owner`,
       {
         identity: { ...identity },

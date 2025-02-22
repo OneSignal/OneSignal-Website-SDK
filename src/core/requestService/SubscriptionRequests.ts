@@ -7,7 +7,10 @@ import {
   ExecutorResultFailRetriable,
   ExecutorResultSuccess,
 } from '../executors/ExecutorResult';
-import { SupportedSubscription } from '../models/SubscriptionModels';
+import {
+  SubscriptionModel,
+  SupportedSubscription,
+} from '../models/SubscriptionModels';
 import { Operation } from '../operationRepo/Operation';
 import { processSubscriptionOperation } from './helpers';
 import { RequestService } from './RequestService';
@@ -91,14 +94,20 @@ export default class SubscriptionRequests {
   }
 
   private static _processSubscriptionResponse(
-    response?: OneSignalApiBaseResponse,
+    response?: OneSignalApiBaseResponse<
+      | object
+      | {
+          subscription: SubscriptionModel;
+        }
+    >,
   ): ExecutorResult<SupportedSubscription> {
     if (!response) {
       throw new Error('processSubscriptionResponse: response is not defined');
     }
 
     const { status, result } = response;
-    const subscription = result.subscription;
+    const subscription =
+      'subscription' in result ? result.subscription : undefined;
 
     if (status >= 200 && status < 300) {
       if (subscription && !isCompleteSubscriptionObject(subscription)) {
