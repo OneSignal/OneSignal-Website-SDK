@@ -10,10 +10,10 @@ copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
 1. The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+   all copies or substantial portions of the Software.
 
 2. All copies of substantial portions of the Software may only be used in connection
-with services provided by OneSignal.
+   with services provided by OneSignal.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -23,7 +23,4 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-object-assign pollyfill (MIT License) Copyright © Sindre Sorhus (https://github.com/sindresorhus/object-assign)
-swivel (MIT License) Copyright © Nicolas Bevacqua (https://github.com/bevacqua/swivel)
-postmessage-plus (MIT License) Copyright © Taylor Hakes (https://github.com/taylorhakes/postmessage-plus)
 emitter-es6 (MIT License) Copyright © Guille Paz (https://github.com/pazguille/emitter-es6)

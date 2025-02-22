@@ -36,19 +36,10 @@ export class DynamicResourceLoader {
   async loadSdkStylesheet(): Promise<ResourceLoadState> {
     const pathForEnv = SdkEnvironment.getOneSignalResourceUrlPath();
     const cssFileForEnv = SdkEnvironment.getOneSignalCssFileName();
-    return await this.loadIfNew(
+    return this.loadIfNew(
       ResourceType.Stylesheet,
       new URL(
         `${pathForEnv}/${cssFileForEnv}?v=${Environment.getSdkStylesVersionHash()}`,
-      ),
-    );
-  }
-
-  async loadFetchPolyfill(): Promise<ResourceLoadState> {
-    return await this.loadIfNew(
-      ResourceType.Script,
-      new URL(
-        'https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js',
       ),
     );
   }
@@ -64,7 +55,7 @@ export class DynamicResourceLoader {
     }
     // Resource is loading; multiple calls can be made to this while the same resource is loading
     // Waiting on the Promise is what we want here
-    return await this.cache[url.toString()];
+    return this.cache[url.toString()];
   }
 
   /**

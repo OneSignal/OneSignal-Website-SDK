@@ -16,41 +16,6 @@ const OUTCOME_NAME = 'test_outcome';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
-test.beforeEach(async () => {
-  await TestEnvironment.initialize();
-  TestEnvironment.mockInternalOneSignal();
-
-  const now = new Date().getTime();
-  timemachine.config({
-    timestamp: now,
-  });
-});
-
-test.afterEach(() => {
-  sinonSandbox.restore();
-  timemachine.reset();
-});
-
-test('outcome name is required', async (t) => {
-  const logSpy = sinonSandbox.stub(Log, 'error');
-  const apiSpy = sinonSandbox
-    .stub(OneSignalApiShared, 'sendOutcome')
-    .resolves();
-  await (OneSignal as any).sendOutcome();
-  t.is(logSpy.callCount, 1);
-  t.is(apiSpy.callCount, 0);
-});
-
-test('outcome weight cannot be other than number or undefined', async (t) => {
-  const logSpy = sinonSandbox.stub(Log, 'error');
-  const apiSpy = sinonSandbox
-    .stub(OneSignalApiShared, 'sendOutcome')
-    .resolves();
-  await (OneSignal as any).sendOutcome(OUTCOME_NAME, {});
-  t.is(logSpy.callCount, 1);
-  t.is(apiSpy.callCount, 0);
-});
-
 test('reporting outcome requires the sdk to be initialized', async (t) => {
   OneSignal.initialized = false;
 

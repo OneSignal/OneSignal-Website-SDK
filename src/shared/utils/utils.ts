@@ -3,7 +3,6 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { OneSignalUtils } from './OneSignalUtils';
 import { PermissionUtils } from './PermissionUtils';
 import { Utils } from '../context/Utils';
-import TimeoutError from '../errors/TimeoutError';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';
 
@@ -192,13 +191,6 @@ export function delay(durationMs: number) {
 
 export function nothing(): Promise<any> {
   return Promise.resolve();
-}
-
-export function timeoutPromise(
-  promise: Promise<any>,
-  milliseconds: number,
-): Promise<TimeoutError | any> {
-  return Utils.timeoutPromise(promise, milliseconds);
 }
 
 /**

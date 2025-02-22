@@ -1,11 +1,5 @@
 {
   "extends": "./build/config/tsconfig.json",
-  // Options here only apply to IDE, build compile options defined in the build tsconfig.json above.
-  "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs"
-    }
-  },
   "compilerOptions": {
     "strictNullChecks": true,
     "checkJs": true,

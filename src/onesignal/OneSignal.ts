@@ -126,7 +126,6 @@ export default class OneSignal {
 
     LocalStorage.removeLegacySubscriptionOptions();
 
-    await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);
 

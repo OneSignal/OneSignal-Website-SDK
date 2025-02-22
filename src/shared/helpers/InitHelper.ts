@@ -8,13 +8,11 @@ import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import Bell from '../../page/bell/Bell';
 import { ContextInterface } from '../../page/models/Context';
-import { DynamicResourceLoader } from '../../page/services/DynamicResourceLoader';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
 import { once, triggerNotificationPermissionChanged } from '../utils/utils';
 import Environment from './Environment';
 import OneSignalEvent from '../services/OneSignalEvent';
-import { bowserCastle } from '../utils/bowserCastle';
 
 declare let OneSignal: any;
 
@@ -392,19 +390,6 @@ export default class InitHelper {
         );
       if (currentPermission == NotificationPermission.Granted) {
         await SubscriptionHelper.registerForPush();
-      }
-    }
-  }
-
-  public static async polyfillSafariFetch() {
-    // If Safari - add 'fetch' pollyfill if it isn't already added.
-    if (bowserCastle().name == 'safari' && typeof window.fetch == 'undefined') {
-      Log.debug('Loading fetch polyfill for Safari..');
-      try {
-        await new DynamicResourceLoader().loadFetchPolyfill();
-        Log.debug('Done loading fetch polyfill.');
-      } catch (e) {
-        Log.debug('Error loading fetch polyfill:', e);
       }
     }
   }
