@@ -1,7 +1,8 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { InvalidArgumentError } from 'src/shared/errors/InvalidArgumentError';
 import Database from 'src/shared/services/Database';
 import NotificationsNamespace from './NotificationsNamespace';
-import { InvalidArgumentError } from 'src/shared/errors/InvalidArgumentError';
+
 describe('NotificationsNamespace', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize();

@@ -1,14 +1,10 @@
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import { OneSignalUtils } from './OneSignalUtils';
-import { PermissionUtils } from './PermissionUtils';
 import { Utils } from '../context/Utils';
 import Log from '../libraries/Log';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { bowserCastle } from './bowserCastle';
-
-export function isArray(variable: any) {
-  return Object.prototype.toString.call(variable) === '[object Array]';
-}
+import { OneSignalUtils } from './OneSignalUtils';
+import { PermissionUtils } from './PermissionUtils';
 
 export function removeDomElement(selector: string) {
   const els = document.querySelectorAll(selector);
@@ -40,14 +36,6 @@ export async function triggerNotificationPermissionChanged(
   return PermissionUtils.triggerNotificationPermissionChanged(
     updateIfIdentical,
   );
-}
-
-/**
- * JSON.stringify() but converts functions to "[Function]" so they aren't lost.
- * Helps when logging method calls.
- */
-export function stringify(obj: any) {
-  return Utils.stringify(obj);
 }
 
 export function executeCallback<T>(callback?: Action<T>, ...args: any[]) {
@@ -200,16 +188,6 @@ export function contains(indexOfAble: any, match: string) {
   return Utils.contains(indexOfAble, match);
 }
 
-/**
- * Returns the current object without keys that have undefined values.
- * Regardless of whether the return result is used, the passed-in object is destructively modified.
- * Only affects keys that the object directly contains (i.e. not those inherited via the object's prototype).
- * @param object
- */
-export function trimUndefined(object: any) {
-  return Utils.trimUndefined(object);
-}
-
 export function getRandomUuid(): string {
   return OneSignalUtils.getRandomUuid();
 }
@@ -221,14 +199,6 @@ export function getRandomUuid(): string {
  */
 export function isValidUuid(uuid: string) {
   return OneSignalUtils.isValidUuid(uuid);
-}
-
-/**
- * Capitalizes the first letter of the string.
- * @returns {string} The string with the first letter capitalized.
- */
-export function capitalize(text: string): string {
-  return Utils.capitalize(text);
 }
 
 /**
@@ -267,20 +237,6 @@ export function unsubscribeFromPush() {
   }
 }
 
-export function wait(milliseconds: number) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
-/**
- * Returns the part of the string after the first occurence of the specified search.
- * @param string The entire string.
- * @param search The text returned will be everything *after* search.
- * e.g. substringAfter('A white fox', 'white') => ' fox'
- */
-export function substringAfter(string: string, search: string) {
-  return string.substr(string.indexOf(search) + search.length);
-}
-
 export function once(
   targetSelectorOrElement: string | string[] | Element | Document,
   event: string,
@@ -298,7 +254,7 @@ export function once(
     if (els.length > 0) {
       for (let i = 0; i < els.length; i++) once(els[i], event, task);
     }
-  } else if (isArray(targetSelectorOrElement)) {
+  } else if (Array.isArray(targetSelectorOrElement)) {
     for (let i = 0; i < (targetSelectorOrElement as string[]).length; i++)
       once((targetSelectorOrElement as string[])[i], event, task);
   } else if (typeof targetSelectorOrElement === 'object') {
@@ -333,14 +289,6 @@ export function once(
  */
 export function getSdkLoadCount() {
   return (<any>window).__oneSignalSdkLoadCount || 0;
-}
-
-export async function awaitSdkEvent(eventName: string) {
-  return await new Promise((resolve) => {
-    OneSignal.emitter.once(eventName, (event: Event) => {
-      resolve(event);
-    });
-  });
 }
 
 /**

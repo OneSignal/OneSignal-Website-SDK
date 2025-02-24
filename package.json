@@ -7,12 +7,10 @@
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "glob": "^10.2.2",
     "jsonp": "github:OneSignal/jsonp#onesignal",
-    "npm-css": "https://registry.npmjs.org/npm-css/-/npm-css-0.2.3.tgz",
     "postcss": "^8.1.0",
     "sass": "^1.83.4",
     "terser-webpack-plugin": "^5.3.7",
-    "tslib": "^2.5.0",
-    "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz"
+    "tslib": "^2.5.0"
   },
   "scripts": {
     "ngrok": "./build/scripts/ngrok.sh",
