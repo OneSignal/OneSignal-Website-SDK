@@ -1,14 +1,14 @@
-import { OSModelUpdatedArgs } from './OSModelUpdatedArgs';
+import { logMethodCall } from '../../shared/utils/utils';
 import Subscribable from '../Subscribable';
 import EncodedModel from '../caching/EncodedModel';
-import { StringKeys } from '../models/StringKeys';
-import { ModelName, SupportedModel } from '../models/SupportedModels';
 import {
   ModelStoreChange,
   ModelStoreHydrated,
   ModelStoreUpdated,
 } from '../models/ModelStoreChange';
-import { logMethodCall } from '../../shared/utils/utils';
+import { StringKeys } from '../models/StringKeys';
+import { ModelName, SupportedModel } from '../models/SupportedModels';
+import { OSModelUpdatedArgs } from './OSModelUpdatedArgs';
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   data: Model;
@@ -66,7 +66,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    */
   public set(
     property: StringKeys<Model>,
-    newValue: any,
+    newValue: NonNullable<Model>[StringKeys<Model>],
     propagate = true,
   ): void {
     logMethodCall('set', { property, newValue });

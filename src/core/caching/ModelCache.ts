@@ -1,9 +1,9 @@
-import { OSModel } from '../modelRepo/OSModel';
-import EncodedModel from './EncodedModel';
-import { StringIndexable } from '../models/StringIndexable';
-import { ModelName, SupportedModel } from '../models/SupportedModels';
 import Database from '../../shared/services/Database';
 import { logMethodCall } from '../../shared/utils/utils';
+import { OSModel } from '../modelRepo/OSModel';
+import { StringIndexable } from '../models/StringIndexable';
+import { ModelName, SupportedModel } from '../models/SupportedModels';
+import EncodedModel from './EncodedModel';
 
 export default class ModelCache {
   private _mutexPromise: Promise<void> = Promise.resolve();
@@ -42,7 +42,7 @@ export default class ModelCache {
     modelName: ModelName,
     modelId: string,
     key: string,
-    value: any,
+    value: unknown,
   ): Promise<void> {
     if (this._mutexLocked) {
       await this._mutexPromise;

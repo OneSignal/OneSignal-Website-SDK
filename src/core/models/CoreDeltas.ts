@@ -10,8 +10,8 @@ export type ModelDelta<Model> = {
 
 export interface PropertyDelta<Model> extends ModelDelta<Model> {
   property: StringKeys<Model>;
-  oldValue?: any;
-  newValue: any;
+  oldValue?: Record<string, unknown>;
+  newValue: Record<string, unknown>;
 }
 
 export type CoreDelta<Model> = ModelDelta<Model> | PropertyDelta<Model>;

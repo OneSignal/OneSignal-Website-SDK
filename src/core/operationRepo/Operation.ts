@@ -42,8 +42,10 @@ export class Operation<Model> {
     return deltas[0].model.data;
   }
 
-  private aggregateDeltas(deltas: CoreDelta<Model>[]): { [key: string]: any } {
-    const result: { [key: string]: any } = {};
+  private aggregateDeltas(deltas: CoreDelta<Model>[]): {
+    [key: string]: unknown;
+  } {
+    const result: { [key: string]: Record<string, unknown> } = {};
 
     deltas.forEach((delta) => {
       if (isPropertyDelta(delta)) {
@@ -70,6 +72,7 @@ export class Operation<Model> {
 
         const shouldMergeExistingAndNew =
           hasExistingProperty && newValueIsPureObject;
+
         const mergedObject = { ...result[delta.property], ...delta.newValue };
 
         result[delta.property] = shouldMergeExistingAndNew

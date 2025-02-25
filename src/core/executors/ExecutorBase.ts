@@ -1,15 +1,15 @@
+import Log from '../../shared/libraries/Log';
+import { NewRecordsState } from '../../shared/models/NewRecordsState';
+import Database from '../../shared/services/Database';
+import LocalStorage from '../../shared/utils/LocalStorage';
+import { logMethodCall } from '../../shared/utils/utils';
 import OperationCache from '../caching/OperationCache';
 import { CoreChangeType } from '../models/CoreChangeType';
 import { CoreDelta } from '../models/CoreDeltas';
 import { ExecutorConfig } from '../models/ExecutorConfig';
-import { Operation } from '../operationRepo/Operation';
-import { logMethodCall } from '../../shared/utils/utils';
 import { SupportedModel } from '../models/SupportedModels';
+import { Operation } from '../operationRepo/Operation';
 import { ExecutorResult } from './ExecutorResult';
-import Log from '../../shared/libraries/Log';
-import Database from '../../shared/services/Database';
-import LocalStorage from '../../shared/utils/LocalStorage';
-import { NewRecordsState } from '../../shared/models/NewRecordsState';
 
 const RETRY_AFTER = 5_000;
 
@@ -93,7 +93,10 @@ export default abstract class ExecutorBase {
     this._operationQueue = [];
   }
 
-  protected _getChangeType(oldValue: any, newValue: any): CoreChangeType {
+  protected _getChangeType(
+    oldValue: unknown,
+    newValue: unknown,
+  ): CoreChangeType {
     logMethodCall('ExecutorBase._getChangeType', { oldValue, newValue });
     const wasPropertyAdded = !oldValue && !!newValue;
     const wasPropertyRemoved = !!oldValue && !newValue;

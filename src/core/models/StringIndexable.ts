@@ -1,3 +1,3 @@
 export interface StringIndexable {
-  [key: string]: any;
+  [key: string]: unknown;
 }
