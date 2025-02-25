@@ -72,11 +72,9 @@ export default class ModelCache {
    * Loads all models from the cache and returns them as an object
    * @param modelNames
    */
-  async load(
-    modelNames: ModelName[],
-  ): Promise<{ [key: string]: OSModel<SupportedModel>[] }> {
+  async load(modelNames: ModelName[]) {
     logMethodCall('ModelCache.load', { modelNames });
-    const allCachedOSModels: StringIndexable = {};
+    const allCachedOSModels: StringIndexable<SupportedModel> = {};
 
     for (let i = 0; i < modelNames.length; i++) {
       const modelName = modelNames[i];
