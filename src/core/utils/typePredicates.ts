@@ -54,7 +54,8 @@ export function isModelStoreHydratedObject<Model>(
 }
 
 export function isIdentityObject(
-  obj: Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  obj?: any,
 ): obj is IdentityModel {
   return obj?.onesignal_id !== undefined;
 }
