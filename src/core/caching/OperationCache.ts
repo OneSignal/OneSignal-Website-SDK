@@ -7,7 +7,7 @@ export default class OperationCache {
   static enqueue<Model>(operation: Operation<Model>): void {
     logMethodCall('OperationCache.enqueue', { operation });
     const fromCache = localStorage.getItem('operationCache');
-    const operations: { [key: string]: any } = fromCache
+    const operations: { [key: string]: unknown } = fromCache
       ? JSON.parse(fromCache)
       : {};
     operations[operation.operationId] = operation;
@@ -48,7 +48,7 @@ export default class OperationCache {
   static delete(id: string): void {
     logMethodCall('OperationCache.delete', { id });
     const fromCache = localStorage.getItem('operationCache');
-    const operations: { [key: string]: any } = fromCache
+    const operations: { [key: string]: unknown } = fromCache
       ? JSON.parse(fromCache)
       : {};
     delete operations[id];

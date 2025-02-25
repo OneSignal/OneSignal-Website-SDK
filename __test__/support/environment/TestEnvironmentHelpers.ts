@@ -1,22 +1,22 @@
-import Database from '../../../src/shared/services/Database';
-import Random from '../utils/Random';
-import Emitter from '../../../src/shared/libraries/Emitter';
-import { TestEnvironmentConfig } from './TestEnvironment';
-import MockNotification from '../mocks/MockNotification';
-import { DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
-import OneSignal from '../../../src/onesignal/OneSignal';
-import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
-import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElement';
-import BrowserUserAgent from '../models/BrowserUserAgent';
-import TestContext from './TestContext';
-import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
-import CoreModule from '../../../src/core/CoreModule';
-import Context from '../../../src/page/models/Context';
-import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
-import UserNamespace from '../../../src/onesignal/UserNamespace';
-import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
 import bowser from 'bowser';
+import { DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
+import CoreModule from '../../../src/core/CoreModule';
+import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
+import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
+import OneSignal from '../../../src/onesignal/OneSignal';
+import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
+import UserNamespace from '../../../src/onesignal/UserNamespace';
+import Context from '../../../src/page/models/Context';
+import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElement';
+import Emitter from '../../../src/shared/libraries/Emitter';
+import Database from '../../../src/shared/services/Database';
+import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
 import * as bowerCastleHelpers from '../../../src/shared/utils/bowserCastle';
+import MockNotification from '../mocks/MockNotification';
+import BrowserUserAgent from '../models/BrowserUserAgent';
+import Random from '../utils/Random';
+import TestContext from './TestContext';
+import { TestEnvironmentConfig } from './TestEnvironment';
 
 declare const global: any;
 
@@ -114,28 +114,10 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   const windowDef = dom.window;
   (windowDef as any).location = url;
 
-  addCustomEventPolyfill(windowDef);
-
   const windowTop: DOMWindow = windowDef;
   dom.reconfigure({ url, windowTop });
   global.window = windowDef;
   global.window.isSecureContext = true;
   global.document = windowDef.document;
   return dom;
-}
-
-function addCustomEventPolyfill(windowDef) {
-  function CustomEvent(event: any, params: any) {
-    params = params || { bubbles: false, cancelable: false, detail: undefined };
-    const evt = document.createEvent('CustomEvent');
-    evt.initCustomEvent(
-      event,
-      params.bubbles,
-      params.cancelable,
-      params.detail,
-    );
-    return evt;
-  }
-  CustomEvent.prototype = windowDef.Event.prototype;
-  global.CustomEvent = CustomEvent;
 }

@@ -461,7 +461,7 @@ export default class TestContext {
     };
   }
 
-  static getFakeMergedConfig(config: TestEnvironmentConfig): AppConfig {
+  static getFakeMergedConfig(config: TestEnvironmentConfig = {}): AppConfig {
     const fakeUserConfig = config.userConfig || this.getFakeAppUserConfig();
     const fakeServerConfig = this.getFakeServerAppConfig(
       config.integration || ConfigIntegrationKind.Custom,

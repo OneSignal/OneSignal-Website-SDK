@@ -7,15 +7,10 @@
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "glob": "^10.2.2",
     "jsonp": "github:OneSignal/jsonp#onesignal",
-    "npm-css": "https://registry.npmjs.org/npm-css/-/npm-css-0.2.3.tgz",
     "postcss": "^8.1.0",
-    "postcss-discard-comments": "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-2.0.4.tgz",
-    "postcss-filter-plugins": "https://registry.npmjs.org/postcss-filter-plugins/-/postcss-filter-plugins-2.0.2.tgz",
-    "regenerator-runtime": "^0.13.2",
     "sass": "^1.83.4",
     "terser-webpack-plugin": "^5.3.7",
-    "tslib": "^2.5.0",
-    "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz"
+    "tslib": "^2.5.0"
   },
   "scripts": {
     "ngrok": "./build/scripts/ngrok.sh",
@@ -49,90 +44,41 @@
   "author": "OneSignal",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
-    "@ava/typescript": "^1.1.1",
     "@types/body-parser": "latest",
-    "@types/chai": "latest",
-    "@types/core-js": "latest",
-    "@types/cors": "latest",
     "@types/express": "^4.17.17",
     "@types/jsdom": "^21.1.7",
-    "@types/loglevel": "latest",
-    "@types/mocha": "^5.0.0",
-    "@types/nconf": "latest",
-    "@types/nock": "^9.1.2",
     "@types/node": "^18.18.0",
-    "@types/object-assign": "^4.0.30",
-    "@types/requirejs": "latest",
     "@types/sinon": "^2.3.3",
-    "@types/text-encoding": "^0.0.31",
     "@types/validator": "latest",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
-    "@vitest/coverage-v8": "^3.0.6",
+    "@vitest/coverage-v8": "3.0.7",
     "autoprefixer": "^10.4.14",
-    "ava": "^3.8.2",
     "bundlesize2": "^0.0.31",
     "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^6.7.3",
     "css-minimizer-webpack-plugin": "^5.0.0",
     "deepmerge": "^4.2.2",
-    "dom-storage": "^2.0.2",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "9.0.0",
     "fake-indexeddb": "^5.0.2",
-    "imports-loader": "^0.7.1",
     "jsdom": "^26.0.0",
     "md5-file": "^3.2.2",
     "mini-css-extract-plugin": "^2.7.5",
     "msw": "^2.7.0",
-    "nock": "^9.1.6",
     "node-dir": "^0.1.16",
-    "nyc": "^11.1.0",
     "postcss-loader": "^7.2.4",
     "prettier": "3.0.2",
     "prettylint": "^2.0.0",
     "sass-loader": "^13.2.2",
-    "sinon": "^2.4.1",
     "style-loader": "^3.3.2",
-    "svgo": "^0.7.2",
-    "timemachine": "^0.3.0",
     "ts-loader": "^9.4.2",
-    "ts-node": "^10.1.1",
     "type-fest": "^4.33.0",
     "typescript": "^4.9.5",
-    "vitest": "^3.0.6",
+    "vitest": "3.0.7",
     "webpack": "^5.80.0",
     "webpack-bundle-analyzer": "^3.3.2",
     "webpack-cli": "^5.0.2"
-  },
-  "ava": {
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register/transpile-only"
-    ],
-    "files": [
-      "test/unit/**/*.ts"
-    ],
-    "source": [
-      "src/**/*.ts"
-    ],
-    "concurrency": 1,
-    "serial": true,
-    "powerAssert": true,
-    "//": "Long timeout otherwise debugger times out after 10 sec",
-    "timeout": "1000000"
-  },
-  "nyc": {
-    "cache": true,
-    "reporter": [
-      "lcov",
-      "text-summary"
-    ],
-    "include": [
-      "build/ts-to-es6/src/**/*.js"
-    ]
   },
   "bundlesize": [
     {

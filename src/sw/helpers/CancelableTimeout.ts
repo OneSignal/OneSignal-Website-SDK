@@ -5,10 +5,6 @@ export interface CancelableTimeoutPromise {
   promise: Promise<void>;
 }
 
-const doNothing = () => {
-  Log.debug('Do nothing');
-};
-
 export function cancelableTimeout(
   callback: () => Promise<void>,
   delayInSeconds: number,
@@ -16,7 +12,8 @@ export function cancelableTimeout(
   const delayInMilliseconds = delayInSeconds * 1000;
 
   let timerId: number | undefined;
-  let clearTimeoutHandle: (() => void) | undefined = undefined;
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  let clearTimeoutHandle = () => {};
 
   const promise = new Promise<void>((resolve, reject) => {
     let startedExecution = false;
@@ -40,14 +37,6 @@ export function cancelableTimeout(
       }
     };
   });
-
-  if (!clearTimeoutHandle) {
-    Log.warn('clearTimeoutHandle was not assigned.');
-    return {
-      promise,
-      cancel: doNothing,
-    };
-  }
 
   return {
     promise,

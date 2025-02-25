@@ -44,7 +44,7 @@ export default class NotificationsNamespace extends EventListenerBase {
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @PublicApi
    */
-  async setDefaultUrl(url: string) {
+  async setDefaultUrl(url?: string) {
     logMethodCall('setDefaultUrl', url);
 
     if (typeof url === 'undefined') {
@@ -70,7 +70,7 @@ export default class NotificationsNamespace extends EventListenerBase {
    * @remarks Either DB value defaultTitle or pageTitle is used when showing a notification title.
    * @PublicApi
    */
-  async setDefaultTitle(title: string) {
+  async setDefaultTitle(title?: string) {
     logMethodCall('setDefaultTitle', title);
 
     if (typeof title === 'undefined') {

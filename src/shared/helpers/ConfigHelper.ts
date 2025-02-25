@@ -59,6 +59,7 @@ export class ConfigHelper {
       const serverConfig = await downloadServerAppConfig(userConfig.appId);
       ConverterHelper.upgradeConfigToVersionTwo(userConfig);
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
+
       this.checkUnsupportedSubdomain(appConfig);
       this.checkRestrictedOrigin(appConfig);
       return appConfig;
@@ -713,6 +714,7 @@ export class ConfigHelper {
     const integrationCapabilities = this.getIntegrationCapabilities(
       configIntegrationKind,
     );
+
     switch (integrationCapabilities.configuration) {
       case IntegrationConfigurationKind.Dashboard:
         return serverConfig.config.siteInfo.proxyOriginEnabled;
