@@ -14,7 +14,7 @@
     "vite": "^6.2.0"
   },
   "scripts": {
-    "clean": "rm -rf build/ts-to-es6 && rm -rf build/bundles",
+    "dev": "vite",
     "transpile:sources": "tsc --project build/config/tsconfig.json",
     "bundle-old": "TESTS=false webpack --config build/config/webpack.config.js",
     "bundle-old-sw": "TESTS=false webpack --config build/config/serviceworker.config.js",
@@ -29,9 +29,6 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest watch --coverage",
     "publish": "npm run clean && npm run build-old:prod",
-    "build-old:dev-dev": "./build/scripts/build.sh -f development -t development -a localhost",
-    "build-old:dev-prod": "./build/scripts/build.sh -f development -t production",
-    "build-old:dev-stag": "./build/scripts/build.sh -f development -t staging",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig"
   },
   "config": {
@@ -75,6 +72,7 @@
     "ts-loader": "^9.4.2",
     "type-fest": "^4.33.0",
     "typescript": "^4.9.5",
+    "vite-plugin-mkcert": "^1.17.6",
     "vitest": "3.0.7",
     "webpack": "^5.80.0",
     "webpack-bundle-analyzer": "^3.3.2",

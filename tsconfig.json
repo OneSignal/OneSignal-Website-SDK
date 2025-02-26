@@ -1,12 +1,27 @@
 {
-  "extends": "./build/config/tsconfig.json",
   "compilerOptions": {
-    "strictNullChecks": true,
-    "checkJs": true,
-    "noImplicitAny": true,
-    "strictPropertyInitialization": true,
-    "baseUrl": ".",
-    "types": ["node", "vitest/globals"]
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    "types": ["vitest/globals"]
   },
-  "include": ["__test__/**/*", "src/**/*", "test/**/*", "typings/**/*"]
+  "include": ["src"]
 }
