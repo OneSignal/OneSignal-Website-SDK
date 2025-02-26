@@ -37,7 +37,7 @@ From OneSignal-Website-SDK (root) directory, build the SDK by running one of the
 1. This will assign the environment type to both the BUILD and API environment types
 
 ```
-npm run build:<type>
+npm run build-old:<type>
 ```
 
 - Options are:
@@ -48,7 +48,7 @@ npm run build:<type>
 2. This will assign the environment type accordingly:
 
 ```
-npm run build:<type>-<type>
+npm run build-old:<type>-<type>
 ```
 
 **Example**: `npm run build:dev-prod` builds the SDK with the BUILD environment as "development" and the API environment as "production"
@@ -68,13 +68,13 @@ If no custom origins are set, defaults will be used: `localhost` for build and `
 **Examples**:
 
 ```
-npm run build:dev-prod -b texas
+npm run build-old:dev-prod -b texas
 ```
 
 This sets the BUILD environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/web/v##/` and the API environment origin to production which will make all onesignal api calls to the production origin `https://onesignal.com/api/v1/apps/<app>`
 
 ```
-npm run build:dev-dev -b localhost -a texas
+npm run build-old:dev-dev -b localhost -a texas
 ```
 
 This sets the BUILD environment origin to `localhost` which will result in SDK files being fetched from `https://localhost:4001/sdks/web/v##/` and the API environment origin to the default `https://texas:3001/api/v1/apps/<app_id>`
@@ -83,7 +83,7 @@ This sets the BUILD environment origin to `localhost` which will result in SDK f
 
 All builds default to `https` unless `--http` is passed to the end of the build command...
 
-**Example**: `npm run build:dev-prod --http` or `npm run build:dev-prod -b localhost --http`
+**Example**: `npm run build-old:dev-prod --http` or `npm run build-old:dev-prod -b localhost --http`
 
 ### NOTE ON PORTS:
 

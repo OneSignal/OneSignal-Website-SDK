@@ -18,9 +18,9 @@ jobs:
       - name: '[Build] Staging'
         env:
           STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
-        run: BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} npm run build:staging
+        run: BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} npm run build-old:staging
       - name: '[Build] Production'
-        run: npm run build:prod
+        run: npm run build-old:prod
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
         with:
