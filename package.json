@@ -10,14 +10,11 @@
     "dev": "vite",
     "build:sdk": "LIB=sdk vite build",
     "build:page": "LIB=page vite build",
-    "build:worker": "LIB=worker vite build",
-    "build": "npm run build:sdk -- --emptyOutDir && npm run build:page && npm run build:worker",
+    "build:sw": "LIB=worker vite build",
+    "build": "npm run build:sdk -- --emptyOutDir && npm run build:page && npm run build:sw",
     "build:dev": "ENV=development npm run build",
     "build:staging": "ENV=staging npm run build",
     "build:prod": "ENV=production npm run build && size-limit",
-    "bundle-old:analyze": "ANALYZE=true ENV=production TESTS=false webpack --config build/config/webpack.config.js --profile --json > stats.json",
-    "bundle-old-sw:analyze": "ANALYZE=true ENV=production TESTS=false webpack --config build/config/serviceworker.config.js --profile --json > stats.json",
-    "bundle-old-sdk:analyze": "ANALYZE=true ENV=production TESTS=false webpack --config build/config/sdk.config.js --profile --json > stats.json",
     "test": "vitest run --coverage",
     "test:watch": "vitest watch --coverage",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig"
@@ -41,7 +38,6 @@
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
     "@vitest/coverage-v8": "3.0.7",
-    "bundlesize2": "^0.0.31",
     "deepmerge": "^4.2.2",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "9.0.0",
@@ -59,22 +55,22 @@
   },
   "bundlesize": [
     {
-      "path": "./build/bundles/OneSignalSDK.page.js",
+      "path": "./build/releases/OneSignalSDK.page.js",
       "maxSize": "1 kB",
       "compression": "gzip"
     },
     {
-      "path": "./build/bundles/OneSignalSDK.page.es6.js",
+      "path": "./build/releases/OneSignalSDK.page.es6.js",
       "maxSize": "79 kB",
       "compression": "gzip"
     },
     {
-      "path": "./build/bundles/OneSignalSDK.sw.js",
+      "path": "./build/releases/OneSignalSDK.sw.js",
       "maxSize": "41 kB",
       "compression": "gzip"
     },
     {
-      "path": "./build/bundles/OneSignalSDK.page.styles.css",
+      "path": "./build/releases/OneSignalSDK.page.styles.css",
       "maxSize": "9 kB",
       "compression": "gzip"
     }
