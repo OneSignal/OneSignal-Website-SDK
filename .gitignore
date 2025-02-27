@@ -1,9 +1,10 @@
 .idea/
 node_modules/
 dist/
+build/stats/*.html
 build/ts-to-es6
-build/bundles
-build/releases
+build/bundles*
+build/releases*
 build/size-analysis.html
 /config.json
 
@@ -17,7 +18,6 @@ dist/Dev-OneSignalSDK.page.js.map
 !.vscode/launch.json
 
 coverage
-.nyc_output
 
-ngrok_last_url
-ngrok.log
+!.env.example
+.env
