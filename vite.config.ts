@@ -1,4 +1,5 @@
 import { defineConfig, LibraryOptions } from 'vite';
+import { analyzer } from 'vite-bundle-analyzer';
 import mkcert from 'vite-plugin-mkcert';
 
 type Lib = 'sdk' | 'page' | 'worker';
@@ -6,7 +7,7 @@ type Lib = 'sdk' | 'page' | 'worker';
 const libConfig: Record<Lib, LibraryOptions> = {
   sdk: {
     entry: './src/entries/sdk.ts',
-    fileName: () => 'OneSignalSdk.page.js',
+    fileName: () => 'OneSignalSDK.page.js',
   },
   page: {
     entry: './src/entries/pageSdkInit.ts',
@@ -19,15 +20,26 @@ const libConfig: Record<Lib, LibraryOptions> = {
 };
 
 /**
- * Mode will be production if command is build otherwise it will be development unless manually set e.g.
- * mode=staging vite ...
+ * Mode will be production if command is build otherwise it will be development
+ * We'll use ENV var to target different environments e.g.
+ * ENV=staging vite ...
  */
 export default defineConfig(({ mode }) => {
-  const isDev = mode === 'development';
+  const isDevMode = mode === 'development';
   const lib = process.env.LIB as Lib;
 
   return {
-    plugins: [mkcert()],
+    plugins: [
+      mkcert(),
+      ...(mode === 'production'
+        ? [
+            analyzer({
+              analyzerMode: 'static',
+              fileName: `../stats/${lib}-stats`,
+            }),
+          ]
+        : []),
+    ],
     build: {
       /**
        * NOTE: Need to specify 2022 or later to not have declarations like
@@ -41,7 +53,7 @@ export default defineConfig(({ mode }) => {
         formats: ['iife'],
       },
       outDir: 'build/releases',
-      emptyOutDir: true,
+      emptyOutDir: false,
       sourcemap: true,
     },
     define: {
@@ -50,7 +62,7 @@ export default defineConfig(({ mode }) => {
       __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN),
       __BUILD_TYPE__: JSON.stringify(process.env.ENV),
       __IS_HTTPS__: JSON.stringify(true),
-      __LOGGING__: JSON.stringify(isDev),
+      __LOGGING__: JSON.stringify(isDevMode),
       __NO_DEV_PORT__: JSON.stringify(process.env.NO_DEV_PORT),
       __VERSION__: JSON.stringify(process.env.npm_package_config_sdkVersion),
     },

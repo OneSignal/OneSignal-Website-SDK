@@ -1,6 +1,7 @@
 .idea/
 node_modules/
 dist/
+build/stats/*.html
 build/ts-to-es6
 build/bundles*
 build/releases*
