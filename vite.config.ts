@@ -1,7 +1,7 @@
 import { defineConfig, LibraryOptions } from 'vite';
 import { analyzer } from 'vite-bundle-analyzer';
 import mkcert from 'vite-plugin-mkcert';
-
+import tsconfigPaths from 'vite-tsconfig-paths';
 type Lib = 'sdk' | 'page' | 'worker';
 
 const libConfig: Record<Lib, LibraryOptions> = {
@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      tsconfigPaths(),
       mkcert(),
       ...(mode === 'production'
         ? [

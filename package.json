@@ -51,24 +51,10 @@
     "vite": "^6.2.0",
     "vite-bundle-analyzer": "^0.17.1",
     "vite-plugin-mkcert": "^1.17.6",
+    "vite-tsconfig-paths": "^5.1.4",
     "vitest": "3.0.7"
   },
   "bundlesize": [
-    {
-      "path": "./build/releases/OneSignalSDK.page.js",
-      "maxSize": "1 kB",
-      "compression": "gzip"
-    },
-    {
-      "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "maxSize": "79 kB",
-      "compression": "gzip"
-    },
-    {
-      "path": "./build/releases/OneSignalSDK.sw.js",
-      "maxSize": "41 kB",
-      "compression": "gzip"
-    },
     {
       "path": "./build/releases/OneSignalSDK.page.styles.css",
       "maxSize": "9 kB",
@@ -84,6 +70,11 @@
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
       "limit": "64 kB",
+      "gzip": true
+    },
+    {
+      "path": "./build/releases/OneSignalSDK.sw.js",
+      "limit": "38 kB",
       "gzip": true
     }
   ]
