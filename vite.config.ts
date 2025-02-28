@@ -38,7 +38,7 @@ const libConfig: Record<Lib, LibraryOptions> = {
  * ENV=staging vite ...
  */
 export default defineConfig(({ mode }) => {
-  const isDevMode = mode === 'development';
+  const isProdEnv = process.env.ENV === 'production';
   const lib = process.env.LIB as Lib;
 
   return {
@@ -60,7 +60,7 @@ export default defineConfig(({ mode }) => {
        * `var It=Object.defineProperty;` above the IIFE.
        */
       target: 'es2022',
-      minify: process.env.ENV === 'production',
+      minify: isProdEnv,
       lib: {
         ...libConfig[lib],
         name: 'OneSignal',
@@ -79,11 +79,11 @@ export default defineConfig(({ mode }) => {
     // Could move some of these to .env.[ENV] file
     define: {
       __API_ORIGIN__: JSON.stringify(process.env.API_ORIGIN || 'localhost'),
-      __API_TYPE__: JSON.stringify(process.env.API || 'development'),
+      __API_TYPE__: JSON.stringify(process.env.API || 'production'),
       __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN || 'localhost'),
-      __BUILD_TYPE__: JSON.stringify(process.env.ENV || 'development'),
+      __BUILD_TYPE__: JSON.stringify(process.env.ENV || 'production'),
       __IS_HTTPS__: JSON.stringify(process.env.HTTPS ?? true),
-      __LOGGING__: JSON.stringify(isDevMode),
+      __LOGGING__: JSON.stringify(!isProdEnv),
       __NO_DEV_PORT__: JSON.stringify(process.env.NO_DEV_PORT ?? false),
       __VERSION__: JSON.stringify(process.env.npm_package_config_sdkVersion),
     },
