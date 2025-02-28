@@ -3,35 +3,24 @@
   "version": "1.2.0",
   "description": "Web push notifications from OneSignal.",
   "dependencies": {
-    "@types/intl-tel-input": "^17.0.1",
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
-    "glob": "^10.2.2",
-    "jsonp": "github:OneSignal/jsonp#onesignal",
-    "postcss": "^8.1.0",
-    "sass": "^1.83.4",
-    "terser-webpack-plugin": "^5.3.7",
-    "tslib": "^2.5.0"
+    "jsonp": "github:OneSignal/jsonp#onesignal"
   },
   "scripts": {
+    "dev": "vite",
     "ngrok": "./build/scripts/ngrok.sh",
-    "clean": "rm -rf build/ts-to-es6 && rm -rf build/bundles",
-    "transpile:sources": "tsc --project build/config/tsconfig.json",
-    "bundle": "TESTS=false webpack --config build/config/webpack.config.js",
-    "bundle-sw": "TESTS=false webpack --config build/config/serviceworker.config.js",
-    "bundle-sdk": "TESTS=false webpack --config build/config/sdk.config.js",
-    "bundle-page-sdk-es6": "TESTS=false webpack --config build/config/page-sdk-es6.config.js",
-    "bundle:analyze": "ANALYZE=true ENV=production TESTS=false webpack --config build/config/webpack.config.js --profile --json > stats.json",
-    "bundle-sw:analyze": "ANALYZE=true ENV=production TESTS=false webpack --config build/config/serviceworker.config.js --profile --json > stats.json",
-    "bundle-sdk:analyze": "ANALYZE=true ENV=production TESTS=false webpack --config build/config/sdk.config.js --profile --json > stats.json",
-    "build:dev": "ENV=development npm run transpile:sources && ENV=development npm run bundle-sw && ENV=development npm run bundle-sdk && ENV=development npm run bundle-page-sdk-es6 && ENV=development build/scripts/publish.sh",
-    "build:staging": "ENV=staging npm run transpile:sources && ENV=staging npm run bundle-sw && ENV=staging npm run bundle-sdk && ENV=staging npm run bundle-page-sdk-es6 && ENV=staging build/scripts/publish.sh",
-    "build:prod": "ENV=production npm run transpile:sources && ENV=production npm run bundle-sw && ENV=production npm run bundle-sdk && ENV=production npm run bundle-page-sdk-es6 && bundlesize && ENV=production build/scripts/publish.sh",
+    "build:sdk": "LIB=sdk vite build",
+    "build:page": "LIB=page vite build",
+    "build:sw": "LIB=worker vite build",
+    "build": "npm run build:sdk && npm run build:page && npm run build:sw",
+    "build:dev": "ENV=development npm run build",
+    "build:staging": "ENV=staging npm run build",
+    "build:prod": "ENV=production API=production npm run build && size-limit",
+    "build:dev-dev": "API=development npm run build:dev",
+    "build:dev-prod": "API=production API_ORIGIN=onesignal.com npm run build:dev",
+    "build:dev-stag": "API=staging API_ORIGIN=onesignal.com npm run build:dev",
     "test": "vitest run --coverage",
     "test:watch": "vitest watch --coverage",
-    "publish": "npm run clean && npm run build:prod",
-    "build:dev-dev": "./build/scripts/build.sh -f development -t development -a localhost",
-    "build:dev-prod": "./build/scripts/build.sh -f development -t production",
-    "build:dev-stag": "./build/scripts/build.sh -f development -t staging",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig"
   },
   "config": {
@@ -44,62 +33,51 @@
   "author": "OneSignal",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
+    "@size-limit/file": "^11.2.0",
     "@types/body-parser": "latest",
     "@types/express": "^4.17.17",
+    "@types/intl-tel-input": "^18.1.4",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^18.18.0",
-    "@types/sinon": "^2.3.3",
-    "@types/validator": "latest",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
     "@vitest/coverage-v8": "3.0.7",
-    "autoprefixer": "^10.4.14",
-    "bundlesize2": "^0.0.31",
-    "clean-webpack-plugin": "^4.0.0",
-    "css-loader": "^6.7.3",
-    "css-minimizer-webpack-plugin": "^5.0.0",
     "deepmerge": "^4.2.2",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "9.0.0",
     "fake-indexeddb": "^5.0.2",
     "jsdom": "^26.0.0",
-    "md5-file": "^3.2.2",
-    "mini-css-extract-plugin": "^2.7.5",
     "msw": "^2.7.0",
-    "node-dir": "^0.1.16",
-    "postcss-loader": "^7.2.4",
     "prettier": "3.0.2",
     "prettylint": "^2.0.0",
-    "sass-loader": "^13.2.2",
-    "style-loader": "^3.3.2",
-    "ts-loader": "^9.4.2",
     "type-fest": "^4.33.0",
     "typescript": "^4.9.5",
-    "vitest": "3.0.7",
-    "webpack": "^5.80.0",
-    "webpack-bundle-analyzer": "^3.3.2",
-    "webpack-cli": "^5.0.2"
+    "vite": "^6.2.0",
+    "vite-bundle-analyzer": "^0.17.1",
+    "vite-plugin-mkcert": "^1.17.6",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "3.0.7"
   },
-  "bundlesize": [
+  "size-limit": [
     {
-      "path": "./build/bundles/OneSignalSDK.page.js",
-      "maxSize": "1 kB",
-      "compression": "gzip"
+      "path": "./build/releases/OneSignalSDK.page.js",
+      "limit": "1 kB",
+      "gzip": true
     },
     {
-      "path": "./build/bundles/OneSignalSDK.page.es6.js",
-      "maxSize": "79 kB",
-      "compression": "gzip"
+      "path": "./build/releases/OneSignalSDK.page.es6.js",
+      "limit": "64 kB",
+      "gzip": true
     },
     {
-      "path": "./build/bundles/OneSignalSDK.sw.js",
-      "maxSize": "41 kB",
-      "compression": "gzip"
+      "path": "./build/releases/OneSignalSDK.sw.js",
+      "limit": "38 kB",
+      "gzip": true
     },
     {
-      "path": "./build/bundles/OneSignalSDK.page.styles.css",
-      "maxSize": "9 kB",
-      "compression": "gzip"
+      "path": "./build/releases/OneSignalSDK.page.styles.css",
+      "limit": "9 kB",
+      "gzip": true
     }
   ]
 }

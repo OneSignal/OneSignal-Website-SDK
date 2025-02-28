@@ -3,8 +3,8 @@ import {
   SubscriptionManager,
   SubscriptionManagerConfig,
 } from '../managers/SubscriptionManager';
-import { ContextSWInterface } from '../models/ContextSW';
 import { AppConfig } from '../models/AppConfig';
+import { ContextSWInterface } from '../models/ContextSW';
 import Path from '../models/Path';
 
 export class ContextHelper {

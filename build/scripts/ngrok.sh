@@ -33,14 +33,10 @@ startNgrokHTTPSForwarding() {
 buildSDK() {
     local url=${1}
 
-    # Build the service worker file
-    echo "Building service worker files"
-    ./build/scripts/buildServiceWorker.sh $url
-
     # Build the SDK
     echo -e "Building SDK with build origin $url\n"
     # If you want to test with staging, change to build:dev-stag and add -a MY_API_URL
-    docker-compose exec onesignal-web-sdk-dev npm run build:dev-prod -b $url --no-port
+    docker-compose exec onesignal-web-sdk-dev BUILD_ORIGIN=$url NO_DEV_PORT=true npm run build:dev-prod
 
     echo -e "BuildSDK() Done.\n"
 }

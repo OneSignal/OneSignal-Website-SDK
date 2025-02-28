@@ -1,9 +1,11 @@
-@import 'reset';
-@import 'helpers';
+@use 'sass:color';
+@use 'sass:math';
+@use 'reset';
+@use 'helpers';
 
 $red: #e54b4d;
 $orange: #e7924c;
-$gray: lighten(#bcbec0, 15%);
+$gray: color.adjust(#bcbec0, $lightness: 15%);
 
 $sm-size: 36px;
 $md-size: 48px;
@@ -11,12 +13,12 @@ $lg-size: 64px;
 $dock-offset: 20px;
 
 $redwhite-background: white;
-$redwhite-background-active: darken(white, 5%);
+$redwhite-background-active: color.adjust(white, $lightness: -5%);
 $inverse-primary: $red;
 $inverse-secondary: white;
 $inverse-tertiary: black;
 $whitered-background: $red;
-$whitered-background-active: darken($red, 10%);
+$whitered-background-active: color.adjust($red, $lightness: -10%);
 $default-primary: white;
 $default-secondary: $red;
 $default-tertiary: black;
@@ -71,7 +73,7 @@ $sizes: (
   }
 
   .onesignal-bell-launcher {
-    @include unselectable();
+    @include helpers.unselectable();
     -webkit-font-smoothing: initial;
     position: absolute;
     z-index: 2147483000;
@@ -95,12 +97,12 @@ $sizes: (
         #{$leftOrRight}: $dock-offset;
 
         @each $size-name, $size-amount in $sizes {
-          $arrow-size: ceil($size-amount * 0.20625);
+          $arrow-size: math.ceil($size-amount * 0.20625);
           @if $position == 'bottom-left' {
-            $transform-origin-x-offset: #{ceil($size-amount * 0.5)};
+            $transform-origin-x-offset: #{math.ceil($size-amount * 0.5)};
           } @else if $position == 'bottom-right' {
             $transform-origin-x-offset: #{$launcher-width -
-              (ceil($size-amount * 0.5))};
+              (math.ceil($size-amount * 0.5))};
           }
 
           &.onesignal-bell-launcher-#{$size-name} {
@@ -118,14 +120,14 @@ $sizes: (
               transform-origin: #{$leftOrRight} bottom;
 
               &:before {
-                #{$leftOrRight}: #{ceil(($size-amount * 0.5)) -
+                #{$leftOrRight}: #{math.ceil(($size-amount * 0.5)) -
                   5 -
-                  ($dialog-border-width + (ceil($arrow-size * 0.5)))};
+                  ($dialog-border-width + (math.ceil($arrow-size * 0.5)))};
               }
 
               &:after {
-                #{$leftOrRight}: #{ceil(($size-amount * 0.5)) -
-                  5 - ceil(($arrow-size * 0.5))};
+                #{$leftOrRight}: #{math.ceil(($size-amount * 0.5)) -
+                  5 - math.ceil(($arrow-size * 0.5))};
               }
             }
           }
@@ -137,8 +139,8 @@ $sizes: (
 
         .onesignal-bell-launcher-message {
           &:after {
-            #{opposite-direction($leftOrRight)}: 100%;
-            border-#{opposite-direction($leftOrRight)}-color: black;
+            #{helpers.opposite-direction($leftOrRight)}: 100%;
+            border-#{helpers.opposite-direction($leftOrRight)}-color: black;
           }
 
           transform-origin: #{$leftOrRight} center;
@@ -347,11 +349,11 @@ $sizes: (
           width: 100%;
 
           &:hover {
-            background: darken($red, 10%);
+            background: color.adjust($red, $lightness: -10%);
           }
 
           &:active {
-            background: darken($red, 20%);
+            background: color.adjust($red, $lightness: -20%);
           }
         }
       }
@@ -426,7 +428,7 @@ $sizes: (
               font-family: $font-sans-serif;
               letter-spacing: 0.2px;
               text-align: center;
-              color: darken($red, 45%);
+              color: color.adjust($red, $lightness: -45%);
             }
 
             p {

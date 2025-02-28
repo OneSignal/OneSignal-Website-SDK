@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 $slidedown-transition-duration: 400ms;
 $border-radius: 0.5em;
 $mobile-width: 320px;
@@ -495,11 +497,11 @@ $desktop-width: 1024px;
         transition: linear 75ms;
 
         &:hover {
-          background: darken(#0078d1, 7.5%);
+          background: color.adjust(#0078d1, $lightness: -7.5%);
         }
 
         &:active {
-          background: darken(#0078d1, 15%);
+          background: color.adjust(#0078d1, $lightness: -15%);
         }
 
         &.disabled {
@@ -541,11 +543,11 @@ $desktop-width: 1024px;
         color: #0078d1 !important;
 
         &:hover {
-          color: darken(#0078d1, 12.5%);
+          color: color.adjust(#0078d1, $lightness: -12.5%);
         }
 
         &:active {
-          color: darken(#0078d1, 30.5%);
+          color: color.adjust(#0078d1, $lightness: -30.5%);
         }
       }
     }

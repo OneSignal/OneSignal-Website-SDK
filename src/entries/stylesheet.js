@@ -1,1 +1,0 @@
-import './stylesheet.scss';

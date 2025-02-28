@@ -1,7 +1,14 @@
 // @vitest-environment node
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { EnvironmentKind } from '../models/EnvironmentKind';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SdkEnvironment from './SdkEnvironment';
+
+const apiType: string = global.__API_TYPE__;
+const apiOrigin: string = global.__API_ORIGIN__;
+afterEach(() => {
+  global.__API_TYPE__ = apiType;
+  global.__API_ORIGIN__ = apiOrigin;
+});
 
 describe('SdkEnvironment', () => {
   test('can determine window environment', () => {
@@ -31,6 +38,7 @@ describe('SdkEnvironment', () => {
     );
 
     // development -  turbine endpoint
+    global.__API_ORIGIN__ = 'localhost';
     expect(
       SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Development).toString(),
     ).toBe('http://localhost:3000/api/v1');

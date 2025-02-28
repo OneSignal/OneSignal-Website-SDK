@@ -1,6 +1,15 @@
-import { defineConfig } from 'vitest/config';
 import path from 'path';
+import { defineConfig } from 'vitest/config';
+
 export default defineConfig({
+  define: {
+    __BUILD_ORIGIN__: JSON.stringify('onesignal.com'),
+    __BUILD_TYPE__: JSON.stringify('production'),
+    __API_TYPE__: JSON.stringify('staging'),
+    __API_ORIGIN__: JSON.stringify('onesignal.com'),
+    __IS_HTTPS__: JSON.stringify(true),
+    __NO_DEV_PORT__: JSON.stringify(true),
+  },
   resolve: {
     alias: {
       src: path.resolve(__dirname, 'src'),
