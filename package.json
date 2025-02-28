@@ -58,13 +58,6 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "3.0.7"
   },
-  "bundlesize": [
-    {
-      "path": "./build/releases/OneSignalSDK.page.styles.css",
-      "maxSize": "9 kB",
-      "compression": "gzip"
-    }
-  ],
   "size-limit": [
     {
       "path": "./build/releases/OneSignalSDK.page.js",

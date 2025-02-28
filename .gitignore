@@ -2,18 +2,12 @@
 node_modules/
 dist/
 build/stats/*.html
-build/ts-to-es6
-build/bundles*
 build/releases*
-build/size-analysis.html
-/config.json
 
 .DS_STORE
 *.pem
 *.key
 *.crt
-dist/Dev-OneSignalSDK.page.js
-dist/Dev-OneSignalSDK.page.js.map
 .vscode/**
 !.vscode/launch.json
 
