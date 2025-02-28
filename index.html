@@ -11,7 +11,9 @@
 
       // set can a query param ?app_id=your_app_id OR
       // create an .env file and set VITE_APP_ID to your app id
-      const appId = URLSearchParams.get('app_id') || '%VITE_APP_ID%';
+      const appId =
+        new URLSearchParams(window.location.search).get('app_id') ||
+        '%VITE_APP_ID%';
 
       OneSignalDeferred.push(async function (OneSignal) {
         await OneSignal.init({
