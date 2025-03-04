@@ -21,3 +21,7 @@ Please reference the OneSignal SDK on your webpage via our CDN URL (listed in ou
 
 Install the dependencies `npm install` then you can `npm run dev`. This will start a dev server on port 4001.
 The code will use navigator register on OneSignalSDKWorker.js to register the code as service worker.
+
+## Preview
+
+To preview with the actual bundle you can run the build first e.g. `npm run build:dev` then cd into the `preview` folder and follow the instructions in that folder. But generally you can run `docker-compose up` or `npm start`.

@@ -3,6 +3,9 @@ node_modules/
 dist/
 build/stats/*.html
 build/releases*
+ngrok_last_url
+ngrok.log
+
 
 .DS_STORE
 *.pem
