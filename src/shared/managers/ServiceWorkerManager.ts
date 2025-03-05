@@ -1,28 +1,28 @@
-import Environment from '../helpers/Environment';
-import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
-import Path from '../models/Path';
-import Database from '../services/Database';
-import Log from '../libraries/Log';
-import OneSignalEvent from '../services/OneSignalEvent';
+import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
+import { Utils } from '../context/Utils';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
-import OneSignalUtils from '../utils/OneSignalUtils';
+import Environment from '../helpers/Environment';
+import EventHelper from '../helpers/EventHelper';
 import ServiceWorkerHelper, {
   ServiceWorkerActiveState,
   ServiceWorkerManagerConfig,
 } from '../helpers/ServiceWorkerHelper';
+import Log from '../libraries/Log';
+import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { ContextSWInterface } from '../models/ContextSW';
-import { Utils } from '../context/Utils';
-import {
-  PageVisibilityRequest,
-  PageVisibilityResponse,
-} from '../models/Session';
-import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
 import {
   NotificationClickEventInternal,
   NotificationForegroundWillDisplayEvent,
   NotificationForegroundWillDisplayEventSerializable,
 } from '../models/NotificationEvent';
-import EventHelper from '../helpers/EventHelper';
+import Path from '../models/Path';
+import {
+  PageVisibilityRequest,
+  PageVisibilityResponse,
+} from '../models/Session';
+import Database from '../services/Database';
+import OneSignalEvent from '../services/OneSignalEvent';
+import OneSignalUtils from '../utils/OneSignalUtils';
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -425,6 +425,7 @@ export class ServiceWorkerManager {
     try {
       registration = await navigator.serviceWorker.register(workerHref, {
         scope,
+        type: import.meta.env.MODE === 'development' ? 'module' : undefined,
       });
     } catch (error) {
       Log.error(

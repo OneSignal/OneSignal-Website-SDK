@@ -6,7 +6,7 @@
  */
 interface SafariRemoteNotificationPermission {
   readonly deviceToken: string | null;
-  readonly permission: "default" | "granted" | "denied";
+  readonly permission: 'default' | 'granted' | 'denied';
 }
 
 interface SafariRemoteNotification {
@@ -15,13 +15,13 @@ interface SafariRemoteNotification {
     webAPIURL: string,
     websitePushID: string,
     queryParameterDictionary: unknown,
-    callback: (permissionData: SafariRemoteNotificationPermission) => void
+    callback: (permissionData: SafariRemoteNotificationPermission) => void,
   ): void;
 }
 
 interface Window {
   safari?: {
-    pushNotification?: SafariRemoteNotification
+    pushNotification?: SafariRemoteNotification;
   };
 }
 
@@ -29,10 +29,8 @@ interface Window {
  * END: window.safari definition
  */
 
-
 declare let OneSignal: any;
 declare let OneSignalDeferred: any;
-
 
 // These __*__ variables are defined from Webpack to change resulting JS
 declare let __VERSION__: string;

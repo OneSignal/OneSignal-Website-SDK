@@ -1,5 +1,5 @@
-import SdkEnvironment from '../../shared/managers/SdkEnvironment';
 import Environment from '../../shared/helpers/Environment';
+import SdkEnvironment from '../../shared/managers/SdkEnvironment';
 
 export const enum ResourceType {
   Stylesheet,
