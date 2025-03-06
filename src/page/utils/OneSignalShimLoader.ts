@@ -20,6 +20,7 @@ export class OneSignalShimLoader {
 
   // Same logic from SdkEnvironment
   private static getPathAndPrefix(): string {
+    console.info('STAGING BUILD');
     const buildOrigin = __BUILD_ORIGIN__;
     const productionOrigin = 'https://cdn.onesignal.com/sdks/web/v16/';
 

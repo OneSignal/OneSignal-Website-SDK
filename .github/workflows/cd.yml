@@ -18,7 +18,12 @@ jobs:
       - name: '[Build] Staging'
         env:
           STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
-        run: BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} npm run build:staging
+        run: |
+          if [ -z "$STAGING_DOMAIN" ]; then
+            echo "Error: STAGING_DOMAIN secret is not set"
+            exit 1
+          fi
+          BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} npm run build:staging
       - name: '[Build] Production'
         run: npm run build:prod
       - name: 'Authenticate to Google Cloud'
