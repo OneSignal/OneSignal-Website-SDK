@@ -16,6 +16,7 @@ import { RequestService } from '../../../core/requestService/RequestService';
 import AliasPair from '../../../core/requestService/AliasPair';
 import { UpdateUserPayload } from '../../../core/requestService/UpdateUserPayload';
 import Utils from '../../../shared/context/Utils';
+import LoginManager from '../../../page/managers/LoginManager';
 
 export class SessionManager implements ISessionManager {
   private context: ContextInterface;
@@ -201,6 +202,8 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleOnFocus(e: Event): Promise<void> {
+    await LoginManager.switchingUsersPromise;
+
     Log.debug('handleOnFocus', e);
     if (!User.singletonInstance?.hasOneSignalId) {
       return;
