@@ -17,7 +17,19 @@ import LocalStorage from '../../shared/utils/LocalStorage';
 import { logMethodCall } from '../../shared/utils/utils';
 
 export default class LoginManager {
+  static switchingUsersPromise: Promise<void> = Promise.resolve();
+
   static async login(externalId: string, token?: string): Promise<void> {
+    try {
+      // Prevents overlapting login/logout calls
+      await this.switchingUsersPromise;
+      this.switchingUsersPromise = this._login(externalId, token);
+    } catch (e) {
+      this.switchingUsersPromise = Promise.reject(e);
+    }
+  }
+
+  static async _login(externalId: string, token?: string): Promise<void> {
     const consentRequired = LocalStorage.getConsentRequired();
     const consentGiven = await Database.getConsentGiven();
 
@@ -130,6 +142,16 @@ export default class LoginManager {
   }
 
   static async logout(): Promise<void> {
+    try {
+      // Prevents overlapting login/logout calls
+      await this.switchingUsersPromise;
+      this.switchingUsersPromise = this._logout();
+    } catch (e) {
+      this.switchingUsersPromise = Promise.reject(e);
+    }
+  }
+
+  static async _logout(): Promise<void> {
     // check if user is already logged out
     const identityModel = OneSignal.coreDirector?.getIdentityModel();
     if (
