@@ -76,16 +76,21 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+
     // Could move some of these to .env.[ENV] file
     define: {
-      __API_ORIGIN__: JSON.stringify(process.env.API_ORIGIN || 'localhost'),
       __API_TYPE__: JSON.stringify(process.env.API || 'production'),
-      __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN || 'localhost'),
       __BUILD_TYPE__: JSON.stringify(process.env.ENV || 'production'),
-      __IS_HTTPS__: JSON.stringify(process.env.HTTPS ?? true),
       __LOGGING__: JSON.stringify(!isProdEnv),
-      __NO_DEV_PORT__: JSON.stringify(process.env.NO_DEV_PORT ?? false),
       __VERSION__: JSON.stringify(process.env.npm_package_config_sdkVersion),
+
+      // ignored for prod
+      __API_ORIGIN__: JSON.stringify(process.env.API_ORIGIN || 'localhost'),
+      __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN || 'localhost'),
+
+      // dev only
+      __IS_HTTPS__: JSON.stringify(process.env.HTTPS ?? true),
+      __NO_DEV_PORT__: JSON.stringify(process.env.NO_DEV_PORT ?? false),
     },
     server: {
       open: true,

@@ -29,7 +29,7 @@ describe('DynamicResourceLoader', () => {
       'link[rel="stylesheet"]',
     );
 
-    const url = `${cssURL}?v=2`;
+    const url = `${cssURL}?v=1`;
     expect(stylesheets[0].getAttribute('href')).toBe(url);
     expect(loader.getCache()).toEqual({
       [url]: expect.any(Promise),

@@ -1,7 +1,7 @@
+import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { bowserCastle } from '../utils/bowserCastle';
-import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
 
 export default class Environment {
   /**
@@ -78,15 +78,5 @@ export default class Environment {
       default:
         return typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
     }
-  }
-
-  /*
-    Returns the MD5 hash of all stylesheets within the src/stylesheets
-    directory.
-   */
-  public static getSdkStylesVersionHash() {
-    return typeof __SRC_STYLESHEETS_MD5_HASH__ === 'undefined'
-      ? '2'
-      : __SRC_STYLESHEETS_MD5_HASH__;
   }
 }
