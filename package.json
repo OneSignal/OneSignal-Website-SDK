@@ -42,7 +42,6 @@
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
     "@vitest/coverage-v8": "3.0.7",
-    "autoprefixer": "^10.4.20",
     "deepmerge": "^4.2.2",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "9.0.0",

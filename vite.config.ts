@@ -60,7 +60,6 @@ export default defineConfig(({ mode }) => {
        * `var It=Object.defineProperty;` above the IIFE.
        */
       target: 'es2022',
-      cssTarget: 'esnext',
       minify: isProdEnv,
       lib: {
         ...libConfig[lib],
