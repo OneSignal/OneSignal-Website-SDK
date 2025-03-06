@@ -2,7 +2,6 @@ import { defineConfig, LibraryOptions } from 'vite';
 import { analyzer } from 'vite-bundle-analyzer';
 import mkcert from 'vite-plugin-mkcert';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import cssSourceMap from './build/plugins/cssSourceMap';
 
 type Lib = 'sdk' | 'page' | 'worker';
 
@@ -52,7 +51,6 @@ export default defineConfig(({ mode }) => {
               analyzerMode: 'static',
               fileName: `../stats/${lib}-stats`,
             }),
-            cssSourceMap(),
           ]
         : []),
     ],
