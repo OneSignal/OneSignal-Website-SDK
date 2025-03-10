@@ -14,7 +14,7 @@
     "build:sw": "LIB=worker vite build",
     "build": "npm run build:sdk && npm run build:page && npm run build:sw",
     "build:dev": "ENV=development npm run build",
-    "build:staging": "ENV=staging npm run build",
+    "build:staging": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com npm run build",
     "build:prod": "ENV=production API=production npm run build && size-limit",
     "build:dev-dev": "API=development npm run build:dev",
     "build:dev-prod": "API=production API_ORIGIN=onesignal.com npm run build:dev",
