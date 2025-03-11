@@ -20,9 +20,6 @@ import { TestEnvironmentConfig } from './TestEnvironment';
 
 declare const global: any;
 
-vi.mock('../../../src/shared/utils/bowserCastle', () => ({
-  bowserCastle: vi.fn(),
-}));
 const bowserCastleSpy = vi.spyOn(bowerCastleHelpers, 'bowserCastle');
 
 export function resetDatabase() {

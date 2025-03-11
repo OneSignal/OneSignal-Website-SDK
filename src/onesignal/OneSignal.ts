@@ -1,9 +1,17 @@
+import CoreModule from '../core/CoreModule';
+import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
 import ConfigManager from '../page/managers/ConfigManager';
+import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
 import { EnvironmentInfo } from '../page/models/EnvironmentInfo';
+import { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
+import {
+  InvalidArgumentError,
+  InvalidArgumentReason,
+} from '../shared/errors/InvalidArgumentError';
 import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
 import Environment from '../shared/helpers/Environment';
 import EventHelper from '../shared/helpers/EventHelper';
@@ -12,27 +20,19 @@ import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
 import SdkEnvironment from '../shared/managers/SdkEnvironment';
-import { AppUserConfig, AppConfig } from '../shared/models/AppConfig';
+import { AppConfig, AppUserConfig } from '../shared/models/AppConfig';
 import { AppUserConfigNotifyButton } from '../shared/models/Prompts';
 import Database from '../shared/services/Database';
-import { logMethodCall } from '../shared/utils/utils';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
-import NotificationsNamespace from './NotificationsNamespace';
-import CoreModule from '../core/CoreModule';
-import { CoreModuleDirector } from '../core/CoreModuleDirector';
-import UserNamespace from './UserNamespace';
-import SlidedownNamespace from './SlidedownNamespace';
-import LocalStorage from '../shared/utils/LocalStorage';
-import LoginManager from '../page/managers/LoginManager';
-import { SessionNamespace } from './SessionNamespace';
-import { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
-import DebugNamespace from './DebugNamesapce';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../shared/errors/InvalidArgumentError';
-import { ONESIGNAL_EVENTS } from './OneSignalEvents';
 import { bowserCastle } from '../shared/utils/bowserCastle';
+import LocalStorage from '../shared/utils/LocalStorage';
+import { logMethodCall } from '../shared/utils/utils';
+import DebugNamespace from './DebugNamesapce';
+import NotificationsNamespace from './NotificationsNamespace';
+import { ONESIGNAL_EVENTS } from './OneSignalEvents';
+import { SessionNamespace } from './SessionNamespace';
+import SlidedownNamespace from './SlidedownNamespace';
+import UserNamespace from './UserNamespace';
 
 export default class OneSignal {
   static EVENTS = ONESIGNAL_EVENTS;
@@ -128,7 +128,6 @@ export default class OneSignal {
 
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);
-
     if (!OneSignal.config) {
       throw new Error('OneSignal config not initialized!');
     }
@@ -263,8 +262,8 @@ export default class OneSignal {
    * @Example
    *  OneSignalDeferred.push(function(onesignal) { onesignal.functionName(param1, param2); });
    */
-  static push(item: OneSignalDeferredLoadedCallback) {
-    ProcessOneSignalPushCalls.processItem(OneSignal, item);
+  static async push(item: OneSignalDeferredLoadedCallback) {
+    return ProcessOneSignalPushCalls.processItem(OneSignal, item);
   }
 
   static __doNotShowWelcomeNotification: boolean;

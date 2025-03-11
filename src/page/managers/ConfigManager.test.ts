@@ -22,7 +22,7 @@ vi.spyOn(OneSignalApi, 'jsonpLib').mockImplementation((url, fn) => {
 delete (window as any).location;
 (window as any).location = {
   ...window.location,
-  origin: 'https://localhost:3001',
+  origin: 'https://localhost:3000',
 };
 
 describe('ConfigManager', () => {

@@ -1,20 +1,20 @@
-import OneSignalError from '../../shared/errors/OneSignalError';
-import { logMethodCall } from '../../shared/utils/utils';
-import OneSignal from '../../onesignal/OneSignal';
-import UserData from '../../core/models/UserData';
-import { RequestService } from '../../core/requestService/RequestService';
-import AliasPair from '../../core/requestService/AliasPair';
-import Log from '../../shared/libraries/Log';
 import { OSModel } from '../../core/modelRepo/OSModel';
 import { SupportedIdentity } from '../../core/models/IdentityModel';
-import MainHelper from '../../shared/helpers/MainHelper';
-import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
-import { RETRY_BACKOFF } from '../../shared/api/RetryBackoff';
-import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
-import UserDirector from '../../onesignal/UserDirector';
-import Database from '../../shared/services/Database';
-import LocalStorage from '../../shared/utils/LocalStorage';
 import { ModelName, SupportedModel } from '../../core/models/SupportedModels';
+import UserData from '../../core/models/UserData';
+import AliasPair from '../../core/requestService/AliasPair';
+import { RequestService } from '../../core/requestService/RequestService';
+import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
+import OneSignal from '../../onesignal/OneSignal';
+import UserDirector from '../../onesignal/UserDirector';
+import { RETRY_BACKOFF } from '../../shared/api/RetryBackoff';
+import OneSignalError from '../../shared/errors/OneSignalError';
+import MainHelper from '../../shared/helpers/MainHelper';
+import Log from '../../shared/libraries/Log';
+import Database from '../../shared/services/Database';
+import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
+import LocalStorage from '../../shared/utils/LocalStorage';
+import { logMethodCall } from '../../shared/utils/utils';
 
 export default class LoginManager {
   static async login(externalId: string, token?: string): Promise<void> {
@@ -131,7 +131,7 @@ export default class LoginManager {
 
   static async logout(): Promise<void> {
     // check if user is already logged out
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal.coreDirector?.getIdentityModel();
     if (
       !identityModel ||
       !identityModel.data ||
