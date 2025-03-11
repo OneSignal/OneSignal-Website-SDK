@@ -55,8 +55,3 @@ describe('pageSdkInit', () => {
     expect(OneSignal.coreDirector).toBeDefined();
   });
 });
-
-Object.defineProperty(window, 'location', {
-  value: new URL('https://localhost:3000'),
-  writable: true,
-});
