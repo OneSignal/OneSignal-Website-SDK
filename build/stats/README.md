@@ -1,1 +1,1 @@
-Build analysis will be stored her when running build commands with ENV=production.
+Build analysis will be stored here when running build commands with ENV=production.
