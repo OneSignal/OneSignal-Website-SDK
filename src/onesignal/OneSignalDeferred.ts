@@ -5,7 +5,7 @@ import OneSignal from './OneSignal';
 // This way the site developer can use OneSignalDeferred.push without have to check
 //   if the SDK is loaded or not.
 export default class OneSignalDeferred {
-  static push(item: OneSignalDeferredLoadedCallback) {
-    OneSignal.push(item);
+  static async push(item: OneSignalDeferredLoadedCallback) {
+    return OneSignal.push(item);
   }
 }
