@@ -1,23 +1,20 @@
 .idea/
 node_modules/
 dist/
-build/ts-to-es6
-build/bundles
+build/stats/*.html
 build/releases
-build/size-analysis.html
-/config.json
+ngrok_last_url
+ngrok.log
+
 
 .DS_STORE
 *.pem
 *.key
 *.crt
-dist/Dev-OneSignalSDK.page.js
-dist/Dev-OneSignalSDK.page.js.map
 .vscode/**
 !.vscode/launch.json
 
 coverage
-.nyc_output
 
-ngrok_last_url
-ngrok.log
+!.env.example
+.env

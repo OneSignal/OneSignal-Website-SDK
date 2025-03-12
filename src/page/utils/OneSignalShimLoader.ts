@@ -20,19 +20,10 @@ export class OneSignalShimLoader {
 
   // Same logic from SdkEnvironment
   private static getPathAndPrefix(): string {
-    const buildOrigin =
-      typeof __BUILD_ORIGIN__ !== 'undefined'
-        ? __BUILD_ORIGIN__ || 'localhost'
-        : 'localhost';
+    const buildOrigin = __BUILD_ORIGIN__;
     const productionOrigin = 'https://cdn.onesignal.com/sdks/web/v16/';
-
-    if (typeof __BUILD_TYPE__ === 'undefined') {
-      return productionOrigin;
-    }
-
-    const isHttps = typeof __IS_HTTPS__ !== 'undefined' ? __IS_HTTPS__ : true;
-    const protocol = isHttps ? 'https' : 'http';
-    const port = isHttps ? 4001 : 4000;
+    const protocol = __IS_HTTPS__ ? 'https' : 'http';
+    const port = __IS_HTTPS__ ? 4001 : 4000;
 
     switch (__BUILD_TYPE__) {
       case 'development':

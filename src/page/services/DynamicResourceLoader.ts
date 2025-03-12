@@ -1,5 +1,4 @@
 import SdkEnvironment from '../../shared/managers/SdkEnvironment';
-import Environment from '../../shared/helpers/Environment';
 
 export const enum ResourceType {
   Stylesheet,
@@ -38,9 +37,7 @@ export class DynamicResourceLoader {
     const cssFileForEnv = SdkEnvironment.getOneSignalCssFileName();
     return this.loadIfNew(
       ResourceType.Stylesheet,
-      new URL(
-        `${pathForEnv}/${cssFileForEnv}?v=${Environment.getSdkStylesVersionHash()}`,
-      ),
+      new URL(`${pathForEnv}/${cssFileForEnv}?v=${__VERSION__}`),
     );
   }
 

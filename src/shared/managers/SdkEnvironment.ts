@@ -1,10 +1,10 @@
-import { EnvironmentKind } from '../models/EnvironmentKind';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
 import Environment from '../helpers/Environment';
+import { EnvironmentKind } from '../models/EnvironmentKind';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 const RESOURCE_HTTP_PORT = 4000;
 const RESOURCE_HTTPS_PORT = 4001;
@@ -22,9 +22,6 @@ export default class SdkEnvironment {
    * building the SDK.
    */
   public static getBuildEnv(): EnvironmentKind {
-    if (typeof __BUILD_TYPE__ === 'undefined') {
-      return EnvironmentKind.Production;
-    }
     switch (__BUILD_TYPE__) {
       case 'development':
         return EnvironmentKind.Development;
@@ -43,9 +40,6 @@ export default class SdkEnvironment {
    * Refers to which API environment should be used. These constants are set when building the SDK
    */
   public static getApiEnv(): EnvironmentKind {
-    if (typeof __API_TYPE__ === 'undefined') {
-      return EnvironmentKind.Production;
-    }
     switch (__API_TYPE__) {
       case 'development':
         return EnvironmentKind.Development;
@@ -119,10 +113,7 @@ export default class SdkEnvironment {
     buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv(),
     action?: string,
   ): URL {
-    const apiOrigin =
-      typeof __API_ORIGIN__ !== 'undefined'
-        ? __API_ORIGIN__ || 'localhost'
-        : 'localhost';
+    const apiOrigin = __API_ORIGIN__;
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
@@ -152,11 +143,8 @@ export default class SdkEnvironment {
   public static getOneSignalResourceUrlPath(
     buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
   ): URL {
-    const buildOrigin =
-      typeof __BUILD_ORIGIN__ !== 'undefined'
-        ? __BUILD_ORIGIN__ || 'localhost'
-        : 'localhost';
-    const isHttps = typeof __IS_HTTPS__ !== 'undefined' ? __IS_HTTPS__ : true;
+    const buildOrigin = __BUILD_ORIGIN__;
+    const isHttps = __IS_HTTPS__;
     let origin: string;
     const protocol = isHttps ? 'https' : 'http';
     const port = isHttps ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;

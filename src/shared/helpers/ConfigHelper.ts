@@ -1,22 +1,17 @@
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import OneSignalUtils from '../utils/OneSignalUtils';
-import Utils from '../context/Utils';
 import {
-  SERVER_CONFIG_DEFAULTS_SESSION,
-  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
+  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
+  SERVER_CONFIG_DEFAULTS_SESSION,
+  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
 } from '../config/constants';
-import TagUtils from '../utils/TagUtils';
-import PromptsHelper from './PromptsHelper';
-import { ConverterHelper } from './ConverterHelper';
+import Utils from '../context/Utils';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
+import SdkEnvironment from '../managers/SdkEnvironment';
 import {
-  AppUserConfig,
-  ServerAppConfig,
   AppConfig,
+  AppUserConfig,
   ConfigIntegrationKind,
+  ServerAppConfig,
   ServerAppPromptConfig,
   ServiceWorkerConfigParams,
 } from '../models/AppConfig';
@@ -25,6 +20,11 @@ import {
   AppUserConfigPromptOptions,
   DelayedPromptType,
 } from '../models/Prompts';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import OneSignalUtils from '../utils/OneSignalUtils';
+import TagUtils from '../utils/TagUtils';
+import { ConverterHelper } from './ConverterHelper';
+import PromptsHelper from './PromptsHelper';
 
 export enum IntegrationConfigurationKind {
   /**

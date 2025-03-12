@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OneSignal Dev</title>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+      // set can a query param ?app_id=your_app_id OR
+      // create an .env file and set VITE_APP_ID to your app id
+      const appId =
+        new URLSearchParams(window.location.search).get('app_id') ||
+        '%VITE_APP_ID%';
+
+      OneSignalDeferred.push(async function (OneSignal) {
+        await OneSignal.init({
+          appId,
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <script type="module" src="/src/entries/pageSdkInit.ts"></script>
+    <h1>OneSignal Dev</h1>
+    <p>
+      This html file is for local development with hot-reloading. To preview the
+      bundle, it will use a separate html file in the preview folder.
+    </p>
+  </body>
+</html>

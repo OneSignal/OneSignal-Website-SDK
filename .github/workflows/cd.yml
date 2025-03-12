@@ -16,9 +16,7 @@ jobs:
       - name: '[Setup] Install dependencies'
         run: npm ci
       - name: '[Build] Staging'
-        env:
-          STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
-        run: BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} npm run build:staging
+        run: npm run build:staging
       - name: '[Build] Production'
         run: npm run build:prod
       - name: 'Authenticate to Google Cloud'

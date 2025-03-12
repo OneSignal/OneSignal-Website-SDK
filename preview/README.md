@@ -1,4 +1,4 @@
-# Express Webpack
+# Preview Builds
 
 ## WebSDK Sandbox Environment
 
@@ -42,7 +42,7 @@ npm run build:<type>
 
 - Options are:
   - `dev`
-  - `stag`
+  - `staging`
   - `prod`
 
 2. This will assign the environment type accordingly:
@@ -55,11 +55,10 @@ npm run build:<type>-<type>
 
 ### CUSTOM ORIGIN PARAMS:
 
-You can pass two additional parameters to the above command, the first being the origin of the build environment and the second being that of the api environment. These parameters use option flags.
+You can pass two additional variables to the above command, the first being the origin of the build environment and the second being that of the api environment. These env vars are:
 
-- Option flags are:
-  - `-b` or `--build`
-  - `-a` or `--api`
+- BUILD_ORIGIN
+- API_ORIGIN
 
 If no custom origins are set, defaults will be used: `localhost` for build and `onesignal.com` for api.
 
@@ -68,22 +67,22 @@ If no custom origins are set, defaults will be used: `localhost` for build and `
 **Examples**:
 
 ```
-npm run build:dev-prod -b texas
+API_ORIGIN=texas npm run build:dev-prod
 ```
 
 This sets the BUILD environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/web/v##/` and the API environment origin to production which will make all onesignal api calls to the production origin `https://onesignal.com/api/v1/apps/<app>`
 
 ```
-npm run build:dev-dev -b localhost -a texas
+BUILD_ORIGIN=localhost API_ORIGIN=texas npm run build:dev-dev
 ```
 
 This sets the BUILD environment origin to `localhost` which will result in SDK files being fetched from `https://localhost:4001/sdks/web/v##/` and the API environment origin to the default `https://texas:3001/api/v1/apps/<app_id>`
 
 ### HTTP
 
-All builds default to `https` unless `--http` is passed to the end of the build command...
+All builds default to `https` unless `HTTPS=false` is passed to the build command...
 
-**Example**: `npm run build:dev-prod --http` or `npm run build:dev-prod -b localhost --http`
+**Example**: `HTTPS=false npm run build:dev-prod` or `HTTPS=false BUILD_ORIGIN=localhost npm run build:dev-prod`
 
 ### NOTE ON PORTS:
 
@@ -92,7 +91,7 @@ All builds default to `https` unless `--http` is passed to the end of the build 
 - HTTP: `4000`
 - HTTPS: `4001`
 
-Use the **`--no-port`** build flag to build without a port number. This is useful when using a reverse proxy like [ngrok](https://ngrok.com/) to serve your localhost environment on the web.
+Use the **`NO_DEV_PORT=true`** build env var to build without a port number. This is useful when using a reverse proxy like [ngrok](https://ngrok.com/) to serve your localhost environment on the web.
 
 **API**: dev-environment API calls will be made to the `3001` port (e.g: `<custom-origin>:3001`)
 
@@ -116,46 +115,11 @@ You may want to run the Web SDK Sandbox with the configuration `dev-dev`. You wi
 
    - change the URLs in the file `development.rb` so that they point to the files' absolute paths (these are the files in the `build` directory after running `npm run build:<>-<>`)
 
-4. Remove the `$PREFIX` var from the `publish.sh` script for all map files
-
-### Running on [ngrok](https://ngrok.com/)
-
-**Problem:**
-you need a quick and easy way to test your changes on a different machine or share the sandbox environment with others.
-
-**Solution:**
-ngrok is a programmable reverse proxy that lets you instantly serve your localhost environment to the web.
-
-#### Steps:
-
-1. Start the ngrok script.
-
-```
-npx ngrok
-```
-
-2. Modify index.html file to use the newly created ngrok origin.
-3. Update your app settings via the dashboard to use the newly created ngrok origin.
-
 ## Troubleshooting
 
 ### Custom origin mismatch
 
-Check the network tab in the browser dev tools to see what origin the SDK is using for network calls. If you set the `-a` flag origin to something other than `onesignal.com` but it is still using that, make sure you are using the correct build command. For example, if you set the origin to `staging.onesignal.com` you should _not_ be using the `dev-prod` environment since the `prod` will result in the ignoring of the custom origin parameter. The fix in this case would be to use `dev-stag`.
-
-### Map files aren't working correctly
-
-The source map files let tools (e.g: the browser dev tools Source tab) map between the emitted JS code and the TypeScript source. If you notice the debugger acting up (e.g: breakpoints don't hit or set correctly) chances are the problem is with your map files. Make sure you remove the `$PREFIX` var from the `publish.sh` script for all `.map` files. Rebuild.
-
-### Sass build error
-
-If you get the error `Node Sass could not find a binding for your current environment: Linux 64-bit with Node.js 12.` try running the following:
-
-```
-npm rebuild node-sass
-```
-
-from _inside_ the docker container shell.
+Check the network tab in the browser dev tools to see what origin the SDK is using for network calls. If you set the `API_ORIGIN` var to something other than `onesignal.com` but it is still using that, make sure you are using the correct build command. For example, if you set the origin to `staging.onesignal.com` you should _not_ be using the `dev-prod` environment since the `prod` will result in the ignoring of the custom origin parameter. The fix in this case would be to use `dev-stag`.
 
 ## Debugging Tips for OneSignal WebSDK Sandbox
 
