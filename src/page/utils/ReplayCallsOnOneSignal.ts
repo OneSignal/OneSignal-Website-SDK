@@ -6,7 +6,7 @@ import { OneSignalDeferredLoadedCallback } from '../models/OneSignalDeferredLoad
 export class ReplayCallsOnOneSignal {
   static async processOneSignalDeferredArray(
     onesignalDeferred: OneSignalDeferredLoadedCallback[],
-  ) {
+  ): Promise<void> {
     for (const item of onesignalDeferred) {
       try {
         await OneSignal.push(item);
