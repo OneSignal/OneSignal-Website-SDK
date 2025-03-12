@@ -43,4 +43,5 @@ function onesignalSdkInit() {
     existingOneSignalDeferred,
   );
 }
+
 onesignalSdkInit();

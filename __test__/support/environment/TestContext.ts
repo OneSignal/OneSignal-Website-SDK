@@ -1,16 +1,16 @@
+import deepmerge from 'deepmerge';
+import ConfigManager from '../../../src/page/managers/ConfigManager';
 import { RecursivePartial } from '../../../src/shared/context/Utils';
 import {
-  ConfigIntegrationKind,
-  ServerAppConfig,
-  NotificationClickMatchBehavior,
-  NotificationClickActionBehavior,
-  AppUserConfig,
   AppConfig,
+  AppUserConfig,
+  ConfigIntegrationKind,
+  NotificationClickActionBehavior,
+  NotificationClickMatchBehavior,
+  ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
 import { DelayedPromptType } from '../../../src/shared/models/Prompts';
 import { APP_ID } from '../constants';
-import deepmerge from 'deepmerge';
-import ConfigManager from '../../../src/page/managers/ConfigManager';
 import { TestEnvironmentConfig } from './TestEnvironment';
 
 export default class TestContext {
@@ -40,7 +40,7 @@ export default class TestContext {
           autoResubscribe: true,
           siteInfo: {
             name: 'localhost https',
-            origin: 'https://localhost:3001',
+            origin: 'https://localhost:3000',
             proxyOrigin: undefined,
             defaultIconUrl: null,
             proxyOriginEnabled: true,
@@ -141,7 +141,7 @@ export default class TestContext {
           },
           welcomeNotification: {
             enable: true,
-            url: 'https://localhost:3001/?_osp=do_not_open',
+            url: 'https://localhost:3000/?_osp=do_not_open',
             title: 'localhost https',
             message: 'Thanks for subscribing!',
             urlEnabled: false,
@@ -150,7 +150,7 @@ export default class TestContext {
             'BDPplk0FjgsEPIG7Gi2-zbjpBGgM_RJ4c99tWbNvxv7VSKIUV1KA7UUaRsTuBpcTEuaPMjvz_kd8rZuQcgMepng',
           onesignal_vapid_public_key:
             'BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0',
-          origin: 'https://localhost:3001',
+          origin: 'https://localhost:3000',
           subdomain: undefined,
           outcomes: {
             direct: {

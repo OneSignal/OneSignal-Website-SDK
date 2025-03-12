@@ -6,7 +6,7 @@ export class ProcessOneSignalPushCalls {
     oneSignalInstance: IOneSignal,
     item: OneSignalDeferredLoadedCallback,
   ) {
-    if (typeof item === 'function') item(oneSignalInstance);
+    if (typeof item === 'function') return item(oneSignalInstance);
     else {
       throw new OneSignalError('Only accepts function type!');
     }

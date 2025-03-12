@@ -1,8 +1,8 @@
 import JSONP from 'jsonp';
 import SdkEnvironment from '../managers/SdkEnvironment';
+import { ServerAppConfig } from '../models/AppConfig';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import OneSignalApiSW from './OneSignalApiSW';
-import { ServerAppConfig } from '../models/AppConfig';
 
 export default class OneSignalApi {
   static jsonpLib(

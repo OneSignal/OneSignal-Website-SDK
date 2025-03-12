@@ -1,8 +1,8 @@
 import bowser from 'bowser';
-import { EnvironmentInfo } from '../models/EnvironmentInfo';
-import { Browser } from '../../shared/models/Browser';
 import Utils from '../../shared/context/Utils';
+import { Browser } from '../../shared/models/Browser';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
+import { EnvironmentInfo } from '../models/EnvironmentInfo';
 
 /**
  * EnvironmentInfoHelper is used to save page ("browser") context environment information to
