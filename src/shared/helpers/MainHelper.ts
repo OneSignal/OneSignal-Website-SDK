@@ -238,6 +238,7 @@ export default class MainHelper {
 
   // TO DO: unit test
   static async getCurrentPushToken(): Promise<string | undefined> {
+    console.log("getCurrentPushToken(): TOP");
     if (Environment.useSafariLegacyPush()) {
       const safariToken = window.safari?.pushNotification?.permission(
         OneSignal.config.safariWebId,
@@ -247,6 +248,8 @@ export default class MainHelper {
 
     const registration =
       await OneSignal.context.serviceWorkerManager.getRegistration();
+
+    console.log("getCurrentPushToken(): registration: " + registration);
     if (!registration) {
       return undefined;
     }

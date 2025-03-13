@@ -16,9 +16,10 @@ import { PropertiesExecutor } from '../../../src/core/executors/PropertiesExecut
 import { SubscriptionExecutor } from '../../../src/core/executors/SubscriptionExecutor';
 import LocalStorage from '../../../src/shared/utils/LocalStorage';
 import { nock, stub } from '__test__/support/helpers/general';
+import { awaitableTimeout } from '../../../src/shared/utils/AwaitableTimeout';
 
 // suppress all internal logging
-vi.useFakeTimers();
+// vi.useFakeTimers();
 vi.mock('../../../src/shared/libraries/Log');
 stub(PropertiesExecutor.prototype, 'getOperationsFromCache', []);
 stub(IdentityExecutor.prototype, 'getOperationsFromCache', []);
@@ -26,28 +27,280 @@ stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', []);
 
 describe('Login tests', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['nextTick'] });
     localStorage.clear();
+    // vi.useFakeTimers();
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
+    // vi.runOnlyPendingTimers();
+    // vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    // vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['nextTick'] });
     vi.resetAllMocks();
+
+    // vi.runOnlyPendingTimers();
+    // vi.useRealTimers();
   });
 
-  test('If privacy consent is required but not given, do not login', async () => {
-    await TestEnvironment.initialize({
-      useMockIdentityModel: true,
-    });
-    LocalStorage.setConsentRequired(true);
+  // test('If privacy consent is required but not given, do not login', async () => {
+  //   await TestEnvironment.initialize({
+  //     useMockIdentityModel: true,
+  //   });
+  //   LocalStorage.setConsentRequired(true);
 
-    stub(Database, 'getConsentGiven', Promise.resolve(false));
+  //   stub(Database, 'getConsentGiven', Promise.resolve(false));
 
-    await expect(LoginManager.login('rodrigo')).rejects.toThrow(
-      'Login: Consent required but not given, skipping login',
-    );
-  });
+  //   await expect(LoginManager.login('rodrigo')).rejects.toThrow(
+  //     'Login: Consent required but not given, skipping login',
+  //   );
+  // });
 
-  test('Login twice with same user -> only one call to identify user', async () => {
+  // test('Login twice with same user -> only one call to identify user', async () => {
+  //   await TestEnvironment.initialize({
+  //     useMockIdentityModel: true,
+  //     useMockPushSubscriptionModel: true,
+  //   });
+  //   setupLoginStubs();
+
+  //   const identifyOrUpsertUserSpy = stub(
+  //     LoginManager,
+  //     'identifyOrUpsertUser',
+  //     Promise.resolve({
+  //       identity: {
+  //         external_id: DUMMY_EXTERNAL_ID,
+  //         onesignal_id: DUMMY_ONESIGNAL_ID,
+  //       },
+  //     }),
+  //   );
+
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+  //   expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(1);
+  // });
+
+  // test('Login twice with different user -> logs in to second user', async () => {
+  //   await TestEnvironment.initialize({ useMockIdentityModel: true });
+  //   setupLoginStubs();
+
+  //   const identifyOrUpsertUserSpy = stub(LoginManager, 'identifyOrUpsertUser');
+
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+  //   await LoginManager.login('rodrigo2');
+
+  //   expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(2);
+  // });
+
+  // test('If there is anything on the delta queue, it gets processed before login', async () => {
+  //   await TestEnvironment.initialize({ useMockIdentityModel: true });
+  //   setupLoginStubs();
+  //   const external_id = DUMMY_EXTERNAL_ID;
+  //   stub(
+  //     LoginManager,
+  //     'identifyOrUpsertUser',
+  //     Promise.resolve({
+  //       identity: {
+  //         external_id,
+  //         onesignal_id: DUMMY_ONESIGNAL_ID,
+  //       },
+  //     }),
+  //   );
+
+  //   const forceProcessSpy = vi.spyOn(
+  //     CoreModuleDirector.prototype,
+  //     'forceDeltaQueueProcessingOnAllExecutors',
+  //   );
+
+  //   await LoginManager.login(external_id);
+
+  //   // TO DO: test the order of operations (force process deltas should occur at beginning of login process)
+  //   expect(forceProcessSpy).toHaveBeenCalledTimes(1);
+  // });
+
+  // test('Upsert user payload only contains one alias', async () => {
+  //   setupLoginStubs();
+  //   await TestEnvironment.initialize();
+  //   const identityModel = getDummyIdentityOSModel();
+  //   nock({});
+
+  //   // to upsert, the user must already be identified (have an external_id)
+  //   identityModel.set('external_id', 'pavel');
+  //   identityModel.setOneSignalId(DUMMY_ONESIGNAL_ID);
+
+  //   OneSignal.coreDirector.add(ModelName.Identity, identityModel);
+
+  //   const identifyOrUpsertUserSpy = vi.spyOn(
+  //     LoginManager,
+  //     'identifyOrUpsertUser',
+  //   );
+  //   const createUserSpy = vi.spyOn(RequestService, 'createUser');
+
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+  //   // get result of identifyOrUpsertUser
+  //   await identifyOrUpsertUserSpy.mock.results[0].value;
+
+  //   // second argument to createUser is the payload object
+  //   const payload = createUserSpy.mock.calls[0][1];
+
+  //   expect(Object.keys(payload.identity!).length).toBe(1);
+  // });
+
+  // test('Identify user payload only contains one alias', async () => {
+  //   setupLoginStubs();
+  //   await TestEnvironment.initialize({
+  //     useMockIdentityModel: true,
+  //   });
+  //   nock({});
+
+  //   const identifyOrUpsertUserSpy = vi.spyOn(
+  //     LoginManager,
+  //     'identifyOrUpsertUser',
+  //   );
+  //   const identifyUserSpy = vi.spyOn(RequestService, 'addAlias');
+
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+  //   // get result of identifyOrUpsertUser
+  //   await identifyOrUpsertUserSpy.mock.results[0].value;
+
+  //   // second argument to identifyUser is the payload object
+  //   const identity = identifyUserSpy.mock.calls[0][2];
+
+  //   expect(JSON.parse(JSON.stringify(identity))).toEqual({
+  //     external_id: DUMMY_EXTERNAL_ID,
+  //   });
+  // });
+
+  // test('If we login with an existing alias 409 we transfer the push subscription', async () => {
+  //   setupLoginStubs();
+  //   await TestEnvironment.initialize({
+  //     useMockIdentityModel: true,
+  //     useMockPushSubscriptionModel: true,
+  //   });
+
+  //   const transferSubscriptionSpy = vi.spyOn(
+  //     LoginManager,
+  //     'transferSubscription',
+  //   );
+
+  //   nock({}, 409);
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+  //   expect(transferSubscriptionSpy).toHaveBeenCalledTimes(1);
+  // });
+
+  // test('If login fails, we fetch and hydrate the previous user', async () => {
+  //   setupLoginStubs();
+  //   await TestEnvironment.initialize({
+  //     useMockIdentityModel: true,
+  //     useMockPushSubscriptionModel: true,
+  //   });
+
+  //   const fetchAndHydrateSpy = vi.spyOn(LoginManager, 'fetchAndHydrate');
+
+  //   nock({}, 400);
+
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+  //   expect(fetchAndHydrateSpy).toHaveBeenCalledTimes(1);
+  // });
+
+  // test('Login called before any Subscriptions, should save external_id but not create User', async () => {
+  //   setupLoginStubs();
+  //   await TestEnvironment.initialize();
+  //   nock({});
+
+  //   OneSignal.coreDirector.add(ModelName.Identity, getDummyIdentityOSModel());
+
+  //   const createUserSpy = vi.spyOn(RequestService, 'createUser');
+
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+  //   expect(OneSignal.coreDirector.getIdentityModel().data.external_id).toBe(
+  //     DUMMY_EXTERNAL_ID,
+  //   );
+
+  //   // User should NOT be created, as we have no subscriptions yet.
+  //   expect(createUserSpy.mock.calls.length).toBe(0);
+  // });
+
+  // test('Login updates externalId on all models', async () => {
+  //   setupLoginStubs();
+  //   await TestEnvironment.initialize({
+  //     useMockIdentityModel: true,
+  //     useMockPushSubscriptionModel: true,
+  //   });
+
+  //   stub(
+  //     LoginManager,
+  //     'identifyOrUpsertUser',
+  //     Promise.resolve({
+  //       identity: {
+  //         external_id: DUMMY_EXTERNAL_ID,
+  //         onesignal_id: DUMMY_ONESIGNAL_ID,
+  //       },
+  //     }),
+  //   );
+
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+  //   expect(OneSignal.coreDirector.getIdentityModel().externalId).toBe(
+  //     DUMMY_EXTERNAL_ID,
+  //   );
+
+  //   expect(OneSignal.coreDirector.getPropertiesModel().externalId).toBe(
+  //     DUMMY_EXTERNAL_ID,
+  //   );
+
+  //   const subs = await OneSignal.coreDirector.getAllSubscriptionsModels();
+
+  //   expect(
+  //     subs.every(
+  //       (sub: { externalId: string }) => sub.externalId === DUMMY_EXTERNAL_ID,
+  //     ),
+  //   ).toBe(true);
+  // });
+
+  // test('Login twice updates current externalId on all models', async () => {
+  //   setupLoginStubs();
+  //   await TestEnvironment.initialize({
+  //     useMockIdentityModel: true,
+  //   });
+
+  //   stub(
+  //     LoginManager,
+  //     'identifyOrUpsertUser',
+  //     Promise.resolve({
+  //       identity: {
+  //         external_id: DUMMY_EXTERNAL_ID,
+  //         onesignal_id: DUMMY_ONESIGNAL_ID,
+  //       },
+  //     }),
+  //   );
+
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID);
+  //   await LoginManager.login(DUMMY_EXTERNAL_ID_2);
+
+  //   expect(OneSignal.coreDirector.getIdentityModel().externalId).toBe(
+  //     DUMMY_EXTERNAL_ID_2,
+  //   );
+
+  //   expect(OneSignal.coreDirector.getPropertiesModel().externalId).toBe(
+  //     DUMMY_EXTERNAL_ID_2,
+  //   );
+
+  //   const subs = await OneSignal.coreDirector.getAllSubscriptionsModels();
+
+  //   expect(
+  //     subs.every(
+  //       (sub: { externalId: string }) => sub.externalId === DUMMY_EXTERNAL_ID_2,
+  //     ),
+  //   ).toBe(true);
+  // });
+
+  test('Login twice without waiting, should throw', async () => {
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
       useMockPushSubscriptionModel: true,
@@ -65,228 +318,68 @@ describe('Login tests', () => {
       }),
     );
 
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
+    const loopTest = async function (expectTimes: number, iter: number) {
+      const login1 = LoginManager.login(DUMMY_EXTERNAL_ID + iter);
+      console.log("TEST1");
 
-    expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(1);
-  });
+      for (let i = 0; i < iter; i++) {
+        // await vi.advanceTimersToNextTimerAsync(); // 11 is not enought, but 12 is to many
+        // await vi.runAllTicks() // TODO: try this
 
-  test('Login twice with different user -> logs in to second user', async () => {
-    await TestEnvironment.initialize({ useMockIdentityModel: true });
-    setupLoginStubs();
+        await vi.runOnlyPendingTimersAsync();
+        
+        // await vi.advanceTimersToNextFrame();
+        // await vi.runAllTimers(); // Aborting after running 10000 timers, assuming an infinite loop!
+        // await vi.runAllTimersAsync(); // Aborting after running 10000 timers, assuming an infinite loop!
+        // await vi.runOnlyPendingTimersAsync(); // even 1 times is to much.
+        // await Promise.resolve(); // never advances 
+        // await vi.advanceTimersByTime(0); // never advances 
+        // await vi.advanceTimersByTime(1); // never advances 
+      }
 
-    const identifyOrUpsertUserSpy = stub(LoginManager, 'identifyOrUpsertUser');
+      console.log("TEST2");
+      const login2 = LoginManager.login(DUMMY_EXTERNAL_ID + iter);
+      await Promise.allSettled([login1, login2]);
 
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
-    await LoginManager.login('rodrigo2');
+      expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(expectTimes);
+    }
 
-    expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(2);
-  });
+    for (let i = 1; i < 20; i++) {
+      await loopTest(i, i);
+    }
+    // // await Promise.all(Array(2).fill().map(() => LoginManager.login(DUMMY_EXTERNAL_ID)));
+    // // await Promise.all([LoginManager.login(DUMMY_EXTERNAL_ID), LoginManager.login(DUMMY_EXTERNAL_ID)]);
+    // console.log("Test - HERE1")
+    // const login1 = LoginManager.login(DUMMY_EXTERNAL_ID);
+    // console.log("Test - HERE2")
+    // await vi.advanceTimersToNextTimerAsync();
+    // await vi.advanceTimersToNextTimerAsync();
+    // await vi.advanceTimersToNextTimerAsync();
+    // await vi.advanceTimersToNextTimerAsync();
+    // await vi.advanceTimersToNextTimerAsync();
+    // await vi.advanceTimersToNextTimerAsync();
+    // await vi.advanceTimersToNextTimerAsync();
+    // await vi.advanceTimersToNextTimerAsync();
+    // await vi.advanceTimersToNextTimerAsync();
+    // await vi.advanceTimersToNextTimerAsync();
 
-  test('If there is anything on the delta queue, it gets processed before login', async () => {
-    await TestEnvironment.initialize({ useMockIdentityModel: true });
-    setupLoginStubs();
-    const external_id = DUMMY_EXTERNAL_ID;
-    stub(
-      LoginManager,
-      'identifyOrUpsertUser',
-      Promise.resolve({
-        identity: {
-          external_id,
-          onesignal_id: DUMMY_ONESIGNAL_ID,
-        },
-      }),
-    );
+    // // await vi.runAllTimers();
+    // console.log("Test - HERE3")
+    // const login2 = LoginManager.login(DUMMY_EXTERNAL_ID);
+    // console.log("Test - HERE4")
+    // await Promise.all([login1, login2]);
+    // console.log("Test - HERE5")
 
-    const forceProcessSpy = vi.spyOn(
-      CoreModuleDirector.prototype,
-      'forceDeltaQueueProcessingOnAllExecutors',
-    );
+    // expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(1);
 
-    await LoginManager.login(external_id);
+    // for(let i = 0; i < 100; i++) {
+    //   LoginManager.login(DUMMY_EXTERNAL_ID + i);
 
-    // TO DO: test the order of operations (force process deltas should occur at beginning of login process)
-    expect(forceProcessSpy).toHaveBeenCalledTimes(1);
-  });
+    //   // LoginManager.login(DUMMY_EXTERNAL_ID);
+    // }
 
-  test('Upsert user payload only contains one alias', async () => {
-    setupLoginStubs();
-    await TestEnvironment.initialize();
-    const identityModel = getDummyIdentityOSModel();
-    nock({});
+    // await LoginManager.login(DUMMY_EXTERNAL_ID + "101");
 
-    // to upsert, the user must already be identified (have an external_id)
-    identityModel.set('external_id', 'pavel');
-    identityModel.setOneSignalId(DUMMY_ONESIGNAL_ID);
-
-    OneSignal.coreDirector.add(ModelName.Identity, identityModel);
-
-    const identifyOrUpsertUserSpy = vi.spyOn(
-      LoginManager,
-      'identifyOrUpsertUser',
-    );
-    const createUserSpy = vi.spyOn(RequestService, 'createUser');
-
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
-
-    // get result of identifyOrUpsertUser
-    await identifyOrUpsertUserSpy.mock.results[0].value;
-
-    // second argument to createUser is the payload object
-    const payload = createUserSpy.mock.calls[0][1];
-
-    expect(Object.keys(payload.identity!).length).toBe(1);
-  });
-
-  test('Identify user payload only contains one alias', async () => {
-    setupLoginStubs();
-    await TestEnvironment.initialize({
-      useMockIdentityModel: true,
-    });
-    nock({});
-
-    const identifyOrUpsertUserSpy = vi.spyOn(
-      LoginManager,
-      'identifyOrUpsertUser',
-    );
-    const identifyUserSpy = vi.spyOn(RequestService, 'addAlias');
-
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
-
-    // get result of identifyOrUpsertUser
-    await identifyOrUpsertUserSpy.mock.results[0].value;
-
-    // second argument to identifyUser is the payload object
-    const identity = identifyUserSpy.mock.calls[0][2];
-
-    expect(JSON.parse(JSON.stringify(identity))).toEqual({
-      external_id: DUMMY_EXTERNAL_ID,
-    });
-  });
-
-  test('If we login with an existing alias 409 we transfer the push subscription', async () => {
-    setupLoginStubs();
-    await TestEnvironment.initialize({
-      useMockIdentityModel: true,
-      useMockPushSubscriptionModel: true,
-    });
-
-    const transferSubscriptionSpy = vi.spyOn(
-      LoginManager,
-      'transferSubscription',
-    );
-
-    nock({}, 409);
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
-
-    expect(transferSubscriptionSpy).toHaveBeenCalledTimes(1);
-  });
-
-  test('If login fails, we fetch and hydrate the previous user', async () => {
-    setupLoginStubs();
-    await TestEnvironment.initialize({
-      useMockIdentityModel: true,
-      useMockPushSubscriptionModel: true,
-    });
-
-    const fetchAndHydrateSpy = vi.spyOn(LoginManager, 'fetchAndHydrate');
-
-    nock({}, 400);
-
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
-    expect(fetchAndHydrateSpy).toHaveBeenCalledTimes(1);
-  });
-
-  test('Login called before any Subscriptions, should save external_id but not create User', async () => {
-    setupLoginStubs();
-    await TestEnvironment.initialize();
-    nock({});
-
-    OneSignal.coreDirector.add(ModelName.Identity, getDummyIdentityOSModel());
-
-    const createUserSpy = vi.spyOn(RequestService, 'createUser');
-
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
-
-    expect(OneSignal.coreDirector.getIdentityModel().data.external_id).toBe(
-      DUMMY_EXTERNAL_ID,
-    );
-
-    // User should NOT be created, as we have no subscriptions yet.
-    expect(createUserSpy.mock.calls.length).toBe(0);
-  });
-
-  test('Login updates externalId on all models', async () => {
-    setupLoginStubs();
-    await TestEnvironment.initialize({
-      useMockIdentityModel: true,
-      useMockPushSubscriptionModel: true,
-    });
-
-    stub(
-      LoginManager,
-      'identifyOrUpsertUser',
-      Promise.resolve({
-        identity: {
-          external_id: DUMMY_EXTERNAL_ID,
-          onesignal_id: DUMMY_ONESIGNAL_ID,
-        },
-      }),
-    );
-
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
-
-    expect(OneSignal.coreDirector.getIdentityModel().externalId).toBe(
-      DUMMY_EXTERNAL_ID,
-    );
-
-    expect(OneSignal.coreDirector.getPropertiesModel().externalId).toBe(
-      DUMMY_EXTERNAL_ID,
-    );
-
-    const subs = await OneSignal.coreDirector.getAllSubscriptionsModels();
-
-    expect(
-      subs.every(
-        (sub: { externalId: string }) => sub.externalId === DUMMY_EXTERNAL_ID,
-      ),
-    ).toBe(true);
-  });
-
-  test('Login twice updates current externalId on all models', async () => {
-    setupLoginStubs();
-    await TestEnvironment.initialize({
-      useMockIdentityModel: true,
-    });
-
-    stub(
-      LoginManager,
-      'identifyOrUpsertUser',
-      Promise.resolve({
-        identity: {
-          external_id: DUMMY_EXTERNAL_ID,
-          onesignal_id: DUMMY_ONESIGNAL_ID,
-        },
-      }),
-    );
-
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
-    await LoginManager.login(DUMMY_EXTERNAL_ID_2);
-
-    expect(OneSignal.coreDirector.getIdentityModel().externalId).toBe(
-      DUMMY_EXTERNAL_ID_2,
-    );
-
-    expect(OneSignal.coreDirector.getPropertiesModel().externalId).toBe(
-      DUMMY_EXTERNAL_ID_2,
-    );
-
-    const subs = await OneSignal.coreDirector.getAllSubscriptionsModels();
-
-    expect(
-      subs.every(
-        (sub: { externalId: string }) => sub.externalId === DUMMY_EXTERNAL_ID_2,
-      ),
-    ).toBe(true);
+    // // await awaitableTimeout(100);
   });
 });

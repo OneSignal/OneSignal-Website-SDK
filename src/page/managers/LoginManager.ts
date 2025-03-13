@@ -17,21 +17,44 @@ import LocalStorage from '../../shared/utils/LocalStorage';
 import { logMethodCall } from '../../shared/utils/utils';
 
 export default class LoginManager {
+  // Prevents overlapting login/logout calls
   static switchingUsersPromise: Promise<void> = Promise.resolve();
 
+  // Option 2 - Works do we really need to catch and rethrow?
+  // static async login(externalId: string, token?: string): Promise<void> {
+  //   try {
+  //     // Prevents overlapting login/logout calls
+  //     await this.switchingUsersPromise;
+  //     await (this.switchingUsersPromise = this._login(externalId, token));
+  //   } catch (e) {
+  //     this.switchingUsersPromise = Promise.resolve();
+  //     throw e;
+  //   }
+  // }
+
+  // Option 2 - Works but could be a bit better
+  // static async login(externalId: string, token?: string): Promise<void> {
+  //     // Prevents overlapting login/logout calls
+  //     await this.switchingUsersPromise;
+  //     this.switchingUsersPromise = this._login(externalId, token).finally(() => this.switchingUsersPromise = Promise.resolve());
+  //     await this.switchingUsersPromise;
+  // }
+
   static async login(externalId: string, token?: string): Promise<void> {
-    try {
-      // Prevents overlapting login/logout calls
-      await this.switchingUsersPromise;
-      this.switchingUsersPromise = this._login(externalId, token);
-    } catch (e) {
-      this.switchingUsersPromise = Promise.reject(e);
-    }
+    // await this.switchingUsersPromise;
+    // try {
+    //   await (this.switchingUsersPromise = this._login(externalId, token));
+    // } finally {
+    //   this.switchingUsersPromise = Promise.resolve();
+    // }
+    return this._login(externalId, token);
   }
 
   static async _login(externalId: string, token?: string): Promise<void> {
     const consentRequired = LocalStorage.getConsentRequired();
+    console.log("HERE1: externalId: " + externalId)
     const consentGiven = await Database.getConsentGiven();
+    console.log("HERE2: externalId: " + externalId)
 
     if (consentRequired && !consentGiven) {
       throw new OneSignalError(
@@ -58,12 +81,18 @@ export default class LoginManager {
 
       // if the current externalId is the same as the one we're trying to set, do nothing
       if (currentExternalId === externalId) {
+        console.log("Login: External ID already set, skipping login");
         Log.debug('Login: External ID already set, skipping login');
         return;
       }
 
+      console.log("HERE3: externalId: " + externalId)
+
       const pushSubModel =
         await OneSignal.coreDirector.getPushSubscriptionModel();
+
+      console.log("HERE4: externalId: " + externalId)
+
       let currentPushSubscriptionId;
 
       if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
@@ -72,6 +101,7 @@ export default class LoginManager {
 
       const isIdentified = LoginManager.isIdentified(identityModel.data);
 
+      console.log("HERE5: BEFORE LoginManager.setExternalId");
       // set the external id on the user locally
       LoginManager.setExternalId(identityModel, externalId);
 
@@ -142,12 +172,12 @@ export default class LoginManager {
   }
 
   static async logout(): Promise<void> {
+    // Prevents overlapting login/logout calls
+    await this.switchingUsersPromise;
     try {
-      // Prevents overlapting login/logout calls
-      await this.switchingUsersPromise;
-      this.switchingUsersPromise = this._logout();
-    } catch (e) {
-      this.switchingUsersPromise = Promise.reject(e);
+      await (this.switchingUsersPromise = this._logout());
+    } finally {
+      this.switchingUsersPromise = Promise.resolve();
     }
   }
 

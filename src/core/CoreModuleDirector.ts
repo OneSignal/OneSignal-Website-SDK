@@ -300,6 +300,7 @@ export class CoreModuleDirector {
   public async getPushSubscriptionModel(): Promise<
     OSModel<SupportedSubscription> | undefined
   > {
+    console.log("getPushSubscriptionModel  TOP");
     logMethodCall('CoreModuleDirector.getPushSubscriptionModel');
     return (
       (await this.getPushSubscriptionModelByCurrentToken()) ||

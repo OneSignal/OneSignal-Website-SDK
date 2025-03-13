@@ -19,6 +19,7 @@ export default defineConfig({
     },
   },
   test: {
+    pool: 'threads',
     clearMocks: true,
     coverage: {
       include: ['src/**'],
