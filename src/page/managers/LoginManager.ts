@@ -17,7 +17,17 @@ import LocalStorage from '../../shared/utils/LocalStorage';
 import { logMethodCall } from '../../shared/utils/utils';
 
 export default class LoginManager {
+  // Other internal classes should await on this if they access users
+  static switchingUsersPromise: Promise<void> = Promise.resolve();
+
   static async login(externalId: string, token?: string): Promise<void> {
+    await (this.switchingUsersPromise = LoginManager._login(externalId, token));
+  }
+
+  private static async _login(
+    externalId: string,
+    token?: string,
+  ): Promise<void> {
     const consentRequired = LocalStorage.getConsentRequired();
     const consentGiven = await Database.getConsentGiven();
 
@@ -130,6 +140,10 @@ export default class LoginManager {
   }
 
   static async logout(): Promise<void> {
+    await (this.switchingUsersPromise = LoginManager._logout());
+  }
+
+  private static async _logout(): Promise<void> {
     // check if user is already logged out
     const identityModel = OneSignal.coreDirector?.getIdentityModel();
     if (
