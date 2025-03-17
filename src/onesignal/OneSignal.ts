@@ -111,7 +111,7 @@ export default class OneSignal {
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
-    LoginManager.logout();
+    await LoginManager.logout();
   }
 
   /**
