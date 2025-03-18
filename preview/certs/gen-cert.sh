@@ -1,10 +1,10 @@
 FILE=./certs/dev-ssl.crt
 if test -f "$FILE"; then
-  echo "express_webpack: dev-ssl.crt already exists."
-  echo "express_webpack: skipping SSL cert generation."
+  echo "preview: dev-ssl.crt already exists."
+  echo "preview: skipping SSL cert generation."
 else
-  echo "express_webpack:\n------ generating new SSL certs ------"
-  echo "copy dev-ssl.crt from container to host with:\n>   docker cp <containerId>:sdk/express_webpack/certs/dev-ssl.crt ."
+  echo "preview:\n------ generating new SSL certs ------"
+  echo "copy dev-ssl.crt from container to host with:\n>   docker cp <containerId>:sdk/preview/certs/dev-ssl.crt ."
   echo "macOS - add cert to keychain:\n>   sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/dev-ssl.crt\n"
   echo "Windows - add cert to cert store:\n> Import-Certificate -FilePath dev-ssl.crt -CertStoreLocation cert:\CurrentUser\Root"
   echo "restart browser\n--------------------------------------"

@@ -3,7 +3,7 @@
 # Installs dependencies to build SDK
 npm ci
 
-cd express_webpack
+cd preview
 
 # Installs dependencies to run Sandbox for dev env
 npm ci
@@ -11,7 +11,7 @@ npm ci
 # Sandbox cert generation
 npm run certs
 
-# Starts express_webpack node server
+# Starts preview node server
 npm start
 
 # Run the below 2 commands to rebuild the sdk
