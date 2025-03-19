@@ -1,22 +1,22 @@
+import AliasPair from '../../../core/requestService/AliasPair';
+import { RequestService } from '../../../core/requestService/RequestService';
+import { UpdateUserPayload } from '../../../core/requestService/UpdateUserPayload';
+import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
+import User from '../../../onesignal/User';
+import LoginManager from '../../../page/managers/LoginManager';
 import { ContextInterface } from '../../../page/models/Context';
+import Utils from '../../../shared/context/Utils';
+import OneSignalError from '../../../shared/errors/OneSignalError';
+import MainHelper from '../../helpers/MainHelper';
+import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/WorkerMessenger';
-import { OneSignalUtils } from '../../utils/OneSignalUtils';
-import { SubscriptionStateKind } from '../../models/SubscriptionStateKind';
-import { ISessionManager } from './types';
 import {
   SessionOrigin,
   UpsertOrDeactivateSessionPayload,
 } from '../../models/Session';
-import MainHelper from '../../helpers/MainHelper';
-import Log from '../../libraries/Log';
-import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
-import OneSignalError from '../../../shared/errors/OneSignalError';
-import User from '../../../onesignal/User';
-import { RequestService } from '../../../core/requestService/RequestService';
-import AliasPair from '../../../core/requestService/AliasPair';
-import { UpdateUserPayload } from '../../../core/requestService/UpdateUserPayload';
-import Utils from '../../../shared/context/Utils';
-import LoginManager from '../../../page/managers/LoginManager';
+import { SubscriptionStateKind } from '../../models/SubscriptionStateKind';
+import { OneSignalUtils } from '../../utils/OneSignalUtils';
+import { ISessionManager } from './types';
 
 export class SessionManager implements ISessionManager {
   private context: ContextInterface;
