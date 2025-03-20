@@ -1,20 +1,18 @@
-import { NotificationPermission } from '../models/NotificationPermission';
-import { AppConfig } from '../models/AppConfig';
-import MainHelper from './MainHelper';
-import SubscriptionHelper from './SubscriptionHelper';
-import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import Log from '../libraries/Log';
-import { CustomLinkManager } from '../managers/CustomLinkManager';
 import Bell from '../../page/bell/Bell';
 import { ContextInterface } from '../../page/models/Context';
+import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
+import Log from '../libraries/Log';
+import { CustomLinkManager } from '../managers/CustomLinkManager';
+import { AppConfig } from '../models/AppConfig';
+import { NotificationPermission } from '../models/NotificationPermission';
+import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
+import OneSignalEvent from '../services/OneSignalEvent';
 import { once, triggerNotificationPermissionChanged } from '../utils/utils';
 import Environment from './Environment';
-import OneSignalEvent from '../services/OneSignalEvent';
-
-declare let OneSignal: any;
+import MainHelper from './MainHelper';
+import SubscriptionHelper from './SubscriptionHelper';
 
 export default class InitHelper {
   /** Main methods */

@@ -30,7 +30,6 @@ export function resetDatabase() {
 
 export function mockUserAgent(config: TestEnvironmentConfig = {}): void {
   const info = bowser._detect(config.userAgent ?? BrowserUserAgent.Default);
-
   // Modify the mock implementation
   bowserCastleSpy.mockReturnValue({
     mobile: info.mobile,

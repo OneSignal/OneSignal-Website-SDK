@@ -1,19 +1,18 @@
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import EventHelper from './EventHelper';
-import {
-  InvalidStateError,
-  InvalidStateReason,
-} from '../errors/InvalidStateError';
-import { Subscription } from '../models/Subscription';
-import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import Log from '../libraries/Log';
-import { ContextSWInterface } from '../models/ContextSW';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { PermissionUtils } from '../utils/PermissionUtils';
 import {
   SubscriptionChannel,
   SubscriptionType,
 } from '../../../src/core/models/SubscriptionModels';
+import {
+  InvalidStateError,
+  InvalidStateReason,
+} from '../errors/InvalidStateError';
+import Log from '../libraries/Log';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { Subscription } from '../models/Subscription';
+import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import { PermissionUtils } from '../utils/PermissionUtils';
+import EventHelper from './EventHelper';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -21,7 +20,7 @@ export default class SubscriptionHelper {
   }
 
   public static async internalRegisterForPush(): Promise<Subscription | null> {
-    const context: ContextSWInterface = OneSignal.context;
+    const context = OneSignal.context;
     let subscription: Subscription | null = null;
 
     switch (SdkEnvironment.getWindowEnv()) {
