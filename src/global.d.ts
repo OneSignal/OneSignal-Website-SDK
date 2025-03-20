@@ -1,5 +1,6 @@
+import { OneSignalDeferredLoadedCallback } from './page/models/OneSignalDeferredLoadedCallback';
+
 /**
- * START: window.safari definition
  * Types and names collected from:
  *   - https://developer.apple.com/documentation/safariextensions/safariremotenotification
  *   - https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/NotificationProgrammingGuideForWebsites/PushNotifications/PushNotifications.html
@@ -19,15 +20,15 @@ interface SafariRemoteNotification {
   ): void;
 }
 
-interface Window {
-  safari?: {
-    pushNotification?: SafariRemoteNotification;
-  };
+declare global {
+  var OneSignal: typeof import('./onesignal/OneSignal').default;
+
+  interface Window {
+    OneSignal: typeof OneSignal;
+    OneSignalDeferred?: OneSignalDeferredLoadedCallback[];
+    __oneSignalSdkLoadCount?: number;
+    safari?: {
+      pushNotification?: SafariRemoteNotification;
+    };
+  }
 }
-
-/**
- * END: window.safari definition
- */
-
-declare let OneSignal: any;
-declare let OneSignalDeferred: any;

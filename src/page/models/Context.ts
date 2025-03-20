@@ -1,21 +1,21 @@
+import ContextHelper from '../../shared/helpers/ContextHelper';
 import { WorkerMessenger } from '../../shared/libraries/WorkerMessenger';
-import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager';
-import { SubscriptionManager } from '../../shared/managers/SubscriptionManager';
-import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import { PageViewManager } from '../../shared/managers/PageViewManager';
 import PermissionManager from '../../shared/managers/PermissionManager';
-import { ContextSWInterface } from '../../shared/models/ContextSW';
-import ContextHelper from '../../shared/helpers/ContextHelper';
+import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager';
+import { SubscriptionManager } from '../../shared/managers/SubscriptionManager';
 import { UpdateManager } from '../../shared/managers/UpdateManager';
-import { ISessionManager } from '../../shared/managers/sessionManager/types';
 import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';
-import { EnvironmentInfo } from './EnvironmentInfo';
+import { ISessionManager } from '../../shared/managers/sessionManager/types';
+import { AppConfig } from '../../shared/models/AppConfig';
+import { ContextSWInterface } from '../../shared/models/ContextSW';
+import { PromptsManager } from '../managers/PromptsManager';
+import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
+import { ISlidedownManager } from '../managers/slidedownManager/types';
 import TagManager from '../managers/tagManager/TagManager';
 import { ITagManager } from '../managers/tagManager/types';
-import { ISlidedownManager } from '../managers/slidedownManager/types';
-import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
-import { AppConfig } from '../../shared/models/AppConfig';
-import { PromptsManager } from '../managers/PromptsManager';
+import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
+import { EnvironmentInfo } from './EnvironmentInfo';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
