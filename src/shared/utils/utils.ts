@@ -217,19 +217,17 @@ export function unsubscribeFromPush() {
   } else {
     return OneSignal.context.serviceWorkerManager
       .getRegistration()
-      .then((serviceWorker: ServiceWorkerRegistration | null | undefined) => {
+      .then((serviceWorker) => {
         if (!serviceWorker) {
           return Promise.resolve();
         }
         return serviceWorker;
       })
-      .then(
-        (registration: ServiceWorkerRegistration) => registration.pushManager,
-      )
-      .then((pushManager: PushManager) => pushManager.getSubscription())
-      .then((subscription: any) => {
+      .then((registration) => registration?.pushManager)
+      .then((pushManager) => pushManager?.getSubscription())
+      .then((subscription) => {
         if (subscription) {
-          return subscription.unsubscribe();
+          return subscription.unsubscribe().then(() => void 0);
         } else {
           return Promise.resolve();
         }
@@ -288,7 +286,7 @@ export function once(
  * Expects a browser environment, otherwise this call will fail.
  */
 export function getSdkLoadCount() {
-  return (<any>window).__oneSignalSdkLoadCount || 0;
+  return window.__oneSignalSdkLoadCount || 0;
 }
 
 /**
@@ -296,7 +294,7 @@ export function getSdkLoadCount() {
  * Expects a browser environment, otherwise this call will fail.
  */
 export function incrementSdkLoadCount() {
-  (<any>window).__oneSignalSdkLoadCount = getSdkLoadCount() + 1;
+  window.__oneSignalSdkLoadCount = getSdkLoadCount() + 1;
 }
 
 export function getPlatformNotificationIcon(

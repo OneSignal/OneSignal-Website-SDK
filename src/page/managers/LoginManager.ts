@@ -146,6 +146,7 @@ export default class LoginManager {
   private static async _logout(): Promise<void> {
     // check if user is already logged out
     const identityModel = OneSignal.coreDirector?.getIdentityModel();
+
     if (
       !identityModel ||
       !identityModel.data ||

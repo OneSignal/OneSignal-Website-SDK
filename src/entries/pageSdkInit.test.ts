@@ -3,24 +3,24 @@ import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import { OneSignalDeferredLoadedCallback } from 'src/page/models/OneSignalDeferredLoadedCallback';
+import OneSignal from 'src/onesignal/OneSignal';
+import InitHelper from 'src/shared/helpers/InitHelper';
 import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
-
-vi.useFakeTimers();
-
-declare global {
-  interface Window {
-    OneSignalDeferred: OneSignalDeferredLoadedCallback[];
-  }
-}
 
 const serverConfig = TestContext.getFakeServerAppConfig(
   ConfigIntegrationKind.Custom,
 );
 
+vi.mock('src/shared/utils/bowserCastle');
+vi.useFakeTimers();
+vi.spyOn(InitHelper, 'sessionInit').mockImplementation(() => {
+  return Promise.resolve();
+});
+
 describe('pageSdkInit', () => {
   beforeEach(async () => {
-    window.OneSignalDeferred = [];
+    const cssURL =
+      'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
 
     server.use(
       http.get('**/sync/*/web', ({ request }) => {
@@ -35,12 +35,24 @@ describe('pageSdkInit', () => {
           },
         );
       }),
+      http.get(cssURL, () => {
+        return HttpResponse.text('');
+      }),
     );
+
     await TestEnvironment.initialize();
   });
 
+  afterEach(() => {
+    vi.resetModules();
+    delete window.OneSignalDeferred;
+    delete window.__oneSignalSdkLoadCount;
+    localStorage.clear();
+    OneSignal._initCalled = false;
+  });
+
   test('can handle init followed by logout', async () => {
-    window.OneSignalDeferred = [];
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
         appId: APP_ID,
@@ -52,6 +64,21 @@ describe('pageSdkInit', () => {
 
     await import('./pageSdkInit');
     await vi.runOnlyPendingTimersAsync();
-    expect(OneSignal.coreDirector).toBeDefined();
+    expect(window.OneSignal.coreDirector).toBeDefined();
+  });
+
+  test('can process deferred items long after page init', async () => {
+    await import('./pageSdkInit');
+    const initSpy = vi.spyOn(window.OneSignal, 'init');
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.init({
+        appId: APP_ID,
+      });
+    });
+
+    await vi.runOnlyPendingTimersAsync();
+    expect(initSpy).toHaveBeenCalled();
   });
 });
