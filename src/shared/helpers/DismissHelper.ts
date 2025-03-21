@@ -1,14 +1,12 @@
 import {
-  DismissPrompt,
   DismissCountKey,
+  DismissPrompt,
   DismissTimeKey,
 } from '../../page/models/Dismiss';
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-
-declare let OneSignal: any;
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,

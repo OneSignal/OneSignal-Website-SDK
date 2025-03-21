@@ -20,11 +20,13 @@ interface SafariRemoteNotification {
   ): void;
 }
 
+type _OneSignal = typeof import('./onesignal/OneSignal').default;
+
 declare global {
-  var OneSignal: typeof import('./onesignal/OneSignal').default;
+  const OneSignal: _OneSignal;
 
   interface Window {
-    OneSignal: typeof OneSignal;
+    OneSignal: _OneSignal;
     OneSignalDeferred?: OneSignalDeferredLoadedCallback[];
     __oneSignalSdkLoadCount?: number;
     safari?: {

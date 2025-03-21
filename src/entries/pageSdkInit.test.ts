@@ -3,7 +3,6 @@ import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import OneSignal from 'src/onesignal/OneSignal';
 import InitHelper from 'src/shared/helpers/InitHelper';
 import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
 
@@ -11,8 +10,10 @@ const serverConfig = TestContext.getFakeServerAppConfig(
   ConfigIntegrationKind.Custom,
 );
 
-vi.mock('src/shared/utils/bowserCastle');
 vi.useFakeTimers();
+vi.mock('src/shared/utils/bowserCastle');
+
+// skip over creating dom elements
 vi.spyOn(InitHelper, 'sessionInit').mockImplementation(() => {
   return Promise.resolve();
 });
@@ -35,9 +36,7 @@ describe('pageSdkInit', () => {
           },
         );
       }),
-      http.get(cssURL, () => {
-        return HttpResponse.text('');
-      }),
+      http.get(cssURL, () => HttpResponse.text('')),
     );
 
     await TestEnvironment.initialize();
@@ -45,8 +44,6 @@ describe('pageSdkInit', () => {
 
   afterEach(() => {
     vi.resetModules();
-    delete window.OneSignalDeferred;
-    delete window.__oneSignalSdkLoadCount;
     localStorage.clear();
     OneSignal._initCalled = false;
   });
@@ -68,6 +65,7 @@ describe('pageSdkInit', () => {
   });
 
   test('can process deferred items long after page init', async () => {
+    console.log('window.OneSignal', window.OneSignalDeferred);
     await import('./pageSdkInit');
     const initSpy = vi.spyOn(window.OneSignal, 'init');
 

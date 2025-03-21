@@ -6,14 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OneSignal Dev</title>
     <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-
       // set can a query param ?app_id=your_app_id OR
       // create an .env file and set VITE_APP_ID to your app id
       const appId =
         new URLSearchParams(window.location.search).get('app_id') ||
         '%VITE_APP_ID%';
 
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function (OneSignal) {
         await OneSignal.init({
           appId,
@@ -33,6 +32,16 @@
       // OneSignalDeferred.push(async function (OneSignal) {
       //   await OneSignal.logout();
       // });
+
+      // to check against delayed OneSignalDeferred call, comment out the one in the head
+      // setTimeout(async () => {
+      //   window.OneSignalDeferred = window.OneSignalDeferred || [];
+      //   OneSignalDeferred.push(async function (OneSignal) {
+      //     await OneSignal.init({
+      //       appId,
+      //     });
+      //   });
+      // }, 5000);
     </script>
   </body>
 </html>
