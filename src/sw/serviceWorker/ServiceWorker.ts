@@ -2,50 +2,49 @@ import Environment from '../../shared/helpers/Environment';
 import ContextSW from '../../shared/models/ContextSW';
 import Database from '../../shared/services/Database';
 
-import { UnsubscriptionStrategy } from '../../shared/models/UnsubscriptionStrategy';
-import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
-import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
-import Log from '../libraries/Log';
-import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
-import { Utils } from '../../shared/context/Utils';
-import { OSServiceWorkerFields, SubscriptionChangeEvent } from './types';
-import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
-import { cancelableTimeout } from '../helpers/CancelableTimeout';
-import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
-import {
-  IMutableOSNotification,
-  IOSNotification,
-} from '../../shared/models/OSNotification';
-import {
-  UpsertOrDeactivateSessionPayload,
-  PageVisibilityResponse,
-  PageVisibilityRequest,
-  SessionStatus,
-} from '../../shared/models/Session';
 import OneSignalApiBase from '../../../src/shared/api/OneSignalApiBase';
 import OneSignalApiSW from '../../../src/shared/api/OneSignalApiSW';
 import {
   WorkerMessenger,
-  WorkerMessengerMessage,
   WorkerMessengerCommand,
+  WorkerMessengerMessage,
 } from '../../../src/shared/libraries/WorkerMessenger';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
+import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
+import { Utils } from '../../shared/context/Utils';
+import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
+import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import {
   NotificationClickEventInternal,
   NotificationForegroundWillDisplayEventSerializable,
 } from '../../shared/models/NotificationEvent';
 import {
+  IMutableOSNotification,
+  IOSNotification,
+} from '../../shared/models/OSNotification';
+import {
+  PageVisibilityRequest,
+  PageVisibilityResponse,
+  SessionStatus,
+  UpsertOrDeactivateSessionPayload,
+} from '../../shared/models/Session';
+import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
+import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
+import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
+import { cancelableTimeout } from '../helpers/CancelableTimeout';
+import Log from '../libraries/Log';
+import {
   OSMinifiedNotificationPayload,
   OSMinifiedNotificationPayloadHelper,
 } from '../models/OSMinifiedNotificationPayload';
+import { OSServiceWorkerFields, SubscriptionChangeEvent } from './types';
 
-import { bowserCastle } from '../../shared/utils/bowserCastle';
-import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
-import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
-import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import { AppConfig } from 'src/shared/models/AppConfig';
+import { bowserCastle } from '../../shared/utils/bowserCastle';
+import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
+import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
+import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -239,76 +238,7 @@ export class ServiceWorker {
         );
       },
     );
-    ServiceWorker.workerMessenger.on(
-      WorkerMessengerCommand.AmpSubscriptionState,
-      async () => {
-        Log.debug('[Service Worker] Received AMP subscription state message.');
-        const pushSubscription =
-          await self.registration.pushManager.getSubscription();
-        if (!pushSubscription) {
-          await ServiceWorker.workerMessenger.broadcast(
-            WorkerMessengerCommand.AmpSubscriptionState,
-            false,
-          );
-        } else {
-          const permission =
-            await self.registration.pushManager.permissionState(
-              pushSubscription.options,
-            );
-          const { optedOut } = await Database.getSubscription();
-          const isSubscribed =
-            !!pushSubscription && permission === 'granted' && optedOut !== true;
-          await ServiceWorker.workerMessenger.broadcast(
-            WorkerMessengerCommand.AmpSubscriptionState,
-            isSubscribed,
-          );
-        }
-      },
-    );
-    ServiceWorker.workerMessenger.on(
-      WorkerMessengerCommand.AmpSubscribe,
-      async () => {
-        Log.debug('[Service Worker] Received AMP subscribe message.');
-        const appId = await ServiceWorker.getAppId();
-        const appConfig = await ConfigHelper.getAppConfig(
-          { appId },
-          OneSignalApiSW.downloadServerAppConfig,
-        );
-        const context = new ContextSW(appConfig);
-        const rawSubscription = await context.subscriptionManager.subscribe(
-          SubscriptionStrategyKind.ResubscribeExisting,
-        );
-        const subscription =
-          await context.subscriptionManager.registerSubscription(
-            rawSubscription,
-          );
-        await Database.put('Ids', { type: 'appId', id: appId });
 
-        ServiceWorker.workerMessenger.broadcast(
-          WorkerMessengerCommand.AmpSubscribe,
-          subscription.deviceId,
-        );
-      },
-    );
-    ServiceWorker.workerMessenger.on(
-      WorkerMessengerCommand.AmpUnsubscribe,
-      async () => {
-        Log.debug('[Service Worker] Received AMP unsubscribe message.');
-        const appId = await ServiceWorker.getAppId();
-        const appConfig = await ConfigHelper.getAppConfig(
-          { appId },
-          OneSignalApiSW.downloadServerAppConfig,
-        );
-        const context = new ContextSW(appConfig);
-        await context.subscriptionManager.unsubscribe(
-          UnsubscriptionStrategy.MarkUnsubscribed,
-        );
-        ServiceWorker.workerMessenger.broadcast(
-          WorkerMessengerCommand.AmpUnsubscribe,
-          null,
-        );
-      },
-    );
     ServiceWorker.workerMessenger.on(
       WorkerMessengerCommand.AreYouVisibleResponse,
       async (payload: PageVisibilityResponse) => {
@@ -1093,11 +1023,6 @@ export class ServiceWorker {
 
   /**
    * Fires when the ServiceWorker can control pages.
-   * REQUIRED: AMP WebPush (amp-web-push v0.1) requires clients.claim()
-   *    - It depends on ServiceWorker having full control of the iframe,
-   *      requirement could be lifted by AMP in the future however.
-   *    - Without this the AMP symptom is the subscribe button does not update
-   *      right after accepting the notification permission from the pop-up.
    * @param event
    */
   static onServiceWorkerActivated(event: ExtendableEvent) {

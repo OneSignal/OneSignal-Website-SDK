@@ -5,11 +5,11 @@ import {
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
-import Environment from '../helpers/Environment';
-import Log from './Log';
-import { ContextSWInterface } from '../models/ContextSW';
-import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
 import { Serializable } from '../../page/models/Serializable';
+import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
+import Environment from '../helpers/Environment';
+import { ContextSWInterface } from '../models/ContextSW';
+import Log from './Log';
 
 /**
  * NOTE: This file contains a mix of code that runs in ServiceWorker and Page contexts
@@ -19,9 +19,6 @@ export enum WorkerMessengerCommand {
   WorkerVersion = 'GetWorkerVersion',
   Subscribe = 'Subscribe',
   SubscribeNew = 'SubscribeNew',
-  AmpSubscriptionState = 'amp-web-push-subscription-state',
-  AmpSubscribe = 'amp-web-push-subscribe',
-  AmpUnsubscribe = 'amp-web-push-unsubscribe',
   NotificationWillDisplay = 'notification.willDisplay',
   NotificationClicked = 'notification.clicked',
   NotificationDismissed = 'notification.dismissed',
@@ -261,13 +258,8 @@ export class WorkerMessenger {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */
-    /* The payload may be null. AMP web push sends commands to our service worker in the format:
-
-       { command: "amp-web-push-subscription-state", payload: null }
-       { command: "amp-web-push-unsubscribe", payload: null }
-       { command: "amp-web-push-subscribe", payload: null }
-
-    */
+    /* The payload may be null.
+     */
     if (!data || !data.command) {
       return;
     }
