@@ -65,7 +65,6 @@ describe('pageSdkInit', () => {
   });
 
   test('can process deferred items long after page init', async () => {
-    console.log('window.OneSignal', window.OneSignalDeferred);
     await import('./pageSdkInit');
     const initSpy = vi.spyOn(window.OneSignal, 'init');
 
