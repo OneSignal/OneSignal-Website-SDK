@@ -82,7 +82,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async _getOneSignalAndSubscriptionIds(): Promise<{
+  private async _getOneSignalAndSubscriptionIds(): Promise<{
     onesignalId: string;
     subscriptionId: string;
   }> {
@@ -112,6 +112,8 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleVisibilityChange(): Promise<void> {
+    await LoginManager.switchingUsersPromise;
+
     if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
@@ -171,6 +173,8 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleOnBeforeUnload(): Promise<void> {
+    await LoginManager.switchingUsersPromise;
+
     if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
@@ -232,6 +236,8 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleOnBlur(e: Event): Promise<void> {
+    await LoginManager.switchingUsersPromise;
+
     Log.debug('handleOnBlur', e);
     if (!User.singletonInstance?.hasOneSignalId) {
       return;
@@ -260,6 +266,8 @@ export class SessionManager implements ISessionManager {
   }
 
   async upsertSession(sessionOrigin: SessionOrigin): Promise<void> {
+    await LoginManager.switchingUsersPromise;
+
     if (User.singletonInstance?.hasOneSignalId) {
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();

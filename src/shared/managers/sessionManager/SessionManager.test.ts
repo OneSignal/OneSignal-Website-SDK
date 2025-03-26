@@ -7,6 +7,7 @@ import {
 } from '__test__/support/constants';
 import { setupLoginStubs } from '__test__/support/helpers/login';
 import LoginManager from 'src/page/managers/LoginManager';
+import { SessionOrigin } from 'src/shared/models/Session';
 
 describe('SessionManager', () => {
   describe('Switching Users', () => {
@@ -54,6 +55,86 @@ describe('SessionManager', () => {
 
       const winner = await Promise.race([loginPromise, sessionPromise]);
       expect(winner).toBe('logout');
+    });
+
+    test('handleOnBlur should wait for login promise', async () => {
+      const loginPromise = (async function () {
+        await LoginManager.login(DUMMY_EXTERNAL_ID);
+        return 'login';
+      })();
+
+      const sessionManager = new SessionManager(OneSignal.context);
+      const sessionPromise = (async function () {
+        await sessionManager.handleOnBlur(new Event('{}'));
+        return 'session';
+      })();
+
+      const winner = await Promise.race([loginPromise, sessionPromise]);
+      expect(winner).toBe('login');
+    });
+
+    test('handleOnBlur should wait for logout promise', async () => {
+      const loginPromise = (async function () {
+        await LoginManager.logout();
+        return 'logout';
+      })();
+
+      const sessionManager = new SessionManager(OneSignal.context);
+      const sessionPromise = (async function () {
+        await sessionManager.handleOnBlur(new Event('{}'));
+        return 'session';
+      })();
+
+      const winner = await Promise.race([loginPromise, sessionPromise]);
+      expect(winner).toBe('logout');
+    });
+
+    test('handleVisibilityChange should wait for login promise', async () => {
+      const loginPromise = (async function () {
+        await LoginManager.login(DUMMY_EXTERNAL_ID);
+        return 'login';
+      })();
+
+      const sessionManager = new SessionManager(OneSignal.context);
+      const sessionPromise = (async function () {
+        await sessionManager.handleVisibilityChange();
+        return 'session';
+      })();
+
+      const winner = await Promise.race([loginPromise, sessionPromise]);
+      expect(winner).toBe('login');
+    });
+
+    test('handleOnBeforeUnload should wait for login promise', async () => {
+      const loginPromise = (async function () {
+        await LoginManager.login(DUMMY_EXTERNAL_ID);
+        return 'login';
+      })();
+
+      const sessionManager = new SessionManager(OneSignal.context);
+      const sessionPromise = (async function () {
+        await sessionManager.handleOnBeforeUnload();
+        return 'session';
+      })();
+
+      const winner = await Promise.race([loginPromise, sessionPromise]);
+      expect(winner).toBe('login');
+    });
+
+    test('upsertSession should wait for login promise', async () => {
+      const loginPromise = (async function () {
+        await LoginManager.login(DUMMY_EXTERNAL_ID);
+        return 'login';
+      })();
+
+      const sessionManager = new SessionManager(OneSignal.context);
+      const sessionPromise = (async function () {
+        await sessionManager.upsertSession(SessionOrigin.UserCreate);
+        return 'session';
+      })();
+
+      const winner = await Promise.race([loginPromise, sessionPromise]);
+      expect(winner).toBe('login');
     });
   });
 });
