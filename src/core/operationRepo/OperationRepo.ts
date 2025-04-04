@@ -1,84 +1,52 @@
+import {
+  ConfigModelStore,
+  ExecutionResult,
+  GroupComparisonType,
+  IOperationExecutor,
+  IOperationRepo,
+  IStartableService,
+  ITime,
+  Operation,
+  OperationModelStore,
+} from 'src/types/operation';
 import { v4 as uuidv4 } from 'uuid';
 
-// Enums
-export enum GroupComparisonType {
-  NONE,
-  CREATE,
-  MODIFY,
-}
+// NewRecordsState mock
+class NewRecordsState {
+  private records: Set<string> = new Set();
 
-export enum ExecutionResult {
-  SUCCESS,
-  SUCCESS_STARTING_ONLY,
-  FAIL_UNAUTHORIZED,
-  FAIL_NORETRY,
-  FAIL_CONFLICT,
-  FAIL_RETRY,
-  FAIL_PAUSE_OPREPO,
-}
+  public add(id: string): void {
+    this.records.add(id);
+  }
 
-// Interfaces
-export interface Operation {
-  id: string;
-  name: string;
-  canStartExecute: boolean;
-  applyToRecordId?: string;
-  groupComparisonType: GroupComparisonType;
-  createComparisonKey: string;
-  modifyComparisonKey: string;
-  translateIds(idTranslations: Record<string, string>): void;
-}
-
-export interface IOperationExecutor {
-  operations: string[];
-  execute(operations: Operation[]): Promise<ExecutionResponse>;
-}
-
-export interface ExecutionResponse {
-  result: ExecutionResult;
-  operations?: Operation[];
-  idTranslations?: Record<string, string>;
-  retryAfterSeconds?: number;
-}
-
-export interface ITime {
-  getCurrentTimeMillis(): number;
-}
-
-export interface ConfigModel {
-  opRepoExecutionInterval: number;
-  opRepoPostWakeDelay: number;
-  opRepoPostCreateDelay: number;
-  opRepoDefaultFailRetryBackoff: number;
-}
-
-export interface ConfigModelStore {
-  model: ConfigModel;
-}
-
-export interface OperationModelStore {
-  add(operation: Operation): void;
-  add(index: number, operation: Operation): void;
-  remove(operationId: string): void;
-  list(): Operation[];
-  loadOperations(): void;
-}
-
-export interface IOperationRepo {
-  enqueue(operation: Operation, flush: boolean): void;
-  enqueueAndWait(operation: Operation, flush: boolean): Promise<boolean>;
-  forceExecuteOperations(): void;
-  containsInstanceOf<T extends Operation>(
-    type: new (...args: any[]) => T,
-  ): boolean;
-  awaitInitialized(): Promise<void>;
-}
-
-export interface IStartableService {
-  start(): void;
+  public canAccess(id?: string): boolean {
+    if (!id) return true;
+    return this.records.has(id);
+  }
 }
 
 // Helper class
+
+class OperationQueueItem {
+  constructor(
+    public operation: Operation,
+    public waiter: WaiterWithValue<boolean> | null,
+    public bucket: number,
+    public retries: number = 0,
+  ) {}
+
+  toString(): string {
+    return `bucket:${this.bucket}, retries:${this.retries}, operation:${this.operation}\n`;
+  }
+}
+
+class LoopWaiterMessage {
+  constructor(
+    public force: boolean,
+    public previousWaitedTime: number = 0,
+  ) {}
+}
+
 class WaiterWithValue<T> {
   private resolver: ((value: T) => void) | null = null;
   private promise: Promise<T> | null = null;
@@ -103,20 +71,6 @@ class WaiterWithValue<T> {
   public async waitForWake(): Promise<T> {
     const result = await this.promise!;
     return result;
-  }
-}
-
-// NewRecordsState mock
-class NewRecordsState {
-  private records: Set<string> = new Set();
-
-  public add(id: string): void {
-    this.records.add(id);
-  }
-
-  public canAccess(id?: string): boolean {
-    if (!id) return true;
-    return this.records.has(id);
   }
 }
 
@@ -316,15 +270,15 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       let highestRetries = 0;
       switch (response.result) {
-        case ExecutionResult.SUCCESS:
+        case ExecutionResult.Success:
           // Remove operations from store and wake waiters
           ops.forEach((op) => this.operationModelStore.remove(op.operation.id));
           ops.forEach((op) => op.waiter?.wake(true));
           break;
 
-        case ExecutionResult.FAIL_UNAUTHORIZED:
-        case ExecutionResult.FAIL_NORETRY:
-        case ExecutionResult.FAIL_CONFLICT:
+        case ExecutionResult.FailUnauthorized:
+        case ExecutionResult.FailNoRetry:
+        case ExecutionResult.FailConflict:
           console.error(
             `Operation execution failed without retry: ${operations}`,
           );
@@ -332,7 +286,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ops.forEach((op) => op.waiter?.wake(false));
           break;
 
-        case ExecutionResult.SUCCESS_STARTING_ONLY:
+        case ExecutionResult.SuccessStartingOnly:
           // Remove starting operation and re-add others to the queue
           this.operationModelStore.remove(startingOp.operation.id);
           startingOp.waiter?.wake(true);
@@ -343,7 +297,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
             .forEach((op) => this.queue.unshift(op));
           break;
 
-        case ExecutionResult.FAIL_RETRY:
+        case ExecutionResult.FailRetry:
           console.error(`Operation execution failed, retrying: ${operations}`);
           // Add back all operations to front of queue
           ops.reverse().forEach((op) => {
@@ -355,7 +309,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           });
           break;
 
-        case ExecutionResult.FAIL_PAUSE_OPREPO:
+        case ExecutionResult.FailPauseOpRepo:
           console.error(
             `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
           );
@@ -442,12 +396,12 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   ): OperationQueueItem[] {
     const ops = [startingOp];
 
-    if (startingOp.operation.groupComparisonType === GroupComparisonType.NONE) {
+    if (startingOp.operation.groupComparisonType === GroupComparisonType.None) {
       return ops;
     }
 
     const startingKey =
-      startingOp.operation.groupComparisonType === GroupComparisonType.CREATE
+      startingOp.operation.groupComparisonType === GroupComparisonType.Create
         ? startingOp.operation.createComparisonKey
         : startingOp.operation.modifyComparisonKey;
 
@@ -456,7 +410,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     for (const item of queueCopy) {
       const itemKey =
-        startingOp.operation.groupComparisonType === GroupComparisonType.CREATE
+        startingOp.operation.groupComparisonType === GroupComparisonType.Create
           ? item.operation.createComparisonKey
           : item.operation.modifyComparisonKey;
 
@@ -501,25 +455,4 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
-}
-
-// Helper classes
-class OperationQueueItem {
-  constructor(
-    public operation: Operation,
-    public waiter: WaiterWithValue<boolean> | null,
-    public bucket: number,
-    public retries: number = 0,
-  ) {}
-
-  toString(): string {
-    return `bucket:${this.bucket}, retries:${this.retries}, operation:${this.operation}\n`;
-  }
-}
-
-class LoopWaiterMessage {
-  constructor(
-    public force: boolean,
-    public previousWaitedTime: number = 0,
-  ) {}
 }
