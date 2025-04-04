@@ -1,27 +1,43 @@
+import Log from 'src/shared/libraries/Log';
+import { delay } from 'src/shared/utils/utils';
 import {
-  ConfigModelStore,
   ExecutionResult,
   GroupComparisonType,
   IOperationExecutor,
   IOperationRepo,
   IStartableService,
-  ITime,
   Operation,
   OperationModelStore,
 } from 'src/types/operation';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuid } from 'uuid';
 
-// NewRecordsState mock
-class NewRecordsState {
-  private records: Set<string> = new Set();
+// Reference: OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/config/ConfigModel.kt
+const OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF = 15000;
+const OP_REPO_POST_CREATE_DELAY = 5000;
+const OP_REPO_EXECUTION_INTERVAL = 5000;
+const OP_REPO_POST_CREATE_RETRY_UP_TO = 60_000;
+
+export class NewRecordsState {
+  private records: Map<string, number> = new Map();
 
   public add(id: string): void {
-    this.records.add(id);
+    this.records.set(id, Date.now());
   }
 
-  public canAccess(id?: string): boolean {
-    if (!id) return true;
-    return this.records.has(id);
+  public canAccess(key: string): boolean {
+    const timeLastMovedOrCreated = this.records.get(key);
+    if (!timeLastMovedOrCreated) return true;
+
+    return Date.now() - timeLastMovedOrCreated >= OP_REPO_POST_CREATE_DELAY;
+  }
+
+  public isInMissingRetryWindow(key: string): boolean {
+    const timeLastMovedOrCreated = this.records.get(key);
+    if (!timeLastMovedOrCreated) return false;
+
+    return (
+      Date.now() - timeLastMovedOrCreated <= OP_REPO_POST_CREATE_RETRY_UP_TO
+    );
   }
 }
 
@@ -30,7 +46,6 @@ class NewRecordsState {
 class OperationQueueItem {
   constructor(
     public operation: Operation,
-    public waiter: WaiterWithValue<boolean> | null,
     public bucket: number,
     public retries: number = 0,
   ) {}
@@ -40,68 +55,24 @@ class OperationQueueItem {
   }
 }
 
-class LoopWaiterMessage {
-  constructor(
-    public force: boolean,
-    public previousWaitedTime: number = 0,
-  ) {}
-}
-
-class WaiterWithValue<T> {
-  private resolver: ((value: T) => void) | null = null;
-  private promise: Promise<T> | null = null;
-
-  constructor() {
-    this.createNewPromise();
-  }
-
-  private createNewPromise(): void {
-    this.promise = new Promise<T>((resolve) => {
-      this.resolver = resolve;
-    });
-  }
-
-  public wake(value: T): void {
-    if (this.resolver) {
-      this.resolver(value);
-      this.createNewPromise();
-    }
-  }
-
-  public async waitForWake(): Promise<T> {
-    const result = await this.promise!;
-    return result;
-  }
-}
-
 // OperationRepo Class
 export class OperationRepo implements IOperationRepo, IStartableService {
   private executorsMap: Map<string, IOperationExecutor>;
-  private queue: OperationQueueItem[] = [];
-  private waiter = new WaiterWithValue<LoopWaiterMessage>();
-  private retryWaiter = new WaiterWithValue<LoopWaiterMessage>();
+  public queue: OperationQueueItem[] = [];
   private paused = false;
-  private initialized: Promise<void>;
-  private initializeResolver: (() => void) | null = null;
   private enqueueIntoBucket = 0;
 
   constructor(
     executors: IOperationExecutor[],
     private operationModelStore: OperationModelStore,
-    private configModelStore: ConfigModelStore,
-    private time: ITime,
     private newRecordState: NewRecordsState,
   ) {
-    this.executorsMap = new Map();
+    this.executorsMap = new Map<string, IOperationExecutor>();
     for (const executor of executors) {
       for (const operation of executor.operations) {
         this.executorsMap.set(operation, executor);
       }
     }
-
-    this.initialized = new Promise<void>((resolve) => {
-      this.initializeResolver = resolve;
-    });
   }
 
   private get executeBucket(): number {
@@ -114,51 +85,34 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return this.queue.some((item) => item.operation instanceof type);
   }
 
-  public async awaitInitialized(): Promise<void> {
-    return this.initialized;
-  }
-
   public start(): void {
     this.paused = false;
-    // In TypeScript, we'll need to use setTimeout or similar instead of coroutines
     this.loadSavedOperations();
     this.processQueueForever();
   }
 
-  public enqueue(operation: Operation, flush: boolean): void {
-    console.debug(
-      `OperationRepo.enqueue(operation: ${operation}, flush: ${flush})`,
-    );
+  public enqueue(operation: Operation): void {
+    Log.debug(`OperationRepo.enqueue(operation: ${operation})`);
 
-    operation.id = uuidv4();
+    operation.id = uuid();
     this.internalEnqueue(
-      new OperationQueueItem(operation, null, this.enqueueIntoBucket),
-      flush,
+      new OperationQueueItem(operation, this.enqueueIntoBucket),
       true,
     );
   }
 
-  public async enqueueAndWait(
-    operation: Operation,
-    flush: boolean,
-  ): Promise<boolean> {
-    console.debug(
-      `OperationRepo.enqueueAndWait(operation: ${operation}, force: ${flush})`,
-    );
+  public enqueueAndWait(operation: Operation): void {
+    Log.debug(`OperationRepo.enqueueAndWait(operation: ${operation})`);
 
-    operation.id = uuidv4();
-    const waiter = new WaiterWithValue<boolean>();
+    operation.id = uuid();
     this.internalEnqueue(
-      new OperationQueueItem(operation, waiter, this.enqueueIntoBucket),
-      flush,
+      new OperationQueueItem(operation, this.enqueueIntoBucket),
       true,
     );
-    return waiter.waitForWake();
   }
 
   private internalEnqueue(
     queueItem: OperationQueueItem,
-    flush: boolean,
     addToStore: boolean,
     index?: number,
   ): void {
@@ -166,7 +120,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       (item) => item.operation.id === queueItem.operation.id,
     );
     if (hasExisting) {
-      console.debug(
+      Log.debug(
         `OperationRepo: internalEnqueue - operation.id: ${queueItem.operation.id} already exists in the queue.`,
       );
       return;
@@ -181,61 +135,26 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     if (addToStore) {
       this.operationModelStore.add(queueItem.operation);
     }
-
-    this.waiter.wake(new LoopWaiterMessage(flush, 0));
   }
 
   private async processQueueForever(): Promise<void> {
-    await this.waitForNewOperationAndExecutionInterval();
     this.enqueueIntoBucket++;
 
-    let running = true;
-    while (running) {
+    setInterval(async () => {
       if (this.paused) {
-        console.debug('OperationRepo is paused');
-        running = false;
+        Log.debug('OperationRepo is paused');
         return;
       }
 
       const ops = this.getNextOps(this.executeBucket);
-      console.debug(`processQueueForever:ops:\n${ops}`);
+      Log.debug(`processQueueForever:ops:\n${ops}`);
 
       if (ops) {
-        await this.executeOperations(ops);
-        // Allow for subsequent operations to be enqueued
-        await this.delay(this.configModelStore.model.opRepoPostWakeDelay);
+        this.executeOperations(ops);
       } else {
-        await this.waitForNewOperationAndExecutionInterval();
         this.enqueueIntoBucket++;
       }
-    }
-  }
-
-  public forceExecuteOperations(): void {
-    this.retryWaiter.wake(new LoopWaiterMessage(true));
-    this.waiter.wake(new LoopWaiterMessage(false));
-  }
-
-  private async waitForNewOperationAndExecutionInterval(): Promise<void> {
-    // Wait for an operation to be enqueued
-    let wakeMessage = await this.waiter.waitForWake();
-
-    // Wait opRepoExecutionInterval, restart the wait time if something new is enqueued
-    let remainingTime =
-      this.configModelStore.model.opRepoExecutionInterval -
-      wakeMessage.previousWaitedTime;
-    while (!wakeMessage.force) {
-      const waitResult = await Promise.race([
-        this.delay(remainingTime).then(() => 'timeout'),
-        this.waiter.waitForWake().then((msg) => {
-          wakeMessage = msg;
-          return 'wake';
-        }),
-      ]);
-
-      if (waitResult === 'timeout') break;
-      remainingTime = this.configModelStore.model.opRepoExecutionInterval;
-    }
+    }, OP_REPO_EXECUTION_INTERVAL);
   }
 
   private async executeOperations(ops: OperationQueueItem[]): Promise<void> {
@@ -251,19 +170,18 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       const operations = ops.map((op) => op.operation);
       const response = await executor.execute(operations);
+      const idTranslations = response.idTranslations;
 
-      console.debug(`OperationRepo: execute response = ${response.result}`);
+      Log.debug(`OperationRepo: execute response = ${response.result}`);
 
       // Handle ID translations
-      if (response.idTranslations) {
-        ops.forEach((op) =>
-          op.operation.translateIds(response.idTranslations!),
-        );
+      if (idTranslations) {
+        ops.forEach((op) => op.operation.translateIds(idTranslations));
         this.queue.forEach((item) =>
-          item.operation.translateIds(response.idTranslations!),
+          item.operation.translateIds(idTranslations),
         );
 
-        Object.values(response.idTranslations).forEach((id) =>
+        Object.values(idTranslations).forEach((id) =>
           this.newRecordState.add(id),
         );
       }
@@ -273,23 +191,18 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult.Success:
           // Remove operations from store and wake waiters
           ops.forEach((op) => this.operationModelStore.remove(op.operation.id));
-          ops.forEach((op) => op.waiter?.wake(true));
           break;
 
         case ExecutionResult.FailUnauthorized:
         case ExecutionResult.FailNoRetry:
         case ExecutionResult.FailConflict:
-          console.error(
-            `Operation execution failed without retry: ${operations}`,
-          );
+          Log.error(`Operation execution failed without retry: ${operations}`);
           ops.forEach((op) => this.operationModelStore.remove(op.operation.id));
-          ops.forEach((op) => op.waiter?.wake(false));
           break;
 
         case ExecutionResult.SuccessStartingOnly:
           // Remove starting operation and re-add others to the queue
           this.operationModelStore.remove(startingOp.operation.id);
-          startingOp.waiter?.wake(true);
 
           ops
             .filter((op) => op !== startingOp)
@@ -298,9 +211,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult.FailRetry:
-          console.error(`Operation execution failed, retrying: ${operations}`);
+          Log.error(`Operation execution failed, retrying: ${operations}`);
           // Add back all operations to front of queue
-          ops.reverse().forEach((op) => {
+          ops.toReversed().forEach((op) => {
             op.retries++;
             if (op.retries > highestRetries) {
               highestRetries = op.retries;
@@ -310,19 +223,19 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult.FailPauseOpRepo:
-          console.error(
+          Log.error(
             `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
           );
           this.paused = true;
-          ops.reverse().forEach((op) => this.queue.unshift(op));
+          ops.toReversed().forEach((op) => this.queue.unshift(op));
           break;
       }
 
       // Handle additional operations from the response
       if (response.operations) {
         for (const op of response.operations.reverse()) {
-          op.id = uuidv4();
-          const queueItem = new OperationQueueItem(op, null, 0);
+          op.id = uuid();
+          const queueItem = new OperationQueueItem(op, 0);
           this.queue.unshift(queueItem);
           this.operationModelStore.add(0, queueItem.operation);
         }
@@ -334,16 +247,13 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         response.retryAfterSeconds,
       );
       if (response.idTranslations) {
-        await this.delayForPostCreate(
-          this.configModelStore.model.opRepoPostCreateDelay,
-        );
+        await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
-      console.error(`Error attempting to execute operation: ${ops}`, e);
+      Log.error(`Error attempting to execute operation: ${ops}`, e);
 
       // On failure remove operations from store and wake waiters
       ops.forEach((op) => this.operationModelStore.remove(op.operation.id));
-      ops.forEach((op) => op.waiter?.wake(false));
     }
   }
 
@@ -351,27 +261,15 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     retries: number,
     retryAfterSeconds?: number,
   ): Promise<void> {
-    console.debug(`retryAfterSeconds: ${retryAfterSeconds}`);
+    Log.debug(`retryAfterSeconds: ${retryAfterSeconds}`);
     const retryAfterSecondsMs = (retryAfterSeconds || 0) * 1000;
-    const delayForOnRetries =
-      retries * this.configModelStore.model.opRepoDefaultFailRetryBackoff;
+    const delayForOnRetries = retries * OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF;
     const delayFor = Math.max(delayForOnRetries, retryAfterSecondsMs);
 
     if (delayFor < 1) return;
 
-    console.error(`Operations being delay for: ${delayFor} ms`);
-
-    const waitResult = await Promise.race([
-      this.delay(delayFor).then(() => 'timeout'),
-      this.retryWaiter.waitForWake().then(() => 'wake'),
-    ]);
-  }
-
-  public async delayForPostCreate(postCreateDelay: number): Promise<void> {
-    await this.delay(postCreateDelay);
-    if (this.queue.length > 0) {
-      this.waiter.wake(new LoopWaiterMessage(false, postCreateDelay));
-    }
+    Log.error(`Operations being delay for: ${delayFor} ms`);
+    await delay(delayFor);
   }
 
   protected getNextOps(bucketFilter: number): OperationQueueItem[] | null {
@@ -434,25 +332,16 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return ops;
   }
 
-  protected loadSavedOperations(): void {
+  public loadSavedOperations(): void {
     this.operationModelStore.loadOperations();
-    const operations = this.operationModelStore.list().reverse();
+    const operations = this.operationModelStore.list().toReversed();
 
     for (const operation of operations) {
       this.internalEnqueue(
-        new OperationQueueItem(operation, null, this.enqueueIntoBucket),
-        false,
+        new OperationQueueItem(operation, this.enqueueIntoBucket),
         false,
         0,
       );
     }
-
-    if (this.initializeResolver) {
-      this.initializeResolver();
-    }
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

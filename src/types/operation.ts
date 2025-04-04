@@ -95,12 +95,10 @@ export interface OperationModelStore {
 
 export interface IOperationRepo {
   enqueue(operation: Operation, flush: boolean): void;
-  enqueueAndWait(operation: Operation, flush: boolean): Promise<boolean>;
-  forceExecuteOperations(): void;
+  enqueueAndWait(operation: Operation, flush: boolean): void;
   containsInstanceOf<T extends Operation>(
     type: new (...args: any[]) => T,
   ): boolean;
-  awaitInitialized(): Promise<void>;
 }
 
 export interface IStartableService {
