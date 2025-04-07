@@ -1,4 +1,4 @@
-import { APP_ID } from '__test__/support/constants';
+import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { server } from '__test__/support/mocks/server';
@@ -90,7 +90,9 @@ describe('pageSdkInit', () => {
         HttpResponse.json(
           {
             properties: {},
-            identity: {},
+            identity: {
+              onesignal_id: DUMMY_ONESIGNAL_ID,
+            },
             subscriptions: undefined,
           } satisfies UserData,
           { status: 200 },

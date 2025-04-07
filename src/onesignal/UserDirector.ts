@@ -1,15 +1,15 @@
 import { OSModel } from '../core/modelRepo/OSModel';
 import { SupportedIdentity } from '../core/models/IdentityModel';
+import { SupportedSubscription } from '../core/models/SubscriptionModels';
 import { ModelName, SupportedModel } from '../core/models/SupportedModels';
 import UserData from '../core/models/UserData';
+import { RequestService } from '../core/requestService/RequestService';
+import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import Environment from '../shared/helpers/Environment';
 import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
 import { logMethodCall } from '../shared/utils/utils';
 import User from './User';
-import { RequestService } from '../core/requestService/RequestService';
-import { SupportedSubscription } from '../core/models/SubscriptionModels';
-import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 
 export default class UserDirector {
   static async initializeUser(isTemporary?: boolean): Promise<void> {
@@ -117,11 +117,11 @@ export default class UserDirector {
         const onesignalId = userData.identity?.onesignal_id;
 
         if (onesignalId) {
-          OneSignal.coreDirector.getNewRecordsState().add(onesignalId);
+          OneSignal.coreDirector.getNewRecordsState()?.add(onesignalId);
         }
 
-        const payloadSubcriptionToken = userData.subscriptions[0].token;
-        const resultSubscription = result.subscriptions.find(
+        const payloadSubcriptionToken = userData.subscriptions?.[0]?.token;
+        const resultSubscription = result.subscriptions?.find(
           (sub) => sub.token === payloadSubcriptionToken,
         );
 
@@ -129,7 +129,7 @@ export default class UserDirector {
           if (isCompleteSubscriptionObject(resultSubscription)) {
             OneSignal.coreDirector
               .getNewRecordsState()
-              .add(resultSubscription.id);
+              ?.add(resultSubscription.id);
           }
         }
       }
