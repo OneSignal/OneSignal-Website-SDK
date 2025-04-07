@@ -3,7 +3,9 @@ import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
+import UserData from 'src/core/models/UserData';
 import InitHelper from 'src/shared/helpers/InitHelper';
+import Log from 'src/shared/libraries/Log';
 import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
 
 const serverConfig = TestContext.getFakeServerAppConfig(
@@ -39,7 +41,9 @@ describe('pageSdkInit', () => {
       http.get(cssURL, () => HttpResponse.text('')),
     );
 
-    await TestEnvironment.initialize();
+    await TestEnvironment.initialize({
+      // useMockIdentityModel: true,
+    });
   });
 
   afterEach(() => {
@@ -77,5 +81,36 @@ describe('pageSdkInit', () => {
 
     await vi.runOnlyPendingTimersAsync();
     expect(initSpy).toHaveBeenCalled();
+  });
+
+  test.only('can login and addEmail', async () => {
+    const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => {});
+    server.use(
+      http.post('**/apps/*/users', () =>
+        HttpResponse.json(
+          {
+            properties: {},
+            identity: {},
+            subscriptions: undefined,
+          } satisfies UserData,
+          { status: 200 },
+        ),
+      ),
+    );
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.init({
+        appId: APP_ID,
+      });
+    });
+    window.OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.login('some-id');
+      OneSignal.User.addEmail('joe@example.com');
+    });
+
+    await import('./pageSdkInit');
+    await vi.advanceTimersByTimeAsync(30000);
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 });
