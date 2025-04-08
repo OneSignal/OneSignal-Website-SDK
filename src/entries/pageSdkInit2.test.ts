@@ -1,24 +1,19 @@
 // separate test file to avoid side effects from pageSdkInit.test.ts
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
-import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { mockServerConfig } from '__test__/support/helpers/configHelper';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { ModelName } from 'src/core/models/SupportedModels';
 import UserData from 'src/core/models/UserData';
-import InitHelper from 'src/shared/helpers/InitHelper';
+import { default as InitHelper } from 'src/shared/helpers/InitHelper';
 import Log from 'src/shared/libraries/Log';
-import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
 import Database from 'src/shared/services/Database';
 
 vi.useFakeTimers();
 
 // skip over creating dom elements
 vi.spyOn(InitHelper, 'sessionInit').mockImplementation(() => Promise.resolve());
-
-const serverConfig = TestContext.getFakeServerAppConfig(
-  ConfigIntegrationKind.Custom,
-);
 
 describe('pageSdkInit 2', () => {
   beforeEach(async () => {
@@ -27,18 +22,7 @@ describe('pageSdkInit 2', () => {
 
   test('can login and addEmail', async () => {
     server.use(
-      http.get('**/sync/*/web', ({ request }) => {
-        const url = new URL(request.url);
-        const callbackParam = url.searchParams.get('callback');
-        return new HttpResponse(
-          `${callbackParam}(${JSON.stringify(serverConfig)})`,
-          {
-            headers: {
-              'Content-Type': 'application/javascript',
-            },
-          },
-        );
-      }),
+      mockServerConfig(),
       http.post('**/apps/*/users', () =>
         HttpResponse.json(
           {

@@ -271,7 +271,7 @@ export function once(
       };
       return internalTaskFunction;
     })();
-    (targetSelectorOrElement as Element | Document)?.addEventListener(
+    (targetSelectorOrElement as Element | Document).addEventListener(
       event,
       taskWrapper,
     );

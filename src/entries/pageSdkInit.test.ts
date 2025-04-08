@@ -1,29 +1,9 @@
 import { APP_ID } from '__test__/support/constants';
-import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { mockServerConfig } from '__test__/support/helpers/configHelper';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import InitHelper from 'src/shared/helpers/InitHelper';
-import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
-
-const serverConfig = TestContext.getFakeServerAppConfig(
-  ConfigIntegrationKind.Custom,
-);
-
-export const mockServerConfig = () => {
-  return http.get('**/sync/*/web', ({ request }) => {
-    const url = new URL(request.url);
-    const callbackParam = url.searchParams.get('callback');
-    return new HttpResponse(
-      `${callbackParam}(${JSON.stringify(serverConfig)})`,
-      {
-        headers: {
-          'Content-Type': 'application/javascript',
-        },
-      },
-    );
-  });
-};
 
 vi.useFakeTimers();
 vi.mock('src/shared/utils/bowserCastle');
@@ -40,7 +20,6 @@ describe('pageSdkInit', () => {
       mockServerConfig(),
       http.get(cssURL, () => HttpResponse.text('')),
     );
-
     await TestEnvironment.initialize();
   });
 
@@ -82,7 +61,6 @@ describe('pageSdkInit', () => {
       });
     });
 
-    // await vi.runOnlyPendingTimersAsync();
     await vi.advanceTimersByTimeAsync(10000);
     expect(initSpy).toHaveBeenCalled();
   });

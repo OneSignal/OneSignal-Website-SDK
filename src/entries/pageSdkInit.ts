@@ -40,7 +40,6 @@ function onesignalSdkInit() {
   );
 
   Object.defineProperty(window.OneSignalDeferred, 'push', {
-    configurable: true,
     value: async function (item: OneSignalDeferredLoadedCallback) {
       await promise;
       OneSignal.push(item);
