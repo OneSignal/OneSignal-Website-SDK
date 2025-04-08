@@ -3,13 +3,18 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { mockServerConfig } from '__test__/support/helpers/configHelper';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import InitHelper from 'src/shared/helpers/InitHelper';
+import Log from 'src/shared/libraries/Log';
 
 vi.useFakeTimers();
-vi.mock('src/shared/utils/bowserCastle');
-
-// skip over creating dom elements
-vi.spyOn(InitHelper, 'sessionInit').mockImplementation(() => Promise.resolve());
+// need to mock browsercastle since we resetting modules after each test
+vi.mock('src/shared/utils/bowserCastle', () => ({
+  bowserCastle: () => ({
+    mobile: false,
+    tablet: false,
+    name: 'Chrome',
+    version: '100',
+  }),
+}));
 
 describe('pageSdkInit', () => {
   beforeEach(async () => {
@@ -51,6 +56,7 @@ describe('pageSdkInit', () => {
   });
 
   test('can process deferred items long after page init', async () => {
+    vi.spyOn(Log, 'error').mockImplementation(() => '');
     await import('./pageSdkInit');
     const initSpy = vi.spyOn(window.OneSignal, 'init');
 
@@ -61,7 +67,7 @@ describe('pageSdkInit', () => {
       });
     });
 
-    await vi.advanceTimersByTimeAsync(10000);
+    await vi.runOnlyPendingTimersAsync();
     expect(initSpy).toHaveBeenCalled();
   });
 });

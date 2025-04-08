@@ -1,15 +1,15 @@
 import { http, HttpResponse } from 'msw';
-import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
-import TestContext from '../environment/TestContext';
-const serverConfig = TestContext.getFakeServerAppConfig(
-  ConfigIntegrationKind.Custom,
-);
-
 import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
 import {
   AppConfig,
+  ConfigIntegrationKind,
   ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
+import TestContext from '../environment/TestContext';
+
+const serverConfig = TestContext.getFakeServerAppConfig(
+  ConfigIntegrationKind.Custom,
+);
 
 /**
  * Test Helper Function.
