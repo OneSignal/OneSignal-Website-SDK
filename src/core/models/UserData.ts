@@ -5,7 +5,7 @@ import { UserPropertiesModel } from './UserPropertiesModel';
 type UserData = {
   properties: UserPropertiesModel;
   identity: SupportedIdentity;
-  subscriptions: SupportedSubscription[];
+  subscriptions?: SupportedSubscription[];
 };
 
 export default UserData;

@@ -1,22 +1,20 @@
 import { APP_ID } from '__test__/support/constants';
-import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { mockServerConfig } from '__test__/support/helpers/configHelper';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import InitHelper from 'src/shared/helpers/InitHelper';
-import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
-
-const serverConfig = TestContext.getFakeServerAppConfig(
-  ConfigIntegrationKind.Custom,
-);
+import Log from 'src/shared/libraries/Log';
 
 vi.useFakeTimers();
-vi.mock('src/shared/utils/bowserCastle');
-
-// skip over creating dom elements
-vi.spyOn(InitHelper, 'sessionInit').mockImplementation(() => {
-  return Promise.resolve();
-});
+// need to mock browsercastle since we resetting modules after each test
+vi.mock('src/shared/utils/bowserCastle', () => ({
+  bowserCastle: () => ({
+    mobile: false,
+    tablet: false,
+    name: 'Chrome',
+    version: '100',
+  }),
+}));
 
 describe('pageSdkInit', () => {
   beforeEach(async () => {
@@ -24,32 +22,21 @@ describe('pageSdkInit', () => {
       'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
 
     server.use(
-      http.get('**/sync/*/web', ({ request }) => {
-        const url = new URL(request.url);
-        const callbackParam = url.searchParams.get('callback');
-        return new HttpResponse(
-          `${callbackParam}(${JSON.stringify(serverConfig)})`,
-          {
-            headers: {
-              'Content-Type': 'application/javascript',
-            },
-          },
-        );
-      }),
+      mockServerConfig(),
       http.get(cssURL, () => HttpResponse.text('')),
     );
-
     await TestEnvironment.initialize();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.resetModules();
     localStorage.clear();
+    sessionStorage.clear();
     OneSignal._initCalled = false;
   });
 
   test('can handle init followed by logout', async () => {
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred = [];
     window.OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
         appId: APP_ID,
@@ -60,11 +47,16 @@ describe('pageSdkInit', () => {
     });
 
     await import('./pageSdkInit');
-    await vi.runOnlyPendingTimersAsync();
+    const logoutSpy = vi.spyOn(window.OneSignal, 'logout');
+
+    await vi.waitUntil(async () => {
+      return logoutSpy.mock.calls.length > 0;
+    });
     expect(window.OneSignal.coreDirector).toBeDefined();
   });
 
   test('can process deferred items long after page init', async () => {
+    vi.spyOn(Log, 'error').mockImplementation(() => '');
     await import('./pageSdkInit');
     const initSpy = vi.spyOn(window.OneSignal, 'init');
 

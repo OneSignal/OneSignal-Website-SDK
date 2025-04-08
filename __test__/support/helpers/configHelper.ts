@@ -1,3 +1,4 @@
+import { http, HttpResponse } from 'msw';
 import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
 import {
   AppConfig,
@@ -5,6 +6,10 @@ import {
   ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
 import TestContext from '../environment/TestContext';
+
+const serverConfig = TestContext.getFakeServerAppConfig(
+  ConfigIntegrationKind.Custom,
+);
 
 /**
  * Test Helper Function.
@@ -27,3 +32,18 @@ export async function getFinalAppConfig(
 
   return await ConfigHelper.getAppConfig(fakeUserConfig, getFakeServerConfig);
 }
+
+export const mockServerConfig = () => {
+  return http.get('**/sync/*/web', ({ request }) => {
+    const url = new URL(request.url);
+    const callbackParam = url.searchParams.get('callback');
+    return new HttpResponse(
+      `${callbackParam}(${JSON.stringify(serverConfig)})`,
+      {
+        headers: {
+          'Content-Type': 'application/javascript',
+        },
+      },
+    );
+  });
+};
