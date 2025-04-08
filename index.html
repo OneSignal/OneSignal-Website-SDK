@@ -42,6 +42,14 @@
       //     });
       //   });
       // }, 5000);
+
+      // For testing addEmail / addSms records
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function (OneSignal) {
+        await OneSignal.login('spicy-new');
+        OneSignal.User.addEmail('jd@mail.com');
+        // OneSignal.User.addSms('6191234567');
+      });
     </script>
   </body>
 </html>

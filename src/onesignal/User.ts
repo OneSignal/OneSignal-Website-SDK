@@ -1,14 +1,14 @@
 import { OSModel } from '../core/modelRepo/OSModel';
-import { ModelName, SupportedModel } from '../core/models/SupportedModels';
 import {
-  FutureSubscriptionModel,
   SubscriptionType,
+  SupportedSubscription,
 } from '../core/models/SubscriptionModels';
+import { ModelName } from '../core/models/SupportedModels';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
-import { logMethodCall, isValidEmail } from '../shared/utils/utils';
+import { isValidEmail, logMethodCall } from '../shared/utils/utils';
 import UserDirector from './UserDirector';
 
 export default class User {
@@ -134,13 +134,11 @@ export default class User {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
     }
 
-    const subscription: FutureSubscriptionModel = {
-      type: SubscriptionType.Email,
-      token: email,
-    };
-    const newSubscription = new OSModel<SupportedModel>(
-      ModelName.Subscriptions,
-      subscription,
+    const onesignalId = User.singletonInstance?.onesignalId;
+    const subscription = this.getSubscriptionModel(
+      SubscriptionType.Email,
+      email,
+      onesignalId,
     );
 
     if (
@@ -148,34 +146,26 @@ export default class User {
       User.singletonInstance?.hasOneSignalId
     ) {
       // existing user
-      newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
+      subscription.setOneSignalId(onesignalId);
       const identityModel = OneSignal.coreDirector.getIdentityModel();
       if (identityModel.data.external_id) {
-        newSubscription.setExternalId(identityModel.data.external_id);
+        subscription.setExternalId(identityModel.data.external_id);
       }
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
-        newSubscription,
-        true,
-      );
+      OneSignal.coreDirector.add(ModelName.Subscriptions, subscription, true);
     } else {
       // new user
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
-        newSubscription,
-        false,
-      );
+      OneSignal.coreDirector.add(ModelName.Subscriptions, subscription, false);
       await UserDirector.createAndHydrateUser();
     }
 
-    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(
+    UserDirector.updateModelWithCurrentUserOneSignalId(subscription).catch(
       (e) => {
         throw e;
       },
     );
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     if (identityModel.data.external_id) {
-      newSubscription.setExternalId(identityModel.data.external_id);
+      subscription.setExternalId(identityModel.data.external_id);
     }
   }
 
@@ -190,14 +180,11 @@ export default class User {
       throw new InvalidArgumentError('sms', InvalidArgumentReason.Empty);
     }
 
-    const subscription: FutureSubscriptionModel = {
-      type: SubscriptionType.SMS,
-      token: sms,
-    };
-
-    const newSubscription = new OSModel<SupportedModel>(
-      ModelName.Subscriptions,
-      subscription,
+    const onesignalId = User.singletonInstance?.onesignalId;
+    const subscription = this.getSubscriptionModel(
+      SubscriptionType.SMS,
+      sms,
+      onesignalId,
     );
 
     if (
@@ -205,27 +192,19 @@ export default class User {
       User.singletonInstance?.hasOneSignalId
     ) {
       // existing user
-      newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
+      subscription.setOneSignalId(User.singletonInstance?.onesignalId);
       const identityModel = OneSignal.coreDirector.getIdentityModel();
       if (identityModel.data.external_id) {
-        newSubscription.setExternalId(identityModel.data.external_id);
+        subscription.setExternalId(identityModel.data.external_id);
       }
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
-        newSubscription,
-        true,
-      );
+      OneSignal.coreDirector.add(ModelName.Subscriptions, subscription, true);
     } else {
       // new user
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
-        newSubscription,
-        false,
-      );
+      OneSignal.coreDirector.add(ModelName.Subscriptions, subscription, false);
       await UserDirector.createAndHydrateUser();
     }
 
-    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(
+    UserDirector.updateModelWithCurrentUserOneSignalId(subscription).catch(
       (e) => {
         throw e;
       },
@@ -233,7 +212,7 @@ export default class User {
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     if (identityModel.data.external_id) {
-      newSubscription.setExternalId(identityModel.data.external_id);
+      subscription.setExternalId(identityModel.data.external_id);
     }
   }
 
@@ -361,7 +340,7 @@ export default class User {
   public getTags(): { [key: string]: string } {
     logMethodCall('getTags');
 
-    return OneSignal.coreDirector.getPropertiesModel()?.data?.tags;
+    return OneSignal.coreDirector.getPropertiesModel()?.data?.tags || {};
   }
 
   public setLanguage(language: string): void {
@@ -384,6 +363,53 @@ export default class User {
 
   public getLanguage(): string {
     logMethodCall('getLanguage');
-    return OneSignal.coreDirector.getPropertiesModel()?.data?.language;
+    return OneSignal.coreDirector.getPropertiesModel()?.data?.language || '';
+  }
+
+  /**
+   * Retrieves subscription models that match the given token and optionally OneSignal ID
+   * @param token - The token to search for in subscriptions
+   * @param onesignalId - Optional OneSignal ID to filter by
+   * @returns matching getSubscriptionModel and deletes duplicate subscriptions
+   */
+  public getSubscriptionModel(
+    type: Extract<SubscriptionType, 'Email' | 'SMS'>,
+    token: string,
+    onesignalId?: string,
+  ): OSModel<SupportedSubscription> {
+    logMethodCall('getSubscriptionModels', { token, onesignalId });
+
+    let subscriptions: { [key: string]: OSModel<SupportedSubscription> } = {};
+    switch (type) {
+      case SubscriptionType.Email:
+        subscriptions = OneSignal.coreDirector.getEmailSubscriptionModels();
+        break;
+      case SubscriptionType.SMS:
+        subscriptions = OneSignal.coreDirector.getSmsSubscriptionModels();
+        break;
+    }
+
+    const matchingSubscriptions = Object.values(subscriptions);
+
+    // No matching subscriptions so return new subscription
+    if (matchingSubscriptions.length === 0) {
+      return new OSModel<SupportedSubscription>(ModelName.Subscriptions, {
+        type,
+        token,
+      });
+    }
+
+    // Remove duplicate subscriptions
+    for (const subscription of matchingSubscriptions.slice(1)) {
+      if (subscription.data?.token === token) {
+        OneSignal.coreDirector.remove(
+          ModelName.Subscriptions,
+          subscription.modelId,
+        );
+      }
+    }
+
+    // Return the first matching subscription
+    return matchingSubscriptions[0];
   }
 }
