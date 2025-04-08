@@ -35,12 +35,14 @@ function onesignalSdkInit() {
   window.OneSignal = OneSignal;
   window.OneSignalDeferred = window.OneSignalDeferred ?? [];
 
-  ReplayCallsOnOneSignal.processOneSignalDeferredArray(
+  const promise = ReplayCallsOnOneSignal.processOneSignalDeferredArray(
     window.OneSignalDeferred,
   );
 
   Object.defineProperty(window.OneSignalDeferred, 'push', {
-    value: function (item: OneSignalDeferredLoadedCallback) {
+    configurable: true,
+    value: async function (item: OneSignalDeferredLoadedCallback) {
+      await promise;
       OneSignal.push(item);
     },
   });

@@ -1,5 +1,15 @@
-import { logMethodCall } from '../shared/utils/utils';
+import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
+import { NewRecordsState } from '../../src/shared/models/NewRecordsState';
+import OneSignal from '../onesignal/OneSignal';
+import User from '../onesignal/User';
+import FuturePushSubscriptionRecord from '../page/userModel/FuturePushSubscriptionRecord';
+import OneSignalError from '../shared/errors/OneSignalError';
+import EventHelper from '../shared/helpers/EventHelper';
+import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
+import { RawPushSubscription } from '../shared/models/RawPushSubscription';
+import Database from '../shared/services/Database';
+import { logMethodCall } from '../shared/utils/utils';
 import CoreModule from './CoreModule';
 import { OSModel } from './modelRepo/OSModel';
 import { SupportedIdentity } from './models/IdentityModel';
@@ -11,18 +21,8 @@ import {
   SupportedSubscription,
 } from './models/SubscriptionModels';
 import { ModelName, SupportedModel } from './models/SupportedModels';
-import { UserPropertiesModel } from './models/UserPropertiesModel';
 import UserData from './models/UserData';
-import OneSignalError from '../shared/errors/OneSignalError';
-import MainHelper from '../shared/helpers/MainHelper';
-import { RawPushSubscription } from '../shared/models/RawPushSubscription';
-import FuturePushSubscriptionRecord from '../page/userModel/FuturePushSubscriptionRecord';
-import User from '../onesignal/User';
-import OneSignal from '../onesignal/OneSignal';
-import Database from '../shared/services/Database';
-import EventHelper from '../shared/helpers/EventHelper';
-import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
-import { NewRecordsState } from '../../src/shared/models/NewRecordsState';
+import { UserPropertiesModel } from './models/UserPropertiesModel';
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -93,7 +93,7 @@ export class CoreModuleDirector {
       // subscriptions are duplicable, so we hydrate them separately
       // when hydrating, we should have the full subscription object (i.e. include ID from server)
       this._hydrateSubscriptions(
-        user.subscriptions as SubscriptionModel[],
+        user.subscriptions as SubscriptionModel[] | undefined,
         onesignalId,
         externalId,
       );
@@ -104,7 +104,7 @@ export class CoreModuleDirector {
   }
 
   private _hydrateSubscriptions(
-    subscriptions: SubscriptionModel[],
+    subscriptions: SubscriptionModel[] | undefined,
     onesignalId: string,
     externalId?: string,
   ): void {

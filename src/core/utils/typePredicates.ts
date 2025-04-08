@@ -66,7 +66,7 @@ export function isFutureSubscriptionObject(obj: {
   return obj?.type !== undefined;
 }
 
-export function isCompleteSubscriptionObject(obj: {
+export function isCompleteSubscriptionObject(obj?: {
   type?: string;
   id?: string;
 }): obj is SubscriptionModel {

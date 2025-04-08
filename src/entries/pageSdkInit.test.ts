@@ -10,13 +10,26 @@ const serverConfig = TestContext.getFakeServerAppConfig(
   ConfigIntegrationKind.Custom,
 );
 
+export const mockServerConfig = () => {
+  return http.get('**/sync/*/web', ({ request }) => {
+    const url = new URL(request.url);
+    const callbackParam = url.searchParams.get('callback');
+    return new HttpResponse(
+      `${callbackParam}(${JSON.stringify(serverConfig)})`,
+      {
+        headers: {
+          'Content-Type': 'application/javascript',
+        },
+      },
+    );
+  });
+};
+
 vi.useFakeTimers();
 vi.mock('src/shared/utils/bowserCastle');
 
 // skip over creating dom elements
-vi.spyOn(InitHelper, 'sessionInit').mockImplementation(() => {
-  return Promise.resolve();
-});
+vi.spyOn(InitHelper, 'sessionInit').mockImplementation(() => Promise.resolve());
 
 describe('pageSdkInit', () => {
   beforeEach(async () => {
@@ -24,32 +37,22 @@ describe('pageSdkInit', () => {
       'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
 
     server.use(
-      http.get('**/sync/*/web', ({ request }) => {
-        const url = new URL(request.url);
-        const callbackParam = url.searchParams.get('callback');
-        return new HttpResponse(
-          `${callbackParam}(${JSON.stringify(serverConfig)})`,
-          {
-            headers: {
-              'Content-Type': 'application/javascript',
-            },
-          },
-        );
-      }),
+      mockServerConfig(),
       http.get(cssURL, () => HttpResponse.text('')),
     );
 
     await TestEnvironment.initialize();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.resetModules();
     localStorage.clear();
+    sessionStorage.clear();
     OneSignal._initCalled = false;
   });
 
   test('can handle init followed by logout', async () => {
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred = [];
     window.OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
         appId: APP_ID,
@@ -60,7 +63,11 @@ describe('pageSdkInit', () => {
     });
 
     await import('./pageSdkInit');
-    await vi.runOnlyPendingTimersAsync();
+    const logoutSpy = vi.spyOn(window.OneSignal, 'logout');
+
+    await vi.waitUntil(async () => {
+      return logoutSpy.mock.calls.length > 0;
+    });
     expect(window.OneSignal.coreDirector).toBeDefined();
   });
 
@@ -75,7 +82,8 @@ describe('pageSdkInit', () => {
       });
     });
 
-    await vi.runOnlyPendingTimersAsync();
+    // await vi.runOnlyPendingTimersAsync();
+    await vi.advanceTimersByTimeAsync(10000);
     expect(initSpy).toHaveBeenCalled();
   });
 });
