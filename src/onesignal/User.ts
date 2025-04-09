@@ -337,10 +337,10 @@ export default class User {
     }
   }
 
-  public getTags(): { [key: string]: string } {
+  public getTags(): { [key: string]: string } | undefined {
     logMethodCall('getTags');
 
-    return OneSignal.coreDirector.getPropertiesModel()?.data?.tags || {};
+    return OneSignal.coreDirector.getPropertiesModel()?.data?.tags;
   }
 
   public setLanguage(language: string): void {
