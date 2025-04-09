@@ -389,7 +389,11 @@ export default class User {
         break;
     }
 
-    const matchingSubscriptions = Object.values(subscriptions);
+    const matchingSubscriptions = Object.values(subscriptions).filter(
+      (subscription) =>
+        subscription.data?.token === token &&
+        subscription.onesignalId === onesignalId,
+    );
 
     // No matching subscriptions so return new subscription
     if (matchingSubscriptions.length === 0) {
@@ -399,17 +403,17 @@ export default class User {
       });
     }
 
+    const [match, ...duplicates] = matchingSubscriptions;
+
     // Remove duplicate subscriptions
-    for (const subscription of matchingSubscriptions.slice(1)) {
-      if (subscription.data?.token === token) {
-        OneSignal.coreDirector.remove(
-          ModelName.Subscriptions,
-          subscription.modelId,
-        );
-      }
+    for (const subscription of duplicates) {
+      OneSignal.coreDirector.remove(
+        ModelName.Subscriptions,
+        subscription.modelId,
+      );
     }
 
     // Return the first matching subscription
-    return matchingSubscriptions[0];
+    return match;
   }
 }
