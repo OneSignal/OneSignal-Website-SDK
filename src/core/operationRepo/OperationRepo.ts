@@ -12,10 +12,10 @@ import {
 import { v4 as uuid } from 'uuid';
 
 // Reference: OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/config/ConfigModel.kt
-const OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF = 15000;
-const OP_REPO_POST_CREATE_DELAY = 5000;
-const OP_REPO_EXECUTION_INTERVAL = 5000;
-const OP_REPO_POST_CREATE_RETRY_UP_TO = 60_000;
+export const OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF = 15000;
+export const OP_REPO_POST_CREATE_DELAY = 5000;
+export const OP_REPO_EXECUTION_INTERVAL = 5000;
+export const OP_REPO_POST_CREATE_RETRY_UP_TO = 60_000;
 
 // Implements logic similar to Android SDK's NewRecordsState
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/main/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/states/NewRecordsState.kt
@@ -26,7 +26,9 @@ export class NewRecordsState {
     this.records.set(id, Date.now());
   }
 
-  public canAccess(key: string): boolean {
+  public canAccess(key: string | undefined): boolean {
+    if (!key) return true;
+
     const timeLastMovedOrCreated = this.records.get(key);
     if (!timeLastMovedOrCreated) return true;
 
@@ -95,16 +97,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public enqueue(operation: Operation): void {
     Log.debug(`OperationRepo.enqueue(operation: ${operation})`);
-
-    operation.id = uuid();
-    this.internalEnqueue(
-      new OperationQueueItem(operation, this.enqueueIntoBucket),
-      true,
-    );
-  }
-
-  public enqueueAndWait(operation: Operation): void {
-    Log.debug(`OperationRepo.enqueueAndWait(operation: ${operation})`);
 
     operation.id = uuid();
     this.internalEnqueue(
@@ -274,7 +266,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     await delay(delayFor);
   }
 
-  protected getNextOps(bucketFilter: number): OperationQueueItem[] | null {
+  public getNextOps(bucketFilter: number): OperationQueueItem[] | null {
     const startingOpIndex = this.queue.findIndex(
       (item) =>
         item.operation.canStartExecute &&
