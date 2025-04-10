@@ -18,23 +18,27 @@ export const OP_REPO_EXECUTION_INTERVAL = 5000;
 export const OP_REPO_POST_CREATE_RETRY_UP_TO = 60_000;
 
 export class NewRecordsState {
-  private records: Map<string, number> = new Map();
+  private _records: Map<string, number> = new Map();
+
+  public get records(): Map<string, number> {
+    return this._records;
+  }
 
   public add(id: string): void {
-    this.records.set(id, Date.now());
+    this._records.set(id, Date.now());
   }
 
   public canAccess(key: string | undefined): boolean {
     if (!key) return true;
 
-    const timeLastMovedOrCreated = this.records.get(key);
+    const timeLastMovedOrCreated = this._records.get(key);
     if (!timeLastMovedOrCreated) return true;
 
     return Date.now() - timeLastMovedOrCreated >= OP_REPO_POST_CREATE_DELAY;
   }
 
   public isInMissingRetryWindow(key: string): boolean {
-    const timeLastMovedOrCreated = this.records.get(key);
+    const timeLastMovedOrCreated = this._records.get(key);
     if (!timeLastMovedOrCreated) return false;
 
     return (
@@ -43,9 +47,7 @@ export class NewRecordsState {
   }
 }
 
-// Helper class
-
-class OperationQueueItem {
+export class OperationQueueItem {
   constructor(
     public operation: Operation,
     public bucket: number,
@@ -75,6 +77,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         this.executorsMap.set(operation, executor);
       }
     }
+  }
+
+  public get isPaused(): boolean {
+    return this.paused;
+  }
+
+  public get records(): Map<string, number> {
+    return this.newRecordState.records;
   }
 
   private get executeBucket(): number {
@@ -131,25 +141,26 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   private async processQueueForever(): Promise<void> {
     this.enqueueIntoBucket++;
+    let runningOps = false;
 
     setInterval(async () => {
-      if (this.paused) {
-        Log.debug('OperationRepo is paused');
-        return;
-      }
+      if (this.paused) return Log.debug('OpRepo is paused');
+      if (runningOps) return Log.debug('Operations in progress');
 
       const ops = this.getNextOps(this.executeBucket);
       Log.debug(`processQueueForever:ops:\n${ops}`);
 
       if (ops) {
-        this.executeOperations(ops);
+        runningOps = true;
+        await this.executeOperations(ops);
+        runningOps = false;
       } else {
         this.enqueueIntoBucket++;
       }
     }, OP_REPO_EXECUTION_INTERVAL);
   }
 
-  private async executeOperations(ops: OperationQueueItem[]): Promise<void> {
+  public async executeOperations(ops: OperationQueueItem[]): Promise<void> {
     try {
       const startingOp = ops[0];
       const executor = this.executorsMap.get(startingOp.operation.name);
@@ -225,7 +236,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       // Handle additional operations from the response
       if (response.operations) {
-        for (const op of response.operations.reverse()) {
+        for (const op of response.operations.toReversed()) {
           op.id = uuid();
           const queueItem = new OperationQueueItem(op, 0);
           this.queue.unshift(queueItem);
@@ -281,14 +292,13 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return null;
   }
 
-  private getGroupableOperations(
+  public getGroupableOperations(
     startingOp: OperationQueueItem,
   ): OperationQueueItem[] {
     const ops = [startingOp];
 
-    if (startingOp.operation.groupComparisonType === GroupComparisonType.None) {
+    if (startingOp.operation.groupComparisonType === GroupComparisonType.None)
       return ops;
-    }
 
     const startingKey =
       startingOp.operation.groupComparisonType === GroupComparisonType.Create
@@ -304,13 +314,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ? item.operation.createComparisonKey
           : item.operation.modifyComparisonKey;
 
-      if (itemKey === '' && startingKey === '') {
+      if (itemKey === '' && startingKey === '')
         throw new Error('Both comparison keys cannot be blank!');
-      }
 
-      if (!this.newRecordState.canAccess(item.operation.applyToRecordId)) {
+      if (!this.newRecordState.canAccess(item.operation.applyToRecordId))
         continue;
-      }
 
       if (itemKey === startingKey) {
         const index = this.queue.indexOf(item);
