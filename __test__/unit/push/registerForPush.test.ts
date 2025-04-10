@@ -1,7 +1,7 @@
-import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
-import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
 import Log from '../../../src/shared/libraries/Log';
+import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
+import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import BrowserUserAgent from '../../support/models/BrowserUserAgent';
 
 //stub dismisshelper

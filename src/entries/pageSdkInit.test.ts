@@ -17,7 +17,7 @@ vi.mock('src/shared/utils/bowserCastle', () => ({
 }));
 
 // need to wait for full OperationRepo rework
-describe.skip('pageSdkInit', () => {
+describe('pageSdkInit', () => {
   beforeEach(async () => {
     const cssURL =
       'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
