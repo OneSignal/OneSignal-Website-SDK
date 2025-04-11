@@ -1,13 +1,16 @@
+// Implements logic similar to Android SDK's ModelStore
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/ModelStore.kt
 import { EventProducer } from 'src/shared/helpers/EventProducer';
 import Log from 'src/shared/libraries/Log';
 import type { IEventNotifier } from 'src/types/events';
 import type { IModelStore, IModelStoreChangeHandler } from 'src/types/models';
-import {
-  PreferenceOneSignalKeys,
-  PreferenceStores,
-  type IPreferencesService,
-} from 'src/types/preferences';
-import type { IModelChangedHandler, Model, ModelChangedArgs } from './Model';
+import type { IPreferencesService } from 'src/types/preferences';
+import type {
+  IModelChangedHandler,
+  Model,
+  ModelChangedArgs,
+} from '../models/Model';
+const STORE = 'OneSignal_ModelStore';
 
 /**
  * The abstract implementation of a model store. Implements all but the `create` method,
@@ -141,11 +144,7 @@ export abstract class ModelStore<TModel extends Model>
   protected load(): void {
     if (!this.name || !this._prefs) return;
 
-    const str = this._prefs.getValue<string>(
-      PreferenceStores.ONESIGNAL,
-      PreferenceOneSignalKeys.MODEL_STORE_PREFIX + this.name,
-      '[]',
-    );
+    const str = this._prefs.getValue<string>(STORE, this.name, '[]');
 
     const jsonArray = JSON.parse(str);
     const shouldRePersist = this.models.length > 0;
@@ -188,11 +187,7 @@ export abstract class ModelStore<TModel extends Model>
       jsonArray.push(model.toJSON());
     }
 
-    this._prefs.setValue<string>(
-      PreferenceStores.ONESIGNAL,
-      PreferenceOneSignalKeys.MODEL_STORE_PREFIX + this.name,
-      JSON.stringify(jsonArray),
-    );
+    this._prefs.setValue<string>(STORE, this.name, JSON.stringify(jsonArray));
   }
 
   subscribe(handler: IModelStoreChangeHandler<TModel>): void {

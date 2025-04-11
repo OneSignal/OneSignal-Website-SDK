@@ -1,10 +1,13 @@
-import { Model } from '../modelRepo/Model';
+import { Model } from '../models/Model';
 
 export const GroupComparisonType = {
   CREATE: 0,
   ALTER: 1,
   NONE: 2,
 } as const;
+
+export type GroupComparisonValue =
+  (typeof GroupComparisonType)[keyof typeof GroupComparisonType];
 
 export abstract class Operation extends Model {
   constructor(name: string) {
@@ -42,7 +45,7 @@ export abstract class Operation extends Model {
    * The comparison type to use when this operation is the starting operation, in terms of
    * which operations can be grouped with it.
    */
-  abstract get groupComparisonType(): typeof GroupComparisonType;
+  abstract get groupComparisonType(): GroupComparisonValue;
 
   /**
    * Whether the operation can currently execute given its current state.

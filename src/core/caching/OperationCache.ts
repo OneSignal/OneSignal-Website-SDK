@@ -1,10 +1,10 @@
 import Log from '../../shared/libraries/Log';
 import { logMethodCall } from '../../shared/utils/utils';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
-import { Operation } from '../operationRepo/Operation';
+import { LegacyOperation } from '../operationRepo/LegacyOperation';
 
 export default class OperationCache {
-  static enqueue<Model>(operation: Operation<Model>): void {
+  static enqueue<Model>(operation: LegacyOperation<Model>): void {
     logMethodCall('OperationCache.enqueue', { operation });
     const fromCache = localStorage.getItem('operationCache');
     const operations: { [key: string]: unknown } = fromCache
@@ -16,22 +16,23 @@ export default class OperationCache {
 
   static getOperationsWithModelName(
     modelName: ModelName,
-  ): Operation<SupportedModel>[] {
+  ): LegacyOperation<SupportedModel>[] {
     const fromCache = localStorage.getItem('operationCache');
-    const rawOperations: Operation<SupportedModel>[] = fromCache
+    const rawOperations: LegacyOperation<SupportedModel>[] = fromCache
       ? Object.values(JSON.parse(fromCache))
       : [];
-    const operations: Operation<SupportedModel>[] = [];
+    const operations: LegacyOperation<SupportedModel>[] = [];
 
     for (let i = 0; i < rawOperations.length; i++) {
       const rawOperation = rawOperations[i];
 
       try {
         // return an operation object with correct references (in particular reference to the model)
-        const operation = Operation.getInstanceWithModelReference(rawOperation);
+        const operation =
+          LegacyOperation.getInstanceWithModelReference(rawOperation);
 
         if (operation) {
-          operations.push(operation as Operation<SupportedModel>);
+          operations.push(operation as LegacyOperation<SupportedModel>);
         }
       } catch (e) {
         Log.warn(
