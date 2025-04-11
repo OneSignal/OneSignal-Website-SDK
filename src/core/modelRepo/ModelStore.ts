@@ -52,15 +52,15 @@ export abstract class ModelStore<TModel extends Model>
   /**
    * Create a model from JSON data
    */
-  abstract create(json: object): TModel | null;
+  abstract create(json?: object): TModel | null;
 
-  add(model: TModel, tag: string): void {
+  add(model: TModel, tag = ModelChangeTags.NORMAL): void {
     const oldModel = this.models.find((m) => m.id === model.id);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag);
   }
 
-  addAt(index: number, model: TModel, tag: string): void {
+  addAt(index: number, model: TModel, tag = ModelChangeTags.NORMAL): void {
     const oldModel = this.models.find((m) => m.id === model.id);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag, index);
