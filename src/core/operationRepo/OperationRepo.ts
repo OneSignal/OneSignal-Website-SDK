@@ -10,44 +10,12 @@ import {
   OperationModelStore,
 } from 'src/types/operation';
 import { v4 as uuid } from 'uuid';
-
-// Reference: OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/config/ConfigModel.kt
-export const OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF = 15000;
-export const OP_REPO_POST_CREATE_DELAY = 5000;
-export const OP_REPO_EXECUTION_INTERVAL = 5000;
-export const OP_REPO_POST_CREATE_RETRY_UP_TO = 60_000;
-
-// Implements logic similar to Android SDK's NewRecordsState
-// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/main/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/states/NewRecordsState.kt
-export class NewRecordsState {
-  private _records: Map<string, number> = new Map();
-
-  public get records(): Map<string, number> {
-    return this._records;
-  }
-
-  public add(id: string): void {
-    this._records.set(id, Date.now());
-  }
-
-  public canAccess(key: string | undefined): boolean {
-    if (!key) return true;
-
-    const timeLastMovedOrCreated = this._records.get(key);
-    if (!timeLastMovedOrCreated) return true;
-
-    return Date.now() - timeLastMovedOrCreated >= OP_REPO_POST_CREATE_DELAY;
-  }
-
-  public isInMissingRetryWindow(key: string): boolean {
-    const timeLastMovedOrCreated = this._records.get(key);
-    if (!timeLastMovedOrCreated) return false;
-
-    return (
-      Date.now() - timeLastMovedOrCreated <= OP_REPO_POST_CREATE_RETRY_UP_TO
-    );
-  }
-}
+import { type NewRecordsState } from './NewRecordsState';
+import {
+  OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
+  OP_REPO_EXECUTION_INTERVAL,
+  OP_REPO_POST_CREATE_DELAY,
+} from './constants';
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationRepo.kt
