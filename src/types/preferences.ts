@@ -1,0 +1,154 @@
+/**
+ * Provides access to the low level preferences. There are one or more preference
+ * stores, identified by PreferenceStores, each store contains a key for each
+ * preference. Each key has a known data type, it's value can be fetched/stored as
+ * needed. Stored preferences will persist across the lifetime of the app installation.
+ */
+export interface IPreferencesService {
+  /**
+   * Retrieve a value identified by the store and key provided.
+   *
+   * @param store The name of the preference store.
+   * @param key The key to retrieve.
+   * @param defValue The optional default value to return, if the key was not previously saved.
+   * @param type The type of value to retrieve (optional).
+   *
+   * @return the value in the preference store, or defValue if not previously saved.
+   */
+  getValue<T>(store: string, key: string, defValue?: T | null): T | null;
+
+  /**
+   * Save a value identified by the store and key provided.
+   *
+   * @param store The name of the preference store.
+   * @param key The key to save.
+   * @param value The value to save.
+   * @param type The type of value to save (optional).
+   */
+  setValue<T>(store: string, key: string, value: T | null): void;
+}
+
+export const PreferenceStores = {
+  /**
+   * The default OneSignal store, keys defined in PreferenceOneSignalKeys.
+   */
+  ONESIGNAL: 'OneSignal',
+
+  /**
+   * The player purchase store, keys defined in PreferencePlayerPurchasesKeys.
+   */
+  PLAYER_PURCHASES: 'GTPlayerPurchases',
+} as const;
+
+export const PreferencePlayerPurchasesKeys = {
+  /**
+   * The purchase tokens that have been tracked.
+   */
+  PREFS_PURCHASE_TOKENS: 'purchaseTokens',
+
+  /**
+   * Whether new purchases should be treated as existing.
+   */
+  PREFS_EXISTING_PURCHASES: 'ExistingPurchases',
+} as const;
+
+export const PreferenceOneSignalKeys = {
+  // Legacy
+  /**
+   * The legacy app ID from SDKs prior to 5.
+   */
+  PREFS_LEGACY_APP_ID: 'GT_APP_ID',
+
+  /**
+   * The legacy player ID from SDKs prior to 5.
+   */
+  PREFS_LEGACY_PLAYER_ID: 'GT_PLAYER_ID',
+
+  /**
+   * The legacy player sync values from SDKS prior to 5.
+   */
+  PREFS_LEGACY_USER_SYNCVALUES: 'ONESIGNAL_USERSTATE_SYNCVALYES_CURRENT_STATE',
+
+  // Location
+  /**
+   * The last time the device location was captured, in Unix time milliseconds.
+   */
+  PREFS_OS_LAST_LOCATION_TIME: 'OS_LAST_LOCATION_TIME',
+
+  /**
+   * Whether location should be shared with OneSignal.
+   */
+  PREFS_OS_LOCATION_SHARED: 'OS_LOCATION_SHARED',
+
+  // Permissions
+  /**
+   * A prefix key for the permission state. When true, the user has rejected this
+   * permission too many times and will not be prompted again.
+   */
+  PREFS_OS_USER_RESOLVED_PERMISSION_PREFIX: 'USER_RESOLVED_PERMISSION_',
+
+  // HTTP
+  /**
+   * A prefix key for retrieving the ETAG for a given HTTP GET cache key. The cache
+   * key should be appended to this prefix.
+   */
+  PREFS_OS_ETAG_PREFIX: 'PREFS_OS_ETAG_PREFIX_',
+
+  /**
+   * A install id, a UUIDv4 generated once when app is first opened.
+   * Value is for a HTTP header, OneSignal-Install-Id, added on all calls
+   * made to OneSignal's backend.
+   */
+  PREFS_OS_INSTALL_ID: 'PREFS_OS_INSTALL_ID',
+
+  /**
+   * A prefix key for retrieving the response for a given HTTP GET cache key. The cache
+   * key should be appended to this prefix.
+   */
+  PREFS_OS_HTTP_CACHE_PREFIX: 'PREFS_OS_HTTP_CACHE_PREFIX_',
+
+  // Outcomes
+  /**
+   * The set of unattributed outcome events that have occurred to ensure uniqueness when requested.
+   */
+  PREFS_OS_UNATTRIBUTED_UNIQUE_OUTCOME_EVENTS_SENT:
+    'PREFS_OS_UNATTRIBUTED_UNIQUE_OUTCOME_EVENTS_SENT',
+
+  // In-App Messaging
+  /**
+   * The serialized IAMs TODO: This isn't currently used, determine if actually needed for cold start IAM fetch delay
+   */
+  PREFS_OS_CACHED_IAMS: 'PREFS_OS_CACHED_IAMS',
+
+  /**
+   * The set of IAM IDs that have been dismissed on this device.
+   */
+  PREFS_OS_DISMISSED_IAMS: 'PREFS_OS_DISPLAYED_IAMS',
+
+  /**
+   * The set of IAM IDs that have impressed (displayed) on the device.
+   */
+  PREFS_OS_IMPRESSIONED_IAMS: 'PREFS_OS_IMPRESSIONED_IAMS',
+
+  /**
+   * The set of click IDs that the device has clicked on.
+   */
+  PREFS_OS_CLICKED_CLICK_IDS_IAMS: 'PREFS_OS_CLICKED_CLICK_IDS_IAMS',
+
+  /**
+   * The set of page IDs that have impressed (displayed) on the device.
+   */
+  PREFS_OS_PAGE_IMPRESSIONED_IAMS: 'PREFS_OS_PAGE_IMPRESSIONED_IAMS',
+
+  /**
+   * The last time an IAM was dismissed, in unix time milliseconds.
+   */
+  PREFS_OS_IAM_LAST_DISMISSED_TIME: 'PREFS_OS_IAM_LAST_DISMISSED_TIME',
+
+  // Models
+  /**
+   * A prefix key for retrieving a specific model store contents. The name of the model
+   * store should be appended to this prefix.
+   */
+  MODEL_STORE_PREFIX: 'MODEL_STORE_',
+} as const;
