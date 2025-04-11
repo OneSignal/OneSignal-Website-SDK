@@ -15,7 +15,7 @@ export interface IPreferencesService {
    *
    * @return the value in the preference store, or defValue if not previously saved.
    */
-  getValue<T>(store: string, key: string, defValue?: T | null): T | null;
+  getValue<T = unknown | null>(store: string, key: string, defValue?: T): T;
 
   /**
    * Save a value identified by the store and key provided.
