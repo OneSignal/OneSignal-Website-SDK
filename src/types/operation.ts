@@ -95,7 +95,6 @@ export interface OperationModelStore {
 
 export interface IOperationRepo {
   enqueue(operation: Operation, flush: boolean): void;
-  enqueueAndWait(operation: Operation, flush: boolean): void;
   containsInstanceOf<T extends Operation>(
     type: new (...args: any[]) => T,
   ): boolean;
