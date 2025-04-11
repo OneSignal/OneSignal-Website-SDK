@@ -1,20 +1,20 @@
-import { SupportedIdentity } from '../../../src/core/models/IdentityModel';
+import CoreModule from '../../../src/core/CoreModule';
+import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import { OSModel } from '../../../src/core/modelRepo/OSModel';
 import { CoreChangeType } from '../../../src/core/models/CoreChangeType';
 import { CoreDelta } from '../../../src/core/models/CoreDeltas';
+import { SupportedIdentity } from '../../../src/core/models/IdentityModel';
 import {
-  SupportedSubscription,
   SubscriptionType,
+  SupportedSubscription,
 } from '../../../src/core/models/SubscriptionModels';
 import { ModelName } from '../../../src/core/models/SupportedModels';
+import { UserPropertiesModel } from '../../../src/core/models/UserPropertiesModel';
 import {
   DUMMY_MODEL_ID,
   DUMMY_PUSH_TOKEN,
   DUMMY_SUBSCRIPTION_ID,
 } from '../constants';
-import CoreModule from '../../../src/core/CoreModule';
-import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
-import { UserPropertiesModel } from '../../../src/core/models/UserPropertiesModel';
 
 export function generateNewSubscription(modelId = '0000000000') {
   return new OSModel<SupportedSubscription>(
