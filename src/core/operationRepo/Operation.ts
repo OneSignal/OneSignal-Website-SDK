@@ -1,114 +1,63 @@
-import OneSignalError from '../../shared/errors/OneSignalError';
-import Database from '../../shared/services/Database';
-import { OSModel } from '../modelRepo/OSModel';
-import { CoreChangeType } from '../models/CoreChangeType';
-import { CoreDelta } from '../models/CoreDeltas';
-import { ModelName, SupportedModel } from '../models/SupportedModels';
-import { isPropertyDelta, isPureObject } from '../utils/typePredicates';
+import { Model } from '../modelRepo/Model';
 
-export class Operation<Model> {
-  operationId: string;
-  timestamp: number;
-  payload?: Partial<SupportedModel>;
-  model?: OSModel<Model>;
-  applyToRecordId?: string;
-  jwtTokenAvailable: Promise<void>;
-  jwtToken?: string | null;
+export const GroupComparisonType = {
+  CREATE: 0,
+  ALTER: 1,
+  NONE: 2,
+} as const;
 
-  constructor(
-    readonly changeType: CoreChangeType,
-    readonly modelName: ModelName,
-    deltas?: CoreDelta<Model>[],
-  ) {
-    this.operationId = Math.random().toString(36).substring(2);
-    this.payload = deltas ? this.getPayload(deltas) : undefined;
-    this.model = deltas ? deltas[deltas.length - 1].model : undefined;
-    this.applyToRecordId = deltas?.[deltas.length - 1]?.applyToRecordId;
-    this.timestamp = Date.now();
-    // eslint-disable-next-line no-async-promise-executor
-    this.jwtTokenAvailable = new Promise<void>(async (resolve) => {
-      this.jwtToken = await Database.getJWTToken();
-      resolve();
-    });
+export abstract class Operation extends Model {
+  constructor(name: string) {
+    super();
+    this.name = name;
   }
 
-  private getPayload(deltas: CoreDelta<Model>[]): any {
-    // for update operations, we send the aggregated property-level changes
-    if (isPropertyDelta(deltas[0])) {
-      return this.aggregateDeltas(deltas);
-    }
-
-    // for add and remove operations, we send the model data itself
-    return deltas[0].model.data;
+  get name(): string {
+    return this.getProperty<string>('name');
   }
 
-  private aggregateDeltas(deltas: CoreDelta<Model>[]): {
-    [key: string]: unknown;
-  } {
-    const result: { [key: string]: Record<string, unknown> } = {};
-
-    deltas.forEach((delta) => {
-      if (isPropertyDelta(delta)) {
-        /**
-         * If the delta is a property delta, we need to check if the property is an object.
-         * If the object has been previously set, we need to merge the new value with the old value.
-         * Example:
-         * 1. Initial value: { a: { b: 1 } }
-         * 2. Delta 1: { a: { b: 2 } }
-         * 3. Delta 2: { a: { c: 3 } }
-         * 4. Result: { a: { b: 2, c: 3 } }
-         */
-        // eslint-disable-next-line no-prototype-builtins
-        const hasExistingProperty = result.hasOwnProperty(delta.property);
-        const newValueIsPureObject = isPureObject(delta.newValue);
-        const oldValueIsPureObject = isPureObject(delta.oldValue);
-        const isNewAndOldCompatible =
-          newValueIsPureObject === oldValueIsPureObject ||
-          delta.oldValue === undefined;
-
-        if (!isNewAndOldCompatible) {
-          throw new Error('Cannot merge incompatible values');
-        }
-
-        const shouldMergeExistingAndNew =
-          hasExistingProperty && newValueIsPureObject;
-
-        const mergedObject = { ...result[delta.property], ...delta.newValue };
-
-        result[delta.property] = shouldMergeExistingAndNew
-          ? mergedObject
-          : delta.newValue;
-      }
-    });
-    return result;
+  private set name(value: string) {
+    this.setProperty<string>('name', value);
   }
 
-  static getInstanceWithModelReference(
-    rawOperation: Operation<SupportedModel>,
-  ): Operation<SupportedModel> | undefined {
-    const { operationId, payload, modelName, changeType, timestamp, model } =
-      rawOperation;
-    if (!model) {
-      throw new OneSignalError('Operation.fromJSON: model is undefined');
-    }
-    const osModel = OneSignal.coreDirector?.getModelByTypeAndId(
-      modelName,
-      model.modelId,
-    );
+  /**
+   * This is a unique id that points to a record this operation will affect.
+   * Example: If the operation is updating tags on a User this will be the onesignalId.
+   */
+  abstract get applyToRecordId(): string;
 
-    if (!!osModel) {
-      const operation = new Operation<SupportedModel>(changeType, modelName);
-      operation.model = osModel;
-      operation.operationId = operationId;
-      operation.timestamp = timestamp;
-      operation.payload = payload;
-      operation.jwtToken = rawOperation.jwtToken;
-      operation.jwtTokenAvailable = Promise.resolve();
-      return operation;
-    } else {
-      throw new Error(
-        `Could not find model with id ${model.modelId} of type ${modelName}. Maybe user logged out?`,
-      );
-    }
+  /**
+   * The key of this operation for when the starting operation has a `groupComparisonType`
+   * of `GroupComparisonType.CREATE`
+   */
+  abstract get createComparisonKey(): string;
+
+  /**
+   * The key of this operation for when the starting operation has a `groupComparisonType`
+   * of `GroupComparisonType.ALTER`
+   */
+  abstract get modifyComparisonKey(): string;
+
+  /**
+   * The comparison type to use when this operation is the starting operation, in terms of
+   * which operations can be grouped with it.
+   */
+  abstract get groupComparisonType(): typeof GroupComparisonType;
+
+  /**
+   * Whether the operation can currently execute given its current state.
+   */
+  abstract get canStartExecute(): boolean;
+
+  /**
+   * Called when an operation has resolved a local ID to a backend ID.
+   * Any IDs within the operation that could be local should be translated at this time.
+   */
+  translateIds(map: Record<string, string>): void {
+    // Optional override
+  }
+
+  toString(): string {
+    return JSON.stringify(this.toJSON());
   }
 }

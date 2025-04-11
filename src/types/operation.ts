@@ -1,10 +1,4 @@
 // Enums
-export enum GroupComparisonType {
-  Create,
-  Alter,
-  None,
-}
-
 export enum ExecutionResult {
   /**
    * The operation was executed successfully.

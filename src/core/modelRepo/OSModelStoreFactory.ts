@@ -3,6 +3,7 @@ import { ModelName } from '../models/SupportedModels';
 import { OSModel } from './OSModel';
 import { OSModelStore } from './OSModelStore';
 
+// TODO: Remove this later as part of the Web SDK Refactor
 export class OSModelStoreFactory {
   static build<Model>(cachedModels?: {
     [key: string]: OSModel<Model>[];
