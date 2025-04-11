@@ -4,15 +4,14 @@ import {
   ExecutionResult,
   GroupComparisonType,
   IOperationExecutor,
-  OperationModelStore,
+  type OperationModelStore,
 } from '../../types/operation';
+import { NewRecordsState } from './NewRecordsState';
+import { OperationQueueItem, OperationRepo } from './OperationRepo';
 import {
-  NewRecordsState,
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_POST_CREATE_DELAY,
-  OperationQueueItem,
-  OperationRepo,
-} from './OperationRepo';
+} from './constants';
 
 vi.spyOn(Log, 'error').mockImplementation(() => '');
 vi.useFakeTimers();
