@@ -88,11 +88,11 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
    * A unique identifier for this model.
    */
   get id(): string {
-    return this.getStringProperty('id');
+    return this.getProperty<string>('id');
   }
 
   set id(value: string) {
-    this.setStringProperty('id', value);
+    this.setProperty<string>('id', value);
   }
 
   protected data: Map<string, unknown> = new Map();
@@ -191,127 +191,9 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
   ): any[] | null {
     return null;
   }
-
-  setEnumProperty<T extends string>(
-    name: string,
-    value: T,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptEnumProperty(name, value, tag, forceChange);
-  }
-
-  setMapModelProperty<T>(
-    name: string,
-    value: Map<string, T>,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptMapModelProperty(name, value, tag, forceChange);
-  }
-
-  setListProperty<T>(
-    name: string,
-    value: T[],
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptListProperty(name, value, tag, forceChange);
-  }
-
-  setStringProperty(
-    name: string,
-    value: string,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptStringProperty(name, value, tag, forceChange);
-  }
-
-  setBooleanProperty(
-    name: string,
-    value: boolean,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptBooleanProperty(name, value, tag, forceChange);
-  }
-
-  setNumberProperty(
-    name: string,
-    value: number,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptNumberProperty(name, value, tag, forceChange);
-  }
-
-  setAnyProperty(
-    name: string,
-    value: any,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptAnyProperty(name, value, tag, forceChange);
-  }
-
-  setOptEnumProperty<T extends string>(
+  setProperty<T>(
     name: string,
     value: T | null,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptAnyProperty(name, value, tag, forceChange);
-  }
-
-  setOptMapModelProperty<T>(
-    name: string,
-    value: Map<string, T> | null,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptAnyProperty(name, value, tag, forceChange);
-  }
-
-  setOptListProperty<T>(
-    name: string,
-    value: T[] | null,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptAnyProperty(name, value, tag, forceChange);
-  }
-
-  setOptStringProperty(
-    name: string,
-    value: string | null,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptAnyProperty(name, value, tag, forceChange);
-  }
-
-  setOptBooleanProperty(
-    name: string,
-    value: boolean | null,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptAnyProperty(name, value, tag, forceChange);
-  }
-
-  setOptNumberProperty(
-    name: string,
-    value: number | null,
-    tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
-  ): void {
-    this.setOptAnyProperty(name, value, tag, forceChange);
-  }
-
-  setOptAnyProperty(
-    name: string,
-    value: any,
     tag: string = ModelChangeTags.NORMAL,
     forceChange = false,
   ): void {
@@ -341,128 +223,9 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
     return this.data.has(name);
   }
 
-  protected getEnumProperty<T extends string>(name: string): T {
-    const value = this.getOptEnumProperty<T>(name);
-    if (value === null) {
-      throw new Error(`Property ${name} is null`);
-    }
-    return value;
-  }
-
-  protected getMapModelProperty<T>(
-    name: string,
-    create?: () => Map<string, T>,
-  ): Map<string, T> {
-    const value = this.getOptMapModelProperty<T>(name, create);
-    if (value === null) {
-      throw new Error(`Property ${name} is null`);
-    }
-    return value;
-  }
-
-  protected getListProperty<T>(name: string, create?: () => T[]): T[] {
-    const value = this.getOptListProperty<T>(name, create);
-    if (value === null) {
-      throw new Error(`Property ${name} is null`);
-    }
-    return value;
-  }
-
-  protected getStringProperty(name: string, create?: () => string): string {
-    const value = this.getOptStringProperty(name, create);
-    if (value === null) {
-      throw new Error(`Property ${name} is null`);
-    }
-    return value;
-  }
-
-  protected getBooleanProperty(name: string, create?: () => boolean): boolean {
-    const value = this.getOptBooleanProperty(name, create);
-    if (value === null) {
-      throw new Error(`Property ${name} is null`);
-    }
-    return value;
-  }
-
-  protected getNumberProperty(name: string, create?: () => number): number {
-    const value = this.getOptNumberProperty(name, create);
-    if (value === null) {
-      throw new Error(`Property ${name} is null`);
-    }
-    return value;
-  }
-
-  protected getAnyProperty(name: string, create?: () => any): any {
-    const value = this.getOptAnyProperty(name, create);
-    if (value === null || value === undefined) {
-      throw new Error(`Property ${name} is null or undefined`);
-    }
-    return value;
-  }
-
-  protected getOptEnumProperty<T extends string>(name: string): T | null {
-    const value = this.getOptAnyProperty(name);
-    if (value === null || value === undefined) {
-      return null;
-    }
+  getProperty<T = unknown | null>(name: string): T {
+    const value = this.data.get(name);
     return value as T;
-  }
-
-  protected getOptMapModelProperty<T>(
-    name: string,
-    create?: () => Map<string, T> | null,
-  ): Map<string, T> | null {
-    return this.getOptAnyProperty(name, create) as Map<string, T> | null;
-  }
-
-  protected getOptListProperty<T>(
-    name: string,
-    create?: () => T[] | null,
-  ): T[] | null {
-    return this.getOptAnyProperty(name, create) as T[] | null;
-  }
-
-  protected getOptStringProperty(
-    name: string,
-    create?: () => string | null,
-  ): string | null {
-    const value = this.getOptAnyProperty(name, create);
-    if (value === null || value === undefined) {
-      return null;
-    }
-    return String(value);
-  }
-
-  protected getOptBooleanProperty(
-    name: string,
-    create?: () => boolean | null,
-  ): boolean | null {
-    const value = this.getOptAnyProperty(name, create);
-    if (value === null || value === undefined) {
-      return null;
-    }
-    return Boolean(value);
-  }
-
-  protected getOptNumberProperty(
-    name: string,
-    create?: () => number | null,
-  ): number | null {
-    const value = this.getOptAnyProperty(name, create);
-    if (value === null || value === undefined) {
-      return null;
-    }
-    return Number(value);
-  }
-
-  protected getOptAnyProperty(name: string, create?: () => unknown): unknown {
-    if (this.data.has(name) || !create) {
-      return this.data.get(name);
-    } else {
-      const defaultValue = create();
-      this.data.set(name, defaultValue);
-      return defaultValue;
-    }
   }
 
   private notifyChanged(
