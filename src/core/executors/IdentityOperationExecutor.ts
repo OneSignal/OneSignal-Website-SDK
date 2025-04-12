@@ -14,8 +14,10 @@ import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { type Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
-import { DELETE_ALIAS, SET_ALIAS } from './constants';
+import { OPERATION_NAME } from './constants';
 
+// Implements logic similar to Android SDK's IdentityOperationExecutor
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/IdentityOperationExecutor.kt
 export class IdentityOperationExecutor implements IOperationExecutor {
   private readonly _identityBackend: IIdentityBackendService;
   private readonly _identityModelStore: IdentityModelStore;
@@ -35,7 +37,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   get operations(): string[] {
-    return [SET_ALIAS, DELETE_ALIAS];
+    return [OPERATION_NAME.SET_ALIAS, OPERATION_NAME.DELETE_ALIAS];
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {

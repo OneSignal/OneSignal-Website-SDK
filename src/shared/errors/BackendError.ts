@@ -1,6 +1,7 @@
 import OneSignalError from './OneSignalError';
 
-// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/main/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/exceptions/BackendException.kt
+// Implements logic similar to Android SDK's BackendException
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/exceptions/BackendException.kt
 /**
  * Raised when a backend service request has failed.
  */

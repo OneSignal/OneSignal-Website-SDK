@@ -1,16 +1,16 @@
 import { IDManager } from 'src/shared/managers/IDManager';
-import { DELETE_ALIAS } from '../executors/constants';
+import { OPERATION_NAME } from '../executors/constants';
 import {
   GroupComparisonType,
   GroupComparisonValue,
   Operation,
 } from './Operation';
 
+// Implements logic similar to Android SDK's DeleteAliasOperation
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/DeleteAliasOperation.kt
 export class DeleteAliasOperation extends Operation {
-  constructor();
-  constructor(appId: string, onesignalId: string, label: string);
   constructor(appId?: string, onesignalId?: string, label?: string) {
-    super(DELETE_ALIAS);
+    super(OPERATION_NAME.DELETE_ALIAS);
     if (appId && onesignalId && label) {
       this.appId = appId;
       this.onesignalId = onesignalId;

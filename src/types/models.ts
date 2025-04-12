@@ -7,6 +7,9 @@ export const ModelChangeTags = {
   HYDRATE: 'HYDRATE',
 } as const;
 
+export type ModelChangeTagValue =
+  (typeof ModelChangeTags)[keyof typeof ModelChangeTags];
+
 /**
  * A handler interface for subscribing to model change events for a specific model store.
  */

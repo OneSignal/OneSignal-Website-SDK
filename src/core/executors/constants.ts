@@ -1,2 +1,4 @@
-export const SET_ALIAS = 'set-alias';
-export const DELETE_ALIAS = 'delete-alias';
+export const OPERATION_NAME = {
+  SET_ALIAS: 'set-alias',
+  DELETE_ALIAS: 'delete-alias',
+} as const;

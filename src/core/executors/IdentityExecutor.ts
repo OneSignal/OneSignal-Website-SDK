@@ -4,10 +4,11 @@ import { CoreChangeType } from '../models/CoreChangeType';
 import { PropertyDelta } from '../models/CoreDeltas';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
-import { Operation } from '../operations/Operation';
+import { LegacyOperation } from '../operationRepo/LegacyOperation';
 import { isPropertyDelta } from '../utils/typePredicates';
 import ExecutorBase from './ExecutorBase';
 
+// TODO: Remove this with later Web SDK Prs
 export class IdentityExecutor extends ExecutorBase {
   constructor(
     executorConfig: ExecutorConfig<SupportedModel>,

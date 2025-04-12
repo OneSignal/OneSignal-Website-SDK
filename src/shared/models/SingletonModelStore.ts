@@ -1,5 +1,5 @@
-import { Model, ModelChangedArgs } from 'src/core/modelRepo/Model';
 import { ModelStore } from 'src/core/modelRepo/ModelStore';
+import { Model, ModelChangedArgs } from 'src/core/models/Model';
 import {
   IModelStoreChangeHandler,
   ISingletonModelStore,
@@ -7,6 +7,8 @@ import {
 } from 'src/types/models';
 import { EventProducer } from '../helpers/EventProducer';
 
+// Implements logic similar to Android SDK's SingletonModelStore
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/SingletonModelStore.kt
 export class SingletonModelStore<TModel extends Model>
   implements ISingletonModelStore<TModel>, IModelStoreChangeHandler<TModel>
 {
@@ -55,8 +57,11 @@ export class SingletonModelStore<TModel extends Model>
     return this.changeSubscription.hasSubscribers;
   }
 
-  // These are no-ops by design
-  onModelAdded(model: TModel, tag: string): void {
+  /**
+   * @param {TModel} model
+   * @param {string} tag
+   */
+  onModelAdded(): void {
     // No-op: singleton is transparently added
   }
 
@@ -66,7 +71,11 @@ export class SingletonModelStore<TModel extends Model>
     );
   }
 
-  onModelRemoved(model: TModel, tag: string): void {
+  /**
+   * @param {TModel} model
+   * @param {string} tag
+   */
+  onModelRemoved(): void {
     // No-op: singleton is never removed
   }
 }
