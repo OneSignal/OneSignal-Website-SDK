@@ -8,7 +8,7 @@ import { CoreChangeType } from '../models/CoreChangeType';
 import { CoreDelta } from '../models/CoreDeltas';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { SupportedModel } from '../models/SupportedModels';
-import { Operation } from '../operationRepo/Operation';
+import { Operation } from '../operations/Operation';
 import { ExecutorResult } from './ExecutorResult';
 
 const RETRY_AFTER = 5_000;

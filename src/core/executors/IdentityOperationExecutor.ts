@@ -1,14 +1,18 @@
+import Log from 'src/shared/libraries/Log';
 import { IIdentityBackendService } from 'src/types/backend';
-import { IOperationExecutor } from 'src/types/operation';
+import { ExecutionResponse, IOperationExecutor } from 'src/types/operation';
+import { IRebuildUserService } from 'src/types/user';
+import { type IdentityModelStore } from '../models/IdentityModelStore';
+import { type NewRecordsState } from '../operationRepo/NewRecordsState';
+import { type Operation } from '../operations/Operation';
+import { SetAliasOperation } from '../operations/SetAliasOperation';
+import { DELETE_ALIAS, SET_ALIAS } from './constants';
 
 export class IdentityOperationExecutor implements IOperationExecutor {
   private readonly _identityBackend: IIdentityBackendService;
   private readonly _identityModelStore: IdentityModelStore;
   private readonly _buildUserService: IRebuildUserService;
   private readonly _newRecordState: NewRecordsState;
-
-  static readonly SET_ALIAS = 'set-alias';
-  static readonly DELETE_ALIAS = 'delete-alias';
 
   constructor(
     identityBackend: IIdentityBackendService,
@@ -23,14 +27,11 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   get operations(): string[] {
-    return [
-      IdentityOperationExecutor.SET_ALIAS,
-      IdentityOperationExecutor.DELETE_ALIAS,
-    ];
+    return [SET_ALIAS, DELETE_ALIAS];
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Logging.debug(
+    Log.debug(
       `IdentityOperationExecutor(operations: ${JSON.stringify(operations)})`,
     );
 

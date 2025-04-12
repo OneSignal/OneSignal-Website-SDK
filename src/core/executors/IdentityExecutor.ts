@@ -4,7 +4,7 @@ import { CoreChangeType } from '../models/CoreChangeType';
 import { PropertyDelta } from '../models/CoreDeltas';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
-import { LegacyOperation } from '../operationRepo/LegacyOperation';
+import { Operation } from '../operations/Operation';
 import { isPropertyDelta } from '../utils/typePredicates';
 import ExecutorBase from './ExecutorBase';
 

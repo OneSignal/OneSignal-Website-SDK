@@ -1,15 +1,15 @@
-import Database from '../../shared/services/Database';
 import OneSignalError from '../../shared/errors/OneSignalError';
+import { APIHeaders } from '../../shared/models/APIHeaders';
+import Database from '../../shared/services/Database';
 import { IdentityModel } from '../models/IdentityModel';
 import { SupportedSubscription } from '../models/SubscriptionModels';
-import { Operation } from '../operationRepo/Operation';
+import { Operation } from '../operations/Operation';
 import {
-  isIdentityObject,
-  isFutureSubscriptionObject,
   isCompleteSubscriptionObject,
+  isFutureSubscriptionObject,
+  isIdentityObject,
 } from '../utils/typePredicates';
 import AliasPair from './AliasPair';
-import { APIHeaders } from '../../shared/models/APIHeaders';
 
 export function processSubscriptionOperation<Model>(
   operation: Operation<Model>,

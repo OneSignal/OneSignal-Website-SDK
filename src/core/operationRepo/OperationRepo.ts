@@ -5,17 +5,16 @@ import {
   IOperationExecutor,
   IOperationRepo,
   IStartableService,
-  Operation,
   OperationModelStore,
 } from 'src/types/operation';
 import { v4 as uuid } from 'uuid';
+import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { type NewRecordsState } from './NewRecordsState';
-import { GroupComparisonType } from './Operation';
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationRepo.kt
@@ -163,19 +162,19 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       let highestRetries = 0;
       switch (response.result) {
-        case ExecutionResult.Success:
+        case ExecutionResult.SUCCESS:
           // Remove operations from store
           ops.forEach((op) => this.operationModelStore.remove(op.operation.id));
           break;
 
-        case ExecutionResult.FailUnauthorized:
-        case ExecutionResult.FailNoRetry:
-        case ExecutionResult.FailConflict:
+        case ExecutionResult.FAIL_UNAUTHORIZED:
+        case ExecutionResult.FAIL_NORETRY:
+        case ExecutionResult.FAIL_CONFLICT:
           Log.error(`Operation execution failed without retry: ${operations}`);
           ops.forEach((op) => this.operationModelStore.remove(op.operation.id));
           break;
 
-        case ExecutionResult.SuccessStartingOnly:
+        case ExecutionResult.SUCCESS_STARTING_ONLY:
           // Remove starting operation and re-add others to the queue
           this.operationModelStore.remove(startingOp.operation.id);
 
@@ -185,7 +184,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
             .forEach((op) => this.queue.unshift(op));
           break;
 
-        case ExecutionResult.FailRetry:
+        case ExecutionResult.FAIL_RETRY:
           Log.error(`Operation execution failed, retrying: ${operations}`);
           // Add back all operations to front of queue
           ops.toReversed().forEach((op) => {
@@ -197,7 +196,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           });
           break;
 
-        case ExecutionResult.FailPauseOpRepo:
+        case ExecutionResult.FAIL_PAUSE_OPREPO:
           Log.error(
             `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
           );

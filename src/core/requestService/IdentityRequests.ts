@@ -1,5 +1,6 @@
-import { logMethodCall } from '../../shared/utils/utils';
 import OneSignalError from '../../shared/errors/OneSignalError';
+import MainHelper from '../../shared/helpers/MainHelper';
+import { logMethodCall } from '../../shared/utils/utils';
 import {
   ExecutorResult,
   ExecutorResultFailNotRetriable,
@@ -7,11 +8,10 @@ import {
   ExecutorResultSuccess,
 } from '../executors/ExecutorResult';
 import { IdentityModel } from '../models/IdentityModel';
-import { Operation } from '../operationRepo/Operation';
+import { Operation } from '../operations/Operation';
 import { isIdentityObject } from '../utils/typePredicates';
 import { processIdentityOperation } from './helpers';
 import { RequestService } from './RequestService';
-import MainHelper from '../../shared/helpers/MainHelper';
 
 /**
  * This class contains logic for all the Identity model related requests that can be made to the OneSignal API

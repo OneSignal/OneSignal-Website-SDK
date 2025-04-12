@@ -1,64 +1,58 @@
+import { type Operation } from 'src/core/operations/Operation';
+
 // Enums
-export enum ExecutionResult {
+export const ExecutionResult = {
   /**
    * The operation was executed successfully.
    */
-  Success,
+  SUCCESS: 0,
 
   /**
    * The operation group failed but the starting op should be retried split from the group.
    */
-  SuccessStartingOnly,
+  SUCCESS_STARTING_ONLY: 1,
 
   /**
    * The operation failed but should be retried.
    */
-  FailRetry,
+  FAIL_RETRY: 2,
 
   /**
    * The operation failed and should not be tried again.
    */
-  FailNoRetry,
+  FAIL_NORETRY: 3,
 
   /**
    * The operation failed because the request was not authorized.  The operation can be
    * retried if authorization can be achieved.
    */
-  FailUnauthorized,
+  FAIL_UNAUTHORIZED: 4,
 
   /**
    * Used in special login case.
    * The operation failed due to a conflict and can be handled.
    */
-  FailConflict,
+  FAIL_CONFLICT: 5,
 
   /**
    * Used in special create user case.
    * The operation failed due to a non-retryable error. Pause the operation repo
    * and retry on a new session, giving the SDK a chance to recover from the failed user create.
    */
-  FailPauseOpRepo,
-}
+  FAIL_PAUSE_OPREPO: 6,
+} as const;
+
+export type ExecutionResultValue =
+  (typeof ExecutionResult)[keyof typeof ExecutionResult];
 
 // Interfaces
-export interface Operation {
-  id: string;
-  name: string;
-  canStartExecute: boolean;
-  applyToRecordId?: string;
-  groupComparisonType: GroupComparisonType;
-  createComparisonKey: string;
-  modifyComparisonKey: string;
-  translateIds(idTranslations: Record<string, string>): void;
-}
-
 export interface IOperationExecutor {
   operations: string[];
   execute(operations: Operation[]): Promise<ExecutionResponse>;
 }
 
 export interface ExecutionResponse {
-  result: ExecutionResult;
+  result: ExecutionResultValue;
   operations?: Operation[];
   idTranslations?: Record<string, string>;
   retryAfterSeconds?: number;

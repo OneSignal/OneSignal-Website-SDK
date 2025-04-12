@@ -1,6 +1,6 @@
 import Log from 'src/shared/libraries/Log';
 import { IPreferencesService } from 'src/types/preferences';
-import { Operation } from '../operationRepo/Operation';
+import { Operation } from '../operations/Operation';
 import { ModelStore } from './ModelStore';
 
 export class OperationModelStore extends ModelStore<Operation> {
