@@ -1,9 +1,17 @@
+import { BackendError } from 'src/shared/errors/BackendError';
+import {
+  getResponseStatusType,
+  ResponseStatusType,
+} from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
-import { IIdentityBackendService } from 'src/types/backend';
-import { ExecutionResponse, IOperationExecutor } from 'src/types/operation';
+import { IdentityConstants, IIdentityBackendService } from 'src/types/backend';
+import { ModelChangeTags } from 'src/types/models';
+import { ExecutionResult, IOperationExecutor } from 'src/types/operation';
 import { IRebuildUserService } from 'src/types/user';
 import { type IdentityModelStore } from '../models/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
+import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
+import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { type Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { DELETE_ALIAS, SET_ALIAS } from './constants';
@@ -76,37 +84,33 @@ export class IdentityOperationExecutor implements IOperationExecutor {
           this._identityModelStore.model.onesignalId ===
           lastOperation.onesignalId
         ) {
-          this._identityModelStore.model.setStringProperty(
+          this._identityModelStore.model.setProperty<string>(
             lastOperation.label,
             lastOperation.value,
             ModelChangeTags.HYDRATE,
           );
         }
       } catch (ex) {
-        if (ex instanceof BackendException) {
-          const responseType = NetworkUtils.getResponseStatusType(
-            ex.statusCode,
-          );
+        if (ex instanceof BackendError) {
+          const responseType = getResponseStatusType(ex.statusCode);
 
           switch (responseType) {
-            case NetworkUtils.ResponseStatusType.RETRYABLE:
+            case ResponseStatusType.RETRYABLE:
               return new ExecutionResponse(
                 ExecutionResult.FAIL_RETRY,
                 ex.retryAfterSeconds,
               );
-            case NetworkUtils.ResponseStatusType.INVALID:
+
+            case ResponseStatusType.INVALID:
               return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
-            case NetworkUtils.ResponseStatusType.CONFLICT:
+
+            case ResponseStatusType.CONFLICT:
               return new ExecutionResponse(
                 ExecutionResult.FAIL_CONFLICT,
                 ex.retryAfterSeconds,
               );
-            case NetworkUtils.ResponseStatusType.UNAUTHORIZED:
-              return new ExecutionResponse(
-                ExecutionResult.FAIL_UNAUTHORIZED,
-                ex.retryAfterSeconds,
-              );
-            case NetworkUtils.ResponseStatusType.MISSING:
+
+            case ResponseStatusType.MISSING: {
               if (
                 ex.statusCode === 404 &&
                 this._newRecordState.isInMissingRetryWindow(
@@ -126,13 +130,13 @@ export class IdentityOperationExecutor implements IOperationExecutor {
                 );
               if (!rebuildOps) {
                 return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
-              } else {
-                return new ExecutionResponse(
-                  ExecutionResult.FAIL_RETRY,
-                  ex.retryAfterSeconds,
-                  rebuildOps,
-                );
               }
+              return new ExecutionResponse(
+                ExecutionResult.FAIL_RETRY,
+                ex.retryAfterSeconds,
+                rebuildOps,
+              );
+            }
           }
         }
       }
@@ -149,34 +153,35 @@ export class IdentityOperationExecutor implements IOperationExecutor {
           this._identityModelStore.model.onesignalId ===
           lastOperation.onesignalId
         ) {
-          this._identityModelStore.model.setOptStringProperty(
+          this._identityModelStore.model.setProperty<string | null>(
             lastOperation.label,
             null,
             ModelChangeTags.HYDRATE,
           );
         }
       } catch (ex) {
-        if (ex instanceof BackendException) {
-          const responseType = NetworkUtils.getResponseStatusType(
-            ex.statusCode,
-          );
+        if (ex instanceof BackendError) {
+          const responseType = getResponseStatusType(ex.statusCode);
 
           switch (responseType) {
-            case NetworkUtils.ResponseStatusType.RETRYABLE:
+            case ResponseStatusType.RETRYABLE:
               return new ExecutionResponse(
                 ExecutionResult.FAIL_RETRY,
                 ex.retryAfterSeconds,
               );
-            case NetworkUtils.ResponseStatusType.CONFLICT:
+            case ResponseStatusType.CONFLICT:
               return new ExecutionResponse(ExecutionResult.SUCCESS); // alias doesn’t exist = good
-            case NetworkUtils.ResponseStatusType.INVALID:
+
+            case ResponseStatusType.INVALID:
               return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
-            case NetworkUtils.ResponseStatusType.UNAUTHORIZED:
+
+            case ResponseStatusType.UNAUTHORIZED:
               return new ExecutionResponse(
                 ExecutionResult.FAIL_UNAUTHORIZED,
                 ex.retryAfterSeconds,
               );
-            case NetworkUtils.ResponseStatusType.MISSING:
+
+            case ResponseStatusType.MISSING:
               if (
                 ex.statusCode === 404 &&
                 this._newRecordState.isInMissingRetryWindow(
@@ -188,7 +193,10 @@ export class IdentityOperationExecutor implements IOperationExecutor {
                   ex.retryAfterSeconds,
                 );
               } else {
-                return new ExecutionResponse(ExecutionResult.SUCCESS); // already deleted
+                // This means either the User or the Alias was already
+                // deleted, either way the end state is the same, the
+                // alias no longer exists on that User.
+                return new ExecutionResponse(ExecutionResult.SUCCESS);
               }
           }
         }

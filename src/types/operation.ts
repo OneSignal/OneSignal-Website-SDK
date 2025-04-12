@@ -1,3 +1,4 @@
+import { type ExecutionResponse } from 'src/core/operations/ExecutionResponse';
 import { type Operation } from 'src/core/operations/Operation';
 
 // Enums
@@ -49,17 +50,6 @@ export type ExecutionResultValue =
 export interface IOperationExecutor {
   operations: string[];
   execute(operations: Operation[]): Promise<ExecutionResponse>;
-}
-
-export interface ExecutionResponse {
-  result: ExecutionResultValue;
-  operations?: Operation[];
-  idTranslations?: Record<string, string>;
-  retryAfterSeconds?: number;
-}
-
-export interface ITime {
-  getCurrentTimeMillis(): number;
 }
 
 export interface ConfigModel {

@@ -1,4 +1,4 @@
-import { Operation } from './operation';
+import { type Operation } from 'src/core/operations/Operation';
 
 /**
  * Interface for retrieving rebuild operations for a user.

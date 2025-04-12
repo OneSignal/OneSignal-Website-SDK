@@ -1,13 +1,13 @@
 export interface IIdentityBackendService {
   /**
    * Set one or more aliases for the user identified by the aliasLabel/aliasValue provided.
-   * If there is a non-successful response from the backend, a BackendException should be thrown with response data.
+   * If there is a non-successful response from the backend, a BackendError should be thrown with response data.
    *
    * @param appId - The ID of the OneSignal application this user exists under.
    * @param aliasLabel - The alias label to retrieve the user under.
    * @param aliasValue - The identifier within the aliasLabel that identifies the user to retrieve.
    * @param identities - The identities that are to be created.
-   * @throws BackendException
+   * @throws BackendError
    */
   setAlias(
     appId: string,
@@ -18,13 +18,13 @@ export interface IIdentityBackendService {
 
   /**
    * Delete the aliasLabelToDelete from the user identified by the aliasLabel/aliasValue provided.
-   * If there is a non-successful response from the backend, a BackendException should be thrown with response data.
+   * If there is a non-successful response from the backend, a BackendError should be thrown with response data.
    *
    * @param appId - The ID of the OneSignal application this user exists under.
    * @param aliasLabel - The alias label to retrieve the user under.
    * @param aliasValue - The identifier within the aliasLabel that identifies the user to retrieve.
    * @param aliasLabelToDelete - The alias label to delete from the user identified.
-   * @throws BackendException
+   * @throws BackendError
    */
   deleteAlias(
     appId: string,
