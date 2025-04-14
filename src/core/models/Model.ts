@@ -164,15 +164,12 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
    * class of Model for this property is determined by the implementor and should depend on
    * the property provided.
    *
-   * @param property The property that is to contain the Model created by this method.
-   * @param jsonObject The JSON object that the Model will be created/initialized from.
+   * @param {string} property The property that is to contain the Model created by this method.
+   * @param {object} jsonObject The JSON object that the Model will be created/initialized from.
    *
    * @return The created Model, or null if the property should not be set.
    */
-  protected createModelForProperty(
-    property: string,
-    jsonObject: any,
-  ): Model | null {
+  protected createModelForProperty(): Model | null {
     return null;
   }
 
@@ -182,17 +179,15 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
    * inside the Array for this property is determined by the implementor and should depend
    * on the property provided.
    *
-   * @param property The property that is to contain the Array created by this method.
-   * @param jsonArray The JSON array that the Array will be created/initialized from.
+   * @param {string} property The property that is to contain the Array created by this method.
+   * @param {unknown[]} jsonArray The JSON array that the Array will be created/initialized from.
    *
    * @return The created Array, or null if the property should not be set.
    */
-  protected createListForProperty(
-    property: string,
-    jsonArray: any[],
-  ): any[] | null {
+  protected createListForProperty(): unknown[] | null {
     return null;
   }
+
   setProperty<T>(
     name: string,
     value: T | null,
