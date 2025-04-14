@@ -1,22 +1,22 @@
-import OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
 import OneSignalApiBase from '../../shared/api/OneSignalApiBase';
-import { IdentityModel, SupportedIdentity } from '../models/IdentityModel';
-import {
-  FutureSubscriptionModel,
-  SubscriptionModel,
-} from '../models/SubscriptionModels';
-import AliasPair from './AliasPair';
-import { UpdateUserPayload } from './UpdateUserPayload';
-import { CreateUserPayload } from './CreateUserPayload';
-import { RequestMetadata } from '../models/RequestMetadata';
-import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
-import OneSignalUtils from '../../shared/utils/OneSignalUtils';
+import OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
 import {
   SdkInitError,
   SdkInitErrorKind,
 } from '../../shared/errors/SdkInitError';
-import UserData from '../models/UserData';
+import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
+import OneSignalUtils from '../../shared/utils/OneSignalUtils';
+import { IdentityModel } from '../models/IdentityModel';
+import { RequestMetadata } from '../models/RequestMetadata';
+import {
+  FutureSubscriptionModel,
+  SubscriptionModel,
+} from '../models/SubscriptionModels';
+import UserData, { Identity } from '../models/UserData';
 import { UserPropertiesModel } from '../models/UserPropertiesModel';
+import AliasPair from './AliasPair';
+import { CreateUserPayload } from './CreateUserPayload';
+import { UpdateUserPayload } from './UpdateUserPayload';
 
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
@@ -140,10 +140,10 @@ export class RequestService {
   static async addAlias(
     requestMetadata: RequestMetadata,
     alias: AliasPair,
-    identity: SupportedIdentity,
+    identity: Identity,
   ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.patch<{ identity: SupportedIdentity }>(
+    return OneSignalApiBase.patch<{ identity: Identity }>(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
       { identity },
       requestMetadata.jwtHeader,
@@ -178,7 +178,7 @@ export class RequestService {
     labelToRemove: string,
   ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.delete<{ identity: SupportedIdentity }>(
+    return OneSignalApiBase.delete<{ identity: Identity }>(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
       requestMetadata.jwtHeader,
     );
@@ -286,11 +286,11 @@ export class RequestService {
   static async transferSubscription(
     requestMetadata: RequestMetadata,
     subscriptionId: string,
-    identity: SupportedIdentity,
+    identity: Identity,
     retainPreviousOwner: boolean,
   ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.patch<{ identity: SupportedIdentity }>(
+    return OneSignalApiBase.patch<{ identity: Identity }>(
       `apps/${appId}/subscriptions/${subscriptionId}/owner`,
       {
         identity: { ...identity },

@@ -1,3 +1,5 @@
+// Implements logic similar to Android SDK's NetworkUtils
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/NetworkUtils.kt
 export const ResponseStatusType = {
   INVALID: 'INVALID',
   RETRYABLE: 'RETRYABLE',
@@ -8,8 +10,6 @@ export const ResponseStatusType = {
 
 type ResponseStatusValue =
   (typeof ResponseStatusType)[keyof typeof ResponseStatusType];
-
-export const MAX_NETWORK_REQUEST_ATTEMPT_COUNT = 3;
 
 /**
  * Determines the response status type based on HTTP status code.

@@ -1,5 +1,5 @@
 import { IdentityConstants } from 'src/types/backend';
-import { Model } from '../modelRepo/Model';
+import { Model } from './Model';
 
 /**
  * The identity model as a MapModel: a simple key-value pair where the key represents

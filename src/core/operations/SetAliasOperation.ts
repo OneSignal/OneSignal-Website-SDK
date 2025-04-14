@@ -11,24 +11,21 @@ import {
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/SetAliasOperation.kt
 export class SetAliasOperation extends Operation {
   constructor(
-    appId?: string,
-    onesignalId?: string,
-    label?: string,
-    value?: string,
+    appId: string,
+    onesignalId: string,
+    label: string,
+    value: string,
   ) {
     super(OPERATION_NAME.SET_ALIAS);
-    if (appId && onesignalId && label && value) {
-      this.appId = appId;
-      this.onesignalId = onesignalId;
-      this.label = label;
-      this.value = value;
-    }
+    this.appId = appId;
+    this.onesignalId = onesignalId;
+    this.label = label;
+    this.value = value;
   }
 
   get appId(): string {
     return this.getProperty<string>('appId');
   }
-
   private set appId(value: string) {
     this.setProperty<string>('appId', value);
   }
@@ -36,7 +33,6 @@ export class SetAliasOperation extends Operation {
   get onesignalId(): string {
     return this.getProperty<string>('onesignalId');
   }
-
   private set onesignalId(value: string) {
     this.setProperty<string>('onesignalId', value);
   }
@@ -44,7 +40,6 @@ export class SetAliasOperation extends Operation {
   get label(): string {
     return this.getProperty<string>('label');
   }
-
   private set label(value: string) {
     this.setProperty<string>('label', value);
   }
@@ -52,7 +47,6 @@ export class SetAliasOperation extends Operation {
   get value(): string {
     return this.getProperty<string>('value');
   }
-
   private set value(value: string) {
     this.setProperty<string>('value', value);
   }
