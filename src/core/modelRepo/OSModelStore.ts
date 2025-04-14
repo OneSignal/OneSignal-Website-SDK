@@ -1,14 +1,14 @@
-import { OSModel } from './OSModel';
 import Subscribable from '../Subscribable';
+import { CoreChangeType } from '../models/CoreChangeType';
 import {
-  ModelStoreChange,
   ModelStoreAdded,
+  ModelStoreChange,
+  ModelStoreHydrated,
   ModelStoreRemoved,
   ModelStoreUpdated,
-  ModelStoreHydrated,
 } from '../models/ModelStoreChange';
-import { CoreChangeType } from '../models/CoreChangeType';
 import { isOSModel, isOSModelUpdatedArgs } from '../utils/typePredicates';
+import { OSModel } from './OSModel';
 
 export class OSModelStore<Model> extends Subscribable<ModelStoreChange<Model>> {
   public models: { [key: string]: OSModel<Model> } = {};
