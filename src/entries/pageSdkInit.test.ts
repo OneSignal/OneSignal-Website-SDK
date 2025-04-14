@@ -16,6 +16,7 @@ vi.mock('src/shared/utils/bowserCastle', () => ({
   }),
 }));
 
+// need to wait for full OperationRepo rework
 describe('pageSdkInit', () => {
   beforeEach(async () => {
     const cssURL =

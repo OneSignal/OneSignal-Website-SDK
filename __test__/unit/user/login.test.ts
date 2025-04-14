@@ -1,21 +1,21 @@
-import { TestEnvironment } from '../../support/environment/TestEnvironment';
-import Database from '../../../src/shared/services/Database';
-import LoginManager from '../../../src/page/managers/LoginManager';
+import { nock, stub } from '__test__/support/helpers/general';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
-import { setupLoginStubs } from '../../support/helpers/login';
-import { RequestService } from '../../../src/core/requestService/RequestService';
-import { getDummyIdentityOSModel } from '../../support/helpers/core';
+import { IdentityExecutor } from '../../../src/core/executors/IdentityExecutor';
+import { PropertiesExecutor } from '../../../src/core/executors/PropertiesExecutor';
+import { SubscriptionExecutor } from '../../../src/core/executors/SubscriptionExecutor';
 import { ModelName } from '../../../src/core/models/SupportedModels';
+import { RequestService } from '../../../src/core/requestService/RequestService';
+import LoginManager from '../../../src/page/managers/LoginManager';
+import Database from '../../../src/shared/services/Database';
+import LocalStorage from '../../../src/shared/utils/LocalStorage';
 import {
   DUMMY_EXTERNAL_ID,
   DUMMY_EXTERNAL_ID_2,
   DUMMY_ONESIGNAL_ID,
 } from '../../support/constants';
-import { IdentityExecutor } from '../../../src/core/executors/IdentityExecutor';
-import { PropertiesExecutor } from '../../../src/core/executors/PropertiesExecutor';
-import { SubscriptionExecutor } from '../../../src/core/executors/SubscriptionExecutor';
-import LocalStorage from '../../../src/shared/utils/LocalStorage';
-import { nock, stub } from '__test__/support/helpers/general';
+import { TestEnvironment } from '../../support/environment/TestEnvironment';
+import { getDummyIdentityOSModel } from '../../support/helpers/core';
+import { setupLoginStubs } from '../../support/helpers/login';
 
 // suppress all internal logging
 vi.useFakeTimers();

@@ -1,12 +1,12 @@
-import MainHelper from '../../../src/shared/helpers/MainHelper';
 import ModelCache from '../../../src/core/caching/ModelCache';
 import { OSModel } from '../../../src/core/modelRepo/OSModel';
 import EventHelper from '../../../src/shared/helpers/EventHelper';
+import MainHelper from '../../../src/shared/helpers/MainHelper';
+import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
+import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
 import { DUMMY_PUSH_TOKEN } from '../../support/constants';
 import { initializeWithPermission } from '../../support/helpers/pushSubscription';
 import { PermissionManager } from '../../support/managers/PermissionManager';
-import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
-import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
 
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(async () => {

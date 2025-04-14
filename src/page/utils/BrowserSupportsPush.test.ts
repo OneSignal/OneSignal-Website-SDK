@@ -1,8 +1,8 @@
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import {
   isIosSafari,
   isPushNotificationsSupported,
 } from './BrowserSupportsPush';
-import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 
 describe('BrowserSupportsPush', () => {
   beforeEach(async () => {
