@@ -1,3 +1,5 @@
+// Implements logic similar to Android SDK's NewRecordsState
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/states/NewRecordsState.kt
 import {
   OP_REPO_POST_CREATE_DELAY,
   OP_REPO_POST_CREATE_RETRY_UP_TO,
