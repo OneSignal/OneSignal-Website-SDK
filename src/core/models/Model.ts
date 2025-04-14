@@ -51,6 +51,8 @@ export interface ModelChangedArgs {
   newValue: unknown;
 }
 
+// Implements logic similar to Android SDK's Model
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/Model.kt
 /**
  * The base class for a Model. A model is effectively a map of data, each key in the map being
  * a property of the model, each value in the map being the property value. A property can be
