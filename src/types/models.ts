@@ -1,7 +1,6 @@
 import type { Model, ModelChangedArgs } from 'src/core/models/Model';
 import type { IEventNotifier } from './events';
 
-// MODEL STORE
 /**
  * A handler interface for subscribing to model change events for a specific model store.
  */

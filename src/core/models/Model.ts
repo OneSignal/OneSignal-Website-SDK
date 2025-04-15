@@ -2,7 +2,6 @@ import { EventProducer } from 'src/shared/helpers/EventProducer';
 import { IEventNotifier } from 'src/types/events';
 import { ModelChangeTags } from 'src/types/models';
 
-// MODEL CHANGED
 /**
  * Implement `IModelChangedHandler` and subscribe implementation via `Model.subscribe` to
  * be notified when the `Model` has changed.
@@ -164,12 +163,17 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
    * class of Model for this property is determined by the implementor and should depend on
    * the property provided.
    *
-   * @param {string} property The property that is to contain the Model created by this method.
-   * @param {object} jsonObject The JSON object that the Model will be created/initialized from.
+   * @param property The property that is to contain the Model created by this method.
+   * @param jsonObject The JSON object that the Model will be created/initialized from.
    *
    * @return The created Model, or null if the property should not be set.
    */
-  protected createModelForProperty(): Model | null {
+  protected createModelForProperty(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _property: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _jsonObject: object,
+  ): Model | null {
     return null;
   }
 
@@ -179,12 +183,17 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
    * inside the Array for this property is determined by the implementor and should depend
    * on the property provided.
    *
-   * @param {string} property The property that is to contain the Array created by this method.
-   * @param {unknown[]} jsonArray The JSON array that the Array will be created/initialized from.
+   * @param property The property that is to contain the Array created by this method.
+   * @param jsonArray The JSON array that the Array will be created/initialized from.
    *
    * @return The created Array, or null if the property should not be set.
    */
-  protected createListForProperty(): unknown[] | null {
+  protected createListForProperty(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _property: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _jsonArray: unknown[],
+  ): unknown[] | null {
     return null;
   }
 
