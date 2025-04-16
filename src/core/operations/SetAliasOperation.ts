@@ -10,17 +10,21 @@ import {
 // Implements logic similar to Android SDK's SetAliasOperation
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/SetAliasOperation.kt
 export class SetAliasOperation extends Operation {
+  constructor();
+  constructor(appId: string, onesignalId: string, label: string, value: string);
   constructor(
-    appId: string,
-    onesignalId: string,
-    label: string,
-    value: string,
+    appId?: string,
+    onesignalId?: string,
+    label?: string,
+    value?: string,
   ) {
     super(OPERATION_NAME.SET_ALIAS);
-    this.appId = appId;
-    this.onesignalId = onesignalId;
-    this.label = label;
-    this.value = value;
+    if (appId && onesignalId && label && value) {
+      this.appId = appId;
+      this.onesignalId = onesignalId;
+      this.label = label;
+      this.value = value;
+    }
   }
 
   get appId(): string {

@@ -71,10 +71,13 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       );
     }
 
-    const lastOperation = operations[operations.length - 1];
+    const lastOperation = operations[operations.length - 1] as
+      | SetAliasOperation
+      | DeleteAliasOperation;
 
-    if (lastOperation instanceof SetAliasOperation) {
-      try {
+    const isSetAlias = lastOperation instanceof SetAliasOperation;
+    try {
+      if (isSetAlias) {
         await this._identityBackend.setAlias(
           lastOperation.appId,
           IdentityConstants.ONESIGNAL_ID,
@@ -92,58 +95,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
             ModelChangeTags.HYDRATE,
           );
         }
-      } catch (ex) {
-        if (ex instanceof BackendError) {
-          const responseType = getResponseStatusType(ex.statusCode);
-
-          switch (responseType) {
-            case ResponseStatusType.RETRYABLE:
-              return new ExecutionResponse(
-                ExecutionResult.FAIL_RETRY,
-                ex.retryAfterSeconds,
-              );
-
-            case ResponseStatusType.INVALID:
-              return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
-
-            case ResponseStatusType.CONFLICT:
-              return new ExecutionResponse(
-                ExecutionResult.FAIL_CONFLICT,
-                ex.retryAfterSeconds,
-              );
-
-            case ResponseStatusType.MISSING: {
-              if (
-                ex.statusCode === 404 &&
-                this._newRecordState.isInMissingRetryWindow(
-                  lastOperation.onesignalId,
-                )
-              ) {
-                return new ExecutionResponse(
-                  ExecutionResult.FAIL_RETRY,
-                  ex.retryAfterSeconds,
-                );
-              }
-
-              const rebuildOps =
-                this._buildUserService.getRebuildOperationsIfCurrentUser(
-                  lastOperation.appId,
-                  lastOperation.onesignalId,
-                );
-              if (!rebuildOps) {
-                return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
-              }
-              return new ExecutionResponse(
-                ExecutionResult.FAIL_RETRY,
-                ex.retryAfterSeconds,
-                rebuildOps,
-              );
-            }
-          }
-        }
-      }
-    } else if (lastOperation instanceof DeleteAliasOperation) {
-      try {
+      } else if (lastOperation instanceof DeleteAliasOperation) {
         await this._identityBackend.deleteAlias(
           lastOperation.appId,
           IdentityConstants.ONESIGNAL_ID,
@@ -161,45 +113,68 @@ export class IdentityOperationExecutor implements IOperationExecutor {
             ModelChangeTags.HYDRATE,
           );
         }
-      } catch (ex) {
-        if (ex instanceof BackendError) {
-          const responseType = getResponseStatusType(ex.statusCode);
+      }
+    } catch (ex) {
+      if (ex instanceof BackendError) {
+        const responseType = getResponseStatusType(ex.statusCode);
 
-          switch (responseType) {
-            case ResponseStatusType.RETRYABLE:
+        switch (responseType) {
+          case ResponseStatusType.RETRYABLE:
+            return new ExecutionResponse(
+              ExecutionResult.FAIL_RETRY,
+              ex.retryAfterSeconds,
+            );
+          case ResponseStatusType.INVALID:
+            return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+
+          case ResponseStatusType.CONFLICT: {
+            if (isSetAlias)
+              return new ExecutionResponse(
+                ExecutionResult.FAIL_CONFLICT,
+                ex.retryAfterSeconds,
+              );
+            return new ExecutionResponse(ExecutionResult.SUCCESS); // alias doesn’t exist = good
+          }
+
+          case ResponseStatusType.UNAUTHORIZED:
+            return new ExecutionResponse(
+              ExecutionResult.FAIL_UNAUTHORIZED,
+              ex.retryAfterSeconds,
+            );
+
+          case ResponseStatusType.MISSING: {
+            if (
+              ex.statusCode === 404 &&
+              this._newRecordState.isInMissingRetryWindow(
+                lastOperation.onesignalId,
+              )
+            )
               return new ExecutionResponse(
                 ExecutionResult.FAIL_RETRY,
                 ex.retryAfterSeconds,
               );
-            case ResponseStatusType.CONFLICT:
-              return new ExecutionResponse(ExecutionResult.SUCCESS); // alias doesn’t exist = good
 
-            case ResponseStatusType.INVALID:
-              return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
-
-            case ResponseStatusType.UNAUTHORIZED:
-              return new ExecutionResponse(
-                ExecutionResult.FAIL_UNAUTHORIZED,
-                ex.retryAfterSeconds,
-              );
-
-            case ResponseStatusType.MISSING:
-              if (
-                ex.statusCode === 404 &&
-                this._newRecordState.isInMissingRetryWindow(
+            if (isSetAlias) {
+              const rebuildOps =
+                this._buildUserService.getRebuildOperationsIfCurrentUser(
+                  lastOperation.appId,
                   lastOperation.onesignalId,
-                )
-              ) {
-                return new ExecutionResponse(
-                  ExecutionResult.FAIL_RETRY,
-                  ex.retryAfterSeconds,
                 );
-              } else {
-                // This means either the User or the Alias was already
-                // deleted, either way the end state is the same, the
-                // alias no longer exists on that User.
-                return new ExecutionResponse(ExecutionResult.SUCCESS);
-              }
+
+              if (rebuildOps == null)
+                return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+
+              return new ExecutionResponse(
+                ExecutionResult.FAIL_RETRY,
+                ex.retryAfterSeconds,
+                rebuildOps,
+              );
+            }
+
+            // This means either the User or the Alias was already
+            // deleted, either way the end state is the same, the
+            // alias no longer exists on that User.
+            return new ExecutionResponse(ExecutionResult.SUCCESS);
           }
         }
       }
