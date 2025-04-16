@@ -1,4 +1,3 @@
-import { IDManager } from 'src/shared/managers/IDManager';
 import { GroupComparisonValue, Operation } from './Operation';
 
 /**
@@ -11,26 +10,10 @@ export abstract class BaseAliasOperation extends Operation {
     onesignalId?: string,
     label?: string,
   ) {
-    super(operationName);
-    if (appId && onesignalId && label) {
-      this.appId = appId;
-      this.onesignalId = onesignalId;
+    super(operationName, appId, onesignalId);
+    if (label) {
       this.label = label;
     }
-  }
-
-  get appId(): string {
-    return this.getProperty<string>('appId');
-  }
-  protected set appId(value: string) {
-    this.setProperty<string>('appId', value);
-  }
-
-  get onesignalId(): string {
-    return this.getProperty<string>('onesignalId');
-  }
-  protected set onesignalId(value: string) {
-    this.setProperty<string>('onesignalId', value);
   }
 
   get label(): string {
@@ -40,25 +23,7 @@ export abstract class BaseAliasOperation extends Operation {
     this.setProperty<string>('label', value);
   }
 
-  override get createComparisonKey(): string {
-    return '';
-  }
-
   abstract override get modifyComparisonKey(): string;
 
   abstract override get groupComparisonType(): GroupComparisonValue;
-
-  override get canStartExecute(): boolean {
-    return !IDManager.isLocalId(this.onesignalId);
-  }
-
-  override get applyToRecordId(): string {
-    return this.onesignalId;
-  }
-
-  override translateIds(map: Record<string, string>): void {
-    if (map[this.onesignalId]) {
-      this.onesignalId = map[this.onesignalId];
-    }
-  }
 }
