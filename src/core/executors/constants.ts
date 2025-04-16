@@ -6,5 +6,5 @@ export const OPERATION_NAME = {
   SET_PROPERTY: 'set-property',
   TRACK_SESSION_START: 'track-session-start',
   TRACK_SESSION_END: 'track-session-end',
-  TRACK_PURCHASE: 'track-purchase',
+  REFRESH_USER: 'refresh-user',
 } as const;

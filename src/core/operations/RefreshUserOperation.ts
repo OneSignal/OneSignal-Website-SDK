@@ -8,22 +8,22 @@ import {
 } from './Operation';
 
 /**
- * An Operation to track the ending of a session, related to a specific user.
+ * An Operation to retrieve a user from the OneSignal backend. The resulting user
+ * will replace the current user.
  */
-export class TrackSessionEndOperation extends Operation {
+export class RefreshUserOperation extends Operation {
   constructor();
-  constructor(appId: string, onesignalId: string, sessionTime: number);
-  constructor(appId?: string, onesignalId?: string, sessionTime?: number) {
-    super(OPERATION_NAME.TRACK_SESSION_END);
-    if (appId && onesignalId && sessionTime) {
+  constructor(appId: string, onesignalId: string);
+  constructor(appId?: string, onesignalId?: string) {
+    super(OPERATION_NAME.REFRESH_USER);
+    if (appId && onesignalId) {
       this.appId = appId;
       this.onesignalId = onesignalId;
-      this.sessionTime = sessionTime;
     }
   }
 
   /**
-   * The OneSignal appId the session was captured under.
+   * The application ID this subscription will be created under.
    */
   get appId(): string {
     return this.getProperty<string>('appId');
@@ -33,7 +33,7 @@ export class TrackSessionEndOperation extends Operation {
   }
 
   /**
-   * The OneSignal ID driving the session. This ID *may* be locally generated
+   * The user ID this subscription will be associated with. This ID *may* be locally generated
    * and can be checked via IDManager.isLocalId to ensure correct processing.
    */
   get onesignalId(): string {
@@ -43,26 +43,16 @@ export class TrackSessionEndOperation extends Operation {
     this.setProperty<string>('onesignalId', value);
   }
 
-  /**
-   * The amount of active time for the session, in milliseconds.
-   */
-  get sessionTime(): number {
-    return this.getProperty<number>('sessionTime');
-  }
-  private set sessionTime(value: number) {
-    this.setProperty<number>('sessionTime', value);
-  }
-
   override get createComparisonKey(): string {
-    return '';
+    return `${this.appId}.User.${this.onesignalId}.Refresh`;
   }
 
   override get modifyComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}`;
+    return `${this.appId}.User.${this.onesignalId}.Refresh`;
   }
 
   override get groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.ALTER;
+    return GroupComparisonType.CREATE;
   }
 
   override get canStartExecute(): boolean {

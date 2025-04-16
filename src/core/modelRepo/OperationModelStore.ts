@@ -4,6 +4,7 @@ import { OPERATION_NAME } from '../executors/constants';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { Operation } from '../operations/Operation';
+import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { SetTagOperation } from '../operations/SetTagOperation';
@@ -40,6 +41,9 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.DELETE_ALIAS:
         operation = new DeleteAliasOperation();
+        break;
+      case OPERATION_NAME.REFRESH_USER:
+        operation = new RefreshUserOperation();
         break;
       case OPERATION_NAME.SET_TAG:
         operation = new SetTagOperation();
