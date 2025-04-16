@@ -5,6 +5,7 @@ import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOpe
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { DeleteTagOperation } from '../operations/DeleteTagOperation';
+import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
@@ -57,6 +58,9 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.TRANSFER_SUBSCRIPTION:
         operation = new TransferSubscriptionOperation();
+        break;
+      case OPERATION_NAME.LOGIN_USER:
+        operation = new LoginUserOperation();
         break;
       case OPERATION_NAME.REFRESH_USER:
         operation = new RefreshUserOperation();

@@ -16,6 +16,7 @@ export const OPERATION_NAME = {
 
   // User Operations
   REFRESH_USER: 'refresh-user',
+  LOGIN_USER: 'login-user',
 
   // Subscription Operations
   CREATE_SUBSCRIPTION: 'create-subscription',
