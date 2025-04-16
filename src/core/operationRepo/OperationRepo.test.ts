@@ -2,16 +2,20 @@ import Log from 'src/shared/libraries/Log';
 import { describe, expect, Mock, vi } from 'vitest';
 import {
   ExecutionResult,
-  GroupComparisonType,
   IOperationExecutor,
   type OperationModelStore,
 } from '../../types/operation';
-import { NewRecordsState } from './NewRecordsState';
-import { OperationQueueItem, OperationRepo } from './OperationRepo';
 import {
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
+import { NewRecordsState } from './NewRecordsState';
+import {
+  GroupComparisonType,
+  GroupComparisonValue,
+  Operation as OperationBase,
+} from './Operation';
+import { OperationQueueItem, OperationRepo } from './OperationRepo';
 
 vi.spyOn(Log, 'error').mockImplementation(() => '');
 vi.useFakeTimers();
@@ -25,8 +29,8 @@ describe('OperationRepo', () => {
     );
 
   const getGroupedOp = () => [
-    new Operation('1', 'Op1', GroupComparisonType.Create, 'abc'),
-    new Operation('2', 'Op2', GroupComparisonType.Create, 'abc'),
+    new Operation('1', 'Op1', GroupComparisonType.CREATE, 'abc'),
+    new Operation('2', 'Op2', GroupComparisonType.CREATE, 'abc'),
   ];
 
   beforeEach(() => {
@@ -79,12 +83,6 @@ describe('OperationRepo', () => {
       constructor() {
         super('id1', 'MyOp');
       }
-
-      createComparisonKey = '';
-      modifyComparisonKey = '';
-      groupComparisonType = GroupComparisonType.None;
-      canStartExecute = false;
-      applyToRecordId = '';
     }
 
     class MyOperation2 extends MyOperation {}
@@ -114,7 +112,7 @@ describe('OperationRepo', () => {
   test('can get grouped operations', () => {
     const opRepo = getNewOpRepo();
 
-    const singleOp = new Operation('1', 'Op1', GroupComparisonType.None);
+    const singleOp = new Operation('1', 'Op1', GroupComparisonType.NONE);
     const groupedOps = getGroupedOp();
 
     let op = new OperationQueueItem(singleOp, 0);
@@ -130,11 +128,11 @@ describe('OperationRepo', () => {
 
     // can group operations by same modify comparison key
     op = new OperationQueueItem(
-      new Operation('1', 'Op1', GroupComparisonType.Alter, '', 'abc'),
+      new Operation('1', 'Op1', GroupComparisonType.ALTER, '', 'abc'),
       0,
     );
     op2 = new OperationQueueItem(
-      new Operation('2', 'Op2', GroupComparisonType.Alter, '', 'abc'),
+      new Operation('2', 'Op2', GroupComparisonType.ALTER, '', 'abc'),
       0,
     );
     opRepo.enqueue(op2.operation);
@@ -142,7 +140,7 @@ describe('OperationRepo', () => {
 
     // throws for no comparison keys
     op = new OperationQueueItem(
-      new Operation('1', 'Op1', GroupComparisonType.Create),
+      new Operation('1', 'Op1', GroupComparisonType.CREATE),
       0,
     );
     opRepo.enqueue(op2.operation);
@@ -156,7 +154,7 @@ describe('OperationRepo', () => {
     records.set(blockedId, Date.now());
 
     op = new OperationQueueItem(
-      new Operation('1', 'Op1', GroupComparisonType.Create, 'def'),
+      new Operation('1', 'Op1', GroupComparisonType.CREATE, 'def'),
       0,
     );
     op2.operation.applyToRecordId = blockedId;
@@ -173,8 +171,8 @@ describe('OperationRepo', () => {
 
     test('can handle success operation and process additional operations', async () => {
       const additionalOps = [
-        new Operation('3', 'Op3', GroupComparisonType.None),
-        new Operation('4', 'Op4', GroupComparisonType.None),
+        new Operation('3', 'Op3', GroupComparisonType.NONE),
+        new Operation('4', 'Op4', GroupComparisonType.NONE),
       ];
 
       executeFn.mockResolvedValueOnce({
@@ -341,7 +339,7 @@ describe('OperationRepo', () => {
       const opRepo = getNewOpRepo();
       const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
 
-      const newOp = new Operation('2', 'Op2', GroupComparisonType.None);
+      const newOp = new Operation('2', 'Op2', GroupComparisonType.NONE);
       const opTranslateIdsSpy = vi.spyOn(newOp, 'translateIds');
 
       opRepo.enqueue(mockOperation);
@@ -364,7 +362,7 @@ describe('OperationRepo', () => {
       const opRepo = getNewOpRepo();
       const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
 
-      const newOp = new Operation('2', 'Op2', GroupComparisonType.None);
+      const newOp = new Operation('2', 'Op2', GroupComparisonType.NONE);
       opRepo.enqueue(mockOperation);
       opRepo.enqueue(newOp);
       await executeOps(opRepo);
@@ -402,23 +400,70 @@ describe('OperationRepo', () => {
 // TODO: Revisit with ModelStore rework
 const mockOperationModelStore = {
   loadOperations: vi.fn(),
-  list: vi.fn(() => [] as Operation[]),
+  list: vi.fn(() => [] as OperationBase[]),
   add: vi.fn(),
   remove: vi.fn(),
 } satisfies OperationModelStore;
 
 // TODO: Revisit with Operation class rework
 const translateIdsFn = vi.fn();
-class Operation {
+class Operation extends OperationBase {
+  private _id: string;
+  private _groupComparisonTypeValue: GroupComparisonValue;
+  private _createComparisonKey: string;
+  private _modifyComparisonKey: string;
+  private _applyToRecordId: string;
+  private _canStartExecute: boolean;
+
   constructor(
-    public id: string,
-    public name: string,
-    public groupComparisonType: GroupComparisonType = GroupComparisonType.None,
-    public createComparisonKey: string = '',
-    public modifyComparisonKey: string = '',
-    public applyToRecordId: string = '',
-    public canStartExecute: boolean = true,
-  ) {}
+    id: string,
+    name: string,
+    groupComparisonTypeValue: GroupComparisonValue = GroupComparisonType.NONE,
+    createComparisonKey = '',
+    modifyComparisonKey = '',
+    applyToRecordId = '',
+    canStartExecute = true,
+  ) {
+    super(name);
+    this._id = id;
+    this._groupComparisonTypeValue = groupComparisonTypeValue;
+    this._createComparisonKey = createComparisonKey;
+    this._modifyComparisonKey = modifyComparisonKey;
+    this._applyToRecordId = applyToRecordId;
+    this._canStartExecute = canStartExecute;
+  }
+
+  get id(): string {
+    return this._id;
+  }
+
+  set id(value: string) {
+    this._id = value;
+  }
+
+  get groupComparisonType(): GroupComparisonValue {
+    return this._groupComparisonTypeValue;
+  }
+
+  get createComparisonKey(): string {
+    return this._createComparisonKey;
+  }
+
+  get modifyComparisonKey(): string {
+    return this._modifyComparisonKey;
+  }
+
+  get applyToRecordId(): string {
+    return this._applyToRecordId;
+  }
+
+  set applyToRecordId(value: string) {
+    this._applyToRecordId = value;
+  }
+
+  get canStartExecute(): boolean {
+    return this._canStartExecute;
+  }
 
   translateIds() {
     translateIdsFn();
@@ -428,7 +473,7 @@ class Operation {
 const mockOperation = new Operation(
   '1',
   'Op1',
-  GroupComparisonType.Create,
+  GroupComparisonType.CREATE,
   'abc',
   '',
   '123',

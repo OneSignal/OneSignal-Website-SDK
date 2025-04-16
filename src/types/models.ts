@@ -46,12 +46,12 @@ export interface IModelStore<TModel extends Model>
    * Add a model to the store.
    */
   add(model: TModel, tag?: string): void;
-  add(index: number, model: TModel, tag?: string): void;
+  addAt(index: number, model: TModel, tag?: string): void;
 
   /**
    * Get a model by id.
    */
-  get(id: string): TModel | null;
+  get(id: string): TModel | undefined;
 
   /**
    * Remove a model by id.

@@ -1,18 +1,19 @@
+import { logMethodCall } from '../../shared/utils/utils';
 import ModelCache from '../caching/ModelCache';
-import Subscribable from '../Subscribable';
 import { CoreChangeType } from '../models/CoreChangeType';
 import { CoreDelta } from '../models/CoreDeltas';
-import { ModelStoresMap } from '../models/ModelStoresMap';
-import { SupportedModel, ModelName } from '../models/SupportedModels';
 import {
-  ModelStoreChange,
   ModelStoreAdded,
+  ModelStoreChange,
+  ModelStoreHydrated,
   ModelStoreRemoved,
   ModelStoreUpdated,
-  ModelStoreHydrated,
 } from '../models/ModelStoreChange';
-import { logMethodCall } from '../../shared/utils/utils';
+import { ModelStoresMap } from '../models/ModelStoresMap';
+import { ModelName, SupportedModel } from '../models/SupportedModels';
+import Subscribable from '../Subscribable';
 
+// TODO: Remove this later as part of the Web SDK Refactor
 export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   constructor(
     private modelCache: ModelCache,

@@ -1,13 +1,13 @@
+import { LegacyOperation } from 'src/core/operationRepo/LegacyOperation';
 import ModelCache from '../../../src/core/caching/ModelCache';
 import OperationCache from '../../../src/core/caching/OperationCache';
 import { CoreChangeType } from '../../../src/core/models/CoreChangeType';
 import { ModelName } from '../../../src/core/models/SupportedModels';
-import { Operation } from '../../../src/core/operationRepo/Operation';
+import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import {
   getDummyIdentityOSModel,
   getMockDeltas,
 } from '../../support/helpers/core';
-import { TestEnvironment } from '../../support/environment/TestEnvironment';
 
 describe('OperationCache: operation results in correct operation queue result', () => {
   beforeEach(async () => {
@@ -23,7 +23,7 @@ describe('OperationCache: operation results in correct operation queue result', 
   });
 
   test('Add operation to cache -> operation queue +1', async () => {
-    const operation = new Operation(
+    const operation = new LegacyOperation(
       CoreChangeType.Add,
       ModelName.Identity,
       getMockDeltas(),
@@ -36,7 +36,7 @@ describe('OperationCache: operation results in correct operation queue result', 
   });
 
   test('Remove operation from cache -> operation queue -1', async () => {
-    const operation = new Operation(
+    const operation = new LegacyOperation(
       CoreChangeType.Add,
       ModelName.Identity,
       getMockDeltas(),
@@ -54,12 +54,12 @@ describe('OperationCache: operation results in correct operation queue result', 
   });
 
   test('Add multiple operations to cache -> operation queue +2', async () => {
-    const operation = new Operation(
+    const operation = new LegacyOperation(
       CoreChangeType.Add,
       ModelName.Identity,
       getMockDeltas(),
     );
-    const operation2 = new Operation(
+    const operation2 = new LegacyOperation(
       CoreChangeType.Add,
       ModelName.Identity,
       getMockDeltas(),
@@ -75,12 +75,12 @@ describe('OperationCache: operation results in correct operation queue result', 
   });
 
   test('Flush operation cache -> operation queue 0', async () => {
-    const operation = new Operation(
+    const operation = new LegacyOperation(
       CoreChangeType.Add,
       ModelName.Identity,
       getMockDeltas(),
     );
-    const operation2 = new Operation(
+    const operation2 = new LegacyOperation(
       CoreChangeType.Add,
       ModelName.Identity,
       getMockDeltas(),

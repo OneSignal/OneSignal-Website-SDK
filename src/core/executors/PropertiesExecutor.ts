@@ -1,10 +1,10 @@
 import { NewRecordsState } from '../../shared/models/NewRecordsState';
-import ExecutorBase from './ExecutorBase';
-import { Operation } from '../operationRepo/Operation';
+import OperationCache from '../caching/OperationCache';
 import { CoreChangeType } from '../models/CoreChangeType';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
-import OperationCache from '../caching/OperationCache';
+import { LegacyOperation } from '../operationRepo/LegacyOperation';
+import ExecutorBase from './ExecutorBase';
 
 export class PropertiesExecutor extends ExecutorBase {
   constructor(
@@ -20,7 +20,7 @@ export class PropertiesExecutor extends ExecutorBase {
     }
 
     this._enqueueOperation(
-      new Operation(
+      new LegacyOperation(
         CoreChangeType.Update,
         ModelName.Properties,
         this._deltaQueue,
@@ -29,7 +29,7 @@ export class PropertiesExecutor extends ExecutorBase {
     this._flushDeltas();
   }
 
-  getOperationsFromCache(): Operation<SupportedModel>[] {
+  getOperationsFromCache(): LegacyOperation<SupportedModel>[] {
     return OperationCache.getOperationsWithModelName(ModelName.Properties);
   }
 }

@@ -4,7 +4,7 @@ import { CoreChangeType } from '../models/CoreChangeType';
 import { CoreDelta } from '../models/CoreDeltas';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
-import { Operation } from '../operationRepo/Operation';
+import { LegacyOperation } from '../operationRepo/LegacyOperation';
 import ExecutorBase from './ExecutorBase';
 
 export class SubscriptionExecutor extends ExecutorBase {
@@ -25,7 +25,7 @@ export class SubscriptionExecutor extends ExecutorBase {
         const deltas = changeSpecificDeltas[changeType];
         if (deltas.length > 0) {
           this._enqueueOperation(
-            new Operation(
+            new LegacyOperation(
               changeType as CoreChangeType,
               deltas[0].model.modelName,
               deltas,
@@ -38,7 +38,7 @@ export class SubscriptionExecutor extends ExecutorBase {
     this._flushDeltas();
   }
 
-  getOperationsFromCache(): Operation<SupportedModel>[] {
+  getOperationsFromCache(): LegacyOperation<SupportedModel>[] {
     return OperationCache.getOperationsWithModelName(ModelName.Subscriptions);
   }
 

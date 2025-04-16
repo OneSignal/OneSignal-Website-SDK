@@ -10,6 +10,7 @@ import { StringKeys } from '../models/StringKeys';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
 import { OSModelUpdatedArgs } from './OSModelUpdatedArgs';
 
+// TODO: Remove this later as part of the Web SDK Refactor
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   data: Model;
   modelId: string;

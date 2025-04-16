@@ -2,7 +2,6 @@ import Log from 'src/shared/libraries/Log';
 import { delay } from 'src/shared/utils/utils';
 import {
   ExecutionResult,
-  GroupComparisonType,
   IOperationExecutor,
   IOperationRepo,
   IStartableService,
@@ -10,12 +9,13 @@ import {
   OperationModelStore,
 } from 'src/types/operation';
 import { v4 as uuid } from 'uuid';
-import { type NewRecordsState } from './NewRecordsState';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
+import { type NewRecordsState } from './NewRecordsState';
+import { GroupComparisonType } from './Operation';
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationRepo.kt
@@ -269,11 +269,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   ): OperationQueueItem[] {
     const ops = [startingOp];
 
-    if (startingOp.operation.groupComparisonType === GroupComparisonType.None)
+    if (startingOp.operation.groupComparisonType === GroupComparisonType.NONE)
       return ops;
 
     const startingKey =
-      startingOp.operation.groupComparisonType === GroupComparisonType.Create
+      startingOp.operation.groupComparisonType === GroupComparisonType.CREATE
         ? startingOp.operation.createComparisonKey
         : startingOp.operation.modifyComparisonKey;
 
@@ -282,7 +282,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     for (const item of queueCopy) {
       const itemKey =
-        startingOp.operation.groupComparisonType === GroupComparisonType.Create
+        startingOp.operation.groupComparisonType === GroupComparisonType.CREATE
           ? item.operation.createComparisonKey
           : item.operation.modifyComparisonKey;
 

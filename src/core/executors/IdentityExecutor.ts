@@ -4,7 +4,7 @@ import { CoreChangeType } from '../models/CoreChangeType';
 import { PropertyDelta } from '../models/CoreDeltas';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
-import { Operation } from '../operationRepo/Operation';
+import { LegacyOperation } from '../operationRepo/LegacyOperation';
 import { isPropertyDelta } from '../utils/typePredicates';
 import ExecutorBase from './ExecutorBase';
 
@@ -46,7 +46,7 @@ export class IdentityExecutor extends ExecutorBase {
 
     if (addAndUpdatedDeltas.length > 0) {
       this._enqueueOperation(
-        new Operation<SupportedModel>(
+        new LegacyOperation<SupportedModel>(
           CoreChangeType.Add,
           ModelName.Identity,
           addAndUpdatedDeltas,
@@ -55,14 +55,18 @@ export class IdentityExecutor extends ExecutorBase {
     }
     if (removeDeltas.length > 0) {
       this._enqueueOperation(
-        new Operation(CoreChangeType.Remove, ModelName.Identity, removeDeltas),
+        new LegacyOperation(
+          CoreChangeType.Remove,
+          ModelName.Identity,
+          removeDeltas,
+        ),
       );
     }
 
     this._flushDeltas();
   }
 
-  getOperationsFromCache(): Operation<SupportedModel>[] {
+  getOperationsFromCache(): LegacyOperation<SupportedModel>[] {
     return OperationCache.getOperationsWithModelName(ModelName.Identity);
   }
 }
