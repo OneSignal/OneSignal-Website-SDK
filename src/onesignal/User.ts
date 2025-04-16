@@ -1,14 +1,14 @@
 import { OSModel } from '../core/modelRepo/OSModel';
-import { ModelName, SupportedModel } from '../core/models/SupportedModels';
 import {
   FutureSubscriptionModel,
   SubscriptionType,
 } from '../core/models/SubscriptionModels';
+import { ModelName, SupportedModel } from '../core/models/SupportedModels';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
-import { logMethodCall, isValidEmail } from '../shared/utils/utils';
+import { isValidEmail, logMethodCall } from '../shared/utils/utils';
 import UserDirector from './UserDirector';
 
 export default class User {

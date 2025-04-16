@@ -1,5 +1,5 @@
-import { SupportedIdentity } from './IdentityModel';
 import { SupportedSubscription } from './SubscriptionModels';
+import { Identity } from './UserData';
 import { UserPropertiesModel } from './UserPropertiesModel';
 
 export enum ModelName {
@@ -15,6 +15,6 @@ export enum LegacyModelName {
 }
 
 export type SupportedModel =
-  | SupportedIdentity
+  | Identity
   | UserPropertiesModel
   | SupportedSubscription;

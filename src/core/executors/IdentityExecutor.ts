@@ -8,6 +8,7 @@ import { LegacyOperation } from '../operationRepo/LegacyOperation';
 import { isPropertyDelta } from '../utils/typePredicates';
 import ExecutorBase from './ExecutorBase';
 
+// TODO: Remove this with later Web SDK Prs
 export class IdentityExecutor extends ExecutorBase {
   constructor(
     executorConfig: ExecutorConfig<SupportedModel>,

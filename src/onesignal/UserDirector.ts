@@ -1,8 +1,7 @@
 import { OSModel } from '../core/modelRepo/OSModel';
-import { SupportedIdentity } from '../core/models/IdentityModel';
 import { SupportedSubscription } from '../core/models/SubscriptionModels';
 import { ModelName, SupportedModel } from '../core/models/SupportedModels';
-import UserData from '../core/models/UserData';
+import UserData, { Identity } from '../core/models/UserData';
 import { RequestService } from '../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import Environment from '../shared/helpers/Environment';
@@ -51,10 +50,7 @@ export default class UserDirector {
       }
     }
 
-    const identityOSModel = new OSModel<SupportedIdentity>(
-      ModelName.Identity,
-      identity,
-    );
+    const identityOSModel = new OSModel<Identity>(ModelName.Identity, identity);
     identityOSModel.setOneSignalId(identity.onesignal_id);
 
     OneSignal.coreDirector.add(
@@ -65,13 +61,13 @@ export default class UserDirector {
     await this.copyOneSignalIdPromiseFromIdentityModel();
   }
 
-  static createUserPropertiesModel(): OSModel<SupportedIdentity> {
+  static createUserPropertiesModel(): OSModel<Identity> {
     const properties = {
       language: Environment.getLanguage(),
       timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
 
-    const propertiesOSModel = new OSModel<SupportedIdentity>(
+    const propertiesOSModel = new OSModel<Identity>(
       ModelName.Properties,
       properties,
     );

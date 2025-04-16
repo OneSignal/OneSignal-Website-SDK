@@ -1,5 +1,8 @@
-import { logMethodCall } from '../../shared/utils/utils';
+import OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
 import OneSignalError from '../../shared/errors/OneSignalError';
+import MainHelper from '../../shared/helpers/MainHelper';
+import Log from '../../shared/libraries/Log';
+import { logMethodCall } from '../../shared/utils/utils';
 import {
   ExecutorResult,
   ExecutorResultFailNotRetriable,
@@ -7,13 +10,10 @@ import {
   ExecutorResultSuccess,
 } from '../executors/ExecutorResult';
 import { UserPropertiesModel } from '../models/UserPropertiesModel';
-import { Operation } from '../operationRepo/Operation';
+import { Operation } from '../operations/Operation';
+import { isCompleteSubscriptionObject } from '../utils/typePredicates';
 import AliasPair from './AliasPair';
 import { RequestService } from './RequestService';
-import MainHelper from '../../shared/helpers/MainHelper';
-import OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
-import Log from '../../shared/libraries/Log';
-import { isCompleteSubscriptionObject } from '../utils/typePredicates';
 
 /**
  * This class contains logic for all the UserProperty model related requests that can be made to the OneSignal API

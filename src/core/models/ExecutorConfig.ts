@@ -1,5 +1,5 @@
 import { ExecutorResult } from '../executors/ExecutorResult';
-import { Operation } from '../operationRepo/Operation';
+import { Operation } from '../operations/Operation';
 import { ModelName, SupportedModel } from './SupportedModels';
 
 export type ExecutorConfig<Model> = {

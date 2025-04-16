@@ -1,10 +1,10 @@
-import { ModelName } from '../../../src/core/models/SupportedModels';
+import { OSModel } from '../../../src/core/modelRepo/OSModel';
 import {
   SubscriptionModel,
   SubscriptionType,
 } from '../../../src/core/models/SubscriptionModels';
+import { ModelName } from '../../../src/core/models/SupportedModels';
 import { generateNewSubscription } from '../../support/helpers/core';
-import { OSModel } from '../../../src/core/modelRepo/OSModel';
 
 describe('OSModel tests', () => {
   test('Set function updates data', async () => {

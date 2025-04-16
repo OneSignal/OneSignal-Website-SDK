@@ -1,4 +1,3 @@
-import Subscribable from '../Subscribable';
 import { CoreChangeType } from '../models/CoreChangeType';
 import {
   ModelStoreAdded,
@@ -7,6 +6,7 @@ import {
   ModelStoreRemoved,
   ModelStoreUpdated,
 } from '../models/ModelStoreChange';
+import Subscribable from '../Subscribable';
 import { isOSModel, isOSModelUpdatedArgs } from '../utils/typePredicates';
 import { OSModel } from './OSModel';
 

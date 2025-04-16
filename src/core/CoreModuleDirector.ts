@@ -12,7 +12,6 @@ import Database from '../shared/services/Database';
 import { logMethodCall } from '../shared/utils/utils';
 import CoreModule from './CoreModule';
 import { OSModel } from './modelRepo/OSModel';
-import { SupportedIdentity } from './models/IdentityModel';
 import { ModelStoresMap } from './models/ModelStoresMap';
 import {
   SubscriptionChannel,
@@ -21,7 +20,7 @@ import {
   SupportedSubscription,
 } from './models/SubscriptionModels';
 import { ModelName, SupportedModel } from './models/SupportedModels';
-import UserData from './models/UserData';
+import UserData, { Identity } from './models/UserData';
 import { UserPropertiesModel } from './models/UserPropertiesModel';
 
 /* Contains OneSignal User-Model-specific logic*/
@@ -307,13 +306,11 @@ export class CoreModuleDirector {
     );
   }
 
-  public getIdentityModel(): OSModel<SupportedIdentity> | undefined {
+  public getIdentityModel(): OSModel<Identity> | undefined {
     logMethodCall('CoreModuleDirector.getIdentityModel');
     const modelStores = this.getModelStores();
     const modelKeys = Object.keys(modelStores.identity.models);
-    return modelStores.identity.models[
-      modelKeys[0]
-    ] as OSModel<SupportedIdentity>;
+    return modelStores.identity.models[modelKeys[0]] as OSModel<Identity>;
   }
 
   public getPropertiesModel(): OSModel<UserPropertiesModel> | undefined {

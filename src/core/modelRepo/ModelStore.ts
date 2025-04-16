@@ -3,7 +3,12 @@
 import { EventProducer } from 'src/shared/helpers/EventProducer';
 import Log from 'src/shared/libraries/Log';
 import type { IEventNotifier } from 'src/types/events';
-import type { IModelStore, IModelStoreChangeHandler } from 'src/types/models';
+import {
+  ModelChangeTags,
+  ModelChangeTagValue,
+  type IModelStore,
+  type IModelStoreChangeHandler,
+} from 'src/types/models';
 import type { IPreferencesService } from 'src/types/preferences';
 import type {
   IModelChangedHandler,
@@ -52,15 +57,19 @@ export abstract class ModelStore<TModel extends Model>
   /**
    * Create a model from JSON data
    */
-  abstract create(json: object): TModel | null;
+  abstract create(json?: object | null): TModel | null;
 
-  add(model: TModel, tag: string): void {
+  add(model: TModel, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
     const oldModel = this.models.find((m) => m.id === model.id);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag);
   }
 
-  addAt(index: number, model: TModel, tag: string): void {
+  addAt(
+    index: number,
+    model: TModel,
+    tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
+  ): void {
     const oldModel = this.models.find((m) => m.id === model.id);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag, index);
@@ -90,7 +99,7 @@ export abstract class ModelStore<TModel extends Model>
     );
   }
 
-  replaceAll(newModels: TModel[], tag: string): void {
+  replaceAll(newModels: TModel[], tag: ModelChangeTagValue): void {
     this.clear(tag);
     for (const model of newModels) {
       this.add(model, tag);

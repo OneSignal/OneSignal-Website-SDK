@@ -1,7 +1,5 @@
 /**
- * Provides access to the low level preferences. There are one or more preference
- * stores, identified by PreferenceStores, each store contains a key for each
- * preference. Each key has a known data type, it's value can be fetched/stored as
+ * Provides access to the low level preferences. Each key has a known data type, it's value can be fetched/stored as
  * needed. Stored preferences will persist across the lifetime of the app installation.
  */
 export interface IPreferencesService {

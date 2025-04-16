@@ -1,10 +1,15 @@
-import { SupportedIdentity } from './IdentityModel';
 import { SupportedSubscription } from './SubscriptionModels';
 import { UserPropertiesModel } from './UserPropertiesModel';
 
+export interface Identity {
+  onesignal_id?: string;
+  external_id?: string;
+  [key: string]: unknown;
+}
+
 type UserData = {
   properties: UserPropertiesModel;
-  identity: SupportedIdentity;
+  identity: Identity;
   subscriptions?: SupportedSubscription[];
 };
 

@@ -1,3 +1,8 @@
+import { OSModel } from '../core/modelRepo/OSModel';
+import { SupportedSubscription } from '../core/models/SubscriptionModels';
+import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
+import SubscriptionChangeEvent from '../page/models/SubscriptionChangeEvent';
+import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { ValidatorUtils } from '../page/utils/ValidatorUtils';
 import {
   InvalidArgumentError,
@@ -9,17 +14,12 @@ import {
 } from '../shared/errors/InvalidStateError';
 import EventHelper from '../shared/helpers/EventHelper';
 import Log from '../shared/libraries/Log';
+import { Subscription } from '../shared/models/Subscription';
 import Database from '../shared/services/Database';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
 } from '../shared/utils/utils';
-import { SupportedSubscription } from '../core/models/SubscriptionModels';
-import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
-import { EventListenerBase } from '../page/userModel/EventListenerBase';
-import SubscriptionChangeEvent from '../page/models/SubscriptionChangeEvent';
-import { OSModel } from '../core/modelRepo/OSModel';
-import { Subscription } from '../shared/models/Subscription';
 
 export default class PushSubscriptionNamespace extends EventListenerBase {
   private _id?: string | null;

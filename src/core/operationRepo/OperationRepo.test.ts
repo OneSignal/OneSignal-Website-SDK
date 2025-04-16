@@ -6,15 +6,15 @@ import {
   type OperationModelStore,
 } from '../../types/operation';
 import {
+  GroupComparisonType,
+  GroupComparisonValue,
+  Operation as OperationBase,
+} from '../operations/Operation';
+import {
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { NewRecordsState } from './NewRecordsState';
-import {
-  GroupComparisonType,
-  GroupComparisonValue,
-  Operation as OperationBase,
-} from './Operation';
 import { OperationQueueItem, OperationRepo } from './OperationRepo';
 
 vi.spyOn(Log, 'error').mockImplementation(() => '');
@@ -176,7 +176,7 @@ describe('OperationRepo', () => {
       ];
 
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.Success,
+        result: ExecutionResult.SUCCESS,
         operations: additionalOps,
       });
 
@@ -212,9 +212,9 @@ describe('OperationRepo', () => {
     });
 
     test.each([
-      ['FailUnauthorized', ExecutionResult.FailUnauthorized],
-      ['FailNoRetry', ExecutionResult.FailNoRetry],
-      ['FailConflict', ExecutionResult.FailConflict],
+      ['FailUnauthorized', ExecutionResult.FAIL_UNAUTHORIZED],
+      ['FailNoRetry', ExecutionResult.FAIL_NORETRY],
+      ['FailConflict', ExecutionResult.FAIL_CONFLICT],
     ])('can handle failed operation: %s', async (_, failResult) => {
       const opRepo = getNewOpRepo();
       const modelRemoveSpy = vi.spyOn(mockOperationModelStore, 'remove');
@@ -233,7 +233,7 @@ describe('OperationRepo', () => {
 
     test('can handle success starting only operation', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.SuccessStartingOnly,
+        result: ExecutionResult.SUCCESS_STARTING_ONLY,
       });
 
       const opRepo = getNewOpRepo();
@@ -262,7 +262,7 @@ describe('OperationRepo', () => {
 
     test('can handle fail retry operation and delay next execution', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.FailRetry,
+        result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 30,
       });
 
@@ -299,7 +299,7 @@ describe('OperationRepo', () => {
 
     test('can handle fail pause op repo operation', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.FailPauseOpRepo,
+        result: ExecutionResult.FAIL_PAUSE_OPREPO,
       });
 
       const opRepo = getNewOpRepo();
@@ -332,7 +332,7 @@ describe('OperationRepo', () => {
         '1': '2',
       };
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.Success,
+        result: ExecutionResult.SUCCESS,
         idTranslations,
       });
 
@@ -479,7 +479,7 @@ const mockOperation = new Operation(
   '123',
 );
 const executeFn: Mock<IOperationExecutor['execute']> = vi.fn(async () => ({
-  result: ExecutionResult.Success,
+  result: ExecutionResult.SUCCESS,
 }));
 
 const mockExecutor: IOperationExecutor = {

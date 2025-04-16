@@ -1,6 +1,15 @@
 import type { Model, ModelChangedArgs } from 'src/core/models/Model';
 import type { IEventNotifier } from './events';
 
+export const ModelChangeTags = {
+  NORMAL: 'NORMAL',
+  NO_PROPOGATE: 'NO_PROPOGATE',
+  HYDRATE: 'HYDRATE',
+} as const;
+
+export type ModelChangeTagValue =
+  (typeof ModelChangeTags)[keyof typeof ModelChangeTags];
+
 /**
  * A handler interface for subscribing to model change events for a specific model store.
  */
@@ -69,8 +78,42 @@ export interface IModelStore<TModel extends Model>
   replaceAll(models: TModel[], tag?: string): void;
 }
 
-export const ModelChangeTags = {
-  NORMAL: 'NORMAL',
-  NO_PROPOGATE: 'NO_PROPOGATE',
-  HYDRATE: 'HYDRATE',
-} as const;
+// SINGLETON MODEL STORE
+/**
+ * A handler interface for ISingletonModelStore.subscribe.
+ * Implement this interface to subscribe to model change events for a specific model store.
+ */
+export interface ISingletonModelStoreChangeHandler<TModel extends Model> {
+  /**
+   * Called when the model has been replaced.
+   *
+   * @param model - The new model.
+   * @param tag - The tag which identifies how/why the model was replaced.
+   */
+  onModelReplaced(model: TModel, tag: string): void;
+
+  /**
+   * Called when a property within the model has been updated.
+   * This wraps IModelChangedHandler.onChanged so store users don't need to subscribe directly to the model.
+   *
+   * @param args - The model change arguments.
+   * @param tag - The tag which identifies how/why the model was updated.
+   */
+  onModelUpdated(args: ModelChangedArgs, tag: string): void;
+}
+
+export interface ISingletonModelStore<TModel extends Model>
+  extends IEventNotifier<ISingletonModelStoreChangeHandler<TModel>> {
+  /**
+   * The model managed by this singleton model store.
+   */
+  readonly model: TModel;
+
+  /**
+   * Replace the existing model with the new model provided.
+   *
+   * @param model - A model that contains all the data for the new effective model.
+   * @param tag - A tag identifying how/why the model is being replaced.
+   */
+  replace(model: TModel, tag?: string): void;
+}

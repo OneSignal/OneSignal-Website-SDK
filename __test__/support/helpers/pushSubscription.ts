@@ -3,8 +3,8 @@ import {
   ModelName,
   SupportedModel,
 } from '../../../src/core/models/SupportedModels';
-import { getDummyPushSubscriptionOSModel } from './core';
 import { TestEnvironment } from '../environment/TestEnvironment';
+import { getDummyPushSubscriptionOSModel } from './core';
 
 export async function initializeWithPermission(
   permission: NotificationPermission,

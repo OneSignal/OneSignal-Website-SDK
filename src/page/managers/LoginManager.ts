@@ -1,7 +1,6 @@
 import { OSModel } from '../../core/modelRepo/OSModel';
-import { SupportedIdentity } from '../../core/models/IdentityModel';
 import { ModelName, SupportedModel } from '../../core/models/SupportedModels';
-import UserData from '../../core/models/UserData';
+import UserData, { Identity } from '../../core/models/UserData';
 import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
@@ -181,7 +180,7 @@ export default class LoginManager {
   }
 
   static setExternalId(
-    identityOSModel: OSModel<SupportedIdentity>,
+    identityOSModel: OSModel<Identity>,
     externalId: string,
   ): void {
     logMethodCall('LoginManager.setExternalId', { externalId });
@@ -193,7 +192,7 @@ export default class LoginManager {
     identityOSModel.set('external_id', externalId, false);
   }
 
-  static isIdentified(identity: SupportedIdentity): boolean {
+  static isIdentified(identity: Identity): boolean {
     logMethodCall('LoginManager.isIdentified', { identity });
 
     return identity.external_id !== undefined;
@@ -410,7 +409,7 @@ export default class LoginManager {
   static async transferSubscription(
     appId: string,
     pushSubscriptionId: string,
-    identity: SupportedIdentity,
+    identity: Identity,
   ): Promise<Partial<UserData>> {
     Log.error(
       '^^^ Handling 409 HTTP response reported by the browser above.' +

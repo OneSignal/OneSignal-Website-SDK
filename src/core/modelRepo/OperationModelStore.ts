@@ -1,6 +1,9 @@
 import Log from 'src/shared/libraries/Log';
 import { IPreferencesService } from 'src/types/preferences';
-import { Operation } from '../operationRepo/Operation';
+import { OPERATION_NAME } from '../executors/constants';
+import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
+import { Operation } from '../operations/Operation';
+import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { ModelStore } from './ModelStore';
 
 export class OperationModelStore extends ModelStore<Operation> {
@@ -23,20 +26,23 @@ export class OperationModelStore extends ModelStore<Operation> {
     }
 
     // Determine the type of operation based on the name property in the json
+    const operationName = jsonObject.name;
     let operation: Operation;
-    // const operationName = jsonObject.name;
 
-    // TODO: add in executors in later prs
-    // switch (operationName) {
-    //   default:
-    //     throw new Error(`Unrecognized operation: ${operationName}`);
-    // }
+    switch (operationName) {
+      case OPERATION_NAME.SET_ALIAS:
+        operation = new SetAliasOperation();
+        break;
+      case OPERATION_NAME.DELETE_ALIAS:
+        operation = new DeleteAliasOperation();
+        break;
+      default:
+        throw new Error(`Unrecognized operation: ${operationName}`);
+    }
 
     // populate the operation with the data
-    // @ts-expect-error - TODO: add in executors in later prs
     operation.initializeFromJson(jsonObject);
 
-    // @ts-expect-error - TODO: add in executors in later prs
     return operation;
   }
 

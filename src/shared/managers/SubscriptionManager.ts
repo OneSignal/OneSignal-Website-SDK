@@ -1,18 +1,24 @@
-import Database from '../services/Database';
 import Environment from '../helpers/Environment';
-import OneSignalEvent from '../services/OneSignalEvent';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
-import SdkEnvironment from './SdkEnvironment';
 import { NotificationPermission } from '../models/NotificationPermission';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { Subscription } from '../models/Subscription';
-import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
+import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
+import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import Database from '../services/Database';
+import OneSignalEvent from '../services/OneSignalEvent';
+import SdkEnvironment from './SdkEnvironment';
 
-import { PermissionUtils } from '../utils/PermissionUtils';
-import { base64ToUint8Array } from '../utils/Encoding';
-import { ContextSWInterface } from '../models/ContextSW';
+import { OSModel } from '../../core/modelRepo/OSModel';
+import { StringKeys } from '../../core/models/StringKeys';
+import {
+  FutureSubscriptionModel,
+  SupportedSubscription,
+} from '../../core/models/SubscriptionModels';
+import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
+import UserDirector from '../../onesignal/UserDirector';
+import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import {
   InvalidStateError,
   InvalidStateReason,
@@ -27,20 +33,14 @@ import SubscriptionError, {
   SubscriptionErrorReason,
 } from '../errors/SubscriptionError';
 import Log from '../libraries/Log';
-import { RawPushSubscription } from '../models/RawPushSubscription';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
-import {
-  FutureSubscriptionModel,
-  SupportedSubscription,
-} from '../../core/models/SubscriptionModels';
-import { StringKeys } from '../../core/models/StringKeys';
-import { SessionOrigin } from '../models/Session';
-import { executeCallback, logMethodCall } from '../utils/utils';
-import UserDirector from '../../onesignal/UserDirector';
-import { OSModel } from '../../core/modelRepo/OSModel';
-import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
-import { bowserCastle } from '../utils/bowserCastle';
+import { ContextSWInterface } from '../models/ContextSW';
 import { PushSubscriptionState } from '../models/PushSubscriptionState';
+import { RawPushSubscription } from '../models/RawPushSubscription';
+import { SessionOrigin } from '../models/Session';
+import { bowserCastle } from '../utils/bowserCastle';
+import { base64ToUint8Array } from '../utils/Encoding';
+import { PermissionUtils } from '../utils/PermissionUtils';
+import { executeCallback, logMethodCall } from '../utils/utils';
 
 export const DEFAULT_DEVICE_ID = '99999999-9999-9999-9999-999999999999';
 

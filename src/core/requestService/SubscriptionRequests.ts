@@ -1,5 +1,6 @@
-import MainHelper from '../../shared/helpers/MainHelper';
+import OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
 import OneSignalError from '../../shared/errors/OneSignalError';
+import MainHelper from '../../shared/helpers/MainHelper';
 import { logMethodCall } from '../../shared/utils/utils';
 import {
   ExecutorResult,
@@ -11,11 +12,10 @@ import {
   SubscriptionModel,
   SupportedSubscription,
 } from '../models/SubscriptionModels';
-import { Operation } from '../operationRepo/Operation';
+import { Operation } from '../operations/Operation';
+import { isCompleteSubscriptionObject } from '../utils/typePredicates';
 import { processSubscriptionOperation } from './helpers';
 import { RequestService } from './RequestService';
-import OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
-import { isCompleteSubscriptionObject } from '../utils/typePredicates';
 
 /**
  * This class contains logic for all the Subscription model related requests that can be made to the OneSignal API
