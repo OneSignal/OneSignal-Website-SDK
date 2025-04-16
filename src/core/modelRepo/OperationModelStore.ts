@@ -12,6 +12,7 @@ import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { SetTagOperation } from '../operations/SetTagOperation';
 import { TrackSessionEndOperation } from '../operations/TrackSessionEndOperation';
 import { TrackSessionStartOperation } from '../operations/TrackSessionStartOperation';
+import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ModelStore } from './ModelStore';
 
 export class OperationModelStore extends ModelStore<Operation> {
@@ -46,6 +47,9 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.CREATE_SUBSCRIPTION:
         operation = new CreateSubscriptionOperation();
+        break;
+      case OPERATION_NAME.UPDATE_SUBSCRIPTION:
+        operation = new UpdateSubscriptionOperation();
         break;
       case OPERATION_NAME.DELETE_SUBSCRIPTION:
         operation = new DeleteSubscriptionOperation();
