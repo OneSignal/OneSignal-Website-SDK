@@ -2,8 +2,14 @@ import Log from 'src/shared/libraries/Log';
 import { IPreferencesService } from 'src/types/preferences';
 import { OPERATION_NAME } from '../executors/constants';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
+import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { Operation } from '../operations/Operation';
+import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
+import { SetPropertyOperation } from '../operations/SetPropertyOperation';
+import { SetTagOperation } from '../operations/SetTagOperation';
+import { TrackSessionEndOperation } from '../operations/TrackSessionEndOperation';
+import { TrackSessionStartOperation } from '../operations/TrackSessionStartOperation';
 import { ModelStore } from './ModelStore';
 
 export class OperationModelStore extends ModelStore<Operation> {
@@ -35,6 +41,24 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.DELETE_ALIAS:
         operation = new DeleteAliasOperation();
+        break;
+      case OPERATION_NAME.REFRESH_USER:
+        operation = new RefreshUserOperation();
+        break;
+      case OPERATION_NAME.SET_TAG:
+        operation = new SetTagOperation();
+        break;
+      case OPERATION_NAME.DELETE_TAG:
+        operation = new DeleteTagOperation();
+        break;
+      case OPERATION_NAME.SET_PROPERTY:
+        operation = new SetPropertyOperation();
+        break;
+      case OPERATION_NAME.TRACK_SESSION_START:
+        operation = new TrackSessionStartOperation();
+        break;
+      case OPERATION_NAME.TRACK_SESSION_END:
+        operation = new TrackSessionEndOperation();
         break;
       default:
         throw new Error(`Unrecognized operation: ${operationName}`);
