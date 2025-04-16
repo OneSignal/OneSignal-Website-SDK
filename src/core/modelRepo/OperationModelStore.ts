@@ -7,6 +7,7 @@ import { Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { SetTagOperation } from '../operations/SetTagOperation';
+import { TrackSessionEndOperation } from '../operations/TrackSessionEndOperation';
 import { TrackSessionStartOperation } from '../operations/TrackSessionStartOperation';
 import { ModelStore } from './ModelStore';
 
@@ -51,6 +52,9 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.TRACK_SESSION_START:
         operation = new TrackSessionStartOperation();
+        break;
+      case OPERATION_NAME.TRACK_SESSION_END:
+        operation = new TrackSessionEndOperation();
         break;
       default:
         throw new Error(`Unrecognized operation: ${operationName}`);
