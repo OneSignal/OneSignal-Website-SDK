@@ -2,6 +2,7 @@ import Log from 'src/shared/libraries/Log';
 import { IPreferencesService } from 'src/types/preferences';
 import { OPERATION_NAME } from '../executors/constants';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
+import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { SetTagOperation } from '../operations/SetTagOperation';
@@ -39,6 +40,9 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.SET_TAG:
         operation = new SetTagOperation();
+        break;
+      case OPERATION_NAME.DELETE_TAG:
+        operation = new DeleteTagOperation();
         break;
       default:
         throw new Error(`Unrecognized operation: ${operationName}`);
