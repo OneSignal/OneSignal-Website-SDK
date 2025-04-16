@@ -1,6 +1,5 @@
 import { OPERATION_NAME } from '../executors/constants';
 import { BaseAliasOperation } from './BaseAliasOperation';
-import { GroupComparisonType, GroupComparisonValue } from './Operation';
 
 // Implements logic similar to Android SDK's SetAliasOperation
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/SetAliasOperation.kt
@@ -26,9 +25,5 @@ export class SetAliasOperation extends BaseAliasOperation {
 
   override get modifyComparisonKey(): string {
     return `${this.appId}.User.${this.onesignalId}.Identity.${this.label}`;
-  }
-
-  override get groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.ALTER;
   }
 }

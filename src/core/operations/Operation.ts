@@ -70,7 +70,9 @@ export abstract class Operation extends Model {
    * The comparison type to use when this operation is the starting operation, in terms of
    * which operations can be grouped with it.
    */
-  abstract get groupComparisonType(): GroupComparisonValue;
+  get groupComparisonType(): GroupComparisonValue {
+    return GroupComparisonType.ALTER;
+  }
 
   /**
    * Whether the operation can currently execute given its current state.

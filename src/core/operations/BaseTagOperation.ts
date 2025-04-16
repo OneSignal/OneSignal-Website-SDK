@@ -1,8 +1,4 @@
-import {
-  GroupComparisonType,
-  GroupComparisonValue,
-  Operation,
-} from './Operation';
+import { Operation } from './Operation';
 
 /**
  * Base class for tag-related operations
@@ -32,9 +28,5 @@ export abstract class BaseTagOperation extends Operation {
 
   override get modifyComparisonKey(): string {
     return `${this.appId}.User.${this.onesignalId}`;
-  }
-
-  override get groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.ALTER;
   }
 }

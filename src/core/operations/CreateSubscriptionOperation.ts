@@ -1,12 +1,7 @@
-import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
 import { OPERATION_NAME } from '../executors/constants';
 import { SubscriptionType } from '../models/SubscriptionModels';
-import {
-  GroupComparisonType,
-  GroupComparisonValue,
-  Operation,
-} from './Operation';
+import { Operation } from './Operation';
 import { Subscription } from './types';
 
 /**
@@ -15,36 +10,17 @@ import { Subscription } from './types';
  */
 export class CreateSubscriptionOperation extends Operation {
   constructor(subscription?: Subscription) {
-    super(OPERATION_NAME.CREATE_SUBSCRIPTION);
+    super(
+      OPERATION_NAME.CREATE_SUBSCRIPTION,
+      subscription?.appId,
+      subscription?.onesignalId,
+    );
     if (subscription) {
-      this.appId = subscription.appId;
-      this.onesignalId = subscription.onesignalId;
       this.subscriptionId = subscription.subscriptionId;
       this.type = subscription.type;
       this.enabled = subscription.enabled;
       this.notification_types = subscription.notification_types;
     }
-  }
-
-  /**
-   * The application ID this subscription will be created under.
-   */
-  get appId(): string {
-    return this.getProperty<string>('appId');
-  }
-  private set appId(value: string) {
-    this.setProperty<string>('appId', value);
-  }
-
-  /**
-   * The user ID this subscription will be associated with. This ID *may* be locally generated
-   * and can be checked via IDManager.isLocalId to ensure correct processing.
-   */
-  get onesignalId(): string {
-    return this.getProperty<string>('onesignalId');
-  }
-  private set onesignalId(value: string) {
-    this.setProperty<string>('onesignalId', value);
   }
 
   /**
@@ -94,23 +70,5 @@ export class CreateSubscriptionOperation extends Operation {
 
   override get modifyComparisonKey(): string {
     return `${this.appId}.User.${this.onesignalId}.Subscription.${this.subscriptionId}`;
-  }
-
-  override get groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.ALTER;
-  }
-
-  override get canStartExecute(): boolean {
-    return !IDManager.isLocalId(this.onesignalId);
-  }
-
-  override get applyToRecordId(): string {
-    return this.onesignalId;
-  }
-
-  override translateIds(map: Record<string, string>): void {
-    if (map[this.onesignalId]) {
-      this.onesignalId = map[this.onesignalId];
-    }
   }
 }
