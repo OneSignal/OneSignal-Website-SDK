@@ -4,6 +4,7 @@ import { OPERATION_NAME } from '../executors/constants';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
+import { SetTagOperation } from '../operations/SetTagOperation';
 import { ModelStore } from './ModelStore';
 
 export class OperationModelStore extends ModelStore<Operation> {
@@ -35,6 +36,9 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.DELETE_ALIAS:
         operation = new DeleteAliasOperation();
+        break;
+      case OPERATION_NAME.SET_TAG:
+        operation = new SetTagOperation();
         break;
       default:
         throw new Error(`Unrecognized operation: ${operationName}`);
