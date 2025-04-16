@@ -1,22 +1,22 @@
 import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
 import { OPERATION_NAME } from '../executors/constants';
 import { SubscriptionType } from '../models/SubscriptionModels';
-import { Operation } from './Operation';
+import { BaseSubscriptionOperation } from './BaseSubscriptionOperation';
 import { Subscription } from './types';
 
 /**
  * An Operation to create a new subscription in the OneSignal backend. The subscription will
  * be associated to the user with the appId and onesignalId provided.
  */
-export class CreateSubscriptionOperation extends Operation {
+export class CreateSubscriptionOperation extends BaseSubscriptionOperation {
   constructor(subscription?: Subscription) {
     super(
       OPERATION_NAME.CREATE_SUBSCRIPTION,
       subscription?.appId,
       subscription?.onesignalId,
+      subscription?.subscriptionId,
     );
     if (subscription) {
-      this.subscriptionId = subscription.subscriptionId;
       this.type = subscription.type;
       this.enabled = subscription.enabled;
       this.notification_types = subscription.notification_types;
@@ -26,17 +26,6 @@ export class CreateSubscriptionOperation extends Operation {
       this.web_auth = subscription.web_auth;
       this.web_p256 = subscription.web_p256;
     }
-  }
-
-  /**
-   * The local ID of the subscription being created. The subscription model with this ID will have its
-   * ID updated with the backend-generated ID post-create.
-   */
-  get subscriptionId(): string {
-    return this.getProperty<string>('subscriptionId');
-  }
-  private set subscriptionId(value: string) {
-    this.setProperty<string>('subscriptionId', value);
   }
 
   /**
@@ -102,13 +91,5 @@ export class CreateSubscriptionOperation extends Operation {
   }
   private set web_p256(value: string | undefined) {
     this.setProperty<string | undefined>('web_p256', value);
-  }
-
-  override get createComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}`;
-  }
-
-  override get modifyComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}.Subscription.${this.subscriptionId}`;
   }
 }
