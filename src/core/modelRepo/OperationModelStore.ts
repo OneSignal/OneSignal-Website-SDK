@@ -3,6 +3,7 @@ import { IPreferencesService } from 'src/types/preferences';
 import { OPERATION_NAME } from '../executors/constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
+import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
@@ -11,7 +12,10 @@ import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { SetTagOperation } from '../operations/SetTagOperation';
 import { TrackSessionEndOperation } from '../operations/TrackSessionEndOperation';
 import { TrackSessionStartOperation } from '../operations/TrackSessionStartOperation';
+import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
+import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ModelStore } from './ModelStore';
+
 export class OperationModelStore extends ModelStore<Operation> {
   constructor(prefs: IPreferencesService) {
     super('operations', prefs);
@@ -44,6 +48,15 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.CREATE_SUBSCRIPTION:
         operation = new CreateSubscriptionOperation();
+        break;
+      case OPERATION_NAME.UPDATE_SUBSCRIPTION:
+        operation = new UpdateSubscriptionOperation();
+        break;
+      case OPERATION_NAME.DELETE_SUBSCRIPTION:
+        operation = new DeleteSubscriptionOperation();
+        break;
+      case OPERATION_NAME.TRANSFER_SUBSCRIPTION:
+        operation = new TransferSubscriptionOperation();
         break;
       case OPERATION_NAME.REFRESH_USER:
         operation = new RefreshUserOperation();
