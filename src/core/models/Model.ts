@@ -229,8 +229,8 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
     return this.data.has(name);
   }
 
-  getProperty<T = unknown | null>(name: string): T {
-    const value = this.data.get(name);
+  getProperty<T = unknown | null>(name: string, defaultValue?: T): T {
+    const value = this.data.get(name) ?? defaultValue;
     return value as T;
   }
 

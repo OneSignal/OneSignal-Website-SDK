@@ -104,12 +104,14 @@ export class OneSignalApiBase {
     }
     try {
       const response = await fetch(url, contents);
-      const { status } = response;
+      const { status, headers } = response;
       const json = await response.json();
+      const retryAfter = headers?.get('Retry-After');
 
       return {
         result: json,
         status,
+        retryAfterSeconds: retryAfter ? parseInt(retryAfter) : undefined,
       };
     } catch (e) {
       if (e.name === 'TypeError') {
