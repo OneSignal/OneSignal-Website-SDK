@@ -1,4 +1,4 @@
-import { GroupComparisonValue, Operation } from './Operation';
+import { Operation } from './Operation';
 
 /**
  * Base class for alias-related operations
@@ -22,8 +22,4 @@ export abstract class BaseAliasOperation extends Operation {
   protected set label(value: string) {
     this.setProperty<string>('label', value);
   }
-
-  abstract override get modifyComparisonKey(): string;
-
-  abstract override get groupComparisonType(): GroupComparisonValue;
 }
