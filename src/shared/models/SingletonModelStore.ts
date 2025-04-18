@@ -4,7 +4,7 @@ import {
   IModelStoreChangeHandler,
   ISingletonModelStore,
   ISingletonModelStoreChangeHandler,
-} from 'src/types/models';
+} from 'src/core/types/models';
 import { EventProducer } from '../helpers/EventProducer';
 
 // Implements logic similar to Android SDK's SingletonModelStore

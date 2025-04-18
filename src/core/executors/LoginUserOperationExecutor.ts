@@ -1,3 +1,5 @@
+import { ModelChangeTags } from 'src/core/types/models';
+import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
 import Environment from 'src/shared/helpers/Environment';
 import {
   getResponseStatusType,
@@ -5,12 +7,10 @@ import {
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
 import { getTimeZoneId } from 'src/shared/utils/utils';
-import { IdentityConstants } from 'src/types/backend';
-import { ModelChangeTags } from 'src/types/models';
-import { ExecutionResult, IOperationExecutor } from 'src/types/operation';
-import { ConfigModelStore } from '../models/ConfigModelStore';
-import { IdentityModelStore } from '../models/IdentityModelStore';
-import { PropertiesModelStore } from '../models/PropertiesModelStore';
+import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { ConfigModelStore } from '../modelStores/ConfigModelStore';
+import { IdentityModelStore } from '../modelStores/IdentityModelStore';
+import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SupportedSubscription } from '../models/SubscriptionModels';
 import { Identity } from '../models/UserData';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -24,7 +24,6 @@ import { TransferSubscriptionOperation } from '../operations/TransferSubscriptio
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { RequestService } from '../requestService/RequestService';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
-import { OPERATION_NAME } from './constants';
 
 // Implements logic similar to Android's SDK's LoginUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/LoginUserOperationExecutor.kt

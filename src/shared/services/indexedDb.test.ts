@@ -2,11 +2,11 @@ import {
   DUMMY_EXTERNAL_ID,
   DUMMY_ONESIGNAL_ID,
 } from '../../../__test__/support/constants';
-import { LegacyModelName, ModelName } from '../../core/models/SupportedModels';
-import IndexedDb from './IndexedDb';
 import Random from '../../../__test__/support/utils/Random';
 import { SubscriptionType } from '../../core/models/SubscriptionModels';
+import { LegacyModelName, ModelName } from '../../core/models/SupportedModels';
 import Log from '../../shared/libraries/Log';
+import IndexedDb from './IndexedDb';
 
 function newOSIndexedDb(
   dbName = Random.getRandomString(10),

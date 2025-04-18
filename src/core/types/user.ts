@@ -17,16 +17,3 @@ export interface IRebuildUserService {
     onesignalId: string,
   ): Operation[] | null;
 }
-
-// Reference: https://documentation.onesignal.com/reference/create-user#body-parameters
-export interface IUserProperties {
-  country?: string;
-  first_active?: number;
-  ip?: string;
-  last_active?: number;
-  lat?: number;
-  long?: number;
-  language?: string;
-  tags?: { [key: string]: string };
-  timezone_id?: string;
-}

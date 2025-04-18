@@ -1,6 +1,6 @@
+import { IPreferencesService } from 'src/core/types/preferences';
 import Log from 'src/shared/libraries/Log';
-import { IPreferencesService } from 'src/types/preferences';
-import { OPERATION_NAME } from '../executors/constants';
+import { OPERATION_NAME } from '../constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';

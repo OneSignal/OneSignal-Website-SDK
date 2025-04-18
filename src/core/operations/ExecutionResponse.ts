@@ -1,4 +1,4 @@
-import { ExecutionResultValue } from 'src/types/operation';
+import { ExecutionResultValue } from 'src/core/types/operation';
 import { type Operation } from './Operation';
 
 export class ExecutionResponse {

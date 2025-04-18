@@ -1,9 +1,10 @@
-import { IdentityConstants } from 'src/types/backend';
+import { IdentityConstants } from '../constants';
 import { Model } from './Model';
 
 type IIdentityModel = {
   [IdentityConstants.ONESIGNAL_ID]: string;
   [IdentityConstants.EXTERNAL_ID]: string | null;
+  [key: string]: string | null;
 };
 
 /**

@@ -1,4 +1,4 @@
-import { IEventNotifier } from 'src/types/events';
+import { IEventNotifier } from 'src/core/types/events';
 
 export class EventProducer<THandler> implements IEventNotifier<THandler> {
   private subscribers: THandler[] = [];

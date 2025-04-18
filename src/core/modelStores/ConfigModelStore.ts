@@ -1,7 +1,7 @@
+import { IPreferencesService } from 'src/core/types/preferences';
 import { SimpleModelStore } from 'src/shared/models/SimpleModelStore';
 import { SingletonModelStore } from 'src/shared/models/SingletonModelStore';
-import { IPreferencesService } from 'src/types/preferences';
-import { ConfigModel } from './ConfigModel';
+import { ConfigModel } from '../models/ConfigModel';
 
 export class ConfigModelStore extends SingletonModelStore<ConfigModel> {
   constructor(prefs: IPreferencesService) {

@@ -1,15 +1,15 @@
 import Log from 'src/shared/libraries/Log';
 import { describe, expect, Mock, vi } from 'vitest';
 import {
-  ExecutionResult,
-  IOperationExecutor,
-  type OperationModelStore,
-} from '../../types/operation';
-import {
   GroupComparisonType,
   GroupComparisonValue,
   Operation as OperationBase,
 } from '../operations/Operation';
+import {
+  ExecutionResult,
+  IOperationExecutor,
+  type OperationModelStore,
+} from '../types/operation';
 import {
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_POST_CREATE_DELAY,
@@ -157,7 +157,7 @@ describe('OperationRepo', () => {
       new Operation('1', 'Op1', GroupComparisonType.CREATE, 'def'),
       0,
     );
-    op2.operation.applyToRecordId = blockedId;
+    op2.operation.setProperty('onesignalId', blockedId);
 
     opRepo.enqueue(op2.operation);
     expect(opRepo.getGroupableOperations(op)).toEqual([op]);
