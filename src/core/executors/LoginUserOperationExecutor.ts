@@ -8,9 +8,10 @@ import {
 import Log from 'src/shared/libraries/Log';
 import { getTimeZoneId } from 'src/shared/utils/utils';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
-import { ConfigModelStore } from '../modelStores/ConfigModelStore';
-import { IdentityModelStore } from '../modelStores/IdentityModelStore';
+import { type ConfigModelStore } from '../modelStores/ConfigModelStore';
+import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
+import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
@@ -37,7 +38,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     private identityOperationExecutor: IdentityOperationExecutor,
     private identityModelStore: IdentityModelStore,
     private propertiesModelStore: PropertiesModelStore,
-    private subscriptionsModelStore: any, // TODO: implement SubscriptionModelStore
+    private subscriptionsModelStore: SubscriptionModelStore,
     private configModelStore: ConfigModelStore,
   ) {}
 
@@ -205,7 +206,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         }
 
         const model = this.subscriptionsModelStore.get(localId);
-        model?.setStringProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
+        model?.setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
       }
 
       const followUp =
