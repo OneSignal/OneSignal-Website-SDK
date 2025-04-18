@@ -73,49 +73,33 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       | DeleteAliasOperation;
 
     const isSetAlias = lastOperation instanceof SetAliasOperation;
-    const request = async () => {
-      if (isSetAlias) {
-        const response = await RequestService.addAlias(
+    const request = isSetAlias
+      ? RequestService.addAlias(
           { appId: lastOperation.appId },
           new AliasPair(AliasPair.ONESIGNAL_ID, lastOperation.onesignalId),
           { [lastOperation.label]: lastOperation.value },
+        )
+      : RequestService.deleteAlias(
+          { appId: lastOperation.appId },
+          new AliasPair(AliasPair.ONESIGNAL_ID, lastOperation.onesignalId),
+          lastOperation.label,
         );
 
-        if (
-          this._identityModelStore.model.onesignalId ===
-          lastOperation.onesignalId
-        ) {
-          this._identityModelStore.model.setProperty<string>(
-            lastOperation.label,
-            lastOperation.value,
-            ModelChangeTags.HYDRATE,
-          );
-        }
-
-        return response;
-      }
-
-      const request = RequestService.deleteAlias(
-        { appId: lastOperation.appId },
-        new AliasPair(AliasPair.ONESIGNAL_ID, lastOperation.onesignalId),
-        lastOperation.label,
-      );
-
+    const { ok, status, retryAfterSeconds } = await request;
+    if (ok) {
       if (
         this._identityModelStore.model.onesignalId === lastOperation.onesignalId
       ) {
         this._identityModelStore.model.setProperty<string | null>(
           lastOperation.label,
-          null,
+          isSetAlias ? lastOperation.value : null,
           ModelChangeTags.HYDRATE,
         );
       }
-      return request;
-    };
+      return new ExecutionResponse(ExecutionResult.SUCCESS);
+    }
 
-    const { status, retryAfterSeconds } = await request();
     const responseType = getResponseStatusType(status);
-
     switch (responseType) {
       case ResponseStatusType.RETRYABLE:
         return new ExecutionResponse(
@@ -173,7 +157,5 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         return new ExecutionResponse(ExecutionResult.SUCCESS);
       }
     }
-
-    return new ExecutionResponse(ExecutionResult.SUCCESS);
   }
 }

@@ -109,6 +109,7 @@ export class OneSignalApiBase {
       const retryAfter = headers?.get('Retry-After');
 
       return {
+        ok: response.ok,
         result: json,
         status,
         retryAfterSeconds: retryAfter ? parseInt(retryAfter) : undefined,
