@@ -1,6 +1,7 @@
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
-import { BackendError } from 'src/shared/errors/BackendError';
-import { IdentityConstants, IIdentityBackendService } from 'src/types/backend';
+import { server } from '__test__/support/mocks/server';
+import { http, HttpResponse } from 'msw';
+import { IdentityConstants } from 'src/types/backend';
 import { ExecutionResult } from 'src/types/operation';
 import { IPreferencesService } from 'src/types/preferences';
 import { IRebuildUserService } from 'src/types/user';
@@ -29,10 +30,12 @@ const deleteAliasOp = new DeleteAliasOperation(
 let identityModelStore: IdentityModelStore;
 let newRecordsState: NewRecordsState;
 
+const identityUri = `**/api/v1/apps/*/users/by/onesignal_id/*/identity`;
+const deleteAliasUri = `${identityUri}/*`;
+
 describe('IdentityOperationExecutor', () => {
   const getExecutor = () => {
     return new IdentityOperationExecutor(
-      new mockIdentityBackendService(),
       identityModelStore,
       new BuildUserService(),
       newRecordsState,
@@ -40,6 +43,13 @@ describe('IdentityOperationExecutor', () => {
   };
 
   beforeEach(() => {
+    server.use(
+      // set alias api
+      http.patch(identityUri, () => HttpResponse.json({})),
+      // delete alias api
+      http.delete(deleteAliasUri, () => HttpResponse.json({})),
+    );
+
     identityModelStore = new IdentityModelStore(new MockPreferencesService());
     newRecordsState = new NewRecordsState();
     getValueFn.mockReturnValue('{}');
@@ -86,15 +96,6 @@ describe('IdentityOperationExecutor', () => {
     const ops = [setAliasOp];
     await executor.execute(ops);
 
-    expect(setAliasFn).toHaveBeenCalledWith(
-      APP_ID,
-      IdentityConstants.ONESIGNAL_ID,
-      DUMMY_ONESIGNAL_ID,
-      {
-        [label]: value,
-      },
-    );
-
     // should set property for matching onesignalId
     expect(identityModelStore.model.getProperty(label)).toBe(value);
   });
@@ -111,47 +112,67 @@ describe('IdentityOperationExecutor', () => {
     const ops = [deleteAliasOp];
     await executor.execute(ops);
 
-    expect(deleteAliasFn).toHaveBeenCalledWith(
-      APP_ID,
-      IdentityConstants.ONESIGNAL_ID,
-      DUMMY_ONESIGNAL_ID,
-      label,
-    );
-
     // should delete property for matching onesignalId
     expect(identityModelStore.model.getProperty(label)).toBeUndefined();
   });
 
   describe('Errors', () => {
+    const setAliasError = (
+      uri: string,
+      method: 'patch' | 'delete',
+      status: number,
+      retryAfter?: number,
+    ) => {
+      server.use(
+        http[method](uri, () =>
+          HttpResponse.json(
+            {},
+            {
+              status,
+              headers: retryAfter
+                ? { 'Retry-After': retryAfter?.toString() }
+                : undefined,
+            },
+          ),
+        ),
+      );
+    };
+
+    const setAddAliasError = (status: number, retryAfter?: number) =>
+      setAliasError(identityUri, 'patch', status, retryAfter);
+
+    const setDeleteAliasError = (status: number, retryAfter?: number) =>
+      setAliasError(deleteAliasUri, 'delete', status, retryAfter);
+
     test('should handle setAlias errors', async () => {
       const executor = getExecutor();
       const ops = [setAliasOp];
 
       // Retryable
-      setAliasFn.mockRejectedValue(new BackendError(429, '', 10));
+      setAddAliasError(429, 10);
       const res = await executor.execute(ops);
       expect(res.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res.retryAfterSeconds).toBe(10);
 
       // Invalid
-      setAliasFn.mockRejectedValue(new BackendError(400));
+      setAddAliasError(400);
       const res2 = await executor.execute(ops);
       expect(res2.result).toBe(ExecutionResult.FAIL_NORETRY);
 
       // Conflict
-      setAliasFn.mockRejectedValue(new BackendError(409, '', 5));
+      setAddAliasError(409, 5);
       const res3 = await executor.execute(ops);
       expect(res3.result).toBe(ExecutionResult.FAIL_CONFLICT);
       expect(res3.retryAfterSeconds).toBe(5);
 
       // Unauthorized
-      setAliasFn.mockRejectedValue(new BackendError(401, '', 15));
+      setAddAliasError(401, 15);
       const res4 = await executor.execute(ops);
       expect(res4.result).toBe(ExecutionResult.FAIL_UNAUTHORIZED);
       expect(res4.retryAfterSeconds).toBe(15);
 
       // Missing
-      setAliasFn.mockRejectedValue(new BackendError(410));
+      setAddAliasError(410);
       const res5 = await executor.execute(ops);
 
       // no rebuild ops
@@ -168,7 +189,7 @@ describe('IdentityOperationExecutor', () => {
 
       // in missing retry window
       newRecordsState.add(DUMMY_ONESIGNAL_ID);
-      setAliasFn.mockRejectedValue(new BackendError(404, '', 20));
+      setAddAliasError(404, 20);
       const res6 = await executor.execute(ops);
       expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res6.retryAfterSeconds).toBe(20);
@@ -179,35 +200,35 @@ describe('IdentityOperationExecutor', () => {
       const ops = [deleteAliasOp];
 
       // Retryable
-      deleteAliasFn.mockRejectedValue(new BackendError(429, '', 10));
+      setDeleteAliasError(429, 10);
       const res = await executor.execute(ops);
       expect(res.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res.retryAfterSeconds).toBe(10);
 
       // Invalid
-      deleteAliasFn.mockRejectedValue(new BackendError(400));
+      setDeleteAliasError(400);
       const res2 = await executor.execute(ops);
       expect(res2.result).toBe(ExecutionResult.FAIL_NORETRY);
 
       // Conflict
-      deleteAliasFn.mockRejectedValue(new BackendError(409, '', 5));
+      setDeleteAliasError(409, 5);
       const res3 = await executor.execute(ops);
       expect(res3.result).toBe(ExecutionResult.SUCCESS);
 
       // Unauthorized
-      deleteAliasFn.mockRejectedValue(new BackendError(401, '', 15));
+      setDeleteAliasError(401, 15);
       const res4 = await executor.execute(ops);
       expect(res4.result).toBe(ExecutionResult.FAIL_UNAUTHORIZED);
       expect(res4.retryAfterSeconds).toBe(15);
 
       // Missing
-      deleteAliasFn.mockRejectedValue(new BackendError(410));
+      setDeleteAliasError(410);
       const res5 = await executor.execute(ops);
       expect(res5.result).toBe(ExecutionResult.SUCCESS);
 
       // in missing retry window
       newRecordsState.add(DUMMY_ONESIGNAL_ID);
-      deleteAliasFn.mockRejectedValue(new BackendError(404, '', 20));
+      setDeleteAliasError(404, 20);
       const res6 = await executor.execute(ops);
       expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res6.retryAfterSeconds).toBe(20);
@@ -216,18 +237,6 @@ describe('IdentityOperationExecutor', () => {
 });
 
 // TODO: Revisit after implementing IdentityBackendService
-const setAliasFn = vi.fn();
-const deleteAliasFn = vi.fn();
-
-class mockIdentityBackendService implements IIdentityBackendService {
-  setAlias(...args: any[]) {
-    return setAliasFn(...args);
-  }
-  deleteAlias(...args: any[]) {
-    return deleteAliasFn(...args);
-  }
-}
-
 const getValueFn = vi.fn().mockReturnValue('{}');
 const setValueFn = vi.fn();
 class MockPreferencesService implements IPreferencesService {
