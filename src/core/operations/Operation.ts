@@ -10,7 +10,16 @@ export const GroupComparisonType = {
 export type GroupComparisonValue =
   (typeof GroupComparisonType)[keyof typeof GroupComparisonType];
 
-export abstract class Operation extends Model {
+type BaseOperation = {
+  name: string;
+  appId: string;
+  onesignalId: string;
+};
+
+export abstract class Operation<
+  B extends object = BaseOperation,
+  T extends B & BaseOperation = B & BaseOperation,
+> extends Model<T> {
   constructor(name: string, appId?: string, onesignalId?: string) {
     super();
     this.name = name;
@@ -21,27 +30,27 @@ export abstract class Operation extends Model {
   }
 
   get name(): string {
-    return this.getProperty<string>('name');
+    return this.getProperty('name');
   }
   private set name(value: string) {
-    this.setProperty<string>('name', value);
+    this.setProperty('name', value);
   }
 
   /**
    * The application ID this subscription will be created under.
    */
   get appId(): string {
-    return this.getProperty<string>('appId');
+    return this.getProperty('appId');
   }
   protected set appId(value: string) {
-    this.setProperty<string>('appId', value);
+    this.setProperty('appId', value);
   }
 
   get onesignalId(): string {
-    return this.getProperty<string>('onesignalId');
+    return this.getProperty('onesignalId');
   }
   protected set onesignalId(value: string) {
-    this.setProperty<string>('onesignalId', value);
+    this.setProperty('onesignalId', value);
   }
 
   /**

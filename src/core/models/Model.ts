@@ -6,24 +6,24 @@ import { ModelChangeTags } from 'src/types/models';
  * Implement `IModelChangedHandler` and subscribe implementation via `Model.subscribe` to
  * be notified when the `Model` has changed.
  */
-export interface IModelChangedHandler {
+export interface IModelChangedHandler<T extends object = object> {
   /**
    * Called when the subscribed model has been changed.
    *
    * @param args Information related to what has changed.
    * @param tag The tag which identifies how/why the model was changed.
    */
-  onChanged(args: ModelChangedArgs, tag: string): void;
+  onChanged(args: ModelChangedArgs<T>, tag: string): void;
 }
 
 /**
  * The arguments passed to the IModelChangedHandler when subscribed via Model.subscribe
  */
-export interface ModelChangedArgs {
+export interface ModelChangedArgs<T extends object = object> {
   /**
    * The full model in its current state.
    */
-  model: Model;
+  model: Model<T>;
 
   /**
    * The path to the property, from the root Model, that has changed.
@@ -84,16 +84,22 @@ export interface ModelChangedArgs {
  * is nested the createModelForProperty and/or createListForProperty needs to be implemented
  * to aide in the deserialization process.
  */
-export class Model implements IEventNotifier<IModelChangedHandler> {
+type BaseModel = { id?: string };
+
+export class Model<
+  U extends object = BaseModel,
+  T extends U & BaseModel = U & BaseModel,
+> implements IEventNotifier<IModelChangedHandler>
+{
   /**
    * A unique identifier for this model.
    */
   get id(): string {
-    return this.getProperty<string>('id');
+    return this.getProperty('id') as string;
   }
 
   set id(value: string) {
-    this.setProperty<string>('id', value);
+    this.setProperty('id', value);
   }
 
   protected data: Map<string, unknown> = new Map();
@@ -108,7 +114,7 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
    * specified, must also specify _parentModel
    */
   constructor(
-    private _parentModel: Model | null = null,
+    private _parentModel: Model<BaseModel> | null = null,
     private readonly _parentProperty: string | null = null,
   ) {
     if ((_parentModel == null) !== (_parentProperty == null)) {
@@ -124,7 +130,7 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
    *
    * @param object The JSON object to initialize this model from.
    */
-  initializeFromJson(object: object): void {
+  initializeFromJson(object: Partial<T>): void {
     this.data.clear();
     this.data = new Map(Object.entries(object));
   }
@@ -136,12 +142,12 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
    * @param id The id of the model to initialize to.
    * @param model The model to initialize this model from.
    */
-  initializeFromModel(id: string | null, model: Model): void {
+  initializeFromModel(id: string | null, model: Model<BaseModel>): void {
     const newData = new Map<string, unknown>();
 
     model.data.forEach((value: unknown, key: string) => {
       if (value instanceof Model) {
-        const childModel = value as Model;
+        const childModel = value as Model<BaseModel>;
         childModel['_parentModel'] = this;
         newData.set(key, childModel);
       } else {
@@ -173,7 +179,7 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
     _property: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _jsonObject: object,
-  ): Model | null {
+  ): Model<BaseModel> | null {
     return null;
   }
 
@@ -197,9 +203,9 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
     return null;
   }
 
-  setProperty<T>(
-    name: string,
-    value: T | null,
+  setProperty<K extends keyof T>(
+    name: string & K,
+    value: T[K] | null,
     tag: string = ModelChangeTags.NORMAL,
     forceChange = false,
   ): void {
@@ -229,9 +235,9 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
     return this.data.has(name);
   }
 
-  getProperty<T = unknown | null>(name: string, defaultValue?: T): T {
-    const value = this.data.get(name) ?? defaultValue;
-    return value as T;
+  getProperty<K extends keyof T>(name: K, defaultValue?: T[K]): T[K] {
+    const value = this.data.get(name as string) ?? defaultValue;
+    return value as T[K];
   }
 
   private notifyChanged(
@@ -269,8 +275,8 @@ export class Model implements IEventNotifier<IModelChangedHandler> {
    *
    * @return The resulting JSON object.
    */
-  toJSON(): object {
-    return Object.fromEntries(this.data.entries());
+  toJSON(): T {
+    return Object.fromEntries(this.data.entries()) as T;
   }
 
   subscribe(handler: IModelChangedHandler): void {

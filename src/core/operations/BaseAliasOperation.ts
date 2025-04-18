@@ -1,9 +1,16 @@
 import { Operation } from './Operation';
 
+type AliasOperation = {
+  label: string;
+};
+
 /**
  * Base class for alias-related operations
  */
-export abstract class BaseAliasOperation extends Operation {
+export abstract class BaseAliasOperation<
+  U extends object = AliasOperation,
+  T extends U & AliasOperation = U & AliasOperation,
+> extends Operation<T> {
   constructor(
     operationName: string,
     appId?: string,
@@ -17,9 +24,9 @@ export abstract class BaseAliasOperation extends Operation {
   }
 
   get label(): string {
-    return this.getProperty<string>('label');
+    return this.getProperty('label');
   }
   protected set label(value: string) {
-    this.setProperty<string>('label', value);
+    this.setProperty('label', value);
   }
 }
