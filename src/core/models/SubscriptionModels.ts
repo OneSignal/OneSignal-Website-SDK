@@ -13,20 +13,6 @@ export enum SubscriptionType {
   // There are other OneSignal types, but only including ones used here.
 }
 
-export const isSubscriptionPush = (
-  subscription: SupportedSubscription,
-): subscription is Extract<
-  SupportedSubscription,
-  { type: SubscriptionType }
-> => {
-  return (
-    subscription.type === SubscriptionType.ChromePush ||
-    subscription.type === SubscriptionType.SafariPush ||
-    subscription.type === SubscriptionType.SafariLegacyPush ||
-    subscription.type === SubscriptionType.FirefoxPush
-  );
-};
-
 export enum SubscriptionChannel {
   Email = 'Email',
   SMS = 'SMS',
