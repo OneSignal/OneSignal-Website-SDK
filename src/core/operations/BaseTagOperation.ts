@@ -1,9 +1,16 @@
 import { Operation } from './Operation';
 
+type TagOperation = {
+  key: string;
+};
+
 /**
  * Base class for tag-related operations
  */
-export abstract class BaseTagOperation extends Operation {
+export abstract class BaseTagOperation<
+  U extends object = TagOperation,
+  T extends U & TagOperation = U & TagOperation,
+> extends Operation<T> {
   constructor(
     operationName: string,
     appId?: string,
@@ -20,10 +27,10 @@ export abstract class BaseTagOperation extends Operation {
    * The tag key.
    */
   get key(): string {
-    return this.getProperty<string>('key');
+    return this.getProperty('key');
   }
   protected set key(value: string) {
-    this.setProperty<string>('key', value);
+    this.setProperty('key', value);
   }
 
   override get modifyComparisonKey(): string {

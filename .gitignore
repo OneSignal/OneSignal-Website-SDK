@@ -6,13 +6,13 @@ build/releases
 ngrok_last_url
 ngrok.log
 
-
 .DS_STORE
 *.pem
 *.key
 *.crt
 .vscode/**
 !.vscode/launch.json
+.cursor/
 
 coverage
 
