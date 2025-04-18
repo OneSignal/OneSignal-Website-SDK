@@ -1,3 +1,4 @@
+// TODO: Remove this file with Web SDK Refactor work
 import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
 
 export type SupportedSubscription = SubscriptionModel | FutureSubscriptionModel;

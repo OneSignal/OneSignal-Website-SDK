@@ -11,8 +11,6 @@ import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { ConfigModelStore } from '../modelStores/ConfigModelStore';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
-import { SupportedSubscription } from '../models/SubscriptionModels';
-import { Identity } from '../models/UserData';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
@@ -23,7 +21,14 @@ import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { RequestService } from '../requestService/RequestService';
+import {
+  ICreateUserIdentity,
+  ICreateUserSubscription,
+  IUserProperties,
+} from '../types/api';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
+
+type SubscriptionWithId = ICreateUserSubscription & { id?: string };
 
 // Implements logic similar to Android's SDK's LoginUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/LoginUserOperationExecutor.kt
@@ -126,9 +131,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     createUserOperation: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
-    const identity: Identity = {};
-    const subscriptions: Record<string, SupportedSubscription> = {};
-    const properties: Record<string, string> = {
+    const identity: ICreateUserIdentity = {};
+    const subscriptions: Record<string, ICreateUserSubscription> = {};
+    const properties: IUserProperties = {
       timezone_id: getTimeZoneId(),
       language: Environment.getLanguage(),
     };
@@ -246,8 +251,8 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       | DeleteSubscriptionOperation
       | TransferSubscriptionOperation
       | UpdateSubscriptionOperation,
-    currentSubs: Record<string, SupportedSubscription>,
-  ): Record<string, SupportedSubscription> {
+    currentSubs: Record<string, SubscriptionWithId>,
+  ): Record<string, SubscriptionWithId> {
     switch (true) {
       case operation instanceof CreateSubscriptionOperation: {
         const { subscriptionId, ...rest } = operation.toJSON();
@@ -287,6 +292,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           subs[subscriptionId] = {
             id: subscriptionId,
             type: operation.type,
+            token: operation.token,
           };
         }
         return subs;

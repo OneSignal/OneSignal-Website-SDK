@@ -1,4 +1,4 @@
-// TODO: Remove this interface and use the IUserProperties in types folder
+// TODO: Remove this file with Web SDK Refactor work
 export interface UserPropertiesModel {
   tags?: { [key: string]: string };
   language?: string;

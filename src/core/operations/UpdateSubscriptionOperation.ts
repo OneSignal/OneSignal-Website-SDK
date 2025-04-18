@@ -1,12 +1,14 @@
 import { OPERATION_NAME } from '../constants';
-import { BaseSubscriptionOperation } from './BaseSubscriptionOperation';
-import { Subscription } from './types';
+import {
+  BaseSubscriptionOperation,
+  SubscriptionWithAppId,
+} from './BaseSubscriptionOperation';
 
 /**
  * An Operation to update an existing subscription in the OneSignal backend.
  */
 export class UpdateSubscriptionOperation extends BaseSubscriptionOperation {
-  constructor(subscription?: Subscription) {
+  constructor(subscription?: SubscriptionWithAppId) {
     super(
       OPERATION_NAME.UPDATE_SUBSCRIPTION,
       subscription?.appId,

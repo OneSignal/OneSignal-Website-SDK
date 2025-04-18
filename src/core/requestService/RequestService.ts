@@ -14,6 +14,7 @@ import {
 } from '../models/SubscriptionModels';
 import {
   ICreateUser,
+  ICreateUserIdentity,
   ISubscription,
   IUserIdentity,
   IUserProperties,
@@ -144,7 +145,7 @@ export class RequestService {
   static async addAlias(
     requestMetadata: RequestMetadata,
     alias: AliasPair,
-    identity: IUserIdentity,
+    identity: ICreateUserIdentity,
   ) {
     const { appId } = requestMetadata;
     return OneSignalApiBase.patch<{ identity: IUserIdentity }>(

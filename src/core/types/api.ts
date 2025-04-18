@@ -35,19 +35,43 @@ export const SubscriptionType = {
   // WindowsPush: 'WindowsPush',
 } as const;
 
+export type SubscriptionTypeValue =
+  (typeof SubscriptionType)[keyof typeof SubscriptionType];
+
+export const NotificationType = {
+  // Notification permission is not granted at the browser level.
+  // Used if the native notification permission is 'default' or 'declined'
+  NoNativePermission: 0,
+  // Everything is available for the subscription to be enabled;
+  // not opted out, has token, and notification permission is granted.
+  Subscribed: 1,
+  // OneSignal.User.PushSubscription.optOut() called or end-user opted out from SDK bell widget
+  // UserOptedOut takes priority over NoNativePermission
+  UserOptedOut: -2,
+  NotSubscribed: -10,
+  TemporaryWebRecord: -20,
+  PermissionRevoked: -21,
+  PushSubscriptionRevoked: -22,
+  ServiceWorkerStatus403: -23,
+  ServiceWorkerStatus404: -24,
+} as const;
+
+export type NotificationTypeValue =
+  (typeof NotificationType)[keyof typeof NotificationType];
+
 export interface ICreateUserSubscription {
   // app_version?: string; // For Mobile
   device_model?: string;
   device_os?: string;
-  enabled: boolean;
-  notification_types?: string[];
+  enabled?: boolean;
+  notification_types?: NotificationTypeValue;
   // rooted?: boolean; // For Android
   sdk?: string;
   token: string;
   session_time?: number;
   session_count?: number;
   // test_type: number; // For iOS
-  type: string;
+  type: SubscriptionTypeValue;
   web_auth?: string;
   web_p256?: string;
 }

@@ -1,41 +1,41 @@
 import { IDManager } from 'src/shared/managers/IDManager';
-import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
-import { SubscriptionType } from '../models/SubscriptionModels';
+import {
+  ICreateUserSubscription,
+  NotificationTypeValue,
+  SubscriptionTypeValue,
+} from '../types/api';
 import { Operation } from './Operation';
-import { Subscription } from './types';
 
-type SubscriptionOperation = {
-  device_model: string | undefined;
-  device_os: number | undefined;
-  enabled: boolean;
-  notification_types: SubscriptionStateKind;
-  sdk: string | undefined;
+type SubscriptionOp = ICreateUserSubscription & {
   subscriptionId: string;
-  type: SubscriptionType;
-  web_auth: string | undefined;
-  web_p256: string | undefined;
+};
+
+export type SubscriptionWithAppId = SubscriptionOp & {
+  appId: string;
+  onesignalId: string;
 };
 
 /**
  * Base class for subscription-related operations
  */
-export abstract class BaseSubscriptionOperation extends Operation<SubscriptionOperation> {
+export abstract class BaseSubscriptionOperation extends Operation<SubscriptionOp> {
   constructor(
     operationName: string,
     appId?: string,
     onesignalId?: string,
-    subscription?: Subscription,
+    subscription?: SubscriptionOp,
   ) {
     super(operationName, appId, onesignalId);
 
     if (subscription) {
-      this.subscriptionId = subscription.subscriptionId;
-      this.type = subscription.type;
+      this.device_model = subscription.device_model;
+      this.device_os = subscription.device_os;
       this.enabled = subscription.enabled;
       this.notification_types = subscription.notification_types;
       this.sdk = subscription.sdk;
-      this.device_model = subscription.device_model;
-      this.device_os = subscription.device_os;
+      this.subscriptionId = subscription.subscriptionId;
+      this.token = subscription.token;
+      this.type = subscription.type;
       this.web_auth = subscription.web_auth;
       this.web_p256 = subscription.web_p256;
     }
@@ -55,30 +55,40 @@ export abstract class BaseSubscriptionOperation extends Operation<SubscriptionOp
   /**
    * The type of subscription.
    */
-  public get type(): SubscriptionType {
+  public get type(): SubscriptionTypeValue {
     return this.getProperty('type');
   }
-  protected set type(value: SubscriptionType) {
+  protected set type(value: SubscriptionTypeValue) {
     this.setProperty('type', value);
+  }
+
+  /**
+   * The token for the subscription.
+   */
+  public get token(): string {
+    return this.getProperty('token');
+  }
+  protected set token(value: string) {
+    this.setProperty('token', value);
   }
 
   /**
    * Whether this subscription is currently enabled.
    */
-  get enabled(): boolean {
+  get enabled(): boolean | undefined {
     return this.getProperty('enabled');
   }
-  protected set enabled(value: boolean) {
+  protected set enabled(value: boolean | undefined) {
     this.setProperty('enabled', value);
   }
 
   /**
    * The notification types this subscription is subscribed to.
    */
-  get notification_types(): SubscriptionStateKind {
+  get notification_types(): NotificationTypeValue | undefined {
     return this.getProperty('notification_types');
   }
-  protected set notification_types(value: SubscriptionStateKind) {
+  protected set notification_types(value: NotificationTypeValue | undefined) {
     this.setProperty('notification_types', value);
   }
 
@@ -105,10 +115,10 @@ export abstract class BaseSubscriptionOperation extends Operation<SubscriptionOp
   /**
    * The device OS version
    */
-  get device_os(): number | undefined {
+  get device_os(): string | undefined {
     return this.getProperty('device_os');
   }
-  protected set device_os(value: number | undefined) {
+  protected set device_os(value: string | undefined) {
     this.setProperty('device_os', value);
   }
 
