@@ -10,6 +10,7 @@ import { ModelChangeTags } from 'src/types/models';
 import { ExecutionResult, IOperationExecutor } from 'src/types/operation';
 import { ConfigModelStore } from '../models/ConfigModelStore';
 import { IdentityModelStore } from '../models/IdentityModelStore';
+import { PropertiesModelStore } from '../models/PropertiesModelStore';
 import { SupportedSubscription } from '../models/SubscriptionModels';
 import { Identity } from '../models/UserData';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -30,8 +31,8 @@ import { OPERATION_NAME } from './constants';
 export class LoginUserOperationExecutor implements IOperationExecutor {
   constructor(
     private identityOperationExecutor: IdentityOperationExecutor,
-    private identityModelStore: IdentityModelStore, // private identityModelStore: IdentityModelStore,
-    private propertiesModelStore: any, // TODO: implement PropertiesModelStore
+    private identityModelStore: IdentityModelStore,
+    private propertiesModelStore: PropertiesModelStore,
     private subscriptionsModelStore: any, // TODO: implement SubscriptionModelStore
     private configModelStore: ConfigModelStore,
   ) {}
