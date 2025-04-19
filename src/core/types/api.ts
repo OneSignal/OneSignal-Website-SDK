@@ -79,8 +79,8 @@ export interface ICreateUserSubscription {
 export interface ICreateUser {
   refresh_device_metadata?: boolean;
   identity: ICreateUserIdentity;
-  properties: IUserProperties;
-  subscriptions: ICreateUserSubscription[];
+  properties?: IUserProperties;
+  subscriptions?: ICreateUserSubscription[];
 }
 
 export interface IUserIdentity {

@@ -6,6 +6,11 @@ import {
   Operation,
 } from './Operation';
 
+type ILoginOp = {
+  externalId?: string;
+  existingOnesignalId?: string;
+};
+
 /**
  * An Operation to login the user with the externalId provided. Logging in a user will do the
  * following:
@@ -13,33 +18,33 @@ import {
  * 1. Attempt to give the user identified by existingOnesignalId an alias of externalId. If
  *    this succeeds the existing user becomes
  */
-export class LoginUserOperation extends Operation {
+export class LoginUserOperation extends Operation<ILoginOp> {
   constructor();
   constructor(
     appId: string,
     onesignalId: string,
     externalId?: string,
-    existingOneSignalId?: string | null,
+    existingOneSignalId?: string,
   );
   constructor(
     appId?: string,
     onesignalId?: string,
     externalId?: string,
-    existingOneSignalId: string | null = null,
+    existingOneSignalId?: string,
   ) {
     super(OPERATION_NAME.LOGIN_USER, appId, onesignalId);
     if (externalId) this.externalId = externalId;
-    this.existingOnesignalId = existingOneSignalId;
+    if (existingOneSignalId) this.existingOnesignalId = existingOneSignalId;
   }
 
   /**
    * The optional external ID of this newly logged-in user. Must be unique for the appId.
    */
   get externalId(): string | undefined {
-    return this.getProperty<string | undefined>('externalId');
+    return this.getProperty('externalId');
   }
   private set externalId(value: string) {
-    this.setProperty<string>('externalId', value);
+    this.setProperty('externalId', value);
   }
 
   /**
@@ -47,11 +52,11 @@ export class LoginUserOperation extends Operation {
    * When null (or non-null but unsuccessful), a new user will be upserted. This ID *may* be locally generated
    * and can be checked via IDManager.isLocalId to ensure correct processing.
    */
-  get existingOnesignalId(): string | null {
-    return this.getProperty<string | null>('existingOnesignalId');
+  get existingOnesignalId(): string | undefined {
+    return this.getProperty('existingOnesignalId');
   }
-  private set existingOnesignalId(value: string | null) {
-    this.setProperty<string>('existingOnesignalId', value);
+  private set existingOnesignalId(value: string) {
+    this.setProperty('existingOnesignalId', value);
   }
 
   override get createComparisonKey(): string {
@@ -68,7 +73,7 @@ export class LoginUserOperation extends Operation {
 
   override get canStartExecute(): boolean {
     return (
-      this.existingOnesignalId === null ||
+      !this.existingOnesignalId ||
       !IDManager.isLocalId(this.existingOnesignalId)
     );
   }

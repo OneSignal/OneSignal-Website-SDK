@@ -97,7 +97,6 @@ export class Model<
   get id(): string {
     return this.getProperty('id') as string;
   }
-
   set id(value: string) {
     this.setProperty('id', value);
   }
