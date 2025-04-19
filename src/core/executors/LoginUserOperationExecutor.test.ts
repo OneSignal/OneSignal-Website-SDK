@@ -22,7 +22,7 @@ import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
-import { SubscriptionWithAppId } from '../operations/BaseSubscriptionOperation';
+import { SubscriptionWithAppId } from '../operations/BaseFullSubscriptionOperation';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';

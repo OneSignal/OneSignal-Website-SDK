@@ -1,15 +1,15 @@
 import { IDManager } from 'src/shared/managers/IDManager';
 import { OPERATION_NAME } from '../constants';
 import {
-  BaseSubscriptionOperation,
+  BaseFullSubscriptionOperation,
   SubscriptionWithAppId,
-} from './BaseSubscriptionOperation';
+} from './BaseFullSubscriptionOperation';
 
 /**
  * An Operation to create a new subscription in the OneSignal backend. The subscription will
  * be associated to the user with the appId and onesignalId provided.
  */
-export class CreateSubscriptionOperation extends BaseSubscriptionOperation {
+export class CreateSubscriptionOperation extends BaseFullSubscriptionOperation {
   constructor(subscription?: SubscriptionWithAppId) {
     super(
       OPERATION_NAME.CREATE_SUBSCRIPTION,
