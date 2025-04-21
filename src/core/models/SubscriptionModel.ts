@@ -1,9 +1,10 @@
+import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
 import { ICreateUserSubscription, SubscriptionTypeValue } from '../types/api';
 import { Model } from './Model';
 
 type ISubscriptionModel = Pick<
   ICreateUserSubscription,
-  'device_model' | 'device_os' | 'sdk' | 'token' | 'type'
+  'device_model' | 'device_os' | 'sdk' | 'token' | 'type' | 'notification_types'
 > & {
   optedIn: boolean;
 };
@@ -25,11 +26,20 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
     this.setProperty('type', value);
   }
 
+  // Android SDK refers to this as address
   get token(): string {
     return this.getProperty('token');
   }
   set token(value: string) {
     this.setProperty('token', value);
+  }
+
+  // Android SDK refers to this as status
+  get notification_types(): SubscriptionStateKind | undefined {
+    return this.getProperty('notification_types');
+  }
+  set notification_types(value: SubscriptionStateKind | undefined) {
+    this.setProperty('notification_types', value);
   }
 
   get sdk(): string | undefined {

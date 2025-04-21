@@ -80,9 +80,7 @@ export interface ModelChangedArgs<T extends object = object> {
  *
  * Deserialization
  * ---------------
- * When deserializing a flat Model nothing specific is required. However if the Model
- * is nested the createModelForProperty and/or createListForProperty needs to be implemented
- * to aide in the deserialization process.
+ * When deserializing a flat Model nothing specific is required.
  */
 type BaseModel = { id?: string };
 
@@ -162,49 +160,9 @@ export class Model<
     this.data = newData;
   }
 
-  /**
-   * Called via initializeFromJson when the property being initialized is a JSON object,
-   * indicating the property value should be set to a nested Model. The specific concrete
-   * class of Model for this property is determined by the implementor and should depend on
-   * the property provided.
-   *
-   * @param property The property that is to contain the Model created by this method.
-   * @param jsonObject The JSON object that the Model will be created/initialized from.
-   *
-   * @return The created Model, or null if the property should not be set.
-   */
-  protected createModelForProperty(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _property: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _jsonObject: object,
-  ): Model<BaseModel> | null {
-    return null;
-  }
-
-  /**
-   * Called via initializeFromJson when the property being initialized is a JSON array,
-   * indicating the property value should be set to an Array. The specific concrete class
-   * inside the Array for this property is determined by the implementor and should depend
-   * on the property provided.
-   *
-   * @param property The property that is to contain the Array created by this method.
-   * @param jsonArray The JSON array that the Array will be created/initialized from.
-   *
-   * @return The created Array, or null if the property should not be set.
-   */
-  protected createListForProperty(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _property: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _jsonArray: unknown[],
-  ): unknown[] | null {
-    return null;
-  }
-
   setProperty<K extends keyof T>(
     name: string & K,
-    value: T[K] | null,
+    value: T[K] | undefined,
     tag: string = ModelChangeTags.NORMAL,
     forceChange = false,
   ): void {
@@ -214,7 +172,7 @@ export class Model<
       return;
     }
 
-    if (value !== null && value !== undefined) {
+    if (value !== undefined) {
       this.data.set(name, value);
     } else if (this.data.has(name)) {
       this.data.delete(name);
@@ -288,5 +246,10 @@ export class Model<
 
   get hasSubscribers(): boolean {
     return this.changeNotifier.hasSubscribers;
+  }
+
+  // Unique to web implementation
+  get isWebPush(): boolean {
+    return [];
   }
 }

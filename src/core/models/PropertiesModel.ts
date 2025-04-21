@@ -1,11 +1,12 @@
-import { IUserProperties } from 'src/core/types/user';
+import { IUserProperties } from '../types/api';
 import { Model } from './Model';
 
 type IPropertiesModel = {
-  onesignalId: string;
+  country: IUserProperties['country'];
   language: IUserProperties['language'];
-  timezone: IUserProperties['timezone_id'];
+  onesignalId: string;
   tags: IUserProperties['tags'];
+  timezone: IUserProperties['timezone_id'];
 };
 
 // Implements logic similar to Android's SDK's PropertiesModel
@@ -16,6 +17,13 @@ export class PropertiesModel extends Model<IPropertiesModel> {
   }
   set onesignalId(value: string) {
     this.setProperty('onesignalId', value);
+  }
+
+  get country(): string | undefined {
+    return this.getProperty('country');
+  }
+  set country(value: string | undefined) {
+    this.setProperty('country', value);
   }
 
   get language(): string | undefined {
