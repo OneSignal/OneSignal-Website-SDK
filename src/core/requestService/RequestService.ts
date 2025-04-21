@@ -249,13 +249,13 @@ export class RequestService {
    * @param requestMetadata - { appId }
    * @param subscriptionId - subscription id
    */
-  static async fetchAliasesForSubscription(
+  static async getIdentityFromSubscription(
     requestMetadata: RequestMetadata,
     subscriptionId: string,
-  ): Promise<OneSignalApiBaseResponse> {
+  ) {
     const { appId } = requestMetadata;
     return OneSignalApiBase.get<{ identity: IUserIdentity }>(
-      `apps/${appId}/subscriptions/${subscriptionId}/identity`,
+      `apps/${appId}/subscriptions/${subscriptionId}/user/identity`,
     );
   }
 

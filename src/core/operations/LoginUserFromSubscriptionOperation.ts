@@ -5,10 +5,13 @@ import {
   Operation,
 } from './Operation';
 
-/**
- * An Operation to login the user with the subscriptionId provided.
- */
-export class LoginUserFromSubscriptionOperation extends Operation {
+interface LoginUserOperation {
+  subscriptionId: string;
+}
+
+// Implements logic similar to Android SDK's LoginUserFromSubscriptionOperation
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/LoginUserFromSubscriptionOperation.kt
+export class LoginUserFromSubscriptionOperation extends Operation<LoginUserOperation> {
   constructor();
   constructor(appId: string, onesignalId: string, subscriptionId: string);
   constructor(appId?: string, onesignalId?: string, subscriptionId?: string) {
@@ -18,37 +21,32 @@ export class LoginUserFromSubscriptionOperation extends Operation {
     }
   }
 
-  /**
-   * The optional external ID of this newly logged-in user. Must be unique for the appId.
-   */
   get subscriptionId(): string {
-    return this.getProperty<string>('subscriptionId');
+    return this.getProperty('subscriptionId');
   }
   private set subscriptionId(value: string) {
-    this.setProperty<string>('subscriptionId', value);
+    this.setProperty('subscriptionId', value);
   }
 
-  private getKey(): string {
+  private get comparisonKey(): string {
     return `${this.appId}.Subscription.${this.subscriptionId}.Login`;
   }
-
-  override get createComparisonKey(): string {
-    return this.getKey();
+  get createComparisonKey(): string {
+    return this.comparisonKey;
+  }
+  get modifyComparisonKey(): string {
+    return this.comparisonKey;
   }
 
-  override get modifyComparisonKey(): string {
-    return this.getKey();
-  }
-
-  override get groupComparisonType(): GroupComparisonValue {
+  get groupComparisonType(): GroupComparisonValue {
     return GroupComparisonType.NONE;
   }
 
-  override get canStartExecute(): boolean {
+  get canStartExecute(): boolean {
     return true;
   }
 
-  override get applyToRecordId(): string {
+  get applyToRecordId(): string {
     return this.subscriptionId;
   }
 }

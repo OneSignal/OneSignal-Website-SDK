@@ -15,6 +15,7 @@ import { isCompleteSubscriptionObject } from '../utils/typePredicates';
 import AliasPair from './AliasPair';
 import { RequestService } from './RequestService';
 
+// TODO: Remove with web sdk refactor work
 /**
  * This class contains logic for all the UserProperty model related requests that can be made to the OneSignal API
  * These static functions are what are ultimately invoked by the operation processing logic in the Executor class
