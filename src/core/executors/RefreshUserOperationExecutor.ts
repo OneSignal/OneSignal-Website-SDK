@@ -50,7 +50,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       );
 
     const startingOp = operations[0];
-    return this.getUser(startingOp as RefreshUserOperation);
+    return this.getUser(startingOp);
   }
 
   private async getUser(op: RefreshUserOperation): Promise<ExecutionResponse> {
