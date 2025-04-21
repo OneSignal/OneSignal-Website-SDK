@@ -1,12 +1,12 @@
-import Log from 'src/shared/libraries/Log';
-import { delay } from 'src/shared/utils/utils';
 import {
   ExecutionResult,
   IOperationExecutor,
   IOperationRepo,
   IStartableService,
   OperationModelStore,
-} from 'src/types/operation';
+} from 'src/core/types/operation';
+import Log from 'src/shared/libraries/Log';
+import { delay } from 'src/shared/utils/utils';
 import { v4 as uuid } from 'uuid';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {

@@ -1,3 +1,4 @@
+// TODO: Remove this file with Web SDK Refactor work
 import { SupportedSubscription } from './SubscriptionModels';
 import { Identity } from './UserData';
 import { UserPropertiesModel } from './UserPropertiesModel';

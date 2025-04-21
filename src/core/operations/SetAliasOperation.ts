@@ -1,4 +1,4 @@
-import { OPERATION_NAME } from '../executors/constants';
+import { OPERATION_NAME } from '../constants';
 import { BaseAliasOperation } from './BaseAliasOperation';
 
 type AliasOp = {

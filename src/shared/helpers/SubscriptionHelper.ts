@@ -1,7 +1,7 @@
 import {
   SubscriptionChannel,
   SubscriptionType,
-} from '../../../src/core/models/SubscriptionModels';
+} from '../../core/models/SubscriptionModels';
 import {
   InvalidStateError,
   InvalidStateReason,

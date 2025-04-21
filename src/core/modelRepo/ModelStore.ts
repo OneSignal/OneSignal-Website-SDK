@@ -1,15 +1,15 @@
 // Implements logic similar to Android SDK's ModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/ModelStore.kt
-import { EventProducer } from 'src/shared/helpers/EventProducer';
-import Log from 'src/shared/libraries/Log';
-import type { IEventNotifier } from 'src/types/events';
+import type { IEventNotifier } from 'src/core/types/events';
 import {
   ModelChangeTags,
   ModelChangeTagValue,
   type IModelStore,
   type IModelStoreChangeHandler,
-} from 'src/types/models';
-import type { IPreferencesService } from 'src/types/preferences';
+} from 'src/core/types/models';
+import type { IPreferencesService } from 'src/core/types/preferences';
+import { EventProducer } from 'src/shared/helpers/EventProducer';
+import Log from 'src/shared/libraries/Log';
 import type {
   IModelChangedHandler,
   Model,

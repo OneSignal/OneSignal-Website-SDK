@@ -1,12 +1,13 @@
+import { ModelChangeTags } from 'src/core/types/models';
+import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
+import { IRebuildUserService } from 'src/core/types/user';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
-import { ModelChangeTags } from 'src/types/models';
-import { ExecutionResult, IOperationExecutor } from 'src/types/operation';
-import { IRebuildUserService } from 'src/types/user';
-import { type IdentityModelStore } from '../models/IdentityModelStore';
+import { OPERATION_NAME } from '../constants';
+import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
@@ -14,7 +15,6 @@ import { type Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import AliasPair from '../requestService/AliasPair';
 import { RequestService } from '../requestService/RequestService';
-import { OPERATION_NAME } from './constants';
 
 // Implements logic similar to Android SDK's IdentityOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/IdentityOperationExecutor.kt
@@ -90,7 +90,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       if (
         this._identityModelStore.model.onesignalId === lastOperation.onesignalId
       ) {
-        this._identityModelStore.model.setProperty<string | null>(
+        this._identityModelStore.model.setProperty(
           lastOperation.label,
           isSetAlias ? lastOperation.value : null,
           ModelChangeTags.HYDRATE,

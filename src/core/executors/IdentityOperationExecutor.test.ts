@@ -1,17 +1,16 @@
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import { IdentityConstants } from 'src/types/backend';
-import { ExecutionResult } from 'src/types/operation';
-import { IPreferencesService } from 'src/types/preferences';
-import { IRebuildUserService } from 'src/types/user';
-import { IdentityModelStore } from '../models/IdentityModelStore';
+import { ExecutionResult } from 'src/core/types/operation';
+import { IPreferencesService } from 'src/core/types/preferences';
+import { IRebuildUserService } from 'src/core/types/user';
+import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { GroupComparisonType, Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { IdentityOperationExecutor } from './IdentityOperationExecutor';
-import { OPERATION_NAME } from './constants';
 
 const label = 'test-label';
 const value = 'test-value';

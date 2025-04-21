@@ -1,14 +1,14 @@
-import { Serializable } from '../models/Serializable';
+import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import {
   FutureSubscriptionModel,
   SubscriptionType,
 } from '../../core/models/SubscriptionModels';
-import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
-import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import OneSignalUtils from '../../shared/utils/OneSignalUtils';
-import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
 import Environment from '../../shared/helpers/Environment';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
+import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
+import OneSignalUtils from '../../shared/utils/OneSignalUtils';
+import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
+import { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
   readonly type: SubscriptionType;

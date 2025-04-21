@@ -1,6 +1,6 @@
+import { IEventNotifier } from 'src/core/types/events';
+import { ModelChangeTags } from 'src/core/types/models';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
-import { IEventNotifier } from 'src/types/events';
-import { ModelChangeTags } from 'src/types/models';
 
 /**
  * Implement `IModelChangedHandler` and subscribe implementation via `Model.subscribe` to
