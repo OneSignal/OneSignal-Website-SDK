@@ -29,7 +29,10 @@ import {
 } from '../types/api';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
 
-type SubscriptionWithId = ICreateUserSubscription & { id?: string };
+type SubscriptionMap = Record<
+  string,
+  ICreateUserSubscription & { id?: string }
+>;
 
 // Implements logic similar to Android's SDK's LoginUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/LoginUserOperationExecutor.kt
@@ -133,7 +136,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     operations: Operation[],
   ): Promise<ExecutionResponse> {
     const identity: ICreateUserIdentity = {};
-    const subscriptions: Record<string, ICreateUserSubscription> = {};
+    let subscriptions: SubscriptionMap = {};
     const properties: IUserProperties = {
       timezone_id: getTimeZoneId(),
       language: Environment.getLanguage(),
@@ -150,9 +153,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         operation instanceof UpdateSubscriptionOperation ||
         operation instanceof DeleteSubscriptionOperation
       ) {
-        Object.assign(
+        subscriptions = this.createSubscriptionsFromOperation(
+          operation,
           subscriptions,
-          this.createSubscriptionsFromOperation(operation, subscriptions),
         );
       } else {
         throw new Error(`Unrecognized operation: ${operation}`);
@@ -172,7 +175,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     if (response.ok) {
       const backendOneSignalId = response.result.identity.onesignal_id;
       const opOneSignalId = createUserOperation.onesignalId;
-      if (!backendOneSignalId) throw new Error('No onesignal_id returned');
 
       const idTranslations: Record<string, string> = {
         [createUserOperation.onesignalId]: backendOneSignalId,
@@ -252,15 +254,18 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       | DeleteSubscriptionOperation
       | TransferSubscriptionOperation
       | UpdateSubscriptionOperation,
-    currentSubs: Record<string, SubscriptionWithId>,
-  ): Record<string, SubscriptionWithId> {
+    currentSubs: SubscriptionMap,
+  ): SubscriptionMap {
     switch (true) {
       case operation instanceof CreateSubscriptionOperation: {
-        const { subscriptionId, ...rest } = operation.toJSON();
+        const subscriptionId = operation.subscriptionId;
         return {
           ...currentSubs,
           [subscriptionId]: {
-            ...rest,
+            enabled: operation.enabled,
+            notification_types: operation.notification_types,
+            token: operation.token,
+            type: operation.type,
           },
         };
       }
@@ -274,6 +279,8 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
             [subscriptionId]: {
               ...currentSubs[subscriptionId],
               enabled: operation.enabled,
+              notification_types: operation.notification_types,
+              token: operation.token,
             },
           };
         }
@@ -282,21 +289,14 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       case operation instanceof TransferSubscriptionOperation: {
         const subscriptionId = operation.subscriptionId;
-        const subs = { ...currentSubs };
 
-        if (subs[subscriptionId]) {
-          subs[subscriptionId] = {
-            ...subs[subscriptionId],
+        return {
+          ...currentSubs,
+          [subscriptionId]: {
+            ...currentSubs[subscriptionId],
             id: subscriptionId,
-          };
-        } else {
-          subs[subscriptionId] = {
-            id: subscriptionId,
-            type: operation.type,
-            token: operation.token,
-          };
-        }
-        return subs;
+          },
+        };
       }
 
       case operation instanceof DeleteSubscriptionOperation: {

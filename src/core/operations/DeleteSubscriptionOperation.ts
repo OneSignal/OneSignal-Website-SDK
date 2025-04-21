@@ -6,6 +6,7 @@ import { GroupComparisonType, GroupComparisonValue } from './Operation';
  * An Operation to delete a subscription from the OneSignal backend.
  */
 export class DeleteSubscriptionOperation extends BaseSubscriptionOperation {
+  constructor(appId: string, onesignalId: string, subscriptionId: string);
   constructor(appId?: string, onesignalId?: string, subscriptionId?: string) {
     super(OPERATION_NAME.DELETE_SUBSCRIPTION, appId, onesignalId);
     if (subscriptionId) {

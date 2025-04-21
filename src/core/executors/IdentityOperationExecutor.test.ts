@@ -1,14 +1,18 @@
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
+import {
+  BuildUserService,
+  getRebuildOpsFn,
+  getValueFn,
+  MockPreferencesService,
+  SomeOperation,
+} from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { ExecutionResult } from 'src/core/types/operation';
-import { IPreferencesService } from 'src/core/types/preferences';
-import { IRebuildUserService } from 'src/core/types/user';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
-import { GroupComparisonType, Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { IdentityOperationExecutor } from './IdentityOperationExecutor';
 
@@ -234,48 +238,3 @@ describe('IdentityOperationExecutor', () => {
     });
   });
 });
-
-// TODO: Revisit after implementing IdentityBackendService
-const getValueFn = vi.fn().mockReturnValue('{}');
-const setValueFn = vi.fn();
-class MockPreferencesService implements IPreferencesService {
-  getValue(...args: any[]) {
-    return getValueFn(...args);
-  }
-  setValue(...args: any[]) {
-    return setValueFn(...args);
-  }
-}
-// TODO: Revisit after implementing BuildUserService
-const getRebuildOpsFn = vi.fn();
-class BuildUserService implements IRebuildUserService {
-  getRebuildOperationsIfCurrentUser(...args: any[]) {
-    return getRebuildOpsFn(...args);
-  }
-}
-
-class SomeOperation extends Operation {
-  constructor() {
-    super('some-operation');
-  }
-
-  get applyToRecordId() {
-    return '';
-  }
-
-  get createComparisonKey() {
-    return '';
-  }
-
-  get modifyComparisonKey() {
-    return '';
-  }
-
-  get groupComparisonType() {
-    return GroupComparisonType.CREATE;
-  }
-
-  get canStartExecute() {
-    return true;
-  }
-}
