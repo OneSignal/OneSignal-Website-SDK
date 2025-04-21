@@ -1,11 +1,15 @@
 import { OPERATION_NAME } from '../executors/constants';
 import { BaseTagOperation } from './BaseTagOperation';
 
+type TagOp = {
+  value: string;
+};
+
 /**
  * An Operation to create/update a tag in the OneSignal backend. The tag will
  * be associated to the user with the appId and onesignalId provided.
  */
-export class SetTagOperation extends BaseTagOperation {
+export class SetTagOperation extends BaseTagOperation<TagOp> {
   constructor();
   constructor(appId: string, onesignalId: string, key: string, value: string);
   constructor(
@@ -22,9 +26,9 @@ export class SetTagOperation extends BaseTagOperation {
    * The new/updated tag value.
    */
   get value(): string {
-    return this.getProperty<string>('value');
+    return this.getProperty('value');
   }
   private set value(value: string) {
-    this.setProperty<string>('value', value);
+    this.setProperty('value', value);
   }
 }

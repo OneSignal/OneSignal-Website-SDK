@@ -52,17 +52,6 @@ export interface IOperationExecutor {
   execute(operations: Operation[]): Promise<ExecutionResponse>;
 }
 
-export interface ConfigModel {
-  opRepoExecutionInterval: number;
-  opRepoPostWakeDelay: number;
-  opRepoPostCreateDelay: number;
-  opRepoDefaultFailRetryBackoff: number;
-}
-
-export interface ConfigModelStore {
-  model: ConfigModel;
-}
-
 export interface OperationModelStore {
   add(operation: Operation): void;
   add(index: number, operation: Operation): void;

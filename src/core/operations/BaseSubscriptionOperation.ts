@@ -4,10 +4,22 @@ import { SubscriptionType } from '../models/SubscriptionModels';
 import { Operation } from './Operation';
 import { Subscription } from './types';
 
+type SubscriptionOperation = {
+  device_model: string | undefined;
+  device_os: number | undefined;
+  enabled: boolean;
+  notification_types: SubscriptionStateKind;
+  sdk: string | undefined;
+  subscriptionId: string;
+  type: SubscriptionType;
+  web_auth: string | undefined;
+  web_p256: string | undefined;
+};
+
 /**
  * Base class for subscription-related operations
  */
-export abstract class BaseSubscriptionOperation extends Operation {
+export abstract class BaseSubscriptionOperation extends Operation<SubscriptionOperation> {
   constructor(
     operationName: string,
     appId?: string,
@@ -34,90 +46,90 @@ export abstract class BaseSubscriptionOperation extends Operation {
    * and can be checked via IDManager.isLocalId to ensure correct processing.
    */
   get subscriptionId(): string {
-    return this.getProperty<string>('subscriptionId');
+    return this.getProperty('subscriptionId');
   }
   protected set subscriptionId(value: string) {
-    this.setProperty<string>('subscriptionId', value);
+    this.setProperty('subscriptionId', value);
   }
 
   /**
    * The type of subscription.
    */
-  get type(): SubscriptionType {
-    return this.getProperty<SubscriptionType>('type');
+  public get type(): SubscriptionType {
+    return this.getProperty('type');
   }
   protected set type(value: SubscriptionType) {
-    this.setProperty<SubscriptionType>('type', value);
+    this.setProperty('type', value);
   }
 
   /**
    * Whether this subscription is currently enabled.
    */
   get enabled(): boolean {
-    return this.getProperty<boolean>('enabled');
+    return this.getProperty('enabled');
   }
   protected set enabled(value: boolean) {
-    this.setProperty<boolean>('enabled', value);
+    this.setProperty('enabled', value);
   }
 
   /**
    * The notification types this subscription is subscribed to.
    */
   get notification_types(): SubscriptionStateKind {
-    return this.getProperty<SubscriptionStateKind>('notification_types');
+    return this.getProperty('notification_types');
   }
   protected set notification_types(value: SubscriptionStateKind) {
-    this.setProperty<SubscriptionStateKind>('notification_types', value);
+    this.setProperty('notification_types', value);
   }
 
   /**
    * The SDK identifier
    */
   get sdk(): string | undefined {
-    return this.getProperty<string | undefined>('sdk');
+    return this.getProperty('sdk');
   }
   protected set sdk(value: string | undefined) {
-    this.setProperty<string | undefined>('sdk', value);
+    this.setProperty('sdk', value);
   }
 
   /**
    * The device model
    */
   get device_model(): string | undefined {
-    return this.getProperty<string | undefined>('device_model');
+    return this.getProperty('device_model');
   }
   protected set device_model(value: string | undefined) {
-    this.setProperty<string | undefined>('device_model', value);
+    this.setProperty('device_model', value);
   }
 
   /**
    * The device OS version
    */
   get device_os(): number | undefined {
-    return this.getProperty<number | undefined>('device_os');
+    return this.getProperty('device_os');
   }
   protected set device_os(value: number | undefined) {
-    this.setProperty<number | undefined>('device_os', value);
+    this.setProperty('device_os', value);
   }
 
   /**
    * Web authentication value
    */
   get web_auth(): string | undefined {
-    return this.getProperty<string | undefined>('web_auth');
+    return this.getProperty('web_auth');
   }
   protected set web_auth(value: string | undefined) {
-    this.setProperty<string | undefined>('web_auth', value);
+    this.setProperty('web_auth', value);
   }
 
   /**
    * Web P256 value
    */
   get web_p256(): string | undefined {
-    return this.getProperty<string | undefined>('web_p256');
+    return this.getProperty('web_p256');
   }
   protected set web_p256(value: string | undefined) {
-    this.setProperty<string | undefined>('web_p256', value);
+    this.setProperty('web_p256', value);
   }
 
   override get createComparisonKey(): string {
