@@ -20,7 +20,6 @@ export class LoginUserFromSubscriptionOperationExecutor
   implements IOperationExecutor
 {
   constructor(
-    // private subscriptionBackend: ISubscriptionBackendService,
     private identityModelStore: IdentityModelStore,
     private propertiesModelStore: PropertiesModelStore,
   ) {}

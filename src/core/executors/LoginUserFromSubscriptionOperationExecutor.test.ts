@@ -150,34 +150,6 @@ describe('LoginUserFromSubscriptionOperationExecutor', () => {
       });
     });
 
-    test.skip('should not update models if onesignalId does not match', async () => {
-      setFetchAliasesResult(DUMMY_ONESIGNAL_ID_2);
-
-      // Set models with a different onesignalId than the one in the operation
-      identityModelStore.model.setProperty(
-        IdentityConstants.ONESIGNAL_ID,
-        'different-id',
-      );
-      propertiesModelStore.model.setProperty('onesignalId', 'different-id');
-
-      const executor = getExecutor();
-      const loginOp = new LoginUserFromSubscriptionOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        DUMMY_SUBSCRIPTION_ID,
-      );
-
-      await executor.execute([loginOp]);
-
-      // Should not update models because IDs don't match
-      expect(
-        identityModelStore.model.getProperty(IdentityConstants.ONESIGNAL_ID),
-      ).toEqual('different-id');
-      expect(propertiesModelStore.model.getProperty('onesignalId')).toEqual(
-        'different-id',
-      );
-    });
-
     test('should fail if subscription has no onesignalId', async () => {
       setFetchAliasesResult(); // No onesignalId in response
 
