@@ -76,36 +76,35 @@ describe('LoginUserFromSubscriptionOperationExecutor', () => {
   });
 
   describe('loginUser', () => {
+    const getSubscriptionIdentityUrl = (subscriptionId: string) =>
+      `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}/user/identity`;
+
     const setFetchAliasesResult = (onesignalId?: string) => {
       server.use(
-        http.get(
-          `**/api/v1/apps/${APP_ID}/subscriptions/${DUMMY_SUBSCRIPTION_ID}/identity`,
-          () =>
-            HttpResponse.json({
-              identity: onesignalId
-                ? {
-                    [IdentityConstants.ONESIGNAL_ID]: onesignalId,
-                  }
-                : {},
-            }),
+        http.get(getSubscriptionIdentityUrl(DUMMY_SUBSCRIPTION_ID), () =>
+          HttpResponse.json({
+            identity: onesignalId
+              ? {
+                  [IdentityConstants.ONESIGNAL_ID]: onesignalId,
+                }
+              : {},
+          }),
         ),
       );
     };
 
     const setFetchAliasesError = (status: number, retryAfter?: number) => {
       server.use(
-        http.get(
-          `**/api/v1/apps/${APP_ID}/subscriptions/${DUMMY_SUBSCRIPTION_ID}/identity`,
-          () =>
-            HttpResponse.json(
-              {},
-              {
-                status,
-                headers: retryAfter
-                  ? { 'Retry-After': retryAfter?.toString() }
-                  : undefined,
-              },
-            ),
+        http.get(getSubscriptionIdentityUrl(DUMMY_SUBSCRIPTION_ID), () =>
+          HttpResponse.json(
+            {},
+            {
+              status,
+              headers: retryAfter
+                ? { 'Retry-After': retryAfter?.toString() }
+                : undefined,
+            },
+          ),
         ),
       );
     };

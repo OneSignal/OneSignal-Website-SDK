@@ -48,7 +48,7 @@ export class LoginUserFromSubscriptionOperationExecutor
   private async loginUser(
     loginUserOp: LoginUserFromSubscriptionOperation,
   ): Promise<ExecutionResponse> {
-    const response = await RequestService.fetchAliasesForSubscription(
+    const response = await RequestService.getIdentityFromSubscription(
       { appId: loginUserOp.appId },
       loginUserOp.subscriptionId,
     );
