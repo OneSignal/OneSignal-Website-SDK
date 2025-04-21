@@ -6,63 +6,32 @@ import { SetTagOperation } from 'src/core/operations/SetTagOperation';
 
 export class PropertyOperationHelper {
   static createPropertiesFromOperation(
-    operation:
-      | SetTagOperation
-      | DeleteTagOperation
-      | SetPropertyOperation
-      | Operation,
+    operation: Operation,
     properties: PropertiesObject,
   ): PropertiesObject {
-    const tags = { ...(properties.tags ?? {}) };
+    if (
+      operation instanceof SetTagOperation ||
+      operation instanceof DeleteTagOperation
+    ) {
+      const tags = { ...(properties.tags ?? {}) };
 
-    if (operation instanceof SetTagOperation) {
-      tags[operation.key] = operation.value;
-      return new PropertiesObject({
-        ...properties,
-        tags,
-      });
-    }
+      if (operation instanceof SetTagOperation)
+        tags[operation.key] = operation.value;
+      else delete tags[operation.key];
 
-    if (operation instanceof DeleteTagOperation) {
-      delete tags[operation.key];
-      return new PropertiesObject({
-        ...properties,
-        tags,
-      });
+      return new PropertiesObject({ ...properties, tags });
     }
 
     if (operation instanceof SetPropertyOperation) {
-      switch (operation.property) {
-        case 'language':
-          return new PropertiesObject({
-            ...properties,
-            language: operation.value as string,
-          });
-        case 'timezone':
-          return new PropertiesObject({
-            ...properties,
-            timezoneId: operation.value as string,
-          });
-        case 'country':
-          return new PropertiesObject({
-            ...properties,
-            country: operation.value as string,
-          });
-        case 'locationLatitude':
-          return new PropertiesObject({
-            ...properties,
-            latitude: operation.value as number,
-          });
-        case 'locationLongitude':
-          return new PropertiesObject({
-            ...properties,
-            longitude: operation.value as number,
-          });
-        default:
-          return new PropertiesObject({
-            ...properties,
-          });
+      const propertyKey = operation.property;
+      const allowedKeys = Object.keys(properties);
+      if (allowedKeys.includes(propertyKey)) {
+        return new PropertiesObject({
+          ...properties,
+          [propertyKey]: operation.value,
+        });
       }
+      return new PropertiesObject({ ...properties });
     }
 
     throw new Error(`Unsupported operation type: ${operation.name}`);

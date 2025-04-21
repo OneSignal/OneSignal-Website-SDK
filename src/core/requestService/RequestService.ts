@@ -16,12 +16,12 @@ import {
   ICreateUser,
   ICreateUserIdentity,
   ISubscription,
+  IUpdateUser,
   IUserIdentity,
   IUserProperties,
   UserData,
 } from '../types/api';
 import AliasPair from './AliasPair';
-import { UpdateUserPayload } from './UpdateUserPayload';
 
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
@@ -85,7 +85,7 @@ export class RequestService {
   static async updateUser(
     requestMetadata: RequestMetadata,
     alias: AliasPair,
-    payload: UpdateUserPayload,
+    payload: IUpdateUser,
   ) {
     const { appId, subscriptionId } = requestMetadata;
     if (!OneSignalUtils.isValidUuid(appId)) {

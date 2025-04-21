@@ -1,10 +1,10 @@
 export class PropertiesDeltasObject {
   constructor(
-    public sessionTime?: number,
-    public sessionCount?: number,
+    public session_time?: number,
+    public session_count?: number,
   ) {}
 
   get hasAtLeastOnePropertySet(): boolean {
-    return this.sessionTime !== undefined || this.sessionCount !== undefined;
+    return this.session_time !== undefined || this.session_count !== undefined;
   }
 }

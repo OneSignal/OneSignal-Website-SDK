@@ -1,17 +1,22 @@
 import { IUserProperties } from '../types/api';
 import { Model } from './Model';
 
-type IPropertiesModel = {
+export type IPropertiesModel = {
   country: IUserProperties['country'];
   language: IUserProperties['language'];
   onesignalId: string;
-  tags: IUserProperties['tags'];
-  timezone: IUserProperties['timezone_id'];
+  tags: Record<string, string>;
+  timezone_id: IUserProperties['timezone_id'];
 };
 
 // Implements logic similar to Android's SDK's PropertiesModel
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/properties/PropertiesModel.kt
 export class PropertiesModel extends Model<IPropertiesModel> {
+  constructor() {
+    super();
+    this.setProperty('tags', {});
+  }
+
   get onesignalId(): string {
     return this.getProperty('onesignalId');
   }
@@ -33,17 +38,17 @@ export class PropertiesModel extends Model<IPropertiesModel> {
     this.setProperty('language', value);
   }
 
-  get timezone(): string | undefined {
-    return this.getProperty('timezone');
+  get timezone_id(): string | undefined {
+    return this.getProperty('timezone_id');
   }
-  set timezone(value: string | undefined) {
-    this.setProperty('timezone', value);
+  set timezone_id(value: string | undefined) {
+    this.setProperty('timezone_id', value);
   }
 
-  get tags(): Record<string, string> | undefined {
+  get tags(): Record<string, string> {
     return this.getProperty('tags');
   }
-  set tags(value: Record<string, string> | undefined) {
+  set tags(value: Record<string, string>) {
     this.setProperty('tags', value);
   }
 }
