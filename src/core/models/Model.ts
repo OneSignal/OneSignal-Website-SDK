@@ -247,9 +247,4 @@ export class Model<
   get hasSubscribers(): boolean {
     return this.changeNotifier.hasSubscribers;
   }
-
-  // Unique to web implementation
-  get isWebPush(): boolean {
-    return [];
-  }
 }

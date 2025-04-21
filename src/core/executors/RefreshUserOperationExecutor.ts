@@ -23,6 +23,8 @@ import { ModelChangeTags } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';
 
+// Implements logic similar to Android SDK's RefreshUserOperationExecutor
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/RefreshUserOperationExecutor.kt
 export class RefreshUserOperationExecutor implements IOperationExecutor {
   constructor(
     private _identityModelStore: IdentityModelStore,

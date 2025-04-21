@@ -20,8 +20,8 @@ export class LoginUserFromSubscriptionOperationExecutor
   implements IOperationExecutor
 {
   constructor(
-    private identityModelStore: IdentityModelStore,
-    private propertiesModelStore: PropertiesModelStore,
+    private _identityModelStore: IdentityModelStore,
+    private _propertiesModelStore: PropertiesModelStore,
   ) {}
 
   get operations(): string[] {
@@ -74,8 +74,8 @@ export class LoginUserFromSubscriptionOperationExecutor
       // Update the current identity, property, and subscription models from a local ID to the backend ID
       idTranslations[loginUserOp.onesignalId] = backendOneSignalId;
 
-      const identityModel = this.identityModelStore.model;
-      const propertiesModel = this.propertiesModelStore.model;
+      const identityModel = this._identityModelStore.model;
+      const propertiesModel = this._propertiesModelStore.model;
       if (identityModel.onesignalId === loginUserOp.onesignalId) {
         identityModel.setProperty(
           IdentityConstants.ONESIGNAL_ID,
