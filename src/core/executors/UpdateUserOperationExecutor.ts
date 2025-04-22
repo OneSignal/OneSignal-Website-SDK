@@ -45,9 +45,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     ];
   }
 
-  async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(`UpdateUserOperationExecutor(operation: ${operations})`);
-
+  private processOperations(operations: Operation[]) {
     let appId: string | null = null;
     let onesignalId: string | null = null;
     let propertiesObject = new PropertiesObject();
@@ -98,6 +96,26 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
         throw new Error(`Unrecognized operation: ${operation}`);
       }
     }
+
+    return {
+      appId,
+      onesignalId,
+      propertiesObject,
+      deltasObject,
+      refreshDeviceMetadata,
+    };
+  }
+
+  async execute(operations: Operation[]): Promise<ExecutionResponse> {
+    Log.debug(`UpdateUserOperationExecutor(operation: ${operations})`);
+
+    const {
+      appId,
+      onesignalId,
+      propertiesObject,
+      deltasObject,
+      refreshDeviceMetadata,
+    } = this.processOperations(operations);
 
     if (!appId || !onesignalId)
       return new ExecutionResponse(ExecutionResult.SUCCESS);
