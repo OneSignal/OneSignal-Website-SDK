@@ -9,12 +9,9 @@ import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { IdentityModel } from '../models/IdentityModel';
 import { RequestMetadata } from '../models/RequestMetadata';
 import {
-  FutureSubscriptionModel,
-  SubscriptionModel,
-} from '../models/SubscriptionModels';
-import {
   ICreateUser,
   ICreateUserIdentity,
+  ICreateUserSubscription,
   ISubscription,
   IUpdateUser,
   IUserIdentity,
@@ -201,7 +198,7 @@ export class RequestService {
   static async createSubscription(
     requestMetadata: RequestMetadata,
     alias: AliasPair,
-    subscription: { subscription: FutureSubscriptionModel },
+    subscription: { subscription: ICreateUserSubscription },
   ) {
     const { appId } = requestMetadata;
     return OneSignalApiBase.post<{ subscription: ISubscription }>(
@@ -220,7 +217,7 @@ export class RequestService {
   static async updateSubscription(
     requestMetadata: RequestMetadata,
     subscriptionId: string,
-    subscription: Partial<SubscriptionModel>,
+    subscription: ICreateUserSubscription,
   ) {
     const { appId } = requestMetadata;
     return OneSignalApiBase.patch<{
