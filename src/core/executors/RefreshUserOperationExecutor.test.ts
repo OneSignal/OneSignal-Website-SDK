@@ -126,7 +126,7 @@ describe('RefreshUserOperationExecutor', () => {
         test_tag: 'test_value',
         test_tag_2: 'test_value_2',
       });
-      expect(propertiesModelStore.model.timezone).toBe('America/New_York');
+      expect(propertiesModelStore.model.timezone_id).toBe('America/New_York');
 
       // Check subscription model updates
       const subscriptions = subscriptionModelStore.list();

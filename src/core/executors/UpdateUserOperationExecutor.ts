@@ -5,9 +5,12 @@ import {
 import { PropertyOperationHelper } from 'src/shared/helpers/PropertyOperationHelper';
 import Log from 'src/shared/libraries/Log';
 import { OPERATION_NAME } from '../constants';
-import { IPropertiesModel } from '../models/PropertiesModel';
+import {
+  IPropertiesModelKeys,
+  IPropertiesModelValues,
+} from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
-import { type PropertiesModelStore } from '../modelStores/PropertiesModelStore';
+import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { PropertiesDeltasObject } from '../objects/PropertiesDeltaObject';
 import { PropertiesObject } from '../objects/PropertiesObject';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -131,14 +134,14 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
             );
           } else if (operation instanceof SetPropertyOperation) {
             this._propertiesModelStore.model.setProperty(
-              operation.property as keyof IPropertiesModel,
-              operation.value as never,
+              operation.property as IPropertiesModelKeys,
+              operation.value as IPropertiesModelValues,
               ModelChangeTags.HYDRATE,
             );
           }
         }
-        return new ExecutionResponse(ExecutionResult.SUCCESS);
       }
+      return new ExecutionResponse(ExecutionResult.SUCCESS);
     }
 
     const responseType = getResponseStatusType(status);

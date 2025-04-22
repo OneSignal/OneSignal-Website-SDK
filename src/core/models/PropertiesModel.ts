@@ -1,13 +1,16 @@
 import { IUserProperties } from '../types/api';
 import { Model } from './Model';
 
-export type IPropertiesModel = {
+type IPropertiesModel = {
   country: IUserProperties['country'];
   language: IUserProperties['language'];
   onesignalId: string;
   tags: Record<string, string>;
   timezone_id: IUserProperties['timezone_id'];
 };
+
+export type IPropertiesModelKeys = keyof IPropertiesModel;
+export type IPropertiesModelValues = IPropertiesModel[keyof IPropertiesModel];
 
 // Implements logic similar to Android's SDK's PropertiesModel
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/properties/PropertiesModel.kt
