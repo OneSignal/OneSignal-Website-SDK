@@ -1,9 +1,10 @@
-import { ExecutorConfigMap as ExecutorConfigMap } from '../models/ExecutorConfig';
+import { ExecutorConfigMap } from '../models/ExecutorConfig';
 import { ModelName } from '../models/SupportedModels';
 import IdentityRequests from '../requestService/IdentityRequests';
 import SubscriptionRequests from '../requestService/SubscriptionRequests';
 import UserPropertyRequests from '../requestService/UserPropertyRequests';
 
+// TODO: Remove this with later Web SDK Prs
 const subscriptionConfig = {
   add: SubscriptionRequests.addSubscription,
   remove: SubscriptionRequests.removeSubscription,

@@ -1,8 +1,12 @@
 import { Model } from './Model';
 
-export class ConfigModel extends Model {
+type Config = {
+  pushSubscriptionId: string | undefined;
+};
+
+export class ConfigModel extends Model<Config> {
   get pushSubscriptionId(): string | undefined {
-    return this.getProperty<string | undefined>('pushSubscriptionId');
+    return this.getProperty('pushSubscriptionId');
   }
   set pushSubscriptionId(value: string | undefined) {
     this.setProperty('pushSubscriptionId', value);

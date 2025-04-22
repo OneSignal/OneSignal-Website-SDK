@@ -6,6 +6,7 @@ import { IdentityExecutor } from './IdentityExecutor';
 import { PropertiesExecutor } from './PropertiesExecutor';
 import { SubscriptionExecutor } from './SubscriptionExecutor';
 
+// TODO: Remove this with later Web SDK Prs
 export class ExecutorFactory {
   static build(
     executorConfig: ExecutorConfig<SupportedModel>,

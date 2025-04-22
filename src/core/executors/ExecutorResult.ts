@@ -4,6 +4,7 @@ export interface ExecutorResult<Model> {
   readonly result?: Model;
 }
 
+// TODO: Remove this with later Web SDK Prs
 export class ExecutorResultSuccess<Model> implements ExecutorResult<Model> {
   readonly success = true;
   readonly retriable = false;

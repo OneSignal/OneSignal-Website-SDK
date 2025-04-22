@@ -13,6 +13,7 @@ import { ExecutorResult } from './ExecutorResult';
 
 const RETRY_AFTER = 5_000;
 
+// TODO: Remove this with later Web SDK Prs
 export default abstract class ExecutorBase {
   protected _deltaQueue: CoreDelta<SupportedModel>[] = [];
   protected _operationQueue: Operation<SupportedModel>[] = [];

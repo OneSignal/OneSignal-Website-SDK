@@ -6,6 +6,7 @@ import { ModelName, SupportedModel } from '../models/SupportedModels';
 import { LegacyOperation } from '../operationRepo/LegacyOperation';
 import ExecutorBase from './ExecutorBase';
 
+// TODO: Remove this with later Web SDK Prs
 export class PropertiesExecutor extends ExecutorBase {
   constructor(
     executorConfig: ExecutorConfig<SupportedModel>,

@@ -38,11 +38,11 @@ type SubscriptionMap = Record<
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/LoginUserOperationExecutor.kt
 export class LoginUserOperationExecutor implements IOperationExecutor {
   constructor(
-    private identityOperationExecutor: IdentityOperationExecutor,
-    private identityModelStore: IdentityModelStore,
-    private propertiesModelStore: PropertiesModelStore,
-    private subscriptionsModelStore: SubscriptionModelStore,
-    private configModelStore: ConfigModelStore,
+    private _identityOperationExecutor: IdentityOperationExecutor,
+    private _identityModelStore: IdentityModelStore,
+    private _propertiesModelStore: PropertiesModelStore,
+    private _subscriptionsModelStore: SubscriptionModelStore,
+    private _configModelStore: ConfigModelStore,
   ) {}
 
   get operations(): string[] {
@@ -77,7 +77,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId)
       return this.createUser(loginUserOp, operations);
 
-    const result = await this.identityOperationExecutor.execute([
+    const result = await this._identityOperationExecutor.execute([
       new SetAliasOperation(
         loginUserOp.appId,
         loginUserOp.existingOnesignalId,
@@ -91,16 +91,16 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         const backendOneSignalId = loginUserOp.existingOnesignalId;
         const opOneSignalId = loginUserOp.onesignalId;
 
-        if (this.identityModelStore.model.onesignalId === opOneSignalId) {
-          this.identityModelStore.model.setProperty(
+        if (this._identityModelStore.model.onesignalId === opOneSignalId) {
+          this._identityModelStore.model.setProperty(
             IdentityConstants.ONESIGNAL_ID,
             backendOneSignalId,
             ModelChangeTags.HYDRATE,
           );
         }
 
-        if (this.propertiesModelStore.model.onesignalId === opOneSignalId) {
-          this.propertiesModelStore.model.setProperty(
+        if (this._propertiesModelStore.model.onesignalId === opOneSignalId) {
+          this._propertiesModelStore.model.setProperty(
             'onesignalId',
             backendOneSignalId,
             ModelChangeTags.HYDRATE,
@@ -180,16 +180,16 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         [createUserOperation.onesignalId]: backendOneSignalId,
       };
 
-      if (this.identityModelStore.model.onesignalId === opOneSignalId) {
-        this.identityModelStore.model.setProperty(
+      if (this._identityModelStore.model.onesignalId === opOneSignalId) {
+        this._identityModelStore.model.setProperty(
           IdentityConstants.ONESIGNAL_ID,
           backendOneSignalId,
           ModelChangeTags.HYDRATE,
         );
       }
 
-      if (this.propertiesModelStore.model.onesignalId === opOneSignalId) {
-        this.propertiesModelStore.model.setProperty(
+      if (this._propertiesModelStore.model.onesignalId === opOneSignalId) {
+        this._propertiesModelStore.model.setProperty(
           'onesignalId',
           backendOneSignalId,
           ModelChangeTags.HYDRATE,
@@ -203,11 +203,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         if (!backendSub || !('id' in backendSub)) continue;
         idTranslations[localId] = backendSub.id;
 
-        if (this.configModelStore.model.pushSubscriptionId === localId) {
-          this.configModelStore.model.pushSubscriptionId = backendSub.id;
+        if (this._configModelStore.model.pushSubscriptionId === localId) {
+          this._configModelStore.model.pushSubscriptionId = backendSub.id;
         }
 
-        const model = this.subscriptionsModelStore.get(localId);
+        const model = this._subscriptionsModelStore.get(localId);
         model?.setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
       }
 

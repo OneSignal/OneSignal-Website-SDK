@@ -8,6 +8,7 @@ type ExecutorStoreInterface = {
   [key in ModelName]?: OSExecutor;
 };
 
+// TODO: Remove this with later Web SDK Prs
 export class ExecutorStore {
   store: ExecutorStoreInterface = {};
 
