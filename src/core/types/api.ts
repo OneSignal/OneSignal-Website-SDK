@@ -1,5 +1,6 @@
 import { SetRequired } from 'type-fest';
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Create User
 // Reference: https://documentation.onesignal.com/reference/create-user#body-parameters
 export interface IUserProperties {
@@ -98,4 +99,19 @@ export interface UserData {
   identity: IUserIdentity;
   properties?: IUserProperties;
   subscriptions?: ISubscription[];
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Update User
+// Reference: https://documentation.onesignal.com/reference/update-user
+export interface IUpdateUserDeltas {
+  session_time?: number;
+  session_count?: number;
+  // also purchases but not relevant for web sdk
+}
+
+export interface IUpdateUser {
+  properties?: IUserProperties;
+  refresh_device_metadata?: boolean;
+  deltas?: IUpdateUserDeltas;
 }

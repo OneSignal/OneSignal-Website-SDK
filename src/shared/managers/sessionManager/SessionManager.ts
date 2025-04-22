@@ -1,6 +1,6 @@
+import { IUpdateUser } from 'src/core/types/api';
 import AliasPair from '../../../core/requestService/AliasPair';
 import { RequestService } from '../../../core/requestService/RequestService';
-import { UpdateUserPayload } from '../../../core/requestService/UpdateUserPayload';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
@@ -382,7 +382,7 @@ export class SessionManager implements ISessionManager {
     try {
       const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
       // TO DO: in future, we should aggregate session count in case network call fails
-      const updateUserPayload: UpdateUserPayload = {
+      const updateUserPayload: IUpdateUser = {
         refresh_device_metadata: true,
         deltas: {
           session_count: 1,

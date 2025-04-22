@@ -81,7 +81,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       if (country) propertiesModel.country = country;
       if (language) propertiesModel.language = language;
       if (tags) propertiesModel.tags = tags;
-      if (timezone_id) propertiesModel.timezone = timezone_id;
+      if (timezone_id) propertiesModel.timezone_id = timezone_id;
 
       const subscriptionModels: SubscriptionModel[] = [];
       for (const sub of subscriptions) {
