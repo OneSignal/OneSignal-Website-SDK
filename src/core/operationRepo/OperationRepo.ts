@@ -3,11 +3,11 @@ import {
   IOperationExecutor,
   IOperationRepo,
   IStartableService,
-  OperationModelStore,
 } from 'src/core/types/operation';
 import Log from 'src/shared/libraries/Log';
 import { delay } from 'src/shared/utils/utils';
 import { v4 as uuid } from 'uuid';
+import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
