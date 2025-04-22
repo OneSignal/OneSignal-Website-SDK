@@ -227,12 +227,12 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         return new ExecutionResponse(ExecutionResult.FAIL_NORETRY, undefined, [
           new CreateSubscriptionOperation({
             appId: lastOp.appId,
+            enabled: lastOp.enabled,
+            notification_types: lastOp.notification_types,
             onesignalId: lastOp.onesignalId,
             subscriptionId: lastOp.subscriptionId,
-            type: lastOp.type,
-            enabled: lastOp.enabled,
             token: lastOp.token,
-            notification_types: lastOp.notification_types,
+            type: lastOp.type,
           }),
         ]);
       default:

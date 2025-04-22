@@ -17,7 +17,6 @@ import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOpe
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import { RequestService } from '../requestService/RequestService';
 import { SubscriptionType } from '../types/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
@@ -67,9 +66,37 @@ describe('SubscriptionOperationExecutor', () => {
     const someOp = new SomeOperation();
     const ops = [someOp];
 
-    const result = executor.execute(ops);
-    await expect(() => result).rejects.toThrow(
+    const res1 = executor.execute(ops);
+    await expect(() => res1).rejects.toThrow(
       `Unrecognized operation: ${ops[0]}`,
+    );
+
+    const deleteOp = new DeleteSubscriptionOperation(
+      APP_ID,
+      DUMMY_ONESIGNAL_ID,
+      DUMMY_SUBSCRIPTION_ID,
+    );
+    const updateOp = new UpdateSubscriptionOperation({
+      appId: APP_ID,
+      onesignalId: DUMMY_ONESIGNAL_ID,
+      subscriptionId: DUMMY_SUBSCRIPTION_ID,
+      token: 'test',
+      type: SubscriptionType.ChromePush,
+    });
+
+    const res2 = executor.execute([deleteOp, updateOp]);
+    await expect(() => res2).rejects.toThrow(
+      'Only supports one operation! Attempted operations:',
+    );
+
+    const transferOp = new TransferSubscriptionOperation(
+      APP_ID,
+      DUMMY_ONESIGNAL_ID,
+      DUMMY_SUBSCRIPTION_ID,
+    );
+    const res3 = executor.execute([transferOp, updateOp]);
+    await expect(() => res3).rejects.toThrow(
+      'TransferSubscriptionOperation only supports one operation! Attempted operations:',
     );
   });
 
@@ -174,6 +201,82 @@ describe('SubscriptionOperationExecutor', () => {
       // API should not have been called
       expect(createSubscriptionFn).not.toHaveBeenCalled();
     });
+
+    test('should handle network errors', async () => {
+      const executor = getExecutor();
+      const createOp = new CreateSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        type: SubscriptionType.ChromePush,
+        token: 'test-token',
+        enabled: true,
+        notification_types: SubscriptionStateKind.Subscribed,
+      });
+
+      // Retryable error
+      setCreateSubscriptionError(429, 10);
+      const res1 = await executor.execute([createOp]);
+      expect(res1).toMatchObject({
+        result: ExecutionResult.FAIL_RETRY,
+        retryAfterSeconds: 10,
+      });
+
+      // Conflict error
+      setCreateSubscriptionError(400, 10);
+      const res2 = await executor.execute([createOp]);
+      expect(res2).toMatchObject({
+        result: ExecutionResult.FAIL_NORETRY,
+      });
+
+      // Invalid error
+      setCreateSubscriptionError(409, 10);
+      const res3 = await executor.execute([createOp]);
+      expect(res3).toMatchObject({
+        result: ExecutionResult.FAIL_NORETRY,
+      });
+
+      // Unauthorized error
+      setCreateSubscriptionError(401, 15);
+      const res4 = await executor.execute([createOp]);
+      expect(res4).toMatchObject({
+        result: ExecutionResult.FAIL_UNAUTHORIZED,
+        retryAfterSeconds: 15,
+      });
+
+      // Missing error without rebuild ops
+      setCreateSubscriptionError(404, 5);
+      const res5 = await executor.execute([createOp]);
+      expect(res5).toMatchObject({
+        result: ExecutionResult.FAIL_NORETRY,
+      });
+
+      // Missing error with rebuild ops
+      const op = new SomeOperation();
+      getRebuildOpsFn.mockReturnValue([op]);
+      const res6 = await executor.execute([createOp]);
+      expect(res6).toMatchObject({
+        result: ExecutionResult.FAIL_RETRY,
+        retryAfterSeconds: 5,
+        operations: [op],
+      });
+
+      // Missing error in retry window
+      newRecordsState.add(DUMMY_ONESIGNAL_ID);
+      setCreateSubscriptionError(404, 20);
+      const res7 = await executor.execute([createOp]);
+      expect(res7).toMatchObject({
+        result: ExecutionResult.FAIL_RETRY,
+        retryAfterSeconds: 20,
+      });
+
+      // Other errors
+      setCreateSubscriptionError(400);
+      const res8 = await executor.execute([createOp]);
+      expect(res8).toMatchObject({
+        result: ExecutionResult.FAIL_NORETRY,
+      });
+    });
   });
 
   describe('UpdateSubscriptionOperation', () => {
@@ -212,7 +315,7 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: DUMMY_ONESIGNAL_ID,
         subscriptionId: DUMMY_SUBSCRIPTION_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType.Email,
         token: 'first-update',
         enabled: true,
         notification_types: SubscriptionStateKind.Subscribed,
@@ -242,59 +345,72 @@ describe('SubscriptionOperationExecutor', () => {
       });
     });
 
-    test('should handle 404 with record in retry window', async () => {
-      newRecordsState.add(DUMMY_SUBSCRIPTION_ID);
+    test('should handle network errors', async () => {
+      const executor = getExecutor();
+      const updateOp = new UpdateSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        type: SubscriptionType.ChromePush,
+        token: 'test-token',
+        enabled: true,
+        notification_types: SubscriptionStateKind.Subscribed,
+      });
+
+      // Retryable error
+      setUpdateSubscriptionError(429, 15);
+      const res1 = await executor.execute([updateOp]);
+      expect(res1).toMatchObject({
+        result: ExecutionResult.FAIL_RETRY,
+        retryAfterSeconds: 15,
+      });
+
+      // Missing error
       setUpdateSubscriptionError(404, 10);
-
-      const executor = getExecutor();
-      const updateOp = new UpdateSubscriptionOperation({
-        appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
-        type: SubscriptionType.ChromePush,
-        token: 'test-token',
-        enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
+      const res2 = await executor.execute([updateOp]);
+      expect(res2).toMatchObject({
+        result: ExecutionResult.FAIL_NORETRY,
+        operations: [
+          new CreateSubscriptionOperation({
+            appId: APP_ID,
+            enabled: true,
+            notification_types: SubscriptionStateKind.Subscribed,
+            onesignalId: DUMMY_ONESIGNAL_ID,
+            subscriptionId: DUMMY_SUBSCRIPTION_ID,
+            token: 'test-token',
+            type: SubscriptionType.ChromePush,
+          }),
+        ],
       });
 
-      const result = await executor.execute([updateOp]);
-      expect(result.result).toBe(ExecutionResult.FAIL_RETRY);
-      expect(result.retryAfterSeconds).toBe(10);
-    });
-
-    test('should convert to create operation on 404', async () => {
-      setUpdateSubscriptionError(404);
-
-      const executor = getExecutor();
-      const updateOp = new UpdateSubscriptionOperation({
-        appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
-        type: SubscriptionType.ChromePush,
-        token: 'test-token',
-        enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
+      // Missing error with record in retry window
+      newRecordsState.add(DUMMY_SUBSCRIPTION_ID);
+      const res3 = await executor.execute([updateOp]);
+      expect(res3).toMatchObject({
+        result: ExecutionResult.FAIL_RETRY,
+        retryAfterSeconds: 10,
       });
 
-      const result = await executor.execute([updateOp]);
-      expect(result.result).toBe(ExecutionResult.FAIL_NORETRY);
-      expect(result.operations?.length).toBe(1);
-      expect(result.operations?.[0]).toBeInstanceOf(
-        CreateSubscriptionOperation,
-      );
+      // Other errors
+      setUpdateSubscriptionError(400);
+      const res4 = await executor.execute([updateOp]);
+      expect(res4).toMatchObject({
+        result: ExecutionResult.FAIL_NORETRY,
+      });
     });
   });
 
   describe('DeleteSubscriptionOperation', () => {
     beforeEach(() => {
       setDeleteSubscriptionResponse();
-
-      // Set up a subscription model to be deleted
-      const model = subscriptionModelStore.create(DUMMY_SUBSCRIPTION_ID);
-      model.setProperty('id', DUMMY_SUBSCRIPTION_ID, ModelChangeTags.HYDRATE);
     });
 
     test('should delete subscription successfully', async () => {
+      // Set up a subscription model to be deleted
+      const model = new SubscriptionModel();
+      model.setProperty('id', DUMMY_SUBSCRIPTION_ID, ModelChangeTags.HYDRATE);
+      subscriptionModelStore.add(model);
+
       const executor = getExecutor();
       const deleteOp = new DeleteSubscriptionOperation(
         APP_ID,
@@ -309,9 +425,7 @@ describe('SubscriptionOperationExecutor', () => {
       expect(subscriptionModelStore.get(DUMMY_SUBSCRIPTION_ID)).toBeUndefined();
     });
 
-    test('should handle 404 as success', async () => {
-      setDeleteSubscriptionError(404);
-
+    test('should handle network errors', async () => {
       const executor = getExecutor();
       const deleteOp = new DeleteSubscriptionOperation(
         APP_ID,
@@ -319,62 +433,40 @@ describe('SubscriptionOperationExecutor', () => {
         DUMMY_SUBSCRIPTION_ID,
       );
 
+      // Missing error
+      setDeleteSubscriptionError(404);
       const result = await executor.execute([deleteOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
-    });
 
-    test('should handle 404 with record in retry window', async () => {
+      // Missing error with record in retry window
       newRecordsState.add(DUMMY_SUBSCRIPTION_ID);
       setDeleteSubscriptionError(404, 5);
-
-      const executor = getExecutor();
-      const deleteOp = new DeleteSubscriptionOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        DUMMY_SUBSCRIPTION_ID,
-      );
-
-      const result = await executor.execute([deleteOp]);
-      expect(result.result).toBe(ExecutionResult.FAIL_RETRY);
-      expect(result.retryAfterSeconds).toBe(5);
-    });
-
-    test('should not allow multiple operations with delete', async () => {
-      const executor = getExecutor();
-      const deleteOp = new DeleteSubscriptionOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        DUMMY_SUBSCRIPTION_ID,
-      );
-      const updateOp = new UpdateSubscriptionOperation({
-        appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
-        token: 'test',
-        type: SubscriptionType.ChromePush,
+      const res2 = await executor.execute([deleteOp]);
+      expect(res2).toMatchObject({
+        result: ExecutionResult.FAIL_RETRY,
+        retryAfterSeconds: 5,
       });
 
-      const result = executor.execute([deleteOp, updateOp]);
-      await expect(() => result).rejects.toThrow(
-        'Only supports one operation! Attempted operations:',
-      );
+      // Retryable error
+      setDeleteSubscriptionError(429, 10);
+      const res3 = await executor.execute([deleteOp]);
+      expect(res3).toMatchObject({
+        result: ExecutionResult.FAIL_RETRY,
+        retryAfterSeconds: 10,
+      });
+
+      // Other errors
+      setDeleteSubscriptionError(400);
+      const res4 = await executor.execute([deleteOp]);
+      expect(res4).toMatchObject({
+        result: ExecutionResult.FAIL_NORETRY,
+      });
     });
   });
 
   describe('TransferSubscriptionOperation', () => {
-    const transferSubscriptionSpy = vi.spyOn(
-      RequestService,
-      'transferSubscription',
-    );
-
     beforeEach(() => {
-      // Mock the RequestService.transferSubscription method
-      transferSubscriptionSpy.mockReset();
-      transferSubscriptionSpy.mockResolvedValue({
-        ok: true,
-        status: 200,
-        result: {},
-      });
+      setTransferSubscriptionResponse();
     });
 
     test('should transfer subscription successfully', async () => {
@@ -388,96 +480,34 @@ describe('SubscriptionOperationExecutor', () => {
       const result = await executor.execute([transferOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
-      // Verify the function was called
-      expect(transferSubscriptionSpy).toHaveBeenCalledWith(
-        { appId: APP_ID },
-        DUMMY_SUBSCRIPTION_ID,
-        { onesignal_id: DUMMY_ONESIGNAL_ID },
-        false,
-      );
+      expect(transferSubscriptionFn).toHaveBeenCalledWith({
+        identity: {
+          onesignal_id: DUMMY_ONESIGNAL_ID,
+        },
+        retain_previous_owner: false,
+      });
     });
 
-    test('should not allow multiple operations with transfer', async () => {
+    test('should handle network errors', async () => {
       const executor = getExecutor();
       const transferOp = new TransferSubscriptionOperation(
         APP_ID,
         DUMMY_ONESIGNAL_ID,
         DUMMY_SUBSCRIPTION_ID,
       );
-      const updateOp = new UpdateSubscriptionOperation({
-        appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
-        token: 'test',
-        type: SubscriptionType.ChromePush,
-      });
-
-      const result = executor.execute([transferOp, updateOp]);
-      await expect(() => result).rejects.toThrow(
-        'TransferSubscriptionOperation only supports one operation! Attempted operations:',
-      );
-    });
-  });
-
-  describe('Error Handling', () => {
-    test('should handle network errors', async () => {
-      const executor = getExecutor();
-      const createOp = new CreateSubscriptionOperation({
-        appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
-        type: SubscriptionType.ChromePush,
-        token: 'test-token',
-        enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
-      });
 
       // Retryable error
-      setCreateSubscriptionError(429, 10);
-      const res1 = await executor.execute([createOp]);
-      expect(res1).toMatchObject({
+      setTransferSubscriptionError(429, 10);
+      const res2 = await executor.execute([transferOp]);
+      expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 10,
       });
 
-      // Unauthorized error
-      setCreateSubscriptionError(401, 15);
-      const res2 = await executor.execute([createOp]);
-      expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
-        retryAfterSeconds: 15,
-      });
-
-      // Missing error without rebuild ops
-      setCreateSubscriptionError(404, 5);
-      const res3 = await executor.execute([createOp]);
-      expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
-      });
-
-      // Missing error with rebuild ops
-      const op = new SomeOperation();
-      getRebuildOpsFn.mockReturnValue([op]);
-      const res4 = await executor.execute([createOp]);
-      expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 5,
-        operations: [op],
-      });
-
-      // Missing error in retry window
-      newRecordsState.add(DUMMY_ONESIGNAL_ID);
-      setCreateSubscriptionError(404, 20);
-      const res5 = await executor.execute([createOp]);
-      expect(res5).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 20,
-      });
-
       // Other errors
-      setCreateSubscriptionError(400);
-      const res6 = await executor.execute([createOp]);
-      expect(res6).toMatchObject({
+      setTransferSubscriptionError(400);
+      const res3 = await executor.execute([transferOp]);
+      expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
     });
@@ -487,16 +517,10 @@ describe('SubscriptionOperationExecutor', () => {
 const createSubscriptionFn = vi.fn();
 const updateSubscriptionFn = vi.fn();
 const deleteSubscriptionFn = vi.fn();
+const transferSubscriptionFn = vi.fn();
 
 const getCreateSubscriptionUri = () =>
   `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${DUMMY_ONESIGNAL_ID}/subscriptions`;
-
-const getUpdateSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
-  `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
-
-const getDeleteSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
-  `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
-
 const setCreateSubscriptionResponse = (
   subscriptionId = DUMMY_SUBSCRIPTION_ID,
 ) => {
@@ -511,25 +535,6 @@ const setCreateSubscriptionResponse = (
     }),
   );
 };
-
-const setUpdateSubscriptionResponse = () => {
-  server.use(
-    http.patch(getUpdateSubscriptionUri(), async ({ request }) => {
-      updateSubscriptionFn(await request?.json());
-      return HttpResponse.json({ success: true });
-    }),
-  );
-};
-
-const setDeleteSubscriptionResponse = () => {
-  server.use(
-    http.delete(getDeleteSubscriptionUri(), () => {
-      deleteSubscriptionFn();
-      return HttpResponse.json({ success: true });
-    }),
-  );
-};
-
 const setCreateSubscriptionError = (status: number, retryAfter?: number) => {
   server.use(
     http.post(getCreateSubscriptionUri(), () =>
@@ -546,6 +551,16 @@ const setCreateSubscriptionError = (status: number, retryAfter?: number) => {
   );
 };
 
+const getUpdateSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
+  `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
+const setUpdateSubscriptionResponse = () => {
+  server.use(
+    http.patch(getUpdateSubscriptionUri(), async ({ request }) => {
+      updateSubscriptionFn(await request?.json());
+      return HttpResponse.json({ success: true });
+    }),
+  );
+};
 const setUpdateSubscriptionError = (status: number, retryAfter?: number) => {
   server.use(
     http.patch(getUpdateSubscriptionUri(), () =>
@@ -562,9 +577,45 @@ const setUpdateSubscriptionError = (status: number, retryAfter?: number) => {
   );
 };
 
+const getDeleteSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
+  `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
+const setDeleteSubscriptionResponse = () => {
+  server.use(
+    http.delete(getDeleteSubscriptionUri(), () => {
+      deleteSubscriptionFn();
+      return HttpResponse.json({ success: true });
+    }),
+  );
+};
 const setDeleteSubscriptionError = (status: number, retryAfter?: number) => {
   server.use(
     http.delete(getDeleteSubscriptionUri(), () =>
+      HttpResponse.json(
+        {},
+        {
+          status,
+          headers: retryAfter
+            ? { 'Retry-After': retryAfter?.toString() }
+            : undefined,
+        },
+      ),
+    ),
+  );
+};
+
+const getTransferSubscriptionUri = () =>
+  `**/api/v1/apps/${APP_ID}/subscriptions/${DUMMY_SUBSCRIPTION_ID}/owner`;
+const setTransferSubscriptionResponse = () => {
+  server.use(
+    http.patch(getTransferSubscriptionUri(), async ({ request }) => {
+      transferSubscriptionFn(await request?.json());
+      return HttpResponse.json({ success: true });
+    }),
+  );
+};
+const setTransferSubscriptionError = (status: number, retryAfter?: number) => {
+  server.use(
+    http.patch(getTransferSubscriptionUri(), () =>
       HttpResponse.json(
         {},
         {
