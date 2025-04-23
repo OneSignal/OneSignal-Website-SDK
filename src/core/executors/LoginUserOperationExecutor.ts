@@ -208,7 +208,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         }
 
         const model = this._subscriptionsModelStore.get(localId);
-        model?.setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
+        model?.setProperty('modelId', backendSub.id, ModelChangeTags.HYDRATE);
       }
 
       const followUp =

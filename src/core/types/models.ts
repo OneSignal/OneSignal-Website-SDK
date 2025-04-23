@@ -2,6 +2,7 @@ import type { Model, ModelChangedArgs } from 'src/core/models/Model';
 import type { IEventNotifier } from './events';
 
 export const ModelName = {
+  Config: 'config',
   Operations: 'operations',
   Identity: 'identity',
   Properties: 'properties',

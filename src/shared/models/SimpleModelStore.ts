@@ -13,10 +13,10 @@ export class SimpleModelStore<TModel extends Model> extends ModelStore<TModel> {
 
   /**
    * @param _create A factory function used to instantiate a new model instance.
-   * @param name Optional name for persistence.
+   * @param modelName Name for persistence.
    */
-  constructor(_create: () => TModel, name: ModelNameType) {
-    super(name);
+  constructor(_create: () => TModel, modelName: ModelNameType) {
+    super(modelName);
     this._create = _create;
     this.load(); // Automatically load on construction
   }

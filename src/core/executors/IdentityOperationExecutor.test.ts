@@ -2,8 +2,6 @@ import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
 import {
   BuildUserService,
   getRebuildOpsFn,
-  getValueFn,
-  MockPreferencesService,
   SomeOperation,
 } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
@@ -53,9 +51,8 @@ describe('IdentityOperationExecutor', () => {
       http.delete(deleteAliasUri, () => HttpResponse.json({})),
     );
 
-    identityModelStore = new IdentityModelStore(new MockPreferencesService());
+    identityModelStore = new IdentityModelStore();
     newRecordsState = new NewRecordsState();
-    getValueFn.mockReturnValue('{}');
   });
 
   test('should return correct operations (names)', async () => {
@@ -95,7 +92,6 @@ describe('IdentityOperationExecutor', () => {
       DUMMY_ONESIGNAL_ID,
     );
     const executor = getExecutor();
-
     const ops = [setAliasOp];
     await executor.execute(ops);
 

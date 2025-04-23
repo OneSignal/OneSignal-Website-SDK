@@ -8,7 +8,6 @@ import {
 import {
   BuildUserService,
   getRebuildOpsFn,
-  MockPreferencesService,
   SomeOperation,
 } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
@@ -31,7 +30,6 @@ import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { RefreshUserOperationExecutor } from './RefreshUserOperationExecutor';
 
-let identityPrefs: MockPreferencesService;
 let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
 let configModelStore: ConfigModelStore;
@@ -43,11 +41,10 @@ vi.mock('src/shared/libraries/Log');
 
 describe('RefreshUserOperationExecutor', () => {
   beforeEach(() => {
-    identityPrefs = new MockPreferencesService();
-    identityModelStore = new IdentityModelStore(identityPrefs);
-    propertiesModelStore = new PropertiesModelStore(identityPrefs);
-    configModelStore = new ConfigModelStore(identityPrefs);
-    subscriptionModelStore = new SubscriptionModelStore(identityPrefs);
+    identityModelStore = new IdentityModelStore();
+    propertiesModelStore = new PropertiesModelStore();
+    configModelStore = new ConfigModelStore();
+    subscriptionModelStore = new SubscriptionModelStore();
     newRecordsState = new NewRecordsState();
     buildUserService = new BuildUserService();
   });
@@ -132,9 +129,9 @@ describe('RefreshUserOperationExecutor', () => {
       const subscriptions = subscriptionModelStore.list();
       expect(subscriptions.length).toBe(1);
       expect(subscriptions[0]).toMatchObject({
-        id: DUMMY_SUBSCRIPTION_ID,
+        modelId: DUMMY_SUBSCRIPTION_ID,
         notification_types: NotificationType.UserOptedOut,
-        optedIn: false,
+        enabled: false,
         token: 'test@example.com',
         type: SubscriptionType.Email,
         device_os: '',
@@ -146,7 +143,7 @@ describe('RefreshUserOperationExecutor', () => {
     test('should preserve cached push subscription when updating models', async () => {
       // Set up a push subscription in the store
       const pushSubModel = new SubscriptionModel();
-      pushSubModel.id = DUMMY_SUBSCRIPTION_ID;
+      pushSubModel.modelId = DUMMY_SUBSCRIPTION_ID;
       pushSubModel.type = SubscriptionType.ChromePush;
       pushSubModel.token = DUMMY_PUSH_TOKEN;
       pushSubModel.notification_types = NotificationType.Subscribed;
@@ -177,7 +174,7 @@ describe('RefreshUserOperationExecutor', () => {
         (sub: SubscriptionModel) => sub.type === SubscriptionType.ChromePush,
       );
       expect(pushSub).toBeDefined();
-      expect(pushSub?.id).toBe(DUMMY_SUBSCRIPTION_ID);
+      expect(pushSub?.modelId).toBe(DUMMY_SUBSCRIPTION_ID);
       expect(pushSub?.token).toBe(DUMMY_PUSH_TOKEN);
     });
 

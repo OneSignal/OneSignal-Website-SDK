@@ -4,19 +4,23 @@ import { Model } from './Model';
 
 type ISubscriptionModel = Pick<
   ICreateUserSubscription,
-  'device_model' | 'device_os' | 'sdk' | 'token' | 'type' | 'notification_types'
-> & {
-  optedIn: boolean;
-};
+  | 'device_model'
+  | 'device_os'
+  | 'sdk'
+  | 'token'
+  | 'type'
+  | 'notification_types'
+  | 'enabled'
+>;
 
 // Implements logic similar to Android SDK's SubscriptionModel
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModel.kt
 export class SubscriptionModel extends Model<ISubscriptionModel> {
-  get optedIn(): boolean {
-    return this.getProperty('optedIn');
+  get enabled(): boolean | undefined {
+    return this.getProperty('enabled');
   }
-  set optedIn(value: boolean) {
-    this.setProperty('optedIn', value);
+  set enabled(value: boolean) {
+    this.setProperty('enabled', value);
   }
 
   get type(): SubscriptionTypeValue {

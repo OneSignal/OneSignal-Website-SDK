@@ -2,7 +2,6 @@ import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
 import {
   BuildUserService,
   getRebuildOpsFn,
-  MockPreferencesService,
   SomeOperation,
 } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
@@ -19,7 +18,6 @@ import { TrackSessionStartOperation } from '../operations/TrackSessionStartOpera
 import { ExecutionResult } from '../types/operation';
 import { UpdateUserOperationExecutor } from './UpdateUserOperationExecutor';
 
-let identityPrefs: MockPreferencesService;
 let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
 let newRecordsState: NewRecordsState;
@@ -29,9 +27,8 @@ vi.mock('src/shared/libraries/Log');
 
 describe('UpdateUserOperationExecutor', () => {
   beforeEach(() => {
-    identityPrefs = new MockPreferencesService();
-    identityModelStore = new IdentityModelStore(identityPrefs);
-    propertiesModelStore = new PropertiesModelStore(identityPrefs);
+    identityModelStore = new IdentityModelStore();
+    propertiesModelStore = new PropertiesModelStore();
     newRecordsState = new NewRecordsState();
     buildUserService = new BuildUserService();
 

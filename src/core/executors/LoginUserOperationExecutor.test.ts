@@ -10,7 +10,6 @@ import {
 } from '__test__/support/constants';
 import {
   BuildUserService,
-  MockPreferencesService,
   SomeOperation,
 } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
@@ -40,7 +39,6 @@ import { ExecutionResult } from '../types/operation';
 import { IdentityOperationExecutor } from './IdentityOperationExecutor';
 import { LoginUserOperationExecutor } from './LoginUserOperationExecutor';
 
-let identityPrefs: MockPreferencesService;
 let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
 let configModelStore: ConfigModelStore;
@@ -50,11 +48,10 @@ vi.mock('src/shared/libraries/Log');
 
 describe('LoginUserOperationExecutor', () => {
   beforeEach(() => {
-    identityPrefs = new MockPreferencesService();
-    identityModelStore = new IdentityModelStore(identityPrefs);
-    propertiesModelStore = new PropertiesModelStore(identityPrefs);
-    configModelStore = new ConfigModelStore(identityPrefs);
-    subscriptionModelStore = new SubscriptionModelStore(identityPrefs);
+    identityModelStore = new IdentityModelStore();
+    propertiesModelStore = new PropertiesModelStore();
+    configModelStore = new ConfigModelStore();
+    subscriptionModelStore = new SubscriptionModelStore();
   });
 
   const getExecutor = () => {
@@ -160,7 +157,7 @@ describe('LoginUserOperationExecutor', () => {
       configModelStore.model.pushSubscriptionId = DUMMY_SUBSCRIPTION_ID;
 
       const subscriptionModel = new SubscriptionModel();
-      subscriptionModel.setProperty('id', DUMMY_SUBSCRIPTION_ID);
+      subscriptionModel.setProperty('modelId', DUMMY_SUBSCRIPTION_ID);
       subscriptionModelStore.add(subscriptionModel, ModelChangeTags.HYDRATE);
 
       // perform operations with old onesignal id
@@ -186,7 +183,7 @@ describe('LoginUserOperationExecutor', () => {
       expect(configModelStore.model.pushSubscriptionId).toEqual(
         DUMMY_SUBSCRIPTION_ID_2,
       );
-      expect(subscriptionModel.getProperty('id')).toEqual(
+      expect(subscriptionModel.getProperty('modelId')).toEqual(
         DUMMY_SUBSCRIPTION_ID_2,
       );
 

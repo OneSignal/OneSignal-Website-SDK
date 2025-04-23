@@ -4,6 +4,7 @@ import type { IEventNotifier } from 'src/core/types/events';
 import {
   ModelChangeTags,
   ModelChangeTagValue,
+  ModelName,
   ModelNameType,
   type IModelStore,
   type IModelStoreChangeHandler,
@@ -46,9 +47,9 @@ export abstract class ModelStore<TModel extends Model>
   private hasLoadedFromCache = false;
 
   /**
-   * @param name The persistable name of the model store. If not specified no persisting will occur.
+   * @param modelName The persistable name of the model store. If not specified no persisting will occur.
    */
-  constructor(public readonly name: ModelNameType) {}
+  constructor(public readonly modelName: ModelNameType) {}
 
   /**
    * Create a model from JSON data
@@ -56,7 +57,7 @@ export abstract class ModelStore<TModel extends Model>
   abstract create(json?: object | null): TModel | null;
 
   add(model: TModel, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
-    const oldModel = this.models.find((m) => m.id === model.id);
+    const oldModel = this.models.find((m) => m.modelId === model.modelId);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag);
   }
@@ -66,7 +67,7 @@ export abstract class ModelStore<TModel extends Model>
     model: TModel,
     tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
   ): void {
-    const oldModel = this.models.find((m) => m.id === model.id);
+    const oldModel = this.models.find((m) => m.modelId === model.modelId);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag, index);
   }
@@ -79,11 +80,11 @@ export abstract class ModelStore<TModel extends Model>
   }
 
   get(id: string): TModel | undefined {
-    return this.models.find((m) => m.id === id);
+    return this.models.find((m) => m.modelId === id);
   }
 
   remove(id: string, tag: string): void {
-    const model = this.models.find((m) => m.id === id);
+    const model = this.models.find((m) => m.modelId === id);
     if (!model) return;
     this.removeItem(model, tag);
   }
@@ -134,7 +135,7 @@ export abstract class ModelStore<TModel extends Model>
     // no longer listen for changes to this model
     model.unsubscribe(this);
 
-    await Database.remove(this.name, model.id);
+    await Database.remove(this.modelName, model.modelId);
     this.persist();
 
     this.changeSubscription.fire((handler) =>
@@ -147,9 +148,17 @@ export abstract class ModelStore<TModel extends Model>
    * This is primarily to address operations which can enqueue before this method is called.
    */
   protected async load(): Promise<void> {
-    if (!this.name) return;
+    if (!this.modelName) return;
 
-    const jsonArray = await Database.getAll<TModel>(this.name);
+    let jsonArray: TModel[] = [];
+    if (
+      !(
+        this.modelName === ModelName.Config ||
+        this.modelName === ModelName.Operations
+      )
+    ) {
+      jsonArray = await Database.getAll<TModel>(this.modelName);
+    }
 
     const shouldRePersist = this.models.length > 0;
 
@@ -157,10 +166,12 @@ export abstract class ModelStore<TModel extends Model>
       const newModel = this.create(jsonArray[index]);
       if (!newModel) continue;
 
-      const hasExisting = this.models.some((m) => m.id === newModel.id);
+      const hasExisting = this.models.some(
+        (m) => m.modelId === newModel.modelId,
+      );
       if (hasExisting) {
         Log.debug(
-          `ModelStore<${this.name}>: load - operation.id: ${newModel.id} already exists in the store.`,
+          `ModelStore<${this.modelName}>: load - operation.id: ${newModel.modelId} already exists in the store.`,
         );
         continue;
       }
@@ -184,10 +195,10 @@ export abstract class ModelStore<TModel extends Model>
    * This is primarily to address operations which can enqueue before load() is called.
    */
   async persist(): Promise<void> {
-    if (!this.name || !this.hasLoadedFromCache) return;
+    if (!this.modelName || !this.hasLoadedFromCache) return;
 
     for (const model of this.models) {
-      await Database.put(this.name, model.toJSON());
+      await Database.put(this.modelName, model.toJSON());
     }
   }
 

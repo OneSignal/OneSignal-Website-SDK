@@ -82,7 +82,7 @@ export interface ModelChangedArgs<T extends object = object> {
  * ---------------
  * When deserializing a flat Model nothing specific is required.
  */
-type BaseModel = { id?: string };
+type BaseModel = { modelId?: string };
 
 export class Model<
   U extends object = BaseModel,
@@ -92,11 +92,11 @@ export class Model<
   /**
    * A unique identifier for this model.
    */
-  get id(): string {
-    return this.getProperty('id') as string;
+  get modelId(): string {
+    return this.getProperty('modelId') as string;
   }
-  set id(value: string) {
-    this.setProperty('id', value);
+  set modelId(value: string) {
+    this.setProperty('modelId', value);
   }
 
   protected data: Map<string, unknown> = new Map();
@@ -153,7 +153,7 @@ export class Model<
     });
 
     if (id !== null) {
-      newData.set('id', id);
+      newData.set('modelId', id);
     }
 
     this.data.clear();

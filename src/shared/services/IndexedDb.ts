@@ -1,4 +1,4 @@
-import { ModelName, LegacyModelName } from '../../core/models/SupportedModels';
+import { LegacyModelName, ModelName } from '../../core/models/SupportedModels';
 import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
@@ -321,6 +321,13 @@ export default class IndexedDb {
     keyOrValue?: IDBValidKey,
   ): Promise<T> {
     const database = await this.ensureDatabaseOpen();
+
+    // TODO: revisit with later web sdk refactor
+    if (table === 'config' || table === 'operations') {
+      // @ts-expect-error - tables like config and operations don't exist/will be ignored
+      return null;
+    }
+
     return await new Promise<T>((resolve, reject) => {
       try {
         const store = database
@@ -346,6 +353,7 @@ export default class IndexedDb {
           reject(e);
         };
       } catch (e) {
+        console.trace('uhh', { table, method, keyOrValue });
         Log.error('Database ' + method.toUpperCase() + ' Error:', e);
         reject(e);
       }

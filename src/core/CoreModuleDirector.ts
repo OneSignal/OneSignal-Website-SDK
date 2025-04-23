@@ -1,3 +1,4 @@
+import { NewRecordsState } from 'src/shared/models/NewRecordsState';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 import OneSignal from '../onesignal/OneSignal';
 import User from '../onesignal/User';
@@ -9,7 +10,7 @@ import Log from '../shared/libraries/Log';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import Database from '../shared/services/Database';
 import { logMethodCall } from '../shared/utils/utils';
-import CoreModule from './CoreModule';
+import LegacyCoreModule from './LegacyCoreModule';
 import { OSModel } from './modelRepo/OSModel';
 import { ModelStoresMap } from './models/ModelStoresMap';
 import {
@@ -21,12 +22,11 @@ import {
 import { ModelName, SupportedModel } from './models/SupportedModels';
 import UserData, { Identity } from './models/UserData';
 import { UserPropertiesModel } from './models/UserPropertiesModel';
-import { NewRecordsState } from './operationRepo/NewRecordsState';
 
 /* Contains OneSignal User-Model-specific logic*/
 
 export class CoreModuleDirector {
-  constructor(private core: CoreModule) {}
+  constructor(private core: LegacyCoreModule) {}
 
   public generatePushSubscriptionModel(
     rawPushSubscription: RawPushSubscription,

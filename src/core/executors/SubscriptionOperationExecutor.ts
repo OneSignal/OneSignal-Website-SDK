@@ -108,7 +108,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         createOperation.subscriptionId,
       );
       subscriptionModel?.setProperty(
-        'id',
+        'modelId',
         backendSubscriptionId,
         ModelChangeTags.HYDRATE,
       );
