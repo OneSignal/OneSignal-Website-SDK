@@ -1,10 +1,10 @@
-import { NewRecordsState } from '../../shared/models/NewRecordsState';
 import OperationCache from '../caching/OperationCache';
 import { CoreChangeType } from '../models/CoreChangeType';
 import { PropertyDelta } from '../models/CoreDeltas';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
 import { LegacyOperation } from '../operationRepo/LegacyOperation';
+import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { isPropertyDelta } from '../utils/typePredicates';
 import ExecutorBase from './ExecutorBase';
 

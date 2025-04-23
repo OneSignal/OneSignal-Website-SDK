@@ -1,5 +1,6 @@
 import { ModelStore } from 'src/core/modelRepo/ModelStore';
 import { Model } from 'src/core/models/Model';
+import { ModelNameType } from 'src/core/types/models';
 
 // Implements logic similar to Android SDK's SimpleModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/SimpleModelStore.kt
@@ -14,7 +15,7 @@ export class SimpleModelStore<TModel extends Model> extends ModelStore<TModel> {
    * @param _create A factory function used to instantiate a new model instance.
    * @param name Optional name for persistence.
    */
-  constructor(_create: () => TModel, name?: string) {
+  constructor(_create: () => TModel, name: ModelNameType) {
     super(name);
     this._create = _create;
     this.load(); // Automatically load on construction

@@ -1,5 +1,4 @@
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
-import { NewRecordsState } from '../../src/shared/models/NewRecordsState';
 import OneSignal from '../onesignal/OneSignal';
 import User from '../onesignal/User';
 import FuturePushSubscriptionRecord from '../page/userModel/FuturePushSubscriptionRecord';
@@ -22,6 +21,7 @@ import {
 import { ModelName, SupportedModel } from './models/SupportedModels';
 import UserData, { Identity } from './models/UserData';
 import { UserPropertiesModel } from './models/UserPropertiesModel';
+import { NewRecordsState } from './operationRepo/NewRecordsState';
 
 /* Contains OneSignal User-Model-specific logic*/
 

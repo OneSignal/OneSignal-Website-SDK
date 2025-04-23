@@ -1,5 +1,4 @@
 import Log from '../../shared/libraries/Log';
-import { NewRecordsState } from '../../shared/models/NewRecordsState';
 import Database from '../../shared/services/Database';
 import LocalStorage from '../../shared/utils/LocalStorage';
 import { logMethodCall } from '../../shared/utils/utils';
@@ -8,6 +7,7 @@ import { CoreChangeType } from '../models/CoreChangeType';
 import { CoreDelta } from '../models/CoreDeltas';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { SupportedModel } from '../models/SupportedModels';
+import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { Operation } from '../operations/Operation';
 import { ExecutorResult } from './ExecutorResult';
 

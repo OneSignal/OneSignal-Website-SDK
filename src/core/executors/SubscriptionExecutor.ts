@@ -1,10 +1,10 @@
-import { NewRecordsState } from '../../shared/models/NewRecordsState';
 import OperationCache from '../caching/OperationCache';
 import { CoreChangeType } from '../models/CoreChangeType';
 import { CoreDelta } from '../models/CoreDeltas';
 import { ExecutorConfig } from '../models/ExecutorConfig';
 import { ModelName, SupportedModel } from '../models/SupportedModels';
 import { LegacyOperation } from '../operationRepo/LegacyOperation';
+import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import ExecutorBase from './ExecutorBase';
 
 // TODO: Remove this with later Web SDK Prs
