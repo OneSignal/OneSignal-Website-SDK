@@ -11,6 +11,8 @@ import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { IRebuildUserService } from '../types/user';
 
+// Implements logic similar to Android SDK's RebuildUserService
+// Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/builduser/impl/RebuildUserService.kt
 export class RebuildUserService implements IRebuildUserService {
   constructor(
     private _identityModelStore: IdentityModelStore,
