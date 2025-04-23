@@ -1,6 +1,13 @@
 import type { Model, ModelChangedArgs } from 'src/core/models/Model';
 import type { IEventNotifier } from './events';
 
+export const ModelName = {
+  Identity: 'identity',
+  Properties: 'properties',
+  Subscriptions: 'subscriptions',
+} as const;
+export type ModelNameType = (typeof ModelName)[keyof typeof ModelName];
+
 export const ModelChangeTags = {
   NORMAL: 'NORMAL',
   NO_PROPOGATE: 'NO_PROPOGATE',

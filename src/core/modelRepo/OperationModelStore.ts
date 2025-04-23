@@ -1,4 +1,3 @@
-import { IPreferencesService } from 'src/core/types/preferences';
 import Log from 'src/shared/libraries/Log';
 import { OPERATION_NAME } from '../constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -21,8 +20,8 @@ import { ModelStore } from './ModelStore';
 // Implements logic similar to Android SDK's OperationModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationModelStore.kt
 export class OperationModelStore extends ModelStore<Operation> {
-  constructor(prefs: IPreferencesService) {
-    super('operations', prefs);
+  constructor() {
+    super('operations');
   }
 
   loadOperations(): void {

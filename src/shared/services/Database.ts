@@ -1,19 +1,7 @@
 import Emitter from '../libraries/Emitter';
 import IndexedDb from './IndexedDb';
 
-import { AppConfig } from '../models/AppConfig';
-import { AppState, PendingNotificationClickEvents } from '../models/AppState';
-import { UserState } from '../models/UserState';
-import { IOSNotification } from '../models/OSNotification';
-import {
-  OutcomesNotificationClicked,
-  OutcomesNotificationReceived,
-} from '../models/OutcomesNotificationEvents';
-import { Subscription } from '../models/Subscription';
-import { Session, ONESIGNAL_SESSION_KEY } from '../models/Session';
-import Log from '../libraries/Log';
-import { SentUniqueOutcome } from '../models/Outcomes';
-import { ModelName } from '../../core/models/SupportedModels';
+import { ModelNameType } from 'src/core/types/models';
 import {
   NotificationClickForOpenHandlingSchema,
   NotificationClickForOpenHandlingSerializer,
@@ -21,7 +9,19 @@ import {
   NotificationReceivedForOutcomesSchema,
   NotificationReceivedForOutcomesSerializer,
 } from '../helpers/OSNotificationDatabaseSerializer';
+import Log from '../libraries/Log';
+import { AppConfig } from '../models/AppConfig';
+import { AppState, PendingNotificationClickEvents } from '../models/AppState';
 import { NotificationClickEventInternal } from '../models/NotificationEvent';
+import { IOSNotification } from '../models/OSNotification';
+import { SentUniqueOutcome } from '../models/Outcomes';
+import {
+  OutcomesNotificationClicked,
+  OutcomesNotificationReceived,
+} from '../models/OutcomesNotificationEvents';
+import { ONESIGNAL_SESSION_KEY, Session } from '../models/Session';
+import { Subscription } from '../models/Subscription';
+import { UserState } from '../models/UserState';
 
 enum DatabaseEventName {
   SET,
@@ -54,7 +54,7 @@ export type OneSignalDbTable =
   | typeof TABLE_OUTCOMES_NOTIFICATION_RECEIVED
   | typeof TABLE_OUTCOMES_NOTIFICATION_CLICKED
   | 'SentUniqueOutcome'
-  | ModelName;
+  | ModelNameType;
 
 export default class Database {
   public emitter: Emitter;
