@@ -1,6 +1,4 @@
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
-import { OSModel } from '../../../src/core/modelRepo/OSModel';
-import { SupportedSubscription } from '../../../src/core/models/SubscriptionModels';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import {
   getCoreModuleDirector,
@@ -17,9 +15,7 @@ describe('CoreModuleDirector tests', () => {
       vi.resetAllMocks();
     });
 
-    async function getPushSubscriptionModel(): Promise<
-      OSModel<SupportedSubscription> | undefined
-    > {
+    async function getPushSubscriptionModel() {
       return (await getCoreModuleDirector()).getPushSubscriptionModel();
     }
 

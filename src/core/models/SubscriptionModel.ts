@@ -17,6 +17,9 @@ type ISubscriptionModel = Pick<
 // Implements logic similar to Android SDK's SubscriptionModel
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModel.kt
 export class SubscriptionModel extends Model<ISubscriptionModel> {
+  /**
+   * The subscription ID.
+   */
   get id(): string {
     return this.getProperty('id');
   }

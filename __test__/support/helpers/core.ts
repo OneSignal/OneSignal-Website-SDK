@@ -1,14 +1,12 @@
+import { IdentityModel } from 'src/core/models/IdentityModel';
+import { PropertiesModel } from 'src/core/models/PropertiesModel';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { Identity } from 'src/core/models/UserData';
 import CoreModule from '../../../src/core/CoreModule';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import { CoreChangeType } from '../../../src/core/models/CoreChangeType';
 import { CoreDelta } from '../../../src/core/models/CoreDeltas';
-import {
-  SubscriptionType,
-  SupportedSubscription,
-} from '../../../src/core/models/SubscriptionModels';
-import { ModelName } from '../../../src/core/models/SupportedModels';
-import { UserPropertiesModel } from '../../../src/core/models/UserPropertiesModel';
+import { SubscriptionType } from '../../../src/core/models/SubscriptionModels';
 import {
   DUMMY_MODEL_ID,
   DUMMY_PUSH_TOKEN,
@@ -16,15 +14,15 @@ import {
 } from '../constants';
 
 export function generateNewSubscription(modelId = '0000000000') {
-  return new OSModel<SupportedSubscription>(
-    ModelName.Subscriptions,
-    {
-      type: SubscriptionType.Email,
-      id: '123', // subscription id
-      token: 'myToken',
-    },
-    modelId,
-  );
+  const model = new SubscriptionModel();
+  model.modelId = modelId;
+  model.mergeData({
+    type: SubscriptionType.Email,
+    id: '123', // subscription id
+    token: 'myToken',
+  });
+
+  return model;
 }
 
 export function getMockDeltas(): CoreDelta<Identity>[] {
@@ -36,28 +34,27 @@ export function getMockDeltas(): CoreDelta<Identity>[] {
   ];
 }
 
-export function getDummyIdentityOSModel(
-  modelId = DUMMY_MODEL_ID,
-): OSModel<Identity> {
-  return new OSModel<Identity>(ModelName.Identity, {}, modelId);
+export function getDummyIdentityOSModel(modelId = DUMMY_MODEL_ID) {
+  const model = new IdentityModel();
+  model.modelId = modelId;
+  return model;
 }
 
-export function getDummyPropertyOSModel(
-  modelId = DUMMY_MODEL_ID,
-): OSModel<UserPropertiesModel> {
-  return new OSModel<UserPropertiesModel>(ModelName.Properties, {}, modelId);
+export function getDummyPropertyOSModel(modelId = DUMMY_MODEL_ID) {
+  const model = new PropertiesModel();
+  model.modelId = modelId;
+  return model;
 }
 
-export function getDummyPushSubscriptionOSModel(): OSModel<SupportedSubscription> {
-  return new OSModel<SupportedSubscription>(
-    ModelName.Subscriptions,
-    {
-      type: SubscriptionType.ChromePush,
-      id: DUMMY_SUBSCRIPTION_ID,
-      token: DUMMY_PUSH_TOKEN,
-    },
-    DUMMY_MODEL_ID,
-  );
+export function getDummyPushSubscriptionOSModel() {
+  const model = new SubscriptionModel();
+  model.modelId = DUMMY_MODEL_ID;
+  model.mergeData({
+    type: SubscriptionType.ChromePush,
+    id: DUMMY_SUBSCRIPTION_ID,
+    token: DUMMY_PUSH_TOKEN,
+  });
+  return model;
 }
 
 // Requirement: Test must also call TestEnvironment.initialize();

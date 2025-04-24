@@ -1,10 +1,7 @@
 import { CoreDelta, ModelDelta, PropertyDelta } from '../models/CoreDeltas';
 import { IdentityModel } from '../models/IdentityModel';
 import { ModelStoreHydrated } from '../models/ModelStoreChange';
-import {
-  FutureSubscriptionModel,
-  SubscriptionModel,
-} from '../models/SubscriptionModels';
+import { FutureSubscriptionModel } from '../models/SubscriptionModels';
 
 export function isPropertyDelta<Model>(
   delta: CoreDelta<Model>,
@@ -67,6 +64,6 @@ export function isFutureSubscriptionObject(obj: {
 export function isCompleteSubscriptionObject(obj?: {
   type?: string;
   id?: string;
-}): obj is SubscriptionModel {
+}) {
   return obj?.type !== undefined && obj?.id !== undefined;
 }

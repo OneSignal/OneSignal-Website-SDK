@@ -1,5 +1,4 @@
-import { IUserIdentity, UserData } from 'src/core/types/api';
-import { SupportedModel } from '../core/models/SupportedModels';
+import { ICreateUser, IUserIdentity, UserData } from 'src/core/types/api';
 import { RequestService } from '../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import Environment from '../shared/helpers/Environment';
@@ -28,7 +27,6 @@ export default class UserDirector {
   static resetUserMetaProperties() {
     const user = User.createOrGetInstance();
     user.hasOneSignalId = false;
-    user.awaitOneSignalIdAvailable = undefined;
     user.isCreatingUser = false;
   }
 
@@ -51,7 +49,11 @@ export default class UserDirector {
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     identityModel.mergeData(identity);
 
-    await this.copyOneSignalIdPromiseFromIdentityModel();
+    const user = User.createOrGetInstance();
+    if (identity.onesignalId) {
+      user.hasOneSignalId = true;
+      user.onesignalId = identity.onesignalId;
+    }
   }
 
   static createUserPropertiesModel() {
@@ -80,11 +82,9 @@ export default class UserDirector {
       const pushSubscription =
         await OneSignal.coreDirector.getPushSubscriptionModel();
 
-      pushSubscription?.modelId;
-
       let subscriptionId;
-      if (isCompleteSubscriptionObject(pushSubscription?.data)) {
-        subscriptionId = pushSubscription?.data.id;
+      if (isCompleteSubscriptionObject(pushSubscription?.toJSON())) {
+        subscriptionId = pushSubscription?.id;
       }
 
       const userData = await UserDirector.getAllUserData();
@@ -112,7 +112,7 @@ export default class UserDirector {
           if (isCompleteSubscriptionObject(resultSubscription)) {
             OneSignal.coreDirector
               .getNewRecordsState()
-              ?.add(resultSubscription.id);
+              .add(resultSubscription.id);
           }
         }
       }
@@ -129,7 +129,7 @@ export default class UserDirector {
     }
   }
 
-  static async getAllUserData(): Promise<UserData> {
+  static async getAllUserData(): Promise<ICreateUser> {
     logMethodCall('LoginManager.getAllUserData');
 
     const identity = OneSignal.coreDirector.getIdentityModel();
@@ -137,35 +137,14 @@ export default class UserDirector {
     const subscriptions =
       await OneSignal.coreDirector.getAllSubscriptionsModels();
 
-    const userData: Partial<UserData> = {};
-    userData.identity = identity?.data;
-    userData.properties = properties?.data;
-    userData.subscriptions = subscriptions?.map(
-      (subscription) => subscription.data,
-    );
+    const userData: ICreateUser = {
+      identity: identity.toJSON(),
+      properties: properties.toJSON(),
+      subscriptions: subscriptions?.map((subscription) =>
+        subscription.toJSON(),
+      ),
+    };
 
-    return userData as UserData;
-  }
-
-  static async copyOneSignalIdPromiseFromIdentityModel() {
-    const user = User.createOrGetInstance();
-    // copy the onesignal id promise to the user
-    const identity = OneSignal.coreDirector.getIdentityModel();
-    user.awaitOneSignalIdAvailable = identity?.awaitOneSignalIdAvailable;
-
-    user.awaitOneSignalIdAvailable?.then((onesignalId: string) => {
-      user.hasOneSignalId = true;
-      user.onesignalId = onesignalId;
-    });
-  }
-
-  static async updateModelWithCurrentUserOneSignalId(
-    model: OSModel<SupportedModel>,
-  ): Promise<void> {
-    const user = User.createOrGetInstance();
-    // wait for the user's onesignal id to be loaded
-    await user.awaitOneSignalIdAvailable;
-
-    model.setOneSignalId(user.onesignalId);
+    return userData;
   }
 }
