@@ -83,7 +83,7 @@ export abstract class ModelStore<TModel extends Model>
     return this.models.find((m) => m.modelId === id);
   }
 
-  remove(id: string, tag: string): void {
+  remove(id: string, tag = ModelChangeTags.NORMAL): void {
     const model = this.models.find((m) => m.modelId === id);
     if (!model) return;
     this.removeItem(model, tag);

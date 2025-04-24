@@ -60,10 +60,10 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
     this.setProperty('device_model', value);
   }
 
-  get device_os(): string | undefined {
+  get device_os(): string | number | undefined {
     return this.getProperty('device_os');
   }
-  set device_os(value: string | undefined) {
+  set device_os(value: string | number | undefined) {
     this.setProperty('device_os', value);
   }
 }

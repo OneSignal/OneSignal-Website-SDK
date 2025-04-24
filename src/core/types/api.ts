@@ -63,7 +63,7 @@ export type NotificationTypeValue =
 export interface ICreateUserSubscription {
   // app_version?: string; // For Mobile
   device_model?: string;
-  device_os?: string;
+  device_os?: string | number;
   enabled?: boolean;
   notification_types?: NotificationTypeValue;
   // rooted?: boolean; // For Android

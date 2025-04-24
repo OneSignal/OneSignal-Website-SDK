@@ -103,10 +103,10 @@ export abstract class BaseFullSubscriptionOperation extends BaseSubscriptionOper
   /**
    * The device OS version
    */
-  get device_os(): string | undefined {
+  get device_os(): string | number | undefined {
     return this.getProperty('device_os');
   }
-  protected set device_os(value: string | undefined) {
+  protected set device_os(value: string | number | undefined) {
     this.setProperty('device_os', value);
   }
 

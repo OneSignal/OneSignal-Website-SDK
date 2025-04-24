@@ -1,4 +1,8 @@
-import { ModelChangeTags, ModelChangeTagValue } from 'src/core/types/models';
+import {
+  ModelChangeTags,
+  ModelChangeTagValue,
+  ModelName,
+} from 'src/core/types/models';
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import { SimpleModelStore } from 'src/shared/models/SimpleModelStore';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -7,7 +11,7 @@ import { SubscriptionModel } from '../models/SubscriptionModel';
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModelStore.kt
 export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> {
   constructor() {
-    super(() => new SubscriptionModel(), 'subscriptions');
+    super(() => new SubscriptionModel(), ModelName.Subscriptions);
   }
 
   override replaceAll(
@@ -21,7 +25,7 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     // When hydrating, preserve properties from existing PUSH subscription
     for (const model of models) {
       if (SubscriptionHelper.isPushSubscriptionType(model.type)) {
-        const existingPushModel = this.get(model.id);
+        const existingPushModel = this.get(model.modelId);
         if (existingPushModel) {
           model.sdk = existingPushModel.sdk;
           model.device_os = existingPushModel.device_os;

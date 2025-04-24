@@ -1,4 +1,3 @@
-import LegacyCoreModule from 'src/core/LegacyCoreModule';
 import ModelCache from '../../../src/core/caching/ModelCache';
 import CoreModule from '../../../src/core/CoreModule';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
@@ -28,7 +27,7 @@ describe('ModelRepo tests', () => {
   beforeEach(async () => {
     vi.spyOn(ModelCache.prototype, 'load').mockResolvedValue({});
     vi.useFakeTimers();
-    core = new LegacyCoreModule();
+    core = new CoreModule();
     coreDirector = new CoreModuleDirector(core);
     await core.init();
     broadcastCount = 0;
