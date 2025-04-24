@@ -58,7 +58,7 @@ export class RebuildUserService implements IRebuildUserService {
           onesignalId,
           subscriptionId: pushSubscription.id,
           type: pushSubscription.type,
-          enabled: pushSubscription.optedIn,
+          enabled: pushSubscription.enabled,
           token: pushSubscription.token,
           notification_types: pushSubscription.notification_types,
         }),

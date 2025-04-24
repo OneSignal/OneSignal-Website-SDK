@@ -98,7 +98,7 @@ export class SessionManager implements ISessionManager {
 
     if (
       !pushSubscriptionModel ||
-      !isCompleteSubscriptionObject(pushSubscriptionModel.data)
+      !isCompleteSubscriptionObject(pushSubscriptionModel)
     ) {
       throw new OneSignalError(
         'Abort _getOneSignalAndSubscriptionIds: no subscription',
@@ -106,7 +106,7 @@ export class SessionManager implements ISessionManager {
     }
 
     const { onesignalId } = identityModel;
-    const { id: subscriptionId } = pushSubscriptionModel.data;
+    const { id: subscriptionId } = pushSubscriptionModel;
 
     return { onesignalId, subscriptionId };
   }
@@ -355,7 +355,7 @@ export class SessionManager implements ISessionManager {
     }
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-    const onesignalId = identityModel?.data?.id;
+    const onesignalId = identityModel.onesignalId;
 
     if (!onesignalId) {
       Log.debug(
@@ -367,7 +367,7 @@ export class SessionManager implements ISessionManager {
     const pushSubscription =
       await OneSignal.coreDirector.getPushSubscriptionModel();
     if (
-      pushSubscription?.data.notification_types !==
+      pushSubscription?.notification_types !==
         SubscriptionStateKind.Subscribed &&
       OneSignal.config?.enableOnSession !== true
     ) {
@@ -375,8 +375,8 @@ export class SessionManager implements ISessionManager {
     }
 
     let subscriptionId;
-    if (isCompleteSubscriptionObject(pushSubscription?.data)) {
-      subscriptionId = pushSubscription?.data.id;
+    if (isCompleteSubscriptionObject(pushSubscription)) {
+      subscriptionId = pushSubscription?.id;
     }
 
     try {
@@ -403,9 +403,11 @@ export class SessionManager implements ISessionManager {
         Log.debug('Error updating user session:', e);
       }
     } catch (e) {
-      Log.error(
-        `Failed to update user session. Error "${e.message}" ${e.stack}`,
-      );
+      if (e instanceof Error) {
+        Log.error(
+          `Failed to update user session. Error "${e.message}" ${e.stack}`,
+        );
+      }
     }
   }
 }
