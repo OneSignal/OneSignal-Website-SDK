@@ -353,7 +353,6 @@ export default class IndexedDb {
           reject(e);
         };
       } catch (e) {
-        console.trace('uhh', { table, method, keyOrValue });
         Log.error('Database ' + method.toUpperCase() + ' Error:', e);
         reject(e);
       }
