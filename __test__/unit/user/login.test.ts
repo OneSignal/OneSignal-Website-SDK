@@ -1,8 +1,5 @@
 import { nock, stub } from '__test__/support/helpers/general';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
-import { IdentityExecutor } from '../../../src/core/executors/IdentityExecutor';
-import { PropertiesExecutor } from '../../../src/core/executors/PropertiesExecutor';
-import { SubscriptionExecutor } from '../../../src/core/executors/SubscriptionExecutor';
 import { ModelName } from '../../../src/core/models/SupportedModels';
 import { RequestService } from '../../../src/core/requestService/RequestService';
 import LoginManager from '../../../src/page/managers/LoginManager';
@@ -20,9 +17,6 @@ import { setupLoginStubs } from '../../support/helpers/login';
 // suppress all internal logging
 vi.useFakeTimers();
 vi.mock('../../../src/shared/libraries/Log');
-stub(PropertiesExecutor.prototype, 'getOperationsFromCache', []);
-stub(IdentityExecutor.prototype, 'getOperationsFromCache', []);
-stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', []);
 
 describe('Login tests', () => {
   beforeEach(() => {
@@ -237,10 +231,6 @@ describe('Login tests', () => {
     await LoginManager.login(DUMMY_EXTERNAL_ID);
 
     expect(OneSignal.coreDirector.getIdentityModel().externalId).toBe(
-      DUMMY_EXTERNAL_ID,
-    );
-
-    expect(OneSignal.coreDirector.getPropertiesModel().externalId).toBe(
       DUMMY_EXTERNAL_ID,
     );
 

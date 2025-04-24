@@ -1,11 +1,8 @@
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
-import { Identity } from 'src/core/models/UserData';
 import CoreModule from '../../../src/core/CoreModule';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
-import { CoreChangeType } from '../../../src/core/models/CoreChangeType';
-import { CoreDelta } from '../../../src/core/models/CoreDeltas';
 import { SubscriptionType } from '../../../src/core/models/SubscriptionModels';
 import {
   DUMMY_MODEL_ID,
@@ -23,15 +20,6 @@ export function generateNewSubscription(modelId = '0000000000') {
   });
 
   return model;
-}
-
-export function getMockDeltas(): CoreDelta<Identity>[] {
-  return [
-    {
-      model: getDummyIdentityOSModel(),
-      changeType: CoreChangeType.Add,
-    },
-  ];
 }
 
 export function getDummyIdentityOSModel(modelId = DUMMY_MODEL_ID) {

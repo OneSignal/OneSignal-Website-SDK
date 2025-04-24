@@ -339,8 +339,7 @@ export default class User {
 
   public getTags(): { [key: string]: string } {
     logMethodCall('getTags');
-
-    return OneSignal.coreDirector.getPropertiesModel()?.data?.tags;
+    return OneSignal.coreDirector.getPropertiesModel().tags;
   }
 
   public setLanguage(language: string): void {
@@ -358,11 +357,11 @@ export default class User {
     }
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-    propertiesModel?.set('language', language);
+    propertiesModel.language = language;
   }
 
-  public getLanguage(): string {
+  public getLanguage(): string | undefined {
     logMethodCall('getLanguage');
-    return OneSignal.coreDirector.getPropertiesModel()?.data?.language;
+    return OneSignal.coreDirector.getPropertiesModel().language;
   }
 }

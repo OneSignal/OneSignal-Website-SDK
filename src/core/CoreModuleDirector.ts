@@ -62,6 +62,10 @@ export class CoreModuleDirector {
     }
   }
 
+  public addSubscriptionModel(model: SubscriptionModel): void {
+    this.core.subscriptionModelStore.add(model);
+  }
+
   /* G E T T E R S */
   public getNewRecordsState(): NewRecordsState {
     return this.core.newRecordsState;
