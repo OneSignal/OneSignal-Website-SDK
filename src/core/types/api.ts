@@ -1,5 +1,13 @@
 import { SetRequired } from 'type-fest';
 
+import { APIHeaders } from '../../shared/models/APIHeaders';
+
+export interface RequestMetadata {
+  appId: string;
+  subscriptionId?: string;
+  jwtHeader?: APIHeaders;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Create User
 // Reference: https://documentation.onesignal.com/reference/create-user#body-parameters
