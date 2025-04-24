@@ -23,9 +23,9 @@ import { UserData } from './types/api';
 export class CoreModuleDirector {
   constructor(private core: CoreModule) {}
 
-  public async generatePushSubscriptionModel(
+  public generatePushSubscriptionModel(
     rawPushSubscription: RawPushSubscription,
-  ): Promise<void> {
+  ): void {
     logMethodCall('CoreModuleDirector.generatePushSubscriptionModel', {
       rawPushSubscription,
     });
