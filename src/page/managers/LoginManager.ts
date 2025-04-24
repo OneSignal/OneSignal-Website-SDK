@@ -1,6 +1,5 @@
-import { OSModel } from '../../core/modelRepo/OSModel';
-import { ModelName, SupportedModel } from '../../core/models/SupportedModels';
-import UserData, { Identity } from '../../core/models/UserData';
+import { IdentityModel } from 'src/core/models/IdentityModel';
+import { ICreateUser, IUserIdentity, UserData } from 'src/core/types/api';
 import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
@@ -37,9 +36,6 @@ export default class LoginManager {
     }
 
     try {
-      // before, logging in, process anything waiting in the delta queue so it's not lost
-      OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
-
       if (token) {
         await Database.setJWTToken(token);
       }
@@ -51,7 +47,7 @@ export default class LoginManager {
         throw new OneSignalError('Login: No identity model found');
       }
 
-      const currentExternalId = identityModel?.data?.external_id;
+      const currentExternalId = identityModel.externalId;
 
       // if the current externalId is the same as the one we're trying to set, do nothing
       if (currentExternalId === externalId) {
@@ -63,16 +59,18 @@ export default class LoginManager {
         await OneSignal.coreDirector.getPushSubscriptionModel();
       let currentPushSubscriptionId;
 
-      if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
-        currentPushSubscriptionId = pushSubModel.data.id;
+      if (isCompleteSubscriptionObject(pushSubModel)) {
+        currentPushSubscriptionId = pushSubModel.id;
       }
 
-      const isIdentified = LoginManager.isIdentified(identityModel.data);
+      const isIdentified = LoginManager.isIdentified({
+        external_id: identityModel.externalId,
+      });
 
       // set the external id on the user locally
       LoginManager.setExternalId(identityModel, externalId);
 
-      let userData: Partial<UserData>;
+      let userData: ICreateUser;
       if (!isIdentified) {
         // Guest User -> Logged In User
         //    If login was not called before we want to keep all data from the "Guest User".
@@ -88,7 +86,7 @@ export default class LoginManager {
         const pushSubscription =
           await OneSignal.coreDirector.getPushSubscriptionModel();
         if (pushSubscription) {
-          userData.subscriptions = [pushSubscription.data];
+          userData.subscriptions = [pushSubscription.toJSON()];
         }
         // We don't want to carry over tags and other properties from the current User if we are switching Users.
         //   - Example switching from User A to User B.
@@ -112,9 +110,12 @@ export default class LoginManager {
         // hydrating with local externalId as server could still be updating
         await LoginManager.fetchAndHydrate(onesignalId, externalId);
       } catch (e) {
-        Log.error(
-          `Login: Error while identifying/upserting user: ${e.message}`,
-        );
+        if (e instanceof Error) {
+          Log.error(
+            `Login: Error while identifying/upserting user: ${e.message}`,
+          );
+        }
+
         // if the login fails, restore the old user data
         if (onesignalIdBackup) {
           Log.debug('Login: Restoring old user data');
@@ -125,9 +126,11 @@ export default class LoginManager {
               currentExternalId,
             );
           } catch (e) {
-            Log.error(
-              `Login: Error while restoring old user data: ${e.message}`,
-            );
+            if (e instanceof Error) {
+              Log.error(
+                `Login: Error while restoring old user data: ${e.message}`,
+              );
+            }
           }
         }
         throw e;
@@ -143,23 +146,17 @@ export default class LoginManager {
 
   private static async _logout(): Promise<void> {
     // check if user is already logged out
-    const identityModel = OneSignal.coreDirector?.getIdentityModel();
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
 
-    if (
-      !identityModel ||
-      !identityModel.data ||
-      !identityModel.data.external_id
-    ) {
+    if (!identityModel.externalId) {
       Log.debug('Logout: User is not logged in, skipping logout');
       return;
     }
 
     // before, logging out, process anything waiting in the delta queue so it's not lost
-    OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
     UserDirector.resetUserMetaProperties();
     const pushSubModel =
       await OneSignal.coreDirector.getPushSubscriptionModel();
-    pushSubModel?.setExternalId(undefined);
 
     // Initialize as a local User, as we don't have a push subscription to create a remote anonymous user.
     if (pushSubModel === undefined) {
@@ -168,45 +165,34 @@ export default class LoginManager {
     }
 
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
-    OneSignal.coreDirector.add(
-      ModelName.Subscriptions,
-      pushSubModel as OSModel<SupportedModel>,
-      false,
-    );
+    OneSignal.coreDirector.addSubscriptionModel(pushSubModel);
+
     // Initialize as non-local, make a request to OneSignal to create a new anonymous user
     await UserDirector.initializeUser(false);
   }
 
-  static setExternalId(
-    identityOSModel: OSModel<Identity>,
-    externalId: string,
-  ): void {
+  static setExternalId(identityModel: IdentityModel, externalId: string): void {
     logMethodCall('LoginManager.setExternalId', { externalId });
-
-    if (!identityOSModel) {
-      throw new OneSignalError('login: no identity model found');
-    }
-
-    identityOSModel.set('external_id', externalId, false);
+    identityModel.externalId = externalId;
   }
 
-  static isIdentified(identity: Identity): boolean {
+  static isIdentified(identity: { external_id?: string }): boolean {
     logMethodCall('LoginManager.isIdentified', { identity });
 
     return identity.external_id !== undefined;
   }
 
   static async identifyOrUpsertUser(
-    userData: Partial<UserData>,
+    userData: ICreateUser,
     isIdentified: boolean,
     subscriptionId?: string,
-  ): Promise<Partial<UserData>> {
+  ): Promise<ICreateUser> {
     logMethodCall('LoginManager.identifyOrUpsertUser', {
       userData,
       isIdentified,
       subscriptionId,
     });
-    let result: Partial<UserData>;
+    let result: ICreateUser;
 
     if (isIdentified) {
       // if started off identified, upsert a user
@@ -220,7 +206,7 @@ export default class LoginManager {
   }
 
   static async upsertUser(
-    userData: Partial<UserData>,
+    userData: ICreateUser,
     subscriptionId?: string,
     retry = 5,
   ): Promise<UserData> {
@@ -282,7 +268,7 @@ export default class LoginManager {
     userData: UserData,
     pushSubscriptionId?: string,
     retry = 5,
-  ): Promise<Partial<UserData>> {
+  ): Promise<UserData> {
     logMethodCall('LoginManager.identifyUser', {
       userData,
       pushSubscriptionId,
@@ -309,7 +295,7 @@ export default class LoginManager {
     if (!onesignalId) {
       // Persist to disk so it is used once we have the opportunity to create a User.
       const identityModel = OneSignal.coreDirector.getIdentityModel();
-      identityModel?.set(AliasPair.EXTERNAL_ID, identity.external_id, false);
+      identityModel.externalId = identity.external_id;
       return userData;
     }
 
@@ -329,12 +315,8 @@ export default class LoginManager {
 
       const newRecordsState = OneSignal.coreDirector.getNewRecordsState();
 
-      if (!newRecordsState) {
-        Log.error(`IdentifyUser: NewRecordsState is undefined`);
-      }
-
       // External id takes time to update on server. Include as new record with current time
-      newRecordsState?.add(onesignalId, true);
+      newRecordsState.add(onesignalId);
     } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
       return await this.transferSubscription(
         appId,
@@ -376,7 +358,7 @@ export default class LoginManager {
    * if logging in from identified user a to identified user b, the identity object would
    * otherwise contain any existing user a aliases
    */
-  static stripAliasesOtherThanExternalId(userData: Partial<UserData>): void {
+  static stripAliasesOtherThanExternalId(userData: ICreateUser): void {
     logMethodCall('LoginManager.stripAliasesOtherThanExternalId', { userData });
 
     const { identity } = userData;
@@ -407,8 +389,8 @@ export default class LoginManager {
   static async transferSubscription(
     appId: string,
     pushSubscriptionId: string,
-    identity: Identity,
-  ): Promise<Partial<UserData>> {
+    identity: IUserIdentity,
+  ): Promise<UserData> {
     Log.error(
       '^^^ Handling 409 HTTP response reported by the browser above.' +
         ' This is an expected result when the User already exists.' +

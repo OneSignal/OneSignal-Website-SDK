@@ -1,5 +1,4 @@
 import { IdentityModel } from '../models/IdentityModel';
-import { FutureSubscriptionModel } from '../models/SubscriptionModels';
 
 export function isIdentityObject(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -10,13 +9,13 @@ export function isIdentityObject(
 
 export function isFutureSubscriptionObject(obj: {
   type?: string;
-}): obj is FutureSubscriptionModel {
+}): obj is { type: string } {
   return obj?.type !== undefined;
 }
 
 export function isCompleteSubscriptionObject(obj?: {
   type?: string;
   id?: string;
-}) {
+}): obj is { type: string; id: string } {
   return obj?.type !== undefined && obj?.id !== undefined;
 }
