@@ -1,5 +1,3 @@
-import { OSModel } from '../modelRepo/OSModel';
-import { OSModelUpdatedArgs } from '../modelRepo/OSModelUpdatedArgs';
 import { CoreDelta, ModelDelta, PropertyDelta } from '../models/CoreDeltas';
 import { IdentityModel } from '../models/IdentityModel';
 import { ModelStoreHydrated } from '../models/ModelStoreChange';

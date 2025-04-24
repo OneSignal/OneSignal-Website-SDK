@@ -119,6 +119,7 @@ export class Model<
         'Parent model and parent property must both be set or both be null.',
       );
     }
+    this.modelId = Math.random().toString(36).substring(2);
   }
 
   /**
@@ -246,5 +247,12 @@ export class Model<
 
   get hasSubscribers(): boolean {
     return this.changeNotifier.hasSubscribers;
+  }
+
+  mergeData(newData: Partial<T>): void {
+    // Merge new data with existing data
+    for (const [key, value] of Object.entries(newData)) {
+      this.data.set(key, value);
+    }
   }
 }

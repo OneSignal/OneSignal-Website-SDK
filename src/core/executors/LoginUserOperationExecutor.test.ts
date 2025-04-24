@@ -83,7 +83,7 @@ describe('LoginUserOperationExecutor', () => {
     const ops = [someOp];
     const result = executor.execute(ops);
     await expect(() => result).rejects.toThrow(
-      `Unrecognized operation: {"name":"${someOp.name}"}`,
+      `Unrecognized operation: ${someOp.name}`,
     );
   });
 
@@ -112,7 +112,7 @@ describe('LoginUserOperationExecutor', () => {
       const ops2 = [loginOp, transferSubOp, someOp];
       const res2 = executor.execute(ops2);
       await expect(res2).rejects.toThrow(
-        `Unrecognized operation: {"name":"${someOp.name}"}`,
+        `Unrecognized operation: ${someOp.name}`,
       );
     });
 
@@ -188,10 +188,12 @@ describe('LoginUserOperationExecutor', () => {
       );
 
       // should have a refresh user operation
+      const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2);
+      refreshOp.modelId = res.operations![0].modelId;
       expect(res).toEqual({
         result: ExecutionResult.SUCCESS,
         retryAfterSeconds: undefined,
-        operations: [new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2)],
+        operations: [refreshOp],
         idTranslations: {
           [DUMMY_ONESIGNAL_ID]: DUMMY_ONESIGNAL_ID_2,
           [DUMMY_SUBSCRIPTION_ID]: DUMMY_SUBSCRIPTION_ID_2,

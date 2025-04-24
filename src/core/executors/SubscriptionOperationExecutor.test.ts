@@ -369,19 +369,19 @@ describe('SubscriptionOperationExecutor', () => {
       // Missing error
       setUpdateSubscriptionError(404, 10);
       const res2 = await executor.execute([updateOp]);
+      const subOp = new CreateSubscriptionOperation({
+        appId: APP_ID,
+        enabled: true,
+        notification_types: SubscriptionStateKind.Subscribed,
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        token: 'test-token',
+        type: SubscriptionType.ChromePush,
+      });
+      subOp.modelId = res2.operations![0].modelId;
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
-        operations: [
-          new CreateSubscriptionOperation({
-            appId: APP_ID,
-            enabled: true,
-            notification_types: SubscriptionStateKind.Subscribed,
-            onesignalId: DUMMY_ONESIGNAL_ID,
-            subscriptionId: DUMMY_SUBSCRIPTION_ID,
-            token: 'test-token',
-            type: SubscriptionType.ChromePush,
-          }),
-        ],
+        operations: [subOp],
       });
 
       // Missing error with record in retry window

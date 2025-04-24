@@ -15,8 +15,8 @@ import {
   SubscriptionChannel,
   SubscriptionType,
 } from './models/SubscriptionModels';
-import UserData from './models/UserData';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
+import { UserData } from './types/api';
 
 /* Contains OneSignal User-Model-specific logic*/
 

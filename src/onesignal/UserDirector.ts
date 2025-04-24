@@ -1,7 +1,5 @@
-import { OSModel } from '../core/modelRepo/OSModel';
-import { SupportedSubscription } from '../core/models/SubscriptionModels';
-import { ModelName, SupportedModel } from '../core/models/SupportedModels';
-import UserData, { Identity } from '../core/models/UserData';
+import { IUserIdentity, UserData } from 'src/core/types/api';
+import { SupportedModel } from '../core/models/SupportedModels';
 import { RequestService } from '../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import Environment from '../shared/helpers/Environment';
@@ -35,7 +33,7 @@ export default class UserDirector {
   }
 
   static async createAnonymousUser(isTemporary?: boolean): Promise<void> {
-    let identity;
+    let identity: IUserIdentity | Record<string, never>;
 
     if (isTemporary) {
       identity = {};
@@ -50,35 +48,22 @@ export default class UserDirector {
       }
     }
 
-    const identityOSModel = new OSModel<Identity>(ModelName.Identity, identity);
-    identityOSModel.setOneSignalId(identity.onesignal_id);
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    identityModel.mergeData(identity);
 
-    OneSignal.coreDirector.add(
-      ModelName.Identity,
-      identityOSModel as OSModel<SupportedModel>,
-      false,
-    );
     await this.copyOneSignalIdPromiseFromIdentityModel();
   }
 
-  static createUserPropertiesModel(): OSModel<Identity> {
+  static createUserPropertiesModel() {
     const properties = {
       language: Environment.getLanguage(),
       timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
 
-    const propertiesOSModel = new OSModel<Identity>(
-      ModelName.Properties,
-      properties,
-    );
+    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    propertiesModel.mergeData(properties);
 
-    OneSignal.coreDirector.add(
-      ModelName.Properties,
-      propertiesOSModel as OSModel<SupportedModel>,
-      false,
-    );
-
-    return propertiesOSModel;
+    return propertiesModel;
   }
 
   static async createUserOnServer(): Promise<UserData | void> {
@@ -94,6 +79,8 @@ export default class UserDirector {
       const appId = await MainHelper.getAppId();
       const pushSubscription =
         await OneSignal.coreDirector.getPushSubscriptionModel();
+
+      pushSubscription?.modelId;
 
       let subscriptionId;
       if (isCompleteSubscriptionObject(pushSubscription?.data)) {
@@ -147,7 +134,7 @@ export default class UserDirector {
 
     const identity = OneSignal.coreDirector.getIdentityModel();
     const properties = OneSignal.coreDirector.getPropertiesModel();
-    const subscriptions: OSModel<SupportedSubscription>[] =
+    const subscriptions =
       await OneSignal.coreDirector.getAllSubscriptionsModels();
 
     const userData: Partial<UserData> = {};

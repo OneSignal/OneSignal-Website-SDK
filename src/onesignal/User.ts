@@ -1,4 +1,3 @@
-import { OSModel } from '../core/modelRepo/OSModel';
 import {
   FutureSubscriptionModel,
   SubscriptionType,

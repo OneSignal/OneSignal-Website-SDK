@@ -1,7 +1,6 @@
 import { Identity } from 'src/core/models/UserData';
 import CoreModule from '../../../src/core/CoreModule';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
-import { OSModel } from '../../../src/core/modelRepo/OSModel';
 import { CoreChangeType } from '../../../src/core/models/CoreChangeType';
 import { CoreDelta } from '../../../src/core/models/CoreDeltas';
 import {
