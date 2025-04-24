@@ -1,8 +1,5 @@
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import {
-  FutureSubscriptionModel,
-  SubscriptionType,
-} from '../../core/models/SubscriptionModels';
+import { SubscriptionType } from '../../core/models/SubscriptionModels';
 import Environment from '../../shared/helpers/Environment';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
@@ -46,7 +43,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     return subscription.safariDeviceToken;
   }
 
-  serialize(): FutureSubscriptionModel {
+  serialize() {
     return {
       type: this.type,
       token: this.token,

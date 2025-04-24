@@ -1,7 +1,5 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
-import OneSignal from '../onesignal/OneSignal';
-import User from '../onesignal/User';
 import OneSignalError from '../shared/errors/OneSignalError';
 import EventHelper from '../shared/helpers/EventHelper';
 import MainHelper from '../shared/helpers/MainHelper';
@@ -17,11 +15,8 @@ import {
   SubscriptionChannel,
   SubscriptionType,
 } from './models/SubscriptionModels';
-import { ModelName, SupportedModel } from './models/SupportedModels';
 import UserData from './models/UserData';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
-import { CreateSubscriptionOperation } from './operations/CreateSubscriptionOperation';
-import { Operation } from './operations/Operation';
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -34,18 +29,12 @@ export class CoreModuleDirector {
     logMethodCall('CoreModuleDirector.generatePushSubscriptionModel', {
       rawPushSubscription,
     });
-    const appId = await MainHelper.getAppId();
-    const user = User.createOrGetInstance();
+    const model = new SubscriptionModel();
+    model.initializeFromJson(
+      new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
+    );
 
-    // new subscription
-    const subOp = new CreateSubscriptionOperation({
-      appId,
-      onesignalId: user.onesignalId,
-      ...new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
-    });
-
-    // don't propagate since we will be including the subscription in the user create call
-    OneSignal.coreDirector.add(subOp);
+    this.core.subscriptionModelStore.add(model);
   }
 
   public hydrateUser(user: UserData, externalId?: string): void {
@@ -67,80 +56,10 @@ export class CoreModuleDirector {
         identity.externalId = externalId;
         user.identity.external_id = externalId;
       }
-
-      // subscriptions are duplicable, so we hydrate them separately
-      // when hydrating, we should have the full subscription object (i.e. include ID from server)
-      this._hydrateSubscriptions(
-        user.subscriptions as SubscriptionModel[] | undefined,
-        onesignalId,
-        externalId,
-      );
       EventHelper.checkAndTriggerUserChanged();
     } catch (e) {
       Log.error(`Error hydrating user: ${e}`);
     }
-  }
-
-  private _hydrateSubscriptions(
-    subscriptions: SubscriptionModel[] | undefined,
-    onesignalId: string,
-    externalId?: string,
-  ): void {
-    logMethodCall('CoreModuleDirector._hydrateSubscriptions', {
-      subscriptions,
-      onesignalId,
-      externalId,
-    });
-
-    if (!subscriptions) {
-      return;
-    }
-
-    const modelStores = this.getModelStores();
-
-    subscriptions.forEach(async (subscription) => {
-      /* We use the token to identify the model because the subscription ID is not set until the server responds.
-       * So when we initially hydrate after init, we may already have a push model with a token, but no ID.
-       * We don't want to create a new model in this case, so we use the token to identify the model.
-       */
-      const existingSubscription = !!subscription.token
-        ? this.getSubscriptionOfTypeWithToken(
-            SubscriptionHelper.toSubscriptionChannel(subscription.type),
-            subscription.token,
-          )
-        : undefined;
-
-      if (existingSubscription) {
-        // set onesignalId on existing subscription *before* hydrating so that the onesignalId is updated in model cache
-        existingSubscription.setOneSignalId(onesignalId);
-        if (externalId) {
-          existingSubscription?.setExternalId(externalId);
-        }
-        existingSubscription.hydrate(subscription);
-      } else {
-        const model = new OSModel<SupportedModel>(
-          ModelName.Subscriptions,
-          subscription,
-        );
-        model.setOneSignalId(onesignalId);
-        if (externalId) {
-          model?.setExternalId(externalId);
-        }
-        modelStores[ModelName.Subscriptions].add(model, false); // don't propagate to server
-      }
-    });
-  }
-
-  /* O P E R A T I O N S */
-
-  public add(operation: Operation): void {
-    logMethodCall('CoreModuleDirector.add', { name: operation.name });
-    this.core.operationModelStore.add(operation);
-  }
-
-  public remove(operation: Operation): void {
-    logMethodCall('CoreModuleDirector.remove', { name: operation.name });
-    this.core.operationModelStore.remove(operation.modelId);
   }
 
   /* G E T T E R S */
