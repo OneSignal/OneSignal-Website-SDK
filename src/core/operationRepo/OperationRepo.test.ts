@@ -1,15 +1,12 @@
 import Log from 'src/shared/libraries/Log';
 import { describe, expect, Mock, vi } from 'vitest';
+import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import {
   GroupComparisonType,
   GroupComparisonValue,
   Operation as OperationBase,
 } from '../operations/Operation';
-import {
-  ExecutionResult,
-  IOperationExecutor,
-  type OperationModelStore,
-} from '../types/operation';
+import { ExecutionResult, IOperationExecutor } from '../types/operation';
 import {
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_POST_CREATE_DELAY,
@@ -19,6 +16,8 @@ import { OperationQueueItem, OperationRepo } from './OperationRepo';
 
 vi.spyOn(Log, 'error').mockImplementation(() => '');
 vi.useFakeTimers();
+
+let mockOperationModelStore: OperationModelStore;
 
 describe('OperationRepo', () => {
   const getNewOpRepo = () =>
@@ -35,6 +34,7 @@ describe('OperationRepo', () => {
 
   beforeEach(() => {
     vi.clearAllTimers();
+    mockOperationModelStore = new OperationModelStore();
   });
 
   test('can enqueue and load cached operations', async () => {
@@ -42,7 +42,8 @@ describe('OperationRepo', () => {
       new Operation('2', 'Op2'),
       new Operation('3', 'Op3'),
     ];
-    mockOperationModelStore.list.mockReturnValueOnce(cachedOperations);
+    mockOperationModelStore.add(cachedOperations[0]);
+    mockOperationModelStore.add(cachedOperations[1]);
 
     const opRepo = getNewOpRepo();
 
@@ -181,22 +182,19 @@ describe('OperationRepo', () => {
       });
 
       const opRepo = getNewOpRepo();
-      const modelAddSpy = vi.spyOn(mockOperationModelStore, 'add');
-      const modelRemoveSpy = vi.spyOn(mockOperationModelStore, 'remove');
 
       opRepo.enqueue(mockOperation);
-      expect(modelAddSpy).toHaveBeenCalledWith(mockOperation);
-      modelAddSpy.mockClear();
+      expect(mockOperationModelStore.list()).toEqual([mockOperation]);
 
       // execute the operation
       await executeOps(opRepo);
 
       // operation should be removed from the model store
-      expect(modelRemoveSpy).toHaveBeenCalledWith(mockOperation.id);
-
       // additional operations should be added to the model store
-      expect(modelAddSpy).toHaveBeenCalledWith(0, additionalOps[0]);
-      expect(modelAddSpy).toHaveBeenCalledWith(0, additionalOps[1]);
+      expect(mockOperationModelStore.list()).toEqual([
+        additionalOps[0],
+        additionalOps[1],
+      ]);
       expect(opRepo.queue).toEqual([
         {
           operation: additionalOps[0],
@@ -217,18 +215,18 @@ describe('OperationRepo', () => {
       ['FailConflict', ExecutionResult.FAIL_CONFLICT],
     ])('can handle failed operation: %s', async (_, failResult) => {
       const opRepo = getNewOpRepo();
-      const modelRemoveSpy = vi.spyOn(mockOperationModelStore, 'remove');
       executeFn.mockResolvedValueOnce({
         result: failResult,
       });
 
       opRepo.enqueue(mockOperation);
+      expect(mockOperationModelStore.list()).toEqual([mockOperation]);
 
       // execute the operation
       await executeOps(opRepo);
 
       // operation should be removed from the model store
-      expect(modelRemoveSpy).toHaveBeenCalledWith(mockOperation.id);
+      expect(mockOperationModelStore.list()).toEqual([]);
     });
 
     test('can handle success starting only operation', async () => {
@@ -238,17 +236,21 @@ describe('OperationRepo', () => {
 
       const opRepo = getNewOpRepo();
       const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
-      const modelRemoveSpy = vi.spyOn(mockOperationModelStore, 'remove');
 
-      // TODO: Revisit with Operation class rework & LoginOperation implementation
       const groupedOps = getGroupedOp();
       opRepo.enqueue(groupedOps[0]);
       opRepo.enqueue(groupedOps[1]);
+
+      expect(mockOperationModelStore.list()).toEqual([
+        groupedOps[0],
+        groupedOps[1],
+      ]);
+
       await executeOps(opRepo);
       expect(executeOperationsSpy).toHaveBeenCalledOnce();
 
       // operation should be removed from the model store
-      expect(modelRemoveSpy).toHaveBeenCalledWith(groupedOps[0].id);
+      expect(mockOperationModelStore.list()).toEqual([groupedOps[1]]);
 
       // group operations will be added to the queue except for the first/starting item
       expect(opRepo.queue).toEqual([
@@ -397,15 +399,6 @@ describe('OperationRepo', () => {
   });
 });
 
-// TODO: Revisit with ModelStore rework
-const mockOperationModelStore = {
-  loadOperations: vi.fn(),
-  list: vi.fn(() => [] as OperationBase[]),
-  add: vi.fn(),
-  remove: vi.fn(),
-} satisfies OperationModelStore;
-
-// TODO: Revisit with Operation class rework
 const translateIdsFn = vi.fn();
 class Operation extends OperationBase {
   private _id: string;

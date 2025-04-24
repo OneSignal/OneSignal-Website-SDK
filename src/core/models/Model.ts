@@ -79,7 +79,7 @@ export interface ModelChangedArgs<T extends object = object> {
  * ---------------
  * When deserializing a flat Model nothing specific is required.
  */
-type BaseModel = { modelId?: string };
+type BaseModel = { modelId: string };
 
 export class Model<
   U extends object = BaseModel,
