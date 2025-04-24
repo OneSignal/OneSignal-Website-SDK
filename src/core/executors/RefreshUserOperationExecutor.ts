@@ -18,9 +18,9 @@ import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import AliasPair from '../requestService/AliasPair';
 import { RequestService } from '../requestService/RequestService';
-import { NotificationType } from '../types/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
+import { NotificationType } from '../types/subscription';
 import { type IRebuildUserService } from '../types/user';
 
 // Implements logic similar to Android SDK's RefreshUserOperationExecutor

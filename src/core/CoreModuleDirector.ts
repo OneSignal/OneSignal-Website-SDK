@@ -11,12 +11,13 @@ import CoreModule from './CoreModule';
 import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';
 import { SubscriptionModel } from './models/SubscriptionModel';
-import {
-  SubscriptionChannel,
-  SubscriptionType,
-} from './models/SubscriptionModels';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { UserData } from './types/api';
+import {
+  SubscriptionChannel,
+  SubscriptionChannelValue,
+  SubscriptionType,
+} from './types/subscription';
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -64,6 +65,10 @@ export class CoreModuleDirector {
 
   public addSubscriptionModel(model: SubscriptionModel): void {
     this.core.subscriptionModelStore.add(model);
+  }
+
+  public removeSubscriptionModel(modelId: string): void {
+    this.core.subscriptionModelStore.remove(modelId);
   }
 
   /* G E T T E R S */
@@ -174,7 +179,7 @@ export class CoreModuleDirector {
   }
 
   public getSubscriptionOfTypeWithToken(
-    type: SubscriptionChannel | undefined,
+    type: SubscriptionChannelValue | undefined,
     token: string,
   ): SubscriptionModel | undefined {
     logMethodCall('CoreModuleDirector.getSubscriptionOfTypeWithToken', {

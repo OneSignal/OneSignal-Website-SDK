@@ -1,5 +1,9 @@
-import { SubscriptionType, SubscriptionTypeValue } from 'src/core/types/api';
-import { SubscriptionChannel } from '../../core/models/SubscriptionModels';
+import {
+  SubscriptionChannel,
+  SubscriptionChannelValue,
+  SubscriptionType,
+  SubscriptionTypeValue,
+} from 'src/core/types/subscription';
 import {
   InvalidStateError,
   InvalidStateReason,
@@ -62,7 +66,7 @@ export default class SubscriptionHelper {
 
   public static toSubscriptionChannel(
     type: SubscriptionTypeValue,
-  ): SubscriptionChannel | undefined {
+  ): SubscriptionChannelValue | undefined {
     switch (type) {
       case SubscriptionType.Email:
         return SubscriptionChannel.Email;

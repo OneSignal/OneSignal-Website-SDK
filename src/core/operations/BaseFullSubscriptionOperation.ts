@@ -1,8 +1,8 @@
+import { ICreateUserSubscription } from '../types/api';
 import {
-  ICreateUserSubscription,
   NotificationTypeValue,
   SubscriptionTypeValue,
-} from '../types/api';
+} from '../types/subscription';
 import { BaseSubscriptionOperation } from './BaseSubscriptionOperation';
 
 type SubscriptionOp = ICreateUserSubscription & {
