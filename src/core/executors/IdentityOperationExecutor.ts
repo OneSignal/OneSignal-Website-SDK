@@ -92,7 +92,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       ) {
         this._identityModelStore.model.setProperty(
           lastOperation.label,
-          isSetAlias ? lastOperation.value : null,
+          isSetAlias ? lastOperation.value : undefined,
           ModelChangeTags.HYDRATE,
         );
       }

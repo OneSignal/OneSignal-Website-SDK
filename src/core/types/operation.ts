@@ -52,14 +52,6 @@ export interface IOperationExecutor {
   execute(operations: Operation[]): Promise<ExecutionResponse>;
 }
 
-export interface OperationModelStore {
-  add(operation: Operation): void;
-  add(index: number, operation: Operation): void;
-  remove(operationId: string): void;
-  list(): Operation[];
-  loadOperations(): void;
-}
-
 export interface IOperationRepo {
   enqueue(operation: Operation, flush: boolean): void;
   containsInstanceOf<T extends Operation>(

@@ -1,5 +1,4 @@
 import { GroupComparisonType, Operation } from 'src/core/operations/Operation';
-import { IPreferencesService } from 'src/core/types/preferences';
 import { IRebuildUserService } from 'src/core/types/user';
 
 export class SomeOperation extends Operation {
@@ -33,16 +32,5 @@ export const getRebuildOpsFn = vi.fn();
 export class BuildUserService implements IRebuildUserService {
   getRebuildOperationsIfCurrentUser(...args: any[]) {
     return getRebuildOpsFn(...args);
-  }
-}
-
-export const getValueFn = vi.fn().mockReturnValue('{}');
-export const setValueFn = vi.fn();
-export class MockPreferencesService implements IPreferencesService {
-  getValue(...args: any[]) {
-    return getValueFn(...args);
-  }
-  setValue(...args: any[]) {
-    return setValueFn(...args);
   }
 }

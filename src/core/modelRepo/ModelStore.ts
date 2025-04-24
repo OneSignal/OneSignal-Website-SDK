@@ -4,18 +4,19 @@ import type { IEventNotifier } from 'src/core/types/events';
 import {
   ModelChangeTags,
   ModelChangeTagValue,
+  ModelName,
+  ModelNameType,
   type IModelStore,
   type IModelStoreChangeHandler,
 } from 'src/core/types/models';
-import type { IPreferencesService } from 'src/core/types/preferences';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
 import Log from 'src/shared/libraries/Log';
+import Database from 'src/shared/services/Database';
 import type {
   IModelChangedHandler,
   Model,
   ModelChangedArgs,
 } from '../models/Model';
-const STORE = 'OneSignal_ModelStore';
 
 /**
  * The abstract implementation of a model store. Implements all but the `create` method,
@@ -46,13 +47,9 @@ export abstract class ModelStore<TModel extends Model>
   private hasLoadedFromCache = false;
 
   /**
-   * @param name The persistable name of the model store. If not specified no persisting will occur.
-   * @param _prefs Preferences service for persistence
+   * @param modelName The persistable name of the model store. If not specified no persisting will occur.
    */
-  constructor(
-    public readonly name?: string,
-    private _prefs?: IPreferencesService,
-  ) {}
+  constructor(public readonly modelName: ModelNameType) {}
 
   /**
    * Create a model from JSON data
@@ -60,7 +57,7 @@ export abstract class ModelStore<TModel extends Model>
   abstract create(json?: object | null): TModel | null;
 
   add(model: TModel, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
-    const oldModel = this.models.find((m) => m.id === model.id);
+    const oldModel = this.models.find((m) => m.modelId === model.modelId);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag);
   }
@@ -70,7 +67,7 @@ export abstract class ModelStore<TModel extends Model>
     model: TModel,
     tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
   ): void {
-    const oldModel = this.models.find((m) => m.id === model.id);
+    const oldModel = this.models.find((m) => m.modelId === model.modelId);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag, index);
   }
@@ -83,11 +80,11 @@ export abstract class ModelStore<TModel extends Model>
   }
 
   get(id: string): TModel | undefined {
-    return this.models.find((m) => m.id === id);
+    return this.models.find((m) => m.modelId === id);
   }
 
   remove(id: string, tag: string): void {
-    const model = this.models.find((m) => m.id === id);
+    const model = this.models.find((m) => m.modelId === id);
     if (!model) return;
     this.removeItem(model, tag);
   }
@@ -127,18 +124,18 @@ export abstract class ModelStore<TModel extends Model>
 
     // listen for changes to this model
     model.subscribe(this);
-
     this.persist();
 
     this.changeSubscription.fire((handler) => handler.onModelAdded(model, tag));
   }
 
-  private removeItem(model: TModel, tag: string): void {
+  private async removeItem(model: TModel, tag: string): Promise<void> {
     this.models = this.models.filter((m) => m !== model);
 
     // no longer listen for changes to this model
     model.unsubscribe(this);
 
+    await Database.remove(this.modelName, model.modelId);
     this.persist();
 
     this.changeSubscription.fire((handler) =>
@@ -150,22 +147,31 @@ export abstract class ModelStore<TModel extends Model>
    * When models are loaded from the cache, they are added to the front of existing models.
    * This is primarily to address operations which can enqueue before this method is called.
    */
-  protected load(): void {
-    if (!this.name || !this._prefs) return;
+  protected async load(): Promise<void> {
+    if (!this.modelName) return;
 
-    const str = this._prefs.getValue<string>(STORE, this.name, '[]');
+    let jsonArray: TModel[] = [];
+    if (
+      !(
+        this.modelName === ModelName.Config ||
+        this.modelName === ModelName.Operations
+      )
+    ) {
+      jsonArray = await Database.getAll<TModel>(this.modelName);
+    }
 
-    const jsonArray = JSON.parse(str);
     const shouldRePersist = this.models.length > 0;
 
     for (let index = jsonArray.length - 1; index >= 0; index--) {
       const newModel = this.create(jsonArray[index]);
       if (!newModel) continue;
 
-      const hasExisting = this.models.some((m) => m.id === newModel.id);
+      const hasExisting = this.models.some(
+        (m) => m.modelId === newModel.modelId,
+      );
       if (hasExisting) {
         Log.debug(
-          `ModelStore<${this.name}>: load - operation.id: ${newModel.id} already exists in the store.`,
+          `ModelStore<${this.modelName}>: load - operation.id: ${newModel.modelId} already exists in the store.`,
         );
         continue;
       }
@@ -188,15 +194,12 @@ export abstract class ModelStore<TModel extends Model>
    * The time between any changes and loading from cache should be minuscule so lack of persistence is safe.
    * This is primarily to address operations which can enqueue before load() is called.
    */
-  persist(): void {
-    if (!this.name || !this._prefs || !this.hasLoadedFromCache) return;
+  async persist(): Promise<void> {
+    if (!this.modelName || !this.hasLoadedFromCache) return;
 
-    const jsonArray: unknown[] = [];
     for (const model of this.models) {
-      jsonArray.push(model.toJSON());
+      await Database.put(this.modelName, model.toJSON());
     }
-
-    this._prefs.setValue<string>(STORE, this.name, JSON.stringify(jsonArray));
   }
 
   subscribe(handler: IModelStoreChangeHandler<TModel>): void {

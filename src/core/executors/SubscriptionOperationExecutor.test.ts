@@ -2,7 +2,6 @@ import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
 import {
   BuildUserService,
   getRebuildOpsFn,
-  MockPreferencesService,
   SomeOperation,
 } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
@@ -22,7 +21,6 @@ import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { SubscriptionOperationExecutor } from './SubscriptionOperationExecutor';
 
-let preferencesService: MockPreferencesService;
 let subscriptionModelStore: SubscriptionModelStore;
 let configModelStore: ConfigModelStore;
 let newRecordsState: NewRecordsState;
@@ -35,9 +33,8 @@ vi.mock('src/shared/libraries/Log');
 
 describe('SubscriptionOperationExecutor', () => {
   beforeEach(() => {
-    preferencesService = new MockPreferencesService();
-    subscriptionModelStore = new SubscriptionModelStore(preferencesService);
-    configModelStore = new ConfigModelStore(preferencesService);
+    subscriptionModelStore = new SubscriptionModelStore();
+    configModelStore = new ConfigModelStore();
     newRecordsState = new NewRecordsState();
     buildUserService = new BuildUserService();
   });
@@ -107,7 +104,11 @@ describe('SubscriptionOperationExecutor', () => {
 
     test('should create subscription successfully', async () => {
       const model = new SubscriptionModel();
-      model.setProperty('id', DUMMY_SUBSCRIPTION_ID, ModelChangeTags.HYDRATE);
+      model.setProperty(
+        'modelId',
+        DUMMY_SUBSCRIPTION_ID,
+        ModelChangeTags.HYDRATE,
+      );
       subscriptionModelStore.add(model);
 
       setCreateSubscriptionResponse(BACKEND_SUBSCRIPTION_ID);
@@ -408,7 +409,11 @@ describe('SubscriptionOperationExecutor', () => {
     test('should delete subscription successfully', async () => {
       // Set up a subscription model to be deleted
       const model = new SubscriptionModel();
-      model.setProperty('id', DUMMY_SUBSCRIPTION_ID, ModelChangeTags.HYDRATE);
+      model.setProperty(
+        'modelId',
+        DUMMY_SUBSCRIPTION_ID,
+        ModelChangeTags.HYDRATE,
+      );
       subscriptionModelStore.add(model);
 
       const executor = getExecutor();

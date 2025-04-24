@@ -1,36 +1,62 @@
 import Log from '../shared/libraries/Log';
-import { NewRecordsState } from '../shared/models/NewRecordsState';
 import { logMethodCall } from '../shared/utils/utils';
-import ModelCache from './caching/ModelCache';
+import { IdentityOperationExecutor } from './executors/IdentityOperationExecutor';
+import { LoginUserFromSubscriptionOperationExecutor } from './executors/LoginUserFromSubscriptionOperationExecutor';
+import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecutor';
+import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
+import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
+import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
 import { ModelRepo } from './modelRepo/ModelRepo';
-import { OSModelStoreFactory } from './modelRepo/OSModelStoreFactory';
-import { SupportedModel } from './models/SupportedModels';
+import { OperationModelStore } from './modelRepo/OperationModelStore';
+import { RebuildUserService } from './modelRepo/RebuildUserService';
+import { ConfigModelStore } from './modelStores/ConfigModelStore';
+import { IdentityModelStore } from './modelStores/IdentityModelStore';
+import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
+import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
+import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { OperationRepo } from './operationRepo/OperationRepo';
+import { IOperationExecutor } from './types/operation';
 
 export default class CoreModule {
+  public operationModelStore: OperationModelStore;
   public modelRepo?: ModelRepo;
   public operationRepo?: OperationRepo;
   public initPromise: Promise<void>;
-  public newRecordsState?: NewRecordsState;
+  public newRecordsState: NewRecordsState;
 
-  private modelCache: ModelCache;
   private initResolver: () => void = () => null;
+  private identityModelStore: IdentityModelStore;
+  private propertiesModelStore: PropertiesModelStore;
+  private subscriptionModelStore: SubscriptionModelStore;
+  private configModelStore: ConfigModelStore;
+  private rebuildUserService: RebuildUserService;
+  private executors?: IOperationExecutor[];
 
   constructor() {
     this.initPromise = new Promise<void>((resolve) => {
       this.initResolver = resolve;
     });
 
-    this.modelCache = new ModelCache();
-    this.modelCache
-      .load(ModelRepo.supportedModels)
-      .then((allCachedOSModels) => {
-        const modelStores = OSModelStoreFactory.build(allCachedOSModels);
-        this.modelRepo = new ModelRepo(this.modelCache, modelStores);
-        this.newRecordsState = new NewRecordsState();
+    this.newRecordsState = new NewRecordsState();
+    this.operationModelStore = new OperationModelStore();
+    this.identityModelStore = new IdentityModelStore();
+    this.propertiesModelStore = new PropertiesModelStore();
+    this.subscriptionModelStore = new SubscriptionModelStore();
+    this.configModelStore = new ConfigModelStore();
+    this.rebuildUserService = new RebuildUserService(
+      this.identityModelStore,
+      this.propertiesModelStore,
+      this.subscriptionModelStore,
+      this.configModelStore,
+    );
+
+    this.operationModelStore
+      .loadOperations()
+      .then(() => {
+        this.executors = this.initializeExecutors();
         this.operationRepo = new OperationRepo(
-          [],
-          this.modelRepo,
+          this.executors,
+          this.operationModelStore,
           this.newRecordsState,
         );
         this.initResolver();
@@ -40,24 +66,56 @@ export default class CoreModule {
       });
   }
 
+  private initializeExecutors() {
+    const identityOpExecutor = new IdentityOperationExecutor(
+      this.identityModelStore,
+      this.rebuildUserService,
+      this.newRecordsState,
+    );
+    const loginOpExecutor = new LoginUserOperationExecutor(
+      identityOpExecutor,
+      this.identityModelStore,
+      this.propertiesModelStore,
+      this.subscriptionModelStore,
+      this.configModelStore,
+    );
+    const loginSubOpExecutor = new LoginUserFromSubscriptionOperationExecutor(
+      this.identityModelStore,
+      this.propertiesModelStore,
+    );
+    const refreshOpExecutor = new RefreshUserOperationExecutor(
+      this.identityModelStore,
+      this.propertiesModelStore,
+      this.subscriptionModelStore,
+      this.configModelStore,
+      this.rebuildUserService,
+      this.newRecordsState,
+    );
+    const subscriptionOpExecutor = new SubscriptionOperationExecutor(
+      this.subscriptionModelStore,
+      this.configModelStore,
+      this.rebuildUserService,
+      this.newRecordsState,
+    );
+    const updateSubOpExecutor = new UpdateUserOperationExecutor(
+      this.identityModelStore,
+      this.propertiesModelStore,
+      this.rebuildUserService,
+      this.newRecordsState,
+    );
+
+    return [
+      identityOpExecutor,
+      loginOpExecutor,
+      loginSubOpExecutor,
+      refreshOpExecutor,
+      subscriptionOpExecutor,
+      updateSubOpExecutor,
+    ];
+  }
+
   public async init() {
     logMethodCall('CoreModule.init');
     await this.initPromise;
-  }
-
-  public async resetModelRepoAndCache() {
-    logMethodCall('CoreModule.resetModelRepo');
-    await this.modelCache.reset();
-    const modelStores = OSModelStoreFactory.build<SupportedModel>();
-    this.modelRepo = new ModelRepo(this.modelCache, modelStores);
-
-    // TODO: Revisit
-    // this.operationRepo?.setModelRepoAndResubscribe(this.modelRepo);
-  }
-
-  // call processDeltaQueue on all executors immediately
-  public forceDeltaQueueProcessingOnAllExecutors(): void {
-    // TODO: Revisit
-    // this.operationRepo?.forceDeltaQueueProcessingOnAllExecutors();
   }
 }

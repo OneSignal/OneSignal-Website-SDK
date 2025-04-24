@@ -1,14 +1,13 @@
 import { ModelChangeTags, ModelChangeTagValue } from 'src/core/types/models';
-import { IPreferencesService } from 'src/core/types/preferences';
+import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import { SimpleModelStore } from 'src/shared/models/SimpleModelStore';
 import { SubscriptionModel } from '../models/SubscriptionModel';
-import { SubscriptionType, SubscriptionTypeValue } from '../types/api';
 
 // Implements logic similar to Android SDK's SubscriptionModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModelStore.kt
 export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> {
-  constructor(prefs: IPreferencesService) {
-    super(() => new SubscriptionModel(), 'subscriptions', prefs);
+  constructor() {
+    super(() => new SubscriptionModel(), 'subscriptions');
   }
 
   override replaceAll(
@@ -21,7 +20,7 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
 
     // When hydrating, preserve properties from existing PUSH subscription
     for (const model of models) {
-      if (isSubscriptionPush(model.type)) {
+      if (SubscriptionHelper.isPushSubscriptionType(model.type)) {
         const existingPushModel = this.get(model.id);
         if (existingPushModel) {
           model.sdk = existingPushModel.sdk;
@@ -34,11 +33,3 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     super.replaceAll(models, tag);
   }
 }
-
-const isSubscriptionPush = (
-  type: SubscriptionTypeValue,
-): type is Exclude<SubscriptionTypeValue, 'Email' | 'SMS'> =>
-  type === SubscriptionType.ChromePush ||
-  type === SubscriptionType.SafariPush ||
-  type === SubscriptionType.SafariLegacyPush ||
-  type === SubscriptionType.FirefoxPush;

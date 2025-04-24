@@ -4,10 +4,7 @@ import {
   DUMMY_ONESIGNAL_ID_2,
   DUMMY_SUBSCRIPTION_ID,
 } from '__test__/support/constants';
-import {
-  MockPreferencesService,
-  SomeOperation,
-} from '__test__/support/helpers/executors';
+import { SomeOperation } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
@@ -18,7 +15,6 @@ import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { ExecutionResult } from '../types/operation';
 import { LoginUserFromSubscriptionOperationExecutor } from './LoginUserFromSubscriptionOperationExecutor';
 
-let identityPrefs: MockPreferencesService;
 let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
 
@@ -26,9 +22,8 @@ vi.mock('src/shared/libraries/Log');
 
 describe('LoginUserFromSubscriptionOperationExecutor', () => {
   beforeEach(() => {
-    identityPrefs = new MockPreferencesService();
-    identityModelStore = new IdentityModelStore(identityPrefs);
-    propertiesModelStore = new PropertiesModelStore(identityPrefs);
+    identityModelStore = new IdentityModelStore();
+    propertiesModelStore = new PropertiesModelStore();
   });
 
   const getExecutor = () => {

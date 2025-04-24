@@ -3,8 +3,8 @@ import { Model } from './Model';
 
 type IIdentityModel = {
   [IdentityConstants.ONESIGNAL_ID]: string;
-  [IdentityConstants.EXTERNAL_ID]: string | null;
-  [key: string]: string | null;
+  [IdentityConstants.EXTERNAL_ID]?: string | undefined;
+  [key: string]: string | undefined;
 };
 
 /**
@@ -29,11 +29,11 @@ export class IdentityModel extends Model<IIdentityModel> {
   /**
    * The (developer-managed) identifier that uniquely identifies this user.
    */
-  get externalId(): string | null {
+  get externalId(): string | undefined {
     return this.getProperty(IdentityConstants.EXTERNAL_ID);
   }
 
-  set externalId(value: string | null) {
+  set externalId(value: string) {
     this.setProperty(IdentityConstants.EXTERNAL_ID, value);
   }
 }
