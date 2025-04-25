@@ -1,6 +1,6 @@
-import { SimpleModelStore } from '../../shared/models/SimpleModelStore';
-import { SingletonModelStore } from '../../shared/models/SingletonModelStore';
 import { IdentityModel } from '../models/IdentityModel';
+import { SimpleModelStore } from '../models/SimpleModelStore';
+import { SingletonModelStore } from '../models/SingletonModelStore';
 import { ModelName } from '../types/models';
 
 // Implements logic similar to Android SDK's IdentityModelStore

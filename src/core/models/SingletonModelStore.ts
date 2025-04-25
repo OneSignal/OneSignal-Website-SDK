@@ -5,7 +5,7 @@ import {
   ISingletonModelStore,
   ISingletonModelStoreChangeHandler,
 } from 'src/core/types/models';
-import { EventProducer } from '../helpers/EventProducer';
+import { EventProducer } from '../../shared/helpers/EventProducer';
 
 // Implements logic similar to Android SDK's SingletonModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/SingletonModelStore.kt
