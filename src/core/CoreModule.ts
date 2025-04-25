@@ -7,8 +7,10 @@ import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationEx
 import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
 import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
 import { IdentityModelStoreListener } from './listeners/IdentityModelStoreListener';
+import { ModelStoreListener } from './listeners/ModelStoreListener';
 import { PropertiesModelStoreListener } from './listeners/PropertiesModelStoreListener';
 import { type SingletonModelStoreListener } from './listeners/SingletonModelStoreListener';
+import { SubscriptionModelStoreListener } from './listeners/SubscriptionModelStoreListener';
 import { OperationModelStore } from './modelRepo/OperationModelStore';
 import { RebuildUserService } from './modelRepo/RebuildUserService';
 import { type Model } from './models/Model';
@@ -18,7 +20,7 @@ import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { OperationRepo } from './operationRepo/OperationRepo';
-import { IOperationExecutor } from './types/operation';
+import type { IOperationExecutor } from './types/operation';
 
 export default class CoreModule {
   public operationModelStore: OperationModelStore;
@@ -33,7 +35,10 @@ export default class CoreModule {
   private configModelStore: ConfigModelStore;
   private rebuildUserService: RebuildUserService;
   private executors?: IOperationExecutor[];
-  private listeners?: SingletonModelStoreListener<Model>[];
+  private listeners?: (
+    | SingletonModelStoreListener<Model>
+    | ModelStoreListener<Model>
+  )[];
 
   constructor() {
     this.initPromise = new Promise<void>((resolve) => {
@@ -80,6 +85,11 @@ export default class CoreModule {
       new PropertiesModelStoreListener(
         this.propertiesModelStore,
         this.operationRepo,
+      ),
+      new SubscriptionModelStoreListener(
+        this.subscriptionModelStore,
+        this.operationRepo,
+        this.identityModelStore,
       ),
     ];
   }

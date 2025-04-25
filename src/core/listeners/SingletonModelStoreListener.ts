@@ -16,7 +16,7 @@ import { ISingletonModelStore } from './types';
  * the actual Operation to be enqueued.
  */
 export abstract class SingletonModelStoreListener<TModel extends Model>
-  implements ISingletonModelStoreChangeHandler<TModel>, Closeable
+  implements ISingletonModelStoreChangeHandler<TModel>
 {
   protected store: ISingletonModelStore<TModel>;
   protected opRepo: IOperationRepo;
@@ -79,9 +79,4 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
     oldValue: unknown,
     newValue: unknown,
   ): Promise<Operation | null>;
-}
-
-// Interface Closeable (manually written since JS/TS has no built-in Closeable)
-export interface Closeable {
-  close(): void;
 }
