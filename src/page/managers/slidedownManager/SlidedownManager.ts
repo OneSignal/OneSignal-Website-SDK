@@ -1,24 +1,15 @@
-import { TagsObjectForApi, TagsObjectWithBoolean } from '../../models/Tags';
-import TaggingContainer from '../../slidedown/TaggingContainer';
-import TagUtils from '../../../shared/utils/TagUtils';
-import { ContextInterface } from '../../models/Context';
-import Slidedown, {
-  manageNotifyButtonStateWhileSlidedownShows,
-} from '../../slidedown/Slidedown';
-import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from '../../../shared/config/constants';
-import PermissionMessageDismissedError from '../../errors/PermissionMessageDismissedError';
-import { NotificationPermission } from '../../../shared/models/NotificationPermission';
-import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';
-import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
-import ConfirmationToast from '../../slidedown/ConfirmationToast';
-import { awaitableTimeout } from '../../../shared/utils/AwaitableTimeout';
-import { DismissPrompt } from '../../models/Dismiss';
-import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
+import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import {
   ChannelCaptureError,
   InvalidChannelInputField,
 } from '../../../page/errors/ChannelCaptureError';
 import ExistingChannelError from '../../../page/errors/ExistingChannelError';
+import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from '../../../shared/config/constants';
+import {
+  NotSubscribedError,
+  NotSubscribedReason,
+} from '../../../shared/errors/NotSubscribedError';
+import OneSignalError from '../../../shared/errors/OneSignalError';
 import PushPermissionNotGrantedError, {
   PushPermissionNotGrantedErrorReason,
 } from '../../../shared/errors/PushPermissionNotGrantedError';
@@ -26,15 +17,24 @@ import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import InitHelper from '../../../shared/helpers/InitHelper';
 import PromptsHelper from '../../../shared/helpers/PromptsHelper';
 import Log from '../../../shared/libraries/Log';
+import { NotificationPermission } from '../../../shared/models/NotificationPermission';
 import { DelayedPromptType } from '../../../shared/models/Prompts';
-import { AutoPromptOptions } from '../PromptsManager';
-import OneSignalError from '../../../shared/errors/OneSignalError';
-import {
-  NotSubscribedError,
-  NotSubscribedReason,
-} from '../../../shared/errors/NotSubscribedError';
-import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
+import { awaitableTimeout } from '../../../shared/utils/AwaitableTimeout';
+import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';
+import TagUtils from '../../../shared/utils/TagUtils';
+import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
+import PermissionMessageDismissedError from '../../errors/PermissionMessageDismissedError';
+import { ContextInterface } from '../../models/Context';
+import { DismissPrompt } from '../../models/Dismiss';
+import { TagsObjectForApi, TagsObjectWithBoolean } from '../../models/Tags';
+import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
+import ConfirmationToast from '../../slidedown/ConfirmationToast';
+import Slidedown, {
+  manageNotifyButtonStateWhileSlidedownShows,
+} from '../../slidedown/Slidedown';
+import TaggingContainer from '../../slidedown/TaggingContainer';
+import { AutoPromptOptions } from '../PromptsManager';
 
 export class SlidedownManager {
   private context: ContextInterface;
@@ -315,12 +315,16 @@ export class SlidedownManager {
         throw new Error('Categories not defined');
       }
 
-      const propertiesOSModel = OneSignal.coreDirector.getPropertiesModel();
-      const existingTags = propertiesOSModel?.data.tags as TagsObjectForApi;
+      const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+      const existingTags = propertiesModel.tags;
 
       if (options.isInUpdateMode && existingTags) {
-        this.context.tagManager.storeRemotePlayerTags(existingTags);
-        tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);
+        this.context.tagManager.storeRemotePlayerTags(
+          existingTags as TagsObjectForApi,
+        );
+        tagsForComponent = TagUtils.convertTagsApiToBooleans(
+          existingTags as TagsObjectForApi,
+        );
       } else {
         // first subscription or no existing tags
         TagUtils.markAllTagsAsSpecified(categories, true);
