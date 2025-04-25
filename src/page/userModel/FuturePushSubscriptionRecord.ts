@@ -1,11 +1,12 @@
 import {
+  NotificationType,
+  NotificationTypeValue,
   SubscriptionType,
   SubscriptionTypeValue,
 } from 'src/core/types/subscription';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import Environment from '../../shared/helpers/Environment';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
-import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
 import { Serializable } from '../models/Serializable';
@@ -14,7 +15,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   readonly type: SubscriptionTypeValue;
   readonly token?: string; // maps to legacy player.identifier
   readonly enabled?: boolean;
-  readonly notificationTypes?: SubscriptionStateKind;
+  readonly notificationTypes?: NotificationTypeValue;
   readonly sdk: string;
   readonly deviceModel: string;
   readonly deviceOs: number;
@@ -28,7 +29,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     this.type = FuturePushSubscriptionRecord.getSubscriptionType();
     // TO DO: enabled
     // this.enabled = true;
-    this.notificationTypes = SubscriptionStateKind.Subscribed;
+    this.notificationTypes = NotificationType.Subscribed;
     // TO DO: fix VERSION type discrepancies throughout codebase
     this.sdk = String(__VERSION__);
     this.deviceModel = navigator.platform;

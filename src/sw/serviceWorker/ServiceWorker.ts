@@ -29,7 +29,6 @@ import {
   SessionStatus,
   UpsertOrDeactivateSessionPayload,
 } from '../../shared/models/Session';
-import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
 import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
 import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
@@ -40,6 +39,10 @@ import {
 } from '../models/OSMinifiedNotificationPayload';
 import { OSServiceWorkerFields, SubscriptionChangeEvent } from './types';
 
+import {
+  NotificationType,
+  NotificationTypeValue,
+} from 'src/core/types/subscription';
 import { AppConfig } from 'src/shared/models/AppConfig';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
@@ -1078,7 +1081,7 @@ export class ServiceWorker {
     }
 
     // Get our new push subscription
-    let rawPushSubscription: RawPushSubscription;
+    let rawPushSubscription: RawPushSubscription = new RawPushSubscription();
 
     // Set it initially by the provided new push subscription
     const providedNewSubscription = event.newSubscription;
@@ -1107,17 +1110,17 @@ export class ServiceWorker {
 
         If the permission is revoked, we should set the subscription state to permission revoked.
        */
-      let subscriptionState: null | SubscriptionStateKind = null;
+      let subscriptionState: null | NotificationTypeValue = null;
       const pushPermission = Notification.permission;
 
       if (pushPermission !== 'granted') {
-        subscriptionState = SubscriptionStateKind.PermissionRevoked;
+        subscriptionState = NotificationType.PermissionRevoked;
       } else if (!rawPushSubscription) {
         /*
           If it's not a permission revoked issue, the subscription expired or was revoked by the
           push server.
          */
-        subscriptionState = SubscriptionStateKind.PushSubscriptionRevoked;
+        subscriptionState = NotificationType.PushSubscriptionRevoked;
       }
 
       // rawPushSubscription may be null if no push subscription was retrieved

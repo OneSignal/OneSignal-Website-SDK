@@ -1,6 +1,8 @@
-import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
 import { ISubscription } from '../types/api';
-import { SubscriptionTypeValue } from '../types/subscription';
+import {
+  NotificationTypeValue,
+  SubscriptionTypeValue,
+} from '../types/subscription';
 import { Model } from './Model';
 
 type ISubscriptionModel = Pick<
@@ -53,10 +55,10 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
   }
 
   // Android SDK refers to this as status
-  get notification_types(): SubscriptionStateKind | undefined {
+  get notification_types(): NotificationTypeValue | undefined {
     return this.getProperty('notification_types');
   }
-  set notification_types(value: SubscriptionStateKind | undefined) {
+  set notification_types(value: NotificationTypeValue | undefined) {
     this.setProperty('notification_types', value);
   }
 

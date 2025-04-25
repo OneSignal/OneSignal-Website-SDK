@@ -239,7 +239,7 @@ export class SubscriptionManager {
   public async registerSubscription(
     pushSubscription: RawPushSubscription,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _subscriptionState: NotificationTypeValue,
+    _subscriptionState?: NotificationTypeValue | null,
   ): Promise<Subscription> {
     /*
       This may be called after the RawPushSubscription has been serialized across a postMessage
