@@ -28,14 +28,10 @@ import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import {
-  ICreateUser,
-  ISubscription,
-  NotificationType,
-  SubscriptionType,
-} from '../types/api';
+import { ICreateUser, ISubscription } from '../types/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
+import { NotificationType, SubscriptionType } from '../types/subscription';
 import { IdentityOperationExecutor } from './IdentityOperationExecutor';
 import { LoginUserOperationExecutor } from './LoginUserOperationExecutor';
 

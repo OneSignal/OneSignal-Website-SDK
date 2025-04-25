@@ -1,8 +1,3 @@
-import { OSModel } from '../../../src/core/modelRepo/OSModel';
-import {
-  ModelName,
-  SupportedModel,
-} from '../../../src/core/models/SupportedModels';
 import { TestEnvironment } from '../environment/TestEnvironment';
 import { getDummyPushSubscriptionOSModel } from './core';
 
@@ -19,10 +14,6 @@ export async function initializeWithPermission(
     permission,
   });
 
-  const pushModel = getDummyPushSubscriptionOSModel();
-  OneSignal.coreDirector.add(
-    ModelName.Subscriptions,
-    pushModel as OSModel<SupportedModel>,
-    false,
-  );
+  const subModel = getDummyPushSubscriptionOSModel();
+  OneSignal.coreDirector.addSubscriptionModel(subModel);
 }

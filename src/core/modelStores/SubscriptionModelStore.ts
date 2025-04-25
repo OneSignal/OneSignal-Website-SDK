@@ -1,4 +1,4 @@
-import { SimpleModelStore } from 'src/core/models/SimpleModelStore';
+import { SimpleModelStore } from 'src/core/modelStores/SimpleModelStore';
 import {
   ModelChangeTags,
   ModelChangeTagValue,

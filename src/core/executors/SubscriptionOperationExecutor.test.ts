@@ -6,7 +6,6 @@ import {
 } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
 import { OPERATION_NAME } from '../constants';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { ConfigModelStore } from '../modelStores/ConfigModelStore';
@@ -16,9 +15,9 @@ import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOpe
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import { SubscriptionType } from '../types/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
+import { NotificationType, SubscriptionType } from '../types/subscription';
 import { SubscriptionOperationExecutor } from './SubscriptionOperationExecutor';
 
 let subscriptionModelStore: SubscriptionModelStore;
@@ -122,7 +121,7 @@ describe('SubscriptionOperationExecutor', () => {
         type: SubscriptionType.ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
+        notification_types: NotificationType.Subscribed,
       });
 
       const result = await executor.execute([createOp]);
@@ -152,7 +151,7 @@ describe('SubscriptionOperationExecutor', () => {
         type: SubscriptionType.ChromePush,
         token: 'old-token',
         enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
+        notification_types: NotificationType.Subscribed,
       });
 
       const updateOp = new UpdateSubscriptionOperation({
@@ -162,7 +161,7 @@ describe('SubscriptionOperationExecutor', () => {
         type: SubscriptionType.Email,
         token: 'new-token',
         enabled: false,
-        notification_types: SubscriptionStateKind.UserOptedOut,
+        notification_types: NotificationType.UserOptedOut,
       });
 
       const result = await executor.execute([createOp, updateOp]);
@@ -173,7 +172,7 @@ describe('SubscriptionOperationExecutor', () => {
           type: SubscriptionType.ChromePush,
           enabled: false,
           token: 'new-token',
-          notification_types: SubscriptionStateKind.UserOptedOut,
+          notification_types: NotificationType.UserOptedOut,
         },
       });
     });
@@ -187,7 +186,7 @@ describe('SubscriptionOperationExecutor', () => {
         type: SubscriptionType.ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
+        notification_types: NotificationType.Subscribed,
       });
 
       const deleteOp = new DeleteSubscriptionOperation(
@@ -212,7 +211,7 @@ describe('SubscriptionOperationExecutor', () => {
         type: SubscriptionType.ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
+        notification_types: NotificationType.Subscribed,
       });
 
       // Retryable error
@@ -294,7 +293,7 @@ describe('SubscriptionOperationExecutor', () => {
         type: SubscriptionType.ChromePush,
         token: 'updated-token',
         enabled: false,
-        notification_types: SubscriptionStateKind.UserOptedOut,
+        notification_types: NotificationType.UserOptedOut,
       });
 
       const result = await executor.execute([updateOp]);
@@ -305,7 +304,7 @@ describe('SubscriptionOperationExecutor', () => {
           type: SubscriptionType.ChromePush,
           enabled: false,
           token: 'updated-token',
-          notification_types: SubscriptionStateKind.UserOptedOut,
+          notification_types: NotificationType.UserOptedOut,
         },
       });
     });
@@ -319,7 +318,7 @@ describe('SubscriptionOperationExecutor', () => {
         type: SubscriptionType.Email,
         token: 'first-update',
         enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
+        notification_types: NotificationType.Subscribed,
       });
 
       const updateOp2 = new UpdateSubscriptionOperation({
@@ -329,7 +328,7 @@ describe('SubscriptionOperationExecutor', () => {
         type: SubscriptionType.ChromePush,
         token: 'second-update',
         enabled: false,
-        notification_types: SubscriptionStateKind.UserOptedOut,
+        notification_types: NotificationType.UserOptedOut,
       });
 
       const result = await executor.execute([updateOp1, updateOp2]);
@@ -341,7 +340,7 @@ describe('SubscriptionOperationExecutor', () => {
           type: SubscriptionType.ChromePush,
           enabled: false,
           token: 'second-update',
-          notification_types: SubscriptionStateKind.UserOptedOut,
+          notification_types: NotificationType.UserOptedOut,
         },
       });
     });
@@ -355,7 +354,7 @@ describe('SubscriptionOperationExecutor', () => {
         type: SubscriptionType.ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
+        notification_types: NotificationType.Subscribed,
       });
 
       // Retryable error
@@ -372,7 +371,7 @@ describe('SubscriptionOperationExecutor', () => {
       const subOp = new CreateSubscriptionOperation({
         appId: APP_ID,
         enabled: true,
-        notification_types: SubscriptionStateKind.Subscribed,
+        notification_types: NotificationType.Subscribed,
         onesignalId: DUMMY_ONESIGNAL_ID,
         subscriptionId: DUMMY_SUBSCRIPTION_ID,
         token: 'test-token',

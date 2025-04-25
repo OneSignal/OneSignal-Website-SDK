@@ -9,6 +9,7 @@ import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
+import { NotificationType } from 'src/core/types/subscription';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import Environment from 'src/shared/helpers/Environment';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
@@ -26,7 +27,6 @@ import {
   SessionStatus,
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/models/Session';
-import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import Database, {
   TABLE_NOTIFICATION_OPENED,
@@ -377,7 +377,7 @@ describe.skip('ServiceWorker', () => {
       );
       expect(registerSubscriptionCall).toHaveBeenCalledWith(
         undefined,
-        SubscriptionStateKind.PushSubscriptionRevoked,
+        NotificationType.PushSubscriptionRevoked,
       );
 
       // the device id will be reset regardless of the old subscription state
@@ -405,7 +405,7 @@ describe.skip('ServiceWorker', () => {
       expect(rawSubscription).toBeInstanceOf(RawPushSubscription);
       expect(rawSubscription.w3cEndpoint?.href).toBe('https://example.com/');
       expect(rawSubscription.safariDeviceToken).toBeUndefined();
-      expect(subscriptionState).toBe(SubscriptionStateKind.PermissionRevoked);
+      expect(subscriptionState).toBe(NotificationType.PermissionRevoked);
     });
   });
 
