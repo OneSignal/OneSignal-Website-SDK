@@ -6,8 +6,11 @@ import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecut
 import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
 import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
 import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
+import { IdentityModelStoreListener } from './listeners/IdentityModelStoreListener';
+import { type SingletonModelStoreListener } from './listeners/SingletonModelStoreListener';
 import { OperationModelStore } from './modelRepo/OperationModelStore';
 import { RebuildUserService } from './modelRepo/RebuildUserService';
+import { type Model } from './models/Model';
 import { ConfigModelStore } from './modelStores/ConfigModelStore';
 import { IdentityModelStore } from './modelStores/IdentityModelStore';
 import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
@@ -29,6 +32,7 @@ export default class CoreModule {
   private configModelStore: ConfigModelStore;
   private rebuildUserService: RebuildUserService;
   private executors?: IOperationExecutor[];
+  private listeners?: SingletonModelStoreListener<Model>[];
 
   constructor() {
     this.initPromise = new Promise<void>((resolve) => {
@@ -57,11 +61,22 @@ export default class CoreModule {
           this.operationModelStore,
           this.newRecordsState,
         );
+        this.listeners = this.initializeListeners();
         this.initResolver();
       })
       .catch((e) => {
         Log.error(e);
       });
+  }
+
+  private initializeListeners() {
+    if (!this.operationRepo) return [];
+    return [
+      new IdentityModelStoreListener(
+        this.identityModelStore,
+        this.operationRepo,
+      ),
+    ];
   }
 
   private initializeExecutors() {
