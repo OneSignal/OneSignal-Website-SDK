@@ -7,6 +7,7 @@ import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationEx
 import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
 import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
 import { IdentityModelStoreListener } from './listeners/IdentityModelStoreListener';
+import { PropertiesModelStoreListener } from './listeners/PropertiesModelStoreListener';
 import { type SingletonModelStoreListener } from './listeners/SingletonModelStoreListener';
 import { OperationModelStore } from './modelRepo/OperationModelStore';
 import { RebuildUserService } from './modelRepo/RebuildUserService';
@@ -74,6 +75,10 @@ export default class CoreModule {
     return [
       new IdentityModelStoreListener(
         this.identityModelStore,
+        this.operationRepo,
+      ),
+      new PropertiesModelStoreListener(
+        this.propertiesModelStore,
         this.operationRepo,
       ),
     ];
