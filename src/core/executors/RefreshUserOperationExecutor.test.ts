@@ -129,7 +129,7 @@ describe('RefreshUserOperationExecutor', () => {
       const subscriptions = subscriptionModelStore.list();
       expect(subscriptions.length).toBe(1);
       expect(subscriptions[0]).toMatchObject({
-        modelId: DUMMY_SUBSCRIPTION_ID,
+        id: DUMMY_SUBSCRIPTION_ID,
         notification_types: NotificationType.UserOptedOut,
         enabled: false,
         token: 'test@example.com',

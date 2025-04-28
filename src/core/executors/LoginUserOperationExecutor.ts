@@ -58,7 +58,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     if (startingOp instanceof LoginUserOperation)
       return this.loginUser(startingOp, operations.slice(1));
 
-    throw new Error(`Unrecognized operation: ${startingOp}`);
+    throw new Error(`Unrecognized operation: ${startingOp.name}`);
   }
 
   private async loginUser(
@@ -158,7 +158,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           subscriptions,
         );
       } else {
-        throw new Error(`Unrecognized operation: ${operation}`);
+        throw new Error(`Unrecognized operation: ${operation.name}`);
       }
     }
 

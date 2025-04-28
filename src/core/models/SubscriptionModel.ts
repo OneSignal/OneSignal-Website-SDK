@@ -1,9 +1,10 @@
 import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
-import { ICreateUserSubscription, SubscriptionTypeValue } from '../types/api';
+import { ISubscription, SubscriptionTypeValue } from '../types/api';
 import { Model } from './Model';
 
 type ISubscriptionModel = Pick<
-  ICreateUserSubscription,
+  ISubscription,
+  | 'id'
   | 'device_model'
   | 'device_os'
   | 'sdk'
@@ -16,6 +17,16 @@ type ISubscriptionModel = Pick<
 // Implements logic similar to Android SDK's SubscriptionModel
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModel.kt
 export class SubscriptionModel extends Model<ISubscriptionModel> {
+  /**
+   * The subscription ID.
+   */
+  get id(): string {
+    return this.getProperty('id');
+  }
+  set id(value: string) {
+    this.setProperty('id', value);
+  }
+
   get enabled(): boolean | undefined {
     return this.getProperty('enabled');
   }
@@ -60,10 +71,10 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
     this.setProperty('device_model', value);
   }
 
-  get device_os(): string | undefined {
+  get device_os(): string | number | undefined {
     return this.getProperty('device_os');
   }
-  set device_os(value: string | undefined) {
+  set device_os(value: string | number | undefined) {
     this.setProperty('device_os', value);
   }
 }

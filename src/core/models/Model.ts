@@ -82,7 +82,7 @@ export interface ModelChangedArgs<T extends object = object> {
  * ---------------
  * When deserializing a flat Model nothing specific is required.
  */
-type BaseModel = { modelId?: string };
+type BaseModel = { modelId: string };
 
 export class Model<
   U extends object = BaseModel,
@@ -90,12 +90,12 @@ export class Model<
 > implements IEventNotifier<IModelChangedHandler>
 {
   /**
-   * A unique identifier for this model.
+   * Legacy Id used as keypath for the IndexedDB tables. A unique identifier for this model.
    */
   get modelId(): string {
     return this.getProperty('modelId') as string;
   }
-  set modelId(value: string) {
+  private set modelId(value: string) {
     this.setProperty('modelId', value);
   }
 
@@ -119,6 +119,7 @@ export class Model<
         'Parent model and parent property must both be set or both be null.',
       );
     }
+    this.modelId = Math.random().toString(36).substring(2);
   }
 
   /**
@@ -246,5 +247,12 @@ export class Model<
 
   get hasSubscribers(): boolean {
     return this.changeNotifier.hasSubscribers;
+  }
+
+  mergeData(newData: Partial<T>): void {
+    // Merge new data with existing data
+    for (const [key, value] of Object.entries(newData)) {
+      this.data.set(key, value);
+    }
   }
 }

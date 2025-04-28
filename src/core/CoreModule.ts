@@ -6,7 +6,6 @@ import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecut
 import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
 import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
 import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
-import { ModelRepo } from './modelRepo/ModelRepo';
 import { OperationModelStore } from './modelRepo/OperationModelStore';
 import { RebuildUserService } from './modelRepo/RebuildUserService';
 import { ConfigModelStore } from './modelStores/ConfigModelStore';
@@ -19,15 +18,14 @@ import { IOperationExecutor } from './types/operation';
 
 export default class CoreModule {
   public operationModelStore: OperationModelStore;
-  public modelRepo?: ModelRepo;
   public operationRepo?: OperationRepo;
   public initPromise: Promise<void>;
   public newRecordsState: NewRecordsState;
+  public subscriptionModelStore: SubscriptionModelStore;
+  public identityModelStore: IdentityModelStore;
+  public propertiesModelStore: PropertiesModelStore;
 
   private initResolver: () => void = () => null;
-  private identityModelStore: IdentityModelStore;
-  private propertiesModelStore: PropertiesModelStore;
-  private subscriptionModelStore: SubscriptionModelStore;
   private configModelStore: ConfigModelStore;
   private rebuildUserService: RebuildUserService;
   private executors?: IOperationExecutor[];

@@ -11,8 +11,19 @@ export const ModelName = {
 export type ModelNameType = (typeof ModelName)[keyof typeof ModelName];
 
 export const ModelChangeTags = {
+  /**
+   * A change was performed through normal means.
+   */
   NORMAL: 'NORMAL',
+
+  /**
+   * A change was performed that should *not* be propogated to the backend.
+   */
   NO_PROPOGATE: 'NO_PROPOGATE',
+
+  /**
+   * A change was performed through the backend hydrating the model.
+   */
   HYDRATE: 'HYDRATE',
 } as const;
 

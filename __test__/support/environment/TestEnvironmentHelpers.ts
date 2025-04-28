@@ -1,6 +1,6 @@
 import bowser from 'bowser';
 import { DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
-import LegacyCoreModule from 'src/core/LegacyCoreModule';
+import CoreModule from 'src/core/CoreModule';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 import OneSignal from '../../../src/onesignal/OneSignal';
@@ -46,7 +46,7 @@ export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal.context = new Context(global.OneSignal.config);
   global.OneSignal.initialized = true;
   global.OneSignal.emitter = new Emitter();
-  const core = new LegacyCoreModule();
+  const core = new CoreModule();
   await core.init();
   global.OneSignal.coreDirector = new CoreModuleDirector(core);
   global.OneSignal.User = new UserNamespace(

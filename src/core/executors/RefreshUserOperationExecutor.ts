@@ -87,7 +87,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       for (const sub of subscriptions) {
         const model = new SubscriptionModel();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        model.modelId = sub.id!;
+        model.id = sub.id!;
         model.token = sub.token ?? '';
         model.notification_types =
           sub.notification_types ?? NotificationType.Subscribed;

@@ -71,8 +71,4 @@ export class TestEnvironment {
     stubNotification(config);
     return oneSignal;
   }
-
-  static async resetCoreModule() {
-    await OneSignal.coreDirector.resetModelRepoAndCache();
-  }
 }

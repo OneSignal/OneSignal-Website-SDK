@@ -93,7 +93,6 @@ export default class LoginManager {
         // We don't want to carry over tags and other properties from the current User if we are switching Users.
         //   - Example switching from User A to User B.
       }
-      await OneSignal.coreDirector.resetModelRepoAndCache();
       await UserDirector.initializeUser(true);
 
       try {
@@ -161,7 +160,6 @@ export default class LoginManager {
     const pushSubModel =
       await OneSignal.coreDirector.getPushSubscriptionModel();
     pushSubModel?.setExternalId(undefined);
-    await OneSignal.coreDirector.resetModelRepoAndCache();
 
     // Initialize as a local User, as we don't have a push subscription to create a remote anonymous user.
     if (pushSubModel === undefined) {

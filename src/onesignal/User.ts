@@ -1,4 +1,3 @@
-import { OSModel } from '../core/modelRepo/OSModel';
 import {
   FutureSubscriptionModel,
   SubscriptionType,
@@ -14,7 +13,6 @@ import UserDirector from './UserDirector';
 export default class User {
   hasOneSignalId = false;
   onesignalId?: string;
-  awaitOneSignalIdAvailable?: Promise<string>;
   isCreatingUser = false;
 
   static singletonInstance?: User = undefined;
@@ -26,17 +24,9 @@ export default class User {
   static createOrGetInstance(): User {
     if (!User.singletonInstance) {
       User.singletonInstance = new User();
-      UserDirector.initializeUser(true)
-        .then(() => {
-          UserDirector.copyOneSignalIdPromiseFromIdentityModel().catch(
-            (e: Error) => {
-              console.error(e);
-            },
-          );
-        })
-        .catch((e: Error) => {
-          console.error(e);
-        });
+      UserDirector.initializeUser(true).catch((e: Error) => {
+        console.error(e);
+      });
     }
 
     return User.singletonInstance;
@@ -168,11 +158,6 @@ export default class User {
       await UserDirector.createAndHydrateUser();
     }
 
-    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(
-      (e) => {
-        throw e;
-      },
-    );
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     if (identityModel.data.external_id) {
       newSubscription.setExternalId(identityModel.data.external_id);
@@ -224,12 +209,6 @@ export default class User {
       );
       await UserDirector.createAndHydrateUser();
     }
-
-    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(
-      (e) => {
-        throw e;
-      },
-    );
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     if (identityModel.data.external_id) {

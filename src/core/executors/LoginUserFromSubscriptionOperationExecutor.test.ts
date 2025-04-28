@@ -134,10 +134,13 @@ describe('LoginUserFromSubscriptionOperationExecutor', () => {
       );
 
       // Should return success with id translations and refresh operation
+      const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2);
+      refreshOp.modelId = result.operations![0].modelId;
+
       expect(result).toEqual({
         result: ExecutionResult.SUCCESS,
         retryAfterSeconds: undefined,
-        operations: [new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2)],
+        operations: [refreshOp],
         idTranslations: {
           [DUMMY_ONESIGNAL_ID]: DUMMY_ONESIGNAL_ID_2,
         },
