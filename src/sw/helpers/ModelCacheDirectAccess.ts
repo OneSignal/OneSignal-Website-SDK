@@ -1,5 +1,5 @@
-import EncodedModel from '../../core/caching/EncodedModel';
-import { ModelName } from '../../core/models/SupportedModels';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { ModelName } from 'src/core/types/models';
 import Database from '../../shared/services/Database';
 
 /**
@@ -11,7 +11,7 @@ export class ModelCacheDirectAccess {
   static async getPushSubscriptionIdByToken(
     token: string,
   ): Promise<string | undefined> {
-    const pushSubscriptions = await Database.getAll<EncodedModel>(
+    const pushSubscriptions = await Database.getAll<SubscriptionModel>(
       ModelName.Subscriptions,
     );
     for (const pushSubscription of pushSubscriptions) {

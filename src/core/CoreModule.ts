@@ -6,15 +6,21 @@ import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecut
 import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
 import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
 import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
+import { IdentityModelStoreListener } from './listeners/IdentityModelStoreListener';
+import { ModelStoreListener } from './listeners/ModelStoreListener';
+import { PropertiesModelStoreListener } from './listeners/PropertiesModelStoreListener';
+import { type SingletonModelStoreListener } from './listeners/SingletonModelStoreListener';
+import { SubscriptionModelStoreListener } from './listeners/SubscriptionModelStoreListener';
 import { OperationModelStore } from './modelRepo/OperationModelStore';
 import { RebuildUserService } from './modelRepo/RebuildUserService';
+import { type Model } from './models/Model';
 import { ConfigModelStore } from './modelStores/ConfigModelStore';
 import { IdentityModelStore } from './modelStores/IdentityModelStore';
 import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { OperationRepo } from './operationRepo/OperationRepo';
-import { IOperationExecutor } from './types/operation';
+import type { IOperationExecutor } from './types/operation';
 
 export default class CoreModule {
   public operationModelStore: OperationModelStore;
@@ -29,6 +35,10 @@ export default class CoreModule {
   private configModelStore: ConfigModelStore;
   private rebuildUserService: RebuildUserService;
   private executors?: IOperationExecutor[];
+  private listeners?: (
+    | SingletonModelStoreListener<Model>
+    | ModelStoreListener<Model>
+  )[];
 
   constructor() {
     this.initPromise = new Promise<void>((resolve) => {
@@ -57,11 +67,31 @@ export default class CoreModule {
           this.operationModelStore,
           this.newRecordsState,
         );
+        this.listeners = this.initializeListeners();
         this.initResolver();
       })
       .catch((e) => {
         Log.error(e);
       });
+  }
+
+  private initializeListeners() {
+    if (!this.operationRepo) return [];
+    return [
+      new IdentityModelStoreListener(
+        this.identityModelStore,
+        this.operationRepo,
+      ),
+      new PropertiesModelStoreListener(
+        this.propertiesModelStore,
+        this.operationRepo,
+      ),
+      new SubscriptionModelStoreListener(
+        this.subscriptionModelStore,
+        this.operationRepo,
+        this.identityModelStore,
+      ),
+    ];
   }
 
   private initializeExecutors() {
