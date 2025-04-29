@@ -7,7 +7,6 @@ import {
 import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { IdentityModel } from '../models/IdentityModel';
-import { RequestMetadata } from '../models/RequestMetadata';
 import {
   ICreateUser,
   ICreateUserIdentity,
@@ -16,6 +15,7 @@ import {
   IUpdateUser,
   IUserIdentity,
   IUserProperties,
+  RequestMetadata,
   UserData,
 } from '../types/api';
 import AliasPair from './AliasPair';

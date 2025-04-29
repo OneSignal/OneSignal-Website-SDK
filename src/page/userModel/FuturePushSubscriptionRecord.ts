@@ -1,5 +1,8 @@
+import {
+  SubscriptionType,
+  SubscriptionTypeValue,
+} from 'src/core/types/subscription';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import { SubscriptionType } from '../../core/models/SubscriptionModels';
 import Environment from '../../shared/helpers/Environment';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
@@ -8,7 +11,7 @@ import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
 import { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
-  readonly type: SubscriptionType;
+  readonly type: SubscriptionTypeValue;
   readonly token?: string; // maps to legacy player.identifier
   readonly enabled?: boolean;
   readonly notificationTypes?: SubscriptionStateKind;
@@ -62,7 +65,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   /**
    * Get the User Model Subscription type based on browser detection.
    */
-  public static getSubscriptionType(): SubscriptionType {
+  public static getSubscriptionType(): SubscriptionTypeValue {
     const browser = OneSignalUtils.redetectBrowserUserAgent();
     if (browser.firefox) {
       return SubscriptionType.FirefoxPush;

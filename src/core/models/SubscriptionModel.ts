@@ -1,5 +1,6 @@
 import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
-import { ISubscription, SubscriptionTypeValue } from '../types/api';
+import { ISubscription } from '../types/api';
+import { SubscriptionTypeValue } from '../types/subscription';
 import { Model } from './Model';
 
 type ISubscriptionModel = Pick<

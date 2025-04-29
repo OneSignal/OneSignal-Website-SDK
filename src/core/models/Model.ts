@@ -68,9 +68,6 @@ export interface ModelChangedArgs<T extends object = object> {
  * String
  * Number
  *
- * When a Model is nested (a property is a Model type or Array of Model types) the child
- * Model is owned and initialized by the parent Model.
- *
  * When a structured schema should be enforced this class should be extended, the base class
  * utilizing Properties with getters/setters that wrap getProperty and setProperty calls
  * to the underlying data.
@@ -102,23 +99,7 @@ export class Model<
   protected data: Map<string, unknown> = new Map();
   private changeNotifier = new EventProducer<IModelChangedHandler>();
 
-  /**
-   *
-   * @param _parentModel The optional parent model. When specified this model is a child model, any changes
-   * to this model will *also* be propagated up to it's parent for notification. When
-   * this is specified, must also specify _parentProperty
-   * @param _parentProperty The optional parent model property that references this model. When this is
-   * specified, must also specify _parentModel
-   */
-  constructor(
-    private _parentModel: Model<BaseModel> | null = null,
-    private readonly _parentProperty: string | null = null,
-  ) {
-    if ((_parentModel == null) !== (_parentProperty == null)) {
-      throw new Error(
-        'Parent model and parent property must both be set or both be null.',
-      );
-    }
+  constructor() {
     this.modelId = Math.random().toString(36).substring(2);
   }
 
@@ -144,13 +125,7 @@ export class Model<
     const newData = new Map<string, unknown>();
 
     model.data.forEach((value: unknown, key: string) => {
-      if (value instanceof Model) {
-        const childModel = value as Model<BaseModel>;
-        childModel['_parentModel'] = this;
-        newData.set(key, childModel);
-      } else {
-        newData.set(key, value);
-      }
+      newData.set(key, value);
     });
 
     if (id !== null) {
@@ -214,18 +189,6 @@ export class Model<
       newValue,
     };
     this.changeNotifier.fire((handler) => handler.onChanged(changeArgs, tag));
-
-    // if there is a parent model, propagate the change up to the parent for it's own processing.
-    if (this._parentModel !== null) {
-      const parentPath = `${this._parentProperty}.${path}`;
-      this._parentModel.notifyChanged(
-        parentPath,
-        property,
-        tag,
-        oldValue,
-        newValue,
-      );
-    }
   }
 
   /**

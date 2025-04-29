@@ -1,6 +1,4 @@
 import { NotificationPermission } from 'src/shared/models/NotificationPermission';
-import OperationCache from '../../../src/core/caching/OperationCache';
-import { ModelName } from '../../../src/core/models/SupportedModels';
 import { RecursivePartial } from '../../../src/shared/context/Utils';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 import {
@@ -42,24 +40,23 @@ export class TestEnvironment {
     mockUserAgent(config);
     // reset db & localStorage
     resetDatabase();
-    OperationCache.flushOperations();
 
     const oneSignal = await initOSGlobals(config);
 
     if (config.useMockIdentityModel) {
-      const identityModel = getDummyIdentityOSModel();
+      const dummyIdentityModel = getDummyIdentityOSModel();
       // set on the model instance
-      identityModel.setOneSignalId(DUMMY_ONESIGNAL_ID);
+      dummyIdentityModel.onesignalId = DUMMY_ONESIGNAL_ID;
       // set on the model data
-      identityModel.set('onesignal_id', DUMMY_ONESIGNAL_ID);
-      OneSignal.coreDirector.add(ModelName.Identity, identityModel, false);
+      dummyIdentityModel.setProperty('onesignal_id', DUMMY_ONESIGNAL_ID);
+
+      const model = OneSignal.coreDirector.getIdentityModel();
+      model.initializeFromModel(null, dummyIdentityModel);
     }
 
     if (config.useMockPushSubscriptionModel) {
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
+      OneSignal.coreDirector.addSubscriptionModel(
         getDummyPushSubscriptionOSModel(),
-        false,
       );
       vi.spyOn(MainHelper, 'getCurrentPushToken').mockResolvedValue(
         DUMMY_PUSH_TOKEN,

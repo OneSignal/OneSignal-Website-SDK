@@ -6,7 +6,6 @@ import {
 } from 'src/core/types/operation';
 import Log from 'src/shared/libraries/Log';
 import { delay } from 'src/shared/utils/utils';
-import { v4 as uuid } from 'uuid';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
@@ -77,7 +76,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public enqueue(operation: Operation): void {
     Log.debug(`OperationRepo.enqueue(operation: ${operation})`);
 
-    operation.id = uuid();
     this.internalEnqueue(
       new OperationQueueItem(operation, this.enqueueIntoBucket),
       true,
@@ -90,11 +88,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     index?: number,
   ): void {
     const hasExisting = this.queue.some(
-      (item) => item.operation.id === queueItem.operation.id,
+      (item) => item.operation.modelId === queueItem.operation.modelId,
     );
     if (hasExisting) {
       Log.debug(
-        `OperationRepo: internalEnqueue - operation.id: ${queueItem.operation.id} already exists in the queue.`,
+        `OperationRepo: internalEnqueue - operation.modelId: ${queueItem.operation.modelId} already exists in the queue.`,
       );
       return;
     }
@@ -164,19 +162,23 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       switch (response.result) {
         case ExecutionResult.SUCCESS:
           // Remove operations from store
-          ops.forEach((op) => this.operationModelStore.remove(op.operation.id));
+          ops.forEach((op) =>
+            this.operationModelStore.remove(op.operation.modelId),
+          );
           break;
 
         case ExecutionResult.FAIL_UNAUTHORIZED:
         case ExecutionResult.FAIL_NORETRY:
         case ExecutionResult.FAIL_CONFLICT:
           Log.error(`Operation execution failed without retry: ${operations}`);
-          ops.forEach((op) => this.operationModelStore.remove(op.operation.id));
+          ops.forEach((op) =>
+            this.operationModelStore.remove(op.operation.modelId),
+          );
           break;
 
         case ExecutionResult.SUCCESS_STARTING_ONLY:
           // Remove starting operation and re-add others to the queue
-          this.operationModelStore.remove(startingOp.operation.id);
+          this.operationModelStore.remove(startingOp.operation.modelId);
 
           ops
             .filter((op) => op !== startingOp)
@@ -208,10 +210,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       // Handle additional operations from the response
       if (response.operations) {
         for (const op of response.operations.toReversed()) {
-          op.id = uuid();
           const queueItem = new OperationQueueItem(op, 0);
           this.queue.unshift(queueItem);
-          this.operationModelStore.add(0, queueItem.operation);
+          this.operationModelStore.addAt(0, queueItem.operation);
         }
       }
 
@@ -227,7 +228,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       Log.error(`Error attempting to execute operation: ${ops}`, e);
 
       // On failure remove operations from store
-      ops.forEach((op) => this.operationModelStore.remove(op.operation.id));
+      ops.forEach((op) =>
+        this.operationModelStore.remove(op.operation.modelId),
+      );
     }
   }
 
