@@ -1,6 +1,8 @@
-import { SubscriptionStateKind } from 'src/shared/models/SubscriptionStateKind';
 import { ISubscription } from '../types/api';
-import { SubscriptionTypeValue } from '../types/subscription';
+import {
+  NotificationTypeValue,
+  SubscriptionTypeValue,
+} from '../types/subscription';
 import { Model } from './Model';
 
 type ISubscriptionModel = Pick<
@@ -13,6 +15,8 @@ type ISubscriptionModel = Pick<
   | 'type'
   | 'notification_types'
   | 'enabled'
+  | 'web_auth'
+  | 'web_p256'
 >;
 
 // Implements logic similar to Android SDK's SubscriptionModel
@@ -51,10 +55,10 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
   }
 
   // Android SDK refers to this as status
-  get notification_types(): SubscriptionStateKind | undefined {
+  get notification_types(): NotificationTypeValue | undefined {
     return this.getProperty('notification_types');
   }
-  set notification_types(value: SubscriptionStateKind | undefined) {
+  set notification_types(value: NotificationTypeValue | undefined) {
     this.setProperty('notification_types', value);
   }
 
@@ -77,5 +81,19 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
   }
   set device_os(value: string | number | undefined) {
     this.setProperty('device_os', value);
+  }
+
+  get web_auth(): string | undefined {
+    return this.getProperty('web_auth');
+  }
+  set web_auth(value: string | undefined) {
+    this.setProperty('web_auth', value);
+  }
+
+  get web_p256(): string | undefined {
+    return this.getProperty('web_p256');
+  }
+  set web_p256(value: string | undefined) {
+    this.setProperty('web_p256', value);
   }
 }

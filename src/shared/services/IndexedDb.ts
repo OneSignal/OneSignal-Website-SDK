@@ -1,9 +1,15 @@
-import { LegacyModelName, ModelName } from '../../core/models/SupportedModels';
+import { ModelName } from 'src/core/types/models';
 import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 
 const DATABASE_VERSION = 6;
+
+export const LegacyModelName = {
+  PushSubscriptions: 'pushSubscriptions',
+  EmailSubscriptions: 'emailSubscriptions',
+  SmsSubscriptions: 'smsSubscriptions',
+} as const;
 
 export default class IndexedDb {
   public emitter: Emitter;

@@ -1,22 +1,6 @@
 import OneSignal from '../../../src/onesignal/OneSignal';
-import { OneSignalWithIndex } from './OneSignalWithIndex';
-import { IdentityExecutor } from '../../../src/core/executors/IdentityExecutor';
-import { PropertiesExecutor } from '../../../src/core/executors/PropertiesExecutor';
-import { SubscriptionExecutor } from '../../../src/core/executors/SubscriptionExecutor';
 import { matchApiToSpec } from '../../support/helpers/api';
-
-vi.spyOn(
-  PropertiesExecutor.prototype,
-  'getOperationsFromCache',
-).mockResolvedValue([]);
-vi.spyOn(
-  IdentityExecutor.prototype,
-  'getOperationsFromCache',
-).mockResolvedValue([]);
-vi.spyOn(
-  SubscriptionExecutor.prototype,
-  'getOperationsFromCache',
-).mockResolvedValue([]);
+import { OneSignalWithIndex } from './OneSignalWithIndex';
 
 describe('API matches spec file', () => {
   let OneSignalWithIndex: OneSignalWithIndex;

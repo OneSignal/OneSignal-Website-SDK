@@ -33,7 +33,7 @@ export class IdentityModel extends Model<IIdentityModel> {
     return this.getProperty(IdentityConstants.EXTERNAL_ID);
   }
 
-  set externalId(value: string) {
+  set externalId(value: string | undefined) {
     this.setProperty(IdentityConstants.EXTERNAL_ID, value);
   }
 }

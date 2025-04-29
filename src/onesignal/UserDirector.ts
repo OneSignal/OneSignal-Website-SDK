@@ -83,7 +83,7 @@ export default class UserDirector {
         await OneSignal.coreDirector.getPushSubscriptionModel();
 
       let subscriptionId;
-      if (isCompleteSubscriptionObject(pushSubscription?.toJSON())) {
+      if (isCompleteSubscriptionObject(pushSubscription)) {
         subscriptionId = pushSubscription?.id;
       }
 

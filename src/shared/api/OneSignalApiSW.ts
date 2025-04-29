@@ -1,4 +1,5 @@
 import { IUpdateUser } from 'src/core/types/api';
+import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
 import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
@@ -8,7 +9,6 @@ import Log from '../libraries/Log';
 import { ServerAppConfig } from '../models/AppConfig';
 import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
 import { OutcomeAttribution, OutcomeAttributionType } from '../models/Outcomes';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { OneSignalApiBase } from './OneSignalApiBase';
 import OneSignalApiShared from './OneSignalApiShared';
 
@@ -39,7 +39,7 @@ export class OneSignalApiSW {
       app_id: appId,
       device_type: deviceType,
       identifier: identifier,
-      notification_types: SubscriptionStateKind.TemporaryWebRecord,
+      notification_types: NotificationType.TemporaryWebRecord,
     })
       .then((response) => {
         if (response?.result?.id) {

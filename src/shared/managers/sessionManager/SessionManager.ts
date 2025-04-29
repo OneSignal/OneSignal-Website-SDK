@@ -1,4 +1,5 @@
 import { IUpdateUser } from 'src/core/types/api';
+import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../../core/requestService/AliasPair';
 import { RequestService } from '../../../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
@@ -14,7 +15,6 @@ import {
   SessionOrigin,
   UpsertOrDeactivateSessionPayload,
 } from '../../models/Session';
-import { SubscriptionStateKind } from '../../models/SubscriptionStateKind';
 import { OneSignalUtils } from '../../utils/OneSignalUtils';
 import { ISessionManager } from './types';
 
@@ -367,8 +367,7 @@ export class SessionManager implements ISessionManager {
     const pushSubscription =
       await OneSignal.coreDirector.getPushSubscriptionModel();
     if (
-      pushSubscription?.notification_types !==
-        SubscriptionStateKind.Subscribed &&
+      pushSubscription?.notification_types !== NotificationType.Subscribed &&
       OneSignal.config?.enableOnSession !== true
     ) {
       return;

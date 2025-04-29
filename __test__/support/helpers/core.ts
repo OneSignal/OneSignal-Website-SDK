@@ -1,9 +1,9 @@
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { SubscriptionType } from 'src/core/types/subscription';
 import CoreModule from '../../../src/core/CoreModule';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
-import { SubscriptionType } from '../../../src/core/models/SubscriptionModels';
 import {
   DUMMY_MODEL_ID,
   DUMMY_PUSH_TOKEN,

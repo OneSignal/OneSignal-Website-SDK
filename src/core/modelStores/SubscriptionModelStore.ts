@@ -1,10 +1,10 @@
+import { SimpleModelStore } from 'src/core/modelStores/SimpleModelStore';
 import {
   ModelChangeTags,
   ModelChangeTagValue,
   ModelName,
 } from 'src/core/types/models';
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
-import { SimpleModelStore } from 'src/shared/models/SimpleModelStore';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 
 // Implements logic similar to Android SDK's SubscriptionModelStore

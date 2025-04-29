@@ -1,5 +1,5 @@
-import { SimpleModelStore } from 'src/shared/models/SimpleModelStore';
-import { SingletonModelStore } from 'src/shared/models/SingletonModelStore';
+import { SimpleModelStore } from 'src/core/modelStores/SimpleModelStore';
+import { SingletonModelStore } from 'src/core/modelStores/SingletonModelStore';
 import { PropertiesModel } from '../models/PropertiesModel';
 import { ModelName } from '../types/models';
 

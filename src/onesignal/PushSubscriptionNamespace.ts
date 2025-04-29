@@ -1,5 +1,3 @@
-import { OSModel } from '../core/modelRepo/OSModel';
-import { SupportedSubscription } from '../core/models/SubscriptionModels';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import SubscriptionChangeEvent from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
@@ -46,9 +44,10 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
     OneSignal.coreDirector
       .getPushSubscriptionModel()
-      .then((pushModel: OSModel<SupportedSubscription> | undefined) => {
-        if (pushModel && isCompleteSubscriptionObject(pushModel.data)) {
-          this._id = pushModel.data.id;
+      .then((pushModel) => {
+        if (isCompleteSubscriptionObject(pushModel)) {
+          pushModel;
+          this._id = pushModel.id;
         }
       })
       .catch((e) => {

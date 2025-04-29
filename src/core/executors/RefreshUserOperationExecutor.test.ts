@@ -20,14 +20,10 @@ import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
-import {
-  ISubscription,
-  NotificationType,
-  SubscriptionType,
-  UserData,
-} from '../types/api';
+import { ISubscription, UserData } from '../types/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
+import { NotificationType, SubscriptionType } from '../types/subscription';
 import { RefreshUserOperationExecutor } from './RefreshUserOperationExecutor';
 
 let identityModelStore: IdentityModelStore;
