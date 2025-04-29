@@ -4,6 +4,7 @@ import {
   IModelStoreChangeHandler,
   ISingletonModelStore,
   ISingletonModelStoreChangeHandler,
+  type ModelChangeTagValue,
 } from 'src/core/types/models';
 import { EventProducer } from '../../shared/helpers/EventProducer';
 
@@ -34,7 +35,7 @@ export class SingletonModelStore<TModel extends Model>
     return createdModel;
   }
 
-  replace(model: TModel, tag: string): void {
+  replace(model: TModel, tag: ModelChangeTagValue): void {
     const existingModel = this.model;
     existingModel.initializeFromModel(existingModel.modelId, model);
     this.store.persist();
@@ -57,13 +58,13 @@ export class SingletonModelStore<TModel extends Model>
 
   /**
    * @param {TModel} model
-   * @param {string} tag
+   * @param {ModelChangeTagValue)} tag
    */
   onModelAdded(): void {
     // No-op: singleton is transparently added
   }
 
-  onModelUpdated(args: ModelChangedArgs, tag: string): void {
+  onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): void {
     this.changeSubscription.fire((handler) =>
       handler.onModelUpdated(args, tag),
     );
@@ -71,7 +72,7 @@ export class SingletonModelStore<TModel extends Model>
 
   /**
    * @param {TModel} model
-   * @param {string} tag
+   * @param {ModelChangeTagValue} tag
    */
   onModelRemoved(): void {
     // No-op: singleton is never removed

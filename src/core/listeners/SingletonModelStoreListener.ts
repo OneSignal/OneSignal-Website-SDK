@@ -24,14 +24,7 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
   constructor(store: ISingletonModelStore<TModel>, opRepo: IOperationRepo) {
     this.store = store;
     this.opRepo = opRepo;
-  }
-
-  bootstrap(): void {
     this.store.subscribe(this);
-  }
-
-  close(): void {
-    this.store.unsubscribe(this);
   }
 
   onModelReplaced(model: TModel, tag: string): void {

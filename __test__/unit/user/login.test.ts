@@ -65,7 +65,7 @@ describe('Login tests', () => {
   test('Login twice with different user -> logs in to second user', async () => {
     await TestEnvironment.initialize({ useMockIdentityModel: true });
     setupLoginStubs();
-
+    nock({});
     const identifyOrUpsertUserSpy = stub(LoginManager, 'identifyOrUpsertUser');
 
     await LoginManager.login(DUMMY_EXTERNAL_ID);
@@ -186,6 +186,7 @@ describe('Login tests', () => {
       useMockIdentityModel: true,
       useMockPushSubscriptionModel: true,
     });
+    nock({});
 
     stub(
       LoginManager,
@@ -210,7 +211,7 @@ describe('Login tests', () => {
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
     });
-
+    nock({});
     stub(
       LoginManager,
       'identifyOrUpsertUser',

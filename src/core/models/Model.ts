@@ -140,7 +140,7 @@ export class Model<
     name: string & K,
     value: T[K] | undefined,
     tag: string = ModelChangeTags.NORMAL,
-    forceChange = false,
+    forceChange = true,
   ): void {
     const oldValue = this.data.get(name);
 
