@@ -14,9 +14,7 @@ export class TrackSessionEndOperation extends Operation<TrackEndOp> {
   constructor(appId: string, onesignalId: string, sessionTime: number);
   constructor(appId?: string, onesignalId?: string, sessionTime?: number) {
     super(OPERATION_NAME.TRACK_SESSION_END, appId, onesignalId);
-    if (sessionTime) {
-      this.sessionTime = sessionTime;
-    }
+    if (sessionTime) this.sessionTime = sessionTime;
   }
 
   /**

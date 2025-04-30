@@ -1,6 +1,6 @@
 import { APP_ID } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { mockServerConfig } from '__test__/support/helpers/configHelper';
+import { mockServerConfig } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Log from 'src/shared/libraries/Log';

@@ -18,9 +18,7 @@ export abstract class BaseTagOperation<
     key?: string,
   ) {
     super(operationName, appId, onesignalId);
-    if (key) {
-      this.key = key;
-    }
+    if (key) this.key = key;
   }
 
   /**

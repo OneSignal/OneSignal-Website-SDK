@@ -23,10 +23,8 @@ export abstract class Operation<
   constructor(name: string, appId?: string, onesignalId?: string) {
     super();
     this.name = name;
-    if (appId && onesignalId) {
-      this.appId = appId;
-      this.onesignalId = onesignalId;
-    }
+    if (appId) this.appId = appId;
+    if (onesignalId) this.onesignalId = onesignalId;
   }
 
   get name(): string {
