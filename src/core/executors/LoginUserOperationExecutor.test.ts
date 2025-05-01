@@ -12,6 +12,10 @@ import {
   BuildUserService,
   SomeOperation,
 } from '__test__/support/helpers/executors';
+import {
+  setAddAliasError,
+  setAddAliasResponse,
+} from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
@@ -185,6 +189,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // should have a refresh user operation
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2);
+      // @ts-expect-error - for testing purposes
       refreshOp.modelId = res.operations![0].modelId;
       expect(res).toEqual({
         result: ExecutionResult.SUCCESS,
@@ -234,38 +239,6 @@ describe('LoginUserOperationExecutor', () => {
   });
 
   describe('login user', () => {
-    const setAddAlias = (onesignalId: string) => {
-      server.use(
-        http.patch(
-          `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/identity`,
-          () =>
-            HttpResponse.json({
-              identity: {
-                onesignal_id: onesignalId,
-              },
-            }),
-        ),
-      );
-    };
-
-    const setAddAliasError = (status: number, retryAfter?: number) => {
-      server.use(
-        http.patch(
-          `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${DUMMY_ONESIGNAL_ID}/identity`,
-          () =>
-            HttpResponse.json(
-              {},
-              {
-                status,
-                headers: retryAfter
-                  ? { 'Retry-After': retryAfter?.toString() }
-                  : undefined,
-              },
-            ),
-        ),
-      );
-    };
-
     test('can add/set alias when logging in a user with existing onesignal id', async () => {
       identityModelStore.model.setProperty(
         IdentityConstants.ONESIGNAL_ID,
@@ -280,7 +253,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // different id for testing id translations
       loginOp.setProperty('existingOnesignalId', DUMMY_ONESIGNAL_ID_2);
-      setAddAlias(DUMMY_ONESIGNAL_ID_2);
+      setAddAliasResponse({ onesignalId: DUMMY_ONESIGNAL_ID_2 });
 
       const ops = [loginOp];
       const res = await executor.execute(ops);
@@ -309,7 +282,7 @@ describe('LoginUserOperationExecutor', () => {
       loginOp.setProperty('existingOnesignalId', DUMMY_ONESIGNAL_ID);
 
       // Conflict error - should create user
-      setAddAliasError(409);
+      setAddAliasError({ status: 409 });
       setCreateUser('123');
 
       const res = await executor.execute([loginOp]);
@@ -321,7 +294,7 @@ describe('LoginUserOperationExecutor', () => {
       });
 
       // Fail no retry - should create user
-      setAddAliasError(400);
+      setAddAliasError({ status: 400 });
       setCreateUser('456');
 
       const res2 = await executor.execute([loginOp]);
@@ -333,7 +306,7 @@ describe('LoginUserOperationExecutor', () => {
       });
 
       // Some other error
-      setAddAliasError(401);
+      setAddAliasError({ status: 401 });
 
       const res3 = await executor.execute([loginOp]);
       expect(res3).toMatchObject({

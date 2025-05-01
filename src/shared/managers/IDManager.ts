@@ -21,7 +21,7 @@ export const IDManager = {
    * @param id - The ID to test.
    * @returns True if the ID was created via createLocalId.
    */
-  isLocalId(id: string): boolean {
-    return id.startsWith(this.LOCAL_PREFIX);
+  isLocalId(id: string | undefined): boolean {
+    return id?.startsWith(this.LOCAL_PREFIX) ?? false;
   },
 };

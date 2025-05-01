@@ -7,10 +7,7 @@ import {
   ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../constants';
-import {
-  getDummyIdentityOSModel,
-  getDummyPushSubscriptionOSModel,
-} from '../helpers/core';
+import { getDummyPushSubscriptionOSModel } from '../helpers/core';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import {
   initOSGlobals,
@@ -44,14 +41,8 @@ export class TestEnvironment {
     const oneSignal = await initOSGlobals(config);
 
     if (config.useMockIdentityModel) {
-      const dummyIdentityModel = getDummyIdentityOSModel();
-      // set on the model instance
-      dummyIdentityModel.onesignalId = DUMMY_ONESIGNAL_ID;
-      // set on the model data
-      dummyIdentityModel.setProperty('onesignal_id', DUMMY_ONESIGNAL_ID);
-
       const model = OneSignal.coreDirector.getIdentityModel();
-      model.initializeFromModel(null, dummyIdentityModel);
+      model.onesignalId = DUMMY_ONESIGNAL_ID;
     }
 
     if (config.useMockPushSubscriptionModel) {

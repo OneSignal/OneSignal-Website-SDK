@@ -107,7 +107,6 @@ export class OneSignalApiBase {
       const { status, headers } = response;
       const json = await response.json();
       const retryAfter = headers?.get('Retry-After');
-
       return {
         ok: response.ok,
         result: json,

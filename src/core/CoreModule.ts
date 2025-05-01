@@ -68,6 +68,7 @@ export default class CoreModule {
           this.newRecordsState,
         );
         this.listeners = this.initializeListeners();
+        this.operationRepo.start();
         this.initResolver();
       })
       .catch((e) => {

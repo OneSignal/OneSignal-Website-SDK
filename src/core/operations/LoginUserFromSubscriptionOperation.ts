@@ -16,9 +16,7 @@ export class LoginUserFromSubscriptionOperation extends Operation<LoginUserOpera
   constructor(appId: string, onesignalId: string, subscriptionId: string);
   constructor(appId?: string, onesignalId?: string, subscriptionId?: string) {
     super(OPERATION_NAME.LOGIN_USER_FROM_SUBSCRIPTION_USER, appId, onesignalId);
-    if (subscriptionId) {
-      this.subscriptionId = subscriptionId;
-    }
+    if (subscriptionId) this.subscriptionId = subscriptionId;
   }
 
   get subscriptionId(): string {
