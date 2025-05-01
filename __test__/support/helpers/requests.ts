@@ -89,7 +89,7 @@ export const setAddAliasError = ({
   status,
   retryAfter,
 }: {
-  onesignalId: string;
+  onesignalId?: string;
   status: number;
   retryAfter?: number;
 }) =>
@@ -116,7 +116,7 @@ export const setDeleteAliasError = ({
   status,
   retryAfter,
 }: {
-  onesignalId: string;
+  onesignalId?: string;
   status: number;
   retryAfter?: number;
 }) =>
