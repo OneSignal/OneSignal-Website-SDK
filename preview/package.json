@@ -16,7 +16,7 @@
     "express-rate-limit": "^7.1.2",
     "fs": "0.0.1-security",
     "https": "^1.0.0",
-    "nodemon": "^1.19.3",
+    "nodemon": "^3.1.10",
     "sanitize-filename": "^1.6.3"
   },
   "devDependencies": {
