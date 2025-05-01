@@ -198,7 +198,10 @@ export abstract class ModelStore<TModel extends Model>
     if (!this.modelName || !this.hasLoadedFromCache) return;
 
     for (const model of this.models) {
-      await Database.put(this.modelName, model.toJSON());
+      await Database.put(this.modelName, {
+        modelId: model.modelId,
+        ...model.toJSON(),
+      });
     }
   }
 

@@ -12,15 +12,12 @@ export default class UserDirector {
     logMethodCall('initializeUser', { isTemporary });
 
     const existingIdentity = OneSignal.coreDirector.getIdentityModel();
-    const existingProperties = OneSignal.coreDirector.getPropertiesModel();
-    const existingUser = !!existingIdentity && !!existingProperties;
-
-    if (existingUser) {
+    if (existingIdentity.onesignalId) {
       Log.debug('User already exists, skipping initialization.');
       return;
     }
 
-    UserDirector.createUserPropertiesModel();
+    UserDirector.updateUserPropertiesModel();
     await UserDirector.createAnonymousUser(isTemporary);
   }
 
@@ -56,16 +53,11 @@ export default class UserDirector {
     }
   }
 
-  static createUserPropertiesModel() {
-    const properties = {
-      language: Environment.getLanguage(),
-      timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    };
-
+  static updateUserPropertiesModel() {
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-    propertiesModel.mergeData(properties);
-
-    return propertiesModel;
+    propertiesModel.language = Environment.getLanguage();
+    propertiesModel.timezone_id =
+      Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
 
   static async createUserOnServer(): Promise<UserData | void> {
@@ -100,7 +92,7 @@ export default class UserDirector {
         const onesignalId = userData.identity?.onesignal_id;
 
         if (onesignalId) {
-          OneSignal.coreDirector.getNewRecordsState()?.add(onesignalId);
+          OneSignal.coreDirector.getNewRecordsState().add(onesignalId);
         }
 
         const payloadSubcriptionToken = userData.subscriptions?.[0]?.token;
