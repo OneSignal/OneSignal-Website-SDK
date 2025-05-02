@@ -1,7 +1,5 @@
-import { ICreateUser, IUserIdentity, UserData } from 'src/core/types/api';
-import { RequestService } from '../core/requestService/RequestService';
-import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
-import Environment from '../shared/helpers/Environment';
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { ICreateUser } from 'src/core/types/api';
 import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
 import { logMethodCall } from '../shared/utils/utils';
@@ -11,14 +9,32 @@ export default class UserDirector {
   static async initializeUser(isTemporary?: boolean): Promise<void> {
     logMethodCall('initializeUser', { isTemporary });
 
-    const existingIdentity = OneSignal.coreDirector.getIdentityModel();
-    if (existingIdentity.onesignalId) {
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    if (identityModel.onesignalId) {
       Log.debug('User already exists, skipping initialization.');
       return;
     }
 
-    UserDirector.updateUserPropertiesModel();
-    await UserDirector.createAnonymousUser(isTemporary);
+    UserDirector.createUserOnServer();
+  }
+
+  static async createUserOnServer(): Promise<void> {
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+
+    const appId = await MainHelper.getAppId();
+    const user = User.createOrGetInstance();
+    user.isCreatingUser = true;
+    OneSignal.coreDirector.operationRepo?.enqueue(
+      new LoginUserOperation(
+        appId,
+        identityModel.onesignalId,
+        identityModel.externalId,
+      ),
+    );
+  }
+
+  static createAndHydrateUser(): void {
+    UserDirector.createUserOnServer();
   }
 
   static resetUserMetaProperties() {
@@ -27,112 +43,18 @@ export default class UserDirector {
     user.isCreatingUser = false;
   }
 
-  static async createAnonymousUser(isTemporary?: boolean): Promise<void> {
-    let identity: IUserIdentity | Record<string, never>;
-
-    if (isTemporary) {
-      identity = {};
-    } else {
-      const userData = await UserDirector.createUserOnServer();
-
-      if (userData) {
-        identity = userData.identity;
-        OneSignal.coreDirector.hydrateUser(userData);
-      } else {
-        return;
-      }
-    }
-
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    identityModel.mergeData(identity);
-
-    const user = User.createOrGetInstance();
-    if (identity.onesignalId) {
-      user.hasOneSignalId = true;
-      user.onesignalId = identity.onesignalId;
-    }
-  }
-
-  static updateUserPropertiesModel() {
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-    propertiesModel.language = Environment.getLanguage();
-    propertiesModel.timezone_id =
-      Intl.DateTimeFormat().resolvedOptions().timeZone;
-  }
-
-  static async createUserOnServer(): Promise<UserData | void> {
-    const user = User.createOrGetInstance();
-
-    if (user.isCreatingUser) {
-      return;
-    }
-
-    user.isCreatingUser = true;
-
-    try {
-      const appId = await MainHelper.getAppId();
-      const pushSubscription =
-        await OneSignal.coreDirector.getPushSubscriptionModel();
-
-      let subscriptionId;
-      if (isCompleteSubscriptionObject(pushSubscription)) {
-        subscriptionId = pushSubscription?.id;
-      }
-
-      const userData = await UserDirector.getAllUserData();
-      const response = await RequestService.createUser(
-        { appId, subscriptionId },
-        userData,
-      );
-      user.isCreatingUser = false;
-      const status = response.status;
-      const result = response.result as UserData;
-
-      if (status >= 200 && status < 300) {
-        const onesignalId = userData.identity?.onesignal_id;
-
-        if (onesignalId) {
-          OneSignal.coreDirector.getNewRecordsState().add(onesignalId);
-        }
-
-        const payloadSubcriptionToken = userData.subscriptions?.[0]?.token;
-        const resultSubscription = result.subscriptions?.find(
-          (sub) => sub.token === payloadSubcriptionToken,
-        );
-
-        if (resultSubscription) {
-          if (isCompleteSubscriptionObject(resultSubscription)) {
-            OneSignal.coreDirector
-              .getNewRecordsState()
-              .add(resultSubscription.id);
-          }
-        }
-      }
-      return result;
-    } catch (e) {
-      Log.error(e);
-    }
-  }
-
-  static async createAndHydrateUser(): Promise<void> {
-    const userData = await UserDirector.createUserOnServer();
-    if (userData) {
-      OneSignal.coreDirector.hydrateUser(userData);
-    }
-  }
-
   static async getAllUserData(): Promise<ICreateUser> {
     logMethodCall('LoginManager.getAllUserData');
 
-    const identity = OneSignal.coreDirector.getIdentityModel();
-    const properties = OneSignal.coreDirector.getPropertiesModel();
-    const subscriptions =
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const subscriptionModels =
       await OneSignal.coreDirector.getAllSubscriptionsModels();
 
     const userData: ICreateUser = {
-      identity: identity.toJSON(),
-      properties: properties.toJSON(),
-      subscriptions: subscriptions?.map((subscription) =>
+      identity: identityModel.toJSON(),
+      properties: propertiesModel.toJSON(),
+      subscriptions: subscriptionModels?.map((subscription) =>
         subscription.toJSON(),
       ),
     };

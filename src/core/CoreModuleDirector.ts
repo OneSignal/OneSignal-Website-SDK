@@ -12,6 +12,7 @@ import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';
 import { SubscriptionModel } from './models/SubscriptionModel';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
+import { type OperationRepo } from './operationRepo/OperationRepo';
 import { ISubscription, UserData } from './types/api';
 import {
   SubscriptionChannel,
@@ -23,6 +24,10 @@ import {
 
 export class CoreModuleDirector {
   constructor(private core: CoreModule) {}
+
+  get operationRepo(): OperationRepo | undefined {
+    return this.core.operationRepo;
+  }
 
   public generatePushSubscriptionModel(
     rawPushSubscription: RawPushSubscription,

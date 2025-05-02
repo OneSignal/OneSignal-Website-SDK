@@ -1,5 +1,6 @@
 import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
+import User from 'src/onesignal/User';
 import Environment from 'src/shared/helpers/Environment';
 import {
   getResponseStatusType,
@@ -176,6 +177,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       const backendOneSignalId = response.result.identity.onesignal_id;
       const opOneSignalId = createUserOperation.onesignalId;
 
+      const user = User.createOrGetInstance();
+      user.isCreatingUser = false;
+      user.hasOneSignalId = true;
+
       const idTranslations: Record<string, string> = {
         [createUserOperation.onesignalId]: backendOneSignalId,
       };
@@ -208,7 +213,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         }
 
         const model = this._subscriptionsModelStore.get(localId);
-        model?.setProperty('modelId', backendSub.id, ModelChangeTags.HYDRATE);
+        model?.setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
       }
 
       const followUp =

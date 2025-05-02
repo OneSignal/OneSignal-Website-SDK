@@ -113,15 +113,6 @@ export default class User {
     const newSubscription = new SubscriptionModel();
     newSubscription.mergeData(subscription);
     OneSignal.coreDirector.addSubscriptionModel(newSubscription);
-
-    if (
-      !(
-        User.singletonInstance?.isCreatingUser ||
-        User.singletonInstance?.hasOneSignalId
-      )
-    ) {
-      await UserDirector.createAndHydrateUser();
-    }
   }
 
   public async addSms(sms: string): Promise<void> {
@@ -140,17 +131,7 @@ export default class User {
 
     const newSubscription = new SubscriptionModel();
     newSubscription.mergeData(subscription);
-
     OneSignal.coreDirector.addSubscriptionModel(newSubscription);
-
-    if (
-      !(
-        User.singletonInstance?.isCreatingUser ||
-        User.singletonInstance?.hasOneSignalId
-      )
-    ) {
-      await UserDirector.createAndHydrateUser();
-    }
   }
 
   public removeEmail(email: string): void {
