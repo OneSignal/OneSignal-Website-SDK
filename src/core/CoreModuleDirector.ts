@@ -8,7 +8,6 @@ import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import Database from '../shared/services/Database';
 import { logMethodCall } from '../shared/utils/utils';
 import CoreModule from './CoreModule';
-import { ConfigModel } from './models/ConfigModel';
 import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';
 import { SubscriptionModel } from './models/SubscriptionModel';
@@ -204,11 +203,6 @@ export class CoreModuleDirector {
       (await this.getPushSubscriptionModelByCurrentToken()) ||
       (await this.getPushSubscriptionModelByLastKnownToken())
     );
-  }
-
-  public getConfigModel(): ConfigModel {
-    logMethodCall('CoreModuleDirector.getConfigModel');
-    return this.core.configModelStore.model;
   }
 
   public getIdentityModel(): IdentityModel {

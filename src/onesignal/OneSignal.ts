@@ -39,7 +39,6 @@ export default class OneSignal {
 
   private static async _initializeCoreModuleAndOSNamespaces() {
     const core = new CoreModule();
-    await core.initPromise;
     OneSignal.coreDirector = new CoreModuleDirector(core);
     const subscription = await Database.getSubscription();
     const permission =

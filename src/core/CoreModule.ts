@@ -11,7 +11,6 @@ import { SubscriptionModelStoreListener } from './listeners/SubscriptionModelSto
 import { OperationModelStore } from './modelRepo/OperationModelStore';
 import { RebuildUserService } from './modelRepo/RebuildUserService';
 import { type Model } from './models/Model';
-import { ConfigModelStore } from './modelStores/ConfigModelStore';
 import { IdentityModelStore } from './modelStores/IdentityModelStore';
 import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
@@ -26,7 +25,6 @@ export default class CoreModule {
   public subscriptionModelStore: SubscriptionModelStore;
   public identityModelStore: IdentityModelStore;
   public propertiesModelStore: PropertiesModelStore;
-  public configModelStore: ConfigModelStore;
 
   private rebuildUserService: RebuildUserService;
   private executors?: IOperationExecutor[];
@@ -41,12 +39,10 @@ export default class CoreModule {
     this.identityModelStore = new IdentityModelStore();
     this.propertiesModelStore = new PropertiesModelStore();
     this.subscriptionModelStore = new SubscriptionModelStore();
-    this.configModelStore = new ConfigModelStore();
     this.rebuildUserService = new RebuildUserService(
       this.identityModelStore,
       this.propertiesModelStore,
       this.subscriptionModelStore,
-      this.configModelStore,
     );
 
     this.executors = this.initializeExecutors();
@@ -89,19 +85,16 @@ export default class CoreModule {
       this.identityModelStore,
       this.propertiesModelStore,
       this.subscriptionModelStore,
-      this.configModelStore,
     );
     const refreshOpExecutor = new RefreshUserOperationExecutor(
       this.identityModelStore,
       this.propertiesModelStore,
       this.subscriptionModelStore,
-      this.configModelStore,
       this.rebuildUserService,
       this.newRecordsState,
     );
     const subscriptionOpExecutor = new SubscriptionOperationExecutor(
       this.subscriptionModelStore,
-      this.configModelStore,
       this.rebuildUserService,
       this.newRecordsState,
     );

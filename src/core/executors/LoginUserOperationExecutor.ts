@@ -7,10 +7,10 @@ import {
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
+import Database from 'src/shared/services/Database';
 import { getTimeZoneId } from 'src/shared/utils/utils';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IPropertiesModelKeys } from '../models/PropertiesModel';
-import { type ConfigModelStore } from '../modelStores/ConfigModelStore';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
@@ -44,7 +44,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     private _identityModelStore: IdentityModelStore,
     private _propertiesModelStore: PropertiesModelStore,
     private _subscriptionsModelStore: SubscriptionModelStore,
-    private _configModelStore: ConfigModelStore,
   ) {}
 
   get operations(): string[] {
@@ -211,10 +210,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         if (!backendSub || !('id' in backendSub)) continue;
         idTranslations[localId] = backendSub.id;
 
-        const pushSubscriptionId =
-          await this._configModelStore.model.pushSubscriptionId;
+        const pushSubscriptionId = await Database.getPushId();
         if (pushSubscriptionId === localId) {
-          this._configModelStore.model.pushSubscriptionId = backendSub.id;
+          await Database.setPushId(backendSub.id);
         }
 
         const model =
@@ -273,6 +271,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         return {
           ...currentSubs,
           [subscriptionId]: {
+            enabled: operation.enabled,
             device_model: operation.device_model,
             device_os: operation.device_os,
             notification_types: operation.notification_types,

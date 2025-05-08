@@ -47,7 +47,6 @@ export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal.initialized = true;
   global.OneSignal.emitter = new Emitter();
   const core = new CoreModule();
-  await core.init();
   global.OneSignal.coreDirector = new CoreModuleDirector(core);
   global.OneSignal.User = new UserNamespace(
     !!config.initUserAndPushSubscription,

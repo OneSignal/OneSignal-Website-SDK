@@ -1,17 +1,22 @@
-import { SimpleModelStore } from 'src/core/modelStores/SimpleModelStore';
 import {
   ModelChangeTags,
   ModelChangeTagValue,
   ModelName,
 } from 'src/core/types/models';
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
+import { ModelStore } from '../modelRepo/ModelStore';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 
 // Implements logic similar to Android SDK's SubscriptionModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModelStore.kt
-export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> {
+export class SubscriptionModelStore extends ModelStore<SubscriptionModel> {
   constructor() {
-    super(() => new SubscriptionModel(), ModelName.Subscriptions);
+    super(ModelName.Subscriptions);
+    this.load();
+  }
+
+  override create(): null {
+    return null;
   }
 
   getBySubscriptionId(subscriptionId: string): SubscriptionModel | undefined {
