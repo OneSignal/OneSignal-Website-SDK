@@ -35,7 +35,7 @@ export class SingletonModelStore<TModel extends Model>
     return createdModel;
   }
 
-  replace(model: TModel, tag: ModelChangeTagValue): void {
+  replace(model: TModel, tag?: ModelChangeTagValue): void {
     const existingModel = this.model;
     existingModel.initializeFromModel(existingModel.modelId, model);
     this.store.persist();

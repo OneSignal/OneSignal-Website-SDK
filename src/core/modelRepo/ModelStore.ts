@@ -83,7 +83,7 @@ export abstract class ModelStore<TModel extends Model>
     return this.models.find((m) => m.modelId === id);
   }
 
-  remove(id: string, tag = ModelChangeTags.NORMAL): void {
+  remove(id: string, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
     const model = this.models.find((m) => m.modelId === id);
     if (!model) return;
     this.removeItem(model, tag);
@@ -96,14 +96,17 @@ export abstract class ModelStore<TModel extends Model>
     );
   }
 
-  replaceAll(newModels: TModel[], tag: ModelChangeTagValue): void {
+  replaceAll(
+    newModels: TModel[],
+    tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
+  ): void {
     this.clear(tag);
     for (const model of newModels) {
       this.add(model, tag);
     }
   }
 
-  clear(tag: string): void {
+  clear(tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
     this.persist();
 
     for (const item of this.models) {

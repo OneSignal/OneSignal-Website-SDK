@@ -108,13 +108,13 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         createOperation.subscriptionId,
       );
       subscriptionModel?.setProperty(
-        'modelId',
+        'id',
         backendSubscriptionId,
         ModelChangeTags.HYDRATE,
       );
 
       if (
-        this._configModelStore.model.pushSubscriptionId ===
+        (await this._configModelStore.model.pushSubscriptionId) ===
         createOperation.subscriptionId
       ) {
         this._configModelStore.model.pushSubscriptionId = backendSubscriptionId;

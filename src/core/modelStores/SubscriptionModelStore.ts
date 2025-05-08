@@ -16,7 +16,7 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
 
   override replaceAll(
     models: SubscriptionModel[],
-    tag: ModelChangeTagValue,
+    tag?: ModelChangeTagValue,
   ): void {
     if (tag !== ModelChangeTags.HYDRATE) {
       return super.replaceAll(models, tag);

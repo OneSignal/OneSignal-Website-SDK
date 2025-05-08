@@ -1,16 +1,20 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import OneSignalError from 'src/shared/errors/OneSignalError';
+import EventHelper from 'src/shared/helpers/EventHelper';
+import Log from 'src/shared/libraries/Log';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
-import OneSignalError from '../shared/errors/OneSignalError';
-import EventHelper from '../shared/helpers/EventHelper';
 import MainHelper from '../shared/helpers/MainHelper';
-import Log from '../shared/libraries/Log';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import Database from '../shared/services/Database';
 import { logMethodCall } from '../shared/utils/utils';
 import CoreModule from './CoreModule';
+import { ConfigModel } from './models/ConfigModel';
 import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';
 import { SubscriptionModel } from './models/SubscriptionModel';
+import { IdentityModelStore } from './modelStores/IdentityModelStore';
+import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
+import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { type OperationRepo } from './operationRepo/OperationRepo';
 import { ISubscription, UserData } from './types/api';
@@ -27,6 +31,18 @@ export class CoreModuleDirector {
 
   get operationRepo(): OperationRepo | undefined {
     return this.core.operationRepo;
+  }
+
+  get identityModelStore(): IdentityModelStore {
+    return this.core.identityModelStore;
+  }
+
+  get propertiesModelStore(): PropertiesModelStore {
+    return this.core.propertiesModelStore;
+  }
+
+  get subscriptionModelStore(): SubscriptionModelStore {
+    return this.core.subscriptionModelStore;
   }
 
   public generatePushSubscriptionModel(
@@ -188,6 +204,11 @@ export class CoreModuleDirector {
       (await this.getPushSubscriptionModelByCurrentToken()) ||
       (await this.getPushSubscriptionModelByLastKnownToken())
     );
+  }
+
+  public getConfigModel(): ConfigModel {
+    logMethodCall('CoreModuleDirector.getConfigModel');
+    return this.core.configModelStore.model;
   }
 
   public getIdentityModel(): IdentityModel {

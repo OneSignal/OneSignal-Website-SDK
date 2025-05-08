@@ -30,9 +30,9 @@ export default class CoreModule {
   public subscriptionModelStore: SubscriptionModelStore;
   public identityModelStore: IdentityModelStore;
   public propertiesModelStore: PropertiesModelStore;
+  public configModelStore: ConfigModelStore;
 
   private initResolver: () => void = () => null;
-  private configModelStore: ConfigModelStore;
   private rebuildUserService: RebuildUserService;
   private executors?: IOperationExecutor[];
   private listeners?: (

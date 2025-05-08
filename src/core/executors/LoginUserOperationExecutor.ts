@@ -208,7 +208,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         if (!backendSub || !('id' in backendSub)) continue;
         idTranslations[localId] = backendSub.id;
 
-        if (this._configModelStore.model.pushSubscriptionId === localId) {
+        const pushSubscriptionId =
+          await this._configModelStore.model.pushSubscriptionId;
+        if (pushSubscriptionId === localId) {
           this._configModelStore.model.pushSubscriptionId = backendSub.id;
         }
 
