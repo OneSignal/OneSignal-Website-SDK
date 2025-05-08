@@ -1,5 +1,7 @@
+import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { ICreateUser } from 'src/core/types/api';
+import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
 import { logMethodCall } from '../shared/utils/utils';
@@ -24,12 +26,25 @@ export default class UserDirector {
     const appId = await MainHelper.getAppId();
     const user = User.createOrGetInstance();
     user.isCreatingUser = true;
+
+    const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
+    if (!pushOp) return;
+    pushOp.id = pushOp.id ?? IDManager.createLocalId();
+    const { id, ...rest } = pushOp.toJSON();
     OneSignal.coreDirector.operationRepo?.enqueue(
       new LoginUserOperation(
         appId,
         identityModel.onesignalId,
         identityModel.externalId,
       ),
+    );
+    OneSignal.coreDirector.operationRepo?.enqueue(
+      new CreateSubscriptionOperation({
+        appId,
+        onesignalId: identityModel.onesignalId,
+        subscriptionId: id,
+        ...rest,
+      }),
     );
   }
 

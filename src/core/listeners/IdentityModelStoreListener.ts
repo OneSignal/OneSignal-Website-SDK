@@ -22,7 +22,6 @@ export class IdentityModelStoreListener extends SingletonModelStoreListener<Iden
 
   async getUpdateOperation(
     model: IdentityModel,
-    _path: string,
     property: string,
     _oldValue: unknown,
     newValue: unknown,

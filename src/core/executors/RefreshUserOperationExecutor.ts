@@ -109,7 +109,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         await this._configModelStore.model.pushSubscriptionId;
       if (pushSubscriptionId) {
         const cachedPushModel =
-          this._subscriptionsModelStore.get(pushSubscriptionId);
+          this._subscriptionsModelStore.getBySubscriptionId(pushSubscriptionId);
         if (cachedPushModel) subscriptionModels.push(cachedPushModel);
       }
 

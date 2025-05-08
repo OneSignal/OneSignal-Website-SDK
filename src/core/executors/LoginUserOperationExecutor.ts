@@ -66,15 +66,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     loginUserOp: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
-    const containsSubOp = operations.some(
-      (op) =>
-        op instanceof CreateSubscriptionOperation ||
-        op instanceof TransferSubscriptionOperation,
-    );
-
-    if (!containsSubOp && !loginUserOp.externalId)
-      return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
-
+    console.warn('loginUserOp', loginUserOp);
     if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId)
       return this.createUser(loginUserOp, operations);
 
@@ -136,6 +128,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     createUserOperation: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
+    console.warn('operations', operations);
     const identity: ICreateUserIdentity = {};
     let subscriptions: SubscriptionMap = {};
     const properties: IUserProperties = {
@@ -214,7 +207,8 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           this._configModelStore.model.pushSubscriptionId = backendSub.id;
         }
 
-        const model = this._subscriptionsModelStore.get(localId);
+        const model =
+          this._subscriptionsModelStore.getBySubscriptionId(localId);
         model?.setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
       }
 
@@ -269,10 +263,14 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         return {
           ...currentSubs,
           [subscriptionId]: {
-            enabled: operation.enabled,
+            device_model: operation.device_model,
+            device_os: operation.device_os,
             notification_types: operation.notification_types,
+            sdk: operation.sdk,
             token: operation.token,
             type: operation.type,
+            web_auth: operation.web_auth,
+            web_p256: operation.web_p256,
           },
         };
       }

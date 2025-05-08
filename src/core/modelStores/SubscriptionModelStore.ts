@@ -14,6 +14,10 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     super(() => new SubscriptionModel(), ModelName.Subscriptions);
   }
 
+  getBySubscriptionId(subscriptionId: string): SubscriptionModel | undefined {
+    return super.list().find((m) => m.id === subscriptionId);
+  }
+
   override replaceAll(
     models: SubscriptionModel[],
     tag?: ModelChangeTagValue,
