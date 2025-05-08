@@ -32,14 +32,14 @@ export default class UserDirector {
 
     pushOp.id = pushOp.id ?? IDManager.createLocalId();
     const { id, ...rest } = pushOp.toJSON();
-    OneSignal.coreDirector.operationRepo?.enqueue(
+    OneSignal.coreDirector.operationRepo.enqueue(
       new LoginUserOperation(
         appId,
         identityModel.onesignalId,
         identityModel.externalId,
       ),
     );
-    OneSignal.coreDirector.operationRepo?.enqueue(
+    OneSignal.coreDirector.operationRepo.enqueue(
       new CreateSubscriptionOperation({
         appId,
         onesignalId: identityModel.onesignalId,

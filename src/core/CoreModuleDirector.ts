@@ -29,7 +29,7 @@ import {
 export class CoreModuleDirector {
   constructor(private core: CoreModule) {}
 
-  get operationRepo(): OperationRepo | undefined {
+  get operationRepo(): OperationRepo {
     return this.core.operationRepo;
   }
 

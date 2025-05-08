@@ -1,7 +1,4 @@
-import Log from '../shared/libraries/Log';
-import { logMethodCall } from '../shared/utils/utils';
 import { IdentityOperationExecutor } from './executors/IdentityOperationExecutor';
-import { LoginUserFromSubscriptionOperationExecutor } from './executors/LoginUserFromSubscriptionOperationExecutor';
 import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecutor';
 import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
 import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
@@ -24,15 +21,13 @@ import type { IOperationExecutor } from './types/operation';
 
 export default class CoreModule {
   public operationModelStore: OperationModelStore;
-  public operationRepo?: OperationRepo;
-  public initPromise: Promise<void>;
+  public operationRepo: OperationRepo;
   public newRecordsState: NewRecordsState;
   public subscriptionModelStore: SubscriptionModelStore;
   public identityModelStore: IdentityModelStore;
   public propertiesModelStore: PropertiesModelStore;
   public configModelStore: ConfigModelStore;
 
-  private initResolver: () => void = () => null;
   private rebuildUserService: RebuildUserService;
   private executors?: IOperationExecutor[];
   private listeners?: (
@@ -41,10 +36,6 @@ export default class CoreModule {
   )[];
 
   constructor() {
-    this.initPromise = new Promise<void>((resolve) => {
-      this.initResolver = resolve;
-    });
-
     this.newRecordsState = new NewRecordsState();
     this.operationModelStore = new OperationModelStore();
     this.identityModelStore = new IdentityModelStore();
@@ -58,22 +49,14 @@ export default class CoreModule {
       this.configModelStore,
     );
 
-    this.operationModelStore
-      .loadOperations()
-      .then(() => {
-        this.executors = this.initializeExecutors();
-        this.operationRepo = new OperationRepo(
-          this.executors,
-          this.operationModelStore,
-          this.newRecordsState,
-        );
-        this.listeners = this.initializeListeners();
-        this.operationRepo.start();
-        this.initResolver();
-      })
-      .catch((e) => {
-        Log.error(e);
-      });
+    this.executors = this.initializeExecutors();
+    this.operationRepo = new OperationRepo(
+      this.executors,
+      this.operationModelStore,
+      this.newRecordsState,
+    );
+    this.listeners = this.initializeListeners();
+    this.operationRepo.start();
   }
 
   private initializeListeners() {
@@ -108,10 +91,6 @@ export default class CoreModule {
       this.subscriptionModelStore,
       this.configModelStore,
     );
-    const loginSubOpExecutor = new LoginUserFromSubscriptionOperationExecutor(
-      this.identityModelStore,
-      this.propertiesModelStore,
-    );
     const refreshOpExecutor = new RefreshUserOperationExecutor(
       this.identityModelStore,
       this.propertiesModelStore,
@@ -136,15 +115,9 @@ export default class CoreModule {
     return [
       identityOpExecutor,
       loginOpExecutor,
-      loginSubOpExecutor,
       refreshOpExecutor,
       subscriptionOpExecutor,
       updateSubOpExecutor,
     ];
-  }
-
-  public async init() {
-    logMethodCall('CoreModule.init');
-    await this.initPromise;
   }
 }

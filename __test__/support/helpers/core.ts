@@ -46,9 +46,8 @@ export function getDummyPushSubscriptionOSModel() {
 }
 
 // Requirement: Test must also call TestEnvironment.initialize();
-export async function getCoreModuleDirector(): Promise<CoreModuleDirector> {
+export function getCoreModuleDirector(): CoreModuleDirector {
   const coreModule = new CoreModule();
-  await coreModule.init();
   return new CoreModuleDirector(coreModule);
 }
 
