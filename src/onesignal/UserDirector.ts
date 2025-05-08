@@ -8,8 +8,8 @@ import { logMethodCall } from '../shared/utils/utils';
 import User from './User';
 
 export default class UserDirector {
-  static async initializeUser(isTemporary?: boolean): Promise<void> {
-    logMethodCall('initializeUser', { isTemporary });
+  static async initializeUser(): Promise<void> {
+    logMethodCall('initializeUser');
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     if (identityModel.onesignalId) {
@@ -28,7 +28,7 @@ export default class UserDirector {
     user.isCreatingUser = true;
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
-    if (!pushOp) return Log.error('No push subscription found');
+    if (!pushOp) return Log.info('No push subscription found');
 
     pushOp.id = pushOp.id ?? IDManager.createLocalId();
     const { id, ...rest } = pushOp.toJSON();

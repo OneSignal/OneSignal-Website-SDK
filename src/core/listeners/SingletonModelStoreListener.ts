@@ -28,7 +28,6 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
   }
 
   onModelReplaced(model: TModel, tag: string): void {
-    console.warn('onModelReplaced', model, tag);
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
@@ -40,7 +39,6 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
   }
 
   async onModelUpdated(args: ModelChangedArgs, tag: string): Promise<void> {
-    console.warn('onModelUpdated', args);
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }

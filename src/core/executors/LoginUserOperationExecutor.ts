@@ -9,6 +9,7 @@ import {
 import Log from 'src/shared/libraries/Log';
 import { getTimeZoneId } from 'src/shared/utils/utils';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type ConfigModelStore } from '../modelStores/ConfigModelStore';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -66,7 +67,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     loginUserOp: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
-    console.warn('loginUserOp', loginUserOp);
     if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId)
       return this.createUser(loginUserOp, operations);
 
@@ -128,7 +128,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     createUserOperation: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
-    console.warn('operations', operations);
     const identity: ICreateUserIdentity = {};
     let subscriptions: SubscriptionMap = {};
     const properties: IUserProperties = {
@@ -192,6 +191,17 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           backendOneSignalId,
           ModelChangeTags.HYDRATE,
         );
+
+        // update other properties
+        const resultProperties = response.result.properties;
+        if (resultProperties) {
+          for (const [key, value] of Object.entries(resultProperties)) {
+            this._propertiesModelStore.model.setProperty(
+              key as IPropertiesModelKeys,
+              value,
+            );
+          }
+        }
       }
 
       for (let i = 0; i < subscriptionList.length; i++) {

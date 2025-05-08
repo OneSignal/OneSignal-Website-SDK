@@ -5,7 +5,6 @@ import {
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
 import { isValidEmail, logMethodCall } from '../shared/utils/utils';
-import UserDirector from './UserDirector';
 
 export default class User {
   hasOneSignalId = false;
@@ -21,9 +20,6 @@ export default class User {
   static createOrGetInstance(): User {
     if (!User.singletonInstance) {
       User.singletonInstance = new User();
-      UserDirector.initializeUser(true).catch((e: Error) => {
-        console.error(e);
-      });
     }
 
     return User.singletonInstance;
