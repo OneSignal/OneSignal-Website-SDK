@@ -1,3 +1,4 @@
+import { logMethodCall } from 'src/shared/utils/utils';
 import { IdentityOperationExecutor } from './executors/IdentityOperationExecutor';
 import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecutor';
 import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
@@ -26,6 +27,8 @@ export default class CoreModule {
   public identityModelStore: IdentityModelStore;
   public propertiesModelStore: PropertiesModelStore;
 
+  private initPromise: Promise<void>;
+
   private rebuildUserService: RebuildUserService;
   private executors?: IOperationExecutor[];
   private listeners?: (
@@ -52,7 +55,12 @@ export default class CoreModule {
       this.newRecordsState,
     );
     this.listeners = this.initializeListeners();
-    this.operationRepo.start();
+    this.initPromise = this.operationRepo.start();
+  }
+
+  public async init() {
+    logMethodCall('CoreModule.init');
+    return this.initPromise;
   }
 
   private initializeListeners() {

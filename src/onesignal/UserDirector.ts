@@ -21,10 +21,12 @@ export default class UserDirector {
   }
 
   static async createUserOnServer(): Promise<void> {
+    const user = User.createOrGetInstance();
+    if (user.isCreatingUser) return;
+
     const identityModel = OneSignal.coreDirector.getIdentityModel();
 
     const appId = await MainHelper.getAppId();
-    const user = User.createOrGetInstance();
     user.isCreatingUser = true;
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();

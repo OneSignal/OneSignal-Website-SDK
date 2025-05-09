@@ -77,10 +77,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return this.queue.some((item) => item.operation instanceof type);
   }
 
-  public start(): void {
+  public async start(): Promise<void> {
     this.paused = false;
-    this.loadSavedOperations();
     this.processQueueForever();
+    await this.loadSavedOperations();
   }
 
   public enqueue(operation: Operation): void {
@@ -341,8 +341,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return ops;
   }
 
-  public loadSavedOperations(): void {
-    this.operationModelStore.loadOperations();
+  public async loadSavedOperations(): Promise<void> {
+    await this.operationModelStore.loadOperations();
     const operations = this.operationModelStore.list().toReversed();
 
     for (const operation of operations) {
