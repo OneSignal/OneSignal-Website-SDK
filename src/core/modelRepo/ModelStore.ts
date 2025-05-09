@@ -96,17 +96,23 @@ export abstract class ModelStore<TModel extends Model>
     );
   }
 
-  replaceAll(
+  async replaceAll(
     newModels: TModel[],
     tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
-  ): void {
+  ): Promise<void> {
     this.clear(tag);
+
+    this.models = [];
+
     for (const model of newModels) {
       this.add(model, tag);
     }
   }
 
-  clear(tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
+  async clear(
+    tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
+  ): Promise<void> {
+    await Database.remove(this.modelName);
     this.persist();
 
     for (const item of this.models) {

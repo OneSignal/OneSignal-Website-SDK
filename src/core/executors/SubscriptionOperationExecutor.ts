@@ -13,6 +13,7 @@ import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOpe
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
+import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import AliasPair from '../requestService/AliasPair';
@@ -107,11 +108,13 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         );
 
       const backendSubscriptionId = subscription?.id;
-      subscriptionModel?.setProperty(
-        'id',
-        backendSubscriptionId,
-        ModelChangeTags.HYDRATE,
-      );
+      if (backendSubscriptionId) {
+        subscriptionModel?.setProperty(
+          'id',
+          backendSubscriptionId,
+          ModelChangeTags.HYDRATE,
+        );
+      }
 
       const pushSubscriptionId = await Database.getPushId();
       if (pushSubscriptionId === createOperation.subscriptionId) {
@@ -121,7 +124,14 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       return new ExecutionResponse(
         ExecutionResult.SUCCESS,
         undefined,
-        undefined,
+        !backendSubscriptionId
+          ? [
+              new RefreshUserOperation(
+                createOperation.appId,
+                createOperation.onesignalId,
+              ),
+            ]
+          : undefined,
         backendSubscriptionId
           ? {
               [createOperation.subscriptionId]: backendSubscriptionId,

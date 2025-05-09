@@ -37,7 +37,7 @@ export class SingletonModelStore<TModel extends Model>
 
   replace(model: TModel, tag?: ModelChangeTagValue): void {
     const existingModel = this.model;
-    existingModel.initializeFromModel(existingModel.modelId, model);
+    existingModel.initializeFromModel(model.modelId, model);
     this.store.persist();
     this.changeSubscription.fire((handler) =>
       handler.onModelReplaced(existingModel, tag),

@@ -7,6 +7,8 @@ import {
   mockServerConfig,
   setAddAliasResponse,
   setDeleteAliasResponse,
+  setSubscriptionFn,
+  setSubscriptionResponse,
 } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { IdentityModel } from 'src/core/models/IdentityModel';
@@ -105,6 +107,53 @@ describe('OneSignal', () => {
 
         await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL * 4);
         expect(deleteAliasFn).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe('email', () => {
+      beforeEach(() => {
+        setSubscriptionResponse();
+      });
+
+      test('can add an email to the current user', async () => {
+        const email = 'test@test.com';
+        window.OneSignal.User.addEmail(email);
+        await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL * 2);
+
+        // should make a request to the backend
+        const subscription = {
+          enabled: true,
+          notification_types: 1,
+          token: email,
+          type: 'Email',
+        };
+        expect(setSubscriptionFn).toHaveBeenCalledWith({
+          subscription,
+        });
+
+        // should also save the subscription to the IndexedDB
+        let dbSubscriptions = await Database.get('subscriptions');
+        expect(dbSubscriptions).toEqual([
+          {
+            modelId: expect.any(String),
+            ...subscription,
+          },
+        ]);
+
+        // cant add the same email twice
+        window.OneSignal.User.addEmail(email);
+        await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL * 2);
+        expect(setSubscriptionFn).toHaveBeenCalledTimes(1);
+
+        dbSubscriptions = await Database.get('subscriptions');
+        expect(dbSubscriptions).toHaveLength(1);
+      });
+
+      test('can remove an email from the current user', async () => {
+        const email = 'test@test.com';
+        window.OneSignal.User.addEmail(email);
+        await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL * 2);
+        window.OneSignal.User.removeEmail(email);
       });
     });
   });

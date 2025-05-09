@@ -35,7 +35,7 @@ export const mockPageStylesCss = () => {
   );
 };
 
-const getHandler = ({
+export const getHandler = ({
   uri,
   method,
   status,
@@ -44,7 +44,7 @@ const getHandler = ({
   callback,
 }: {
   uri: string;
-  method: 'patch' | 'delete';
+  method: 'patch' | 'delete' | 'post';
   status: number;
   response?: object;
   retryAfter?: number;
@@ -125,4 +125,21 @@ export const setDeleteAliasError = ({
     method: 'delete',
     status,
     retryAfter,
+  });
+
+// subscription
+const getSetSubscriptionUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
+  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/subscriptions`;
+
+export const setSubscriptionFn = vi.fn();
+export const setSubscriptionResponse = ({
+  onesignalId,
+  response = {},
+}: { onesignalId?: string; response?: object } = {}) =>
+  getHandler({
+    uri: getSetSubscriptionUri(onesignalId),
+    method: 'post',
+    status: 200,
+    response,
+    callback: setSubscriptionFn,
   });

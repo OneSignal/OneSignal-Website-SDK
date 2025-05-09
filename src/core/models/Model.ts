@@ -112,7 +112,7 @@ export class Model<U extends object = object, T extends U & object = U & object>
     });
 
     if (id !== null) {
-      newData.set('modelId', id);
+      this.modelId = id;
     }
 
     this.data.clear();
