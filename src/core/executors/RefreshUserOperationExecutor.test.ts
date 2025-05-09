@@ -144,10 +144,6 @@ describe('RefreshUserOperationExecutor', () => {
       subscriptionModelStore.add(pushSubModel);
       await Database.setPushId(DUMMY_SUBSCRIPTION_ID_2);
 
-      console.log(
-        'subscriptionModelStoressdsadas',
-        subscriptionModelStore.list(),
-      );
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
 

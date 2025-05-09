@@ -100,13 +100,13 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     );
 
     if (response.ok) {
-      const {
-        subscription: { id: backendSubscriptionId },
-      } = response.result;
+      const { subscription } = response.result;
       const subscriptionModel =
         this._subscriptionModelStore.getBySubscriptionId(
           createOperation.subscriptionId,
         );
+
+      const backendSubscriptionId = subscription?.id;
       subscriptionModel?.setProperty(
         'id',
         backendSubscriptionId,
@@ -122,9 +122,11 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         ExecutionResult.SUCCESS,
         undefined,
         undefined,
-        {
-          [createOperation.subscriptionId]: backendSubscriptionId,
-        },
+        backendSubscriptionId
+          ? {
+              [createOperation.subscriptionId]: backendSubscriptionId,
+            }
+          : undefined,
       );
     }
 

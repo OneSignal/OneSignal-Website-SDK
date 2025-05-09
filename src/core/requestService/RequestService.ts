@@ -201,7 +201,7 @@ export class RequestService {
     subscription: { subscription: ICreateUserSubscription },
   ) {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.post<{ subscription: ISubscription }>(
+    return OneSignalApiBase.post<{ subscription?: ISubscription }>(
       `apps/${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
       subscription,
       requestMetadata.jwtHeader,
