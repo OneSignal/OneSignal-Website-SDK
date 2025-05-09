@@ -6,9 +6,9 @@ import {
 } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
+import Database from 'src/shared/services/Database';
 import { OPERATION_NAME } from '../constants';
 import { SubscriptionModel } from '../models/SubscriptionModel';
-import { ConfigModelStore } from '../modelStores/ConfigModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -21,7 +21,6 @@ import { NotificationType, SubscriptionType } from '../types/subscription';
 import { SubscriptionOperationExecutor } from './SubscriptionOperationExecutor';
 
 let subscriptionModelStore: SubscriptionModelStore;
-let configModelStore: ConfigModelStore;
 let newRecordsState: NewRecordsState;
 let buildUserService: BuildUserService;
 
@@ -33,7 +32,6 @@ vi.mock('src/shared/libraries/Log');
 describe('SubscriptionOperationExecutor', () => {
   beforeEach(() => {
     subscriptionModelStore = new SubscriptionModelStore();
-    configModelStore = new ConfigModelStore();
     newRecordsState = new NewRecordsState();
     buildUserService = new BuildUserService();
   });
@@ -41,7 +39,6 @@ describe('SubscriptionOperationExecutor', () => {
   const getExecutor = () => {
     return new SubscriptionOperationExecutor(
       subscriptionModelStore,
-      configModelStore,
       buildUserService,
       newRecordsState,
     );
@@ -103,15 +100,11 @@ describe('SubscriptionOperationExecutor', () => {
 
     test('should create subscription successfully', async () => {
       const model = new SubscriptionModel();
-      model.setProperty(
-        'modelId',
-        DUMMY_SUBSCRIPTION_ID,
-        ModelChangeTags.HYDRATE,
-      );
+      model.setProperty('id', DUMMY_SUBSCRIPTION_ID, ModelChangeTags.HYDRATE);
       subscriptionModelStore.add(model);
 
       setCreateSubscriptionResponse(BACKEND_SUBSCRIPTION_ID);
-      configModelStore.model.pushSubscriptionId = DUMMY_SUBSCRIPTION_ID;
+      await Database.setPushId(DUMMY_SUBSCRIPTION_ID);
 
       const executor = getExecutor();
       const createOp = new CreateSubscriptionOperation({
@@ -133,10 +126,8 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Verify models were updated
-      expect(configModelStore.model.pushSubscriptionId).toBe(
-        BACKEND_SUBSCRIPTION_ID,
-      );
-      const subscriptionModel = subscriptionModelStore.get(
+      await expect(Database.getPushId()).resolves.toBe(BACKEND_SUBSCRIPTION_ID);
+      const subscriptionModel = subscriptionModelStore.getBySubscriptionId(
         BACKEND_SUBSCRIPTION_ID,
       );
       expect(subscriptionModel).toBeDefined();
@@ -408,11 +399,7 @@ describe('SubscriptionOperationExecutor', () => {
     test('should delete subscription successfully', async () => {
       // Set up a subscription model to be deleted
       const model = new SubscriptionModel();
-      model.setProperty(
-        'modelId',
-        DUMMY_SUBSCRIPTION_ID,
-        ModelChangeTags.HYDRATE,
-      );
+      model.setProperty('id', DUMMY_SUBSCRIPTION_ID, ModelChangeTags.HYDRATE);
       subscriptionModelStore.add(model);
 
       const executor = getExecutor();

@@ -5,8 +5,8 @@ import {
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
+import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
-import { type ConfigModelStore } from '../modelStores/ConfigModelStore';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -24,7 +24,6 @@ import { ModelChangeTags } from '../types/models';
 export class SubscriptionOperationExecutor implements IOperationExecutor {
   constructor(
     private _subscriptionModelStore: SubscriptionModelStore,
-    private _configModelStore: ConfigModelStore,
     private _buildUserService: IRebuildUserService,
     private _newRecordState: NewRecordsState,
   ) {}
@@ -104,20 +103,19 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       const {
         subscription: { id: backendSubscriptionId },
       } = response.result;
-      const subscriptionModel = this._subscriptionModelStore.get(
-        createOperation.subscriptionId,
-      );
+      const subscriptionModel =
+        this._subscriptionModelStore.getBySubscriptionId(
+          createOperation.subscriptionId,
+        );
       subscriptionModel?.setProperty(
-        'modelId',
+        'id',
         backendSubscriptionId,
         ModelChangeTags.HYDRATE,
       );
 
-      if (
-        this._configModelStore.model.pushSubscriptionId ===
-        createOperation.subscriptionId
-      ) {
-        this._configModelStore.model.pushSubscriptionId = backendSubscriptionId;
+      const pushSubscriptionId = await Database.getPushId();
+      if (pushSubscriptionId === createOperation.subscriptionId) {
+        await Database.setPushId(backendSubscriptionId);
       }
 
       return new ExecutionResponse(
@@ -163,7 +161,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         }
 
         const rebuildOps =
-          this._buildUserService.getRebuildOperationsIfCurrentUser(
+          await this._buildUserService.getRebuildOperationsIfCurrentUser(
             createOperation.appId,
             createOperation.onesignalId,
           );

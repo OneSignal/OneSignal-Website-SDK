@@ -4,6 +4,7 @@ import {
   DUMMY_ONESIGNAL_ID_2,
   DUMMY_PUSH_TOKEN,
   DUMMY_SUBSCRIPTION_ID,
+  DUMMY_SUBSCRIPTION_ID_2,
 } from '__test__/support/constants';
 import {
   BuildUserService,
@@ -12,23 +13,21 @@ import {
 } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
+import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { SubscriptionModel } from '../models/SubscriptionModel';
-import { ConfigModelStore } from '../modelStores/ConfigModelStore';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { ISubscription, UserData } from '../types/api';
-import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { NotificationType, SubscriptionType } from '../types/subscription';
 import { RefreshUserOperationExecutor } from './RefreshUserOperationExecutor';
 
 let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
-let configModelStore: ConfigModelStore;
 let subscriptionModelStore: SubscriptionModelStore;
 let newRecordsState: NewRecordsState;
 let buildUserService: BuildUserService;
@@ -36,10 +35,10 @@ let buildUserService: BuildUserService;
 vi.mock('src/shared/libraries/Log');
 
 describe('RefreshUserOperationExecutor', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await Database.clear(); // in case subscription model (from previous tests) are loaded from db
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
-    configModelStore = new ConfigModelStore();
     subscriptionModelStore = new SubscriptionModelStore();
     newRecordsState = new NewRecordsState();
     buildUserService = new BuildUserService();
@@ -50,7 +49,6 @@ describe('RefreshUserOperationExecutor', () => {
       identityModelStore,
       propertiesModelStore,
       subscriptionModelStore,
-      configModelStore,
       buildUserService,
       newRecordsState,
     );
@@ -75,13 +73,12 @@ describe('RefreshUserOperationExecutor', () => {
   });
 
   describe('getUser', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       // Set up initial model state
       identityModelStore.model.setProperty(
         IdentityConstants.ONESIGNAL_ID,
         DUMMY_ONESIGNAL_ID,
       );
-      // propertiesModelStore.model.setProperty('onesignalId', DUMMY_ONESIGNAL_ID);
     });
 
     test('should ignore refresh if id is different in identity model store', async () => {
@@ -139,14 +136,18 @@ describe('RefreshUserOperationExecutor', () => {
     test('should preserve cached push subscription when updating models', async () => {
       // Set up a push subscription in the store
       const pushSubModel = new SubscriptionModel();
-      pushSubModel.modelId = DUMMY_SUBSCRIPTION_ID;
+      pushSubModel.id = DUMMY_SUBSCRIPTION_ID_2;
       pushSubModel.type = SubscriptionType.ChromePush;
       pushSubModel.token = DUMMY_PUSH_TOKEN;
       pushSubModel.notification_types = NotificationType.Subscribed;
 
-      subscriptionModelStore.add(pushSubModel, ModelChangeTags.HYDRATE);
-      configModelStore.model.pushSubscriptionId = DUMMY_SUBSCRIPTION_ID;
+      subscriptionModelStore.add(pushSubModel);
+      await Database.setPushId(DUMMY_SUBSCRIPTION_ID_2);
 
+      console.log(
+        'subscriptionModelStoressdsadas',
+        subscriptionModelStore.list(),
+      );
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
 
@@ -170,7 +171,7 @@ describe('RefreshUserOperationExecutor', () => {
         (sub: SubscriptionModel) => sub.type === SubscriptionType.ChromePush,
       );
       expect(pushSub).toBeDefined();
-      expect(pushSub?.modelId).toBe(DUMMY_SUBSCRIPTION_ID);
+      expect(pushSub?.id).toBe(DUMMY_SUBSCRIPTION_ID_2);
       expect(pushSub?.token).toBe(DUMMY_PUSH_TOKEN);
     });
 

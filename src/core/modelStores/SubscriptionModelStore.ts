@@ -14,9 +14,13 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     super(() => new SubscriptionModel(), ModelName.Subscriptions);
   }
 
+  getBySubscriptionId(subscriptionId: string): SubscriptionModel | undefined {
+    return super.list().find((m) => m.id === subscriptionId);
+  }
+
   override replaceAll(
     models: SubscriptionModel[],
-    tag: ModelChangeTagValue,
+    tag?: ModelChangeTagValue,
   ): void {
     if (tag !== ModelChangeTags.HYDRATE) {
       return super.replaceAll(models, tag);
@@ -34,6 +38,7 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
       }
     }
 
+    console.log('replaceAll', models);
     super.replaceAll(models, tag);
   }
 }

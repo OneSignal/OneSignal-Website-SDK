@@ -15,5 +15,5 @@ export interface IRebuildUserService {
   getRebuildOperationsIfCurrentUser(
     appId: string,
     onesignalId: string,
-  ): Operation[] | null;
+  ): Promise<Operation[] | null>;
 }

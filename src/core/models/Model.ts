@@ -26,15 +26,6 @@ export interface ModelChangedArgs<T extends object = object> {
   model: Model<T>;
 
   /**
-   * The path to the property, from the root Model, that has changed.
-   * This can be a dot notation path like:
-   * - `mapProperty.new_key`
-   * - `complexProperty.simpleProperty`
-   * - `complexProperty.mapProperty.new_key`
-   */
-  path: string;
-
-  /**
    * The property that was changed.
    */
   property: string;
@@ -79,22 +70,14 @@ export interface ModelChangedArgs<T extends object = object> {
  * ---------------
  * When deserializing a flat Model nothing specific is required.
  */
-type BaseModel = { modelId: string };
 
-export class Model<
-  U extends object = BaseModel,
-  T extends U & BaseModel = U & BaseModel,
-> implements IEventNotifier<IModelChangedHandler>
+export class Model<U extends object = object, T extends U & object = U & object>
+  implements IEventNotifier<IModelChangedHandler>
 {
   /**
    * Legacy Id used as keypath for the IndexedDB tables. A unique identifier for this model.
    */
-  get modelId(): string {
-    return this.getProperty('modelId') as string;
-  }
-  private set modelId(value: string) {
-    this.setProperty('modelId', value);
-  }
+  public modelId: string;
 
   protected data: Map<string, unknown> = new Map();
   private changeNotifier = new EventProducer<IModelChangedHandler>();
@@ -121,7 +104,7 @@ export class Model<
    * @param id The id of the model to initialize to.
    * @param model The model to initialize this model from.
    */
-  initializeFromModel(id: string | null, model: Model<BaseModel>): void {
+  initializeFromModel(id: string | null, model: Model<U, T>): void {
     const newData = new Map<string, unknown>();
 
     model.data.forEach((value: unknown, key: string) => {
@@ -154,7 +137,7 @@ export class Model<
       this.data.delete(name);
     }
 
-    this.notifyChanged(name, name, tag, oldValue, value);
+    this.notifyChanged(name, tag, oldValue, value);
   }
 
   /**
@@ -174,7 +157,6 @@ export class Model<
   }
 
   private notifyChanged(
-    path: string,
     property: string,
     tag: string,
     oldValue: unknown,
@@ -183,7 +165,6 @@ export class Model<
     // if there are any changed listeners for this specific model, notify them.
     const changeArgs: ModelChangedArgs = {
       model: this,
-      path,
       property,
       oldValue,
       newValue,

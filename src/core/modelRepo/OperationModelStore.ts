@@ -4,7 +4,6 @@ import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOpe
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { DeleteTagOperation } from '../operations/DeleteTagOperation';
-import { LoginUserFromSubscriptionOperation } from '../operations/LoginUserFromSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
@@ -65,9 +64,6 @@ export class OperationModelStore extends ModelStore<Operation> {
       case OPERATION_NAME.LOGIN_USER:
         operation = new LoginUserOperation();
         break;
-      case OPERATION_NAME.LOGIN_USER_FROM_SUBSCRIPTION_USER:
-        operation = new LoginUserFromSubscriptionOperation();
-        break;
       case OPERATION_NAME.REFRESH_USER:
         operation = new RefreshUserOperation();
         break;
@@ -113,10 +109,7 @@ export class OperationModelStore extends ModelStore<Operation> {
       return false;
     }
 
-    const excluded = new Set<string>([
-      OPERATION_NAME.LOGIN_USER,
-      OPERATION_NAME.LOGIN_USER_FROM_SUBSCRIPTION_USER,
-    ]);
+    const excluded = new Set<string>([OPERATION_NAME.LOGIN_USER]);
 
     // Must have onesignalId if it is not one of the excluded operations above
     if (!object.onesignalId && !excluded.has(operationName)) {

@@ -498,6 +498,14 @@ export default class Database {
     ]);
   }
 
+  static async clear() {
+    const objectStoreNames =
+      await Database.singletonInstance.database.objectStoreNames();
+    for (const objectStoreName of objectStoreNames) {
+      await Database.singletonInstance.database.remove(objectStoreName);
+    }
+  }
+
   // START: Static mappings to instance methods
   static async on(...args: any[]) {
     // eslint-disable-next-line prefer-spread
@@ -505,6 +513,14 @@ export default class Database {
       Database.singletonInstance.emitter,
       args,
     );
+  }
+
+  static async getPushId(): Promise<string | undefined> {
+    return this.get<string>('Options', 'lastPushId');
+  }
+
+  static async setPushId(pushId: string | undefined): Promise<void> {
+    await this.put('Options', { key: 'lastPushId', value: pushId });
   }
 
   static async setIsPushEnabled(enabled: boolean): Promise<void> {

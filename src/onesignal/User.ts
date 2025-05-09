@@ -5,7 +5,6 @@ import {
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
 import { isValidEmail, logMethodCall } from '../shared/utils/utils';
-import UserDirector from './UserDirector';
 
 export default class User {
   hasOneSignalId = false;
@@ -21,9 +20,6 @@ export default class User {
   static createOrGetInstance(): User {
     if (!User.singletonInstance) {
       User.singletonInstance = new User();
-      UserDirector.initializeUser(true).catch((e: Error) => {
-        console.error(e);
-      });
     }
 
     return User.singletonInstance;
@@ -113,15 +109,6 @@ export default class User {
     const newSubscription = new SubscriptionModel();
     newSubscription.mergeData(subscription);
     OneSignal.coreDirector.addSubscriptionModel(newSubscription);
-
-    if (
-      !(
-        User.singletonInstance?.isCreatingUser ||
-        User.singletonInstance?.hasOneSignalId
-      )
-    ) {
-      await UserDirector.createAndHydrateUser();
-    }
   }
 
   public async addSms(sms: string): Promise<void> {
@@ -140,17 +127,7 @@ export default class User {
 
     const newSubscription = new SubscriptionModel();
     newSubscription.mergeData(subscription);
-
     OneSignal.coreDirector.addSubscriptionModel(newSubscription);
-
-    if (
-      !(
-        User.singletonInstance?.isCreatingUser ||
-        User.singletonInstance?.hasOneSignalId
-      )
-    ) {
-      await UserDirector.createAndHydrateUser();
-    }
   }
 
   public removeEmail(email: string): void {

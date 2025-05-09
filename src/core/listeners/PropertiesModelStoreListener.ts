@@ -23,13 +23,12 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
 
   async getUpdateOperation(
     model: PropertiesModel,
-    path: string,
     property: string,
     _oldValue: unknown,
     newValue: unknown,
   ): Promise<Operation | null> {
     const appId = await MainHelper.getAppId();
-    if (path.startsWith('tags')) {
+    if (property === 'tags') {
       if (newValue != null && typeof newValue === 'string') {
         return new SetTagOperation(
           appId,

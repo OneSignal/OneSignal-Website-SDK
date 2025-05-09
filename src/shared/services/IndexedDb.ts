@@ -329,7 +329,7 @@ export default class IndexedDb {
     const database = await this.ensureDatabaseOpen();
 
     // TODO: revisit with later web sdk refactor
-    if (table === 'config' || table === 'operations') {
+    if (table === 'operations') {
       // @ts-expect-error - tables like config and operations don't exist/will be ignored
       return null;
     }

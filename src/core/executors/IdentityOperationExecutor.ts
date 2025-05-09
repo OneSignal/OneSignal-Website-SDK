@@ -136,7 +136,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
 
         if (isSetAlias) {
           const rebuildOps =
-            this._buildUserService.getRebuildOperationsIfCurrentUser(
+            await this._buildUserService.getRebuildOperationsIfCurrentUser(
               lastOperation.appId,
               lastOperation.onesignalId,
             );

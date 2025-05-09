@@ -22,7 +22,7 @@ export class LoginUserOperation extends Operation<ILoginOp> {
   constructor();
   constructor(
     appId: string,
-    onesignalId: string,
+    onesignalId: string | undefined,
     externalId?: string,
     existingOneSignalId?: string,
   );
