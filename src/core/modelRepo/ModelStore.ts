@@ -154,12 +154,7 @@ export abstract class ModelStore<TModel extends Model>
     if (!this.modelName) return;
 
     let jsonArray: TModel[] = [];
-    if (
-      !(
-        this.modelName === ModelName.Config ||
-        this.modelName === ModelName.Operations
-      )
-    ) {
+    if (!(this.modelName === ModelName.Operations)) {
       jsonArray = await Database.getAll<TModel>(this.modelName);
     }
 

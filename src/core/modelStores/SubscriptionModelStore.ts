@@ -38,6 +38,7 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
       }
     }
 
+    console.log('replaceAll', models);
     super.replaceAll(models, tag);
   }
 }

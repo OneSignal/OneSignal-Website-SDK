@@ -79,8 +79,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public async start(): Promise<void> {
     this.paused = false;
-    this.processQueueForever();
     await this.loadSavedOperations();
+    this.processQueueForever();
   }
 
   public enqueue(operation: Operation): void {

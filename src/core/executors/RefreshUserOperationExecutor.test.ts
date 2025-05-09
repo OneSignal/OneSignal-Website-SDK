@@ -22,7 +22,6 @@ import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { ISubscription, UserData } from '../types/api';
-import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { NotificationType, SubscriptionType } from '../types/subscription';
 import { RefreshUserOperationExecutor } from './RefreshUserOperationExecutor';
@@ -37,6 +36,7 @@ vi.mock('src/shared/libraries/Log');
 
 describe('RefreshUserOperationExecutor', () => {
   beforeEach(async () => {
+    await Database.clear(); // in case subscription model (from previous tests) are loaded from db
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
     subscriptionModelStore = new SubscriptionModelStore();
@@ -73,13 +73,12 @@ describe('RefreshUserOperationExecutor', () => {
   });
 
   describe('getUser', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       // Set up initial model state
       identityModelStore.model.setProperty(
         IdentityConstants.ONESIGNAL_ID,
         DUMMY_ONESIGNAL_ID,
       );
-      // propertiesModelStore.model.setProperty('onesignalId', DUMMY_ONESIGNAL_ID);
     });
 
     test('should ignore refresh if id is different in identity model store', async () => {
@@ -142,9 +141,13 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.token = DUMMY_PUSH_TOKEN;
       pushSubModel.notification_types = NotificationType.Subscribed;
 
-      subscriptionModelStore.add(pushSubModel, ModelChangeTags.HYDRATE);
+      subscriptionModelStore.add(pushSubModel);
       await Database.setPushId(DUMMY_SUBSCRIPTION_ID_2);
 
+      console.log(
+        'subscriptionModelStoressdsadas',
+        subscriptionModelStore.list(),
+      );
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
 

@@ -57,7 +57,7 @@ describe('OperationRepo', () => {
     ]);
 
     // cached operations are added to the front of the queue and should maintain order
-    opRepo.start();
+    await opRepo.start();
     expect(opRepo.queue).toEqual([
       {
         operation: cachedOperations[0],
