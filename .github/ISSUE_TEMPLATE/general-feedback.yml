@@ -1,9 +1,8 @@
 name: 📣 General feedback
 description: Tell us what's on your mind
-title: "[Feedback]: "
-labels: ["triage"]
-assignees:
-  - OneSignal/eng-developer-sdk
+title: '[Feedback]: '
+labels: ['Feedback']
+
 body:
   - type: markdown
     attributes:

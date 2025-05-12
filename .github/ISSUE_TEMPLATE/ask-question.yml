@@ -1,9 +1,8 @@
 name: 🙋‍♂️ Ask a question
 description: Tell us what's on your mind
-title: "[Question]: "
-labels: ["triage"]
-assignees:
-  - OneSignal/eng-developer-sdk
+title: '[Question]: '
+labels: ['Question']
+
 body:
   - type: markdown
     attributes:
