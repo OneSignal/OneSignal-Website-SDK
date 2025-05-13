@@ -17,6 +17,7 @@ import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { type OperationRepo } from './operationRepo/OperationRepo';
 import { ISubscription, UserData } from './types/api';
+import { ModelChangeTags } from './types/models';
 import {
   SubscriptionChannel,
   SubscriptionChannelValue,
@@ -55,7 +56,8 @@ export class CoreModuleDirector {
       new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
     );
 
-    this.core.subscriptionModelStore.add(model);
+    // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
+    this.core.subscriptionModelStore.add(model, ModelChangeTags.NO_PROPOGATE);
   }
 
   public hydrateUser(user: UserData, externalId?: string): void {

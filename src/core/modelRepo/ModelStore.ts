@@ -10,7 +10,6 @@ import {
   type IModelStoreChangeHandler,
 } from 'src/core/types/models';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
-import Log from 'src/shared/libraries/Log';
 import Database from 'src/shared/services/Database';
 import type {
   IModelChangedHandler,
@@ -169,16 +168,6 @@ export abstract class ModelStore<TModel extends Model>
     for (let index = jsonArray.length - 1; index >= 0; index--) {
       const newModel = this.create(jsonArray[index]);
       if (!newModel) continue;
-
-      const hasExisting = this.models.some(
-        (m) => m.modelId === newModel.modelId,
-      );
-      if (hasExisting) {
-        Log.debug(
-          `ModelStore<${this.modelName}>: load - operation.id: ${newModel.modelId} already exists in the store.`,
-        );
-        continue;
-      }
 
       this.models.unshift(newModel);
       // listen for changes to this model
