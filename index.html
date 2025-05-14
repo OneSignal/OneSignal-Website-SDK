@@ -18,6 +18,9 @@
           appId,
         });
       });
+      OneSignalDeferred.push(async function (OneSignal) {
+        await OneSignal.login('fadi-wsr');
+      });
     </script>
   </head>
   <body>
