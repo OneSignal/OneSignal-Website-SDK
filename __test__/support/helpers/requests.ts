@@ -1,6 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
-import { APP_ID, DUMMY_ONESIGNAL_ID } from '../constants';
+import {
+  APP_ID,
+  DUMMY_ONESIGNAL_ID,
+  DUMMY_SUBSCRIPTION_ID,
+} from '../constants';
 import TestContext from '../environment/TestContext';
 import { server } from '../mocks/server';
 
@@ -44,7 +48,7 @@ export const getHandler = ({
   callback,
 }: {
   uri: string;
-  method: 'patch' | 'delete' | 'post';
+  method: 'patch' | 'delete' | 'post' | 'get';
   status: number;
   response?: object;
   retryAfter?: number;
@@ -127,6 +131,7 @@ export const setDeleteAliasError = ({
     retryAfter,
   });
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // subscription
 const getSetSubscriptionUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
   `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/subscriptions`;
@@ -142,4 +147,41 @@ export const setSubscriptionResponse = ({
     status: 200,
     response,
     callback: setSubscriptionFn,
+  });
+
+export const deleteSubscriptionFn = vi.fn();
+
+const getSetDeleteSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
+  `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
+
+export const setDeleteSubscriptionResponse = ({
+  subscriptionId,
+  response = {},
+}: { subscriptionId?: string; response?: object } = {}) =>
+  getHandler({
+    uri: getSetDeleteSubscriptionUri(subscriptionId),
+    method: 'delete',
+    status: 200,
+    response,
+    callback: deleteSubscriptionFn,
+  });
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// user
+const getUserUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
+  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
+
+export const setGetUserResponse = ({
+  onesignalId,
+  response = {
+    identity: {
+      onesignal_id: DUMMY_ONESIGNAL_ID,
+    },
+  },
+}: { onesignalId?: string; response?: object } = {}) =>
+  getHandler({
+    uri: getUserUri(onesignalId),
+    method: 'get',
+    status: 200,
+    response,
   });

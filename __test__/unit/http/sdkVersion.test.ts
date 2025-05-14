@@ -1,18 +1,20 @@
-import Environment from '../../../src/shared/helpers/Environment';
+import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
+import { nock } from '__test__/support/helpers/general';
+import AliasPair from '../../../src/core/requestService/AliasPair';
 import { RequestService } from '../../../src/core/requestService/RequestService';
+import Environment from '../../../src/shared/helpers/Environment';
 import {
   APP_ID,
   DUMMY_EXTERNAL_ID,
   DUMMY_SUBSCRIPTION_ID,
 } from '../../support/constants';
-import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
-import AliasPair from '../../../src/core/requestService/AliasPair';
 import { getDummyPushSubscriptionOSModel } from '../../support/helpers/core';
-import { nock } from '__test__/support/helpers/general';
+import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
 
 describe('Sdk Version Header Tests', () => {
   beforeAll(() => {
     nock({});
+    mockUserAgent();
     vi.spyOn(Environment, 'version').mockReturnValue(160000);
   });
 

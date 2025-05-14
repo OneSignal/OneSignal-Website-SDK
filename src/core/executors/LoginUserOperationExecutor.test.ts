@@ -8,6 +8,7 @@ import {
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
 } from '__test__/support/constants';
+import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
   BuildUserService,
   SomeOperation,
@@ -47,6 +48,7 @@ vi.mock('src/shared/libraries/Log');
 
 describe('LoginUserOperationExecutor', () => {
   beforeEach(() => {
+    mockUserAgent();
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
     subscriptionModelStore = new SubscriptionModelStore();

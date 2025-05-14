@@ -1,4 +1,5 @@
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
+import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
   BuildUserService,
   getRebuildOpsFn,
@@ -31,6 +32,7 @@ vi.mock('src/shared/libraries/Log');
 
 describe('SubscriptionOperationExecutor', () => {
   beforeEach(() => {
+    mockUserAgent();
     subscriptionModelStore = new SubscriptionModelStore();
     newRecordsState = new NewRecordsState();
     buildUserService = new BuildUserService();

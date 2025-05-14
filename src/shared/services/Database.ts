@@ -1,6 +1,7 @@
 import Emitter from '../libraries/Emitter';
 import IndexedDb from './IndexedDb';
 
+import { ICreateUserSubscription } from 'src/core/types/api';
 import { ModelNameType } from 'src/core/types/models';
 import {
   NotificationClickForOpenHandlingSchema,
@@ -55,6 +56,11 @@ export type OneSignalDbTable =
   | typeof TABLE_OUTCOMES_NOTIFICATION_CLICKED
   | 'SentUniqueOutcome'
   | ModelNameType;
+
+export interface SubscriptionItem extends ICreateUserSubscription {
+  modelId: string;
+  id: string;
+}
 
 export default class Database {
   public emitter: Emitter;
