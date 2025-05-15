@@ -1,7 +1,6 @@
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
-import { ICreateUser } from 'src/core/types/api';
 import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
@@ -19,14 +18,6 @@ export default class UserDirector {
     }
 
     UserDirector.createUserOnServer();
-  }
-
-  static resetIds() {
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    identityModel.onesignalId = IDManager.createLocalId();
-
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-    propertiesModel.onesignalId = IDManager.createLocalId();
   }
 
   static async createUserOnServer(): Promise<void> {
@@ -70,24 +61,5 @@ export default class UserDirector {
     const user = User.createOrGetInstance();
     user.hasOneSignalId = false;
     user.isCreatingUser = false;
-  }
-
-  static async getAllUserData(): Promise<ICreateUser> {
-    logMethodCall('LoginManager.getAllUserData');
-
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-    const subscriptionModels =
-      await OneSignal.coreDirector.getAllSubscriptionsModels();
-
-    const userData: ICreateUser = {
-      identity: identityModel.toJSON(),
-      properties: propertiesModel.toJSON(),
-      subscriptions: subscriptionModels?.map((subscription) =>
-        subscription.toJSON(),
-      ),
-    };
-
-    return userData;
   }
 }
