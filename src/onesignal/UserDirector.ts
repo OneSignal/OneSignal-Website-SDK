@@ -1,10 +1,11 @@
+import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { ICreateUser } from 'src/core/types/api';
 import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
-import { logMethodCall } from '../shared/utils/utils';
+import { delay, logMethodCall } from '../shared/utils/utils';
 import User from './User';
 
 export default class UserDirector {
@@ -20,12 +21,19 @@ export default class UserDirector {
     UserDirector.createUserOnServer();
   }
 
+  static resetIds() {
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    identityModel.onesignalId = IDManager.createLocalId();
+
+    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    propertiesModel.onesignalId = IDManager.createLocalId();
+  }
+
   static async createUserOnServer(): Promise<void> {
     const user = User.createOrGetInstance();
     if (user.isCreatingUser) return;
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-
     const appId = await MainHelper.getAppId();
     user.isCreatingUser = true;
 
@@ -49,10 +57,13 @@ export default class UserDirector {
         ...rest,
       }),
     );
+
+    // in case init and login are in the same bucket
+    await delay(OP_REPO_EXECUTION_INTERVAL * 2);
   }
 
-  static createAndHydrateUser(): void {
-    UserDirector.createUserOnServer();
+  static createAndHydrateUser(): Promise<void> {
+    return UserDirector.createUserOnServer();
   }
 
   static resetUserMetaProperties() {

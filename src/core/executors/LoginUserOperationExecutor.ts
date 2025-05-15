@@ -2,6 +2,7 @@ import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
 import User from 'src/onesignal/User';
 import Environment from 'src/shared/helpers/Environment';
+import EventHelper from 'src/shared/helpers/EventHelper';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -66,6 +67,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     loginUserOp: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
+    // When there is no existing user to attempt to associate with the externalId provided, we go right to
+    // createUser.  If there is no externalId provided this is an insert, if there is this will be an
+    // "upsert with retrieval" as the user may already exist.
     if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId)
       return this.createUser(loginUserOp, operations);
 
@@ -198,6 +202,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
             this._propertiesModelStore.model.setProperty(
               key as IPropertiesModelKeys,
               value,
+              ModelChangeTags.HYDRATE,
             );
           }
         }
@@ -219,6 +224,8 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           this._subscriptionsModelStore.getBySubscriptionId(localId);
         model?.setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
       }
+
+      EventHelper.checkAndTriggerUserChanged();
 
       const followUp =
         Object.keys(identity).length > 0

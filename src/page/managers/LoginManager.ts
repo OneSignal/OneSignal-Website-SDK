@@ -36,7 +36,6 @@ export default class LoginManager {
       const identityModel = OneSignal.coreDirector.getIdentityModel();
       const currentOneSignalId = identityModel.onesignalId;
       const currentExternalId = identityModel.externalId;
-      console.log('1', { currentOneSignalId, currentExternalId });
 
       // if the current externalId is the same as the one we're trying to set, do nothing
       if (currentExternalId === externalId) {
@@ -50,7 +49,7 @@ export default class LoginManager {
           appId,
           currentOneSignalId,
           externalId,
-          !currentExternalId ? currentOneSignalId : undefined,
+          currentOneSignalId,
         ),
       );
     } catch (e) {

@@ -1,20 +1,23 @@
 export class PropertiesObject {
+  public ip?: string;
   public tags?: Record<string, string>;
   public language?: string;
-  public timezoneId?: string;
+  public timezone_id?: string;
   public country?: string;
 
   constructor(
     properties: {
+      ip?: string;
       tags?: Record<string, string>;
       language?: string;
-      timezoneId?: string;
+      timezone_id?: string;
       country?: string;
     } = {},
   ) {
+    this.ip = properties.ip;
     this.tags = properties.tags;
     this.language = properties.language;
-    this.timezoneId = properties.timezoneId;
+    this.timezone_id = properties.timezone_id;
     this.country = properties.country;
   }
 
