@@ -95,32 +95,28 @@ export abstract class ModelStore<TModel extends Model>
     );
   }
 
-  async replaceAll(
+  replaceAll(
     newModels: TModel[],
     tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
-  ): Promise<void> {
+  ) {
     this.clear(tag);
-
-    this.models = [];
 
     for (const model of newModels) {
       this.add(model, tag);
     }
   }
 
-  async clear(
-    tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
-  ): Promise<void> {
-    await Database.remove(this.modelName);
-    this.persist();
-
+  clear(tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
     for (const item of this.models) {
       // no longer listen for changes to this model
       item.unsubscribe(this);
       this.changeSubscription.fire((handler) =>
         handler.onModelRemoved(item, tag),
       );
+      Database.remove(this.modelName, item.modelId);
     }
+
+    this.models = [];
   }
 
   private addItem(model: TModel, tag: string, index?: number): void {

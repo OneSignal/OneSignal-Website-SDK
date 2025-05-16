@@ -18,10 +18,10 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     return super.list().find((m) => m.id === subscriptionId);
   }
 
-  override async replaceAll(
+  override replaceAll(
     models: SubscriptionModel[],
     tag?: ModelChangeTagValue,
-  ): Promise<void> {
+  ): void {
     if (tag !== ModelChangeTags.HYDRATE) {
       return super.replaceAll(models, tag);
     }
