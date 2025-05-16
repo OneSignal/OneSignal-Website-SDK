@@ -81,7 +81,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __API_TYPE__: JSON.stringify(process.env.API || 'production'),
       __BUILD_TYPE__: JSON.stringify(process.env.ENV || 'production'),
-      __LOGGING__: JSON.stringify(!isProdEnv),
+      __LOGGING__: JSON.stringify(process.env.LOGGING || false),
       __VERSION__: JSON.stringify(process.env.npm_package_config_sdkVersion),
 
       // ignored for prod

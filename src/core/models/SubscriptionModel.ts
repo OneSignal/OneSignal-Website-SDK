@@ -1,3 +1,4 @@
+import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import { ISubscription } from '../types/api';
 import {
   NotificationTypeValue,
@@ -22,6 +23,13 @@ type ISubscriptionModel = Pick<
 // Implements logic similar to Android SDK's SubscriptionModel
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModel.kt
 export class SubscriptionModel extends Model<ISubscriptionModel> {
+  constructor() {
+    super();
+    this.sdk = FuturePushSubscriptionRecord.getSdk();
+    this.device_model = FuturePushSubscriptionRecord.getDeviceModel();
+    this.device_os = FuturePushSubscriptionRecord.getDeviceOS();
+  }
+
   /**
    * The subscription ID.
    */

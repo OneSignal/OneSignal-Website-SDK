@@ -21,10 +21,13 @@ export class SimpleModelStore<TModel extends Model> extends ModelStore<TModel> {
     this.load(); // Automatically load on construction
   }
 
-  override create(jsonObject?: object): TModel {
+  override create(modelData?: { modelId?: string } & object): TModel {
     const model = this._create();
-    if (jsonObject != null) {
-      model.initializeFromJson(jsonObject);
+    if (modelData != null) {
+      model.initializeFromJson(modelData);
+      if (modelData.modelId) {
+        model.modelId = modelData.modelId;
+      }
     }
     return model;
   }

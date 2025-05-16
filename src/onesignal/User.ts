@@ -1,5 +1,10 @@
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
-import { SubscriptionType } from 'src/core/types/subscription';
+import {
+  NotificationType,
+  SubscriptionType,
+  SubscriptionTypeValue,
+} from 'src/core/types/subscription';
+import { IDManager } from 'src/shared/managers/IDManager';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
@@ -90,6 +95,30 @@ export default class User {
     });
   }
 
+  private addSubscriptionToModels({
+    type,
+    token,
+  }: {
+    type: SubscriptionTypeValue;
+    token: string;
+  }): void {
+    const hasSubscription = OneSignal.coreDirector.subscriptionModelStore
+      .list()
+      .find((model) => model.token === token && model.type === type);
+    if (hasSubscription) return;
+
+    const subscription = {
+      id: IDManager.createLocalId(),
+      enabled: true,
+      notification_types: NotificationType.Subscribed,
+      token,
+      type,
+    };
+    const newSubscription = new SubscriptionModel();
+    newSubscription.mergeData(subscription);
+    OneSignal.coreDirector.addSubscriptionModel(newSubscription);
+  }
+
   public async addEmail(email: string): Promise<void> {
     logMethodCall('addEmail', { email });
 
@@ -102,13 +131,10 @@ export default class User {
     if (!isValidEmail(email))
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
 
-    const subscription = {
+    this.addSubscriptionToModels({
       type: SubscriptionType.Email,
       token: email,
-    };
-    const newSubscription = new SubscriptionModel();
-    newSubscription.mergeData(subscription);
-    OneSignal.coreDirector.addSubscriptionModel(newSubscription);
+    });
   }
 
   public async addSms(sms: string): Promise<void> {
@@ -120,14 +146,10 @@ export default class User {
     if (!sms)
       throw new InvalidArgumentError('sms', InvalidArgumentReason.Empty);
 
-    const subscription = {
+    this.addSubscriptionToModels({
       type: SubscriptionType.SMS,
       token: sms,
-    };
-
-    const newSubscription = new SubscriptionModel();
-    newSubscription.mergeData(subscription);
-    OneSignal.coreDirector.addSubscriptionModel(newSubscription);
+    });
   }
 
   public removeEmail(email: string): void {

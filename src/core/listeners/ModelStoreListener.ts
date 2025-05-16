@@ -18,9 +18,6 @@ export abstract class ModelStoreListener<TModel extends Model> {
   constructor(store: IModelStore<TModel>, opRepo: IOperationRepo) {
     this.store = store;
     this.opRepo = opRepo;
-  }
-
-  bootstrap(): void {
     this.store.subscribe(this);
   }
 

@@ -1,3 +1,4 @@
+import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import {
@@ -13,6 +14,7 @@ describe('CoreModuleDirector tests', () => {
   describe('getPushSubscriptionModel', () => {
     beforeEach(() => {
       vi.resetAllMocks();
+      mockUserAgent();
     });
 
     async function getPushSubscriptionModel() {
