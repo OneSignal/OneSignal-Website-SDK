@@ -189,7 +189,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           );
         }
         const rebuildOps =
-          this._buildUserService.getRebuildOperationsIfCurrentUser(
+          await this._buildUserService.getRebuildOperationsIfCurrentUser(
             appId,
             onesignalId,
           );

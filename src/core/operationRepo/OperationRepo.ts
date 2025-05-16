@@ -18,11 +18,21 @@ import { type NewRecordsState } from './NewRecordsState';
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationRepo.kt
 export class OperationQueueItem {
-  constructor(
-    public operation: Operation,
-    public bucket: number,
-    public retries: number = 0,
-  ) {}
+  public operation: Operation;
+  public bucket: number;
+  public retries: number;
+  public resolver?: (value: boolean) => void;
+  constructor(props: {
+    operation: Operation;
+    bucket: number;
+    retries?: number;
+    resolver?: (value: boolean) => void;
+  }) {
+    this.operation = props.operation;
+    this.bucket = props.bucket;
+    this.retries = props.retries ?? 0;
+    this.resolver = props.resolver;
+  }
 
   toString(): string {
     return `bucket:${this.bucket}, retries:${this.retries}, operation:${this.operation}\n`;
@@ -67,9 +77,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return this.queue.some((item) => item.operation instanceof type);
   }
 
-  public start(): void {
+  public async start(): Promise<void> {
     this.paused = false;
-    this.loadSavedOperations();
+    await this.loadSavedOperations();
     this.processQueueForever();
   }
 
@@ -77,9 +87,27 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     Log.debug(`OperationRepo.enqueue(operation: ${operation})`);
 
     this.internalEnqueue(
-      new OperationQueueItem(operation, this.enqueueIntoBucket),
+      new OperationQueueItem({
+        operation,
+        bucket: this.enqueueIntoBucket,
+      }),
       true,
     );
+  }
+
+  public async enqueueAndWait(operation: Operation): Promise<void> {
+    Log.debug(`OperationRepo.enqueueAndWaitoperation: ${operation})`);
+
+    await new Promise((resolve) => {
+      this.internalEnqueue(
+        new OperationQueueItem({
+          operation,
+          bucket: this.enqueueIntoBucket,
+          resolver: resolve,
+        }),
+        true,
+      );
+    });
   }
 
   private internalEnqueue(
@@ -165,6 +193,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ops.forEach((op) =>
             this.operationModelStore.remove(op.operation.modelId),
           );
+          ops.forEach((op) => op.resolver?.(true));
           break;
 
         case ExecutionResult.FAIL_UNAUTHORIZED:
@@ -174,12 +203,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ops.forEach((op) =>
             this.operationModelStore.remove(op.operation.modelId),
           );
+          ops.forEach((op) => op.resolver?.(false));
           break;
 
         case ExecutionResult.SUCCESS_STARTING_ONLY:
           // Remove starting operation and re-add others to the queue
           this.operationModelStore.remove(startingOp.operation.modelId);
 
+          startingOp.resolver?.(true);
           ops
             .filter((op) => op !== startingOp)
             .reverse()
@@ -210,7 +241,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       // Handle additional operations from the response
       if (response.operations) {
         for (const op of response.operations.toReversed()) {
-          const queueItem = new OperationQueueItem(op, 0);
+          const queueItem = new OperationQueueItem({
+            operation: op,
+            bucket: 0,
+          });
           this.queue.unshift(queueItem);
           this.operationModelStore.addAt(0, queueItem.operation);
         }
@@ -231,6 +265,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       ops.forEach((op) =>
         this.operationModelStore.remove(op.operation.modelId),
       );
+      ops.forEach((op) => op.resolver?.(false));
     }
   }
 
@@ -306,13 +341,16 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return ops;
   }
 
-  public loadSavedOperations(): void {
-    this.operationModelStore.loadOperations();
+  public async loadSavedOperations(): Promise<void> {
+    await this.operationModelStore.loadOperations();
     const operations = this.operationModelStore.list().toReversed();
 
     for (const operation of operations) {
       this.internalEnqueue(
-        new OperationQueueItem(operation, this.enqueueIntoBucket),
+        new OperationQueueItem({
+          operation,
+          bucket: this.enqueueIntoBucket,
+        }),
         false,
         0,
       );

@@ -20,7 +20,7 @@ export interface IUserProperties {
   lat?: number;
   long?: number;
   language?: string;
-  tags?: { [key: string]: string };
+  tags?: Record<string, string>;
   timezone_id?: string;
 }
 

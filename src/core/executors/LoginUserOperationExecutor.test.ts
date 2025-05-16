@@ -18,9 +18,9 @@ import {
 } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
+import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { SubscriptionModel } from '../models/SubscriptionModel';
-import { ConfigModelStore } from '../modelStores/ConfigModelStore';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
@@ -41,7 +41,6 @@ import { LoginUserOperationExecutor } from './LoginUserOperationExecutor';
 
 let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
-let configModelStore: ConfigModelStore;
 let subscriptionModelStore: SubscriptionModelStore;
 
 vi.mock('src/shared/libraries/Log');
@@ -50,7 +49,6 @@ describe('LoginUserOperationExecutor', () => {
   beforeEach(() => {
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
-    configModelStore = new ConfigModelStore();
     subscriptionModelStore = new SubscriptionModelStore();
   });
 
@@ -64,7 +62,6 @@ describe('LoginUserOperationExecutor', () => {
       identityModelStore,
       propertiesModelStore,
       subscriptionModelStore,
-      configModelStore,
     );
   };
 
@@ -97,10 +94,6 @@ describe('LoginUserOperationExecutor', () => {
 
       // login op with create subscription op and no externalId
       const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-
-      const ops = [loginOp];
-      const res = await executor.execute(ops);
-      expect(res.result).toBe(ExecutionResult.FAIL_NORETRY);
 
       // login op with subscription op and random operation
       const transferSubOp = new TransferSubscriptionOperation(
@@ -154,10 +147,10 @@ describe('LoginUserOperationExecutor', () => {
         DUMMY_ONESIGNAL_ID,
       );
       propertiesModelStore.model.setProperty('onesignalId', DUMMY_ONESIGNAL_ID);
-      configModelStore.model.pushSubscriptionId = DUMMY_SUBSCRIPTION_ID;
+      await Database.setPushId(DUMMY_SUBSCRIPTION_ID);
 
       const subscriptionModel = new SubscriptionModel();
-      subscriptionModel.setProperty('modelId', DUMMY_SUBSCRIPTION_ID);
+      subscriptionModel.setProperty('id', DUMMY_SUBSCRIPTION_ID);
       subscriptionModelStore.add(subscriptionModel, ModelChangeTags.HYDRATE);
 
       // perform operations with old onesignal id
@@ -180,16 +173,13 @@ describe('LoginUserOperationExecutor', () => {
       expect(propertiesModelStore.model.getProperty('onesignalId')).toEqual(
         DUMMY_ONESIGNAL_ID_2,
       );
-      expect(configModelStore.model.pushSubscriptionId).toEqual(
-        DUMMY_SUBSCRIPTION_ID_2,
-      );
-      expect(subscriptionModel.getProperty('modelId')).toEqual(
+      expect(await Database.getPushId()).toEqual(DUMMY_SUBSCRIPTION_ID_2);
+      expect(subscriptionModel.getProperty('id')).toEqual(
         DUMMY_SUBSCRIPTION_ID_2,
       );
 
       // should have a refresh user operation
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2);
-      // @ts-expect-error - for testing purposes
       refreshOp.modelId = res.operations![0].modelId;
       expect(res).toEqual({
         result: ExecutionResult.SUCCESS,

@@ -1,7 +1,7 @@
+import Database from 'src/shared/services/Database';
 import { IdentityModel } from '../models/IdentityModel';
 import { PropertiesModel } from '../models/PropertiesModel';
 import { SubscriptionModel } from '../models/SubscriptionModel';
-import { ConfigModelStore } from '../modelStores/ConfigModelStore';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
@@ -18,13 +18,12 @@ export class RebuildUserService implements IRebuildUserService {
     private _identityModelStore: IdentityModelStore,
     private _propertiesModelStore: PropertiesModelStore,
     private _subscriptionsModelStore: SubscriptionModelStore,
-    private _configModelStore: ConfigModelStore,
   ) {}
 
-  getRebuildOperationsIfCurrentUser(
+  async getRebuildOperationsIfCurrentUser(
     appId: string,
     onesignalId: string,
-  ): Operation[] | null {
+  ): Promise<Operation[] | null> {
     const identityModel = new IdentityModel();
     identityModel.initializeFromModel(null, this._identityModelStore.model);
 
@@ -47,8 +46,9 @@ export class RebuildUserService implements IRebuildUserService {
       new LoginUserOperation(appId, onesignalId, identityModel.externalId),
     );
 
+    const pushSubscriptionId = await Database.getPushId();
     const pushSubscription = subscriptionModels.find(
-      (s) => s.id === this._configModelStore.model.pushSubscriptionId,
+      (s) => s.id === pushSubscriptionId,
     );
 
     if (pushSubscription) {

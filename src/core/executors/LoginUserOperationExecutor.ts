@@ -1,14 +1,16 @@
 import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
+import User from 'src/onesignal/User';
 import Environment from 'src/shared/helpers/Environment';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
+import Database from 'src/shared/services/Database';
 import { getTimeZoneId } from 'src/shared/utils/utils';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
-import { type ConfigModelStore } from '../modelStores/ConfigModelStore';
+import { IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
@@ -42,7 +44,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     private _identityModelStore: IdentityModelStore,
     private _propertiesModelStore: PropertiesModelStore,
     private _subscriptionsModelStore: SubscriptionModelStore,
-    private _configModelStore: ConfigModelStore,
   ) {}
 
   get operations(): string[] {
@@ -65,15 +66,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     loginUserOp: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
-    const containsSubOp = operations.some(
-      (op) =>
-        op instanceof CreateSubscriptionOperation ||
-        op instanceof TransferSubscriptionOperation,
-    );
-
-    if (!containsSubOp && !loginUserOp.externalId)
-      return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
-
     if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId)
       return this.createUser(loginUserOp, operations);
 
@@ -176,6 +168,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       const backendOneSignalId = response.result.identity.onesignal_id;
       const opOneSignalId = createUserOperation.onesignalId;
 
+      const user = User.createOrGetInstance();
+      user.isCreatingUser = false;
+      user.hasOneSignalId = true;
+
       const idTranslations: Record<string, string> = {
         [createUserOperation.onesignalId]: backendOneSignalId,
       };
@@ -194,6 +190,17 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           backendOneSignalId,
           ModelChangeTags.HYDRATE,
         );
+
+        // update other properties
+        const resultProperties = response.result.properties;
+        if (resultProperties) {
+          for (const [key, value] of Object.entries(resultProperties)) {
+            this._propertiesModelStore.model.setProperty(
+              key as IPropertiesModelKeys,
+              value,
+            );
+          }
+        }
       }
 
       for (let i = 0; i < subscriptionList.length; i++) {
@@ -203,12 +210,14 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         if (!backendSub || !('id' in backendSub)) continue;
         idTranslations[localId] = backendSub.id;
 
-        if (this._configModelStore.model.pushSubscriptionId === localId) {
-          this._configModelStore.model.pushSubscriptionId = backendSub.id;
+        const pushSubscriptionId = await Database.getPushId();
+        if (pushSubscriptionId === localId) {
+          await Database.setPushId(backendSub.id);
         }
 
-        const model = this._subscriptionsModelStore.get(localId);
-        model?.setProperty('modelId', backendSub.id, ModelChangeTags.HYDRATE);
+        const model =
+          this._subscriptionsModelStore.getBySubscriptionId(localId);
+        model?.setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
       }
 
       const followUp =
@@ -263,9 +272,14 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           ...currentSubs,
           [subscriptionId]: {
             enabled: operation.enabled,
+            device_model: operation.device_model,
+            device_os: operation.device_os,
             notification_types: operation.notification_types,
+            sdk: operation.sdk,
             token: operation.token,
             type: operation.type,
+            web_auth: operation.web_auth,
+            web_p256: operation.web_p256,
           },
         };
       }

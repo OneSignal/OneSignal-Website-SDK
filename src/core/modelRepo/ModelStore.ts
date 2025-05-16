@@ -83,7 +83,7 @@ export abstract class ModelStore<TModel extends Model>
     return this.models.find((m) => m.modelId === id);
   }
 
-  remove(id: string, tag = ModelChangeTags.NORMAL): void {
+  remove(id: string, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
     const model = this.models.find((m) => m.modelId === id);
     if (!model) return;
     this.removeItem(model, tag);
@@ -96,14 +96,17 @@ export abstract class ModelStore<TModel extends Model>
     );
   }
 
-  replaceAll(newModels: TModel[], tag: ModelChangeTagValue): void {
+  replaceAll(
+    newModels: TModel[],
+    tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
+  ): void {
     this.clear(tag);
     for (const model of newModels) {
       this.add(model, tag);
     }
   }
 
-  clear(tag: string): void {
+  clear(tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
     this.persist();
 
     for (const item of this.models) {
@@ -151,12 +154,7 @@ export abstract class ModelStore<TModel extends Model>
     if (!this.modelName) return;
 
     let jsonArray: TModel[] = [];
-    if (
-      !(
-        this.modelName === ModelName.Config ||
-        this.modelName === ModelName.Operations
-      )
-    ) {
+    if (!(this.modelName === ModelName.Operations)) {
       jsonArray = await Database.getAll<TModel>(this.modelName);
     }
 
@@ -198,7 +196,10 @@ export abstract class ModelStore<TModel extends Model>
     if (!this.modelName || !this.hasLoadedFromCache) return;
 
     for (const model of this.models) {
-      await Database.put(this.modelName, model.toJSON());
+      await Database.put(this.modelName, {
+        modelId: model.modelId,
+        ...model.toJSON(),
+      });
     }
   }
 

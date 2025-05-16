@@ -28,25 +28,24 @@ export abstract class ModelStoreListener<TModel extends Model> {
     this.store.unsubscribe(this);
   }
 
-  onModelAdded(model: TModel, tag: string): void {
+  async onModelAdded(model: TModel, tag: string): Promise<void> {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = this.getAddOperation(model);
+    const operation = await this.getAddOperation(model);
     if (operation != null) {
       this.opRepo.enqueue(operation);
     }
   }
 
-  onModelUpdated(args: ModelChangedArgs, tag: string): void {
+  async onModelUpdated(args: ModelChangedArgs, tag: string): Promise<void> {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = this.getUpdateOperation(
+    const operation = await this.getUpdateOperation(
       args.model as TModel,
-      args.path,
       args.property,
       args.oldValue,
       args.newValue,
@@ -56,12 +55,12 @@ export abstract class ModelStoreListener<TModel extends Model> {
     }
   }
 
-  onModelRemoved(model: TModel, tag: string): void {
+  async onModelRemoved(model: TModel, tag: string): Promise<void> {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = this.getRemoveOperation(model);
+    const operation = await this.getRemoveOperation(model);
     if (operation != null) {
       this.opRepo.enqueue(operation);
     }
@@ -85,7 +84,6 @@ export abstract class ModelStoreListener<TModel extends Model> {
    */
   abstract getUpdateOperation(
     model: TModel,
-    path: string,
     property: string,
     oldValue: unknown,
     newValue: unknown,

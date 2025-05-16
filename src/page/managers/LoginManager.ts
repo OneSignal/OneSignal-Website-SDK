@@ -91,7 +91,7 @@ export default class LoginManager {
         // We don't want to carry over tags and other properties from the current User if we are switching Users.
         //   - Example switching from User A to User B.
       }
-      await UserDirector.initializeUser(true);
+      await UserDirector.initializeUser();
 
       try {
         const result = await LoginManager.identifyOrUpsertUser(
@@ -160,7 +160,7 @@ export default class LoginManager {
 
     // Initialize as a local User, as we don't have a push subscription to create a remote anonymous user.
     if (pushSubModel === undefined) {
-      await UserDirector.initializeUser(true);
+      await UserDirector.initializeUser();
       return;
     }
 
@@ -168,7 +168,7 @@ export default class LoginManager {
     OneSignal.coreDirector.addSubscriptionModel(pushSubModel);
 
     // Initialize as non-local, make a request to OneSignal to create a new anonymous user
-    await UserDirector.initializeUser(false);
+    await UserDirector.initializeUser();
   }
 
   static setExternalId(identityModel: IdentityModel, externalId: string): void {

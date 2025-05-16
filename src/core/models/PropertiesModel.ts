@@ -17,7 +17,6 @@ export type IPropertiesModelValues = IPropertiesModel[keyof IPropertiesModel];
 export class PropertiesModel extends Model<IPropertiesModel> {
   constructor() {
     super();
-    this.setProperty('tags', {});
   }
 
   get onesignalId(): string {
@@ -49,7 +48,7 @@ export class PropertiesModel extends Model<IPropertiesModel> {
   }
 
   get tags(): Record<string, string> {
-    return this.getProperty('tags');
+    return this.getProperty('tags') ?? {};
   }
   set tags(value: Record<string, string>) {
     this.setProperty('tags', value);

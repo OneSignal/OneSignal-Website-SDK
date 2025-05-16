@@ -4,11 +4,11 @@ import {
 } from 'src/shared/helpers/NetworkUtils';
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import Log from 'src/shared/libraries/Log';
+import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
 import { PropertiesModel } from '../models/PropertiesModel';
 import { SubscriptionModel } from '../models/SubscriptionModel';
-import { ConfigModelStore } from '../modelStores/ConfigModelStore';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
@@ -30,7 +30,6 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
     private _identityModelStore: IdentityModelStore,
     private _propertiesModelStore: PropertiesModelStore,
     private _subscriptionsModelStore: SubscriptionModelStore,
-    private _configModelStore: ConfigModelStore,
     private _buildUserService: IRebuildUserService,
     private _newRecordState: NewRecordsState,
   ) {}
@@ -105,11 +104,11 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         }
       }
 
-      const pushSubscriptionId =
-        this._configModelStore.model.pushSubscriptionId;
+      const pushSubscriptionId = await Database.getPushId();
+
       if (pushSubscriptionId) {
         const cachedPushModel =
-          this._subscriptionsModelStore.get(pushSubscriptionId);
+          this._subscriptionsModelStore.getBySubscriptionId(pushSubscriptionId);
         if (cachedPushModel) subscriptionModels.push(cachedPushModel);
       }
 
@@ -149,7 +148,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
           );
 
         const rebuildOps =
-          this._buildUserService.getRebuildOperationsIfCurrentUser(
+          await this._buildUserService.getRebuildOperationsIfCurrentUser(
             op.appId,
             op.onesignalId,
           );

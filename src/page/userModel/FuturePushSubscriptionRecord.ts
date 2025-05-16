@@ -18,24 +18,20 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   readonly notificationTypes?: NotificationTypeValue;
   readonly sdk: string;
   readonly deviceModel: string;
-  readonly deviceOs: number;
+  readonly deviceOs: string | number;
   readonly webAuth?: string;
   readonly webp256?: string;
 
   constructor(rawPushSubscription: RawPushSubscription) {
-    const environment = EnvironmentInfoHelper.getEnvironmentInfo();
-
     this.token = this._getToken(rawPushSubscription);
     this.type = FuturePushSubscriptionRecord.getSubscriptionType();
     // TO DO: enabled
     // this.enabled = true;
     this.notificationTypes = NotificationType.Subscribed;
     // TO DO: fix VERSION type discrepancies throughout codebase
-    this.sdk = String(__VERSION__);
-    this.deviceModel = navigator.platform;
-    this.deviceOs = isNaN(environment.browserVersion)
-      ? -1
-      : environment.browserVersion;
+    this.sdk = FuturePushSubscriptionRecord.getSdk();
+    this.deviceModel = FuturePushSubscriptionRecord.getDeviceModel();
+    this.deviceOs = FuturePushSubscriptionRecord.getDeviceOS();
     this.webAuth = rawPushSubscription.w3cAuth;
     this.webp256 = rawPushSubscription.w3cP256dh;
   }
@@ -95,5 +91,18 @@ export default class FuturePushSubscriptionRecord implements Serializable {
         return DeliveryPlatformKind.SafariVapid;
     }
     return DeliveryPlatformKind.ChromeLike;
+  }
+
+  public static getDeviceOS(): string | number {
+    const environment = EnvironmentInfoHelper.getEnvironmentInfo();
+    return isNaN(environment.browserVersion) ? -1 : environment.browserVersion;
+  }
+
+  public static getDeviceModel(): string {
+    return navigator.platform;
+  }
+
+  public static getSdk(): string {
+    return String(__VERSION__);
   }
 }

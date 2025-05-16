@@ -30,20 +30,17 @@ describe('Model tests', () => {
   test('Encode function returns encoded model', async () => {
     const newSub = generateNewSubscription();
     expect(newSub.toJSON()).toEqual({
-      modelId: '0000000000',
       type: SubscriptionType.Email,
       id: '123',
       token: 'myToken',
     });
 
     const model = new SubscriptionModel();
-    model.modelId = '0000000000';
     model.setProperty('type', SubscriptionType.Email);
     model.setProperty('id', '123');
     model.setProperty('token', 'myToken');
 
     expect(model.toJSON()).toEqual({
-      modelId: '0000000000',
       type: SubscriptionType.Email,
       id: '123',
       token: 'myToken',

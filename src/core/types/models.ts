@@ -2,7 +2,6 @@ import type { Model, ModelChangedArgs } from 'src/core/models/Model';
 import type { IEventNotifier } from './events';
 
 export const ModelName = {
-  Config: 'config',
   Operations: 'operations',
   Identity: 'identity',
   Properties: 'properties',
@@ -110,7 +109,7 @@ export interface ISingletonModelStoreChangeHandler<TModel extends Model> {
    * @param model - The new model.
    * @param tag - The tag which identifies how/why the model was replaced.
    */
-  onModelReplaced(model: TModel, tag: string): void;
+  onModelReplaced(model: TModel, tag?: string): void;
 
   /**
    * Called when a property within the model has been updated.
@@ -119,7 +118,7 @@ export interface ISingletonModelStoreChangeHandler<TModel extends Model> {
    * @param args - The model change arguments.
    * @param tag - The tag which identifies how/why the model was updated.
    */
-  onModelUpdated(args: ModelChangedArgs, tag: string): void;
+  onModelUpdated(args: ModelChangedArgs, tag?: string): void;
 }
 
 export interface ISingletonModelStore<TModel extends Model>
