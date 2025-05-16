@@ -1,11 +1,8 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SessionManager } from './SessionManager';
 
-import {
-  DUMMY_EXTERNAL_ID,
-  DUMMY_ONESIGNAL_ID,
-} from '__test__/support/constants';
-import { setupLoginStubs } from '__test__/support/helpers/login';
+import { DUMMY_EXTERNAL_ID } from '__test__/support/constants';
+import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import LoginManager from 'src/page/managers/LoginManager';
 import { SessionOrigin } from 'src/shared/models/Session';
 
@@ -16,13 +13,7 @@ describe('SessionManager', () => {
         useMockIdentityModel: true,
       });
 
-      setupLoginStubs();
-      vi.spyOn(LoginManager, 'identifyOrUpsertUser').mockResolvedValue({
-        identity: {
-          external_id: DUMMY_EXTERNAL_ID,
-          onesignal_id: DUMMY_ONESIGNAL_ID,
-        },
-      });
+      setAddAliasResponse();
     });
 
     test('handleOnFocus should wait for login promise', async () => {

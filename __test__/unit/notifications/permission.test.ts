@@ -19,7 +19,6 @@ function expectPermissionChangeEvent(
 
 describe('Notifications namespace permission properties', () => {
   beforeEach(async () => {
-    vi.useFakeTimers();
     TestEnvironment.initialize();
   });
 

@@ -49,7 +49,7 @@ export default class LoginManager {
           appId,
           currentOneSignalId,
           externalId,
-          currentOneSignalId,
+          !currentExternalId ? currentOneSignalId : undefined,
         ),
       );
     } catch (e) {

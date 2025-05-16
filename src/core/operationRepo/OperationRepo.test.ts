@@ -1,3 +1,4 @@
+import { fakeWaitForOperations } from '__test__/support/helpers/executors';
 import Log from 'src/shared/libraries/Log';
 import { describe, expect, Mock, vi } from 'vitest';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
@@ -104,7 +105,7 @@ describe('OperationRepo', () => {
     expect(opRepo.queue.length).toBe(1);
 
     // index will be 1 if enqueue is after start
-    await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL * 2);
+    await fakeWaitForOperations();
 
     expect(getNextOpsSpy).toHaveBeenCalledWith(0);
     expect(opRepo.queue.length).toBe(0);

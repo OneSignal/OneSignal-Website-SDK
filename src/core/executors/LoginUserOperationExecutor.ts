@@ -194,17 +194,17 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           backendOneSignalId,
           ModelChangeTags.HYDRATE,
         );
+      }
 
-        // update other properties
-        const resultProperties = response.result.properties;
-        if (resultProperties) {
-          for (const [key, value] of Object.entries(resultProperties)) {
-            this._propertiesModelStore.model.setProperty(
-              key as IPropertiesModelKeys,
-              value,
-              ModelChangeTags.HYDRATE,
-            );
-          }
+      // update other properties
+      const resultProperties = response.result.properties;
+      if (resultProperties) {
+        for (const [key, value] of Object.entries(resultProperties)) {
+          this._propertiesModelStore.model.setProperty(
+            key as IPropertiesModelKeys,
+            value,
+            ModelChangeTags.HYDRATE,
+          );
         }
       }
 
