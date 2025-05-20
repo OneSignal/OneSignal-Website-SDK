@@ -1,7 +1,7 @@
 import Emitter from '../libraries/Emitter';
 import IndexedDb from './IndexedDb';
 
-import { ICreateUserSubscription } from 'src/core/types/api';
+import { ICreateUserSubscription, IUserProperties } from 'src/core/types/api';
 import { ModelNameType } from 'src/core/types/models';
 import {
   NotificationClickForOpenHandlingSchema,
@@ -68,6 +68,10 @@ export interface SubscriptionItem extends ModelItem, ICreateUserSubscription {
 export interface IdentityItem extends ModelItem {
   onesignalId: string;
   externalId: string;
+}
+
+export interface PropertiesItem extends ModelItem, IUserProperties {
+  onesignalId: string;
 }
 
 export default class Database {

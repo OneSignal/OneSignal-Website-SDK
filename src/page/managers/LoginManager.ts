@@ -1,3 +1,5 @@
+import { IdentityModel } from 'src/core/models/IdentityModel';
+import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
@@ -65,26 +67,19 @@ export default class LoginManager {
     // check if user is already logged out
     const identityModel = OneSignal.coreDirector.getIdentityModel();
 
-    if (!identityModel.externalId) {
-      Log.debug('Logout: User is not logged in, skipping logout');
-      return;
-    }
+    if (!identityModel.externalId)
+      return Log.debug('Logout: User is not logged in, skipping logout');
 
-    // before, logging out, process anything waiting in the delta queue so it's not lost
     UserDirector.resetUserMetaProperties();
-    const pushSubModel =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
 
-    // Initialize as a local User, as we don't have a push subscription to create a remote anonymous user.
-    if (pushSubModel === undefined) {
-      await UserDirector.initializeUser();
-      return;
-    }
+    // replace models
+    const newIdentityModel = new IdentityModel();
+    OneSignal.coreDirector.identityModelStore.replace(newIdentityModel);
 
-    // add the push subscription model back to the repo since we need at least 1 sub to create a new user
-    OneSignal.coreDirector.addSubscriptionModel(pushSubModel);
+    const newPropertiesModel = new PropertiesModel();
+    OneSignal.coreDirector.propertiesModelStore.replace(newPropertiesModel);
 
-    // Initialize as non-local, make a request to OneSignal to create a new anonymous user
-    await UserDirector.initializeUser();
+    // create a new anonymous user
+    UserDirector.initializeUser();
   }
 }
