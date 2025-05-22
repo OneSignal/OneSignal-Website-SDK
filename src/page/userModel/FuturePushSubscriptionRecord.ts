@@ -25,8 +25,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   constructor(rawPushSubscription: RawPushSubscription) {
     this.token = this._getToken(rawPushSubscription);
     this.type = FuturePushSubscriptionRecord.getSubscriptionType();
-    // TO DO: enabled
-    // this.enabled = true;
+    this.enabled = true;
     this.notificationTypes = NotificationType.Subscribed;
     // TO DO: fix VERSION type discrepancies throughout codebase
     this.sdk = FuturePushSubscriptionRecord.getSdk();

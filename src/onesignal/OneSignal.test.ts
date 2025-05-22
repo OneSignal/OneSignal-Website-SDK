@@ -27,15 +27,24 @@ import {
 } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { IdentityModel } from 'src/core/models/IdentityModel';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ICreateUserSubscription } from 'src/core/types/api';
+import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
 import Database, {
   IdentityItem,
+  PropertiesItem,
   SubscriptionItem,
 } from 'src/shared/services/Database';
 import LocalStorage from 'src/shared/utils/LocalStorage';
 
 const debugSpy = vi.spyOn(Log, 'debug');
+
+const getIdentityItem = async () =>
+  (await Database.get<IdentityItem[]>('identity'))[0];
+
+const getPropertiesItem = async () =>
+  (await Database.get<PropertiesItem[]>('properties'))[0];
 
 describe('OneSignal', () => {
   beforeAll(async () => {
@@ -123,12 +132,24 @@ describe('OneSignal', () => {
 
         window.OneSignal.User.addAlias('someLabel', 'someId');
         window.OneSignal.User.addAlias('someLabel2', 'someId2');
-        await waitForOperations();
+
+        let identityModel = window.OneSignal.coreDirector.getIdentityModel();
+        expect(identityModel.getProperty('someLabel')).toBe('someId');
+        expect(identityModel.getProperty('someLabel2')).toBe('someId2');
+        await vi.waitUntil(async () => {
+          return addAliasFn.mock.calls.length === 2;
+        });
+
         window.OneSignal.User.removeAlias('someLabel');
         window.OneSignal.User.removeAlias('someLabel2');
 
-        await waitForOperations(4);
-        expect(deleteAliasFn).toHaveBeenCalledTimes(2);
+        await vi.waitUntil(async () => {
+          return deleteAliasFn.mock.calls.length === 2;
+        });
+
+        identityModel = window.OneSignal.coreDirector.getIdentityModel();
+        expect(identityModel.getProperty('someLabel')).toBeUndefined();
+        expect(identityModel.getProperty('someLabel2')).toBeUndefined();
       });
     });
 
@@ -313,9 +334,6 @@ describe('OneSignal', () => {
 
     describe('login', () => {
       const externalId = 'jd-1';
-      const getIdentityItem = async () =>
-        (await Database.get<IdentityItem[]>('identity'))[0];
-
       beforeEach(() => {
         setAddAliasResponse();
       });
@@ -478,6 +496,109 @@ describe('OneSignal', () => {
         const dbSubscriptions = await Database.get('subscriptions');
         expect(dbSubscriptions).toMatchObject([
           { id: DUMMY_SUBSCRIPTION_ID, type: 'ChromePush', token: 'abc123' },
+        ]);
+      });
+    });
+
+    describe('logout', () => {
+      test('should not do anything if user has no external id', async () => {
+        const identityModel = window.OneSignal.coreDirector.getIdentityModel();
+        expect(identityModel.externalId).toBeUndefined();
+
+        window.OneSignal.logout();
+        expect(debugSpy).toHaveBeenCalledWith(
+          'Logout: User is not logged in, skipping logout',
+        );
+      });
+
+      test('can logout the user with existing external id and subscription', async () => {
+        const token = 'abc123';
+        const type = 'ChromePush';
+
+        // existing user
+        let identityModel = window.OneSignal.coreDirector.getIdentityModel();
+        identityModel.setProperty(
+          'external_id',
+          'jd-1',
+          ModelChangeTags.NO_PROPOGATE,
+        );
+
+        // create a push subscription
+        await Database.remove('subscriptions');
+        const subModel = new SubscriptionModel();
+        subModel.initializeFromJson({
+          id: DUMMY_SUBSCRIPTION_ID,
+          type,
+          token,
+        });
+        window.OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+          [subModel],
+          ModelChangeTags.NO_PROPOGATE,
+        );
+
+        const appState = await Database.getAppState();
+        await Database.setAppState({
+          ...appState,
+          lastKnownPushToken: token,
+        });
+
+        await vi.waitUntil(async () => {
+          const subscriptions =
+            await Database.get<SubscriptionItem[]>('subscriptions');
+          return subscriptions.length > 0;
+        });
+
+        setCreateUserResponse({});
+        await window.OneSignal.logout();
+
+        // identity model should be reset
+        identityModel = window.OneSignal.coreDirector.getIdentityModel();
+        expect(identityModel.toJSON()).toEqual({}); // no one signal id
+
+        let identityData = await getIdentityItem();
+        expect(identityData).toEqual({
+          modelId: expect.any(String),
+          onesignal_id: undefined,
+        });
+
+        // properties model should be reset
+        const propertiesModel =
+          window.OneSignal.coreDirector.getPropertiesModel();
+        expect(propertiesModel.toJSON()).toEqual({});
+
+        let propertiesData = await getPropertiesItem();
+        expect(propertiesData).toEqual({
+          modelId: expect.any(String),
+        });
+        await waitForOperations(3);
+
+        // should update models and db
+        identityModel = window.OneSignal.coreDirector.getIdentityModel();
+        expect(identityModel.toJSON()).toEqual({
+          onesignal_id: DUMMY_ONESIGNAL_ID,
+        });
+
+        identityData = await getIdentityItem();
+        expect(identityData).toEqual({
+          modelId: expect.any(String),
+          onesignal_id: DUMMY_ONESIGNAL_ID,
+        });
+
+        propertiesData = await getPropertiesItem();
+        expect(propertiesData).toEqual({
+          modelId: expect.any(String),
+          onesignalId: DUMMY_ONESIGNAL_ID,
+        });
+
+        const subscriptions =
+          await Database.get<SubscriptionItem[]>('subscriptions');
+        expect(subscriptions).toEqual([
+          {
+            id: DUMMY_SUBSCRIPTION_ID,
+            modelId: expect.any(String),
+            token,
+            type,
+          },
         ]);
       });
     });
