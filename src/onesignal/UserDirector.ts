@@ -1,10 +1,10 @@
+import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
-import { ICreateUser } from 'src/core/types/api';
 import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
-import { logMethodCall } from '../shared/utils/utils';
+import { delay, logMethodCall } from '../shared/utils/utils';
 import User from './User';
 
 export default class UserDirector {
@@ -25,7 +25,6 @@ export default class UserDirector {
     if (user.isCreatingUser) return;
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-
     const appId = await MainHelper.getAppId();
     user.isCreatingUser = true;
 
@@ -49,34 +48,20 @@ export default class UserDirector {
         ...rest,
       }),
     );
+
+    // in case OneSignal.init and OneSignal.login are both called in a short time period
+    // we need this create operation to finish before attempting to execute the login (with external id) operation
+    // otherwise the login operation executor will error since there will be two login operations
+    await delay(OP_REPO_EXECUTION_INTERVAL * 2);
   }
 
-  static createAndHydrateUser(): void {
-    UserDirector.createUserOnServer();
+  static createAndHydrateUser(): Promise<void> {
+    return UserDirector.createUserOnServer();
   }
 
   static resetUserMetaProperties() {
     const user = User.createOrGetInstance();
     user.hasOneSignalId = false;
     user.isCreatingUser = false;
-  }
-
-  static async getAllUserData(): Promise<ICreateUser> {
-    logMethodCall('LoginManager.getAllUserData');
-
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-    const subscriptionModels =
-      await OneSignal.coreDirector.getAllSubscriptionsModels();
-
-    const userData: ICreateUser = {
-      identity: identityModel.toJSON(),
-      properties: propertiesModel.toJSON(),
-      subscriptions: subscriptionModels?.map((subscription) =>
-        subscription.toJSON(),
-      ),
-    };
-
-    return userData;
   }
 }

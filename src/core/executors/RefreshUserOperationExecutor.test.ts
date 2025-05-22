@@ -12,8 +12,10 @@ import {
   getRebuildOpsFn,
   SomeOperation,
 } from '__test__/support/helpers/executors';
-import { server } from '__test__/support/mocks/server';
-import { http, HttpResponse } from 'msw';
+import {
+  setGetUserError,
+  setGetUserResponse,
+} from '__test__/support/helpers/requests';
 import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -22,7 +24,6 @@ import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
-import { ISubscription, UserData } from '../types/api';
 import { ExecutionResult } from '../types/operation';
 import { NotificationType, SubscriptionType } from '../types/subscription';
 import { RefreshUserOperationExecutor } from './RefreshUserOperationExecutor';
@@ -84,7 +85,12 @@ describe('RefreshUserOperationExecutor', () => {
     });
 
     test('should ignore refresh if id is different in identity model store', async () => {
-      setGetUserResponse(DUMMY_ONESIGNAL_ID_2, {}, { language: 'fr' });
+      setGetUserResponse({
+        onesignalId: DUMMY_ONESIGNAL_ID_2,
+        properties: {
+          language: 'fr',
+        },
+      });
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2);
 
@@ -94,8 +100,27 @@ describe('RefreshUserOperationExecutor', () => {
     });
 
     test('should handle successful user retrieval and update models', async () => {
-      setGetUserResponse();
-      propertiesModelStore.model.setProperty('onesignalId', DUMMY_ONESIGNAL_ID);
+      setGetUserResponse({
+        externalId: 'test_user',
+        properties: {
+          country: 'US',
+          language: 'en',
+          tags: {
+            test_tag: 'test_value',
+            test_tag_2: 'test_value_2',
+          },
+          timezone_id: 'America/New_York',
+        },
+        subscriptions: [
+          {
+            app_id: APP_ID,
+            id: DUMMY_SUBSCRIPTION_ID,
+            type: SubscriptionType.Email,
+            token: 'test@example.com',
+            notification_types: NotificationType.UserOptedOut,
+          },
+        ],
+      });
 
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
@@ -150,13 +175,16 @@ describe('RefreshUserOperationExecutor', () => {
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
 
       // Mock response without push subscription
-      setGetUserResponse(DUMMY_ONESIGNAL_ID, {}, {}, [
-        {
-          id: 'email-sub-id',
-          type: SubscriptionType.Email,
-          token: 'test@example.com',
-        },
-      ]);
+      setGetUserResponse({
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        subscriptions: [
+          {
+            id: 'email-sub-id',
+            type: SubscriptionType.Email,
+            token: 'test@example.com',
+          },
+        ],
+      });
 
       await executor.execute([refreshOp]);
 
@@ -178,7 +206,10 @@ describe('RefreshUserOperationExecutor', () => {
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
 
       // retryable error
-      setGetUserError(429, 10);
+      setGetUserError({
+        status: 429,
+        retryAfter: 10,
+      });
       const res1 = await executor.execute([refreshOp]);
       expect(res1).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -186,7 +217,10 @@ describe('RefreshUserOperationExecutor', () => {
       });
 
       // unauthorized error
-      setGetUserError(401, 15);
+      setGetUserError({
+        status: 401,
+        retryAfter: 15,
+      });
       const res2 = await executor.execute([refreshOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_UNAUTHORIZED,
@@ -195,7 +229,10 @@ describe('RefreshUserOperationExecutor', () => {
 
       // missing error
       // -- no rebuild ops
-      setGetUserError(404, 5);
+      setGetUserError({
+        status: 404,
+        retryAfter: 5,
+      });
       const res3 = await executor.execute([refreshOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
@@ -214,7 +251,10 @@ describe('RefreshUserOperationExecutor', () => {
 
       // -- in missing retry window
       newRecordsState.add(DUMMY_ONESIGNAL_ID);
-      setGetUserError(404, 20);
+      setGetUserError({
+        status: 404,
+        retryAfter: 20,
+      });
       const res6 = await executor.execute([refreshOp]);
       expect(res6).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -222,7 +262,9 @@ describe('RefreshUserOperationExecutor', () => {
       });
 
       // other errors
-      setGetUserError(400);
+      setGetUserError({
+        status: 400,
+      });
       const res7 = await executor.execute([refreshOp]);
       expect(res7).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
@@ -231,55 +273,3 @@ describe('RefreshUserOperationExecutor', () => {
     });
   });
 });
-
-const getUserUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
-  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
-
-const setGetUserResponse = (
-  onesignalId = DUMMY_ONESIGNAL_ID,
-  identity: Omit<UserData['identity'], 'onesignal_id'> = {
-    external_id: 'test_user',
-  },
-  properties: UserData['properties'] = {
-    country: 'US',
-    language: 'en',
-    tags: { test_tag: 'test_value', test_tag_2: 'test_value_2' },
-    timezone_id: 'America/New_York',
-  },
-  subscriptions: Partial<ISubscription>[] = [
-    {
-      app_id: APP_ID,
-      id: DUMMY_SUBSCRIPTION_ID,
-      type: SubscriptionType.Email,
-      token: 'test@example.com',
-      notification_types: NotificationType.UserOptedOut,
-    },
-  ],
-) => {
-  server.use(
-    http.get(getUserUri(onesignalId), () =>
-      HttpResponse.json({
-        identity: {
-          onesignal_id: onesignalId,
-          ...identity,
-        },
-        properties,
-        subscriptions,
-      }),
-    ),
-  );
-};
-const setGetUserError = (status: number, retryAfter?: number) =>
-  server.use(
-    http.get(getUserUri(), () =>
-      HttpResponse.json(
-        {},
-        {
-          status,
-          headers: retryAfter
-            ? { 'Retry-After': retryAfter?.toString() }
-            : undefined,
-        },
-      ),
-    ),
-  );

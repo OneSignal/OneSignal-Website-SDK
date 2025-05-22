@@ -80,6 +80,7 @@ export default class InitHelper {
     // saves isOptedOut to localStorage. used for require user interaction functionality
     const subscription = await Database.getSubscription();
     subscription.optedOut = isOptedOut;
+
     await Database.setSubscription(subscription);
     await InitHelper.handleAutoResubscribe(isOptedOut);
 

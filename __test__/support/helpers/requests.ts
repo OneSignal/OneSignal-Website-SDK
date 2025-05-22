@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { ISubscription, IUserProperties } from 'src/core/types/api';
 import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
 import {
   APP_ID,
@@ -56,11 +57,13 @@ export const getHandler = ({
 }) => {
   server.use(
     http[method](uri, async ({ request }) => {
-      if (method !== 'delete') {
-        callback?.(await request.json());
-      } else {
+      try {
+        const body = await request.json();
+        callback?.(body);
+      } catch (error) {
         callback?.();
       }
+
       return HttpResponse.json(response, {
         status,
         headers: retryAfter
@@ -171,17 +174,84 @@ export const setDeleteSubscriptionResponse = ({
 const getUserUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
   `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
 
+// get user
+export const getUserFn = vi.fn();
 export const setGetUserResponse = ({
-  onesignalId,
-  response = {
-    identity: {
-      onesignal_id: DUMMY_ONESIGNAL_ID,
-    },
-  },
-}: { onesignalId?: string; response?: object } = {}) =>
+  onesignalId = DUMMY_ONESIGNAL_ID,
+  newOnesignalId = DUMMY_ONESIGNAL_ID,
+  externalId,
+  subscriptions = [],
+  properties = {},
+}: {
+  onesignalId?: string;
+  newOnesignalId?: string;
+  externalId?: string;
+  subscriptions?: Partial<ISubscription>[];
+  properties?: Partial<IUserProperties>;
+} = {}) =>
   getHandler({
     uri: getUserUri(onesignalId),
     method: 'get',
     status: 200,
-    response,
+    response: {
+      identity: {
+        onesignal_id: newOnesignalId,
+        external_id: externalId,
+      },
+      subscriptions,
+      properties,
+    },
+    callback: getUserFn,
   });
+
+// get user error
+export const setGetUserError = ({
+  onesignalId = DUMMY_ONESIGNAL_ID,
+  status,
+  retryAfter,
+}: {
+  onesignalId?: string;
+  status: number;
+  retryAfter?: number;
+}) =>
+  getHandler({
+    uri: getUserUri(onesignalId),
+    method: 'get',
+    status,
+    retryAfter,
+  });
+
+// create user
+const getCreateUserUri = () => `**/api/v1/apps/${APP_ID}/users`;
+export const createUserFn = vi.fn();
+export const setCreateUserResponse = ({
+  onesignalId = DUMMY_ONESIGNAL_ID,
+  subscriptions = [],
+  externalId,
+}: {
+  onesignalId?: string;
+  subscriptions?: Partial<ISubscription>[];
+  externalId?: string;
+} = {}) =>
+  getHandler({
+    uri: getCreateUserUri(),
+    method: 'post',
+    status: 200,
+    response: {
+      identity: {
+        onesignal_id: onesignalId,
+        external_id: externalId,
+      },
+      subscriptions,
+    },
+    callback: createUserFn,
+  });
+
+export const setCreateUserError = ({
+  status,
+  retryAfter,
+}: {
+  status: number;
+  retryAfter?: number;
+}) =>
+  getHandler({ uri: getCreateUserUri(), method: 'post', status, retryAfter });

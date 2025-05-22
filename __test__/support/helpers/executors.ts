@@ -1,5 +1,7 @@
+import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { GroupComparisonType, Operation } from 'src/core/operations/Operation';
 import { IRebuildUserService } from 'src/core/types/user';
+import { delay } from 'src/shared/utils/utils';
 
 export class SomeOperation extends Operation {
   constructor() {
@@ -34,3 +36,10 @@ export class BuildUserService implements IRebuildUserService {
     return getRebuildOpsFn(...args);
   }
 }
+
+export const fakeWaitForOperations = async (amount = 2) => {
+  await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL * amount);
+};
+export const waitForOperations = async (amount = 2) => {
+  await delay(OP_REPO_EXECUTION_INTERVAL * amount);
+};

@@ -8,17 +8,19 @@ import {
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
 } from '__test__/support/constants';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
   BuildUserService,
   SomeOperation,
 } from '__test__/support/helpers/executors';
 import {
+  createUserFn,
   setAddAliasError,
   setAddAliasResponse,
+  setCreateUserError,
+  setCreateUserResponse,
 } from '__test__/support/helpers/requests';
-import { server } from '__test__/support/mocks/server';
-import { http, HttpResponse } from 'msw';
 import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -33,7 +35,6 @@ import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import { ICreateUser, ISubscription } from '../types/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { NotificationType, SubscriptionType } from '../types/subscription';
@@ -47,6 +48,10 @@ let subscriptionModelStore: SubscriptionModelStore;
 vi.mock('src/shared/libraries/Log');
 
 describe('LoginUserOperationExecutor', () => {
+  beforeAll(async () => {
+    await TestEnvironment.initialize();
+  });
+
   beforeEach(() => {
     mockUserAgent();
     identityModelStore = new IdentityModelStore();
@@ -88,7 +93,9 @@ describe('LoginUserOperationExecutor', () => {
 
   describe('create user', () => {
     beforeEach(() => {
-      setCreateUser(DUMMY_ONESIGNAL_ID);
+      setCreateUserResponse({
+        onesignalId: DUMMY_ONESIGNAL_ID,
+      });
     });
 
     test('should fail if there are invalid operations', async () => {
@@ -139,8 +146,10 @@ describe('LoginUserOperationExecutor', () => {
         type: SubscriptionType.ChromePush,
         token: DUMMY_PUSH_TOKEN,
       };
-      // @ts-expect-error - TODO: add more properties to subscription
-      setCreateUser(DUMMY_ONESIGNAL_ID_2, [someSubscription]);
+      setCreateUserResponse({
+        onesignalId: DUMMY_ONESIGNAL_ID_2,
+        subscriptions: [someSubscription],
+      });
 
       // have identity model, config, properties model have the same onesignalId to check
       // that their properties are updated
@@ -205,7 +214,7 @@ describe('LoginUserOperationExecutor', () => {
       const ops = [loginOp, createSubOp];
 
       // retryable error
-      setCreateUserError(429, 10);
+      setCreateUserError({ status: 429, retryAfter: 10 });
       const res = await executor.execute(ops);
       expect(res).toEqual({
         result: ExecutionResult.FAIL_RETRY,
@@ -213,7 +222,7 @@ describe('LoginUserOperationExecutor', () => {
       });
 
       // unauthorized error
-      setCreateUserError(401, 15);
+      setCreateUserError({ status: 401, retryAfter: 15 });
       const res2 = await executor.execute(ops);
       expect(res2).toEqual({
         result: ExecutionResult.FAIL_UNAUTHORIZED,
@@ -221,7 +230,7 @@ describe('LoginUserOperationExecutor', () => {
       });
 
       // others errors - pause repo
-      setCreateUserError(400, 20);
+      setCreateUserError({ status: 400, retryAfter: 20 });
       const res3 = await executor.execute(ops);
       expect(res3).toEqual({
         result: ExecutionResult.FAIL_PAUSE_OPREPO,
@@ -275,7 +284,9 @@ describe('LoginUserOperationExecutor', () => {
 
       // Conflict error - should create user
       setAddAliasError({ status: 409 });
-      setCreateUser('123');
+      setCreateUserResponse({
+        onesignalId: '123',
+      });
 
       const res = await executor.execute([loginOp]);
       expect(res).toMatchObject({
@@ -287,7 +298,9 @@ describe('LoginUserOperationExecutor', () => {
 
       // Fail no retry - should create user
       setAddAliasError({ status: 400 });
-      setCreateUser('456');
+      setCreateUserResponse({
+        onesignalId: '456',
+      });
 
       const res2 = await executor.execute([loginOp]);
       expect(res2).toMatchObject({
@@ -309,7 +322,9 @@ describe('LoginUserOperationExecutor', () => {
 
   describe('create subscriptions', () => {
     test('can create a subscriptions', async () => {
-      setCreateUser(DUMMY_ONESIGNAL_ID);
+      setCreateUserResponse({
+        onesignalId: DUMMY_ONESIGNAL_ID,
+      });
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
@@ -341,7 +356,9 @@ describe('LoginUserOperationExecutor', () => {
     });
 
     test('can update a subscription', async () => {
-      setCreateUser(DUMMY_ONESIGNAL_ID);
+      setCreateUserResponse({
+        onesignalId: DUMMY_ONESIGNAL_ID,
+      });
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
@@ -387,7 +404,9 @@ describe('LoginUserOperationExecutor', () => {
     });
 
     test('can transfer a subscription', async () => {
-      setCreateUser(DUMMY_ONESIGNAL_ID);
+      setCreateUserResponse({
+        onesignalId: DUMMY_ONESIGNAL_ID,
+      });
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
@@ -421,7 +440,10 @@ describe('LoginUserOperationExecutor', () => {
     });
 
     test('can delete a subscription', async () => {
-      setCreateUser(DUMMY_ONESIGNAL_ID);
+      setCreateUserResponse({
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        subscriptions: [mockSubscriptionOpInfo],
+      });
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
@@ -454,39 +476,3 @@ const mockSubscriptionOpInfo = {
   token: DUMMY_PUSH_TOKEN,
   type: SubscriptionType.ChromePush,
 } satisfies SubscriptionWithAppId;
-
-const createUserUri = `**/api/v1/apps/${APP_ID}/users`;
-
-const createUserFn = vi.fn();
-const setCreateUser = (
-  onesignalId: string,
-  subscriptions?: ISubscription[],
-) => {
-  server.use(
-    http.post(createUserUri, async ({ request }) => {
-      createUserFn(await request.json());
-      return HttpResponse.json({
-        identity: {
-          onesignal_id: onesignalId,
-        },
-        subscriptions,
-      } satisfies ICreateUser);
-    }),
-  );
-};
-
-const setCreateUserError = (status: number, retryAfter?: number) => {
-  server.use(
-    http.post(createUserUri, () =>
-      HttpResponse.json(
-        { error: 'error' },
-        {
-          status,
-          headers: retryAfter
-            ? { 'Retry-After': retryAfter?.toString() }
-            : undefined,
-        },
-      ),
-    ),
-  );
-};

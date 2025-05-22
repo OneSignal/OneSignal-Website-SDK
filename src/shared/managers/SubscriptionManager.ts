@@ -177,8 +177,7 @@ export class SubscriptionManager {
 
     if (!pushModel) {
       OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
-      UserDirector.createAndHydrateUser();
-      return;
+      return UserDirector.createAndHydrateUser();
     }
     // resubscribing. update existing push subscription model
     const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(

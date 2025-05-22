@@ -5,7 +5,6 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Log from 'src/shared/libraries/Log';
 
-vi.useFakeTimers();
 // need to mock browsercastle since we resetting modules after each test
 vi.mock('src/shared/utils/bowserCastle', () => ({
   bowserCastle: () => ({
@@ -62,13 +61,12 @@ describe('pageSdkInit', () => {
     const initSpy = vi.spyOn(window.OneSignal, 'init');
 
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    window.OneSignalDeferred.push(async function (OneSignal) {
-      await OneSignal.init({
+    await window.OneSignalDeferred.push(async function (OneSignal) {
+      return OneSignal.init({
         appId: APP_ID,
       });
     });
 
-    await vi.runOnlyPendingTimersAsync();
     expect(initSpy).toHaveBeenCalled();
   });
 });

@@ -11,26 +11,24 @@ export class InvalidArgumentError extends OneSignalError {
   argument: string;
   reason: string;
 
-  constructor(
-    argName: string,
-    reason: InvalidArgumentReason,
-    message?: string,
-  ) {
+  constructor(argName: string, reason: InvalidArgumentReason, message = '') {
     let errorMessage;
     switch (reason) {
       case InvalidArgumentReason.Empty:
-        errorMessage = `Supply a non-empty value to '${argName}'. ${message}`;
+        errorMessage = `Supply a non-empty value to '${argName}'.`;
         break;
       case InvalidArgumentReason.Malformed:
-        errorMessage = `The value for '${argName}' was malformed. ${message}`;
+        errorMessage = `The value for '${argName}' was malformed.`;
         break;
       case InvalidArgumentReason.EnumOutOfRange:
-        errorMessage = `The value for '${argName}' was out of range of the expected input enum. ${message}`;
+        errorMessage = `The value for '${argName}' was out of range of the expected input enum.`;
         break;
       case InvalidArgumentReason.WrongType:
-        errorMessage = `The value for '${argName}' was of the wrong type. ${message}`;
+        errorMessage = `The value for '${argName}' was of the wrong type.`;
         break;
     }
+
+    if (message) errorMessage += ` ${message}`;
 
     super(errorMessage);
     this.argument = argName;

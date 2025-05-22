@@ -8,16 +8,7 @@ import BrowserUserAgent from '../../support/models/BrowserUserAgent';
 vi.mock('../../../src/shared/helpers/DismissHelper');
 
 //stub log
-vi.useFakeTimers();
-vi.mock('../../../src/shared/libraries/Log', () => ({
-  default: {
-    debug: vi.fn(),
-    trace: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock('src/shared/libraries/Log');
 
 describe('Register for push', () => {
   beforeEach(async () => {
