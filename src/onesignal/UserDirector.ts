@@ -49,7 +49,9 @@ export default class UserDirector {
       }),
     );
 
-    // in case init and login are in the same bucket
+    // in case OneSignal.init and OneSignal.login are both called in a short time period
+    // we need this create operation to finish before attempting to execute the login (with external id) operation
+    // otherwise the login operation executor will error since there will be two login operations
     await delay(OP_REPO_EXECUTION_INTERVAL * 2);
   }
 
