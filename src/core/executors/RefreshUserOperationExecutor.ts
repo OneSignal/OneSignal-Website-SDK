@@ -7,7 +7,10 @@ import Log from 'src/shared/libraries/Log';
 import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
-import { PropertiesModel } from '../models/PropertiesModel';
+import {
+  IPropertiesModelKeys,
+  PropertiesModel,
+} from '../models/PropertiesModel';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -75,12 +78,10 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       propertiesModel.onesignalId = op.onesignalId;
 
       const { properties = {}, subscriptions = [] } = result;
-      const { country, language, tags, timezone_id } = properties;
 
-      if (country) propertiesModel.country = country;
-      if (language) propertiesModel.language = language;
-      if (tags) propertiesModel.tags = tags;
-      if (timezone_id) propertiesModel.timezone_id = timezone_id;
+      Object.entries(properties).forEach(([key, value]) => {
+        propertiesModel.setProperty(key as IPropertiesModelKeys, value);
+      });
 
       const subscriptionModels: SubscriptionModel[] = [];
       for (const sub of subscriptions) {

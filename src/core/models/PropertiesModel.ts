@@ -2,6 +2,7 @@ import { IUserProperties } from '../types/api';
 import { Model } from './Model';
 
 type IPropertiesModel = {
+  ip: string;
   country: IUserProperties['country'];
   language: IUserProperties['language'];
   onesignalId: string;
@@ -24,6 +25,13 @@ export class PropertiesModel extends Model<IPropertiesModel> {
   }
   set onesignalId(value: string) {
     this.setProperty('onesignalId', value);
+  }
+
+  get ip(): string | undefined {
+    return this.getProperty('ip');
+  }
+  set ip(value: string | undefined) {
+    this.setProperty('ip', value);
   }
 
   get country(): string | undefined {
