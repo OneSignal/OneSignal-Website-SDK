@@ -13,8 +13,6 @@ import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { SetTagOperation } from '../operations/SetTagOperation';
-import { TrackSessionEndOperation } from '../operations/TrackSessionEndOperation';
-import { TrackSessionStartOperation } from '../operations/TrackSessionStartOperation';
 import { ExecutionResult } from '../types/operation';
 import { UpdateUserOperationExecutor } from './UpdateUserOperationExecutor';
 
@@ -54,8 +52,6 @@ describe('UpdateUserOperationExecutor', () => {
       OPERATION_NAME.SET_TAG,
       OPERATION_NAME.DELETE_TAG,
       OPERATION_NAME.SET_PROPERTY,
-      OPERATION_NAME.TRACK_SESSION_START,
-      OPERATION_NAME.TRACK_SESSION_END,
     ]);
   });
 
@@ -176,91 +172,6 @@ describe('UpdateUserOperationExecutor', () => {
       const result = await executor.execute([setPropertyOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
       expect(propertiesModelStore.model.language).toBe('fr');
-    });
-  });
-
-  describe('TrackSessionOperations', () => {
-    beforeEach(() => {
-      setUpdateUserResponse();
-    });
-
-    test('should handle track session start operation', async () => {
-      const executor = getExecutor();
-      const sessionStartOp = new TrackSessionStartOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-      );
-
-      const result = await executor.execute([sessionStartOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-
-      expect(updateUserFn).toHaveBeenCalledWith({
-        deltas: {
-          session_count: 1,
-        },
-        properties: {},
-        refresh_device_metadata: true,
-      });
-    });
-
-    test('should handle track session end operation', async () => {
-      const executor = getExecutor();
-      const sessionEndOp = new TrackSessionEndOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        120, // Session time in seconds
-      );
-
-      const result = await executor.execute([sessionEndOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-
-      expect(updateUserFn).toHaveBeenCalledWith({
-        deltas: {
-          session_time: 120,
-        },
-        properties: {},
-        refresh_device_metadata: false,
-      });
-    });
-
-    test('should handle multiple track session operations', async () => {
-      const executor = getExecutor();
-      const sessionStartOp = new TrackSessionStartOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-      );
-      const sessionEndOp = new TrackSessionEndOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        50,
-      );
-      const sessionStartOp2 = new TrackSessionStartOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-      );
-      const sessionEndOp2 = new TrackSessionEndOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        125,
-      );
-
-      const result = await executor.execute([
-        sessionStartOp,
-        sessionEndOp,
-        sessionStartOp2,
-        sessionEndOp2,
-      ]);
-
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-
-      expect(updateUserFn).toHaveBeenCalledWith({
-        deltas: {
-          session_count: 2,
-          session_time: 175,
-        },
-        properties: {},
-        refresh_device_metadata: true,
-      });
     });
   });
 

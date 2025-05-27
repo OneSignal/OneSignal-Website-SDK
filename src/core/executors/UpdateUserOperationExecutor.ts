@@ -19,8 +19,6 @@ import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { SetTagOperation } from '../operations/SetTagOperation';
-import { TrackSessionEndOperation } from '../operations/TrackSessionEndOperation';
-import { TrackSessionStartOperation } from '../operations/TrackSessionStartOperation';
 import AliasPair from '../requestService/AliasPair';
 import { RequestService } from '../requestService/RequestService';
 import { ModelChangeTags } from '../types/models';
@@ -42,8 +40,6 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
       OPERATION_NAME.SET_TAG,
       OPERATION_NAME.DELETE_TAG,
       OPERATION_NAME.SET_PROPERTY,
-      OPERATION_NAME.TRACK_SESSION_START,
-      OPERATION_NAME.TRACK_SESSION_END,
     ];
   }
 
@@ -51,8 +47,8 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     let appId: string | null = null;
     let onesignalId: string | null = null;
     let propertiesObject = new PropertiesObject();
-    let deltasObject = new PropertiesDeltasObject();
-    let refreshDeviceMetadata = false;
+    const deltasObject = new PropertiesDeltasObject();
+    const refreshDeviceMetadata = false;
 
     for (const operation of operations) {
       if (
@@ -69,31 +65,6 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
             operation,
             propertiesObject,
           );
-      } else if (operation instanceof TrackSessionStartOperation) {
-        if (!appId) {
-          appId = operation.appId;
-          onesignalId = operation.onesignalId;
-        }
-        const sessionCount = deltasObject.session_count
-          ? deltasObject.session_count + 1
-          : 1;
-        deltasObject = new PropertiesDeltasObject(
-          deltasObject.session_time,
-          sessionCount,
-        );
-        refreshDeviceMetadata = true;
-      } else if (operation instanceof TrackSessionEndOperation) {
-        if (!appId) {
-          appId = operation.appId;
-          onesignalId = operation.onesignalId;
-        }
-        const sessionTime = deltasObject.session_time
-          ? deltasObject.session_time + operation.sessionTime
-          : operation.sessionTime;
-        deltasObject = new PropertiesDeltasObject(
-          sessionTime,
-          deltasObject.session_count,
-        );
       } else {
         throw new Error(`Unrecognized operation: ${operation}`);
       }
