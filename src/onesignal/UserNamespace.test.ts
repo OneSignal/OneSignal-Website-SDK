@@ -2,10 +2,10 @@ import {
   DUMMY_ONESIGNAL_ID,
   DUMMY_PUSH_TOKEN,
 } from '__test__/support/constants';
+import { IDManager } from 'src/shared/managers/IDManager';
 import { TestEnvironment } from '../../__test__/support/environment/TestEnvironment';
 import UserChangeEvent from '../page/models/UserChangeEvent';
 import { Subscription } from '../shared/models/Subscription';
-import User from './User';
 import UserNamespace from './UserNamespace';
 
 vi.mock('../shared/libraries/Log');
@@ -21,12 +21,16 @@ describe('UserNamespace', () => {
 
   describe('User Identity Properties', () => {
     test('should return correct onesignalId', () => {
-      const user = new User();
-      user.onesignalId = DUMMY_ONESIGNAL_ID;
-
-      vi.spyOn(User, 'createOrGetInstance').mockReturnValue(user);
-
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
       userNamespace = new UserNamespace(true);
+
+      identityModel.setProperty('onesignal_id', undefined);
+      expect(userNamespace.onesignalId).toBe(undefined);
+
+      identityModel.onesignalId = IDManager.createLocalId();
+      expect(userNamespace.onesignalId).toBe(undefined);
+
+      identityModel.onesignalId = DUMMY_ONESIGNAL_ID;
       expect(userNamespace.onesignalId).toBe(DUMMY_ONESIGNAL_ID);
     });
 

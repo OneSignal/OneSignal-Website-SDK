@@ -61,7 +61,6 @@ export default class UserDirector {
 
   static resetUserMetaProperties() {
     const user = User.createOrGetInstance();
-    user.hasOneSignalId = false;
     user.isCreatingUser = false;
   }
 }

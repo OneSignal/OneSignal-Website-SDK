@@ -12,8 +12,6 @@ import {
 import { isValidEmail, logMethodCall } from '../shared/utils/utils';
 
 export default class User {
-  hasOneSignalId = false;
-  onesignalId?: string;
   isCreatingUser = false;
 
   static singletonInstance?: User = undefined;
@@ -30,8 +28,12 @@ export default class User {
     return User.singletonInstance;
   }
 
-  /* PUBLIC API METHODS */
+  get onesignalId(): string | undefined {
+    const oneSignalId = OneSignal.coreDirector.getIdentityModel().onesignalId;
+    return !IDManager.isLocalId(oneSignalId) ? oneSignalId : undefined;
+  }
 
+  /* PUBLIC API METHODS */
   public addAlias(label: string, id: string): void {
     logMethodCall('addAlias', { label, id });
 

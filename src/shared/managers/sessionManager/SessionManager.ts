@@ -31,11 +31,6 @@ export class SessionManager implements ISessionManager {
     subscriptionId: string,
     sessionOrigin: SessionOrigin,
   ): Promise<void> {
-    console.trace('notifySWToUpsertSession', {
-      onesignalId,
-      subscriptionId,
-      sessionOrigin,
-    });
     const payload: UpsertOrDeactivateSessionPayload = {
       onesignalId,
       subscriptionId,
@@ -117,13 +112,9 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleVisibilityChange(): Promise<void> {
-    console.trace('handleVisibilityChange');
     await LoginManager.switchingUsersPromise;
 
-    console.log('handleVisibilityChange', {
-      hasOneSignalId: User.singletonInstance?.hasOneSignalId,
-    });
-    if (!User.singletonInstance?.hasOneSignalId) {
+    if (!User.singletonInstance?.onesignalId) {
       return;
     }
 
@@ -131,11 +122,6 @@ export class SessionManager implements ISessionManager {
       const visibilityState = document.visibilityState;
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
-
-      console.log('handleVisibilityChange', {
-        onesignalId,
-        subscriptionId,
-      });
 
       if (visibilityState === 'visible') {
         this.setupOnFocusAndOnBlurForSession();
@@ -187,10 +173,9 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleOnBeforeUnload(): Promise<void> {
-    console.trace('handleOnBeforeUnload');
     await LoginManager.switchingUsersPromise;
 
-    if (!User.singletonInstance?.hasOneSignalId) {
+    if (!User.singletonInstance?.onesignalId) {
       return;
     }
 
@@ -224,7 +209,7 @@ export class SessionManager implements ISessionManager {
     await LoginManager.switchingUsersPromise;
 
     Log.debug('handleOnFocus', e);
-    if (!User.singletonInstance?.hasOneSignalId) {
+    if (!User.singletonInstance?.onesignalId) {
       return;
     }
 
@@ -254,7 +239,7 @@ export class SessionManager implements ISessionManager {
     await LoginManager.switchingUsersPromise;
 
     Log.debug('handleOnBlur', e);
-    if (!User.singletonInstance?.hasOneSignalId) {
+    if (!User.singletonInstance?.onesignalId) {
       return;
     }
 
@@ -283,7 +268,7 @@ export class SessionManager implements ISessionManager {
   async upsertSession(sessionOrigin: SessionOrigin): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (User.singletonInstance?.hasOneSignalId) {
+    if (User.singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
       await this.notifySWToUpsertSession(

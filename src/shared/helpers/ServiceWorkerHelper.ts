@@ -135,14 +135,6 @@ export default class ServiceWorkerHelper {
     sendOnFocusEnabled: boolean,
     outcomesConfig: OutcomesConfig,
   ): Promise<CancelableTimeoutPromise | undefined> {
-    console.trace('deactivateSession', {
-      appId,
-      onesignalId,
-      subscriptionId,
-      thresholdInSeconds,
-      sendOnFocusEnabled,
-      outcomesConfig,
-    });
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {

@@ -174,7 +174,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       const user = User.createOrGetInstance();
       user.isCreatingUser = false;
-      user.hasOneSignalId = true;
 
       const idTranslations: Record<string, string> = {
         [createUserOperation.onesignalId]: backendOneSignalId,

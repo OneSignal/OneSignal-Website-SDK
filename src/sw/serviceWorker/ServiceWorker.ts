@@ -420,10 +420,6 @@ export class ServiceWorker {
     hasAnyActiveSessions: boolean,
     options: UpsertOrDeactivateSessionPayload,
   ) {
-    console.trace('updateSessionBasedOnHasActive', {
-      hasAnyActiveSessions,
-      options,
-    });
     if (hasAnyActiveSessions) {
       await ServiceWorkerHelper.upsertSession(
         options.appId,
