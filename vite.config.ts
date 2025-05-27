@@ -78,6 +78,8 @@ export default defineConfig(({ mode }) => {
     },
 
     // Could move some of these to .env.[ENV] file
+    // NOTE!!!: Since the service worker is registered separately, the define WONT probably replace it for the SW
+    // But it will be fine for builds. So check if field exists for development e.g. typeof __VERSION__ !== 'undefined'
     define: {
       __API_TYPE__: JSON.stringify(process.env.API || 'production'),
       __BUILD_TYPE__: JSON.stringify(process.env.ENV || 'production'),
