@@ -7,17 +7,15 @@ import {
   DUMMY_SUBSCRIPTION_ID_2,
 } from '__test__/support/constants';
 import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
-import {
-  BuildUserService,
-  getRebuildOpsFn,
-  SomeOperation,
-} from '__test__/support/helpers/executors';
+import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setGetUserError,
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
 import Database from 'src/shared/services/Database';
+import { MockInstance } from 'vitest';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -32,7 +30,8 @@ let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
 let subscriptionModelStore: SubscriptionModelStore;
 let newRecordsState: NewRecordsState;
-let buildUserService: BuildUserService;
+let buildUserService: RebuildUserService;
+let getRebuildOpsSpy: MockInstance;
 
 vi.mock('src/shared/libraries/Log');
 
@@ -44,7 +43,15 @@ describe('RefreshUserOperationExecutor', () => {
     propertiesModelStore = new PropertiesModelStore();
     subscriptionModelStore = new SubscriptionModelStore();
     newRecordsState = new NewRecordsState();
-    buildUserService = new BuildUserService();
+    buildUserService = new RebuildUserService(
+      identityModelStore,
+      propertiesModelStore,
+      subscriptionModelStore,
+    );
+    getRebuildOpsSpy = vi.spyOn(
+      buildUserService,
+      'getRebuildOperationsIfCurrentUser',
+    );
   });
 
   const getExecutor = () => {
@@ -233,6 +240,7 @@ describe('RefreshUserOperationExecutor', () => {
         status: 404,
         retryAfter: 5,
       });
+      getRebuildOpsSpy.mockReturnValueOnce(null);
       const res3 = await executor.execute([refreshOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
@@ -240,13 +248,22 @@ describe('RefreshUserOperationExecutor', () => {
       });
 
       // -- with rebuild ops
-      const op = new SomeOperation();
-      getRebuildOpsFn.mockReturnValue([op]);
       const res4 = await executor.execute([refreshOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 5,
-        operations: [op],
+        operations: [
+          {
+            name: 'login-user',
+            appId: APP_ID,
+            onesignalId: DUMMY_ONESIGNAL_ID,
+          },
+          {
+            name: 'refresh-user',
+            appId: APP_ID,
+            onesignalId: DUMMY_ONESIGNAL_ID,
+          },
+        ],
       });
 
       // -- in missing retry window

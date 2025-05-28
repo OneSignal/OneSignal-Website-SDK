@@ -1,15 +1,19 @@
-import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
-import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
-  BuildUserService,
-  getRebuildOpsFn,
-  SomeOperation,
-} from '__test__/support/helpers/executors';
+  APP_ID,
+  DUMMY_ONESIGNAL_ID,
+  DUMMY_SUBSCRIPTION_ID_3,
+} from '__test__/support/constants';
+import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
+import { SomeOperation } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Database from 'src/shared/services/Database';
+import { MockInstance } from 'vitest';
 import { OPERATION_NAME } from '../constants';
+import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';
+import { IdentityModelStore } from '../modelStores/IdentityModelStore';
+import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -23,19 +27,51 @@ import { SubscriptionOperationExecutor } from './SubscriptionOperationExecutor';
 
 let subscriptionModelStore: SubscriptionModelStore;
 let newRecordsState: NewRecordsState;
-let buildUserService: BuildUserService;
+let buildUserService: RebuildUserService;
+let identityModelStore: IdentityModelStore;
+let propertiesModelStore: PropertiesModelStore;
+let subscriptionsModelStore: SubscriptionModelStore;
+let getRebuildOpsSpy: MockInstance;
 
 const DUMMY_SUBSCRIPTION_ID = 'test-subscription-id';
 const BACKEND_SUBSCRIPTION_ID = 'backend-subscription-id';
 
 vi.mock('src/shared/libraries/Log');
 
+mockUserAgent();
+const pushSubscription = new SubscriptionModel();
+pushSubscription.initializeFromJson({
+  id: DUMMY_SUBSCRIPTION_ID_3,
+  type: SubscriptionType.ChromePush,
+  token: 'push-token',
+  enabled: true,
+  notification_types: NotificationType.Subscribed,
+});
+
 describe('SubscriptionOperationExecutor', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     mockUserAgent();
     subscriptionModelStore = new SubscriptionModelStore();
     newRecordsState = new NewRecordsState();
-    buildUserService = new BuildUserService();
+
+    identityModelStore = new IdentityModelStore();
+    propertiesModelStore = new PropertiesModelStore();
+    subscriptionsModelStore = new SubscriptionModelStore();
+
+    identityModelStore.model.onesignalId = DUMMY_ONESIGNAL_ID;
+    buildUserService = new RebuildUserService(
+      identityModelStore,
+      propertiesModelStore,
+      subscriptionsModelStore,
+    );
+    getRebuildOpsSpy = vi.spyOn(
+      buildUserService,
+      'getRebuildOperationsIfCurrentUser',
+    );
+  });
+
+  afterEach(async () => {
+    await Database.remove('subscriptions');
   });
 
   const getExecutor = () => {
@@ -239,19 +275,42 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Missing error without rebuild ops
       setCreateSubscriptionError(404, 5);
+      getRebuildOpsSpy.mockReturnValueOnce(null);
       const res5 = await executor.execute([createOp]);
+
       expect(res5).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
 
       // Missing error with rebuild ops
-      const op = new SomeOperation();
-      getRebuildOpsFn.mockReturnValue([op]);
+      subscriptionsModelStore.add(pushSubscription);
+      await Database.setPushId(DUMMY_SUBSCRIPTION_ID_3);
+
       const res6 = await executor.execute([createOp]);
       expect(res6).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 5,
-        operations: [op],
+        operations: [
+          {
+            name: 'login-user',
+            appId: APP_ID,
+            onesignalId: DUMMY_ONESIGNAL_ID,
+          },
+          {
+            name: 'create-subscription',
+            appId: APP_ID,
+            onesignalId: DUMMY_ONESIGNAL_ID,
+            type: SubscriptionType.ChromePush,
+            token: 'push-token',
+            enabled: true,
+            subscriptionId: DUMMY_SUBSCRIPTION_ID_3,
+          },
+          {
+            name: 'refresh-user',
+            appId: APP_ID,
+            onesignalId: DUMMY_ONESIGNAL_ID,
+          },
+        ],
       });
 
       // Missing error in retry window
