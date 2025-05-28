@@ -119,6 +119,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       const pushSubscriptionId = await Database.getPushId();
       if (pushSubscriptionId === createOperation.subscriptionId) {
         await Database.setPushId(backendSubscriptionId);
+        await Database.setPushToken(subscription?.token);
       }
 
       return new ExecutionResponse(

@@ -536,9 +536,14 @@ export default class Database {
   static async getPushId(): Promise<string | undefined> {
     return this.get<string>('Options', 'lastPushId');
   }
-
   static async setPushId(pushId: string | undefined): Promise<void> {
     await this.put('Options', { key: 'lastPushId', value: pushId });
+  }
+  static async getPushToken(): Promise<string | undefined> {
+    return this.get<string>('Options', 'lastPushToken');
+  }
+  static async setPushToken(pushToken: string | undefined): Promise<void> {
+    await this.put('Options', { key: 'lastPushToken', value: pushToken });
   }
 
   static async setIsPushEnabled(enabled: boolean): Promise<void> {
