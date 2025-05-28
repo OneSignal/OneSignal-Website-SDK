@@ -5,6 +5,7 @@ import {
 import Environment from '../helpers/Environment';
 import { EnvironmentKind } from '../models/EnvironmentKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import { EnvVariables } from '../utils/EnvVariables';
 
 const RESOURCE_HTTP_PORT = 4000;
 const RESOURCE_HTTPS_PORT = 4001;
@@ -22,7 +23,8 @@ export default class SdkEnvironment {
    * building the SDK.
    */
   public static getBuildEnv(): EnvironmentKind {
-    switch (__BUILD_TYPE__) {
+    const buildType = EnvVariables.BUILD_TYPE();
+    switch (buildType) {
       case 'development':
         return EnvironmentKind.Development;
       case 'staging':
@@ -40,7 +42,8 @@ export default class SdkEnvironment {
    * Refers to which API environment should be used. These constants are set when building the SDK
    */
   public static getApiEnv(): EnvironmentKind {
-    switch (__API_TYPE__) {
+    const apiType = EnvVariables.API_TYPE();
+    switch (apiType) {
       case 'development':
         return EnvironmentKind.Development;
       case 'staging':
@@ -113,7 +116,7 @@ export default class SdkEnvironment {
     buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv(),
     action?: string,
   ): URL {
-    const apiOrigin = __API_ORIGIN__;
+    const apiOrigin = EnvVariables.API_ORIGIN();
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
@@ -143,15 +146,16 @@ export default class SdkEnvironment {
   public static getOneSignalResourceUrlPath(
     buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
   ): URL {
-    const buildOrigin = __BUILD_ORIGIN__;
-    const isHttps = __IS_HTTPS__;
-    let origin: string;
+    const buildOrigin = EnvVariables.BUILD_ORIGIN();
+    const isHttps = EnvVariables.IS_HTTPS();
+
     const protocol = isHttps ? 'https' : 'http';
     const port = isHttps ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;
+    let origin: string;
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
-        origin = __NO_DEV_PORT__
+        origin = EnvVariables.NO_DEV_PORT()
           ? `${protocol}://${buildOrigin}`
           : `${protocol}://${buildOrigin}:${port}`;
         break;
