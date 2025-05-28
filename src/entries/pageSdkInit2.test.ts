@@ -1,16 +1,15 @@
 // separate test file to avoid side effects from pageSdkInit.test.ts
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { mockServerConfig } from '__test__/support/helpers/configHelper';
+import { mockServerConfig } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { UserData } from 'src/core/types/api';
 import { ModelName } from 'src/core/types/models';
+import { NotificationType } from 'src/core/types/subscription';
 import { default as InitHelper } from 'src/shared/helpers/InitHelper';
 import Log from 'src/shared/libraries/Log';
 import Database from 'src/shared/services/Database';
-
-vi.useFakeTimers();
 
 // skip over creating dom elements
 vi.spyOn(InitHelper, 'sessionInit').mockImplementation(() => Promise.resolve());
@@ -20,8 +19,7 @@ describe('pageSdkInit 2', () => {
     await TestEnvironment.initialize();
   });
 
-  // TODO: revisit with later web sdk refactor
-  test.skip('can login and addEmail', async () => {
+  test('can login and addEmail', async () => {
     server.use(
       mockServerConfig(),
       http.post('**/apps/*/users', () =>
@@ -60,16 +58,19 @@ describe('pageSdkInit 2', () => {
       return subscriptions.length > 0;
     });
 
-    expect(subscriptions).toMatchObject([
+    expect(subscriptions).toEqual([
       {
-        modelName: ModelName.Subscriptions,
+        id: expect.any(String),
+        device_model: '',
+        device_os: 56,
+        enabled: true,
         modelId: expect.any(String),
-        onesignalId: undefined,
-        type: 'Email',
+        notification_types: NotificationType.Subscribed,
+        sdk: '1',
         token: email,
+        type: 'Email',
       },
     ]);
-    await vi.runOnlyPendingTimersAsync();
     expect(errorSpy).not.toHaveBeenCalled();
   });
 });

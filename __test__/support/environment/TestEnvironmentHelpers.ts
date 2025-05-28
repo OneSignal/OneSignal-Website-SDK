@@ -1,6 +1,11 @@
 import bowser from 'bowser';
 import { DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
 import CoreModule from 'src/core/CoreModule';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import {
+  NotificationType,
+  SubscriptionType,
+} from 'src/core/types/subscription';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 import OneSignal from '../../../src/onesignal/OneSignal';
@@ -12,6 +17,7 @@ import Emitter from '../../../src/shared/libraries/Emitter';
 import Database from '../../../src/shared/services/Database';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
 import * as bowerCastleHelpers from '../../../src/shared/utils/bowserCastle';
+import { DUMMY_SUBSCRIPTION_ID_3 } from '../constants';
 import MockNotification from '../mocks/MockNotification';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import Random from '../utils/Random';
@@ -116,3 +122,15 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   global.document = windowDef.document;
   return dom;
 }
+
+export const createPushSub = () => {
+  const pushSubscription = new SubscriptionModel();
+  pushSubscription.initializeFromJson({
+    id: DUMMY_SUBSCRIPTION_ID_3,
+    type: SubscriptionType.ChromePush,
+    token: 'push-token',
+    enabled: true,
+    notification_types: NotificationType.Subscribed,
+  });
+  return pushSubscription;
+};
