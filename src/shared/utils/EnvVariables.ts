@@ -1,20 +1,29 @@
-// Really this is Window | ServiceWorkerGlobalScope but Typescript complains about dynamic keys
-declare const self: Record<string, unknown>;
+// NOTE: We are using a function to get the value of the environment variable to make it easier to test.
+// We also are using typeof check since defining global constants (through Vite) does not work for the service worker.
+// ^ This only applies to development mode since we have separate bundles (entries) for the service worker and the main bundle.
 
-const getEnvVariable = (key: string, defaultValue?: string | boolean) => {
-  return typeof self[key] === 'undefined' ? defaultValue : self[key];
-};
+// strings
+export const API_TYPE = () =>
+  typeof __API_TYPE__ === 'undefined' ? 'production' : __API_TYPE__;
 
-export const EnvVariables = {
-  // strings
-  API_TYPE: () => getEnvVariable('__API_TYPE__', 'production'),
-  API_ORIGIN: () => getEnvVariable('__API_ORIGIN__', 'localhost'),
-  BUILD_TYPE: () => getEnvVariable('__BUILD_TYPE__', 'production'),
-  BUILD_ORIGIN: () => getEnvVariable('__BUILD_ORIGIN__'),
-  VERSION: () => getEnvVariable('__VERSION__'),
+export const API_ORIGIN = () =>
+  typeof __API_ORIGIN__ === 'undefined' ? 'localhost' : __API_ORIGIN__;
 
-  // booleans
-  IS_HTTPS: () => getEnvVariable('__IS_HTTPS__', true),
-  LOGGING: () => getEnvVariable('__LOGGING__', false),
-  NO_DEV_PORT: () => getEnvVariable('__NO_DEV_PORT__', true),
-};
+export const BUILD_TYPE = () =>
+  typeof __BUILD_TYPE__ === 'undefined' ? 'production' : __BUILD_TYPE__;
+
+export const BUILD_ORIGIN = () =>
+  typeof __BUILD_ORIGIN__ === 'undefined' ? 'localhost' : __BUILD_ORIGIN__;
+
+export const VERSION = () =>
+  typeof __VERSION__ === 'undefined' ? '1' : __VERSION__;
+
+// booleans
+export const IS_HTTPS = () =>
+  typeof __IS_HTTPS__ === 'undefined' ? true : __IS_HTTPS__;
+
+export const LOGGING = () =>
+  typeof __LOGGING__ === 'undefined' ? false : __LOGGING__;
+
+export const NO_DEV_PORT = () =>
+  typeof __NO_DEV_PORT__ === 'undefined' ? true : __NO_DEV_PORT__;

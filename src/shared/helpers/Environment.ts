@@ -2,7 +2,7 @@ import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { bowserCastle } from '../utils/bowserCastle';
-import { EnvVariables } from '../utils/EnvVariables';
+import { VERSION } from '../utils/EnvVariables';
 
 export default class Environment {
   /**
@@ -29,7 +29,7 @@ export default class Environment {
   }
 
   public static version() {
-    return EnvVariables.VERSION();
+    return VERSION();
   }
 
   public static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {

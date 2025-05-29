@@ -20,11 +20,3 @@ vi.mock('src/core/operationRepo/constants', () => ({
   OP_REPO_EXECUTION_INTERVAL: 5,
   OP_REPO_POST_CREATE_RETRY_UP_TO: 10,
 }));
-
-beforeEach(() => {
-  // @ts-expect-error - we use EnvVariables to grab env variables
-  // when running the dev server, vite define globals wont work for the service worker
-  // thus we need the env var helpers to provide a default value
-  // we use self since it's a global object that is available in the service worker and in the browser
-  global.self = global;
-});

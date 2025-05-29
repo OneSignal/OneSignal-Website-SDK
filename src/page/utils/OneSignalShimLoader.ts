@@ -1,4 +1,10 @@
-import { EnvVariables } from 'src/shared/utils/EnvVariables';
+import {
+  BUILD_ORIGIN,
+  BUILD_TYPE,
+  IS_HTTPS,
+  NO_DEV_PORT,
+  VERSION,
+} from 'src/shared/utils/EnvVariables';
 import {
   isIosSafari,
   isPushNotificationsSupported,
@@ -8,7 +14,7 @@ import {
 // See sdk.ts for what entry points this handles
 
 export class OneSignalShimLoader {
-  private static VERSION = EnvVariables.VERSION();
+  private static VERSION = VERSION();
 
   private static addScriptToPage(url: string): void {
     const scriptElement = document.createElement('script');
@@ -20,25 +26,25 @@ export class OneSignalShimLoader {
 
   // Same logic from SdkEnvironment
   private static getPathAndPrefix(): string {
-    const buildOrigin = EnvVariables.BUILD_ORIGIN();
-    const noDevPort = EnvVariables.NO_DEV_PORT();
-    const buildType = EnvVariables.BUILD_TYPE();
-    const isHttps = EnvVariables.IS_HTTPS();
+    const buildOrigin = BUILD_ORIGIN();
+    const noDevPort = NO_DEV_PORT();
+    const buildType = BUILD_TYPE();
+    const isHttps = IS_HTTPS();
 
     const productionOrigin = 'https://cdn.onesignal.com/sdks/web/v16/';
     const protocol = isHttps ? 'https' : 'http';
     const port = isHttps ? 4001 : 4000;
 
-    switch (buildType) {
-      case 'development':
-        return noDevPort
-          ? `${protocol}://${buildOrigin}/sdks/web/v16/Dev-`
-          : `${protocol}://${buildOrigin}:${port}/sdks/web/v16/Dev-`;
-      case 'staging':
-        return `https://${buildOrigin}/sdks/web/v16/Staging-`;
-      default:
-        return productionOrigin;
-    }
+    // using if statements to have better dead code elimination
+    if (buildType === 'development')
+      return noDevPort
+        ? `${protocol}://${buildOrigin}/sdks/web/v16/Dev-`
+        : `${protocol}://${buildOrigin}:${port}/sdks/web/v16/Dev-`;
+
+    if (buildType === 'staging')
+      return `https://${buildOrigin}/sdks/web/v16/Staging-`;
+
+    return productionOrigin;
   }
 
   private static loadFullPageSDK(): void {

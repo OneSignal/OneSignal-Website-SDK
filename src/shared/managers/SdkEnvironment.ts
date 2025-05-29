@@ -5,7 +5,14 @@ import {
 import Environment from '../helpers/Environment';
 import { EnvironmentKind } from '../models/EnvironmentKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import { EnvVariables } from '../utils/EnvVariables';
+import {
+  API_ORIGIN,
+  API_TYPE,
+  BUILD_ORIGIN,
+  BUILD_TYPE,
+  IS_HTTPS,
+  NO_DEV_PORT,
+} from '../utils/EnvVariables';
 
 const RESOURCE_HTTP_PORT = 4000;
 const RESOURCE_HTTPS_PORT = 4001;
@@ -23,17 +30,12 @@ export default class SdkEnvironment {
    * building the SDK.
    */
   public static getBuildEnv(): EnvironmentKind {
-    const buildType = EnvVariables.BUILD_TYPE();
-    switch (buildType) {
-      case 'development':
-        return EnvironmentKind.Development;
-      case 'staging':
-        return EnvironmentKind.Staging;
-      case 'production':
-        return EnvironmentKind.Production;
-      default:
-        return EnvironmentKind.Production;
-    }
+    const buildType = BUILD_TYPE();
+
+    // using if statements to have better dead code elimination
+    if (buildType === 'development') return EnvironmentKind.Development;
+    if (buildType === 'staging') return EnvironmentKind.Staging;
+    return EnvironmentKind.Production;
   }
 
   /**
@@ -42,17 +44,12 @@ export default class SdkEnvironment {
    * Refers to which API environment should be used. These constants are set when building the SDK
    */
   public static getApiEnv(): EnvironmentKind {
-    const apiType = EnvVariables.API_TYPE();
-    switch (apiType) {
-      case 'development':
-        return EnvironmentKind.Development;
-      case 'staging':
-        return EnvironmentKind.Staging;
-      case 'production':
-        return EnvironmentKind.Production;
-      default:
-        return EnvironmentKind.Production;
-    }
+    const apiType = API_TYPE();
+
+    // using if statements to have better dead code elimination
+    if (apiType === 'development') return EnvironmentKind.Development;
+    if (apiType === 'staging') return EnvironmentKind.Staging;
+    return EnvironmentKind.Production;
   }
 
   static getOrigin(): string {
@@ -84,31 +81,6 @@ export default class SdkEnvironment {
   }
 
   /**
-   * Returns build-specific prefixes used for operations like registering the
-   * service worker.
-   *
-   * For example, in staging the registered service worker filename is
-   * Staging-OneSignalSDKWorker.js.
-   */
-  public static getBuildEnvPrefix(
-    buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
-  ): string {
-    switch (buildEnv) {
-      case EnvironmentKind.Development:
-        return 'Dev-';
-      case EnvironmentKind.Staging:
-        return 'Staging-';
-      case EnvironmentKind.Production:
-        return '';
-      default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
-    }
-  }
-
-  /**
    * Returns the URL object representing the components of OneSignal's API
    * endpoint.
    */
@@ -116,8 +88,7 @@ export default class SdkEnvironment {
     buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv(),
     action?: string,
   ): URL {
-    const apiOrigin = EnvVariables.API_ORIGIN();
-
+    const apiOrigin = API_ORIGIN();
     switch (buildEnv) {
       case EnvironmentKind.Development:
         if (SdkEnvironment.isTurbineEndpoint(action)) {
@@ -143,56 +114,45 @@ export default class SdkEnvironment {
     return new URL('https://media.onesignal.com/web-sdk');
   }
 
-  public static getOneSignalResourceUrlPath(
-    buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
-  ): URL {
-    const buildOrigin = EnvVariables.BUILD_ORIGIN();
-    const isHttps = EnvVariables.IS_HTTPS();
+  public static getOneSignalResourceUrlPath(): URL {
+    const buildEnv = SdkEnvironment.getBuildEnv();
+    const buildOrigin = BUILD_ORIGIN();
+    const isHttps = IS_HTTPS();
 
     const protocol = isHttps ? 'https' : 'http';
     const port = isHttps ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;
     let origin: string;
 
-    switch (buildEnv) {
-      case EnvironmentKind.Development:
-        origin = EnvVariables.NO_DEV_PORT()
-          ? `${protocol}://${buildOrigin}`
-          : `${protocol}://${buildOrigin}:${port}`;
-        break;
-      case EnvironmentKind.Staging:
-        origin = `https://${buildOrigin}`;
-        break;
-      case EnvironmentKind.Production:
-        origin = 'https://onesignal.com';
-        break;
-      default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
+    // using if statements to have better dead code elimination
+    if (buildEnv === EnvironmentKind.Development) {
+      origin = NO_DEV_PORT()
+        ? `${protocol}://${buildOrigin}`
+        : `${protocol}://${buildOrigin}:${port}`;
+    } else if (buildEnv === EnvironmentKind.Staging) {
+      origin = `https://${buildOrigin}`;
+    } else if (buildEnv === EnvironmentKind.Production) {
+      origin = 'https://onesignal.com';
+    } else {
+      throw new InvalidArgumentError(
+        'buildEnv',
+        InvalidArgumentReason.EnumOutOfRange,
+      );
     }
-
     return new URL(`${origin}/sdks/web/v16`);
   }
 
-  public static getOneSignalCssFileName(
-    buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
-  ): string {
+  public static getOneSignalCssFileName(): string {
     const baseFileName = 'OneSignalSDK.page.styles.css';
+    const buildEnv = SdkEnvironment.getBuildEnv();
 
-    switch (buildEnv) {
-      case EnvironmentKind.Development:
-        return `Dev-${baseFileName}`;
-      case EnvironmentKind.Staging:
-        return `Staging-${baseFileName}`;
-      case EnvironmentKind.Production:
-        return baseFileName;
-      default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
-    }
+    // using if statements to have better dead code elimination
+    if (buildEnv === EnvironmentKind.Development) return `Dev-${baseFileName}`;
+    if (buildEnv === EnvironmentKind.Staging) return `Staging-${baseFileName}`;
+    if (buildEnv === EnvironmentKind.Production) return baseFileName;
+    throw new InvalidArgumentError(
+      'buildEnv',
+      InvalidArgumentReason.EnumOutOfRange,
+    );
   }
 
   static isTurbineEndpoint(action?: string): boolean {
