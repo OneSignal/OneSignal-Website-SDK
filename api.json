@@ -254,7 +254,7 @@
         "args": [
           {
             "name": "logLevel",
-            "type": "string",
+            "type": "'trace' | 'debug' | 'info' | 'warn' | 'error'",
             "optional": false
           }
         ],
