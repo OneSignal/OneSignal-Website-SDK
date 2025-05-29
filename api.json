@@ -455,7 +455,7 @@
         "name": "getTags",
         "isAsync": false,
         "args": [],
-        "returnType": "{ [key: string]: string }"
+        "returnType": "Promise<{ [key: string]: string }>"
       },
       {
         "name": "addEventListener",
@@ -507,7 +507,7 @@
         "name": "getLanguage",
         "isAsync": false,
         "args": [],
-        "returnType": "string"
+        "returnType": "Promise<string>"
       }
     ],
     "properties": [
