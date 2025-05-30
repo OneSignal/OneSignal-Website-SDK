@@ -42,10 +42,19 @@ declare const self: ServiceWorkerGlobalScope;
 const endpoint = 'https://example.com';
 const appId = APP_ID;
 const notificationId = 'test-notification-id';
-const version = 1;
+const version = '1';
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
+
+const dispatchEvent = async (event: Event) => {
+  self.dispatchEvent(event);
+
+  // wait for the first setTimeout in the run method, then adds a 1s delay
+  // since some cancelable timeouts are 0.5/1s and sometimes there are multiple cancelable timeouts
+  // and plus we add some buffer time for IndexedDB operations
+  await vi.advanceTimersByTimeAsync(1600);
+};
 
 const serverConfig = TestContext.getFakeServerAppConfig(
   ConfigIntegrationKind.Custom,
@@ -58,8 +67,7 @@ const serverConfig = TestContext.getFakeServerAppConfig(
   },
 );
 
-// TODO: Revisit when OperationRepo is fully implemented
-describe.skip('ServiceWorker', () => {
+describe('ServiceWorker', () => {
   beforeAll(async () => {
     await TestEnvironment.initialize();
 
@@ -106,7 +114,7 @@ describe.skip('ServiceWorker', () => {
   describe('activate event', () => {
     test('should call claim on activate', () => {
       const event = new ExtendableEvent('activate');
-      self.dispatchEvent(event);
+      dispatchEvent(event);
 
       expect(self.clients.claim).toHaveBeenCalled();
     });
@@ -114,7 +122,7 @@ describe.skip('ServiceWorker', () => {
 
   describe('push event', () => {
     test('should handle push event errors', async () => {
-      await self.dispatchEvent(new PushEvent('push'));
+      await dispatchEvent(new PushEvent('push'));
 
       // missing event.data
       await vi.runOnlyPendingTimersAsync();
@@ -125,8 +133,7 @@ describe.skip('ServiceWorker', () => {
 
       // malformed event.data
       logDebugSpy.mockClear();
-      await self.dispatchEvent(new PushEvent('push', 'some message'));
-      await vi.runOnlyPendingTimersAsync();
+      await dispatchEvent(new PushEvent('push', 'some message'));
 
       expect(logDebugSpy).toHaveBeenCalledWith(
         'Failed to display a notification:',
@@ -135,8 +142,7 @@ describe.skip('ServiceWorker', () => {
 
       // with missing notification id
       logDebugSpy.mockClear();
-      await self.dispatchEvent(new PushEvent('push', {}));
-      await vi.runOnlyPendingTimersAsync();
+      await dispatchEvent(new PushEvent('push', {}));
       expect(logDebugSpy).toHaveBeenCalledWith(
         'isValidPushPayload: Valid JSON but missing notification UUID:',
         {},
@@ -145,8 +151,7 @@ describe.skip('ServiceWorker', () => {
 
     test('should handle successful push event', async () => {
       const payload = mockOSMinifiedNotificationPayload();
-      await self.dispatchEvent(new PushEvent('push', payload));
-      await vi.advanceTimersByTimeAsync(10000);
+      await dispatchEvent(new PushEvent('push', payload));
       const notificationId = payload.custom.i;
 
       // db should mark the notification as received
@@ -200,8 +205,7 @@ describe.skip('ServiceWorker', () => {
           rr: 'y',
         },
       });
-      await self.dispatchEvent(new PushEvent('push', payload));
-      await vi.advanceTimersByTimeAsync(10000);
+      await dispatchEvent(new PushEvent('push', payload));
 
       expect(apiPutSpy).toHaveBeenCalledWith(
         `notifications/${payload.custom.i}/report_received`,
@@ -221,8 +225,7 @@ describe.skip('ServiceWorker', () => {
           notificationId,
         },
       });
-      await self.dispatchEvent(event);
-      await vi.runOnlyPendingTimersAsync();
+      await dispatchEvent(event);
 
       expect(
         ServiceWorker.webhookNotificationEventSender.dismiss,
@@ -245,8 +248,7 @@ describe.skip('ServiceWorker', () => {
           notificationId,
         },
       });
-      await self.dispatchEvent(event);
-      await vi.runOnlyPendingTimersAsync();
+      await dispatchEvent(event);
 
       // should close the notification since it was clicked
       expect(notificationClose).toHaveBeenCalled();
@@ -346,8 +348,7 @@ describe.skip('ServiceWorker', () => {
       const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
         oldSubscription: {},
       });
-      await self.dispatchEvent(event);
-      await vi.advanceTimersByTimeAsync(15000);
+      await dispatchEvent(event);
 
       // should remove previous ids
       const ids = await Database.getAll('Ids');
@@ -369,8 +370,7 @@ describe.skip('ServiceWorker', () => {
         oldSubscription: {},
       });
 
-      await self.dispatchEvent(event);
-      await vi.advanceTimersByTimeAsync(20000);
+      await dispatchEvent(event);
 
       expect(subscribeCall).toHaveBeenCalledWith(
         SubscriptionStrategyKind.SubscribeNew,
@@ -397,8 +397,7 @@ describe.skip('ServiceWorker', () => {
         newSubscription: {},
       });
 
-      await self.dispatchEvent(event);
-      await vi.runOnlyPendingTimersAsync();
+      await dispatchEvent(event);
 
       const [rawSubscription, subscriptionState] =
         registerSubscriptionCall.mock.calls[0];
@@ -474,8 +473,7 @@ describe.skip('ServiceWorker', () => {
           payload:
             baseMessagePayload satisfies UpsertOrDeactivateSessionPayload,
         });
-        await self.dispatchEvent(event);
-        await vi.runOnlyPendingTimersAsync();
+        await dispatchEvent(event);
 
         // should cancel the previous calls
         expect(cancel).toHaveBeenCalled();
@@ -503,8 +501,7 @@ describe.skip('ServiceWorker', () => {
             isSafari: false,
           } satisfies UpsertOrDeactivateSessionPayload,
         });
-        await self.dispatchEvent(event);
-        await vi.runOnlyPendingTimersAsync();
+        await dispatchEvent(event);
 
         // should create a new session
         const updatedSession = (await Database.getCurrentSession())!;
@@ -534,8 +531,7 @@ describe.skip('ServiceWorker', () => {
             isSafari: false,
           } satisfies UpsertOrDeactivateSessionPayload,
         });
-        await self.dispatchEvent(event);
-        await vi.runOnlyPendingTimersAsync();
+        await dispatchEvent(event);
 
         expect(Log.debug).toHaveBeenCalledWith(
           'No active session found. Cannot deactivate.',
@@ -566,8 +562,8 @@ describe.skip('ServiceWorker', () => {
         });
 
         // debounces event
-        self.dispatchEvent(event);
-        self.dispatchEvent(event);
+        dispatchEvent(event);
+        dispatchEvent(event);
 
         // should finalize session then clean up sessions
         await vi.advanceTimersByTimeAsync(15000);
@@ -603,8 +599,7 @@ describe.skip('ServiceWorker', () => {
       const event = new ExtendableMessageEvent('message', {
         command: WorkerMessengerCommand.WorkerVersion,
       });
-      await self.dispatchEvent(event);
-      await vi.runOnlyPendingTimersAsync();
+      await dispatchEvent(event);
 
       // should send a message to all clients
       expect(postMessageFn).toHaveBeenCalledWith({
@@ -618,8 +613,7 @@ describe.skip('ServiceWorker', () => {
         command: WorkerMessengerCommand.Subscribe,
         payload: appConfig,
       });
-      await self.dispatchEvent(event);
-      await vi.advanceTimersByTimeAsync(20000);
+      await dispatchEvent(event);
 
       expect(postMessageFn).toHaveBeenCalledWith({
         command: WorkerMessengerCommand.Subscribe,
@@ -633,8 +627,7 @@ describe.skip('ServiceWorker', () => {
         payload: appConfig,
       });
 
-      await self.dispatchEvent(event);
-      await vi.waitUntil(() => postMessageFn.mock.calls.length > 0);
+      await dispatchEvent(event);
 
       expect(postMessageFn).toHaveBeenCalledWith({
         command: WorkerMessengerCommand.SubscribeNew,
@@ -648,8 +641,7 @@ describe.skip('ServiceWorker', () => {
           command: WorkerMessengerCommand.AreYouVisibleResponse,
           payload: { focused: false, timestamp: Date.now() },
         });
-        await self.dispatchEvent(event);
-        await vi.runOnlyPendingTimersAsync();
+        await dispatchEvent(event);
 
         expect(postMessageFn).not.toHaveBeenCalled();
       });
@@ -667,8 +659,7 @@ describe.skip('ServiceWorker', () => {
           command: WorkerMessengerCommand.AreYouVisibleResponse,
           payload: { focused: true, timestamp },
         });
-        await self.dispatchEvent(event);
-        await vi.runOnlyPendingTimersAsync();
+        await dispatchEvent(event);
 
         // should set client status as active
         expect(postMessageFn).not.toHaveBeenCalled();
@@ -682,14 +673,14 @@ describe.skip('ServiceWorker', () => {
         command: WorkerMessengerCommand.SetLogging,
         payload: { shouldLog: true },
       });
-      await self.dispatchEvent(event);
+      await dispatchEvent(event);
       expect(self.shouldLog).toBe(true);
 
       event = new ExtendableMessageEvent('message', {
         command: WorkerMessengerCommand.SetLogging,
         payload: { shouldLog: false },
       });
-      await self.dispatchEvent(event);
+      await dispatchEvent(event);
       expect(self.shouldLog).toBe(undefined);
     });
   });

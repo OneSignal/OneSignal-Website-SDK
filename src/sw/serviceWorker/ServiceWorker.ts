@@ -1081,7 +1081,7 @@ export class ServiceWorker {
     }
 
     // Get our new push subscription
-    let rawPushSubscription: RawPushSubscription = new RawPushSubscription();
+    let rawPushSubscription: RawPushSubscription;
 
     // Set it initially by the provided new push subscription
     const providedNewSubscription = event.newSubscription;

@@ -4,11 +4,6 @@ export const getSubscriptionFn = vi
   .fn<() => Promise<Partial<PushSubscription>>>()
   .mockResolvedValue({
     endpoint: DUMMY_PUSH_TOKEN,
-    // expirationTime: Date.now(),
-    // options: {
-    //   applicationServerKey: null,
-    //   userVisibleOnly: true,
-    // },
   });
 
 export const getRegistrationFn = vi
@@ -20,10 +15,6 @@ export const getRegistrationFn = vi
     },
     pushManager: {
       getSubscription: getSubscriptionFn,
-      // permissionState: vi.fn().mockResolvedValue('granted'),
-      // subscribe: vi.fn().mockResolvedValue({
-      //   endpoint,
-      // }),
     } satisfies PushManager,
     showNotification: vi.fn(),
   });
