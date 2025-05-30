@@ -1,14 +1,20 @@
+import { DUMMY_PUSH_TOKEN } from '__test__/support/constants';
+import {
+  createPushSub,
+  mockUserAgent,
+} from '__test__/support/environment/TestEnvironmentHelpers';
 import EventHelper from '../../../src/shared/helpers/EventHelper';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
-import { DUMMY_PUSH_TOKEN } from '../../support/constants';
 import { initializeWithPermission } from '../../support/helpers/pushSubscription';
 import { PermissionManager } from '../../support/managers/PermissionManager';
+
+mockUserAgent();
+const pushModel = createPushSub();
 
 // TODO: Revisit with later Web SDK Prs
 describe.skip('Notification Types are set correctly on subscription change', () => {
   beforeEach(async () => {
-    vi.useFakeTimers();
     vi.spyOn(MainHelper, 'getCurrentPushToken').mockResolvedValue(
       DUMMY_PUSH_TOKEN,
     );

@@ -1,9 +1,5 @@
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
-import {
-  BuildUserService,
-  getRebuildOpsFn,
-  SomeOperation,
-} from '__test__/support/helpers/executors';
+import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setAddAliasError,
   setAddAliasResponse,
@@ -11,8 +7,12 @@ import {
   setDeleteAliasResponse,
 } from '__test__/support/helpers/requests';
 import { ExecutionResult } from 'src/core/types/operation';
+import { MockInstance } from 'vitest';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
+import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
+import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
@@ -34,12 +34,16 @@ const deleteAliasOp = new DeleteAliasOperation(
 
 let identityModelStore: IdentityModelStore;
 let newRecordsState: NewRecordsState;
+let propertiesModelStore: PropertiesModelStore;
+let subscriptionModelStore: SubscriptionModelStore;
+let rebuildUserService: RebuildUserService;
+let getRebuildOpsSpy: MockInstance;
 
 describe('IdentityOperationExecutor', () => {
   const getExecutor = () => {
     return new IdentityOperationExecutor(
       identityModelStore,
-      new BuildUserService(),
+      rebuildUserService,
       newRecordsState,
     );
   };
@@ -47,8 +51,23 @@ describe('IdentityOperationExecutor', () => {
   beforeEach(() => {
     setAddAliasResponse();
     setDeleteAliasResponse();
+
     identityModelStore = new IdentityModelStore();
+    identityModelStore.model.onesignalId = DUMMY_ONESIGNAL_ID;
+
     newRecordsState = new NewRecordsState();
+    propertiesModelStore = new PropertiesModelStore();
+    subscriptionModelStore = new SubscriptionModelStore();
+
+    rebuildUserService = new RebuildUserService(
+      identityModelStore,
+      propertiesModelStore,
+      subscriptionModelStore,
+    );
+    getRebuildOpsSpy = vi.spyOn(
+      rebuildUserService,
+      'getRebuildOperationsIfCurrentUser',
+    );
   });
 
   test('should return correct operations (names)', async () => {
@@ -141,19 +160,32 @@ describe('IdentityOperationExecutor', () => {
 
       // Missing
       setAddAliasError({ status: 410 });
+      getRebuildOpsSpy.mockReturnValueOnce(null);
       const res5 = await executor.execute(ops);
 
       // no rebuild ops
+      // @ts-expect-error - for testing purposes
+      identityModelStore.model.onesignalId = undefined;
       expect(res5.result).toBe(ExecutionResult.FAIL_NORETRY);
       expect(res5.retryAfterSeconds).toBeUndefined();
 
       // with rebuild ops
-      const op = new SomeOperation();
-      getRebuildOpsFn.mockReturnValue([op]);
+      identityModelStore.model.onesignalId = DUMMY_ONESIGNAL_ID;
       const res7 = await executor.execute(ops);
       expect(res7.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res7.retryAfterSeconds).toBeUndefined();
-      expect(res7.operations).toEqual([op]);
+      expect(res7.operations).toMatchObject([
+        {
+          name: 'login-user',
+          appId: APP_ID,
+          onesignalId: DUMMY_ONESIGNAL_ID,
+        },
+        {
+          name: 'refresh-user',
+          appId: APP_ID,
+          onesignalId: DUMMY_ONESIGNAL_ID,
+        },
+      ]);
 
       // in missing retry window
       newRecordsState.add(DUMMY_ONESIGNAL_ID);

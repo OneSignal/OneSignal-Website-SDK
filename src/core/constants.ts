@@ -10,10 +10,6 @@ export const OPERATION_NAME = {
   // Property Operations
   SET_PROPERTY: 'set-property',
 
-  // Session Operations
-  TRACK_SESSION_START: 'track-session-start',
-  TRACK_SESSION_END: 'track-session-end',
-
   // User Operations
   REFRESH_USER: 'refresh-user',
   LOGIN_USER: 'login-user',

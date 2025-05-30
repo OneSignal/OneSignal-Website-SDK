@@ -2,6 +2,7 @@ import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { bowserCastle } from '../utils/bowserCastle';
+import { VERSION } from '../utils/EnvVariables';
 
 export default class Environment {
   /**
@@ -28,7 +29,7 @@ export default class Environment {
   }
 
   public static version() {
-    return typeof __VERSION__ === 'undefined' ? 1 : Number(__VERSION__);
+    return VERSION();
   }
 
   public static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {

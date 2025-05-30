@@ -1,27 +1,26 @@
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
-import {
-  BuildUserService,
-  getRebuildOpsFn,
-  SomeOperation,
-} from '__test__/support/helpers/executors';
+import { SomeOperation } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
+import { MockInstance } from 'vitest';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
+import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { SetTagOperation } from '../operations/SetTagOperation';
-import { TrackSessionEndOperation } from '../operations/TrackSessionEndOperation';
-import { TrackSessionStartOperation } from '../operations/TrackSessionStartOperation';
 import { ExecutionResult } from '../types/operation';
 import { UpdateUserOperationExecutor } from './UpdateUserOperationExecutor';
 
 let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
 let newRecordsState: NewRecordsState;
-let buildUserService: BuildUserService;
+let buildUserService: RebuildUserService;
+let subscriptionsModelStore: SubscriptionModelStore;
+let getRebuildOpsSpy: MockInstance;
 
 vi.mock('src/shared/libraries/Log');
 
@@ -30,7 +29,17 @@ describe('UpdateUserOperationExecutor', () => {
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
     newRecordsState = new NewRecordsState();
-    buildUserService = new BuildUserService();
+
+    subscriptionsModelStore = new SubscriptionModelStore();
+    buildUserService = new RebuildUserService(
+      identityModelStore,
+      propertiesModelStore,
+      subscriptionsModelStore,
+    );
+    getRebuildOpsSpy = vi.spyOn(
+      buildUserService,
+      'getRebuildOperationsIfCurrentUser',
+    );
 
     // Set up initial model state
     identityModelStore.model.setProperty(
@@ -54,8 +63,6 @@ describe('UpdateUserOperationExecutor', () => {
       OPERATION_NAME.SET_TAG,
       OPERATION_NAME.DELETE_TAG,
       OPERATION_NAME.SET_PROPERTY,
-      OPERATION_NAME.TRACK_SESSION_START,
-      OPERATION_NAME.TRACK_SESSION_END,
     ]);
   });
 
@@ -179,91 +186,6 @@ describe('UpdateUserOperationExecutor', () => {
     });
   });
 
-  describe('TrackSessionOperations', () => {
-    beforeEach(() => {
-      setUpdateUserResponse();
-    });
-
-    test('should handle track session start operation', async () => {
-      const executor = getExecutor();
-      const sessionStartOp = new TrackSessionStartOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-      );
-
-      const result = await executor.execute([sessionStartOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-
-      expect(updateUserFn).toHaveBeenCalledWith({
-        deltas: {
-          session_count: 1,
-        },
-        properties: {},
-        refresh_device_metadata: true,
-      });
-    });
-
-    test('should handle track session end operation', async () => {
-      const executor = getExecutor();
-      const sessionEndOp = new TrackSessionEndOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        120, // Session time in seconds
-      );
-
-      const result = await executor.execute([sessionEndOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-
-      expect(updateUserFn).toHaveBeenCalledWith({
-        deltas: {
-          session_time: 120,
-        },
-        properties: {},
-        refresh_device_metadata: false,
-      });
-    });
-
-    test('should handle multiple track session operations', async () => {
-      const executor = getExecutor();
-      const sessionStartOp = new TrackSessionStartOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-      );
-      const sessionEndOp = new TrackSessionEndOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        50,
-      );
-      const sessionStartOp2 = new TrackSessionStartOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-      );
-      const sessionEndOp2 = new TrackSessionEndOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        125,
-      );
-
-      const result = await executor.execute([
-        sessionStartOp,
-        sessionEndOp,
-        sessionStartOp2,
-        sessionEndOp2,
-      ]);
-
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-
-      expect(updateUserFn).toHaveBeenCalledWith({
-        deltas: {
-          session_count: 2,
-          session_time: 175,
-        },
-        properties: {},
-        refresh_device_metadata: true,
-      });
-    });
-  });
-
   describe('Error Handling', () => {
     test('should handle network errors', async () => {
       const executor = getExecutor();
@@ -292,19 +214,29 @@ describe('UpdateUserOperationExecutor', () => {
 
       // Missing error without rebuild ops
       setUpdateUserError(404, 5);
+      getRebuildOpsSpy.mockReturnValueOnce(null);
       const res3 = await executor.execute([setTagOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
 
       // Missing error with rebuild ops
-      const op = new SomeOperation();
-      getRebuildOpsFn.mockReturnValue([op]);
       const res4 = await executor.execute([setTagOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 5,
-        operations: [op],
+        operations: [
+          {
+            name: 'login-user',
+            appId: APP_ID,
+            onesignalId: DUMMY_ONESIGNAL_ID,
+          },
+          {
+            name: 'refresh-user',
+            appId: APP_ID,
+            onesignalId: DUMMY_ONESIGNAL_ID,
+          },
+        ],
       });
 
       // Missing error in retry window

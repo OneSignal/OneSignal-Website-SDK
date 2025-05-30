@@ -1,6 +1,5 @@
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { GroupComparisonType, Operation } from 'src/core/operations/Operation';
-import { IRebuildUserService } from 'src/core/types/user';
 import { delay } from 'src/shared/utils/utils';
 
 export class SomeOperation extends Operation {
@@ -26,14 +25,6 @@ export class SomeOperation extends Operation {
 
   get canStartExecute() {
     return true;
-  }
-}
-
-// TODO: Revisit after implementing BuildUserService
-export const getRebuildOpsFn = vi.fn();
-export class BuildUserService implements IRebuildUserService {
-  getRebuildOperationsIfCurrentUser(...args: any[]) {
-    return getRebuildOpsFn(...args);
   }
 }
 

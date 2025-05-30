@@ -78,19 +78,21 @@ export default defineConfig(({ mode }) => {
     },
 
     // Could move some of these to .env.[ENV] file
+    // NOTE!!!: Since the service worker is registered separately, the define WONT probably replace it for the SW
+    // But it will be fine for builds. So check if field exists for development e.g. typeof __VERSION__ !== 'undefined'
     define: {
-      __API_TYPE__: JSON.stringify(process.env.API || 'production'),
-      __BUILD_TYPE__: JSON.stringify(process.env.ENV || 'production'),
-      __LOGGING__: JSON.stringify(process.env.LOGGING || false),
+      __API_TYPE__: JSON.stringify(process.env.API),
+      __BUILD_TYPE__: JSON.stringify(process.env.ENV),
+      __LOGGING__: JSON.stringify(process.env.LOGGING),
       __VERSION__: JSON.stringify(process.env.npm_package_config_sdkVersion),
 
       // ignored for prod
-      __API_ORIGIN__: JSON.stringify(process.env.API_ORIGIN || 'localhost'),
-      __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN || 'localhost'),
+      __API_ORIGIN__: JSON.stringify(process.env.API_ORIGIN),
+      __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN),
 
       // dev only
-      __IS_HTTPS__: JSON.stringify(process.env.HTTPS ?? true),
-      __NO_DEV_PORT__: JSON.stringify(process.env.NO_DEV_PORT ?? false),
+      __IS_HTTPS__: JSON.stringify(process.env.HTTPS),
+      __NO_DEV_PORT__: JSON.stringify(process.env.NO_DEV_PORT),
     },
     server: {
       open: true,

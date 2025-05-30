@@ -1,23 +1,23 @@
-import Log from '../../sw/libraries/Log';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
-import Database from '../services/Database';
-import { OutcomesConfig } from '../models/Outcomes';
 import {
   cancelableTimeout,
   CancelableTimeoutPromise,
 } from '../../sw/helpers/CancelableTimeout';
-import Utils from '../context/Utils';
-import OutcomesHelper from './OutcomesHelper';
+import Log from '../../sw/libraries/Log';
 import { OSServiceWorkerFields } from '../../sw/serviceWorker/types';
-import { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
-import {
-  SessionOrigin,
-  initializeNewSession,
-  SessionStatus,
-  Session,
-} from '../models/Session';
 import OneSignalApiSW from '../api/OneSignalApiSW';
+import Utils from '../context/Utils';
+import { OutcomesConfig } from '../models/Outcomes';
+import { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
+import {
+  initializeNewSession,
+  Session,
+  SessionOrigin,
+  SessionStatus,
+} from '../models/Session';
+import Database from '../services/Database';
+import { OneSignalUtils } from '../utils/OneSignalUtils';
+import OutcomesHelper from './OutcomesHelper';
 
 declare let self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 

@@ -174,7 +174,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       const user = User.createOrGetInstance();
       user.isCreatingUser = false;
-      user.hasOneSignalId = true;
 
       const idTranslations: Record<string, string> = {
         [createUserOperation.onesignalId]: backendOneSignalId,
@@ -218,6 +217,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         const pushSubscriptionId = await Database.getPushId();
         if (pushSubscriptionId === localId) {
           await Database.setPushId(backendSub.id);
+          await Database.setPushToken(backendSub.token);
         }
 
         const model =

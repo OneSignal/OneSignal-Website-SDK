@@ -10,10 +10,7 @@ import {
 } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
-import {
-  BuildUserService,
-  SomeOperation,
-} from '__test__/support/helpers/executors';
+import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   createUserFn,
   setAddAliasError,
@@ -23,6 +20,7 @@ import {
 } from '__test__/support/helpers/requests';
 import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -44,6 +42,7 @@ import { LoginUserOperationExecutor } from './LoginUserOperationExecutor';
 let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
 let subscriptionModelStore: SubscriptionModelStore;
+let rebuildUserService: RebuildUserService;
 
 vi.mock('src/shared/libraries/Log');
 
@@ -57,13 +56,18 @@ describe('LoginUserOperationExecutor', () => {
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
     subscriptionModelStore = new SubscriptionModelStore();
+    rebuildUserService = new RebuildUserService(
+      identityModelStore,
+      propertiesModelStore,
+      subscriptionModelStore,
+    );
   });
 
   const getExecutor = () => {
     return new LoginUserOperationExecutor(
       new IdentityOperationExecutor(
         identityModelStore,
-        new BuildUserService(),
+        rebuildUserService,
         new NewRecordsState(),
       ),
       identityModelStore,
