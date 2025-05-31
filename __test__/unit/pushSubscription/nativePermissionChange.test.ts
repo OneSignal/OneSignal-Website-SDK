@@ -24,6 +24,8 @@ const triNotifSpy = vi.spyOn(
   'triggerNotificationPermissionChanged',
 );
 
+vi.useFakeTimers();
+
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(async () => {
     mockUserAgent();
@@ -135,7 +137,7 @@ describe('Notification Types are set correctly on subscription change', () => {
         lastKnownPushToken: DUMMY_PUSH_TOKEN_2,
         lastKnownPushId: DUMMY_SUBSCRIPTION_ID_3,
       });
-      OneSignal.coreDirector.addSubscriptionModel(pushModel);
+      OneSignal.coreDirector.subscriptionModelStore.add(pushModel);
 
       await EventHelper.checkAndTriggerSubscriptionChanged();
       expect(changeListener).toHaveBeenCalledWith({
