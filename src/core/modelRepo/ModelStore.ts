@@ -2,6 +2,7 @@
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/ModelStore.kt
 import type { IEventNotifier } from 'src/core/types/events';
 import {
+  DatabaseModel,
   ModelChangeTags,
   ModelChangeTagValue,
   ModelName,
@@ -34,7 +35,10 @@ import type {
  * Instantiating this model store with persistence will load any previously persisted models
  * as part of its initialization process.
  */
-export abstract class ModelStore<TModel extends Model>
+export abstract class ModelStore<
+    TModel extends Model,
+    DBModel extends DatabaseModel<TModel> = DatabaseModel<TModel>,
+  >
   implements
     IEventNotifier<IModelStoreChangeHandler<TModel>>,
     IModelStore<TModel>,
@@ -53,7 +57,7 @@ export abstract class ModelStore<TModel extends Model>
   /**
    * Create a model from JSON data
    */
-  abstract create(json?: object | null): TModel | null;
+  abstract create(json?: DBModel | null): TModel | null;
 
   add(model: TModel, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
     const oldModel = this.models.find((m) => m.modelId === model.modelId);
@@ -154,9 +158,9 @@ export abstract class ModelStore<TModel extends Model>
   protected async load(): Promise<void> {
     if (!this.modelName) return;
 
-    let jsonArray: TModel[] = [];
+    let jsonArray: DBModel[] = [];
     if (!(this.modelName === ModelName.Operations)) {
-      jsonArray = await Database.getAll<TModel>(this.modelName);
+      jsonArray = await Database.getAll<DBModel>(this.modelName);
     }
 
     const shouldRePersist = this.models.length > 0;
@@ -189,6 +193,7 @@ export abstract class ModelStore<TModel extends Model>
     for (const model of this.models) {
       await Database.put(this.modelName, {
         modelId: model.modelId,
+        modelName: this.modelName,
         ...model.toJSON(),
       });
     }

@@ -58,12 +58,21 @@ export interface IModelStoreChangeHandler<TModel extends Model> {
   onModelRemoved(model: TModel, tag: string): void;
 }
 
-export interface IModelStore<TModel extends Model>
-  extends IEventNotifier<IModelStoreChangeHandler<TModel>> {
+export type DatabaseModel<TModel extends Model> = ReturnType<
+  TModel['toJSON']
+> & {
+  modelId: string;
+  modelName: string;
+};
+
+export interface IModelStore<
+  TModel extends Model,
+  DBModel extends DatabaseModel<TModel> = DatabaseModel<TModel>,
+> extends IEventNotifier<IModelStoreChangeHandler<TModel>> {
   /**
    * Create a new instance of the model, optionally from a JSON object.
    */
-  create(jsonObject?: object): TModel | null;
+  create(jsonObject?: DBModel | null): TModel | null;
 
   /**
    * List the models that are owned by this model store.
