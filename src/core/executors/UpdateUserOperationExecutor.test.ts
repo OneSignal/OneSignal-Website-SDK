@@ -9,9 +9,7 @@ import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
-import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
-import { SetTagOperation } from '../operations/SetTagOperation';
 import { ExecutionResult } from '../types/operation';
 import { UpdateUserOperationExecutor } from './UpdateUserOperationExecutor';
 
@@ -59,11 +57,7 @@ describe('UpdateUserOperationExecutor', () => {
 
   test('should return correct operations (names)', () => {
     const executor = getExecutor();
-    expect(executor.operations).toEqual([
-      OPERATION_NAME.SET_TAG,
-      OPERATION_NAME.DELETE_TAG,
-      OPERATION_NAME.SET_PROPERTY,
-    ]);
+    expect(executor.operations).toEqual([OPERATION_NAME.SET_PROPERTY]);
   });
 
   test('should validate operations', async () => {
@@ -75,92 +69,6 @@ describe('UpdateUserOperationExecutor', () => {
     await expect(() => result).rejects.toThrow(
       `Unrecognized operation: ${ops[0]}`,
     );
-  });
-
-  describe('SetTagOperation', () => {
-    beforeEach(() => {
-      setUpdateUserResponse();
-    });
-
-    test('should update tags in properties model on success', async () => {
-      propertiesModelStore.model.setProperty('tags', {
-        some_tag: 'some_value',
-      });
-
-      const executor = getExecutor();
-      const setTagOp = new SetTagOperation(APP_ID, DUMMY_ONESIGNAL_ID, 'tags', {
-        some_tag: 'some_value',
-        test_tag: 'test_value',
-      });
-
-      const result = await executor.execute([setTagOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-      expect(propertiesModelStore.model.tags).toEqual({
-        some_tag: 'some_value',
-        test_tag: 'test_value',
-      });
-    });
-
-    test('should handle multiple tag operations', async () => {
-      const executor = getExecutor();
-      const setTagOp1 = new SetTagOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        'tags',
-        { tag1: 'value1' },
-      );
-      const setTagOp2 = new SetTagOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        'tags',
-        { tag2: 'value2' },
-      );
-
-      const result = await executor.execute([setTagOp1, setTagOp2]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-      expect(propertiesModelStore.model.tags).toEqual({
-        tag2: 'value2',
-      });
-    });
-
-    test('should not update model if onesignalId differs', async () => {
-      const differentId = 'different-id';
-      setUpdateUserResponse(differentId);
-
-      const executor = getExecutor();
-      const setTagOp = new SetTagOperation(
-        APP_ID,
-        differentId,
-        'test_tag',
-        'test_value',
-      );
-
-      const result = await executor.execute([setTagOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-      expect(propertiesModelStore.model.tags).toEqual({});
-    });
-  });
-
-  describe('DeleteTagOperation', () => {
-    beforeEach(() => {
-      propertiesModelStore.model.setProperty('tags', {
-        existing_tag: 'existing_value',
-      });
-      setUpdateUserResponse();
-    });
-
-    test('should remove tag from properties model on success', async () => {
-      const executor = getExecutor();
-      const deleteTagOp = new DeleteTagOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        'existing_tag',
-      );
-
-      const result = await executor.execute([deleteTagOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-      expect(propertiesModelStore.model.tags).toEqual({});
-    });
   });
 
   describe('SetPropertyOperation', () => {
@@ -181,16 +89,33 @@ describe('UpdateUserOperationExecutor', () => {
       expect(result.result).toBe(ExecutionResult.SUCCESS);
       expect(propertiesModelStore.model.language).toBe('fr');
     });
+
+    test('can set tags', async () => {
+      const executor = getExecutor();
+      const setPropertyOp = new SetPropertyOperation(
+        APP_ID,
+        DUMMY_ONESIGNAL_ID,
+        'tags',
+        { tagA: 'valueA', tagB: 'valueB' },
+      );
+
+      const result = await executor.execute([setPropertyOp]);
+      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(propertiesModelStore.model.tags).toEqual({
+        tagA: 'valueA',
+        tagB: 'valueB',
+      });
+    });
   });
 
   describe('Error Handling', () => {
     test('should handle network errors', async () => {
       const executor = getExecutor();
-      const setTagOp = new SetTagOperation(
+      const setTagOp = new SetPropertyOperation(
         APP_ID,
         DUMMY_ONESIGNAL_ID,
-        'test_tag',
-        'test_value',
+        'tags',
+        { test_tag: 'test_value' },
       );
 
       // Retryable error

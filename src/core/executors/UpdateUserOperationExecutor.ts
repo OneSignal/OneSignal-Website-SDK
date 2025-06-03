@@ -13,11 +13,9 @@ import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { PropertiesObject } from '../objects/PropertiesObject';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
-import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
-import { SetTagOperation } from '../operations/SetTagOperation';
 import AliasPair from '../requestService/AliasPair';
 import { RequestService } from '../requestService/RequestService';
 import { ModelChangeTags } from '../types/models';
@@ -35,11 +33,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   ) {}
 
   get operations(): string[] {
-    return [
-      OPERATION_NAME.SET_TAG,
-      OPERATION_NAME.DELETE_TAG,
-      OPERATION_NAME.SET_PROPERTY,
-    ];
+    return [OPERATION_NAME.SET_PROPERTY];
   }
 
   private processOperations(operations: Operation[]) {
@@ -49,11 +43,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     const refreshDeviceMetadata = false;
 
     for (const operation of operations) {
-      if (
-        operation instanceof SetTagOperation ||
-        operation instanceof DeleteTagOperation ||
-        operation instanceof SetPropertyOperation
-      ) {
+      if (operation instanceof SetPropertyOperation) {
         if (!appId) {
           appId = operation.appId;
           onesignalId = operation.onesignalId;
@@ -99,21 +89,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     if (ok) {
       if (this._identityModelStore.model.onesignalId === onesignalId) {
         for (const operation of operations) {
-          const tags = { ...this._propertiesModelStore.model.tags };
-          if (operation instanceof SetTagOperation) {
-            this._propertiesModelStore.model.setProperty(
-              'tags',
-              operation.value,
-              ModelChangeTags.HYDRATE,
-            );
-          } else if (operation instanceof DeleteTagOperation) {
-            delete tags[operation.key];
-            this._propertiesModelStore.model.setProperty(
-              'tags',
-              tags,
-              ModelChangeTags.HYDRATE,
-            );
-          } else if (operation instanceof SetPropertyOperation) {
+          if (operation instanceof SetPropertyOperation) {
             this._propertiesModelStore.model.setProperty(
               operation.property as IPropertiesModelKeys,
               operation.value as IPropertiesModelValues,

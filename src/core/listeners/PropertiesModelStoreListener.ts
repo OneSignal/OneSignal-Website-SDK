@@ -1,10 +1,8 @@
 import MainHelper from 'src/shared/helpers/MainHelper';
 import { PropertiesModel } from '../models/PropertiesModel';
 import { type PropertiesModelStore } from '../modelStores/PropertiesModelStore';
-import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { type Operation } from '../operations/Operation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
-import { SetTagOperation } from '../operations/SetTagOperation';
 import { type IOperationRepo } from '../types/operation';
 import { SingletonModelStoreListener } from './SingletonModelStoreListener';
 
@@ -28,18 +26,6 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
     newValue: unknown,
   ): Promise<Operation | null> {
     const appId = await MainHelper.getAppId();
-    if (property === 'tags') {
-      if (newValue != null && typeof newValue === 'object') {
-        return new SetTagOperation(
-          appId,
-          model.onesignalId,
-          property,
-          newValue as Record<string, string>,
-        );
-      }
-      return new DeleteTagOperation(appId, model.onesignalId, property);
-    }
-
     return new SetPropertyOperation(
       appId,
       model.onesignalId,
