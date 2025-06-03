@@ -113,6 +113,7 @@ export default class User {
       id: IDManager.createLocalId(),
       enabled: true,
       notification_types: NotificationType.Subscribed,
+      onesignalId: OneSignal.coreDirector.getIdentityModel().onesignalId,
       token,
       type,
     };

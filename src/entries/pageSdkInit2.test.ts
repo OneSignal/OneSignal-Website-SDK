@@ -66,6 +66,7 @@ describe('pageSdkInit 2', () => {
         id: expect.any(String),
         modelId: expect.any(String),
         modelName: 'subscriptions',
+        onesignalId: DUMMY_ONESIGNAL_ID,
         notification_types: NotificationType.Subscribed,
         sdk: '1',
         token: email,

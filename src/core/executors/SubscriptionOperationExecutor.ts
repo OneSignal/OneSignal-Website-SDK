@@ -114,6 +114,11 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           backendSubscriptionId,
           ModelChangeTags.HYDRATE,
         );
+        subscriptionModel?.setProperty(
+          'onesignalId',
+          createOperation.onesignalId,
+          ModelChangeTags.HYDRATE,
+        );
       }
 
       const pushSubscriptionId = await Database.getPushId();

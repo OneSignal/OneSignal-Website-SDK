@@ -205,6 +205,7 @@ describe('OneSignal', () => {
             id: expect.any(String),
             modelId: expect.any(String),
             modelName: 'subscriptions',
+            onesignalId: DUMMY_ONESIGNAL_ID,
             sdk: '1',
           },
         ]);
@@ -295,6 +296,7 @@ describe('OneSignal', () => {
             id: expect.any(String),
             modelId: expect.any(String),
             modelName: 'subscriptions',
+            onesignalId: DUMMY_ONESIGNAL_ID,
             sdk: '1',
           },
         ]);
