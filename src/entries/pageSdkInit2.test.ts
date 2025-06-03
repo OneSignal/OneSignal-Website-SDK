@@ -60,11 +60,12 @@ describe('pageSdkInit 2', () => {
 
     expect(subscriptions).toEqual([
       {
-        id: expect.any(String),
         device_model: '',
         device_os: 56,
         enabled: true,
+        id: expect.any(String),
         modelId: expect.any(String),
+        modelName: 'subscriptions',
         notification_types: NotificationType.Subscribed,
         sdk: '1',
         token: email,

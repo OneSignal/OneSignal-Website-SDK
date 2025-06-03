@@ -199,11 +199,12 @@ describe('OneSignal', () => {
         let dbSubscriptions = await getEmailSubscriptionDbItems();
         expect(dbSubscriptions).toEqual([
           {
-            modelId: expect.any(String),
-            id: expect.any(String),
             ...subscription,
-            device_os: 56,
             device_model: '',
+            device_os: 56,
+            id: expect.any(String),
+            modelId: expect.any(String),
+            modelName: 'subscriptions',
             sdk: '1',
           },
         ]);
@@ -288,11 +289,12 @@ describe('OneSignal', () => {
 
         expect(dbSubscriptions).toEqual([
           {
-            modelId: expect.any(String),
-            id: expect.any(String),
             ...subscription,
-            device_os: 56,
             device_model: '',
+            device_os: 56,
+            id: expect.any(String),
+            modelId: expect.any(String),
+            modelName: 'subscriptions',
             sdk: '1',
           },
         ]);
@@ -365,6 +367,7 @@ describe('OneSignal', () => {
         // should not change the identity in the IndexedDB right away
         expect(identityData).toEqual({
           modelId: expect.any(String),
+          modelName: 'identity',
           onesignal_id: DUMMY_ONESIGNAL_ID,
         });
 
@@ -378,9 +381,10 @@ describe('OneSignal', () => {
         // should also update the identity in the IndexedDB
         identityData = await getIdentityItem();
         expect(identityData).toEqual({
-          modelId: expect.any(String),
-          onesignal_id: DUMMY_ONESIGNAL_ID,
           external_id: externalId,
+          modelId: expect.any(String),
+          modelName: 'identity',
+          onesignal_id: DUMMY_ONESIGNAL_ID,
         });
 
         const identityModel = window.OneSignal.coreDirector.getIdentityModel();
@@ -431,9 +435,10 @@ describe('OneSignal', () => {
 
         const identityData = await getIdentityItem();
         expect(identityData).toEqual({
-          modelId: expect.any(String),
-          onesignal_id: DUMMY_ONESIGNAL_ID,
           external_id: newExternalId,
+          modelId: expect.any(String),
+          modelName: 'identity',
+          onesignal_id: DUMMY_ONESIGNAL_ID,
         });
 
         const identityModel = window.OneSignal.coreDirector.getIdentityModel();
@@ -484,9 +489,10 @@ describe('OneSignal', () => {
         // onesignal id should be changed
         const identityData = await getIdentityItem();
         expect(identityData).toEqual({
-          modelId: expect.any(String),
-          onesignal_id: DUMMY_ONESIGNAL_ID_2,
           external_id: externalId,
+          modelId: expect.any(String),
+          modelName: 'identity',
+          onesignal_id: DUMMY_ONESIGNAL_ID_2,
         });
 
         // subscriptions should be kept
@@ -556,6 +562,7 @@ describe('OneSignal', () => {
         expect(identityData).toEqual({
           modelId: expect.any(String),
           onesignal_id: undefined,
+          modelName: 'identity',
         });
 
         // properties model should be reset
@@ -566,6 +573,7 @@ describe('OneSignal', () => {
         let propertiesData = await getPropertiesItem();
         expect(propertiesData).toEqual({
           modelId: expect.any(String),
+          modelName: 'properties',
         });
         await waitForOperations(3);
 
@@ -578,12 +586,14 @@ describe('OneSignal', () => {
         identityData = await getIdentityItem();
         expect(identityData).toEqual({
           modelId: expect.any(String),
+          modelName: 'identity',
           onesignal_id: DUMMY_ONESIGNAL_ID,
         });
 
         propertiesData = await getPropertiesItem();
         expect(propertiesData).toEqual({
           modelId: expect.any(String),
+          modelName: 'properties',
           onesignalId: DUMMY_ONESIGNAL_ID,
         });
 
@@ -593,6 +603,7 @@ describe('OneSignal', () => {
           {
             id: DUMMY_SUBSCRIPTION_ID,
             modelId: expect.any(String),
+            modelName: 'subscriptions',
             token,
             type,
           },
