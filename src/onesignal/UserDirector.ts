@@ -1,3 +1,5 @@
+import { IdentityModel } from 'src/core/models/IdentityModel';
+import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
@@ -62,5 +64,20 @@ export default class UserDirector {
   static resetUserMetaProperties() {
     const user = User.createOrGetInstance();
     user.isCreatingUser = false;
+  }
+
+  // Resets models similar to Android SDK
+  // https://github.com/OneSignal/OneSignal-Android-SDK/blob/ed2e87618ea3af81b75f97b0a4cbb8f658c7fc80/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/internal/OneSignalImp.kt#L448
+  static resetUserModels() {
+    // replace models
+    const newIdentityModel = new IdentityModel();
+    const newPropertiesModel = new PropertiesModel();
+
+    const sdkId = IDManager.createLocalId();
+    newIdentityModel.onesignalId = sdkId;
+    newPropertiesModel.onesignalId = sdkId;
+
+    OneSignal.coreDirector.identityModelStore.replace(newIdentityModel);
+    OneSignal.coreDirector.propertiesModelStore.replace(newPropertiesModel);
   }
 }

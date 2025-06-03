@@ -31,6 +31,7 @@ import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
+import { IDManager } from 'src/shared/managers/IDManager';
 import Database, {
   IdentityItem,
   PropertiesItem,
@@ -38,6 +39,7 @@ import Database, {
 } from 'src/shared/services/Database';
 import LocalStorage from 'src/shared/utils/LocalStorage';
 
+vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
 
 const getIdentityItem = async () =>
@@ -54,6 +56,7 @@ describe('OneSignal', () => {
 
     await Database.put('identity', {
       modelId: '123',
+      modelName: 'identity',
       onesignal_id: DUMMY_ONESIGNAL_ID,
     });
     await window.OneSignal.init({ appId: APP_ID });
@@ -68,6 +71,10 @@ describe('OneSignal', () => {
     window.OneSignal.coreDirector
       .getIdentityModel()
       .initializeFromJson(newIdentityModel.toJSON());
+  });
+
+  afterEach(async () => {
+    await waitForOperations(); // flush operations
   });
 
   describe('User', () => {
@@ -337,6 +344,7 @@ describe('OneSignal', () => {
       const externalId = 'jd-1';
       beforeEach(() => {
         setAddAliasResponse();
+        addAliasFn.mockClear();
       });
 
       test('should validate external id', async () => {
@@ -558,24 +566,31 @@ describe('OneSignal', () => {
 
         // identity model should be reset
         identityModel = window.OneSignal.coreDirector.getIdentityModel();
-        expect(identityModel.toJSON()).toEqual({}); // no one signal id
+        const onesignalId = identityModel.onesignalId;
+        expect(identityModel.toJSON()).toEqual({
+          onesignal_id: expect.any(String),
+        });
+        expect(IDManager.isLocalId(onesignalId)).toBe(true);
 
         let identityData = await getIdentityItem();
         expect(identityData).toEqual({
           modelId: expect.any(String),
-          onesignal_id: undefined,
+          onesignal_id: onesignalId,
           modelName: 'identity',
         });
 
         // properties model should be reset
         const propertiesModel =
           window.OneSignal.coreDirector.getPropertiesModel();
-        expect(propertiesModel.toJSON()).toEqual({});
+        expect(propertiesModel.toJSON()).toEqual({
+          onesignalId,
+        });
 
         let propertiesData = await getPropertiesItem();
         expect(propertiesData).toEqual({
           modelId: expect.any(String),
           modelName: 'properties',
+          onesignalId,
         });
         await waitForOperations(3);
 

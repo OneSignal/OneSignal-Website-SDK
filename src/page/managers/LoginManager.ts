@@ -1,5 +1,3 @@
-import { IdentityModel } from 'src/core/models/IdentityModel';
-import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
@@ -35,7 +33,7 @@ export default class LoginManager {
         await Database.setJWTToken(token);
       }
 
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      let identityModel = OneSignal.coreDirector.getIdentityModel();
       const currentOneSignalId = identityModel.onesignalId;
       const currentExternalId = identityModel.externalId;
 
@@ -45,11 +43,17 @@ export default class LoginManager {
         return;
       }
 
+      UserDirector.resetUserModels();
+      identityModel = OneSignal.coreDirector.getIdentityModel();
+
+      identityModel.externalId = externalId;
+      const newIdentityOneSignalId = identityModel.onesignalId;
+
       const appId = await MainHelper.getAppId();
       await OneSignal.coreDirector.operationRepo.enqueueAndWait(
         new LoginUserOperation(
           appId,
-          currentOneSignalId,
+          newIdentityOneSignalId,
           externalId,
           !currentExternalId ? currentOneSignalId : undefined,
         ),
@@ -71,15 +75,9 @@ export default class LoginManager {
       return Log.debug('Logout: User is not logged in, skipping logout');
 
     UserDirector.resetUserMetaProperties();
-
-    // replace models
-    const newIdentityModel = new IdentityModel();
-    OneSignal.coreDirector.identityModelStore.replace(newIdentityModel);
-
-    const newPropertiesModel = new PropertiesModel();
-    OneSignal.coreDirector.propertiesModelStore.replace(newPropertiesModel);
+    UserDirector.resetUserModels();
 
     // create a new anonymous user
-    UserDirector.initializeUser();
+    UserDirector.createUserOnServer();
   }
 }
