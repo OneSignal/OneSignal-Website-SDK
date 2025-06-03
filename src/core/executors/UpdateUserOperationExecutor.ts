@@ -5,10 +5,7 @@ import {
 import { PropertyOperationHelper } from 'src/shared/helpers/PropertyOperationHelper';
 import Log from 'src/shared/libraries/Log';
 import { OPERATION_NAME } from '../constants';
-import {
-  IPropertiesModelKeys,
-  IPropertiesModelValues,
-} from '../models/PropertiesModel';
+import { IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { PropertiesObject } from '../objects/PropertiesObject';
@@ -86,13 +83,24 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
 
     const { ok, retryAfterSeconds, status } = response;
 
+    const isTagProperty = (
+      op: SetPropertyOperation,
+    ): op is SetPropertyOperation<'tags'> => op.property === 'tags';
+
     if (ok) {
       if (this._identityModelStore.model.onesignalId === onesignalId) {
         for (const operation of operations) {
           if (operation instanceof SetPropertyOperation) {
+            // removing empty string tags from operation.value to save space in IndexedDB and local memory.
+            let value = operation.value;
+            if (isTagProperty(operation)) {
+              value = { ...operation.value };
+              for (const key in value) if (value[key] === '') delete value[key];
+            }
+
             this._propertiesModelStore.model.setProperty(
               operation.property as IPropertiesModelKeys,
-              operation.value as IPropertiesModelValues,
+              value,
               ModelChangeTags.HYDRATE,
             );
           }
