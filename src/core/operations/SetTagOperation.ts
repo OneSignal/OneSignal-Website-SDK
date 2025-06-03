@@ -2,7 +2,7 @@ import { OPERATION_NAME } from '../constants';
 import { BaseTagOperation } from './BaseTagOperation';
 
 type TagOp = {
-  value: string;
+  value: Record<string, string>;
 };
 
 /**
@@ -11,12 +11,17 @@ type TagOp = {
  */
 export class SetTagOperation extends BaseTagOperation<TagOp> {
   constructor();
-  constructor(appId: string, onesignalId: string, key: string, value: string);
+  constructor(
+    appId: string,
+    onesignalId: string,
+    key: string,
+    value: Record<string, string>,
+  );
   constructor(
     appId?: string,
     onesignalId?: string,
     key?: string,
-    value?: string,
+    value?: Record<string, string>,
   ) {
     super(OPERATION_NAME.SET_TAG, appId, onesignalId, key);
     if (value) this.value = value;
@@ -25,10 +30,10 @@ export class SetTagOperation extends BaseTagOperation<TagOp> {
   /**
    * The new/updated tag value.
    */
-  get value(): string {
+  get value(): Record<string, string> {
     return this.getProperty('value');
   }
-  private set value(value: string) {
+  private set value(value: Record<string, string>) {
     this.setProperty('value', value);
   }
 }

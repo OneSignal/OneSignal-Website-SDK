@@ -11,7 +11,6 @@ import {
 } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
-import { PropertiesDeltasObject } from '../objects/PropertiesDeltaObject';
 import { PropertiesObject } from '../objects/PropertiesObject';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteTagOperation } from '../operations/DeleteTagOperation';
@@ -47,7 +46,6 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     let appId: string | null = null;
     let onesignalId: string | null = null;
     let propertiesObject = new PropertiesObject();
-    const deltasObject = new PropertiesDeltasObject();
     const refreshDeviceMetadata = false;
 
     for (const operation of operations) {
@@ -74,7 +72,6 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
       appId,
       onesignalId,
       propertiesObject,
-      deltasObject,
       refreshDeviceMetadata,
     };
   }
@@ -82,13 +79,8 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
     Log.debug(`UpdateUserOperationExecutor(operation: ${operations})`);
 
-    const {
-      appId,
-      onesignalId,
-      propertiesObject,
-      deltasObject,
-      refreshDeviceMetadata,
-    } = this.processOperations(operations);
+    const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
+      this.processOperations(operations);
 
     if (!appId || !onesignalId)
       return new ExecutionResponse(ExecutionResult.SUCCESS);
@@ -99,7 +91,6 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
       {
         properties: propertiesObject,
         refresh_device_metadata: refreshDeviceMetadata,
-        deltas: deltasObject,
       },
     );
 
@@ -110,10 +101,9 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
         for (const operation of operations) {
           const tags = { ...this._propertiesModelStore.model.tags };
           if (operation instanceof SetTagOperation) {
-            tags[operation.key] = operation.value;
             this._propertiesModelStore.model.setProperty(
               'tags',
-              tags,
+              operation.value,
               ModelChangeTags.HYDRATE,
             );
           } else if (operation instanceof DeleteTagOperation) {

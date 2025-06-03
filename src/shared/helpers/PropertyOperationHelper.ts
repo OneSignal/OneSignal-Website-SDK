@@ -13,13 +13,15 @@ export class PropertyOperationHelper {
       operation instanceof SetTagOperation ||
       operation instanceof DeleteTagOperation
     ) {
-      const tags = { ...(properties.tags ?? {}) };
+      let tags: Record<string, string> = { ...(properties.tags ?? {}) };
 
-      if (operation instanceof SetTagOperation)
-        tags[operation.key] = operation.value;
+      if (operation instanceof SetTagOperation) tags = operation.value;
       else delete tags[operation.key];
 
-      return new PropertiesObject({ ...properties, tags });
+      return new PropertiesObject({
+        ...properties,
+        tags,
+      });
     }
 
     if (operation instanceof SetPropertyOperation) {

@@ -88,12 +88,10 @@ describe('UpdateUserOperationExecutor', () => {
       });
 
       const executor = getExecutor();
-      const setTagOp = new SetTagOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        'test_tag',
-        'test_value',
-      );
+      const setTagOp = new SetTagOperation(APP_ID, DUMMY_ONESIGNAL_ID, 'tags', {
+        some_tag: 'some_value',
+        test_tag: 'test_value',
+      });
 
       const result = await executor.execute([setTagOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
@@ -108,20 +106,19 @@ describe('UpdateUserOperationExecutor', () => {
       const setTagOp1 = new SetTagOperation(
         APP_ID,
         DUMMY_ONESIGNAL_ID,
-        'tag1',
-        'value1',
+        'tags',
+        { tag1: 'value1' },
       );
       const setTagOp2 = new SetTagOperation(
         APP_ID,
         DUMMY_ONESIGNAL_ID,
-        'tag2',
-        'value2',
+        'tags',
+        { tag2: 'value2' },
       );
 
       const result = await executor.execute([setTagOp1, setTagOp2]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
       expect(propertiesModelStore.model.tags).toEqual({
-        tag1: 'value1',
         tag2: 'value2',
       });
     });

@@ -29,12 +29,12 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
   ): Promise<Operation | null> {
     const appId = await MainHelper.getAppId();
     if (property === 'tags') {
-      if (newValue != null && typeof newValue === 'string') {
+      if (newValue != null && typeof newValue === 'object') {
         return new SetTagOperation(
           appId,
           model.onesignalId,
           property,
-          newValue,
+          newValue as Record<string, string>,
         );
       }
       return new DeleteTagOperation(appId, model.onesignalId, property);
