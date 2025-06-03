@@ -18,7 +18,9 @@ type ISubscriptionModel = Pick<
   | 'enabled'
   | 'web_auth'
   | 'web_p256'
->;
+> & {
+  onesignalId?: string;
+};
 
 // Implements logic similar to Android SDK's SubscriptionModel
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModel.kt
@@ -28,6 +30,16 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
     this.sdk = FuturePushSubscriptionRecord.getSdk();
     this.device_model = FuturePushSubscriptionRecord.getDeviceModel();
     this.device_os = FuturePushSubscriptionRecord.getDeviceOS();
+  }
+
+  /**
+   * This is a legacy property, could be removed sometime after web refactor launch
+   */
+  get onesignalId(): string | undefined {
+    return this.getProperty('onesignalId');
+  }
+  set onesignalId(value: string | undefined) {
+    this.setProperty('onesignalId', value);
   }
 
   /**

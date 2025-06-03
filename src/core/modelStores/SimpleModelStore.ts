@@ -24,6 +24,7 @@ export class SimpleModelStore<TModel extends Model> extends ModelStore<TModel> {
   override create(modelData?: DatabaseModel<TModel>): TModel {
     const model = this._create();
     if (modelData != null) {
+      // TODO: ModelName is a legacy property, could be removed sometime after web refactor launch
       // model name is kept track in the model store, so we don't need to pass it to the model,
       // the model id needs to be passed to the model, so it can stay consistent since reload will generate a new id
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

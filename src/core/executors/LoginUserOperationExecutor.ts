@@ -223,6 +223,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         const model =
           this._subscriptionsModelStore.getBySubscriptionId(localId);
         model?.setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
+        model?.setProperty(
+          'onesignalId',
+          backendOneSignalId,
+          ModelChangeTags.HYDRATE,
+        );
       }
 
       EventHelper.checkAndTriggerUserChanged();
