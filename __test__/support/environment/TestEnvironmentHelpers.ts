@@ -123,12 +123,18 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   return dom;
 }
 
-export const createPushSub = () => {
+export const createPushSub = ({
+  id = DUMMY_SUBSCRIPTION_ID_3,
+  token = 'push-token',
+}: {
+  id?: string;
+  token?: string;
+} = {}) => {
   const pushSubscription = new SubscriptionModel();
   pushSubscription.initializeFromJson({
-    id: DUMMY_SUBSCRIPTION_ID_3,
+    id,
     type: SubscriptionType.ChromePush,
-    token: 'push-token',
+    token,
     enabled: true,
     notification_types: NotificationType.Subscribed,
   });

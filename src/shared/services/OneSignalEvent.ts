@@ -1,8 +1,8 @@
-import Environment from '../helpers/Environment';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import Utils from '../context/Utils';
-import Log from '../libraries/Log';
+import Environment from '../helpers/Environment';
 import Emitter from '../libraries/Emitter';
+import Log from '../libraries/Log';
+import SdkEnvironment from '../managers/SdkEnvironment';
 
 const SILENT_EVENTS = [
   'notifyButtonHovering',

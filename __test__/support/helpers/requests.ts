@@ -58,9 +58,10 @@ export const getHandler = ({
   server.use(
     http[method](uri, async ({ request }) => {
       try {
-        const body = await request.json();
-        callback?.(body);
-      } catch (error) {
+        const data = await request.json();
+        callback?.(data);
+      } catch {
+        // some requests don't have a body
         callback?.();
       }
 

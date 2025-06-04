@@ -54,6 +54,7 @@ export default class EventHelper {
       isPushEnabled !== lastKnownPushEnabled ||
       currentPushToken !== lastKnownPushToken ||
       pushSubscriptionId !== lastKnownPushId;
+
     if (!didStateChange) {
       return;
     }

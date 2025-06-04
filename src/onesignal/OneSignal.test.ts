@@ -136,16 +136,13 @@ describe('OneSignal', () => {
         let identityModel = window.OneSignal.coreDirector.getIdentityModel();
         expect(identityModel.getProperty('someLabel')).toBe('someId');
         expect(identityModel.getProperty('someLabel2')).toBe('someId2');
-        await vi.waitUntil(async () => {
-          return addAliasFn.mock.calls.length === 2;
-        });
+
+        await vi.waitUntil(async () => addAliasFn.mock.calls.length === 2);
 
         window.OneSignal.User.removeAlias('someLabel');
         window.OneSignal.User.removeAlias('someLabel2');
 
-        await vi.waitUntil(async () => {
-          return deleteAliasFn.mock.calls.length === 2;
-        });
+        await vi.waitUntil(async () => deleteAliasFn.mock.calls.length === 2);
 
         identityModel = window.OneSignal.coreDirector.getIdentityModel();
         expect(identityModel.getProperty('someLabel')).toBeUndefined();
