@@ -19,7 +19,7 @@ import EventHelper from '../../../src/shared/helpers/EventHelper';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 
-const triNotifSpy = vi.spyOn(
+const triggerNotificationSpy = vi.spyOn(
   PermissionUtils,
   'triggerNotificationPermissionChanged',
 );
@@ -54,7 +54,7 @@ describe('Notification Types are set correctly on subscription change', () => {
       await setDbPermission(NotificationPermission.Granted);
 
       await MainHelper.checkAndTriggerNotificationPermissionChanged();
-      expect(triNotifSpy).not.toHaveBeenCalled();
+      expect(triggerNotificationSpy).not.toHaveBeenCalled();
     });
 
     test('should trigger change if permission status is different', async () => {
