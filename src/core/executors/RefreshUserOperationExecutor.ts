@@ -97,6 +97,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         model.sdk = sub.sdk ?? '';
         model.device_os = sub.device_os ?? '';
         model.device_model = sub.device_model ?? '';
+        model.onesignalId = op.onesignalId;
 
         // We only add a non-push subscriptions. For push, the device is the source of truth
         // so we don't want to cache these subscriptions from the backend.
@@ -110,7 +111,10 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       if (pushSubscriptionId) {
         const cachedPushModel =
           this._subscriptionsModelStore.getBySubscriptionId(pushSubscriptionId);
-        if (cachedPushModel) subscriptionModels.push(cachedPushModel);
+        if (cachedPushModel) {
+          cachedPushModel.onesignalId = op.onesignalId;
+          subscriptionModels.push(cachedPushModel);
+        }
       }
 
       this._identityModelStore.replace(identityModel, ModelChangeTags.HYDRATE);

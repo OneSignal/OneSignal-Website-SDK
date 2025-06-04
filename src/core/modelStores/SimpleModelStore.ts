@@ -1,6 +1,6 @@
 import { ModelStore } from 'src/core/modelRepo/ModelStore';
 import { Model } from 'src/core/models/Model';
-import { ModelNameType } from 'src/core/types/models';
+import { DatabaseModel, ModelNameType } from 'src/core/types/models';
 
 // Implements logic similar to Android SDK's SimpleModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/SimpleModelStore.kt
@@ -21,12 +21,17 @@ export class SimpleModelStore<TModel extends Model> extends ModelStore<TModel> {
     this.load(); // Automatically load on construction
   }
 
-  override create(modelData?: { modelId?: string } & object): TModel {
+  override create(modelData?: DatabaseModel<TModel>): TModel {
     const model = this._create();
     if (modelData != null) {
-      model.initializeFromJson(modelData);
-      if (modelData.modelId) {
-        model.modelId = modelData.modelId;
+      // TODO: ModelName is a legacy property, could be removed sometime after web refactor launch
+      // model name is kept track in the model store, so we don't need to pass it to the model,
+      // the model id needs to be passed to the model, so it can stay consistent since reload will generate a new id
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { modelId, modelName: _, ...rest } = modelData;
+      model.initializeFromJson(rest);
+      if (modelId) {
+        model.modelId = modelId;
       }
     }
     return model;
