@@ -5,20 +5,14 @@ import {
 import { PropertyOperationHelper } from 'src/shared/helpers/PropertyOperationHelper';
 import Log from 'src/shared/libraries/Log';
 import { OPERATION_NAME } from '../constants';
-import {
-  IPropertiesModelKeys,
-  IPropertiesModelValues,
-} from '../models/PropertiesModel';
+import { IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
-import { PropertiesDeltasObject } from '../objects/PropertiesDeltaObject';
 import { PropertiesObject } from '../objects/PropertiesObject';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
-import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
-import { SetTagOperation } from '../operations/SetTagOperation';
 import AliasPair from '../requestService/AliasPair';
 import { RequestService } from '../requestService/RequestService';
 import { ModelChangeTags } from '../types/models';
@@ -36,26 +30,17 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   ) {}
 
   get operations(): string[] {
-    return [
-      OPERATION_NAME.SET_TAG,
-      OPERATION_NAME.DELETE_TAG,
-      OPERATION_NAME.SET_PROPERTY,
-    ];
+    return [OPERATION_NAME.SET_PROPERTY];
   }
 
   private processOperations(operations: Operation[]) {
     let appId: string | null = null;
     let onesignalId: string | null = null;
     let propertiesObject = new PropertiesObject();
-    const deltasObject = new PropertiesDeltasObject();
     const refreshDeviceMetadata = false;
 
     for (const operation of operations) {
-      if (
-        operation instanceof SetTagOperation ||
-        operation instanceof DeleteTagOperation ||
-        operation instanceof SetPropertyOperation
-      ) {
+      if (operation instanceof SetPropertyOperation) {
         if (!appId) {
           appId = operation.appId;
           onesignalId = operation.onesignalId;
@@ -74,7 +59,6 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
       appId,
       onesignalId,
       propertiesObject,
-      deltasObject,
       refreshDeviceMetadata,
     };
   }
@@ -82,13 +66,8 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
     Log.debug(`UpdateUserOperationExecutor(operation: ${operations})`);
 
-    const {
-      appId,
-      onesignalId,
-      propertiesObject,
-      deltasObject,
-      refreshDeviceMetadata,
-    } = this.processOperations(operations);
+    const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
+      this.processOperations(operations);
 
     if (!appId || !onesignalId)
       return new ExecutionResponse(ExecutionResult.SUCCESS);
@@ -99,34 +78,29 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
       {
         properties: propertiesObject,
         refresh_device_metadata: refreshDeviceMetadata,
-        deltas: deltasObject,
       },
     );
 
     const { ok, retryAfterSeconds, status } = response;
 
+    const isTagProperty = (
+      op: SetPropertyOperation,
+    ): op is SetPropertyOperation<'tags'> => op.property === 'tags';
+
     if (ok) {
       if (this._identityModelStore.model.onesignalId === onesignalId) {
         for (const operation of operations) {
-          const tags = { ...this._propertiesModelStore.model.tags };
-          if (operation instanceof SetTagOperation) {
-            tags[operation.key] = operation.value;
-            this._propertiesModelStore.model.setProperty(
-              'tags',
-              tags,
-              ModelChangeTags.HYDRATE,
-            );
-          } else if (operation instanceof DeleteTagOperation) {
-            delete tags[operation.key];
-            this._propertiesModelStore.model.setProperty(
-              'tags',
-              tags,
-              ModelChangeTags.HYDRATE,
-            );
-          } else if (operation instanceof SetPropertyOperation) {
+          if (operation instanceof SetPropertyOperation) {
+            // removing empty string tags from operation.value to save space in IndexedDB and local memory.
+            let value = operation.value;
+            if (isTagProperty(operation)) {
+              value = { ...operation.value };
+              for (const key in value) if (value[key] === '') delete value[key];
+            }
+
             this._propertiesModelStore.model.setProperty(
               operation.property as IPropertiesModelKeys,
-              operation.value as IPropertiesModelValues,
+              value,
               ModelChangeTags.HYDRATE,
             );
           }

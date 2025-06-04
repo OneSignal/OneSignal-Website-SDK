@@ -253,8 +253,9 @@ export default class User {
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
     const newTags = { ...propertiesModel.tags };
 
+    // need to set the tag to an empty string to remove it
     tagKeys.forEach((tagKey) => {
-      delete newTags[tagKey];
+      newTags[tagKey] = '';
     });
     propertiesModel.tags = newTags;
   }

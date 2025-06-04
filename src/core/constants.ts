@@ -3,10 +3,6 @@ export const OPERATION_NAME = {
   SET_ALIAS: 'set-alias',
   DELETE_ALIAS: 'delete-alias',
 
-  // Tag Operations
-  SET_TAG: 'set-tag',
-  DELETE_TAG: 'delete-tag',
-
   // Property Operations
   SET_PROPERTY: 'set-property',
 

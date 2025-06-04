@@ -3,13 +3,11 @@ import { OPERATION_NAME } from '../constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
-import { DeleteTagOperation } from '../operations/DeleteTagOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
-import { SetTagOperation } from '../operations/SetTagOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ModelName } from '../types/models';
@@ -64,12 +62,6 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.REFRESH_USER:
         operation = new RefreshUserOperation();
-        break;
-      case OPERATION_NAME.SET_TAG:
-        operation = new SetTagOperation();
-        break;
-      case OPERATION_NAME.DELETE_TAG:
-        operation = new DeleteTagOperation();
         break;
       case OPERATION_NAME.SET_PROPERTY:
         operation = new SetPropertyOperation();

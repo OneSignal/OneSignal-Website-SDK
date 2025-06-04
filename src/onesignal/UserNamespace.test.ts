@@ -226,7 +226,7 @@ describe('UserNamespace', () => {
       // Then remove one
       userNamespace.removeTag('tag1');
 
-      expect(userNamespace.getTags()).toEqual({ tag2: 'value2' });
+      expect(userNamespace.getTags()).toEqual({ tag1: '', tag2: 'value2' });
     });
 
     test('should remove multiple tags', () => {
@@ -242,7 +242,11 @@ describe('UserNamespace', () => {
       // Then remove multiple
       userNamespace.removeTags(['tag1', 'tag3']);
 
-      expect(userNamespace.getTags()).toEqual({ tag2: 'value2' });
+      expect(userNamespace.getTags()).toEqual({
+        tag1: '',
+        tag2: 'value2',
+        tag3: '',
+      });
     });
 
     test('should return empty object when no tags exist', () => {

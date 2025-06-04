@@ -2,30 +2,36 @@ import { OPERATION_NAME } from '../constants';
 
 import { Operation } from './Operation';
 
-type PropertyOp = {
-  property: string;
-  value: unknown;
+type Property = 'tags' | string;
+type PropertyValue = {
+  tags: Record<string, string>;
+  [key: string]: string | Record<string, string>;
 };
 
 /**
  * An Operation to update a property related to a specific user.
  */
-export class SetPropertyOperation extends Operation<PropertyOp> {
+export class SetPropertyOperation<
+  P extends Property = string,
+> extends Operation<{
+  property: P;
+  value: PropertyValue[P];
+}> {
   constructor();
   constructor(
     appId: string,
     onesignalId: string,
-    property: string,
-    value: unknown,
+    property: P,
+    value: PropertyValue[P],
   );
   constructor(
     appId?: string,
     onesignalId?: string,
-    property?: string,
-    value?: unknown,
+    property?: P,
+    value?: PropertyValue[P],
   ) {
     super(OPERATION_NAME.SET_PROPERTY, appId, onesignalId);
-    if (property) {
+    if (property && value) {
       this.property = property;
       this.value = value;
     }
@@ -37,18 +43,18 @@ export class SetPropertyOperation extends Operation<PropertyOp> {
   get property(): string {
     return this.getProperty('property');
   }
-  private set property(value: string) {
+  private set property(value: P) {
     this.setProperty('property', value);
   }
 
   /**
    * The value of that property to update it to.
    */
-  get value(): unknown {
-    return this.getProperty('value');
+  get value() {
+    return this.getProperty('value') as PropertyValue[P];
   }
-  private set value(value: unknown) {
-    this.setProperty('value', value);
+  private set value(_value) {
+    this.setProperty('value', _value);
   }
 
   override get modifyComparisonKey(): string {
