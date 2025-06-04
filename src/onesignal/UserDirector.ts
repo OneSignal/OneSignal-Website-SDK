@@ -1,12 +1,11 @@
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
-import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
-import { delay, logMethodCall } from '../shared/utils/utils';
+import { logMethodCall } from '../shared/utils/utils';
 import User from './User';
 
 export default class UserDirector {
@@ -50,11 +49,6 @@ export default class UserDirector {
         ...rest,
       }),
     );
-
-    // in case OneSignal.init and OneSignal.login are both called in a short time period
-    // we need this create operation to finish before attempting to execute the login (with external id) operation
-    // otherwise the login operation executor will error since there will be two login operations
-    await delay(OP_REPO_EXECUTION_INTERVAL * 2);
   }
 
   static createAndHydrateUser(): Promise<void> {
