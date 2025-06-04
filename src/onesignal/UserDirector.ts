@@ -1,10 +1,11 @@
-import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
+import { IdentityModel } from 'src/core/models/IdentityModel';
+import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
-import { delay, logMethodCall } from '../shared/utils/utils';
+import { logMethodCall } from '../shared/utils/utils';
 import User from './User';
 
 export default class UserDirector {
@@ -48,11 +49,6 @@ export default class UserDirector {
         ...rest,
       }),
     );
-
-    // in case OneSignal.init and OneSignal.login are both called in a short time period
-    // we need this create operation to finish before attempting to execute the login (with external id) operation
-    // otherwise the login operation executor will error since there will be two login operations
-    await delay(OP_REPO_EXECUTION_INTERVAL * 2);
   }
 
   static createAndHydrateUser(): Promise<void> {
@@ -62,5 +58,20 @@ export default class UserDirector {
   static resetUserMetaProperties() {
     const user = User.createOrGetInstance();
     user.isCreatingUser = false;
+  }
+
+  // Resets models similar to Android SDK
+  // https://github.com/OneSignal/OneSignal-Android-SDK/blob/ed2e87618ea3af81b75f97b0a4cbb8f658c7fc80/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/internal/OneSignalImp.kt#L448
+  static resetUserModels() {
+    // replace models
+    const newIdentityModel = new IdentityModel();
+    const newPropertiesModel = new PropertiesModel();
+
+    const sdkId = IDManager.createLocalId();
+    newIdentityModel.onesignalId = sdkId;
+    newPropertiesModel.onesignalId = sdkId;
+
+    OneSignal.coreDirector.identityModelStore.replace(newIdentityModel);
+    OneSignal.coreDirector.propertiesModelStore.replace(newPropertiesModel);
   }
 }
