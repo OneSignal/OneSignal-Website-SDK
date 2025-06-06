@@ -19,6 +19,7 @@ import EventHelper from '../../../src/shared/helpers/EventHelper';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 
+vi.mock('src/shared/libraries/Log');
 const triggerNotificationSpy = vi.spyOn(
   PermissionUtils,
   'triggerNotificationPermissionChanged',

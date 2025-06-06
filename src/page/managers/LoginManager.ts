@@ -68,6 +68,7 @@ export default class LoginManager {
           pushOp.id,
         ),
       );
+      User.createOrGetInstance().isCreatingUser = true;
       await OneSignal.coreDirector.operationRepo.enqueueAndWait(
         new LoginUserOperation(
           appId,
@@ -96,6 +97,6 @@ export default class LoginManager {
     UserDirector.resetUserModels();
 
     // create a new anonymous user
-    UserDirector.createUserOnServer();
+    return UserDirector.createUserOnServer();
   }
 }
