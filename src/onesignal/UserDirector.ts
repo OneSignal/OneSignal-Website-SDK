@@ -51,10 +51,6 @@ export default class UserDirector {
     );
   }
 
-  static createAndHydrateUser(): Promise<void> {
-    return UserDirector.createUserOnServer();
-  }
-
   static resetUserMetaProperties() {
     const user = User.createOrGetInstance();
     user.isCreatingUser = false;

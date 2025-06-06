@@ -1,4 +1,6 @@
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
+import { ModelChangeTags } from 'src/core/types/models';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
 import OneSignalError from '../../shared/errors/OneSignalError';
@@ -46,10 +48,26 @@ export default class LoginManager {
       UserDirector.resetUserModels();
       identityModel = OneSignal.coreDirector.getIdentityModel();
 
-      identityModel.externalId = externalId;
+      // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
+      // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
+      identityModel.setProperty(
+        'external_id',
+        externalId,
+        ModelChangeTags.HYDRATE,
+      );
       const newIdentityOneSignalId = identityModel.onesignalId;
 
       const appId = await MainHelper.getAppId();
+      const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
+      if (!pushOp) return Log.error('Subscription not found.');
+
+      OneSignal.coreDirector.operationRepo.enqueue(
+        new TransferSubscriptionOperation(
+          appId,
+          newIdentityOneSignalId,
+          pushOp.id,
+        ),
+      );
       await OneSignal.coreDirector.operationRepo.enqueueAndWait(
         new LoginUserOperation(
           appId,
