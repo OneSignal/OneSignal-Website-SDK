@@ -62,6 +62,7 @@ export default class LoginManager {
       const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
       if (!pushOp) return Log.error('Subscription not found.');
 
+      User.createOrGetInstance().isCreatingUser = true;
       OneSignal.coreDirector.operationRepo.enqueue(
         new TransferSubscriptionOperation(
           appId,
@@ -69,7 +70,6 @@ export default class LoginManager {
           pushOp.id,
         ),
       );
-      User.createOrGetInstance().isCreatingUser = true;
       await OneSignal.coreDirector.operationRepo.enqueueAndWait(
         new LoginUserOperation(
           appId,

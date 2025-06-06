@@ -29,12 +29,12 @@ export default class UserDirector {
         identityModel.externalId,
       ),
     );
-    return OneSignal.coreDirector.operationRepo.enqueueAndWait(
+    await OneSignal.coreDirector.operationRepo.enqueueAndWait(
       new CreateSubscriptionOperation({
+        ...rest,
         appId,
         onesignalId: identityModel.onesignalId,
         subscriptionId: id,
-        ...rest,
       }),
     );
   }
