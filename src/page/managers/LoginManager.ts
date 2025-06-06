@@ -1,6 +1,7 @@
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
+import User from 'src/onesignal/User';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
 import OneSignalError from '../../shared/errors/OneSignalError';

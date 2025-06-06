@@ -14,7 +14,6 @@ export default class UserDirector {
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     const appId = await MainHelper.getAppId();
-    user.isCreatingUser = true;
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
     if (!pushOp) return Log.info('No push subscription found');
@@ -22,6 +21,7 @@ export default class UserDirector {
     pushOp.id = pushOp.id ?? IDManager.createLocalId();
     const { id, ...rest } = pushOp.toJSON();
 
+    User.createOrGetInstance().isCreatingUser = true;
     OneSignal.coreDirector.operationRepo.enqueue(
       new LoginUserOperation(
         appId,
