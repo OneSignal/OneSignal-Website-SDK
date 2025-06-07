@@ -2,6 +2,7 @@ import bowser from 'bowser';
 import { DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { ModelChangeTags } from 'src/core/types/models';
 import {
   NotificationType,
   SubscriptionType,
@@ -17,7 +18,7 @@ import Emitter from '../../../src/shared/libraries/Emitter';
 import Database from '../../../src/shared/services/Database';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
 import * as bowerCastleHelpers from '../../../src/shared/utils/bowserCastle';
-import { DUMMY_SUBSCRIPTION_ID_3 } from '../constants';
+import { DUMMY_ONESIGNAL_ID, DUMMY_SUBSCRIPTION_ID_3 } from '../constants';
 import MockNotification from '../mocks/MockNotification';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import Random from '../utils/Random';
@@ -126,17 +127,47 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
 export const createPushSub = ({
   id = DUMMY_SUBSCRIPTION_ID_3,
   token = 'push-token',
+  onesignalId = DUMMY_ONESIGNAL_ID,
 }: {
   id?: string;
   token?: string;
+  onesignalId?: string;
 } = {}) => {
   const pushSubscription = new SubscriptionModel();
   pushSubscription.initializeFromJson({
-    id,
-    type: SubscriptionType.ChromePush,
-    token,
+    device_model: '',
+    device_os: 56,
     enabled: true,
+    id,
     notification_types: NotificationType.Subscribed,
+    onesignalId,
+    token,
+    sdk: '1',
+    type: SubscriptionType.ChromePush,
   });
   return pushSubscription;
+};
+
+export const setupSubModelStore = async ({
+  id,
+  token,
+  onesignalId,
+}: {
+  id?: string;
+  token?: string;
+  onesignalId?: string;
+} = {}) => {
+  const pushModel = createPushSub({
+    id,
+    token,
+    onesignalId,
+  });
+  await Database.setPushId(pushModel.id);
+  await Database.setPushToken(pushModel.token);
+  OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+    [pushModel],
+    ModelChangeTags.NO_PROPOGATE,
+  );
+
+  return pushModel;
 };

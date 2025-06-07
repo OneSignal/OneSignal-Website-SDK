@@ -58,7 +58,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     const startingOp = operations[0];
 
     if (startingOp instanceof LoginUserOperation)
-      return this.loginUser(startingOp, operations.slice(1));
+      return this.loginUser(startingOp, operations.slice(1)).finally(() => {
+        User.createOrGetInstance().isCreatingUser = false;
+      });
 
     throw new Error(`Unrecognized operation: ${startingOp.name}`);
   }
@@ -171,9 +173,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     if (response.ok) {
       const backendOneSignalId = response.result.identity.onesignal_id;
       const opOneSignalId = createUserOperation.onesignalId;
-
-      const user = User.createOrGetInstance();
-      user.isCreatingUser = false;
 
       const idTranslations: Record<string, string> = {
         [createUserOperation.onesignalId]: backendOneSignalId,

@@ -2,8 +2,8 @@ import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpe
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import {
+  generateNewSubscription,
   getCoreModuleDirector,
-  getDummyPushSubscriptionOSModel,
 } from '../../support/helpers/core';
 
 describe('CoreModuleDirector tests', () => {
@@ -26,7 +26,7 @@ describe('CoreModuleDirector tests', () => {
     });
 
     test('returns current subscription when available', async () => {
-      const pushModelCurrent = getDummyPushSubscriptionOSModel();
+      const pushModelCurrent = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByCurrentToken',
@@ -35,7 +35,7 @@ describe('CoreModuleDirector tests', () => {
     });
 
     test('returns last known subscription when current is unavailable', async () => {
-      const pushModelLastKnown = getDummyPushSubscriptionOSModel();
+      const pushModelLastKnown = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByLastKnownToken',
@@ -44,13 +44,13 @@ describe('CoreModuleDirector tests', () => {
     });
 
     test('returns current subscription over last known', async () => {
-      const pushModelCurrent = getDummyPushSubscriptionOSModel();
+      const pushModelCurrent = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByCurrentToken',
       ).mockResolvedValue(pushModelCurrent);
 
-      const pushModelLastKnown = getDummyPushSubscriptionOSModel();
+      const pushModelLastKnown = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByLastKnownToken',

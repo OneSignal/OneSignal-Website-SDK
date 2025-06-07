@@ -4,7 +4,10 @@ import { SessionManager } from './SessionManager';
 import { DUMMY_EXTERNAL_ID } from '__test__/support/constants';
 import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import LoginManager from 'src/page/managers/LoginManager';
+import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/models/Session';
+
+vi.spyOn(Log, 'error').mockImplementation(() => '');
 
 describe('SessionManager', () => {
   describe('Switching Users', () => {

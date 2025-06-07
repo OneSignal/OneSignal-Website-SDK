@@ -7,7 +7,7 @@ import {
   ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../constants';
-import { getDummyPushSubscriptionOSModel } from '../helpers/core';
+import { generateNewSubscription } from '../helpers/core';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import {
   initOSGlobals,
@@ -46,9 +46,7 @@ export class TestEnvironment {
     }
 
     if (config.useMockPushSubscriptionModel) {
-      OneSignal.coreDirector.addSubscriptionModel(
-        getDummyPushSubscriptionOSModel(),
-      );
+      OneSignal.coreDirector.addSubscriptionModel(generateNewSubscription());
       vi.spyOn(MainHelper, 'getCurrentPushToken').mockResolvedValue(
         DUMMY_PUSH_TOKEN,
       );
