@@ -4,17 +4,22 @@ import {
   DUMMY_ONESIGNAL_ID,
   DUMMY_PUSH_TOKEN,
   DUMMY_SUBSCRIPTION_ID,
+  DUMMY_SUBSCRIPTION_ID_2,
 } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
+import { waitForOperations } from '__test__/support/helpers/executors';
 import {
   mockServerConfig,
+  setCreateSubscriptionResponse,
   setCreateUserResponse,
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelName } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
+import { IDManager } from 'src/shared/managers/IDManager';
 import Database, { SubscriptionItem } from 'src/shared/services/Database';
 
 describe('pageSdkInit 2', () => {
@@ -24,14 +29,31 @@ describe('pageSdkInit 2', () => {
   });
 
   test('can login and addEmail', async () => {
+    const email = 'joe@example.com';
     const subModel = await setupSubModelStore({
       id: DUMMY_SUBSCRIPTION_ID,
       token: DUMMY_PUSH_TOKEN,
     });
+    const emailSubModel = new SubscriptionModel();
+    emailSubModel.mergeData({
+      id: DUMMY_SUBSCRIPTION_ID_2,
+      token: email,
+      type: 'Email',
+    });
 
-    setGetUserResponse();
+    setGetUserResponse({
+      subscriptions: [
+        {
+          ...subModel.toJSON(),
+        },
+        emailSubModel,
+      ],
+    });
     setCreateUserResponse({
       onesignalId: DUMMY_ONESIGNAL_ID,
+    });
+    setCreateSubscriptionResponse({
+      response: emailSubModel,
     });
 
     const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
@@ -43,21 +65,39 @@ describe('pageSdkInit 2', () => {
         appId: APP_ID,
       });
     });
-
     await import('./pageSdkInit');
 
-    const email = 'joe@example.com';
-    window.OneSignalDeferred.push(async function (OneSignal) {
+    await window.OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.login('some-id');
       OneSignal.User.addEmail(email);
+
+      // waiting for indexedb to update, addEmail should add a new subscription item with temporary id
+      await waitForOperations(1);
+      const subscriptions = (
+        await Database.getAll<SubscriptionItem>(ModelName.Subscriptions)
+      ).sort((a, b) => a.type.localeCompare(b.type));
+
+      expect(subscriptions).toMatchObject([
+        {
+          id: DUMMY_SUBSCRIPTION_ID,
+          onesignalId: DUMMY_ONESIGNAL_ID,
+          type: 'ChromePush',
+        },
+        {
+          id: expect.any(String),
+          onesignalId: DUMMY_ONESIGNAL_ID,
+          token: email,
+          type: 'Email',
+        },
+      ]);
+      expect(IDManager.isLocalId(subscriptions[1].id)).toBe(true);
     });
 
-    // wait for email sub to be added
-    let subscriptions: SubscriptionItem[] = [];
-    await vi.waitUntil(async () => {
-      subscriptions = await Database.getAll(ModelName.Subscriptions);
-      return subscriptions.length >= 2;
-    });
+    // wait user subscriptions to be refresh/replaced
+    await waitForOperations(3);
+    const subscriptions = await Database.getAll<SubscriptionItem>(
+      ModelName.Subscriptions,
+    );
     subscriptions.sort((a, b) => a.type.localeCompare(b.type));
 
     // should the push subscription and the email be added to the subscriptions modelstore
