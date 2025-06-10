@@ -94,7 +94,7 @@ describe('pageSdkInit 2', () => {
     });
 
     // wait user subscriptions to be refresh/replaced
-    await waitForOperations(4);
+    await waitForOperations(5);
     const subscriptions = await Database.getAll<SubscriptionItem>(
       ModelName.Subscriptions,
     );
