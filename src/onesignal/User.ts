@@ -117,6 +117,7 @@ export default class User {
       token,
       type,
     };
+
     const newSubscription = new SubscriptionModel();
     newSubscription.mergeData(subscription);
     OneSignal.coreDirector.addSubscriptionModel(newSubscription);

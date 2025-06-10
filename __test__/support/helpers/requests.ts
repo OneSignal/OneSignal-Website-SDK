@@ -140,8 +140,8 @@ export const setDeleteAliasError = ({
 const getSetSubscriptionUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
   `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/subscriptions`;
 
-export const setSubscriptionFn = vi.fn();
-export const setSubscriptionResponse = ({
+export const createSubscriptionFn = vi.fn();
+export const setCreateSubscriptionResponse = ({
   onesignalId,
   response = {},
 }: { onesignalId?: string; response?: object } = {}) =>
@@ -150,7 +150,7 @@ export const setSubscriptionResponse = ({
     method: 'post',
     status: 200,
     response,
-    callback: setSubscriptionFn,
+    callback: createSubscriptionFn,
   });
 
 export const deleteSubscriptionFn = vi.fn();
@@ -168,6 +168,41 @@ export const setDeleteSubscriptionResponse = ({
     status: 200,
     response,
     callback: deleteSubscriptionFn,
+  });
+
+export const updateSubscriptionFn = vi.fn();
+export const getUpdateSubscriptionUri = (
+  subscriptionId = DUMMY_SUBSCRIPTION_ID,
+) => `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
+export const setUpdateSubscriptionResponse = ({
+  subscriptionId,
+  response = {},
+}: { subscriptionId?: string; response?: object } = {}) =>
+  getHandler({
+    uri: getUpdateSubscriptionUri(subscriptionId),
+    method: 'patch',
+    status: 200,
+    response,
+    callback: updateSubscriptionFn,
+  });
+
+// transfer subscription
+export const transferSubscriptionFn = vi.fn();
+
+export const getTransferSubscriptionUri = (
+  subscriptionId = DUMMY_SUBSCRIPTION_ID,
+) => `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}/owner`;
+
+export const setTransferSubscriptionResponse = ({
+  subscriptionId,
+  response = {},
+}: { subscriptionId?: string; response?: object } = {}) =>
+  getHandler({
+    uri: getTransferSubscriptionUri(subscriptionId),
+    method: 'patch',
+    status: 200,
+    response,
+    callback: transferSubscriptionFn,
   });
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

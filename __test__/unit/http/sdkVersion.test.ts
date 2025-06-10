@@ -1,4 +1,5 @@
 import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
+import { generateNewSubscription } from '__test__/support/helpers/core';
 import { nock } from '__test__/support/helpers/general';
 import AliasPair from '../../../src/core/requestService/AliasPair';
 import { RequestService } from '../../../src/core/requestService/RequestService';
@@ -8,7 +9,6 @@ import {
   DUMMY_EXTERNAL_ID,
   DUMMY_SUBSCRIPTION_ID,
 } from '../../support/constants';
-import { getDummyPushSubscriptionOSModel } from '../../support/helpers/core';
 import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
 
 describe('Sdk Version Header Tests', () => {
@@ -71,7 +71,7 @@ describe('Sdk Version Header Tests', () => {
       { appId: APP_ID },
       new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
       {
-        subscription: getDummyPushSubscriptionOSModel().data,
+        subscription: generateNewSubscription().data,
       },
     );
     expectHeaderToBeSent();

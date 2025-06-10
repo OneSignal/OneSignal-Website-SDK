@@ -1,7 +1,4 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
-import OneSignalError from 'src/shared/errors/OneSignalError';
-import EventHelper from 'src/shared/helpers/EventHelper';
-import Log from 'src/shared/libraries/Log';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
@@ -16,7 +13,6 @@ import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { type OperationRepo } from './operationRepo/OperationRepo';
-import { ISubscription, UserData } from './types/api';
 import { ModelChangeTags } from './types/models';
 import {
   SubscriptionChannel,
@@ -58,61 +54,6 @@ export class CoreModuleDirector {
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
     this.core.subscriptionModelStore.add(model, ModelChangeTags.NO_PROPOGATE);
-  }
-
-  public hydrateUser(user: UserData, externalId?: string): void {
-    logMethodCall('CoreModuleDirector.hydrateUser', { user, externalId });
-    try {
-      const identityModel = this.getIdentityModel();
-      const propertiesModel = this.getPropertiesModel();
-
-      const { onesignal_id: onesignalId } = user.identity;
-      if (!onesignalId) {
-        throw new OneSignalError('OneSignal ID is missing from user data');
-      }
-
-      // set OneSignal ID *before* hydrating models so that the onesignalId is also updated in model cache
-      identityModel.onesignalId = onesignalId;
-      propertiesModel.onesignalId = onesignalId;
-
-      if (externalId) {
-        identityModel.externalId = externalId;
-        user.identity.external_id = externalId;
-      }
-
-      // identity and properties models are always single, so we hydrate immediately (i.e. replace existing data)
-      identityModel.initializeFromJson(user.identity);
-      if (user.properties) propertiesModel.initializeFromJson(user.properties);
-      this.hydrateSubscriptions(user.subscriptions);
-
-      EventHelper.checkAndTriggerUserChanged();
-    } catch (e) {
-      Log.error(`Error hydrating user: ${e}`);
-    }
-  }
-
-  private hydrateSubscriptions(subscriptions?: ISubscription[]): void {
-    if (!subscriptions) return;
-    subscriptions.forEach((subscription) => {
-      /* We use the token to identify the model because the subscription ID is not set until the server responds.
-       * So when we initially hydrate after init, we may already have a push model with a token, but no ID.
-       * We don't want to create a new model in this case, so we use the token to identify the model.
-       */
-      const existingSubscription = !!subscription.token
-        ? this.getSubscriptionOfTypeWithToken(
-            SubscriptionHelper.toSubscriptionChannel(subscription.type),
-            subscription.token,
-          )
-        : undefined;
-
-      if (existingSubscription) {
-        existingSubscription.initializeFromJson(subscription);
-      } else {
-        const model = new SubscriptionModel();
-        model.initializeFromJson(subscription);
-        this.core.subscriptionModelStore.add(model);
-      }
-    });
   }
 
   public addSubscriptionModel(model: SubscriptionModel): void {
