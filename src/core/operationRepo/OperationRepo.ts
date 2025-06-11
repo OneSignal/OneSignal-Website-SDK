@@ -190,9 +190,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       switch (response.result) {
         case ExecutionResult.SUCCESS:
           // Remove operations from store
-          ops.forEach((op) =>
-            this.operationModelStore.remove(op.operation.modelId),
-          );
+          ops.forEach((op) => {
+            this.operationModelStore.remove(op.operation.modelId);
+          });
           ops.forEach((op) => op.resolver?.(true));
           break;
 
@@ -200,9 +200,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult.FAIL_NORETRY:
         case ExecutionResult.FAIL_CONFLICT:
           Log.error(`Operation execution failed without retry: ${operations}`);
-          ops.forEach((op) =>
-            this.operationModelStore.remove(op.operation.modelId),
-          );
+          ops.forEach((op) => {
+            this.operationModelStore.remove(op.operation.modelId);
+          });
           ops.forEach((op) => op.resolver?.(false));
           break;
 
@@ -262,9 +262,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       Log.error(`Error attempting to execute operation: ${ops}`, e);
 
       // On failure remove operations from store
-      ops.forEach((op) =>
-        this.operationModelStore.remove(op.operation.modelId),
-      );
+      ops.forEach((op) => {
+        this.operationModelStore.remove(op.operation.modelId);
+      });
       ops.forEach((op) => op.resolver?.(false));
     }
   }
@@ -344,6 +344,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public async loadSavedOperations(): Promise<void> {
     await this.operationModelStore.loadOperations();
     const operations = this.operationModelStore.list().toReversed();
+
     for (const operation of operations) {
       this.internalEnqueue(
         new OperationQueueItem({

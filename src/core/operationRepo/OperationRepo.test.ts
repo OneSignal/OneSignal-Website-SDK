@@ -1,5 +1,6 @@
 import { fakeWaitForOperations } from '__test__/support/helpers/executors';
 import Log from 'src/shared/libraries/Log';
+import Database from 'src/shared/services/Database';
 import { describe, expect, Mock, vi } from 'vitest';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import {
@@ -7,6 +8,9 @@ import {
   GroupComparisonValue,
   Operation as OperationBase,
 } from '../operations/Operation';
+import { SetAliasOperation } from '../operations/SetAliasOperation';
+import { SetPropertyOperation } from '../operations/SetPropertyOperation';
+import { ModelName } from '../types/models';
 import { ExecutionResult, IOperationExecutor } from '../types/operation';
 import {
   OP_REPO_EXECUTION_INTERVAL,
@@ -38,44 +42,75 @@ describe('OperationRepo', () => {
     mockOperationModelStore = new OperationModelStore();
   });
 
-  test('can enqueue and load cached operations', async () => {
-    const cachedOperations = [
-      new Operation('2', 'Op2'),
-      new Operation('3', 'Op3'),
-    ];
-    mockOperationModelStore.add(cachedOperations[0]);
-    mockOperationModelStore.add(cachedOperations[1]);
+  describe('Enqueue/Load Operations', () => {
+    test('can enqueue and load cached operations', async () => {
+      const cachedOperations = [
+        new Operation('2', 'Op2'),
+        new Operation('3', 'Op3'),
+      ];
+      mockOperationModelStore.add(cachedOperations[0]);
+      mockOperationModelStore.add(cachedOperations[1]);
 
-    const opRepo = getNewOpRepo();
+      const opRepo = getNewOpRepo();
 
-    opRepo.enqueue(mockOperation);
-    expect(opRepo.queue).toEqual([
-      {
-        operation: mockOperation,
-        bucket: 0,
-        retries: 0,
-      },
-    ]);
+      opRepo.enqueue(mockOperation);
+      expect(opRepo.queue).toEqual([
+        {
+          operation: mockOperation,
+          bucket: 0,
+          retries: 0,
+        },
+      ]);
 
-    // cached operations are added to the front of the queue and should maintain order
-    await opRepo.start();
-    expect(opRepo.queue).toEqual([
-      {
-        operation: cachedOperations[0],
-        bucket: 0,
-        retries: 0,
-      },
-      {
-        operation: cachedOperations[1],
-        bucket: 0,
-        retries: 0,
-      },
-      {
-        operation: mockOperation,
-        bucket: 0,
-        retries: 0,
-      },
-    ]);
+      // cached operations are added to the front of the queue and should maintain order
+      await opRepo.start();
+      expect(opRepo.queue).toEqual([
+        {
+          operation: cachedOperations[0],
+          bucket: 0,
+          retries: 0,
+        },
+        {
+          operation: cachedOperations[1],
+          bucket: 0,
+          retries: 0,
+        },
+        {
+          operation: mockOperation,
+          bucket: 0,
+          retries: 0,
+        },
+      ]);
+    });
+
+    test.only('enqueue should persist operations in IndexedDb', async () => {
+      const opRepo = getNewOpRepo();
+      await opRepo.loadSavedOperations();
+
+      const op1 = new SetAliasOperation();
+      opRepo.enqueue(op1);
+
+      const op2 = new SetPropertyOperation();
+      opRepo.enqueue(op2);
+
+      console.log([op1.modelId, op2.modelId]);
+
+      expect(mockOperationModelStore.list()).toEqual([op1, op2]);
+
+      const ops = await Database.getAll(ModelName.Operations);
+      expect(ops).toEqual([
+        {
+          modelId: op1.modelId,
+          modelName: ModelName.Operations,
+          name: op1.name,
+        },
+        {
+          modelId: op2.modelId,
+          modelName: ModelName.Operations,
+          name: op2.name,
+        },
+      ]);
+    });
   });
 
   test('containsInstanceOf', async () => {
