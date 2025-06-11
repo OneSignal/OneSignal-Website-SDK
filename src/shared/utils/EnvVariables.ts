@@ -26,4 +26,4 @@ export const LOGGING = () =>
   typeof __LOGGING__ === 'undefined' ? false : __LOGGING__;
 
 export const NO_DEV_PORT = () =>
-  typeof __NO_DEV_PORT__ === 'undefined' ? true : __NO_DEV_PORT__;
+  typeof __NO_DEV_PORT__ === 'undefined' ? false : __NO_DEV_PORT__;
