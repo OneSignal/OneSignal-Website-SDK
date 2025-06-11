@@ -99,7 +99,7 @@ describe('OperationRepo', () => {
     const opRepo = getNewOpRepo();
 
     const getNextOpsSpy = vi.spyOn(opRepo, 'getNextOps');
-    opRepo.start();
+    await opRepo.start();
     opRepo.enqueue(mockOperation);
 
     expect(opRepo.queue.length).toBe(1);
@@ -188,7 +188,7 @@ describe('OperationRepo', () => {
 
   describe('Executor Operations', () => {
     const executeOps = async (opRepo: OperationRepo) => {
-      opRepo.start();
+      await opRepo.start();
       await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
     };
 

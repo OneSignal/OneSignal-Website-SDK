@@ -500,22 +500,6 @@ export default class Database {
     await Promise.all(promises);
   }
 
-  /**
-   * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them
-   * with blank values.
-   * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
-   */
-  static async rebuild() {
-    return Promise.all([
-      Database.singletonInstance.remove('Ids'),
-      Database.singletonInstance.remove(TABLE_NOTIFICATION_OPENED),
-      Database.singletonInstance.remove('Options'),
-      Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED),
-      Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_CLICKED),
-      Database.singletonInstance.remove('SentUniqueOutcome'),
-    ]);
-  }
-
   static async clear() {
     const objectStoreNames =
       await Database.singletonInstance.database.objectStoreNames();

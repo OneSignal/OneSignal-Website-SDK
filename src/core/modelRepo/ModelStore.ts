@@ -5,7 +5,6 @@ import {
   DatabaseModel,
   ModelChangeTags,
   ModelChangeTagValue,
-  ModelName,
   ModelNameType,
   type IModelStore,
   type IModelStoreChangeHandler,
@@ -158,10 +157,7 @@ export abstract class ModelStore<
   protected async load(): Promise<void> {
     if (!this.modelName) return;
 
-    let jsonArray: DBModel[] = [];
-    if (!(this.modelName === ModelName.Operations)) {
-      jsonArray = await Database.getAll<DBModel>(this.modelName);
-    }
+    const jsonArray: DBModel[] = await Database.getAll<DBModel>(this.modelName);
 
     const shouldRePersist = this.models.length > 0;
 
