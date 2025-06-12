@@ -59,19 +59,24 @@ export type OneSignalDbTable =
 
 export interface ModelItem {
   modelId: string;
+  modelName: ModelNameType;
 }
 
 export interface SubscriptionItem extends ModelItem, ICreateUserSubscription {
   id: string;
 }
-
 export interface IdentityItem extends ModelItem {
   onesignalId: string;
   externalId: string;
 }
-
 export interface PropertiesItem extends ModelItem, IUserProperties {
   onesignalId: string;
+}
+export interface OperationItem extends ModelItem {
+  appId: string;
+  onesignalId: string;
+  name: string;
+  [key: string]: unknown;
 }
 
 export default class Database {

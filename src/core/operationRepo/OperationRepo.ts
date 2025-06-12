@@ -22,6 +22,7 @@ export class OperationQueueItem {
   public bucket: number;
   public retries: number;
   public resolver?: (value: boolean) => void;
+
   constructor(props: {
     operation: Operation;
     bucket: number;
@@ -43,7 +44,7 @@ export class OperationQueueItem {
 export class OperationRepo implements IOperationRepo, IStartableService {
   private executorsMap: Map<string, IOperationExecutor>;
   public queue: OperationQueueItem[] = [];
-  private paused = false;
+  private paused = true;
   private enqueueIntoBucket = 0;
 
   constructor(
