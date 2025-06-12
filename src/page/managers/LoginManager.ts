@@ -14,6 +14,8 @@ export default class LoginManager {
   // Other internal classes should await on this if they access users
   static switchingUsersPromise: Promise<void> = Promise.resolve();
 
+  static enqueuePromise: Promise<void> = Promise.resolve();
+
   static async login(externalId: string, token?: string): Promise<void> {
     await (this.switchingUsersPromise = LoginManager._login(externalId, token));
   }
@@ -22,65 +24,76 @@ export default class LoginManager {
     externalId: string,
     token?: string,
   ): Promise<void> {
-    const consentRequired = LocalStorage.getConsentRequired();
-    const consentGiven = await Database.getConsentGiven();
+    LoginManager.enqueuePromise = new Promise<void>(async (resolve) => {
+      const consentRequired = LocalStorage.getConsentRequired();
+      const consentGiven = await Database.getConsentGiven();
 
-    if (consentRequired && !consentGiven) {
-      throw new OneSignalError(
-        'Login: Consent required but not given, skipping login',
-      );
-    }
-
-    try {
-      if (token) {
-        await Database.setJWTToken(token);
+      if (consentRequired && !consentGiven) {
+        throw new OneSignalError(
+          'Login: Consent required but not given, skipping login',
+        );
       }
 
-      let identityModel = OneSignal.coreDirector.getIdentityModel();
-      const currentOneSignalId = identityModel.onesignalId;
-      const currentExternalId = identityModel.externalId;
+      try {
+        if (token) {
+          await Database.setJWTToken(token);
+        }
 
-      // if the current externalId is the same as the one we're trying to set, do nothing
-      if (currentExternalId === externalId) {
-        Log.debug('Login: External ID already set, skipping login');
-        return;
-      }
+        let identityModel = OneSignal.coreDirector.getIdentityModel();
+        const currentOneSignalId = identityModel.onesignalId;
+        const currentExternalId = identityModel.externalId;
 
-      UserDirector.resetUserModels();
-      identityModel = OneSignal.coreDirector.getIdentityModel();
+        // if the current externalId is the same as the one we're trying to set, do nothing
+        if (currentExternalId === externalId) {
+          Log.debug('Login: External ID already set, skipping login');
+          resolve();
+          return;
+        }
 
-      // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
-      // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
-      identityModel.setProperty(
-        'external_id',
-        externalId,
-        ModelChangeTags.HYDRATE,
-      );
-      const newIdentityOneSignalId = identityModel.onesignalId;
+        UserDirector.resetUserModels();
+        identityModel = OneSignal.coreDirector.getIdentityModel();
 
-      const appId = await MainHelper.getAppId();
-      const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
-      if (!pushOp) return Log.error('Subscription not found.');
-
-      User.createOrGetInstance().isCreatingUser = true;
-      OneSignal.coreDirector.operationRepo.enqueue(
-        new TransferSubscriptionOperation(
-          appId,
-          newIdentityOneSignalId,
-          pushOp.id,
-        ),
-      );
-      await OneSignal.coreDirector.operationRepo.enqueueAndWait(
-        new LoginUserOperation(
-          appId,
-          newIdentityOneSignalId,
+        // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
+        // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
+        identityModel.setProperty(
+          'external_id',
           externalId,
-          !currentExternalId ? currentOneSignalId : undefined,
-        ),
-      );
-    } catch (e) {
-      Log.error(e);
-    }
+          ModelChangeTags.HYDRATE,
+        );
+        const newIdentityOneSignalId = identityModel.onesignalId;
+
+        const appId = await MainHelper.getAppId();
+        const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
+        if (!pushOp) {
+          resolve();
+          return Log.error('Subscription not found.');
+        }
+
+        // resolve the promise before starting the operations to allow for situations like
+        // OneSignal.login('some-external-id'); OneSignal.addTag('some-tag', 'some-value');
+        resolve();
+
+        User.createOrGetInstance().isCreatingUser = true;
+        OneSignal.coreDirector.operationRepo.enqueue(
+          new TransferSubscriptionOperation(
+            appId,
+            newIdentityOneSignalId,
+            pushOp.id,
+          ),
+        );
+        await OneSignal.coreDirector.operationRepo.enqueueAndWait(
+          new LoginUserOperation(
+            appId,
+            newIdentityOneSignalId,
+            externalId,
+            !currentExternalId ? currentOneSignalId : undefined,
+          ),
+        );
+      } catch (e) {
+        Log.error(e);
+        resolve();
+      }
+    });
   }
 
   static async logout(): Promise<void> {

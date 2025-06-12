@@ -2,6 +2,7 @@ import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import LoginManager from 'src/page/managers/LoginManager';
 import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
 import Log from '../shared/libraries/Log';
@@ -9,34 +10,37 @@ import User from './User';
 
 export default class UserDirector {
   static async createUserOnServer(): Promise<void> {
-    const user = User.createOrGetInstance();
-    if (user.isCreatingUser) return;
+    LoginManager.enqueuePromise = new Promise<void>(async (resolve) => {
+      const user = User.createOrGetInstance();
+      if (user.isCreatingUser) return;
 
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    const appId = await MainHelper.getAppId();
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      const appId = await MainHelper.getAppId();
 
-    const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
-    if (!pushOp) return Log.info('No push subscription found');
+      const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
+      if (!pushOp) return Log.info('No push subscription found');
 
-    pushOp.id = pushOp.id ?? IDManager.createLocalId();
-    const { id, ...rest } = pushOp.toJSON();
+      pushOp.id = pushOp.id ?? IDManager.createLocalId();
+      const { id, ...rest } = pushOp.toJSON();
 
-    User.createOrGetInstance().isCreatingUser = true;
-    OneSignal.coreDirector.operationRepo.enqueue(
-      new LoginUserOperation(
-        appId,
-        identityModel.onesignalId,
-        identityModel.externalId,
-      ),
-    );
-    await OneSignal.coreDirector.operationRepo.enqueueAndWait(
-      new CreateSubscriptionOperation({
-        ...rest,
-        appId,
-        onesignalId: identityModel.onesignalId,
-        subscriptionId: id,
-      }),
-    );
+      resolve();
+      User.createOrGetInstance().isCreatingUser = true;
+      OneSignal.coreDirector.operationRepo.enqueue(
+        new LoginUserOperation(
+          appId,
+          identityModel.onesignalId,
+          identityModel.externalId,
+        ),
+      );
+      await OneSignal.coreDirector.operationRepo.enqueueAndWait(
+        new CreateSubscriptionOperation({
+          ...rest,
+          appId,
+          onesignalId: identityModel.onesignalId,
+          subscriptionId: id,
+        }),
+      );
+    });
   }
 
   static resetUserMetaProperties() {

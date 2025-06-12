@@ -305,9 +305,19 @@ export default class OneSignal {
     this._notifications = value;
   }
 
+  private static _user: UserNamespace;
+  static get User() {
+    if (!this._user) {
+      this._user = new UserNamespace(false);
+    }
+    return this._user;
+  }
+  static set User(value: UserNamespace) {
+    this._user = value;
+  }
+
   static Slidedown = new SlidedownNamespace();
   static Session = new SessionNamespace();
-  static User = new UserNamespace(false);
   static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
 }

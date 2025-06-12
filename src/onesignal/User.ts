@@ -4,6 +4,7 @@ import {
   SubscriptionType,
   SubscriptionTypeValue,
 } from 'src/core/types/subscription';
+import LoginManager from 'src/page/managers/LoginManager';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   InvalidArgumentError,
@@ -219,7 +220,7 @@ export default class User {
     this.addTags({ [key]: value });
   }
 
-  public addTags(tags: { [key: string]: string }): void {
+  public async addTags(tags: { [key: string]: string }): Promise<void> {
     logMethodCall('addTags', { tags });
 
     if (typeof tags !== 'object')
@@ -228,6 +229,7 @@ export default class User {
     if (!tags)
       throw new InvalidArgumentError('tags', InvalidArgumentReason.Empty);
 
+    await LoginManager.enqueuePromise;
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
     const newTags = { ...propertiesModel.tags, ...tags };
     propertiesModel.tags = newTags;
@@ -245,7 +247,7 @@ export default class User {
     this.removeTags([tagKey]);
   }
 
-  public removeTags(tagKeys: string[]): void {
+  public async removeTags(tagKeys: string[]): Promise<void> {
     logMethodCall('removeTags', { tagKeys });
 
     if (!tagKeys || tagKeys.length === 0)
@@ -253,6 +255,8 @@ export default class User {
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
     const newTags = { ...propertiesModel.tags };
+
+    await LoginManager.enqueuePromise;
 
     // need to set the tag to an empty string to remove it
     tagKeys.forEach((tagKey) => {
@@ -266,7 +270,7 @@ export default class User {
     return OneSignal.coreDirector.getPropertiesModel().tags;
   }
 
-  public setLanguage(language: string): void {
+  public async setLanguage(language: string): Promise<void> {
     logMethodCall('setLanguage', { language });
 
     if (typeof language !== 'string')
@@ -278,6 +282,7 @@ export default class User {
     if (!language)
       throw new InvalidArgumentError('language', InvalidArgumentReason.Empty);
 
+    await LoginManager.enqueuePromise;
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
     propertiesModel.language = language;
   }
