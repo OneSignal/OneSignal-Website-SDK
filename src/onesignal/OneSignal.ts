@@ -86,8 +86,6 @@ export default class OneSignal {
    * @param jwtToken - The JWT auth token to use when setting the external user ID
    */
   static async login(externalId: string, jwtToken?: string): Promise<void> {
-    logMethodCall('login', { externalId, jwtToken });
-
     if (typeof externalId === 'undefined') {
       throw new InvalidArgumentError('externalId', InvalidArgumentReason.Empty);
     }

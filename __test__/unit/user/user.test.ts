@@ -56,7 +56,7 @@ describe('User tests', () => {
     const languageSample = 'fr';
 
     const user = User.createOrGetInstance();
-    user.setLanguage(languageSample);
+    await user.setLanguage(languageSample);
 
     const propModel = OneSignal.coreDirector.getPropertiesModel();
     expect(propModel.language).toBe(languageSample);
