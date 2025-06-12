@@ -24,7 +24,7 @@ export class OperationModelStore extends ModelStore<Operation> {
     return this.load();
   }
 
-  create(jsonObject: { name?: string } | null): Operation | null {
+  create(jsonObject?: { name?: string } | null): Operation | null {
     if (jsonObject === null) {
       Log.error('null jsonObject sent to OperationModelStore.create');
       return null;
@@ -83,11 +83,14 @@ export class OperationModelStore extends ModelStore<Operation> {
    *
    * @param object The JSON object that represents an Operation
    */
-  private isValidOperation(object: {
+  private isValidOperation(object?: {
     name?: string;
     onesignalId?: string;
-  }): boolean {
-    const operationName = object.name;
+  }): object is {
+    name: string;
+    onesignalId?: string;
+  } {
+    const operationName = object?.name;
     if (!operationName) {
       Log.error("jsonObject must have 'name' attribute");
       return false;

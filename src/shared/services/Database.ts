@@ -59,19 +59,24 @@ export type OneSignalDbTable =
 
 export interface ModelItem {
   modelId: string;
+  modelName: ModelNameType;
 }
 
 export interface SubscriptionItem extends ModelItem, ICreateUserSubscription {
   id: string;
 }
-
 export interface IdentityItem extends ModelItem {
   onesignalId: string;
   externalId: string;
 }
-
 export interface PropertiesItem extends ModelItem, IUserProperties {
   onesignalId: string;
+}
+export interface OperationItem extends ModelItem {
+  appId: string;
+  onesignalId: string;
+  name: string;
+  [key: string]: unknown;
 }
 
 export default class Database {
@@ -498,22 +503,6 @@ export default class Database {
       return Database.put('SentUniqueOutcome', o);
     });
     await Promise.all(promises);
-  }
-
-  /**
-   * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them
-   * with blank values.
-   * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
-   */
-  static async rebuild() {
-    return Promise.all([
-      Database.singletonInstance.remove('Ids'),
-      Database.singletonInstance.remove(TABLE_NOTIFICATION_OPENED),
-      Database.singletonInstance.remove('Options'),
-      Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED),
-      Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_CLICKED),
-      Database.singletonInstance.remove('SentUniqueOutcome'),
-    ]);
   }
 
   static async clear() {
