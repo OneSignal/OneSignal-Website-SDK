@@ -20,13 +20,13 @@ export class IdentityModelStoreListener extends SingletonModelStoreListener<Iden
     return null;
   }
 
-  async getUpdateOperation(
+  getUpdateOperation(
     model: IdentityModel,
     property: string,
     _oldValue: unknown,
     newValue: unknown,
-  ): Promise<Operation> {
-    const appId = await MainHelper.getAppId();
+  ): Operation {
+    const appId = MainHelper.getAppId();
     if (newValue != null && typeof newValue === 'string') {
       return new SetAliasOperation(
         appId,

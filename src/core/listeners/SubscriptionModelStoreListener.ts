@@ -24,11 +24,11 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     this._identityModelStore = identityModelStore;
   }
 
-  async getAddOperation(model: SubscriptionModel): Promise<Operation> {
+  getAddOperation(model: SubscriptionModel): Operation {
     const { enabled, notification_types } =
       SubscriptionModelStoreListener.getSubscriptionEnabledAndStatus(model);
 
-    const appId = await MainHelper.getAppId();
+    const appId = MainHelper.getAppId();
     return new CreateSubscriptionOperation({
       appId,
       onesignalId: this._identityModelStore.model.onesignalId,
@@ -40,8 +40,8 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     });
   }
 
-  async getRemoveOperation(model: SubscriptionModel): Promise<Operation> {
-    const appId = await MainHelper.getAppId();
+  getRemoveOperation(model: SubscriptionModel): Operation {
+    const appId = MainHelper.getAppId();
     return new DeleteSubscriptionOperation(
       appId,
       this._identityModelStore.model.onesignalId,
@@ -49,10 +49,10 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     );
   }
 
-  async getUpdateOperation(model: SubscriptionModel): Promise<Operation> {
+  getUpdateOperation(model: SubscriptionModel): Operation {
     const { enabled, notification_types } =
       SubscriptionModelStoreListener.getSubscriptionEnabledAndStatus(model);
-    const appId = await MainHelper.getAppId();
+    const appId = MainHelper.getAppId();
 
     return new UpdateSubscriptionOperation({
       appId,

@@ -25,12 +25,12 @@ export abstract class ModelStoreListener<TModel extends Model> {
     this.store.unsubscribe(this);
   }
 
-  async onModelAdded(model: TModel, tag: string): Promise<void> {
+  onModelAdded(model: TModel, tag: string): void {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = await this.getAddOperation(model);
+    const operation = this.getAddOperation(model);
     if (operation != null) {
       this.opRepo.enqueue(operation);
     }
@@ -67,13 +67,13 @@ export abstract class ModelStoreListener<TModel extends Model> {
    * Called when a model has been added to the model store.
    * @return The operation to enqueue when a model has been added, or null if no operation should be enqueued.
    */
-  abstract getAddOperation(model: TModel): Promise<Operation | null>;
+  abstract getAddOperation(model: TModel): Operation | null;
 
   /**
    * Called when a model has been removed from the model store.
    * @return The operation to enqueue when a model has been removed, or null if no operation should be enqueued.
    */
-  abstract getRemoveOperation(model: TModel): Promise<Operation | null>;
+  abstract getRemoveOperation(model: TModel): Operation | null;
 
   /**
    * Called when a model has been updated.
@@ -84,5 +84,5 @@ export abstract class ModelStoreListener<TModel extends Model> {
     property: string,
     oldValue: unknown,
     newValue: unknown,
-  ): Promise<Operation | null>;
+  ): Operation | null;
 }

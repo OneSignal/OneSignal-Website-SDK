@@ -38,12 +38,12 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
     }
   }
 
-  async onModelUpdated(args: ModelChangedArgs, tag: string): Promise<void> {
+  onModelUpdated(args: ModelChangedArgs, tag: string): void {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = await this.getUpdateOperation(
+    const operation = this.getUpdateOperation(
       args.model as TModel,
       args.property,
       args.oldValue,
@@ -69,5 +69,5 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
     property: string,
     oldValue: unknown,
     newValue: unknown,
-  ): Promise<Operation | null>;
+  ): Operation | null;
 }

@@ -9,6 +9,7 @@ import {
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
 import Database from 'src/shared/services/Database';
+import LocalStorage from 'src/shared/utils/LocalStorage';
 import { getTimeZoneId } from 'src/shared/utils/utils';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IPropertiesModelKeys } from '../models/PropertiesModel';
@@ -69,6 +70,13 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     loginUserOp: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
+    const consentRequired = LocalStorage.getConsentRequired();
+    const consentGiven = await Database.getConsentGiven();
+
+    if (consentRequired && !consentGiven) {
+      return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+    }
+
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.

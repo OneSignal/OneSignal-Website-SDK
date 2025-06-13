@@ -5,15 +5,21 @@ import {
   IStartableService,
 } from 'src/core/types/operation';
 import Log from 'src/shared/libraries/Log';
+import Database from 'src/shared/services/Database';
 import { delay } from 'src/shared/utils/utils';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
+import { ModelName } from '../types/models';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { type NewRecordsState } from './NewRecordsState';
+
+const removeOpFromDB = (op: Operation) => {
+  Database.remove(ModelName.Operations, op.modelId);
+};
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationRepo.kt
@@ -222,6 +228,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           Log.error(`Operation execution failed, retrying: ${operations}`);
           // Add back all operations to front of queue
           ops.toReversed().forEach((op) => {
+            removeOpFromDB(op.operation);
             op.retries++;
             if (op.retries > highestRetries) {
               highestRetries = op.retries;
@@ -235,7 +242,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
             `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
           );
           this.paused = true;
-          ops.toReversed().forEach((op) => this.queue.unshift(op));
+          ops.toReversed().forEach((op) => {
+            removeOpFromDB(op.operation);
+            this.queue.unshift(op);
+          });
           break;
       }
 
