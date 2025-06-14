@@ -51,7 +51,8 @@ describe('LoginUserOperationExecutor', () => {
     await TestEnvironment.initialize();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await Database.clear();
     mockUserAgent();
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();

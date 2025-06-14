@@ -41,7 +41,7 @@ import Database, {
 } from 'src/shared/services/Database';
 import LocalStorage from 'src/shared/utils/LocalStorage';
 
-vi.spyOn(Log, 'error').mockImplementation(() => '');
+const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
 
 const getIdentityItem = async () =>
@@ -50,17 +50,22 @@ const getIdentityItem = async () =>
 const getPropertiesItem = async () =>
   (await Database.get<PropertiesItem[]>('properties'))[0];
 
+const setupIdentity = async () => {
+  await Database.put('identity', {
+    modelId: '123',
+    modelName: 'identity',
+    onesignal_id: DUMMY_ONESIGNAL_ID,
+  });
+};
+
 describe('OneSignal', () => {
   beforeAll(async () => {
     server.use(mockServerConfig(), mockPageStylesCss());
     const _onesignal = await TestEnvironment.initialize();
     window.OneSignal = _onesignal;
 
-    await Database.put('identity', {
-      modelId: '123',
-      modelName: 'identity',
-      onesignal_id: DUMMY_ONESIGNAL_ID,
-    });
+    await setupIdentity();
+
     await window.OneSignal.init({ appId: APP_ID });
   });
 
@@ -77,6 +82,7 @@ describe('OneSignal', () => {
 
   afterEach(async () => {
     await waitForOperations(); // flush operations
+    await setupIdentity();
   });
 
   describe('User', () => {
@@ -371,9 +377,14 @@ describe('OneSignal', () => {
           "The value for 'jwtToken' was of the wrong type.",
         );
 
+        // TODO: add consent required test
         // if needing consent required
         LocalStorage.setConsentRequired(true);
-        await expect(window.OneSignal.login(externalId)).rejects.toThrowError(
+        await window.OneSignal.login(externalId);
+        await vi.waitUntil(() => errorSpy.mock.calls.length === 1);
+
+        const error = errorSpy.mock.calls[0][1] as Error;
+        expect(error.message).toBe(
           'Login: Consent required but not given, skipping login',
         );
       });

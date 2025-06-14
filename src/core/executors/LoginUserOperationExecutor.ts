@@ -1,6 +1,7 @@
 import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
 import User from 'src/onesignal/User';
+import OneSignalError from 'src/shared/errors/OneSignalError';
 import Environment from 'src/shared/helpers/Environment';
 import EventHelper from 'src/shared/helpers/EventHelper';
 import {
@@ -74,7 +75,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     const consentGiven = await Database.getConsentGiven();
 
     if (consentRequired && !consentGiven) {
-      return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+      throw new OneSignalError(
+        'Login: Consent required but not given, skipping login',
+      );
     }
 
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
