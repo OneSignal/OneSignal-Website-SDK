@@ -26,10 +26,14 @@ import {
   setDeleteSubscriptionResponse,
   setGetUserResponse,
   setTransferSubscriptionResponse,
+  setUpdateUserResponse,
   transferSubscriptionFn,
+  updateUserFn,
 } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { IdentityModel } from 'src/core/models/IdentityModel';
+import { PropertiesModel } from 'src/core/models/PropertiesModel';
+import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
@@ -78,6 +82,12 @@ describe('OneSignal', () => {
     window.OneSignal.coreDirector
       .getIdentityModel()
       .initializeFromJson(newIdentityModel.toJSON());
+
+    const newPropertiesModel = new PropertiesModel();
+    newPropertiesModel.onesignalId = DUMMY_ONESIGNAL_ID;
+    window.OneSignal.coreDirector
+      .getPropertiesModel()
+      .initializeFromJson(newPropertiesModel.toJSON());
   });
 
   afterEach(async () => {
@@ -640,6 +650,64 @@ describe('OneSignal', () => {
           },
         ]);
       });
+    });
+  });
+
+  test('should preserve operations order without needing await', async () => {
+    await setupSubModelStore({
+      id: DUMMY_SUBSCRIPTION_ID,
+      token: 'def456',
+    });
+    setAddAliasResponse();
+    setTransferSubscriptionResponse();
+    setUpdateUserResponse();
+
+    window.OneSignal.login('some-id');
+    window.OneSignal.User.addTag('some-tag', 'some-value');
+    const tags = window.OneSignal.User.getTags();
+
+    let queue: OperationQueueItem[] = [];
+    await vi.waitUntil(
+      () => {
+        queue = window.OneSignal.coreDirector.operationRepo.queue;
+        return queue.length === 3;
+      },
+      { interval: 1 },
+    );
+
+    // its fine if login op is last since its the only one that can be executed
+    const setPropertyOp = queue[0];
+    expect(setPropertyOp.operation.name).toBe('set-property');
+    const loginOp = queue[2];
+    expect(loginOp.operation.name).toBe('login-user');
+
+    // tags should still be sync
+    expect(tags).toEqual({
+      'some-tag': 'some-value',
+    });
+
+    // should set alias
+    await vi.waitUntil(() => addAliasFn.mock.calls.length === 1, {
+      interval: 1,
+    });
+    expect(addAliasFn).toHaveBeenCalledWith({
+      identity: {
+        external_id: 'some-id',
+      },
+    });
+    expect(updateUserFn).not.toHaveBeenCalled();
+
+    // should update user tags
+    await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, {
+      interval: 1,
+    });
+    expect(updateUserFn).toHaveBeenCalledWith({
+      properties: {
+        tags: {
+          'some-tag': 'some-value',
+        },
+      },
+      refresh_device_metadata: false,
     });
   });
 });

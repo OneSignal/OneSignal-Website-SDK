@@ -291,3 +291,37 @@ export const setCreateUserError = ({
   retryAfter?: number;
 }) =>
   getHandler({ uri: getCreateUserUri(), method: 'post', status, retryAfter });
+
+// update user
+export const updateUserFn = vi.fn();
+
+const getUpdateUserUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
+  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
+
+export const setUpdateUserResponse = ({
+  onesignalId = DUMMY_ONESIGNAL_ID,
+  response = {},
+}: { onesignalId?: string; response?: object } = {}) =>
+  getHandler({
+    uri: getUpdateUserUri(onesignalId),
+    method: 'patch',
+    status: 200,
+    response,
+    callback: updateUserFn,
+  });
+
+export const setUpdateUserError = ({
+  onesignalId = DUMMY_ONESIGNAL_ID,
+  status,
+  retryAfter,
+}: {
+  onesignalId?: string;
+  status: number;
+  retryAfter?: number;
+}) =>
+  getHandler({
+    uri: getUpdateUserUri(onesignalId),
+    method: 'patch',
+    status,
+    retryAfter,
+  });
