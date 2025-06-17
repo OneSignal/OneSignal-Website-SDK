@@ -87,19 +87,6 @@ export default class IndexedDb {
       );
     } else {
       Log.warn('OneSignal: Fatal error opening IndexedDb database:', error);
-
-      // version error will occur if the existing db version is higher than the version we are trying to open
-      // so we will need to nuke the db in this case
-      if (error.name.includes('VersionError')) {
-        Log.warn(
-          'OneSignal: IndexedDb version mismatch, deleting database',
-          error,
-        );
-        const req = indexedDB.deleteDatabase(this.databaseName);
-        req.onsuccess = () => {
-          this.open(this.databaseName);
-        };
-      }
     }
   }
 
@@ -197,9 +184,6 @@ export default class IndexedDb {
     }
     if (newDbVersion >= 7 && event.oldVersion < 7) {
       db.createObjectStore(ModelName.Operations, { keyPath: 'modelId' });
-    }
-    if (newDbVersion >= 8 && event.oldVersion < 8) {
-      // Make sure to update the database version at the top of the file
     }
     // Wrap in conditional for tests
     if (typeof OneSignal !== 'undefined') {
