@@ -3,7 +3,7 @@ import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 
-const DATABASE_VERSION = 6;
+const DATABASE_VERSION = 7;
 
 export const LegacyModelName = {
   PushSubscriptions: 'pushSubscriptions',
@@ -183,7 +183,7 @@ export default class IndexedDb {
       this.migrateModelNameSubscriptionsTableForV6(db, transaction);
     }
     if (newDbVersion >= 7 && event.oldVersion < 7) {
-      // Make sure to update the database version at the top of the file
+      db.createObjectStore(ModelName.Operations, { keyPath: 'modelId' });
     }
     // Wrap in conditional for tests
     if (typeof OneSignal !== 'undefined') {
@@ -327,12 +327,6 @@ export default class IndexedDb {
     keyOrValue?: IDBValidKey,
   ): Promise<T> {
     const database = await this.ensureDatabaseOpen();
-
-    // TODO: revisit with later web sdk refactor
-    if (table === 'operations') {
-      // @ts-expect-error - tables like config and operations don't exist/will be ignored
-      return null;
-    }
 
     return await new Promise<T>((resolve, reject) => {
       try {

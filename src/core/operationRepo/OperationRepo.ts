@@ -22,6 +22,7 @@ export class OperationQueueItem {
   public bucket: number;
   public retries: number;
   public resolver?: (value: boolean) => void;
+
   constructor(props: {
     operation: Operation;
     bucket: number;
@@ -43,7 +44,7 @@ export class OperationQueueItem {
 export class OperationRepo implements IOperationRepo, IStartableService {
   private executorsMap: Map<string, IOperationExecutor>;
   public queue: OperationQueueItem[] = [];
-  private paused = false;
+  private paused = true;
   private enqueueIntoBucket = 0;
 
   constructor(
@@ -190,9 +191,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       switch (response.result) {
         case ExecutionResult.SUCCESS:
           // Remove operations from store
-          ops.forEach((op) =>
-            this.operationModelStore.remove(op.operation.modelId),
-          );
+          ops.forEach((op) => {
+            this.operationModelStore.remove(op.operation.modelId);
+          });
           ops.forEach((op) => op.resolver?.(true));
           break;
 
@@ -200,9 +201,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult.FAIL_NORETRY:
         case ExecutionResult.FAIL_CONFLICT:
           Log.error(`Operation execution failed without retry: ${operations}`);
-          ops.forEach((op) =>
-            this.operationModelStore.remove(op.operation.modelId),
-          );
+          ops.forEach((op) => {
+            this.operationModelStore.remove(op.operation.modelId);
+          });
           ops.forEach((op) => op.resolver?.(false));
           break;
 
@@ -262,9 +263,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       Log.error(`Error attempting to execute operation: ${ops}`, e);
 
       // On failure remove operations from store
-      ops.forEach((op) =>
-        this.operationModelStore.remove(op.operation.modelId),
-      );
+      ops.forEach((op) => {
+        this.operationModelStore.remove(op.operation.modelId);
+      });
       ops.forEach((op) => op.resolver?.(false));
     }
   }
