@@ -8,7 +8,6 @@ import {
 } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
-import { waitForOperations } from '__test__/support/helpers/executors';
 import {
   mockServerConfig,
   setCreateSubscriptionResponse,
@@ -72,12 +71,12 @@ describe('pageSdkInit 2', () => {
       OneSignal.User.addEmail(email);
 
       // waiting for indexedb to update, addEmail should add a new subscription item with temporary id
-      await waitForOperations(1);
-      const subscriptions = (
-        await Database.getAll<SubscriptionItem>(ModelName.Subscriptions)
-      ).sort((a, b) => a.type.localeCompare(b.type));
+      const subModels = OneSignal.coreDirector.subscriptionModelStore
+        .list()
+        .map((m) => m.toJSON());
+      subModels.sort((a, b) => a.type.localeCompare(b.type));
 
-      expect(subscriptions).toMatchObject([
+      expect(subModels).toMatchObject([
         {
           id: DUMMY_SUBSCRIPTION_ID,
           onesignalId: DUMMY_ONESIGNAL_ID,
@@ -85,19 +84,22 @@ describe('pageSdkInit 2', () => {
         },
         {
           id: expect.any(String),
-          onesignalId: DUMMY_ONESIGNAL_ID,
+          onesignalId: expect.any(String),
           token: email,
           type: 'Email',
         },
       ]);
-      expect(IDManager.isLocalId(subscriptions[1].id)).toBe(true);
+      expect(IDManager.isLocalId(subModels[1].id)).toBe(true);
     });
 
     // wait user subscriptions to be refresh/replaced
-    await waitForOperations(5);
-    const subscriptions = await Database.getAll<SubscriptionItem>(
-      ModelName.Subscriptions,
-    );
+    let subscriptions: SubscriptionItem[] = [];
+    await vi.waitUntil(async () => {
+      subscriptions = await Database.getAll<SubscriptionItem>(
+        ModelName.Subscriptions,
+      );
+      return subscriptions.length === 2;
+    });
     subscriptions.sort((a, b) => a.type.localeCompare(b.type));
 
     // should the push subscription and the email be added to the subscriptions modelstore

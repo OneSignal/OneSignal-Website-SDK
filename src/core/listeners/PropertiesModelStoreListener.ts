@@ -19,13 +19,13 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
     return null;
   }
 
-  async getUpdateOperation(
+  getUpdateOperation(
     model: PropertiesModel,
     property: string,
     _oldValue: unknown,
     newValue: unknown,
-  ): Promise<Operation | null> {
-    const appId = await MainHelper.getAppId();
+  ): Operation | null {
+    const appId = MainHelper.getAppId();
     return new SetPropertyOperation(
       appId,
       model.onesignalId,

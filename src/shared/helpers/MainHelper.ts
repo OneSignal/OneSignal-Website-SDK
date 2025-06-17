@@ -121,7 +121,7 @@ export default class MainHelper {
   }
 
   static async getNotificationIcons() {
-    const appId = await MainHelper.getAppId();
+    const appId = MainHelper.getAppId();
     if (!appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     }
@@ -223,13 +223,8 @@ export default class MainHelper {
     return hash;
   }
 
-  static async getAppId(): Promise<string> {
-    if (OneSignal.config.appId) {
-      return Promise.resolve(OneSignal.config.appId);
-    } else {
-      const appId = await Database.get<string>('Ids', 'appId');
-      return appId;
-    }
+  static getAppId(): string {
+    return OneSignal.config?.appId || '';
   }
 
   static async getDeviceId(): Promise<string | undefined> {

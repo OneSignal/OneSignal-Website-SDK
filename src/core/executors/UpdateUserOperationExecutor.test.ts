@@ -1,7 +1,9 @@
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
 import { SomeOperation } from '__test__/support/helpers/executors';
-import { server } from '__test__/support/mocks/server';
-import { http, HttpResponse } from 'msw';
+import {
+  setUpdateUserError,
+  setUpdateUserResponse,
+} from '__test__/support/helpers/requests';
 import { MockInstance } from 'vitest';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
@@ -119,7 +121,7 @@ describe('UpdateUserOperationExecutor', () => {
       );
 
       // Retryable error
-      setUpdateUserError(429, 10);
+      setUpdateUserError({ status: 429, retryAfter: 10 });
       const res1 = await executor.execute([setTagOp]);
       expect(res1).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -127,7 +129,7 @@ describe('UpdateUserOperationExecutor', () => {
       });
 
       // Unauthorized error
-      setUpdateUserError(401, 15);
+      setUpdateUserError({ status: 401, retryAfter: 15 });
       const res2 = await executor.execute([setTagOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_UNAUTHORIZED,
@@ -135,7 +137,7 @@ describe('UpdateUserOperationExecutor', () => {
       });
 
       // Missing error without rebuild ops
-      setUpdateUserError(404, 5);
+      setUpdateUserError({ status: 404, retryAfter: 5 });
       getRebuildOpsSpy.mockReturnValueOnce(null);
       const res3 = await executor.execute([setTagOp]);
       expect(res3).toMatchObject({
@@ -163,7 +165,7 @@ describe('UpdateUserOperationExecutor', () => {
 
       // Missing error in retry window
       newRecordsState.add(DUMMY_ONESIGNAL_ID);
-      setUpdateUserError(404, 20);
+      setUpdateUserError({ status: 404, retryAfter: 20 });
       const res5 = await executor.execute([setTagOp]);
       expect(res5).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -171,7 +173,7 @@ describe('UpdateUserOperationExecutor', () => {
       });
 
       // Other errors
-      setUpdateUserError(400);
+      setUpdateUserError({ status: 400 });
       const res6 = await executor.execute([setTagOp]);
       expect(res6).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
@@ -179,33 +181,3 @@ describe('UpdateUserOperationExecutor', () => {
     });
   });
 });
-
-const updateUserFn = vi.fn();
-
-const getUpdateUserUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
-  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
-
-const setUpdateUserResponse = (onesignalId?: string) => {
-  server.use(
-    http.patch(getUpdateUserUri(onesignalId), async ({ request }) => {
-      updateUserFn(await request?.json());
-      return HttpResponse.json({ success: true });
-    }),
-  );
-};
-
-const setUpdateUserError = (status: number, retryAfter?: number) => {
-  server.use(
-    http.patch(getUpdateUserUri(), () =>
-      HttpResponse.json(
-        {},
-        {
-          status,
-          headers: retryAfter
-            ? { 'Retry-After': retryAfter?.toString() }
-            : undefined,
-        },
-      ),
-    ),
-  );
-};

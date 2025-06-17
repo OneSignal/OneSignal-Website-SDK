@@ -365,7 +365,7 @@ export default class InitHelper {
   }
 
   public static async initSaveState(overridingPageTitle?: string) {
-    const appId = await MainHelper.getAppId();
+    const appId = MainHelper.getAppId();
     const config: AppConfig = OneSignal.config;
     await Database.put('Ids', { type: 'appId', id: appId });
     const pageTitle: string =

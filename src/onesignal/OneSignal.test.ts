@@ -26,10 +26,14 @@ import {
   setDeleteSubscriptionResponse,
   setGetUserResponse,
   setTransferSubscriptionResponse,
+  setUpdateUserResponse,
   transferSubscriptionFn,
+  updateUserFn,
 } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { IdentityModel } from 'src/core/models/IdentityModel';
+import { PropertiesModel } from 'src/core/models/PropertiesModel';
+import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
@@ -41,7 +45,7 @@ import Database, {
 } from 'src/shared/services/Database';
 import LocalStorage from 'src/shared/utils/LocalStorage';
 
-vi.spyOn(Log, 'error').mockImplementation(() => '');
+const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
 
 const getIdentityItem = async () =>
@@ -50,17 +54,22 @@ const getIdentityItem = async () =>
 const getPropertiesItem = async () =>
   (await Database.get<PropertiesItem[]>('properties'))[0];
 
+const setupIdentity = async () => {
+  await Database.put('identity', {
+    modelId: '123',
+    modelName: 'identity',
+    onesignal_id: DUMMY_ONESIGNAL_ID,
+  });
+};
+
 describe('OneSignal', () => {
   beforeAll(async () => {
     server.use(mockServerConfig(), mockPageStylesCss());
     const _onesignal = await TestEnvironment.initialize();
     window.OneSignal = _onesignal;
 
-    await Database.put('identity', {
-      modelId: '123',
-      modelName: 'identity',
-      onesignal_id: DUMMY_ONESIGNAL_ID,
-    });
+    await setupIdentity();
+
     await window.OneSignal.init({ appId: APP_ID });
   });
 
@@ -73,10 +82,17 @@ describe('OneSignal', () => {
     window.OneSignal.coreDirector
       .getIdentityModel()
       .initializeFromJson(newIdentityModel.toJSON());
+
+    const newPropertiesModel = new PropertiesModel();
+    newPropertiesModel.onesignalId = DUMMY_ONESIGNAL_ID;
+    window.OneSignal.coreDirector
+      .getPropertiesModel()
+      .initializeFromJson(newPropertiesModel.toJSON());
   });
 
   afterEach(async () => {
     await waitForOperations(); // flush operations
+    await setupIdentity();
   });
 
   describe('User', () => {
@@ -371,9 +387,14 @@ describe('OneSignal', () => {
           "The value for 'jwtToken' was of the wrong type.",
         );
 
+        // TODO: add consent required test
         // if needing consent required
         LocalStorage.setConsentRequired(true);
-        await expect(window.OneSignal.login(externalId)).rejects.toThrowError(
+        await window.OneSignal.login(externalId);
+        await vi.waitUntil(() => errorSpy.mock.calls.length === 1);
+
+        const error = errorSpy.mock.calls[0][1] as Error;
+        expect(error.message).toBe(
           'Login: Consent required but not given, skipping login',
         );
       });
@@ -629,6 +650,64 @@ describe('OneSignal', () => {
           },
         ]);
       });
+    });
+  });
+
+  test('should preserve operations order without needing await', async () => {
+    await setupSubModelStore({
+      id: DUMMY_SUBSCRIPTION_ID,
+      token: 'def456',
+    });
+    setAddAliasResponse();
+    setTransferSubscriptionResponse();
+    setUpdateUserResponse();
+
+    window.OneSignal.login('some-id');
+    window.OneSignal.User.addTag('some-tag', 'some-value');
+    const tags = window.OneSignal.User.getTags();
+
+    let queue: OperationQueueItem[] = [];
+    await vi.waitUntil(
+      () => {
+        queue = window.OneSignal.coreDirector.operationRepo.queue;
+        return queue.length === 3;
+      },
+      { interval: 1 },
+    );
+
+    // its fine if login op is last since its the only one that can be executed
+    const setPropertyOp = queue[0];
+    expect(setPropertyOp.operation.name).toBe('set-property');
+    const loginOp = queue[2];
+    expect(loginOp.operation.name).toBe('login-user');
+
+    // tags should still be sync
+    expect(tags).toEqual({
+      'some-tag': 'some-value',
+    });
+
+    // should set alias
+    await vi.waitUntil(() => addAliasFn.mock.calls.length === 1, {
+      interval: 1,
+    });
+    expect(addAliasFn).toHaveBeenCalledWith({
+      identity: {
+        external_id: 'some-id',
+      },
+    });
+    expect(updateUserFn).not.toHaveBeenCalled();
+
+    // should update user tags
+    await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, {
+      interval: 1,
+    });
+    expect(updateUserFn).toHaveBeenCalledWith({
+      properties: {
+        tags: {
+          'some-tag': 'some-value',
+        },
+      },
+      refresh_device_metadata: false,
     });
   });
 });

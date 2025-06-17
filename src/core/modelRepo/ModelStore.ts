@@ -137,7 +137,8 @@ export abstract class ModelStore<
   }
 
   private async removeItem(model: TModel, tag: string): Promise<void> {
-    this.models = this.models.filter((m) => m !== model);
+    const index = this.models.findIndex((m) => m.modelId === model.modelId);
+    if (index !== -1) this.models.splice(index, 1);
 
     // no longer listen for changes to this model
     model.unsubscribe(this);

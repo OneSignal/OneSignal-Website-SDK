@@ -388,7 +388,7 @@ export class SessionManager implements ISessionManager {
         },
       };
 
-      const appId = await MainHelper.getAppId();
+      const appId = MainHelper.getAppId();
       Utils.enforceAppId(appId);
       Utils.enforceAlias(aliasPair);
       try {

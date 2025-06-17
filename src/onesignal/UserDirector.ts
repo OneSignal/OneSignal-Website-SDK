@@ -2,9 +2,9 @@ import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
-import Log from '../shared/libraries/Log';
 import User from './User';
 
 export default class UserDirector {
@@ -13,7 +13,7 @@ export default class UserDirector {
     if (user.isCreatingUser) return;
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-    const appId = await MainHelper.getAppId();
+    const appId = MainHelper.getAppId();
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
     if (!pushOp) return Log.info('No push subscription found');
