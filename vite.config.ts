@@ -83,7 +83,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __API_TYPE__: JSON.stringify(process.env.API),
       __BUILD_TYPE__: JSON.stringify(process.env.ENV),
-      __LOGGING__: JSON.stringify(process.env.LOGGING),
+      __LOGGING__: JSON.stringify(getBooleanEnv(process.env.LOGGING)),
       __VERSION__: JSON.stringify(process.env.npm_package_config_sdkVersion),
 
       // ignored for prod
@@ -91,8 +91,8 @@ export default defineConfig(({ mode }) => {
       __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN),
 
       // dev only
-      __IS_HTTPS__: JSON.stringify(process.env.HTTPS),
-      __NO_DEV_PORT__: JSON.stringify(process.env.NO_DEV_PORT),
+      __IS_HTTPS__: JSON.stringify(getBooleanEnv(process.env.HTTPS)),
+      __NO_DEV_PORT__: JSON.stringify(getBooleanEnv(process.env.NO_DEV_PORT)),
     },
     server: {
       open: true,
@@ -104,3 +104,7 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
+
+const getBooleanEnv = (env?: string) => {
+  return env && env === 'true';
+};

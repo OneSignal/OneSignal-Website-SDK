@@ -9,7 +9,7 @@
     "uuid": "^11.1.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "LOGGING=false vite",
     "dev:logging": "LOGGING=true vite",
     "ngrok": "./build/scripts/ngrok.sh",
     "build:sdk": "LIB=sdk vite build",
