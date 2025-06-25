@@ -148,8 +148,7 @@ describe('OneSignal', () => {
         const identityModel = window.OneSignal.coreDirector.getIdentityModel();
         expect(identityModel.getProperty('someLabel')).toBeUndefined();
 
-        await waitForOperations(3);
-        expect(deleteAliasFn).toHaveBeenCalled();
+        await vi.waitUntil(() => deleteAliasFn.mock.calls.length === 1);
       });
 
       test('can delete multiple aliases from the current user', async () => {
@@ -213,6 +212,7 @@ describe('OneSignal', () => {
         const subscription: ICreateUserSubscription = {
           enabled: true,
           notification_types: 1,
+          sdk: '1',
           token: email,
           type: 'Email',
         };
@@ -303,6 +303,7 @@ describe('OneSignal', () => {
         const subscription: ICreateUserSubscription = {
           enabled: true,
           notification_types: 1,
+          sdk: '1',
           token: sms,
           type: 'SMS',
         };
