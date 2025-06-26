@@ -5,7 +5,14 @@
       "name": "Launch Chrome",
       "request": "launch",
       "type": "chrome",
-      "url": "https://localhost:4001",
+      "url": "https://localhost:4000",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "name": "Launch Edge",
+      "request": "launch",
+      "type": "msedge",
+      "url": "https://localhost:4000",
       "webRoot": "${workspaceFolder}"
     }
   ]

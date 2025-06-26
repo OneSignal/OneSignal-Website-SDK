@@ -11,8 +11,8 @@ services:
       ports:
           - published: 4001
             target: 4001
-          - published: 4000
-            target: 4000
+          - published: 4002
+            target: 4002
       command: /bin/sh -c "./docker/docker-entry-point.sh"
 # Named volumes that are persisted between docker-compose rebuilds.
 # If you need to remove these volumes for some reason, run `docker-compose down -v`
