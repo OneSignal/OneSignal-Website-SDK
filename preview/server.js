@@ -42,11 +42,7 @@ app.get('/push/onesignal/:file', (req, res) => {
 
 https
   .createServer(options, app)
-  .listen(4001, () =>
-    console.info('preview: listening on port 4001 (https)'),
-  );
+  .listen(4001, () => console.info('preview: listening on port 4001 (https)'));
 
 // http
-app.listen(4000, () =>
-  console.info('preview: listening on port 4000 (http)'),
-);
+app.listen(4002, () => console.info('preview: listening on port 4002 (http)'));

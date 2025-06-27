@@ -96,7 +96,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       open: true,
-      port: 4001,
+      port: 4000,
       https: {
         cert: './certs/cert.pem',
         key: './certs/dev.pem',
