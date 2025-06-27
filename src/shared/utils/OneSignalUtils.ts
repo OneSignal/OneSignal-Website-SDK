@@ -1,20 +1,12 @@
 import bowser, { IBowser } from 'bowser';
-import Environment from '../helpers/Environment';
 import { Utils } from '../context/Utils';
+import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';
 
 export class OneSignalUtils {
   public static getBaseUrl() {
     return location.origin;
-  }
-
-  public static isLocalhostAllowedAsSecureOrigin(): boolean {
-    return (
-      OneSignal.config &&
-      OneSignal.config.userConfig &&
-      OneSignal.config.userConfig.allowLocalhostAsSecureOrigin === true
-    );
   }
 
   public static redetectBrowserUserAgent(): IBowser {

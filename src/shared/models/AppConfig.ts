@@ -1,10 +1,10 @@
 import { Categories } from '../../page/models/Tags';
 import { OutcomesConfig, OutcomesServerConfig } from './Outcomes';
 import {
-  AppUserConfigPromptOptions,
-  CustomLinkStyle,
-  CustomLinkSize,
   AppUserConfigNotifyButton,
+  AppUserConfigPromptOptions,
+  CustomLinkSize,
+  CustomLinkStyle,
   SlidedownOptions,
 } from './Prompts';
 
@@ -91,7 +91,6 @@ export interface AppUserConfig {
   webhooks?: AppUserConfigWebhooks;
   notificationClickHandlerMatch?: NotificationClickMatchBehavior;
   notificationClickHandlerAction?: NotificationClickActionBehavior;
-  allowLocalhostAsSecureOrigin?: boolean;
   pageUrl?: string;
   outcomes?: OutcomesConfig;
   serviceWorkerOverrideForTypical?: boolean;
@@ -245,9 +244,7 @@ export interface ServerAppConfig {
       workerName?: string;
       registrationScope?: string;
     };
-    setupBehavior?: {
-      allowLocalhostAsSecureOrigin: false;
-    };
+    setupBehavior?: {};
     welcomeNotification: {
       url: string | undefined;
       title: string | undefined;
