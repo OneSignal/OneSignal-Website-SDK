@@ -353,6 +353,9 @@ describe('LoginUserOperationExecutor', () => {
         refresh_device_metadata: true,
         subscriptions: [
           {
+            device_model: '',
+            device_os: 56,
+            sdk: '1',
             token: mockSubscriptionOpInfo.token,
             type: mockSubscriptionOpInfo.type,
           },
@@ -391,6 +394,9 @@ describe('LoginUserOperationExecutor', () => {
         expect.objectContaining({
           subscriptions: [
             {
+              device_model: '',
+              device_os: 56,
+              sdk: '1',
               type: mockSubscriptionOpInfo.type,
               ...updates,
             },
@@ -435,7 +441,10 @@ describe('LoginUserOperationExecutor', () => {
         expect.objectContaining({
           subscriptions: [
             {
+              device_model: '',
+              device_os: 56,
               id: DUMMY_SUBSCRIPTION_ID,
+              sdk: '1',
               type: mockSubscriptionOpInfo.type,
               token: mockSubscriptionOpInfo.token,
             },

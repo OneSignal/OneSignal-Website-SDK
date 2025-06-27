@@ -194,10 +194,11 @@ describe('SubscriptionOperationExecutor', () => {
 
       expect(createSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
-          type: SubscriptionType.ChromePush,
           enabled: false,
-          token: 'new-token',
           notification_types: NotificationType.UserOptedOut,
+          token: 'new-token',
+          sdk: '1',
+          type: SubscriptionType.ChromePush,
         },
       });
     });

@@ -85,6 +85,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       createOperation.notification_types;
 
     const subscription = {
+      sdk: createOperation.sdk,
       type: createOperation.type,
       enabled,
       token,
