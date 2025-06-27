@@ -298,9 +298,7 @@ export default class TestContext {
             workerName: 'OneSignalSDKWorker.js',
             registrationScope: '/',
           },
-          setupBehavior: {
-            allowLocalhostAsSecureOrigin: false,
-          },
+          setupBehavior: {},
           welcomeNotification: {
             url: undefined,
             title: undefined,
@@ -457,7 +455,6 @@ export default class TestContext {
       },
       notificationClickHandlerMatch: NotificationClickMatchBehavior.Origin,
       notificationClickHandlerAction: NotificationClickActionBehavior.Focus,
-      allowLocalhostAsSecureOrigin: true,
     };
   }
 
