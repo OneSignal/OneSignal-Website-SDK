@@ -65,15 +65,17 @@ export default class SdkEnvironment {
     // using if statements to have better dead code elimination
     if (API_TYPE === EnvironmentKind.Development) {
       return SdkEnvironment.isTurbineEndpoint(action)
-        ? new URL(`http://${API_ORIGIN}:${TURBINE_API_URL_PORT}/api/v1`)
-        : new URL(`http://${API_ORIGIN}:${API_URL_PORT}/api/v1`);
+        ? new URL(`http://${API_ORIGIN}:${TURBINE_API_URL_PORT}/api/v1/`)
+        : new URL(`http://${API_ORIGIN}:${API_URL_PORT}/api/v1/`);
     }
 
     if (API_TYPE === EnvironmentKind.Staging)
-      return new URL(`https://${API_ORIGIN}/api/v1`);
+      return new URL(`https://${API_ORIGIN}/api/v1/`);
 
     if (API_TYPE === EnvironmentKind.Production)
-      return new URL('https://onesignal.com/api/v1');
+      return new URL(
+        legacy ? 'https://onesignal.com/api/v1/' : 'https://api.onesignal.com/',
+      );
 
     throw new InvalidArgumentError(
       'buildEnv',

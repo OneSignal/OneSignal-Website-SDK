@@ -1,12 +1,12 @@
+import { APP_ID } from '__test__/support/constants';
+import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
 import {
   AppUserConfig,
   ConfigIntegrationKind,
 } from '../../../src/shared/models/AppConfig';
-import { getRandomUuid } from '../../../src/shared/utils/utils';
+import TestContext from '../../support/environment/TestContext';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { getFinalAppConfig } from '../../support/helpers/configHelper';
-import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
-import TestContext from '../../support/environment/TestContext';
 
 const SERVICE_WORKER_PATH = 'push/onesignal/';
 
@@ -22,7 +22,7 @@ describe('ConfigHelper Tests', () => {
 
   test('promptOptions 1 - autoRegister = true backwards compatibility for custom integration shows native on HTTPS', async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       autoRegister: true,
     };
 
@@ -38,7 +38,7 @@ describe('ConfigHelper Tests', () => {
 
   test('promptOptions 3 - autoRegister = false backwards compatibility for custom integration (no enabled prompts)', async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       autoRegister: false,
     };
 
@@ -54,7 +54,7 @@ describe('ConfigHelper Tests', () => {
 
   test(`promptOptions 4 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       autoRegister: true,
     };
     (fakeUserConfig as any).promptOptions = {
@@ -75,7 +75,7 @@ describe('ConfigHelper Tests', () => {
 
   test(`promptOptions 6 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       autoRegister: true,
     };
 
@@ -98,7 +98,7 @@ describe('ConfigHelper Tests', () => {
 
   test(`promptOptions 8 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       autoRegister: true,
     };
 
@@ -125,7 +125,7 @@ describe('ConfigHelper Tests', () => {
 
   test(`promptOptions 9 - autoRegister = true backwards compatibility for custom integration (ignores config, shows native on HTTPS)`, async () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       autoRegister: true,
     };
 
@@ -152,7 +152,7 @@ describe('ConfigHelper Tests', () => {
 
   test('autoResubscribe - autoRegister backwards compatibility for custom integration 1', () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       autoRegister: true,
     };
 
@@ -169,7 +169,7 @@ describe('ConfigHelper Tests', () => {
 
   test('autoResubscribe - autoRegister backwards compatibility for custom integration 2', () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
     };
 
     const fakeServerConfig = TestContext.getFakeServerAppConfig(
@@ -187,7 +187,7 @@ describe('ConfigHelper Tests', () => {
 
   test('autoResubscribe - autoRegister backwards compatibility for custom integration 3', () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       autoRegister: false,
       autoResubscribe: true,
     };
@@ -205,7 +205,7 @@ describe('ConfigHelper Tests', () => {
 
   test('service worker config override (true) for typical site works', () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
       serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
       serviceWorkerOverrideForTypical: true,
@@ -231,7 +231,7 @@ describe('ConfigHelper Tests', () => {
 
   test('service worker config override (false) for typical site works', () => {
     const fakeUserConfig: AppUserConfig = {
-      appId: getRandomUuid(),
+      appId: APP_ID,
       serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
       serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
       serviceWorkerOverrideForTypical: false,

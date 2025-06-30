@@ -188,10 +188,6 @@ export function contains(indexOfAble: any, match: string) {
   return Utils.contains(indexOfAble, match);
 }
 
-export function getRandomUuid(): string {
-  return OneSignalUtils.getRandomUuid();
-}
-
 /**
  * Returns true if the UUID is a string of 36 characters;
  * @param uuid

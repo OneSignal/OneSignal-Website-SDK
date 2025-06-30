@@ -28,22 +28,6 @@ export class OneSignalUtils {
     );
   }
 
-  public static getRandomUuid(): string {
-    const crypto =
-      typeof window === 'undefined'
-        ? (global as any).crypto
-        : window.crypto || (<any>window).msCrypto;
-    const uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-      /[xy]/g,
-      function (c) {
-        const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16 | 0,
-          v = c == 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      },
-    );
-    return uuidStr;
-  }
-
   public static logMethodCall(methodName: string, ...args: any[]) {
     return Log.debug(
       `Called ${methodName}(${args.map(Utils.stringify).join(', ')})`,
