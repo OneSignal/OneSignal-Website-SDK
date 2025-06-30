@@ -98,7 +98,7 @@ export default class SdkEnvironment {
       case EnvironmentKind.Staging:
         return new URL(`https://${apiOrigin}/api/v1`);
       case EnvironmentKind.Production:
-        return new URL('https://onesignal.com/api/v1');
+        return new URL('https://api.onesignal.com');
       default:
         throw new InvalidArgumentError(
           'buildEnv',
