@@ -1,14 +1,14 @@
-import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
+import { IUpdateUser } from 'src/core/types/api';
+import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
-import { UpdateUserPayload } from '../../core/requestService/UpdateUserPayload';
+import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
+import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import Utils from '../context/Utils';
 import Log from '../libraries/Log';
 import { ServerAppConfig } from '../models/AppConfig';
 import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
 import { OutcomeAttribution, OutcomeAttributionType } from '../models/Outcomes';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { OneSignalApiBase } from './OneSignalApiBase';
 import OneSignalApiShared from './OneSignalApiShared';
 
@@ -39,7 +39,7 @@ export class OneSignalApiSW {
       app_id: appId,
       device_type: deviceType,
       identifier: identifier,
-      notification_types: SubscriptionStateKind.TemporaryWebRecord,
+      notification_types: NotificationType.TemporaryWebRecord,
     })
       .then((response) => {
         if (response?.result?.id) {
@@ -65,7 +65,7 @@ export class OneSignalApiSW {
   ): Promise<void> {
     const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
     // TO DO: in future, we should aggregate session count in case network call fails
-    const updateUserPayload: UpdateUserPayload = {
+    const updateUserPayload: IUpdateUser = {
       refresh_device_metadata: true,
       deltas: {
         session_count: 1,
@@ -92,7 +92,7 @@ export class OneSignalApiSW {
     sessionDuration: number,
     attribution: OutcomeAttribution,
   ): Promise<void> {
-    const updateUserPayload: UpdateUserPayload = {
+    const updateUserPayload: IUpdateUser = {
       refresh_device_metadata: true,
       deltas: {
         session_time: sessionDuration,

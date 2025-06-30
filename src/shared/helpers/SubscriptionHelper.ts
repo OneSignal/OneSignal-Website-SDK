@@ -1,7 +1,9 @@
 import {
   SubscriptionChannel,
+  SubscriptionChannelValue,
   SubscriptionType,
-} from '../../../src/core/models/SubscriptionModels';
+  SubscriptionTypeValue,
+} from 'src/core/types/subscription';
 import {
   InvalidStateError,
   InvalidStateReason,
@@ -50,7 +52,7 @@ export default class SubscriptionHelper {
   /**
    * Helper that checks if a given SubscriptionType is a push subscription.
    */
-  public static isPushSubscriptionType(type: SubscriptionType): boolean {
+  public static isPushSubscriptionType(type: SubscriptionTypeValue): boolean {
     switch (type) {
       case SubscriptionType.ChromePush:
       case SubscriptionType.SafariPush:
@@ -63,8 +65,8 @@ export default class SubscriptionHelper {
   }
 
   public static toSubscriptionChannel(
-    type: SubscriptionType,
-  ): SubscriptionChannel | undefined {
+    type: SubscriptionTypeValue,
+  ): SubscriptionChannelValue | undefined {
     switch (type) {
       case SubscriptionType.Email:
         return SubscriptionChannel.Email;

@@ -1,9 +1,9 @@
-import User from './User';
-import PushSubscriptionNamespace from './PushSubscriptionNamespace';
-import { Subscription } from '../shared/models/Subscription';
-import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import UserChangeEvent from '../page/models/UserChangeEvent';
+import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
+import { Subscription } from '../shared/models/Subscription';
+import PushSubscriptionNamespace from './PushSubscriptionNamespace';
+import User from './User';
 
 export default class UserNamespace extends EventListenerBase {
   private _currentUser?: User;
@@ -36,7 +36,7 @@ export default class UserNamespace extends EventListenerBase {
 
   get externalId(): string | undefined {
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-    return identityModel?.data?.external_id;
+    return identityModel?.externalId;
   }
 
   public addAlias(label: string, id: string): void {

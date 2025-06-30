@@ -1,6 +1,4 @@
 import { NotificationPermission } from 'src/shared/models/NotificationPermission';
-import OperationCache from '../../../src/core/caching/OperationCache';
-import { ModelName } from '../../../src/core/models/SupportedModels';
 import { RecursivePartial } from '../../../src/shared/context/Utils';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 import {
@@ -9,10 +7,7 @@ import {
   ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../constants';
-import {
-  getDummyIdentityOSModel,
-  getDummyPushSubscriptionOSModel,
-} from '../helpers/core';
+import { generateNewSubscription } from '../helpers/core';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import {
   initOSGlobals,
@@ -42,25 +37,16 @@ export class TestEnvironment {
     mockUserAgent(config);
     // reset db & localStorage
     resetDatabase();
-    OperationCache.flushOperations();
 
     const oneSignal = await initOSGlobals(config);
 
     if (config.useMockIdentityModel) {
-      const identityModel = getDummyIdentityOSModel();
-      // set on the model instance
-      identityModel.setOneSignalId(DUMMY_ONESIGNAL_ID);
-      // set on the model data
-      identityModel.set('onesignal_id', DUMMY_ONESIGNAL_ID);
-      OneSignal.coreDirector.add(ModelName.Identity, identityModel, false);
+      const model = OneSignal.coreDirector.getIdentityModel();
+      model.onesignalId = DUMMY_ONESIGNAL_ID;
     }
 
     if (config.useMockPushSubscriptionModel) {
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
-        getDummyPushSubscriptionOSModel(),
-        false,
-      );
+      OneSignal.coreDirector.addSubscriptionModel(generateNewSubscription());
       vi.spyOn(MainHelper, 'getCurrentPushToken').mockResolvedValue(
         DUMMY_PUSH_TOKEN,
       );
@@ -70,9 +56,5 @@ export class TestEnvironment {
     config.environment = 'dom';
     stubNotification(config);
     return oneSignal;
-  }
-
-  static async resetCoreModule() {
-    await OneSignal.coreDirector.resetModelRepoAndCache();
   }
 }

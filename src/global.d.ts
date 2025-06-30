@@ -11,10 +11,12 @@ interface SafariRemoteNotificationPermission {
 }
 
 interface SafariRemoteNotification {
-  permission(websitePushID: string): SafariRemoteNotificationPermission;
+  permission(
+    websitePushID: string | undefined,
+  ): SafariRemoteNotificationPermission;
   requestPermission(
     webAPIURL: string,
-    websitePushID: string,
+    websitePushID: string | undefined,
     queryParameterDictionary: unknown,
     callback: (permissionData: SafariRemoteNotificationPermission) => void,
   ): void;

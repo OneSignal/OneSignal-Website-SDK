@@ -1,8 +1,7 @@
-import ModelCache from '../../../src/core/caching/ModelCache';
+import OneSignal from '../../../src/onesignal/OneSignal';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import { PermissionManager } from '../../support/managers/PermissionManager';
-import OneSignal from '../../../src/onesignal/OneSignal';
 
 function expectPermissionChangeEvent(
   expectedPermission: boolean,
@@ -20,8 +19,6 @@ function expectPermissionChangeEvent(
 
 describe('Notifications namespace permission properties', () => {
   beforeEach(async () => {
-    vi.useFakeTimers();
-    vi.spyOn(ModelCache.prototype, 'load').mockResolvedValue({});
     TestEnvironment.initialize();
   });
 

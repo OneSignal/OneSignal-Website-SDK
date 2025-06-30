@@ -1,27 +1,27 @@
+import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
+import Utils from '../context/Utils';
+import {
+  InvalidArgumentError,
+  InvalidArgumentReason,
+} from '../errors/InvalidArgumentError';
 import {
   InvalidStateError,
   InvalidStateReason,
 } from '../errors/InvalidStateError';
+import {
+  NotSubscribedError,
+  NotSubscribedReason,
+} from '../errors/NotSubscribedError';
+import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import {
   AppUserConfigPromptOptions,
   SlidedownOptions,
 } from '../models/Prompts';
-import Log from '../libraries/Log';
-import Utils from '../context/Utils';
 import Database from '../services/Database';
 import { PermissionUtils } from '../utils/PermissionUtils';
-import Environment from './Environment';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
-import {
-  NotSubscribedError,
-  NotSubscribedReason,
-} from '../errors/NotSubscribedError';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../errors/InvalidArgumentError';
-import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
+import Environment from './Environment';
 
 export default class MainHelper {
   static async showLocalNotification(
@@ -110,6 +110,7 @@ export default class MainHelper {
     );
     const currentPermission =
       await OneSignal.context.permissionManager.getPermissionStatus();
+
     if (previousPermission !== currentPermission) {
       await PermissionUtils.triggerNotificationPermissionChanged();
       await Database.put('Options', {
@@ -120,7 +121,7 @@ export default class MainHelper {
   }
 
   static async getNotificationIcons() {
-    const appId = await MainHelper.getAppId();
+    const appId = MainHelper.getAppId();
     if (!appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     }
@@ -222,13 +223,8 @@ export default class MainHelper {
     return hash;
   }
 
-  static async getAppId(): Promise<string> {
-    if (OneSignal.config.appId) {
-      return Promise.resolve(OneSignal.config.appId);
-    } else {
-      const appId = await Database.get<string>('Ids', 'appId');
-      return appId;
-    }
+  static getAppId(): string {
+    return OneSignal.config?.appId || '';
   }
 
   static async getDeviceId(): Promise<string | undefined> {

@@ -1,21 +1,21 @@
+import UserNamespace from '../../onesignal/UserNamespace';
+import SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
+import UserChangeEvent from '../../page/models/UserChangeEvent';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { ContextSWInterface } from '../models/ContextSW';
-import Database from '../services/Database';
-import LimitStore from '../services/LimitStore';
-import BrowserUtils from '../utils/BrowserUtils';
-import OneSignalUtils from '../utils/OneSignalUtils';
-import PromptsHelper from './PromptsHelper';
-import OneSignalEvent from '../services/OneSignalEvent';
-import SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
-import UserChangeEvent from '../../page/models/UserChangeEvent';
-import MainHelper from './MainHelper';
 import {
   NotificationClickEvent,
   NotificationClickEventInternal,
 } from '../models/NotificationEvent';
+import Database from '../services/Database';
+import LimitStore from '../services/LimitStore';
+import OneSignalEvent from '../services/OneSignalEvent';
+import BrowserUtils from '../utils/BrowserUtils';
+import OneSignalUtils from '../utils/OneSignalUtils';
 import { awaitOneSignalInitAndSupported } from '../utils/utils';
-import UserNamespace from '../../onesignal/UserNamespace';
+import MainHelper from './MainHelper';
+import PromptsHelper from './PromptsHelper';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -47,13 +47,14 @@ export default class EventHelper {
     const currentPushToken = await MainHelper.getCurrentPushToken();
 
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
-    const pushSubscriptionId = pushModel?.data?.id;
+    const pushSubscriptionId = pushModel?.id;
 
     const didStateChange =
       lastKnownPushEnabled === null ||
       isPushEnabled !== lastKnownPushEnabled ||
       currentPushToken !== lastKnownPushToken ||
       pushSubscriptionId !== lastKnownPushId;
+
     if (!didStateChange) {
       return;
     }
@@ -330,7 +331,7 @@ export default class EventHelper {
 
     const identityModel = await OneSignal.coreDirector.getIdentityModel();
     const currentOneSignalId = identityModel?.onesignalId;
-    const currentExternalId = identityModel?.data?.external_id;
+    const currentExternalId = identityModel?.externalId;
 
     const didStateChange =
       currentOneSignalId !== previousOneSignalId ||

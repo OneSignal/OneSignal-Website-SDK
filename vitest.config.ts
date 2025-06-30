@@ -24,6 +24,7 @@ export default defineConfig({
       include: ['src/**'],
       reporter: ['text-summary', 'lcov'],
       reportsDirectory: 'coverage',
+      reportOnFailure: true,
     },
     environment: 'jsdom',
     globals: true,

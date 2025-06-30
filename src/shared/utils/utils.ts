@@ -327,3 +327,7 @@ export function getDomElementOrStub(selector: string): Element {
 export function deepCopy<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
+
+export function getTimeZoneId() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}

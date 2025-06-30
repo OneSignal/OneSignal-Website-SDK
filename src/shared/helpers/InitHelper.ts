@@ -80,6 +80,7 @@ export default class InitHelper {
     // saves isOptedOut to localStorage. used for require user interaction functionality
     const subscription = await Database.getSubscription();
     subscription.optedOut = isOptedOut;
+
     await Database.setSubscription(subscription);
     await InitHelper.handleAutoResubscribe(isOptedOut);
 
@@ -364,7 +365,7 @@ export default class InitHelper {
   }
 
   public static async initSaveState(overridingPageTitle?: string) {
-    const appId = await MainHelper.getAppId();
+    const appId = MainHelper.getAppId();
     const config: AppConfig = OneSignal.config;
     await Database.put('Ids', { type: 'appId', id: appId });
     const pageTitle: string =

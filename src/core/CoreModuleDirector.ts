@@ -1,33 +1,45 @@
+import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
-import { NewRecordsState } from '../../src/shared/models/NewRecordsState';
-import OneSignal from '../onesignal/OneSignal';
-import User from '../onesignal/User';
-import FuturePushSubscriptionRecord from '../page/userModel/FuturePushSubscriptionRecord';
-import OneSignalError from '../shared/errors/OneSignalError';
-import EventHelper from '../shared/helpers/EventHelper';
 import MainHelper from '../shared/helpers/MainHelper';
-import Log from '../shared/libraries/Log';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import Database from '../shared/services/Database';
 import { logMethodCall } from '../shared/utils/utils';
 import CoreModule from './CoreModule';
-import { OSModel } from './modelRepo/OSModel';
-import { SupportedIdentity } from './models/IdentityModel';
-import { ModelStoresMap } from './models/ModelStoresMap';
+import { IdentityModel } from './models/IdentityModel';
+import { PropertiesModel } from './models/PropertiesModel';
+import { SubscriptionModel } from './models/SubscriptionModel';
+import { IdentityModelStore } from './modelStores/IdentityModelStore';
+import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
+import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
+import { NewRecordsState } from './operationRepo/NewRecordsState';
+import { type OperationRepo } from './operationRepo/OperationRepo';
+import { ModelChangeTags } from './types/models';
 import {
   SubscriptionChannel,
-  SubscriptionModel,
+  SubscriptionChannelValue,
   SubscriptionType,
-  SupportedSubscription,
-} from './models/SubscriptionModels';
-import { ModelName, SupportedModel } from './models/SupportedModels';
-import UserData from './models/UserData';
-import { UserPropertiesModel } from './models/UserPropertiesModel';
+} from './types/subscription';
 
 /* Contains OneSignal User-Model-specific logic*/
 
 export class CoreModuleDirector {
   constructor(private core: CoreModule) {}
+
+  get operationRepo(): OperationRepo {
+    return this.core.operationRepo;
+  }
+
+  get identityModelStore(): IdentityModelStore {
+    return this.core.identityModelStore;
+  }
+
+  get propertiesModelStore(): PropertiesModelStore {
+    return this.core.propertiesModelStore;
+  }
+
+  get subscriptionModelStore(): SubscriptionModelStore {
+    return this.core.subscriptionModelStore;
+  }
 
   public generatePushSubscriptionModel(
     rawPushSubscription: RawPushSubscription,
@@ -35,181 +47,32 @@ export class CoreModuleDirector {
     logMethodCall('CoreModuleDirector.generatePushSubscriptionModel', {
       rawPushSubscription,
     });
-    // new subscription
-    const pushModel = new OSModel<SupportedSubscription>(
-      ModelName.Subscriptions,
+    const model = new SubscriptionModel();
+    model.initializeFromJson(
       new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
     );
 
-    const user = User.createOrGetInstance();
-    if (user.hasOneSignalId) {
-      pushModel.setOneSignalId(user.onesignalId);
-    }
-
-    const identity = this.getIdentityModel();
-    const externalId = identity?.data.external_id;
-    if (externalId) {
-      pushModel.setExternalId(externalId);
-    }
-
-    // don't propagate since we will be including the subscription in the user create call
-    OneSignal.coreDirector.add(
-      ModelName.Subscriptions,
-      pushModel as OSModel<SupportedModel>,
-      false,
-    );
+    // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
+    this.core.subscriptionModelStore.add(model, ModelChangeTags.NO_PROPOGATE);
   }
 
-  public async resetModelRepoAndCache(): Promise<void> {
-    await this.core.resetModelRepoAndCache();
+  public addSubscriptionModel(model: SubscriptionModel): void {
+    this.core.subscriptionModelStore.add(model);
   }
 
-  public hydrateUser(user: UserData, externalId?: string): void {
-    logMethodCall('CoreModuleDirector.hydrateUser', { user, externalId });
-    try {
-      const identity = this.getIdentityModel();
-      const properties = this.getPropertiesModel();
-
-      const { onesignal_id: onesignalId } = user.identity;
-
-      if (!onesignalId) {
-        throw new OneSignalError('OneSignal ID is missing from user data');
-      }
-
-      // set OneSignal ID *before* hydrating models so that the onesignalId is also updated in model cache
-      identity?.setOneSignalId(onesignalId);
-      properties?.setOneSignalId(onesignalId);
-
-      if (externalId) {
-        identity?.setExternalId(externalId);
-        properties?.setExternalId(externalId);
-        user.identity.external_id = externalId;
-      }
-
-      // identity and properties models are always single, so we hydrate immediately (i.e. replace existing data)
-      identity?.hydrate(user.identity);
-      properties?.hydrate(user.properties);
-
-      // subscriptions are duplicable, so we hydrate them separately
-      // when hydrating, we should have the full subscription object (i.e. include ID from server)
-      this._hydrateSubscriptions(
-        user.subscriptions as SubscriptionModel[] | undefined,
-        onesignalId,
-        externalId,
-      );
-      EventHelper.checkAndTriggerUserChanged();
-    } catch (e) {
-      Log.error(`Error hydrating user: ${e}`);
-    }
-  }
-
-  private _hydrateSubscriptions(
-    subscriptions: SubscriptionModel[] | undefined,
-    onesignalId: string,
-    externalId?: string,
-  ): void {
-    logMethodCall('CoreModuleDirector._hydrateSubscriptions', {
-      subscriptions,
-      onesignalId,
-      externalId,
-    });
-
-    if (!subscriptions) {
-      return;
-    }
-
-    const modelStores = this.getModelStores();
-
-    subscriptions.forEach(async (subscription) => {
-      /* We use the token to identify the model because the subscription ID is not set until the server responds.
-       * So when we initially hydrate after init, we may already have a push model with a token, but no ID.
-       * We don't want to create a new model in this case, so we use the token to identify the model.
-       */
-      const existingSubscription = !!subscription.token
-        ? this.getSubscriptionOfTypeWithToken(
-            SubscriptionHelper.toSubscriptionChannel(subscription.type),
-            subscription.token,
-          )
-        : undefined;
-
-      if (existingSubscription) {
-        // set onesignalId on existing subscription *before* hydrating so that the onesignalId is updated in model cache
-        existingSubscription.setOneSignalId(onesignalId);
-        if (externalId) {
-          existingSubscription?.setExternalId(externalId);
-        }
-        existingSubscription.hydrate(subscription);
-      } else {
-        const model = new OSModel<SupportedModel>(
-          ModelName.Subscriptions,
-          subscription,
-        );
-        model.setOneSignalId(onesignalId);
-        if (externalId) {
-          model?.setExternalId(externalId);
-        }
-        modelStores[ModelName.Subscriptions].add(model, false); // don't propagate to server
-      }
-    });
-  }
-
-  // call processDeltaQueue on all executors immediately
-  public forceDeltaQueueProcessingOnAllExecutors(): void {
-    logMethodCall('CoreModuleDirector.forceDeltaQueueProcessingOnAllExecutors');
-    this.core.forceDeltaQueueProcessingOnAllExecutors();
-  }
-
-  /* O P E R A T I O N S */
-
-  public add(
-    modelName: ModelName,
-    model: OSModel<SupportedModel>,
-    propagate = true,
-  ): void {
-    logMethodCall('CoreModuleDirector.add', { modelName, model });
-    const modelStores = this.getModelStores();
-    modelStores[modelName].add(model, propagate);
-  }
-
-  public remove(modelName: ModelName, modelId: string): void {
-    logMethodCall('CoreModuleDirector.remove', { modelName, modelId });
-    const modelStores = this.getModelStores();
-    modelStores[modelName].remove(modelId);
+  public removeSubscriptionModel(modelId: string): void {
+    this.core.subscriptionModelStore.remove(modelId);
   }
 
   /* G E T T E R S */
-  public getNewRecordsState(): NewRecordsState | undefined {
+  public getNewRecordsState(): NewRecordsState {
     return this.core.newRecordsState;
   }
 
-  public getModelByTypeAndId(
-    modelName: ModelName,
-    modelId: string,
-  ): OSModel<SupportedModel> | undefined {
-    logMethodCall('CoreModuleDirector.getModelByTypeAndId', {
-      modelName,
-      modelId,
-    });
-    const modelStores = this.getModelStores();
-    return modelStores[modelName].models[modelId];
-  }
-
-  public getEmailSubscriptionModels(): {
-    [key: string]: OSModel<SupportedSubscription>;
-  } {
+  public getEmailSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getEmailSubscriptionModels');
-    const modelStores = this.getModelStores();
-    const subscriptionModels = modelStores.subscriptions.models as {
-      [key: string]: OSModel<SupportedSubscription>;
-    };
-
-    const emailSubscriptions = Object.fromEntries(
-      Object.entries(subscriptionModels).filter(
-        ([, model]) => model.data?.type === SubscriptionType.Email,
-      ),
-    );
-
-    return emailSubscriptions;
+    const subscriptions = this.core.subscriptionModelStore.list();
+    return subscriptions.filter((s) => s.type === SubscriptionType.Email);
   }
 
   public async hasEmail(): Promise<boolean> {
@@ -217,22 +80,10 @@ export class CoreModuleDirector {
     return Object.keys(emails).length > 0;
   }
 
-  public getSmsSubscriptionModels(): {
-    [key: string]: OSModel<SupportedSubscription>;
-  } {
+  public getSmsSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getSmsSubscriptionModels');
-    const modelStores = this.getModelStores();
-    const subscriptionModels = modelStores.subscriptions.models as {
-      [key: string]: OSModel<SupportedSubscription>;
-    };
-
-    const smsSubscriptions = Object.fromEntries(
-      Object.entries(subscriptionModels).filter(
-        ([, model]) => model.data?.type === SubscriptionType.SMS,
-      ),
-    );
-
-    return smsSubscriptions;
+    const subscriptions = this.core.subscriptionModelStore.list();
+    return subscriptions.filter((s) => s.type === SubscriptionType.SMS);
   }
 
   public async hasSms(): Promise<boolean> {
@@ -243,26 +94,16 @@ export class CoreModuleDirector {
   /**
    * Returns all push subscription models, including push subscriptions from other browsers.
    */
-  public getAllPushSubscriptionModels(): {
-    [key: string]: OSModel<SupportedSubscription>;
-  } {
+  public getAllPushSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getAllPushSubscriptionModels');
-    const modelStores = this.getModelStores();
-    const subscriptionModels = modelStores.subscriptions.models as {
-      [key: string]: OSModel<SupportedSubscription>;
-    };
-
-    const pushSubscriptions = Object.fromEntries(
-      Object.entries(subscriptionModels).filter(([, model]) =>
-        SubscriptionHelper.isPushSubscriptionType(model.data?.type),
-      ),
+    const subscriptions = this.core.subscriptionModelStore.list();
+    return subscriptions.filter((s) =>
+      SubscriptionHelper.isPushSubscriptionType(s.type),
     );
-
-    return pushSubscriptions;
   }
 
   private async getPushSubscriptionModelByCurrentToken(): Promise<
-    OSModel<SupportedSubscription> | undefined
+    SubscriptionModel | undefined
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
     const pushToken = await MainHelper.getCurrentPushToken();
@@ -278,7 +119,7 @@ export class CoreModuleDirector {
   // Browser may return a different PushToken value, use the last-known value as a fallback.
   //   - This happens if you disable notification permissions then re-enable them.
   private async getPushSubscriptionModelByLastKnownToken(): Promise<
-    OSModel<SupportedSubscription> | undefined
+    SubscriptionModel | undefined
   > {
     logMethodCall(
       'CoreModuleDirector.getPushSubscriptionModelByLastKnownToken',
@@ -298,7 +139,7 @@ export class CoreModuleDirector {
    * @returns The push subscription model for the current browser, or undefined if no push subscription exists.
    */
   public async getPushSubscriptionModel(): Promise<
-    OSModel<SupportedSubscription> | undefined
+    SubscriptionModel | undefined
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModel');
     return (
@@ -307,48 +148,39 @@ export class CoreModuleDirector {
     );
   }
 
-  public getIdentityModel(): OSModel<SupportedIdentity> | undefined {
+  public getIdentityModel(): IdentityModel {
     logMethodCall('CoreModuleDirector.getIdentityModel');
-    const modelStores = this.getModelStores();
-    const modelKeys = Object.keys(modelStores.identity.models);
-    return modelStores.identity.models[
-      modelKeys[0]
-    ] as OSModel<SupportedIdentity>;
+    return this.core.identityModelStore.model;
   }
 
-  public getPropertiesModel(): OSModel<UserPropertiesModel> | undefined {
+  public getPropertiesModel(): PropertiesModel {
     logMethodCall('CoreModuleDirector.getPropertiesModel');
-    const modelStores = this.getModelStores();
-    const modelKeys = Object.keys(modelStores.properties.models);
-    return modelStores.properties.models[
-      modelKeys[0]
-    ] as OSModel<UserPropertiesModel>;
+    return this.core.propertiesModelStore.model;
   }
 
-  public async getAllSubscriptionsModels(): Promise<
-    OSModel<SupportedSubscription>[]
-  > {
+  public async getAllSubscriptionsModels(): Promise<SubscriptionModel[]> {
     logMethodCall('CoreModuleDirector.getAllSubscriptionsModels');
     const emailSubscriptions = this.getEmailSubscriptionModels();
     const smsSubscriptions = this.getSmsSubscriptionModels();
     const pushSubscription = await this.getPushSubscriptionModel();
 
-    const subscriptions = Object.values(emailSubscriptions)
-      .concat(Object.values(smsSubscriptions))
-      .concat(pushSubscription ? [pushSubscription] : []);
-    return subscriptions;
+    return [
+      ...emailSubscriptions,
+      ...smsSubscriptions,
+      ...(pushSubscription ? [pushSubscription] : []),
+    ];
   }
 
   public getSubscriptionOfTypeWithToken(
-    type: SubscriptionChannel | undefined,
+    type: SubscriptionChannelValue | undefined,
     token: string,
-  ): OSModel<SupportedSubscription> | undefined {
+  ): SubscriptionModel | undefined {
     logMethodCall('CoreModuleDirector.getSubscriptionOfTypeWithToken', {
       type,
       token,
     });
 
-    let subscriptions: Record<string, OSModel<SupportedSubscription>>;
+    let subscriptions: SubscriptionModel[];
 
     switch (type) {
       case SubscriptionChannel.Email:
@@ -364,14 +196,6 @@ export class CoreModuleDirector {
         return undefined;
     }
 
-    return Object.values(subscriptions).find(
-      (subscription) => subscription.data.token === token,
-    );
-  }
-
-  /* P R I V A T E */
-
-  private getModelStores(): ModelStoresMap<SupportedModel> {
-    return this.core.modelRepo?.modelStores as ModelStoresMap<SupportedModel>;
+    return subscriptions.find((subscription) => subscription.token === token);
   }
 }

@@ -76,7 +76,7 @@ export class RawPushSubscription implements Serializable {
   }
 
   public serialize() {
-    const serializedBundle: any = {
+    const serializedBundle = {
       /* Old Parameters */
       w3cEndpoint: this.w3cEndpoint ? this.w3cEndpoint.toString() : null,
       w3cP256dh: this.w3cP256dh,

@@ -1,6 +1,12 @@
 import bowser from 'bowser';
 import { DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
-import CoreModule from '../../../src/core/CoreModule';
+import CoreModule from 'src/core/CoreModule';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { ModelChangeTags } from 'src/core/types/models';
+import {
+  NotificationType,
+  SubscriptionType,
+} from 'src/core/types/subscription';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 import OneSignal from '../../../src/onesignal/OneSignal';
@@ -12,6 +18,7 @@ import Emitter from '../../../src/shared/libraries/Emitter';
 import Database from '../../../src/shared/services/Database';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
 import * as bowerCastleHelpers from '../../../src/shared/utils/bowserCastle';
+import { DUMMY_ONESIGNAL_ID, DUMMY_SUBSCRIPTION_ID_3 } from '../constants';
 import MockNotification from '../mocks/MockNotification';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import Random from '../utils/Random';
@@ -47,7 +54,6 @@ export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal.initialized = true;
   global.OneSignal.emitter = new Emitter();
   const core = new CoreModule();
-  await core.init();
   global.OneSignal.coreDirector = new CoreModuleDirector(core);
   global.OneSignal.User = new UserNamespace(
     !!config.initUserAndPushSubscription,
@@ -117,3 +123,51 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   global.document = windowDef.document;
   return dom;
 }
+
+export const createPushSub = ({
+  id = DUMMY_SUBSCRIPTION_ID_3,
+  token = 'push-token',
+  onesignalId = DUMMY_ONESIGNAL_ID,
+}: {
+  id?: string;
+  token?: string;
+  onesignalId?: string;
+} = {}) => {
+  const pushSubscription = new SubscriptionModel();
+  pushSubscription.initializeFromJson({
+    device_model: '',
+    device_os: 56,
+    enabled: true,
+    id,
+    notification_types: NotificationType.Subscribed,
+    onesignalId,
+    token,
+    sdk: '1',
+    type: SubscriptionType.ChromePush,
+  });
+  return pushSubscription;
+};
+
+export const setupSubModelStore = async ({
+  id,
+  token,
+  onesignalId,
+}: {
+  id?: string;
+  token?: string;
+  onesignalId?: string;
+} = {}) => {
+  const pushModel = createPushSub({
+    id,
+    token,
+    onesignalId,
+  });
+  await Database.setPushId(pushModel.id);
+  await Database.setPushToken(pushModel.token);
+  OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+    [pushModel],
+    ModelChangeTags.NO_PROPOGATE,
+  );
+
+  return pushModel;
+};

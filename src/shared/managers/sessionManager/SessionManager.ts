@@ -1,6 +1,7 @@
+import { IUpdateUser } from 'src/core/types/api';
+import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../../core/requestService/AliasPair';
 import { RequestService } from '../../../core/requestService/RequestService';
-import { UpdateUserPayload } from '../../../core/requestService/UpdateUserPayload';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
@@ -14,7 +15,6 @@ import {
   SessionOrigin,
   UpsertOrDeactivateSessionPayload,
 } from '../../models/Session';
-import { SubscriptionStateKind } from '../../models/SubscriptionStateKind';
 import { OneSignalUtils } from '../../utils/OneSignalUtils';
 import { ISessionManager } from './types';
 
@@ -98,7 +98,7 @@ export class SessionManager implements ISessionManager {
 
     if (
       !pushSubscriptionModel ||
-      !isCompleteSubscriptionObject(pushSubscriptionModel.data)
+      !isCompleteSubscriptionObject(pushSubscriptionModel)
     ) {
       throw new OneSignalError(
         'Abort _getOneSignalAndSubscriptionIds: no subscription',
@@ -106,7 +106,7 @@ export class SessionManager implements ISessionManager {
     }
 
     const { onesignalId } = identityModel;
-    const { id: subscriptionId } = pushSubscriptionModel.data;
+    const { id: subscriptionId } = pushSubscriptionModel;
 
     return { onesignalId, subscriptionId };
   }
@@ -114,7 +114,7 @@ export class SessionManager implements ISessionManager {
   async handleVisibilityChange(): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (!User.singletonInstance?.hasOneSignalId) {
+    if (!User.singletonInstance?.onesignalId) {
       return;
     }
 
@@ -175,7 +175,7 @@ export class SessionManager implements ISessionManager {
   async handleOnBeforeUnload(): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (!User.singletonInstance?.hasOneSignalId) {
+    if (!User.singletonInstance?.onesignalId) {
       return;
     }
 
@@ -209,7 +209,7 @@ export class SessionManager implements ISessionManager {
     await LoginManager.switchingUsersPromise;
 
     Log.debug('handleOnFocus', e);
-    if (!User.singletonInstance?.hasOneSignalId) {
+    if (!User.singletonInstance?.onesignalId) {
       return;
     }
 
@@ -239,7 +239,7 @@ export class SessionManager implements ISessionManager {
     await LoginManager.switchingUsersPromise;
 
     Log.debug('handleOnBlur', e);
-    if (!User.singletonInstance?.hasOneSignalId) {
+    if (!User.singletonInstance?.onesignalId) {
       return;
     }
 
@@ -268,7 +268,7 @@ export class SessionManager implements ISessionManager {
   async upsertSession(sessionOrigin: SessionOrigin): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (User.singletonInstance?.hasOneSignalId) {
+    if (User.singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
       await this.notifySWToUpsertSession(
@@ -355,7 +355,7 @@ export class SessionManager implements ISessionManager {
     }
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-    const onesignalId = identityModel?.data?.id;
+    const onesignalId = identityModel.onesignalId;
 
     if (!onesignalId) {
       Log.debug(
@@ -367,29 +367,28 @@ export class SessionManager implements ISessionManager {
     const pushSubscription =
       await OneSignal.coreDirector.getPushSubscriptionModel();
     if (
-      pushSubscription?.data.notification_types !==
-        SubscriptionStateKind.Subscribed &&
+      pushSubscription?.notification_types !== NotificationType.Subscribed &&
       OneSignal.config?.enableOnSession !== true
     ) {
       return;
     }
 
     let subscriptionId;
-    if (isCompleteSubscriptionObject(pushSubscription?.data)) {
-      subscriptionId = pushSubscription?.data.id;
+    if (isCompleteSubscriptionObject(pushSubscription)) {
+      subscriptionId = pushSubscription?.id;
     }
 
     try {
       const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
       // TO DO: in future, we should aggregate session count in case network call fails
-      const updateUserPayload: UpdateUserPayload = {
+      const updateUserPayload: IUpdateUser = {
         refresh_device_metadata: true,
         deltas: {
           session_count: 1,
         },
       };
 
-      const appId = await MainHelper.getAppId();
+      const appId = MainHelper.getAppId();
       Utils.enforceAppId(appId);
       Utils.enforceAlias(aliasPair);
       try {
@@ -403,9 +402,11 @@ export class SessionManager implements ISessionManager {
         Log.debug('Error updating user session:', e);
       }
     } catch (e) {
-      Log.error(
-        `Failed to update user session. Error "${e.message}" ${e.stack}`,
-      );
+      if (e instanceof Error) {
+        Log.error(
+          `Failed to update user session. Error "${e.message}" ${e.stack}`,
+        );
+      }
     }
   }
 }

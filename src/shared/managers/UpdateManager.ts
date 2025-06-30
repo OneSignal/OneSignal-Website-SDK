@@ -1,14 +1,14 @@
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
 
 import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 
-import { SessionOrigin } from '../models/Session';
-import OneSignalApiShared from '../api/OneSignalApiShared';
+import { NotificationType } from 'src/core/types/subscription';
+import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import User from '../../onesignal/User';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
-import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
+import OneSignalApiShared from '../api/OneSignalApiShared';
+import { SessionOrigin } from '../models/Session';
 import { logMethodCall } from '../utils/utils';
 
 export class UpdateManager {
@@ -22,7 +22,7 @@ export class UpdateManager {
   }
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
-    if (!User.singletonInstance?.hasOneSignalId) {
+    if (!User.singletonInstance?.onesignalId) {
       Log.debug(
         'Not sending the update because user is not registered with OneSignal (no onesignal_id)',
       );
@@ -57,8 +57,7 @@ export class UpdateManager {
       await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (
-      subscriptionModel?.data.notification_types !==
-        SubscriptionStateKind.Subscribed &&
+      subscriptionModel?.notification_types !== NotificationType.Subscribed &&
       OneSignal.config?.enableOnSession !== true
     ) {
       return;
@@ -71,9 +70,11 @@ export class UpdateManager {
       this.context.sessionManager.upsertSession(SessionOrigin.UserNewSession);
       this.onSessionSent = true;
     } catch (e) {
-      Log.error(
-        `Failed to update user session. Error "${e.message}" ${e.stack}`,
-      );
+      if (e instanceof Error) {
+        Log.error(
+          `Failed to update user session. Error "${e.message}" ${e.stack}`,
+        );
+      }
     }
   }
 
@@ -89,7 +90,7 @@ export class UpdateManager {
 
     if (
       pushSubscriptionModel &&
-      isCompleteSubscriptionObject(pushSubscriptionModel?.data)
+      isCompleteSubscriptionObject(pushSubscriptionModel)
     ) {
       const outcomeRequestData: OutcomeRequestData = {
         id: outcomeName,
@@ -97,7 +98,7 @@ export class UpdateManager {
         notification_ids: notificationIds,
         direct: true,
         subscription: {
-          id: pushSubscriptionModel.data.id,
+          id: pushSubscriptionModel.id,
           type: FuturePushSubscriptionRecord.getSubscriptionType(),
         },
       };
@@ -124,7 +125,7 @@ export class UpdateManager {
 
     if (
       pushSubscriptionModel &&
-      isCompleteSubscriptionObject(pushSubscriptionModel?.data)
+      isCompleteSubscriptionObject(pushSubscriptionModel)
     ) {
       const outcomeRequestData: OutcomeRequestData = {
         id: outcomeName,
@@ -132,7 +133,7 @@ export class UpdateManager {
         notification_ids: notificationIds,
         direct: false,
         subscription: {
-          id: pushSubscriptionModel.data.id,
+          id: pushSubscriptionModel.id,
           type: FuturePushSubscriptionRecord.getSubscriptionType(),
         },
       };
@@ -158,13 +159,13 @@ export class UpdateManager {
 
     if (
       pushSubscriptionModel &&
-      isCompleteSubscriptionObject(pushSubscriptionModel?.data)
+      isCompleteSubscriptionObject(pushSubscriptionModel)
     ) {
       const outcomeRequestData: OutcomeRequestData = {
         id: outcomeName,
         app_id: appId,
         subscription: {
-          id: pushSubscriptionModel.data.id,
+          id: pushSubscriptionModel.id,
           type: FuturePushSubscriptionRecord.getSubscriptionType(),
         },
       };

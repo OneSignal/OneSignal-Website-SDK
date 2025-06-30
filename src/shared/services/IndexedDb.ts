@@ -1,9 +1,15 @@
-import { ModelName, LegacyModelName } from '../../core/models/SupportedModels';
+import { ModelName } from 'src/core/types/models';
 import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 
-const DATABASE_VERSION = 6;
+const DATABASE_VERSION = 7;
+
+export const LegacyModelName = {
+  PushSubscriptions: 'pushSubscriptions',
+  EmailSubscriptions: 'emailSubscriptions',
+  SmsSubscriptions: 'smsSubscriptions',
+} as const;
 
 export default class IndexedDb {
   public emitter: Emitter;
@@ -177,7 +183,7 @@ export default class IndexedDb {
       this.migrateModelNameSubscriptionsTableForV6(db, transaction);
     }
     if (newDbVersion >= 7 && event.oldVersion < 7) {
-      // Make sure to update the database version at the top of the file
+      db.createObjectStore(ModelName.Operations, { keyPath: 'modelId' });
     }
     // Wrap in conditional for tests
     if (typeof OneSignal !== 'undefined') {
@@ -321,6 +327,7 @@ export default class IndexedDb {
     keyOrValue?: IDBValidKey,
   ): Promise<T> {
     const database = await this.ensureDatabaseOpen();
+
     return await new Promise<T>((resolve, reject) => {
       try {
         const store = database

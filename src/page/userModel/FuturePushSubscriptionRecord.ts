@@ -1,40 +1,37 @@
-import { Serializable } from '../models/Serializable';
 import {
-  FutureSubscriptionModel,
+  NotificationType,
+  NotificationTypeValue,
   SubscriptionType,
-} from '../../core/models/SubscriptionModels';
-import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
+  SubscriptionTypeValue,
+} from 'src/core/types/subscription';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import OneSignalUtils from '../../shared/utils/OneSignalUtils';
-import { SubscriptionStateKind } from '../../shared/models/SubscriptionStateKind';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import Environment from '../../shared/helpers/Environment';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
+import OneSignalUtils from '../../shared/utils/OneSignalUtils';
+import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
+import { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
-  readonly type: SubscriptionType;
+  readonly type: SubscriptionTypeValue;
   readonly token?: string; // maps to legacy player.identifier
   readonly enabled?: boolean;
-  readonly notificationTypes?: SubscriptionStateKind;
+  readonly notificationTypes?: NotificationTypeValue;
   readonly sdk: string;
   readonly deviceModel: string;
-  readonly deviceOs: number;
+  readonly deviceOs: string | number;
   readonly webAuth?: string;
   readonly webp256?: string;
 
   constructor(rawPushSubscription: RawPushSubscription) {
-    const environment = EnvironmentInfoHelper.getEnvironmentInfo();
-
     this.token = this._getToken(rawPushSubscription);
     this.type = FuturePushSubscriptionRecord.getSubscriptionType();
-    // TO DO: enabled
-    // this.enabled = true;
-    this.notificationTypes = SubscriptionStateKind.Subscribed;
+    this.enabled = true;
+    this.notificationTypes = NotificationType.Subscribed;
     // TO DO: fix VERSION type discrepancies throughout codebase
-    this.sdk = String(__VERSION__);
-    this.deviceModel = navigator.platform;
-    this.deviceOs = isNaN(environment.browserVersion)
-      ? -1
-      : environment.browserVersion;
+    this.sdk = FuturePushSubscriptionRecord.getSdk();
+    this.deviceModel = FuturePushSubscriptionRecord.getDeviceModel();
+    this.deviceOs = FuturePushSubscriptionRecord.getDeviceOS();
     this.webAuth = rawPushSubscription.w3cAuth;
     this.webp256 = rawPushSubscription.w3cP256dh;
   }
@@ -46,7 +43,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     return subscription.safariDeviceToken;
   }
 
-  serialize(): FutureSubscriptionModel {
+  serialize() {
     return {
       type: this.type,
       token: this.token,
@@ -65,7 +62,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   /**
    * Get the User Model Subscription type based on browser detection.
    */
-  public static getSubscriptionType(): SubscriptionType {
+  public static getSubscriptionType(): SubscriptionTypeValue {
     const browser = OneSignalUtils.redetectBrowserUserAgent();
     if (browser.firefox) {
       return SubscriptionType.FirefoxPush;
@@ -94,5 +91,18 @@ export default class FuturePushSubscriptionRecord implements Serializable {
         return DeliveryPlatformKind.SafariVapid;
     }
     return DeliveryPlatformKind.ChromeLike;
+  }
+
+  public static getDeviceOS(): string | number {
+    const environment = EnvironmentInfoHelper.getEnvironmentInfo();
+    return isNaN(environment.browserVersion) ? -1 : environment.browserVersion;
+  }
+
+  public static getDeviceModel(): string {
+    return navigator.platform;
+  }
+
+  public static getSdk(): string {
+    return String(VERSION());
   }
 }

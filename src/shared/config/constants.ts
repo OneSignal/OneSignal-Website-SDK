@@ -1,4 +1,4 @@
-import { SlidedownPromptOptions, DelayedPromptType } from '../models/Prompts';
+import { DelayedPromptType, SlidedownPromptOptions } from '../models/Prompts';
 
 export const SERVER_CONFIG_DEFAULTS_SESSION = {
   reportingThreshold: 30,

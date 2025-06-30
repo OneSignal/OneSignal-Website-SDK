@@ -104,15 +104,17 @@ export class OneSignalApiBase {
     }
     try {
       const response = await fetch(url, contents);
-      const { status } = response;
+      const { status, headers } = response;
       const json = await response.json();
-
+      const retryAfter = headers?.get('Retry-After');
       return {
+        ok: response.ok,
         result: json,
         status,
+        retryAfterSeconds: retryAfter ? parseInt(retryAfter) : undefined,
       };
     } catch (e) {
-      if (e.name === 'TypeError') {
+      if (e instanceof Error && e.name === 'TypeError') {
         await awaitableTimeout(RETRY_BACKOFF[retry]);
         Log.error(
           `OneSignal: Network timed out while calling ${url}. Retrying...`,

@@ -1,66 +1,60 @@
-import { ModelName } from '../../../src/core/models/SupportedModels';
-import {
-  SubscriptionModel,
-  SubscriptionType,
-} from '../../../src/core/models/SubscriptionModels';
+import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { SubscriptionType } from 'src/core/types/subscription';
 import { generateNewSubscription } from '../../support/helpers/core';
-import { OSModel } from '../../../src/core/modelRepo/OSModel';
 
-describe('OSModel tests', () => {
+describe('Model tests', () => {
+  beforeAll(() => {
+    mockUserAgent();
+  });
+
   test('Set function updates data', async () => {
     const newSub = generateNewSubscription();
-    expect(newSub.data?.enabled).toBe(undefined);
-    newSub.set('enabled', true);
-    expect(newSub.data?.enabled).toBe(true);
+    expect(newSub.enabled).toBe(undefined);
+    newSub.setProperty('enabled', true);
+    expect(newSub.enabled).toBe(true);
   });
 
   test('Set function broadcasts update event', async () => {
     const newSub = generateNewSubscription();
-    newSub.subscribe(() => {
-      expect(true).toBe(true);
+    newSub.subscribe({
+      onChanged: () => {
+        expect(true).toBe(true);
+      },
     });
-    newSub.set('enabled', true);
+    newSub.setProperty('enabled', true);
   });
 
   test('Hydrate function updates data', async () => {
     const newSub = generateNewSubscription();
-    expect(newSub.data?.type).toBe(SubscriptionType.Email);
-    newSub.hydrate({ type: SubscriptionType.ChromePush });
-    expect(newSub.data?.type).toBe(SubscriptionType.ChromePush);
-    expect(newSub.data).toEqual({ type: SubscriptionType.ChromePush });
+    expect(newSub.type).toBe(SubscriptionType.Email);
+    newSub.setProperty('type', SubscriptionType.ChromePush);
+    expect(newSub.type).toBe(SubscriptionType.ChromePush);
   });
 
   test('Encode function returns encoded model', async () => {
     const newSub = generateNewSubscription();
-    const encodedSub = newSub.encode();
-    expect(encodedSub).toEqual({
-      modelId: '0000000000',
-      modelName: ModelName.Subscriptions,
+    expect(newSub.toJSON()).toEqual({
       type: SubscriptionType.Email,
       id: '123',
       token: 'myToken',
+      device_os: 56,
+      device_model: '',
+      sdk: '1',
     });
-  });
 
-  test('Decode function returns decoded model', async () => {
-    const encodedSub = {
-      modelId: '0000000000',
-      modelName: ModelName.Subscriptions,
+    const model = new SubscriptionModel();
+    model.setProperty('type', SubscriptionType.Email);
+    model.setProperty('id', '123');
+    model.setProperty('token', 'myToken');
+
+    expect(model.toJSON()).toEqual({
       type: SubscriptionType.Email,
       id: '123',
       token: 'myToken',
-    };
-    const decodedSub = OSModel.decode(encodedSub) as OSModel<SubscriptionModel>;
-
-    const model: SubscriptionModel = {
-      type: SubscriptionType.Email,
-      id: '123',
-      token: 'myToken',
-    };
-
-    // upstream bug workaround https://github.com/facebook/jest/issues/8475
-    expect(JSON.stringify(decodedSub)).toEqual(
-      JSON.stringify(new OSModel(ModelName.Subscriptions, model, '0000000000')),
-    );
+      device_os: 56,
+      device_model: '',
+      sdk: '1',
+    });
   });
 });

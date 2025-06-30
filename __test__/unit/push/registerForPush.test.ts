@@ -1,23 +1,14 @@
-import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import InitHelper from '../../../src/shared/helpers/InitHelper';
-import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
 import Log from '../../../src/shared/libraries/Log';
+import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
+import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import BrowserUserAgent from '../../support/models/BrowserUserAgent';
 
 //stub dismisshelper
 vi.mock('../../../src/shared/helpers/DismissHelper');
 
 //stub log
-vi.useFakeTimers();
-vi.mock('../../../src/shared/libraries/Log', () => ({
-  default: {
-    debug: vi.fn(),
-    trace: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock('src/shared/libraries/Log');
 
 describe('Register for push', () => {
   beforeEach(async () => {

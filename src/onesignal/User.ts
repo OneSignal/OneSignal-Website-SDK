@@ -1,20 +1,17 @@
-import { OSModel } from '../core/modelRepo/OSModel';
-import { ModelName, SupportedModel } from '../core/models/SupportedModels';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import {
-  FutureSubscriptionModel,
+  NotificationType,
   SubscriptionType,
-} from '../core/models/SubscriptionModels';
+  SubscriptionTypeValue,
+} from 'src/core/types/subscription';
+import { IDManager } from 'src/shared/managers/IDManager';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
-import { logMethodCall, isValidEmail } from '../shared/utils/utils';
-import UserDirector from './UserDirector';
+import { isValidEmail, logMethodCall } from '../shared/utils/utils';
 
 export default class User {
-  hasOneSignalId = false;
-  onesignalId?: string;
-  awaitOneSignalIdAvailable?: Promise<string>;
   isCreatingUser = false;
 
   static singletonInstance?: User = undefined;
@@ -26,42 +23,30 @@ export default class User {
   static createOrGetInstance(): User {
     if (!User.singletonInstance) {
       User.singletonInstance = new User();
-      UserDirector.initializeUser(true)
-        .then(() => {
-          UserDirector.copyOneSignalIdPromiseFromIdentityModel().catch(
-            (e: Error) => {
-              console.error(e);
-            },
-          );
-        })
-        .catch((e: Error) => {
-          console.error(e);
-        });
     }
 
     return User.singletonInstance;
   }
 
-  /* PUBLIC API METHODS */
+  get onesignalId(): string | undefined {
+    const oneSignalId = OneSignal.coreDirector.getIdentityModel().onesignalId;
+    return !IDManager.isLocalId(oneSignalId) ? oneSignalId : undefined;
+  }
 
+  /* PUBLIC API METHODS */
   public addAlias(label: string, id: string): void {
     logMethodCall('addAlias', { label, id });
 
-    if (typeof label !== 'string') {
+    if (typeof label !== 'string')
       throw new InvalidArgumentError('label', InvalidArgumentReason.WrongType);
-    }
 
-    if (typeof id !== 'string') {
+    if (typeof id !== 'string')
       throw new InvalidArgumentError('id', InvalidArgumentReason.WrongType);
-    }
 
-    if (!label) {
+    if (!label)
       throw new InvalidArgumentError('label', InvalidArgumentReason.Empty);
-    }
 
-    if (!id) {
-      throw new InvalidArgumentError('id', InvalidArgumentReason.Empty);
-    }
+    if (!id) throw new InvalidArgumentError('id', InvalidArgumentReason.Empty);
 
     this.addAliases({ [label]: id });
   }
@@ -69,9 +54,8 @@ export default class User {
   public addAliases(aliases: { [key: string]: string }): void {
     logMethodCall('addAliases', { aliases });
 
-    if (!aliases || Object.keys(aliases).length === 0) {
+    if (!aliases || Object.keys(aliases).length === 0)
       throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
-    }
 
     Object.keys(aliases).forEach(async (label) => {
       if (typeof label !== 'string') {
@@ -83,23 +67,19 @@ export default class User {
     });
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-    identityModel?.setApplyToRecordId(identityModel?.onesignalId);
-
     Object.keys(aliases).forEach(async (label) => {
-      identityModel?.set(label, aliases[label]);
+      identityModel.setProperty(label, aliases[label]);
     });
   }
 
   public removeAlias(label: string): void {
     logMethodCall('removeAlias', { label });
 
-    if (typeof label !== 'string') {
+    if (typeof label !== 'string')
       throw new InvalidArgumentError('label', InvalidArgumentReason.WrongType);
-    }
 
-    if (!label) {
+    if (!label)
       throw new InvalidArgumentError('label', InvalidArgumentReason.Empty);
-    }
 
     this.removeAliases([label]);
   }
@@ -112,149 +92,85 @@ export default class User {
     }
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
-    identityModel?.setApplyToRecordId(identityModel?.onesignalId);
-
     aliases.forEach(async (alias) => {
-      identityModel?.set(alias, undefined);
+      identityModel.setProperty(alias, undefined);
     });
+  }
+
+  private addSubscriptionToModels({
+    type,
+    token,
+  }: {
+    type: SubscriptionTypeValue;
+    token: string;
+  }): void {
+    const hasSubscription = OneSignal.coreDirector.subscriptionModelStore
+      .list()
+      .find((model) => model.token === token && model.type === type);
+    if (hasSubscription) return;
+
+    const subscription = {
+      id: IDManager.createLocalId(),
+      enabled: true,
+      notification_types: NotificationType.Subscribed,
+      onesignalId: OneSignal.coreDirector.getIdentityModel().onesignalId,
+      token,
+      type,
+    };
+
+    const newSubscription = new SubscriptionModel();
+    newSubscription.mergeData(subscription);
+    OneSignal.coreDirector.addSubscriptionModel(newSubscription);
   }
 
   public async addEmail(email: string): Promise<void> {
     logMethodCall('addEmail', { email });
 
-    if (typeof email !== 'string') {
+    if (typeof email !== 'string')
       throw new InvalidArgumentError('email', InvalidArgumentReason.WrongType);
-    }
 
-    if (!email) {
+    if (!email)
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
-    }
 
-    if (!isValidEmail(email)) {
+    if (!isValidEmail(email))
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
-    }
 
-    const subscription: FutureSubscriptionModel = {
+    this.addSubscriptionToModels({
       type: SubscriptionType.Email,
       token: email,
-    };
-    const newSubscription = new OSModel<SupportedModel>(
-      ModelName.Subscriptions,
-      subscription,
-    );
-
-    if (
-      User.singletonInstance?.isCreatingUser ||
-      User.singletonInstance?.hasOneSignalId
-    ) {
-      // existing user
-      newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
-      if (identityModel.data.external_id) {
-        newSubscription.setExternalId(identityModel.data.external_id);
-      }
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
-        newSubscription,
-        true,
-      );
-    } else {
-      // new user
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
-        newSubscription,
-        false,
-      );
-      await UserDirector.createAndHydrateUser();
-    }
-
-    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(
-      (e) => {
-        throw e;
-      },
-    );
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    if (identityModel.data.external_id) {
-      newSubscription.setExternalId(identityModel.data.external_id);
-    }
+    });
   }
 
   public async addSms(sms: string): Promise<void> {
     logMethodCall('addSms', { sms });
 
-    if (typeof sms !== 'string') {
+    if (typeof sms !== 'string')
       throw new InvalidArgumentError('sms', InvalidArgumentReason.WrongType);
-    }
 
-    if (!sms) {
+    if (!sms)
       throw new InvalidArgumentError('sms', InvalidArgumentReason.Empty);
-    }
 
-    const subscription: FutureSubscriptionModel = {
+    this.addSubscriptionToModels({
       type: SubscriptionType.SMS,
       token: sms,
-    };
-
-    const newSubscription = new OSModel<SupportedModel>(
-      ModelName.Subscriptions,
-      subscription,
-    );
-
-    if (
-      User.singletonInstance?.isCreatingUser ||
-      User.singletonInstance?.hasOneSignalId
-    ) {
-      // existing user
-      newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
-      if (identityModel.data.external_id) {
-        newSubscription.setExternalId(identityModel.data.external_id);
-      }
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
-        newSubscription,
-        true,
-      );
-    } else {
-      // new user
-      OneSignal.coreDirector.add(
-        ModelName.Subscriptions,
-        newSubscription,
-        false,
-      );
-      await UserDirector.createAndHydrateUser();
-    }
-
-    UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(
-      (e) => {
-        throw e;
-      },
-    );
-
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    if (identityModel.data.external_id) {
-      newSubscription.setExternalId(identityModel.data.external_id);
-    }
+    });
   }
 
   public removeEmail(email: string): void {
     logMethodCall('removeEmail', { email });
 
-    if (typeof email !== 'string') {
+    if (typeof email !== 'string')
       throw new InvalidArgumentError('email', InvalidArgumentReason.WrongType);
-    }
 
-    if (!email) {
+    if (!email)
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
-    }
 
     const emailSubscriptions =
       OneSignal.coreDirector.getEmailSubscriptionModels();
-    const modelIds = Object.keys(emailSubscriptions);
-    modelIds.forEach(async (modelId) => {
-      const model = emailSubscriptions[modelId];
-      if (model.data?.token === email) {
-        OneSignal.coreDirector.remove(ModelName.Subscriptions, modelId);
+
+    emailSubscriptions.forEach((model) => {
+      if (model.token === email) {
+        OneSignal.coreDirector.removeSubscriptionModel(model.modelId);
       }
     });
   }
@@ -274,11 +190,9 @@ export default class User {
     }
 
     const smsSubscriptions = OneSignal.coreDirector.getSmsSubscriptionModels();
-    const modelIds = Object.keys(smsSubscriptions);
-    modelIds.forEach(async (modelId) => {
-      const model = smsSubscriptions[modelId];
-      if (model.data?.token === smsNumber) {
-        OneSignal.coreDirector.remove(ModelName.Subscriptions, modelId);
+    smsSubscriptions.forEach((model) => {
+      if (model.token === smsNumber) {
+        OneSignal.coreDirector.removeSubscriptionModel(model.modelId);
       }
     });
   }
@@ -286,25 +200,21 @@ export default class User {
   public addTag(key: string, value: string): void {
     logMethodCall('addTag', { key, value });
 
-    if (typeof key !== 'string') {
+    if (typeof key !== 'string')
       throw new InvalidArgumentError('key', InvalidArgumentReason.WrongType);
-    }
 
-    if (typeof value !== 'string') {
+    if (typeof value !== 'string')
       throw new InvalidArgumentError('value', InvalidArgumentReason.WrongType);
-    }
 
-    if (!key) {
+    if (!key)
       throw new InvalidArgumentError('key', InvalidArgumentReason.Empty);
-    }
 
-    if (!value) {
+    if (!value)
       throw new InvalidArgumentError(
         'value',
         InvalidArgumentReason.Empty,
         'Did you mean to call removeTag?',
       );
-    }
 
     this.addTags({ [key]: value });
   }
@@ -312,29 +222,25 @@ export default class User {
   public addTags(tags: { [key: string]: string }): void {
     logMethodCall('addTags', { tags });
 
-    if (typeof tags !== 'object') {
+    if (typeof tags !== 'object')
       throw new InvalidArgumentError('tags', InvalidArgumentReason.WrongType);
-    }
 
-    if (!tags) {
+    if (!tags)
       throw new InvalidArgumentError('tags', InvalidArgumentReason.Empty);
-    }
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-    tags = { ...propertiesModel?.data?.tags, ...tags };
-    propertiesModel?.set('tags', tags);
+    const newTags = { ...propertiesModel.tags, ...tags };
+    propertiesModel.tags = newTags;
   }
 
   public removeTag(tagKey: string): void {
     logMethodCall('removeTag', { tagKey });
 
-    if (typeof tagKey !== 'string') {
+    if (typeof tagKey !== 'string')
       throw new InvalidArgumentError('tagKey', InvalidArgumentReason.WrongType);
-    }
 
-    if (typeof tagKey === 'undefined') {
+    if (!tagKey)
       throw new InvalidArgumentError('tagKey', InvalidArgumentReason.Empty);
-    }
 
     this.removeTags([tagKey]);
   }
@@ -342,48 +248,42 @@ export default class User {
   public removeTags(tagKeys: string[]): void {
     logMethodCall('removeTags', { tagKeys });
 
-    if (!tagKeys || tagKeys.length === 0) {
+    if (!tagKeys || tagKeys.length === 0)
       throw new InvalidArgumentError('tagKeys', InvalidArgumentReason.Empty);
-    }
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-    const tagsCopy = JSON.parse(JSON.stringify(propertiesModel?.data?.tags));
+    const newTags = { ...propertiesModel.tags };
 
-    if (tagsCopy) {
-      tagKeys.forEach((tagKey) => {
-        tagsCopy[tagKey] = '';
-      });
-      propertiesModel?.setApplyToRecordId(propertiesModel?.onesignalId);
-      propertiesModel?.set('tags', tagsCopy);
-    }
+    // need to set the tag to an empty string to remove it
+    tagKeys.forEach((tagKey) => {
+      newTags[tagKey] = '';
+    });
+    propertiesModel.tags = newTags;
   }
 
   public getTags(): { [key: string]: string } {
     logMethodCall('getTags');
-
-    return OneSignal.coreDirector.getPropertiesModel()?.data?.tags;
+    return OneSignal.coreDirector.getPropertiesModel().tags;
   }
 
   public setLanguage(language: string): void {
     logMethodCall('setLanguage', { language });
 
-    if (typeof language !== 'string') {
+    if (typeof language !== 'string')
       throw new InvalidArgumentError(
         'language',
         InvalidArgumentReason.WrongType,
       );
-    }
 
-    if (!language) {
+    if (!language)
       throw new InvalidArgumentError('language', InvalidArgumentReason.Empty);
-    }
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-    propertiesModel?.set('language', language);
+    propertiesModel.language = language;
   }
 
-  public getLanguage(): string {
+  public getLanguage(): string | undefined {
     logMethodCall('getLanguage');
-    return OneSignal.coreDirector.getPropertiesModel()?.data?.language;
+    return OneSignal.coreDirector.getPropertiesModel().language;
   }
 }

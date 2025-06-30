@@ -1,59 +1,124 @@
-import ModelCache from './caching/ModelCache';
-import { ModelRepo } from './modelRepo/ModelRepo';
+import { logMethodCall } from 'src/shared/utils/utils';
+import { IdentityOperationExecutor } from './executors/IdentityOperationExecutor';
+import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecutor';
+import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
+import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
+import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
+import { IdentityModelStoreListener } from './listeners/IdentityModelStoreListener';
+import { ModelStoreListener } from './listeners/ModelStoreListener';
+import { PropertiesModelStoreListener } from './listeners/PropertiesModelStoreListener';
+import { type SingletonModelStoreListener } from './listeners/SingletonModelStoreListener';
+import { SubscriptionModelStoreListener } from './listeners/SubscriptionModelStoreListener';
+import { OperationModelStore } from './modelRepo/OperationModelStore';
+import { RebuildUserService } from './modelRepo/RebuildUserService';
+import { type Model } from './models/Model';
+import { IdentityModelStore } from './modelStores/IdentityModelStore';
+import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
+import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
+import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { OperationRepo } from './operationRepo/OperationRepo';
-import { OSModelStoreFactory } from './modelRepo/OSModelStoreFactory';
-import Log from '../shared/libraries/Log';
-import { logMethodCall } from '../shared/utils/utils';
-import { SupportedModel } from './models/SupportedModels';
-import { NewRecordsState } from '../shared/models/NewRecordsState';
+import type { IOperationExecutor } from './types/operation';
 
 export default class CoreModule {
-  public modelRepo?: ModelRepo;
-  public operationRepo?: OperationRepo;
-  public initPromise: Promise<void>;
-  public newRecordsState?: NewRecordsState;
+  public operationModelStore: OperationModelStore;
+  public operationRepo: OperationRepo;
+  public newRecordsState: NewRecordsState;
+  public subscriptionModelStore: SubscriptionModelStore;
+  public identityModelStore: IdentityModelStore;
+  public propertiesModelStore: PropertiesModelStore;
 
-  private modelCache: ModelCache;
-  private initResolver: () => void = () => null;
+  private initPromise: Promise<void>;
+
+  private rebuildUserService: RebuildUserService;
+  private executors?: IOperationExecutor[];
+  private listeners?: (
+    | SingletonModelStoreListener<Model>
+    | ModelStoreListener<Model>
+  )[];
 
   constructor() {
-    this.initPromise = new Promise<void>((resolve) => {
-      this.initResolver = resolve;
-    });
+    this.newRecordsState = new NewRecordsState();
+    this.operationModelStore = new OperationModelStore();
+    this.identityModelStore = new IdentityModelStore();
+    this.propertiesModelStore = new PropertiesModelStore();
+    this.subscriptionModelStore = new SubscriptionModelStore();
+    this.rebuildUserService = new RebuildUserService(
+      this.identityModelStore,
+      this.propertiesModelStore,
+      this.subscriptionModelStore,
+    );
 
-    this.modelCache = new ModelCache();
-    this.modelCache
-      .load(ModelRepo.supportedModels)
-      .then((allCachedOSModels) => {
-        const modelStores = OSModelStoreFactory.build(allCachedOSModels);
-        this.modelRepo = new ModelRepo(this.modelCache, modelStores);
-        this.newRecordsState = new NewRecordsState();
-        this.operationRepo = new OperationRepo(
-          this.modelRepo,
-          this.newRecordsState,
-        );
-        this.initResolver();
-      })
-      .catch((e) => {
-        Log.error(e);
-      });
+    this.executors = this.initializeExecutors();
+    this.operationRepo = new OperationRepo(
+      this.executors,
+      this.operationModelStore,
+      this.newRecordsState,
+    );
+    this.listeners = this.initializeListeners();
+    this.initPromise = this.operationRepo.start();
   }
 
   public async init() {
     logMethodCall('CoreModule.init');
-    await this.initPromise;
+    return this.initPromise;
   }
 
-  public async resetModelRepoAndCache() {
-    logMethodCall('CoreModule.resetModelRepo');
-    await this.modelCache.reset();
-    const modelStores = OSModelStoreFactory.build<SupportedModel>();
-    this.modelRepo = new ModelRepo(this.modelCache, modelStores);
-    this.operationRepo?.setModelRepoAndResubscribe(this.modelRepo);
+  private initializeListeners() {
+    if (!this.operationRepo) return [];
+    return [
+      new IdentityModelStoreListener(
+        this.identityModelStore,
+        this.operationRepo,
+      ),
+      new PropertiesModelStoreListener(
+        this.propertiesModelStore,
+        this.operationRepo,
+      ),
+      new SubscriptionModelStoreListener(
+        this.subscriptionModelStore,
+        this.operationRepo,
+        this.identityModelStore,
+      ),
+    ];
   }
 
-  // call processDeltaQueue on all executors immediately
-  public forceDeltaQueueProcessingOnAllExecutors(): void {
-    this.operationRepo?.forceDeltaQueueProcessingOnAllExecutors();
+  private initializeExecutors() {
+    const identityOpExecutor = new IdentityOperationExecutor(
+      this.identityModelStore,
+      this.rebuildUserService,
+      this.newRecordsState,
+    );
+    const loginOpExecutor = new LoginUserOperationExecutor(
+      identityOpExecutor,
+      this.identityModelStore,
+      this.propertiesModelStore,
+      this.subscriptionModelStore,
+    );
+    const refreshOpExecutor = new RefreshUserOperationExecutor(
+      this.identityModelStore,
+      this.propertiesModelStore,
+      this.subscriptionModelStore,
+      this.rebuildUserService,
+      this.newRecordsState,
+    );
+    const subscriptionOpExecutor = new SubscriptionOperationExecutor(
+      this.subscriptionModelStore,
+      this.rebuildUserService,
+      this.newRecordsState,
+    );
+    const updateSubOpExecutor = new UpdateUserOperationExecutor(
+      this.identityModelStore,
+      this.propertiesModelStore,
+      this.rebuildUserService,
+      this.newRecordsState,
+    );
+
+    return [
+      identityOpExecutor,
+      loginOpExecutor,
+      refreshOpExecutor,
+      subscriptionOpExecutor,
+      updateSubOpExecutor,
+    ];
   }
 }

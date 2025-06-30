@@ -1,19 +1,19 @@
+import { NotificationEventName } from '../page/models/NotificationEventName';
+import NotificationEventTypeMap from '../page/models/NotificationEventTypeMap';
+import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { ValidatorUtils } from '../page/utils/ValidatorUtils';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
+import EventHelper from '../shared/helpers/EventHelper';
+import { NotificationPermission } from '../shared/models/NotificationPermission';
 import Database from '../shared/services/Database';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
 } from '../shared/utils/utils';
 import OneSignal from './OneSignal';
-import { EventListenerBase } from '../page/userModel/EventListenerBase';
-import { NotificationEventName } from '../page/models/NotificationEventName';
-import { NotificationPermission } from '../shared/models/NotificationPermission';
-import NotificationEventTypeMap from '../page/models/NotificationEventTypeMap';
-import EventHelper from '../shared/helpers/EventHelper';
 
 export default class NotificationsNamespace extends EventListenerBase {
   private _permission: boolean;

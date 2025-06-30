@@ -5,10 +5,12 @@
   "type": "module",
   "dependencies": {
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
-    "jsonp": "github:OneSignal/jsonp#onesignal"
+    "jsonp": "github:OneSignal/jsonp#onesignal",
+    "uuid": "^11.1.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "LOGGING=false vite",
+    "dev:logging": "LOGGING=true vite",
     "ngrok": "./build/scripts/ngrok.sh",
     "build:sdk": "LIB=sdk vite build",
     "build:page": "LIB=page vite build",
@@ -40,15 +42,16 @@
     "@types/intl-tel-input": "^18.1.4",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^18.18.0",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
-    "@vitest/coverage-v8": "3.0.9",
+    "@vitest/coverage-v8": "3.1.4",
     "deepmerge": "^4.2.2",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "9.0.0",
-    "fake-indexeddb": "^5.0.2",
+    "fake-indexeddb": "5.0.2",
     "jsdom": "^26.0.0",
-    "msw": "^2.7.0",
+    "msw": "^2.7.4",
     "prettier": "3.0.2",
     "prettylint": "^2.0.0",
     "type-fest": "^4.33.0",
@@ -57,7 +60,7 @@
     "vite-bundle-analyzer": "^0.17.1",
     "vite-plugin-mkcert": "^1.17.6",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "3.0.9"
+    "vitest": "3.1.4"
   },
   "size-limit": [
     {
@@ -67,12 +70,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "63.5 kB",
+      "limit": "66 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "37.5 kB",
+      "limit": "38 kB",
       "gzip": true
     },
     {

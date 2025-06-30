@@ -1,19 +1,8 @@
 import Emitter from '../libraries/Emitter';
 import IndexedDb from './IndexedDb';
 
-import { AppConfig } from '../models/AppConfig';
-import { AppState, PendingNotificationClickEvents } from '../models/AppState';
-import { UserState } from '../models/UserState';
-import { IOSNotification } from '../models/OSNotification';
-import {
-  OutcomesNotificationClicked,
-  OutcomesNotificationReceived,
-} from '../models/OutcomesNotificationEvents';
-import { Subscription } from '../models/Subscription';
-import { Session, ONESIGNAL_SESSION_KEY } from '../models/Session';
-import Log from '../libraries/Log';
-import { SentUniqueOutcome } from '../models/Outcomes';
-import { ModelName } from '../../core/models/SupportedModels';
+import { ICreateUserSubscription, IUserProperties } from 'src/core/types/api';
+import { ModelNameType } from 'src/core/types/models';
 import {
   NotificationClickForOpenHandlingSchema,
   NotificationClickForOpenHandlingSerializer,
@@ -21,7 +10,19 @@ import {
   NotificationReceivedForOutcomesSchema,
   NotificationReceivedForOutcomesSerializer,
 } from '../helpers/OSNotificationDatabaseSerializer';
+import Log from '../libraries/Log';
+import { AppConfig } from '../models/AppConfig';
+import { AppState, PendingNotificationClickEvents } from '../models/AppState';
 import { NotificationClickEventInternal } from '../models/NotificationEvent';
+import { IOSNotification } from '../models/OSNotification';
+import { SentUniqueOutcome } from '../models/Outcomes';
+import {
+  OutcomesNotificationClicked,
+  OutcomesNotificationReceived,
+} from '../models/OutcomesNotificationEvents';
+import { ONESIGNAL_SESSION_KEY, Session } from '../models/Session';
+import { Subscription } from '../models/Subscription';
+import { UserState } from '../models/UserState';
 
 enum DatabaseEventName {
   SET,
@@ -54,7 +55,29 @@ export type OneSignalDbTable =
   | typeof TABLE_OUTCOMES_NOTIFICATION_RECEIVED
   | typeof TABLE_OUTCOMES_NOTIFICATION_CLICKED
   | 'SentUniqueOutcome'
-  | ModelName;
+  | ModelNameType;
+
+export interface ModelItem {
+  modelId: string;
+  modelName: ModelNameType;
+}
+
+export interface SubscriptionItem extends ModelItem, ICreateUserSubscription {
+  id: string;
+}
+export interface IdentityItem extends ModelItem {
+  onesignalId: string;
+  externalId: string;
+}
+export interface PropertiesItem extends ModelItem, IUserProperties {
+  onesignalId: string;
+}
+export interface OperationItem extends ModelItem {
+  appId: string;
+  onesignalId: string;
+  name: string;
+  [key: string]: unknown;
+}
 
 export default class Database {
   public emitter: Emitter;
@@ -482,20 +505,12 @@ export default class Database {
     await Promise.all(promises);
   }
 
-  /**
-   * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them
-   * with blank values.
-   * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
-   */
-  static async rebuild() {
-    return Promise.all([
-      Database.singletonInstance.remove('Ids'),
-      Database.singletonInstance.remove(TABLE_NOTIFICATION_OPENED),
-      Database.singletonInstance.remove('Options'),
-      Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED),
-      Database.singletonInstance.remove(TABLE_OUTCOMES_NOTIFICATION_CLICKED),
-      Database.singletonInstance.remove('SentUniqueOutcome'),
-    ]);
+  static async clear() {
+    const objectStoreNames =
+      await Database.singletonInstance.database.objectStoreNames();
+    for (const objectStoreName of objectStoreNames) {
+      await Database.singletonInstance.database.remove(objectStoreName);
+    }
   }
 
   // START: Static mappings to instance methods
@@ -505,6 +520,19 @@ export default class Database {
       Database.singletonInstance.emitter,
       args,
     );
+  }
+
+  static async getPushId(): Promise<string | undefined> {
+    return this.get<string>('Options', 'lastPushId');
+  }
+  static async setPushId(pushId: string | undefined): Promise<void> {
+    await this.put('Options', { key: 'lastPushId', value: pushId });
+  }
+  static async getPushToken(): Promise<string | undefined> {
+    return this.get<string>('Options', 'lastPushToken');
+  }
+  static async setPushToken(pushToken: string | undefined): Promise<void> {
+    await this.put('Options', { key: 'lastPushToken', value: pushToken });
   }
 
   static async setIsPushEnabled(enabled: boolean): Promise<void> {
