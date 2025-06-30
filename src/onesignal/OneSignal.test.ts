@@ -534,7 +534,7 @@ describe('OneSignal', () => {
         });
 
         // calls refresh user
-        await waitForOperations(3);
+        await waitForOperations(4);
 
         // onesignal id should be changed
         const identityData = await getIdentityItem();
