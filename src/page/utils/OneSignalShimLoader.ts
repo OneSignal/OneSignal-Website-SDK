@@ -14,7 +14,7 @@ import {
 // See sdk.ts for what entry points this handles
 
 export class OneSignalShimLoader {
-  private static VERSION = VERSION();
+  private static VERSION = VERSION;
 
   private static addScriptToPage(url: string): void {
     const scriptElement = document.createElement('script');
@@ -26,10 +26,10 @@ export class OneSignalShimLoader {
 
   // Same logic from SdkEnvironment
   private static getPathAndPrefix(): string {
-    const buildOrigin = BUILD_ORIGIN();
-    const noDevPort = NO_DEV_PORT();
-    const buildType = BUILD_TYPE();
-    const isHttps = IS_HTTPS();
+    const buildOrigin = BUILD_ORIGIN;
+    const noDevPort = NO_DEV_PORT;
+    const buildType = BUILD_TYPE;
+    const isHttps = IS_HTTPS;
 
     const productionOrigin = 'https://cdn.onesignal.com/sdks/web/v16/';
     const protocol = isHttps ? 'https' : 'http';

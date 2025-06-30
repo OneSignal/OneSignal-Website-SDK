@@ -30,7 +30,7 @@ export default class SdkEnvironment {
    * building the SDK.
    */
   public static getBuildEnv(): EnvironmentKind {
-    const buildType = BUILD_TYPE();
+    const buildType = BUILD_TYPE;
 
     // using if statements to have better dead code elimination
     if (buildType === 'development') return EnvironmentKind.Development;
@@ -44,7 +44,7 @@ export default class SdkEnvironment {
    * Refers to which API environment should be used. These constants are set when building the SDK
    */
   public static getApiEnv(): EnvironmentKind {
-    const apiType = API_TYPE();
+    const apiType = API_TYPE;
 
     // using if statements to have better dead code elimination
     if (apiType === 'development') return EnvironmentKind.Development;
@@ -92,7 +92,7 @@ export default class SdkEnvironment {
     legacy?: boolean;
   } = {}): URL {
     const buildEnv = SdkEnvironment.getBuildEnv();
-    const apiOrigin = API_ORIGIN();
+    const apiOrigin = API_ORIGIN;
     switch (buildEnv) {
       case EnvironmentKind.Development:
         if (SdkEnvironment.isTurbineEndpoint(action)) {
@@ -124,8 +124,8 @@ export default class SdkEnvironment {
 
   public static getOneSignalResourceUrlPath(): URL {
     const buildEnv = SdkEnvironment.getBuildEnv();
-    const buildOrigin = BUILD_ORIGIN();
-    const isHttps = IS_HTTPS();
+    const buildOrigin = BUILD_ORIGIN;
+    const isHttps = IS_HTTPS;
 
     const protocol = isHttps ? 'https' : 'http';
     const port = isHttps ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;
@@ -133,7 +133,7 @@ export default class SdkEnvironment {
 
     // using if statements to have better dead code elimination
     if (buildEnv === EnvironmentKind.Development) {
-      origin = NO_DEV_PORT()
+      origin = NO_DEV_PORT
         ? `${protocol}://${buildOrigin}`
         : `${protocol}://${buildOrigin}:${port}`;
     } else if (buildEnv === EnvironmentKind.Staging) {
