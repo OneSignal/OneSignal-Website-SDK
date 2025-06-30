@@ -66,7 +66,7 @@ If no custom origins are set, defaults will be used: `localhost` for build and `
 API_ORIGIN=texas npm run build:dev-prod
 ```
 
-This sets the BUILD environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/web/v##/` and the API environment origin to production which will make all onesignal api calls to the production origin `https://onesignal.com/api/v1/apps/<app>`
+This sets the BUILD environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/web/v##/` and the API environment origin to production which will make all onesignal api calls to the production origin `https://api.onesignal.com/apps/<app>`
 
 ```
 BUILD_ORIGIN=localhost API_ORIGIN=texas npm run build:dev-dev
