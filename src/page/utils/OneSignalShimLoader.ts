@@ -26,23 +26,18 @@ export class OneSignalShimLoader {
 
   // Same logic from SdkEnvironment
   private static getPathAndPrefix(): string {
-    const buildOrigin = BUILD_ORIGIN;
-    const noDevPort = NO_DEV_PORT;
-    const buildType = BUILD_TYPE;
-    const isHttps = IS_HTTPS;
-
     const productionOrigin = 'https://cdn.onesignal.com/sdks/web/v16/';
-    const protocol = isHttps ? 'https' : 'http';
-    const port = isHttps ? 4001 : 4000;
+    const protocol = IS_HTTPS ? 'https' : 'http';
+    const port = IS_HTTPS ? 4001 : 4000;
 
     // using if statements to have better dead code elimination
-    if (buildType === 'development')
-      return noDevPort
-        ? `${protocol}://${buildOrigin}/sdks/web/v16/Dev-`
-        : `${protocol}://${buildOrigin}:${port}/sdks/web/v16/Dev-`;
+    if (BUILD_TYPE === 'development')
+      return NO_DEV_PORT
+        ? `${protocol}://${BUILD_ORIGIN}/sdks/web/v16/Dev-`
+        : `${protocol}://${BUILD_ORIGIN}:${port}/sdks/web/v16/Dev-`;
 
-    if (buildType === 'staging')
-      return `https://${buildOrigin}/sdks/web/v16/Staging-`;
+    if (BUILD_TYPE === 'staging')
+      return `https://${BUILD_ORIGIN}/sdks/web/v16/Staging-`;
 
     return productionOrigin;
   }

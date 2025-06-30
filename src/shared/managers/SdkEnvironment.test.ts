@@ -46,7 +46,11 @@ describe('SdkEnvironment', () => {
 
     // development -  turbine endpoint
     global.__API_ORIGIN__ = 'localhost';
+    global.__API_TYPE__ = 'development';
     SdkEnvironment = await getSdkEnvironment();
+    expect(SdkEnvironment.getOneSignalApiUrl().toString()).toBe(
+      'http://localhost:3000/api/v1',
+    );
     expect(
       SdkEnvironment.getOneSignalApiUrl({
         action: 'outcomes',
@@ -55,11 +59,12 @@ describe('SdkEnvironment', () => {
 
     // -- with custom origin
     // @ts-expect-error - mock __API_ORIGIN__ to test custom origin
+    // staging
     global.__API_ORIGIN__ = 'some-origin';
     SdkEnvironment = await getSdkEnvironment();
-    expect(
-      SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Staging).toString(),
-    ).toBe('https://some-origin/api/v1');
+    expect(SdkEnvironment.getOneSignalApiUrl().toString()).toBe(
+      'https://some-origin/api/v1',
+    );
 
     // production
     global.__BUILD_TYPE__ = 'production';
