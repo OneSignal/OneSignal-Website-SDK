@@ -124,7 +124,7 @@ export class CoreModuleDirector {
     logMethodCall(
       'CoreModuleDirector.getPushSubscriptionModelByLastKnownToken',
     );
-    const { lastKnownPushToken } = await Database.getAppState();
+    const lastKnownPushToken = await Database.getPushToken();
     if (lastKnownPushToken) {
       return this.getSubscriptionOfTypeWithToken(
         SubscriptionChannel.Push,

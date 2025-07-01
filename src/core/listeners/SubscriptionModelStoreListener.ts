@@ -62,6 +62,8 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
       enabled,
       token: model.token,
       notification_types,
+      web_auth: model.web_auth,
+      web_p256: model.web_p256,
     });
   }
 

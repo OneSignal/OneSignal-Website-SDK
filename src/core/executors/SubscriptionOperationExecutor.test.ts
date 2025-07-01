@@ -343,6 +343,8 @@ describe('SubscriptionOperationExecutor', () => {
         token: 'updated-token',
         enabled: false,
         notification_types: NotificationType.UserOptedOut,
+        web_auth: 'some-web-auth',
+        web_p256: 'some-web-p256',
       });
 
       const result = await executor.execute([updateOp]);
@@ -354,6 +356,8 @@ describe('SubscriptionOperationExecutor', () => {
           enabled: false,
           token: 'updated-token',
           notification_types: NotificationType.UserOptedOut,
+          web_auth: 'some-web-auth',
+          web_p256: 'some-web-p256',
         },
       });
     });
@@ -368,6 +372,8 @@ describe('SubscriptionOperationExecutor', () => {
         token: 'first-update',
         enabled: true,
         notification_types: NotificationType.Subscribed,
+        web_auth: 'some-web-auth',
+        web_p256: 'some-web-p256',
       });
 
       const updateOp2 = new UpdateSubscriptionOperation({
@@ -378,6 +384,8 @@ describe('SubscriptionOperationExecutor', () => {
         token: 'second-update',
         enabled: false,
         notification_types: NotificationType.UserOptedOut,
+        web_auth: 'some-web-auth-2',
+        web_p256: 'some-web-p256-2',
       });
 
       const result = await executor.execute([updateOp1, updateOp2]);
@@ -390,6 +398,8 @@ describe('SubscriptionOperationExecutor', () => {
           enabled: false,
           token: 'second-update',
           notification_types: NotificationType.UserOptedOut,
+          web_auth: 'some-web-auth-2',
+          web_p256: 'some-web-p256-2',
         },
       });
     });
