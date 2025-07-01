@@ -87,7 +87,7 @@ export class OneSignalApiBase {
     const url = `${SdkEnvironment.getOneSignalApiUrl(
       undefined,
       action,
-    ).toString()}/${action}`;
+    ).toString()}${action}`;
 
     return OneSignalApiBase.executeFetch(url, contents);
   }

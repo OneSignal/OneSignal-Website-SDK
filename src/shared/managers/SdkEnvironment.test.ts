@@ -36,32 +36,32 @@ describe('SdkEnvironment', () => {
     // staging
     global.__API_ORIGIN__ = 'onesignal-staging.com';
     expect(SdkEnvironment.getOneSignalApiUrl().toString()).toBe(
-      'https://onesignal-staging.com/api/v1',
+      'https://onesignal-staging.com/api/v1/',
     );
 
     // development -  turbine endpoint
     global.__API_ORIGIN__ = 'localhost';
     expect(
       SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Development).toString(),
-    ).toBe('http://localhost:3000/api/v1');
+    ).toBe('http://localhost:3000/api/v1/');
     expect(
       SdkEnvironment.getOneSignalApiUrl(
         EnvironmentKind.Development,
         'outcomes',
       ).toString(),
-    ).toBe('http://localhost:18080/api/v1');
+    ).toBe('http://localhost:18080/api/v1/');
 
     // staging
     expect(
       SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Staging).toString(),
-    ).toBe('https://localhost/api/v1');
+    ).toBe('https://localhost/api/v1/');
 
     // -- with custom origin
     // @ts-expect-error - mock __API_ORIGIN__ to test custom origin
     global.__API_ORIGIN__ = 'some-origin';
     expect(
       SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Staging).toString(),
-    ).toBe('https://some-origin/api/v1');
+    ).toBe('https://some-origin/api/v1/');
 
     // production
     expect(
