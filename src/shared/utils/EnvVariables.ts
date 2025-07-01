@@ -1,5 +1,5 @@
 // NOTE: We are using a function to get the value of the environment variable to make it easier to test.
-// We also are using typeof check since defining global constants (through Vite) does not work for the service worker.
+// We also are using typeof check since defining global constants (through Vite) DOES NOT work for the service worker.
 // ^ This only applies to development mode since we have separate bundles (entries) for the service worker and the main bundle.
 
 // strings
