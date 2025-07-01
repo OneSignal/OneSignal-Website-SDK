@@ -183,7 +183,14 @@ export class SubscriptionManager {
     const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
       rawPushSubscription,
     ).serialize();
-    pushModel.mergeData(serializedSubscriptionRecord);
+    for (const key in serializedSubscriptionRecord) {
+      pushModel.setProperty(
+        key as keyof typeof serializedSubscriptionRecord,
+        serializedSubscriptionRecord[
+          key as keyof typeof serializedSubscriptionRecord
+        ],
+      );
+    }
   }
 
   async updateNotificationTypes(): Promise<void> {
