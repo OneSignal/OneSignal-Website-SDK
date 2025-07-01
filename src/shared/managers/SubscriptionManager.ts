@@ -184,12 +184,8 @@ export class SubscriptionManager {
       rawPushSubscription,
     ).serialize();
     for (const key in serializedSubscriptionRecord) {
-      pushModel.setProperty(
-        key as keyof typeof serializedSubscriptionRecord,
-        serializedSubscriptionRecord[
-          key as keyof typeof serializedSubscriptionRecord
-        ],
-      );
+      const modelKey = key as keyof typeof serializedSubscriptionRecord;
+      pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
     }
   }
 
