@@ -33,10 +33,8 @@ describe('SdkEnvironment', () => {
   });
 
   test('can get api url ', () => {
-    // staging
-    global.__API_ORIGIN__ = 'onesignal-staging.com';
     expect(SdkEnvironment.getOneSignalApiUrl().toString()).toBe(
-      'https://onesignal-staging.com/api/v1',
+      'https://onesignal.com/api/v1',
     );
 
     // development -  turbine endpoint
@@ -66,6 +64,6 @@ describe('SdkEnvironment', () => {
     // production
     expect(
       SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Production).toString(),
-    ).toBe('https://api.onesignal.com/');
+    ).toBe('https://onesignal.com/api/v1');
   });
 });
