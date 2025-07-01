@@ -64,6 +64,6 @@ describe('SdkEnvironment', () => {
     // production
     expect(
       SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Production).toString(),
-    ).toBe('https://api.onesignal.com/');
+    ).toBe('https://onesignal.com/api/v1');
   });
 });

@@ -62,7 +62,7 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 
 server.use(
-  http.get('https://api.onesignal.com/notifications', () =>
+  http.get('https://api.onesignal.com/v1/notifications', () =>
     HttpResponse.json({ result: {}, status: 200 }),
   ),
 );
