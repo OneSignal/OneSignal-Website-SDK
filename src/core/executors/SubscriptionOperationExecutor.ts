@@ -207,6 +207,8 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       enabled: lastOp.enabled,
       token: lastOp.token,
       notification_types: lastOp.notification_types,
+      web_auth: lastOp.web_auth,
+      web_p256: lastOp.web_p256,
     };
 
     const response = await RequestService.updateSubscription(
