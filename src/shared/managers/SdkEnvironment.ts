@@ -84,10 +84,14 @@ export default class SdkEnvironment {
    * Returns the URL object representing the components of OneSignal's API
    * endpoint.
    */
-  public static getOneSignalApiUrl(
-    buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv(),
-    action?: string,
-  ): URL {
+  public static getOneSignalApiUrl({
+    action,
+    legacy = false,
+  }: {
+    action?: string;
+    legacy?: boolean;
+  } = {}): URL {
+    const buildEnv = SdkEnvironment.getBuildEnv();
     const apiOrigin = API_ORIGIN();
     switch (buildEnv) {
       case EnvironmentKind.Development:
@@ -98,7 +102,11 @@ export default class SdkEnvironment {
       case EnvironmentKind.Staging:
         return new URL(`https://${apiOrigin}/api/v1/`);
       case EnvironmentKind.Production:
-        return new URL('https://api.onesignal.com/');
+        return new URL(
+          legacy
+            ? 'https://onesignal.com/api/v1/'
+            : 'https://api.onesignal.com/',
+        );
       default:
         throw new InvalidArgumentError(
           'buildEnv',

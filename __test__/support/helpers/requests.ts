@@ -78,9 +78,9 @@ export const getHandler = ({
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // alias
 const getSetAliasUri = (onesignalId: string = DUMMY_ONESIGNAL_ID) =>
-  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/identity`;
+  `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/identity`;
 const getDeleteAliasUri = (onesignalId: string = DUMMY_ONESIGNAL_ID) =>
-  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/identity/*`;
+  `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/identity/*`;
 
 export const addAliasFn = vi.fn();
 export const setAddAliasResponse = ({
@@ -138,7 +138,7 @@ export const setDeleteAliasError = ({
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // subscription
 const getSetSubscriptionUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
-  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/subscriptions`;
+  `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/subscriptions`;
 
 export const createSubscriptionFn = vi.fn();
 export const setCreateSubscriptionResponse = ({
@@ -156,7 +156,7 @@ export const setCreateSubscriptionResponse = ({
 export const deleteSubscriptionFn = vi.fn();
 
 const getSetDeleteSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
-  `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
+  `**/apps/${APP_ID}/subscriptions/${subscriptionId}`;
 
 export const setDeleteSubscriptionResponse = ({
   subscriptionId,
@@ -173,7 +173,7 @@ export const setDeleteSubscriptionResponse = ({
 export const updateSubscriptionFn = vi.fn();
 export const getUpdateSubscriptionUri = (
   subscriptionId = DUMMY_SUBSCRIPTION_ID,
-) => `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
+) => `**/apps/${APP_ID}/subscriptions/${subscriptionId}`;
 export const setUpdateSubscriptionResponse = ({
   subscriptionId,
   response = {},
@@ -191,7 +191,7 @@ export const transferSubscriptionFn = vi.fn();
 
 export const getTransferSubscriptionUri = (
   subscriptionId = DUMMY_SUBSCRIPTION_ID,
-) => `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}/owner`;
+) => `**/apps/${APP_ID}/subscriptions/${subscriptionId}/owner`;
 
 export const setTransferSubscriptionResponse = ({
   subscriptionId,
@@ -208,7 +208,7 @@ export const setTransferSubscriptionResponse = ({
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // user
 const getUserUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
-  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
+  `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
 
 // get user
 export const getUserFn = vi.fn();
@@ -258,7 +258,7 @@ export const setGetUserError = ({
   });
 
 // create user
-const getCreateUserUri = () => `**/api/v1/apps/${APP_ID}/users`;
+const getCreateUserUri = () => `**/apps/${APP_ID}/users`;
 export const createUserFn = vi.fn();
 export const setCreateUserResponse = ({
   onesignalId = DUMMY_ONESIGNAL_ID,
@@ -296,7 +296,7 @@ export const setCreateUserError = ({
 export const updateUserFn = vi.fn();
 
 const getUpdateUserUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
-  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
+  `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
 
 export const setUpdateUserResponse = ({
   onesignalId = DUMMY_ONESIGNAL_ID,

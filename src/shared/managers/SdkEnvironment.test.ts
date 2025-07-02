@@ -1,5 +1,4 @@
 // @vitest-environment node
-import { EnvironmentKind } from '../models/EnvironmentKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SdkEnvironment from './SdkEnvironment';
 
@@ -35,37 +34,43 @@ describe('SdkEnvironment', () => {
   test('can get api url ', () => {
     // staging
     global.__API_ORIGIN__ = 'onesignal-staging.com';
+    global.__BUILD_TYPE__ = 'staging';
     expect(SdkEnvironment.getOneSignalApiUrl().toString()).toBe(
       'https://onesignal-staging.com/api/v1/',
     );
 
     // development -  turbine endpoint
     global.__API_ORIGIN__ = 'localhost';
+    global.__BUILD_TYPE__ = 'development';
+    expect(SdkEnvironment.getOneSignalApiUrl().toString()).toBe(
+      'http://localhost:3000/api/v1/',
+    );
     expect(
-      SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Development).toString(),
-    ).toBe('http://localhost:3000/api/v1/');
-    expect(
-      SdkEnvironment.getOneSignalApiUrl(
-        EnvironmentKind.Development,
-        'outcomes',
-      ).toString(),
+      SdkEnvironment.getOneSignalApiUrl({
+        action: 'outcomes',
+      }).toString(),
     ).toBe('http://localhost:18080/api/v1/');
-
-    // staging
-    expect(
-      SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Staging).toString(),
-    ).toBe('https://localhost/api/v1/');
 
     // -- with custom origin
     // @ts-expect-error - mock __API_ORIGIN__ to test custom origin
     global.__API_ORIGIN__ = 'some-origin';
-    expect(
-      SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Staging).toString(),
-    ).toBe('https://some-origin/api/v1/');
+    global.__BUILD_TYPE__ = 'staging';
+    expect(SdkEnvironment.getOneSignalApiUrl().toString()).toBe(
+      'https://some-origin/api/v1/',
+    );
 
     // production
+    global.__BUILD_TYPE__ = 'production';
+    expect(SdkEnvironment.getOneSignalApiUrl().toString()).toBe(
+      'https://api.onesignal.com/',
+    );
+
+    // production - legacy
+    global.__BUILD_TYPE__ = 'production';
     expect(
-      SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Production).toString(),
-    ).toBe('https://api.onesignal.com/');
+      SdkEnvironment.getOneSignalApiUrl({
+        legacy: true,
+      }).toString(),
+    ).toBe('https://onesignal.com/api/v1/');
   });
 });

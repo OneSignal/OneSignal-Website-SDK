@@ -85,10 +85,9 @@ export class OneSignalApiBase {
     };
     if (data) contents.body = JSON.stringify(data);
 
-    const url = `${SdkEnvironment.getOneSignalApiUrl(
-      undefined,
+    const url = `${SdkEnvironment.getOneSignalApiUrl({
       action,
-    ).toString()}${action}`;
+    }).toString()}${action}`;
 
     return OneSignalApiBase.executeFetch(url, contents);
   }

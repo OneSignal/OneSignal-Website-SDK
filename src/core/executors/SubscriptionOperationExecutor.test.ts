@@ -579,7 +579,7 @@ const deleteSubscriptionFn = vi.fn();
 const transferSubscriptionFn = vi.fn();
 
 const getCreateSubscriptionUri = () =>
-  `**/api/v1/apps/${APP_ID}/users/by/onesignal_id/${DUMMY_ONESIGNAL_ID}/subscriptions`;
+  `**/apps/${APP_ID}/users/by/onesignal_id/${DUMMY_ONESIGNAL_ID}/subscriptions`;
 const setCreateSubscriptionResponse = (
   subscriptionId = DUMMY_SUBSCRIPTION_ID,
 ) => {
@@ -611,7 +611,7 @@ const setCreateSubscriptionError = (status: number, retryAfter?: number) => {
 };
 
 const getUpdateSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
-  `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
+  `**/apps/${APP_ID}/subscriptions/${subscriptionId}`;
 const setUpdateSubscriptionResponse = () => {
   server.use(
     http.patch(getUpdateSubscriptionUri(), async ({ request }) => {
@@ -637,7 +637,7 @@ const setUpdateSubscriptionError = (status: number, retryAfter?: number) => {
 };
 
 const getDeleteSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
-  `**/api/v1/apps/${APP_ID}/subscriptions/${subscriptionId}`;
+  `**/apps/${APP_ID}/subscriptions/${subscriptionId}`;
 const setDeleteSubscriptionResponse = () => {
   server.use(
     http.delete(getDeleteSubscriptionUri(), () => {
@@ -663,7 +663,7 @@ const setDeleteSubscriptionError = (status: number, retryAfter?: number) => {
 };
 
 const getTransferSubscriptionUri = () =>
-  `**/api/v1/apps/${APP_ID}/subscriptions/${DUMMY_SUBSCRIPTION_ID}/owner`;
+  `**/apps/${APP_ID}/subscriptions/${DUMMY_SUBSCRIPTION_ID}/owner`;
 const setTransferSubscriptionResponse = () => {
   server.use(
     http.patch(getTransferSubscriptionUri(), async ({ request }) => {
