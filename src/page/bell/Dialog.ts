@@ -1,13 +1,14 @@
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import SdkEnvironment from '../../shared/managers/SdkEnvironment';
+import OneSignalEvent from '../../shared/services/OneSignalEvent';
+import { bowserCastle } from '../../shared/utils/bowserCastle';
 import {
   addDomElement,
   clearDomElementChildren,
   getPlatformNotificationIcon,
 } from '../../shared/utils/utils';
+import type { NotificationIcons } from '../types';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 
 export default class Dialog extends AnimatedElement {
   public bell: Bell;
