@@ -19,7 +19,7 @@ export default class OneSignalApi {
       return await new Promise<ServerAppConfig>((resolve, reject) => {
         // Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
         OneSignalApi.jsonpLib(
-          `${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId}/web`,
+          `${SdkEnvironment.getOneSignalApiUrl().toString()}sync/${appId}/web`,
           (err: Error, data: ServerAppConfig) => {
             if (err) reject(err);
             else {

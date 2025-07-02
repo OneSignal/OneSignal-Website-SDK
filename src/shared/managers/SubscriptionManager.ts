@@ -351,14 +351,16 @@ export class SubscriptionManager {
 
     if (!this.safariPermissionPromptFailed) {
       return requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari/apps/${
-          this.config.appId
-        }`,
+        `${SdkEnvironment.getOneSignalApiUrl({
+          legacy: true,
+        }).toString()}safari/apps/${this.config.appId}`,
       );
     } else {
       // If last attempt failed, retry with the legacy URL
       return requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
+        `${SdkEnvironment.getOneSignalApiUrl({
+          legacy: true,
+        }).toString()}safari`,
       );
     }
   }
