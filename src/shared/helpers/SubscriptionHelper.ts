@@ -31,6 +31,7 @@ export default class SubscriptionHelper {
           const rawSubscription = await context.subscriptionManager.subscribe(
             SubscriptionStrategyKind.ResubscribeExisting,
           );
+          console.warn('rawSubscription', rawSubscription);
           subscription =
             await context.subscriptionManager.registerSubscription(
               rawSubscription,
@@ -56,7 +57,6 @@ export default class SubscriptionHelper {
     switch (type) {
       case SubscriptionType.ChromePush:
       case SubscriptionType.SafariPush:
-      case SubscriptionType.SafariLegacyPush:
       case SubscriptionType.FirefoxPush:
         return true;
       default:

@@ -12,20 +12,8 @@ export default class Environment {
     return typeof window !== 'undefined';
   }
 
-  // Prefer Legacy Safari if API is available over VAPID until Safari
-  // fixes issues with it.
-  public static useSafariLegacyPush(): boolean {
-    return this.isBrowser() && window.safari?.pushNotification != undefined;
-  }
-
-  // This is the counter part to useSafariLegacyPush(); as it notes only use
-  // Safari VAPID if it doesn't have legacy Safari push.
   public static useSafariVapidPush(): boolean {
-    return (
-      bowserCastle().name == 'safari' &&
-      supportsVapidPush() &&
-      !this.useSafariLegacyPush()
-    );
+    return bowserCastle().name == 'safari' && supportsVapidPush();
   }
 
   public static version() {

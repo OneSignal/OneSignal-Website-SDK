@@ -1,10 +1,5 @@
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../errors/InvalidArgumentError';
-import { NotificationPermission } from '../models/NotificationPermission';
 import OneSignalError from '../errors/OneSignalError';
-import Environment from '../helpers/Environment';
+import { NotificationPermission } from '../models/NotificationPermission';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -26,47 +21,15 @@ export default class PermissionManager {
       );
     }
 
-    return await OneSignal.context.permissionManager.getNotificationPermission(
-      OneSignal.config!.safariWebId,
-    );
+    return await OneSignal.context.permissionManager.getNotificationPermission();
   }
 
   /**
-   * Notification permission reported by the browser.
-   *
-   * @param safariWebId The Safari web ID necessary to access the permission
-   * state on Legacy Safari on macOS.
-   */
-  public async getNotificationPermission(
-    safariWebId?: string,
-  ): Promise<NotificationPermission> {
-    if (Environment.useSafariLegacyPush()) {
-      return PermissionManager.getLegacySafariNotificationPermission(
-        safariWebId,
-      );
-    }
-    return this.getW3cNotificationPermission();
-  }
-
-  /**
-   * Returns the Safari browser's notification permission as reported by the browser.
-   *
-   * @param safariWebId The Safari web ID necessary for Legacy Safari on macOS.
-   */
-  private static getLegacySafariNotificationPermission(
-    safariWebId?: string,
-  ): NotificationPermission {
-    if (safariWebId)
-      return window.safari.pushNotification.permission(safariWebId)
-        .permission as NotificationPermission;
-    throw new InvalidArgumentError('safariWebId', InvalidArgumentReason.Empty);
-  }
-
   /**
    * Returns the notification permission as reported by the browser.
    *   - Expect for legacy Safari on macOS.
    */
-  private getW3cNotificationPermission(): NotificationPermission {
+  public getNotificationPermission(): NotificationPermission {
     return Notification.permission as NotificationPermission;
   }
 }

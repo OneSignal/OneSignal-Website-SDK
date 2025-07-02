@@ -70,9 +70,6 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     if (Environment.useSafariVapidPush()) {
       return SubscriptionType.SafariPush;
     }
-    if (Environment.useSafariLegacyPush()) {
-      return SubscriptionType.SafariLegacyPush;
-    }
     // Other browsers, like Edge, are Chromium based so we consider them "Chrome".
     return SubscriptionType.ChromePush;
   }
@@ -85,8 +82,6 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     switch (this.getSubscriptionType()) {
       case SubscriptionType.FirefoxPush:
         return DeliveryPlatformKind.Firefox;
-      case SubscriptionType.SafariLegacyPush:
-        return DeliveryPlatformKind.SafariLegacy;
       case SubscriptionType.SafariPush:
         return DeliveryPlatformKind.SafariVapid;
     }

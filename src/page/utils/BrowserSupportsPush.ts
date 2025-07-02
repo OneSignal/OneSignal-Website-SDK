@@ -6,15 +6,7 @@
 // Checks if the browser supports push notifications by checking if specific
 //   classes and properties on them exist
 export function isPushNotificationsSupported() {
-  return supportsVapidPush() || supportsSafariLegacyPush();
-}
-
-// Does the browser support legacy Safari push? (only available on macOS)
-export function supportsSafariLegacyPush(): boolean {
-  return (
-    typeof window.safari !== 'undefined' &&
-    typeof window.safari.pushNotification !== 'undefined'
-  );
+  return supportsVapidPush();
 }
 
 // Does the browser support the standard Push API

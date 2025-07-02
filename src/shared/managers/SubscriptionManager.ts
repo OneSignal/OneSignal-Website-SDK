@@ -13,12 +13,7 @@ import NotImplementedError from '../errors/NotImplementedError';
 import PushPermissionNotGrantedError, {
   PushPermissionNotGrantedErrorReason,
 } from '../errors/PushPermissionNotGrantedError';
-import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
-import SubscriptionError, {
-  SubscriptionErrorReason,
-} from '../errors/SubscriptionError';
-import Environment from '../helpers/Environment';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
@@ -61,7 +56,6 @@ export type SubscriptionStateServiceWorkerNotIntalled = Exclude<
 export class SubscriptionManager {
   private context: ContextSWInterface;
   private config: SubscriptionManagerConfig;
-  private safariPermissionPromptFailed = false;
 
   constructor(context: ContextSWInterface, config: SubscriptionManagerConfig) {
     this.context = context;
@@ -142,26 +136,12 @@ export class SubscriptionManager {
             PushPermissionNotGrantedErrorReason.Blocked,
           );
 
-        if (Environment.useSafariLegacyPush()) {
-          rawPushSubscription = await this.subscribeSafari();
-          await this._updatePushSubscriptionModelWithRawSubscription(
-            rawPushSubscription,
-          );
-          /* Now that permissions have been granted, install the service worker */
-          Log.info('Installing SW on Safari');
-          try {
-            await this.context.serviceWorkerManager.installWorker();
-            Log.info('SW on Safari successfully installed');
-          } catch (e) {
-            Log.error('SW on Safari failed to install.');
-          }
-        } else {
-          rawPushSubscription =
-            await this.subscribeFcmFromPage(subscriptionStrategy);
-          await this._updatePushSubscriptionModelWithRawSubscription(
-            rawPushSubscription,
-          );
-        }
+        rawPushSubscription =
+          await this.subscribeFcmFromPage(subscriptionStrategy);
+        console.warn('rawPushSubscription 2', rawPushSubscription);
+        await this._updatePushSubscriptionModelWithRawSubscription(
+          rawPushSubscription,
+        );
         break;
       default:
         throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
@@ -274,13 +254,9 @@ export class SubscriptionManager {
     subscription.deviceId = DEFAULT_DEVICE_ID;
     subscription.optedOut = false;
     if (pushSubscription) {
-      if (Environment.useSafariLegacyPush()) {
-        subscription.subscriptionToken = pushSubscription.safariDeviceToken;
-      } else {
-        subscription.subscriptionToken = pushSubscription.w3cEndpoint
-          ? pushSubscription.w3cEndpoint.toString()
-          : null;
-      }
+      subscription.subscriptionToken = pushSubscription.w3cEndpoint
+        ? pushSubscription.w3cEndpoint.toString()
+        : null;
     } else {
       subscription.subscriptionToken = null;
     }
@@ -337,83 +313,6 @@ export class SubscriptionManager {
   public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
     const { deviceId } = await Database.getSubscription();
     return !!deviceId;
-  }
-
-  private async subscribeSafariPromptPermission(): Promise<string | null> {
-    const requestPermission = (url: string) => {
-      return new Promise<string | null>((resolve) => {
-        window.safari?.pushNotification?.requestPermission(
-          url,
-          this.config.safariWebId,
-          { app_id: this.config.appId },
-          (response) => {
-            if (response && response.deviceToken) {
-              resolve(response.deviceToken.toLowerCase());
-            } else {
-              resolve(null);
-            }
-          },
-        );
-      });
-    };
-
-    if (!this.safariPermissionPromptFailed) {
-      return requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl({
-          legacy: true,
-        }).toString()}safari/apps/${this.config.appId}`,
-      );
-    } else {
-      // If last attempt failed, retry with the legacy URL
-      return requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl({
-          legacy: true,
-        }).toString()}safari`,
-      );
-    }
-  }
-
-  private async subscribeSafari(): Promise<RawPushSubscription> {
-    const pushSubscriptionDetails = new RawPushSubscription();
-    if (!this.config.safariWebId) {
-      throw new SdkInitError(SdkInitErrorKind.MissingSafariWebId);
-    }
-
-    const { deviceToken: existingDeviceToken } =
-      window.safari?.pushNotification?.permission(this.config.safariWebId) ||
-      {};
-
-    if (existingDeviceToken) {
-      pushSubscriptionDetails.setFromSafariSubscription(
-        existingDeviceToken.toLowerCase(),
-      );
-      return pushSubscriptionDetails;
-    }
-
-    /*
-      We're about to show the Safari native permission request. It can fail for a number of
-      reasons, e.g.:
-        - Setup-related reasons when developers just starting to get set up
-          - Address bar URL doesn't match safari certificate allowed origins (case-sensitive)
-          - Safari web ID doesn't match provided web ID
-          - Browsing in a Safari private window
-          - Bad icon DPI
-
-      but shouldn't fail for sites that have already gotten Safari working.
-
-      We'll show the permissionPromptDisplay event if the Safari user isn't already subscribed,
-      otherwise an already subscribed Safari user would not see the permission request again.
-    */
-    OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
-    const deviceToken = await this.subscribeSafariPromptPermission();
-    PermissionUtils.triggerNotificationPermissionChanged();
-    if (deviceToken) {
-      pushSubscriptionDetails.setFromSafariSubscription(deviceToken);
-    } else {
-      this.safariPermissionPromptFailed = true;
-      throw new SubscriptionError(SubscriptionErrorReason.InvalidSafariSetup);
-    }
-    return pushSubscriptionDetails;
   }
 
   private async subscribeFcmFromPage(
@@ -822,23 +721,6 @@ export class SubscriptionManager {
     const isValidPushSubscription = isCompleteSubscriptionObject(
       pushSubscriptionModel,
     );
-
-    if (Environment.useSafariLegacyPush()) {
-      const subscriptionState = window.safari?.pushNotification?.permission(
-        this.config.safariWebId,
-      );
-      const isSubscribedToSafari = !!(
-        isValidPushSubscription &&
-        subscriptionToken &&
-        subscriptionState?.permission === 'granted' &&
-        subscriptionState?.deviceToken
-      );
-
-      return {
-        subscribed: isSubscribedToSafari,
-        optedOut: !!optedOut,
-      };
-    }
 
     const workerRegistration =
       await this.context.serviceWorkerManager.getOneSignalRegistration();
