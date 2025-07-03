@@ -124,7 +124,7 @@ describe('UserNamespace', () => {
           // @ts-expect-error - mock invalid argument
           'some-label': 1234,
         }),
-      ).toThrowError("The value for 'id' was of the wrong type.");
+      ).toThrowError("The value for 'key: some-label' was of the wrong type.");
 
       // empty values
       expect(() => userNamespace.addAliases({})).toThrowError(
@@ -329,8 +329,12 @@ describe('UserNamespace', () => {
     test('should set language', () => {
       const language = 'fr';
 
-      userNamespace.setLanguage(language);
+      // @ts-expect-error - mock invalid argument
+      expect(() => userNamespace.setLanguage(123)).toThrowError(
+        "The value for 'language' was of the wrong type.",
+      );
 
+      userNamespace.setLanguage(language);
       expect(userNamespace.getLanguage()).toBe(language);
     });
 
