@@ -9,7 +9,7 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
-import { isValidEmail, logMethodCall } from '../shared/utils/utils';
+import { isObject, isValidEmail, logMethodCall } from '../shared/utils/utils';
 
 export default class User {
   isCreatingUser = false;
@@ -54,17 +54,24 @@ export default class User {
   public addAliases(aliases: { [key: string]: string }): void {
     logMethodCall('addAliases', { aliases });
 
+    if (!isObject(aliases))
+      throw new InvalidArgumentError(
+        'aliases',
+        InvalidArgumentReason.WrongType,
+      );
+
     if (!aliases || Object.keys(aliases).length === 0)
       throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
 
-    Object.keys(aliases).forEach(async (label) => {
-      if (typeof label !== 'string') {
-        throw new InvalidArgumentError(
-          'label',
-          InvalidArgumentReason.WrongType,
-        );
+    for (const label of Object.keys(aliases)) {
+      if (typeof aliases[label] !== 'string') {
+        throw new InvalidArgumentError('id', InvalidArgumentReason.WrongType);
       }
-    });
+
+      if (label === 'external_id' || label === 'onesignal_id') {
+        throw new InvalidArgumentError(label, InvalidArgumentReason.Reserved);
+      }
+    }
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     Object.keys(aliases).forEach(async (label) => {
@@ -87,9 +94,14 @@ export default class User {
   public removeAliases(aliases: string[]): void {
     logMethodCall('removeAliases', { aliases });
 
-    if (!aliases || aliases.length === 0) {
+    if (!Array.isArray(aliases))
+      throw new InvalidArgumentError(
+        'aliases',
+        InvalidArgumentReason.WrongType,
+      );
+
+    if (!aliases || aliases.length === 0)
       throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
-    }
 
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     aliases.forEach(async (alias) => {

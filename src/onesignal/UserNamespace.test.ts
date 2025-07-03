@@ -104,6 +104,77 @@ describe('UserNamespace', () => {
       expect(identityModel.getProperty('someLabel')).toBeUndefined();
       expect(identityModel.getProperty('anotherLabel')).toBeUndefined();
     });
+
+    test('can validate add aliases', () => {
+      // wrong types
+      // @ts-expect-error - mock invalid argument
+      expect(() => userNamespace.addAlias(1234, '5678')).toThrowError(
+        "The value for 'label' was of the wrong type.",
+      );
+      // @ts-expect-error - mock invalid argument
+      expect(() => userNamespace.addAlias('some-label', 1234)).toThrowError(
+        "The value for 'id' was of the wrong type.",
+      );
+      // @ts-expect-error - mock invalid argument
+      expect(() => userNamespace.addAliases(['some-label'])).toThrowError(
+        "The value for 'aliases' was of the wrong type.",
+      );
+      expect(() =>
+        userNamespace.addAliases({
+          // @ts-expect-error - mock invalid argument
+          'some-label': 1234,
+        }),
+      ).toThrowError("The value for 'id' was of the wrong type.");
+
+      // empty values
+      expect(() => userNamespace.addAliases({})).toThrowError(
+        "Supply a non-empty value to 'aliases'.",
+      );
+      expect(() => userNamespace.addAlias('', 'some-id')).toThrowError(
+        "Supply a non-empty value to 'label'.",
+      );
+      expect(() => userNamespace.addAlias('some-label', '')).toThrowError(
+        "Supply a non-empty value to 'id'.",
+      );
+
+      // reserved aliases
+      expect(() =>
+        userNamespace.addAlias('external_id', 'some-id'),
+      ).toThrowError("The value for 'external_id' is reserved.");
+      expect(() =>
+        userNamespace.addAlias('onesignal_id', 'some-id'),
+      ).toThrowError("The value for 'onesignal_id' is reserved.");
+      expect(() =>
+        userNamespace.addAliases({
+          external_id: 'some-id',
+        }),
+      ).toThrowError("The value for 'external_id' is reserved.");
+      expect(() =>
+        userNamespace.addAliases({
+          onesignal_id: 'some-id',
+        }),
+      ).toThrowError("The value for 'onesignal_id' is reserved.");
+    });
+
+    test('can validate remove aliases', () => {
+      // wrong types
+      // @ts-expect-error - mock invalid argument
+      expect(() => userNamespace.removeAliases(1234)).toThrowError(
+        "The value for 'aliases' was of the wrong type.",
+      );
+      // @ts-expect-error - mock invalid argument
+      expect(() => userNamespace.removeAlias(1234)).toThrowError(
+        "The value for 'label' was of the wrong type.",
+      );
+
+      // empty values
+      expect(() => userNamespace.removeAliases([])).toThrowError(
+        "Supply a non-empty value to 'aliases'.",
+      );
+      expect(() => userNamespace.removeAlias('')).toThrowError(
+        "Supply a non-empty value to 'label'.",
+      );
+    });
   });
 
   describe('Email Management', () => {

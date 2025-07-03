@@ -1,13 +1,6 @@
 // @vitest-environment node
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
-// const apiType: string = global.__API_TYPE__;
-// const apiOrigin: string = global.__API_ORIGIN__;
-// afterEach(() => {
-//   global.__API_TYPE__ = apiType;
-//   global.__API_ORIGIN__ = apiOrigin;
-// });
-
 const getSdkEnvironment = async () => {
   vi.resetModules();
   const SdkEnvironment = await import('./SdkEnvironment');

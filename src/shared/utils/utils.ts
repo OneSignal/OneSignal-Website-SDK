@@ -327,3 +327,7 @@ export function deepCopy<T>(obj: T): T {
 export function getTimeZoneId() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
+
+export function isObject(value: unknown) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
