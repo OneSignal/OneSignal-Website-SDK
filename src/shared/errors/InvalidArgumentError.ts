@@ -5,6 +5,7 @@ export enum InvalidArgumentReason {
   Malformed,
   EnumOutOfRange,
   WrongType,
+  Reserved,
 }
 
 export class InvalidArgumentError extends OneSignalError {
@@ -25,6 +26,9 @@ export class InvalidArgumentError extends OneSignalError {
         break;
       case InvalidArgumentReason.WrongType:
         errorMessage = `The value for '${argName}' was of the wrong type.`;
+        break;
+      case InvalidArgumentReason.Reserved:
+        errorMessage = `The value for '${argName}' is reserved.`;
         break;
     }
 

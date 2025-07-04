@@ -29,7 +29,7 @@ export default class Environment {
   }
 
   public static version() {
-    return VERSION();
+    return VERSION;
   }
 
   public static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {

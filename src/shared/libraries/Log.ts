@@ -67,7 +67,7 @@ export default class Log {
       const methodToMapTo = methods[nativeMethod];
       const shouldMap =
         nativeMethodExists &&
-        (LOGGING() || Log.shouldLog() || methodToMapTo === 'error');
+        (LOGGING || Log.shouldLog() || methodToMapTo === 'error');
 
       if (shouldMap) {
         Log[methodToMapTo] = console[nativeMethod].bind(console);

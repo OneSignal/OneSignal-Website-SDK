@@ -38,7 +38,7 @@ export class DynamicResourceLoader {
     const cssFileForEnv = SdkEnvironment.getOneSignalCssFileName();
     return this.loadIfNew(
       ResourceType.Stylesheet,
-      new URL(`${pathForEnv}/${cssFileForEnv}?v=${VERSION()}`),
+      new URL(`${pathForEnv}/${cssFileForEnv}?v=${VERSION}`),
     );
   }
 

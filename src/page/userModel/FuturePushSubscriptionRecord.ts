@@ -103,6 +103,6 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   }
 
   public static getSdk(): string {
-    return String(VERSION());
+    return String(VERSION);
   }
 }
