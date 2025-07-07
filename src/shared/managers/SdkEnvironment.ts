@@ -23,35 +23,6 @@ const TURBINE_ENDPOINTS = ['outcomes', 'on_focus'];
 declare let self: ServiceWorkerGlobalScope | undefined;
 
 export default class SdkEnvironment {
-  /**
-   * Returns development, staging, or production.
-   *
-   * The magic constants used to detect the environment is set or unset when
-   * building the SDK.
-   */
-  public static getBuildEnv(): EnvironmentKind {
-    const buildType = BUILD_TYPE();
-
-    // using if statements to have better dead code elimination
-    if (buildType === 'development') return EnvironmentKind.Development;
-    if (buildType === 'staging') return EnvironmentKind.Staging;
-    return EnvironmentKind.Production;
-  }
-
-  /**
-   * Returns development staging, or production.
-   *
-   * Refers to which API environment should be used. These constants are set when building the SDK
-   */
-  public static getApiEnv(): EnvironmentKind {
-    const apiType = API_TYPE();
-
-    // using if statements to have better dead code elimination
-    if (apiType === 'development') return EnvironmentKind.Development;
-    if (apiType === 'staging') return EnvironmentKind.Staging;
-    return EnvironmentKind.Production;
-  }
-
   static getOrigin(): string {
     if (Environment.isBrowser()) {
       return window.location.origin;
@@ -91,28 +62,25 @@ export default class SdkEnvironment {
     action?: string;
     legacy?: boolean;
   } = {}): URL {
-    const buildEnv = SdkEnvironment.getBuildEnv();
-    const apiOrigin = API_ORIGIN();
-    switch (buildEnv) {
-      case EnvironmentKind.Development:
-        if (SdkEnvironment.isTurbineEndpoint(action)) {
-          return new URL(`http://${apiOrigin}:${TURBINE_API_URL_PORT}/api/v1/`);
-        }
-        return new URL(`http://${apiOrigin}:${API_URL_PORT}/api/v1/`);
-      case EnvironmentKind.Staging:
-        return new URL(`https://${apiOrigin}/api/v1/`);
-      case EnvironmentKind.Production:
-        return new URL(
-          legacy
-            ? 'https://onesignal.com/api/v1/'
-            : 'https://api.onesignal.com/',
-        );
-      default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
+    // using if statements to have better dead code elimination
+    if (API_TYPE === EnvironmentKind.Development) {
+      return SdkEnvironment.isTurbineEndpoint(action)
+        ? new URL(`http://${API_ORIGIN}:${TURBINE_API_URL_PORT}/api/v1/`)
+        : new URL(`http://${API_ORIGIN}:${API_URL_PORT}/api/v1/`);
     }
+
+    if (API_TYPE === EnvironmentKind.Staging)
+      return new URL(`https://${API_ORIGIN}/api/v1/`);
+
+    if (API_TYPE === EnvironmentKind.Production)
+      return new URL(
+        legacy ? 'https://onesignal.com/api/v1/' : 'https://api.onesignal.com/',
+      );
+
+    throw new InvalidArgumentError(
+      'buildEnv',
+      InvalidArgumentReason.EnumOutOfRange,
+    );
   }
 
   /**
@@ -123,22 +91,18 @@ export default class SdkEnvironment {
   }
 
   public static getOneSignalResourceUrlPath(): URL {
-    const buildEnv = SdkEnvironment.getBuildEnv();
-    const buildOrigin = BUILD_ORIGIN();
-    const isHttps = IS_HTTPS();
-
-    const protocol = isHttps ? 'https' : 'http';
-    const port = isHttps ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;
+    const protocol = IS_HTTPS ? 'https' : 'http';
+    const port = IS_HTTPS ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;
     let origin: string;
 
     // using if statements to have better dead code elimination
-    if (buildEnv === EnvironmentKind.Development) {
-      origin = NO_DEV_PORT()
-        ? `${protocol}://${buildOrigin}`
-        : `${protocol}://${buildOrigin}:${port}`;
-    } else if (buildEnv === EnvironmentKind.Staging) {
-      origin = `https://${buildOrigin}`;
-    } else if (buildEnv === EnvironmentKind.Production) {
+    if (BUILD_TYPE === EnvironmentKind.Development) {
+      origin = NO_DEV_PORT
+        ? `${protocol}://${BUILD_ORIGIN}`
+        : `${protocol}://${BUILD_ORIGIN}:${port}`;
+    } else if (BUILD_TYPE === EnvironmentKind.Staging) {
+      origin = `https://${BUILD_ORIGIN}`;
+    } else if (BUILD_TYPE === EnvironmentKind.Production) {
       origin = 'https://onesignal.com';
     } else {
       throw new InvalidArgumentError(
@@ -151,12 +115,16 @@ export default class SdkEnvironment {
 
   public static getOneSignalCssFileName(): string {
     const baseFileName = 'OneSignalSDK.page.styles.css';
-    const buildEnv = SdkEnvironment.getBuildEnv();
 
     // using if statements to have better dead code elimination
-    if (buildEnv === EnvironmentKind.Development) return `Dev-${baseFileName}`;
-    if (buildEnv === EnvironmentKind.Staging) return `Staging-${baseFileName}`;
-    if (buildEnv === EnvironmentKind.Production) return baseFileName;
+    if (BUILD_TYPE === EnvironmentKind.Development)
+      return `Dev-${baseFileName}`;
+
+    if (BUILD_TYPE === EnvironmentKind.Staging)
+      return `Staging-${baseFileName}`;
+
+    if (BUILD_TYPE === EnvironmentKind.Production) return baseFileName;
+
     throw new InvalidArgumentError(
       'buildEnv',
       InvalidArgumentReason.EnumOutOfRange,

@@ -1,8 +1,8 @@
 /**
  * Build Environment Kind
  */
-export enum EnvironmentKind {
-  Development = 'Development',
-  Staging = 'Staging',
-  Production = 'Production',
-}
+export const EnvironmentKind = {
+  Development: 'development',
+  Staging: 'staging',
+  Production: 'production',
+} as const;

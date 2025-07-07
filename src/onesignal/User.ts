@@ -9,7 +9,7 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
-import { isValidEmail, logMethodCall } from '../shared/utils/utils';
+import { isObject, isValidEmail, logMethodCall } from '../shared/utils/utils';
 
 export default class User {
   isCreatingUser = false;
@@ -33,68 +33,95 @@ export default class User {
     return !IDManager.isLocalId(oneSignalId) ? oneSignalId : undefined;
   }
 
+  private validateStringLabel(label: string, labelName: string): void {
+    if (typeof label !== 'string')
+      throw new InvalidArgumentError(
+        labelName,
+        InvalidArgumentReason.WrongType,
+      );
+
+    if (!label)
+      throw new InvalidArgumentError(labelName, InvalidArgumentReason.Empty);
+  }
+
+  private validateArray(array: string[], arrayName: string): void {
+    if (!Array.isArray(array))
+      throw new InvalidArgumentError(
+        arrayName,
+        InvalidArgumentReason.WrongType,
+      );
+
+    if (array.length === 0)
+      throw new InvalidArgumentError(arrayName, InvalidArgumentReason.Empty);
+
+    for (const label of array) {
+      this.validateLabel(label, 'label');
+    }
+  }
+
+  private validateObject(object: unknown, objectName: string): void {
+    if (!isObject(object))
+      throw new InvalidArgumentError(
+        objectName,
+        InvalidArgumentReason.WrongType,
+      );
+
+    if (!object || Object.keys(object).length === 0)
+      throw new InvalidArgumentError(objectName, InvalidArgumentReason.Empty);
+  }
+
+  private validateLabel(label: string, labelName: string): void {
+    this.validateStringLabel(label, labelName);
+
+    if (label === 'external_id' || label === 'onesignal_id') {
+      throw new InvalidArgumentError(label, InvalidArgumentReason.Reserved);
+    }
+  }
+
+  private updateIdentityModel(aliases: {
+    [key: string]: string | undefined;
+  }): void {
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    Object.keys(aliases).forEach((label) => {
+      identityModel.setProperty(label, aliases[label]);
+    });
+  }
+
   /* PUBLIC API METHODS */
   public addAlias(label: string, id: string): void {
     logMethodCall('addAlias', { label, id });
 
-    if (typeof label !== 'string')
-      throw new InvalidArgumentError('label', InvalidArgumentReason.WrongType);
-
-    if (typeof id !== 'string')
-      throw new InvalidArgumentError('id', InvalidArgumentReason.WrongType);
-
-    if (!label)
-      throw new InvalidArgumentError('label', InvalidArgumentReason.Empty);
-
-    if (!id) throw new InvalidArgumentError('id', InvalidArgumentReason.Empty);
+    this.validateStringLabel(label, 'label');
+    this.validateStringLabel(id, 'id');
 
     this.addAliases({ [label]: id });
   }
 
   public addAliases(aliases: { [key: string]: string }): void {
     logMethodCall('addAliases', { aliases });
+    this.validateObject(aliases, 'aliases');
 
-    if (!aliases || Object.keys(aliases).length === 0)
-      throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
+    for (const label of Object.keys(aliases)) {
+      this.validateStringLabel(aliases[label], `key: ${label}`);
+      this.validateLabel(label, `key: ${label}`);
+    }
 
-    Object.keys(aliases).forEach(async (label) => {
-      if (typeof label !== 'string') {
-        throw new InvalidArgumentError(
-          'label',
-          InvalidArgumentReason.WrongType,
-        );
-      }
-    });
-
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    Object.keys(aliases).forEach(async (label) => {
-      identityModel.setProperty(label, aliases[label]);
-    });
+    this.updateIdentityModel(aliases);
   }
 
   public removeAlias(label: string): void {
     logMethodCall('removeAlias', { label });
-
-    if (typeof label !== 'string')
-      throw new InvalidArgumentError('label', InvalidArgumentReason.WrongType);
-
-    if (!label)
-      throw new InvalidArgumentError('label', InvalidArgumentReason.Empty);
-
     this.removeAliases([label]);
   }
 
   public removeAliases(aliases: string[]): void {
     logMethodCall('removeAliases', { aliases });
+    this.validateArray(aliases, 'aliases');
 
-    if (!aliases || aliases.length === 0) {
-      throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
-    }
-
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    aliases.forEach(async (alias) => {
-      identityModel.setProperty(alias, undefined);
-    });
+    const newAliases = Object.fromEntries(
+      aliases.map((key) => [key, undefined]),
+    );
+    this.updateIdentityModel(newAliases);
   }
 
   private addSubscriptionToModels({
@@ -126,11 +153,7 @@ export default class User {
   public async addEmail(email: string): Promise<void> {
     logMethodCall('addEmail', { email });
 
-    if (typeof email !== 'string')
-      throw new InvalidArgumentError('email', InvalidArgumentReason.WrongType);
-
-    if (!email)
-      throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
+    this.validateStringLabel(email, 'email');
 
     if (!isValidEmail(email))
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
@@ -144,11 +167,7 @@ export default class User {
   public async addSms(sms: string): Promise<void> {
     logMethodCall('addSms', { sms });
 
-    if (typeof sms !== 'string')
-      throw new InvalidArgumentError('sms', InvalidArgumentReason.WrongType);
-
-    if (!sms)
-      throw new InvalidArgumentError('sms', InvalidArgumentReason.Empty);
+    this.validateStringLabel(sms, 'sms');
 
     this.addSubscriptionToModels({
       type: SubscriptionType.SMS,
@@ -159,11 +178,7 @@ export default class User {
   public removeEmail(email: string): void {
     logMethodCall('removeEmail', { email });
 
-    if (typeof email !== 'string')
-      throw new InvalidArgumentError('email', InvalidArgumentReason.WrongType);
-
-    if (!email)
-      throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
+    this.validateStringLabel(email, 'email');
 
     const emailSubscriptions =
       OneSignal.coreDirector.getEmailSubscriptionModels();
@@ -178,16 +193,7 @@ export default class User {
   public removeSms(smsNumber: string): void {
     logMethodCall('removeSms', { smsNumber });
 
-    if (typeof smsNumber !== 'string') {
-      throw new InvalidArgumentError(
-        'smsNumber',
-        InvalidArgumentReason.WrongType,
-      );
-    }
-
-    if (!smsNumber) {
-      throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.Empty);
-    }
+    this.validateStringLabel(smsNumber, 'smsNumber');
 
     const smsSubscriptions = OneSignal.coreDirector.getSmsSubscriptionModels();
     smsSubscriptions.forEach((model) => {
@@ -200,21 +206,8 @@ export default class User {
   public addTag(key: string, value: string): void {
     logMethodCall('addTag', { key, value });
 
-    if (typeof key !== 'string')
-      throw new InvalidArgumentError('key', InvalidArgumentReason.WrongType);
-
-    if (typeof value !== 'string')
-      throw new InvalidArgumentError('value', InvalidArgumentReason.WrongType);
-
-    if (!key)
-      throw new InvalidArgumentError('key', InvalidArgumentReason.Empty);
-
-    if (!value)
-      throw new InvalidArgumentError(
-        'value',
-        InvalidArgumentReason.Empty,
-        'Did you mean to call removeTag?',
-      );
+    this.validateStringLabel(key, 'key');
+    this.validateStringLabel(value, 'value');
 
     this.addTags({ [key]: value });
   }
@@ -222,11 +215,7 @@ export default class User {
   public addTags(tags: { [key: string]: string }): void {
     logMethodCall('addTags', { tags });
 
-    if (typeof tags !== 'object')
-      throw new InvalidArgumentError('tags', InvalidArgumentReason.WrongType);
-
-    if (!tags)
-      throw new InvalidArgumentError('tags', InvalidArgumentReason.Empty);
+    this.validateObject(tags, 'tags');
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
     const newTags = { ...propertiesModel.tags, ...tags };
@@ -236,11 +225,7 @@ export default class User {
   public removeTag(tagKey: string): void {
     logMethodCall('removeTag', { tagKey });
 
-    if (typeof tagKey !== 'string')
-      throw new InvalidArgumentError('tagKey', InvalidArgumentReason.WrongType);
-
-    if (!tagKey)
-      throw new InvalidArgumentError('tagKey', InvalidArgumentReason.Empty);
+    this.validateStringLabel(tagKey, 'tagKey');
 
     this.removeTags([tagKey]);
   }
@@ -248,8 +233,7 @@ export default class User {
   public removeTags(tagKeys: string[]): void {
     logMethodCall('removeTags', { tagKeys });
 
-    if (!tagKeys || tagKeys.length === 0)
-      throw new InvalidArgumentError('tagKeys', InvalidArgumentReason.Empty);
+    this.validateArray(tagKeys, 'tagKeys');
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
     const newTags = { ...propertiesModel.tags };
@@ -269,14 +253,7 @@ export default class User {
   public setLanguage(language: string): void {
     logMethodCall('setLanguage', { language });
 
-    if (typeof language !== 'string')
-      throw new InvalidArgumentError(
-        'language',
-        InvalidArgumentReason.WrongType,
-      );
-
-    if (!language)
-      throw new InvalidArgumentError('language', InvalidArgumentReason.Empty);
+    this.validateStringLabel(language, 'language');
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
     propertiesModel.language = language;
