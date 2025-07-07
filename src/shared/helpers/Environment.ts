@@ -1,3 +1,4 @@
+import { EnvironmentInfoHelper } from 'src/page/helpers/EnvironmentInfoHelper';
 import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
@@ -30,6 +31,15 @@ export default class Environment {
 
   public static version() {
     return VERSION;
+  }
+
+  public static getDeviceOS(): string | number {
+    const environment = EnvironmentInfoHelper.getEnvironmentInfo();
+    return isNaN(environment.browserVersion) ? -1 : environment.browserVersion;
+  }
+
+  public static getDeviceModel(): string {
+    return navigator.platform;
   }
 
   public static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {

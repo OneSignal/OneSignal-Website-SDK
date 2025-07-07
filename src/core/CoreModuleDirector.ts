@@ -5,6 +5,7 @@ import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import Database from '../shared/services/Database';
 import { logMethodCall } from '../shared/utils/utils';
 import CoreModule from './CoreModule';
+import { CustomEventController } from './customEvents/CustomEventController';
 import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';
 import { SubscriptionModel } from './models/SubscriptionModel';
@@ -39,6 +40,10 @@ export class CoreModuleDirector {
 
   get subscriptionModelStore(): SubscriptionModelStore {
     return this.core.subscriptionModelStore;
+  }
+
+  get customEventController(): CustomEventController {
+    return this.core.customEventController;
   }
 
   public generatePushSubscriptionModel(

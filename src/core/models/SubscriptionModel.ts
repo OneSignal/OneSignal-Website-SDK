@@ -1,4 +1,4 @@
-import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import Environment from 'src/shared/helpers/Environment';
 import { ISubscription } from '../types/api';
 import {
   NotificationTypeValue,
@@ -27,9 +27,9 @@ type ISubscriptionModel = Pick<
 export class SubscriptionModel extends Model<ISubscriptionModel> {
   constructor() {
     super();
-    this.sdk = FuturePushSubscriptionRecord.getSdk();
-    this.device_model = FuturePushSubscriptionRecord.getDeviceModel();
-    this.device_os = FuturePushSubscriptionRecord.getDeviceOS();
+    this.sdk = Environment.version();
+    this.device_model = Environment.getDeviceModel();
+    this.device_os = Environment.getDeviceOS();
   }
 
   /**

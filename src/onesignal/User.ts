@@ -248,6 +248,14 @@ export default class User {
     return OneSignal.coreDirector.getPropertiesModel().tags;
   }
 
+  public trackEvent(name: string, properties?: Record<string, unknown>): void {
+    logMethodCall('trackEvent', { name, properties });
+    OneSignal.coreDirector.customEventController.sendCustomEvent(
+      name,
+      properties,
+    );
+  }
+
   public setLanguage(language: string): void {
     logMethodCall('setLanguage', { language });
 

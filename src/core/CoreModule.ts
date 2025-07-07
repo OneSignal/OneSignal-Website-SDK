@@ -1,4 +1,5 @@
 import { logMethodCall } from 'src/shared/utils/utils';
+import { CustomEventController } from './customEvents/CustomEventController';
 import { IdentityOperationExecutor } from './executors/IdentityOperationExecutor';
 import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecutor';
 import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
@@ -26,6 +27,7 @@ export default class CoreModule {
   public subscriptionModelStore: SubscriptionModelStore;
   public identityModelStore: IdentityModelStore;
   public propertiesModelStore: PropertiesModelStore;
+  public customEventController: CustomEventController;
 
   private initPromise: Promise<void>;
 
@@ -42,6 +44,9 @@ export default class CoreModule {
     this.identityModelStore = new IdentityModelStore();
     this.propertiesModelStore = new PropertiesModelStore();
     this.subscriptionModelStore = new SubscriptionModelStore();
+    this.customEventController = new CustomEventController(
+      this.identityModelStore,
+    );
     this.rebuildUserService = new RebuildUserService(
       this.identityModelStore,
       this.propertiesModelStore,

@@ -1,5 +1,4 @@
-import { IEventNotifier } from 'src/core/types/events';
-import { ModelChangeTags } from 'src/core/types/models';
+import { ModelChangeTags, type IEventNotifier } from 'src/core/types/models';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
 
 /**

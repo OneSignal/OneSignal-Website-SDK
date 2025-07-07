@@ -1,4 +1,4 @@
-import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import Environment from 'src/shared/helpers/Environment';
 import { ICreateUserSubscription } from '../types/api';
 import {
   NotificationTypeValue,
@@ -28,9 +28,9 @@ export abstract class BaseFullSubscriptionOperation extends BaseSubscriptionOper
     super(operationName, appId, onesignalId);
 
     if (subscription) {
-      this.sdk = FuturePushSubscriptionRecord.getSdk();
-      this.device_model = FuturePushSubscriptionRecord.getDeviceModel();
-      this.device_os = FuturePushSubscriptionRecord.getDeviceOS();
+      this.sdk = Environment.version();
+      this.device_model = Environment.getDeviceModel();
+      this.device_os = Environment.getDeviceOS();
       this.enabled = subscription.enabled;
       this.notification_types = subscription.notification_types;
       this.subscriptionId = subscription.subscriptionId;
