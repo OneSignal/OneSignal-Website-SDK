@@ -178,6 +178,11 @@ export class SubscriptionManager {
     if (!pushModel) {
       OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
       return UserDirector.createUserOnServer();
+
+      // Bug w/ v160400 release where isCreatingUser was improperly set and never reset
+      // so a check if pushModel id is needed to recreate the user
+    } else if (!pushModel.id) {
+      return UserDirector.createUserOnServer();
     }
     // resubscribing. update existing push subscription model
     const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
