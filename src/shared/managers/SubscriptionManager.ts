@@ -174,16 +174,19 @@ export class SubscriptionManager {
     rawPushSubscription: RawPushSubscription,
   ) {
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
-
+    // EventHelper checkAndTriggerSubscriptionChanged is called before this function when permission is granted and so
+    // it will save the push token/id to the database so we don't need to save the token afer generating
     if (!pushModel) {
       OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
       return UserDirector.createUserOnServer();
 
       // Bug w/ v160400 release where isCreatingUser was improperly set and never reset
       // so a check if pushModel id is needed to recreate the user
-    } else if (!pushModel.id) {
+    }
+    if (!pushModel.id) {
       return UserDirector.createUserOnServer();
     }
+
     // resubscribing. update existing push subscription model
     const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
       rawPushSubscription,
