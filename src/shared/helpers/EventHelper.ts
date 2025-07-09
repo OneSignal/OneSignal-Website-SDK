@@ -27,6 +27,7 @@ export default class EventHelper {
   }
 
   static async checkAndTriggerSubscriptionChanged() {
+    console.log('checkAndTriggerSubscriptionChanged');
     OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
     const context: ContextSWInterface = OneSignal.context;
     // isPushEnabled = subscribed && is not opted out

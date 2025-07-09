@@ -12,6 +12,7 @@ export const SubscriptionType = {
   Email: 'Email',
   SMS: 'SMS',
   SafariPush: 'SafariPush',
+  SafariLegacyPush: 'SafariLegacyPush',
   FirefoxPush: 'FirefoxPush',
   // And others but not relevant for Web SDK
   // macOSPush: 'macOSPush',

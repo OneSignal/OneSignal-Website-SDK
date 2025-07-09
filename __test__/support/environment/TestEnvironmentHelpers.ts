@@ -162,8 +162,10 @@ export const setupSubModelStore = async ({
     token,
     onesignalId,
   });
-  await Database.setPushId(pushModel.id);
-  await Database.setPushToken(pushModel.token);
+  await Database.setTokenAndId({
+    token: pushModel.token,
+    id: pushModel.id,
+  });
   OneSignal.coreDirector.subscriptionModelStore.replaceAll(
     [pushModel],
     ModelChangeTags.NO_PROPOGATE,

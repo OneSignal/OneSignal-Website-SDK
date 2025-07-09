@@ -1,6 +1,7 @@
 import {
   NotificationType,
   NotificationTypeValue,
+  SubscriptionType,
 } from 'src/core/types/subscription';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import UserDirector from '../../onesignal/UserDirector';
@@ -138,7 +139,6 @@ export class SubscriptionManager {
 
         rawPushSubscription =
           await this.subscribeFcmFromPage(subscriptionStrategy);
-        console.warn('rawPushSubscription 2', rawPushSubscription);
         await this._updatePushSubscriptionModelWithRawSubscription(
           rawPushSubscription,
         );
@@ -153,24 +153,38 @@ export class SubscriptionManager {
   private async _updatePushSubscriptionModelWithRawSubscription(
     rawPushSubscription: RawPushSubscription,
   ) {
+    console.log('updatePushSubscriptionModelWithRawSubscription', {
+      rawPushSubscription,
+    });
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    console.log('pushModel', { pushModel });
+
     // EventHelper checkAndTriggerSubscriptionChanged is called before this function when permission is granted and so
     // it will save the push token/id to the database so we don't need to save the token afer generating
     if (!pushModel) {
       OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
       return UserDirector.createUserOnServer();
-
-      // Bug w/ v160400 release where isCreatingUser was improperly set and never reset
-      // so a check if pushModel id is needed to recreate the user
-    }
-    if (!pushModel.id) {
-      return UserDirector.createUserOnServer();
     }
 
-    // resubscribing. update existing push subscription model
+    // Bug w/ v160400 release where isCreatingUser was improperly set and never reset
+    // so a check if pushModel id is needed to recreate the user
+    if (!pushModel.id) return UserDirector.createUserOnServer();
+
     const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
       rawPushSubscription,
     ).serialize();
+
+    // for legacy safari push, switch to new format (e.g. old token 'ebsm3...' to -> https://web.push.apple.com/... with populated web_auth and web_p256)
+    if (pushModel.type === SubscriptionType.SafariLegacyPush) {
+      if (!window.Notification) return;
+      await Database.setTokenAndId({
+        token: serializedSubscriptionRecord.token,
+        id: pushModel.id,
+      });
+      pushModel.setProperty('type', SubscriptionType.SafariPush);
+    }
+
+    // update existing push subscription model
     for (const key in serializedSubscriptionRecord) {
       const modelKey = key as keyof typeof serializedSubscriptionRecord;
       pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
