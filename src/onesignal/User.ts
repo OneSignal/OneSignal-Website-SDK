@@ -12,8 +12,6 @@ import {
 import { isObject, isValidEmail, logMethodCall } from '../shared/utils/utils';
 
 export default class User {
-  isCreatingUser = false;
-
   static singletonInstance?: User = undefined;
 
   /**

@@ -1,7 +1,6 @@
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
-import User from 'src/onesignal/User';
 import MainHelper from 'src/shared/helpers/MainHelper';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
@@ -46,8 +45,6 @@ export default class LoginManager {
     );
     const newIdentityOneSignalId = identityModel.onesignalId;
 
-    User.createOrGetInstance().isCreatingUser = true;
-
     const appId = MainHelper.getAppId();
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
@@ -81,7 +78,6 @@ export default class LoginManager {
     if (!identityModel.externalId)
       return Log.debug('Logout: User is not logged in, skipping logout');
 
-    UserDirector.resetUserMetaProperties();
     UserDirector.resetUserModels();
 
     // create a new anonymous user
