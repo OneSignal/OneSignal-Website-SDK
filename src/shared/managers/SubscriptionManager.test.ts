@@ -51,9 +51,9 @@ describe('SubscriptionManager', () => {
       expect(subModels.length).toBe(0);
 
       // mimicing the event helper checkAndTriggerSubscriptionChanged
-      await OneSignal.database.setPushToken(
-        rawSubscription.w3cEndpoint?.toString(),
-      );
+      await OneSignal.database.setTokenAndId({
+        token: rawSubscription.w3cEndpoint?.toString(),
+      });
 
       await subscriptionManager._updatePushSubscriptionModelWithRawSubscription(
         rawSubscription,
@@ -164,9 +164,9 @@ describe('SubscriptionManager', () => {
       const subscriptionManager = new SubscriptionManager(context, subConfig);
       const rawSubscription = getRawSubscription();
 
-      await OneSignal.database.setPushToken(
-        rawSubscription.w3cEndpoint?.toString(),
-      );
+      await OneSignal.database.setTokenAndId({
+        token: rawSubscription.w3cEndpoint?.toString(),
+      });
 
       const pushModel = await setupSubModelStore({
         id: '123',
