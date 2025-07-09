@@ -1,6 +1,5 @@
 import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
-import User from 'src/onesignal/User';
 import OneSignalError from 'src/shared/errors/OneSignalError';
 import Environment from 'src/shared/helpers/Environment';
 import EventHelper from 'src/shared/helpers/EventHelper';
@@ -60,9 +59,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     const startingOp = operations[0];
 
     if (startingOp instanceof LoginUserOperation)
-      return this.loginUser(startingOp, operations.slice(1)).finally(() => {
-        User.createOrGetInstance().isCreatingUser = false;
-      });
+      return this.loginUser(startingOp, operations.slice(1));
 
     throw new Error(`Unrecognized operation: ${startingOp.name}`);
   }

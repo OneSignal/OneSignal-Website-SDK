@@ -5,13 +5,9 @@ import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
-import User from './User';
 
 export default class UserDirector {
   static async createUserOnServer(): Promise<void> {
-    const user = User.createOrGetInstance();
-    if (user.isCreatingUser) return;
-
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     const appId = MainHelper.getAppId();
 
@@ -21,7 +17,6 @@ export default class UserDirector {
     pushOp.id = pushOp.id ?? IDManager.createLocalId();
     const { id, ...rest } = pushOp.toJSON();
 
-    User.createOrGetInstance().isCreatingUser = true;
     OneSignal.coreDirector.operationRepo.enqueue(
       new LoginUserOperation(
         appId,
@@ -37,11 +32,6 @@ export default class UserDirector {
         subscriptionId: id,
       }),
     );
-  }
-
-  static resetUserMetaProperties() {
-    const user = User.createOrGetInstance();
-    user.isCreatingUser = false;
   }
 
   // Resets models similar to Android SDK
