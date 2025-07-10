@@ -11,19 +11,10 @@ import { CustomWebEvent } from './CustomWebEvent';
 
 export class CustomEventController implements ICustomEventController {
   private readonly _identityModelStore: IdentityModelStore;
-  private readonly _time: number;
   private readonly queue: CustomWebEvent[] = [];
 
-  constructor({
-    identityModelStore,
-    time,
-  }: {
-    identityModelStore: IdentityModelStore;
-    time: number;
-  }) {
+  constructor(identityModelStore: IdentityModelStore) {
     this._identityModelStore = identityModelStore;
-    this._time = time;
-
     this._identityModelStore.subscribe(this);
   }
 
@@ -49,13 +40,14 @@ export class CustomEventController implements ICustomEventController {
   private async sendCustomEvent(event: CustomWebEvent) {
     // send the custom event in the background
     try {
-      await RequestService.sendCustomEvent(
+      const request = await RequestService.sendCustomEvent(
         { appId: event.appId },
         event.toJSON(),
       );
+      if (request.ok) throw new Error('Failed to send custom event');
     } catch (err) {
       // TODO: handling 400 response due to payload being too large
-      Log.warn(`ERROR: ${err} for sending ${event}, `);
+      Log.warn(`ERROR: ${err} for sending ${event.name}, `);
     }
 
     this.queue.splice(this.queue.indexOf(event), 1);

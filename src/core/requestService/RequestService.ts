@@ -304,6 +304,11 @@ export class RequestService {
   }
 
   // Custom Events
+  /**
+   * Send an custom event to the backend and return the response.
+   *
+   * @param customEvent The custom event to send up.
+   */
   static async sendCustomEvent(
     requestMetadata: RequestMetadata,
     customEvent: ICustomEventRequestItem,
