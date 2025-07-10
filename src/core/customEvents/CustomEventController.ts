@@ -1,32 +1,33 @@
 import Environment from 'src/shared/helpers/Environment';
+import Log from 'src/shared/libraries/Log';
+import { IDManager } from 'src/shared/managers/IDManager';
+import { IdentityConstants } from '../constants';
+import { IdentityModel } from '../models/IdentityModel';
+import { ModelChangedArgs } from '../models/Model';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
-import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
+import { RequestService } from '../requestService/RequestService';
 import { ICustomEventController } from '../types/events';
 import { CustomWebEvent } from './CustomWebEvent';
 
 export class CustomEventController implements ICustomEventController {
   private readonly _identityModelStore: IdentityModelStore;
   private readonly _time: number;
-  private readonly _subscriptionModelStore: SubscriptionModelStore;
+  private readonly queue: CustomWebEvent[] = [];
 
   constructor({
     identityModelStore,
-    subscriptionModelStore,
     time,
   }: {
     identityModelStore: IdentityModelStore;
-    subscriptionModelStore: SubscriptionModelStore;
     time: number;
   }) {
     this._identityModelStore = identityModelStore;
-    this._subscriptionModelStore = subscriptionModelStore;
     this._time = time;
+
+    this._identityModelStore.subscribe(this);
   }
 
-  async sendCustomEvent(
-    name: string,
-    properties?: Record<string, unknown>,
-  ): Promise<void> {
+  enqueueCustomEvent(name: string, properties?: Record<string, unknown>) {
     const identityModel = this._identityModelStore.model;
 
     const customEvent = new CustomWebEvent({
@@ -38,14 +39,62 @@ export class CustomEventController implements ICustomEventController {
       timestamp: this._time,
     });
 
-    // TODO: Send http request in next commit
+    // immediately send the event if onesignalId is already retrieved
+    this.saveCustomEvent(customEvent);
+    if (!IDManager.isLocalId(identityModel.onesignalId)) {
+      this.sendCustomEvent(customEvent);
+    }
   }
 
-  saveCustomEvent(event: CustomEvent) {
-    // TODO for the caching session
+  private async sendCustomEvent(event: CustomWebEvent) {
+    // send the custom event in the background
+    try {
+      await RequestService.sendCustomEvent(
+        { appId: event.appId },
+        event.toJSON(),
+      );
+    } catch (err) {
+      // TODO: handling 400 response due to payload being too large
+      Log.warn(`ERROR: ${err} for sending ${event}, `);
+    }
+
+    this.queue.splice(this.queue.indexOf(event), 1);
+  }
+
+  saveCustomEvent(event: CustomWebEvent) {
+    this.queue.push(event);
+  }
+
+  private updateAllEventsWithOnesignalId(onesignalId: string) {
+    this.queue.forEach((event) => {
+      if (event.onesignalId && IDManager.isLocalId(event.onesignalId)) {
+        event.updateOnesignalId(onesignalId);
+      }
+    });
+  }
+
+  private sendAllSavedEvents() {
+    this.queue.forEach((event) => {
+      if (event.onesignalId && !IDManager.isLocalId(event.onesignalId)) {
+        this.sendCustomEvent(event);
+      }
+    });
   }
 
   start() {
-    // TODO send all cached events and clear the queue
+    this.sendAllSavedEvents();
+  }
+
+  onModelReplaced(model: IdentityModel, tag: string) {}
+
+  onModelUpdated(args: ModelChangedArgs, tag: string) {
+    if (args.property == IdentityConstants.ONESIGNAL_ID) {
+      const onesignalId = args.newValue as string;
+      if (!IDManager.isLocalId(onesignalId)) {
+        // the onesignal ID is updated, send all queued events with the updated onesignal ID
+        this.updateAllEventsWithOnesignalId(onesignalId);
+        this.sendAllSavedEvents();
+      }
+    }
   }
 }

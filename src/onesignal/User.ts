@@ -250,7 +250,7 @@ export default class User {
 
   public trackEvent(name: string, properties?: Record<string, unknown>): void {
     logMethodCall('trackEvent', { name, properties });
-    OneSignal.coreDirector.customEventController.sendCustomEvent(
+    OneSignal.coreDirector.customEventController.enqueueCustomEvent(
       name,
       properties,
     );

@@ -18,6 +18,7 @@ import {
   RequestMetadata,
   UserData,
 } from '../types/api';
+import { ICustomEventRequest, ICustomEventRequestItem } from '../types/events';
 import AliasPair from './AliasPair';
 
 export class RequestService {
@@ -298,6 +299,19 @@ export class RequestService {
         identity: { ...identity },
         retain_previous_owner: retainPreviousOwner,
       },
+      requestMetadata.jwtHeader,
+    );
+  }
+
+  // Custom Events
+  static async sendCustomEvent(
+    requestMetadata: RequestMetadata,
+    customEvent: ICustomEventRequestItem,
+  ) {
+    const { appId } = requestMetadata;
+    return OneSignalApiBase.post<{ identity: IUserIdentity }>(
+      `apps/${appId}/integrations/custom_events`,
+      { events: [customEvent] } satisfies ICustomEventRequest,
       requestMetadata.jwtHeader,
     );
   }

@@ -1,6 +1,8 @@
-import { ICustomEvent } from '../types/events';
+import MainHelper from 'src/shared/helpers/MainHelper';
+import { ICustomEvent, ICustomEventRequestItem } from '../types/events';
 
 export class CustomWebEvent implements ICustomEvent {
+  appId: string;
   name: string;
   properties?: Record<string, unknown>;
   onesignalId: string;
@@ -23,6 +25,7 @@ export class CustomWebEvent implements ICustomEvent {
     sdk: string;
     timestamp: number;
   }) {
+    this.appId = MainHelper.getAppId();
     this.name = name;
     this.properties = properties;
     this.onesignalId = onesignalId;
@@ -31,7 +34,11 @@ export class CustomWebEvent implements ICustomEvent {
     this.timestamp = timestamp;
   }
 
-  toJSON(): Record<string, unknown> {
+  updateOnesignalId(onesignalId: string) {
+    this.onesignalId = onesignalId;
+  }
+
+  toJSON(): ICustomEventRequestItem {
     const payload = {
       sdk: this.sdk,
       ...(this.properties ?? {}),
