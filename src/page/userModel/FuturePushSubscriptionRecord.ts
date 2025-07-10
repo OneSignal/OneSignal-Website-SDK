@@ -37,10 +37,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   }
 
   private _getToken(subscription: RawPushSubscription): string | undefined {
-    if (subscription.w3cEndpoint) {
-      return subscription.w3cEndpoint.toString();
-    }
-    return subscription.safariDeviceToken;
+    return subscription.w3cEndpoint?.toString();
   }
 
   serialize() {

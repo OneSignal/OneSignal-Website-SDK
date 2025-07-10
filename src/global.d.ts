@@ -9,6 +9,8 @@ declare global {
     OneSignal: _OneSignal;
     OneSignalDeferred?: OneSignalDeferredLoadedCallback[];
     __oneSignalSdkLoadCount?: number;
-    safari?: {};
+    safari?: {
+      pushNotification?: {};
+    };
   }
 }

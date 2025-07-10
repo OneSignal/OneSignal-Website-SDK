@@ -6,7 +6,16 @@
 // Checks if the browser supports push notifications by checking if specific
 //   classes and properties on them exist
 export function isPushNotificationsSupported() {
-  return supportsVapidPush();
+  return supportsVapidPush() || supportsSafariLegacyPush();
+}
+
+// Allow app to run with legacy safari push notifications. If safari version is newer then
+// the subscription will ported in SubscriptionManager _updatePushSubscriptionModelWithRawSubscription
+export function supportsSafariLegacyPush(): boolean {
+  return (
+    typeof window.safari !== 'undefined' &&
+    typeof window.safari.pushNotification !== 'undefined'
+  );
 }
 
 // Does the browser support the standard Push API

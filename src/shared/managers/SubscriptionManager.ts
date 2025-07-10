@@ -15,6 +15,7 @@ import PushPermissionNotGrantedError, {
   PushPermissionNotGrantedErrorReason,
 } from '../errors/PushPermissionNotGrantedError';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
+import Environment from '../helpers/Environment';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
@@ -153,11 +154,7 @@ export class SubscriptionManager {
   private async _updatePushSubscriptionModelWithRawSubscription(
     rawPushSubscription: RawPushSubscription,
   ) {
-    console.log('updatePushSubscriptionModelWithRawSubscription', {
-      rawPushSubscription,
-    });
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
-    console.log('pushModel', { pushModel });
 
     // EventHelper checkAndTriggerSubscriptionChanged is called before this function when permission is granted and so
     // it will save the push token/id to the database so we don't need to save the token afer generating
@@ -176,12 +173,11 @@ export class SubscriptionManager {
 
     // for legacy safari push, switch to new format (e.g. old token 'ebsm3...' to -> https://web.push.apple.com/... with populated web_auth and web_p256)
     if (pushModel.type === SubscriptionType.SafariLegacyPush) {
-      if (!window.Notification) return;
+      if (!Environment.useSafariVapidPush()) return;
       await Database.setTokenAndId({
         token: serializedSubscriptionRecord.token,
         id: pushModel.id,
       });
-      pushModel.setProperty('type', SubscriptionType.SafariPush);
     }
 
     // update existing push subscription model
