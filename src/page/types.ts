@@ -1,4 +1,4 @@
-interface NotificationIcons {
+export interface NotificationIcons {
   chrome?: string;
   firefox?: string;
   safari?: string;

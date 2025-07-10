@@ -21,7 +21,6 @@ import {
 import Database from '../services/Database';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
-import Environment from './Environment';
 
 export default class MainHelper {
   static async showLocalNotification(
@@ -234,13 +233,6 @@ export default class MainHelper {
 
   // TO DO: unit test
   static async getCurrentPushToken(): Promise<string | undefined> {
-    if (Environment.useSafariLegacyPush()) {
-      const safariToken = window.safari?.pushNotification?.permission(
-        OneSignal.config.safariWebId,
-      ).deviceToken;
-      return safariToken?.toLowerCase() || undefined;
-    }
-
     const registration =
       await OneSignal.context.serviceWorkerManager.getRegistration();
     if (!registration) {
