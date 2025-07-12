@@ -11,27 +11,46 @@ export default class UserDirector {
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     const appId = MainHelper.getAppId();
 
+    const allSubscriptions =
+      await OneSignal.coreDirector.getAllSubscriptionsModels();
+    const hasAnySubscription = allSubscriptions.length > 0;
+    const hasExternalId = !!identityModel.externalId;
+
+    if (!hasAnySubscription && !hasExternalId) {
+      return Log.info(
+        'No subscriptions or external ID found, skipping user creation',
+      );
+    }
+
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
-    if (!pushOp) return Log.info('No push subscription found');
+    if (pushOp) {
+      pushOp.id = pushOp.id ?? IDManager.createLocalId();
+      const { id, ...rest } = pushOp.toJSON();
 
-    pushOp.id = pushOp.id ?? IDManager.createLocalId();
-    const { id, ...rest } = pushOp.toJSON();
-
-    OneSignal.coreDirector.operationRepo.enqueue(
-      new LoginUserOperation(
-        appId,
-        identityModel.onesignalId,
-        identityModel.externalId,
-      ),
-    );
-    await OneSignal.coreDirector.operationRepo.enqueueAndWait(
-      new CreateSubscriptionOperation({
-        ...rest,
-        appId,
-        onesignalId: identityModel.onesignalId,
-        subscriptionId: id,
-      }),
-    );
+      OneSignal.coreDirector.operationRepo.enqueue(
+        new LoginUserOperation(
+          appId,
+          identityModel.onesignalId,
+          identityModel.externalId,
+        ),
+      );
+      await OneSignal.coreDirector.operationRepo.enqueueAndWait(
+        new CreateSubscriptionOperation({
+          ...rest,
+          appId,
+          onesignalId: identityModel.onesignalId,
+          subscriptionId: id,
+        }),
+      );
+    } else {
+      OneSignal.coreDirector.operationRepo.enqueue(
+        new LoginUserOperation(
+          appId,
+          identityModel.onesignalId,
+          identityModel.externalId,
+        ),
+      );
+    }
   }
 
   // Resets models similar to Android SDK
