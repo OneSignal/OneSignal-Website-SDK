@@ -48,14 +48,15 @@ export default class LoginManager {
     const appId = MainHelper.getAppId();
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
-    if (!pushOp) return Log.info('No push subscription found');
-    OneSignal.coreDirector.operationRepo.enqueue(
-      new TransferSubscriptionOperation(
-        appId,
-        newIdentityOneSignalId,
-        pushOp.id,
-      ),
-    );
+    if (pushOp) {
+      OneSignal.coreDirector.operationRepo.enqueue(
+        new TransferSubscriptionOperation(
+          appId,
+          newIdentityOneSignalId,
+          pushOp.id,
+        ),
+      );
+    }
 
     await OneSignal.coreDirector.operationRepo.enqueueAndWait(
       new LoginUserOperation(
