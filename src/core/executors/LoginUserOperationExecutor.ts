@@ -223,8 +223,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
         const pushSubscriptionId = await Database.getPushId();
         if (pushSubscriptionId === localId) {
-          await Database.setPushId(backendSub.id);
-          await Database.setPushToken(backendSub.token);
+          await Database.setTokenAndId({
+            id: backendSub.id,
+            token: backendSub.token,
+          });
         }
 
         const model =

@@ -3,7 +3,6 @@ import {
   NotificationTypeValue,
 } from 'src/core/types/subscription';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
-import UserDirector from '../../onesignal/UserDirector';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import {
   InvalidStateError,
@@ -174,18 +173,21 @@ export class SubscriptionManager {
     rawPushSubscription: RawPushSubscription,
   ) {
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+
     // EventHelper checkAndTriggerSubscriptionChanged is called before this function when permission is granted and so
     // it will save the push token/id to the database so we don't need to save the token afer generating
     if (!pushModel) {
+      console.log('pushModel is null');
       OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
-      return UserDirector.createUserOnServer();
+      return;
 
       // Bug w/ v160400 release where isCreatingUser was improperly set and never reset
       // so a check if pushModel id is needed to recreate the user
     }
-    if (!pushModel.id) {
-      return UserDirector.createUserOnServer();
-    }
+    // if (!pushModel.id) {
+    //   // return UserDirector.createAndSwitchToNewUser();
+    //   return;
+    // }
 
     // resubscribing. update existing push subscription model
     const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(

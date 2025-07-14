@@ -1,3 +1,4 @@
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
@@ -32,6 +33,7 @@ import NotificationsNamespace from './NotificationsNamespace';
 import { ONESIGNAL_EVENTS } from './OneSignalEvents';
 import { SessionNamespace } from './SessionNamespace';
 import SlidedownNamespace from './SlidedownNamespace';
+import UserDirector from './UserDirector';
 import UserNamespace from './UserNamespace';
 
 export default class OneSignal {
@@ -41,6 +43,21 @@ export default class OneSignal {
     const core = new CoreModule();
     await core.init();
     OneSignal.coreDirector = new CoreModuleDirector(core);
+
+    // if the local user has no onesignalId, create a new user
+    if (!OneSignal.coreDirector.getIdentityModel().onesignalId) {
+      const appId = MainHelper.getAppId();
+      await UserDirector.createAndSwitchToNewUser();
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      OneSignal.coreDirector.operationRepo.enqueue(
+        new LoginUserOperation(
+          appId,
+          identityModel.onesignalId,
+          identityModel.externalId,
+        ),
+      );
+    }
+
     const subscription = await Database.getSubscription();
     const permission =
       await OneSignal.context.permissionManager.getPermissionStatus();
