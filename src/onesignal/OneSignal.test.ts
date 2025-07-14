@@ -606,7 +606,9 @@ describe('OneSignal', () => {
           window.OneSignal.User.addEmail(email);
           window.OneSignal.User.addSms(sms);
 
-          await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 2);
+          await vi.waitUntil(
+            () => createSubscriptionFn.mock.calls.length === 2,
+          );
 
           expect(createSubscriptionFn).toHaveBeenCalledWith({
             subscription: {
@@ -630,10 +632,18 @@ describe('OneSignal', () => {
 
           let dbSubscriptions = [] as any[];
 
-          await vi.waitUntil(async () => (dbSubscriptions = await Database.get('subscriptions')).length === 3);
+          await vi.waitUntil(
+            async () =>
+              (dbSubscriptions = await Database.get('subscriptions')).length ===
+              3,
+          );
 
-          const emailSubscriptions = dbSubscriptions.filter((s) => s.type === 'Email');
-          const smsSubscriptions = dbSubscriptions.filter((s) => s.type === 'SMS');
+          const emailSubscriptions = dbSubscriptions.filter(
+            (s) => s.type === 'Email',
+          );
+          const smsSubscriptions = dbSubscriptions.filter(
+            (s) => s.type === 'SMS',
+          );
 
           expect(emailSubscriptions).toHaveLength(1);
           expect(emailSubscriptions[0].token).toBe(email);
@@ -656,10 +666,21 @@ describe('OneSignal', () => {
           await Database.remove('subscriptions');
 
           const identityModel = OneSignal.coreDirector.getIdentityModel();
-          identityModel.setProperty('external_id', '', ModelChangeTags.NO_PROPOGATE);
-          identityModel.setProperty('onesignal_id', '', ModelChangeTags.NO_PROPOGATE);
+          identityModel.setProperty(
+            'external_id',
+            '',
+            ModelChangeTags.NO_PROPOGATE,
+          );
+          identityModel.setProperty(
+            'onesignal_id',
+            '',
+            ModelChangeTags.NO_PROPOGATE,
+          );
 
-          window.OneSignal.coreDirector.subscriptionModelStore.replaceAll([], ModelChangeTags.NO_PROPOGATE);
+          window.OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+            [],
+            ModelChangeTags.NO_PROPOGATE,
+          );
           await window.OneSignal.login(externalId);
 
           const identityData = await getIdentityItem();
@@ -722,7 +743,9 @@ describe('OneSignal', () => {
           window.OneSignal.User.addEmail(email);
           window.OneSignal.User.addSms(sms);
 
-          await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 2);
+          await vi.waitUntil(
+            () => createSubscriptionFn.mock.calls.length === 2,
+          );
 
           expect(createSubscriptionFn).toHaveBeenCalledWith({
             subscription: {
@@ -744,12 +767,18 @@ describe('OneSignal', () => {
             },
           });
 
-          let dbSubscriptions = await Database.get('subscriptions') as any[];
+          const dbSubscriptions = (await Database.get(
+            'subscriptions',
+          )) as any[];
 
           await vi.waitUntil(async () => dbSubscriptions.length === 3);
 
-          const emailSubscriptions = dbSubscriptions.filter((s) => s.type === 'Email');
-          const smsSubscriptions = dbSubscriptions.filter((s) => s.type === 'SMS');
+          const emailSubscriptions = dbSubscriptions.filter(
+            (s) => s.type === 'Email',
+          );
+          const smsSubscriptions = dbSubscriptions.filter(
+            (s) => s.type === 'SMS',
+          );
 
           expect(emailSubscriptions).toHaveLength(1);
           expect(emailSubscriptions[0].token).toBe(email);
@@ -762,9 +791,15 @@ describe('OneSignal', () => {
 
         test('login with a prior web push subscription - it should transfer the subscription', async () => {
           const identityModel = OneSignal.coreDirector.getIdentityModel();
-          identityModel.setProperty('onesignal_id', '', ModelChangeTags.NO_PROPOGATE);
+          identityModel.setProperty(
+            'onesignal_id',
+            '',
+            ModelChangeTags.NO_PROPOGATE,
+          );
 
-          const dbSubscriptions = await Database.get('subscriptions') as any[];
+          const dbSubscriptions = (await Database.get(
+            'subscriptions',
+          )) as any[];
           expect(dbSubscriptions).toHaveLength(1);
 
           await window.OneSignal.login(externalId);
@@ -787,9 +822,11 @@ describe('OneSignal', () => {
               timezone_id: 'America/Los_Angeles',
             },
             refresh_device_metadata: true,
-            subscriptions: [{
-              id: DUMMY_SUBSCRIPTION_ID,
-            }],
+            subscriptions: [
+              {
+                id: DUMMY_SUBSCRIPTION_ID,
+              },
+            ],
           });
         });
       });
