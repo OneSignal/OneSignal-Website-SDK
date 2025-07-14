@@ -41,6 +41,7 @@ export default class OneSignal {
     const core = new CoreModule();
     await core.init();
     OneSignal.coreDirector = new CoreModuleDirector(core);
+
     const subscription = await Database.getSubscription();
     const permission =
       await OneSignal.context.permissionManager.getPermissionStatus();

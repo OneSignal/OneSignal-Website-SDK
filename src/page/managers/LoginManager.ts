@@ -1,6 +1,4 @@
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
-import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
-import { ModelChangeTags } from 'src/core/types/models';
 import MainHelper from 'src/shared/helpers/MainHelper';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
@@ -24,8 +22,8 @@ export default class LoginManager {
     }
 
     let identityModel = OneSignal.coreDirector.getIdentityModel();
-    const currentOneSignalId = identityModel.onesignalId;
     const currentExternalId = identityModel.externalId;
+    const currentOneSignalId = identityModel.onesignalId;
 
     // if the current externalId is the same as the one we're trying to set, do nothing
     if (currentExternalId === externalId) {
@@ -33,31 +31,13 @@ export default class LoginManager {
       return;
     }
 
-    UserDirector.resetUserModels();
-    identityModel = OneSignal.coreDirector.getIdentityModel();
-
-    // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
-    // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
-    identityModel.setProperty(
-      'external_id',
-      externalId,
-      ModelChangeTags.HYDRATE,
-    );
-    const newIdentityOneSignalId = identityModel.onesignalId;
+    await UserDirector.createAndSwitchToNewUser((newIdentityModel) => {
+      newIdentityModel.externalId = externalId;
+    });
+    const newIdentityOneSignalId =
+      OneSignal.coreDirector.identityModelStore.model.onesignalId;
 
     const appId = MainHelper.getAppId();
-
-    const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
-    if (pushOp) {
-      OneSignal.coreDirector.operationRepo.enqueue(
-        new TransferSubscriptionOperation(
-          appId,
-          newIdentityOneSignalId,
-          pushOp.id,
-        ),
-      );
-    }
-
     await OneSignal.coreDirector.operationRepo.enqueueAndWait(
       new LoginUserOperation(
         appId,
@@ -74,14 +54,20 @@ export default class LoginManager {
 
   private static async _logout(): Promise<void> {
     // check if user is already logged out
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-
-    if (!identityModel.externalId)
+    if (!OneSignal.coreDirector.getIdentityModel().externalId)
       return Log.debug('Logout: User is not logged in, skipping logout');
 
-    UserDirector.resetUserModels();
-
     // create a new anonymous user
-    return UserDirector.createUserOnServer();
+    await UserDirector.createAndSwitchToNewUser();
+
+    const appId = MainHelper.getAppId();
+    const newIdentityModel = OneSignal.coreDirector.getIdentityModel();
+    await OneSignal.coreDirector.operationRepo.enqueueAndWait(
+      new LoginUserOperation(
+        appId,
+        newIdentityModel.onesignalId,
+        newIdentityModel.externalId,
+      ),
+    );
   }
 }

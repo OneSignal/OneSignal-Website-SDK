@@ -1,6 +1,10 @@
 import { APP_ID } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { mockServerConfig } from '__test__/support/helpers/requests';
+import {
+  createUserFn,
+  mockServerConfig,
+  setCreateUserResponse,
+} from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Log from 'src/shared/libraries/Log';
@@ -36,6 +40,8 @@ describe('pageSdkInit', () => {
   });
 
   test('can handle init followed by logout', async () => {
+    setCreateUserResponse();
+
     window.OneSignalDeferred = [];
     window.OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
@@ -49,9 +55,8 @@ describe('pageSdkInit', () => {
     await import('./pageSdkInit');
     const logoutSpy = vi.spyOn(window.OneSignal, 'logout');
 
-    await vi.waitUntil(async () => {
-      return logoutSpy.mock.calls.length > 0;
-    });
+    await vi.waitUntil(() => createUserFn.mock.calls.length === 1);
+    await vi.waitUntil(() => logoutSpy.mock.calls.length === 1);
     expect(window.OneSignal.coreDirector).toBeDefined();
   });
 

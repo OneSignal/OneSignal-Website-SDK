@@ -138,7 +138,9 @@ describe('SubscriptionOperationExecutor', () => {
       subscriptionModelStore.add(model);
 
       setCreateSubscriptionResponse(BACKEND_SUBSCRIPTION_ID);
-      await Database.setPushId(DUMMY_SUBSCRIPTION_ID);
+      await Database.setTokenAndId({
+        id: DUMMY_SUBSCRIPTION_ID,
+      });
 
       const executor = getExecutor();
       const createOp = new CreateSubscriptionOperation({
@@ -281,7 +283,9 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Missing error with rebuild ops
       subscriptionsModelStore.add(pushSubscription);
-      await Database.setPushId(DUMMY_SUBSCRIPTION_ID_3);
+      await Database.setTokenAndId({
+        id: DUMMY_SUBSCRIPTION_ID_3,
+      });
 
       const res6 = await executor.execute([createOp]);
       expect(res6).toMatchObject({
