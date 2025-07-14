@@ -630,13 +630,10 @@ describe('OneSignal', () => {
             },
           });
 
-          let dbSubscriptions = [] as any[];
-
-          await vi.waitUntil(
-            async () =>
-              (dbSubscriptions = await Database.get('subscriptions')).length ===
-              3,
-          );
+          const dbSubscriptions = (await Database.get(
+            'subscriptions',
+          )) as any[];
+          expect(dbSubscriptions).toHaveLength(3);
 
           const emailSubscriptions = dbSubscriptions.filter(
             (s) => s.type === 'Email',
@@ -771,7 +768,7 @@ describe('OneSignal', () => {
             'subscriptions',
           )) as any[];
 
-          await vi.waitUntil(async () => dbSubscriptions.length === 3);
+          expect(dbSubscriptions).toHaveLength(3);
 
           const emailSubscriptions = dbSubscriptions.filter(
             (s) => s.type === 'Email',
