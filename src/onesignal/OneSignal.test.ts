@@ -576,6 +576,7 @@ describe('OneSignal', () => {
         });
 
         test('login before adding email and sms - it should create subscriptions with the external ID', async () => {
+          setTransferSubscriptionResponse();
           setGetUserResponse({
             onesignalId: DUMMY_ONESIGNAL_ID,
             externalId,
@@ -705,6 +706,7 @@ describe('OneSignal', () => {
         });
 
         test('login then add email, sms, and web push - all subscriptions should be created with the external ID', async () => {
+          setTransferSubscriptionResponse();
           setGetUserResponse({
             onesignalId: DUMMY_ONESIGNAL_ID,
             externalId,
