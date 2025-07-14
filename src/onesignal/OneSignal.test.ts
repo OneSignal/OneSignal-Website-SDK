@@ -770,8 +770,7 @@ describe('OneSignal', () => {
             'subscriptions',
           )) as any[];
 
-          await waitForOperations(5);
-          expect(dbSubscriptions).toHaveLength(3);
+          await vi.waitUntil(() => dbSubscriptions.length === 3);
 
           const emailSubscriptions = dbSubscriptions.filter(
             (s) => s.type === 'Email',
