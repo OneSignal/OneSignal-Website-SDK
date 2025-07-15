@@ -534,6 +534,17 @@ export default class Database {
   static async setPushToken(pushToken: string | undefined): Promise<void> {
     await this.put('Options', { key: 'lastPushToken', value: pushToken });
   }
+  static async setTokenAndId({
+    token,
+    id,
+  }: {
+    token?: string;
+    id?: string;
+  }): Promise<void> {
+    if (token)
+      await this.put('Options', { key: 'lastPushToken', value: token });
+    if (id) await this.put('Options', { key: 'lastPushId', value: id });
+  }
 
   static async setIsPushEnabled(enabled: boolean): Promise<void> {
     return Database.singletonInstance.setIsPushEnabled(enabled);

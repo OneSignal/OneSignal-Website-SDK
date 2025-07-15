@@ -155,9 +155,7 @@ export class ServiceWorkerManager {
       workerState === ServiceWorkerActiveState.ThirdParty
     ) {
       const permission =
-        await OneSignal.context.permissionManager.getNotificationPermission(
-          OneSignal.config!.safariWebId,
-        );
+        await OneSignal.context.permissionManager.getNotificationPermission();
       const notificationsEnabled = permission === 'granted';
       if (notificationsEnabled) {
         Log.info(

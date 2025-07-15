@@ -1,33 +1,34 @@
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
+import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../../shared/config/constants';
+import { Utils } from '../../shared/context/Utils';
 import MainHelper from '../../shared/helpers/MainHelper';
+import PromptsHelper from '../../shared/helpers/PromptsHelper';
+import {
+  DelayedPromptType,
+  SlidedownPromptOptions,
+} from '../../shared/models/Prompts';
+import OneSignalEvent from '../../shared/services/OneSignalEvent';
+import {
+  COLORS,
+  SLIDEDOWN_CSS_CLASSES,
+  SLIDEDOWN_CSS_IDS,
+} from '../../shared/slidedown/constants';
+import { bowserCastle } from '../../shared/utils/bowserCastle';
 import {
   addCssClass,
   addDomElement,
+  getDomElementOrStub,
   getPlatformNotificationIcon,
   once,
-  removeDomElement,
   removeCssClass,
-  getDomElementOrStub,
+  removeDomElement,
 } from '../../shared/utils/utils';
-import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../../shared/config/constants';
+import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
+import { TagCategory } from '../models/Tags';
+import type { NotificationIcons } from '../types';
+import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';
-import {
-  SLIDEDOWN_CSS_CLASSES,
-  SLIDEDOWN_CSS_IDS,
-  COLORS,
-} from '../../shared/slidedown/constants';
-import { TagCategory } from '../models/Tags';
 import { getSlidedownElement } from './SlidedownElement';
-import { Utils } from '../../shared/context/Utils';
-import ChannelCaptureContainer from './ChannelCaptureContainer';
-import PromptsHelper from '../../shared/helpers/PromptsHelper';
-import {
-  SlidedownPromptOptions,
-  DelayedPromptType,
-} from '../../shared/models/Prompts';
-import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 
 export default class Slidedown {
   public options: SlidedownPromptOptions;

@@ -9,7 +9,8 @@ export function isPushNotificationsSupported() {
   return supportsVapidPush() || supportsSafariLegacyPush();
 }
 
-// Does the browser support legacy Safari push? (only available on macOS)
+// Allow app to run with legacy safari push notifications. If safari version is newer then
+// the subscription will ported in SubscriptionManager _updatePushSubscriptionModelWithRawSubscription
 export function supportsSafariLegacyPush(): boolean {
   return (
     typeof window.safari !== 'undefined' &&

@@ -1,3 +1,4 @@
+import type { NotificationIcons } from '../../page/types';
 import { Utils } from '../context/Utils';
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
