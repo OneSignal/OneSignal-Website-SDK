@@ -12,7 +12,8 @@ const createUser = async () => {
   // if the local user has no onesignalId, create a new user
   if (!OneSignal.coreDirector.getIdentityModel().onesignalId) {
     const appId = MainHelper.getAppId();
-    await UserDirector.createAndSwitchToNewUser();
+    UserDirector.createAndSwitchToNewUser();
+
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     OneSignal.coreDirector.operationRepo.enqueue(
       new LoginUserOperation(

@@ -68,10 +68,10 @@ export default class UserDirector {
       changeTag = ModelChangeTags.NORMAL;
     }
 
-    await Database.setTokenAndId({
+    OneSignal.coreDirector.subscriptionModelStore.add(newPushOp, changeTag);
+    Database.setTokenAndId({
       id: newPushOp.id,
       token: newPushOp.token,
     });
-    OneSignal.coreDirector.subscriptionModelStore.add(newPushOp, changeTag);
   }
 }

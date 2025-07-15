@@ -31,7 +31,7 @@ export default class LoginManager {
       return;
     }
 
-    await UserDirector.createAndSwitchToNewUser((newIdentityModel) => {
+    UserDirector.createAndSwitchToNewUser((newIdentityModel) => {
       newIdentityModel.externalId = externalId;
     });
     const newIdentityOneSignalId =
@@ -58,7 +58,7 @@ export default class LoginManager {
       return Log.debug('Logout: User is not logged in, skipping logout');
 
     // create a new anonymous user
-    await UserDirector.createAndSwitchToNewUser();
+    UserDirector.createAndSwitchToNewUser();
 
     const appId = MainHelper.getAppId();
     const newIdentityModel = OneSignal.coreDirector.getIdentityModel();
