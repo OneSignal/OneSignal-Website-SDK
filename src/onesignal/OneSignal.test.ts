@@ -2,6 +2,7 @@ import {
   APP_ID,
   DUMMY_ONESIGNAL_ID,
   DUMMY_ONESIGNAL_ID_2,
+  DUMMY_PUSH_TOKEN,
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
   DUMMY_SUBSCRIPTION_ID_3,
@@ -546,10 +547,289 @@ describe('OneSignal', () => {
         });
 
         // subscriptions should be kept
-        const dbSubscriptions = await Database.get('subscriptions');
-        expect(dbSubscriptions).toMatchObject([
-          { id: DUMMY_SUBSCRIPTION_ID, type: 'ChromePush', token: 'abc123' },
-        ]);
+      });
+
+      describe('subscription creation after login', () => {
+        const email = 'test@example.com';
+        const sms = '+1234567890';
+
+        beforeEach(async () => {
+          await Database.remove('subscriptions', DUMMY_SUBSCRIPTION_ID);
+
+          setCreateSubscriptionResponse({
+            response: {
+              id: DUMMY_SUBSCRIPTION_ID_2,
+              type: 'Email',
+              token: email,
+            },
+          });
+
+          setCreateUserResponse({
+            onesignalId: DUMMY_ONESIGNAL_ID,
+            externalId,
+          });
+
+          setGetUserResponse({
+            onesignalId: DUMMY_ONESIGNAL_ID,
+            externalId,
+          });
+        });
+
+        test('login before adding email and sms - it should create subscriptions with the external ID', async () => {
+          setTransferSubscriptionResponse();
+          setGetUserResponse({
+            onesignalId: DUMMY_ONESIGNAL_ID,
+            externalId,
+            subscriptions: [
+              {
+                id: DUMMY_SUBSCRIPTION_ID_2,
+                type: 'Email',
+                token: email,
+              },
+              {
+                id: DUMMY_SUBSCRIPTION_ID_3,
+                type: 'SMS',
+                token: sms,
+              },
+            ],
+          });
+
+          await window.OneSignal.login(externalId);
+
+          const identityData = await getIdentityItem();
+          expect(identityData).toEqual({
+            external_id: externalId,
+            modelId: expect.any(String),
+            modelName: 'identity',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+          });
+
+          window.OneSignal.User.addEmail(email);
+          window.OneSignal.User.addSms(sms);
+
+          await vi.waitUntil(
+            () => createSubscriptionFn.mock.calls.length === 2,
+          );
+
+          expect(createSubscriptionFn).toHaveBeenCalledWith({
+            subscription: {
+              enabled: true,
+              notification_types: 1,
+              sdk: '1',
+              token: email,
+              type: 'Email',
+            },
+          });
+
+          expect(createSubscriptionFn).toHaveBeenCalledWith({
+            subscription: {
+              enabled: true,
+              notification_types: 1,
+              sdk: '1',
+              token: sms,
+              type: 'SMS',
+            },
+          });
+
+          const dbSubscriptions = (await Database.get(
+            'subscriptions',
+          )) as any[];
+          expect(dbSubscriptions).toHaveLength(3);
+
+          const emailSubscriptions = dbSubscriptions.filter(
+            (s) => s.type === 'Email',
+          );
+          const smsSubscriptions = dbSubscriptions.filter(
+            (s) => s.type === 'SMS',
+          );
+
+          expect(emailSubscriptions).toHaveLength(1);
+          expect(emailSubscriptions[0].token).toBe(email);
+          expect(emailSubscriptions[0].onesignalId).toBe(DUMMY_ONESIGNAL_ID);
+
+          expect(smsSubscriptions).toHaveLength(1);
+          expect(smsSubscriptions[0].token).toBe(sms);
+          expect(smsSubscriptions[0].onesignalId).toBe(DUMMY_ONESIGNAL_ID);
+        });
+
+        test('login without accepting web push permissions - it should create a new user without any subscriptions', async () => {
+          setCreateSubscriptionResponse({
+            response: {
+              id: DUMMY_SUBSCRIPTION_ID,
+              type: 'ChromePush',
+              token: DUMMY_PUSH_TOKEN,
+            },
+          });
+
+          await Database.remove('subscriptions');
+
+          const identityModel = OneSignal.coreDirector.getIdentityModel();
+          identityModel.setProperty(
+            'external_id',
+            '',
+            ModelChangeTags.NO_PROPOGATE,
+          );
+          identityModel.setProperty(
+            'onesignal_id',
+            '',
+            ModelChangeTags.NO_PROPOGATE,
+          );
+
+          window.OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+            [],
+            ModelChangeTags.NO_PROPOGATE,
+          );
+          await window.OneSignal.login(externalId);
+
+          const identityData = await getIdentityItem();
+          expect(identityData).toEqual({
+            external_id: externalId,
+            modelId: expect.any(String),
+            modelName: 'identity',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+          });
+
+          await window.OneSignal.User.PushSubscription.optIn();
+
+          expect(createUserFn).toHaveBeenCalledTimes(1);
+          expect(createUserFn).toHaveBeenCalledWith({
+            identity: {
+              external_id: externalId,
+            },
+            properties: {
+              language: 'en',
+              timezone_id: 'America/Los_Angeles',
+            },
+            refresh_device_metadata: true,
+            subscriptions: [],
+          });
+        });
+
+        test('login then add email, sms, and web push - all subscriptions should be created with the external ID', async () => {
+          setTransferSubscriptionResponse();
+          setGetUserResponse({
+            onesignalId: DUMMY_ONESIGNAL_ID,
+            externalId,
+            subscriptions: [
+              {
+                id: DUMMY_SUBSCRIPTION_ID,
+                type: 'ChromePush',
+                token: DUMMY_PUSH_TOKEN,
+              },
+              {
+                id: DUMMY_SUBSCRIPTION_ID_2,
+                type: 'Email',
+                token: email,
+              },
+              {
+                id: DUMMY_SUBSCRIPTION_ID_3,
+                type: 'SMS',
+                token: sms,
+              },
+            ],
+          });
+
+          await window.OneSignal.login(externalId);
+
+          const identityData = await getIdentityItem();
+          expect(identityData).toEqual({
+            external_id: externalId,
+            modelId: expect.any(String),
+            modelName: 'identity',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+          });
+
+          window.OneSignal.User.addEmail(email);
+          window.OneSignal.User.addSms(sms);
+
+          await vi.waitUntil(
+            () => createSubscriptionFn.mock.calls.length === 2,
+          );
+
+          expect(createSubscriptionFn).toHaveBeenCalledWith({
+            subscription: {
+              enabled: true,
+              notification_types: 1,
+              sdk: '1',
+              token: email,
+              type: 'Email',
+            },
+          });
+
+          expect(createSubscriptionFn).toHaveBeenCalledWith({
+            subscription: {
+              enabled: true,
+              notification_types: 1,
+              sdk: '1',
+              token: sms,
+              type: 'SMS',
+            },
+          });
+
+          await waitForOperations(5);
+
+          const dbSubscriptions = (await Database.get(
+            'subscriptions',
+          )) as any[];
+
+          expect(dbSubscriptions).toHaveLength(3);
+
+          const emailSubscriptions = dbSubscriptions.filter(
+            (s) => s.type === 'Email',
+          );
+          const smsSubscriptions = dbSubscriptions.filter(
+            (s) => s.type === 'SMS',
+          );
+
+          expect(emailSubscriptions).toHaveLength(1);
+          expect(emailSubscriptions[0].token).toBe(email);
+          expect(emailSubscriptions[0].onesignalId).toBe(DUMMY_ONESIGNAL_ID);
+
+          expect(smsSubscriptions).toHaveLength(1);
+          expect(smsSubscriptions[0].token).toBe(sms);
+          expect(smsSubscriptions[0].onesignalId).toBe(DUMMY_ONESIGNAL_ID);
+        });
+
+        test('login with a prior web push subscription - it should transfer the subscription', async () => {
+          const identityModel = OneSignal.coreDirector.getIdentityModel();
+          identityModel.setProperty(
+            'onesignal_id',
+            '',
+            ModelChangeTags.NO_PROPOGATE,
+          );
+
+          const dbSubscriptions = (await Database.get(
+            'subscriptions',
+          )) as any[];
+          expect(dbSubscriptions).toHaveLength(1);
+
+          await window.OneSignal.login(externalId);
+
+          const identityData = await getIdentityItem();
+          expect(identityData).toEqual({
+            external_id: externalId,
+            modelId: expect.any(String),
+            modelName: 'identity',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+          });
+
+          expect(createUserFn).toHaveBeenCalledTimes(1);
+          expect(createUserFn).toHaveBeenCalledWith({
+            identity: {
+              external_id: externalId,
+            },
+            properties: {
+              language: 'en',
+              timezone_id: 'America/Los_Angeles',
+            },
+            refresh_device_metadata: true,
+            subscriptions: [
+              {
+                id: DUMMY_SUBSCRIPTION_ID,
+              },
+            ],
+          });
+        });
       });
     });
 
