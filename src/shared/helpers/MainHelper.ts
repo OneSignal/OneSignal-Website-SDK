@@ -24,6 +24,8 @@ import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
 import Environment from './Environment';
 
 export default class MainHelper {
+  private static lastKnownPushToken: string | undefined;
+
   static async showLocalNotification(
     title: string,
     message: string,
@@ -232,7 +234,15 @@ export default class MainHelper {
     return subscription.deviceId || undefined;
   }
 
-  // TO DO: unit test
+  // make sure to keep in sync with IndexedDB
+  static getLastKnownPushToken(): string | undefined {
+    return this.lastKnownPushToken;
+  }
+  static setLastKnownPushToken(token: string): void {
+    this.lastKnownPushToken = token;
+  }
+
+  // just used for checking subscription data/permission changed
   static async getCurrentPushToken(): Promise<string | undefined> {
     if (Environment.useSafariLegacyPush()) {
       const safariToken = window.safari?.pushNotification?.permission(

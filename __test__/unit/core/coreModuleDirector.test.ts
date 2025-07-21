@@ -21,8 +21,8 @@ describe('CoreModuleDirector tests', () => {
       return (await getCoreModuleDirector()).getPushSubscriptionModel();
     }
 
-    test('returns undefined when it find no push records', async () => {
-      expect(await getPushSubscriptionModel()).toBe(undefined);
+    test('returns undefined when it find no push records', () => {
+      expect(getPushSubscriptionModel()).toBe(undefined);
     });
 
     test('returns current subscription when available', async () => {
@@ -31,16 +31,16 @@ describe('CoreModuleDirector tests', () => {
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByCurrentToken',
       ).mockResolvedValue(pushModelCurrent);
-      expect(await getPushSubscriptionModel()).toBe(pushModelCurrent);
+      expect(getPushSubscriptionModel()).toBe(pushModelCurrent);
     });
 
-    test('returns last known subscription when current is unavailable', async () => {
+    test('returns last known subscription when current is unavailable', () => {
       const pushModelLastKnown = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
         'getPushSubscriptionModelByLastKnownToken',
       ).mockResolvedValue(pushModelLastKnown);
-      expect(await getPushSubscriptionModel()).toBe(pushModelLastKnown);
+      expect(getPushSubscriptionModel()).toBe(pushModelLastKnown);
     });
 
     test('returns current subscription over last known', async () => {
@@ -56,7 +56,7 @@ describe('CoreModuleDirector tests', () => {
         'getPushSubscriptionModelByLastKnownToken',
       ).mockResolvedValue(pushModelLastKnown);
 
-      expect(await getPushSubscriptionModel()).toBe(pushModelCurrent);
+      expect(getPushSubscriptionModel()).toBe(pushModelCurrent);
     });
   });
 });

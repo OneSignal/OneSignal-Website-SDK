@@ -1,29 +1,9 @@
-import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
-import MainHelper from 'src/shared/helpers/MainHelper';
 import UserChangeEvent from '../page/models/UserChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
 import { Subscription } from '../shared/models/Subscription';
 import PushSubscriptionNamespace from './PushSubscriptionNamespace';
 import User from './User';
-import UserDirector from './UserDirector';
-
-const createUser = async () => {
-  // if the local user has no onesignalId, create a new user
-  if (!OneSignal.coreDirector.getIdentityModel().onesignalId) {
-    const appId = MainHelper.getAppId();
-    UserDirector.createAndSwitchToNewUser();
-
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    OneSignal.coreDirector.operationRepo.enqueue(
-      new LoginUserOperation(
-        appId,
-        identityModel.onesignalId,
-        identityModel.externalId,
-      ),
-    );
-  }
-};
 
 export default class UserNamespace extends EventListenerBase {
   private _currentUser?: User;
@@ -40,7 +20,6 @@ export default class UserNamespace extends EventListenerBase {
     super();
     if (initialize) {
       this._currentUser = User.createOrGetInstance();
-      createUser();
       this.PushSubscription = new PushSubscriptionNamespace(
         true,
         subscription,

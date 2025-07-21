@@ -42,17 +42,10 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     this._permission = permission;
     this._token = subscription.subscriptionToken;
 
-    OneSignal.coreDirector
-      .getPushSubscriptionModel()
-      .then((pushModel) => {
-        if (isCompleteSubscriptionObject(pushModel)) {
-          pushModel;
-          this._id = pushModel.id;
-        }
-      })
-      .catch((e) => {
-        Log.error(e);
-      });
+    const pushModel = OneSignal.coreDirector.getPushSubscriptionModel();
+    if (isCompleteSubscriptionObject(pushModel)) {
+      this._id = pushModel.id;
+    }
 
     OneSignal.emitter.on(
       OneSignal.EVENTS.SUBSCRIPTION_CHANGED,

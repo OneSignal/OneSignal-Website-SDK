@@ -10,12 +10,12 @@ import Database from 'src/shared/services/Database';
 import MainHelper from '../shared/helpers/MainHelper';
 
 export default class UserDirector {
-  static async createAndSwitchToNewUser(
+  static createAndSwitchToNewUser(
     modifiyModels?: (
       identityModel: IdentityModel,
       propertiesModel: PropertiesModel,
     ) => void,
-  ): Promise<void> {
+  ): void {
     console.log('createAndSwitchToNewUser');
     const appId = MainHelper.getAppId();
 
@@ -37,7 +37,7 @@ export default class UserDirector {
     // will be automatically transferred over to this new user being created.  If there is no
     // current push subscription we do a "normal" replace which will drive adding a CreateSubscriptionOperation
     // to the queue.
-    const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushOp = OneSignal.coreDirector.getPushSubscriptionModel();
     const newPushOp = new SubscriptionModel();
 
     newPushOp.id = pushOp?.id ?? IDManager.createLocalId();

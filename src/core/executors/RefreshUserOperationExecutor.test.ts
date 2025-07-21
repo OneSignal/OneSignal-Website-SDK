@@ -176,7 +176,9 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.notification_types = NotificationType.Subscribed;
 
       subscriptionModelStore.add(pushSubModel);
-      await Database.setPushId(DUMMY_SUBSCRIPTION_ID_2);
+      await Database.setTokenAndId({
+        id: DUMMY_SUBSCRIPTION_ID_2,
+      });
 
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);

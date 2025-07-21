@@ -46,7 +46,7 @@ export default class EventHelper {
 
     const currentPushToken = await MainHelper.getCurrentPushToken();
 
-    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushModel = OneSignal.coreDirector.getPushSubscriptionModel();
     const pushSubscriptionId = pushModel?.id;
 
     const didStateChange =

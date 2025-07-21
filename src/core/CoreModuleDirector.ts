@@ -1,8 +1,7 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import MainHelper from 'src/shared/helpers/MainHelper';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
-import MainHelper from '../shared/helpers/MainHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
-import Database from '../shared/services/Database';
 import { logMethodCall } from '../shared/utils/utils';
 import CoreModule from './CoreModule';
 import { IdentityModel } from './models/IdentityModel';
@@ -102,29 +101,15 @@ export class CoreModuleDirector {
     );
   }
 
-  private async getPushSubscriptionModelByCurrentToken(): Promise<
-    SubscriptionModel | undefined
-  > {
-    logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
-    const pushToken = await MainHelper.getCurrentPushToken();
-    if (pushToken) {
-      return this.getSubscriptionOfTypeWithToken(
-        SubscriptionChannel.Push,
-        pushToken,
-      );
-    }
-    return undefined;
-  }
-
   // Browser may return a different PushToken value, use the last-known value as a fallback.
   //   - This happens if you disable notification permissions then re-enable them.
-  private async getPushSubscriptionModelByLastKnownToken(): Promise<
-    SubscriptionModel | undefined
-  > {
+  private getPushSubscriptionModelByLastKnownToken():
+    | SubscriptionModel
+    | undefined {
     logMethodCall(
       'CoreModuleDirector.getPushSubscriptionModelByLastKnownToken',
     );
-    const lastKnownPushToken = await Database.getPushToken();
+    const lastKnownPushToken = MainHelper.getLastKnownPushToken();
     if (lastKnownPushToken !== undefined) {
       return this.getSubscriptionOfTypeWithToken(
         SubscriptionChannel.Push,
@@ -138,14 +123,9 @@ export class CoreModuleDirector {
    * Gets the current push subscription model for the current browser.
    * @returns The push subscription model for the current browser, or undefined if no push subscription exists.
    */
-  public async getPushSubscriptionModel(): Promise<
-    SubscriptionModel | undefined
-  > {
+  public getPushSubscriptionModel(): SubscriptionModel | undefined {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModel');
-    return (
-      (await this.getPushSubscriptionModelByCurrentToken()) ||
-      (await this.getPushSubscriptionModelByLastKnownToken())
-    );
+    return this.getPushSubscriptionModelByLastKnownToken();
   }
 
   public getIdentityModel(): IdentityModel {
@@ -158,11 +138,11 @@ export class CoreModuleDirector {
     return this.core.propertiesModelStore.model;
   }
 
-  public async getAllSubscriptionsModels(): Promise<SubscriptionModel[]> {
+  public getAllSubscriptionsModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getAllSubscriptionsModels');
     const emailSubscriptions = this.getEmailSubscriptionModels();
     const smsSubscriptions = this.getSmsSubscriptionModels();
-    const pushSubscription = await this.getPushSubscriptionModel();
+    const pushSubscription = this.getPushSubscriptionModel();
 
     return [
       ...emailSubscriptions,

@@ -3,6 +3,7 @@ import IndexedDb from './IndexedDb';
 
 import { ICreateUserSubscription, IUserProperties } from 'src/core/types/api';
 import { ModelNameType } from 'src/core/types/models';
+import MainHelper from '../helpers/MainHelper';
 import {
   NotificationClickForOpenHandlingSchema,
   NotificationClickForOpenHandlingSerializer,
@@ -219,6 +220,13 @@ export default class Database {
   }
 
   async setAppState(appState: AppState) {
+    if (appState.lastKnownPushToken != null) {
+      MainHelper.setLastKnownPushToken(appState.lastKnownPushToken);
+      await this.put('Options', {
+        key: 'lastPushToken',
+        value: appState.lastKnownPushToken,
+      });
+    }
     if (appState.defaultNotificationUrl)
       await this.put('Options', {
         key: 'defaultUrl',
@@ -238,11 +246,6 @@ export default class Database {
       await this.put('Options', {
         key: 'lastPushId',
         value: appState.lastKnownPushId,
-      });
-    if (appState.lastKnownPushToken != null)
-      await this.put('Options', {
-        key: 'lastPushToken',
-        value: appState.lastKnownPushToken,
       });
     if (appState.lastKnownOptedIn != null)
       await this.put('Options', {
@@ -525,9 +528,6 @@ export default class Database {
   static async getPushId(): Promise<string | undefined> {
     return this.get<string>('Options', 'lastPushId');
   }
-  static async getPushToken(): Promise<string | undefined> {
-    return this.get<string>('Options', 'lastPushToken');
-  }
 
   static async setTokenAndId({
     token,
@@ -536,8 +536,10 @@ export default class Database {
     token?: string;
     id?: string;
   }): Promise<void> {
-    if (token !== undefined)
+    if (token !== undefined) {
+      MainHelper.setLastKnownPushToken(token);
       await this.put('Options', { key: 'lastPushToken', value: token });
+    }
     if (id !== undefined)
       await this.put('Options', { key: 'lastPushId', value: id });
   }

@@ -159,7 +159,7 @@ describe('SubscriptionManager', () => {
       );
 
       const updatedPushModel =
-        (await OneSignal.coreDirector.getPushSubscriptionModel())!;
+        OneSignal.coreDirector.getPushSubscriptionModel()!;
       expect(updatedPushModel.token).toBe(
         rawSubscription.w3cEndpoint?.toString(),
       );

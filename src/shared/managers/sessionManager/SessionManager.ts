@@ -82,13 +82,13 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  private async _getOneSignalAndSubscriptionIds(): Promise<{
+  private _getOneSignalAndSubscriptionIds(): {
     onesignalId: string;
     subscriptionId: string;
-  }> {
+  } {
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     const pushSubscriptionModel =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
+      OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (!identityModel || !identityModel.onesignalId) {
       throw new OneSignalError(
@@ -121,7 +121,7 @@ export class SessionManager implements ISessionManager {
     try {
       const visibilityState = document.visibilityState;
       const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
+        this._getOneSignalAndSubscriptionIds();
 
       if (visibilityState === 'visible') {
         this.setupOnFocusAndOnBlurForSession();
@@ -183,7 +183,7 @@ export class SessionManager implements ISessionManager {
       // don't have much time on before unload
       // have to skip adding device record to the payload
       const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
+        this._getOneSignalAndSubscriptionIds();
       const payload: UpsertOrDeactivateSessionPayload = {
         appId: this.context.appConfig.appId,
         onesignalId,
@@ -224,7 +224,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
+        this._getOneSignalAndSubscriptionIds();
       await this.notifySWToUpsertSession(
         onesignalId,
         subscriptionId,
@@ -254,7 +254,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
+        this._getOneSignalAndSubscriptionIds();
       await this.notifySWToDeactivateSession(
         onesignalId,
         subscriptionId,
@@ -270,7 +270,7 @@ export class SessionManager implements ISessionManager {
 
     if (User.singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
+        this._getOneSignalAndSubscriptionIds();
       await this.notifySWToUpsertSession(
         onesignalId,
         subscriptionId,
@@ -364,8 +364,7 @@ export class SessionManager implements ISessionManager {
       return;
     }
 
-    const pushSubscription =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushSubscription = OneSignal.coreDirector.getPushSubscriptionModel();
     if (
       pushSubscription?.notification_types !== NotificationType.Subscribed &&
       OneSignal.config?.enableOnSession !== true

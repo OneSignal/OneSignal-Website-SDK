@@ -169,10 +169,10 @@ export class SubscriptionManager {
     return rawPushSubscription;
   }
 
-  private async _updatePushSubscriptionModelWithRawSubscription(
+  private _updatePushSubscriptionModelWithRawSubscription(
     rawPushSubscription: RawPushSubscription,
   ) {
-    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushModel = OneSignal.coreDirector.getPushSubscriptionModel();
 
     // EventHelper checkAndTriggerSubscriptionChanged is called before this function when permission is granted and so
     // it will save the push token/id to the database so we don't need to save the token afer generating
@@ -219,10 +219,10 @@ export class SubscriptionManager {
     return NotificationType.NoNativePermission;
   }
 
-  async updatePushSubscriptionNotificationTypes(
+  updatePushSubscriptionNotificationTypes(
     notificationTypes: NotificationTypeValue,
-  ): Promise<void> {
-    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+  ) {
+    const pushModel = OneSignal.coreDirector.getPushSubscriptionModel();
     if (!pushModel) {
       Log.info('No Push Subscription yet to update notification_types.');
       return;
@@ -820,7 +820,7 @@ export class SubscriptionManager {
     const { optedOut, subscriptionToken } = await Database.getSubscription();
 
     const pushSubscriptionModel =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
+      OneSignal.coreDirector.getPushSubscriptionModel();
     const isValidPushSubscription = isCompleteSubscriptionObject(
       pushSubscriptionModel,
     );
