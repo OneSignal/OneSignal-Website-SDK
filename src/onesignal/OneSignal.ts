@@ -38,6 +38,11 @@ export default class OneSignal {
   static EVENTS = ONESIGNAL_EVENTS;
 
   private static async _initializeCoreModuleAndOSNamespaces() {
+    const lastKnownPushToken = await Database.getPushToken();
+    if (lastKnownPushToken) {
+      MainHelper.setLastKnownPushToken(lastKnownPushToken);
+    }
+
     const core = new CoreModule();
     await core.init();
     OneSignal.coreDirector = new CoreModuleDirector(core);

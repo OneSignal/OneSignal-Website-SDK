@@ -528,6 +528,9 @@ export default class Database {
   static async getPushId(): Promise<string | undefined> {
     return this.get<string>('Options', 'lastPushId');
   }
+  static async getPushToken(): Promise<string | undefined> {
+    return this.get<string>('Options', 'lastPushToken');
+  }
 
   static async setTokenAndId({
     token,

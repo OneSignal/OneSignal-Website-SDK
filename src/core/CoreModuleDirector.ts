@@ -110,6 +110,7 @@ export class CoreModuleDirector {
       'CoreModuleDirector.getPushSubscriptionModelByLastKnownToken',
     );
     const lastKnownPushToken = MainHelper.getLastKnownPushToken();
+    console.trace('lastKnownPushToken', lastKnownPushToken);
     if (lastKnownPushToken !== undefined) {
       return this.getSubscriptionOfTypeWithToken(
         SubscriptionChannel.Push,
