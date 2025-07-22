@@ -37,6 +37,7 @@ import { bowserCastle } from '../utils/bowserCastle';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { executeCallback, logMethodCall } from '../utils/utils';
+import { IDManager } from './IDManager';
 import SdkEnvironment from './SdkEnvironment';
 export const DEFAULT_DEVICE_ID = '99999999-9999-9999-9999-999999999999';
 
@@ -185,7 +186,11 @@ export class SubscriptionManager {
         OneSignal.coreDirector.generatePushSubscriptionModel(
           rawPushSubscription,
         );
-      return await UserDirector.createUserOnServer();
+      return UserDirector.createUserOnServer();
+    }
+    // for users with data failed to create a user or user+subscriptipn on the server
+    if (IDManager.isLocalId(pushModel.id)) {
+      return UserDirector.createUserOnServer();
     }
 
     // in case of notifcation state changes, we need to update its web_auth, web_p256, and other keys

@@ -86,7 +86,6 @@ export class SessionManager implements ISessionManager {
     onesignalId: string;
     subscriptionId: string;
   }> {
-    console.trace('_getOneSignalAndSubscriptionIds');
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     const pushSubscriptionModel =
       await OneSignal.coreDirector.getPushSubscriptionModel();
