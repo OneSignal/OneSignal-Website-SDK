@@ -1,4 +1,5 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import { IDManager } from 'src/shared/managers/IDManager';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
@@ -43,7 +44,7 @@ export class CoreModuleDirector {
 
   public generatePushSubscriptionModel(
     rawPushSubscription: RawPushSubscription,
-  ): void {
+  ): SubscriptionModel {
     logMethodCall('CoreModuleDirector.generatePushSubscriptionModel', {
       rawPushSubscription,
     });
@@ -51,9 +52,12 @@ export class CoreModuleDirector {
     model.initializeFromJson(
       new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
     );
+    model.id = IDManager.createLocalId();
+    Database.setPushId(model.id);
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
-    this.core.subscriptionModelStore.add(model, ModelChangeTags.NO_PROPOGATE);
+    this.core.subscriptionModelStore.add(model, ModelChangeTags.HYDRATE);
+    return model;
   }
 
   public addSubscriptionModel(model: SubscriptionModel): void {
