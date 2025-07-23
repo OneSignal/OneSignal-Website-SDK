@@ -52,11 +52,6 @@ export default class UserDirector {
     }
   }
 
-  static async initializeUser() {
-    if (OneSignal.coreDirector.getIdentityModel().onesignalId) return;
-    await UserDirector.createUserOnServer();
-  }
-
   // Resets models similar to Android SDK
   // https://github.com/OneSignal/OneSignal-Android-SDK/blob/ed2e87618ea3af81b75f97b0a4cbb8f658c7fc80/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/internal/OneSignalImp.kt#L448
   static resetUserModels() {
