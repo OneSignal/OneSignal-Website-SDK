@@ -4,6 +4,7 @@ import {
   SubscriptionType,
   SubscriptionTypeValue,
 } from 'src/core/types/subscription';
+import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   InvalidArgumentError,
@@ -122,13 +123,13 @@ export default class User {
     this.updateIdentityModel(newAliases);
   }
 
-  private addSubscriptionToModels({
+  private async addSubscriptionToModels({
     type,
     token,
   }: {
     type: SubscriptionTypeValue;
     token: string;
-  }): void {
+  }): Promise<void> {
     const hasSubscription = OneSignal.coreDirector.subscriptionModelStore
       .list()
       .find((model) => model.token === token && model.type === type);
@@ -148,7 +149,20 @@ export default class User {
     OneSignal.coreDirector.addSubscriptionModel(newSubscription);
   }
 
+  /**
+   * Temporary fix, for now we expect the user to call login before adding an email/sms subscription
+   */
+  private validateUserExists(): boolean {
+    const hasOneSignalId =
+      !!OneSignal.coreDirector.getIdentityModel().onesignalId;
+    if (!hasOneSignalId) {
+      Log.error('Call login before adding an email/sms subscription');
+    }
+    return hasOneSignalId;
+  }
+
   public async addEmail(email: string): Promise<void> {
+    if (!this.validateUserExists()) return;
     logMethodCall('addEmail', { email });
 
     this.validateStringLabel(email, 'email');
@@ -163,6 +177,7 @@ export default class User {
   }
 
   public async addSms(sms: string): Promise<void> {
+    if (!this.validateUserExists()) return;
     logMethodCall('addSms', { sms });
 
     this.validateStringLabel(sms, 'sms');

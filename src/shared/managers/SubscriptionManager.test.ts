@@ -101,7 +101,7 @@ describe('SubscriptionManager', () => {
       });
     });
 
-    test('should create user if push subscription model does not have an id', async () => {
+    test('should create user if push subscription model has a local id', async () => {
       const generatePushSubscriptionModelSpy = vi.spyOn(
         OneSignal.coreDirector,
         'generatePushSubscriptionModel',
@@ -123,7 +123,7 @@ describe('SubscriptionManager', () => {
       identityModel.externalId = 'some-external-id';
 
       await setupSubModelStore({
-        id: '',
+        id: IDManager.createLocalId(),
         token: rawSubscription.w3cEndpoint?.toString(),
         onesignalId: identityModel.onesignalId,
       });

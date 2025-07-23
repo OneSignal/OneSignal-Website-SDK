@@ -24,8 +24,7 @@ export default class UserDirector {
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
     if (pushOp) {
-      pushOp.id = pushOp.id ?? IDManager.createLocalId();
-      const { id, ...rest } = pushOp.toJSON();
+      const subData = pushOp.toJSON();
 
       OneSignal.coreDirector.operationRepo.enqueue(
         new LoginUserOperation(
@@ -36,10 +35,10 @@ export default class UserDirector {
       );
       await OneSignal.coreDirector.operationRepo.enqueueAndWait(
         new CreateSubscriptionOperation({
-          ...rest,
+          ...subData,
           appId,
           onesignalId: identityModel.onesignalId,
-          subscriptionId: id,
+          subscriptionId: pushOp.id!,
         }),
       );
     } else {
@@ -51,6 +50,11 @@ export default class UserDirector {
         ),
       );
     }
+  }
+
+  static async initializeUser() {
+    if (OneSignal.coreDirector.getIdentityModel().onesignalId) return;
+    await UserDirector.createUserOnServer();
   }
 
   // Resets models similar to Android SDK

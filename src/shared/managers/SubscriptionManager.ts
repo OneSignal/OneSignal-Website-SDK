@@ -2,8 +2,9 @@ import {
   NotificationType,
   NotificationTypeValue,
 } from 'src/core/types/subscription';
+import UserDirector from 'src/onesignal/UserDirector';
+import LoginManager from 'src/page/managers/LoginManager';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
-import UserDirector from '../../onesignal/UserDirector';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import {
   InvalidStateError,
@@ -36,6 +37,7 @@ import { bowserCastle } from '../utils/bowserCastle';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { executeCallback, logMethodCall } from '../utils/utils';
+import { IDManager } from './IDManager';
 import SdkEnvironment from './SdkEnvironment';
 export const DEFAULT_DEVICE_ID = '99999999-9999-9999-9999-999999999999';
 
@@ -170,30 +172,37 @@ export class SubscriptionManager {
     return rawPushSubscription;
   }
 
-  private async _updatePushSubscriptionModelWithRawSubscription(
+  public async _updatePushSubscriptionModelWithRawSubscription(
     rawPushSubscription: RawPushSubscription,
   ) {
-    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
-    // EventHelper checkAndTriggerSubscriptionChanged is called before this function when permission is granted and so
-    // it will save the push token/id to the database so we don't need to save the token afer generating
+    // incase a login op was called before user accepts the notifcations permissions, we need to wait for it to finish
+    // otherwise there would be two login ops in the same bucket for LoginOperationExecutor which would error
+    await LoginManager.switchingUsersPromise;
+
+    let pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    // for new users, we need to create a new push subscription model and also save its push id to IndexedDB
     if (!pushModel) {
-      OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
-      return UserDirector.createUserOnServer();
-
-      // Bug w/ v160400 release where isCreatingUser was improperly set and never reset
-      // so a check if pushModel id is needed to recreate the user
-    }
-    if (!pushModel.id) {
+      pushModel =
+        OneSignal.coreDirector.generatePushSubscriptionModel(
+          rawPushSubscription,
+        );
       return UserDirector.createUserOnServer();
     }
+    // for users with data failed to create a user or user + subscription on the server
+    if (IDManager.isLocalId(pushModel.id)) {
+      return UserDirector.createUserOnServer();
+    }
 
-    // resubscribing. update existing push subscription model
+    // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
     const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
       rawPushSubscription,
     ).serialize();
     for (const key in serializedSubscriptionRecord) {
       const modelKey = key as keyof typeof serializedSubscriptionRecord;
-      pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
+      // Add defensive check to ensure pushModel is still valid
+      if (pushModel && typeof pushModel.setProperty === 'function') {
+        pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
+      }
     }
   }
 

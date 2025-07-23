@@ -185,6 +185,9 @@ describe('UserNamespace', () => {
     };
 
     test('can add an email subscription', async () => {
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      identityModel.onesignalId = IDManager.createLocalId();
+
       const email = 'test@example.com';
       const addSubscriptionSpy = vi.spyOn(
         OneSignal.coreDirector,
@@ -200,6 +203,9 @@ describe('UserNamespace', () => {
     });
 
     test('should remove an email subscription', async () => {
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      identityModel.onesignalId = IDManager.createLocalId();
+
       const email = 'test@example.com';
 
       // First add the email
@@ -228,6 +234,9 @@ describe('UserNamespace', () => {
     };
 
     test('should add an SMS subscription', async () => {
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      identityModel.onesignalId = IDManager.createLocalId();
+
       const smsNumber = '+15551234567';
       const addSubscriptionSpy = vi.spyOn(
         OneSignal.coreDirector,
@@ -244,6 +253,9 @@ describe('UserNamespace', () => {
 
     test('should remove an SMS subscription', async () => {
       const smsNumber = '+15551234567';
+
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      identityModel.onesignalId = IDManager.createLocalId();
 
       // First add the SMS
       await userNamespace.addSms(smsNumber);
