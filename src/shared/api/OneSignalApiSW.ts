@@ -2,10 +2,9 @@ import type { IUpdateUser } from 'src/core/types/api';
 import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
-import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
-import type { ServerAppConfig } from '../config';
+import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import Utils from '../context/Utils';
+import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
@@ -111,7 +110,7 @@ export class OneSignalApiSW {
       notification_ids: attribution.notificationIds,
       subscription: {
         id: subscriptionId,
-        type: FuturePushSubscriptionRecord.getSubscriptionType(),
+        type: Environment.getSubscriptionType(),
       },
       onesignal_id: onesignalId,
     };

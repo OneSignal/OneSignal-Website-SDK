@@ -8,6 +8,7 @@ import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
+import { TrackEventOperation } from '../operations/TrackEventOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ModelName } from '../types/models';
@@ -65,6 +66,9 @@ export class OperationModelStore extends ModelStore<Operation> {
         break;
       case OPERATION_NAME.SET_PROPERTY:
         operation = new SetPropertyOperation();
+        break;
+      case OPERATION_NAME.CUSTOM_EVENT:
+        operation = new TrackEventOperation();
         break;
       default:
         throw new Error(`Unrecognized operation: ${operationName}`);

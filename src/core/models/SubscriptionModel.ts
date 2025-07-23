@@ -1,5 +1,5 @@
-import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
-import type { ISubscription } from '../types/api';
+import Environment from 'src/shared/helpers/Environment';
+import { ISubscription } from '../types/api';
 import {
   type NotificationTypeValue,
   type SubscriptionTypeValue,
@@ -27,9 +27,9 @@ type ISubscriptionModel = Pick<
 export class SubscriptionModel extends Model<ISubscriptionModel> {
   constructor() {
     super();
-    this.sdk = FuturePushSubscriptionRecord.getSdk();
-    this.device_model = FuturePushSubscriptionRecord.getDeviceModel();
-    this.device_os = FuturePushSubscriptionRecord.getDeviceOS();
+    this.sdk = Environment.version();
+    this.device_model = Environment.getDeviceModel();
+    this.device_os = Environment.getDeviceOS();
   }
 
   /**
@@ -96,10 +96,10 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
     this.setProperty('device_model', value);
   }
 
-  get device_os(): string | number | undefined {
+  get device_os(): number | undefined {
     return this.getProperty('device_os');
   }
-  set device_os(value: string | number | undefined) {
+  set device_os(value: number | undefined) {
     this.setProperty('device_os', value);
   }
 

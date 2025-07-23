@@ -323,3 +323,16 @@ export function getTimeZoneId() {
 export function isObject(value: unknown) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
+
+/**
+ * Returns true if the value is a JSON-serializable object.
+ */
+export function isObjectSerializable(value: unknown): boolean {
+  if (!isObject(value)) return false;
+  try {
+    JSON.stringify(value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}

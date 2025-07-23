@@ -325,3 +325,16 @@ export const setUpdateUserError = ({
     status,
     retryAfter,
   });
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// custom events
+const getCustomEventsUri = () =>
+  `**/apps/${APP_ID}/integrations/sdk/custom_events`;
+export const sendCustomEventFn = vi.fn();
+export const setSendCustomEventResponse = () =>
+  getHandler({
+    uri: getCustomEventsUri(),
+    method: 'post',
+    status: 200,
+    callback: sendCustomEventFn,
+  });

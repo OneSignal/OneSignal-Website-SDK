@@ -19,6 +19,7 @@ import {
   getUserFn,
   mockPageStylesCss,
   mockServerConfig,
+  sendCustomEventFn,
   setAddAliasError,
   setAddAliasResponse,
   setCreateSubscriptionResponse,
@@ -26,6 +27,7 @@ import {
   setDeleteAliasResponse,
   setDeleteSubscriptionResponse,
   setGetUserResponse,
+  setSendCustomEventResponse,
   setTransferSubscriptionResponse,
   setUpdateUserResponse,
   transferSubscriptionFn,
@@ -931,6 +933,40 @@ describe('OneSignal', () => {
             type: 'ChromePush',
           },
         ]);
+      });
+    });
+  });
+
+  describe('Custom Events', () => {
+    test('can send a custom event', async () => {
+      setSendCustomEventResponse();
+
+      const name = 'test_event';
+      const properties = {
+        test_property: 'test_value',
+      };
+
+      window.OneSignal.User.trackEvent(name, properties);
+
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1);
+
+      expect(sendCustomEventFn).toHaveBeenCalledWith({
+        events: [
+          {
+            name,
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+            payload: {
+              os_sdk: {
+                sdk: '1',
+                device_model: '',
+                device_os: 56,
+                type: 'ChromePush',
+              },
+              test_property: 'test_value',
+            },
+            timestamp: expect.any(String),
+          },
+        ],
       });
     });
   });
