@@ -631,10 +631,11 @@ describe('OneSignal', () => {
             },
           });
 
-          const dbSubscriptions = (await Database.get(
-            'subscriptions',
-          )) as any[];
-          expect(dbSubscriptions).toHaveLength(3);
+          let dbSubscriptions: SubscriptionItem[] = [];
+          await vi.waitUntil(async () => {
+            dbSubscriptions = await Database.get('subscriptions');
+            return dbSubscriptions.length === 3;
+          });
 
           const emailSubscriptions = dbSubscriptions.filter(
             (s) => s.type === 'Email',
