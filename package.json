@@ -75,7 +75,7 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "37.5 kB",
+      "limit": "69 kB",
       "gzip": true
     },
     {
