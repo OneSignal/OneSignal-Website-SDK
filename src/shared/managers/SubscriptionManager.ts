@@ -199,10 +199,7 @@ export class SubscriptionManager {
     ).serialize();
     for (const key in serializedSubscriptionRecord) {
       const modelKey = key as keyof typeof serializedSubscriptionRecord;
-      // Add defensive check to ensure pushModel is still valid
-      if (pushModel && typeof pushModel.setProperty === 'function') {
-        pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
-      }
+      pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
     }
   }
 
