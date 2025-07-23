@@ -188,12 +188,12 @@ export class SubscriptionManager {
         );
       return UserDirector.createUserOnServer();
     }
-    // for users with data failed to create a user or user+subscriptipn on the server
+    // for users with data failed to create a user or user + subscription on the server
     if (IDManager.isLocalId(pushModel.id)) {
       return UserDirector.createUserOnServer();
     }
 
-    // in case of notifcation state changes, we need to update its web_auth, web_p256, and other keys
+    // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
     const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
       rawPushSubscription,
     ).serialize();
