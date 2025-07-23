@@ -1,8 +1,10 @@
+import type {
+  NotificationTypeValue,
+  SubscriptionTypeValue,
+} from 'src/core/types/subscription';
 import {
   NotificationType,
-  NotificationTypeValue,
   SubscriptionType,
-  SubscriptionTypeValue,
 } from 'src/core/types/subscription';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { VERSION } from 'src/shared/utils/EnvVariables';
@@ -10,7 +12,7 @@ import Environment from '../../shared/helpers/Environment';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
-import { Serializable } from '../models/Serializable';
+import type { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
   readonly type: SubscriptionTypeValue;
