@@ -64,6 +64,7 @@ export interface ModelItem {
 
 export interface SubscriptionItem extends ModelItem, ICreateUserSubscription {
   id: string;
+  onesignalId: string;
 }
 export interface IdentityItem extends ModelItem {
   onesignalId: string;
