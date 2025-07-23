@@ -1,6 +1,5 @@
 // Implements logic similar to Android SDK's ModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/ModelStore.kt
-import type { IEventNotifier } from 'src/core/types/events';
 import {
   type DatabaseModel,
   type IModelStore,

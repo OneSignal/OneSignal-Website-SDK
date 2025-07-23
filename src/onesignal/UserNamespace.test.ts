@@ -2,13 +2,15 @@ import {
   DUMMY_ONESIGNAL_ID,
   DUMMY_PUSH_TOKEN,
 } from '__test__/support/constants';
+import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { TestEnvironment } from '../../__test__/support/environment/TestEnvironment';
 import UserChangeEvent from '../page/models/UserChangeEvent';
 import { Subscription } from '../shared/models/Subscription';
+import User from './User';
 import UserNamespace from './UserNamespace';
 
-vi.mock('../shared/libraries/Log');
+const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 
 describe('UserNamespace', () => {
   let userNamespace: UserNamespace;
@@ -425,6 +427,34 @@ describe('UserNamespace', () => {
       const customNamespace = new UserNamespace(true, subscription, permission);
 
       expect(customNamespace.PushSubscription).toBeDefined();
+    });
+  });
+
+  describe('Custom Events', () => {
+    test('should call track event', () => {
+      const trackEventSpy = vi.spyOn(User.prototype, 'trackEvent');
+      const name = 'test_event';
+      const properties = {
+        test_property: 'test_value',
+      };
+
+      // should validate properties
+      // @ts-expect-error - mock invalid argument
+      userNamespace.trackEvent(name, 123);
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Custom event properties must be a JSON-serializable object',
+      );
+
+      // big ints can't be serialized
+      userNamespace.trackEvent(name, {
+        data: 10n,
+      });
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Custom event properties must be a JSON-serializable object',
+      );
+
+      userNamespace.trackEvent(name, properties);
+      expect(trackEventSpy).toHaveBeenCalledWith(name, properties);
     });
   });
 });

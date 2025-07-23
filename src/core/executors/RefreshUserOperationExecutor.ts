@@ -106,9 +106,9 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         model.type = sub.type;
         model.enabled =
           model.notification_types !== NotificationType.UserOptedOut;
-        model.sdk = sub.sdk ?? '';
-        model.device_os = sub.device_os ?? '';
-        model.device_model = sub.device_model ?? '';
+        model.sdk = sub.sdk;
+        model.device_os = sub.device_os;
+        model.device_model = sub.device_model;
         model.onesignalId = op.onesignalId;
 
         // We only add a non-push subscriptions. For push, the device is the source of truth

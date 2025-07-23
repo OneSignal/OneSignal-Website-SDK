@@ -15,6 +15,9 @@ export const OPERATION_NAME = {
   UPDATE_SUBSCRIPTION: 'update-subscription',
   DELETE_SUBSCRIPTION: 'delete-subscription',
   TRANSFER_SUBSCRIPTION: 'transfer-subscription',
+
+  // Custom Events Operations
+  CUSTOM_EVENT: 'custom-event',
 } as const;
 
 export const IdentityConstants = {

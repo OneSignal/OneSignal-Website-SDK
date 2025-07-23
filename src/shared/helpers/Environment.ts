@@ -1,8 +1,15 @@
+import {
+  SubscriptionType,
+  SubscriptionTypeValue,
+} from 'src/core/types/subscription';
+import { EnvironmentInfoHelper } from 'src/page/helpers/EnvironmentInfoHelper';
 import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
 import SdkEnvironment from '../managers/SdkEnvironment';
+import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { bowserCastle } from '../utils/bowserCastle';
 import { VERSION } from '../utils/EnvVariables';
+import OneSignalUtils from '../utils/OneSignalUtils';
 
 export default class Environment {
   /**
@@ -30,6 +37,49 @@ export default class Environment {
 
   public static version() {
     return VERSION;
+  }
+
+  public static getDeviceOS(): number {
+    const environment = EnvironmentInfoHelper.getEnvironmentInfo();
+    return isNaN(environment.browserVersion) ? -1 : environment.browserVersion;
+  }
+
+  public static getDeviceModel(): string {
+    return navigator.platform;
+  }
+
+  /**
+   * Get the User Model Subscription type based on browser detection.
+   */
+  public static getSubscriptionType(): SubscriptionTypeValue {
+    const browser = OneSignalUtils.redetectBrowserUserAgent();
+    if (browser.firefox) {
+      return SubscriptionType.FirefoxPush;
+    }
+    if (Environment.useSafariVapidPush()) {
+      return SubscriptionType.SafariPush;
+    }
+    if (Environment.useSafariLegacyPush()) {
+      return SubscriptionType.SafariLegacyPush;
+    }
+    // Other browsers, like Edge, are Chromium based so we consider them "Chrome".
+    return SubscriptionType.ChromePush;
+  }
+
+  /**
+   * Get the legacy player.device_type
+   * NOTE: Use getSubscriptionType() instead when possible.
+   */
+  public static getDeviceType(): DeliveryPlatformKind {
+    switch (this.getSubscriptionType()) {
+      case SubscriptionType.FirefoxPush:
+        return DeliveryPlatformKind.Firefox;
+      case SubscriptionType.SafariLegacyPush:
+        return DeliveryPlatformKind.SafariLegacy;
+      case SubscriptionType.SafariPush:
+        return DeliveryPlatformKind.SafariVapid;
+    }
+    return DeliveryPlatformKind.ChromeLike;
   }
 
   public static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {

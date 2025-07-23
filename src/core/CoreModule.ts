@@ -1,4 +1,6 @@
 import { logMethodCall } from 'src/shared/utils/utils';
+import { CustomEventController } from './controllers/CustomEventController';
+import { CustomEventsOperationExecutor } from './executors/CustomEventOperationExecutor';
 import { IdentityOperationExecutor } from './executors/IdentityOperationExecutor';
 import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecutor';
 import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
@@ -26,6 +28,7 @@ export default class CoreModule {
   public subscriptionModelStore: SubscriptionModelStore;
   public identityModelStore: IdentityModelStore;
   public propertiesModelStore: PropertiesModelStore;
+  public customEventController: CustomEventController;
 
   private initPromise: Promise<void>;
 
@@ -54,6 +57,11 @@ export default class CoreModule {
       this.operationModelStore,
       this.newRecordsState,
     );
+    this.customEventController = new CustomEventController(
+      this.identityModelStore,
+      this.operationRepo,
+    );
+
     this.listeners = this.initializeListeners();
     this.initPromise = this.operationRepo.start();
   }
@@ -112,6 +120,7 @@ export default class CoreModule {
       this.rebuildUserService,
       this.newRecordsState,
     );
+    const customEventOpExecutor = new CustomEventsOperationExecutor();
 
     return [
       identityOpExecutor,
@@ -119,6 +128,7 @@ export default class CoreModule {
       refreshOpExecutor,
       subscriptionOpExecutor,
       updateSubOpExecutor,
+      customEventOpExecutor,
     ];
   }
 }

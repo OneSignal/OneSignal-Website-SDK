@@ -99,6 +99,10 @@ export default class UserNamespace extends EventListenerBase {
     return this._currentUser?.getLanguage() || '';
   }
 
+  public trackEvent(name: string, properties?: Record<string, unknown>) {
+    return this._currentUser?.trackEvent(name, properties);
+  }
+
   addEventListener(
     event: 'change',
     listener: (userChange: UserChangeEvent) => void,

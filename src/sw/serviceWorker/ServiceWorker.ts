@@ -10,7 +10,6 @@ import {
   type WorkerMessengerMessage,
 } from '../../../src/shared/libraries/WorkerMessenger';
 import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import { Utils } from '../../shared/context/Utils';
 import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
@@ -378,7 +377,7 @@ export class ServiceWorker {
     const postData = {
       player_id: pushSubscriptionId,
       app_id: appId,
-      device_type: FuturePushSubscriptionRecord.getDeviceType(),
+      device_type: Environment.getDeviceType(),
     };
 
     Log.debug(
@@ -819,7 +818,7 @@ export class ServiceWorker {
     const notificationOpensLink: boolean =
       ServiceWorker.shouldOpenNotificationUrl(launchUrl);
     const appId = await ServiceWorker.getAppId();
-    const deviceType = FuturePushSubscriptionRecord.getDeviceType();
+    const deviceType = Environment.getDeviceType();
 
     const notificationClickEvent: NotificationClickEventInternal = {
       notification: osNotification,
@@ -1071,7 +1070,7 @@ export class ServiceWorker {
         // We don't have the device ID stored, but we can look it up from our old subscription
         deviceId = await OneSignalApiSW.getUserIdFromSubscriptionIdentifier(
           appId,
-          FuturePushSubscriptionRecord.getDeviceType(),
+          Environment.getDeviceType(),
           event.oldSubscription.endpoint,
         );
 
