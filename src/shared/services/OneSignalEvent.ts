@@ -1,5 +1,5 @@
 import Utils from '../context/Utils';
-import Environment from '../helpers/Environment';
+import Environment from '../helpers/EnvironmentHelper';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';

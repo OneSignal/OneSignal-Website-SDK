@@ -1,4 +1,4 @@
-import Environment from '../../shared/helpers/Environment';
+import Environment from '../../shared/helpers/EnvironmentHelper';
 import ContextSW from '../../shared/models/ContextSW';
 import Database from '../../shared/services/Database';
 

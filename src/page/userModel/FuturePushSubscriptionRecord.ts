@@ -8,7 +8,7 @@ import {
 } from 'src/core/types/subscription';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { VERSION } from 'src/shared/utils/EnvVariables';
-import Environment from '../../shared/helpers/Environment';
+import Environment from '../../shared/helpers/EnvironmentHelper';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';

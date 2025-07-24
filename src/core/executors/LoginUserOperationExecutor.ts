@@ -4,7 +4,7 @@ import {
   type IOperationExecutor,
 } from 'src/core/types/operation';
 import OneSignalError from 'src/shared/errors/OneSignalError';
-import Environment from 'src/shared/helpers/Environment';
+import Environment from 'src/shared/helpers/EnvironmentHelper';
 import EventHelper from 'src/shared/helpers/EventHelper';
 import {
   getResponseStatusType,

@@ -1,6 +1,6 @@
 import bowser, { IBowser } from 'bowser';
 import { Utils } from '../context/Utils';
-import Environment from '../helpers/Environment';
+import Environment from '../helpers/EnvironmentHelper';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';
 

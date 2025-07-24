@@ -17,7 +17,7 @@ export type InvalidArgumentReasonValue =
 
 export class InvalidArgumentError extends OneSignalError {
   argument: string;
-  reason: string;
+  reason: keyof typeof InvalidArgumentReason;
 
   constructor(
     argName: string,
@@ -25,7 +25,7 @@ export class InvalidArgumentError extends OneSignalError {
     message = '',
   ) {
     let errorMessage;
-    switch (reason) {
+    switch (_reason) {
       case InvalidArgumentReason.Empty:
         errorMessage = `Supply a non-empty value to '${argName}'.`;
         break;

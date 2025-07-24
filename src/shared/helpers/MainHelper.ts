@@ -22,7 +22,7 @@ import {
 import Database from '../services/Database';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
-import Environment from './Environment';
+import Environment from './EnvironmentHelper';
 
 export default class MainHelper {
   static async showLocalNotification(

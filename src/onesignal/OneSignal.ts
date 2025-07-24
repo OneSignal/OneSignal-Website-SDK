@@ -14,7 +14,7 @@ import {
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
 import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
-import Environment from '../shared/helpers/Environment';
+import Environment from '../shared/helpers/EnvironmentHelper';
 import EventHelper from '../shared/helpers/EventHelper';
 import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';

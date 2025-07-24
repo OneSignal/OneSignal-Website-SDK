@@ -3,7 +3,7 @@ import { generateNewSubscription } from '__test__/support/helpers/core';
 import { nock } from '__test__/support/helpers/general';
 import AliasPair from '../../../src/core/requestService/AliasPair';
 import { RequestService } from '../../../src/core/requestService/RequestService';
-import Environment from '../../../src/shared/helpers/Environment';
+import Environment from '../../../src/shared/helpers/EnvironmentHelper';
 import {
   APP_ID,
   DUMMY_EXTERNAL_ID,

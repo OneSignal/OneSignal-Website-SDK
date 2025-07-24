@@ -4,6 +4,7 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { bowserCastle } from '../utils/bowserCastle';
 import { VERSION } from '../utils/EnvVariables';
 
+// Legacy class, should be removed
 export default class Environment {
   /**
    * True if not in a service worker environment.

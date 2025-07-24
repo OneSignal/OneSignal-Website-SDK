@@ -10,7 +10,7 @@ import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { once, triggerNotificationPermissionChanged } from '../utils/utils';
-import Environment from './Environment';
+import Environment from './EnvironmentHelper';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 

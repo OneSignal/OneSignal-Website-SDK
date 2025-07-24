@@ -2,7 +2,7 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
-import Environment from '../helpers/Environment';
+import Environment from '../helpers/EnvironmentHelper';
 import { EnvironmentKind } from '../models/EnvironmentKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import {
@@ -22,6 +22,7 @@ const TURBINE_ENDPOINTS = ['outcomes', 'on_focus'];
 
 declare let self: ServiceWorkerGlobalScope | undefined;
 
+// TODO: remove this file
 export default class SdkEnvironment {
   static getOrigin(): string {
     if (Environment.isBrowser()) {

@@ -3,7 +3,7 @@ import {
   OneSignalApiErrorKind,
 } from '../errors/OneSignalApiError';
 import OneSignalError from '../errors/OneSignalError';
-import Environment from '../helpers/Environment';
+import Environment from '../helpers/EnvironmentHelper';
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import type { APIHeaders } from '../models/APIHeaders';

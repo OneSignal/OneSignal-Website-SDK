@@ -19,7 +19,11 @@ import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationE
 import SubscriptionError, {
   SubscriptionErrorReason,
 } from '../errors/SubscriptionError';
-import Environment from '../helpers/Environment';
+import {
+  getOneSignalApiUrl,
+  isSafariLegacyPush,
+  isServiceWorkerEnv,
+} from '../helpers/Environment';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
@@ -44,7 +48,6 @@ import { base64ToUint8Array } from '../utils/Encoding';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { executeCallback, logMethodCall } from '../utils/utils';
 import { IDManager } from './IDManager';
-import SdkEnvironment from './SdkEnvironment';
 export const DEFAULT_DEVICE_ID = '99999999-9999-9999-9999-999999999999';
 
 export interface SubscriptionManagerConfig {
@@ -121,58 +124,51 @@ export class SubscriptionManager {
   public async subscribe(
     subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
-    const env = SdkEnvironment.getWindowEnv();
-
     let rawPushSubscription: RawPushSubscription;
 
-    switch (env) {
-      case WindowEnvironmentKind.ServiceWorker:
-        rawPushSubscription =
-          await this.subscribeFcmFromWorker(subscriptionStrategy);
-        break;
-      case WindowEnvironmentKind.Host:
-        /*
-          Check our notification permission before subscribing.
+    if (isServiceWorkerEnv) {
+      rawPushSubscription =
+        await this.subscribeFcmFromWorker(subscriptionStrategy);
+    } else {
+      /*
+        Check our notification permission before subscribing.
 
-          - If notifications are blocked, we can't subscribe.
-          - If notifications are granted, the user should be completely resubscribed.
-          - If notifications permissions are untouched, the user will be prompted and then
-            subscribed.
+        - If notifications are blocked, we can't subscribe.
+        - If notifications are granted, the user should be completely resubscribed.
+        - If notifications permissions are untouched, the user will be prompted and then
+          subscribed.
 
-          Subscribing is only possible on the top-level frame, so there's no permission ambiguity
-          here.
-        */
-        if (
-          (await OneSignal.context.permissionManager.getPermissionStatus()) ===
-          NotificationPermission.Denied
-        )
-          throw new PushPermissionNotGrantedError(
-            PushPermissionNotGrantedErrorReason.Blocked,
-          );
+        Subscribing is only possible on the top-level frame, so there's no permission ambiguity
+        here.
+      */
+      if (
+        (await OneSignal.context.permissionManager.getPermissionStatus()) ===
+        NotificationPermission.Denied
+      )
+        throw new PushPermissionNotGrantedError(
+          PushPermissionNotGrantedErrorReason.Blocked,
+        );
 
-        if (Environment.useSafariLegacyPush()) {
-          rawPushSubscription = await this.subscribeSafari();
-          await this._updatePushSubscriptionModelWithRawSubscription(
-            rawPushSubscription,
-          );
-          /* Now that permissions have been granted, install the service worker */
-          Log.info('Installing SW on Safari');
-          try {
-            await this.context.serviceWorkerManager.installWorker();
-            Log.info('SW on Safari successfully installed');
-          } catch (e) {
-            Log.error('SW on Safari failed to install.');
-          }
-        } else {
-          rawPushSubscription =
-            await this.subscribeFcmFromPage(subscriptionStrategy);
-          await this._updatePushSubscriptionModelWithRawSubscription(
-            rawPushSubscription,
-          );
+      if (isSafariLegacyPush) {
+        rawPushSubscription = await this.subscribeSafari();
+        await this._updatePushSubscriptionModelWithRawSubscription(
+          rawPushSubscription,
+        );
+        /* Now that permissions have been granted, install the service worker */
+        Log.info('Installing SW on Safari');
+        try {
+          await this.context.serviceWorkerManager.installWorker();
+          Log.info('SW on Safari successfully installed');
+        } catch (e) {
+          Log.error('SW on Safari failed to install.');
         }
-        break;
-      default:
-        throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
+      } else {
+        rawPushSubscription =
+          await this.subscribeFcmFromPage(subscriptionStrategy);
+        await this._updatePushSubscriptionModelWithRawSubscription(
+          rawPushSubscription,
+        );
+      }
     }
 
     return rawPushSubscription;
@@ -286,7 +282,7 @@ export class SubscriptionManager {
     subscription.deviceId = DEFAULT_DEVICE_ID;
     subscription.optedOut = false;
     if (pushSubscription) {
-      if (Environment.useSafariLegacyPush()) {
+      if (isSafariLegacyPush) {
         subscription.subscriptionToken = pushSubscription.safariDeviceToken;
       } else {
         subscription.subscriptionToken = pushSubscription.w3cEndpoint
@@ -298,7 +294,7 @@ export class SubscriptionManager {
     }
     await Database.setSubscription(subscription);
 
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+    if (!isServiceWorkerEnv) {
       OneSignalEvent.trigger(OneSignal.EVENTS.REGISTERED);
     }
 
@@ -321,9 +317,7 @@ export class SubscriptionManager {
     if (strategy === UnsubscriptionStrategy.DestroySubscription) {
       throw new NotImplementedError();
     } else if (strategy === UnsubscriptionStrategy.MarkUnsubscribed) {
-      if (
-        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.ServiceWorker
-      ) {
+      if (isServiceWorkerEnv) {
         await Database.put('Options', { key: 'optedOut', value: true });
       } else {
         throw new NotImplementedError();
@@ -371,14 +365,14 @@ export class SubscriptionManager {
 
     if (!this.safariPermissionPromptFailed) {
       return requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl({
+        `${getOneSignalApiUrl({
           legacy: true,
         }).toString()}safari/apps/${this.config.appId}`,
       );
     } else {
       // If last attempt failed, retry with the legacy URL
       return requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl({
+        `${getOneSignalApiUrl({
           legacy: true,
         }).toString()}safari`,
       );
@@ -442,7 +436,7 @@ export class SubscriptionManager {
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (
-      SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host &&
+      !isServiceWorkerEnv &&
       Notification.permission === NotificationPermission.Default
     ) {
       await OneSignalEvent.trigger(
@@ -807,23 +801,18 @@ export class SubscriptionManager {
    * Returns an object describing the user's actual push subscription state and opt-out status.
    */
   public async getSubscriptionState(): Promise<PushSubscriptionState> {
-    const windowEnv = SdkEnvironment.getWindowEnv();
-    switch (windowEnv) {
-      case WindowEnvironmentKind.ServiceWorker: {
-        const pushSubscription = await (<ServiceWorkerGlobalScope>(
-          (<any>self)
-        )).registration.pushManager.getSubscription();
-        const { optedOut } = await Database.getSubscription();
-        return {
-          subscribed: !!pushSubscription,
-          optedOut: !!optedOut,
-        };
-      }
-      default: {
-        /* Regular browser window environments */
-        return this.getSubscriptionStateFromBrowserContext();
-      }
+    if (isServiceWorkerEnv) {
+      const pushSubscription = await (<ServiceWorkerGlobalScope>(
+        (<any>self)
+      )).registration.pushManager.getSubscription();
+      const { optedOut } = await Database.getSubscription();
+      return {
+        subscribed: !!pushSubscription,
+        optedOut: !!optedOut,
+      };
     }
+    /* Regular browser window environments */
+    return this.getSubscriptionStateFromBrowserContext();
   }
 
   private async getSubscriptionStateFromBrowserContext(): Promise<PushSubscriptionState> {
@@ -835,7 +824,7 @@ export class SubscriptionManager {
       pushSubscriptionModel,
     );
 
-    if (Environment.useSafariLegacyPush()) {
+    if (isSafariLegacyPush) {
       const subscriptionState = window.safari?.pushNotification?.permission(
         this.config.safariWebId,
       );

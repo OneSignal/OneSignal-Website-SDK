@@ -2,9 +2,9 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
-import { NotificationPermission } from '../models/NotificationPermission';
 import OneSignalError from '../errors/OneSignalError';
-import Environment from '../helpers/Environment';
+import Environment from '../helpers/EnvironmentHelper';
+import { NotificationPermission } from '../models/NotificationPermission';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions

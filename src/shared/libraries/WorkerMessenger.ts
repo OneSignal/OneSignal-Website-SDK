@@ -7,7 +7,7 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 import type { Serializable } from '../../page/models/Serializable';
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
-import Environment from '../helpers/Environment';
+import Environment from '../helpers/EnvironmentHelper';
 import type { ContextSWInterface } from '../models/ContextSW';
 import Log from './Log';
 
