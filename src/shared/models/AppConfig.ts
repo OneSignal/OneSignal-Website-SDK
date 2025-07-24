@@ -251,7 +251,7 @@ export interface ServerAppConfig {
       workerName?: string;
       registrationScope?: string;
     };
-    setupBehavior?: {};
+    setupBehavior?: Record<string, unknown>;
     welcomeNotification: {
       url: string | undefined;
       title: string | undefined;
