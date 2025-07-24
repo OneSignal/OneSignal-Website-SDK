@@ -1,4 +1,4 @@
-import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
+import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import Log from '../libraries/Log';
 import OneSignalApiBase from './OneSignalApiBase';
 

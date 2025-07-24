@@ -1,4 +1,4 @@
-import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import type { SubscriptionTypeValue } from 'src/core/types/subscription';
 
 export interface OutcomeRequestData {
   app_id: string;
@@ -7,6 +7,9 @@ export interface OutcomeRequestData {
   notification_ids?: string[];
   weight?: number;
   session_time?: number;
-  subscription?: SubscriptionModel;
+  subscription?: {
+    id: string;
+    type: SubscriptionTypeValue;
+  };
   onesignal_id?: string;
 }

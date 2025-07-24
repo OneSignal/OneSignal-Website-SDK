@@ -1,7 +1,7 @@
-import {
+import type {
+  TagCategory,
   TagsObjectForApi,
   TagsObjectWithBoolean,
-  TagCategory,
 } from '../../page/models/Tags';
 import { deepCopy } from './utils';
 

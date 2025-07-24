@@ -1,18 +1,19 @@
 import {
   cancelableTimeout,
-  CancelableTimeoutPromise,
+  type CancelableTimeoutPromise,
 } from '../../sw/helpers/CancelableTimeout';
 import Log from '../../sw/libraries/Log';
-import { OSServiceWorkerFields } from '../../sw/serviceWorker/types';
+import type { OSServiceWorkerFields } from '../../sw/serviceWorker/types';
 import OneSignalApiSW from '../api/OneSignalApiSW';
 import Utils from '../context/Utils';
-import { OutcomesConfig } from '../models/Outcomes';
-import { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
+import type { OutcomesConfig } from '../models/Outcomes';
+import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import {
   initializeNewSession,
-  Session,
+  type Session,
   SessionOrigin,
+  type SessionOriginValue,
   SessionStatus,
 } from '../models/Session';
 import Database from '../services/Database';
@@ -25,7 +26,7 @@ export default class ServiceWorkerHelper {
   public static getServiceWorkerHref(
     config: ServiceWorkerManagerConfig,
     appId: string,
-    sdkVersion: number,
+    sdkVersion: string,
   ): string {
     return ServiceWorkerHelper.appendServiceWorkerParams(
       config.workerPath.getFullPath(),
@@ -37,7 +38,7 @@ export default class ServiceWorkerHelper {
   private static appendServiceWorkerParams(
     workerFullPath: string,
     appId: string,
-    sdkVersion: number,
+    sdkVersion: string,
   ): string {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
     const appIdAsQueryParam = Utils.encodeHashAsUriComponent({ appId });
@@ -53,7 +54,7 @@ export default class ServiceWorkerHelper {
     subscriptionId: string,
     sessionThresholdInSeconds: number,
     sendOnFocusEnabled: boolean,
-    sessionOrigin: SessionOrigin,
+    sessionOrigin: SessionOriginValue,
     outcomesConfig: OutcomesConfig,
   ): Promise<void> {
     const existingSession = await Database.getCurrentSession();
@@ -201,7 +202,7 @@ export default class ServiceWorkerHelper {
     appId: string,
     onesignalId: string,
     subscriptionId: string,
-    sessionOrigin: SessionOrigin,
+    sessionOrigin: SessionOriginValue,
     session: Session,
   ) {
     if (sessionOrigin === SessionOrigin.UserCreate) {
@@ -264,21 +265,21 @@ export default class ServiceWorkerHelper {
   }
 }
 
-export enum ServiceWorkerActiveState {
+export const ServiceWorkerActiveState = {
   /**
    * OneSignalSDKWorker.js, or the equivalent custom file name, is active.
    */
-  OneSignalWorker = 'OneSignal Worker',
+  OneSignalWorker: 'OneSignal Worker',
   /**
    * A service worker is active, but it is not OneSignalSDKWorker.js
    * (or the equivalent custom file names as provided by user config).
    */
-  ThirdParty = '3rd Party',
+  ThirdParty: '3rd Party',
   /**
    * No service worker is installed.
    */
-  None = 'None',
-}
+  None: 'None',
+} as const;
 
 export interface ServiceWorkerManagerConfig {
   /**

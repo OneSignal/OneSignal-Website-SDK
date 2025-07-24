@@ -2,7 +2,7 @@ import { OPERATION_NAME } from '../constants';
 
 import {
   GroupComparisonType,
-  GroupComparisonValue,
+  type GroupComparisonValue,
   Operation,
 } from './Operation';
 

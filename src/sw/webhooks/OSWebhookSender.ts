@@ -1,6 +1,6 @@
 import Database from '../../shared/services/Database';
 import Log from '../libraries/Log';
-import { IOSWebhookEventPayload } from './IOSWebhookEventPayload';
+import type { IOSWebhookEventPayload } from './IOSWebhookEventPayload';
 
 export class OSWebhookSender {
   async send(payload: IOSWebhookEventPayload): Promise<void> {

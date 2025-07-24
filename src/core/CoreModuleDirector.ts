@@ -17,14 +17,17 @@ import { type OperationRepo } from './operationRepo/OperationRepo';
 import { ModelChangeTags } from './types/models';
 import {
   SubscriptionChannel,
-  SubscriptionChannelValue,
+  type SubscriptionChannelValue,
   SubscriptionType,
 } from './types/subscription';
 
 /* Contains OneSignal User-Model-specific logic*/
 
 export class CoreModuleDirector {
-  constructor(private core: CoreModule) {}
+  private core: CoreModule;
+  constructor(core: CoreModule) {
+    this.core = core;
+  }
 
   get operationRepo(): OperationRepo {
     return this.core.operationRepo;

@@ -1,11 +1,11 @@
-import { type Model, ModelChangedArgs } from '../models/Model';
+import type { Model, ModelChangedArgs } from '../models/Model';
 import { type Operation } from '../operations/Operation';
 import {
-  ISingletonModelStoreChangeHandler,
+  type ISingletonModelStoreChangeHandler,
   ModelChangeTags,
 } from '../types/models';
-import { IOperationRepo } from '../types/operation';
-import { ISingletonModelStore } from './types';
+import type { IOperationRepo } from '../types/operation';
+import type { ISingletonModelStore } from './types';
 
 // Implements logic similar to Android SDK's SingletonModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/listeners/SingletonModelStoreListener.kt

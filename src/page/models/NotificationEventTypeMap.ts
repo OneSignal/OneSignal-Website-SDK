@@ -1,15 +1,13 @@
-import {
+import type {
   NotificationClickEvent,
-  NotificationForegroundWillDisplayEvent,
   NotificationDismissEvent,
+  NotificationForegroundWillDisplayEvent,
 } from '../../shared/models/NotificationEvent';
 
-type NotificationEventTypeMap = {
+export type NotificationEventTypeMap = {
   click: NotificationClickEvent;
   foregroundWillDisplay: NotificationForegroundWillDisplayEvent;
   dismiss: NotificationDismissEvent;
   permissionChange: boolean;
   permissionPromptDisplay: void;
 };
-
-export default NotificationEventTypeMap;

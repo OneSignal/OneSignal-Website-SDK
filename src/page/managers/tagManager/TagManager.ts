@@ -1,8 +1,11 @@
-import { TagsObjectForApi, TagsObjectWithBoolean } from '../../models/Tags';
-import TagUtils from '../../../shared/utils/TagUtils';
-import { ContextInterface } from '../../models/Context';
-import { ITagManager } from './types';
 import Log from '../../../shared/libraries/Log';
+import TagUtils from '../../../shared/utils/TagUtils';
+import type { ContextInterface } from '../../models/Context';
+import type {
+  TagsObjectForApi,
+  TagsObjectWithBoolean,
+} from '../../models/Tags';
+import type { ITagManager } from './types';
 
 /**
  * Manages tags for the TaggingContainer
@@ -33,9 +36,8 @@ export default class TagManager implements ITagManager {
 
     const shouldSendUpdate = !TagUtils.isTagObjectEmpty(finalTagsObject);
     if (shouldSendUpdate) {
-      return (await OneSignal.User.addTags(
-        finalTagsObject,
-      )) as TagsObjectForApi;
+      await OneSignal.User.addTags(finalTagsObject);
+      return finalTagsObject;
     }
     Log.warn(
       'OneSignal: no change detected in Category preferences. Skipping tag update.',

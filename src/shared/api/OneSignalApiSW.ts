@@ -1,14 +1,17 @@
-import { IUpdateUser } from 'src/core/types/api';
+import type { IUpdateUser } from 'src/core/types/api';
 import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
-import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
+import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import Utils from '../context/Utils';
 import Log from '../libraries/Log';
-import { ServerAppConfig } from '../models/AppConfig';
+import type { ServerAppConfig } from '../models/AppConfig';
 import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
-import { OutcomeAttribution, OutcomeAttributionType } from '../models/Outcomes';
+import {
+  OutcomeAttributionType,
+  type OutcomeAttribution,
+} from '../models/Outcomes';
 import { OneSignalApiBase } from './OneSignalApiBase';
 import OneSignalApiShared from './OneSignalApiShared';
 

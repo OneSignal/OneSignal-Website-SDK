@@ -12,6 +12,7 @@ ngrok.log
 *.crt
 .vscode/**
 !.vscode/launch.json
+!.vscode/settings.json
 .cursor/
 
 coverage

@@ -1,5 +1,5 @@
 import OneSignalApiBase from '../../shared/api/OneSignalApiBase';
-import OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
+import type OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
 import {
   SdkInitError,
   SdkInitErrorKind,
@@ -8,15 +8,15 @@ import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { IdentityModel } from '../models/IdentityModel';
 import {
-  ICreateUser,
-  ICreateUserIdentity,
-  ICreateUserSubscription,
-  ISubscription,
-  IUpdateUser,
-  IUserIdentity,
-  IUserProperties,
-  RequestMetadata,
-  UserData,
+  type ICreateUser,
+  type ICreateUserIdentity,
+  type ICreateUserSubscription,
+  type ISubscription,
+  type IUpdateUser,
+  type IUserIdentity,
+  type IUserProperties,
+  type RequestMetadata,
+  type UserData,
 } from '../types/api';
 import AliasPair from './AliasPair';
 

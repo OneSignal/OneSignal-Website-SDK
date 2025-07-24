@@ -1,5 +1,5 @@
-import { ISessionManager } from '../../../shared/managers/sessionManager/types';
-import { SessionOrigin } from '../../../shared/models/Session';
+import type { ISessionManager } from '../../../shared/managers/sessionManager/types';
+import type { SessionOrigin } from '../../../shared/models/Session';
 
 export class SessionManager implements ISessionManager {
   async upsertSession(_sessionOrigin: SessionOrigin): Promise<void> {

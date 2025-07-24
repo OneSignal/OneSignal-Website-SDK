@@ -1,8 +1,8 @@
 import {
   SubscriptionChannel,
-  SubscriptionChannelValue,
+  type SubscriptionChannelValue,
   SubscriptionType,
-  SubscriptionTypeValue,
+  type SubscriptionTypeValue,
 } from 'src/core/types/subscription';
 import {
   InvalidStateError,

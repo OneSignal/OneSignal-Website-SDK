@@ -1,7 +1,7 @@
-import {
+import type {
   IOSNotification,
   IOSNotificationActionButton,
-} from '../../shared/models/OSNotification';
+} from 'src/shared/models/OSNotification';
 
 // This is the raw payload that OneSignal sends
 export interface OSMinifiedNotificationPayload {

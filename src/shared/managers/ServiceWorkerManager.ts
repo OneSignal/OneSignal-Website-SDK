@@ -5,20 +5,20 @@ import Environment from '../helpers/Environment';
 import EventHelper from '../helpers/EventHelper';
 import ServiceWorkerHelper, {
   ServiceWorkerActiveState,
-  ServiceWorkerManagerConfig,
+  type ServiceWorkerManagerConfig,
 } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
-import { ContextSWInterface } from '../models/ContextSW';
+import type { ContextSWInterface } from '../models/ContextSW';
 import {
-  NotificationClickEventInternal,
-  NotificationForegroundWillDisplayEvent,
-  NotificationForegroundWillDisplayEventSerializable,
+  type NotificationClickEventInternal,
+  type NotificationForegroundWillDisplayEvent,
+  type NotificationForegroundWillDisplayEventSerializable,
 } from '../models/NotificationEvent';
 import Path from '../models/Path';
 import {
-  PageVisibilityRequest,
-  PageVisibilityResponse,
+  type PageVisibilityRequest,
+  type PageVisibilityResponse,
 } from '../models/Session';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
@@ -39,7 +39,7 @@ export class ServiceWorkerManager {
    * WARNING: This might be a non-OneSignal service worker, use
    * getOneSignalRegistration() instead if you need this guarantee.
    */
-  private async getRegistration(): Promise<
+  public async getRegistration(): Promise<
     ServiceWorkerRegistration | undefined
   > {
     return ServiceWorkerUtilHelper.getRegistration(

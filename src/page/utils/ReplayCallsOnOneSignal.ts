@@ -1,6 +1,6 @@
 import OneSignal from '../../onesignal/OneSignal';
 import Log from '../../shared/libraries/Log';
-import { OneSignalDeferredLoadedCallback } from '../models/OneSignalDeferredLoadedCallback';
+import type { OneSignalDeferredLoadedCallback } from '../models/OneSignalDeferredLoadedCallback';
 
 // TODO: Renaming ReplayCallsOnOneSignal in a future commit
 export class ReplayCallsOnOneSignal {

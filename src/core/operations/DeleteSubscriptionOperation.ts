@@ -1,6 +1,6 @@
 import { OPERATION_NAME } from '../constants';
 import { BaseSubscriptionOperation } from './BaseSubscriptionOperation';
-import { GroupComparisonType, GroupComparisonValue } from './Operation';
+import { GroupComparisonType, type GroupComparisonValue } from './Operation';
 
 /**
  * An Operation to delete a subscription from the OneSignal backend.

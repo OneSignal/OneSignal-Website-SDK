@@ -1,5 +1,8 @@
 import { ModelChangeTags } from 'src/core/types/models';
-import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
+import {
+  ExecutionResult,
+  type IOperationExecutor,
+} from 'src/core/types/operation';
 import OneSignalError from 'src/shared/errors/OneSignalError';
 import Environment from 'src/shared/helpers/Environment';
 import EventHelper from 'src/shared/helpers/EventHelper';
@@ -12,7 +15,7 @@ import Database from 'src/shared/services/Database';
 import LocalStorage from 'src/shared/utils/LocalStorage';
 import { getTimeZoneId } from 'src/shared/utils/utils';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
-import { IPropertiesModelKeys } from '../models/PropertiesModel';
+import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
@@ -26,7 +29,7 @@ import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { RequestService } from '../requestService/RequestService';
-import {
+import type {
   ICreateUserIdentity,
   ICreateUserSubscription,
   IUserProperties,
@@ -41,12 +44,22 @@ type SubscriptionMap = Record<
 // Implements logic similar to Android's SDK's LoginUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/LoginUserOperationExecutor.kt
 export class LoginUserOperationExecutor implements IOperationExecutor {
+  private _identityOperationExecutor: IdentityOperationExecutor;
+  private _identityModelStore: IdentityModelStore;
+  private _propertiesModelStore: PropertiesModelStore;
+  private _subscriptionsModelStore: SubscriptionModelStore;
+
   constructor(
-    private _identityOperationExecutor: IdentityOperationExecutor,
-    private _identityModelStore: IdentityModelStore,
-    private _propertiesModelStore: PropertiesModelStore,
-    private _subscriptionsModelStore: SubscriptionModelStore,
-  ) {}
+    _identityOperationExecutor: IdentityOperationExecutor,
+    _identityModelStore: IdentityModelStore,
+    _propertiesModelStore: PropertiesModelStore,
+    _subscriptionsModelStore: SubscriptionModelStore,
+  ) {
+    this._identityOperationExecutor = _identityOperationExecutor;
+    this._identityModelStore = _identityModelStore;
+    this._propertiesModelStore = _propertiesModelStore;
+    this._subscriptionsModelStore = _subscriptionsModelStore;
+  }
 
   get operations(): string[] {
     return [OPERATION_NAME.LOGIN_USER];

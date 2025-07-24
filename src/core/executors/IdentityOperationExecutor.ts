@@ -1,6 +1,9 @@
 import { ModelChangeTags } from 'src/core/types/models';
-import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
-import { IRebuildUserService } from 'src/core/types/user';
+import {
+  ExecutionResult,
+  type IOperationExecutor,
+} from 'src/core/types/operation';
+import type { IRebuildUserService } from 'src/core/types/user';
 import {
   getResponseStatusType,
   ResponseStatusType,

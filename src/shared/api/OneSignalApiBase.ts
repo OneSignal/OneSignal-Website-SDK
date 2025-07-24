@@ -6,10 +6,10 @@ import OneSignalError from '../errors/OneSignalError';
 import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { APIHeaders } from '../models/APIHeaders';
+import type { APIHeaders } from '../models/APIHeaders';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import { isValidUuid } from '../utils/utils';
-import OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
+import type OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';

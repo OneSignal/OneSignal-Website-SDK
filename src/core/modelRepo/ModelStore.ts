@@ -2,12 +2,12 @@
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/ModelStore.kt
 import type { IEventNotifier } from 'src/core/types/events';
 import {
-  DatabaseModel,
-  ModelChangeTags,
-  ModelChangeTagValue,
-  ModelNameType,
+  type DatabaseModel,
   type IModelStore,
   type IModelStoreChangeHandler,
+  ModelChangeTags,
+  type ModelChangeTagValue,
+  type ModelNameType,
 } from 'src/core/types/models';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
 import Database from 'src/shared/services/Database';
@@ -43,6 +43,7 @@ export abstract class ModelStore<
     IModelStore<TModel>,
     IModelChangedHandler
 {
+  public readonly modelName: ModelNameType;
   private changeSubscription: EventProducer<IModelStoreChangeHandler<TModel>> =
     new EventProducer();
   private models: TModel[] = [];
@@ -51,7 +52,9 @@ export abstract class ModelStore<
   /**
    * @param modelName The persistable name of the model store. If not specified no persisting will occur.
    */
-  constructor(public readonly modelName: ModelNameType) {}
+  constructor(modelName: ModelNameType) {
+    this.modelName = modelName;
+  }
 
   /**
    * Create a model from JSON data

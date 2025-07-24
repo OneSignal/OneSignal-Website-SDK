@@ -8,16 +8,17 @@ import Utils from '../context/Utils';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import {
-  AppConfig,
-  AppUserConfig,
+  type AppConfig,
+  type AppUserConfig,
   ConfigIntegrationKind,
-  ServerAppConfig,
-  ServerAppPromptConfig,
-  ServiceWorkerConfigParams,
+  type ConfigIntegrationKindValue,
+  type ServerAppConfig,
+  type ServerAppPromptConfig,
+  type ServiceWorkerConfigParams,
 } from '../models/AppConfig';
 import {
-  AppUserConfigCustomLinkOptions,
-  AppUserConfigPromptOptions,
+  type AppUserConfigCustomLinkOptions,
+  type AppUserConfigPromptOptions,
   DelayedPromptType,
 } from '../models/Prompts';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
@@ -26,19 +27,21 @@ import TagUtils from '../utils/TagUtils';
 import { ConverterHelper } from './ConverterHelper';
 import PromptsHelper from './PromptsHelper';
 
-export enum IntegrationConfigurationKind {
+export const IntegrationConfigurationKind = {
   /**
    * Configuration comes from the dashboard only.
    */
-  Dashboard,
+  Dashboard: 0,
   /**
    * Configuration comes from user-provided JavaScript code only.
    */
-  JavaScript,
-}
+  JavaScript: 1,
+} as const;
+type IntegrationConfigurationKindValue =
+  (typeof IntegrationConfigurationKind)[keyof typeof IntegrationConfigurationKind];
 
 export interface IntegrationCapabilities {
-  configuration: IntegrationConfigurationKind;
+  configuration: IntegrationConfigurationKindValue;
 }
 
 const MAX_CATEGORIES = 10;
@@ -64,7 +67,7 @@ export class ConfigHelper {
       this.checkRestrictedOrigin(appConfig);
       return appConfig;
     } catch (e) {
-      if (e) {
+      if (e instanceof Object && 'code' in e) {
         if (e.code === 1) throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
         else if (e.code === 2)
           throw new SdkInitError(SdkInitErrorKind.AppNotConfiguredForWebPush);
@@ -119,7 +122,7 @@ export class ConfigHelper {
   }
 
   public static getIntegrationCapabilities(
-    integration: ConfigIntegrationKind,
+    integration: ConfigIntegrationKindValue,
   ): IntegrationCapabilities {
     switch (integration) {
       case ConfigIntegrationKind.Custom:
@@ -178,7 +181,7 @@ export class ConfigHelper {
 
   public static getConfigIntegrationKind(
     serverConfig: ServerAppConfig,
-  ): ConfigIntegrationKind {
+  ): ConfigIntegrationKindValue {
     if (serverConfig.config.integration)
       return serverConfig.config.integration.kind;
     return ConfigIntegrationKind.Custom;
@@ -517,7 +520,7 @@ export class ConfigHelper {
   }
 
   public static getUserConfigForConfigIntegrationKind(
-    configIntegrationKind: ConfigIntegrationKind,
+    configIntegrationKind: ConfigIntegrationKindValue,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig,
   ): AppUserConfig {
@@ -704,7 +707,7 @@ export class ConfigHelper {
    * Describes how to merge a dashboard-set subdomain with a/lack of user-supplied subdomain.
    */
   public static hasUnsupportedSubdomainForConfigIntegrationKind(
-    configIntegrationKind: ConfigIntegrationKind,
+    configIntegrationKind: ConfigIntegrationKindValue,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig,
   ): boolean {

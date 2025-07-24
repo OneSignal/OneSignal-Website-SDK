@@ -1,8 +1,8 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
-import { ICreateUserSubscription } from '../types/api';
+import type { ICreateUserSubscription } from '../types/api';
 import {
-  NotificationTypeValue,
-  SubscriptionTypeValue,
+  type NotificationTypeValue,
+  type SubscriptionTypeValue,
 } from '../types/subscription';
 import { BaseSubscriptionOperation } from './BaseSubscriptionOperation';
 

@@ -1,4 +1,10 @@
 import {
+  InvalidStateError,
+  InvalidStateReason,
+} from '../../shared/errors/InvalidStateError';
+import Log from '../../shared/libraries/Log';
+import type { BellSize } from '../../shared/models/Prompts';
+import {
   addCssClass,
   contains,
   hasCssClass,
@@ -8,15 +14,9 @@ import {
 } from '../../shared/utils/utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Bell from './Bell';
-import {
-  InvalidStateError,
-  InvalidStateReason,
-} from '../../shared/errors/InvalidStateError';
-import { BellSize } from '../../shared/models/Prompts';
-import Log from '../../shared/libraries/Log';
 
 export default class Launcher extends ActiveAnimatedElement {
-  public bell: any;
+  public bell: Bell;
   public wasInactive: boolean;
 
   constructor(bell: Bell) {
@@ -77,7 +77,7 @@ export default class Launcher extends ActiveAnimatedElement {
             );
           }, this.transitionCheckTimeout);
           once(
-            this.element,
+            this.element!,
             'transitionend',
             (event: Event, destroyListenerFn: () => void) => {
               if (
@@ -136,12 +136,12 @@ export default class Launcher extends ActiveAnimatedElement {
       return this.bell.badge
         .hide()
         .then(() =>
-          Promise.all([super.activate(), this.resize(this.bell.options.size)]),
+          Promise.all([super.activate(), this.resize(this.bell.options.size!)]),
         );
     } else {
       return Promise.all([
         super.activate(),
-        this.resize(this.bell.options.size),
+        this.resize(this.bell.options.size!),
       ]);
     }
   }

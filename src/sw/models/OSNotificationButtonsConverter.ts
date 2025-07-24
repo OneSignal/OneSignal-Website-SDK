@@ -1,4 +1,7 @@
-import { IOSNotificationActionButton } from '../../shared/models/OSNotification';
+import type {
+  IOSNotificationActionButton,
+  NotificationAction,
+} from '../../shared/models/OSNotification';
 
 export class OSNotificationButtonsConverter {
   static toNative(

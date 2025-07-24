@@ -1,5 +1,5 @@
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
-import SubscriptionChangeEvent from '../page/models/SubscriptionChangeEvent';
+import type SubscriptionChangeEvent from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { ValidatorUtils } from '../page/utils/ValidatorUtils';
 import {

@@ -1,4 +1,4 @@
-import { IOSNotification } from './OSNotification';
+import type { IOSNotification } from './OSNotification';
 
 export interface NotificationClickEvent {
   readonly notification: IOSNotification;

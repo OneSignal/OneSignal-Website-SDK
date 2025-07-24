@@ -1,15 +1,15 @@
 import JSONP from 'jsonp';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { ServerAppConfig } from '../models/AppConfig';
+import type { ServerAppConfig } from '../models/AppConfig';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import OneSignalApiSW from './OneSignalApiSW';
 
 export default class OneSignalApi {
   static jsonpLib(
     url: string,
-    fn: (err: Error, data: ServerAppConfig) => void,
+    fn: (err: Error | null, data: ServerAppConfig) => void,
   ) {
-    JSONP(url, null, fn);
+    JSONP(url, undefined, fn);
   }
 
   static async downloadServerAppConfig(
@@ -20,7 +20,7 @@ export default class OneSignalApi {
         // Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
         OneSignalApi.jsonpLib(
           `${SdkEnvironment.getOneSignalApiUrl().toString()}sync/${appId}/web`,
-          (err: Error, data: ServerAppConfig) => {
+          (err: Error | null, data: ServerAppConfig) => {
             if (err) reject(err);
             else {
               if (data.success) resolve(data);

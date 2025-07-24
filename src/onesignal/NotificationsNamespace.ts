@@ -1,5 +1,5 @@
-import { NotificationEventName } from '../page/models/NotificationEventName';
-import NotificationEventTypeMap from '../page/models/NotificationEventTypeMap';
+import type { NotificationEventName } from '../page/models/NotificationEventName';
+import type { NotificationEventTypeMap } from '../page/models/NotificationEventTypeMap';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { ValidatorUtils } from '../page/utils/ValidatorUtils';
 import {
@@ -17,11 +17,13 @@ import OneSignal from './OneSignal';
 
 export default class NotificationsNamespace extends EventListenerBase {
   private _permission: boolean;
+  private _permissionNative?: NotificationPermission;
 
-  constructor(private _permissionNative?: NotificationPermission) {
+  constructor(permissionNative?: NotificationPermission) {
     super();
 
-    this._permission = _permissionNative === NotificationPermission.Granted;
+    this._permissionNative = permissionNative;
+    this._permission = permissionNative === NotificationPermission.Granted;
 
     OneSignal.emitter.on(
       OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,

@@ -1,6 +1,6 @@
 import {
   NotificationType,
-  NotificationTypeValue,
+  type NotificationTypeValue,
 } from 'src/core/types/subscription';
 import UserDirector from 'src/onesignal/UserDirector';
 import LoginManager from 'src/page/managers/LoginManager';
@@ -22,9 +22,9 @@ import SubscriptionError, {
 import Environment from '../helpers/Environment';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
-import { ContextSWInterface } from '../models/ContextSW';
+import type { ContextSWInterface } from '../models/ContextSW';
 import { NotificationPermission } from '../models/NotificationPermission';
-import { PushSubscriptionState } from '../models/PushSubscriptionState';
+import type { PushSubscriptionState } from '../models/PushSubscriptionState';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SessionOrigin } from '../models/Session';
 import { Subscription } from '../models/Subscription';
@@ -47,12 +47,12 @@ export interface SubscriptionManagerConfig {
   /**
    * The VAPID public key to use for Chrome-like browsers, including Opera and Yandex browser.
    */
-  vapidPublicKey: string;
+  vapidPublicKey?: string;
   /**
    * A globally shared VAPID public key to use for the Firefox browser, which does not use
    * VAPID for authentication but for application identification and uses a single
    */
-  onesignalVapidPublicKey: string;
+  onesignalVapidPublicKey?: string;
 }
 
 export type SubscriptionStateServiceWorkerNotIntalled = Exclude<
@@ -253,7 +253,7 @@ export class SubscriptionManager {
    * records are marked with a special subscription state for tracking purposes.
    */
   public async registerSubscription(
-    pushSubscription: RawPushSubscription,
+    pushSubscription: RawPushSubscription | undefined,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _subscriptionState?: NotificationTypeValue | null,
   ): Promise<Subscription> {
