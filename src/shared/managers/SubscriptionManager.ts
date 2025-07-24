@@ -23,7 +23,7 @@ import {
   getOneSignalApiUrl,
   isSafariLegacyPush,
   isServiceWorkerEnv,
-} from '../helpers/Environment';
+} from '../helpers/environment';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
