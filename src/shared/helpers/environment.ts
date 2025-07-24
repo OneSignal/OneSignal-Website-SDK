@@ -9,6 +9,11 @@ export const EnvironmentKind = {
 
 export const isBrowser = typeof window !== 'undefined';
 
+export const supportsServiceWorkers = () => {
+  if (IS_SERVICE_WORKER) return true;
+  return typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
+};
+
 export const windowEnvString = IS_SERVICE_WORKER ? 'Service Worker' : 'Browser';
 
 export const useSafariLegacyPush =
@@ -19,7 +24,7 @@ export const supportsVapidPush =
   // eslint-disable-next-line no-prototype-builtins
   PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey');
 
-export const useSafariVapidPush =
+export const useSafariVapidPush = () =>
   bowserCastle().name == 'safari' && supportsVapidPush && !useSafariLegacyPush;
 
 // for determing the api url

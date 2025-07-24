@@ -13,7 +13,6 @@ import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscri
 import { Utils } from '../../shared/context/Utils';
 import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
-import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import {
   type NotificationClickEventInternal,
   type NotificationForegroundWillDisplayEventSerializable,
@@ -104,6 +103,10 @@ export class ServiceWorker {
       (self as any).workerMessenger = new WorkerMessenger();
     }
     return (self as any).workerMessenger;
+  }
+
+  private static set workerMessenger(workerMessenger: WorkerMessenger) {
+    (self as any).workerMessenger = workerMessenger;
   }
 
   /**

@@ -72,7 +72,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     if (browser.firefox) {
       return SubscriptionType.FirefoxPush;
     }
-    if (useSafariVapidPush) {
+    if (useSafariVapidPush()) {
       return SubscriptionType.SafariPush;
     }
     if (useSafariLegacyPush) {

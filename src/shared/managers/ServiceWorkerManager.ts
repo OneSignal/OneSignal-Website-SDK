@@ -1,6 +1,7 @@
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
 import { Utils } from '../context/Utils';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
+import { supportsServiceWorkers } from '../helpers/environment';
 import EventHelper from '../helpers/EventHelper';
 import ServiceWorkerHelper, {
   ServiceWorkerActiveState,
@@ -22,7 +23,7 @@ import {
 } from '../models/Session';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
-import { IS_SERVICE_WORKER, VERSION } from '../utils/EnvVariables';
+import { VERSION } from '../utils/EnvVariables';
 import OneSignalUtils from '../utils/OneSignalUtils';
 
 export class ServiceWorkerManager {
@@ -496,8 +497,3 @@ export class ServiceWorkerManager {
     }
   }
 }
-
-const supportsServiceWorkers = () => {
-  if (IS_SERVICE_WORKER) return true;
-  return typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
-};

@@ -10,7 +10,7 @@ export const InvalidArgumentReason = {
 
 const reverseInvalidArgumentReason = Object.fromEntries(
   Object.entries(InvalidArgumentReason).map(([key, value]) => [value, key]),
-);
+) as Record<InvalidArgumentReasonValue, keyof typeof InvalidArgumentReason>;
 
 export type InvalidArgumentReasonValue =
   (typeof InvalidArgumentReason)[keyof typeof InvalidArgumentReason];
@@ -21,7 +21,7 @@ export class InvalidArgumentError extends OneSignalError {
 
   constructor(
     argName: string,
-    reason: InvalidArgumentReasonValue,
+    _reason: InvalidArgumentReasonValue,
     message = '',
   ) {
     let errorMessage;
@@ -47,7 +47,7 @@ export class InvalidArgumentError extends OneSignalError {
 
     super(errorMessage);
     this.argument = argName;
-    this.reason = reverseInvalidArgumentReason[reason];
+    this.reason = reverseInvalidArgumentReason[_reason];
 
     /**
      * Important! Required to make sure the correct error type is detected during instanceof checks.

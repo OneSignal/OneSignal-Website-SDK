@@ -3,7 +3,6 @@ import { generateNewSubscription } from '__test__/support/helpers/core';
 import { nock } from '__test__/support/helpers/general';
 import AliasPair from '../../../src/core/requestService/AliasPair';
 import { RequestService } from '../../../src/core/requestService/RequestService';
-import Environment from '../../../src/shared/helpers/EnvironmentHelper';
 import {
   APP_ID,
   DUMMY_EXTERNAL_ID,
@@ -15,7 +14,6 @@ describe('Sdk Version Header Tests', () => {
   beforeAll(() => {
     nock({});
     mockUserAgent();
-    vi.spyOn(Environment, 'version').mockReturnValue(160000);
   });
 
   test('POST /users: SDK-Version header is sent', () => {

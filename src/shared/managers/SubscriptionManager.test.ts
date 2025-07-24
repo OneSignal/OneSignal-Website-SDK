@@ -15,6 +15,7 @@ import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
 import {
   SubscriptionManager,
+  updatePushSubscriptionModelWithRawSubscription,
   type SubscriptionManagerConfig,
 } from './SubscriptionManager';
 
@@ -42,8 +43,6 @@ describe('SubscriptionManager', () => {
   describe('updatePushSubscriptionModelWithRawSubscription', () => {
     test('should create the push subscription model if it does not exist', async () => {
       setCreateUserResponse();
-      const context = new ContextSW(TestContext.getFakeMergedConfig());
-      const subscriptionManager = new SubscriptionManager(context, subConfig);
       const rawSubscription = getRawSubscription();
 
       let subModels =
@@ -55,9 +54,7 @@ describe('SubscriptionManager', () => {
         rawSubscription.w3cEndpoint?.toString(),
       );
 
-      await subscriptionManager._updatePushSubscriptionModelWithRawSubscription(
-        rawSubscription,
-      );
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
       subModels = await OneSignal.coreDirector.subscriptionModelStore.list();
       expect(subModels.length).toBe(1);
@@ -128,9 +125,7 @@ describe('SubscriptionManager', () => {
         onesignalId: identityModel.onesignalId,
       });
 
-      await subscriptionManager._updatePushSubscriptionModelWithRawSubscription(
-        rawSubscription,
-      );
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
       // should not call generatePushSubscriptionModelSpy
       expect(generatePushSubscriptionModelSpy).not.toHaveBeenCalled();
@@ -160,8 +155,6 @@ describe('SubscriptionManager', () => {
 
     test('should update the push subscription model if it already exists', async () => {
       setCreateUserResponse();
-      const context = new ContextSW(TestContext.getFakeMergedConfig());
-      const subscriptionManager = new SubscriptionManager(context, subConfig);
       const rawSubscription = getRawSubscription();
 
       await OneSignal.database.setPushToken(
@@ -176,9 +169,7 @@ describe('SubscriptionManager', () => {
       pushModel.web_auth = 'old-web-auth';
       pushModel.web_p256 = 'old-web-p256';
 
-      await subscriptionManager._updatePushSubscriptionModelWithRawSubscription(
-        rawSubscription,
-      );
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
       const updatedPushModel =
         (await OneSignal.coreDirector.getPushSubscriptionModel())!;

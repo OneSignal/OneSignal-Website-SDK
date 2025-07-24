@@ -11,7 +11,6 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { NotificationType } from 'src/core/types/subscription';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
-import Environment from 'src/shared/helpers/EnvironmentHelper';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
 import {
   DEFAULT_DEVICE_ID,
@@ -50,6 +49,16 @@ const version = '1';
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
 
+let { isServiceWorker } = vi.hoisted(() => {
+  return { isServiceWorker: false };
+});
+vi.mock('src/shared/utils/EnvVariables', async (importOriginal) => ({
+  ...(await importOriginal()),
+  get IS_SERVICE_WORKER() {
+    return isServiceWorker;
+  },
+}));
+
 const dispatchEvent = async (event: Event) => {
   self.dispatchEvent(event);
 
@@ -81,6 +90,7 @@ describe('ServiceWorker', () => {
   });
 
   beforeEach(async () => {
+    isServiceWorker = false;
     await Database.cleanupCurrentSession();
     await Database.put('Ids', {
       type: 'appId',
@@ -99,7 +109,6 @@ describe('ServiceWorker', () => {
 
   test('should have basic properties', () => {
     expect(ServiceWorker.VERSION).toBe(version);
-    expect(ServiceWorker.environment).toBe(Environment);
     expect(ServiceWorker.database).toBe(Database);
     expect(ServiceWorker.log).toBe(Log);
   });
@@ -597,6 +606,10 @@ describe('ServiceWorker', () => {
       optedOut: false,
       subscriptionToken: endpoint + '/',
     };
+
+    beforeEach(async () => {
+      isServiceWorker = true;
+    });
 
     test('should send worker version message', async () => {
       const event = new ExtendableMessageEvent('message', {

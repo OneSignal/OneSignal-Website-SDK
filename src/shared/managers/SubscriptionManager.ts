@@ -39,7 +39,6 @@ import {
   UnsubscriptionStrategy,
   type UnsubscriptionStrategyValue,
 } from '../models/UnsubscriptionStrategy';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { bowserCastle } from '../utils/bowserCastle';
@@ -69,7 +68,7 @@ export type SubscriptionStateServiceWorkerNotIntalled = Exclude<
   typeof NotificationType.Subscribed | typeof NotificationType.UserOptedOut
 >;
 
-const updatePushSubscriptionModelWithRawSubscription = async (
+export const updatePushSubscriptionModelWithRawSubscription = async (
   rawPushSubscription: RawPushSubscription,
 ) => {
   // incase a login op was called before user accepts the notifcations permissions, we need to wait for it to finish
