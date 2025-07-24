@@ -6,9 +6,12 @@ import {
   NotificationType,
   SubscriptionType,
 } from 'src/core/types/subscription';
+import {
+  useSafariLegacyPush,
+  useSafariVapidPush,
+} from 'src/shared/helpers/environment';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { VERSION } from 'src/shared/utils/EnvVariables';
-import Environment from '../../shared/helpers/EnvironmentHelper';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
@@ -69,10 +72,10 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     if (browser.firefox) {
       return SubscriptionType.FirefoxPush;
     }
-    if (Environment.useSafariVapidPush()) {
+    if (useSafariVapidPush) {
       return SubscriptionType.SafariPush;
     }
-    if (Environment.useSafariLegacyPush()) {
+    if (useSafariLegacyPush) {
       return SubscriptionType.SafariLegacyPush;
     }
     // Other browsers, like Edge, are Chromium based so we consider them "Chrome".

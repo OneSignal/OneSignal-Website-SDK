@@ -1,16 +1,30 @@
-import { API_ORIGIN, API_TYPE } from '../utils/EnvVariables';
+import { bowserCastle } from '../utils/bowserCastle';
+import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
 
-export const isSafariLegacyPush =
-  typeof window !== 'undefined' && window.safari?.pushNotification != undefined;
-
-// for determing the api url
-const API_URL_PORT = 3000;
-const TURBINE_API_URL_PORT = 18080;
-const EnvironmentKind = {
+export const EnvironmentKind = {
   Development: 'development',
   Staging: 'staging',
   Production: 'production',
 } as const;
+
+export const isBrowser = typeof window !== 'undefined';
+
+export const windowEnvString = IS_SERVICE_WORKER ? 'Service Worker' : 'Browser';
+
+export const useSafariLegacyPush =
+  isBrowser && window.safari?.pushNotification != undefined;
+
+export const supportsVapidPush =
+  typeof PushSubscriptionOptions !== 'undefined' &&
+  // eslint-disable-next-line no-prototype-builtins
+  PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey');
+
+export const useSafariVapidPush =
+  bowserCastle().name == 'safari' && supportsVapidPush && !useSafariLegacyPush;
+
+// for determing the api url
+const API_URL_PORT = 3000;
+const TURBINE_API_URL_PORT = 18080;
 
 export const getOneSignalApiUrl = ({
   action,

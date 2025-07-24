@@ -14,7 +14,6 @@ import {
   NotSubscribedReason,
 } from '../errors/NotSubscribedError';
 import Log from '../libraries/Log';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import {
   type AppUserConfigPromptOptions,
   type SlidedownOptions,
@@ -22,7 +21,7 @@ import {
 import Database from '../services/Database';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
-import Environment from './EnvironmentHelper';
+import { getOneSignalApiUrl, useSafariLegacyPush } from './environment';
 
 export default class MainHelper {
   static async showLocalNotification(
@@ -126,7 +125,7 @@ export default class MainHelper {
     if (!appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     }
-    const url = `${SdkEnvironment.getOneSignalApiUrl().toString()}apps/${appId}/icon`;
+    const url = `${getOneSignalApiUrl().toString()}apps/${appId}/icon`;
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
@@ -237,7 +236,7 @@ export default class MainHelper {
 
   // TO DO: unit test
   static async getCurrentPushToken(): Promise<string | undefined> {
-    if (Environment.useSafariLegacyPush()) {
+    if (useSafariLegacyPush) {
       const safariToken = window.safari?.pushNotification?.permission(
         OneSignal.config?.safariWebId,
       ).deviceToken;

@@ -24,7 +24,7 @@ export class OneSignalShimLoader {
     document.head.appendChild(scriptElement);
   }
 
-  // Same logic from SdkEnvironment
+  // Same logic from env helper
   private static getPathAndPrefix(): string {
     const productionOrigin = 'https://cdn.onesignal.com/sdks/web/v16/';
     const protocol = IS_HTTPS ? 'https' : 'http';

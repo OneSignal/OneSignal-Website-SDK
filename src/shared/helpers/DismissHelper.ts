@@ -5,8 +5,8 @@ import {
 } from '../../page/models/Dismiss';
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
 import Log from '../libraries/Log';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
+import { windowEnvString } from './environment';
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
@@ -39,7 +39,7 @@ export class DismissHelper {
       dismissDays = 30;
     }
     Log.debug(
-      `(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the ${type} ` +
+      `(${windowEnvString} environment) OneSignal: User dismissed the ${type} ` +
         `notification prompt; reprompt after ${dismissDays} days.`,
     );
     await Database.put('Options', { key: countKey, value: dismissCount });

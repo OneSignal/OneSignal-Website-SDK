@@ -19,7 +19,10 @@ import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationE
 import SubscriptionError, {
   SubscriptionErrorReason,
 } from '../errors/SubscriptionError';
-import { getOneSignalApiUrl, isSafariLegacyPush } from '../helpers/environment';
+import {
+  getOneSignalApiUrl,
+  useSafariLegacyPush,
+} from '../helpers/environment';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
@@ -175,7 +178,7 @@ export class SubscriptionManager {
           PushPermissionNotGrantedErrorReason.Blocked,
         );
 
-      if (isSafariLegacyPush) {
+      if (useSafariLegacyPush) {
         rawPushSubscription = await this.subscribeSafari();
         await updatePushSubscriptionModelWithRawSubscription(
           rawPushSubscription,
@@ -277,7 +280,7 @@ export class SubscriptionManager {
     subscription.deviceId = DEFAULT_DEVICE_ID;
     subscription.optedOut = false;
     if (pushSubscription) {
-      if (isSafariLegacyPush) {
+      if (useSafariLegacyPush) {
         subscription.subscriptionToken = pushSubscription.safariDeviceToken;
       } else {
         subscription.subscriptionToken = pushSubscription.w3cEndpoint
@@ -819,7 +822,7 @@ export class SubscriptionManager {
       pushSubscriptionModel,
     );
 
-    if (isSafariLegacyPush) {
+    if (useSafariLegacyPush) {
       const subscriptionState = window.safari?.pushNotification?.permission(
         this.config.safariWebId,
       );

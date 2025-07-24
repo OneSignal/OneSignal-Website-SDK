@@ -1,8 +1,7 @@
 import { Utils } from '../context/Utils';
 import Log from '../libraries/Log';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { bowserCastle } from './bowserCastle';
+import { IS_SERVICE_WORKER } from './EnvVariables';
 import { OneSignalUtils } from './OneSignalUtils';
 import { PermissionUtils } from './PermissionUtils';
 
@@ -202,7 +201,7 @@ export function isValidUuid(uuid: string) {
  */
 export function unsubscribeFromPush() {
   Log.warn('OneSignal: Unsubscribing from push.');
-  if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+  if (!IS_SERVICE_WORKER) {
     return (<any>self).registration.pushManager
       .getSubscription()
       .then((subscription: PushSubscription) => {
@@ -210,25 +209,24 @@ export function unsubscribeFromPush() {
           return subscription.unsubscribe();
         } else throw new Error('Cannot unsubscribe because not subscribed.');
       });
-  } else {
-    return OneSignal.context.serviceWorkerManager
-      .getRegistration()
-      .then((serviceWorker) => {
-        if (!serviceWorker) {
-          return Promise.resolve();
-        }
-        return serviceWorker;
-      })
-      .then((registration) => registration?.pushManager)
-      .then((pushManager) => pushManager?.getSubscription())
-      .then((subscription) => {
-        if (subscription) {
-          return subscription.unsubscribe().then(() => void 0);
-        } else {
-          return Promise.resolve();
-        }
-      });
   }
+  return OneSignal.context.serviceWorkerManager
+    .getRegistration()
+    .then((serviceWorker) => {
+      if (!serviceWorker) {
+        return Promise.resolve();
+      }
+      return serviceWorker;
+    })
+    .then((registration) => registration?.pushManager)
+    .then((pushManager) => pushManager?.getSubscription())
+    .then((subscription) => {
+      if (subscription) {
+        return subscription.unsubscribe().then(() => void 0);
+      } else {
+        return Promise.resolve();
+      }
+    });
 }
 
 export function once(

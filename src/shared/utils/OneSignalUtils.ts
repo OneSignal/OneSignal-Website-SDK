@@ -1,6 +1,6 @@
-import bowser, { IBowser } from 'bowser';
+import bowser, { type IBowser } from 'bowser';
 import { Utils } from '../context/Utils';
-import Environment from '../helpers/EnvironmentHelper';
+import { isBrowser } from '../helpers/environment';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';
 
@@ -35,7 +35,7 @@ export class OneSignalUtils {
   }
 
   static isSafari(): boolean {
-    return Environment.isBrowser() && typeof window.safari !== 'undefined';
+    return isBrowser && typeof window.safari !== 'undefined';
   }
 }
 

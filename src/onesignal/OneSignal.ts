@@ -1,4 +1,6 @@
 import type Bell from 'src/page/bell/Bell';
+import { windowEnvString } from 'src/shared/helpers/environment';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
@@ -14,13 +16,11 @@ import {
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
 import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
-import Environment from '../shared/helpers/EnvironmentHelper';
 import EventHelper from '../shared/helpers/EventHelper';
 import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
-import SdkEnvironment from '../shared/managers/SdkEnvironment';
 import type { AppConfig, AppUserConfig } from '../shared/models/AppConfig';
 import Database from '../shared/services/Database';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
@@ -267,9 +267,7 @@ export default class OneSignal {
   }
 
   static __doNotShowWelcomeNotification: boolean;
-  static VERSION = Environment.version();
-  static _VERSION = Environment.version();
-  static sdkEnvironment = SdkEnvironment;
+  static VERSION = VERSION;
   static environmentInfo?: EnvironmentInfo;
   static config: AppConfig | null = null;
   static _sessionInitAlreadyRunning = false;
@@ -278,7 +276,6 @@ export default class OneSignal {
   static initialized = false;
   static _didLoadITILibrary = false;
   static notifyButton: Bell | null = null;
-  static environment = Environment;
   static database = Database;
   static event = OneSignalEvent;
   private static pendingInit = true;
@@ -313,8 +310,8 @@ export default class OneSignal {
 }
 
 Log.info(
-  `OneSignal Web SDK loaded (version ${OneSignal._VERSION},
-  ${SdkEnvironment.getWindowEnv().toString()} environment).`,
+  `OneSignal Web SDK loaded (version ${VERSION},
+  ${windowEnvString} environment).`,
 );
 Log.debug(
   `Current Page URL: ${

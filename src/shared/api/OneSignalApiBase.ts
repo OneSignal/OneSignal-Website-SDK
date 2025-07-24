@@ -3,16 +3,23 @@ import {
   OneSignalApiErrorKind,
 } from '../errors/OneSignalApiError';
 import OneSignalError from '../errors/OneSignalError';
-import Environment from '../helpers/EnvironmentHelper';
+import { getOneSignalApiUrl } from '../helpers/environment';
 import Log from '../libraries/Log';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import type { APIHeaders } from '../models/APIHeaders';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
+import { IS_SERVICE_WORKER, VERSION } from '../utils/EnvVariables';
 import { isValidUuid } from '../utils/utils';
 import type OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+const getOrigin = () => {
+  if (IS_SERVICE_WORKER) {
+    return self.location.origin;
+  }
+  return window.location.origin;
+};
 
 export class OneSignalApiBase {
   static get<T = unknown>(
@@ -68,8 +75,8 @@ export class OneSignalApiBase {
     }
 
     const callHeaders = new Headers();
-    callHeaders.append('Origin', SdkEnvironment.getOrigin());
-    callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
+    callHeaders.append('Origin', getOrigin());
+    callHeaders.append('SDK-Version', `onesignal/web/${VERSION}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
     callHeaders.append('Accept', 'application/vnd.onesignal.v1+json');
     if (headers) {
@@ -85,7 +92,7 @@ export class OneSignalApiBase {
     };
     if (data) contents.body = JSON.stringify(data);
 
-    const url = `${SdkEnvironment.getOneSignalApiUrl({
+    const url = `${getOneSignalApiUrl({
       action,
     }).toString()}${action}`;
 

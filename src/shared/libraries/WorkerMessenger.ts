@@ -2,13 +2,11 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 import type { Serializable } from '../../page/models/Serializable';
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
-import Environment from '../helpers/EnvironmentHelper';
 import type { ContextSWInterface } from '../models/ContextSW';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import Log from './Log';
 
 /**
@@ -133,8 +131,7 @@ export class WorkerMessenger {
     command: WorkerMessengerCommandValue,
     payload: WorkerMessengerPayload,
   ) {
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker)
-      return;
+    if (!IS_SERVICE_WORKER) return;
 
     const clients = await (<ServiceWorkerGlobalScope>(
       (<any>self)
@@ -163,9 +160,7 @@ export class WorkerMessenger {
     payload?: WorkerMessengerPayload,
     windowClient?: Client,
   ) {
-    const env = SdkEnvironment.getWindowEnv();
-
-    if (env === WindowEnvironmentKind.ServiceWorker) {
+    if (IS_SERVICE_WORKER) {
       if (!windowClient) {
         throw new InvalidArgumentError(
           'windowClient',
@@ -229,11 +224,7 @@ export class WorkerMessenger {
    * service worker.
    */
   public async listen() {
-    if (!Environment.supportsServiceWorkers()) return;
-
-    const env = SdkEnvironment.getWindowEnv();
-
-    if (env === WindowEnvironmentKind.ServiceWorker) {
+    if (IS_SERVICE_WORKER) {
       self.addEventListener(
         'message',
         this.onWorkerMessageReceivedFromPage.bind(this),

@@ -1,4 +1,3 @@
-import Environment from '../../shared/helpers/EnvironmentHelper';
 import ContextSW from '../../shared/models/ContextSW';
 import Database from '../../shared/services/Database';
 
@@ -47,6 +46,7 @@ import {
   type NotificationTypeValue,
 } from 'src/core/types/subscription';
 import type { AppConfig } from 'src/shared/models/AppConfig';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
@@ -67,14 +67,7 @@ export class ServiceWorker {
    * previous version.
    */
   static get VERSION() {
-    return Environment.version();
-  }
-
-  /**
-   * Describes what context the JavaScript code is running in and whether we're running in local development mode.
-   */
-  static get environment() {
-    return Environment;
+    return VERSION;
   }
 
   static get log() {
@@ -201,7 +194,7 @@ export class ServiceWorker {
         Log.debug('[Service Worker] Received worker version message.');
         ServiceWorker.workerMessenger.broadcast(
           WorkerMessengerCommand.WorkerVersion,
-          Environment.version(),
+          VERSION,
         );
       },
     );
@@ -1032,9 +1025,7 @@ export class ServiceWorker {
    * @param event
    */
   static onServiceWorkerActivated(event: ExtendableEvent) {
-    Log.info(
-      `OneSignal Service Worker activated (version ${Environment.version()})`,
-    );
+    Log.info(`OneSignal Service Worker activated (version ${VERSION})`);
     event.waitUntil(self.clients.claim());
   }
 

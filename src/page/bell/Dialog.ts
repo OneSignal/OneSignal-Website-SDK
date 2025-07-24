@@ -1,4 +1,3 @@
-import SdkEnvironment from '../../shared/managers/SdkEnvironment';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import {
@@ -9,6 +8,8 @@ import {
 import type { NotificationIcons } from '../models/NotificationIcons';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
+
+const STATIC_RESOURCES_URL = new URL('https://media.onesignal.com/web-sdk');
 
 export default class Dialog extends AnimatedElement {
   public bell: Bell;
@@ -107,8 +108,7 @@ export default class Dialog extends AnimatedElement {
 
           let instructionsHtml = '';
           if (imageUrl) {
-            imageUrl =
-              SdkEnvironment.getOneSignalStaticResourcesUrl() + imageUrl;
+            imageUrl = STATIC_RESOURCES_URL + imageUrl;
             instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>`;
           }
 
