@@ -74,6 +74,9 @@ export default defineConfig(({ mode }) => {
         output: {
           assetFileNames: `${prefix}OneSignalSDK.page.styles.css`,
         },
+
+        // for getting rid of unused imports for builds otherwise we would need dynamic imports
+        treeshake: 'smallest',
       },
     },
 
@@ -87,6 +90,7 @@ export default defineConfig(({ mode }) => {
         getBooleanEnv(process.env.LOGGING) ?? !isProdEnv,
       ),
       __VERSION__: JSON.stringify(process.env.npm_package_config_sdkVersion),
+      __IS_SERVICE_WORKER__: JSON.stringify(lib === 'worker'),
 
       // ignored for prod
       __API_ORIGIN__: JSON.stringify(process.env.API_ORIGIN),

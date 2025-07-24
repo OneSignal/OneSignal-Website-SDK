@@ -266,7 +266,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async upsertSession(sessionOrigin: SessionOrigin): Promise<void> {
+  async upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
     if (User.singletonInstance?.onesignalId) {

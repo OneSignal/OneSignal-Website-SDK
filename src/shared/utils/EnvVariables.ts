@@ -25,3 +25,10 @@ export const LOGGING = typeof __LOGGING__ === 'undefined' ? true : __LOGGING__;
 
 export const NO_DEV_PORT =
   typeof __NO_DEV_PORT__ === 'undefined' ? false : __NO_DEV_PORT__;
+
+// See note at the top. Defined globals wont work for service workers but will work for builds.
+export const IS_SERVICE_WORKER =
+  typeof __IS_SERVICE_WORKER__ === 'undefined'
+    ? typeof self !== 'undefined' &&
+      typeof ServiceWorkerGlobalScope !== 'undefined'
+    : __IS_SERVICE_WORKER__;

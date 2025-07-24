@@ -1,9 +1,5 @@
 import { API_ORIGIN, API_TYPE } from '../utils/EnvVariables';
 
-export const isServiceWorkerEnv =
-  typeof self !== 'undefined' &&
-  typeof ServiceWorkerGlobalScope !== 'undefined';
-
 export const isSafariLegacyPush =
   typeof window !== 'undefined' && window.safari?.pushNotification != undefined;
 

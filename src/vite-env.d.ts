@@ -33,3 +33,8 @@ declare const __BUILD_ORIGIN__: string;
  * Which build environment to use (development, staging, production)
  */
 declare const __BUILD_TYPE__: string;
+
+/**
+ * Whether the current build is for a service worker
+ */
+declare const __IS_SERVICE_WORKER__: boolean;

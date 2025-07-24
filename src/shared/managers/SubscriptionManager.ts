@@ -19,11 +19,7 @@ import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationE
 import SubscriptionError, {
   SubscriptionErrorReason,
 } from '../errors/SubscriptionError';
-import {
-  getOneSignalApiUrl,
-  isSafariLegacyPush,
-  isServiceWorkerEnv,
-} from '../helpers/environment';
+import { getOneSignalApiUrl, isSafariLegacyPush } from '../helpers/environment';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
@@ -45,6 +41,7 @@ import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { bowserCastle } from '../utils/bowserCastle';
 import { base64ToUint8Array } from '../utils/Encoding';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { executeCallback, logMethodCall } from '../utils/utils';
 import { IDManager } from './IDManager';
@@ -68,6 +65,35 @@ export type SubscriptionStateServiceWorkerNotIntalled = Exclude<
   NotificationTypeValue,
   typeof NotificationType.Subscribed | typeof NotificationType.UserOptedOut
 >;
+
+const updatePushSubscriptionModelWithRawSubscription = async (
+  rawPushSubscription: RawPushSubscription,
+) => {
+  // incase a login op was called before user accepts the notifcations permissions, we need to wait for it to finish
+  // otherwise there would be two login ops in the same bucket for LoginOperationExecutor which would error
+  await LoginManager.switchingUsersPromise;
+
+  let pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+  // for new users, we need to create a new push subscription model and also save its push id to IndexedDB
+  if (!pushModel) {
+    pushModel =
+      OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
+    return UserDirector.createUserOnServer();
+  }
+  // for users with data failed to create a user or user + subscription on the server
+  if (IDManager.isLocalId(pushModel.id)) {
+    return UserDirector.createUserOnServer();
+  }
+
+  // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
+  const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
+    rawPushSubscription,
+  ).serialize();
+  for (const key in serializedSubscriptionRecord) {
+    const modelKey = key as keyof typeof serializedSubscriptionRecord;
+    pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
+  }
+};
 
 export class SubscriptionManager {
   private context: ContextSWInterface;
@@ -126,7 +152,7 @@ export class SubscriptionManager {
   ): Promise<RawPushSubscription> {
     let rawPushSubscription: RawPushSubscription;
 
-    if (isServiceWorkerEnv) {
+    if (IS_SERVICE_WORKER) {
       rawPushSubscription =
         await this.subscribeFcmFromWorker(subscriptionStrategy);
     } else {
@@ -151,7 +177,7 @@ export class SubscriptionManager {
 
       if (isSafariLegacyPush) {
         rawPushSubscription = await this.subscribeSafari();
-        await this._updatePushSubscriptionModelWithRawSubscription(
+        await updatePushSubscriptionModelWithRawSubscription(
           rawPushSubscription,
         );
         /* Now that permissions have been granted, install the service worker */
@@ -165,44 +191,13 @@ export class SubscriptionManager {
       } else {
         rawPushSubscription =
           await this.subscribeFcmFromPage(subscriptionStrategy);
-        await this._updatePushSubscriptionModelWithRawSubscription(
+        await updatePushSubscriptionModelWithRawSubscription(
           rawPushSubscription,
         );
       }
     }
 
     return rawPushSubscription;
-  }
-
-  public async _updatePushSubscriptionModelWithRawSubscription(
-    rawPushSubscription: RawPushSubscription,
-  ) {
-    // incase a login op was called before user accepts the notifcations permissions, we need to wait for it to finish
-    // otherwise there would be two login ops in the same bucket for LoginOperationExecutor which would error
-    await LoginManager.switchingUsersPromise;
-
-    let pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
-    // for new users, we need to create a new push subscription model and also save its push id to IndexedDB
-    if (!pushModel) {
-      pushModel =
-        OneSignal.coreDirector.generatePushSubscriptionModel(
-          rawPushSubscription,
-        );
-      return UserDirector.createUserOnServer();
-    }
-    // for users with data failed to create a user or user + subscription on the server
-    if (IDManager.isLocalId(pushModel.id)) {
-      return UserDirector.createUserOnServer();
-    }
-
-    // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
-    const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
-      rawPushSubscription,
-    ).serialize();
-    for (const key in serializedSubscriptionRecord) {
-      const modelKey = key as keyof typeof serializedSubscriptionRecord;
-      pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
-    }
   }
 
   async updateNotificationTypes(): Promise<void> {
@@ -294,7 +289,7 @@ export class SubscriptionManager {
     }
     await Database.setSubscription(subscription);
 
-    if (!isServiceWorkerEnv) {
+    if (!IS_SERVICE_WORKER) {
       OneSignalEvent.trigger(OneSignal.EVENTS.REGISTERED);
     }
 
@@ -317,7 +312,7 @@ export class SubscriptionManager {
     if (strategy === UnsubscriptionStrategy.DestroySubscription) {
       throw new NotImplementedError();
     } else if (strategy === UnsubscriptionStrategy.MarkUnsubscribed) {
-      if (isServiceWorkerEnv) {
+      if (IS_SERVICE_WORKER) {
         await Database.put('Options', { key: 'optedOut', value: true });
       } else {
         throw new NotImplementedError();
@@ -436,7 +431,7 @@ export class SubscriptionManager {
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (
-      !isServiceWorkerEnv &&
+      !IS_SERVICE_WORKER &&
       Notification.permission === NotificationPermission.Default
     ) {
       await OneSignalEvent.trigger(
@@ -801,7 +796,7 @@ export class SubscriptionManager {
    * Returns an object describing the user's actual push subscription state and opt-out status.
    */
   public async getSubscriptionState(): Promise<PushSubscriptionState> {
-    if (isServiceWorkerEnv) {
+    if (IS_SERVICE_WORKER) {
       const pushSubscription = await (<ServiceWorkerGlobalScope>(
         (<any>self)
       )).registration.pushManager.getSubscription();
