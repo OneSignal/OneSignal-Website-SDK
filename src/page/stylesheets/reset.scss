@@ -772,7 +772,8 @@
   direction: ltr;
   text-align: left; /* for IE, Opera */
   text-align: start; /* recommended W3C Spec */
-  font-family: 'Times New Roman', Times, serif; /* Override this with whatever font-family is required */
+  font-family:
+    'Times New Roman', Times, serif; /* Override this with whatever font-family is required */
   color: black;
   font-style: normal;
   font-weight: normal;

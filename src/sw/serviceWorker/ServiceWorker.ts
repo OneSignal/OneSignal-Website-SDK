@@ -7,7 +7,7 @@ import OneSignalApiSW from '../../../src/shared/api/OneSignalApiSW';
 import {
   WorkerMessenger,
   WorkerMessengerCommand,
-  WorkerMessengerMessage,
+  type WorkerMessengerMessage,
 } from '../../../src/shared/libraries/WorkerMessenger';
 import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
@@ -16,34 +16,37 @@ import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
 import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import {
-  NotificationClickEventInternal,
-  NotificationForegroundWillDisplayEventSerializable,
+  type NotificationClickEventInternal,
+  type NotificationForegroundWillDisplayEventSerializable,
 } from '../../shared/models/NotificationEvent';
 import {
-  IMutableOSNotification,
-  IOSNotification,
+  type IMutableOSNotification,
+  type IOSNotification,
 } from '../../shared/models/OSNotification';
 import {
-  PageVisibilityRequest,
-  PageVisibilityResponse,
+  type PageVisibilityRequest,
+  type PageVisibilityResponse,
   SessionStatus,
-  UpsertOrDeactivateSessionPayload,
+  type UpsertOrDeactivateSessionPayload,
 } from '../../shared/models/Session';
 import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
 import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import Log from '../libraries/Log';
 import {
-  OSMinifiedNotificationPayload,
+  type OSMinifiedNotificationPayload,
   OSMinifiedNotificationPayloadHelper,
 } from '../models/OSMinifiedNotificationPayload';
-import { OSServiceWorkerFields, SubscriptionChangeEvent } from './types';
+import {
+  type OSServiceWorkerFields,
+  type SubscriptionChangeEvent,
+} from './types';
 
 import {
   NotificationType,
-  NotificationTypeValue,
+  type NotificationTypeValue,
 } from 'src/core/types/subscription';
-import { AppConfig } from 'src/shared/models/AppConfig';
+import type { AppConfig } from 'src/shared/models/AppConfig';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
@@ -626,8 +629,8 @@ export class ServiceWorker {
     notification.icon = notification.icon
       ? notification.icon
       : defaultIcon
-      ? defaultIcon
-      : undefined;
+        ? defaultIcon
+        : undefined;
 
     ServiceWorker.ensureNotificationResourcesHttps(notification);
 
@@ -1081,7 +1084,7 @@ export class ServiceWorker {
     }
 
     // Get our new push subscription
-    let rawPushSubscription: RawPushSubscription;
+    let rawPushSubscription: RawPushSubscription | undefined;
 
     // Set it initially by the provided new push subscription
     const providedNewSubscription = event.newSubscription;

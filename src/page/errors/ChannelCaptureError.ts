@@ -1,16 +1,23 @@
 import OneSignalError from '../../shared/errors/OneSignalError';
 
-export enum InvalidChannelInputField {
-  InvalidSms,
-  InvalidEmail,
-  InvalidEmailAndSms,
-}
+export const InvalidChannelInputField = {
+  InvalidSms: 0,
+  InvalidEmail: 1,
+  InvalidEmailAndSms: 2,
+} as const;
+
+const reverseInvalidChannelInputField = Object.fromEntries(
+  Object.entries(InvalidChannelInputField).map(([key, value]) => [value, key]),
+);
+
+export type InvalidChannelInputFieldValue =
+  (typeof InvalidChannelInputField)[keyof typeof InvalidChannelInputField];
 
 export class ChannelCaptureError extends OneSignalError {
   description: string;
-  reason: InvalidChannelInputField;
+  reason: InvalidChannelInputFieldValue;
 
-  constructor(reason: InvalidChannelInputField) {
+  constructor(reason: InvalidChannelInputFieldValue) {
     let errorMessage;
     switch (reason) {
       case InvalidChannelInputField.InvalidEmail:
@@ -27,7 +34,7 @@ export class ChannelCaptureError extends OneSignalError {
     }
 
     super(errorMessage);
-    this.description = InvalidChannelInputField[reason];
+    this.description = reverseInvalidChannelInputField[reason];
     this.reason = reason;
 
     /**

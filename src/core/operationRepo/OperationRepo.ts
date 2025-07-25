@@ -1,8 +1,8 @@
 import {
   ExecutionResult,
-  IOperationExecutor,
-  IOperationRepo,
-  IStartableService,
+  type IOperationExecutor,
+  type IOperationRepo,
+  type IStartableService,
 } from 'src/core/types/operation';
 import Log from 'src/shared/libraries/Log';
 import Database from 'src/shared/services/Database';
@@ -52,12 +52,17 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public queue: OperationQueueItem[] = [];
   private paused = true;
   private enqueueIntoBucket = 0;
+  private operationModelStore: OperationModelStore;
+  private newRecordState: NewRecordsState;
 
   constructor(
     executors: IOperationExecutor[],
-    private operationModelStore: OperationModelStore,
-    private newRecordState: NewRecordsState,
+    operationModelStore: OperationModelStore,
+    newRecordState: NewRecordsState,
   ) {
+    this.operationModelStore = operationModelStore;
+    this.newRecordState = newRecordState;
+
     this.executorsMap = new Map<string, IOperationExecutor>();
     for (const executor of executors) {
       for (const operation of executor.operations) {

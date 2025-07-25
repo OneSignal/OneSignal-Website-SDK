@@ -15,7 +15,7 @@ import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
 import {
   SubscriptionManager,
-  SubscriptionManagerConfig,
+  type SubscriptionManagerConfig,
 } from './SubscriptionManager';
 
 const subConfig: SubscriptionManagerConfig = {

@@ -1,5 +1,5 @@
-import { IOSWebhookEventPayload } from '../../IOSWebhookEventPayload';
-import { IOSNotification } from '../../../../shared/models/OSNotification';
+import type { IOSNotification } from '../../../../shared/models/OSNotification';
+import type { IOSWebhookEventPayload } from '../../IOSWebhookEventPayload';
 
 export class OSWebhookPayloadNotificationDismiss
   implements IOSWebhookEventPayload

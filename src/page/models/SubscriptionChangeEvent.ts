@@ -1,12 +1,10 @@
-type PushSubscriptionNamespaceProperties = {
+interface PushSubscriptionNamespaceProperties {
   id: string | null | undefined;
   token: string | null | undefined;
   optedIn: boolean;
-};
+}
 
-type SubscriptionChangeEvent = {
+export interface SubscriptionChangeEvent {
   previous: PushSubscriptionNamespaceProperties;
   current: PushSubscriptionNamespaceProperties;
-};
-
-export default SubscriptionChangeEvent;
+}

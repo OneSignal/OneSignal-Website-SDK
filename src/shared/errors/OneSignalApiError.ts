@@ -1,14 +1,17 @@
 import OneSignalError from './OneSignalError';
 
-export enum OneSignalApiErrorKind {
-  MissingAppId,
-  RetryLimitReached,
-}
+export const OneSignalApiErrorKind = {
+  MissingAppId: 0,
+  RetryLimitReached: 1,
+} as const;
+
+export type OneSignalApiErrorKindValue =
+  (typeof OneSignalApiErrorKind)[keyof typeof OneSignalApiErrorKind];
 
 export class OneSignalApiError extends OneSignalError {
   reason!: string;
 
-  constructor(reason: OneSignalApiErrorKind) {
+  constructor(reason: OneSignalApiErrorKindValue) {
     let errorMessage;
     switch (reason) {
       case OneSignalApiErrorKind.MissingAppId:

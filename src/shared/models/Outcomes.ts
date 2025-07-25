@@ -28,15 +28,18 @@ export interface OutcomesConfig {
   };
 }
 
-export enum OutcomeAttributionType {
-  Direct = 1,
-  Indirect = 2,
-  Unattributed = 3,
-  NotSupported = 4,
-}
+export const OutcomeAttributionType = {
+  Direct: 1,
+  Indirect: 2,
+  Unattributed: 3,
+  NotSupported: 4,
+} as const;
+
+export type OutcomeAttributionTypeValue =
+  (typeof OutcomeAttributionType)[keyof typeof OutcomeAttributionType];
 
 export interface OutcomeAttribution {
-  type: OutcomeAttributionType;
+  type: OutcomeAttributionTypeValue;
   notificationIds: string[];
 }
 

@@ -9,16 +9,24 @@ import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOpe
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
-import { IRebuildUserService } from '../types/user';
+import type { IRebuildUserService } from '../types/user';
 
 // Implements logic similar to Android SDK's RebuildUserService
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/builduser/impl/RebuildUserService.kt
 export class RebuildUserService implements IRebuildUserService {
+  private _identityModelStore: IdentityModelStore;
+  private _propertiesModelStore: PropertiesModelStore;
+  private _subscriptionsModelStore: SubscriptionModelStore;
+
   constructor(
-    private _identityModelStore: IdentityModelStore,
-    private _propertiesModelStore: PropertiesModelStore,
-    private _subscriptionsModelStore: SubscriptionModelStore,
-  ) {}
+    _identityModelStore: IdentityModelStore,
+    _propertiesModelStore: PropertiesModelStore,
+    _subscriptionsModelStore: SubscriptionModelStore,
+  ) {
+    this._identityModelStore = _identityModelStore;
+    this._propertiesModelStore = _propertiesModelStore;
+    this._subscriptionsModelStore = _subscriptionsModelStore;
+  }
 
   async getRebuildOperationsIfCurrentUser(
     appId: string,

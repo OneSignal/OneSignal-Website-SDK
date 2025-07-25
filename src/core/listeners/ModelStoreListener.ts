@@ -1,7 +1,7 @@
-import { ModelChangedArgs, type Model } from '../models/Model';
+import type { Model, ModelChangedArgs } from '../models/Model';
 import { Operation } from '../operations/Operation';
 import { ModelChangeTags, type IModelStore } from '../types/models';
-import { type IOperationRepo } from '../types/operation';
+import type { IOperationRepo } from '../types/operation';
 
 // Implements logic similar to Android SDK's ModelStoreListener
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/listeners/ModelStoreListener.kt

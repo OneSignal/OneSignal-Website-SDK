@@ -1,11 +1,11 @@
-import { SlidedownHtmlProps } from './types';
 import {
   DEFAULT_ICON,
-  SLIDEDOWN_CSS_IDS,
-  SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_BUTTON_CLASSES,
+  SLIDEDOWN_CSS_CLASSES,
+  SLIDEDOWN_CSS_IDS,
 } from '../../shared/slidedown/constants';
 import { addCssClass } from '../../shared/utils/utils';
+import type { SlidedownHtmlProps } from './types';
 
 export function getSlidedownElement(dialogProps: SlidedownHtmlProps): Element {
   const { icon, messageText, positiveButtonText, negativeButtonText } =

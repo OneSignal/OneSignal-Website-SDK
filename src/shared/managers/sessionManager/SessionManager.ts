@@ -1,11 +1,11 @@
-import { IUpdateUser } from 'src/core/types/api';
+import type { IUpdateUser } from 'src/core/types/api';
 import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../../core/requestService/AliasPair';
 import { RequestService } from '../../../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
-import { ContextInterface } from '../../../page/models/Context';
+import type { ContextInterface } from '../../../page/models/Context';
 import Utils from '../../../shared/context/Utils';
 import OneSignalError from '../../../shared/errors/OneSignalError';
 import MainHelper from '../../helpers/MainHelper';
@@ -13,10 +13,11 @@ import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/WorkerMessenger';
 import {
   SessionOrigin,
-  UpsertOrDeactivateSessionPayload,
+  type SessionOriginValue,
+  type UpsertOrDeactivateSessionPayload,
 } from '../../models/Session';
 import { OneSignalUtils } from '../../utils/OneSignalUtils';
-import { ISessionManager } from './types';
+import type { ISessionManager } from './types';
 
 export class SessionManager implements ISessionManager {
   private context: ContextInterface;
@@ -29,7 +30,7 @@ export class SessionManager implements ISessionManager {
   async notifySWToUpsertSession(
     onesignalId: string,
     subscriptionId: string,
-    sessionOrigin: SessionOrigin,
+    sessionOrigin: SessionOriginValue,
   ): Promise<void> {
     const payload: UpsertOrDeactivateSessionPayload = {
       onesignalId,
@@ -57,7 +58,7 @@ export class SessionManager implements ISessionManager {
   async notifySWToDeactivateSession(
     onesignalId: string,
     subscriptionId: string,
-    sessionOrigin: SessionOrigin,
+    sessionOrigin: SessionOriginValue,
   ): Promise<void> {
     const payload: UpsertOrDeactivateSessionPayload = {
       appId: this.context.appConfig.appId,

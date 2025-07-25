@@ -1,5 +1,5 @@
-interface NotificationIcons {
-  chrome?: string;
-  firefox?: string;
-  safari?: string;
+export interface NotificationIcons {
+  chrome: string | null;
+  firefox: string | null;
+  safari: string | null;
 }

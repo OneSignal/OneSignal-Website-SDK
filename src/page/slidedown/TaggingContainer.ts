@@ -1,21 +1,21 @@
-import { TagCategory, TagsObjectWithBoolean } from '../models/Tags';
 import {
-  addDomElement,
-  removeDomElement,
-  addCssClass,
-  removeCssClass,
-  getDomElementOrStub,
-} from '../../shared/utils/utils';
-import { getLoadingIndicatorWithColor } from './LoadingIndicator';
-import {
+  COLORS,
+  SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_CSS_IDS,
   TAGGING_CONTAINER_CSS_CLASSES,
   TAGGING_CONTAINER_CSS_IDS,
   TAGGING_CONTAINER_STRINGS,
-  COLORS,
-  SLIDEDOWN_CSS_CLASSES,
 } from '../../shared/slidedown/constants';
 import TagUtils from '../../shared/utils/TagUtils';
+import {
+  addCssClass,
+  addDomElement,
+  getDomElementOrStub,
+  removeCssClass,
+  removeDomElement,
+} from '../../shared/utils/utils';
+import type { TagCategory, TagsObjectWithBoolean } from '../models/Tags';
+import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 
 export default class TaggingContainer {
   public mount(

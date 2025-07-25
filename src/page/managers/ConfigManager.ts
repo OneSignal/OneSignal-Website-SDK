@@ -1,8 +1,8 @@
 import OneSignalApi from '../../shared/api/OneSignalApi';
 import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
-import {
-  AppUserConfig,
+import type {
   AppConfig,
+  AppUserConfig,
   ServerAppConfig,
 } from '../../shared/models/AppConfig';
 

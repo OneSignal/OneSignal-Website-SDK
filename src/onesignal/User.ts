@@ -2,7 +2,7 @@ import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import {
   NotificationType,
   SubscriptionType,
-  SubscriptionTypeValue,
+  type SubscriptionTypeValue,
 } from 'src/core/types/subscription';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';

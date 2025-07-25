@@ -1,13 +1,11 @@
-import Log from '../libraries/Log';
-import { ContextSWInterface } from '../models/ContextSW';
-
-import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
-
 import { NotificationType } from 'src/core/types/subscription';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import User from '../../onesignal/User';
+import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import OneSignalApiShared from '../api/OneSignalApiShared';
+import Log from '../libraries/Log';
+import type { ContextSWInterface } from '../models/ContextSW';
 import { SessionOrigin } from '../models/Session';
 import { logMethodCall } from '../utils/utils';
 

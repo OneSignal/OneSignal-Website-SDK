@@ -1,15 +1,18 @@
 import OneSignalError from './OneSignalError';
 
-export enum PushPermissionNotGrantedErrorReason {
-  Blocked,
-  Dismissed,
-  Default,
-}
+export const PushPermissionNotGrantedErrorReason = {
+  Blocked: 0,
+  Dismissed: 1,
+  Default: 2,
+} as const;
+
+export type PushPermissionNotGrantedErrorReasonValue =
+  (typeof PushPermissionNotGrantedErrorReason)[keyof typeof PushPermissionNotGrantedErrorReason];
 
 export default class PushPermissionNotGrantedError extends OneSignalError {
-  reason!: PushPermissionNotGrantedErrorReason;
+  reason!: PushPermissionNotGrantedErrorReasonValue;
 
-  constructor(reason: PushPermissionNotGrantedErrorReason) {
+  constructor(reason: PushPermissionNotGrantedErrorReasonValue) {
     let errorMessage;
     switch (reason) {
       case PushPermissionNotGrantedErrorReason.Dismissed:

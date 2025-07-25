@@ -1,6 +1,6 @@
 import { OPERATION_NAME } from '../constants';
 import { BaseAliasOperation } from './BaseAliasOperation';
-import { GroupComparisonType, GroupComparisonValue } from './Operation';
+import { GroupComparisonType, type GroupComparisonValue } from './Operation';
 
 // Implements logic similar to Android SDK's DeleteAliasOperation
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/DeleteAliasOperation.kt

@@ -1,19 +1,26 @@
 import OneSignalError from './OneSignalError';
 
-export enum SdkInitErrorKind {
-  InvalidAppId,
-  AppNotConfiguredForWebPush,
-  WrongSiteUrl,
-  MultipleInitialization,
-  MissingSafariWebId,
-  Unknown,
-}
+export const SdkInitErrorKind = {
+  InvalidAppId: 0,
+  AppNotConfiguredForWebPush: 1,
+  WrongSiteUrl: 2,
+  MultipleInitialization: 3,
+  MissingSafariWebId: 4,
+  Unknown: 5,
+} as const;
+
+const reverseSdkInitErrorKind = Object.fromEntries(
+  Object.entries(SdkInitErrorKind).map(([key, value]) => [value, key]),
+);
+
+export type SdkInitErrorKindValue =
+  (typeof SdkInitErrorKind)[keyof typeof SdkInitErrorKind];
 
 export class SdkInitError extends OneSignalError {
   reason!: string;
 
   constructor(
-    reason: SdkInitErrorKind,
+    reason: SdkInitErrorKindValue,
     extra?: {
       siteUrl: string;
     },
@@ -56,7 +63,7 @@ export class SdkInitError extends OneSignalError {
     }
     super(errorMessage);
 
-    this.reason = SdkInitErrorKind[reason];
+    this.reason = reverseSdkInitErrorKind[reason];
 
     /**
      * Important! Required to make sure the correct error type is detected during instanceof checks.

@@ -1,7 +1,7 @@
-import { SessionOrigin } from '../../models/Session';
+import type { SessionOriginValue } from '../../models/Session';
 
 export interface ISessionManager {
-  sendOnSessionUpdateFromPage: () => Promise<void>;
   setupSessionEventListeners(): void;
-  upsertSession: (sessionOrigin: SessionOrigin) => Promise<void>;
+  upsertSession: (sessionOrigin: SessionOriginValue) => Promise<void>;
+  sendOnSessionUpdateFromPage: () => Promise<void>;
 }

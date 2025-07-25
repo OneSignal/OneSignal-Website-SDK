@@ -1,17 +1,24 @@
 import OneSignalError from './OneSignalError';
 
-export enum NotSubscribedReason {
-  Unknown,
-  NoDeviceId,
-  NoEmailSet,
-  NoSMSSet,
-  OptedOut,
-}
+export const NotSubscribedReason = {
+  Unknown: 0,
+  NoDeviceId: 1,
+  NoEmailSet: 2,
+  NoSMSSet: 3,
+  OptedOut: 4,
+} as const;
+
+export type NotSubscribedReasonValue =
+  (typeof NotSubscribedReason)[keyof typeof NotSubscribedReason];
+
+const reverseNotSubscribedReason = Object.fromEntries(
+  Object.entries(NotSubscribedReason).map(([key, value]) => [value, key]),
+);
 
 export class NotSubscribedError extends OneSignalError {
   reason: string;
 
-  constructor(reason: NotSubscribedReason) {
+  constructor(reason: NotSubscribedReasonValue) {
     let errorMessage;
     switch (reason) {
       case NotSubscribedReason.Unknown || NotSubscribedReason.NoDeviceId:
@@ -31,7 +38,7 @@ export class NotSubscribedError extends OneSignalError {
         break;
     }
     super(errorMessage);
-    this.reason = NotSubscribedReason[reason];
+    this.reason = reverseNotSubscribedReason[reason];
 
     /**
      * Important! Required to make sure the correct error type is detected during instanceof checks.

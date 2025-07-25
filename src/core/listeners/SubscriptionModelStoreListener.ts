@@ -6,8 +6,11 @@ import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOpe
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { type Operation } from '../operations/Operation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import { IOperationRepo } from '../types/operation';
-import { NotificationType, NotificationTypeValue } from '../types/subscription';
+import type { IOperationRepo } from '../types/operation';
+import {
+  NotificationType,
+  type NotificationTypeValue,
+} from '../types/subscription';
 import { ModelStoreListener } from './ModelStoreListener';
 
 // Implements logic similar to Android SDK's SubscriptionModelStoreListener

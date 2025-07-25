@@ -18,23 +18,29 @@ import InitHelper from '../../../shared/helpers/InitHelper';
 import PromptsHelper from '../../../shared/helpers/PromptsHelper';
 import Log from '../../../shared/libraries/Log';
 import { NotificationPermission } from '../../../shared/models/NotificationPermission';
-import { DelayedPromptType } from '../../../shared/models/Prompts';
-import { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
+import {
+  DelayedPromptType,
+  type DelayedPromptTypeValue,
+} from '../../../shared/models/Prompts';
+import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import { awaitableTimeout } from '../../../shared/utils/AwaitableTimeout';
 import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';
 import TagUtils from '../../../shared/utils/TagUtils';
 import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
 import PermissionMessageDismissedError from '../../errors/PermissionMessageDismissedError';
-import { ContextInterface } from '../../models/Context';
+import type { ContextInterface } from '../../models/Context';
 import { DismissPrompt } from '../../models/Dismiss';
-import { TagsObjectForApi, TagsObjectWithBoolean } from '../../models/Tags';
+import type {
+  TagsObjectForApi,
+  TagsObjectWithBoolean,
+} from '../../models/Tags';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';
 import Slidedown, {
   manageNotifyButtonStateWhileSlidedownShows,
 } from '../../slidedown/Slidedown';
 import TaggingContainer from '../../slidedown/TaggingContainer';
-import { AutoPromptOptions } from '../PromptsManager';
+import type { AutoPromptOptions } from '../PromptsManager';
 
 export class SlidedownManager {
   private context: ContextInterface;
@@ -370,7 +376,7 @@ export class SlidedownManager {
         `SlidedownManager: handleAllowClick: this.slidedown is undefined`,
       );
     }
-    const slidedownType: DelayedPromptType = this.slidedown.options.type;
+    const slidedownType: DelayedPromptTypeValue = this.slidedown.options.type;
 
     if (this.slidedown.isShowingFailureState) {
       this.slidedown.removeFailureState();
@@ -402,7 +408,7 @@ export class SlidedownManager {
       this.slidedown.removeSaveState();
       this.slidedown.setFailureState();
 
-      if (e.reason !== undefined) {
+      if (e instanceof ChannelCaptureError) {
         this.slidedown.setFailureStateForInvalidChannelInput(e.reason);
       }
       return;

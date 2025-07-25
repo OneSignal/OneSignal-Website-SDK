@@ -1,7 +1,7 @@
-import { OutcomeAttributionType } from './Outcomes';
+import type { OutcomeAttributionTypeValue } from './Outcomes';
 
-export default interface OutcomeProps {
-  type: OutcomeAttributionType;
+export interface OutcomeProps {
+  type: OutcomeAttributionTypeValue;
   notificationIds: string[];
   weight?: number | undefined;
 }

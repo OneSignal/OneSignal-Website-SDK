@@ -1,6 +1,6 @@
-import { Categories } from '../../page/models/Tags';
-import { OutcomesConfig, OutcomesServerConfig } from './Outcomes';
-import {
+import type { Categories } from '../../page/models/Tags';
+import type { OutcomesConfig, OutcomesServerConfig } from './Outcomes';
+import type {
   AppUserConfigNotifyButton,
   AppUserConfigPromptOptions,
   CustomLinkSize,
@@ -51,29 +51,36 @@ export interface AppConfig {
   siteName: string;
 }
 
-export enum ConfigIntegrationKind {
-  TypicalSite = 'typical',
-  WordPress = 'wordpress',
-  Shopify = 'shopify',
-  Blogger = 'blogger',
-  Magento = 'magento',
-  Drupal = 'drupal',
-  SquareSpace = 'squarespace',
-  Joomla = 'joomla',
-  Weebly = 'weebly',
-  Wix = 'wix',
-  Custom = 'custom',
-}
+export const ConfigIntegrationKind = {
+  TypicalSite: 'typical',
+  WordPress: 'wordpress',
+  Shopify: 'shopify',
+  Blogger: 'blogger',
+  Magento: 'magento',
+  Drupal: 'drupal',
+  SquareSpace: 'squarespace',
+  Joomla: 'joomla',
+  Weebly: 'weebly',
+  Wix: 'wix',
+  Custom: 'custom',
+} as const;
 
-export enum NotificationClickMatchBehavior {
-  Exact = 'exact',
-  Origin = 'origin',
-}
+export type ConfigIntegrationKindValue =
+  (typeof ConfigIntegrationKind)[keyof typeof ConfigIntegrationKind];
 
-export enum NotificationClickActionBehavior {
-  Navigate = 'navigate',
-  Focus = 'focus',
-}
+export const NotificationClickMatchBehavior = {
+  Exact: 'exact',
+  Origin: 'origin',
+} as const;
+type NotificationClickMatchBehaviorValue =
+  (typeof NotificationClickMatchBehavior)[keyof typeof NotificationClickMatchBehavior];
+
+export const NotificationClickActionBehavior = {
+  Navigate: 'navigate',
+  Focus: 'focus',
+} as const;
+type NotificationClickActionBehaviorValue =
+  (typeof NotificationClickActionBehavior)[keyof typeof NotificationClickActionBehavior];
 
 export interface AppUserConfig {
   [key: string]: any;
@@ -89,8 +96,8 @@ export interface AppUserConfig {
   notifyButton?: Partial<AppUserConfigNotifyButton>;
   persistNotification?: boolean;
   webhooks?: AppUserConfigWebhooks;
-  notificationClickHandlerMatch?: NotificationClickMatchBehavior;
-  notificationClickHandlerAction?: NotificationClickActionBehavior;
+  notificationClickHandlerMatch?: NotificationClickMatchBehaviorValue;
+  notificationClickHandlerAction?: NotificationClickActionBehaviorValue;
   pageUrl?: string;
   outcomes?: OutcomesConfig;
   serviceWorkerOverrideForTypical?: boolean;
@@ -237,14 +244,14 @@ export interface ServerAppConfig {
       notificationDisplayedHook?: string;
     };
     integration: {
-      kind: ConfigIntegrationKind;
+      kind: ConfigIntegrationKindValue;
     };
     serviceWorker: {
       path?: string;
       workerName?: string;
       registrationScope?: string;
     };
-    setupBehavior?: {};
+    setupBehavior?: Record<string, unknown>;
     welcomeNotification: {
       url: string | undefined;
       title: string | undefined;
@@ -254,8 +261,8 @@ export interface ServerAppConfig {
     };
     notificationBehavior?: {
       click: {
-        match: NotificationClickMatchBehavior;
-        action: NotificationClickActionBehavior;
+        match: NotificationClickMatchBehaviorValue;
+        action: NotificationClickActionBehaviorValue;
       };
       display: {
         persist: boolean;

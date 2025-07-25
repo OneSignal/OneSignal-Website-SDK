@@ -1,7 +1,10 @@
-import { AppUserConfig, SlidedownOptionsVersion1 } from '../models/AppConfig';
+import type {
+  AppUserConfig,
+  SlidedownOptionsVersion1,
+} from '../models/AppConfig';
 import {
-  AppUserConfigPromptOptions,
-  SlidedownOptions,
+  type AppUserConfigPromptOptions,
+  type SlidedownOptions,
   DelayedPromptType,
 } from '../models/Prompts';
 import PromptsHelper from './PromptsHelper';

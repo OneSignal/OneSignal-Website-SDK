@@ -1,10 +1,10 @@
 import UserNamespace from '../../onesignal/UserNamespace';
-import SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
-import UserChangeEvent from '../../page/models/UserChangeEvent';
+import type SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
+import type UserChangeEvent from '../../page/models/UserChangeEvent';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
-import { ContextSWInterface } from '../models/ContextSW';
-import {
+import type { ContextSWInterface } from '../models/ContextSW';
+import type {
   NotificationClickEvent,
   NotificationClickEventInternal,
 } from '../models/NotificationEvent';
@@ -187,7 +187,7 @@ export default class EventHelper {
   }
 
   private static async onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
-    if (!OneSignal.config.userConfig.notifyButton) return;
+    if (!OneSignal.config?.userConfig.notifyButton) return;
 
     const displayPredicate =
       OneSignal.config.userConfig.notifyButton.displayPredicate;
@@ -212,9 +212,9 @@ export default class EventHelper {
   }
 
   private static async onSubscriptionChanged_updateCustomLink() {
-    if (OneSignal.config.userConfig.promptOptions) {
+    if (OneSignal.config?.userConfig.promptOptions) {
       new CustomLinkManager(
-        OneSignal.config.userConfig.promptOptions.customlink,
+        OneSignal.config?.userConfig.promptOptions.customlink,
       ).initialize();
     }
   }
@@ -251,8 +251,8 @@ export default class EventHelper {
   static async fireStoredNotificationClicks() {
     await awaitOneSignalInitAndSupported();
     const url =
-      OneSignal.config.pageUrl ||
-      OneSignal.config.userConfig.pageUrl ||
+      OneSignal.config?.pageUrl ||
+      OneSignal.config?.userConfig.pageUrl ||
       document.URL;
 
     async function fireEventWithNotification(
@@ -261,7 +261,9 @@ export default class EventHelper {
       // Remove the notification from the recently clicked list
       // Once this page processes this retroactively provided clicked event, nothing should get the same event
       const appState = await Database.getAppState();
-      appState.pendingNotificationClickEvents[selectedEvent.result.url] = null;
+      // @ts-expect-error - TODO: address this is a workaround to fix the type error
+      appState.pendingNotificationClickEvents![selectedEvent.result.url!] =
+        null;
       await Database.setAppState(appState);
 
       const timestamp = selectedEvent.timestamp;
@@ -290,13 +292,13 @@ export default class EventHelper {
     );
     if (notificationClickHandlerMatch === 'origin') {
       for (const clickedNotificationUrl of Object.keys(
-        appState.pendingNotificationClickEvents,
+        appState.pendingNotificationClickEvents!,
       )) {
         // Using notificationClickHandlerMatch: 'origin', as long as the notification's URL's origin matches our current tab's origin,
         // fire the clicked event
         if (new URL(clickedNotificationUrl).origin === location.origin) {
           const clickedNotification =
-            appState.pendingNotificationClickEvents[clickedNotificationUrl];
+            appState.pendingNotificationClickEvents![clickedNotificationUrl];
           await fireEventWithNotification(clickedNotification);
         }
       }
@@ -309,13 +311,13 @@ export default class EventHelper {
         As a workaround, if there are no notifications for https://site.com/, we'll do a check for https://site.com.
       */
       let pageClickedNotifications =
-        appState.pendingNotificationClickEvents[url];
+        appState.pendingNotificationClickEvents?.[url];
       if (pageClickedNotifications) {
         await fireEventWithNotification(pageClickedNotifications);
       } else if (!pageClickedNotifications && url.endsWith('/')) {
         const urlWithoutTrailingSlash = url.substring(0, url.length - 1);
         pageClickedNotifications =
-          appState.pendingNotificationClickEvents[urlWithoutTrailingSlash];
+          appState.pendingNotificationClickEvents?.[urlWithoutTrailingSlash];
         if (pageClickedNotifications) {
           await fireEventWithNotification(pageClickedNotifications);
         }

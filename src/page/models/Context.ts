@@ -6,16 +6,16 @@ import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager
 import { SubscriptionManager } from '../../shared/managers/SubscriptionManager';
 import { UpdateManager } from '../../shared/managers/UpdateManager';
 import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';
-import { ISessionManager } from '../../shared/managers/sessionManager/types';
-import { AppConfig } from '../../shared/models/AppConfig';
-import { ContextSWInterface } from '../../shared/models/ContextSW';
+import type { ISessionManager } from '../../shared/managers/sessionManager/types';
+import type { AppConfig } from '../../shared/models/AppConfig';
+import type { ContextSWInterface } from '../../shared/models/ContextSW';
 import { PromptsManager } from '../managers/PromptsManager';
 import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
-import { ISlidedownManager } from '../managers/slidedownManager/types';
+import type { ISlidedownManager } from '../managers/slidedownManager/types';
 import TagManager from '../managers/tagManager/TagManager';
-import { ITagManager } from '../managers/tagManager/types';
+import type { ITagManager } from '../managers/tagManager/types';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { EnvironmentInfo } from './EnvironmentInfo';
+import type { EnvironmentInfo } from './EnvironmentInfo';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;

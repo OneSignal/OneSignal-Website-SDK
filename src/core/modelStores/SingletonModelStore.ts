@@ -1,9 +1,9 @@
 import { ModelStore } from 'src/core/modelRepo/ModelStore';
-import { Model, ModelChangedArgs } from 'src/core/models/Model';
+import { Model, type ModelChangedArgs } from 'src/core/models/Model';
 import {
-  IModelStoreChangeHandler,
-  ISingletonModelStore,
-  ISingletonModelStoreChangeHandler,
+  type IModelStoreChangeHandler,
+  type ISingletonModelStore,
+  type ISingletonModelStoreChangeHandler,
   type ModelChangeTagValue,
 } from 'src/core/types/models';
 import { EventProducer } from '../../shared/helpers/EventProducer';

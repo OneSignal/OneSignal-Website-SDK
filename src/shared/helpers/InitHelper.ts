@@ -1,9 +1,9 @@
 import Bell from '../../page/bell/Bell';
-import { ContextInterface } from '../../page/models/Context';
+import type { ContextInterface } from '../../page/models/Context';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
-import { AppConfig } from '../models/AppConfig';
+import type { AppConfig } from '../models/AppConfig';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import Database from '../services/Database';
@@ -76,7 +76,8 @@ export default class InitHelper {
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = await OneSignal.context.subscriptionManager.isOptedOut();
+    const isOptedOut =
+      (await OneSignal.context.subscriptionManager.isOptedOut()) ?? false;
     // saves isOptedOut to localStorage. used for require user interaction functionality
     const subscription = await Database.getSubscription();
     subscription.optedOut = isOptedOut;
@@ -89,7 +90,7 @@ export default class InitHelper {
     // saves isSubscribed to IndexedDb. used for require user interaction functionality
     await Database.setIsPushEnabled(!!isSubscribed);
 
-    if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut) {
+    if (OneSignal.config?.userConfig.promptOptions?.autoPrompt && !isOptedOut) {
       OneSignal.context.promptsManager.spawnAutoPrompts();
     }
 
@@ -125,8 +126,8 @@ export default class InitHelper {
         await OneSignal.context.updateManager.sendOnSessionUpdate();
       }
     } else if (
-      !OneSignal.config.userConfig.promptOptions.autoPrompt &&
-      !OneSignal.config.userConfig.autoResubscribe
+      !OneSignal.config?.userConfig.promptOptions?.autoPrompt &&
+      !OneSignal.config?.userConfig.autoResubscribe
     ) {
       await OneSignal.context.updateManager.sendOnSessionUpdate();
     }
@@ -262,7 +263,7 @@ export default class InitHelper {
   }
 
   protected static async showPromptsFromWebConfigEditor() {
-    const config: AppConfig = OneSignal.config;
+    const config: AppConfig = OneSignal.config!;
     if (config.userConfig.promptOptions) {
       await new CustomLinkManager(
         config.userConfig.promptOptions.customlink,
@@ -293,7 +294,8 @@ export default class InitHelper {
   public static async saveInitOptions() {
     const opPromises: Promise<any>[] = [];
 
-    const persistNotification = OneSignal.config.userConfig.persistNotification;
+    const persistNotification =
+      OneSignal.config?.userConfig.persistNotification;
     opPromises.push(
       Database.put('Options', {
         key: 'persistNotification',
@@ -301,17 +303,20 @@ export default class InitHelper {
       }),
     );
 
-    const webhookOptions = OneSignal.config.userConfig.webhooks;
+    const webhookOptions = OneSignal.config?.userConfig.webhooks;
     [
       'notification.willDisplay',
       'notification.clicked',
       'notification.dismissed',
     ].forEach((event) => {
-      if (webhookOptions && webhookOptions[event]) {
+      if (
+        webhookOptions &&
+        webhookOptions[event as keyof typeof webhookOptions]
+      ) {
         opPromises.push(
           Database.put('Options', {
             key: `webhooks.${event}`,
-            value: webhookOptions[event],
+            value: webhookOptions[event as keyof typeof webhookOptions],
           }),
         );
       } else {
@@ -330,7 +335,7 @@ export default class InitHelper {
       );
     }
 
-    if (OneSignal.config.userConfig.notificationClickHandlerMatch) {
+    if (OneSignal.config?.userConfig.notificationClickHandlerMatch) {
       opPromises.push(
         Database.put('Options', {
           key: 'notificationClickHandlerMatch',
@@ -346,7 +351,7 @@ export default class InitHelper {
       );
     }
 
-    if (OneSignal.config.userConfig.notificationClickHandlerAction) {
+    if (OneSignal.config?.userConfig.notificationClickHandlerAction) {
       opPromises.push(
         Database.put('Options', {
           key: 'notificationClickHandlerAction',
@@ -366,7 +371,7 @@ export default class InitHelper {
 
   public static async initSaveState(overridingPageTitle?: string) {
     const appId = MainHelper.getAppId();
-    const config: AppConfig = OneSignal.config;
+    const config: AppConfig = OneSignal.config!;
     await Database.put('Ids', { type: 'appId', id: appId });
     const pageTitle: string =
       overridingPageTitle ||
@@ -379,10 +384,10 @@ export default class InitHelper {
 
   public static async handleAutoResubscribe(isOptedOut: boolean) {
     Log.info('handleAutoResubscribe', {
-      autoResubscribe: OneSignal.config.userConfig.autoResubscribe,
+      autoResubscribe: OneSignal.config?.userConfig.autoResubscribe,
       isOptedOut,
     });
-    if (OneSignal.config.userConfig.autoResubscribe && !isOptedOut) {
+    if (OneSignal.config?.userConfig.autoResubscribe && !isOptedOut) {
       const currentPermission: NotificationPermission =
         await OneSignal.context.permissionManager.getNotificationPermission(
           OneSignal.context.appConfig.safariWebId,

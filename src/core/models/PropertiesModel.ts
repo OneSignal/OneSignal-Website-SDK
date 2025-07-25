@@ -1,4 +1,4 @@
-import { IUserProperties } from '../types/api';
+import type { IUserProperties } from '../types/api';
 import { Model } from './Model';
 
 type IPropertiesModel = {

@@ -1,24 +1,30 @@
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import SdkEnvironment from '../../shared/managers/SdkEnvironment';
 
-export const enum ResourceType {
-  Stylesheet,
-  Script,
-}
+export const ResourceType = {
+  Stylesheet: 0,
+  Script: 1,
+} as const;
 
-export const enum ResourceLoadState {
+export type ResourceTypeValue =
+  (typeof ResourceType)[keyof typeof ResourceType];
+
+export const ResourceLoadState = {
   /**
    * The remote resource was fetched and loaded successfully.
    */
-  Loaded,
+  Loaded: 0,
   /**
    * The remote resource failed to be loaded (e.g. not found or network offline).
    */
-  Failed,
-}
+  Failed: 1,
+} as const;
+
+export type ResourceLoadStateValue =
+  (typeof ResourceLoadState)[keyof typeof ResourceLoadState];
 
 interface DynamicResourceLoaderCache {
-  [key: string]: Promise<ResourceLoadState>;
+  [key: string]: Promise<ResourceLoadStateValue>;
 }
 
 export class DynamicResourceLoader {
@@ -33,7 +39,7 @@ export class DynamicResourceLoader {
     return { ...this.cache };
   }
 
-  async loadSdkStylesheet(): Promise<ResourceLoadState> {
+  async loadSdkStylesheet(): Promise<ResourceLoadStateValue> {
     const pathForEnv = SdkEnvironment.getOneSignalResourceUrlPath();
     const cssFileForEnv = SdkEnvironment.getOneSignalCssFileName();
     return this.loadIfNew(
@@ -46,7 +52,10 @@ export class DynamicResourceLoader {
    * Attempts to load a resource by adding it to the document's <head>.
    * Caches any previous load attempt's result and does not retry loading a previous resource.
    */
-  async loadIfNew(type: ResourceType, url: URL): Promise<ResourceLoadState> {
+  async loadIfNew(
+    type: ResourceTypeValue,
+    url: URL,
+  ): Promise<ResourceLoadStateValue> {
     // Load for first time
     if (!this.cache[url.toString()]) {
       this.cache[url.toString()] = DynamicResourceLoader.load(type, url);
@@ -60,7 +69,10 @@ export class DynamicResourceLoader {
    * Attempts to load a resource by adding it to the document's <head>.
    * Each call creates a new DOM element and fetch attempt.
    */
-  static async load(type: ResourceType, url: URL): Promise<ResourceLoadState> {
+  static async load(
+    type: ResourceTypeValue,
+    url: URL,
+  ): Promise<ResourceLoadStateValue> {
     try {
       let domElement: HTMLElement;
       await new Promise((resolve, reject) => {

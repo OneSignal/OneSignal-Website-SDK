@@ -1,8 +1,8 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
-import { ISubscription } from '../types/api';
+import type { ISubscription } from '../types/api';
 import {
-  NotificationTypeValue,
-  SubscriptionTypeValue,
+  type NotificationTypeValue,
+  type SubscriptionTypeValue,
 } from '../types/subscription';
 import { Model } from './Model';
 

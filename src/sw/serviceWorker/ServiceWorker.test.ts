@@ -17,15 +17,18 @@ import {
   DEFAULT_DEVICE_ID,
   SubscriptionManager,
 } from 'src/shared/managers/SubscriptionManager';
-import { AppConfig, ConfigIntegrationKind } from 'src/shared/models/AppConfig';
+import {
+  type AppConfig,
+  ConfigIntegrationKind,
+} from 'src/shared/models/AppConfig';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import {
   ONESIGNAL_SESSION_KEY,
-  Session,
+  type Session,
   SessionOrigin,
   SessionStatus,
-  UpsertOrDeactivateSessionPayload,
+  type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/models/Session';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import Database, {
@@ -328,6 +331,7 @@ describe('ServiceWorker', () => {
         http.post(`**/players`, () => HttpResponse.json({ id: someDeviceId })),
       );
 
+      // @ts-expect-error - for setting sdk env
       global.ServiceWorkerGlobalScope = undefined;
     });
 
@@ -402,8 +406,8 @@ describe('ServiceWorker', () => {
       const [rawSubscription, subscriptionState] =
         registerSubscriptionCall.mock.calls[0];
       expect(rawSubscription).toBeInstanceOf(RawPushSubscription);
-      expect(rawSubscription.w3cEndpoint?.href).toBe('https://example.com/');
-      expect(rawSubscription.safariDeviceToken).toBeUndefined();
+      expect(rawSubscription?.w3cEndpoint?.href).toBe('https://example.com/');
+      expect(rawSubscription?.safariDeviceToken).toBeUndefined();
       expect(subscriptionState).toBe(NotificationType.PermissionRevoked);
     });
   });
@@ -578,7 +582,6 @@ describe('ServiceWorker', () => {
   });
 
   describe('worker messenger', () => {
-    const newAppID = '32f13333-a0d2-4ce8-bcd9-b1754e242756';
     const appConfig: AppConfig = {
       appId,
       hasUnsupportedSubdomain: false,
@@ -689,6 +692,8 @@ describe('ServiceWorker', () => {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const logDebugSpy = vi.spyOn(Log, 'debug');
 // -- one signal api base mock
+
+// @ts-expect-error - for mocking
 const apiPutSpy = vi.spyOn(OneSignalApiBase, 'put').mockResolvedValue({
   result: {},
   status: 200,

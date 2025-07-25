@@ -1,32 +1,40 @@
 import Emitter from '../libraries/Emitter';
 import IndexedDb from './IndexedDb';
 
-import { ICreateUserSubscription, IUserProperties } from 'src/core/types/api';
-import { ModelNameType } from 'src/core/types/models';
+import type {
+  ICreateUserSubscription,
+  IUserProperties,
+} from 'src/core/types/api';
+import type { ModelNameType } from 'src/core/types/models';
 import {
-  NotificationClickForOpenHandlingSchema,
+  type NotificationClickForOpenHandlingSchema,
   NotificationClickForOpenHandlingSerializer,
   NotificationClickedForOutcomesSerializer,
-  NotificationReceivedForOutcomesSchema,
+  type NotificationReceivedForOutcomesSchema,
   NotificationReceivedForOutcomesSerializer,
 } from '../helpers/OSNotificationDatabaseSerializer';
 import Log from '../libraries/Log';
-import { AppConfig } from '../models/AppConfig';
-import { AppState, PendingNotificationClickEvents } from '../models/AppState';
-import { NotificationClickEventInternal } from '../models/NotificationEvent';
-import { IOSNotification } from '../models/OSNotification';
-import { SentUniqueOutcome } from '../models/Outcomes';
+import type { AppConfig } from '../models/AppConfig';
 import {
+  AppState,
+  type PendingNotificationClickEvents,
+} from '../models/AppState';
+import type { NotificationClickEventInternal } from '../models/NotificationEvent';
+import type { IOSNotification } from '../models/OSNotification';
+import type { SentUniqueOutcome } from '../models/Outcomes';
+import type {
   OutcomesNotificationClicked,
   OutcomesNotificationReceived,
 } from '../models/OutcomesNotificationEvents';
-import { ONESIGNAL_SESSION_KEY, Session } from '../models/Session';
+import { ONESIGNAL_SESSION_KEY, type Session } from '../models/Session';
 import { Subscription } from '../models/Subscription';
 import { UserState } from '../models/UserState';
 
-enum DatabaseEventName {
-  SET,
-}
+const DatabaseEventName = {
+  SET: 0,
+} as const;
+type DatabaseEventNameValue =
+  (typeof DatabaseEventName)[keyof typeof DatabaseEventName];
 
 interface DatabaseResult {
   id: any;
@@ -83,6 +91,7 @@ export interface OperationItem extends ModelItem {
 export default class Database {
   public emitter: Emitter;
   private database: IndexedDb;
+  private databaseName: string;
 
   /* Temp Database Proxy */
   public static databaseInstanceName: string;
@@ -91,7 +100,8 @@ export default class Database {
 
   public static EVENTS = DatabaseEventName;
 
-  constructor(private databaseName: string) {
+  constructor(databaseName: string) {
+    this.databaseName = databaseName;
     this.emitter = new Emitter();
     this.database = new IndexedDb(this.databaseName);
   }
@@ -512,15 +522,6 @@ export default class Database {
     for (const objectStoreName of objectStoreNames) {
       await Database.singletonInstance.database.remove(objectStoreName);
     }
-  }
-
-  // START: Static mappings to instance methods
-  static async on(...args: any[]) {
-    // eslint-disable-next-line prefer-spread
-    return Database.singletonInstance.emitter.on.apply(
-      Database.singletonInstance.emitter,
-      args,
-    );
   }
 
   static async getPushId(): Promise<string | undefined> {

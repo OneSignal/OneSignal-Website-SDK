@@ -1,5 +1,3 @@
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
@@ -9,18 +7,21 @@ import InitHelper from '../../shared/helpers/InitHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import Log from '../../shared/libraries/Log';
 import {
-  SlidedownPromptOptions,
-  AppUserConfigPromptOptions,
   DelayedPromptType,
-  DelayedPromptOptions,
+  type AppUserConfigPromptOptions,
+  type DelayedPromptOptions,
+  type DelayedPromptTypeValue,
+  type SlidedownPromptOptions,
 } from '../../shared/models/Prompts';
+import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
+import { bowserCastle } from '../../shared/utils/bowserCastle';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
-import { ContextInterface } from '../models/Context';
+import type { ContextInterface } from '../models/Context';
 import { DismissPrompt } from '../models/Dismiss';
+import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Slidedown from '../slidedown/Slidedown';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -43,7 +44,7 @@ export class PromptsManager {
   private shouldForceSlidedownOverNative(): boolean {
     const { environmentInfo } = OneSignal;
     const { browserType, browserVersion, requiresUserInteraction } =
-      environmentInfo;
+      environmentInfo!;
 
     return (
       (browserType === 'chrome' &&
@@ -55,8 +56,7 @@ export class PromptsManager {
 
   public async spawnAutoPrompts() {
     // user config prompt options
-    const userPromptOptions: AppUserConfigPromptOptions =
-      OneSignal.config.userConfig.promptOptions;
+    const userPromptOptions = OneSignal.config?.userConfig.promptOptions;
 
     /*
      * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
@@ -90,7 +90,7 @@ export class PromptsManager {
     // if slidedown not configured, condition met with native options, & should force slidedown over native:
     const isPushSlidedownConfigured =
       !!PromptsHelper.getFirstSlidedownPromptOptionsWithType(
-        userPromptOptions.slidedown?.prompts,
+        userPromptOptions?.slidedown?.prompts,
         DelayedPromptType.Push,
       );
 
@@ -102,7 +102,7 @@ export class PromptsManager {
     }
 
     // spawn slidedown prompts
-    const prompts = userPromptOptions.slidedown?.prompts;
+    const prompts = userPromptOptions?.slidedown?.prompts;
     if (!!prompts && prompts?.length > 0) {
       for (let i = 0; i < prompts.length; i++) {
         const promptOptions = prompts[i];
@@ -132,7 +132,7 @@ export class PromptsManager {
   }
 
   public async internalShowDelayedPrompt(
-    type: DelayedPromptType,
+    type: DelayedPromptTypeValue,
     timeDelaySeconds: number,
     options?: AutoPromptOptions,
   ): Promise<void> {
@@ -260,7 +260,7 @@ export class PromptsManager {
    * If present, `options.slidedownPromptOptions` overrides `typeToPullFromConfig`
    */
   public async internalShowParticularSlidedown(
-    typeToPullFromConfig: DelayedPromptType,
+    typeToPullFromConfig: DelayedPromptTypeValue,
     options?: AutoPromptOptions,
   ): Promise<void> {
     const prompts =
@@ -347,8 +347,8 @@ export class PromptsManager {
   }
 
   private getDelayedPromptOptions(
-    promptOptions: AppUserConfigPromptOptions,
-    type: DelayedPromptType,
+    promptOptions: AppUserConfigPromptOptions | undefined,
+    type: DelayedPromptTypeValue,
   ): DelayedPromptOptions {
     const defaultOptions = {
       enabled: false,

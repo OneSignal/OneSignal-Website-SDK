@@ -1,4 +1,4 @@
-import { Serializable } from '../../page/models/Serializable';
+import type { Serializable } from '../../page/models/Serializable';
 
 export class RawPushSubscription implements Serializable {
   /**
@@ -45,14 +45,14 @@ export class RawPushSubscription implements Serializable {
         if (p256dh) {
           // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
           const p256dh_base64encoded = btoa(
-            String.fromCharCode.apply(null, new Uint8Array(p256dh)),
+            String.fromCharCode(...new Uint8Array(p256dh)),
           );
           rawPushSubscription.w3cP256dh = p256dh_base64encoded;
         }
         if (auth) {
           // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
           const auth_base64encoded = btoa(
-            String.fromCharCode.apply(null, new Uint8Array(auth)),
+            String.fromCharCode(...new Uint8Array(auth)),
           );
           rawPushSubscription.w3cAuth = auth_base64encoded;
         }

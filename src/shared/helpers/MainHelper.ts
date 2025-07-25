@@ -1,3 +1,4 @@
+import type { NotificationIcons } from 'src/page/models/NotificationIcons';
 import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
 import Utils from '../context/Utils';
 import {
@@ -15,8 +16,8 @@ import {
 import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import {
-  AppUserConfigPromptOptions,
-  SlidedownOptions,
+  type AppUserConfigPromptOptions,
+  type SlidedownOptions,
 } from '../models/Prompts';
 import Database from '../services/Database';
 import { PermissionUtils } from '../utils/PermissionUtils';
@@ -132,7 +133,7 @@ export default class MainHelper {
       Log.error(`API call ${url}`, 'failed with:', data.errors);
       throw new Error('Failed to get notification icons.');
     }
-    return data;
+    return data as NotificationIcons;
   }
 
   public static getSlidedownOptions(
@@ -142,7 +143,7 @@ export default class MainHelper {
   }
 
   static getFullscreenPermissionMessageOptions(
-    promptOptions: AppUserConfigPromptOptions,
+    promptOptions: AppUserConfigPromptOptions | undefined,
   ): AppUserConfigPromptOptions | null {
     if (!promptOptions) {
       return null;
@@ -166,13 +167,13 @@ export default class MainHelper {
 
   static getPromptOptionsQueryString() {
     const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(
-      OneSignal.config.userConfig.promptOptions,
+      OneSignal.config?.userConfig.promptOptions,
     );
     let promptOptionsStr = '';
     if (promptOptions) {
       const hash = MainHelper.getPromptOptionsPostHash();
       for (const key of Object.keys(hash)) {
-        const value = hash[key];
+        const value = hash[key as keyof typeof hash];
         promptOptionsStr += '&' + key + '=' + value;
       }
     }
@@ -181,9 +182,9 @@ export default class MainHelper {
 
   static getPromptOptionsPostHash() {
     const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(
-      OneSignal.config.userConfig.promptOptions,
+      OneSignal.config?.userConfig.promptOptions,
     );
-    const hash = {};
+    const hash: Record<string, string> = {};
     if (promptOptions) {
       const legacyParams = {
         exampleNotificationTitleDesktop: 'exampleNotificationTitle',
@@ -192,8 +193,10 @@ export default class MainHelper {
         exampleNotificationMessageMobile: 'exampleNotificationMessage',
       };
       for (const legacyParamKey of Object.keys(legacyParams)) {
-        const legacyParamValue = legacyParams[legacyParamKey];
-        if (promptOptions[legacyParamKey]) {
+        const legacyParamValue =
+          legacyParams[legacyParamKey as keyof typeof legacyParams];
+        if (promptOptions[legacyParamKey as keyof AppUserConfigPromptOptions]) {
+          // @ts-expect-error - TODO: look into better typing for this
           promptOptions[legacyParamValue] = promptOptions[legacyParamKey];
         }
       }
@@ -213,10 +216,10 @@ export default class MainHelper {
       ];
       for (let i = 0; i < allowedPromptOptions.length; i++) {
         const key = allowedPromptOptions[i];
-        const value = promptOptions[key];
-        const encoded_value = encodeURIComponent(value);
+        const value = promptOptions[key as keyof AppUserConfigPromptOptions];
+        const encoded_value = encodeURIComponent(value as string);
         if (value || value === false || value === '') {
-          hash[key] = encoded_value;
+          hash[key as keyof typeof hash] = encoded_value;
         }
       }
     }
@@ -236,7 +239,7 @@ export default class MainHelper {
   static async getCurrentPushToken(): Promise<string | undefined> {
     if (Environment.useSafariLegacyPush()) {
       const safariToken = window.safari?.pushNotification?.permission(
-        OneSignal.config.safariWebId,
+        OneSignal.config?.safariWebId,
       ).deviceToken;
       return safariToken?.toLowerCase() || undefined;
     }

@@ -1,11 +1,11 @@
 import { ResourceLoadState } from '../../page/services/DynamicResourceLoader';
+import Log from '../libraries/Log';
+import type { AppUserConfigCustomLinkOptions } from '../models/Prompts';
 import {
   CUSTOM_LINK_CSS_CLASSES,
   CUSTOM_LINK_CSS_SELECTORS,
 } from '../slidedown/constants';
 import { addCssClass } from '../utils/utils';
-import Log from '../libraries/Log';
-import { AppUserConfigCustomLinkOptions } from '../models/Prompts';
 
 export class CustomLinkManager {
   private config: AppUserConfigCustomLinkOptions | undefined;

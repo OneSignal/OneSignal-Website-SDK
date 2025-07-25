@@ -5,33 +5,36 @@ import {
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
-import { Serializable } from '../../page/models/Serializable';
+import type { Serializable } from '../../page/models/Serializable';
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
 import Environment from '../helpers/Environment';
-import { ContextSWInterface } from '../models/ContextSW';
+import type { ContextSWInterface } from '../models/ContextSW';
 import Log from './Log';
 
 /**
  * NOTE: This file contains a mix of code that runs in ServiceWorker and Page contexts
  */
 
-export enum WorkerMessengerCommand {
-  WorkerVersion = 'GetWorkerVersion',
-  Subscribe = 'Subscribe',
-  SubscribeNew = 'SubscribeNew',
-  NotificationWillDisplay = 'notification.willDisplay',
-  NotificationClicked = 'notification.clicked',
-  NotificationDismissed = 'notification.dismissed',
-  RedirectPage = 'command.redirect',
-  SessionUpsert = 'os.session.upsert',
-  SessionDeactivate = 'os.session.deactivate',
-  AreYouVisible = 'os.page_focused_request',
-  AreYouVisibleResponse = 'os.page_focused_response',
-  SetLogging = 'os.set_sw_logging',
-}
+export const WorkerMessengerCommand = {
+  WorkerVersion: 'GetWorkerVersion',
+  Subscribe: 'Subscribe',
+  SubscribeNew: 'SubscribeNew',
+  NotificationWillDisplay: 'notification.willDisplay',
+  NotificationClicked: 'notification.clicked',
+  NotificationDismissed: 'notification.dismissed',
+  RedirectPage: 'command.redirect',
+  SessionUpsert: 'os.session.upsert',
+  SessionDeactivate: 'os.session.deactivate',
+  AreYouVisible: 'os.page_focused_request',
+  AreYouVisibleResponse: 'os.page_focused_response',
+  SetLogging: 'os.set_sw_logging',
+} as const;
+
+export type WorkerMessengerCommandValue =
+  (typeof WorkerMessengerCommand)[keyof typeof WorkerMessengerCommand];
 
 export interface WorkerMessengerMessage {
-  command: WorkerMessengerCommand;
+  command: WorkerMessengerCommandValue;
   payload: WorkerMessengerPayload;
 }
 
@@ -50,7 +53,7 @@ export class WorkerMessengerReplyBuffer {
   }
 
   public addListener(
-    command: WorkerMessengerCommand,
+    command: WorkerMessengerCommandValue,
     callback: (param: unknown) => void,
     onceListenerOnly: boolean,
   ) {
@@ -65,12 +68,12 @@ export class WorkerMessengerReplyBuffer {
   }
 
   public findListenersForMessage(
-    command: WorkerMessengerCommand,
+    command: WorkerMessengerCommandValue,
   ): WorkerMessengerReplyBufferRecord[] {
     return this.replies[command.toString()] || [];
   }
 
-  public deleteListenerRecords(command: WorkerMessengerCommand) {
+  public deleteListenerRecords(command: WorkerMessengerCommandValue) {
     this.replies[command.toString()] = null;
   }
 
@@ -79,7 +82,7 @@ export class WorkerMessengerReplyBuffer {
   }
 
   public deleteListenerRecord(
-    command: WorkerMessengerCommand,
+    command: WorkerMessengerCommandValue,
     targetRecord: object,
   ) {
     const listenersForCommand = this.replies[command.toString()];
@@ -127,7 +130,7 @@ export class WorkerMessenger {
    * Broadcasts a message from a service worker to all clients, including uncontrolled clients.
    */
   async broadcast(
-    command: WorkerMessengerCommand,
+    command: WorkerMessengerCommandValue,
     payload: WorkerMessengerPayload,
   ) {
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker)
@@ -156,7 +159,7 @@ export class WorkerMessenger {
       Sends a postMessage() to the supplied windowClient
    */
   async unicast(
-    command: WorkerMessengerCommand,
+    command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
     windowClient?: Client,
   ) {
@@ -188,7 +191,7 @@ export class WorkerMessenger {
   }
 
   public async directPostMessageToSW(
-    command: WorkerMessengerCommand,
+    command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
   ): Promise<void> {
     Log.debug(
@@ -254,7 +257,7 @@ export class WorkerMessenger {
     );
   }
 
-  onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
+  onWorkerMessageReceivedFromPage(event: MessageEvent) {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */
@@ -295,7 +298,7 @@ export class WorkerMessenger {
   message topic. If no one is listening to the message, it is discarded;
   otherwise, the listener callback is executed.
   */
-  onPageMessageReceivedFromServiceWorker(event: ExtendableMessageEvent) {
+  onPageMessageReceivedFromServiceWorker(event: MessageEvent) {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */
@@ -329,7 +332,7 @@ export class WorkerMessenger {
     message to the window frame with the specific command.
    */
   on(
-    command: WorkerMessengerCommand,
+    command: WorkerMessengerCommandValue,
     callback: (WorkerMessengerPayload: any) => void,
   ): void {
     this.replies.addListener(command, callback, false);
@@ -342,7 +345,7 @@ export class WorkerMessenger {
   The callback is executed once at most.
   */
   once(
-    command: WorkerMessengerCommand,
+    command: WorkerMessengerCommandValue,
     callback: (WorkerMessengerPayload: any) => void,
   ): void {
     this.replies.addListener(command, callback, true);
@@ -352,7 +355,7 @@ export class WorkerMessenger {
     Unsubscribe a callback from being notified about service worker messages
     with the specified command.
    */
-  off(command?: WorkerMessengerCommand): void {
+  off(command?: WorkerMessengerCommandValue): void {
     if (command) {
       this.replies.deleteListenerRecords(command);
     } else {

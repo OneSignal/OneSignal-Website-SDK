@@ -8,7 +8,7 @@ import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
 import {
-  IPropertiesModelKeys,
+  type IPropertiesModelKeys,
   PropertiesModel,
 } from '../models/PropertiesModel';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -29,13 +29,25 @@ import { type IRebuildUserService } from '../types/user';
 // Implements logic similar to Android SDK's RefreshUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/RefreshUserOperationExecutor.kt
 export class RefreshUserOperationExecutor implements IOperationExecutor {
+  private _identityModelStore: IdentityModelStore;
+  private _propertiesModelStore: PropertiesModelStore;
+  private _subscriptionsModelStore: SubscriptionModelStore;
+  private _buildUserService: IRebuildUserService;
+  private _newRecordState: NewRecordsState;
+
   constructor(
-    private _identityModelStore: IdentityModelStore,
-    private _propertiesModelStore: PropertiesModelStore,
-    private _subscriptionsModelStore: SubscriptionModelStore,
-    private _buildUserService: IRebuildUserService,
-    private _newRecordState: NewRecordsState,
-  ) {}
+    _identityModelStore: IdentityModelStore,
+    _propertiesModelStore: PropertiesModelStore,
+    _subscriptionsModelStore: SubscriptionModelStore,
+    _buildUserService: IRebuildUserService,
+    _newRecordState: NewRecordsState,
+  ) {
+    this._identityModelStore = _identityModelStore;
+    this._propertiesModelStore = _propertiesModelStore;
+    this._subscriptionsModelStore = _subscriptionsModelStore;
+    this._buildUserService = _buildUserService;
+    this._newRecordState = _newRecordState;
+  }
 
   get operations(): string[] {
     return [OPERATION_NAME.REFRESH_USER];

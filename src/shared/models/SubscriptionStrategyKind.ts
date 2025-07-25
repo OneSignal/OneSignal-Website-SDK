@@ -2,7 +2,7 @@
  * When subscribing for a web push subscription, describes whether an existing subscription is first
  * unsubscribed or is left intact.
  */
-export const enum SubscriptionStrategyKind {
+export const SubscriptionStrategyKind = {
   /**
    * Creates a new push subscription or resubscribes an existing push subscription.
    *
@@ -25,7 +25,7 @@ export const enum SubscriptionStrategyKind {
    * unchanged still as legacy GCM). Migrating the subscription to VAPID would require first
    * unsubscribing, which this strategy does not attempt.
    */
-  ResubscribeExisting,
+  ResubscribeExisting: 0,
   /**
    * Unsubscribes an existing push subscription if one exists, and creates a new push subscription
    * with a new endpoint and crypto keys.
@@ -34,5 +34,8 @@ export const enum SubscriptionStrategyKind {
    * strategy is used to "refresh" Microsoft Edge's expiring push subscriptions by obtaining a new
    * subscription with a newly long duration expiration time.
    */
-  SubscribeNew,
-}
+  SubscribeNew: 1,
+} as const;
+
+export type SubscriptionStrategyKindValue =
+  (typeof SubscriptionStrategyKind)[keyof typeof SubscriptionStrategyKind];

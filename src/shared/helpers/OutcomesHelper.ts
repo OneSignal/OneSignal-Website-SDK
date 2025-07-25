@@ -1,17 +1,17 @@
+import { Utils } from '../../shared/context/Utils';
+import Log from '../libraries/Log';
+import type { OutcomeProps } from '../models/OutcomeProps';
 import {
-  OutcomesConfig,
-  OutcomeAttribution,
+  type OutcomeAttribution,
   OutcomeAttributionType,
-  SentUniqueOutcome,
+  type OutcomesConfig,
+  type SentUniqueOutcome,
 } from '../models/Outcomes';
-import { OutcomesNotificationReceived } from '../models/OutcomesNotificationEvents';
+import type { OutcomesNotificationReceived } from '../models/OutcomesNotificationEvents';
 import Database, {
   TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
 } from '../services/Database';
-import Log from '../libraries/Log';
-import { Utils } from '../../shared/context/Utils';
-import { logMethodCall, awaitOneSignalInitAndSupported } from '../utils/utils';
-import OutcomeProps from '../models/OutcomeProps';
+import { awaitOneSignalInitAndSupported, logMethodCall } from '../utils/utils';
 
 const SEND_OUTCOME = 'sendOutcome';
 const SEND_UNIQUE_OUTCOME = 'sendUniqueOutcome';

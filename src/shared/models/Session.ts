@@ -1,20 +1,26 @@
-import { OutcomesConfig } from './Outcomes';
+import type { OutcomesConfig } from './Outcomes';
 
-export enum SessionStatus {
-  Active = 'active',
-  Inactive = 'inactive',
-}
+export const SessionStatus = {
+  Active: 'active',
+  Inactive: 'inactive',
+} as const;
 
-export enum SessionOrigin {
-  UserCreate = 1,
-  UserNewSession = 2,
-  VisibilityVisible = 3,
-  VisibilityHidden = 4,
-  BeforeUnload = 5,
-  PageRefresh = 6,
-  Focus = 7,
-  Blur = 8,
-}
+export type SessionStatusValue =
+  (typeof SessionStatus)[keyof typeof SessionStatus];
+
+export const SessionOrigin = {
+  UserCreate: 1,
+  UserNewSession: 2,
+  VisibilityVisible: 3,
+  VisibilityHidden: 4,
+  BeforeUnload: 5,
+  PageRefresh: 6,
+  Focus: 7,
+  Blur: 8,
+} as const;
+
+export type SessionOriginValue =
+  (typeof SessionOrigin)[keyof typeof SessionOrigin];
 
 export interface Session {
   sessionKey: string; // indexDb keyPath, always ONESIGNAL_SESSION_KEY
@@ -22,7 +28,7 @@ export interface Session {
   startTimestamp: number;
   accumulatedDuration: number;
   notificationId: string | null; // for direct clicks
-  status: SessionStatus;
+  status: SessionStatusValue;
   lastDeactivatedTimestamp: number | null;
   lastActivatedTimestamp: number;
 }
@@ -32,7 +38,7 @@ type NewSessionOptions = Partial<Session> & { appId: string };
 interface BaseSessionPayload {
   sessionThreshold: number;
   enableSessionDuration: boolean;
-  sessionOrigin: SessionOrigin;
+  sessionOrigin: SessionOriginValue;
   isSafari: boolean;
   outcomesConfig: OutcomesConfig;
 }

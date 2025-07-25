@@ -1,21 +1,28 @@
 import { PermissionPromptType } from '../models/PermissionPromptType';
 import OneSignalError from './OneSignalError';
 
-export enum InvalidStateReason {
-  MissingAppId,
-  RedundantPermissionMessage,
-  PushPermissionAlreadyGranted,
-  UnsupportedEnvironment,
-  MissingDomElement,
-  ServiceWorkerNotActivated,
-}
+export const InvalidStateReason = {
+  MissingAppId: 0,
+  RedundantPermissionMessage: 1,
+  PushPermissionAlreadyGranted: 2,
+  UnsupportedEnvironment: 3,
+  MissingDomElement: 4,
+  ServiceWorkerNotActivated: 5,
+} as const;
+
+export type InvalidStateReasonValue =
+  (typeof InvalidStateReason)[keyof typeof InvalidStateReason];
+
+const reverseInvalidStateReason = Object.fromEntries(
+  Object.entries(InvalidStateReason).map(([key, value]) => [value, key]),
+);
 
 export class InvalidStateError extends OneSignalError {
   description: string;
-  reason: InvalidStateReason;
+  reason: InvalidStateReasonValue;
 
   constructor(
-    reason: InvalidStateReason,
+    reason: InvalidStateReasonValue,
     extra?: {
       permissionPromptType: PermissionPromptType;
     },
@@ -44,7 +51,7 @@ export class InvalidStateError extends OneSignalError {
     }
 
     super(errorMessage);
-    this.description = InvalidStateReason[reason];
+    this.description = reverseInvalidStateReason[reason];
     this.reason = reason;
 
     /**

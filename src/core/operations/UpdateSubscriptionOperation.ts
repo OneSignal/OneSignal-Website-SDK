@@ -1,7 +1,7 @@
 import { OPERATION_NAME } from '../constants';
 import {
   BaseFullSubscriptionOperation,
-  SubscriptionWithAppId,
+  type SubscriptionWithAppId,
 } from './BaseFullSubscriptionOperation';
 
 /**

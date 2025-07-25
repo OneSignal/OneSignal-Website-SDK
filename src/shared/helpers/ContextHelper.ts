@@ -1,10 +1,10 @@
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import {
   SubscriptionManager,
-  SubscriptionManagerConfig,
+  type SubscriptionManagerConfig,
 } from '../managers/SubscriptionManager';
-import { AppConfig } from '../models/AppConfig';
-import { ContextSWInterface } from '../models/ContextSW';
+import type { AppConfig } from '../models/AppConfig';
+import type { ContextSWInterface } from '../models/ContextSW';
 import Path from '../models/Path';
 
 export class ContextHelper {

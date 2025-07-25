@@ -1,5 +1,5 @@
-import { ExecutionResultValue } from 'src/core/types/operation';
-import { type Operation } from './Operation';
+import type { ExecutionResultValue } from 'src/core/types/operation';
+import type { Operation } from './Operation';
 
 export class ExecutionResponse {
   /**

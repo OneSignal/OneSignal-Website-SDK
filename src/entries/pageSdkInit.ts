@@ -2,7 +2,7 @@
  * This is OneSignalSDK.page.es6.js(ES6)
  * Loaded from OneSignalSDK.page.js only if the browser supports push.
  */
-import { OneSignalDeferredLoadedCallback } from 'src/page/models/OneSignalDeferredLoadedCallback';
+import type { OneSignalDeferredLoadedCallback } from 'src/page/models/OneSignalDeferredLoadedCallback';
 import OneSignal from '../onesignal/OneSignal';
 import { ReplayCallsOnOneSignal } from '../page/utils/ReplayCallsOnOneSignal';
 import Log from '../shared/libraries/Log';

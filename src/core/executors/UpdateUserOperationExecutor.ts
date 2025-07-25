@@ -5,7 +5,7 @@ import {
 import { PropertyOperationHelper } from 'src/shared/helpers/PropertyOperationHelper';
 import Log from 'src/shared/libraries/Log';
 import { OPERATION_NAME } from '../constants';
-import { IPropertiesModelKeys } from '../models/PropertiesModel';
+import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { PropertiesObject } from '../objects/PropertiesObject';
@@ -16,18 +16,28 @@ import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import AliasPair from '../requestService/AliasPair';
 import { RequestService } from '../requestService/RequestService';
 import { ModelChangeTags } from '../types/models';
-import { ExecutionResult, IOperationExecutor } from '../types/operation';
+import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';
 
 // Implements logic similar to Android's SDK's UpdateUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/UpdateUserOperationExecutor.kt
 export class UpdateUserOperationExecutor implements IOperationExecutor {
+  private _identityModelStore: IdentityModelStore;
+  private _propertiesModelStore: PropertiesModelStore;
+  private _buildUserService: IRebuildUserService;
+  private _newRecordState: NewRecordsState;
+
   constructor(
-    private _identityModelStore: IdentityModelStore,
-    private _propertiesModelStore: PropertiesModelStore,
-    private _buildUserService: IRebuildUserService,
-    private _newRecordState: NewRecordsState,
-  ) {}
+    _identityModelStore: IdentityModelStore,
+    _propertiesModelStore: PropertiesModelStore,
+    _buildUserService: IRebuildUserService,
+    _newRecordState: NewRecordsState,
+  ) {
+    this._identityModelStore = _identityModelStore;
+    this._propertiesModelStore = _propertiesModelStore;
+    this._buildUserService = _buildUserService;
+    this._newRecordState = _newRecordState;
+  }
 
   get operations(): string[] {
     return [OPERATION_NAME.SET_PROPERTY];

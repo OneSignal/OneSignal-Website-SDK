@@ -1,8 +1,8 @@
+import Log from '../../shared/libraries/Log';
 import {
-  addCssClass,
-  getDomElementOrStub,
-  removeCssClass,
-} from '../../shared/utils/utils';
+  type SlidedownPromptOptions,
+  DelayedPromptType,
+} from '../../shared/models/Prompts';
 import {
   CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES,
   CHANNEL_CAPTURE_CONTAINER_CSS_IDS,
@@ -10,15 +10,14 @@ import {
   SLIDEDOWN_CSS_IDS,
 } from '../../shared/slidedown/constants';
 import {
+  addCssClass,
+  getDomElementOrStub,
+  removeCssClass,
+} from '../../shared/utils/utils';
+import {
   ItiScriptURLHashes,
   ItiScriptURLs,
 } from './InternationalTelephoneInput';
-import {} from 'intl-tel-input'; // typings
-import Log from '../../shared/libraries/Log';
-import {
-  SlidedownPromptOptions,
-  DelayedPromptType,
-} from '../../shared/models/Prompts';
 
 interface TypeSpecificVariablePayload {
   message: string;

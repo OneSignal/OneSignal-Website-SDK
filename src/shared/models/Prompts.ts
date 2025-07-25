@@ -1,13 +1,16 @@
-import { TagCategory } from '../../page/models/Tags';
+import type { TagCategory } from '../../page/models/Tags';
 
-export enum DelayedPromptType {
-  Native = 'native', // native push
-  Push = 'push', // slidedown w/ push only
-  Category = 'category', // slidedown w/ push + categories
-  Sms = 'sms', // sms only
-  Email = 'email', // email only
-  SmsAndEmail = 'smsAndEmail', // sms and email only
-}
+export const DelayedPromptType = {
+  Native: 'native', // native push
+  Push: 'push', // slidedown w/ push only
+  Category: 'category', // slidedown w/ push + categories
+  Sms: 'sms', // sms only
+  Email: 'email', // email only
+  SmsAndEmail: 'smsAndEmail', // sms and email only
+};
+
+export type DelayedPromptTypeValue =
+  (typeof DelayedPromptType)[keyof typeof DelayedPromptType];
 
 interface BasePromptOptions {
   enabled: boolean;
@@ -24,7 +27,7 @@ export interface SlidedownOptions {
 }
 
 export interface SlidedownPromptOptions {
-  type: DelayedPromptType;
+  type: DelayedPromptTypeValue;
   text: SlidedownTextOptions;
   autoPrompt: boolean;
   icon?: string | null; // url

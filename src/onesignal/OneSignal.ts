@@ -1,11 +1,12 @@
+import type Bell from 'src/page/bell/Bell';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
 import ConfigManager from '../page/managers/ConfigManager';
 import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
-import { EnvironmentInfo } from '../page/models/EnvironmentInfo';
-import { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
+import type { EnvironmentInfo } from '../page/models/EnvironmentInfo';
+import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
 import {
@@ -20,8 +21,7 @@ import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
 import SdkEnvironment from '../shared/managers/SdkEnvironment';
-import { AppConfig, AppUserConfig } from '../shared/models/AppConfig';
-import { AppUserConfigNotifyButton } from '../shared/models/Prompts';
+import type { AppConfig, AppUserConfig } from '../shared/models/AppConfig';
 import Database from '../shared/services/Database';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
 import { bowserCastle } from '../shared/utils/bowserCastle';
@@ -277,7 +277,7 @@ export default class OneSignal {
   static timedLocalStorage = TimedLocalStorage;
   static initialized = false;
   static _didLoadITILibrary = false;
-  static notifyButton: AppUserConfigNotifyButton | null = null;
+  static notifyButton: Bell | null = null;
   static environment = Environment;
   static database = Database;
   static event = OneSignalEvent;

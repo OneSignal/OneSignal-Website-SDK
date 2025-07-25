@@ -1,5 +1,8 @@
-import { ExecutionResult, IOperationExecutor } from 'src/core/types/operation';
-import { IRebuildUserService } from 'src/core/types/user';
+import {
+  ExecutionResult,
+  type IOperationExecutor,
+} from 'src/core/types/operation';
+import type { IRebuildUserService } from 'src/core/types/user';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -23,11 +26,19 @@ import { ModelChangeTags } from '../types/models';
 // Implements logic similar to Android SDK's SubscriptionOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/SubscriptionOperationExecutor.kt
 export class SubscriptionOperationExecutor implements IOperationExecutor {
+  private _subscriptionModelStore: SubscriptionModelStore;
+  private _buildUserService: IRebuildUserService;
+  private _newRecordState: NewRecordsState;
+
   constructor(
-    private _subscriptionModelStore: SubscriptionModelStore,
-    private _buildUserService: IRebuildUserService,
-    private _newRecordState: NewRecordsState,
-  ) {}
+    _subscriptionModelStore: SubscriptionModelStore,
+    _buildUserService: IRebuildUserService,
+    _newRecordState: NewRecordsState,
+  ) {
+    this._subscriptionModelStore = _subscriptionModelStore;
+    this._buildUserService = _buildUserService;
+    this._newRecordState = _newRecordState;
+  }
 
   get operations(): string[] {
     return [
