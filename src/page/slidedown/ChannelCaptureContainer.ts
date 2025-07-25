@@ -1,8 +1,9 @@
-import Log from '../../shared/libraries/Log';
 import {
-  type SlidedownPromptOptions,
   DelayedPromptType,
-} from '../../shared/models/Prompts';
+  type DelayedPromptTypeValue,
+  type SlidedownPromptOptions,
+} from 'src/shared/prompts';
+import Log from '../../shared/libraries/Log';
 import {
   CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES,
   CHANNEL_CAPTURE_CONTAINER_CSS_IDS,
@@ -101,7 +102,7 @@ export default class ChannelCaptureContainer {
   }
 
   private getInputWithValidationElement(
-    type: DelayedPromptType,
+    type: DelayedPromptTypeValue,
     label: string,
   ): Element {
     const varPayload =
@@ -154,7 +155,7 @@ export default class ChannelCaptureContainer {
   }
 
   private getTypeSpecificVariablesForValidationElemGeneration(
-    type: DelayedPromptType,
+    type: DelayedPromptTypeValue,
   ): TypeSpecificVariablePayload {
     if (type === DelayedPromptType.Email) {
       return {
@@ -432,7 +433,7 @@ export default class ChannelCaptureContainer {
     }
   }
 
-  static resetInputErrorStates(type: DelayedPromptType): void {
+  static resetInputErrorStates(type: DelayedPromptTypeValue): void {
     switch (type) {
       case DelayedPromptType.Sms:
         ChannelCaptureContainer.showSmsInputError(false);
@@ -454,13 +455,13 @@ export default class ChannelCaptureContainer {
     return re.test(emailString || '') || emailString === '';
   }
 
-  static isUsingSmsInputField(type: DelayedPromptType): boolean {
+  static isUsingSmsInputField(type: DelayedPromptTypeValue): boolean {
     return (
       type === DelayedPromptType.Sms || type === DelayedPromptType.SmsAndEmail
     );
   }
 
-  static isUsingEmailInputField(type: DelayedPromptType): boolean {
+  static isUsingEmailInputField(type: DelayedPromptTypeValue): boolean {
     return (
       type === DelayedPromptType.Email || type === DelayedPromptType.SmsAndEmail
     );

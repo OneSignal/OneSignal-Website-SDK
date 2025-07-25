@@ -1,6 +1,6 @@
 import type { AutoPromptOptions } from '../page/managers/PromptsManager';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
-import { DelayedPromptType } from '../shared/models/Prompts';
+import { DelayedPromptType } from '../shared/prompts';
 import { awaitOneSignalInitAndSupported } from '../shared/utils/utils';
 import OneSignal from './OneSignal';
 
