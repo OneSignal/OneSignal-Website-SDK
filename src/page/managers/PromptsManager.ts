@@ -2,7 +2,7 @@ import { Browser } from 'src/shared/models/Browser';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-} from '../../shared/config/constants';
+} from 'src/shared/constants';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import InitHelper from '../../shared/helpers/InitHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';

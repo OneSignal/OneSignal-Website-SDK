@@ -4,11 +4,11 @@ import {
 } from '../errors/OneSignalApiError';
 import OneSignalError from '../errors/OneSignalError';
 import { getOneSignalApiUrl } from '../helpers/environment';
+import { isValidUuid } from '../helpers/general';
 import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/EnvVariables';
-import { isValidUuid } from '../utils/utils';
 import type OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';
 

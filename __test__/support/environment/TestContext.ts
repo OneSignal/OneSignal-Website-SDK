@@ -1,6 +1,6 @@
 import deepmerge from 'deepmerge';
-import ConfigManager from '../../../src/page/managers/ConfigManager';
-import { type RecursivePartial } from '../../../src/shared/context/Utils';
+import { getMergedConfig } from 'src/shared/helpers/config';
+import type { RecursivePartial } from '../../../src/shared/context/Utils';
 import {
   type AppConfig,
   type AppUserConfig,
@@ -12,7 +12,7 @@ import {
 } from '../../../src/shared/models/AppConfig';
 import { DelayedPromptType } from '../../../src/shared/models/Prompts';
 import { APP_ID } from '../constants';
-import { type TestEnvironmentConfig } from './TestEnvironment';
+import type { TestEnvironmentConfig } from './TestEnvironment';
 
 export default class TestContext {
   static getFakeServerAppConfig(
@@ -462,11 +462,7 @@ export default class TestContext {
       config.integration || ConfigIntegrationKind.Custom,
       config.overrideServerConfig,
     );
-    const configManager = new ConfigManager();
-    const fakeMergedConfig = configManager.getMergedConfig(
-      fakeUserConfig,
-      fakeServerConfig,
-    );
+    const fakeMergedConfig = getMergedConfig(fakeUserConfig, fakeServerConfig);
     return fakeMergedConfig;
   }
 }

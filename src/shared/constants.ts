@@ -1,18 +1,7 @@
 import {
   DelayedPromptType,
   type SlidedownPromptOptions,
-} from '../models/Prompts';
-
-export const SERVER_CONFIG_DEFAULTS_SESSION = {
-  reportingThreshold: 30,
-  enableOnSessionForUnsubcribed: false,
-  enableOnFocus: true,
-};
-
-export const SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS = {
-  pageViews: 1,
-  timeDelay: 0,
-};
+} from './models/Prompts';
 
 export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
   actionMessage:
@@ -27,6 +16,11 @@ export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
   },
   savingText: 'Saving...',
   confirmMessage: 'Thank You!',
+};
+
+export const SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS = {
+  pageViews: 1,
+  timeDelay: 0,
 };
 
 export const CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS: SlidedownPromptOptions = {
