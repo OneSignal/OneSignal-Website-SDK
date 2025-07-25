@@ -28,8 +28,14 @@ import type { PushSubscriptionState } from '../models/PushSubscriptionState';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SessionOrigin } from '../models/Session';
 import { Subscription } from '../models/Subscription';
-import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
+import {
+  SubscriptionStrategyKind,
+  type SubscriptionStrategyKindValue,
+} from '../models/SubscriptionStrategyKind';
+import {
+  UnsubscriptionStrategy,
+  type UnsubscriptionStrategyValue,
+} from '../models/UnsubscriptionStrategy';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
@@ -113,7 +119,7 @@ export class SubscriptionManager {
    * and will select the correct method.
    */
   public async subscribe(
-    subscriptionStrategy: SubscriptionStrategyKind,
+    subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
     const env = SdkEnvironment.getWindowEnv();
 
@@ -311,7 +317,7 @@ export class SubscriptionManager {
     return await SubscriptionManager.requestNotificationPermission();
   }
 
-  public async unsubscribe(strategy: UnsubscriptionStrategy) {
+  public async unsubscribe(strategy: UnsubscriptionStrategyValue) {
     if (strategy === UnsubscriptionStrategy.DestroySubscription) {
       throw new NotImplementedError();
     } else if (strategy === UnsubscriptionStrategy.MarkUnsubscribed) {
@@ -335,7 +341,7 @@ export class SubscriptionManager {
    */
   public static async requestNotificationPermission(): Promise<NotificationPermission> {
     const results = await window.Notification.requestPermission();
-    // TODO: Clean up our custom NotificationPermission enum
+    // TODO: Clean up our custom NotificationPermission
     //         in favor of TS union type NotificationPermission instead of converting
     return results as NotificationPermission;
   }
@@ -423,7 +429,7 @@ export class SubscriptionManager {
   }
 
   private async subscribeFcmFromPage(
-    subscriptionStrategy: SubscriptionStrategyKind,
+    subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
     /*
       Before installing the service worker, request notification permissions. If
@@ -517,7 +523,7 @@ export class SubscriptionManager {
   }
 
   public async subscribeFcmFromWorker(
-    subscriptionStrategy: SubscriptionStrategyKind,
+    subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
     /*
       We're running inside of the service worker.
@@ -608,7 +614,7 @@ export class SubscriptionManager {
    */
   public async subscribeWithVapidKey(
     pushManager: PushManager,
-    subscriptionStrategy: SubscriptionStrategyKind,
+    subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
     /*
       Always try subscribing using VAPID by providing an applicationServerKey, except for cases

@@ -1,13 +1,16 @@
 import OneSignalError from './OneSignalError';
 
-export enum SubscriptionErrorReason {
-  InvalidSafariSetup,
-  Blocked,
-  Dismissed,
-}
+export const SubscriptionErrorReason = {
+  InvalidSafariSetup: 0,
+  Blocked: 1,
+  Dismissed: 2,
+} as const;
+
+export type SubscriptionErrorReasonValue =
+  (typeof SubscriptionErrorReason)[keyof typeof SubscriptionErrorReason];
 
 export default class SubscriptionError extends OneSignalError {
-  constructor(reason: SubscriptionErrorReason) {
+  constructor(reason: SubscriptionErrorReasonValue) {
     let errorMessage;
     switch (reason) {
       case SubscriptionErrorReason.InvalidSafariSetup:

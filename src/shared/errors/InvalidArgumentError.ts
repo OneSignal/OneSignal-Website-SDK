@@ -1,18 +1,29 @@
 import OneSignalError from './OneSignalError';
 
-export enum InvalidArgumentReason {
-  Empty,
-  Malformed,
-  EnumOutOfRange,
-  WrongType,
-  Reserved,
-}
+export const InvalidArgumentReason = {
+  Empty: 0,
+  Malformed: 1,
+  EnumOutOfRange: 2,
+  WrongType: 3,
+  Reserved: 4,
+} as const;
+
+const reverseInvalidArgumentReason = Object.fromEntries(
+  Object.entries(InvalidArgumentReason).map(([key, value]) => [value, key]),
+);
+
+export type InvalidArgumentReasonValue =
+  (typeof InvalidArgumentReason)[keyof typeof InvalidArgumentReason];
 
 export class InvalidArgumentError extends OneSignalError {
   argument: string;
   reason: string;
 
-  constructor(argName: string, reason: InvalidArgumentReason, message = '') {
+  constructor(
+    argName: string,
+    reason: InvalidArgumentReasonValue,
+    message = '',
+  ) {
     let errorMessage;
     switch (reason) {
       case InvalidArgumentReason.Empty:
@@ -36,7 +47,7 @@ export class InvalidArgumentError extends OneSignalError {
 
     super(errorMessage);
     this.argument = argName;
-    this.reason = InvalidArgumentReason[reason];
+    this.reason = reverseInvalidArgumentReason[reason];
 
     /**
      * Important! Required to make sure the correct error type is detected during instanceof checks.

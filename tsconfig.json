@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
     "lib": ["ESNext", "DOM", "DOM.Iterable", "WebWorker"],
@@ -9,7 +9,12 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+
+    /**
+     * Should use import type syntax instead of regular import when getting types/interfaces from a module
+     */
     "verbatimModuleSyntax": true,
+
     "moduleDetection": "force",
     "noEmit": true,
 
@@ -17,6 +22,10 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+
+    /**
+     * Warn against using enums, parameter properties e.g. private readonly variable in constructor, etc.
+     */
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
