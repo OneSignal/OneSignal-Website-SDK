@@ -1,5 +1,5 @@
-import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../../shared/config/constants';
-import { Utils } from '../../shared/context/Utils';
+import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from 'src/shared/constants';
+import { getValueOrDefault } from 'src/shared/helpers/general';
 import MainHelper from '../../shared/helpers/MainHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import {
@@ -67,7 +67,7 @@ export default class Slidedown {
           this.options.text.positiveUpdateButton?.substring(0, 16);
         this.updateMessage = this.options.text.updateMessage?.substring(0, 90);
         this.tagCategories = options.categories;
-        this.errorButton = Utils.getValueOrDefault(
+        this.errorButton = getValueOrDefault(
           this.options.text.positiveUpdateButton,
           SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton,
         );
@@ -75,7 +75,7 @@ export default class Slidedown {
       case DelayedPromptType.Sms:
       case DelayedPromptType.Email:
       case DelayedPromptType.SmsAndEmail:
-        this.errorButton = Utils.getValueOrDefault(
+        this.errorButton = getValueOrDefault(
           this.options.text.acceptButton,
           SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton,
         );

@@ -1,4 +1,4 @@
-import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
+import { getServerAppConfig } from 'src/shared/helpers/config';
 import {
   type AppConfig,
   ConfigIntegrationKind,
@@ -25,5 +25,5 @@ export async function getFinalAppConfig(
       resolve(fakeServerConfig);
     });
 
-  return await ConfigHelper.getAppConfig(fakeUserConfig, getFakeServerConfig);
+  return await getServerAppConfig(fakeUserConfig, getFakeServerConfig);
 }

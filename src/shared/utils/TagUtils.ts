@@ -3,7 +3,6 @@ import type {
   TagsObjectForApi,
   TagsObjectWithBoolean,
 } from '../../page/models/Tags';
-import { deepCopy } from './utils';
 
 export default class TagUtils {
   static convertTagsApiToBooleans(
@@ -82,12 +81,12 @@ export default class TagUtils {
     const isExistingPlayerTagsEmpty =
       TagUtils.isTagObjectEmpty(existingPlayerTags);
     if (isExistingPlayerTagsEmpty) {
-      const categoriesCopy = deepCopy(categories);
+      const categoriesCopy = structuredClone(categories);
       TagUtils.markAllTagsAsSpecified(categoriesCopy, true);
       return categoriesCopy;
     }
 
-    const categoriesCopy = deepCopy<TagCategory[]>(categories);
+    const categoriesCopy = structuredClone<TagCategory[]>(categories);
     return categoriesCopy.map((category) => {
       const existingTagValue: boolean = existingPlayerTags[category.tag];
       category.checked = TagUtils.getCheckedStatusForTagValue(existingTagValue);
@@ -102,14 +101,5 @@ export default class TagUtils {
     }
 
     return tagValue;
-  }
-
-  static limitCategoriesToMaxCount(
-    tagCategories: TagCategory[],
-    max: number,
-  ): TagCategory[] {
-    let tagCategoriesCopy = deepCopy(tagCategories);
-    tagCategoriesCopy = tagCategories.slice(0, max);
-    return tagCategoriesCopy;
   }
 }
