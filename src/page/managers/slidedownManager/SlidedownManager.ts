@@ -1,10 +1,10 @@
+import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from 'src/shared/constants';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import {
   ChannelCaptureError,
   InvalidChannelInputField,
 } from '../../../page/errors/ChannelCaptureError';
 import ExistingChannelError from '../../../page/errors/ExistingChannelError';
-import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from '../../../shared/config/constants';
 import {
   NotSubscribedError,
   NotSubscribedReason,

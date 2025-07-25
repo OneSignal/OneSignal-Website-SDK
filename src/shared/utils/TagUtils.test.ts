@@ -102,13 +102,4 @@ describe('TagUtils', () => {
     expect(TagUtils.getCheckedStatusForTagValue(true)).toBe(true);
     expect(TagUtils.getCheckedStatusForTagValue(false)).toBe(false);
   });
-
-  test('should limit categories to max count', () => {
-    const categories: TagCategory[] = [
-      { tag: 'tag1', label: 'label1' },
-      { tag: 'tag2', label: 'label2' },
-    ];
-    const limitedCategories = TagUtils.limitCategoriesToMaxCount(categories, 1);
-    expect(limitedCategories).toEqual([{ tag: 'tag1', label: 'label1' }]);
-  });
 });

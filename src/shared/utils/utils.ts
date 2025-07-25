@@ -192,15 +192,6 @@ export function contains(indexOfAble: any, match: string) {
 }
 
 /**
- * Returns true if the UUID is a string of 36 characters;
- * @param uuid
- * @returns {*|boolean}
- */
-export function isValidUuid(uuid: string) {
-  return OneSignalUtils.isValidUuid(uuid);
-}
-
-/**
  * Unsubscribe from push notifications without removing the active service worker.
  */
 export function unsubscribeFromPush() {
@@ -323,10 +314,6 @@ export function getDomElementOrStub(selector: string): Element {
     return document.createElement('div');
   }
   return foundElement;
-}
-
-export function deepCopy<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj));
 }
 
 export function getTimeZoneId() {

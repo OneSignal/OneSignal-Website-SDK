@@ -1,10 +1,10 @@
 import type Bell from 'src/page/bell/Bell';
+import { getAppConfig } from 'src/shared/helpers/config';
 import { windowEnvString } from 'src/shared/helpers/environment';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
-import ConfigManager from '../page/managers/ConfigManager';
 import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
 import type { EnvironmentInfo } from '../page/models/EnvironmentInfo';
@@ -49,7 +49,8 @@ export default class OneSignal {
   }
 
   private static async _initializeConfig(options: AppUserConfig) {
-    const appConfig = await new ConfigManager().getAppConfig(options);
+    const appConfig = await getAppConfig(options);
+
     Log.debug('OneSignal: Final web app config:', appConfig);
 
     // TODO: environmentInfo is explicitly dependent on existence of OneSignal.config. Needs refactor.
