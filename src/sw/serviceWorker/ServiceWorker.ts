@@ -1,6 +1,3 @@
-import ContextSW from '../../shared/models/ContextSW';
-import Database from '../../shared/services/Database';
-
 import OneSignalApiBase from '../../../src/shared/api/OneSignalApiBase';
 import OneSignalApiSW from '../../../src/shared/api/OneSignalApiSW';
 import {
@@ -13,6 +10,7 @@ import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscri
 import { Utils } from '../../shared/context/Utils';
 import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
+import ContextSW from '../../shared/models/ContextSW';
 import {
   type NotificationClickEventInternal,
   type NotificationForegroundWillDisplayEventSerializable,
@@ -28,6 +26,7 @@ import {
   type UpsertOrDeactivateSessionPayload,
 } from '../../shared/models/Session';
 import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
+import Database from '../../shared/services/Database';
 import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import Log from '../libraries/Log';
@@ -45,6 +44,7 @@ import {
   type NotificationTypeValue,
 } from 'src/core/types/subscription';
 import type { AppConfig } from 'src/shared/models/AppConfig';
+import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
@@ -61,25 +61,6 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
  * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
  */
 export class ServiceWorker {
-  /**
-   * An incrementing integer defined in package.json. Value doesn't matter as long as it's different from the
-   * previous version.
-   */
-  static get VERSION() {
-    return VERSION;
-  }
-
-  static get log() {
-    return Log;
-  }
-
-  /**
-   * An interface to the browser's IndexedDB.
-   */
-  static get database() {
-    return Database;
-  }
-
   static get webhookNotificationEventSender() {
     return new OSWebhookNotificationEventSender();
   }
@@ -103,10 +84,6 @@ export class ServiceWorker {
       (self as any).workerMessenger = new WorkerMessenger();
     }
     return (self as any).workerMessenger;
-  }
-
-  private static set workerMessenger(workerMessenger: WorkerMessenger) {
-    (self as any).workerMessenger = workerMessenger;
   }
 
   /**
@@ -802,7 +779,7 @@ export class ServiceWorker {
     );
     if (matchPreference) notificationClickHandlerMatch = matchPreference;
 
-    const actionPreference = await this.database.get<string>(
+    const actionPreference = await Database.get<string>(
       'Options',
       'notificationClickHandlerAction',
     );
@@ -973,7 +950,7 @@ export class ServiceWorker {
     appId: string | undefined | null,
     pushSubscriptionId: string | undefined,
     notificationClickEvent: NotificationClickEventInternal,
-    deviceType: DeliveryPlatformKind,
+    deviceType: DeliveryPlatformKindValue,
   ): Promise<void> {
     const notificationData = notificationClickEvent.notification;
 

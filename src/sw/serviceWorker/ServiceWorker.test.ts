@@ -107,12 +107,6 @@ describe('ServiceWorker', () => {
     global.ServiceWorkerGlobalScope = {};
   });
 
-  test('should have basic properties', () => {
-    expect(ServiceWorker.VERSION).toBe(version);
-    expect(ServiceWorker.database).toBe(Database);
-    expect(ServiceWorker.log).toBe(Log);
-  });
-
   describe('getAppId', () => {
     test('can return appId from url', async () => {
       // @ts-expect-error - search is readonly but we need to set it for testing
