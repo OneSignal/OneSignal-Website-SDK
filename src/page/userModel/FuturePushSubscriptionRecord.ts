@@ -2,18 +2,10 @@ import type {
   NotificationTypeValue,
   SubscriptionTypeValue,
 } from 'src/core/types/subscription';
-import {
-  NotificationType,
-  NotificationTypeValue,
-  SubscriptionTypeValue,
-} from 'src/core/types/subscription';
-import {
-  useSafariLegacyPush,
-  useSafariVapidPush,
-} from 'src/shared/environment';
+import { NotificationType } from 'src/core/types/subscription';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import Environment from '../../shared/helpers/Environment';
-import { Serializable } from '../models/Serializable';
+import type { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
   readonly type: SubscriptionTypeValue;

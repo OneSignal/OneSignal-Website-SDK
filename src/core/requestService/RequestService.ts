@@ -17,7 +17,7 @@ import {
   type RequestMetadata,
   type UserData,
 } from '../types/api';
-import { ICreateEvent } from '../types/customEvents';
+import type { ICreateEvent } from '../types/customEvents';
 import AliasPair from './AliasPair';
 
 export class RequestService {

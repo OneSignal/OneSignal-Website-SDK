@@ -10,8 +10,8 @@ import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { TrackEventOperation } from '../operations/TrackEventOperation';
 import { RequestService } from '../requestService/RequestService';
-import { ICustomEventMetadata } from '../types/customEvents';
-import { ExecutionResult, IOperationExecutor } from '../types/operation';
+import type { ICustomEventMetadata } from '../types/customEvents';
+import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 
 // Implements logic similar to Android SDK's CustomEventOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/main/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/CustomEventOperationExecutor.kt

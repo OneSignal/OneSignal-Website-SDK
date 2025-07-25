@@ -1,8 +1,11 @@
 import MainHelper from '../../shared/helpers/MainHelper';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { TrackEventOperation } from '../operations/TrackEventOperation';
-import { ICustomEvent, ICustomEventController } from '../types/customEvents';
-import { IOperationRepo } from '../types/operation';
+import type {
+  ICustomEvent,
+  ICustomEventController,
+} from '../types/customEvents';
+import type { IOperationRepo } from '../types/operation';
 
 /**
  * Implements custom event tracking functionality.
@@ -10,10 +13,13 @@ import { IOperationRepo } from '../types/operation';
  * and enqueueing them for execution via the operation repository.
  */
 export class CustomEventController implements ICustomEventController {
-  constructor(
-    private readonly _identityModelStore: IdentityModelStore,
-    private readonly _opRepo: IOperationRepo,
-  ) {}
+  private readonly _identityModelStore: IdentityModelStore;
+  private readonly _opRepo: IOperationRepo;
+
+  constructor(identityModelStore: IdentityModelStore, opRepo: IOperationRepo) {
+    this._identityModelStore = identityModelStore;
+    this._opRepo = opRepo;
+  }
 
   sendCustomEvent(event: ICustomEvent): void {
     const appId = MainHelper.getAppId();

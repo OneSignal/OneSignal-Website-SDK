@@ -2,10 +2,11 @@ import type { IUpdateUser } from 'src/core/types/api';
 import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
-import { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
+import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import Utils from '../context/Utils';
 import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
+import type { ServerAppConfig } from '../models/AppConfig';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
   OutcomeAttributionType,

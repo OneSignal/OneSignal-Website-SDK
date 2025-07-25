@@ -1,5 +1,5 @@
 import Environment from 'src/shared/helpers/Environment';
-import { ISubscription } from '../types/api';
+import type { ISubscription } from '../types/api';
 import {
   type NotificationTypeValue,
   type SubscriptionTypeValue,
