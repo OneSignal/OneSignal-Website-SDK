@@ -4,9 +4,9 @@ import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
 import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
+import type { ServerAppConfig } from '../config';
 import Utils from '../context/Utils';
 import Log from '../libraries/Log';
-import type { ServerAppConfig } from '../models/AppConfig';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
   OutcomeAttributionType,

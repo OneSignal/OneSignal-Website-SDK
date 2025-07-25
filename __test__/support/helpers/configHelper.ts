@@ -1,9 +1,9 @@
-import { getServerAppConfig } from 'src/shared/helpers/config';
 import {
-  type AppConfig,
   ConfigIntegrationKind,
+  getServerAppConfig,
+  type AppConfig,
   type ServerAppConfig,
-} from '../../../src/shared/models/AppConfig';
+} from 'src/shared/config';
 import TestContext from '../environment/TestContext';
 
 /**

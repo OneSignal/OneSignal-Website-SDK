@@ -1,4 +1,4 @@
-import type { Categories } from 'src/page/tags/types';
+import type { Categories } from 'src/page/tags';
 import type { DelayedPromptType } from './constants';
 
 export type DelayedPromptTypeValue =
@@ -80,12 +80,6 @@ export interface SlidedownTextOptions {
 export interface SlidedownDelayOptions {
   pageViews: number;
   timeDelay: number;
-}
-
-export interface TagCategory {
-  tag: string;
-  label: string;
-  checked?: boolean;
 }
 
 export interface FullscreenPermissionMessageOptions

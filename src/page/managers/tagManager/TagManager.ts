@@ -1,10 +1,7 @@
+import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags';
 import Log from '../../../shared/libraries/Log';
 import TagUtils from '../../../shared/utils/TagUtils';
 import type { ContextInterface } from '../../models/Context';
-import type {
-  TagsObjectForApi,
-  TagsObjectWithBoolean,
-} from '../../models/Tags';
 import type { ITagManager } from './types';
 
 /**

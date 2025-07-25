@@ -1,4 +1,8 @@
-import type { TagCategory } from 'src/shared/prompts';
+export interface TagCategory {
+  tag: string;
+  label: string;
+  checked?: boolean;
+}
 
 type PossibleTagValueValues = '0' | '1';
 export interface TagsObject<T> {

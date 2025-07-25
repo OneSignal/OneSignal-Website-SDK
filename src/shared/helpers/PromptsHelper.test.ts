@@ -1,7 +1,7 @@
 import {
   DelayedPromptType,
   type SlidedownPromptOptions,
-} from '../models/Prompts';
+} from 'src/shared/prompts';
 import PromptsHelper from './PromptsHelper';
 
 describe('PromptsHelper', () => {
