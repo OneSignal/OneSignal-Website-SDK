@@ -1,11 +1,14 @@
 import {
   SubscriptionType,
-  SubscriptionTypeValue,
+  type SubscriptionTypeValue,
 } from 'src/core/types/subscription';
 import { EnvironmentInfoHelper } from 'src/page/helpers/EnvironmentInfoHelper';
 import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
+import {
+  DeliveryPlatformKind,
+  type DeliveryPlatformKindValue,
+} from '../models/DeliveryPlatformKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { bowserCastle } from '../utils/bowserCastle';
 import { VERSION } from '../utils/EnvVariables';
@@ -70,7 +73,7 @@ export default class Environment {
    * Get the legacy player.device_type
    * NOTE: Use getSubscriptionType() instead when possible.
    */
-  public static getDeviceType(): DeliveryPlatformKind {
+  public static getDeviceType(): DeliveryPlatformKindValue {
     switch (this.getSubscriptionType()) {
       case SubscriptionType.FirefoxPush:
         return DeliveryPlatformKind.Firefox;

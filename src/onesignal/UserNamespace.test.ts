@@ -5,7 +5,7 @@ import {
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { TestEnvironment } from '../../__test__/support/environment/TestEnvironment';
-import UserChangeEvent from '../page/models/UserChangeEvent';
+import type UserChangeEvent from '../page/models/UserChangeEvent';
 import { Subscription } from '../shared/models/Subscription';
 import User from './User';
 import UserNamespace from './UserNamespace';

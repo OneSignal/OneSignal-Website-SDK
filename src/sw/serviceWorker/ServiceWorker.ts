@@ -13,7 +13,6 @@ import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscript
 import { Utils } from '../../shared/context/Utils';
 import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
-import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
 import {
   type NotificationClickEventInternal,
   type NotificationForegroundWillDisplayEventSerializable,
@@ -46,6 +45,7 @@ import {
   type NotificationTypeValue,
 } from 'src/core/types/subscription';
 import type { AppConfig } from 'src/shared/models/AppConfig';
+import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
@@ -976,7 +976,7 @@ export class ServiceWorker {
     appId: string | undefined | null,
     pushSubscriptionId: string | undefined,
     notificationClickEvent: NotificationClickEventInternal,
-    deviceType: DeliveryPlatformKind,
+    deviceType: DeliveryPlatformKindValue,
   ): Promise<void> {
     const notificationData = notificationClickEvent.notification;
 
