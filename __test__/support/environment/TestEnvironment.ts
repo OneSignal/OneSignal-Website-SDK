@@ -1,11 +1,13 @@
-import { RecursivePartial } from '../../../src/shared/context/Utils';
-import MainHelper from '../../../src/shared/helpers/MainHelper';
-import {
+import type {
   AppUserConfig,
+  ConfigIntegrationKindValue,
   ServerAppConfig,
-} from '../../../src/shared/models/AppConfig';
+} from '../../../src/shared/config';
+import type { RecursivePartial } from '../../../src/shared/context/Utils';
+import MainHelper from '../../../src/shared/helpers/MainHelper';
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../constants';
 import { generateNewSubscription } from '../helpers/core';
+import BrowserUserAgent from '../models/BrowserUserAgent';
 import {
   initOSGlobals,
   mockUserAgent,
@@ -22,9 +24,9 @@ export interface TestEnvironmentConfig {
   permission?: NotificationPermission;
   addPrompts?: boolean;
   url?: string;
-  userAgent?: BrowserUserAgent;
+  userAgent?: typeof BrowserUserAgent;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
-  integration?: ConfigIntegrationKind;
+  integration?: ConfigIntegrationKindValue;
   useMockIdentityModel?: boolean;
   useMockPushSubscriptionModel?: boolean;
 }

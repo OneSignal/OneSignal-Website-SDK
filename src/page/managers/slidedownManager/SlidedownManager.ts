@@ -1,3 +1,4 @@
+import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags';
 import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from 'src/shared/constants';
 import {
   DelayedPromptType,
@@ -30,10 +31,6 @@ import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
 import PermissionMessageDismissedError from '../../errors/PermissionMessageDismissedError';
 import type { ContextInterface } from '../../models/Context';
 import { DismissPrompt } from '../../models/Dismiss';
-import type {
-  TagsObjectForApi,
-  TagsObjectWithBoolean,
-} from '../../models/Tags';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';
 import Slidedown, {

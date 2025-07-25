@@ -4,10 +4,10 @@ import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
 import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
+import type { ServerAppConfig } from '../config';
 import Utils from '../context/Utils';
 import Log from '../libraries/Log';
-import type { ServerAppConfig } from '../models/AppConfig';
-import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
+import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
   OutcomeAttributionType,
   type OutcomeAttribution,
@@ -33,7 +33,7 @@ export class OneSignalApiSW {
    */
   static getUserIdFromSubscriptionIdentifier(
     appId: string,
-    deviceType: DeliveryPlatformKind,
+    deviceType: DeliveryPlatformKindValue,
     identifier: string,
   ): Promise<string | null> {
     // Calling POST /players with an existing identifier returns us that player ID

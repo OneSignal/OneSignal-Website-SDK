@@ -1,8 +1,8 @@
-import {
+import type {
   TagCategory,
   TagsObjectForApi,
   TagsObjectWithBoolean,
-} from 'src/page/models/Tags';
+} from 'src/page/tags';
 import TagUtils from './TagUtils';
 
 describe('TagUtils', () => {
