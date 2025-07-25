@@ -42,7 +42,7 @@ import {
   NotificationType,
   type NotificationTypeValue,
 } from 'src/core/types/subscription';
-import { getServerAppConfig } from 'src/shared/helpers/config/config';
+import { getServerAppConfig } from 'src/shared/config';
 import type { AppConfig } from 'src/shared/models/AppConfig';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
 import { VERSION } from 'src/shared/utils/EnvVariables';

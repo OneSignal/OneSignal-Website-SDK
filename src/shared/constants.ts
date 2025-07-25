@@ -1,7 +1,4 @@
-import {
-  DelayedPromptType,
-  type SlidedownPromptOptions,
-} from './models/Prompts';
+import { DelayedPromptType, type SlidedownPromptOptions } from './prompts';
 
 export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
   actionMessage:

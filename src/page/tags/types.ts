@@ -1,3 +1,5 @@
+import type { TagCategory } from 'src/shared/prompts';
+
 type PossibleTagValueValues = '0' | '1';
 export interface TagsObject<T> {
   [key: string]: T;

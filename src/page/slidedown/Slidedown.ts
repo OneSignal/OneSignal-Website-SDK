@@ -1,11 +1,12 @@
 import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from 'src/shared/constants';
 import { getValueOrDefault } from 'src/shared/helpers/general';
-import MainHelper from '../../shared/helpers/MainHelper';
-import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import {
   DelayedPromptType,
   type SlidedownPromptOptions,
-} from '../../shared/models/Prompts';
+  type TagCategory,
+} from 'src/shared/prompts';
+import MainHelper from '../../shared/helpers/MainHelper';
+import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import {
   COLORS,
@@ -27,7 +28,6 @@ import {
   type InvalidChannelInputFieldValue,
 } from '../errors/ChannelCaptureError';
 import type { NotificationIcons } from '../models/NotificationIcons';
-import type { TagCategory } from '../models/Tags';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';
