@@ -1,6 +1,6 @@
 import { SdkInitError, SdkInitErrorKind } from 'src/shared/errors/SdkInitError';
-import { type AppConfig } from 'src/shared/models/AppConfig';
 import { IS_SERVICE_WORKER } from 'src/shared/utils/EnvVariables';
+import { type AppConfig } from './types';
 
 // The os.tc domain feature is no longer supported in v16, so throw if the
 // OneSignal app is still configured this way after they migrated from v15.

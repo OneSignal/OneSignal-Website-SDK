@@ -1,12 +1,10 @@
-import type {
-  AppUserConfig,
-  SlidedownOptionsVersion1,
-} from 'src/shared/models/AppConfig';
 import {
   DelayedPromptType,
   type AppUserConfigPromptOptions,
   type SlidedownOptions,
-} from 'src/shared/models/Prompts';
+  type SlidedownOptionsVersion1,
+} from '../prompts';
+import type { AppUserConfig } from './types';
 
 /**
  * Standardizes config to version 2 of the config schema

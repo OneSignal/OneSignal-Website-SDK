@@ -1,13 +1,27 @@
-import type { Categories } from '../../page/models/Tags';
-import type { OutcomesConfig, OutcomesServerConfig } from './Outcomes';
+import type { OutcomesConfig, OutcomesServerConfig } from '../outcomes/types';
 import type {
-  AppUserConfigNotifyButton,
   AppUserConfigPromptOptions,
-  CustomLinkSize,
-  CustomLinkStyle,
-  SlidedownOptions,
-} from './Prompts';
+  BellPosition,
+  BellSize,
+  BellText,
+  ServerAppPromptConfig,
+} from '../prompts/types';
+import type {
+  ConfigIntegrationKind,
+  NotificationClickActionBehavior,
+  NotificationClickMatchBehavior,
+} from './constants';
 
+type NotificationClickMatchBehaviorValue =
+  (typeof NotificationClickMatchBehavior)[keyof typeof NotificationClickMatchBehavior];
+
+type NotificationClickActionBehaviorValue =
+  (typeof NotificationClickActionBehavior)[keyof typeof NotificationClickActionBehavior];
+
+export type ConfigIntegrationKindValue =
+  (typeof ConfigIntegrationKind)[keyof typeof ConfigIntegrationKind];
+
+// app config
 export interface AppConfig {
   /**
    * The OneSignal dashboard app ID. Although this value is provided, it isn't
@@ -51,37 +65,6 @@ export interface AppConfig {
   siteName: string;
 }
 
-export const ConfigIntegrationKind = {
-  TypicalSite: 'typical',
-  WordPress: 'wordpress',
-  Shopify: 'shopify',
-  Blogger: 'blogger',
-  Magento: 'magento',
-  Drupal: 'drupal',
-  SquareSpace: 'squarespace',
-  Joomla: 'joomla',
-  Weebly: 'weebly',
-  Wix: 'wix',
-  Custom: 'custom',
-} as const;
-
-export type ConfigIntegrationKindValue =
-  (typeof ConfigIntegrationKind)[keyof typeof ConfigIntegrationKind];
-
-export const NotificationClickMatchBehavior = {
-  Exact: 'exact',
-  Origin: 'origin',
-} as const;
-type NotificationClickMatchBehaviorValue =
-  (typeof NotificationClickMatchBehavior)[keyof typeof NotificationClickMatchBehavior];
-
-export const NotificationClickActionBehavior = {
-  Navigate: 'navigate',
-  Focus: 'focus',
-} as const;
-type NotificationClickActionBehaviorValue =
-  (typeof NotificationClickActionBehavior)[keyof typeof NotificationClickActionBehavior];
-
 export interface AppUserConfig {
   [key: string]: any;
   appId?: string;
@@ -110,6 +93,33 @@ export interface AppUserConfigWelcomeNotification {
   url: string | undefined;
 }
 
+export interface AppUserConfigNotifyButton {
+  options?: AppUserConfigNotifyButton;
+  enable: boolean;
+  displayPredicate?: null | (() => void | null | undefined | boolean);
+  size?: BellSize;
+  position?: BellPosition;
+  offset?: { bottom: string; left: string; right: string };
+  prenotify?: boolean;
+  showCredit?: boolean;
+  colors?: {
+    'circle.background': string;
+    'circle.foreground': string;
+    'badge.background': string;
+    'badge.foreground': string;
+    'badge.bordercolor': string;
+    'pulse.color': string;
+    'dialog.button.background.hovering': string;
+    'dialog.button.background.active': string;
+    'dialog.button.background': string;
+    'dialog.button.foreground': string;
+  };
+  text: BellText;
+  theme?: string;
+  showLauncherAfter?: number;
+  showBadgeAfter?: number;
+}
+
 export interface AppUserConfigWebhooks {
   cors: boolean | undefined;
   'notification.willDisplay': string | undefined;
@@ -117,93 +127,7 @@ export interface AppUserConfigWebhooks {
   'notification.dismissed': string | undefined;
 }
 
-// deprecated. TO DO: remove after server config version 2 fully migrated
-export interface SlidedownOptionsVersion1 {
-  enabled: boolean;
-  autoPrompt: boolean;
-  pageViews?: number;
-  timeDelay?: number;
-  acceptButtonText?: string;
-  acceptButton?: string;
-  cancelButtonText?: string;
-  cancelButton?: string;
-  actionMessage: string;
-  customizeTextEnabled: boolean;
-  categories?: Categories;
-}
-
-export interface ServerAppPromptConfig {
-  native: {
-    enabled: boolean;
-    autoPrompt: boolean;
-    pageViews?: number;
-    timeDelay?: number;
-  };
-  bell: {
-    enabled: boolean;
-    size: 'small' | 'medium' | 'large';
-    color: {
-      main: string;
-      accent: string;
-    };
-    dialog: {
-      main: {
-        title: string;
-        subscribeButton: string;
-        unsubscribeButton: string;
-      };
-      blocked: {
-        title: string;
-        message: string;
-      };
-    };
-    offset: {
-      left: number;
-      right: number;
-      bottom: number;
-    };
-    message: {
-      subscribing: string;
-      unsubscribing: string;
-    };
-    tooltip: {
-      blocked: string;
-      subscribed: string;
-      unsubscribed: string;
-    };
-    location: 'bottom-left' | 'bottom-right';
-    hideWhenSubscribed: boolean;
-    customizeTextEnabled: boolean;
-  };
-  slidedown: SlidedownOptions;
-  fullscreen: {
-    title: string;
-    caption: string;
-    enabled: boolean;
-    message: string;
-    acceptButton: string;
-    cancelButton: string;
-    actionMessage: string;
-    autoAcceptTitle: string;
-    customizeTextEnabled: boolean;
-  };
-  customlink: {
-    enabled: boolean;
-    style: CustomLinkStyle;
-    size: CustomLinkSize;
-    unsubscribeEnabled: boolean;
-    text: {
-      explanation: string;
-      subscribe: string;
-      unsubscribe: string;
-    };
-    color: {
-      button: string;
-      text: string;
-    };
-  };
-}
-
+// server app config
 export interface ServerAppConfig {
   success: boolean;
   app_id: string;

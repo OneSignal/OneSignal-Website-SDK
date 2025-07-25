@@ -2,7 +2,7 @@ import {
   DelayedPromptType,
   type DelayedPromptTypeValue,
   type SlidedownPromptOptions,
-} from '../models/Prompts';
+} from '../prompts';
 
 export default class PromptsHelper {
   static isCategorySlidedownConfigured(
