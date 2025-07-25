@@ -1,23 +1,23 @@
-import type { TagCategory } from 'src/page/models/Tags';
-import {
-  CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
-  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
-} from 'src/shared/constants';
 import {
   ConfigIntegrationKind,
   type AppUserConfig,
   type ConfigIntegrationKindValue,
   type ServerAppConfig,
-  type ServerAppPromptConfig,
   type ServiceWorkerConfigParams,
-} from 'src/shared/models/AppConfig';
+} from 'src/shared/config';
+import {
+  CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
+  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
+  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
+} from 'src/shared/constants';
+import { getValueOrDefault, valueOrDefault } from '../helpers/general';
 import {
   DelayedPromptType,
   type AppUserConfigCustomLinkOptions,
   type AppUserConfigPromptOptions,
-} from 'src/shared/models/Prompts';
-import { getValueOrDefault, valueOrDefault } from '../general';
+  type ServerAppPromptConfig,
+  type TagCategory,
+} from '../prompts';
 import {
   getPromptOptionsForDashboardConfiguration,
   isSlidedownAutoPromptConfigured,

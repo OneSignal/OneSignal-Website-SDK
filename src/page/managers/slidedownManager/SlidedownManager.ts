@@ -1,4 +1,8 @@
 import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from 'src/shared/constants';
+import {
+  DelayedPromptType,
+  type DelayedPromptTypeValue,
+} from 'src/shared/prompts';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import {
   ChannelCaptureError,
@@ -18,10 +22,6 @@ import InitHelper from '../../../shared/helpers/InitHelper';
 import PromptsHelper from '../../../shared/helpers/PromptsHelper';
 import Log from '../../../shared/libraries/Log';
 import { NotificationPermission } from '../../../shared/models/NotificationPermission';
-import {
-  DelayedPromptType,
-  type DelayedPromptTypeValue,
-} from '../../../shared/models/Prompts';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import { awaitableTimeout } from '../../../shared/utils/AwaitableTimeout';
 import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';

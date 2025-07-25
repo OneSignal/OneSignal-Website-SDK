@@ -1,11 +1,11 @@
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from 'src/shared/constants';
-import type { ServerAppConfig } from 'src/shared/models/AppConfig';
+import { getValueOrDefault } from '../helpers/general';
 import type {
   AppUserConfigCustomLinkOptions,
   AppUserConfigPromptOptions,
   SlidedownPromptOptions,
-} from 'src/shared/models/Prompts';
-import { getValueOrDefault } from '../general';
+} from '../prompts';
+import type { ServerAppConfig } from './types';
 
 /**
  * Used only with Dashboard Configuration
