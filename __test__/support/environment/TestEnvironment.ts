@@ -1,14 +1,11 @@
-import { NotificationPermission } from 'src/shared/models/NotificationPermission';
 import { RecursivePartial } from '../../../src/shared/context/Utils';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 import {
   AppUserConfig,
-  ConfigIntegrationKind,
   ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../constants';
 import { generateNewSubscription } from '../helpers/core';
-import BrowserUserAgent from '../models/BrowserUserAgent';
 import {
   initOSGlobals,
   mockUserAgent,

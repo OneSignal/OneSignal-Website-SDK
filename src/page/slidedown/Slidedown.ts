@@ -1,10 +1,10 @@
-import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../../shared/config/constants';
-import { Utils } from '../../shared/context/Utils';
+import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from 'src/shared/constants';
+import { getValueOrDefault } from 'src/shared/helpers/general';
 import MainHelper from '../../shared/helpers/MainHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import {
-  type SlidedownPromptOptions,
   DelayedPromptType,
+  type SlidedownPromptOptions,
 } from '../../shared/models/Prompts';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import {
@@ -22,7 +22,10 @@ import {
   removeCssClass,
   removeDomElement,
 } from '../../shared/utils/utils';
-import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
+import {
+  InvalidChannelInputField,
+  type InvalidChannelInputFieldValue,
+} from '../errors/ChannelCaptureError';
 import type { NotificationIcons } from '../models/NotificationIcons';
 import type { TagCategory } from '../models/Tags';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
@@ -64,7 +67,7 @@ export default class Slidedown {
           this.options.text.positiveUpdateButton?.substring(0, 16);
         this.updateMessage = this.options.text.updateMessage?.substring(0, 90);
         this.tagCategories = options.categories;
-        this.errorButton = Utils.getValueOrDefault(
+        this.errorButton = getValueOrDefault(
           this.options.text.positiveUpdateButton,
           SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton,
         );
@@ -72,7 +75,7 @@ export default class Slidedown {
       case DelayedPromptType.Sms:
       case DelayedPromptType.Email:
       case DelayedPromptType.SmsAndEmail:
-        this.errorButton = Utils.getValueOrDefault(
+        this.errorButton = getValueOrDefault(
           this.options.text.acceptButton,
           SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton,
         );
@@ -255,7 +258,7 @@ export default class Slidedown {
   }
 
   setFailureStateForInvalidChannelInput(
-    invalidChannelInput: InvalidChannelInputField,
+    invalidChannelInput: InvalidChannelInputFieldValue,
   ): void {
     switch (invalidChannelInput) {
       case InvalidChannelInputField.InvalidSms:

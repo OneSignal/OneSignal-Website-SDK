@@ -1,8 +1,8 @@
-import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
+import { getServerAppConfig } from 'src/shared/helpers/config';
 import {
-  AppConfig,
+  type AppConfig,
   ConfigIntegrationKind,
-  ServerAppConfig,
+  type ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
 import TestContext from '../environment/TestContext';
 
@@ -25,5 +25,5 @@ export async function getFinalAppConfig(
       resolve(fakeServerConfig);
     });
 
-  return await ConfigHelper.getAppConfig(fakeUserConfig, getFakeServerConfig);
+  return await getServerAppConfig(fakeUserConfig, getFakeServerConfig);
 }
