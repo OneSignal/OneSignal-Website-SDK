@@ -14,6 +14,7 @@ import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
 import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { type OperationRepo } from './operationRepo/OperationRepo';
+import { type ICustomEventController } from './types/customEvents';
 import { ModelChangeTags } from './types/models';
 import {
   SubscriptionChannel,
@@ -43,6 +44,10 @@ export class CoreModuleDirector {
 
   get subscriptionModelStore(): SubscriptionModelStore {
     return this.core.subscriptionModelStore;
+  }
+
+  get customEventController(): ICustomEventController {
+    return this.core.customEventController;
   }
 
   public generatePushSubscriptionModel(

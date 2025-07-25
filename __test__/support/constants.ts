@@ -44,7 +44,7 @@ export const DUMMY_GET_USER_REQUEST_WITH_PUSH_SUB = {
         session_count: 1,
         sdk: '160000',
         device_model: 'MacIntel',
-        device_os: '114',
+        device_os: 114,
         rooted: false,
         test_type: 0,
         app_version: '',

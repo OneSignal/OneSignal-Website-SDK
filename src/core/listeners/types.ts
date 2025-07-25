@@ -1,6 +1,8 @@
 import type { Model } from '../models/Model';
-import type { IEventNotifier } from '../types/events';
-import type { ISingletonModelStoreChangeHandler } from '../types/models';
+import type {
+  IEventNotifier,
+  ISingletonModelStoreChangeHandler,
+} from '../types/models';
 
 export interface ISingletonModelStore<TModel extends Model>
   extends IEventNotifier<ISingletonModelStoreChangeHandler<TModel>> {

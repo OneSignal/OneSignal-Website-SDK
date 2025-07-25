@@ -3,11 +3,11 @@ import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
 import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import Utils from '../context/Utils';
+import Environment from '../helpers/Environment';
 import Log from '../libraries/Log';
 import type { ServerAppConfig } from '../models/AppConfig';
-import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
+import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
   OutcomeAttributionType,
   type OutcomeAttribution,
@@ -33,7 +33,7 @@ export class OneSignalApiSW {
    */
   static getUserIdFromSubscriptionIdentifier(
     appId: string,
-    deviceType: DeliveryPlatformKind,
+    deviceType: DeliveryPlatformKindValue,
     identifier: string,
   ): Promise<string | null> {
     // Calling POST /players with an existing identifier returns us that player ID
@@ -111,7 +111,7 @@ export class OneSignalApiSW {
       notification_ids: attribution.notificationIds,
       subscription: {
         id: subscriptionId,
-        type: FuturePushSubscriptionRecord.getSubscriptionType(),
+        type: Environment.getSubscriptionType(),
       },
       onesignal_id: onesignalId,
     };

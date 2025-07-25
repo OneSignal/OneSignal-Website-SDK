@@ -10,7 +10,12 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
-import { isObject, isValidEmail, logMethodCall } from '../shared/utils/utils';
+import {
+  isObject,
+  isObjectSerializable,
+  isValidEmail,
+  logMethodCall,
+} from '../shared/utils/utils';
 
 export default class User {
   static singletonInstance?: User = undefined;
@@ -275,5 +280,19 @@ export default class User {
   public getLanguage(): string | undefined {
     logMethodCall('getLanguage');
     return OneSignal.coreDirector.getPropertiesModel().language;
+  }
+
+  public trackEvent(name: string, properties: Record<string, unknown> = {}) {
+    if (!isObjectSerializable(properties)) {
+      return Log.error(
+        'Custom event properties must be a JSON-serializable object',
+      );
+    }
+
+    logMethodCall('trackEvent', { name, properties });
+    OneSignal.coreDirector.customEventController.sendCustomEvent({
+      name,
+      properties,
+    });
   }
 }

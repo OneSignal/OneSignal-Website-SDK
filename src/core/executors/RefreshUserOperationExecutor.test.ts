@@ -161,9 +161,6 @@ describe('RefreshUserOperationExecutor', () => {
         enabled: false,
         token: 'test@example.com',
         type: SubscriptionType.Email,
-        device_os: '',
-        device_model: '',
-        sdk: '',
       });
     });
 
