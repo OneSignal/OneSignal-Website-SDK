@@ -4,7 +4,7 @@ import {
 } from '__test__/support/constants';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { TestEnvironment } from '../../__test__/support/environment/TestEnvironment';
-import UserChangeEvent from '../page/models/UserChangeEvent';
+import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { Subscription } from '../shared/models/Subscription';
 import UserNamespace from './UserNamespace';
 

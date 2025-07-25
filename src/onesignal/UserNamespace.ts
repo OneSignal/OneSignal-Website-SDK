@@ -1,4 +1,4 @@
-import type UserChangeEvent from '../page/models/UserChangeEvent';
+import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
 import { Subscription } from '../shared/models/Subscription';

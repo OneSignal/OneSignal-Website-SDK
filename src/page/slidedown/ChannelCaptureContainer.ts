@@ -1,5 +1,6 @@
 import Log from '../../shared/libraries/Log';
 import {
+  type DelayedPromptTypeValue,
   type SlidedownPromptOptions,
   DelayedPromptType,
 } from '../../shared/models/Prompts';
@@ -101,7 +102,7 @@ export default class ChannelCaptureContainer {
   }
 
   private getInputWithValidationElement(
-    type: DelayedPromptType,
+    type: DelayedPromptTypeValue,
     label: string,
   ): Element {
     const varPayload =
@@ -154,7 +155,7 @@ export default class ChannelCaptureContainer {
   }
 
   private getTypeSpecificVariablesForValidationElemGeneration(
-    type: DelayedPromptType,
+    type: DelayedPromptTypeValue,
   ): TypeSpecificVariablePayload {
     if (type === DelayedPromptType.Email) {
       return {
@@ -207,8 +208,9 @@ export default class ChannelCaptureContainer {
     smsInput.addEventListener('keyup', (event) => {
       this.smsInputFieldIsValid =
         this.itiOneSignal.isValidNumber() ||
-        (<HTMLInputElement>smsInput)?.value === '';
+        (smsInput as HTMLInputElement)?.value === '';
 
+      // @ts-expect-error - TODO: improve type
       if (event.key === 'Enter') {
         // Trigger the button element with a click
         document.getElementById(SLIDEDOWN_CSS_IDS.allowButton)?.click();
@@ -221,7 +223,7 @@ export default class ChannelCaptureContainer {
     smsInput.addEventListener('blur', () => {
       this.smsInputFieldIsValid =
         this.itiOneSignal.isValidNumber() ||
-        (<HTMLInputElement>smsInput)?.value === '';
+        (smsInput as HTMLInputElement)?.value === '';
 
       this.updateValidationOnSmsInputChange();
     });
@@ -233,10 +235,11 @@ export default class ChannelCaptureContainer {
     );
 
     emailInput.addEventListener('keyup', (event) => {
-      const emailValue = (<HTMLInputElement>emailInput)?.value;
+      const emailValue = (emailInput as HTMLInputElement)?.value;
       this.emailInputFieldIsValid =
         ChannelCaptureContainer.validateEmailInputWithReturnVal(emailValue);
 
+      // @ts-expect-error - TODO: improve type
       if (event.key === 'Enter') {
         // Trigger the button element with a click
         document.getElementById(SLIDEDOWN_CSS_IDS.allowButton)?.click();
@@ -361,12 +364,14 @@ export default class ChannelCaptureContainer {
     const inputNode = getDomElementOrStub(
       `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`,
     );
-    return (<HTMLInputElement>inputNode)?.value || '';
+    return (inputNode as HTMLInputElement)?.value || '';
   }
 
   getValueFromSmsInput(): string {
     return (
-      this.itiOneSignal.getNumber(intlTelInputUtils.numberFormat.E164) || ''
+      this.itiOneSignal.getNumber(
+        window.intlTelInput.utils.numberFormat.E164,
+      ) || ''
     );
   }
 
@@ -432,7 +437,7 @@ export default class ChannelCaptureContainer {
     }
   }
 
-  static resetInputErrorStates(type: DelayedPromptType): void {
+  static resetInputErrorStates(type: DelayedPromptTypeValue): void {
     switch (type) {
       case DelayedPromptType.Sms:
         ChannelCaptureContainer.showSmsInputError(false);
@@ -454,13 +459,13 @@ export default class ChannelCaptureContainer {
     return re.test(emailString || '') || emailString === '';
   }
 
-  static isUsingSmsInputField(type: DelayedPromptType): boolean {
+  static isUsingSmsInputField(type: DelayedPromptTypeValue): boolean {
     return (
       type === DelayedPromptType.Sms || type === DelayedPromptType.SmsAndEmail
     );
   }
 
-  static isUsingEmailInputField(type: DelayedPromptType): boolean {
+  static isUsingEmailInputField(type: DelayedPromptTypeValue): boolean {
     return (
       type === DelayedPromptType.Email || type === DelayedPromptType.SmsAndEmail
     );

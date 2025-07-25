@@ -12,6 +12,7 @@
     "dev": "LOGGING=false vite",
     "dev:logging": "LOGGING=true vite",
     "ngrok": "./build/scripts/ngrok.sh",
+    "prebuild": "tsc --noEmit",
     "build:sdk": "LIB=sdk vite build",
     "build:page": "LIB=page vite build",
     "build:sw": "LIB=worker vite build",

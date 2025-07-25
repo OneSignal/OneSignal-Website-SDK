@@ -49,6 +49,8 @@ import { executeCallback, logMethodCall } from '../utils/utils';
 import { IDManager } from './IDManager';
 export const DEFAULT_DEVICE_ID = '99999999-9999-9999-9999-999999999999';
 
+declare let self: ServiceWorkerGlobalScope;
+
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
   appId: string;
@@ -135,7 +137,7 @@ export class SubscriptionManager {
    * @returns
    */
   async isOptedOut(
-    callback?: Promise<boolean | undefined | null>,
+    callback?: (optedOut: boolean | undefined | null) => void,
   ): Promise<boolean | undefined | null> {
     logMethodCall('isOptedOut', callback);
     const { optedOut } = await Database.getSubscription();
@@ -530,7 +532,7 @@ export class SubscriptionManager {
       Because of this, we're not able to check for this property on Firefox.
      */
 
-    const swRegistration = (<ServiceWorkerGlobalScope>(<any>self)).registration;
+    const swRegistration = self.registration;
 
     if (!swRegistration.active && bowserCastle().name !== 'firefox') {
       throw new InvalidStateError(InvalidStateReason.ServiceWorkerNotActivated);
@@ -587,7 +589,7 @@ export class SubscriptionManager {
     }
 
     if (key) {
-      return <ArrayBuffer>base64ToUint8Array(key).buffer;
+      return base64ToUint8Array(key).buffer as ArrayBuffer;
     } else {
       return undefined;
     }
@@ -799,9 +801,8 @@ export class SubscriptionManager {
    */
   public async getSubscriptionState(): Promise<PushSubscriptionState> {
     if (IS_SERVICE_WORKER) {
-      const pushSubscription = await (<ServiceWorkerGlobalScope>(
-        (<any>self)
-      )).registration.pushManager.getSubscription();
+      const pushSubscription =
+        await self.registration.pushManager.getSubscription();
       const { optedOut } = await Database.getSubscription();
       return {
         subscribed: !!pushSubscription,

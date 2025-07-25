@@ -1,3 +1,4 @@
+import type { NotificationIcons } from 'src/page/models/NotificationIcons';
 import { Utils } from '../context/Utils';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';
@@ -37,7 +38,10 @@ export async function triggerNotificationPermissionChanged(
   );
 }
 
-export function executeCallback<T>(callback?: Action<T>, ...args: any[]) {
+export function executeCallback<T>(
+  callback?: (...args: any[]) => T,
+  ...args: any[]
+) {
   if (callback) {
     // eslint-disable-next-line prefer-spread
     return callback.apply(null, args);
@@ -202,7 +206,7 @@ export function isValidUuid(uuid: string) {
 export function unsubscribeFromPush() {
   Log.warn('OneSignal: Unsubscribing from push.');
   if (!IS_SERVICE_WORKER) {
-    return (<any>self).registration.pushManager
+    return (self as any).registration.pushManager
       .getSubscription()
       .then((subscription: PushSubscription) => {
         if (subscription) {
@@ -210,27 +214,30 @@ export function unsubscribeFromPush() {
         } else throw new Error('Cannot unsubscribe because not subscribed.');
       });
   }
-  return OneSignal.context.serviceWorkerManager
-    .getRegistration()
-    .then((serviceWorker) => {
-      if (!serviceWorker) {
-        return Promise.resolve();
-      }
-      return serviceWorker;
-    })
-    .then((registration) => registration?.pushManager)
-    .then((pushManager) => pushManager?.getSubscription())
-    .then((subscription) => {
-      if (subscription) {
-        return subscription.unsubscribe().then(() => void 0);
-      } else {
-        return Promise.resolve();
-      }
-    });
+  return (
+    OneSignal.context.serviceWorkerManager
+      .getRegistration()
+      // @ts-expect-error - TODO: improve type
+      .then((serviceWorker) => {
+        if (!serviceWorker) {
+          return Promise.resolve();
+        }
+        return serviceWorker;
+      })
+      .then((registration) => registration?.pushManager)
+      .then((pushManager) => pushManager?.getSubscription())
+      .then((subscription) => {
+        if (subscription) {
+          return subscription.unsubscribe().then(() => void 0);
+        } else {
+          return Promise.resolve();
+        }
+      })
+  );
 }
 
 export function once(
-  targetSelectorOrElement: string | string[] | Element | Document,
+  targetSelectorOrElement: string | string[] | Element | Document | null,
   event: string,
   task?: (e: Event, callback: () => void) => void,
   manualDestroy = false,
@@ -261,7 +268,7 @@ export function once(
         if (!manualDestroy) {
           destroyEventListener();
         }
-        task(e, destroyEventListener);
+        task?.(e, destroyEventListener);
       };
       return internalTaskFunction;
     })();

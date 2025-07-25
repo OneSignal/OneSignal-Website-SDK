@@ -13,7 +13,7 @@ import {
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
 import Database from 'src/shared/services/Database';
-import { MockInstance } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';

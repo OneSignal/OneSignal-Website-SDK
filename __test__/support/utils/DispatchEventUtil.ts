@@ -1,4 +1,4 @@
-import { EventHandler } from '../../../src/shared/libraries/Emitter';
+import type { EventHandler } from '../../../src/shared/libraries/Emitter';
 
 export class DispatchEventUtil {
   private listeners: Map<string, Array<EventHandler | EventListenerObject>> =
@@ -25,9 +25,9 @@ export class DispatchEventUtil {
     if (!handlers) return false;
 
     for (const handler of handlers) {
-      const eventListenerObj = (<EventListenerObject>handler).handleEvent;
+      const eventListenerObj = (handler as EventListenerObject).handleEvent;
       if (eventListenerObj) eventListenerObj(evt);
-      else (<EventHandler>handler)(evt);
+      else (handler as EventHandler)(evt);
     }
     return true;
   }

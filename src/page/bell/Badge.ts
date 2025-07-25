@@ -6,9 +6,9 @@ export default class Badge extends ActiveAnimatedElement {
     super(
       '.onesignal-bell-launcher-badge',
       'onesignal-bell-launcher-badge-opened',
-      null,
+      undefined,
       'onesignal-bell-launcher-badge-active',
-      null,
+      undefined,
       'hidden',
     );
   }
@@ -24,7 +24,7 @@ export default class Badge extends ActiveAnimatedElement {
 
   show(): Promise<AnimatedElement> {
     const promise = super.show();
-    OneSignal.notifyButton.setCustomColorsIfSpecified();
+    OneSignal.notifyButton?.setCustomColorsIfSpecified();
     return promise;
   }
 

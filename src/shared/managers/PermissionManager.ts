@@ -4,7 +4,6 @@ import {
 } from '../errors/InvalidArgumentError';
 import OneSignalError from '../errors/OneSignalError';
 import { useSafariLegacyPush } from '../helpers/environment';
-import { NotificationPermission } from '../models/NotificationPermission';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions

@@ -24,7 +24,7 @@ export class InvalidStateError extends OneSignalError {
   constructor(
     reason: InvalidStateReasonValue,
     extra?: {
-      permissionPromptType: PermissionPromptType;
+      permissionPromptType: keyof typeof PermissionPromptType;
     },
   ) {
     let errorMessage;

@@ -313,7 +313,9 @@ export class ServiceWorker {
               );
             }
 
+            // @ts-expect-error - TODO: improve type
             return notificationEventPromiseFns.reduce((p, fn) => {
+              // @ts-expect-error - TODO: improve type
               return (p = p.then(fn));
             }, Promise.resolve());
           },
@@ -614,6 +616,7 @@ export class ServiceWorker {
        On Chrome 56, a large image can be displayed:
        https://bugs.chromium.org/p/chromium/issues/detail?id=614456
        */
+      // @ts-expect-error - image is not standard?
       image: notification.image,
       /*
        On Chrome 44+, use this property to store extra information which

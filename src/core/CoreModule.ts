@@ -31,6 +31,8 @@ export default class CoreModule {
 
   private rebuildUserService: RebuildUserService;
   private executors?: IOperationExecutor[];
+
+  // @ts-expect-error - not exposed but keeps track of listeners
   private listeners?: (
     | SingletonModelStoreListener<Model>
     | ModelStoreListener<Model>

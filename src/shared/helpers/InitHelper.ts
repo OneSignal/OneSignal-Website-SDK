@@ -221,30 +221,30 @@ export default class InitHelper {
 
   private static async showNotifyButton() {
     if (isBrowser && !OneSignal.notifyButton) {
-      OneSignal.config.userConfig.notifyButton =
-        OneSignal.config.userConfig.notifyButton || {};
-      if (OneSignal.config.userConfig.bell) {
+      OneSignal.config!.userConfig.notifyButton =
+        OneSignal.config!.userConfig.notifyButton || {};
+      if (OneSignal.config!.userConfig.bell) {
         // If both bell and notifyButton, notifyButton's options take precedence
-        OneSignal.config.userConfig.bell = {
-          ...OneSignal.config.userConfig.bell,
-          ...OneSignal.config.userConfig.notifyButton,
+        OneSignal.config!.userConfig.bell = {
+          ...OneSignal.config!.userConfig.bell,
+          ...OneSignal.config!.userConfig.notifyButton,
         };
-        OneSignal.config.userConfig.notifyButton = {
-          ...OneSignal.config.userConfig.notifyButton,
-          ...OneSignal.config.userConfig.bell,
+        OneSignal.config!.userConfig.notifyButton = {
+          ...OneSignal.config!.userConfig.notifyButton,
+          ...OneSignal.config!.userConfig.bell,
         };
       }
 
-      const displayPredicate: () => boolean =
-        OneSignal.config.userConfig.notifyButton.displayPredicate;
+      const displayPredicate =
+        OneSignal.config!.userConfig.notifyButton!.displayPredicate;
       if (displayPredicate && typeof displayPredicate === 'function') {
         OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
           const predicateValue = await Promise.resolve(
-            OneSignal.config.userConfig.notifyButton.displayPredicate(),
+            OneSignal.config!.userConfig.notifyButton!.displayPredicate?.(),
           );
           if (predicateValue !== false) {
             OneSignal.notifyButton = new Bell(
-              OneSignal.config.userConfig.notifyButton,
+              OneSignal.config!.userConfig.notifyButton!,
             );
             OneSignal.notifyButton.create();
           } else {
@@ -255,7 +255,7 @@ export default class InitHelper {
         });
       } else {
         OneSignal.notifyButton = new Bell(
-          OneSignal.config.userConfig.notifyButton,
+          OneSignal.config!.userConfig.notifyButton!,
         );
         OneSignal.notifyButton.create();
       }

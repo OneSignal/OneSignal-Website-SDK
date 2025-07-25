@@ -10,10 +10,11 @@ import type { ContextSWInterface } from '../models/ContextSW';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import Log from './Log';
 
+declare let self: ServiceWorkerGlobalScope;
+
 /**
  * NOTE: This file contains a mix of code that runs in ServiceWorker and Page contexts
  */
-
 export const WorkerMessengerCommand = {
   WorkerVersion: 'GetWorkerVersion',
   Subscribe: 'Subscribe',
@@ -134,9 +135,10 @@ export class WorkerMessenger {
   ) {
     if (!IS_SERVICE_WORKER) return;
 
-    const clients = await (<ServiceWorkerGlobalScope>(
-      (<any>self)
-    )).clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const clients = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    });
     for (const client of clients) {
       Log.debug(
         `[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${
@@ -250,7 +252,7 @@ export class WorkerMessenger {
     );
   }
 
-  onWorkerMessageReceivedFromPage(event: MessageEvent) {
+  onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */

@@ -29,7 +29,9 @@ describe('CoreModuleDirector tests', () => {
       const pushModelCurrent = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
+        // @ts-expect-error - private method
         'getPushSubscriptionModelByCurrentToken',
+        // @ts-expect-error - private method
       ).mockResolvedValue(pushModelCurrent);
       expect(await getPushSubscriptionModel()).toBe(pushModelCurrent);
     });
@@ -38,7 +40,9 @@ describe('CoreModuleDirector tests', () => {
       const pushModelLastKnown = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
+        // @ts-expect-error - private method
         'getPushSubscriptionModelByLastKnownToken',
+        // @ts-expect-error - private method
       ).mockResolvedValue(pushModelLastKnown);
       expect(await getPushSubscriptionModel()).toBe(pushModelLastKnown);
     });
@@ -47,13 +51,17 @@ describe('CoreModuleDirector tests', () => {
       const pushModelCurrent = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
+        // @ts-expect-error - private method
         'getPushSubscriptionModelByCurrentToken',
+        // @ts-expect-error - private method
       ).mockResolvedValue(pushModelCurrent);
 
       const pushModelLastKnown = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
+        // @ts-expect-error - private method
         'getPushSubscriptionModelByLastKnownToken',
+        // @ts-expect-error - private method
       ).mockResolvedValue(pushModelLastKnown);
 
       expect(await getPushSubscriptionModel()).toBe(pushModelCurrent);

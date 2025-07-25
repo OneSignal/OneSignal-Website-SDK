@@ -1,5 +1,5 @@
-import BrowserUtils from '../../shared/utils/BrowserUtils';
 import Log from '../../shared/libraries/Log';
+import BrowserUtils from '../../shared/utils/BrowserUtils';
 import { delay, nothing } from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
@@ -36,7 +36,7 @@ export default class Message extends AnimatedElement {
     };
   }
 
-  display(type, content, duration = 0) {
+  display(type: string, content: string, duration = 0) {
     Log.debug(`Calling display(${type}, ${content}, ${duration}).`);
     return (this.shown ? this.hide() : nothing())
       .then(() => {

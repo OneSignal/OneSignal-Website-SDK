@@ -33,8 +33,6 @@ import { UserState } from '../models/UserState';
 const DatabaseEventName = {
   SET: 0,
 } as const;
-type DatabaseEventNameValue =
-  (typeof DatabaseEventName)[keyof typeof DatabaseEventName];
 
 interface DatabaseResult {
   id: any;

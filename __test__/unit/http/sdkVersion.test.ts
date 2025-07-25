@@ -17,12 +17,15 @@ describe('Sdk Version Header Tests', () => {
   });
 
   test('POST /users: SDK-Version header is sent', () => {
+    // @ts-expect-error - partial identity object
     RequestService.createUser({ appId: APP_ID }, {});
     expectHeaderToBeSent();
   });
+
   test('POST /users: header is sent', () => {
     RequestService.createUser(
       { appId: APP_ID },
+      // @ts-expect-error - partial identity object
       { refresh_device_metadata: true },
     );
     expectHeaderToBeSent();
@@ -30,6 +33,7 @@ describe('Sdk Version Header Tests', () => {
   test('POST /users: header is sent with subscription id', () => {
     RequestService.createUser(
       { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
+      // @ts-expect-error - partial identity object
       {},
     );
     expectHeaderToBeSent();
@@ -69,6 +73,7 @@ describe('Sdk Version Header Tests', () => {
       { appId: APP_ID },
       new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
       {
+        // @ts-expect-error - partial identity object
         subscription: generateNewSubscription().data,
       },
     );
@@ -90,6 +95,7 @@ describe('Sdk Version Header Tests', () => {
     expectHeaderToBeSent();
   });
   test('PATCH /subscriptions/<subscription_id>: header is sent', () => {
+    // @ts-expect-error - partial identity object
     RequestService.updateSubscription({ appId: APP_ID }, DUMMY_EXTERNAL_ID, {});
     expectHeaderToBeSent();
   });

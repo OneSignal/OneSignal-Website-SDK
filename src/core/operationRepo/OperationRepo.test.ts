@@ -6,18 +6,18 @@ import {
 import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import { fakeWaitForOperations } from '__test__/support/helpers/executors';
 import Log from 'src/shared/libraries/Log';
-import Database, { OperationItem } from 'src/shared/services/Database';
-import { describe, expect, Mock, vi } from 'vitest';
+import Database, { type OperationItem } from 'src/shared/services/Database';
+import { describe, expect, type Mock, vi } from 'vitest';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import {
   GroupComparisonType,
-  GroupComparisonValue,
+  type GroupComparisonValue,
   Operation as OperationBase,
 } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { ModelName } from '../types/models';
-import { ExecutionResult, IOperationExecutor } from '../types/operation';
+import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { SubscriptionType } from '../types/subscription';
 import {
   OP_REPO_EXECUTION_INTERVAL,

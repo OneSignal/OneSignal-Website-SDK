@@ -1,5 +1,4 @@
-import { APP_ID, DUMMY_EXTERNAL_ID } from '__test__/support/constants';
-import TestContext from '__test__/support/environment/TestContext';
+import { DUMMY_EXTERNAL_ID } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
@@ -10,20 +9,9 @@ import {
   getSubscriptionFn,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
-import ContextSW from '../models/ContextSW';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
-import {
-  SubscriptionManager,
-  updatePushSubscriptionModelWithRawSubscription,
-  type SubscriptionManagerConfig,
-} from './SubscriptionManager';
-
-const subConfig: SubscriptionManagerConfig = {
-  appId: APP_ID,
-  vapidPublicKey: '',
-  onesignalVapidPublicKey: '',
-};
+import { updatePushSubscriptionModelWithRawSubscription } from './SubscriptionManager';
 
 const getRawSubscription = (): RawPushSubscription => {
   const rawSubscription = new RawPushSubscription();
@@ -110,9 +98,6 @@ describe('SubscriptionManager', () => {
       setCreateUserResponse({
         externalId: 'some-external-id',
       });
-
-      const context = new ContextSW(TestContext.getFakeMergedConfig());
-      const subscriptionManager = new SubscriptionManager(context, subConfig);
 
       // create push sub with no id
       const identityModel = OneSignal.coreDirector.getIdentityModel();

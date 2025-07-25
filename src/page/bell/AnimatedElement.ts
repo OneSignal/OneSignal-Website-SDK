@@ -1,13 +1,20 @@
+import Log from '../../shared/libraries/Log';
+import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import {
   addCssClass,
-  removeCssClass,
   contains,
   once,
+  removeCssClass,
 } from '../../shared/utils/utils';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import Log from '../../shared/libraries/Log';
 
 export default class AnimatedElement {
+  public selector: string;
+  public showClass: string | undefined;
+  public hideClass: string | undefined;
+  public state: string;
+  public targetTransitionEvents: string[];
+  public nestedContentSelector: string | undefined;
+  public transitionCheckTimeout: number;
   /**
    * Abstracts common DOM operations like hiding and showing transitionable elements into chainable promises.
    * @param selector {string} The CSS selector of the element.
@@ -18,14 +25,22 @@ export default class AnimatedElement {
    * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
    */
   constructor(
-    public selector: string,
-    public showClass: string | undefined,
-    public hideClass: string | undefined,
-    public state = 'shown',
-    public targetTransitionEvents = ['opacity', 'transform'],
-    public nestedContentSelector?: string,
-    public transitionCheckTimeout = 500,
-  ) {}
+    selector: string,
+    showClass: string | undefined,
+    hideClass: string | undefined,
+    state = 'shown',
+    targetTransitionEvents = ['opacity', 'transform'],
+    nestedContentSelector?: string,
+    transitionCheckTimeout = 500,
+  ) {
+    this.selector = selector;
+    this.showClass = showClass;
+    this.hideClass = hideClass;
+    this.state = state;
+    this.targetTransitionEvents = targetTransitionEvents;
+    this.nestedContentSelector = nestedContentSelector;
+    this.transitionCheckTimeout = transitionCheckTimeout;
+  }
 
   /**
    * Asynchronously shows an element by applying its {showClass} CSS class.

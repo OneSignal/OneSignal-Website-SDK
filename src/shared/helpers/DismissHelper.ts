@@ -1,6 +1,7 @@
 import {
   DismissCountKey,
   DismissPrompt,
+  type DismissPromptValue,
   DismissTimeKey,
 } from '../../page/models/Dismiss';
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
@@ -22,7 +23,7 @@ export class DismissHelper {
   /**
    * Creates an expiring local storage entry to note that the user does not want to be disturbed.
    */
-  static async markPromptDismissedWithType(type: DismissPrompt) {
+  static async markPromptDismissedWithType(type: DismissPromptValue) {
     const countKey = DISMISS_TYPE_COUNT_MAP[type];
     const timeKey = DISMISS_TYPE_TIME_MAP[type];
 
@@ -51,7 +52,7 @@ export class DismissHelper {
   /**
    * Returns true if a LocalStorage entry exists for noting the user dismissed the prompt.
    */
-  static wasPromptOfTypeDismissed(type: DismissPrompt): boolean {
+  static wasPromptOfTypeDismissed(type: DismissPromptValue): boolean {
     switch (type) {
       case DismissPrompt.Push:
         return (
