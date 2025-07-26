@@ -1,9 +1,9 @@
 import Bell from '../../page/bell/Bell';
 import type { ContextInterface } from '../../page/models/Context';
+import type { AppConfig } from '../config';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
-import type { AppConfig } from '../models/AppConfig';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import Database from '../services/Database';

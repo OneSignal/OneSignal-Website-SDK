@@ -6,7 +6,6 @@ import Log from '../../sw/libraries/Log';
 import type { OSServiceWorkerFields } from '../../sw/serviceWorker/types';
 import OneSignalApiSW from '../api/OneSignalApiSW';
 import Utils from '../context/Utils';
-import type { OutcomesConfig } from '../models/Outcomes';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import {
@@ -16,6 +15,7 @@ import {
   type SessionOriginValue,
   SessionStatus,
 } from '../models/Session';
+import type { OutcomesConfig } from '../outcomes/types';
 import Database from '../services/Database';
 import { OneSignalUtils } from '../utils/OneSignalUtils';
 import OutcomesHelper from './OutcomesHelper';

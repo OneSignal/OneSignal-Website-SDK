@@ -1,3 +1,4 @@
+import type { TagCategory } from 'src/page/tags';
 import {
   ConfigIntegrationKind,
   type AppUserConfig,
@@ -16,7 +17,6 @@ import {
   type AppUserConfigCustomLinkOptions,
   type AppUserConfigPromptOptions,
   type ServerAppPromptConfig,
-  type TagCategory,
 } from '../prompts';
 import {
   getPromptOptionsForDashboardConfiguration,
