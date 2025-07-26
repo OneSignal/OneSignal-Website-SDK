@@ -6,7 +6,6 @@ import {
 } from '../config/constants';
 import Utils from '../context/Utils';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import {
   type AppConfig,
   type AppUserConfig,
@@ -21,7 +20,7 @@ import {
   type AppUserConfigPromptOptions,
   DelayedPromptType,
 } from '../models/Prompts';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import TagUtils from '../utils/TagUtils';
 import { ConverterHelper } from './ConverterHelper';
@@ -96,13 +95,9 @@ export class ConfigHelper {
   }
 
   public static checkRestrictedOrigin(appConfig: AppConfig) {
-    if (!appConfig.restrictedOriginEnabled) {
-      return;
-    }
+    if (!appConfig.restrictedOriginEnabled) return;
 
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.Host) {
-      return;
-    }
+    if (IS_SERVICE_WORKER) return;
 
     if (!this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
       throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {

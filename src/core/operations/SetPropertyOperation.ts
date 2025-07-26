@@ -3,7 +3,7 @@ import { OPERATION_NAME } from '../constants';
 import { Operation } from './Operation';
 
 type Property = 'tags' | string;
-type PropertyValue = {
+export type PropertyValue = {
   tags: Record<string, string>;
   [key: string]: string | Record<string, string>;
 };

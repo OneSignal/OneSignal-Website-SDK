@@ -34,5 +34,18 @@ declare global {
     safari?: {
       pushNotification?: SafariRemoteNotification;
     };
+    intlTelInput: ((
+      element: Element,
+      options: {
+        autoPlaceholder: string;
+        separateDialCode: boolean;
+      },
+    ) => void) & {
+      utils: {
+        numberFormat: {
+          E164: string;
+        };
+      };
+    };
   }
 }

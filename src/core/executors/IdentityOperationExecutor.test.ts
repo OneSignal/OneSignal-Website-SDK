@@ -7,7 +7,7 @@ import {
   setDeleteAliasResponse,
 } from '__test__/support/helpers/requests';
 import { ExecutionResult } from 'src/core/types/operation';
-import { MockInstance } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';

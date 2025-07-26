@@ -2,9 +2,8 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
-import { NotificationPermission } from '../models/NotificationPermission';
 import OneSignalError from '../errors/OneSignalError';
-import Environment from '../helpers/Environment';
+import { useSafariLegacyPush } from '../helpers/environment';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -40,7 +39,7 @@ export default class PermissionManager {
   public async getNotificationPermission(
     safariWebId?: string,
   ): Promise<NotificationPermission> {
-    if (Environment.useSafariLegacyPush()) {
+    if (useSafariLegacyPush) {
       return PermissionManager.getLegacySafariNotificationPermission(
         safariWebId,
       );
@@ -57,7 +56,7 @@ export default class PermissionManager {
     safariWebId?: string,
   ): NotificationPermission {
     if (safariWebId)
-      return window.safari.pushNotification.permission(safariWebId)
+      return window.safari?.pushNotification?.permission(safariWebId)
         .permission as NotificationPermission;
     throw new InvalidArgumentError('safariWebId', InvalidArgumentReason.Empty);
   }

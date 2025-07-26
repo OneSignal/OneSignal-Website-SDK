@@ -1,6 +1,6 @@
 import bowser from 'bowser';
 import Utils from '../../shared/context/Utils';
-import { Browser } from '../../shared/models/Browser';
+import { Browser, type BrowserValue } from '../../shared/models/Browser';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import type { EnvironmentInfo } from '../models/EnvironmentInfo';
 
@@ -20,7 +20,7 @@ export class EnvironmentInfoHelper {
     };
   }
 
-  private static getBrowser(): Browser {
+  private static getBrowser(): BrowserValue {
     if (bowserCastle().name === 'chrome') {
       return Browser.Chrome;
     }

@@ -1,6 +1,6 @@
 import UserNamespace from '../../onesignal/UserNamespace';
-import type SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
-import type UserChangeEvent from '../../page/models/UserChangeEvent';
+import type { SubscriptionChangeEvent } from '../../page/models/SubscriptionChangeEvent';
+import type { UserChangeEvent } from '../../page/models/UserChangeEvent';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import type { ContextSWInterface } from '../models/ContextSW';

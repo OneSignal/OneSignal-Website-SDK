@@ -1,8 +1,8 @@
 import Utils from '../context/Utils';
-import Environment from '../helpers/Environment';
+import { windowEnvString } from '../helpers/environment';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
-import SdkEnvironment from '../managers/SdkEnvironment';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 
 const SILENT_EVENTS = [
   'notifyButtonHovering',
@@ -29,17 +29,16 @@ export default class OneSignalEvent {
   static async trigger(eventName: string, data?: any, emitter?: Emitter) {
     if (!Utils.contains(SILENT_EVENTS, eventName)) {
       const displayData = data;
-      const env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
 
       if (displayData || displayData === false) {
-        Log.debug(`(${env}) » ${eventName}:`, displayData);
+        Log.debug(`(${windowEnvString}) » ${eventName}:`, displayData);
       } else {
-        Log.debug(`(${env}) » ${eventName}`);
+        Log.debug(`(${windowEnvString}) » ${eventName}`);
       }
     }
 
     // Fire internal event to those listening via OneSignal.emitter.on()
-    if (Environment.isBrowser()) {
+    if (!IS_SERVICE_WORKER) {
       if (eventName === OneSignal.EVENTS.SDK_INITIALIZED) {
         if (OneSignal.initialized) return;
         else OneSignal.initialized = true;

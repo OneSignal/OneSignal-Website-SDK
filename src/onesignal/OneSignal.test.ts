@@ -34,15 +34,15 @@ import {
 import { server } from '__test__/support/mocks/server';
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
-import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
-import { ICreateUserSubscription } from 'src/core/types/api';
+import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
+import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import Database, {
-  IdentityItem,
-  PropertiesItem,
-  SubscriptionItem,
+  type IdentityItem,
+  type PropertiesItem,
+  type SubscriptionItem,
 } from 'src/shared/services/Database';
 import LocalStorage from 'src/shared/utils/LocalStorage';
 

@@ -1,12 +1,13 @@
 import {
   DismissCountKey,
   DismissPrompt,
+  type DismissPromptValue,
   DismissTimeKey,
 } from '../../page/models/Dismiss';
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
 import Log from '../libraries/Log';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
+import { windowEnvString } from './environment';
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
@@ -22,7 +23,7 @@ export class DismissHelper {
   /**
    * Creates an expiring local storage entry to note that the user does not want to be disturbed.
    */
-  static async markPromptDismissedWithType(type: DismissPrompt) {
+  static async markPromptDismissedWithType(type: DismissPromptValue) {
     const countKey = DISMISS_TYPE_COUNT_MAP[type];
     const timeKey = DISMISS_TYPE_TIME_MAP[type];
 
@@ -39,7 +40,7 @@ export class DismissHelper {
       dismissDays = 30;
     }
     Log.debug(
-      `(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the ${type} ` +
+      `(${windowEnvString} environment) OneSignal: User dismissed the ${type} ` +
         `notification prompt; reprompt after ${dismissDays} days.`,
     );
     await Database.put('Options', { key: countKey, value: dismissCount });
@@ -51,7 +52,7 @@ export class DismissHelper {
   /**
    * Returns true if a LocalStorage entry exists for noting the user dismissed the prompt.
    */
-  static wasPromptOfTypeDismissed(type: DismissPrompt): boolean {
+  static wasPromptOfTypeDismissed(type: DismissPromptValue): boolean {
     switch (type) {
       case DismissPrompt.Push:
         return (

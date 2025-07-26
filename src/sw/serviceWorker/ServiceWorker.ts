@@ -1,7 +1,3 @@
-import Environment from '../../shared/helpers/Environment';
-import ContextSW from '../../shared/models/ContextSW';
-import Database from '../../shared/services/Database';
-
 import OneSignalApiBase from '../../../src/shared/api/OneSignalApiBase';
 import OneSignalApiSW from '../../../src/shared/api/OneSignalApiSW';
 import {
@@ -14,7 +10,7 @@ import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscri
 import { Utils } from '../../shared/context/Utils';
 import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
-import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
+import ContextSW from '../../shared/models/ContextSW';
 import {
   type NotificationClickEventInternal,
   type NotificationForegroundWillDisplayEventSerializable,
@@ -30,6 +26,7 @@ import {
   type UpsertOrDeactivateSessionPayload,
 } from '../../shared/models/Session';
 import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
+import Database from '../../shared/services/Database';
 import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import Log from '../libraries/Log';
@@ -47,6 +44,8 @@ import {
   type NotificationTypeValue,
 } from 'src/core/types/subscription';
 import type { AppConfig } from 'src/shared/models/AppConfig';
+import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
@@ -62,32 +61,6 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
  * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
  */
 export class ServiceWorker {
-  /**
-   * An incrementing integer defined in package.json. Value doesn't matter as long as it's different from the
-   * previous version.
-   */
-  static get VERSION() {
-    return Environment.version();
-  }
-
-  /**
-   * Describes what context the JavaScript code is running in and whether we're running in local development mode.
-   */
-  static get environment() {
-    return Environment;
-  }
-
-  static get log() {
-    return Log;
-  }
-
-  /**
-   * An interface to the browser's IndexedDB.
-   */
-  static get database() {
-    return Database;
-  }
-
   static get webhookNotificationEventSender() {
     return new OSWebhookNotificationEventSender();
   }
@@ -201,7 +174,7 @@ export class ServiceWorker {
         Log.debug('[Service Worker] Received worker version message.');
         ServiceWorker.workerMessenger.broadcast(
           WorkerMessengerCommand.WorkerVersion,
-          Environment.version(),
+          VERSION,
         );
       },
     );
@@ -340,7 +313,9 @@ export class ServiceWorker {
               );
             }
 
+            // @ts-expect-error - TODO: improve type
             return notificationEventPromiseFns.reduce((p, fn) => {
+              // @ts-expect-error - TODO: improve type
               return (p = p.then(fn));
             }, Promise.resolve());
           },
@@ -641,6 +616,7 @@ export class ServiceWorker {
        On Chrome 56, a large image can be displayed:
        https://bugs.chromium.org/p/chromium/issues/detail?id=614456
        */
+      // @ts-expect-error - image is not standard?
       image: notification.image,
       /*
        On Chrome 44+, use this property to store extra information which
@@ -806,7 +782,7 @@ export class ServiceWorker {
     );
     if (matchPreference) notificationClickHandlerMatch = matchPreference;
 
-    const actionPreference = await this.database.get<string>(
+    const actionPreference = await Database.get<string>(
       'Options',
       'notificationClickHandlerAction',
     );
@@ -977,7 +953,7 @@ export class ServiceWorker {
     appId: string | undefined | null,
     pushSubscriptionId: string | undefined,
     notificationClickEvent: NotificationClickEventInternal,
-    deviceType: DeliveryPlatformKind,
+    deviceType: DeliveryPlatformKindValue,
   ): Promise<void> {
     const notificationData = notificationClickEvent.notification;
 
@@ -1032,9 +1008,7 @@ export class ServiceWorker {
    * @param event
    */
   static onServiceWorkerActivated(event: ExtendableEvent) {
-    Log.info(
-      `OneSignal Service Worker activated (version ${Environment.version()})`,
-    );
+    Log.info(`OneSignal Service Worker activated (version ${VERSION})`);
     event.waitUntil(self.clients.claim());
   }
 

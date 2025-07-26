@@ -1,5 +1,5 @@
 import bowser from 'bowser';
-import { DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
+import { type DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
@@ -23,7 +23,7 @@ import MockNotification from '../mocks/MockNotification';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import Random from '../utils/Random';
 import TestContext from './TestContext';
-import { TestEnvironmentConfig } from './TestEnvironment';
+import { type TestEnvironmentConfig } from './TestEnvironment';
 
 declare const global: any;
 
@@ -36,6 +36,7 @@ export function resetDatabase() {
 }
 
 export function mockUserAgent(config: TestEnvironmentConfig = {}): void {
+  // @ts-expect-error - bowser is not typed correctly
   const info = bowser._detect(config.userAgent ?? BrowserUserAgent.Default);
   // Modify the mock implementation
   bowserCastleSpy.mockReturnValue({
@@ -100,7 +101,9 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   }
 
   const resourceLoader = new ResourceLoader({
-    userAgent: config.userAgent ? config.userAgent : BrowserUserAgent.Default,
+    userAgent: config.userAgent
+      ? config.userAgent.toString()
+      : BrowserUserAgent.Default.toString(),
   });
 
   // global document object must be defined for `getSlidedownElement` to work correctly.

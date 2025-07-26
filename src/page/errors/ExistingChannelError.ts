@@ -1,8 +1,8 @@
-import { DelayedPromptType } from '../../shared/models/Prompts';
 import OneSignalError from '../../shared/errors/OneSignalError';
+import { type DelayedPromptTypeValue } from '../../shared/models/Prompts';
 
 export default class ExistingChannelError extends OneSignalError {
-  constructor(type: DelayedPromptType) {
+  constructor(type: DelayedPromptTypeValue) {
     super(
       `This operation can only be performed when the channel '${type}' does not yet exist.`,
     );

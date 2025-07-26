@@ -2,7 +2,10 @@ import MainHelper from 'src/shared/helpers/MainHelper';
 import { PropertiesModel } from '../models/PropertiesModel';
 import { type PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type Operation } from '../operations/Operation';
-import { SetPropertyOperation } from '../operations/SetPropertyOperation';
+import {
+  SetPropertyOperation,
+  type PropertyValue,
+} from '../operations/SetPropertyOperation';
 import { type IOperationRepo } from '../types/operation';
 import { SingletonModelStoreListener } from './SingletonModelStoreListener';
 
@@ -30,7 +33,7 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
       appId,
       model.onesignalId,
       property,
-      newValue,
+      newValue as PropertyValue[string],
     );
   }
 }

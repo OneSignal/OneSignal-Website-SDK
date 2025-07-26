@@ -4,7 +4,7 @@ import {
   setUpdateUserError,
   setUpdateUserResponse,
 } from '__test__/support/helpers/requests';
-import { MockInstance } from 'vitest';
+import { type MockInstance } from 'vitest';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';

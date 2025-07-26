@@ -1,6 +1,5 @@
-import { PermissionUtils } from '../../../src/shared/utils/PermissionUtils';
 import RealPermissionManager from '../../../src/shared/managers/PermissionManager';
-import { NotificationPermission } from 'src/shared/models/NotificationPermission';
+import { PermissionUtils } from '../../../src/shared/utils/PermissionUtils';
 
 export class PermissionManager {
   public static async mockNotificationPermissionChange(

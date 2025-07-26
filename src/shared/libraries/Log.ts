@@ -9,7 +9,7 @@ export default class Log {
   static warn: ConsoleLog;
   static error: ConsoleLog;
 
-  private static proxyMethodsCreated: boolean;
+  private static proxyMethodsCreated: boolean | undefined;
 
   private static shouldLog(): boolean {
     try {
@@ -61,8 +61,10 @@ export default class Log {
       info: 'info',
       warn: 'warn',
       error: 'error',
-    };
-    for (const nativeMethod of Object.keys(methods)) {
+    } as const;
+    for (const nativeMethod of Object.keys(
+      methods,
+    ) as (keyof typeof methods)[]) {
       const nativeMethodExists = typeof console[nativeMethod] !== 'undefined';
       const methodToMapTo = methods[nativeMethod];
       const shouldMap =

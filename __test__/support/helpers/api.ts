@@ -1,3 +1,4 @@
+import type { IndexableByString } from 'src/page/slidedown';
 import { ReaderManager } from '../managers/ReaderManager';
 
 export function isAsyncFunction(fn: () => any): boolean {

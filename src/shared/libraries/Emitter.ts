@@ -44,7 +44,7 @@ export default class Emitter {
 
     function fn(this: EventHandler) {
       that.off(event, fn);
-      // eslint-disable-next-line prefer-rest-params
+      // @ts-expect-error - arguments is not typed
       listener.apply(this, arguments);
     }
 
@@ -136,6 +136,7 @@ export default class Emitter {
       listeners = listeners.slice(0);
       const len = listeners.length;
       for (let i = 0; i < len; i += 1)
+        // @ts-expect-error - TODO: improve args type
         await (listeners[i] as () => void).apply(this, args);
     }
 

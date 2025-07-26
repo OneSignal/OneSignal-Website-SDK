@@ -15,12 +15,13 @@ export default class IndexedDb {
   public emitter: Emitter;
   private database: IDBDatabase | undefined;
   private openLock: Promise<IDBDatabase> | undefined;
+  private readonly databaseName: string;
+  private readonly dbVersion: number;
 
-  constructor(
-    private readonly databaseName: string,
-    private readonly dbVersion = DATABASE_VERSION,
-  ) {
+  constructor(databaseName: string, dbVersion = DATABASE_VERSION) {
     this.emitter = new Emitter();
+    this.databaseName = databaseName;
+    this.dbVersion = dbVersion;
   }
 
   private open(databaseName: string): Promise<IDBDatabase> {

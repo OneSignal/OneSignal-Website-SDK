@@ -14,6 +14,7 @@ describe('Register for push', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize({
       addPrompts: true,
+      // @ts-expect-error - default user agent
       userAgent: BrowserUserAgent.Default,
     });
   });
