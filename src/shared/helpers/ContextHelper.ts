@@ -1,9 +1,9 @@
+import type { AppConfig } from '../config';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import {
   SubscriptionManager,
   type SubscriptionManagerConfig,
 } from '../managers/SubscriptionManager';
-import type { AppConfig } from '../models/AppConfig';
 import type { ContextSWInterface } from '../models/ContextSW';
 import Path from '../models/Path';
 

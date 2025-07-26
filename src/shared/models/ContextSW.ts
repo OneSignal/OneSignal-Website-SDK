@@ -1,4 +1,5 @@
 import { SessionManager } from '../../sw/managers/sessionManager/SessionManager';
+import type { AppConfig } from '../config';
 import ContextHelper from '../helpers/ContextHelper';
 import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { PageViewManager } from '../managers/PageViewManager';
@@ -7,7 +8,6 @@ import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { UpdateManager } from '../managers/UpdateManager';
 import type { ISessionManager } from '../managers/sessionManager/types';
-import type { AppConfig } from './AppConfig';
 
 // TODO: Ideally this file should only import classes used by ServiceWorker.ts.
 //       Example, ServiceWorkerManager should be remove as it is used by the page / browser,

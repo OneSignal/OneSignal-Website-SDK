@@ -4,10 +4,10 @@ import type { OutcomeProps } from '../models/OutcomeProps';
 import {
   type OutcomeAttribution,
   OutcomeAttributionType,
-  type OutcomesConfig,
   type SentUniqueOutcome,
 } from '../models/Outcomes';
 import type { OutcomesNotificationReceived } from '../models/OutcomesNotificationEvents';
+import type { OutcomesConfig } from '../outcomes/types';
 import Database, {
   TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
 } from '../services/Database';

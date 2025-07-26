@@ -1,14 +1,10 @@
+import type { AppUserConfigNotifyButton } from 'src/shared/config';
+import type { BellPosition, BellSize, BellText } from 'src/shared/prompts';
 import OneSignal from '../../onesignal/OneSignal';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import { NotificationPermission } from '../../shared/models/NotificationPermission';
-import type {
-  AppUserConfigNotifyButton,
-  BellPosition,
-  BellSize,
-  BellText,
-} from '../../shared/models/Prompts';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import BrowserUtils from '../../shared/utils/BrowserUtils';

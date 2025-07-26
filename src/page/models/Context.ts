@@ -1,3 +1,4 @@
+import type { AppConfig } from 'src/shared/config';
 import ContextHelper from '../../shared/helpers/ContextHelper';
 import { WorkerMessenger } from '../../shared/libraries/WorkerMessenger';
 import { PageViewManager } from '../../shared/managers/PageViewManager';
@@ -7,7 +8,6 @@ import { SubscriptionManager } from '../../shared/managers/SubscriptionManager';
 import { UpdateManager } from '../../shared/managers/UpdateManager';
 import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';
 import type { ISessionManager } from '../../shared/managers/sessionManager/types';
-import type { AppConfig } from '../../shared/models/AppConfig';
 import type { ContextSWInterface } from '../../shared/models/ContextSW';
 import { PromptsManager } from '../managers/PromptsManager';
 import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
