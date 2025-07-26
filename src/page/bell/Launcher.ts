@@ -1,9 +1,9 @@
+import type { BellSize } from 'src/shared/prompts';
 import {
   InvalidStateError,
   InvalidStateReason,
 } from '../../shared/errors/InvalidStateError';
 import Log from '../../shared/libraries/Log';
-import type { BellSize } from '../../shared/models/Prompts';
 import {
   addCssClass,
   contains,

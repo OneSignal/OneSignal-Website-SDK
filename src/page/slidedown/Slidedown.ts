@@ -3,7 +3,6 @@ import { getValueOrDefault } from 'src/shared/helpers/general';
 import {
   DelayedPromptType,
   type SlidedownPromptOptions,
-  type TagCategory,
 } from 'src/shared/prompts';
 import MainHelper from '../../shared/helpers/MainHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
@@ -28,6 +27,7 @@ import {
   type InvalidChannelInputFieldValue,
 } from '../errors/ChannelCaptureError';
 import type { NotificationIcons } from '../models/NotificationIcons';
+import type { TagCategory } from '../tags';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';

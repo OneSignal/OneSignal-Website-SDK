@@ -1,4 +1,4 @@
-import type { OutcomesConfig } from './Outcomes';
+import type { OutcomesConfig } from '../outcomes/types';
 
 export const SessionStatus = {
   Active: 'active',

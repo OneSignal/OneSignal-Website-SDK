@@ -1,4 +1,4 @@
-import type { Categories } from 'src/page/tags';
+import type { Categories, TagCategory } from 'src/page/tags';
 import type { DelayedPromptType } from './constants';
 
 export type DelayedPromptTypeValue =
