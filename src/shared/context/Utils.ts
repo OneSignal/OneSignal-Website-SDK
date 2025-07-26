@@ -104,16 +104,6 @@ export class Utils {
     return Promise.race([promise, timeoutPromise]);
   }
 
-  public static getValueOrDefault<T>(
-    value: T | undefined | null,
-    defaultValue: T,
-  ): T {
-    if (value !== undefined && value !== null) {
-      return value;
-    }
-    return defaultValue;
-  }
-
   /**
    * This is similar to ECMAScript2107 String.prototype.padStart.
    * Switch to this after updating TypeScript and can confirm it gets transpiled down to ES6

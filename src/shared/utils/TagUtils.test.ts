@@ -2,7 +2,7 @@ import type {
   TagCategory,
   TagsObjectForApi,
   TagsObjectWithBoolean,
-} from 'src/page/models/Tags';
+} from 'src/page/tags';
 import TagUtils from './TagUtils';
 
 describe('TagUtils', () => {
@@ -101,14 +101,5 @@ describe('TagUtils', () => {
     expect(TagUtils.getCheckedStatusForTagValue(undefined)).toBe(true);
     expect(TagUtils.getCheckedStatusForTagValue(true)).toBe(true);
     expect(TagUtils.getCheckedStatusForTagValue(false)).toBe(false);
-  });
-
-  test('should limit categories to max count', () => {
-    const categories: TagCategory[] = [
-      { tag: 'tag1', label: 'label1' },
-      { tag: 'tag2', label: 'label2' },
-    ];
-    const limitedCategories = TagUtils.limitCategoriesToMaxCount(categories, 1);
-    expect(limitedCategories).toEqual([{ tag: 'tag1', label: 'label1' }]);
   });
 });

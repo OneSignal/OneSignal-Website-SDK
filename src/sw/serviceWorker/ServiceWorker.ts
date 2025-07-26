@@ -8,7 +8,6 @@ import {
 import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import { Utils } from '../../shared/context/Utils';
-import { ConfigHelper } from '../../shared/helpers/ConfigHelper';
 import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
 import ContextSW from '../../shared/models/ContextSW';
 import {
@@ -43,7 +42,7 @@ import {
   NotificationType,
   type NotificationTypeValue,
 } from 'src/core/types/subscription';
-import type { AppConfig } from 'src/shared/models/AppConfig';
+import { type AppConfig, getServerAppConfig } from 'src/shared/config';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
@@ -1023,7 +1022,7 @@ export class ServiceWorker {
       // Without an app ID, we can't make any calls
       return;
     }
-    const appConfig = await ConfigHelper.getAppConfig(
+    const appConfig = await getServerAppConfig(
       { appId },
       OneSignalApiSW.downloadServerAppConfig,
     );

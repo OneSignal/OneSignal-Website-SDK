@@ -2,18 +2,18 @@ import { Browser } from 'src/shared/models/Browser';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-} from '../../shared/config/constants';
-import { DismissHelper } from '../../shared/helpers/DismissHelper';
-import InitHelper from '../../shared/helpers/InitHelper';
-import PromptsHelper from '../../shared/helpers/PromptsHelper';
-import Log from '../../shared/libraries/Log';
+} from 'src/shared/constants';
 import {
   DelayedPromptType,
   type AppUserConfigPromptOptions,
   type DelayedPromptOptions,
   type DelayedPromptTypeValue,
   type SlidedownPromptOptions,
-} from '../../shared/models/Prompts';
+} from 'src/shared/prompts';
+import { DismissHelper } from '../../shared/helpers/DismissHelper';
+import InitHelper from '../../shared/helpers/InitHelper';
+import PromptsHelper from '../../shared/helpers/PromptsHelper';
+import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
 import { bowserCastle } from '../../shared/utils/bowserCastle';

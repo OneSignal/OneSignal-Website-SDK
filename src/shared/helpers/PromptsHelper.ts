@@ -1,9 +1,8 @@
-import type { SlidedownOptionsVersion1 } from '../models/AppConfig';
 import {
   DelayedPromptType,
   type DelayedPromptTypeValue,
   type SlidedownPromptOptions,
-} from '../models/Prompts';
+} from '../prompts';
 
 export default class PromptsHelper {
   static isCategorySlidedownConfigured(
@@ -20,16 +19,6 @@ export default class PromptsHelper {
     }
     return false;
   }
-  /**
-   * Is Category Slidedown Configured (version 1 config schema)
-   * @param  {SlidedownOptionsVersion1} options
-   * @returns boolean
-   */
-  static isCategorySlidedownConfiguredVersion1(
-    options?: SlidedownOptionsVersion1,
-  ): boolean {
-    return (options?.categories?.tags?.length || 0) > 0;
-  }
 
   static getFirstSlidedownPromptOptionsWithType(
     prompts: SlidedownPromptOptions[] | undefined,
@@ -38,19 +27,6 @@ export default class PromptsHelper {
     return prompts
       ? prompts.filter((options) => options.type === type)[0]
       : undefined;
-  }
-
-  static isSlidedownAutoPromptConfigured(
-    prompts: SlidedownPromptOptions[],
-  ): boolean {
-    if (!prompts) {
-      return false;
-    }
-
-    for (let i = 0; i < prompts.length; i++) {
-      if (prompts[i].autoPrompt) return true;
-    }
-    return false;
   }
 
   static isSlidedownPushDependent(
