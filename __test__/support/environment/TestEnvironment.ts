@@ -10,7 +10,6 @@ import { generateNewSubscription } from '../helpers/core';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import {
   initOSGlobals,
-  mockUserAgent,
   resetDatabase,
   stubDomEnvironment,
   stubNotification,
@@ -33,7 +32,6 @@ export interface TestEnvironmentConfig {
 
 export class TestEnvironment {
   static async initialize(config: TestEnvironmentConfig = {}) {
-    mockUserAgent(config);
     // reset db & localStorage
     resetDatabase();
 

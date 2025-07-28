@@ -1,14 +1,8 @@
-import { DEVICE_OS } from '__test__/support/constants';
-import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { SubscriptionType } from 'src/core/types/subscription';
 import { generateNewSubscription } from '../../support/helpers/core';
 
 describe('Model tests', () => {
-  beforeAll(() => {
-    mockUserAgent();
-  });
-
   test('Set function updates data', async () => {
     const newSub = generateNewSubscription();
     expect(newSub.enabled).toBe(undefined);

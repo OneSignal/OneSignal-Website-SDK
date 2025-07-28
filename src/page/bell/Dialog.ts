@@ -1,5 +1,10 @@
+import {
+  Browser,
+  getBrowserName,
+  isMobileBrowser,
+  isTabletBrowser,
+} from 'src/shared/useragent';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 import {
   addDomElement,
   clearDomElementChildren,
@@ -96,14 +101,16 @@ export default class Dialog extends AnimatedElement {
           contents = `<h1>${this.bell.options.text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${notificationIconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container">${buttonHtml}</div>${footer}`;
         } else if (this.bell.state === Bell.STATES.BLOCKED) {
           let imageUrl = null;
-          if (bowserCastle().name === 'chrome') {
-            if (!bowserCastle().mobile && !bowserCastle().tablet)
+
+          const browserName = getBrowserName();
+          if (browserName === Browser.Chrome) {
+            if (!isMobileBrowser() && !isTabletBrowser())
               imageUrl = '/bell/chrome-unblock.jpg';
-          } else if (bowserCastle().name === 'firefox')
+          } else if (browserName === Browser.Firefox)
             imageUrl = '/bell/firefox-unblock.jpg';
-          else if (bowserCastle().name == 'safari')
+          else if (browserName === Browser.Safari)
             imageUrl = '/bell/safari-unblock.jpg';
-          else if (bowserCastle().name === 'msedge')
+          else if (browserName === Browser.Edge)
             imageUrl = '/bell/edge-unblock.png';
 
           let instructionsHtml = '';
@@ -113,8 +120,8 @@ export default class Dialog extends AnimatedElement {
           }
 
           if (
-            (bowserCastle().mobile || bowserCastle().tablet) &&
-            bowserCastle().name === 'chrome'
+            (isMobileBrowser() || isTabletBrowser()) &&
+            browserName === Browser.Chrome
           ) {
             instructionsHtml = `<ol><li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li><li>Click <strong>Site settings</strong> under Advanced.</li><li>Click <strong>Notifications</strong>.</li><li>Find and click this entry for this website.</li><li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li></ol>`;
           }

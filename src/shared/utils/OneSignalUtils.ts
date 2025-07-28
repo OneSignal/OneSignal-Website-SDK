@@ -1,20 +1,10 @@
-import bowser, { type IBowser } from 'bowser';
 import { Utils } from '../context/Utils';
 import { isBrowser } from '../environment/environment';
 import Log from '../libraries/Log';
-import { bowserCastle } from './bowserCastle';
 
 export class OneSignalUtils {
   public static getBaseUrl() {
     return location.origin;
-  }
-
-  public static redetectBrowserUserAgent(): IBowser {
-    // During testing, the browser object may be initialized before the userAgent is injected
-    if (bowserCastle().name === '' && bowserCastle().version === '') {
-      return bowser._detect(navigator.userAgent);
-    }
-    return bowser;
   }
 
   /**

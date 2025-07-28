@@ -4,6 +4,7 @@ import {
   SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
   type SlidedownPromptOptions,
 } from 'src/shared/prompts';
+import { isMobileBrowser } from 'src/shared/useragent';
 import MainHelper from '../../shared/helpers/MainHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
@@ -12,7 +13,6 @@ import {
   SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_CSS_IDS,
 } from '../../shared/slidedown/constants';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 import {
   addCssClass,
   addDomElement,
@@ -136,7 +136,7 @@ export default class Slidedown {
       // Animate it in depending on environment
       addCssClass(
         this.container,
-        bowserCastle().mobile
+        isMobileBrowser()
           ? SLIDEDOWN_CSS_CLASSES.slideUp
           : SLIDEDOWN_CSS_CLASSES.slideDown,
       );

@@ -41,7 +41,7 @@ import {
 } from '../models/UnsubscriptionStrategy';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
-import { bowserCastle } from '../utils/bowserCastle';
+import { Browser, getBrowserName } from '../useragent';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { PermissionUtils } from '../utils/PermissionUtils';
@@ -534,7 +534,7 @@ export class SubscriptionManager {
 
     const swRegistration = self.registration;
 
-    if (!swRegistration.active && bowserCastle().name !== 'firefox') {
+    if (!swRegistration.active && getBrowserName() !== Browser.Firefox) {
       throw new InvalidStateError(InvalidStateReason.ServiceWorkerNotActivated);
       /*
         Or should we wait for the service worker to be ready?
@@ -574,7 +574,7 @@ export class SubscriptionManager {
     // Specifically return undefined instead of null if the key isn't available
     let key = undefined;
 
-    if (bowserCastle().name === 'firefox') {
+    if (getBrowserName() === Browser.Firefox) {
       /*
         Firefox uses VAPID for application identification instead of
         authentication, and so all apps share an identification key.

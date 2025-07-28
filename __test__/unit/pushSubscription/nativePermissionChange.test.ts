@@ -6,10 +6,7 @@ import {
   DUMMY_SUBSCRIPTION_ID_3,
 } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import {
-  createPushSub,
-  mockUserAgent,
-} from '__test__/support/environment/TestEnvironmentHelpers';
+import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import Emitter from 'src/shared/libraries/Emitter';
 import { AppState } from 'src/shared/models/AppState';
@@ -29,7 +26,6 @@ vi.useFakeTimers();
 
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(async () => {
-    mockUserAgent();
     await TestEnvironment.initialize();
     OneSignal.emitter = new Emitter();
   });

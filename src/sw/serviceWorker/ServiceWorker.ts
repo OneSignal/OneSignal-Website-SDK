@@ -44,8 +44,8 @@ import { type AppConfig, getServerAppConfig } from 'src/shared/config';
 import { getDeviceType } from 'src/shared/environment';
 import ContextSW from 'src/shared/models/ContextSW';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
+import { Browser, getBrowserName } from 'src/shared/useragent';
 import { VERSION } from 'src/shared/utils/EnvVariables';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
 import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
@@ -378,7 +378,7 @@ export class ServiceWorker {
    * to be safe we are disabling it for all Safari browsers.
    */
   static browserSupportsConfirmedDelivery(): boolean {
-    return bowserCastle().name !== 'safari';
+    return getBrowserName() !== Browser.Safari;
   }
 
   /**

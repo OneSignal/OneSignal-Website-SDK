@@ -1,13 +1,4 @@
-import {
-  SubscriptionType,
-  type SubscriptionTypeValue,
-} from 'src/core/types/subscription';
-import { EnvironmentInfoHelper } from 'src/page/helpers/EnvironmentInfoHelper';
-import {
-  DeliveryPlatformKind,
-  type DeliveryPlatformKindValue,
-} from '../models/DeliveryPlatformKind';
-import { bowserCastle } from '../utils/bowserCastle';
+import { Browser, getBrowserName } from '../useragent';
 import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import { EnvironmentKind } from './constants';
@@ -30,7 +21,9 @@ export const supportsVapidPush =
   PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey');
 
 export const useSafariVapidPush = () =>
-  bowserCastle().name == 'safari' && supportsVapidPush && !useSafariLegacyPush;
+  getBrowserName() === Browser.Safari &&
+  supportsVapidPush &&
+  !useSafariLegacyPush;
 
 // for determing the api url
 const API_URL_PORT = 3000;

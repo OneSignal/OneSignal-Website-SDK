@@ -15,18 +15,15 @@ import type { ISlidedownManager } from '../managers/slidedownManager/types';
 import TagManager from '../managers/tagManager/TagManager';
 import type { ITagManager } from '../managers/tagManager/types';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import type { EnvironmentInfo } from './EnvironmentInfo';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
-  environmentInfo?: EnvironmentInfo;
   tagManager: ITagManager;
   slidedownManager: ISlidedownManager;
 }
 
 export default class Context implements ContextInterface {
   public appConfig: AppConfig;
-  public environmentInfo?: EnvironmentInfo;
   public dynamicResourceLoader: DynamicResourceLoader;
   public subscriptionManager: SubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
@@ -41,9 +38,6 @@ export default class Context implements ContextInterface {
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
-    if (typeof OneSignal !== 'undefined' && !!OneSignal.environmentInfo) {
-      this.environmentInfo = OneSignal.environmentInfo;
-    }
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
     this.pageViewManager = new PageViewManager();

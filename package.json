@@ -4,7 +4,6 @@
   "description": "Web push notifications from OneSignal.",
   "type": "module",
   "dependencies": {
-    "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "jsonp": "github:OneSignal/jsonp#onesignal",
     "uuid": "^11.1.0"
   },

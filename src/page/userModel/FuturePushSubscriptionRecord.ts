@@ -9,7 +9,16 @@ import {
   getSubscriptionType,
 } from 'src/shared/environment';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import {
+  Browser,
+  getBrowserName,
+  getBrowserVersion,
+} from 'src/shared/useragent';
 import { VERSION } from 'src/shared/utils/EnvVariables';
+import {
+  DeliveryPlatformKind,
+  type DeliveryPlatformKindValue,
+} from '../../shared/models/DeliveryPlatformKind';
 import type { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
@@ -54,5 +63,54 @@ export default class FuturePushSubscriptionRecord implements Serializable {
       web_auth: this.webAuth,
       web_p256: this.webp256,
     };
+  }
+
+  /* S T A T I C */
+
+  /**
+   * Get the User Model Subscription type based on browser detection.
+   */
+  public static getSubscriptionType(): SubscriptionTypeValue {
+    const browserName = getBrowserName();
+    if (browserName === Browser.Firefox) {
+      return SubscriptionType.FirefoxPush;
+    }
+    if (useSafariVapidPush()) {
+      return SubscriptionType.SafariPush;
+    }
+    if (useSafariLegacyPush) {
+      return SubscriptionType.SafariLegacyPush;
+    }
+    // Other browsers, like Edge, are Chromium based so we consider them "Chrome".
+    return SubscriptionType.ChromePush;
+  }
+
+  /**
+   * Get the legacy player.device_type
+   * NOTE: Use getSubscriptionType() instead when possible.
+   */
+  public static getDeviceType(): DeliveryPlatformKindValue {
+    switch (this.getSubscriptionType()) {
+      case SubscriptionType.FirefoxPush:
+        return DeliveryPlatformKind.Firefox;
+      case SubscriptionType.SafariLegacyPush:
+        return DeliveryPlatformKind.SafariLegacy;
+      case SubscriptionType.SafariPush:
+        return DeliveryPlatformKind.SafariVapid;
+    }
+    return DeliveryPlatformKind.ChromeLike;
+  }
+
+  public static getDeviceOS(): string | number {
+    const browserVersion = getBrowserVersion();
+    return isNaN(browserVersion) ? -1 : browserVersion;
+  }
+
+  public static getDeviceModel(): string {
+    return navigator.platform;
+  }
+
+  public static getSdk(): string {
+    return String(VERSION);
   }
 }

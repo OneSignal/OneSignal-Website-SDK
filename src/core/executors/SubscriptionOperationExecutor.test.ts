@@ -3,10 +3,7 @@ import {
   DUMMY_ONESIGNAL_ID,
   DUMMY_SUBSCRIPTION_ID_3,
 } from '__test__/support/constants';
-import {
-  createPushSub,
-  mockUserAgent,
-} from '__test__/support/environment/TestEnvironmentHelpers';
+import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
@@ -41,12 +38,10 @@ const BACKEND_SUBSCRIPTION_ID = 'backend-subscription-id';
 
 vi.mock('src/shared/libraries/Log');
 
-mockUserAgent();
 const pushSubscription = createPushSub();
 
 describe('SubscriptionOperationExecutor', () => {
   beforeEach(async () => {
-    mockUserAgent();
     subscriptionModelStore = new SubscriptionModelStore();
     newRecordsState = new NewRecordsState();
 
