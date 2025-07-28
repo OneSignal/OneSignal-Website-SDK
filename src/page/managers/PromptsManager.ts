@@ -1,4 +1,3 @@
-import { Browser } from 'src/shared/models/Browser';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -8,15 +7,20 @@ import {
   type DelayedPromptTypeValue,
   type SlidedownPromptOptions,
 } from 'src/shared/prompts';
+import {
+  Browser,
+  getBrowserName,
+  isMobileBrowser,
+  isTabletBrowser,
+  requiresUserInteraction,
+} from 'src/shared/useragent';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import InitHelper from '../../shared/helpers/InitHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
-import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
 import type { ContextInterface } from '../models/Context';
 import { DismissPrompt } from '../models/Dismiss';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
@@ -41,15 +45,10 @@ export class PromptsManager {
   }
 
   private shouldForceSlidedownOverNative(): boolean {
-    const { environmentInfo } = OneSignal;
-    const { browserType, browserVersion, requiresUserInteraction } =
-      environmentInfo!;
-
     return (
-      (browserType === Browser.Chrome &&
-        Number(browserVersion) >= 63 &&
-        (bowserCastle().tablet || bowserCastle().mobile)) ||
-      requiresUserInteraction
+      (getBrowserName() === Browser.Chrome &&
+        (isTabletBrowser() || isMobileBrowser())) ||
+      requiresUserInteraction()
     );
   }
 
@@ -141,9 +140,7 @@ export class PromptsManager {
       return;
     }
 
-    const { requiresUserInteraction } =
-      EnvironmentInfoHelper.getEnvironmentInfo();
-    if (requiresUserInteraction && type === DelayedPromptType.Native) {
+    if (requiresUserInteraction() && type === DelayedPromptType.Native) {
       type = DelayedPromptType.Push; // Push Slidedown for cases where user interaction is needed
     }
 

@@ -1,5 +1,6 @@
 import type { IUpdateUser } from 'src/core/types/api';
 import { NotificationType } from 'src/core/types/subscription';
+import { supportsServiceWorkers } from 'src/shared/environment';
 import AliasPair from '../../../core/requestService/AliasPair';
 import { RequestService } from '../../../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
@@ -42,7 +43,7 @@ export class SessionManager implements ISessionManager {
       isSafari: OneSignalUtils.isSafari(),
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
-    if (this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
+    if (supportsServiceWorkers()) {
       Log.debug('Notify SW to upsert session');
       await this.context.workerMessenger.unicast(
         WorkerMessengerCommand.SessionUpsert,
@@ -70,7 +71,7 @@ export class SessionManager implements ISessionManager {
       isSafari: OneSignalUtils.isSafari(),
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
-    if (this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
+    if (supportsServiceWorkers()) {
       Log.debug('Notify SW to deactivate session');
       await this.context.workerMessenger.unicast(
         WorkerMessengerCommand.SessionDeactivate,
@@ -279,7 +280,7 @@ export class SessionManager implements ISessionManager {
       );
     }
 
-    if (this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
+    if (supportsServiceWorkers()) {
       this.setupSessionEventListeners();
     } else {
       this.onSessionSent = sessionOrigin === SessionOrigin.UserCreate;
@@ -289,7 +290,7 @@ export class SessionManager implements ISessionManager {
 
   setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
-    if (!this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers) {
+    if (!supportsServiceWorkers()) {
       Log.debug(
         'Not setting session event listeners. No service worker possible.',
       );

@@ -11,13 +11,16 @@ import {
   useSafariVapidPush,
 } from 'src/shared/environment';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import {
+  Browser,
+  getBrowserName,
+  getBrowserVersion,
+} from 'src/shared/useragent';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import {
   DeliveryPlatformKind,
   type DeliveryPlatformKindValue,
 } from '../../shared/models/DeliveryPlatformKind';
-import OneSignalUtils from '../../shared/utils/OneSignalUtils';
-import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
 import type { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
@@ -71,8 +74,8 @@ export default class FuturePushSubscriptionRecord implements Serializable {
    * Get the User Model Subscription type based on browser detection.
    */
   public static getSubscriptionType(): SubscriptionTypeValue {
-    const browser = OneSignalUtils.redetectBrowserUserAgent();
-    if (browser.firefox) {
+    const browserName = getBrowserName();
+    if (browserName === Browser.Firefox) {
       return SubscriptionType.FirefoxPush;
     }
     if (useSafariVapidPush()) {
@@ -102,8 +105,8 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   }
 
   public static getDeviceOS(): string | number {
-    const environment = EnvironmentInfoHelper.getEnvironmentInfo();
-    return isNaN(environment.browserVersion) ? -1 : environment.browserVersion;
+    const browserVersion = getBrowserVersion();
+    return isNaN(browserVersion) ? -1 : browserVersion;
   }
 
   public static getDeviceModel(): string {

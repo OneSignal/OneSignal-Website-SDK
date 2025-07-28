@@ -9,7 +9,6 @@ import {
   DUMMY_SUBSCRIPTION_ID_2,
 } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   createUserFn,
@@ -53,7 +52,6 @@ describe('LoginUserOperationExecutor', () => {
 
   beforeEach(async () => {
     await Database.clear();
-    mockUserAgent();
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
     subscriptionModelStore = new SubscriptionModelStore();

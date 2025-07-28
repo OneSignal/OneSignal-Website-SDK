@@ -1,12 +1,12 @@
 import type { AppUserConfigNotifyButton } from 'src/shared/config';
 import type { BellPosition, BellSize, BellText } from 'src/shared/prompts';
+import { Browser, getBrowserName } from 'src/shared/useragent';
 import OneSignal from '../../onesignal/OneSignal';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import { NotificationPermission } from '../../shared/models/NotificationPermission';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 import BrowserUtils from '../../shared/utils/BrowserUtils';
 import {
   addCssClass,
@@ -537,11 +537,7 @@ export default class Bell {
   }
 
   patchSafariSvgFilterBug() {
-    if (
-      !(
-        bowserCastle().name == 'safari' && Number(bowserCastle().version) >= 9.1
-      )
-    ) {
+    if (getBrowserName() !== Browser.Safari) {
       const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
       const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
       const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
@@ -557,8 +553,7 @@ export default class Bell {
         'style',
         `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
       );
-    }
-    if (bowserCastle().name == 'safari') {
+    } else {
       this.badge.element.setAttribute('style', `display: none;`);
     }
   }

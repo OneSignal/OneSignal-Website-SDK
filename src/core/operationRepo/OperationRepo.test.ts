@@ -3,7 +3,6 @@ import {
   DUMMY_ONESIGNAL_ID,
   DUMMY_SUBSCRIPTION_ID,
 } from '__test__/support/constants';
-import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import { fakeWaitForOperations } from '__test__/support/helpers/executors';
 import Log from 'src/shared/libraries/Log';
 import Database, { type OperationItem } from 'src/shared/services/Database';
@@ -39,7 +38,6 @@ vi.spyOn(OperationModelStore.prototype, 'create').mockImplementation(() => {
 });
 
 let mockOperationModelStore: OperationModelStore;
-mockUserAgent();
 
 describe('OperationRepo', () => {
   let opRepo: OperationRepo;

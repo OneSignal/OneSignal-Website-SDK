@@ -1,7 +1,7 @@
 import type { NotificationIcons } from 'src/page/models/NotificationIcons';
 import { Utils } from '../context/Utils';
 import Log from '../libraries/Log';
-import { bowserCastle } from './bowserCastle';
+import { Browser, getBrowserName } from '../useragent';
 import { IS_SERVICE_WORKER } from './EnvVariables';
 import { OneSignalUtils } from './OneSignalUtils';
 import { PermissionUtils } from './PermissionUtils';
@@ -294,9 +294,10 @@ export function getPlatformNotificationIcon(
 ): string {
   if (!notificationIcons) return 'default-icon';
 
-  if (bowserCastle().name == 'safari' && notificationIcons.safari)
+  const browserName = getBrowserName();
+  if (browserName === Browser.Safari && notificationIcons.safari)
     return notificationIcons.safari;
-  else if (bowserCastle().name === 'firefox' && notificationIcons.firefox)
+  else if (browserName === Browser.Firefox && notificationIcons.firefox)
     return notificationIcons.firefox;
 
   return (

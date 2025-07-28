@@ -1,4 +1,4 @@
-import { bowserCastle } from '../utils/bowserCastle';
+import { Browser, getBrowserName } from '../useragent';
 import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { EnvironmentKind } from './constants';
 
@@ -20,7 +20,9 @@ export const supportsVapidPush =
   PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey');
 
 export const useSafariVapidPush = () =>
-  bowserCastle().name == 'safari' && supportsVapidPush && !useSafariLegacyPush;
+  getBrowserName() === Browser.Safari &&
+  supportsVapidPush &&
+  !useSafariLegacyPush;
 
 // for determing the api url
 const API_URL_PORT = 3000;
