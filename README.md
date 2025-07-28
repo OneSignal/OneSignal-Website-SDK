@@ -25,3 +25,5 @@ The code will use navigator register on OneSignalSDKWorker.js to register the co
 ## Preview
 
 To preview with the actual bundle you can run the build first e.g. `npm run build:dev` then cd into the `preview` folder and follow the instructions in that folder. But generally you can run `docker-compose up` or `npm start`.
+
+Some ReadMe change.
