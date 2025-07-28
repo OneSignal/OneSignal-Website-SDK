@@ -9,8 +9,8 @@ import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once, triggerNotificationPermissionChanged } from '../utils/utils';
-import { isBrowser } from './environment';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 
@@ -220,7 +220,7 @@ export default class InitHelper {
   }
 
   private static async showNotifyButton() {
-    if (isBrowser && !OneSignal.notifyButton) {
+    if (!IS_SERVICE_WORKER && !OneSignal.notifyButton) {
       OneSignal.config!.userConfig.notifyButton =
         OneSignal.config!.userConfig.notifyButton || {};
       if (OneSignal.config!.userConfig.bell) {

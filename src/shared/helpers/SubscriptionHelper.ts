@@ -20,25 +20,19 @@ export default class SubscriptionHelper {
     const context = OneSignal.context;
     let subscription: Subscription | null = null;
 
-    if (!IS_SERVICE_WORKER) {
-      try {
-        const rawSubscription = await context.subscriptionManager.subscribe(
-          SubscriptionStrategyKind.ResubscribeExisting,
-        );
-        subscription =
-          await context.subscriptionManager.registerSubscription(
-            rawSubscription,
-          );
-        context.pageViewManager.incrementPageViewCount();
-        await PermissionUtils.triggerNotificationPermissionChanged();
-        await EventHelper.checkAndTriggerSubscriptionChanged();
-      } catch (e) {
-        Log.error(e);
-      }
-    } else {
-      throw new Error('Unsupported environment');
+    if (IS_SERVICE_WORKER) throw new Error('Unsupported environment');
+    try {
+      const rawSubscription = await context.subscriptionManager.subscribe(
+        SubscriptionStrategyKind.ResubscribeExisting,
+      );
+      subscription =
+        await context.subscriptionManager.registerSubscription(rawSubscription);
+      context.pageViewManager.incrementPageViewCount();
+      await PermissionUtils.triggerNotificationPermissionChanged();
+      await EventHelper.checkAndTriggerSubscriptionChanged();
+    } catch (e) {
+      Log.error(e);
     }
-
     return subscription;
   }
 
