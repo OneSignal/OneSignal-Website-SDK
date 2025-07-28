@@ -1,9 +1,9 @@
+import { getOneSignalApiUrl } from '../environment/environment';
 import {
   OneSignalApiError,
   OneSignalApiErrorKind,
 } from '../errors/OneSignalApiError';
 import OneSignalError from '../errors/OneSignalError';
-import { getOneSignalApiUrl } from '../helpers/environment';
 import { isValidUuid } from '../helpers/general';
 import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';

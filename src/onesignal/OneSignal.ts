@@ -4,7 +4,7 @@ import {
   type AppConfig,
   type AppUserConfig,
 } from 'src/shared/config';
-import { windowEnvString } from 'src/shared/helpers/environment';
+import { windowEnvString } from 'src/shared/environment';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';

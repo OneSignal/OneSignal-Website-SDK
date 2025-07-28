@@ -1,10 +1,8 @@
 import { Browser } from 'src/shared/models/Browser';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
-  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-} from 'src/shared/constants';
-import {
   DelayedPromptType,
+  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
   type AppUserConfigPromptOptions,
   type DelayedPromptOptions,
   type DelayedPromptTypeValue,

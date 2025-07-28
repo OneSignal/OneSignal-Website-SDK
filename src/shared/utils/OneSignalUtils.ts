@@ -1,6 +1,6 @@
 import bowser, { type IBowser } from 'bowser';
 import { Utils } from '../context/Utils';
-import { isBrowser } from '../helpers/environment';
+import { isBrowser } from '../environment/environment';
 import Log from '../libraries/Log';
 import { bowserCastle } from './bowserCastle';
 
