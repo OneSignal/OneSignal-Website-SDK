@@ -1,7 +1,7 @@
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
 import { Utils } from '../context/Utils';
+import { supportsServiceWorkers } from '../environment/environment';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
-import { supportsServiceWorkers } from '../helpers/environment';
 import EventHelper from '../helpers/EventHelper';
 import ServiceWorkerHelper, {
   ServiceWorkerActiveState,

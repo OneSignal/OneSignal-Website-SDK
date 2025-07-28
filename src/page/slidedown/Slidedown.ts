@@ -1,7 +1,7 @@
-import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from 'src/shared/constants';
 import { getValueOrDefault } from 'src/shared/helpers/general';
 import {
   DelayedPromptType,
+  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
   type SlidedownPromptOptions,
 } from 'src/shared/prompts';
 import MainHelper from '../../shared/helpers/MainHelper';

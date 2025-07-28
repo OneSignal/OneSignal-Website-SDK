@@ -8,16 +8,14 @@ import {
 } from 'src/shared/config';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
+  DelayedPromptType,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
   SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
-} from 'src/shared/constants';
-import { getValueOrDefault, valueOrDefault } from '../helpers/general';
-import {
-  DelayedPromptType,
   type AppUserConfigCustomLinkOptions,
   type AppUserConfigPromptOptions,
   type ServerAppPromptConfig,
-} from '../prompts';
+} from 'src/shared/prompts';
+import { getValueOrDefault, valueOrDefault } from '../helpers/general';
 import {
   getPromptOptionsForDashboardConfiguration,
   isSlidedownAutoPromptConfigured,

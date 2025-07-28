@@ -1,8 +1,8 @@
+import { EnvironmentKind } from 'src/shared/environment';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from 'src/shared/errors/InvalidArgumentError';
-import { EnvironmentKind } from 'src/shared/helpers/environment';
 import {
   BUILD_ORIGIN,
   BUILD_TYPE,

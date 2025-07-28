@@ -1,11 +1,6 @@
 import { bowserCastle } from '../utils/bowserCastle';
 import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
-
-export const EnvironmentKind = {
-  Development: 'development',
-  Staging: 'staging',
-  Production: 'production',
-} as const;
+import { EnvironmentKind } from './constants';
 
 export const isBrowser = typeof window !== 'undefined';
 

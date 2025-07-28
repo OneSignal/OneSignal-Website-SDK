@@ -5,9 +5,9 @@ import {
   DismissTimeKey,
 } from '../../page/models/Dismiss';
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
+import { windowEnvString } from '../environment/environment';
 import Log from '../libraries/Log';
 import Database from '../services/Database';
-import { windowEnvString } from './environment';
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,

@@ -1,5 +1,5 @@
 import Utils from '../context/Utils';
-import { windowEnvString } from '../helpers/environment';
+import { windowEnvString } from '../environment/environment';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';

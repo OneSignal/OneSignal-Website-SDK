@@ -1,6 +1,6 @@
 import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags';
-import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from 'src/shared/constants';
 import {
+  CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
   type DelayedPromptTypeValue,
 } from 'src/shared/prompts';

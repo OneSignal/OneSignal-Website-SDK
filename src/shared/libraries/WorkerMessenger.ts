@@ -5,7 +5,7 @@ import {
 
 import type { Serializable } from '../../page/models/Serializable';
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
-import { supportsServiceWorkers } from '../helpers/environment';
+import { supportsServiceWorkers } from '../environment/environment';
 import type { ContextSWInterface } from '../models/ContextSW';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import Log from './Log';

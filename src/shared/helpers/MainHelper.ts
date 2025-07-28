@@ -1,6 +1,10 @@
 import type { NotificationIcons } from 'src/page/models/NotificationIcons';
 import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
 import {
+  getOneSignalApiUrl,
+  useSafariLegacyPush,
+} from '../environment/environment';
+import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
@@ -20,7 +24,6 @@ import type {
 import Database from '../services/Database';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
-import { getOneSignalApiUrl, useSafariLegacyPush } from './environment';
 import { getValueOrDefault } from './general';
 
 export default class MainHelper {
