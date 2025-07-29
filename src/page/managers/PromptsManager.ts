@@ -1,3 +1,4 @@
+import { delay } from 'src/shared/helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -19,7 +20,6 @@ import InitHelper from '../../shared/helpers/InitHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import type { ContextInterface } from '../models/Context';
 import { DismissPrompt } from '../models/Dismiss';
@@ -145,7 +145,7 @@ export class PromptsManager {
     }
 
     if (timeDelaySeconds > 0) {
-      await awaitableTimeout(timeDelaySeconds * 1_000);
+      await delay(timeDelaySeconds * 1_000);
     }
 
     switch (type) {

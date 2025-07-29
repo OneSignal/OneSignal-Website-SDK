@@ -4,18 +4,14 @@ import {
   SubscriptionType,
   type SubscriptionTypeValue,
 } from 'src/core/types/subscription';
+import { isObject, isValidEmail } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
-import {
-  isObject,
-  isObjectSerializable,
-  isValidEmail,
-  logMethodCall,
-} from '../shared/utils/utils';
+import { logMethodCall } from '../shared/utils/utils';
 
 export default class User {
   static singletonInstance?: User = undefined;

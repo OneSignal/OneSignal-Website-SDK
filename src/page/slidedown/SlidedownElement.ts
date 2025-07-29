@@ -1,10 +1,10 @@
+import { addCssClass } from 'src/shared/helpers/dom';
 import {
   DEFAULT_ICON,
   SLIDEDOWN_BUTTON_CLASSES,
   SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_CSS_IDS,
-} from '../../shared/slidedown/constants';
-import { addCssClass } from '../../shared/utils/utils';
+} from 'src/shared/slidedown/constants';
 import type { SlidedownHtmlProps } from './types';
 
 export function getSlidedownElement(dialogProps: SlidedownHtmlProps): Element {

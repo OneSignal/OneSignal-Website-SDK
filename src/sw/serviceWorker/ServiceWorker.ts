@@ -7,6 +7,7 @@ import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
 import { type AppConfig, getServerAppConfig } from 'src/shared/config';
 import { Utils } from 'src/shared/context/Utils';
+import { delay } from 'src/shared/helpers/general';
 import ServiceWorkerHelper from 'src/shared/helpers/ServiceWorkerHelper';
 import {
   WorkerMessenger,
@@ -33,7 +34,6 @@ import {
   type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session';
 import { Browser, getBrowserName } from 'src/shared/useragent';
-import { awaitableTimeout } from 'src/shared/utils/AwaitableTimeout';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
@@ -355,7 +355,7 @@ export class ServiceWorker {
       `Called sendConfirmedDelivery(${JSON.stringify(notification, null, 4)})`,
     );
 
-    await awaitableTimeout(
+    await delay(
       Math.floor(Math.random() * MAX_CONFIRMED_DELIVERY_DELAY * 1_000),
     );
     await OneSignalApiBase.put(
@@ -669,7 +669,7 @@ export class ServiceWorker {
     );
 
     if (this.requiresMacOS15ChromiumAfterDisplayWorkaround()) {
-      await awaitableTimeout(1_000);
+      await delay(1_000);
     }
   }
 

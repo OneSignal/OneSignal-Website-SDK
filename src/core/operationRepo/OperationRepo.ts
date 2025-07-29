@@ -4,9 +4,9 @@ import {
   type IOperationRepo,
   type IStartableService,
 } from 'src/core/types/operation';
+import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import Database from 'src/shared/services/Database';
-import { delay } from 'src/shared/utils/utils';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import { ModelName } from '../types/models';

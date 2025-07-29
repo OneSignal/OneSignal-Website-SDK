@@ -1,27 +1,26 @@
+import {
+  addCssClass,
+  addDomElement,
+  getDomElementOrStub,
+  removeCssClass,
+  removeDomElement,
+} from 'src/shared/helpers/dom';
 import { getValueOrDefault } from 'src/shared/helpers/general';
+import MainHelper from 'src/shared/helpers/MainHelper';
+import PromptsHelper from 'src/shared/helpers/PromptsHelper';
 import {
   DelayedPromptType,
   SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
   type SlidedownPromptOptions,
 } from 'src/shared/prompts';
-import { isMobileBrowser } from 'src/shared/useragent';
-import MainHelper from '../../shared/helpers/MainHelper';
-import PromptsHelper from '../../shared/helpers/PromptsHelper';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
+import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import {
   COLORS,
   SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_CSS_IDS,
-} from '../../shared/slidedown/constants';
-import {
-  addCssClass,
-  addDomElement,
-  getDomElementOrStub,
-  getPlatformNotificationIcon,
-  once,
-  removeCssClass,
-  removeDomElement,
-} from '../../shared/utils/utils';
+} from 'src/shared/slidedown/constants';
+import { isMobileBrowser } from 'src/shared/useragent';
+import { getPlatformNotificationIcon, once } from 'src/shared/utils/utils';
 import {
   InvalidChannelInputField,
   type InvalidChannelInputFieldValue,

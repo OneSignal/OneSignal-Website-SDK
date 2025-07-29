@@ -1,6 +1,6 @@
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { GroupComparisonType, Operation } from 'src/core/operations/Operation';
-import { delay } from 'src/shared/utils/utils';
+import { delay } from 'src/shared/helpers/general';
 
 export class SomeOperation extends Operation {
   constructor() {

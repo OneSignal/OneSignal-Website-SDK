@@ -1,6 +1,7 @@
-import Log from '../../shared/libraries/Log';
-import BrowserUtils from '../../shared/utils/BrowserUtils';
-import { delay, nothing } from '../../shared/utils/utils';
+import { delay } from 'src/shared/helpers/general';
+import Log from 'src/shared/libraries/Log';
+import BrowserUtils from 'src/shared/utils/BrowserUtils';
+import { nothing } from 'src/shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
