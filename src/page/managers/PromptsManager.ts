@@ -2,6 +2,7 @@ import { delay } from 'src/shared/helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
+  getFirstSlidedownPromptOptionsWithType,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
   type AppUserConfigPromptOptions,
   type DelayedPromptOptions,
@@ -17,7 +18,6 @@ import {
 } from 'src/shared/useragent';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import InitHelper from '../../shared/helpers/InitHelper';
-import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
@@ -86,11 +86,10 @@ export class PromptsManager {
     }
 
     // if slidedown not configured, condition met with native options, & should force slidedown over native:
-    const isPushSlidedownConfigured =
-      !!PromptsHelper.getFirstSlidedownPromptOptionsWithType(
-        userPromptOptions?.slidedown?.prompts,
-        DelayedPromptType.Push,
-      );
+    const isPushSlidedownConfigured = !!getFirstSlidedownPromptOptionsWithType(
+      userPromptOptions?.slidedown?.prompts,
+      DelayedPromptType.Push,
+    );
 
     if (forceSlidedownWithNativeOptions && !isPushSlidedownConfigured) {
       this.internalShowDelayedPrompt(
@@ -263,10 +262,7 @@ export class PromptsManager {
       this.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
     const slidedownPromptOptions =
       options?.slidedownPromptOptions ||
-      PromptsHelper.getFirstSlidedownPromptOptionsWithType(
-        prompts,
-        typeToPullFromConfig,
-      );
+      getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
 
     if (!slidedownPromptOptions) {
       if (typeToPullFromConfig !== DelayedPromptType.Push) {
@@ -374,7 +370,7 @@ export class PromptsManager {
       case DelayedPromptType.Sms:
       case DelayedPromptType.SmsAndEmail: {
         const { userConfig } = this.context.appConfig;
-        const options = PromptsHelper.getFirstSlidedownPromptOptionsWithType(
+        const options = getFirstSlidedownPromptOptionsWithType(
           userConfig.promptOptions?.slidedown?.prompts || [],
           type,
         );

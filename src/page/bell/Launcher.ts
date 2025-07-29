@@ -7,9 +7,10 @@ import {
   hasCssClass,
   removeCssClass,
 } from 'src/shared/helpers/dom';
+import { nothing } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import type { BellSize } from 'src/shared/prompts';
-import { contains, nothing, once } from 'src/shared/utils/utils';
+import { contains, once } from 'src/shared/utils/utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Bell from './Bell';
 

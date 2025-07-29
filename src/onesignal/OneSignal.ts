@@ -6,6 +6,10 @@ import {
 } from 'src/shared/config';
 import { windowEnvString } from 'src/shared/environment';
 import {
+  _onSubscriptionChanged,
+  checkAndTriggerSubscriptionChanged,
+} from 'src/shared/listeners';
+import {
   Browser,
   getBrowserName,
   getBrowserVersion,
@@ -23,7 +27,6 @@ import {
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
 import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
-import EventHelper from '../shared/helpers/EventHelper';
 import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
@@ -170,11 +173,11 @@ export default class OneSignal {
 
       OneSignal.emitter.on(
         OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-        EventHelper.onNotificationPermissionChange,
+        checkAndTriggerSubscriptionChanged,
       );
       OneSignal.emitter.on(
         OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-        EventHelper._onSubscriptionChanged,
+        _onSubscriptionChanged,
       );
       OneSignal.emitter.on(
         OneSignal.EVENTS.SDK_INITIALIZED,

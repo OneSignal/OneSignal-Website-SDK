@@ -7,9 +7,9 @@ import {
 } from 'src/shared/helpers/dom';
 import { getValueOrDefault } from 'src/shared/helpers/general';
 import MainHelper from 'src/shared/helpers/MainHelper';
-import PromptsHelper from 'src/shared/helpers/PromptsHelper';
 import {
   DelayedPromptType,
+  isSlidedownPushDependent,
   SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
   type SlidedownPromptOptions,
 } from 'src/shared/prompts';
@@ -279,7 +279,7 @@ export default class Slidedown {
     removeDomElement('#onesignal-button-indicator-holder');
     removeCssClass(this.allowButton, 'onesignal-error-state-button');
 
-    if (!PromptsHelper.isSlidedownPushDependent(this.options.type)) {
+    if (!isSlidedownPushDependent(this.options.type)) {
       ChannelCaptureContainer.resetInputErrorStates(this.options.type);
     }
 

@@ -3,6 +3,7 @@ import { delay } from 'src/shared/helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
+  isSlidedownPushDependent,
   type DelayedPromptTypeValue,
 } from 'src/shared/prompts';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
@@ -21,7 +22,6 @@ import PushPermissionNotGrantedError, {
 } from '../../../shared/errors/PushPermissionNotGrantedError';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import InitHelper from '../../../shared/helpers/InitHelper';
-import PromptsHelper from '../../../shared/helpers/PromptsHelper';
 import Log from '../../../shared/libraries/Log';
 import { NotificationPermission } from '../../../shared/models/NotificationPermission';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
@@ -67,15 +67,14 @@ export class SlidedownManager {
 
     const slidedownType = options.slidedownPromptOptions?.type;
 
-    let isSlidedownPushDependent = false;
+    let _isSlidedownPushDependent = false;
 
     if (!!slidedownType) {
-      isSlidedownPushDependent =
-        PromptsHelper.isSlidedownPushDependent(slidedownType);
+      _isSlidedownPushDependent = isSlidedownPushDependent(slidedownType);
     }
 
     // applies to both push and category slidedown types
-    if (isSlidedownPushDependent) {
+    if (_isSlidedownPushDependent) {
       if (subscribed) {
         // applies to category slidedown type only
         if (options.isInUpdateMode) {
@@ -414,7 +413,7 @@ export class SlidedownManager {
     if (this.slidedown) {
       this.slidedown.close();
 
-      if (!PromptsHelper.isSlidedownPushDependent(slidedownType)) {
+      if (!isSlidedownPushDependent(slidedownType)) {
         await this.showConfirmationToast();
       }
       // timeout to allow slidedown close animation to finish in case another slidedown is queued

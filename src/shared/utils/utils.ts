@@ -26,22 +26,8 @@ export async function triggerNotificationPermissionChanged(
   );
 }
 
-export function executeCallback<T>(
-  callback?: (...args: any[]) => T,
-  ...args: any[]
-) {
-  if (callback) {
-    // eslint-disable-next-line prefer-spread
-    return callback.apply(null, args);
-  }
-}
-
 export function logMethodCall(methodName: string, ...args: any[]) {
   return OneSignalUtils.logMethodCall(methodName, ...args);
-}
-
-export function nothing(): Promise<any> {
-  return Promise.resolve();
 }
 
 /**

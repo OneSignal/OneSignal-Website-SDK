@@ -2,9 +2,10 @@ import type { AppUserConfigNotifyButton } from 'src/shared/config';
 import {
   addCssClass,
   addDomElement,
+  decodeHtmlEntities,
   removeDomElement,
 } from 'src/shared/helpers/dom';
-import { delay } from 'src/shared/helpers/general';
+import { delay, nothing } from 'src/shared/helpers/general';
 import type { BellPosition, BellSize, BellText } from 'src/shared/prompts';
 import { Browser, getBrowserName } from 'src/shared/useragent';
 import OneSignal from '../../onesignal/OneSignal';
@@ -13,8 +14,7 @@ import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import { NotificationPermission } from '../../shared/models/NotificationPermission';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import BrowserUtils from '../../shared/utils/BrowserUtils';
-import { contains, nothing, once } from '../../shared/utils/utils';
+import { contains, once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
 import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
@@ -270,7 +270,7 @@ export default class Bell {
             resolve();
           });
         } else {
-          this.message.content = BrowserUtils.decodeHtmlEntities(
+          this.message.content = decodeHtmlEntities(
             this.message.getTipForState(),
           );
           this.message.contentType = Message.TYPES.TIP;
