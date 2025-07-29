@@ -3,8 +3,13 @@ import type {
   SubscriptionTypeValue,
 } from 'src/core/types/subscription';
 import { NotificationType } from 'src/core/types/subscription';
+import {
+  getDeviceModel,
+  getDeviceOS,
+  getSubscriptionType,
+} from 'src/shared/environment';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import Environment from '../../shared/helpers/Environment';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import type { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
@@ -14,18 +19,18 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   readonly notificationTypes?: NotificationTypeValue;
   readonly sdk: string;
   readonly deviceModel: string;
-  readonly deviceOs: number;
+  readonly deviceOs: string;
   readonly webAuth?: string;
   readonly webp256?: string;
 
   constructor(rawPushSubscription: RawPushSubscription) {
     this.token = this._getToken(rawPushSubscription);
-    this.type = Environment.getSubscriptionType();
+    this.type = getSubscriptionType();
     this.enabled = true;
     this.notificationTypes = NotificationType.Subscribed;
-    this.sdk = Environment.version();
-    this.deviceModel = Environment.getDeviceModel();
-    this.deviceOs = Environment.getDeviceOS();
+    this.sdk = VERSION;
+    this.deviceModel = getDeviceModel();
+    this.deviceOs = getDeviceOS();
     this.webAuth = rawPushSubscription.w3cAuth;
     this.webp256 = rawPushSubscription.w3cP256dh;
   }

@@ -35,7 +35,7 @@ export interface ICreateUserIdentity {
 export interface ICreateUserSubscription {
   // app_version?: string; // For Mobile
   device_model?: string;
-  device_os?: number;
+  device_os?: string;
   enabled?: boolean;
   notification_types?: NotificationTypeValue;
   // rooted?: boolean; // For Android

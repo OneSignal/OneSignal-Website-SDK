@@ -139,7 +139,7 @@ export const createPushSub = ({
   const pushSubscription = new SubscriptionModel();
   pushSubscription.initializeFromJson({
     device_model: '',
-    device_os: 56,
+    device_os: '56',
     enabled: true,
     id,
     notification_types: NotificationType.Subscribed,

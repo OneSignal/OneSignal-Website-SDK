@@ -1,4 +1,5 @@
-import Environment from 'src/shared/helpers/Environment';
+import { getDeviceModel, getDeviceOS } from 'src/shared/environment';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import type { ISubscription } from '../types/api';
 import {
   type NotificationTypeValue,
@@ -27,9 +28,9 @@ type ISubscriptionModel = Pick<
 export class SubscriptionModel extends Model<ISubscriptionModel> {
   constructor() {
     super();
-    this.sdk = Environment.version();
-    this.device_model = Environment.getDeviceModel();
-    this.device_os = Environment.getDeviceOS();
+    this.sdk = VERSION;
+    this.device_model = getDeviceModel();
+    this.device_os = getDeviceOS();
   }
 
   /**
@@ -96,10 +97,10 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
     this.setProperty('device_model', value);
   }
 
-  get device_os(): number | undefined {
+  get device_os(): string | undefined {
     return this.getProperty('device_os');
   }
-  set device_os(value: number | undefined) {
+  set device_os(value: string | undefined) {
     this.setProperty('device_os', value);
   }
 

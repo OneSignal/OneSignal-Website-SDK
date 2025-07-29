@@ -1,5 +1,15 @@
+import {
+  SubscriptionType,
+  type SubscriptionTypeValue,
+} from 'src/core/types/subscription';
+import { EnvironmentInfoHelper } from 'src/page/helpers/EnvironmentInfoHelper';
+import {
+  DeliveryPlatformKind,
+  type DeliveryPlatformKindValue,
+} from '../models/DeliveryPlatformKind';
 import { bowserCastle } from '../utils/bowserCastle';
 import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import OneSignalUtils from '../utils/OneSignalUtils';
 import { EnvironmentKind } from './constants';
 
 export const isBrowser = typeof window !== 'undefined';
@@ -61,3 +71,45 @@ const isTurbineEndpoint = (action?: string): boolean => {
     (turbine_endpoint) => action.indexOf(turbine_endpoint) > -1,
   );
 };
+
+export const getSubscriptionType = (): SubscriptionTypeValue => {
+  const browser = OneSignalUtils.redetectBrowserUserAgent();
+  if (browser.firefox) {
+    return SubscriptionType.FirefoxPush;
+  }
+  if (useSafariVapidPush()) {
+    return SubscriptionType.SafariPush;
+  }
+  if (useSafariLegacyPush) {
+    return SubscriptionType.SafariLegacyPush;
+  }
+  // Other browsers, like Edge, are Chromium based so we consider them "Chrome".
+  return SubscriptionType.ChromePush;
+};
+
+/**
+ * Get the legacy player.device_type
+ * NOTE: Use getSubscriptionType() instead when possible.
+ */
+export function getDeviceType(): DeliveryPlatformKindValue {
+  switch (getSubscriptionType()) {
+    case SubscriptionType.FirefoxPush:
+      return DeliveryPlatformKind.Firefox;
+    case SubscriptionType.SafariLegacyPush:
+      return DeliveryPlatformKind.SafariLegacy;
+    case SubscriptionType.SafariPush:
+      return DeliveryPlatformKind.SafariVapid;
+  }
+  return DeliveryPlatformKind.ChromeLike;
+}
+
+export function getDeviceOS(): string {
+  const environment = EnvironmentInfoHelper.getEnvironmentInfo();
+  return String(
+    isNaN(environment.browserVersion) ? -1 : environment.browserVersion,
+  );
+}
+
+export function getDeviceModel(): string {
+  return navigator.platform;
+}

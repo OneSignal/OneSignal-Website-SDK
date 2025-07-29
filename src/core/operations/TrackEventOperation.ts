@@ -1,10 +1,10 @@
 import { IDManager } from 'src/shared/managers/IDManager';
 import { OPERATION_NAME } from '../constants';
-import { ICustomEvent } from '../types/customEvents';
+import type { ICustomEvent } from '../types/customEvents';
 import {
   GroupComparisonType,
-  GroupComparisonValue,
   Operation,
+  type GroupComparisonValue,
 } from './Operation';
 
 type OperationProps = {

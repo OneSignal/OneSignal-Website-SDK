@@ -2,8 +2,8 @@ import { NotificationType } from 'src/core/types/subscription';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import User from '../../onesignal/User';
 import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import OneSignalApiShared from '../api/OneSignalApiShared';
+import { getSubscriptionType } from '../environment';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
 import { SessionOrigin } from '../models/Session';
@@ -97,7 +97,7 @@ export class UpdateManager {
         direct: true,
         subscription: {
           id: pushSubscriptionModel.id,
-          type: FuturePushSubscriptionRecord.getSubscriptionType(),
+          type: getSubscriptionType(),
         },
       };
       if (value !== undefined) {
@@ -132,7 +132,7 @@ export class UpdateManager {
         direct: false,
         subscription: {
           id: pushSubscriptionModel.id,
-          type: FuturePushSubscriptionRecord.getSubscriptionType(),
+          type: getSubscriptionType(),
         },
       };
       if (value !== undefined) {
@@ -164,7 +164,7 @@ export class UpdateManager {
         app_id: appId,
         subscription: {
           id: pushSubscriptionModel.id,
-          type: FuturePushSubscriptionRecord.getSubscriptionType(),
+          type: getSubscriptionType(),
         },
       };
       if (value !== undefined) {

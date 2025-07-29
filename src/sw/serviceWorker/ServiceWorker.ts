@@ -40,8 +40,11 @@ import {
   NotificationType,
   type NotificationTypeValue,
 } from 'src/core/types/subscription';
-import type { AppConfig } from 'src/shared/models/AppConfig';
+import { type AppConfig, getServerAppConfig } from 'src/shared/config';
+import { getDeviceType } from 'src/shared/environment';
+import ContextSW from 'src/shared/models/ContextSW';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
 import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
@@ -349,7 +352,7 @@ export class ServiceWorker {
     const postData = {
       player_id: pushSubscriptionId,
       app_id: appId,
-      device_type: Environment.getDeviceType(),
+      device_type: getDeviceType(),
     };
 
     Log.debug(
@@ -791,7 +794,7 @@ export class ServiceWorker {
     const notificationOpensLink: boolean =
       ServiceWorker.shouldOpenNotificationUrl(launchUrl);
     const appId = await ServiceWorker.getAppId();
-    const deviceType = Environment.getDeviceType();
+    const deviceType = getDeviceType();
 
     const notificationClickEvent: NotificationClickEventInternal = {
       notification: osNotification,
@@ -1041,7 +1044,7 @@ export class ServiceWorker {
         // We don't have the device ID stored, but we can look it up from our old subscription
         deviceId = await OneSignalApiSW.getUserIdFromSubscriptionIdentifier(
           appId,
-          Environment.getDeviceType(),
+          getDeviceType(),
           event.oldSubscription.endpoint,
         );
 

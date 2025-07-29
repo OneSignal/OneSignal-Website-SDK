@@ -11,7 +11,7 @@ export interface ICustomEventController {
 
 export interface ICustomEventMetadata {
   device_model: string;
-  device_os: number;
+  device_os: string;
   sdk: string;
   type: SubscriptionTypeValue;
 }

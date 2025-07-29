@@ -1,4 +1,8 @@
-import Environment from 'src/shared/helpers/Environment';
+import {
+  getDeviceModel,
+  getDeviceOS,
+  getSubscriptionType,
+} from 'src/shared/environment';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -25,9 +29,9 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
   private get eventMetadata(): ICustomEventMetadata {
     return {
       sdk: VERSION,
-      device_model: Environment.getDeviceModel(),
-      device_os: Environment.getDeviceOS(),
-      type: Environment.getSubscriptionType(),
+      device_model: getDeviceModel(),
+      device_os: getDeviceOS(),
+      type: getSubscriptionType(),
     };
   }
 
