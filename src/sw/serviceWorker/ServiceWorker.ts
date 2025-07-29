@@ -15,23 +15,23 @@ import {
 } from 'src/shared/libraries/WorkerMessenger';
 import ContextSW from 'src/shared/models/ContextSW';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
-import {
-  type NotificationClickEventInternal,
-  type NotificationForegroundWillDisplayEventSerializable,
+import type {
+  NotificationClickEventInternal,
+  NotificationForegroundWillDisplayEventSerializable,
 } from 'src/shared/models/NotificationEvent';
-import {
-  type IMutableOSNotification,
-  type IOSNotification,
+import type {
+  IMutableOSNotification,
+  IOSNotification,
 } from 'src/shared/models/OSNotification';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
+import Database from 'src/shared/services/Database';
 import {
   type PageVisibilityRequest,
   type PageVisibilityResponse,
   SessionStatus,
   type UpsertOrDeactivateSessionPayload,
-} from 'src/shared/models/Session';
-import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
-import Database from 'src/shared/services/Database';
+} from 'src/shared/session';
 import { Browser, getBrowserName } from 'src/shared/useragent';
 import { awaitableTimeout } from 'src/shared/utils/AwaitableTimeout';
 import { VERSION } from 'src/shared/utils/EnvVariables';

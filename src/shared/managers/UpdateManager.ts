@@ -6,7 +6,7 @@ import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscri
 import OneSignalApiShared from '../api/OneSignalApiShared';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
-import { SessionOrigin } from '../models/Session';
+import { SessionOrigin } from '../session';
 import { logMethodCall } from '../utils/utils';
 
 export class UpdateManager {

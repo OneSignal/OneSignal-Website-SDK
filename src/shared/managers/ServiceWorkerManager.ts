@@ -17,12 +17,9 @@ import {
   type NotificationForegroundWillDisplayEventSerializable,
 } from '../models/NotificationEvent';
 import Path from '../models/Path';
-import {
-  type PageVisibilityRequest,
-  type PageVisibilityResponse,
-} from '../models/Session';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
+import type { PageVisibilityRequest, PageVisibilityResponse } from '../session';
 import { VERSION } from '../utils/EnvVariables';
 import OneSignalUtils from '../utils/OneSignalUtils';
 

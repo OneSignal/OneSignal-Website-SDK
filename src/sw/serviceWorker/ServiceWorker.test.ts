@@ -19,13 +19,6 @@ import {
 } from 'src/shared/managers/SubscriptionManager';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import {
-  ONESIGNAL_SESSION_KEY,
-  SessionOrigin,
-  SessionStatus,
-  type Session,
-  type UpsertOrDeactivateSessionPayload,
-} from 'src/shared/models/Session';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import Database, {
   TABLE_NOTIFICATION_OPENED,
@@ -33,6 +26,13 @@ import Database, {
   TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
   TABLE_SESSIONS,
 } from 'src/shared/services/Database';
+import {
+  ONESIGNAL_SESSION_KEY,
+  SessionOrigin,
+  SessionStatus,
+  type Session,
+  type UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session';
 import Log from '../libraries/Log';
 import { ServiceWorker } from './ServiceWorker';
 

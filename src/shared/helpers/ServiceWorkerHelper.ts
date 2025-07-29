@@ -8,15 +8,15 @@ import OneSignalApiSW from '../api/OneSignalApiSW';
 import Utils from '../context/Utils';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
+import type { OutcomesConfig } from '../outcomes/types';
+import Database from '../services/Database';
 import {
   initializeNewSession,
   type Session,
   SessionOrigin,
   type SessionOriginValue,
   SessionStatus,
-} from '../models/Session';
-import type { OutcomesConfig } from '../outcomes/types';
-import Database from '../services/Database';
+} from '../session';
 import { OneSignalUtils } from '../utils/OneSignalUtils';
 import OutcomesHelper from './OutcomesHelper';
 
