@@ -4,11 +4,28 @@ import type { BrowserValue } from './types';
 export function getBrowserName(): BrowserValue {
   const ua = navigator.userAgent.toLowerCase();
 
-  if (ua.includes('edg/')) return Browser.Edge;
-  if (ua.includes('chrome/') && !ua.includes('edg/') && !ua.includes('opr/'))
+  if (ua.includes('edg/') || ua.includes('edge/')) return Browser.Edge;
+  if (
+    (ua.includes('safari/') || ua.includes('applewebkit/')) &&
+    !ua.includes('chrome/')
+  )
+    return Browser.Safari;
+
+  if (
+    ua.includes('chrome/') &&
+    !ua.includes('edg/') &&
+    !ua.includes('edge/') &&
+    !ua.includes('opr/') &&
+    !ua.includes('opera/') &&
+    !ua.includes('yabrowser/') &&
+    !ua.includes('samsungbrowser/') &&
+    !ua.includes('ucbrowser/') &&
+    !ua.includes('vivaldi/')
+  )
     return Browser.Chrome;
-  if (ua.includes('safari/') && !ua.includes('chrome/')) return Browser.Safari;
+
   if (ua.includes('firefox/')) return Browser.Firefox;
+
   return Browser.Other;
 }
 
@@ -35,12 +52,13 @@ export function getBrowserVersion(): number {
 }
 
 export function isMobileBrowser(): boolean {
-  const ua = navigator.userAgent;
-  return /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(ua);
+  const ua = navigator.userAgent.toLowerCase();
+  if (isTabletBrowser(ua)) return false;
+  return /android|ipad|iphone|ipod|opera mini|iemobile|mobile/.test(ua);
 }
 
-export function isTabletBrowser(): boolean {
-  const ua = navigator.userAgent.toLowerCase();
+export function isTabletBrowser(ua: string = navigator.userAgent): boolean {
+  ua = ua.toLowerCase();
 
   const isIPad = /\bipad\b/.test(ua);
   const isAndroidTablet = /android/.test(ua) && !/mobile/.test(ua); // Android tablets don't include "mobile"

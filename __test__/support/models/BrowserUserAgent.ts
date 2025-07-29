@@ -19,7 +19,7 @@ const BrowserUserAgent = {
   FirefoxMobileSupported:
     'Mozilla/5.0 (Android 4.4; Mobile; rv:44.0) Gecko/48.0 Firefox/48.0',
   FirefoxTabletSupported:
-    'Mozilla/5.0 (Android 4.4; Mobile ; rv:44.0) Gecko/48.0 Firefox/48.0',
+    'Mozilla/5.0 (Android 4.4; Tablet; rv:44.0) Gecko/48.0 Firefox/48.0',
   FirefoxWindowsUnSupported:
     'Mozilla/5.0 (Windows NT x.y; WOW64; rv:44.0) Gecko/20100101 Firefox/44.0',
   FirefoxWindowsSupported:
