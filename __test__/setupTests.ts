@@ -24,3 +24,9 @@ vi.mock('src/core/operationRepo/constants', () => ({
   OP_REPO_EXECUTION_INTERVAL: 5,
   OP_REPO_POST_CREATE_RETRY_UP_TO: 10,
 }));
+
+Object.defineProperty(navigator, 'userAgent', {
+  value:
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.0.0 Safari/537.36',
+  writable: true,
+});

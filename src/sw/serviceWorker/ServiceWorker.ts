@@ -1,54 +1,50 @@
-import OneSignalApiBase from '../../../src/shared/api/OneSignalApiBase';
-import OneSignalApiSW from '../../../src/shared/api/OneSignalApiSW';
+import {
+  NotificationType,
+  type NotificationTypeValue,
+} from 'src/core/types/subscription';
+import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
+import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
+import { type AppConfig, getServerAppConfig } from 'src/shared/config';
+import { Utils } from 'src/shared/context/Utils';
+import ServiceWorkerHelper from 'src/shared/helpers/ServiceWorkerHelper';
 import {
   WorkerMessenger,
   WorkerMessengerCommand,
   type WorkerMessengerMessage,
-} from '../../../src/shared/libraries/WorkerMessenger';
-import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
-import { Utils } from '../../shared/context/Utils';
-import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
+} from 'src/shared/libraries/WorkerMessenger';
+import ContextSW from 'src/shared/models/ContextSW';
+import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
 import {
   type NotificationClickEventInternal,
   type NotificationForegroundWillDisplayEventSerializable,
-} from '../../shared/models/NotificationEvent';
+} from 'src/shared/models/NotificationEvent';
 import {
   type IMutableOSNotification,
   type IOSNotification,
-} from '../../shared/models/OSNotification';
+} from 'src/shared/models/OSNotification';
+import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import {
   type PageVisibilityRequest,
   type PageVisibilityResponse,
   SessionStatus,
   type UpsertOrDeactivateSessionPayload,
-} from '../../shared/models/Session';
-import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
-import Database from '../../shared/services/Database';
-import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
+} from 'src/shared/models/Session';
+import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
+import Database from 'src/shared/services/Database';
+import { Browser, getBrowserName } from 'src/shared/useragent';
+import { awaitableTimeout } from 'src/shared/utils/AwaitableTimeout';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
+import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import Log from '../libraries/Log';
 import {
   type OSMinifiedNotificationPayload,
   OSMinifiedNotificationPayloadHelper,
 } from '../models/OSMinifiedNotificationPayload';
-import {
-  type OSServiceWorkerFields,
-  type SubscriptionChangeEvent,
-} from './types';
-
-import {
-  NotificationType,
-  type NotificationTypeValue,
-} from 'src/core/types/subscription';
-import { type AppConfig, getServerAppConfig } from 'src/shared/config';
-import { getDeviceType } from 'src/shared/environment';
-import ContextSW from 'src/shared/models/ContextSW';
-import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
-import { Browser, getBrowserName } from 'src/shared/useragent';
-import { VERSION } from 'src/shared/utils/EnvVariables';
-import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
 import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
+import type { OSServiceWorkerFields, SubscriptionChangeEvent } from './types';
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 

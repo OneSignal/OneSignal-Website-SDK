@@ -198,11 +198,6 @@ describe('ServiceWorker', () => {
     });
 
     test('should confirm delivery', async () => {
-      mockBowser.mockReturnValue({
-        name: 'Chrome',
-        version: '130',
-      });
-
       const payload = mockOSMinifiedNotificationPayload({
         custom: {
           rr: 'y',
@@ -729,15 +724,6 @@ vi.mock('../helpers/ModelCacheDirectAccess', () => ({
       .fn()
       .mockImplementation(() => pushSubscriptionId),
   },
-}));
-
-// -- browser info mock
-const mockBowser = vi.fn().mockReturnValue({
-  name: 'Safari',
-  version: '18',
-});
-vi.mock('../../../src/shared/utils/bowserCastle', () => ({
-  bowserCastle: () => mockBowser(),
 }));
 
 // -- awaitable timeout mock
