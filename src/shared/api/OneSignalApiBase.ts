@@ -4,10 +4,9 @@ import {
   OneSignalApiErrorKind,
 } from '../errors/OneSignalApiError';
 import OneSignalError from '../errors/OneSignalError';
-import { isValidUuid } from '../helpers/general';
+import { delay, isValidUuid } from '../helpers/general';
 import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';
-import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/EnvVariables';
 import type OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';
@@ -122,7 +121,7 @@ export class OneSignalApiBase {
       };
     } catch (e) {
       if (e instanceof Error && e.name === 'TypeError') {
-        await awaitableTimeout(RETRY_BACKOFF[retry]);
+        await delay(RETRY_BACKOFF[retry]);
         Log.error(
           `OneSignal: Network timed out while calling ${url}. Retrying...`,
         );

@@ -1,17 +1,15 @@
-import type { BellSize } from 'src/shared/prompts';
 import {
   InvalidStateError,
   InvalidStateReason,
-} from '../../shared/errors/InvalidStateError';
-import Log from '../../shared/libraries/Log';
+} from 'src/shared/errors/InvalidStateError';
 import {
   addCssClass,
-  contains,
   hasCssClass,
-  nothing,
-  once,
   removeCssClass,
-} from '../../shared/utils/utils';
+} from 'src/shared/helpers/dom';
+import Log from 'src/shared/libraries/Log';
+import type { BellSize } from 'src/shared/prompts';
+import { contains, nothing, once } from 'src/shared/utils/utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Bell from './Bell';
 

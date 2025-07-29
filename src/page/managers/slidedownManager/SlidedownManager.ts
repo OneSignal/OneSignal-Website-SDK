@@ -1,4 +1,5 @@
 import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags';
+import { delay } from 'src/shared/helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -24,7 +25,6 @@ import PromptsHelper from '../../../shared/helpers/PromptsHelper';
 import Log from '../../../shared/libraries/Log';
 import { NotificationPermission } from '../../../shared/models/NotificationPermission';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
-import { awaitableTimeout } from '../../../shared/utils/AwaitableTimeout';
 import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';
 import TagUtils from '../../../shared/utils/TagUtils';
 import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
@@ -279,10 +279,10 @@ export class SlidedownManager {
     if (!confirmMessage) {
       return;
     }
-    await awaitableTimeout(1000);
+    await delay(1000);
     const confirmationToast = new ConfirmationToast(confirmMessage);
     await confirmationToast.show();
-    await awaitableTimeout(5000);
+    await delay(5000);
     confirmationToast.close();
     ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
   }
@@ -418,7 +418,7 @@ export class SlidedownManager {
         await this.showConfirmationToast();
       }
       // timeout to allow slidedown close animation to finish in case another slidedown is queued
-      await awaitableTimeout(1000);
+      await delay(1000);
 
       Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
     }

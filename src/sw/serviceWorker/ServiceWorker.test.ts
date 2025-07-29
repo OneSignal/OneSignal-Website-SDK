@@ -205,6 +205,8 @@ describe('ServiceWorker', () => {
       });
       await dispatchEvent(new PushEvent('push', payload));
 
+      await vi.runOnlyPendingTimersAsync();
+
       expect(apiPutSpy).toHaveBeenCalledWith(
         `notifications/${payload.custom.i}/report_received`,
         {

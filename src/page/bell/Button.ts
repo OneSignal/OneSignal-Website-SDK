@@ -1,10 +1,10 @@
-import { removeDomElement, addDomElement } from '../../shared/utils/utils';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
+import { addDomElement, removeDomElement } from 'src/shared/helpers/dom';
+import InitHelper from 'src/shared/helpers/InitHelper';
+import LimitStore from 'src/shared/services/LimitStore';
+import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Bell from './Bell';
-import LimitStore from '../../shared/services/LimitStore';
 import Message from './Message';
-import InitHelper from '../../shared/helpers/InitHelper';
 
 export default class Button extends ActiveAnimatedElement {
   public events: any;

@@ -1,11 +1,7 @@
+import { addCssClass, removeCssClass } from 'src/shared/helpers/dom';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import {
-  addCssClass,
-  contains,
-  once,
-  removeCssClass,
-} from '../../shared/utils/utils';
+import { contains, once } from '../../shared/utils/utils';
 
 export default class AnimatedElement {
   public selector: string;

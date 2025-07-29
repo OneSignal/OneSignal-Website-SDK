@@ -1,15 +1,12 @@
+import { addDomElement, clearDomElementChildren } from 'src/shared/helpers/dom';
 import {
   Browser,
   getBrowserName,
   isMobileBrowser,
   isTabletBrowser,
 } from 'src/shared/useragent';
+import { getPlatformNotificationIcon } from 'src/shared/utils/utils';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import {
-  addDomElement,
-  clearDomElementChildren,
-  getPlatformNotificationIcon,
-} from '../../shared/utils/utils';
 import type { NotificationIcons } from '../models/NotificationIcons';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
