@@ -38,7 +38,7 @@ describe('CoreModuleDirector tests', () => {
         'getPushSubscriptionModelByLastKnownToken',
         // @ts-expect-error - private method
       ).mockResolvedValue(pushModelLastKnown);
-      expect(await getPushSubscriptionModel()).toBe(pushModelLastKnown);
+      expect(await getPushSubscriptionModel()).toEqual(pushModelLastKnown);
     });
 
     test('returns current subscription over last known', async () => {
