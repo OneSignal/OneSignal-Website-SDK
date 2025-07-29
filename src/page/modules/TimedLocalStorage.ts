@@ -58,6 +58,7 @@ export default class TimedLocalStorage {
     const record = localStorage.getItem(key);
     let parsedRecord;
     try {
+      // @ts-expect-error - we have this in a try catch
       parsedRecord = JSON.parse(record);
     } catch (e) {
       return null;
@@ -86,7 +87,7 @@ export default class TimedLocalStorage {
   /**
    * Removes an item from LocalStorage.
    */
-  public static removeItem(key: string): void {
+  public static removeItem(key: string): null | void {
     if (!TimedLocalStorage.isLocalStorageSupported()) {
       return null;
     }

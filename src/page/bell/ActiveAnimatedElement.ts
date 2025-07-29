@@ -9,6 +9,11 @@ import {
 import AnimatedElement from './AnimatedElement';
 
 export default class ActiveAnimatedElement extends AnimatedElement {
+  public activeClass: string | undefined;
+  public inactiveClass: string | undefined;
+  public activeState: string | undefined;
+  public nestedContentSelector: string | undefined;
+
   /**
    * Abstracts common DOM operations like hiding and showing transitionable elements into chainable promises.
    * @param selector {string} The CSS selector of the element.
@@ -22,17 +27,21 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
    */
   constructor(
-    public selector: string,
-    public showClass: string | undefined,
-    public hideClass: string | undefined,
-    public activeClass: string | undefined,
-    public inactiveClass: string | undefined,
-    public state = 'shown',
-    public activeState = 'active',
-    public targetTransitionEvents = ['opacity', 'transform'],
-    public nestedContentSelector?: string,
+    selector: string,
+    showClass: string | undefined,
+    hideClass: string | undefined,
+    activeClass: string | undefined,
+    inactiveClass: string | undefined,
+    state = 'shown',
+    activeState = 'active',
+    targetTransitionEvents = ['opacity', 'transform'],
+    nestedContentSelector?: string,
   ) {
     super(selector, showClass, hideClass, state, targetTransitionEvents);
+    this.activeClass = activeClass;
+    this.inactiveClass = inactiveClass;
+    this.activeState = activeState;
+    this.nestedContentSelector = nestedContentSelector;
   }
 
   /**

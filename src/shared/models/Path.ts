@@ -51,12 +51,4 @@ export default class Path {
   getFullPath() {
     return this.path;
   }
-
-  getPathWithoutFileName() {
-    const newPath = this.getWithoutQueryString();
-    const fileNameIndex = newPath.lastIndexOf(this.getFileName());
-    let pathWithoutFileName = newPath.substring(0, fileNameIndex);
-    pathWithoutFileName = pathWithoutFileName.replace(/[\\/]$/, '');
-    return pathWithoutFileName;
-  }
 }

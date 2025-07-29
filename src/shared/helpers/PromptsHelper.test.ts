@@ -1,4 +1,7 @@
-import { DelayedPromptType, SlidedownPromptOptions } from '../models/Prompts';
+import {
+  DelayedPromptType,
+  type SlidedownPromptOptions,
+} from '../models/Prompts';
 import PromptsHelper from './PromptsHelper';
 
 describe('PromptsHelper', () => {

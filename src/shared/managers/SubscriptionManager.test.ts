@@ -1,5 +1,4 @@
-import { APP_ID, DUMMY_EXTERNAL_ID } from '__test__/support/constants';
-import TestContext from '__test__/support/environment/TestContext';
+import { DUMMY_EXTERNAL_ID } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
@@ -10,19 +9,9 @@ import {
   getSubscriptionFn,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
-import ContextSW from '../models/ContextSW';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
-import {
-  SubscriptionManager,
-  type SubscriptionManagerConfig,
-} from './SubscriptionManager';
-
-const subConfig: SubscriptionManagerConfig = {
-  appId: APP_ID,
-  vapidPublicKey: '',
-  onesignalVapidPublicKey: '',
-};
+import { updatePushSubscriptionModelWithRawSubscription } from './SubscriptionManager';
 
 const getRawSubscription = (): RawPushSubscription => {
   const rawSubscription = new RawPushSubscription();
@@ -42,8 +31,6 @@ describe('SubscriptionManager', () => {
   describe('updatePushSubscriptionModelWithRawSubscription', () => {
     test('should create the push subscription model if it does not exist', async () => {
       setCreateUserResponse();
-      const context = new ContextSW(TestContext.getFakeMergedConfig());
-      const subscriptionManager = new SubscriptionManager(context, subConfig);
       const rawSubscription = getRawSubscription();
 
       let subModels =
@@ -55,9 +42,7 @@ describe('SubscriptionManager', () => {
         rawSubscription.w3cEndpoint?.toString(),
       );
 
-      await subscriptionManager._updatePushSubscriptionModelWithRawSubscription(
-        rawSubscription,
-      );
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
       subModels = await OneSignal.coreDirector.subscriptionModelStore.list();
       expect(subModels.length).toBe(1);
@@ -70,7 +55,7 @@ describe('SubscriptionManager', () => {
         device_os: 56,
         enabled: true,
         notification_types: 1,
-        sdk: '1',
+        sdk: __VERSION__,
         token: rawSubscription.w3cEndpoint?.toString(),
         type: 'ChromePush',
         web_auth: rawSubscription.w3cAuth,
@@ -91,7 +76,7 @@ describe('SubscriptionManager', () => {
             device_os: 56,
             enabled: true,
             notification_types: 1,
-            sdk: '1',
+            sdk: __VERSION__,
             token: rawSubscription.w3cEndpoint?.toString(),
             type: 'ChromePush',
             web_auth: rawSubscription.w3cAuth,
@@ -114,9 +99,6 @@ describe('SubscriptionManager', () => {
         externalId: 'some-external-id',
       });
 
-      const context = new ContextSW(TestContext.getFakeMergedConfig());
-      const subscriptionManager = new SubscriptionManager(context, subConfig);
-
       // create push sub with no id
       const identityModel = OneSignal.coreDirector.getIdentityModel();
       identityModel.onesignalId = IDManager.createLocalId();
@@ -128,9 +110,7 @@ describe('SubscriptionManager', () => {
         onesignalId: identityModel.onesignalId,
       });
 
-      await subscriptionManager._updatePushSubscriptionModelWithRawSubscription(
-        rawSubscription,
-      );
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
       // should not call generatePushSubscriptionModelSpy
       expect(generatePushSubscriptionModelSpy).not.toHaveBeenCalled();
@@ -150,7 +130,7 @@ describe('SubscriptionManager', () => {
             device_os: 56,
             enabled: true,
             notification_types: 1,
-            sdk: '1',
+            sdk: __VERSION__,
             token: rawSubscription.w3cEndpoint?.toString(),
             type: 'ChromePush',
           },
@@ -160,8 +140,6 @@ describe('SubscriptionManager', () => {
 
     test('should update the push subscription model if it already exists', async () => {
       setCreateUserResponse();
-      const context = new ContextSW(TestContext.getFakeMergedConfig());
-      const subscriptionManager = new SubscriptionManager(context, subConfig);
       const rawSubscription = getRawSubscription();
 
       await OneSignal.database.setPushToken(
@@ -176,9 +154,7 @@ describe('SubscriptionManager', () => {
       pushModel.web_auth = 'old-web-auth';
       pushModel.web_p256 = 'old-web-p256';
 
-      await subscriptionManager._updatePushSubscriptionModelWithRawSubscription(
-        rawSubscription,
-      );
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
       const updatedPushModel =
         (await OneSignal.coreDirector.getPushSubscriptionModel())!;

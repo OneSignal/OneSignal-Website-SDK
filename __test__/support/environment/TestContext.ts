@@ -1,21 +1,22 @@
 import deepmerge from 'deepmerge';
 import ConfigManager from '../../../src/page/managers/ConfigManager';
-import { RecursivePartial } from '../../../src/shared/context/Utils';
+import { type RecursivePartial } from '../../../src/shared/context/Utils';
 import {
-  AppConfig,
-  AppUserConfig,
+  type AppConfig,
+  type AppUserConfig,
   ConfigIntegrationKind,
+  type ConfigIntegrationKindValue,
   NotificationClickActionBehavior,
   NotificationClickMatchBehavior,
-  ServerAppConfig,
+  type ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
 import { DelayedPromptType } from '../../../src/shared/models/Prompts';
 import { APP_ID } from '../constants';
-import { TestEnvironmentConfig } from './TestEnvironment';
+import { type TestEnvironmentConfig } from './TestEnvironment';
 
 export default class TestContext {
   static getFakeServerAppConfig(
-    configIntegrationKind: ConfigIntegrationKind,
+    configIntegrationKind: ConfigIntegrationKindValue,
     overrideServerConfig: RecursivePartial<ServerAppConfig> | null = null,
     appId: string = APP_ID,
   ): ServerAppConfig {
@@ -341,10 +342,7 @@ export default class TestContext {
       };
     }
 
-    return deepmerge(
-      (<ServerAppConfig>remoteConfigMockDefaults) as Partial<ServerAppConfig>,
-      overrideServerConfig || {},
-    );
+    return deepmerge(remoteConfigMockDefaults, overrideServerConfig || {});
   }
 
   static getFakeAppUserConfig(appId: string = APP_ID): AppUserConfig {

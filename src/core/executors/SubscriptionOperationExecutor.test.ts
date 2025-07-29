@@ -11,7 +11,7 @@ import { SomeOperation } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Database from 'src/shared/services/Database';
-import { MockInstance } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -197,7 +197,7 @@ describe('SubscriptionOperationExecutor', () => {
           enabled: false,
           notification_types: NotificationType.UserOptedOut,
           token: 'new-token',
-          sdk: '1',
+          sdk: __VERSION__,
           type: SubscriptionType.ChromePush,
         },
       });

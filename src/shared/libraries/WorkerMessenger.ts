@@ -2,19 +2,19 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 import type { Serializable } from '../../page/models/Serializable';
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
-import Environment from '../helpers/Environment';
+import { supportsServiceWorkers } from '../helpers/environment';
 import type { ContextSWInterface } from '../models/ContextSW';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import Log from './Log';
+
+declare let self: ServiceWorkerGlobalScope;
 
 /**
  * NOTE: This file contains a mix of code that runs in ServiceWorker and Page contexts
  */
-
 export const WorkerMessengerCommand = {
   WorkerVersion: 'GetWorkerVersion',
   Subscribe: 'Subscribe',
@@ -133,12 +133,12 @@ export class WorkerMessenger {
     command: WorkerMessengerCommandValue,
     payload: WorkerMessengerPayload,
   ) {
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker)
-      return;
+    if (!IS_SERVICE_WORKER) return;
 
-    const clients = await (<ServiceWorkerGlobalScope>(
-      (<any>self)
-    )).clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const clients = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    });
     for (const client of clients) {
       Log.debug(
         `[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${
@@ -163,9 +163,7 @@ export class WorkerMessenger {
     payload?: WorkerMessengerPayload,
     windowClient?: Client,
   ) {
-    const env = SdkEnvironment.getWindowEnv();
-
-    if (env === WindowEnvironmentKind.ServiceWorker) {
+    if (IS_SERVICE_WORKER) {
       if (!windowClient) {
         throw new InvalidArgumentError(
           'windowClient',
@@ -229,11 +227,8 @@ export class WorkerMessenger {
    * service worker.
    */
   public async listen() {
-    if (!Environment.supportsServiceWorkers()) return;
-
-    const env = SdkEnvironment.getWindowEnv();
-
-    if (env === WindowEnvironmentKind.ServiceWorker) {
+    if (!supportsServiceWorkers()) return;
+    if (IS_SERVICE_WORKER) {
       self.addEventListener(
         'message',
         this.onWorkerMessageReceivedFromPage.bind(this),
@@ -257,7 +252,7 @@ export class WorkerMessenger {
     );
   }
 
-  onWorkerMessageReceivedFromPage(event: MessageEvent) {
+  onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */

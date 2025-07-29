@@ -1,8 +1,8 @@
-import { DelayedPromptType } from '../../shared/models/Prompts';
 import OneSignalError from '../../shared/errors/OneSignalError';
+import { type DelayedPromptTypeValue } from '../../shared/models/Prompts';
 
 export default class PermissionMessageDismissedError extends OneSignalError {
-  constructor(type?: DelayedPromptType) {
+  constructor(type?: DelayedPromptTypeValue) {
     super(
       `The permission message of type ${
         type || 'unknown'

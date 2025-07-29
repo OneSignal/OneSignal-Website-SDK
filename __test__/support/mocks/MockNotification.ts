@@ -1,3 +1,5 @@
+import type { NotificationAction } from 'src/shared/models/OSNotification';
+
 // This is a mock for the w3c Notification
 export default class MockNotification implements Notification {
   readonly body: string;

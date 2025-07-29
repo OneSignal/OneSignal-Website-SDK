@@ -26,7 +26,7 @@ import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
-import { SubscriptionWithAppId } from '../operations/BaseFullSubscriptionOperation';
+import type { SubscriptionWithAppId } from '../operations/BaseFullSubscriptionOperation';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
@@ -355,7 +355,7 @@ describe('LoginUserOperationExecutor', () => {
           {
             device_model: '',
             device_os: 56,
-            sdk: '1',
+            sdk: __VERSION__,
             token: mockSubscriptionOpInfo.token,
             type: mockSubscriptionOpInfo.type,
           },
@@ -396,7 +396,7 @@ describe('LoginUserOperationExecutor', () => {
             {
               device_model: '',
               device_os: 56,
-              sdk: '1',
+              sdk: __VERSION__,
               type: mockSubscriptionOpInfo.type,
               ...updates,
             },
@@ -444,7 +444,7 @@ describe('LoginUserOperationExecutor', () => {
               device_model: '',
               device_os: 56,
               id: DUMMY_SUBSCRIPTION_ID,
-              sdk: '1',
+              sdk: __VERSION__,
               type: mockSubscriptionOpInfo.type,
               token: mockSubscriptionOpInfo.token,
             },

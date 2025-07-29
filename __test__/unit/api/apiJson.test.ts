@@ -1,6 +1,6 @@
 import OneSignal from '../../../src/onesignal/OneSignal';
 import { matchApiToSpec } from '../../support/helpers/api';
-import { OneSignalWithIndex } from './OneSignalWithIndex';
+import type { OneSignalWithIndex } from './OneSignalWithIndex';
 
 describe('API matches spec file', () => {
   let OneSignalWithIndex: OneSignalWithIndex;

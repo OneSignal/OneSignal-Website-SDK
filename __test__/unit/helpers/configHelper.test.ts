@@ -1,7 +1,7 @@
 import { APP_ID } from '__test__/support/constants';
 import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
 import {
-  AppUserConfig,
+  type AppUserConfig,
   ConfigIntegrationKind,
 } from '../../../src/shared/models/AppConfig';
 import TestContext from '../../support/environment/TestContext';

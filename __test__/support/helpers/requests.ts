@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { ISubscription, IUserProperties } from 'src/core/types/api';
+import { type ISubscription, type IUserProperties } from 'src/core/types/api';
 import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
 import {
   APP_ID,

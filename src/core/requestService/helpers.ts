@@ -1,4 +1,4 @@
-import { APIHeaders } from '../../shared/models/APIHeaders';
+import { type APIHeaders } from '../../shared/models/APIHeaders';
 import Database from '../../shared/services/Database';
 
 // TODO: Remove with web sdk refactor work

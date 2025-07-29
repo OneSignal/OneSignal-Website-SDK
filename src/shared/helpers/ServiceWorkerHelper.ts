@@ -280,6 +280,8 @@ export const ServiceWorkerActiveState = {
    */
   None: 'None',
 } as const;
+export type ServiceWorkerActiveStateValue =
+  (typeof ServiceWorkerActiveState)[keyof typeof ServiceWorkerActiveState];
 
 export interface ServiceWorkerManagerConfig {
   /**

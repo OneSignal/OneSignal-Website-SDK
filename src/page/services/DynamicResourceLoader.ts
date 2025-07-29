@@ -1,5 +1,15 @@
-import { VERSION } from 'src/shared/utils/EnvVariables';
-import SdkEnvironment from '../../shared/managers/SdkEnvironment';
+import {
+  InvalidArgumentError,
+  InvalidArgumentReason,
+} from 'src/shared/errors/InvalidArgumentError';
+import { EnvironmentKind } from 'src/shared/helpers/environment';
+import {
+  BUILD_ORIGIN,
+  BUILD_TYPE,
+  IS_HTTPS,
+  NO_DEV_PORT,
+  VERSION,
+} from 'src/shared/utils/EnvVariables';
 
 export const ResourceType = {
   Stylesheet: 0,
@@ -27,6 +37,43 @@ interface DynamicResourceLoaderCache {
   [key: string]: Promise<ResourceLoadStateValue>;
 }
 
+const getOneSignalCssFileName = () => {
+  const baseFileName = 'OneSignalSDK.page.styles.css';
+
+  // using if statements to have better dead code elimination
+  if (BUILD_TYPE === EnvironmentKind.Development) return `Dev-${baseFileName}`;
+
+  if (BUILD_TYPE === EnvironmentKind.Staging) return `Staging-${baseFileName}`;
+
+  if (BUILD_TYPE === EnvironmentKind.Production) return baseFileName;
+};
+
+const RESOURCE_HTTP_PORT = 4000;
+const RESOURCE_HTTPS_PORT = 4001;
+
+const getOneSignalResourceUrlPath = () => {
+  const protocol = IS_HTTPS ? 'https' : 'http';
+  const port = IS_HTTPS ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;
+  let origin: string;
+
+  // using if statements to have better dead code elimination
+  if (BUILD_TYPE === EnvironmentKind.Development) {
+    origin = NO_DEV_PORT
+      ? `${protocol}://${BUILD_ORIGIN}`
+      : `${protocol}://${BUILD_ORIGIN}:${port}`;
+  } else if (BUILD_TYPE === EnvironmentKind.Staging) {
+    origin = `https://${BUILD_ORIGIN}`;
+  } else if (BUILD_TYPE === EnvironmentKind.Production) {
+    origin = 'https://onesignal.com';
+  } else {
+    throw new InvalidArgumentError(
+      'buildEnv',
+      InvalidArgumentReason.EnumOutOfRange,
+    );
+  }
+  return new URL(`${origin}/sdks/web/v16`);
+};
+
 export class DynamicResourceLoader {
   private cache: DynamicResourceLoaderCache;
 
@@ -40,8 +87,8 @@ export class DynamicResourceLoader {
   }
 
   async loadSdkStylesheet(): Promise<ResourceLoadStateValue> {
-    const pathForEnv = SdkEnvironment.getOneSignalResourceUrlPath();
-    const cssFileForEnv = SdkEnvironment.getOneSignalCssFileName();
+    const pathForEnv = getOneSignalResourceUrlPath();
+    const cssFileForEnv = getOneSignalCssFileName();
     return this.loadIfNew(
       ResourceType.Stylesheet,
       new URL(`${pathForEnv}/${cssFileForEnv}?v=${VERSION}`),

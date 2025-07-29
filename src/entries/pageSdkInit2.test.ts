@@ -19,7 +19,7 @@ import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelName } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import Database, { SubscriptionItem } from 'src/shared/services/Database';
+import Database, { type SubscriptionItem } from 'src/shared/services/Database';
 
 describe('pageSdkInit 2', () => {
   beforeEach(async () => {
@@ -109,7 +109,7 @@ describe('pageSdkInit 2', () => {
       enabled: true,
       modelName: 'subscriptions',
       notification_types: 1,
-      sdk: '1',
+      sdk: __VERSION__,
     };
     expect(subscriptions).toEqual([
       {

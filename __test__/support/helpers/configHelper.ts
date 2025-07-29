@@ -1,8 +1,8 @@
 import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
 import {
-  AppConfig,
+  type AppConfig,
   ConfigIntegrationKind,
-  ServerAppConfig,
+  type ServerAppConfig,
 } from '../../../src/shared/models/AppConfig';
 import TestContext from '../environment/TestContext';
 
@@ -20,7 +20,7 @@ export async function getFinalAppConfig(
     ConfigIntegrationKind.Custom,
   );
   fakeUserConfig.appId = fakeServerConfig.app_id;
-  const getFakeServerConfig = (appId: string) =>
+  const getFakeServerConfig = () =>
     new Promise<ServerAppConfig>((resolve) => {
       resolve(fakeServerConfig);
     });

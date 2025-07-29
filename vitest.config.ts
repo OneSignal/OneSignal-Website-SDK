@@ -10,7 +10,7 @@ export default defineConfig({
     __IS_HTTPS__: JSON.stringify(true),
     __LOGGING__: JSON.stringify(false),
     __NO_DEV_PORT__: JSON.stringify(true),
-    __VERSION__: JSON.stringify('1'),
+    __VERSION__: JSON.stringify('160000'),
   },
   resolve: {
     alias: {

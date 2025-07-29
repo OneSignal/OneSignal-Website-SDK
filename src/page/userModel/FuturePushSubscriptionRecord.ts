@@ -6,10 +6,16 @@ import {
   NotificationType,
   SubscriptionType,
 } from 'src/core/types/subscription';
+import {
+  useSafariLegacyPush,
+  useSafariVapidPush,
+} from 'src/shared/helpers/environment';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { VERSION } from 'src/shared/utils/EnvVariables';
-import Environment from '../../shared/helpers/Environment';
-import { DeliveryPlatformKind } from '../../shared/models/DeliveryPlatformKind';
+import {
+  DeliveryPlatformKind,
+  type DeliveryPlatformKindValue,
+} from '../../shared/models/DeliveryPlatformKind';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
 import type { Serializable } from '../models/Serializable';
@@ -69,10 +75,10 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     if (browser.firefox) {
       return SubscriptionType.FirefoxPush;
     }
-    if (Environment.useSafariVapidPush()) {
+    if (useSafariVapidPush()) {
       return SubscriptionType.SafariPush;
     }
-    if (Environment.useSafariLegacyPush()) {
+    if (useSafariLegacyPush) {
       return SubscriptionType.SafariLegacyPush;
     }
     // Other browsers, like Edge, are Chromium based so we consider them "Chrome".
@@ -83,7 +89,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
    * Get the legacy player.device_type
    * NOTE: Use getSubscriptionType() instead when possible.
    */
-  public static getDeviceType(): DeliveryPlatformKind {
+  public static getDeviceType(): DeliveryPlatformKindValue {
     switch (this.getSubscriptionType()) {
       case SubscriptionType.FirefoxPush:
         return DeliveryPlatformKind.Firefox;

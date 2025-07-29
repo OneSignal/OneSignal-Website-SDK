@@ -11,7 +11,6 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { NotificationType } from 'src/core/types/subscription';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
-import Environment from 'src/shared/helpers/Environment';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
 import {
   DEFAULT_DEVICE_ID,
@@ -45,10 +44,20 @@ declare const self: ServiceWorkerGlobalScope;
 const endpoint = 'https://example.com';
 const appId = APP_ID;
 const notificationId = 'test-notification-id';
-const version = '1';
+const version = __VERSION__;
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
+
+let { isServiceWorker } = vi.hoisted(() => {
+  return { isServiceWorker: false };
+});
+vi.mock('src/shared/utils/EnvVariables', async (importOriginal) => ({
+  ...(await importOriginal()),
+  get IS_SERVICE_WORKER() {
+    return isServiceWorker;
+  },
+}));
 
 const dispatchEvent = async (event: Event) => {
   self.dispatchEvent(event);
@@ -81,6 +90,7 @@ describe('ServiceWorker', () => {
   });
 
   beforeEach(async () => {
+    isServiceWorker = false;
     await Database.cleanupCurrentSession();
     await Database.put('Ids', {
       type: 'appId',
@@ -95,13 +105,6 @@ describe('ServiceWorker', () => {
 
     // @ts-expect-error - for setting sdk env to SW
     global.ServiceWorkerGlobalScope = {};
-  });
-
-  test('should have basic properties', () => {
-    expect(ServiceWorker.VERSION).toBe(version);
-    expect(ServiceWorker.environment).toBe(Environment);
-    expect(ServiceWorker.database).toBe(Database);
-    expect(ServiceWorker.log).toBe(Log);
   });
 
   describe('getAppId', () => {
@@ -597,6 +600,10 @@ describe('ServiceWorker', () => {
       optedOut: false,
       subscriptionToken: endpoint + '/',
     };
+
+    beforeEach(async () => {
+      isServiceWorker = true;
+    });
 
     test('should send worker version message', async () => {
       const event = new ExtendableMessageEvent('message', {

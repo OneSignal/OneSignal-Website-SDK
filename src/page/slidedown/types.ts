@@ -4,3 +4,7 @@ export interface SlidedownHtmlProps {
   positiveButtonText?: string;
   negativeButtonText?: string;
 }
+
+export interface IndexableByString<T> {
+  [key: string]: T;
+}

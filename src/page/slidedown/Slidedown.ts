@@ -3,8 +3,8 @@ import { Utils } from '../../shared/context/Utils';
 import MainHelper from '../../shared/helpers/MainHelper';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import {
-  type SlidedownPromptOptions,
   DelayedPromptType,
+  type SlidedownPromptOptions,
 } from '../../shared/models/Prompts';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import {
@@ -22,7 +22,10 @@ import {
   removeCssClass,
   removeDomElement,
 } from '../../shared/utils/utils';
-import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
+import {
+  InvalidChannelInputField,
+  type InvalidChannelInputFieldValue,
+} from '../errors/ChannelCaptureError';
 import type { NotificationIcons } from '../models/NotificationIcons';
 import type { TagCategory } from '../models/Tags';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
@@ -255,7 +258,7 @@ export default class Slidedown {
   }
 
   setFailureStateForInvalidChannelInput(
-    invalidChannelInput: InvalidChannelInputField,
+    invalidChannelInput: InvalidChannelInputFieldValue,
   ): void {
     switch (invalidChannelInput) {
       case InvalidChannelInputField.InvalidSms:

@@ -4,15 +4,10 @@ import {
   SubscriptionType,
   type SubscriptionTypeValue,
 } from 'src/core/types/subscription';
-import {
-  InvalidStateError,
-  InvalidStateReason,
-} from '../errors/InvalidStateError';
 import Log from '../libraries/Log';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import EventHelper from './EventHelper';
 
@@ -25,27 +20,19 @@ export default class SubscriptionHelper {
     const context = OneSignal.context;
     let subscription: Subscription | null = null;
 
-    switch (SdkEnvironment.getWindowEnv()) {
-      case WindowEnvironmentKind.Host:
-        try {
-          const rawSubscription = await context.subscriptionManager.subscribe(
-            SubscriptionStrategyKind.ResubscribeExisting,
-          );
-          subscription =
-            await context.subscriptionManager.registerSubscription(
-              rawSubscription,
-            );
-          context.pageViewManager.incrementPageViewCount();
-          await PermissionUtils.triggerNotificationPermissionChanged();
-          await EventHelper.checkAndTriggerSubscriptionChanged();
-        } catch (e) {
-          Log.error(e);
-        }
-        break;
-      default:
-        throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
+    if (IS_SERVICE_WORKER) throw new Error('Unsupported environment');
+    try {
+      const rawSubscription = await context.subscriptionManager.subscribe(
+        SubscriptionStrategyKind.ResubscribeExisting,
+      );
+      subscription =
+        await context.subscriptionManager.registerSubscription(rawSubscription);
+      context.pageViewManager.incrementPageViewCount();
+      await PermissionUtils.triggerNotificationPermissionChanged();
+      await EventHelper.checkAndTriggerSubscriptionChanged();
+    } catch (e) {
+      Log.error(e);
     }
-
     return subscription;
   }
 

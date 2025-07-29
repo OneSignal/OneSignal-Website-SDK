@@ -1,3 +1,4 @@
+import { Browser } from 'src/shared/models/Browser';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
@@ -47,7 +48,7 @@ export class PromptsManager {
       environmentInfo!;
 
     return (
-      (browserType === 'chrome' &&
+      (browserType === Browser.Chrome &&
         Number(browserVersion) >= 63 &&
         (bowserCastle().tablet || bowserCastle().mobile)) ||
       requiresUserInteraction

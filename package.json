@@ -12,6 +12,7 @@
     "dev": "LOGGING=false vite",
     "dev:logging": "LOGGING=true vite",
     "ngrok": "./build/scripts/ngrok.sh",
+    "prebuild": "tsc --noEmit",
     "build:sdk": "LIB=sdk vite build",
     "build:page": "LIB=page vite build",
     "build:sw": "LIB=worker vite build",
@@ -66,17 +67,17 @@
   "size-limit": [
     {
       "path": "./build/releases/OneSignalSDK.page.js",
-      "limit": "1 kB",
+      "limit": "640 B",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "65.2 kB",
+      "limit": "64 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "69 kB",
+      "limit": "35 kB",
       "gzip": true
     },
     {

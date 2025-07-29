@@ -1,10 +1,11 @@
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
 import { Utils } from '../context/Utils';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
-import Environment from '../helpers/Environment';
+import { supportsServiceWorkers } from '../helpers/environment';
 import EventHelper from '../helpers/EventHelper';
 import ServiceWorkerHelper, {
   ServiceWorkerActiveState,
+  type ServiceWorkerActiveStateValue,
   type ServiceWorkerManagerConfig,
 } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
@@ -22,6 +23,7 @@ import {
 } from '../models/Session';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
+import { VERSION } from '../utils/EnvVariables';
 import OneSignalUtils from '../utils/OneSignalUtils';
 
 export class ServiceWorkerManager {
@@ -60,7 +62,7 @@ export class ServiceWorkerManager {
     return undefined;
   }
 
-  public async getActiveState(): Promise<ServiceWorkerActiveState> {
+  public async getActiveState(): Promise<ServiceWorkerActiveStateValue> {
     const workerRegistration = await this.getRegistration();
     if (!workerRegistration) {
       return ServiceWorkerActiveState.None;
@@ -107,7 +109,7 @@ export class ServiceWorkerManager {
   // Check if the ServiceWorker file name is ours or a third party's
   private swActiveStateByFileName(
     fileName?: string | null,
-  ): ServiceWorkerActiveState {
+  ): ServiceWorkerActiveStateValue {
     if (!fileName) {
       return ServiceWorkerActiveState.None;
     }
@@ -121,9 +123,9 @@ export class ServiceWorkerManager {
     return ServiceWorkerActiveState.ThirdParty;
   }
 
-  public async getWorkerVersion(): Promise<number> {
+  public async getWorkerVersion(): Promise<string> {
     // eslint-disable-next-line no-async-promise-executor
-    return new Promise<number>(async (resolve) => {
+    return new Promise<string>(async (resolve) => {
       this.context.workerMessenger.once(
         WorkerMessengerCommand.WorkerVersion,
         (workerVersion) => {
@@ -140,7 +142,7 @@ export class ServiceWorkerManager {
   // or is already installed and doesn't need updating.
   private async shouldInstallWorker(): Promise<boolean> {
     // 1. Does the browser support ServiceWorkers?
-    if (!Environment.supportsServiceWorkers()) return false;
+    if (!supportsServiceWorkers()) return false;
 
     // 2. Is OneSignal initialized?
     if (!OneSignal.config) return false;
@@ -204,7 +206,7 @@ export class ServiceWorkerManager {
     const serviceWorkerHref = ServiceWorkerHelper.getServiceWorkerHref(
       this.config,
       this.context.appConfig.appId,
-      Environment.version(),
+      VERSION,
     );
     // 3.1 If we can't get a scriptURL assume it is different
     if (!availableWorker?.scriptURL) {
@@ -229,7 +231,7 @@ export class ServiceWorkerManager {
    */
   private async workerNeedsUpdate(): Promise<boolean> {
     Log.info('[Service Worker Update] Checking service worker version...');
-    let workerVersion: number;
+    let workerVersion: string;
     try {
       workerVersion = await Utils.timeoutPromise(
         this.getWorkerVersion(),
@@ -242,9 +244,9 @@ export class ServiceWorkerManager {
       return true;
     }
 
-    if (workerVersion !== Environment.version()) {
+    if (workerVersion !== VERSION) {
       Log.info(
-        `[Service Worker Update] Updating service worker from ${workerVersion} --> ${Environment.version()}.`,
+        `[Service Worker Update] Updating service worker from ${workerVersion} --> ${VERSION}.`,
       );
       return true;
     }
@@ -411,7 +413,7 @@ export class ServiceWorkerManager {
     const workerHref = ServiceWorkerHelper.getServiceWorkerHref(
       this.config,
       this.context.appConfig.appId,
-      Environment.version(),
+      VERSION,
     );
 
     const scope = `${OneSignalUtils.getBaseUrl()}${
@@ -456,7 +458,7 @@ export class ServiceWorkerManager {
     const workerHref = ServiceWorkerHelper.getServiceWorkerHref(
       configWithBetaWorkerName,
       this.context.appConfig.appId,
-      Environment.version(),
+      VERSION,
     );
 
     const scope = `${OneSignalUtils.getBaseUrl()}${

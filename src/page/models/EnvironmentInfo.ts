@@ -1,8 +1,8 @@
-import { Browser } from '../../shared/models/Browser';
+import type { BrowserValue } from 'src/shared/models/Browser';
 
 // for runtime environment info
 export interface EnvironmentInfo {
-  browserType: Browser;
+  browserType: BrowserValue;
   browserVersion: number;
   isBrowserAndSupportsServiceWorkers: boolean;
   requiresUserInteraction: boolean;

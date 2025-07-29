@@ -9,8 +9,8 @@ import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once, triggerNotificationPermissionChanged } from '../utils/utils';
-import Environment from './Environment';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 
@@ -220,31 +220,31 @@ export default class InitHelper {
   }
 
   private static async showNotifyButton() {
-    if (Environment.isBrowser() && !OneSignal.notifyButton) {
-      OneSignal.config.userConfig.notifyButton =
-        OneSignal.config.userConfig.notifyButton || {};
-      if (OneSignal.config.userConfig.bell) {
+    if (!IS_SERVICE_WORKER && !OneSignal.notifyButton) {
+      OneSignal.config!.userConfig.notifyButton =
+        OneSignal.config!.userConfig.notifyButton || {};
+      if (OneSignal.config!.userConfig.bell) {
         // If both bell and notifyButton, notifyButton's options take precedence
-        OneSignal.config.userConfig.bell = {
-          ...OneSignal.config.userConfig.bell,
-          ...OneSignal.config.userConfig.notifyButton,
+        OneSignal.config!.userConfig.bell = {
+          ...OneSignal.config!.userConfig.bell,
+          ...OneSignal.config!.userConfig.notifyButton,
         };
-        OneSignal.config.userConfig.notifyButton = {
-          ...OneSignal.config.userConfig.notifyButton,
-          ...OneSignal.config.userConfig.bell,
+        OneSignal.config!.userConfig.notifyButton = {
+          ...OneSignal.config!.userConfig.notifyButton,
+          ...OneSignal.config!.userConfig.bell,
         };
       }
 
-      const displayPredicate: () => boolean =
-        OneSignal.config.userConfig.notifyButton.displayPredicate;
+      const displayPredicate =
+        OneSignal.config!.userConfig.notifyButton!.displayPredicate;
       if (displayPredicate && typeof displayPredicate === 'function') {
         OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
           const predicateValue = await Promise.resolve(
-            OneSignal.config.userConfig.notifyButton.displayPredicate(),
+            OneSignal.config!.userConfig.notifyButton!.displayPredicate?.(),
           );
           if (predicateValue !== false) {
             OneSignal.notifyButton = new Bell(
-              OneSignal.config.userConfig.notifyButton,
+              OneSignal.config!.userConfig.notifyButton!,
             );
             OneSignal.notifyButton.create();
           } else {
@@ -255,7 +255,7 @@ export default class InitHelper {
         });
       } else {
         OneSignal.notifyButton = new Bell(
-          OneSignal.config.userConfig.notifyButton,
+          OneSignal.config!.userConfig.notifyButton!,
         );
         OneSignal.notifyButton.create();
       }

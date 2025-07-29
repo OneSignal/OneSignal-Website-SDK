@@ -8,6 +8,7 @@ describe('TimedLocalStorage', () => {
   test('can check if localStorage is supported', () => {
     expect(TimedLocalStorage.isLocalStorageSupported()).toBe(true);
 
+    // @ts-expect-error - purposely setting to undefined
     localStorageSpy.mockReturnValueOnce(undefined);
     expect(TimedLocalStorage.isLocalStorageSupported()).toBe(false);
   });
@@ -25,9 +26,11 @@ describe('TimedLocalStorage', () => {
     expect(TimedLocalStorage.getItem('my-key')).toEqual({ value: 'my-value' });
 
     // should do nothing if localStorage is not supported
+    // @ts-expect-error - purposely setting to undefined
     localStorageSpy.mockReturnValueOnce(undefined);
     TimedLocalStorage.setItem('my-key-2', { value: 'my-value' });
 
+    // @ts-expect-error - purposely setting to undefined
     localStorageSpy.mockReturnValueOnce(undefined);
     expect(TimedLocalStorage.getItem('my-key-2')).toBe(null);
   });
@@ -36,6 +39,7 @@ describe('TimedLocalStorage', () => {
     TimedLocalStorage.setItem('temp-key', 'my-value');
 
     // should do nothing if localStorage is not supported
+    // @ts-expect-error - purposely setting to undefined
     localStorageSpy.mockReturnValueOnce(undefined);
     TimedLocalStorage.removeItem('temp-key');
     expect(TimedLocalStorage.getItem('temp-key')).toBe('my-value');
