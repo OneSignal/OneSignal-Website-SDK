@@ -197,7 +197,7 @@ describe('SubscriptionOperationExecutor', () => {
           enabled: false,
           notification_types: NotificationType.UserOptedOut,
           token: 'new-token',
-          sdk: '1',
+          sdk: __VERSION__,
           type: SubscriptionType.ChromePush,
         },
       });

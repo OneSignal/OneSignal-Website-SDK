@@ -5,7 +5,7 @@ export function expectHeaderToBeSent() {
     const requestInit = params[1] as RequestInit;
     const headers = requestInit.headers as Headers;
     expect(headers.get('sdk-version')).toMatch(
-      new RegExp(/^onesignal\/web\/[0-9]$/),
+      new RegExp(/^onesignal\/web\/[0-9]{6}$/),
     );
   });
 }

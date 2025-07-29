@@ -145,7 +145,7 @@ export const createPushSub = ({
     notification_types: NotificationType.Subscribed,
     onesignalId,
     token,
-    sdk: '1',
+    sdk: __VERSION__,
     type: SubscriptionType.ChromePush,
   });
   return pushSubscription;

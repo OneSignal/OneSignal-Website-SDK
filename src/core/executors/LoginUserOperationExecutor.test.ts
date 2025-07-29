@@ -355,7 +355,7 @@ describe('LoginUserOperationExecutor', () => {
           {
             device_model: '',
             device_os: 56,
-            sdk: '1',
+            sdk: __VERSION__,
             token: mockSubscriptionOpInfo.token,
             type: mockSubscriptionOpInfo.type,
           },
@@ -396,7 +396,7 @@ describe('LoginUserOperationExecutor', () => {
             {
               device_model: '',
               device_os: 56,
-              sdk: '1',
+              sdk: __VERSION__,
               type: mockSubscriptionOpInfo.type,
               ...updates,
             },
@@ -444,7 +444,7 @@ describe('LoginUserOperationExecutor', () => {
               device_model: '',
               device_os: 56,
               id: DUMMY_SUBSCRIPTION_ID,
-              sdk: '1',
+              sdk: __VERSION__,
               type: mockSubscriptionOpInfo.type,
               token: mockSubscriptionOpInfo.token,
             },

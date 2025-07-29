@@ -12,12 +12,12 @@ declare const __LOGGING__: boolean;
 
 declare const __IS_HTTPS__: boolean;
 
-declare var __API_ORIGIN__: string;
+declare const __API_ORIGIN__: string;
 
 /**
  * Which API environment to use (development, staging, production)
  */
-declare var __API_TYPE__: string;
+declare const __API_TYPE__: string;
 
 /**
  * Whether or not a dev port should be used

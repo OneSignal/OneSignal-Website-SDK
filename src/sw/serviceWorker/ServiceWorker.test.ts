@@ -44,7 +44,7 @@ declare const self: ServiceWorkerGlobalScope;
 const endpoint = 'https://example.com';
 const appId = APP_ID;
 const notificationId = 'test-notification-id';
-const version = '1';
+const version = __VERSION__;
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');

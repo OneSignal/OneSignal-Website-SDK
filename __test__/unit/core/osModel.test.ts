@@ -40,7 +40,7 @@ describe('Model tests', () => {
       token: 'myToken',
       device_os: 56,
       device_model: '',
-      sdk: '1',
+      sdk: __VERSION__,
     });
 
     const model = new SubscriptionModel();
@@ -54,7 +54,7 @@ describe('Model tests', () => {
       token: 'myToken',
       device_os: 56,
       device_model: '',
-      sdk: '1',
+      sdk: __VERSION__,
     });
   });
 });

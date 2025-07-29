@@ -197,7 +197,7 @@ describe('OneSignal', () => {
               type: 'Email',
               device_os: 56,
               device_model: '',
-              sdk: '1',
+              sdk: __VERSION__,
               enabled: true,
               notification_types: 1,
             },
@@ -213,7 +213,7 @@ describe('OneSignal', () => {
         const subscription: ICreateUserSubscription = {
           enabled: true,
           notification_types: 1,
-          sdk: '1',
+          sdk: __VERSION__,
           token: email,
           type: 'Email',
         };
@@ -232,7 +232,7 @@ describe('OneSignal', () => {
             modelId: expect.any(String),
             modelName: 'subscriptions',
             onesignalId: DUMMY_ONESIGNAL_ID,
-            sdk: '1',
+            sdk: __VERSION__,
           },
         ]);
 
@@ -290,7 +290,7 @@ describe('OneSignal', () => {
               type: 'SMS',
               device_os: 56,
               device_model: '',
-              sdk: '1',
+              sdk: __VERSION__,
             },
           ],
         });
@@ -304,7 +304,7 @@ describe('OneSignal', () => {
         const subscription: ICreateUserSubscription = {
           enabled: true,
           notification_types: 1,
-          sdk: '1',
+          sdk: __VERSION__,
           token: sms,
           type: 'SMS',
         };
@@ -324,7 +324,7 @@ describe('OneSignal', () => {
             modelId: expect.any(String),
             modelName: 'subscriptions',
             onesignalId: DUMMY_ONESIGNAL_ID,
-            sdk: '1',
+            sdk: __VERSION__,
           },
         ]);
 
@@ -615,7 +615,7 @@ describe('OneSignal', () => {
             subscription: {
               enabled: true,
               notification_types: 1,
-              sdk: '1',
+              sdk: __VERSION__,
               token: email,
               type: 'Email',
             },
@@ -625,7 +625,7 @@ describe('OneSignal', () => {
             subscription: {
               enabled: true,
               notification_types: 1,
-              sdk: '1',
+              sdk: __VERSION__,
               token: sms,
               type: 'SMS',
             },
@@ -751,7 +751,7 @@ describe('OneSignal', () => {
             subscription: {
               enabled: true,
               notification_types: 1,
-              sdk: '1',
+              sdk: __VERSION__,
               token: email,
               type: 'Email',
             },
@@ -761,7 +761,7 @@ describe('OneSignal', () => {
             subscription: {
               enabled: true,
               notification_types: 1,
-              sdk: '1',
+              sdk: __VERSION__,
               token: sms,
               type: 'SMS',
             },
@@ -926,7 +926,7 @@ describe('OneSignal', () => {
             modelName: 'subscriptions',
             notification_types: 1,
             onesignalId: DUMMY_ONESIGNAL_ID,
-            sdk: '1',
+            sdk: __VERSION__,
             token: pushSub.token,
             type: 'ChromePush',
           },
