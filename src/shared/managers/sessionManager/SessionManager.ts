@@ -1,6 +1,11 @@
 import type { IUpdateUser } from 'src/core/types/api';
 import { NotificationType } from 'src/core/types/subscription';
 import { supportsServiceWorkers } from 'src/shared/environment';
+import {
+  SessionOrigin,
+  type SessionOriginValue,
+  type UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session';
 import AliasPair from '../../../core/requestService/AliasPair';
 import { RequestService } from '../../../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
@@ -12,11 +17,6 @@ import OneSignalError from '../../../shared/errors/OneSignalError';
 import MainHelper from '../../helpers/MainHelper';
 import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/WorkerMessenger';
-import {
-  SessionOrigin,
-  type SessionOriginValue,
-  type UpsertOrDeactivateSessionPayload,
-} from '../../models/Session';
 import { OneSignalUtils } from '../../utils/OneSignalUtils';
 import type { ISessionManager } from './types';
 

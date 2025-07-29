@@ -29,7 +29,6 @@ import type { ContextSWInterface } from '../models/ContextSW';
 import { NotificationPermission } from '../models/NotificationPermission';
 import type { PushSubscriptionState } from '../models/PushSubscriptionState';
 import { RawPushSubscription } from '../models/RawPushSubscription';
-import { SessionOrigin } from '../models/Session';
 import { Subscription } from '../models/Subscription';
 import {
   SubscriptionStrategyKind,
@@ -41,6 +40,7 @@ import {
 } from '../models/UnsubscriptionStrategy';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
+import { SessionOrigin } from '../session';
 import { Browser, getBrowserName } from '../useragent';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
