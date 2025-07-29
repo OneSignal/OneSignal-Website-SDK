@@ -1,8 +1,7 @@
-import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
+import ServiceWorkerUtilHelper from 'src/sw/helpers/ServiceWorkerUtilHelper';
 import { Utils } from '../context/Utils';
 import { supportsServiceWorkers } from '../environment/environment';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
-import EventHelper from '../helpers/EventHelper';
 import ServiceWorkerHelper, {
   ServiceWorkerActiveState,
   type ServiceWorkerActiveStateValue,
@@ -10,6 +9,7 @@ import ServiceWorkerHelper, {
 } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
+import { triggerNotificationClick } from '../listeners';
 import type { ContextSWInterface } from '../models/ContextSW';
 import {
   type NotificationClickEventInternal,
@@ -316,7 +316,7 @@ export class ServiceWorkerManager {
           }
           await Database.putNotificationClickedEventPendingUrlOpening(event);
         } else {
-          await EventHelper.triggerNotificationClick(event);
+          await triggerNotificationClick(event);
         }
       },
     );

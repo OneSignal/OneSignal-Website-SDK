@@ -1,3 +1,7 @@
+import {
+  checkAndTriggerSubscriptionChanged,
+  onInternalSubscriptionSet,
+} from 'src/shared/listeners';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
@@ -10,7 +14,6 @@ import {
   InvalidStateError,
   InvalidStateReason,
 } from '../shared/errors/InvalidStateError';
-import EventHelper from '../shared/helpers/EventHelper';
 import Log from '../shared/libraries/Log';
 import { Subscription } from '../shared/models/Subscription';
 import Database from '../shared/services/Database';
@@ -139,12 +142,10 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
     subscriptionFromDb.optedOut = !enabled;
     await Database.setSubscription(subscriptionFromDb);
-    EventHelper.onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch(
-      (e) => {
-        Log.error(e);
-      },
-    );
-    EventHelper.checkAndTriggerSubscriptionChanged().catch((e) => {
+    onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch((e) => {
+      Log.error(e);
+    });
+    checkAndTriggerSubscriptionChanged().catch((e) => {
       Log.error(e);
     });
   }

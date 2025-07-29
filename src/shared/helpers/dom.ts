@@ -127,3 +127,11 @@ export function hasCssClass(
     );
   }
 }
+
+export function decodeHtmlEntities(text: string): string {
+  if (typeof DOMParser === 'undefined') {
+    return text;
+  }
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+  return doc.documentElement.textContent || '';
+}

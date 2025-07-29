@@ -18,6 +18,10 @@ export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export function nothing(): Promise<any> {
+  return Promise.resolve();
+}
+
 type Nullable = undefined | null;
 export function valueOrDefault<T>(value: T | Nullable, defaultValue: T): T {
   if (typeof value === 'undefined' || value === null) {

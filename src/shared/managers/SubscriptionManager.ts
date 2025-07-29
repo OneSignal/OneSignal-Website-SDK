@@ -45,7 +45,7 @@ import { Browser, getBrowserName } from '../useragent';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { PermissionUtils } from '../utils/PermissionUtils';
-import { executeCallback, logMethodCall } from '../utils/utils';
+import { logMethodCall } from '../utils/utils';
 import { IDManager } from './IDManager';
 export const DEFAULT_DEVICE_ID = '99999999-9999-9999-9999-999999999999';
 
@@ -98,6 +98,13 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
     pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
   }
 };
+
+function executeCallback<T>(callback?: (...args: any[]) => T, ...args: any[]) {
+  if (callback) {
+    // eslint-disable-next-line prefer-spread
+    return callback.apply(null, args);
+  }
+}
 
 export class SubscriptionManager {
   private context: ContextSWInterface;
