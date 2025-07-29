@@ -6,6 +6,7 @@ import type {
   IUserProperties,
 } from 'src/core/types/api';
 import type { ModelNameType } from 'src/core/types/models';
+import type { AppConfig } from '../config';
 import {
   type NotificationClickForOpenHandlingSchema,
   NotificationClickForOpenHandlingSerializer,
@@ -14,7 +15,6 @@ import {
   NotificationReceivedForOutcomesSerializer,
 } from '../helpers/OSNotificationDatabaseSerializer';
 import Log from '../libraries/Log';
-import type { AppConfig } from '../models/AppConfig';
 import {
   AppState,
   type PendingNotificationClickEvents,

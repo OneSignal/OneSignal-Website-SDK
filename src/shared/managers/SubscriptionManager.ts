@@ -7,6 +7,10 @@ import LoginManager from 'src/page/managers/LoginManager';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import {
+  getOneSignalApiUrl,
+  useSafariLegacyPush,
+} from '../environment/environment';
+import {
   InvalidStateError,
   InvalidStateReason,
 } from '../errors/InvalidStateError';
@@ -19,10 +23,6 @@ import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationE
 import SubscriptionError, {
   SubscriptionErrorReason,
 } from '../errors/SubscriptionError';
-import {
-  getOneSignalApiUrl,
-  useSafariLegacyPush,
-} from '../helpers/environment';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';

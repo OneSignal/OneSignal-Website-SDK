@@ -1,9 +1,9 @@
-import Log from '../../shared/libraries/Log';
 import {
+  DelayedPromptType,
   type DelayedPromptTypeValue,
   type SlidedownPromptOptions,
-  DelayedPromptType,
-} from '../../shared/models/Prompts';
+} from 'src/shared/prompts';
+import Log from '../../shared/libraries/Log';
 import {
   CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES,
   CHANNEL_CAPTURE_CONTAINER_CSS_IDS,

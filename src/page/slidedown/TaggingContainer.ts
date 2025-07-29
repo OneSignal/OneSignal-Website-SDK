@@ -1,3 +1,4 @@
+import type { TagCategory } from 'src/page/tags';
 import {
   COLORS,
   SLIDEDOWN_CSS_CLASSES,
@@ -14,7 +15,7 @@ import {
   removeCssClass,
   removeDomElement,
 } from '../../shared/utils/utils';
-import type { TagCategory, TagsObjectWithBoolean } from '../models/Tags';
+import type { TagsObjectWithBoolean } from '../tags';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 
 export default class TaggingContainer {

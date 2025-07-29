@@ -1,6 +1,9 @@
 import type { NotificationIcons } from 'src/page/models/NotificationIcons';
 import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
-import Utils from '../context/Utils';
+import {
+  getOneSignalApiUrl,
+  useSafariLegacyPush,
+} from '../environment/environment';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
@@ -14,14 +17,14 @@ import {
   NotSubscribedReason,
 } from '../errors/NotSubscribedError';
 import Log from '../libraries/Log';
-import {
-  type AppUserConfigPromptOptions,
-  type SlidedownOptions,
-} from '../models/Prompts';
+import type {
+  AppUserConfigPromptOptions,
+  SlidedownOptions,
+} from '../prompts/types';
 import Database from '../services/Database';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
-import { getOneSignalApiUrl, useSafariLegacyPush } from './environment';
+import { getValueOrDefault } from './general';
 
 export default class MainHelper {
   static async showLocalNotification(
@@ -138,7 +141,7 @@ export default class MainHelper {
   public static getSlidedownOptions(
     promptOptions: AppUserConfigPromptOptions,
   ): SlidedownOptions {
-    return Utils.getValueOrDefault(promptOptions.slidedown, { prompts: [] });
+    return getValueOrDefault(promptOptions.slidedown, { prompts: [] });
   }
 
   static getFullscreenPermissionMessageOptions(

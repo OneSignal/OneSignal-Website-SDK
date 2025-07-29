@@ -1,9 +1,9 @@
+import { useSafariLegacyPush } from '../environment/environment';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
 import OneSignalError from '../errors/OneSignalError';
-import { useSafariLegacyPush } from '../helpers/environment';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions

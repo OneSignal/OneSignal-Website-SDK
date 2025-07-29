@@ -9,7 +9,7 @@ import {
 import {
   useSafariLegacyPush,
   useSafariVapidPush,
-} from 'src/shared/helpers/environment';
+} from 'src/shared/environment';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import {

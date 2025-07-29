@@ -1,18 +1,20 @@
 import deepmerge from 'deepmerge';
-import ConfigManager from '../../../src/page/managers/ConfigManager';
-import { type RecursivePartial } from '../../../src/shared/context/Utils';
+import { DelayedPromptType } from 'src/shared/prompts/constants';
 import {
+  getMergedConfig,
   type AppConfig,
   type AppUserConfig,
-  ConfigIntegrationKind,
   type ConfigIntegrationKindValue,
+  type ServerAppConfig,
+} from '../../../src/shared/config';
+import {
+  ConfigIntegrationKind,
   NotificationClickActionBehavior,
   NotificationClickMatchBehavior,
-  type ServerAppConfig,
-} from '../../../src/shared/models/AppConfig';
-import { DelayedPromptType } from '../../../src/shared/models/Prompts';
+} from '../../../src/shared/config/constants';
+import type { RecursivePartial } from '../../../src/shared/context/Utils';
 import { APP_ID } from '../constants';
-import { type TestEnvironmentConfig } from './TestEnvironment';
+import type { TestEnvironmentConfig } from './TestEnvironment';
 
 export default class TestContext {
   static getFakeServerAppConfig(
@@ -462,11 +464,7 @@ export default class TestContext {
       config.integration || ConfigIntegrationKind.Custom,
       config.overrideServerConfig,
     );
-    const configManager = new ConfigManager();
-    const fakeMergedConfig = configManager.getMergedConfig(
-      fakeUserConfig,
-      fakeServerConfig,
-    );
+    const fakeMergedConfig = getMergedConfig(fakeUserConfig, fakeServerConfig);
     return fakeMergedConfig;
   }
 }

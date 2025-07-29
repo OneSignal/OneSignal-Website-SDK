@@ -1,11 +1,11 @@
-import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../../shared/config/constants';
-import { Utils } from '../../shared/context/Utils';
-import MainHelper from '../../shared/helpers/MainHelper';
-import PromptsHelper from '../../shared/helpers/PromptsHelper';
+import { getValueOrDefault } from 'src/shared/helpers/general';
 import {
   DelayedPromptType,
+  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
   type SlidedownPromptOptions,
-} from '../../shared/models/Prompts';
+} from 'src/shared/prompts';
+import MainHelper from '../../shared/helpers/MainHelper';
+import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import {
   COLORS,
@@ -27,7 +27,7 @@ import {
   type InvalidChannelInputFieldValue,
 } from '../errors/ChannelCaptureError';
 import type { NotificationIcons } from '../models/NotificationIcons';
-import type { TagCategory } from '../models/Tags';
+import type { TagCategory } from '../tags';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';
@@ -67,7 +67,7 @@ export default class Slidedown {
           this.options.text.positiveUpdateButton?.substring(0, 16);
         this.updateMessage = this.options.text.updateMessage?.substring(0, 90);
         this.tagCategories = options.categories;
-        this.errorButton = Utils.getValueOrDefault(
+        this.errorButton = getValueOrDefault(
           this.options.text.positiveUpdateButton,
           SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton,
         );
@@ -75,7 +75,7 @@ export default class Slidedown {
       case DelayedPromptType.Sms:
       case DelayedPromptType.Email:
       case DelayedPromptType.SmsAndEmail:
-        this.errorButton = Utils.getValueOrDefault(
+        this.errorButton = getValueOrDefault(
           this.options.text.acceptButton,
           SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton,
         );

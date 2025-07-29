@@ -1,10 +1,14 @@
 import type Bell from 'src/page/bell/Bell';
-import { windowEnvString } from 'src/shared/helpers/environment';
+import {
+  getAppConfig,
+  type AppConfig,
+  type AppUserConfig,
+} from 'src/shared/config';
+import { windowEnvString } from 'src/shared/environment';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
-import ConfigManager from '../page/managers/ConfigManager';
 import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
 import type { EnvironmentInfo } from '../page/models/EnvironmentInfo';
@@ -21,7 +25,6 @@ import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
-import type { AppConfig, AppUserConfig } from '../shared/models/AppConfig';
 import Database from '../shared/services/Database';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
 import { bowserCastle } from '../shared/utils/bowserCastle';
@@ -49,7 +52,8 @@ export default class OneSignal {
   }
 
   private static async _initializeConfig(options: AppUserConfig) {
-    const appConfig = await new ConfigManager().getAppConfig(options);
+    const appConfig = await getAppConfig(options);
+
     Log.debug('OneSignal: Final web app config:', appConfig);
 
     // TODO: environmentInfo is explicitly dependent on existence of OneSignal.config. Needs refactor.

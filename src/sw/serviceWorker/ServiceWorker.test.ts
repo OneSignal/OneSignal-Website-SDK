@@ -11,22 +11,19 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { NotificationType } from 'src/core/types/subscription';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
+import { ConfigIntegrationKind, type AppConfig } from 'src/shared/config';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
 import {
   DEFAULT_DEVICE_ID,
   SubscriptionManager,
 } from 'src/shared/managers/SubscriptionManager';
-import {
-  type AppConfig,
-  ConfigIntegrationKind,
-} from 'src/shared/models/AppConfig';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import {
   ONESIGNAL_SESSION_KEY,
-  type Session,
   SessionOrigin,
   SessionStatus,
+  type Session,
   type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/models/Session';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';

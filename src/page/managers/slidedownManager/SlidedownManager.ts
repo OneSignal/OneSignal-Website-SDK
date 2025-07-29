@@ -1,10 +1,15 @@
+import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags';
+import {
+  CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
+  DelayedPromptType,
+  type DelayedPromptTypeValue,
+} from 'src/shared/prompts';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import {
   ChannelCaptureError,
   InvalidChannelInputField,
 } from '../../../page/errors/ChannelCaptureError';
 import ExistingChannelError from '../../../page/errors/ExistingChannelError';
-import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from '../../../shared/config/constants';
 import {
   NotSubscribedError,
   NotSubscribedReason,
@@ -18,10 +23,6 @@ import InitHelper from '../../../shared/helpers/InitHelper';
 import PromptsHelper from '../../../shared/helpers/PromptsHelper';
 import Log from '../../../shared/libraries/Log';
 import { NotificationPermission } from '../../../shared/models/NotificationPermission';
-import {
-  DelayedPromptType,
-  type DelayedPromptTypeValue,
-} from '../../../shared/models/Prompts';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import { awaitableTimeout } from '../../../shared/utils/AwaitableTimeout';
 import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';
@@ -30,10 +31,6 @@ import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
 import PermissionMessageDismissedError from '../../errors/PermissionMessageDismissedError';
 import type { ContextInterface } from '../../models/Context';
 import { DismissPrompt } from '../../models/Dismiss';
-import type {
-  TagsObjectForApi,
-  TagsObjectWithBoolean,
-} from '../../models/Tags';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';
 import Slidedown, {

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
-import { type ISubscription, type IUserProperties } from 'src/core/types/api';
-import { ConfigIntegrationKind } from 'src/shared/models/AppConfig';
+import type { ISubscription, IUserProperties } from 'src/core/types/api';
+import { ConfigIntegrationKind } from 'src/shared/config';
 import {
   APP_ID,
   DUMMY_ONESIGNAL_ID,
