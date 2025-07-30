@@ -1,5 +1,4 @@
-import BrowserUserAgent from '__test__/support/models/BrowserUserAgent';
-import Bowser from 'bowser';
+import { USER_AGENTS } from '__test__/constants';
 import { Browser } from './constants';
 import { getBrowserName, isMobileBrowser, isTabletBrowser } from './useragent';
 
@@ -10,146 +9,103 @@ const mockUserAgent = (userAgent: string) => {
   });
 };
 
-// using third party library to validate our simpler logic
-const checkBrowserIsMobile = (userAgent: string) => {
-  const browser = Bowser.getParser(userAgent);
-  return browser.getPlatformType() === 'mobile';
-};
-
-const checkBrowserIsTablet = (userAgent: string) => {
-  const browser = Bowser.getParser(userAgent);
-  return browser.getPlatformType() === 'tablet';
-};
-
-const checkBrowserName = (userAgent: string) => {
-  const browser = Bowser.getParser(userAgent);
-  const name = browser.getBrowser().name;
-
-  switch (name) {
-    case 'Chrome':
-      return Browser.Chrome;
-    case 'Firefox':
-      return Browser.Firefox;
-    case 'Microsoft Edge':
-      return Browser.Edge;
-    case 'Safari':
-      return Browser.Safari;
-    default:
-      return Browser.Other;
-  }
-};
-
-describe.skip('isMobileBrowser()', () => {
+describe('isMobileBrowser()', () => {
   [
+    // non mobile / is tablet
     {
-      userAgent: BrowserUserAgent.iPhone,
-      expected: true,
-    },
-    {
-      userAgent: BrowserUserAgent.iPad,
+      userAgent: USER_AGENTS.CHROME_WINDOWS,
       expected: false,
     },
     {
-      userAgent: BrowserUserAgent.iPod,
+      userAgent: USER_AGENTS.CHROME_MAC,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.CHROME_LINUX,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.CHROME_IOS_IPAD,
+      expected: false,
+    },
+
+    {
+      userAgent: USER_AGENTS.FIREFOX_WINDOWS,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.FIREFOX_MAC,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.SAFARI_IPAD,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.EDGE_MAC,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.EDGE_WINDOWS,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.OPERA_WINDOWS,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.YANDEX_WINDOWS,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.VIVALDI_WINDOWS,
+      expected: false,
+    },
+
+    // mobile
+    {
+      userAgent: USER_AGENTS.CHROME_ANDROID,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.ChromeAndroidSupported,
+      userAgent: USER_AGENTS.CHROME_IOS_IPHONE,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.FirefoxMobileSupported,
+      userAgent: USER_AGENTS.CHROME_IOS_IPOD,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.OperaAndroidSupported,
+      userAgent: USER_AGENTS.FIREFOX_ANDROID,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.OperaMiniUnsupported,
+      userAgent: USER_AGENTS.FIREFOX_IOS,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.SamsungBrowserSupported,
+      userAgent: USER_AGENTS.SAFARI_IPHONE,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.UcBrowserSupported,
+      userAgent: USER_AGENTS.SAFARI_IPOD,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.FacebookBrowseriOS,
+      userAgent: USER_AGENTS.EDGE_ANDROID,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.FacebookBrowserAndroid,
+      userAgent: USER_AGENTS.EDGE_IOS,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.YandexMobileSupported,
+      userAgent: USER_AGENTS.FACEBOOK_APP_IOS,
       expected: true,
     },
   ].forEach(({ userAgent, expected }) => {
-    test(`should detect as a mobile browser "${userAgent}"`, () => {
+    test(`"${userAgent}" should ${expected ? 'be' : 'not be'} a mobile browser`, () => {
       mockUserAgent(userAgent);
-      expect(checkBrowserIsMobile(userAgent)).toBe(expected);
-      expect(isMobileBrowser()).toBe(expected);
-    });
-  });
-
-  [
-    {
-      userAgent: BrowserUserAgent.Default,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.ChromeWindowsSupported,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.ChromeMacSupported,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.ChromeLinuxSupported,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.SafariSupportedMac,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.FirefoxWindowsSupported,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.FirefoxMacSupported,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.FirefoxLinuxSupported,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.EdgeSupported,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.OperaDesktopSupported,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.YandexDesktopSupportedHigh,
-      expected: false,
-    },
-    {
-      userAgent: BrowserUserAgent.VivaldiWindowsSupported,
-      expected: false,
-    },
-  ].forEach(({ userAgent, expected }) => {
-    test(`should detect ${userAgent} as a desktop browser`, () => {
-      mockUserAgent(userAgent);
-      expect(checkBrowserIsMobile(userAgent)).toBe(expected);
       expect(isMobileBrowser()).toBe(expected);
     });
   });
@@ -160,131 +116,185 @@ describe.skip('isMobileBrowser()', () => {
   });
 });
 
-describe.skip('isTabletBrowser()', () => {
+describe('isTabletBrowser()', () => {
   [
+    // non tablet or is mobile
     {
-      userAgent: BrowserUserAgent.iPad,
+      userAgent: USER_AGENTS.CHROME_WINDOWS,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.CHROME_MAC,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.CHROME_LINUX,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.CHROME_IOS_IPHONE,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.FIREFOX_WINDOWS,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.FIREFOX_MAC,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.FIREFOX_IOS,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.SAFARI_MAC,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.SAFARI_IPHONE,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.EDGE_MAC,
+      expected: false,
+    },
+    {
+      userAgent: USER_AGENTS.EDGE_WINDOWS,
+      expected: false,
+    },
+
+    // tablet
+    {
+      userAgent: USER_AGENTS.CHROME_IOS_IPAD,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.ChromeTabletSupported,
+      userAgent: USER_AGENTS.SAFARI_IPAD,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.FirefoxTabletSupported,
+      userAgent: USER_AGENTS.SAMSUNG_TABLET,
       expected: true,
     },
     {
-      userAgent: BrowserUserAgent.OperaTabletSupported,
+      userAgent: USER_AGENTS.GOOGLE_TABLET,
       expected: true,
     },
   ].forEach(({ userAgent, expected }) => {
-    test(`should detect as tablet for "${userAgent}"`, () => {
+    test(`"${userAgent}" should ${expected ? 'be' : 'not be'} a tablet browser`, () => {
       mockUserAgent(userAgent);
-      expect(checkBrowserIsTablet(userAgent)).toBe(expected);
       expect(isTabletBrowser()).toBe(expected);
     });
   });
 });
 
-describe('getBrowserName', () => {
+describe('getBrowserName()', () => {
   [
+    // chrome
     {
-      userAgent: BrowserUserAgent.Default,
+      userAgent: USER_AGENTS.CHROME_WINDOWS,
       expected: Browser.Chrome,
     },
     {
-      userAgent: BrowserUserAgent.ChromeWindowsSupported,
+      userAgent: USER_AGENTS.CHROME_MAC,
       expected: Browser.Chrome,
     },
     {
-      userAgent: BrowserUserAgent.FirefoxWindowsSupported,
+      userAgent: USER_AGENTS.CHROME_LINUX,
+      expected: Browser.Chrome,
+    },
+    {
+      userAgent: USER_AGENTS.CHROME_ANDROID,
+      expected: Browser.Chrome,
+    },
+    {
+      userAgent: USER_AGENTS.CHROME_IOS_IPHONE,
+      expected: Browser.Chrome,
+    },
+    {
+      userAgent: USER_AGENTS.CHROME_IOS_IPAD,
+      expected: Browser.Chrome,
+    },
+
+    // firefox
+    {
+      userAgent: USER_AGENTS.FIREFOX_WINDOWS,
       expected: Browser.Firefox,
     },
     {
-      userAgent: BrowserUserAgent.EdgeSupported,
+      userAgent: USER_AGENTS.FIREFOX_MAC,
+      expected: Browser.Firefox,
+    },
+    {
+      userAgent: USER_AGENTS.FIREFOX_LINUX,
+      expected: Browser.Firefox,
+    },
+    {
+      userAgent: USER_AGENTS.FIREFOX_ANDROID,
+      expected: Browser.Firefox,
+    },
+    {
+      userAgent: USER_AGENTS.FIREFOX_IOS,
+      expected: Browser.Firefox,
+    },
+
+    // edge
+    {
+      userAgent: USER_AGENTS.EDGE_WINDOWS,
       expected: Browser.Edge,
     },
     {
-      userAgent: BrowserUserAgent.OperaDesktopSupported,
-      expected: Browser.Other,
+      userAgent: USER_AGENTS.EDGE_MAC,
+      expected: Browser.Edge,
     },
     {
-      userAgent: BrowserUserAgent.YandexDesktopSupportedHigh,
-      expected: Browser.Other,
+      userAgent: USER_AGENTS.EDGE_IOS,
+      expected: Browser.Edge,
     },
     {
-      userAgent: BrowserUserAgent.VivaldiWindowsSupported,
-      expected: Browser.Other,
+      userAgent: USER_AGENTS.EDGE_ANDROID,
+      expected: Browser.Edge,
     },
+
+    // safari
     {
-      userAgent: BrowserUserAgent.SafariSupportedMac,
+      userAgent: USER_AGENTS.SAFARI_MAC,
       expected: Browser.Safari,
     },
     {
-      userAgent: BrowserUserAgent.ChromeAndroidSupported,
-      expected: Browser.Chrome,
-    },
-    {
-      userAgent: BrowserUserAgent.FirefoxMobileSupported,
-      expected: Browser.Firefox,
-    },
-    {
-      userAgent: BrowserUserAgent.OperaAndroidSupported,
-      expected: Browser.Other,
-    },
-    {
-      userAgent: BrowserUserAgent.OperaMiniUnsupported,
-      expected: Browser.Other,
-    },
-    {
-      userAgent: BrowserUserAgent.SamsungBrowserSupported,
-      expected: Browser.Other,
-    },
-    {
-      userAgent: BrowserUserAgent.UcBrowserSupported,
-      expected: Browser.Other,
-    },
-    {
-      userAgent: BrowserUserAgent.FacebookBrowseriOS,
+      userAgent: USER_AGENTS.SAFARI_IPHONE,
       expected: Browser.Safari,
     },
     {
-      userAgent: BrowserUserAgent.FacebookBrowserAndroid,
-      expected: Browser.Chrome,
+      userAgent: USER_AGENTS.SAFARI_IPAD,
+      expected: Browser.Safari,
     },
     {
-      userAgent: BrowserUserAgent.YandexMobileSupported,
+      userAgent: USER_AGENTS.SAFARI_IPOD,
+      expected: Browser.Safari,
+    },
+    {
+      userAgent: USER_AGENTS.FACEBOOK_APP_IOS,
+      expected: Browser.Safari,
+    },
+
+    // other
+    {
+      userAgent: USER_AGENTS.OPERA_WINDOWS,
       expected: Browser.Other,
     },
     {
-      userAgent: BrowserUserAgent.ChromeTabletSupported,
-      expected: Browser.Chrome,
-    },
-    {
-      userAgent: BrowserUserAgent.FirefoxTabletSupported,
-      expected: Browser.Firefox,
-    },
-    {
-      userAgent: BrowserUserAgent.OperaTabletSupported,
+      userAgent: USER_AGENTS.YANDEX_WINDOWS,
       expected: Browser.Other,
     },
     {
-      userAgent: BrowserUserAgent.iPad,
-      expected: Browser.Safari,
-    },
-    {
-      userAgent: BrowserUserAgent.iPhone,
-      expected: Browser.Safari,
-    },
-    {
-      userAgent: BrowserUserAgent.iPod,
-      expected: Browser.Safari,
+      userAgent: USER_AGENTS.VIVALDI_WINDOWS,
+      expected: Browser.Other,
     },
   ].forEach(({ userAgent, expected }) => {
-    test(`should return the correct browser name for "${userAgent}"`, () => {
+    test(`"${userAgent}" should be ${expected}`, () => {
       mockUserAgent(userAgent);
-      expect(checkBrowserName(userAgent)).toBe(expected);
       expect(getBrowserName()).toBe(expected);
     });
   });

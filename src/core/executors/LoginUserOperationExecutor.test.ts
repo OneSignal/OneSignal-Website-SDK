@@ -8,7 +8,7 @@ import {
   DUMMY_PUSH_TOKEN_2,
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
-} from '__test__/support/constants';
+} from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {

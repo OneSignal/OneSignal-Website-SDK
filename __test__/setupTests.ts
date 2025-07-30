@@ -1,3 +1,4 @@
+import { DEFAULT_USER_AGENT } from './constants';
 import { server } from './support/mocks/server';
 beforeAll(() =>
   server.listen({
@@ -26,7 +27,6 @@ vi.mock('src/core/operationRepo/constants', () => ({
 }));
 
 Object.defineProperty(navigator, 'userAgent', {
-  value:
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.0.0 Safari/537.36',
+  value: DEFAULT_USER_AGENT,
   writable: true,
 });

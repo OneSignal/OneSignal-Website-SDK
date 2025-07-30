@@ -2,7 +2,7 @@ import {
   APP_ID,
   DUMMY_ONESIGNAL_ID,
   DUMMY_SUBSCRIPTION_ID,
-} from '__test__/support/constants';
+} from '__test__/constants';
 import { fakeWaitForOperations } from '__test__/support/helpers/executors';
 import Log from 'src/shared/libraries/Log';
 import Database, { type OperationItem } from 'src/shared/services/Database';

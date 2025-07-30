@@ -1,4 +1,4 @@
-import { DUMMY_EXTERNAL_ID } from '__test__/support/constants';
+import { DUMMY_EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import LoginManager from 'src/page/managers/LoginManager';

@@ -16,9 +16,12 @@ import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElemen
 import Emitter from '../../../src/shared/libraries/Emitter';
 import Database from '../../../src/shared/services/Database';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
-import { DUMMY_ONESIGNAL_ID, DUMMY_SUBSCRIPTION_ID_3 } from '../constants';
+import {
+  DEFAULT_USER_AGENT,
+  DUMMY_ONESIGNAL_ID,
+  DUMMY_SUBSCRIPTION_ID_3,
+} from '../../constants';
 import MockNotification from '../mocks/MockNotification';
-import BrowserUserAgent from '../models/BrowserUserAgent';
 import Random from '../utils/Random';
 import TestContext from './TestContext';
 import { type TestEnvironmentConfig } from './TestEnvironment';
@@ -87,7 +90,7 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   const resourceLoader = new ResourceLoader({
     userAgent: config.userAgent
       ? config.userAgent.toString()
-      : BrowserUserAgent.Default.toString(),
+      : DEFAULT_USER_AGENT.toString(),
   });
 
   // global document object must be defined for `getSlidedownElement` to work correctly.

@@ -1,72 +1,39 @@
 import { Browser } from './constants';
+import { getBrowser, isMobile, isTablet } from './detect';
 import type { BrowserValue } from './types';
 
+// Reference: https://github.com/TimvanScherpenzeel/detect-ua/blob/master/src/index.ts
+
 export function getBrowserName(): BrowserValue {
-  const ua = navigator.userAgent.toLowerCase();
-
-  if (ua.includes('edg/') || ua.includes('edge/')) return Browser.Edge;
-  if (
-    (ua.includes('safari/') || ua.includes('applewebkit/')) &&
-    !ua.includes('chrome/')
-  )
-    return Browser.Safari;
-
-  if (
-    ua.includes('chrome/') &&
-    !ua.includes('edg/') &&
-    !ua.includes('edge/') &&
-    !ua.includes('opr/') &&
-    !ua.includes('opera/') &&
-    !ua.includes('yabrowser/') &&
-    !ua.includes('samsungbrowser/') &&
-    !ua.includes('ucbrowser/') &&
-    !ua.includes('vivaldi/')
-  )
-    return Browser.Chrome;
-
-  if (ua.includes('firefox/')) return Browser.Firefox;
-
-  return Browser.Other;
+  const name = getBrowser(navigator.userAgent).name;
+  switch (name) {
+    case 'Chrome':
+    case 'Chromium':
+      return Browser.Chrome;
+    case 'Firefox':
+      return Browser.Firefox;
+    case 'Microsoft Edge':
+      return Browser.Edge;
+    case 'Safari':
+      return Browser.Safari;
+    default:
+      return Browser.Other;
+  }
 }
 
 export function getBrowserVersion(): number {
-  const ua = navigator.userAgent;
-  let version = NaN;
-  const browsers = [
-    { name: 'Edge', regex: /edg\/([\d\.]+)/i },
-    { name: 'Opera', regex: /(?:opr|opera)\/([\d\.]+)/i },
-    { name: 'Chrome', regex: /chrome\/([\d\.]+)/i },
-    { name: 'Safari', regex: /version\/([\d\.]+).*safari/i },
-    { name: 'Firefox', regex: /firefox\/([\d\.]+)/i },
-  ];
-
-  for (const browser of browsers) {
-    const match = ua.match(browser.regex);
-    if (match) {
-      const [major, minor = '0'] = match[1].split('.');
-      version = +`${major}.${minor}`;
-    }
-  }
-
-  return version;
+  const version = getBrowser(navigator.userAgent).version;
+  if (!version) return -1;
+  const [major, minor = '0'] = version.split('.');
+  return +`${major}.${minor}`;
 }
 
 export function isMobileBrowser(): boolean {
-  const ua = navigator.userAgent.toLowerCase();
-  if (isTabletBrowser(ua)) return false;
-  return /android|ipad|iphone|ipod|opera mini|iemobile|mobile/.test(ua);
+  return isMobile(navigator.userAgent);
 }
 
-export function isTabletBrowser(ua: string = navigator.userAgent): boolean {
-  ua = ua.toLowerCase();
-
-  const isIPad = /\bipad\b/.test(ua);
-  const isAndroidTablet = /android/.test(ua) && !/mobile/.test(ua); // Android tablets don't include "mobile"
-  const isWindowsTablet =
-    /windows/.test(ua) && /touch/.test(ua) && !/phone/.test(ua);
-  const isKindleOrFire = /kindle|silk|kf[a-z]{2,}/.test(ua); // Amazon devices
-
-  return isIPad || isAndroidTablet || isWindowsTablet || isKindleOrFire;
+export function isTabletBrowser(): boolean {
+  return isTablet(navigator.userAgent);
 }
 
 export function requiresUserInteraction(): boolean {

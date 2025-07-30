@@ -2,7 +2,7 @@ import {
   APP_ID,
   DUMMY_ONESIGNAL_ID,
   DUMMY_SUBSCRIPTION_ID_3,
-} from '__test__/support/constants';
+} from '__test__/constants';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';

@@ -2,7 +2,7 @@ import {
   APP_ID,
   DUMMY_ONESIGNAL_ID,
   DUMMY_SUBSCRIPTION_ID,
-} from '__test__/support/constants';
+} from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';

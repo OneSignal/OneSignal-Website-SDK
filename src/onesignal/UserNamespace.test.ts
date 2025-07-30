@@ -1,9 +1,4 @@
-import {
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_PUSH_TOKEN,
-} from '__test__/support/constants';
-import { ModelChangeTags } from 'src/core/types/models';
-import Log from 'src/shared/libraries/Log';
+import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '__test__/constants';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { TestEnvironment } from '../../__test__/support/environment/TestEnvironment';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';

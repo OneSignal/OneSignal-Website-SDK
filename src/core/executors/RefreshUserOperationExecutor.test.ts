@@ -6,7 +6,7 @@ import {
   DUMMY_PUSH_TOKEN,
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
-} from '__test__/support/constants';
+} from '__test__/constants';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setGetUserError,
