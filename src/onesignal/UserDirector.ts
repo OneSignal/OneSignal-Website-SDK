@@ -2,6 +2,7 @@ import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
@@ -55,6 +56,9 @@ export default class UserDirector {
   // Resets models similar to Android SDK
   // https://github.com/OneSignal/OneSignal-Android-SDK/blob/ed2e87618ea3af81b75f97b0a4cbb8f658c7fc80/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/internal/OneSignalImp.kt#L448
   static resetUserModels() {
+    const prevOnesignalId =
+      OneSignal.coreDirector.getIdentityModel().onesignalId;
+
     // replace models
     const newIdentityModel = new IdentityModel();
     const newPropertiesModel = new PropertiesModel();
@@ -62,6 +66,17 @@ export default class UserDirector {
     const sdkId = IDManager.createLocalId();
     newIdentityModel.onesignalId = sdkId;
     newPropertiesModel.onesignalId = sdkId;
+
+    // update onesignalId for all operations in the queue
+    const opList = OneSignal.coreDirector.operationRepo.queue;
+    opList.forEach((op) => {
+      if (
+        IDManager.isLocalId(op.operation.onesignalId) &&
+        op.operation.onesignalId === prevOnesignalId
+      ) {
+        op.operation.setProperty('onesignalId', sdkId, ModelChangeTags.HYDRATE);
+      }
+    });
 
     OneSignal.coreDirector.identityModelStore.replace(newIdentityModel);
     OneSignal.coreDirector.propertiesModelStore.replace(newPropertiesModel);

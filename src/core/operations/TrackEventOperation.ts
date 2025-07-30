@@ -26,10 +26,10 @@ type ITrackEventOp = Pick<OperationProps, 'externalId' | 'timestamp' | 'event'>;
 export class TrackEventOperation extends Operation<ITrackEventOp> {
   constructor(props?: OperationProps);
   constructor(props: OperationProps) {
-    super(OPERATION_NAME.CUSTOM_EVENT, props.appId, props.onesignalId);
-    if (props.externalId) this.externalId = props.externalId;
-    if (props.timestamp) this.timestamp = props.timestamp;
-    if (props.event) this.event = props.event;
+    super(OPERATION_NAME.CUSTOM_EVENT, props?.appId, props?.onesignalId);
+    if (props?.externalId) this.externalId = props.externalId;
+    if (props?.timestamp) this.timestamp = props.timestamp;
+    if (props?.event) this.event = props.event;
   }
 
   /**
@@ -63,7 +63,7 @@ export class TrackEventOperation extends Operation<ITrackEventOp> {
   }
 
   override get createComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}`;
+    return `${this.appId}.User.${this.onesignalId}.CustomEvent`;
   }
   override get modifyComparisonKey(): string {
     return `${this.appId}.User.${this.onesignalId}.CustomEvent.${this.name}`;
