@@ -1,65 +1,152 @@
-// types.ts
-export interface IDeviceResult {
-  version: string;
+interface BrowserConfig {
+  name: string;
+  pattern: RegExp;
+  versionPattern?: RegExp;
 }
 
-export interface IBrowserResult {
+interface IBrowserResult {
   name: string;
   version: string;
 }
 
-// utils.ts
-const isSSR = typeof window === 'undefined';
+const PATTERNS = {
+  LIKE_ANDROID: /like android/i,
+  ANDROID: /android/i,
+  IOS_DEVICES: /(iphone|ipod|ipad)/i,
+  TABLET: /tablet/i,
+  TABLET_PC: /tablet pc/i,
+  MOBILE: /[^-]mobi/i,
+  NEXUS_MOBILE: /nexus\s*[0-6]\s*/i,
+  NEXUS_TABLET: /nexus\s*[0-9]+/i,
+  GENERIC_VERSION: /version\/(\d+(?:\.\d+)?)/i,
+} as const;
 
-/**
- * Get user agent string with SSR support
- */
-export function getUserAgent(forceUserAgent?: string): string {
-  return forceUserAgent
-    ? forceUserAgent
-    : !isSSR && window.navigator
-      ? window.navigator.userAgent
-      : '';
-}
+// Ordered from most specific to least specific
+const BROWSER_CONFIGS: BrowserConfig[] = [
+  {
+    name: 'Opera',
+    pattern: /(?:opera|opr|opios)/i,
+    versionPattern: /(?:opera|opr|opios)[\s\/](\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'Facebook',
+    pattern: /FBAN\//i,
+    versionPattern: /FBAV\/(\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'Samsung Internet for Android',
+    pattern: /samsungbrowser/i,
+    versionPattern: /samsungbrowser[\s\/](\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'Yandex Browser',
+    pattern: /yabrowser/i,
+    versionPattern: /yabrowser[\s\/](\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'Vivaldi',
+    pattern: /vivaldi/i,
+    versionPattern: /vivaldi[\s\/](\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'UC Browser',
+    pattern: /ucbrowser/i,
+    versionPattern: /ucbrowser[\s\/](\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'Microsoft Edge',
+    pattern: /(edge|edgios|edga|edg)/i,
+    versionPattern: /(edge|edgios|edga|edg)[\s\/](\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'Firefox',
+    pattern: /firefox|iceweasel|fxios/i,
+    versionPattern: /(?:firefox|iceweasel|fxios)[\s\/](\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'Chromium',
+    pattern: /chromium/i,
+    versionPattern: /chromium[\s\/](\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'Chrome',
+    pattern: /chrome|crios|crmo/i,
+    versionPattern: /(?:chrome|crios|crmo)[\s\/](\d+(?:\.\d+)?)/i,
+  },
+  {
+    name: 'Safari',
+    pattern: /safari|applewebkit/i,
+    versionPattern: /version[\s\/](\d+(?:\.\d+)?)/i,
+  },
+];
 
-/**
- * Match entry based on position found in the user-agent string
- */
-export function matchUserAgent(
+const matchUserAgent = (
   userAgent: string,
   position: number,
   pattern: RegExp,
-): string {
+): string => {
   const match = userAgent.match(pattern);
-  return (match && match.length > 1 && match[position]) || '';
+  return match?.[position] || '';
+};
+
+const safeNavigator = () =>
+  typeof navigator !== 'undefined' ? navigator : null;
+const safeWindow = () => (typeof window !== 'undefined' ? window : null);
+
+function extractVersion(userAgent: string, config: BrowserConfig): string {
+  if (config.versionPattern) {
+    const match = userAgent.match(config.versionPattern);
+    if (match) {
+      const index = config.versionPattern.source.includes('(')
+        ? config.name === 'Microsoft Edge'
+          ? 2
+          : 1
+        : 1;
+      return match[index] || '';
+    }
+  }
+  return matchUserAgent(userAgent, 1, PATTERNS.GENERIC_VERSION);
 }
 
-// device-detection.ts
-/**
- * Check if device is Android
- */
-export function isAndroidDevice(userAgent: string): boolean {
-  return !/like android/i.test(userAgent) && /android/i.test(userAgent);
+export function getBrowser(userAgent: string): IBrowserResult {
+  if (!userAgent) return { name: 'Unknown', version: '' };
+
+  for (const config of BROWSER_CONFIGS) {
+    if (config.pattern.test(userAgent)) {
+      return { name: config.name, version: extractVersion(userAgent, config) };
+    }
+  }
+  return {
+    name: matchUserAgent(userAgent, 1, /^(.*?)[\s\/]/) || 'Unknown',
+    version: matchUserAgent(userAgent, 2, /^(.*?)[\s\/](.+?)[\s]/) || '',
+  };
 }
 
-/**
- * Get iOS device type (iphone, ipod, ipad, or empty string)
- */
+function isAndroidDevice(userAgent: string): boolean {
+  return (
+    !!userAgent &&
+    !PATTERNS.LIKE_ANDROID.test(userAgent) &&
+    PATTERNS.ANDROID.test(userAgent)
+  );
+}
+
 export function getIOSDeviceType(userAgent: string): string {
+  if (!userAgent) return '';
+
   let deviceType = matchUserAgent(
     userAgent,
     1,
-    /(iphone|ipod|ipad)/i,
+    PATTERNS.IOS_DEVICES,
   ).toLowerCase();
 
-  // Workaround for ipadOS, force detection as tablet
-  // SEE: https://github.com/lancedikson/bowser/issues/329
-  // SEE: https://stackoverflow.com/questions/58019463/how-to-detect-device-name-in-safari-on-ios-13-while-it-doesnt-show-the-correct
+  // iPadOS workaround
+  const nav = safeNavigator();
+  const win = safeWindow();
   if (
-    !isSSR &&
-    navigator.platform === 'MacIntel' &&
-    navigator.maxTouchPoints > 2 &&
-    !(window as any).MSStream
+    !deviceType &&
+    nav?.platform === 'MacIntel' &&
+    nav?.maxTouchPoints > 2 &&
+    !(win as { MSStream?: unknown })?.MSStream
   ) {
     deviceType = 'ipad';
   }
@@ -67,226 +154,34 @@ export function getIOSDeviceType(userAgent: string): string {
   return deviceType;
 }
 
-/**
- * Check if device is a tablet
- */
 export function isTablet(userAgent: string): boolean {
+  if (!userAgent) return false;
+
   const isAndroid = isAndroidDevice(userAgent);
   const iOSDevice = getIOSDeviceType(userAgent);
 
   return (
-    // Default tablet
-    (/tablet/i.test(userAgent) && !/tablet pc/i.test(userAgent)) ||
-    // iPad
+    (PATTERNS.TABLET.test(userAgent) && !PATTERNS.TABLET_PC.test(userAgent)) ||
     iOSDevice === 'ipad' ||
-    // Android tablet
-    (isAndroid && !/[^-]mobi/i.test(userAgent)) ||
-    // Nexus tablet
-    (!/nexus\s*[0-6]\s*/i.test(userAgent) && /nexus\s*[0-9]+/i.test(userAgent))
+    (isAndroid && !PATTERNS.MOBILE.test(userAgent)) ||
+    (!PATTERNS.NEXUS_MOBILE.test(userAgent) &&
+      PATTERNS.NEXUS_TABLET.test(userAgent))
   );
 }
 
-/**
- * Check if device is mobile
- */
 export function isMobile(userAgent: string): boolean {
+  if (!userAgent) return false;
+
   const isTabletDevice = isTablet(userAgent);
   const isAndroid = isAndroidDevice(userAgent);
   const iOSDevice = getIOSDeviceType(userAgent);
 
   return (
-    // Default mobile
     !isTabletDevice &&
-    (/[^-]mobi/i.test(userAgent) ||
-      // iPhone / iPod
+    (PATTERNS.MOBILE.test(userAgent) ||
       iOSDevice === 'iphone' ||
       iOSDevice === 'ipod' ||
-      // Android mobile
       isAndroid ||
-      // Nexus mobile
-      /nexus\s*[0-6]\s*/i.test(userAgent))
+      PATTERNS.NEXUS_MOBILE.test(userAgent))
   );
-}
-
-/**
- * Check if device is desktop
- */
-export function isDesktop(userAgent: string): boolean {
-  return !isMobile(userAgent) && !isTablet(userAgent);
-}
-
-// os-detection.ts
-/**
- * Check if device is running macOS and return version info
- */
-export function isMacOS(userAgent: string): IDeviceResult | false {
-  if (!/macintosh/i.test(userAgent)) {
-    return false;
-  }
-
-  const version = matchUserAgent(userAgent, 1, /mac os x (\d+(\.?_?\d+)+)/i)
-    .replace(/[_\s]/g, '.')
-    .split('.')
-    .map((versionNumber: string): string => versionNumber)[1];
-
-  return { version };
-}
-
-/**
- * Check if device is running Windows and return version info
- */
-export function isWindows(userAgent: string): IDeviceResult | false {
-  if (!/windows /i.test(userAgent)) {
-    return false;
-  }
-
-  const version = matchUserAgent(
-    userAgent,
-    1,
-    /Windows ((NT|XP)( \d\d?.\d)?)/i,
-  );
-  return { version };
-}
-
-/**
- * Check if device is running iOS and return version info
- */
-export function isiOS(userAgent: string): IDeviceResult | false {
-  const iOSDevice = getIOSDeviceType(userAgent);
-
-  if (!iOSDevice) {
-    return false;
-  }
-
-  const version =
-    matchUserAgent(userAgent, 1, /os (\d+([_\s]\d+)*) like mac os x/i).replace(
-      /[_\s]/g,
-      '.',
-    ) || matchUserAgent(userAgent, 1, /version\/(\d+(\.\d+)?)/i);
-
-  return { version };
-}
-
-/**
- * Check if device is running Android and return version info
- */
-export function isAndroid(userAgent: string): IDeviceResult | false {
-  if (!isAndroidDevice(userAgent)) {
-    return false;
-  }
-
-  const version = matchUserAgent(userAgent, 1, /android[ \/-](\d+(\.\d+)*)/i);
-  return { version };
-}
-
-// browser-detection.ts
-/**
- * Detect browser name and version
- */
-export function getBrowser(userAgent: string): IBrowserResult {
-  const versionIdentifier = matchUserAgent(
-    userAgent,
-    1,
-    /version\/(\d+(\.\d+)?)/i,
-  );
-
-  if (/opera/i.test(userAgent)) {
-    // Opera
-    return {
-      name: 'Opera',
-      version:
-        versionIdentifier ||
-        matchUserAgent(userAgent, 1, /(?:opera|opr|opios)[\s\/](\d+(\.\d+)?)/i),
-    };
-  } else if (/opr\/|opios/i.test(userAgent)) {
-    // Opera
-    return {
-      name: 'Opera',
-      version:
-        matchUserAgent(userAgent, 1, /(?:opr|opios)[\s\/](\d+(\.\d+)?)/i) ||
-        versionIdentifier,
-    };
-  } else if (/SamsungBrowser/i.test(userAgent)) {
-    // Samsung Browser
-    return {
-      name: 'Samsung Internet for Android',
-      version:
-        versionIdentifier ||
-        matchUserAgent(userAgent, 1, /(?:SamsungBrowser)[\s\/](\d+(\.\d+)?)/i),
-    };
-  } else if (/yabrowser/i.test(userAgent)) {
-    // Yandex Browser
-    return {
-      name: 'Yandex Browser',
-      version:
-        versionIdentifier ||
-        matchUserAgent(userAgent, 1, /(?:yabrowser)[\s\/](\d+(\.\d+)?)/i),
-    };
-  } else if (/ucbrowser/i.test(userAgent)) {
-    // UC Browser
-    return {
-      name: 'UC Browser',
-      version: matchUserAgent(
-        userAgent,
-        1,
-        /(?:ucbrowser)[\s\/](\d+(\.\d+)?)/i,
-      ),
-    };
-  } else if (/msie|trident/i.test(userAgent)) {
-    // Internet Explorer
-    return {
-      name: 'Internet Explorer',
-      version: matchUserAgent(userAgent, 1, /(?:msie |rv:)(\d+(\.\d+)?)/i),
-    };
-  } else if (/(edge|edgios|edga|edg)/i.test(userAgent)) {
-    // Edge
-    return {
-      name: 'Microsoft Edge',
-      version: matchUserAgent(
-        userAgent,
-        2,
-        /(edge|edgios|edga|edg)\/(\d+(\.\d+)?)/i,
-      ),
-    };
-  } else if (/firefox|iceweasel|fxios/i.test(userAgent)) {
-    // Firefox
-    return {
-      name: 'Firefox',
-      version: matchUserAgent(
-        userAgent,
-        1,
-        /(?:firefox|iceweasel|fxios)[ \/](\d+(\.\d+)?)/i,
-      ),
-    };
-  } else if (/chromium/i.test(userAgent)) {
-    // Chromium
-    return {
-      name: 'Chromium',
-      version:
-        matchUserAgent(userAgent, 1, /(?:chromium)[\s\/](\d+(?:\.\d+)?)/i) ||
-        versionIdentifier,
-    };
-  } else if (/chrome|crios|crmo/i.test(userAgent)) {
-    // Chrome
-    return {
-      name: 'Chrome',
-      version: matchUserAgent(
-        userAgent,
-        1,
-        /(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i,
-      ),
-    };
-  } else if (/safari|applewebkit/i.test(userAgent)) {
-    // Safari
-    return {
-      name: 'Safari',
-      version: versionIdentifier,
-    };
-  } else {
-    // Everything else
-    return {
-      name: matchUserAgent(userAgent, 1, /^(.*)\/(.*) /),
-      version: matchUserAgent(userAgent, 2, /^(.*)\/(.*) /),
-    };
-  }
 }
