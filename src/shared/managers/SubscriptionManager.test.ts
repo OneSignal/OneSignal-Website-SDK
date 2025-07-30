@@ -1,4 +1,4 @@
-import { DUMMY_EXTERNAL_ID } from '__test__/support/constants';
+import { DEVICE_OS, DUMMY_EXTERNAL_ID } from '__test__/support/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
@@ -52,7 +52,7 @@ describe('SubscriptionManager', () => {
       expect(subModels[0].toJSON()).toEqual({
         id,
         device_model: '',
-        device_os: 56,
+        device_os: DEVICE_OS,
         enabled: true,
         notification_types: 1,
         sdk: __VERSION__,
@@ -73,7 +73,7 @@ describe('SubscriptionManager', () => {
         subscriptions: [
           {
             device_model: '',
-            device_os: 56,
+            device_os: DEVICE_OS,
             enabled: true,
             notification_types: 1,
             sdk: __VERSION__,
@@ -127,7 +127,7 @@ describe('SubscriptionManager', () => {
         subscriptions: [
           {
             device_model: '',
-            device_os: 56,
+            device_os: DEVICE_OS,
             enabled: true,
             notification_types: 1,
             sdk: __VERSION__,

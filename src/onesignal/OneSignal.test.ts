@@ -1,5 +1,6 @@
 import {
   APP_ID,
+  DEVICE_OS,
   DUMMY_ONESIGNAL_ID,
   DUMMY_ONESIGNAL_ID_2,
   DUMMY_PUSH_TOKEN,
@@ -197,7 +198,7 @@ describe('OneSignal', () => {
               id: DUMMY_SUBSCRIPTION_ID_2,
               token: 'test@test.com',
               type: 'Email',
-              device_os: '56',
+              device_os: DEVICE_OS,
               device_model: '',
               sdk: __VERSION__,
               enabled: true,
@@ -229,7 +230,7 @@ describe('OneSignal', () => {
           {
             ...subscription,
             device_model: '',
-            device_os: 56,
+            device_os: DEVICE_OS,
             id: expect.any(String),
             modelId: expect.any(String),
             modelName: 'subscriptions',
@@ -290,7 +291,7 @@ describe('OneSignal', () => {
               id: DUMMY_SUBSCRIPTION_ID_3,
               token: sms,
               type: 'SMS',
-              device_os: '56',
+              device_os: DEVICE_OS,
               device_model: '',
               sdk: __VERSION__,
             },
@@ -321,7 +322,7 @@ describe('OneSignal', () => {
           {
             ...subscription,
             device_model: '',
-            device_os: 56,
+            device_os: DEVICE_OS,
             id: expect.any(String),
             modelId: expect.any(String),
             modelName: 'subscriptions',
@@ -921,7 +922,7 @@ describe('OneSignal', () => {
         expect(subscriptions).toEqual([
           {
             device_model: '',
-            device_os: 56,
+            device_os: DEVICE_OS,
             enabled: true,
             id: pushSub.id,
             modelId: expect.any(String),
@@ -957,9 +958,9 @@ describe('OneSignal', () => {
             onesignal_id: DUMMY_ONESIGNAL_ID,
             payload: {
               os_sdk: {
-                sdk: '1',
+                sdk: __VERSION__,
                 device_model: '',
-                device_os: 56,
+                device_os: DEVICE_OS,
                 type: 'ChromePush',
               },
               test_property: 'test_value',

@@ -19,6 +19,8 @@ export const DUMMY_SUBSCRIPTION_ID_2 = '7777777777-8888888888-9999999999';
 export const DUMMY_SUBSCRIPTION_ID_3 = '1010101010-1111111111-2222222222';
 export const DUMMY_MODEL_ID = '0000000000';
 
+export const DEVICE_OS = '56';
+
 /* REQUEST CONSTANTS */
 export const DUMMY_GET_USER_REQUEST_WITH_PUSH_SUB = {
   result: {
@@ -44,7 +46,7 @@ export const DUMMY_GET_USER_REQUEST_WITH_PUSH_SUB = {
         session_count: 1,
         sdk: __VERSION__,
         device_model: 'MacIntel',
-        device_os: 114,
+        device_os: '114',
         rooted: false,
         test_type: 0,
         app_version: '',

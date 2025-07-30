@@ -18,7 +18,11 @@ import Emitter from '../../../src/shared/libraries/Emitter';
 import Database from '../../../src/shared/services/Database';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
 import * as bowerCastleHelpers from '../../../src/shared/utils/bowserCastle';
-import { DUMMY_ONESIGNAL_ID, DUMMY_SUBSCRIPTION_ID_3 } from '../constants';
+import {
+  DEVICE_OS,
+  DUMMY_ONESIGNAL_ID,
+  DUMMY_SUBSCRIPTION_ID_3,
+} from '../constants';
 import MockNotification from '../mocks/MockNotification';
 import BrowserUserAgent from '../models/BrowserUserAgent';
 import Random from '../utils/Random';
@@ -139,7 +143,7 @@ export const createPushSub = ({
   const pushSubscription = new SubscriptionModel();
   pushSubscription.initializeFromJson({
     device_model: '',
-    device_os: '56',
+    device_os: DEVICE_OS,
     enabled: true,
     id,
     notification_types: NotificationType.Subscribed,
