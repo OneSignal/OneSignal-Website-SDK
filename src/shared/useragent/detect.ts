@@ -21,7 +21,6 @@ const PATTERNS = {
   GENERIC_VERSION: /version\/(\d+(?:\.\d+)?)/i,
 } as const;
 
-// Ordered from most specific to least specific
 const BROWSER_CONFIGS: BrowserConfig[] = [
   {
     name: 'Opera',
@@ -55,8 +54,8 @@ const BROWSER_CONFIGS: BrowserConfig[] = [
   },
   {
     name: 'Microsoft Edge',
-    pattern: /(edge|edgios|edga|edg)/i,
-    versionPattern: /(edge|edgios|edga|edg)[\s\/](\d+(?:\.\d+)?)/i,
+    pattern: /(?:edge|edgios|edga|edg)/i,
+    versionPattern: /(?:edge|edgios|edga|edg)[\s\/](\d+(?:\.\d+)?)/i,
   },
   {
     name: 'Firefox',
@@ -84,33 +83,16 @@ const matchUserAgent = (
   userAgent: string,
   position: number,
   pattern: RegExp,
-): string => {
-  const match = userAgent.match(pattern);
-  return match?.[position] || '';
-};
-
-const safeNavigator = () =>
-  typeof navigator !== 'undefined' ? navigator : null;
-const safeWindow = () => (typeof window !== 'undefined' ? window : null);
+): string => userAgent.match(pattern)?.[position] || '';
 
 function extractVersion(userAgent: string, config: BrowserConfig): string {
-  if (config.versionPattern) {
-    const match = userAgent.match(config.versionPattern);
-    if (match) {
-      const index = config.versionPattern.source.includes('(')
-        ? config.name === 'Microsoft Edge'
-          ? 2
-          : 1
-        : 1;
-      return match[index] || '';
-    }
-  }
-  return matchUserAgent(userAgent, 1, PATTERNS.GENERIC_VERSION);
+  if (!config.versionPattern)
+    return matchUserAgent(userAgent, 1, PATTERNS.GENERIC_VERSION);
+  const match = userAgent.match(config.versionPattern);
+  return match?.[1] || '';
 }
 
 export function getBrowser(userAgent: string): IBrowserResult {
-  if (!userAgent) return { name: 'Unknown', version: '' };
-
   for (const config of BROWSER_CONFIGS) {
     if (config.pattern.test(userAgent)) {
       return { name: config.name, version: extractVersion(userAgent, config) };
@@ -122,44 +104,30 @@ export function getBrowser(userAgent: string): IBrowserResult {
   };
 }
 
-function isAndroidDevice(userAgent: string): boolean {
-  return (
-    !!userAgent &&
-    !PATTERNS.LIKE_ANDROID.test(userAgent) &&
-    PATTERNS.ANDROID.test(userAgent)
-  );
-}
+const isAndroidDevice = (userAgent: string): boolean =>
+  !PATTERNS.LIKE_ANDROID.test(userAgent) && PATTERNS.ANDROID.test(userAgent);
 
 export function getIOSDeviceType(userAgent: string): string {
-  if (!userAgent) return '';
-
   let deviceType = matchUserAgent(
     userAgent,
     1,
     PATTERNS.IOS_DEVICES,
   ).toLowerCase();
 
-  // iPadOS workaround
-  const nav = safeNavigator();
-  const win = safeWindow();
   if (
     !deviceType &&
-    nav?.platform === 'MacIntel' &&
-    nav?.maxTouchPoints > 2 &&
-    !(win as { MSStream?: unknown })?.MSStream
+    navigator.platform === 'MacIntel' &&
+    navigator.maxTouchPoints > 2 &&
+    !(window as { MSStream?: unknown })?.MSStream
   ) {
     deviceType = 'ipad';
   }
-
   return deviceType;
 }
 
 export function isTablet(userAgent: string): boolean {
-  if (!userAgent) return false;
-
   const isAndroid = isAndroidDevice(userAgent);
   const iOSDevice = getIOSDeviceType(userAgent);
-
   return (
     (PATTERNS.TABLET.test(userAgent) && !PATTERNS.TABLET_PC.test(userAgent)) ||
     iOSDevice === 'ipad' ||
@@ -170,12 +138,9 @@ export function isTablet(userAgent: string): boolean {
 }
 
 export function isMobile(userAgent: string): boolean {
-  if (!userAgent) return false;
-
   const isTabletDevice = isTablet(userAgent);
   const isAndroid = isAndroidDevice(userAgent);
   const iOSDevice = getIOSDeviceType(userAgent);
-
   return (
     !isTabletDevice &&
     (PATTERNS.MOBILE.test(userAgent) ||
