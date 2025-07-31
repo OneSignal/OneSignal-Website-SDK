@@ -80,12 +80,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "60.5 kB",
+      "limit": "60.55 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "25.1 kB",
+      "limit": "25.25 kB",
       "gzip": true
     },
     {

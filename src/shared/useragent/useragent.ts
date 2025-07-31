@@ -1,6 +1,8 @@
 import { Browser } from './constants';
-import { getBrowser, isMobile, isTablet } from './detect';
+import { getBrowser } from './detect';
 import type { BrowserValue } from './types';
+
+export { isMobileBrowser, isTabletBrowser } from './detect';
 
 const BROWSER_MAP: Record<string, BrowserValue> = {
   Chrome: Browser.Chrome,
@@ -20,9 +22,6 @@ export const getBrowserVersion = (): number => {
   const [major, minor = '0'] = version.split('.');
   return +`${major}.${minor}`;
 };
-
-export const isMobileBrowser = (): boolean => isMobile(navigator.userAgent);
-export const isTabletBrowser = (): boolean => isTablet(navigator.userAgent);
 
 export function requiresUserInteraction(): boolean {
   const browserName = getBrowserName();
