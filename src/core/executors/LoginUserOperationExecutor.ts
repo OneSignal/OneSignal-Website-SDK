@@ -25,7 +25,6 @@ import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { type Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
-import { TrackEventOperation } from '../operations/TrackEventOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { RequestService } from '../requestService/RequestService';

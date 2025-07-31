@@ -23,7 +23,7 @@ type ITrackEventOp = Pick<OperationProps, 'externalId' | 'timestamp' | 'event'>;
 /**
  * An Operation to track a custom event for a specific user.
  */
-export class TrackEventOperation extends Operation<ITrackEventOp> {
+export class TrackCustomEventOperation extends Operation<ITrackEventOp> {
   constructor(props?: OperationProps);
   constructor(props: OperationProps) {
     super(OPERATION_NAME.CUSTOM_EVENT, props?.appId, props?.onesignalId);
@@ -62,11 +62,15 @@ export class TrackEventOperation extends Operation<ITrackEventOp> {
     this.setProperty('event', value);
   }
 
+  private get key(): string {
+    return `${this.appId}.User.${this.onesignalId}.CustomEvent.${this.event.name}`;
+  }
+
   override get createComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}.CustomEvent`;
+    return this.key;
   }
   override get modifyComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}.CustomEvent.${this.name}`;
+    return this.key;
   }
 
   // TODO: no batching of custom events until finalized

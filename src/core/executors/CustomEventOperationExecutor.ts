@@ -12,7 +12,7 @@ import { VERSION } from 'src/shared/utils/EnvVariables';
 import { OPERATION_NAME } from '../constants';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
-import { TrackEventOperation } from '../operations/TrackEventOperation';
+import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
 import { RequestService } from '../requestService/RequestService';
 import type { ICustomEventMetadata } from '../types/customEvents';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
@@ -45,7 +45,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     // TODO: each trackEvent is sent individually right now; may need to batch in the future
     const operation = operations[0];
 
-    if (!(operation instanceof TrackEventOperation)) {
+    if (!(operation instanceof TrackCustomEventOperation)) {
       throw new Error(
         `Unrecognized operation! Expected TrackEventOperation, got: ${operation.constructor.name}`,
       );
