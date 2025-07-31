@@ -99,6 +99,16 @@ export default class UserNamespace extends EventListenerBase {
     return this._currentUser?.getLanguage() || '';
   }
 
+  /**
+   * Track a custom event. Note that this will be queued until the user is logged in or accepts notifications permissions.
+   *
+   * @param name - The name of the event.
+   * @param properties - The properties of the event.
+   */
+  public trackEvent(name: string, properties?: Record<string, unknown>) {
+    return this._currentUser?.trackEvent(name, properties);
+  }
+
   addEventListener(
     event: 'change',
     listener: (userChange: UserChangeEvent) => void,

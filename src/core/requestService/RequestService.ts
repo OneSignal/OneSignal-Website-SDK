@@ -6,7 +6,6 @@ import {
 } from '../../shared/errors/SdkInitError';
 import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
-import { IdentityModel } from '../models/IdentityModel';
 import {
   type ICreateUser,
   type ICreateUserIdentity,
@@ -18,6 +17,7 @@ import {
   type RequestMetadata,
   type UserData,
 } from '../types/api';
+import type { ICreateEvent } from '../types/customEvents';
 import AliasPair from './AliasPair';
 
 export class RequestService {
@@ -242,40 +242,6 @@ export class RequestService {
   }
 
   /**
-   * Lists all aliases for the user identified by the given subscription id
-   * @param requestMetadata - { appId }
-   * @param subscriptionId - subscription id
-   */
-  static async getIdentityFromSubscription(
-    requestMetadata: RequestMetadata,
-    subscriptionId: string,
-  ) {
-    const { appId } = requestMetadata;
-    return OneSignalApiBase.get<{ identity: IUserIdentity }>(
-      `apps/${appId}/subscriptions/${subscriptionId}/user/identity`,
-    );
-  }
-
-  /**
-   * Upserts one or more aliases for the user identified by the given subscription id
-   * @param requestMetadata - { appId }
-   * @param subscriptionId - subscription id
-   * @param identity - identity label & id
-   */
-  static async identifyUserForSubscription(
-    requestMetadata: RequestMetadata,
-    subscriptionId: string,
-    identity: IdentityModel,
-  ): Promise<OneSignalApiBaseResponse> {
-    const { appId } = requestMetadata;
-    return OneSignalApiBase.patch<{ identity: IUserIdentity }>(
-      `apps/${appId}/users/by/subscriptions/${subscriptionId}/identity`,
-      { identity },
-      requestMetadata.jwtHeader,
-    );
-  }
-
-  /**
    * Transfers this Subscription to the User identified by the identity in the payload.
    * @param requestMetadata - { appId }
    * @param subscriptionId - subscription id
@@ -297,6 +263,21 @@ export class RequestService {
       {
         identity: { ...identity },
         retain_previous_owner: retainPreviousOwner,
+      },
+      requestMetadata.jwtHeader,
+    );
+  }
+
+  // custom events
+  static async sendCustomEvent(
+    requestMetadata: RequestMetadata,
+    event: ICreateEvent,
+  ) {
+    const { appId } = requestMetadata;
+    return OneSignalApiBase.post(
+      `apps/${appId}/integrations/sdk/custom_events`,
+      {
+        events: [event],
       },
       requestMetadata.jwtHeader,
     );

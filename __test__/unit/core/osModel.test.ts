@@ -1,3 +1,4 @@
+import { DEVICE_OS } from '__test__/support/constants';
 import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { SubscriptionType } from 'src/core/types/subscription';
@@ -38,7 +39,7 @@ describe('Model tests', () => {
       type: SubscriptionType.Email,
       id: '123',
       token: 'myToken',
-      device_os: 56,
+      device_os: DEVICE_OS,
       device_model: '',
       sdk: __VERSION__,
     });
@@ -52,7 +53,7 @@ describe('Model tests', () => {
       type: SubscriptionType.Email,
       id: '123',
       token: 'myToken',
-      device_os: 56,
+      device_os: DEVICE_OS,
       device_model: '',
       sdk: __VERSION__,
     });

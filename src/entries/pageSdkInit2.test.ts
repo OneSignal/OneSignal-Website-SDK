@@ -1,6 +1,7 @@
 // separate test file to avoid side effects from pageSdkInit.test.ts
 import {
   APP_ID,
+  DEVICE_OS,
   DUMMY_ONESIGNAL_ID,
   DUMMY_PUSH_TOKEN,
   DUMMY_SUBSCRIPTION_ID,
@@ -105,7 +106,7 @@ describe('pageSdkInit 2', () => {
     // should the push subscription and the email be added to the subscriptions modelstore
     const shared = {
       device_model: '',
-      device_os: 56,
+      device_os: DEVICE_OS,
       enabled: true,
       modelName: 'subscriptions',
       notification_types: 1,

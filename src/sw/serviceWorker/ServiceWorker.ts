@@ -6,10 +6,8 @@ import {
   type WorkerMessengerMessage,
 } from '../../../src/shared/libraries/WorkerMessenger';
 import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import { Utils } from '../../shared/context/Utils';
 import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
-import ContextSW from '../../shared/models/ContextSW';
 import {
   type NotificationClickEventInternal,
   type NotificationForegroundWillDisplayEventSerializable,
@@ -43,6 +41,8 @@ import {
   type NotificationTypeValue,
 } from 'src/core/types/subscription';
 import { type AppConfig, getServerAppConfig } from 'src/shared/config';
+import { getDeviceType } from 'src/shared/environment';
+import ContextSW from 'src/shared/models/ContextSW';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import { bowserCastle } from '../../shared/utils/bowserCastle';
@@ -352,7 +352,7 @@ export class ServiceWorker {
     const postData = {
       player_id: pushSubscriptionId,
       app_id: appId,
-      device_type: FuturePushSubscriptionRecord.getDeviceType(),
+      device_type: getDeviceType(),
     };
 
     Log.debug(
@@ -794,7 +794,7 @@ export class ServiceWorker {
     const notificationOpensLink: boolean =
       ServiceWorker.shouldOpenNotificationUrl(launchUrl);
     const appId = await ServiceWorker.getAppId();
-    const deviceType = FuturePushSubscriptionRecord.getDeviceType();
+    const deviceType = getDeviceType();
 
     const notificationClickEvent: NotificationClickEventInternal = {
       notification: osNotification,
@@ -1044,7 +1044,7 @@ export class ServiceWorker {
         // We don't have the device ID stored, but we can look it up from our old subscription
         deviceId = await OneSignalApiSW.getUserIdFromSubscriptionIdentifier(
           appId,
-          FuturePushSubscriptionRecord.getDeviceType(),
+          getDeviceType(),
           event.oldSubscription.endpoint,
         );
 

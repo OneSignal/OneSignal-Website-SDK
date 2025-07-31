@@ -1,4 +1,5 @@
-import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import { getDeviceModel, getDeviceOS } from 'src/shared/environment';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import type { ICreateUserSubscription } from '../types/api';
 import {
   type NotificationTypeValue,
@@ -28,9 +29,9 @@ export abstract class BaseFullSubscriptionOperation extends BaseSubscriptionOper
     super(operationName, appId, onesignalId);
 
     if (subscription) {
-      this.sdk = FuturePushSubscriptionRecord.getSdk();
-      this.device_model = FuturePushSubscriptionRecord.getDeviceModel();
-      this.device_os = FuturePushSubscriptionRecord.getDeviceOS();
+      this.sdk = VERSION;
+      this.device_model = getDeviceModel();
+      this.device_os = getDeviceOS();
       this.enabled = subscription.enabled;
       this.notification_types = subscription.notification_types;
       this.subscriptionId = subscription.subscriptionId;
@@ -104,10 +105,10 @@ export abstract class BaseFullSubscriptionOperation extends BaseSubscriptionOper
   /**
    * The device OS version
    */
-  get device_os(): string | number | undefined {
+  get device_os(): string | undefined {
     return this.getProperty('device_os');
   }
-  protected set device_os(value: string | number | undefined) {
+  protected set device_os(value: string | undefined) {
     this.setProperty('device_os', value);
   }
 

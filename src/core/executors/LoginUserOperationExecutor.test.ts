@@ -1,5 +1,6 @@
 import {
   APP_ID,
+  DEVICE_OS,
   DUMMY_EXTERNAL_ID,
   DUMMY_ONESIGNAL_ID,
   DUMMY_ONESIGNAL_ID_2,
@@ -354,7 +355,7 @@ describe('LoginUserOperationExecutor', () => {
         subscriptions: [
           {
             device_model: '',
-            device_os: 56,
+            device_os: DEVICE_OS,
             sdk: __VERSION__,
             token: mockSubscriptionOpInfo.token,
             type: mockSubscriptionOpInfo.type,
@@ -395,7 +396,7 @@ describe('LoginUserOperationExecutor', () => {
           subscriptions: [
             {
               device_model: '',
-              device_os: 56,
+              device_os: DEVICE_OS,
               sdk: __VERSION__,
               type: mockSubscriptionOpInfo.type,
               ...updates,
@@ -442,7 +443,7 @@ describe('LoginUserOperationExecutor', () => {
           subscriptions: [
             {
               device_model: '',
-              device_os: 56,
+              device_os: DEVICE_OS,
               id: DUMMY_SUBSCRIPTION_ID,
               sdk: __VERSION__,
               type: mockSubscriptionOpInfo.type,

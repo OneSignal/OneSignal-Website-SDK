@@ -3,9 +3,9 @@ import { NotificationType } from 'src/core/types/subscription';
 import AliasPair from '../../core/requestService/AliasPair';
 import { RequestService } from '../../core/requestService/RequestService';
 import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import type { ServerAppConfig } from '../config';
 import Utils from '../context/Utils';
+import { getSubscriptionType } from '../environment';
 import Log from '../libraries/Log';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
@@ -111,7 +111,7 @@ export class OneSignalApiSW {
       notification_ids: attribution.notificationIds,
       subscription: {
         id: subscriptionId,
-        type: FuturePushSubscriptionRecord.getSubscriptionType(),
+        type: getSubscriptionType(),
       },
       onesignal_id: onesignalId,
     };

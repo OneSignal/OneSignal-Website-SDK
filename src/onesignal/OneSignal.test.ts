@@ -1,5 +1,6 @@
 import {
   APP_ID,
+  DEVICE_OS,
   DUMMY_ONESIGNAL_ID,
   DUMMY_ONESIGNAL_ID_2,
   DUMMY_PUSH_TOKEN,
@@ -19,6 +20,7 @@ import {
   getUserFn,
   mockPageStylesCss,
   mockServerConfig,
+  sendCustomEventFn,
   setAddAliasError,
   setAddAliasResponse,
   setCreateSubscriptionResponse,
@@ -26,7 +28,9 @@ import {
   setDeleteAliasResponse,
   setDeleteSubscriptionResponse,
   setGetUserResponse,
+  setSendCustomEventResponse,
   setTransferSubscriptionResponse,
+  setUpdateSubscriptionResponse,
   setUpdateUserResponse,
   transferSubscriptionFn,
   updateUserFn,
@@ -92,7 +96,12 @@ describe('OneSignal', () => {
   });
 
   afterEach(async () => {
-    await waitForOperations(); // flush operations
+    window.OneSignal.coreDirector.operationRepo.queue = [];
+    await Database.remove('operations');
+    window.OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+      [],
+      ModelChangeTags.HYDRATE,
+    );
     await setupIdentity();
   });
 
@@ -195,7 +204,7 @@ describe('OneSignal', () => {
               id: DUMMY_SUBSCRIPTION_ID_2,
               token: 'test@test.com',
               type: 'Email',
-              device_os: 56,
+              device_os: DEVICE_OS,
               device_model: '',
               sdk: __VERSION__,
               enabled: true,
@@ -227,7 +236,7 @@ describe('OneSignal', () => {
           {
             ...subscription,
             device_model: '',
-            device_os: 56,
+            device_os: DEVICE_OS,
             id: expect.any(String),
             modelId: expect.any(String),
             modelName: 'subscriptions',
@@ -288,7 +297,7 @@ describe('OneSignal', () => {
               id: DUMMY_SUBSCRIPTION_ID_3,
               token: sms,
               type: 'SMS',
-              device_os: 56,
+              device_os: DEVICE_OS,
               device_model: '',
               sdk: __VERSION__,
             },
@@ -319,7 +328,7 @@ describe('OneSignal', () => {
           {
             ...subscription,
             device_model: '',
-            device_os: 56,
+            device_os: DEVICE_OS,
             id: expect.any(String),
             modelId: expect.any(String),
             modelName: 'subscriptions',
@@ -708,6 +717,7 @@ describe('OneSignal', () => {
 
         test('login then add email, sms, and web push - all subscriptions should be created with the external ID', async () => {
           setTransferSubscriptionResponse();
+          setUpdateSubscriptionResponse();
           setGetUserResponse({
             onesignalId: DUMMY_ONESIGNAL_ID,
             externalId,
@@ -860,6 +870,7 @@ describe('OneSignal', () => {
         );
 
         setCreateUserResponse({});
+        setUpdateSubscriptionResponse();
 
         window.OneSignal.logout();
 
@@ -919,7 +930,7 @@ describe('OneSignal', () => {
         expect(subscriptions).toEqual([
           {
             device_model: '',
-            device_os: 56,
+            device_os: DEVICE_OS,
             enabled: true,
             id: pushSub.id,
             modelId: expect.any(String),
@@ -931,6 +942,230 @@ describe('OneSignal', () => {
             type: 'ChromePush',
           },
         ]);
+      });
+    });
+  });
+
+  describe('Custom Events', () => {
+    const name = 'test_event';
+    const properties = {
+      test_property: 'test_value',
+    };
+    const OS_SDK = {
+      sdk: __VERSION__,
+      device_model: '',
+      device_os: DEVICE_OS,
+      type: 'ChromePush',
+    };
+
+    const getQueue = async (length: number) => {
+      const queue = await vi.waitUntil(
+        () => {
+          const _queue = window.OneSignal.coreDirector.operationRepo.queue;
+          return _queue.length === length ? _queue : null;
+        },
+        { interval: 1 },
+      );
+      return queue;
+    };
+
+    test('can send a custom event', async () => {
+      setSendCustomEventResponse();
+
+      OneSignal.coreDirector
+        .getIdentityModel()
+        .setProperty('external_id', 'some-id', ModelChangeTags.NO_PROPOGATE);
+      window.OneSignal.User.trackEvent(name, properties);
+
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1);
+
+      expect(sendCustomEventFn).toHaveBeenCalledWith({
+        events: [
+          {
+            name,
+            external_id: 'some-id',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+            payload: {
+              os_sdk: OS_SDK,
+              test_property: 'test_value',
+            },
+            timestamp: expect.any(String),
+          },
+        ],
+      });
+    });
+
+    test('can send a custom event after login', async () => {
+      setCreateUserResponse({});
+      setGetUserResponse({
+        onesignalId: DUMMY_ONESIGNAL_ID,
+        externalId: 'some-id',
+      });
+      setSendCustomEventResponse();
+
+      const identityModel = window.OneSignal.coreDirector.getIdentityModel();
+      identityModel.setProperty(
+        'external_id',
+        'some-id',
+        ModelChangeTags.NO_PROPOGATE,
+      );
+
+      window.OneSignal.login('some-id-2');
+      window.OneSignal.User.trackEvent(name, properties);
+
+      const queue = await getQueue(2);
+
+      // login and custom event should have matching id (via UserDirector reset user models)
+      const newLocalId = queue[0].operation.onesignalId;
+      expect(queue[1].operation.onesignalId).toBe(newLocalId);
+
+      // should translate ids for the custom event
+      await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
+        interval: 1,
+      });
+      expect(sendCustomEventFn).not.toHaveBeenCalled();
+
+      await waitForOperations(3);
+      expect(sendCustomEventFn).toHaveBeenCalledWith({
+        events: [
+          {
+            external_id: 'some-id-2',
+            name,
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+            payload: {
+              ...properties,
+              os_sdk: OS_SDK,
+            },
+            timestamp: expect.any(String),
+          },
+        ],
+      });
+    });
+
+    test('custom event can execute before login for an existing user w/ no external id', async () => {
+      setAddAliasResponse();
+      setSendCustomEventResponse();
+
+      window.OneSignal.User.trackEvent('test_event_1', {
+        test_property_1: 'test_value_1',
+      });
+      window.OneSignal.login('some-id');
+      window.OneSignal.User.trackEvent('test_event_2', {
+        test_property_2: 'test_value_2',
+      });
+
+      const queue = await getQueue(3);
+
+      expect(queue[0].operation.onesignalId).toBe(DUMMY_ONESIGNAL_ID);
+      const localID = queue[1].operation.onesignalId;
+      expect(queue[2].operation.onesignalId).toBe(localID);
+
+      // first event should have been sent
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
+        interval: 1,
+      });
+      expect(sendCustomEventFn).toHaveBeenCalledWith({
+        events: [
+          {
+            name: 'test_event_1',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+            payload: {
+              os_sdk: OS_SDK,
+              test_property_1: 'test_value_1',
+            },
+            timestamp: expect.any(String),
+          },
+        ],
+      });
+
+      // identity transfer call should have been made
+      await vi.waitUntil(() => addAliasFn.mock.calls.length === 1, {
+        interval: 1,
+      });
+      expect(addAliasFn).toHaveBeenCalledWith({
+        identity: {
+          external_id: 'some-id',
+        },
+      });
+
+      // second event should have been sent
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 2, {
+        interval: 1,
+      });
+      expect(sendCustomEventFn).toHaveBeenCalledWith({
+        events: [
+          {
+            external_id: 'some-id',
+            name: 'test_event_2',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+            payload: {
+              os_sdk: OS_SDK,
+              test_property_2: 'test_value_2',
+            },
+            timestamp: expect.any(String),
+          },
+        ],
+      });
+    });
+
+    test('custom event can execute before login for an existing user w/ external id', async () => {
+      OneSignal.coreDirector
+        .getIdentityModel()
+        .setProperty('external_id', 'some-id', ModelChangeTags.NO_PROPOGATE);
+
+      setSendCustomEventResponse();
+      setCreateUserResponse({
+        externalId: 'some-id-2',
+      });
+      setGetUserResponse();
+
+      window.OneSignal.User.trackEvent('test_event_1', {
+        test_property_1: 'test_value_1',
+      });
+      window.OneSignal.login('some-id-2');
+      window.OneSignal.User.trackEvent('test_event_2', {
+        test_property_2: 'test_value_2',
+      });
+
+      const queue = await getQueue(3);
+      expect(queue[0].operation.onesignalId).toBe(DUMMY_ONESIGNAL_ID);
+      const localID = queue[1].operation.onesignalId;
+      expect(queue[2].operation.onesignalId).toBe(localID);
+
+      // first event should have been sent
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
+        interval: 1,
+      });
+      expect(sendCustomEventFn).toHaveBeenCalledWith({
+        events: [
+          expect.objectContaining({
+            name: 'test_event_1',
+          }),
+        ],
+      });
+
+      // create user should have been called
+      await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
+        interval: 1,
+      });
+      expect(createUserFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          identity: {
+            external_id: 'some-id-2',
+          },
+        }),
+      );
+
+      // second event should have been sent
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 2, {
+        interval: 1,
+      });
+      expect(sendCustomEventFn).toHaveBeenCalledWith({
+        events: [
+          expect.objectContaining({
+            name: 'test_event_2',
+          }),
+        ],
       });
     });
   });

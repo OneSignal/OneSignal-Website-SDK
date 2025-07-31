@@ -1,5 +1,6 @@
 import {
   APP_ID,
+  DEVICE_OS,
   DUMMY_ONESIGNAL_ID,
   DUMMY_ONESIGNAL_ID_2,
   DUMMY_PUSH_TOKEN,
@@ -125,6 +126,9 @@ describe('RefreshUserOperationExecutor', () => {
             type: SubscriptionType.Email,
             token: 'test@example.com',
             notification_types: NotificationType.UserOptedOut,
+            device_os: DEVICE_OS,
+            device_model: '',
+            sdk: __VERSION__,
           },
         ],
       });
@@ -161,9 +165,9 @@ describe('RefreshUserOperationExecutor', () => {
         enabled: false,
         token: 'test@example.com',
         type: SubscriptionType.Email,
-        device_os: '',
+        device_os: DEVICE_OS,
         device_model: '',
-        sdk: '',
+        sdk: __VERSION__,
       });
     });
 
