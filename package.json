@@ -35,7 +35,7 @@
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig"
   },
   "config": {
-    "sdkVersion": "160405"
+    "sdkVersion": "160500"
   },
   "repository": {
     "type": "git",
