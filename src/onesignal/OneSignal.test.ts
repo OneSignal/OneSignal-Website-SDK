@@ -972,6 +972,9 @@ describe('OneSignal', () => {
     test('can send a custom event', async () => {
       setSendCustomEventResponse();
 
+      OneSignal.coreDirector
+        .getIdentityModel()
+        .setProperty('external_id', 'some-id', ModelChangeTags.NO_PROPOGATE);
       window.OneSignal.User.trackEvent(name, properties);
 
       await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1);
@@ -980,6 +983,7 @@ describe('OneSignal', () => {
         events: [
           {
             name,
+            external_id: 'some-id',
             onesignal_id: DUMMY_ONESIGNAL_ID,
             payload: {
               os_sdk: OS_SDK,
@@ -991,7 +995,7 @@ describe('OneSignal', () => {
       });
     });
 
-    test('custom event should wait for login to complete for a fresh user', async () => {
+    test('can send a custom event after login', async () => {
       setCreateUserResponse({});
       setGetUserResponse({
         onesignalId: DUMMY_ONESIGNAL_ID,
@@ -1000,21 +1004,19 @@ describe('OneSignal', () => {
       setSendCustomEventResponse();
 
       const identityModel = window.OneSignal.coreDirector.getIdentityModel();
-      const startingOnesignalId = IDManager.createLocalId();
       identityModel.setProperty(
-        'onesignal_id',
-        startingOnesignalId,
+        'external_id',
+        'some-id',
         ModelChangeTags.NO_PROPOGATE,
       );
 
+      window.OneSignal.login('some-id-2');
       window.OneSignal.User.trackEvent(name, properties);
-      window.OneSignal.login('some-id');
 
       const queue = await getQueue(2);
 
       // login and custom event should have matching id (via UserDirector reset user models)
       const newLocalId = queue[0].operation.onesignalId;
-      expect(newLocalId).not.toBe(startingOnesignalId);
       expect(queue[1].operation.onesignalId).toBe(newLocalId);
 
       // should translate ids for the custom event
@@ -1027,6 +1029,7 @@ describe('OneSignal', () => {
       expect(sendCustomEventFn).toHaveBeenCalledWith({
         events: [
           {
+            external_id: 'some-id-2',
             name,
             onesignal_id: DUMMY_ONESIGNAL_ID,
             payload: {

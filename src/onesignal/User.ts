@@ -161,7 +161,7 @@ export default class User {
     const hasOneSignalId =
       !!OneSignal.coreDirector.getIdentityModel().onesignalId;
     if (!hasOneSignalId) {
-      Log.error('Call login before adding an email/sms subscription');
+      Log.error('User must be logged in first.');
     }
     return hasOneSignalId;
   }
@@ -283,6 +283,7 @@ export default class User {
   }
 
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {
+    if (!this.validateUserExists()) return;
     if (!isObjectSerializable(properties)) {
       return Log.error(
         'Custom event properties must be a JSON-serializable object',

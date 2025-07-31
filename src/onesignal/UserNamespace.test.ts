@@ -2,6 +2,7 @@ import {
   DUMMY_ONESIGNAL_ID,
   DUMMY_PUSH_TOKEN,
 } from '__test__/support/constants';
+import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { TestEnvironment } from '../../__test__/support/environment/TestEnvironment';
@@ -438,6 +439,18 @@ describe('UserNamespace', () => {
         test_property: 'test_value',
       };
 
+      userNamespace.trackEvent(name, {});
+      expect(errorSpy).toHaveBeenCalledWith('User must be logged in first.');
+      errorSpy.mockClear();
+
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      identityModel.setProperty(
+        'onesignal_id',
+        DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.NO_PROPOGATE,
+      );
+
+      console.log('zzz');
       // should validate properties
       // @ts-expect-error - mock invalid argument
       userNamespace.trackEvent(name, 123);

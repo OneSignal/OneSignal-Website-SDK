@@ -2,7 +2,6 @@ import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import MainHelper from 'src/shared/helpers/MainHelper';
-import { IDManager } from 'src/shared/managers/IDManager';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
 import Log from '../../shared/libraries/Log';
@@ -25,9 +24,7 @@ export default class LoginManager {
     }
 
     let identityModel = OneSignal.coreDirector.getIdentityModel();
-    const currentOneSignalId = IDManager.isLocalId(identityModel.onesignalId)
-      ? undefined
-      : identityModel.onesignalId;
+    const currentOneSignalId = identityModel.onesignalId;
     const currentExternalId = identityModel.externalId;
 
     // if the current externalId is the same as the one we're trying to set, do nothing

@@ -1,5 +1,3 @@
-import { ModelChangeTags } from 'src/core/types/models';
-import { IDManager } from 'src/shared/managers/IDManager';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
@@ -21,16 +19,6 @@ export default class UserNamespace extends EventListenerBase {
   ) {
     super();
     if (initialize) {
-      // operation model store expect operations to have a onesignalId even if it's a local id
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
-      if (!identityModel.onesignalId) {
-        identityModel.setProperty(
-          'onesignal_id',
-          IDManager.createLocalId(),
-          ModelChangeTags.HYDRATE,
-        );
-      }
-
       this._currentUser = User.createOrGetInstance();
       this.PushSubscription = new PushSubscriptionNamespace(
         true,
