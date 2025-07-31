@@ -1,6 +1,13 @@
-import { Browser, getBrowserName } from '../useragent';
+import {
+  SubscriptionType,
+  type SubscriptionTypeValue,
+} from 'src/core/types/subscription';
+import {
+  DeliveryPlatformKind,
+  type DeliveryPlatformKindValue,
+} from '../models/DeliveryPlatformKind';
+import { Browser, getBrowserName, getBrowserVersion } from '../useragent';
 import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
-import OneSignalUtils from '../utils/OneSignalUtils';
 import { EnvironmentKind } from './constants';
 
 export const isBrowser = typeof window !== 'undefined';
@@ -66,8 +73,8 @@ const isTurbineEndpoint = (action?: string): boolean => {
 };
 
 export const getSubscriptionType = (): SubscriptionTypeValue => {
-  const browser = OneSignalUtils.redetectBrowserUserAgent();
-  if (browser.firefox) {
+  const isFirefox = getBrowserName() === Browser.Firefox;
+  if (isFirefox) {
     return SubscriptionType.FirefoxPush;
   }
   if (useSafariVapidPush()) {
@@ -97,10 +104,7 @@ export function getDeviceType(): DeliveryPlatformKindValue {
 }
 
 export function getDeviceOS(): string {
-  const environment = EnvironmentInfoHelper.getEnvironmentInfo();
-  return String(
-    isNaN(environment.browserVersion) ? -1 : environment.browserVersion,
-  );
+  return String(getBrowserVersion());
 }
 
 export function getDeviceModel(): string {

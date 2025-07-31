@@ -1,4 +1,4 @@
-import { DUMMY_EXTERNAL_ID } from '__test__/constants';
+import { DEVICE_OS, DUMMY_EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {

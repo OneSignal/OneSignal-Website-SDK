@@ -18,6 +18,7 @@ import Database from '../../../src/shared/services/Database';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
 import {
   DEFAULT_USER_AGENT,
+  DEVICE_OS,
   DUMMY_ONESIGNAL_ID,
   DUMMY_SUBSCRIPTION_ID_3,
 } from '../../constants';

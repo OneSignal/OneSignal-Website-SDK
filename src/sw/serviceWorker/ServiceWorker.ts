@@ -2,11 +2,11 @@ import {
   NotificationType,
   type NotificationTypeValue,
 } from 'src/core/types/subscription';
-import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
 import { type AppConfig, getServerAppConfig } from 'src/shared/config';
 import { Utils } from 'src/shared/context/Utils';
+import { getDeviceType } from 'src/shared/environment';
 import { delay } from 'src/shared/helpers/general';
 import ServiceWorkerHelper from 'src/shared/helpers/ServiceWorkerHelper';
 import {

@@ -2,11 +2,16 @@ import type {
   NotificationTypeValue,
   SubscriptionTypeValue,
 } from 'src/core/types/subscription';
-import { NotificationType } from 'src/core/types/subscription';
+import {
+  NotificationType,
+  SubscriptionType,
+} from 'src/core/types/subscription';
 import {
   getDeviceModel,
   getDeviceOS,
   getSubscriptionType,
+  useSafariLegacyPush,
+  useSafariVapidPush,
 } from 'src/shared/environment';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import {

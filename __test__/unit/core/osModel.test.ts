@@ -1,3 +1,4 @@
+import { DEVICE_OS } from '__test__/constants';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { SubscriptionType } from 'src/core/types/subscription';
 import { generateNewSubscription } from '../../support/helpers/core';

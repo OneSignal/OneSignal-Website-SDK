@@ -293,3 +293,16 @@ export default class User {
     });
   }
 }
+
+/**
+ * Returns true if the value is a JSON-serializable object.
+ */
+function isObjectSerializable(value: unknown): boolean {
+  if (!isObject(value)) return false;
+  try {
+    JSON.stringify(value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
