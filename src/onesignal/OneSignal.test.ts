@@ -280,10 +280,16 @@ describe('OneSignal', () => {
 
     describe('sms', () => {
       const sms = '+1234567890';
-      const getSmsSubscriptionDbItems = async () =>
-        (await Database.get<SubscriptionItem[]>('subscriptions')).filter(
-          (s) => s.type === 'SMS',
-        );
+      const getSmsSubscriptionDbItems = async (length: number) => {
+        let subscriptions: SubscriptionItem[] = [];
+        await vi.waitUntil(async () => {
+          subscriptions = (
+            await Database.get<SubscriptionItem[]>('subscriptions')
+          ).filter((s) => s.type === 'SMS');
+          return subscriptions.length === length;
+        });
+        return subscriptions;
+      };
 
       beforeEach(() => {
         // id not returned for sms or email
@@ -322,7 +328,7 @@ describe('OneSignal', () => {
         });
 
         // should also save the subscription to the IndexedDB
-        let dbSubscriptions = await getSmsSubscriptionDbItems();
+        let dbSubscriptions = await getSmsSubscriptionDbItems(1);
 
         expect(dbSubscriptions).toEqual([
           {
@@ -342,7 +348,7 @@ describe('OneSignal', () => {
         expect(createSubscriptionFn).toHaveBeenCalledTimes(1);
         await waitForOperations(1);
 
-        dbSubscriptions = await getSmsSubscriptionDbItems();
+        dbSubscriptions = await getSmsSubscriptionDbItems(1);
         expect(dbSubscriptions).toMatchObject([
           {
             modelId: expect.any(String),
@@ -357,15 +363,11 @@ describe('OneSignal', () => {
           subscriptionId: DUMMY_SUBSCRIPTION_ID_3,
         });
         window.OneSignal.User.addSms(sms);
-        let dbSubscriptions = await getSmsSubscriptionDbItems();
-        expect(dbSubscriptions).toHaveLength(1);
+        await getSmsSubscriptionDbItems(1);
 
-        await waitForOperations(6);
         window.OneSignal.User.removeSms(sms);
-        await waitForOperations(4);
 
-        dbSubscriptions = await getSmsSubscriptionDbItems();
-        expect(dbSubscriptions).toHaveLength(0);
+        await getSmsSubscriptionDbItems(0);
       });
     });
 
@@ -1025,7 +1027,9 @@ describe('OneSignal', () => {
       });
       expect(sendCustomEventFn).not.toHaveBeenCalled();
 
-      await waitForOperations(3);
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
+        interval: 1,
+      });
       expect(sendCustomEventFn).toHaveBeenCalledWith({
         events: [
           {
