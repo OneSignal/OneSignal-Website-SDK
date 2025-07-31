@@ -25,7 +25,6 @@ import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { type Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
-import { TrackEventOperation } from '../operations/TrackEventOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { RequestService } from '../requestService/RequestService';
@@ -93,8 +92,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.
-    if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId)
+    if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId) {
       return this.createUser(loginUserOp, operations);
+    }
 
     const result = await this._identityOperationExecutor.execute([
       new SetAliasOperation(

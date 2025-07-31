@@ -1,5 +1,4 @@
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
-import { ModelChangeTags } from 'src/core/types/models';
 import {
   NotificationType,
   SubscriptionType,
@@ -287,16 +286,6 @@ export default class User {
     if (!isObjectSerializable(properties)) {
       return Log.error(
         'Custom event properties must be a JSON-serializable object',
-      );
-    }
-
-    // check onesignalId
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    if (!identityModel.onesignalId) {
-      identityModel.setProperty(
-        'onesignal_id',
-        IDManager.createLocalId(),
-        ModelChangeTags.HYDRATE,
       );
     }
 
