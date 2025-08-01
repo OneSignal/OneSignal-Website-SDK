@@ -1,4 +1,4 @@
-import type { NotificationIcons } from 'src/page/models/NotificationIcons';
+import type { NotificationIcons } from 'src/shared/notifications';
 import { Utils } from '../context/Utils';
 import Log from '../libraries/Log';
 import { Browser, getBrowserName } from '../useragent';

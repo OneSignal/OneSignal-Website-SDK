@@ -1,5 +1,7 @@
-import type { NotificationClickEvent } from '../../../shared/models/NotificationEvent';
-import type { IOSNotification } from '../../../shared/models/OSNotification';
+import type {
+  IOSNotification,
+  NotificationClickEvent,
+} from 'src/shared/notifications';
 import { OSWebhookSender } from './../OSWebhookSender';
 import { OSWebhookPayloadNotificationClick } from './payloads/OSWebhookPayloadNotificationClick';
 import { OSWebhookPayloadNotificationDismiss } from './payloads/OSWebhookPayloadNotificationDismiss';

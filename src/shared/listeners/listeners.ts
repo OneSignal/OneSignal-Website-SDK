@@ -9,7 +9,7 @@ import type { ContextSWInterface } from '../models/ContextSW';
 import type {
   NotificationClickEvent,
   NotificationClickEventInternal,
-} from '../models/NotificationEvent';
+} from '../notifications';
 import { isCategorySlidedownConfigured } from '../prompts';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';

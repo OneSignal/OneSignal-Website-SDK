@@ -8,11 +8,6 @@ export default class Log {
       console.debug(...args);
     }
   }
-  static trace(...args: any[]): void {
-    if (!!self.shouldLog) {
-      console.trace(...args);
-    }
-  }
   static info(...args: any[]): void {
     if (!!self.shouldLog) {
       console.info(...args);

@@ -1,5 +1,5 @@
-import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import Log from '../libraries/Log';
+import type { OutcomeRequestData } from '../outcomes/types';
 import OneSignalApiBase from './OneSignalApiBase';
 
 export default class OneSignalApiShared {

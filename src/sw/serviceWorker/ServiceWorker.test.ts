@@ -9,7 +9,6 @@ import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import { NotificationType } from 'src/core/types/subscription';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import { ConfigIntegrationKind, type AppConfig } from 'src/shared/config';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
@@ -33,6 +32,7 @@ import {
   type Session,
   type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session';
+import { NotificationType } from 'src/shared/subscriptions';
 import Log from '../libraries/Log';
 import { ServiceWorker } from './ServiceWorker';
 

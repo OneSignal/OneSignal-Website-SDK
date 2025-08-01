@@ -1,15 +1,12 @@
+import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
+import UserDirector from 'src/onesignal/UserDirector';
+import LoginManager from 'src/page/managers/LoginManager';
+import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import {
   NotificationType,
   type NotificationTypeValue,
-} from 'src/core/types/subscription';
-import UserDirector from 'src/onesignal/UserDirector';
-import LoginManager from 'src/page/managers/LoginManager';
-import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
-import {
-  getOneSignalApiUrl,
-  useSafariLegacyPush,
-} from '../environment/environment';
+} from 'src/shared/subscriptions';
+import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment';
 import {
   InvalidStateError,
   InvalidStateReason,

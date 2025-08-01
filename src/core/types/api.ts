@@ -4,7 +4,7 @@ import type { APIHeaders } from 'src/shared/models/APIHeaders';
 import type {
   NotificationTypeValue,
   SubscriptionTypeValue,
-} from './subscription';
+} from 'src/shared/subscriptions';
 
 export interface RequestMetadata {
   appId: string;

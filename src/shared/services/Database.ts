@@ -19,8 +19,6 @@ import {
   AppState,
   type PendingNotificationClickEvents,
 } from '../models/AppState';
-import type { NotificationClickEventInternal } from '../models/NotificationEvent';
-import type { IOSNotification } from '../models/OSNotification';
 import type { SentUniqueOutcome } from '../models/Outcomes';
 import type {
   OutcomesNotificationClicked,
@@ -28,6 +26,10 @@ import type {
 } from '../models/OutcomesNotificationEvents';
 import { Subscription } from '../models/Subscription';
 import { UserState } from '../models/UserState';
+import type {
+  IOSNotification,
+  NotificationClickEventInternal,
+} from '../notifications';
 import { ONESIGNAL_SESSION_KEY, type Session } from '../session';
 
 const DatabaseEventName = {

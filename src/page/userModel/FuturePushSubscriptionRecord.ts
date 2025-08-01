@@ -1,11 +1,3 @@
-import type {
-  NotificationTypeValue,
-  SubscriptionTypeValue,
-} from 'src/core/types/subscription';
-import {
-  NotificationType,
-  SubscriptionType,
-} from 'src/core/types/subscription';
 import {
   getDeviceModel,
   getDeviceOS,
@@ -14,6 +6,12 @@ import {
   useSafariVapidPush,
 } from 'src/shared/environment';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import {
+  NotificationType,
+  SubscriptionType,
+  type NotificationTypeValue,
+  type SubscriptionTypeValue,
+} from 'src/shared/subscriptions';
 import {
   Browser,
   getBrowserName,

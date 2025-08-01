@@ -1,8 +1,6 @@
 import { IdentityConstants } from 'src/core/constants';
 import { updateUserByAlias } from 'src/core/requestService';
 import type { IUpdateUser } from 'src/core/types/api';
-import { NotificationType } from 'src/core/types/subscription';
-import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import type { ServerAppConfig } from '../config';
 import Utils from '../context/Utils';
 import { getSubscriptionType } from '../environment';
@@ -12,6 +10,8 @@ import {
   OutcomeAttributionType,
   type OutcomeAttribution,
 } from '../models/Outcomes';
+import type { OutcomeRequestData } from '../outcomes/types';
+import { NotificationType } from '../subscriptions';
 import { OneSignalApiBase } from './OneSignalApiBase';
 import OneSignalApiShared from './OneSignalApiShared';
 

@@ -108,3 +108,53 @@ export interface NotificationAction {
   title: string;
   icon?: string;
 }
+
+export interface NotificationClickEvent {
+  readonly notification: IOSNotification;
+  readonly result: NotificationClickResult;
+}
+
+// Timestamp is required for internal click handing, but omit it externally
+// to simply the public SDK API
+export interface NotificationClickEventInternal extends NotificationClickEvent {
+  readonly timestamp: number;
+}
+
+export interface NotificationClickResult {
+  readonly actionId?: string;
+  readonly url?: string;
+}
+
+export interface NotificationForegroundWillDisplayEventSerializable {
+  readonly notification: IOSNotification;
+}
+
+export interface NotificationForegroundWillDisplayEvent
+  extends NotificationForegroundWillDisplayEventSerializable {
+  preventDefault(): void;
+}
+
+export interface NotificationDismissEvent {
+  notification: IOSNotification;
+}
+
+export type NotificationEventTypeMap = {
+  click: NotificationClickEvent;
+  foregroundWillDisplay: NotificationForegroundWillDisplayEvent;
+  dismiss: NotificationDismissEvent;
+  permissionChange: boolean;
+  permissionPromptDisplay: void;
+};
+
+export type NotificationEventName =
+  | 'click'
+  | 'foregroundWillDisplay'
+  | 'dismiss'
+  | 'permissionChange'
+  | 'permissionPromptDisplay';
+
+export interface NotificationIcons {
+  chrome: string | null;
+  firefox: string | null;
+  safari: string | null;
+}

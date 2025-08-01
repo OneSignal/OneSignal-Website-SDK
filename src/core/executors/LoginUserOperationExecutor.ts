@@ -5,6 +5,7 @@ import {
 } from 'src/core/types/operation';
 import OneSignalError from 'src/shared/errors/OneSignalError';
 import { getTimeZoneId } from 'src/shared/helpers/general';
+import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -12,7 +13,6 @@ import {
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import Database from 'src/shared/services/Database';
-import LocalStorage from 'src/shared/utils/LocalStorage';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -80,7 +80,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     loginUserOp: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
-    const consentRequired = LocalStorage.getConsentRequired();
+    const consentRequired = getConsentRequired();
     const consentGiven = await Database.getConsentGiven();
 
     if (consentRequired && !consentGiven) {
