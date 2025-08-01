@@ -13,7 +13,7 @@ import { OPERATION_NAME } from '../constants';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
-import { RequestService } from '../requestService/RequestService';
+import { sendCustomEvent } from '../requestService';
 import type { ICustomEventMetadata } from '../types/customEvents';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 
@@ -51,7 +51,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
       );
     }
 
-    const response = await RequestService.sendCustomEvent(
+    const response = await sendCustomEvent(
       { appId: operation.appId },
       {
         name: operation.event.name,

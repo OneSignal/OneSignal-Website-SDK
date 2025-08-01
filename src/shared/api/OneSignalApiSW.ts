@@ -1,7 +1,7 @@
+import { IdentityConstants } from 'src/core/constants';
+import { updateUserByAlias } from 'src/core/requestService';
 import type { IUpdateUser } from 'src/core/types/api';
 import { NotificationType } from 'src/core/types/subscription';
-import AliasPair from '../../core/requestService/AliasPair';
-import { RequestService } from '../../core/requestService/RequestService';
 import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
 import type { ServerAppConfig } from '../config';
 import Utils from '../context/Utils';
@@ -66,7 +66,10 @@ export class OneSignalApiSW {
     onesignalId: string,
     subscriptionId: string,
   ): Promise<void> {
-    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+    const aliasPair = {
+      label: IdentityConstants.ONESIGNAL_ID,
+      id: onesignalId,
+    };
     // TO DO: in future, we should aggregate session count in case network call fails
     const updateUserPayload: IUpdateUser = {
       refresh_device_metadata: true,
@@ -78,7 +81,7 @@ export class OneSignalApiSW {
     Utils.enforceAppId(appId);
     Utils.enforceAlias(aliasPair);
     try {
-      await RequestService.updateUser(
+      await updateUserByAlias(
         { appId, subscriptionId },
         aliasPair,
         updateUserPayload,
@@ -102,7 +105,10 @@ export class OneSignalApiSW {
       },
     };
 
-    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+    const aliasPair = {
+      label: IdentityConstants.ONESIGNAL_ID,
+      id: onesignalId,
+    };
 
     const outcomePayload: OutcomeRequestData = {
       id: 'os__session_duration',
@@ -120,7 +126,7 @@ export class OneSignalApiSW {
       attribution.type === OutcomeAttributionType.Direct ? true : false;
 
     try {
-      await RequestService.updateUser(
+      await updateUserByAlias(
         { appId, subscriptionId },
         aliasPair,
         updateUserPayload,

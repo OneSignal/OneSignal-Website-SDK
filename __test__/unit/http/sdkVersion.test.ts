@@ -5,8 +5,18 @@ import {
 } from '__test__/constants';
 import { generateNewSubscription } from '__test__/support/helpers/core';
 import { nock } from '__test__/support/helpers/general';
-import AliasPair from '../../../src/core/requestService/AliasPair';
-import { RequestService } from '../../../src/core/requestService/RequestService';
+import { IdentityConstants } from 'src/core/constants';
+import {
+  createNewUser,
+  createSubscriptionByAlias,
+  deleteAlias,
+  deleteSubscriptionById,
+  deleteUserByAlias,
+  getUserByAlias,
+  getUserIdentity,
+  updateSubscriptionById,
+  updateUserByAlias,
+} from 'src/core/requestService';
 import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
 
 describe('Sdk Version Header Tests', () => {
@@ -14,60 +24,81 @@ describe('Sdk Version Header Tests', () => {
 
   test('POST /users: SDK-Version header is sent', () => {
     // @ts-expect-error - partial identity object
-    RequestService.createUser({ appId: APP_ID }, {});
+    createNewUser({ appId: APP_ID }, {});
     expectHeaderToBeSent();
   });
 
   test('POST /users: header is sent', () => {
-    RequestService.createUser(
+    createNewUser(
       { appId: APP_ID },
       // @ts-expect-error - partial identity object
       { refresh_device_metadata: true },
     );
     expectHeaderToBeSent();
   });
+
   test('POST /users: header is sent with subscription id', () => {
-    RequestService.createUser(
+    createNewUser(
       { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
       // @ts-expect-error - partial identity object
       {},
     );
     expectHeaderToBeSent();
   });
+
   test('GET /users/by/<alias_label>/<alias_id>: header is sent', () => {
-    RequestService.getUser(
+    getUserByAlias(
       { appId: APP_ID },
-      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
+      {
+        label: IdentityConstants.EXTERNAL_ID,
+        id: DUMMY_EXTERNAL_ID,
+      },
     );
     expectHeaderToBeSent();
   });
+
   test('PATCH /users/by/<alias_label>/<alias_id>: header is sent', () => {
-    RequestService.updateUser(
+    updateUserByAlias(
       { appId: APP_ID },
-      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
+      {
+        label: IdentityConstants.EXTERNAL_ID,
+        id: DUMMY_EXTERNAL_ID,
+      },
       {},
     );
     expectHeaderToBeSent();
   });
+
   test('PATCH /users/by/<alias_label>/<alias_id>: header is sent with subscription id', () => {
-    RequestService.updateUser(
+    updateUserByAlias(
       { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
-      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
+      {
+        label: IdentityConstants.EXTERNAL_ID,
+        id: DUMMY_EXTERNAL_ID,
+      },
       {},
     );
     expectHeaderToBeSent();
   });
+
   test('DELETE /users/by/<alias_label>/<alias_id>: header is sent', () => {
-    RequestService.deleteUser(
+    deleteUserByAlias(
       { appId: APP_ID },
-      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
+      {
+        label: IdentityConstants.EXTERNAL_ID,
+        id: DUMMY_EXTERNAL_ID,
+      },
     );
     expectHeaderToBeSent();
   });
+
   test('POST /users/by/<alias_label>/<alias_id>/subscription: header is sent', () => {
-    RequestService.createSubscription(
+    createSubscriptionByAlias(
       { appId: APP_ID },
-      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
+      {
+        label: IdentityConstants.EXTERNAL_ID,
+        id: DUMMY_EXTERNAL_ID,
+      },
       {
         // @ts-expect-error - partial identity object
         subscription: generateNewSubscription().data,
@@ -75,28 +106,42 @@ describe('Sdk Version Header Tests', () => {
     );
     expectHeaderToBeSent();
   });
+
   test('GET /users/by/<alias_label>/<alias_id>/identity: header is sent', () => {
-    RequestService.getUserIdentity(
+    getUserIdentity(
       { appId: APP_ID },
-      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
+      {
+        label: IdentityConstants.EXTERNAL_ID,
+        id: DUMMY_EXTERNAL_ID,
+      },
     );
     expectHeaderToBeSent();
   });
+
   test('DELETE /users/by/<alias_label>/<alias_id>/identity/<alias_label_to_delete>: header is sent', () => {
-    RequestService.deleteAlias(
+    deleteAlias(
       { appId: APP_ID },
-      new AliasPair(AliasPair.EXTERNAL_ID, DUMMY_EXTERNAL_ID),
-      AliasPair.EXTERNAL_ID,
+      {
+        label: IdentityConstants.EXTERNAL_ID,
+        id: DUMMY_EXTERNAL_ID,
+      },
+      IdentityConstants.EXTERNAL_ID,
     );
     expectHeaderToBeSent();
   });
+
   test('PATCH /subscriptions/<subscription_id>: header is sent', () => {
-    // @ts-expect-error - partial identity object
-    RequestService.updateSubscription({ appId: APP_ID }, DUMMY_EXTERNAL_ID, {});
+    updateSubscriptionById(
+      { appId: APP_ID },
+      DUMMY_EXTERNAL_ID,
+      // @ts-expect-error - partial identity object
+      {},
+    );
     expectHeaderToBeSent();
   });
+
   test('DELETE /subscriptions/<subscription_id>: header is sent', () => {
-    RequestService.deleteSubscription({ appId: APP_ID }, DUMMY_EXTERNAL_ID);
+    deleteSubscriptionById({ appId: APP_ID }, DUMMY_EXTERNAL_ID);
     expectHeaderToBeSent();
   });
 });

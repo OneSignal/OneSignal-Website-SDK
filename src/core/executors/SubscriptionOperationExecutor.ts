@@ -19,8 +19,12 @@ import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import AliasPair from '../requestService/AliasPair';
-import { RequestService } from '../requestService/RequestService';
+import {
+  createSubscriptionByAlias,
+  deleteSubscriptionById,
+  transferSubscriptionById,
+  updateSubscriptionById,
+} from '../requestService';
 import { ModelChangeTags } from '../types/models';
 
 // Implements logic similar to Android SDK's SubscriptionOperationExecutor
@@ -103,12 +107,12 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       notification_types,
     };
 
-    const response = await RequestService.createSubscription(
+    const response = await createSubscriptionByAlias(
       { appId: createOperation.appId },
-      new AliasPair(
-        IdentityConstants.ONESIGNAL_ID,
-        createOperation.onesignalId,
-      ),
+      {
+        label: IdentityConstants.ONESIGNAL_ID,
+        id: createOperation.onesignalId,
+      },
       { subscription },
     );
 
@@ -222,7 +226,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       web_p256: lastOp.web_p256,
     };
 
-    const response = await RequestService.updateSubscription(
+    const response = await updateSubscriptionById(
       { appId: lastOp.appId },
       lastOp.subscriptionId,
       subscription,
@@ -273,7 +277,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   private async transferSubscription(
     op: TransferSubscriptionOperation,
   ): Promise<ExecutionResponse> {
-    const response = await RequestService.transferSubscription(
+    const response = await transferSubscriptionById(
       { appId: op.appId },
       op.subscriptionId,
       { onesignal_id: op.onesignalId },
@@ -302,7 +306,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   private async deleteSubscription(
     op: DeleteSubscriptionOperation,
   ): Promise<ExecutionResponse> {
-    const response = await RequestService.deleteSubscription(
+    const response = await deleteSubscriptionById(
       { appId: op.appId },
       op.subscriptionId,
     );

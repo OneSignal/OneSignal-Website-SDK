@@ -1,3 +1,5 @@
+import { IdentityConstants } from 'src/core/constants';
+import { updateUserByAlias } from 'src/core/requestService';
 import type { IUpdateUser } from 'src/core/types/api';
 import { NotificationType } from 'src/core/types/subscription';
 import { supportsServiceWorkers } from 'src/shared/environment';
@@ -6,8 +8,6 @@ import {
   type SessionOriginValue,
   type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session';
-import AliasPair from '../../../core/requestService/AliasPair';
-import { RequestService } from '../../../core/requestService/RequestService';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
@@ -381,7 +381,10 @@ export class SessionManager implements ISessionManager {
     }
 
     try {
-      const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+      const aliasPair = {
+        label: IdentityConstants.ONESIGNAL_ID,
+        id: onesignalId,
+      };
       // TO DO: in future, we should aggregate session count in case network call fails
       const updateUserPayload: IUpdateUser = {
         refresh_device_metadata: true,
@@ -394,7 +397,7 @@ export class SessionManager implements ISessionManager {
       Utils.enforceAppId(appId);
       Utils.enforceAlias(aliasPair);
       try {
-        await RequestService.updateUser(
+        await updateUserByAlias(
           { appId, subscriptionId },
           aliasPair,
           updateUserPayload,

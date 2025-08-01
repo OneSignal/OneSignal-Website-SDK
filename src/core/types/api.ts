@@ -12,6 +12,11 @@ export interface RequestMetadata {
   jwtHeader?: APIHeaders;
 }
 
+export interface AliasPair {
+  label: string;
+  id: string;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Create User
 // Reference: https://documentation.onesignal.com/reference/create-user#body-parameters

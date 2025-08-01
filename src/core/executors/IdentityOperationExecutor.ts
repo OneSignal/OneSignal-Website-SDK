@@ -9,15 +9,14 @@ import {
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
-import { OPERATION_NAME } from '../constants';
+import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { type Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
-import AliasPair from '../requestService/AliasPair';
-import { RequestService } from '../requestService/RequestService';
+import { addAlias, deleteAlias } from '../requestService';
 
 // Implements logic similar to Android SDK's IdentityOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/IdentityOperationExecutor.kt
@@ -77,14 +76,20 @@ export class IdentityOperationExecutor implements IOperationExecutor {
 
     const isSetAlias = lastOperation instanceof SetAliasOperation;
     const request = isSetAlias
-      ? RequestService.addAlias(
+      ? addAlias(
           { appId: lastOperation.appId },
-          new AliasPair(AliasPair.ONESIGNAL_ID, lastOperation.onesignalId),
+          {
+            label: IdentityConstants.ONESIGNAL_ID,
+            id: lastOperation.onesignalId,
+          },
           { [lastOperation.label]: lastOperation.value },
         )
-      : RequestService.deleteAlias(
+      : deleteAlias(
           { appId: lastOperation.appId },
-          new AliasPair(AliasPair.ONESIGNAL_ID, lastOperation.onesignalId),
+          {
+            label: IdentityConstants.ONESIGNAL_ID,
+            id: lastOperation.onesignalId,
+          },
           lastOperation.label,
         );
 

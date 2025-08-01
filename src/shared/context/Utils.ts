@@ -1,4 +1,4 @@
-import AliasPair from '../../core/requestService/AliasPair';
+import type { AliasPair } from 'src/core/types/api';
 import TimeoutError from '../errors/TimeoutError';
 
 type Nullable = undefined | null;
