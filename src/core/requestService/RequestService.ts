@@ -275,7 +275,7 @@ export class RequestService {
   ) {
     const { appId } = requestMetadata;
     return OneSignalApiBase.post(
-      `apps/${appId}/integrations/sdk/custom_events`,
+      `apps/${appId}/custom_events`,
       {
         events: [event],
       },
