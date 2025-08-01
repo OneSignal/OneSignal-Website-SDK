@@ -328,8 +328,7 @@ export const setUpdateUserError = ({
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // custom events
-const getCustomEventsUri = () =>
-  `**/apps/${APP_ID}/integrations/sdk/custom_events`;
+const getCustomEventsUri = () => `**/apps/${APP_ID}/custom_events`;
 export const sendCustomEventFn = vi.fn();
 export const setSendCustomEventResponse = () =>
   getHandler({
