@@ -1,5 +1,5 @@
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
-import { SubscriptionType } from 'src/core/types/subscription';
+import { SubscriptionType } from 'src/shared/subscriptions';
 import CoreModule from '../../../src/core/CoreModule';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 

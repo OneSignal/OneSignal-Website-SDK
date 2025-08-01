@@ -447,7 +447,6 @@ describe('UserNamespace', () => {
         ModelChangeTags.NO_PROPOGATE,
       );
 
-      console.log('zzz');
       // should validate properties
       // @ts-expect-error - mock invalid argument
       userNamespace.trackEvent(name, 123);

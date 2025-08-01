@@ -6,6 +6,11 @@ import {
 } from 'src/shared/config';
 import { windowEnvString } from 'src/shared/environment';
 import {
+  getConsentRequired,
+  removeLegacySubscriptionOptions,
+  setConsentRequired as setStorageConsentRequired,
+} from 'src/shared/helpers/localStorage';
+import {
   _onSubscriptionChanged,
   checkAndTriggerSubscriptionChanged,
 } from 'src/shared/listeners';
@@ -33,7 +38,6 @@ import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
 import Database from '../shared/services/Database';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
-import LocalStorage from '../shared/utils/LocalStorage';
 import { logMethodCall } from '../shared/utils/utils';
 import DebugNamespace from './DebugNamesapce';
 import NotificationsNamespace from './NotificationsNamespace';
@@ -130,7 +134,7 @@ export default class OneSignal {
       `Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`,
     );
 
-    LocalStorage.removeLegacySubscriptionOptions();
+    removeLegacySubscriptionOptions();
 
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);
@@ -150,7 +154,7 @@ export default class OneSignal {
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
 
-    if (LocalStorage.getConsentRequired()) {
+    if (getConsentRequired()) {
       const providedConsent = await Database.getConsentGiven();
       if (!providedConsent) {
         OneSignal.pendingInit = true;
@@ -257,7 +261,7 @@ export default class OneSignal {
       );
     }
 
-    LocalStorage.setConsentRequired(requiresConsent);
+    setStorageConsentRequired(requiresConsent);
   }
 
   /**

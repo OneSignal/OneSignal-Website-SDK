@@ -1,4 +1,4 @@
-import type { NotificationAction } from 'src/shared/models/OSNotification';
+import type { NotificationAction } from 'src/shared/notifications';
 
 // This is a mock for the w3c Notification
 export default class MockNotification implements Notification {

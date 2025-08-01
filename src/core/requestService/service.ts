@@ -275,7 +275,7 @@ export async function sendCustomEvent(
 ) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.post(
-    `apps/${appId}/integrations/sdk/custom_events`,
+    `apps/${appId}/custom_events`,
     {
       events: [event],
     },

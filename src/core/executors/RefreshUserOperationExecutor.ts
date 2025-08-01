@@ -5,6 +5,7 @@ import {
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import Log from 'src/shared/libraries/Log';
 import Database from 'src/shared/services/Database';
+import { NotificationType } from 'src/shared/subscriptions';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
 import {
@@ -22,7 +23,6 @@ import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { getUserByAlias } from '../requestService';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import { NotificationType } from '../types/subscription';
 import { type IRebuildUserService } from '../types/user';
 
 // Implements logic similar to Android SDK's RefreshUserOperationExecutor

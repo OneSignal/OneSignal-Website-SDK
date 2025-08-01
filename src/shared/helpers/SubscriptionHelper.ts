@@ -3,7 +3,7 @@ import {
   type SubscriptionChannelValue,
   SubscriptionType,
   type SubscriptionTypeValue,
-} from 'src/core/types/subscription';
+} from 'src/shared/subscriptions';
 import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';

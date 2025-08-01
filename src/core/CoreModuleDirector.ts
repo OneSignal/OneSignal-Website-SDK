@@ -1,5 +1,10 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import { IDManager } from 'src/shared/managers/IDManager';
+import {
+  SubscriptionChannel,
+  type SubscriptionChannelValue,
+  SubscriptionType,
+} from 'src/shared/subscriptions';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
@@ -16,11 +21,6 @@ import { NewRecordsState } from './operationRepo/NewRecordsState';
 import { type OperationRepo } from './operationRepo/OperationRepo';
 import { type ICustomEventController } from './types/customEvents';
 import { ModelChangeTags } from './types/models';
-import {
-  SubscriptionChannel,
-  type SubscriptionChannelValue,
-  SubscriptionType,
-} from './types/subscription';
 
 /* Contains OneSignal User-Model-specific logic*/
 

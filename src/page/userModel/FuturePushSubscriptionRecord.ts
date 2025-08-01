@@ -1,14 +1,20 @@
-import type {
-  NotificationTypeValue,
-  SubscriptionTypeValue,
-} from 'src/core/types/subscription';
-import { NotificationType } from 'src/core/types/subscription';
 import {
   getDeviceModel,
   getDeviceOS,
   getSubscriptionType,
 } from 'src/shared/environment';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import {
+  NotificationType,
+  SubscriptionType,
+  type NotificationTypeValue,
+  type SubscriptionTypeValue,
+} from 'src/shared/subscriptions';
+import {
+  Browser,
+  getBrowserName,
+  getBrowserVersion,
+} from 'src/shared/useragent';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import type { Serializable } from '../models/Serializable';
 

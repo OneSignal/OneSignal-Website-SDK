@@ -4,9 +4,6 @@ export const SubscriptionChannel = {
   Push: 'Push',
 } as const;
 
-export type SubscriptionChannelValue =
-  (typeof SubscriptionChannel)[keyof typeof SubscriptionChannel];
-
 export const SubscriptionType = {
   ChromePush: 'ChromePush',
   Email: 'Email',
@@ -22,9 +19,6 @@ export const SubscriptionType = {
   // iOSPush: 'iOSPush',
   // WindowsPush: 'WindowsPush',
 } as const;
-
-export type SubscriptionTypeValue =
-  (typeof SubscriptionType)[keyof typeof SubscriptionType];
 
 export const NotificationType = {
   // Notification permission is not granted at the browser level.
@@ -43,6 +37,3 @@ export const NotificationType = {
   ServiceWorkerStatus403: -23,
   ServiceWorkerStatus404: -24,
 } as const;
-
-export type NotificationTypeValue =
-  (typeof NotificationType)[keyof typeof NotificationType];

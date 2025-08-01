@@ -6,6 +6,7 @@ import {
 import { fakeWaitForOperations } from '__test__/support/helpers/executors';
 import Log from 'src/shared/libraries/Log';
 import Database, { type OperationItem } from 'src/shared/services/Database';
+import { SubscriptionType } from 'src/shared/subscriptions';
 import { describe, expect, type Mock, vi } from 'vitest';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -17,7 +18,6 @@ import {
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { ModelName } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import { SubscriptionType } from '../types/subscription';
 import {
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_POST_CREATE_DELAY,

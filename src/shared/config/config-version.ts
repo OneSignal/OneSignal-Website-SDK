@@ -32,21 +32,18 @@ export function upgradeConfigToVersionTwo(userConfig: AppUserConfig) {
  * @param  {any} slidedownConfig
  * @returns boolean
  */
-function isPromptOptionsVersion0(slidedownConfig: any): boolean {
-  if (!!slidedownConfig) {
-    const version0Keys = [
-      'acceptButtonText',
-      'cancelButtonText',
-      'actionMessage',
-    ];
+function isPromptOptionsVersion0(slidedownConfig: unknown): boolean {
+  if (!slidedownConfig) return false;
 
-    for (let i = 0; i < version0Keys.length; i++) {
-      // eslint-disable-next-line no-prototype-builtins
-      if (slidedownConfig.hasOwnProperty(version0Keys[i])) return true;
-    }
-  }
+  const version0Keys = [
+    'acceptButtonText',
+    'cancelButtonText',
+    'actionMessage',
+  ];
 
-  return false;
+  return version0Keys.some((key) =>
+    Object.prototype.hasOwnProperty.call(slidedownConfig, key),
+  );
 }
 
 /**
@@ -83,36 +80,21 @@ function convertConfigToVersionOne(
     promptOptions.slidedown = {};
   }
 
-  const { acceptButtonText, cancelButtonText, actionMessage } =
-    promptOptions.slidedown;
+  const { slidedown } = promptOptions;
 
-  // we may have supported both of these keys in the past (with and without "Text" postfix)
-  // so we're leaving here and checking in case it is being used this way
-  const higherLevelAcceptButtonText =
-    promptOptions.acceptButtonText || promptOptions.acceptButton;
-  const higherLevelCancelButtonText =
-    promptOptions.cancelButtonText || promptOptions.cancelButton;
+  // Use nullish coalescing for cleaner fallback logic
+  slidedown.acceptButtonText =
+    slidedown.acceptButtonText ??
+    promptOptions.acceptButtonText ??
+    promptOptions.acceptButton;
 
-  /**
-   * we should give preference to the lower level ("slidedown" level) text settings in the case that
-   * text settings are configured at the higher level as well as the lower level
-   *
-   * Example:
-   * "promptOptions": {
-   *      "acceptButtonText": "",
-   *      "cancelButtonText": "",
-   *      "slidedown": {
-   *          "acceptButtonText": "", <--
-   *          "cancelButtonText": ""  <--
-   *      }
-   * }
-   */
-  promptOptions.slidedown.acceptButtonText =
-    acceptButtonText || higherLevelAcceptButtonText;
-  promptOptions.slidedown.cancelButtonText =
-    cancelButtonText || higherLevelCancelButtonText;
-  promptOptions.slidedown.actionMessage =
-    actionMessage || promptOptions.actionMessage;
+  slidedown.cancelButtonText =
+    slidedown.cancelButtonText ??
+    promptOptions.cancelButtonText ??
+    promptOptions.cancelButton;
+
+  slidedown.actionMessage =
+    slidedown.actionMessage ?? promptOptions.actionMessage;
 
   return promptOptions;
 }
@@ -145,69 +127,61 @@ function convertConfigToVersionOne(
 function isSlidedownConfigVersion1(
   slidedownConfig: any,
 ): slidedownConfig is SlidedownOptionsVersion1 {
-  if (!!slidedownConfig) {
-    const version1Keys = [
-      'enabled',
-      'autoPrompt',
-      'pageViews',
-      'timeDelay',
-      'acceptButton',
-      'acceptButtonText',
-      'cancelButton',
-      'cancelButtonText',
-      'actionMessage',
-      'customizeTextEnabled',
-      'categories',
-    ];
+  if (!slidedownConfig) return false;
 
-    for (let i = 0; i < version1Keys.length; i++) {
-      // eslint-disable-next-line no-prototype-builtins
-      if (slidedownConfig.hasOwnProperty(version1Keys[i])) return true;
-    }
-  }
-  return false;
+  const version1Keys = [
+    'enabled',
+    'autoPrompt',
+    'pageViews',
+    'timeDelay',
+    'acceptButton',
+    'acceptButtonText',
+    'cancelButton',
+    'cancelButtonText',
+    'actionMessage',
+    'customizeTextEnabled',
+    'categories',
+  ] as const;
+
+  return version1Keys.some((key) =>
+    Object.prototype.hasOwnProperty.call(slidedownConfig, key),
+  );
 }
 
 function convertConfigToVersionTwo(
   slidedownConfig: SlidedownOptionsVersion1 & SlidedownOptions,
 ): SlidedownOptions {
-  // determine if the slidedown is category type or regular push
-  const promptType = isCategorySlidedownConfiguredVersion1(slidedownConfig)
+  const isCategory = isCategorySlidedownConfiguredVersion1(slidedownConfig);
+  const promptType = isCategory
     ? DelayedPromptType.Category
     : DelayedPromptType.Push;
 
-  let positiveUpdateButton, negativeUpdateButton: string | undefined;
-  if (promptType === DelayedPromptType.Category) {
-    positiveUpdateButton = slidedownConfig.categories?.positiveUpdateButton;
-    negativeUpdateButton = slidedownConfig.categories?.negativeUpdateButton;
-  }
+  const { categories, prompts = [] } = slidedownConfig;
 
-  const existingPromptsConfig = slidedownConfig.prompts || [];
+  const newPrompt = {
+    type: promptType,
+    autoPrompt: slidedownConfig.autoPrompt,
+    text: {
+      actionMessage: slidedownConfig.actionMessage,
+      acceptButton:
+        slidedownConfig.acceptButton ?? slidedownConfig.acceptButtonText,
+      cancelButton:
+        slidedownConfig.cancelButton ?? slidedownConfig.cancelButtonText,
+      ...(isCategory && {
+        positiveUpdateButton: categories?.positiveUpdateButton,
+        negativeUpdateButton: categories?.negativeUpdateButton,
+        updateMessage: categories?.updateMessage,
+      }),
+    },
+    delay: {
+      pageViews: slidedownConfig.pageViews,
+      timeDelay: slidedownConfig.timeDelay,
+    },
+    categories: categories?.tags,
+  };
 
   return {
-    prompts: [
-      ...existingPromptsConfig,
-      {
-        type: promptType,
-        autoPrompt: slidedownConfig.autoPrompt,
-        text: {
-          actionMessage: slidedownConfig.actionMessage,
-          acceptButton:
-            slidedownConfig.acceptButton || slidedownConfig.acceptButtonText,
-          cancelButton:
-            slidedownConfig.cancelButton || slidedownConfig.cancelButtonText,
-          // categories-specific...
-          positiveUpdateButton,
-          negativeUpdateButton,
-          updateMessage: slidedownConfig?.categories?.updateMessage,
-        },
-        delay: {
-          pageViews: slidedownConfig.pageViews,
-          timeDelay: slidedownConfig.timeDelay,
-        },
-        categories: slidedownConfig?.categories?.tags,
-      },
-    ],
+    prompts: [...prompts, newPrompt],
   } as SlidedownOptions;
 }
 

@@ -1,12 +1,12 @@
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { isObject, isValidEmail } from 'src/shared/helpers/general';
+import Log from 'src/shared/libraries/Log';
+import { IDManager } from 'src/shared/managers/IDManager';
 import {
   NotificationType,
   SubscriptionType,
   type SubscriptionTypeValue,
-} from 'src/core/types/subscription';
-import { isObject, isValidEmail } from 'src/shared/helpers/general';
-import Log from 'src/shared/libraries/Log';
-import { IDManager } from 'src/shared/managers/IDManager';
+} from 'src/shared/subscriptions';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,

@@ -7,6 +7,7 @@ import {
 } from 'src/shared/helpers/dom';
 import { getValueOrDefault } from 'src/shared/helpers/general';
 import MainHelper from 'src/shared/helpers/MainHelper';
+import type { NotificationIcons } from 'src/shared/notifications';
 import {
   DelayedPromptType,
   isSlidedownPushDependent,
@@ -25,7 +26,6 @@ import {
   InvalidChannelInputField,
   type InvalidChannelInputFieldValue,
 } from '../errors/ChannelCaptureError';
-import type { NotificationIcons } from '../models/NotificationIcons';
 import type { TagCategory } from '../tags';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';

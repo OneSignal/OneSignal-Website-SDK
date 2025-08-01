@@ -1,4 +1,8 @@
-import ServiceWorkerUtilHelper from 'src/sw/helpers/ServiceWorkerUtilHelper';
+import {
+  getAvailableServiceWorker,
+  getSWRegistration,
+  waitUntilActive,
+} from '../../sw/helpers/registration';
 import { Utils } from '../context/Utils';
 import { supportsServiceWorkers } from '../environment/environment';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
@@ -11,12 +15,12 @@ import Log from '../libraries/Log';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { triggerNotificationClick } from '../listeners';
 import type { ContextSWInterface } from '../models/ContextSW';
+import Path from '../models/Path';
 import {
   type NotificationClickEventInternal,
   type NotificationForegroundWillDisplayEvent,
   type NotificationForegroundWillDisplayEventSerializable,
-} from '../models/NotificationEvent';
-import Path from '../models/Path';
+} from '../notifications';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
 import type { PageVisibilityRequest, PageVisibilityResponse } from '../session';
@@ -41,9 +45,7 @@ export class ServiceWorkerManager {
   public async getRegistration(): Promise<
     ServiceWorkerRegistration | undefined
   > {
-    return ServiceWorkerUtilHelper.getRegistration(
-      this.config.registrationOptions.scope,
-    );
+    return getSWRegistration(this.config.registrationOptions.scope);
   }
 
   /**
@@ -76,8 +78,7 @@ export class ServiceWorkerManager {
   private static activeSwFileName(
     workerRegistration: ServiceWorkerRegistration,
   ): string | null | undefined {
-    const serviceWorker =
-      ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    const serviceWorker = getAvailableServiceWorker(workerRegistration);
     if (!serviceWorker) {
       return null;
     }
@@ -198,8 +199,7 @@ export class ServiceWorkerManager {
     }
 
     // 3. Different href?, asking if (path + filename + queryParams) is different
-    const availableWorker =
-      ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    const availableWorker = getAvailableServiceWorker(workerRegistration);
     const serviceWorkerHref = ServiceWorkerHelper.getServiceWorkerHref(
       this.config,
       this.context.appConfig.appId,
@@ -436,7 +436,7 @@ export class ServiceWorkerManager {
       `[Service Worker Installation] Service worker installed. Waiting for activation`,
     );
 
-    await ServiceWorkerUtilHelper.waitUntilActive(registration);
+    await waitUntilActive(registration);
 
     Log.debug(`[Service Worker Installation] Service worker active`);
 

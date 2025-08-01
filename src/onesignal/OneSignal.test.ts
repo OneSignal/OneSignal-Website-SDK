@@ -41,6 +41,7 @@ import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
+import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import Database, {
@@ -48,7 +49,6 @@ import Database, {
   type PropertiesItem,
   type SubscriptionItem,
 } from 'src/shared/services/Database';
-import LocalStorage from 'src/shared/utils/LocalStorage';
 
 const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
@@ -79,7 +79,7 @@ describe('OneSignal', () => {
   });
 
   beforeEach(async () => {
-    LocalStorage.setConsentRequired(false);
+    setConsentRequired(false);
 
     // reset the identity model
     const newIdentityModel = new IdentityModel();
@@ -402,7 +402,7 @@ describe('OneSignal', () => {
 
         // TODO: add consent required test
         // if needing consent required
-        LocalStorage.setConsentRequired(true);
+        setConsentRequired(true);
         await window.OneSignal.login(externalId);
         await vi.waitUntil(() => errorSpy.mock.calls.length === 1);
 

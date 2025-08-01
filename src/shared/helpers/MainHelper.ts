@@ -1,4 +1,4 @@
-import type { NotificationIcons } from 'src/page/models/NotificationIcons';
+import type { NotificationIcons } from 'src/shared/notifications';
 import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
 import {
   getOneSignalApiUrl,
