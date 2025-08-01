@@ -27,7 +27,7 @@ import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import { RequestService } from '../requestService/RequestService';
+import { createNewUser } from '../requestService';
 import type {
   ICreateUserIdentity,
   ICreateUserSubscription,
@@ -182,7 +182,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     }
 
     const subscriptionList = Object.entries(subscriptions);
-    const response = await RequestService.createUser(
+    const response = await createNewUser(
       { appId: createUserOperation.appId },
       {
         identity,
