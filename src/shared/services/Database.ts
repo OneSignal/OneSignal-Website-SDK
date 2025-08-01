@@ -26,9 +26,9 @@ import type {
   OutcomesNotificationClicked,
   OutcomesNotificationReceived,
 } from '../models/OutcomesNotificationEvents';
-import { ONESIGNAL_SESSION_KEY, type Session } from '../models/Session';
 import { Subscription } from '../models/Subscription';
 import { UserState } from '../models/UserState';
+import { ONESIGNAL_SESSION_KEY, type Session } from '../session';
 
 const DatabaseEventName = {
   SET: 0,

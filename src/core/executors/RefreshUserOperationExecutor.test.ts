@@ -6,8 +6,7 @@ import {
   DUMMY_PUSH_TOKEN,
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
-} from '__test__/support/constants';
-import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
+} from '__test__/constants';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setGetUserError,
@@ -39,7 +38,6 @@ vi.mock('src/shared/libraries/Log');
 describe('RefreshUserOperationExecutor', () => {
   beforeEach(async () => {
     await Database.clear(); // in case subscription model (from previous tests) are loaded from db
-    mockUserAgent();
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
     subscriptionModelStore = new SubscriptionModelStore();

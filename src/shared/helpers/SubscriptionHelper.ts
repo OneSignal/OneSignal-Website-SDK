@@ -5,11 +5,11 @@ import {
   type SubscriptionTypeValue,
 } from 'src/core/types/subscription';
 import Log from '../libraries/Log';
+import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { PermissionUtils } from '../utils/PermissionUtils';
-import EventHelper from './EventHelper';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -29,7 +29,7 @@ export default class SubscriptionHelper {
         await context.subscriptionManager.registerSubscription(rawSubscription);
       context.pageViewManager.incrementPageViewCount();
       await PermissionUtils.triggerNotificationPermissionChanged();
-      await EventHelper.checkAndTriggerSubscriptionChanged();
+      await checkAndTriggerSubscriptionChanged();
     } catch (e) {
       Log.error(e);
     }

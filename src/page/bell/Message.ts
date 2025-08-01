@@ -1,6 +1,6 @@
-import Log from '../../shared/libraries/Log';
-import BrowserUtils from '../../shared/utils/BrowserUtils';
-import { delay, nothing } from '../../shared/utils/utils';
+import { decodeHtmlEntities } from 'src/shared/helpers/dom';
+import { delay, nothing } from 'src/shared/helpers/general';
+import Log from 'src/shared/libraries/Log';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
@@ -40,7 +40,7 @@ export default class Message extends AnimatedElement {
     Log.debug(`Calling display(${type}, ${content}, ${duration}).`);
     return (this.shown ? this.hide() : nothing())
       .then(() => {
-        this.content = BrowserUtils.decodeHtmlEntities(content);
+        this.content = decodeHtmlEntities(content);
         this.contentType = type;
       })
       .then(() => {
@@ -68,7 +68,7 @@ export default class Message extends AnimatedElement {
   }
 
   enqueue(message: string) {
-    this.queued.push(BrowserUtils.decodeHtmlEntities(message));
+    this.queued.push(decodeHtmlEntities(message));
     return new Promise<void>((resolve) => {
       if (this.bell.badge.shown) {
         this.bell.badge

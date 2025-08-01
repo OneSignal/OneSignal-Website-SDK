@@ -1,4 +1,4 @@
-import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/support/constants';
+import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/constants';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setAddAliasError,

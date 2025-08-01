@@ -2,7 +2,6 @@ import InitHelper from '../../../src/shared/helpers/InitHelper';
 import Log from '../../../src/shared/libraries/Log';
 import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
-import BrowserUserAgent from '../../support/models/BrowserUserAgent';
 
 //stub dismisshelper
 vi.mock('../../../src/shared/helpers/DismissHelper');
@@ -14,8 +13,6 @@ describe('Register for push', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize({
       addPrompts: true,
-      // @ts-expect-error - default user agent
-      userAgent: BrowserUserAgent.Default,
     });
   });
 

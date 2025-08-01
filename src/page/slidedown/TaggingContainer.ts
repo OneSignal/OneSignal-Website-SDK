@@ -1,5 +1,12 @@
 import type { TagCategory } from 'src/page/tags';
 import {
+  addCssClass,
+  addDomElement,
+  getDomElementOrStub,
+  removeCssClass,
+  removeDomElement,
+} from 'src/shared/helpers/dom';
+import {
   COLORS,
   SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_CSS_IDS,
@@ -8,13 +15,6 @@ import {
   TAGGING_CONTAINER_STRINGS,
 } from '../../shared/slidedown/constants';
 import TagUtils from '../../shared/utils/TagUtils';
-import {
-  addCssClass,
-  addDomElement,
-  getDomElementOrStub,
-  removeCssClass,
-  removeDomElement,
-} from '../../shared/utils/utils';
 import type { TagsObjectWithBoolean } from '../tags';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 

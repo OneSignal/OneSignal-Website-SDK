@@ -1,4 +1,4 @@
-import { APP_ID } from '__test__/support/constants';
+import { APP_ID } from '__test__/constants';
 import { nock } from '__test__/support/helpers/general';
 import { OneSignalApiSW } from './OneSignalApiSW';
 

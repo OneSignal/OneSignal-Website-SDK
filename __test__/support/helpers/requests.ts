@@ -5,7 +5,7 @@ import {
   APP_ID,
   DUMMY_ONESIGNAL_ID,
   DUMMY_SUBSCRIPTION_ID,
-} from '../constants';
+} from '../../constants';
 import TestContext from '../environment/TestContext';
 import { server } from '../mocks/server';
 

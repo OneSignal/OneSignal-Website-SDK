@@ -1,11 +1,10 @@
+import { DUMMY_EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { SessionManager } from './SessionManager';
-
-import { DUMMY_EXTERNAL_ID } from '__test__/support/constants';
 import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import LoginManager from 'src/page/managers/LoginManager';
 import Log from 'src/shared/libraries/Log';
-import { SessionOrigin } from 'src/shared/models/Session';
+import { SessionOrigin } from 'src/shared/session';
+import { SessionManager } from './SessionManager';
 
 vi.spyOn(Log, 'error').mockImplementation(() => '');
 

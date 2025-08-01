@@ -1,4 +1,3 @@
-import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 import {
@@ -12,11 +11,6 @@ describe('CoreModuleDirector tests', () => {
   });
 
   describe('getPushSubscriptionModel', () => {
-    beforeEach(() => {
-      vi.resetAllMocks();
-      mockUserAgent();
-    });
-
     async function getPushSubscriptionModel() {
       return (await getCoreModuleDirector()).getPushSubscriptionModel();
     }
@@ -44,7 +38,7 @@ describe('CoreModuleDirector tests', () => {
         'getPushSubscriptionModelByLastKnownToken',
         // @ts-expect-error - private method
       ).mockResolvedValue(pushModelLastKnown);
-      expect(await getPushSubscriptionModel()).toBe(pushModelLastKnown);
+      expect(await getPushSubscriptionModel()).toEqual(pushModelLastKnown);
     });
 
     test('returns current subscription over last known', async () => {

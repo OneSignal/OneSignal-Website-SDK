@@ -1,22 +1,20 @@
 import type { AppUserConfigNotifyButton } from 'src/shared/config';
+import {
+  addCssClass,
+  addDomElement,
+  decodeHtmlEntities,
+  removeDomElement,
+} from 'src/shared/helpers/dom';
+import { delay, nothing } from 'src/shared/helpers/general';
 import type { BellPosition, BellSize, BellText } from 'src/shared/prompts';
+import { Browser, getBrowserName } from 'src/shared/useragent';
 import OneSignal from '../../onesignal/OneSignal';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import { NotificationPermission } from '../../shared/models/NotificationPermission';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
-import BrowserUtils from '../../shared/utils/BrowserUtils';
-import {
-  addCssClass,
-  addDomElement,
-  contains,
-  delay,
-  nothing,
-  once,
-  removeDomElement,
-} from '../../shared/utils/utils';
+import { contains, once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
 import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
@@ -272,7 +270,7 @@ export default class Bell {
             resolve();
           });
         } else {
-          this.message.content = BrowserUtils.decodeHtmlEntities(
+          this.message.content = decodeHtmlEntities(
             this.message.getTipForState(),
           );
           this.message.contentType = Message.TYPES.TIP;
@@ -537,11 +535,7 @@ export default class Bell {
   }
 
   patchSafariSvgFilterBug() {
-    if (
-      !(
-        bowserCastle().name == 'safari' && Number(bowserCastle().version) >= 9.1
-      )
-    ) {
+    if (getBrowserName() !== Browser.Safari) {
       const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
       const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
       const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
@@ -557,8 +551,7 @@ export default class Bell {
         'style',
         `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
       );
-    }
-    if (bowserCastle().name == 'safari') {
+    } else {
       this.badge.element.setAttribute('style', `display: none;`);
     }
   }

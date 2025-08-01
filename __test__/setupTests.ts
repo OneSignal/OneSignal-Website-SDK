@@ -1,3 +1,4 @@
+import { DEFAULT_USER_AGENT } from './constants';
 import { server } from './support/mocks/server';
 beforeAll(() =>
   server.listen({
@@ -24,3 +25,8 @@ vi.mock('src/core/operationRepo/constants', () => ({
   OP_REPO_EXECUTION_INTERVAL: 5,
   OP_REPO_POST_CREATE_RETRY_UP_TO: 10,
 }));
+
+Object.defineProperty(navigator, 'userAgent', {
+  value: DEFAULT_USER_AGENT,
+  writable: true,
+});

@@ -4,7 +4,6 @@
   "description": "Web push notifications from OneSignal.",
   "type": "module",
   "dependencies": {
-    "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "jsonp": "github:OneSignal/jsonp#onesignal",
     "uuid": "^11.1.0"
   },
@@ -81,12 +80,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "64 kB",
+      "limit": "61.1 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "34 kB",
+      "limit": "25.1 kB",
       "gzip": true
     },
     {

@@ -1,3 +1,4 @@
+import { fireStoredNotificationClicks } from 'src/shared/listeners';
 import type { NotificationEventName } from '../page/models/NotificationEventName';
 import type { NotificationEventTypeMap } from '../page/models/NotificationEventTypeMap';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
@@ -6,7 +7,6 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
-import EventHelper from '../shared/helpers/EventHelper';
 import { NotificationPermission } from '../shared/models/NotificationPermission';
 import Database from '../shared/services/Database';
 import {
@@ -151,7 +151,7 @@ export default class NotificationsNamespace extends EventListenerBase {
     OneSignal.emitter.on(event, listener);
 
     if (event === 'click') {
-      EventHelper.fireStoredNotificationClicks();
+      fireStoredNotificationClicks();
     }
   }
 

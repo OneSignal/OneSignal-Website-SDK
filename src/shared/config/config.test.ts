@@ -1,4 +1,4 @@
-import { APP_ID } from '__test__/support/constants';
+import { APP_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { getFinalAppConfig } from '__test__/support/helpers/configHelper';

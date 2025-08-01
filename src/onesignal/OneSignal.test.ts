@@ -7,7 +7,7 @@ import {
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
   DUMMY_SUBSCRIPTION_ID_3,
-} from '__test__/support/constants';
+} from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import { waitForOperations } from '__test__/support/helpers/executors';

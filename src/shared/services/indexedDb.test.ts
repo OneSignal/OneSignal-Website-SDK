@@ -1,11 +1,8 @@
+import { DUMMY_EXTERNAL_ID, DUMMY_ONESIGNAL_ID } from '__test__/constants';
+import Random from '__test__/support/utils/Random';
 import { ModelName } from 'src/core/types/models';
 import { SubscriptionType } from 'src/core/types/subscription';
-import {
-  DUMMY_EXTERNAL_ID,
-  DUMMY_ONESIGNAL_ID,
-} from '../../../__test__/support/constants';
-import Random from '../../../__test__/support/utils/Random';
-import Log from '../../shared/libraries/Log';
+import Log from 'src/shared/libraries/Log';
 import IndexedDb, { LegacyModelName } from './IndexedDb';
 
 function newOSIndexedDb(

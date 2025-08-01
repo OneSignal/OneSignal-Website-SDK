@@ -1,19 +1,9 @@
-import { APP_ID } from '__test__/support/constants';
+import { APP_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { mockServerConfig } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Log from 'src/shared/libraries/Log';
-
-// need to mock browsercastle since we resetting modules after each test
-vi.mock('src/shared/utils/bowserCastle', () => ({
-  bowserCastle: () => ({
-    mobile: false,
-    tablet: false,
-    name: 'Chrome',
-    version: '100',
-  }),
-}));
 
 // need to wait for full OperationRepo rework
 describe('pageSdkInit', () => {
