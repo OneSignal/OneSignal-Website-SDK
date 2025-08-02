@@ -1,9 +1,6 @@
+import { InvalidAppIdError } from 'src/shared/errors';
 import OneSignalApiBase from '../../shared/api/OneSignalApiBase';
 import type OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
-import {
-  SdkInitError,
-  SdkInitErrorKind,
-} from '../../shared/errors/SdkInitError';
 import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import type {
@@ -86,7 +83,7 @@ export async function updateUserByAlias(
 ) {
   const { appId, subscriptionId } = requestMetadata;
   if (!OneSignalUtils.isValidUuid(appId)) {
-    throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
+    throw InvalidAppIdError;
   }
 
   const subscriptionHeader = subscriptionId

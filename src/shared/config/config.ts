@@ -1,5 +1,5 @@
 import OneSignalApi from '../api/OneSignalApi';
-import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
+import { InvalidAppIdError } from '../errors';
 import { isValidUuid, valueOrDefault } from '../helpers/general';
 import {
   checkRestrictedOrigin,
@@ -37,7 +37,7 @@ export async function getServerAppConfig(
 ): Promise<AppConfig> {
   try {
     if (!userConfig || !userConfig.appId || !isValidUuid(userConfig.appId))
-      throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
+      throw InvalidAppIdError;
 
     const serverConfig = await downloadServerAppConfig(userConfig.appId);
     upgradeConfigToVersionTwo(userConfig);
@@ -48,9 +48,8 @@ export async function getServerAppConfig(
     return appConfig;
   } catch (e) {
     if (e instanceof Object && 'code' in e) {
-      if (e.code === 1) throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
-      else if (e.code === 2)
-        throw new SdkInitError(SdkInitErrorKind.AppNotConfiguredForWebPush);
+      if (e.code === 1) throw InvalidAppIdError;
+      else if (e.code === 2) throw new Error('App not configured for web push');
     }
     throw e;
   }

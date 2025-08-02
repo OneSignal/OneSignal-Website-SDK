@@ -1,4 +1,3 @@
-import OneSignalError from 'src/shared/errors/OneSignalError';
 import type { OneSignalDeferredLoadedCallback } from '../../page/models/OneSignalDeferredLoadedCallback';
 
 export class ProcessOneSignalPushCalls {
@@ -8,7 +7,7 @@ export class ProcessOneSignalPushCalls {
   ) {
     if (typeof item === 'function') return item(oneSignalInstance);
     else {
-      throw new OneSignalError('Only accepts function type!');
+      throw new Error('Callback is not a function');
     }
   }
 }

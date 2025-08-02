@@ -1,5 +1,4 @@
 import type { AliasPair } from 'src/core/types/api';
-import TimeoutError from '../errors/TimeoutError';
 
 type Nullable = undefined | null;
 
@@ -94,10 +93,10 @@ export function encodeHashAsUriComponent(hash: any): string {
 export function timeoutPromise(
   promise: Promise<any>,
   milliseconds: number,
-): Promise<TimeoutError | any> {
+): Promise<Error | any> {
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
-      reject(new TimeoutError());
+      reject(new Error('Async operation timed out'));
     }, milliseconds);
   });
   return Promise.race([promise, timeoutPromise]);

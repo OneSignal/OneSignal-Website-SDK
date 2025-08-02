@@ -1,7 +1,6 @@
 import Bell from '../../page/bell/Bell';
 import type { ContextInterface } from '../../page/models/Context';
 import type { AppConfig } from '../config';
-import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { NotificationPermission } from '../models/NotificationPermission';
@@ -66,9 +65,7 @@ export default class InitHelper {
     try {
       await InitHelper.doInitialize();
     } catch (err) {
-      if (err instanceof SdkInitError) {
-        return;
-      }
+      if (err instanceof Error) return;
       throw err;
     }
 
@@ -215,7 +212,7 @@ export default class InitHelper {
       await Promise.all(promises);
     } catch (e) {
       Log.error(e);
-      throw new SdkInitError(SdkInitErrorKind.Unknown);
+      throw new Error('Unknown init error');
     }
   }
 
@@ -399,8 +396,7 @@ export default class InitHelper {
   }
 
   public static errorIfInitAlreadyCalled() {
-    if (OneSignal._initCalled)
-      throw new SdkInitError(SdkInitErrorKind.MultipleInitialization);
+    if (OneSignal._initCalled) throw new Error('SDK already initialized');
     OneSignal._initCalled = true;
   }
 }

@@ -44,9 +44,7 @@ interface IntegrationCapabilities {
 export function getConfigIntegrationKind(
   serverConfig: ServerAppConfig,
 ): ConfigIntegrationKindValue {
-  if (serverConfig.config.integration)
-    return serverConfig.config.integration.kind;
-  return ConfigIntegrationKind.Custom;
+  return serverConfig.config.integration?.kind ?? ConfigIntegrationKind.Custom;
 }
 
 /**
@@ -246,11 +244,11 @@ export function getUserConfigForConfigIntegrationKind(
         },
       };
 
-      // eslint-disable-next-line no-prototype-builtins
-      if (userConfig.hasOwnProperty('autoResubscribe')) {
+      if (Object.prototype.hasOwnProperty.call(userConfig, 'autoResubscribe')) {
         config.autoResubscribe = !!userConfig.autoResubscribe;
-        // eslint-disable-next-line no-prototype-builtins
-      } else if (userConfig.hasOwnProperty('autoRegister')) {
+      } else if (
+        Object.prototype.hasOwnProperty.call(userConfig, 'autoRegister')
+      ) {
         config.autoResubscribe = !!userConfig.autoRegister;
       } else {
         config.autoResubscribe = !!serverConfig.config.autoResubscribe;
@@ -265,29 +263,21 @@ function getServiceWorkerValues(
   userConfig: AppUserConfig,
   serverConfig: ServerAppConfig,
 ): ServiceWorkerConfigParams {
+  const { serviceWorker } = serverConfig.config;
   const useUserOverride = userConfig.serviceWorkerOverrideForTypical;
 
-  const path = useUserOverride
-    ? valueOrDefault(userConfig.path, serverConfig.config.serviceWorker.path)
-    : serverConfig.config.serviceWorker.path;
-
-  const serviceWorkerParam = useUserOverride
-    ? valueOrDefault(userConfig.serviceWorkerParam, {
-        scope: serverConfig.config.serviceWorker.registrationScope,
-      })
-    : { scope: serverConfig.config.serviceWorker.registrationScope };
-
-  const serviceWorkerPath = useUserOverride
-    ? valueOrDefault(
-        userConfig.serviceWorkerPath,
-        serverConfig.config.serviceWorker.workerName,
-      )
-    : serverConfig.config.serviceWorker.workerName;
-
   return {
-    path,
-    serviceWorkerParam,
-    serviceWorkerPath,
+    path: useUserOverride
+      ? valueOrDefault(userConfig.path, serviceWorker.path)
+      : serviceWorker.path,
+    serviceWorkerParam: useUserOverride
+      ? valueOrDefault(userConfig.serviceWorkerParam, {
+          scope: serviceWorker.registrationScope,
+        })
+      : { scope: serviceWorker.registrationScope },
+    serviceWorkerPath: useUserOverride
+      ? valueOrDefault(userConfig.serviceWorkerPath, serviceWorker.workerName)
+      : serviceWorker.workerName,
   };
 }
 
@@ -429,13 +419,17 @@ function injectDefaultsIntoPromptOptions(
   }
 
   if (promptOptionsConfig.native) {
+    const hasAutoPromptProperty = Object.prototype.hasOwnProperty.call(
+      promptOptionsConfig.native,
+      'autoPrompt',
+    );
+    promptOptionsConfig.native.autoPrompt = hasAutoPromptProperty
+      ? !!promptOptionsConfig.native.enabled &&
+        !!promptOptionsConfig.native.autoPrompt
+      : !!promptOptionsConfig.native.enabled;
+
     promptOptionsConfig.native.enabled = !!promptOptionsConfig.native.enabled;
-    promptOptionsConfig.native.autoPrompt =
-      // eslint-disable-next-line no-prototype-builtins
-      promptOptionsConfig.native.hasOwnProperty('autoPrompt')
-        ? !!promptOptionsConfig.native.enabled &&
-          !!promptOptionsConfig.native.autoPrompt
-        : !!promptOptionsConfig.native.enabled;
+
     promptOptionsConfig.native.pageViews = getValueOrDefault(
       promptOptionsConfig.native.pageViews,
       SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,

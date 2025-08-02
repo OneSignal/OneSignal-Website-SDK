@@ -1,4 +1,8 @@
 import {
+  InvalidChannelInputField,
+  type InvalidChannelInputFieldValue,
+} from 'src/shared/errors';
+import {
   addCssClass,
   addDomElement,
   getDomElementOrStub,
@@ -22,10 +26,6 @@ import {
 } from 'src/shared/slidedown/constants';
 import { isMobileBrowser } from 'src/shared/useragent';
 import { getPlatformNotificationIcon, once } from 'src/shared/utils/utils';
-import {
-  InvalidChannelInputField,
-  type InvalidChannelInputFieldValue,
-} from '../errors/ChannelCaptureError';
 import type { TagCategory } from '../tags';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';

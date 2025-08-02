@@ -1,8 +1,5 @@
 import { EnvironmentKind } from 'src/shared/environment';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from 'src/shared/errors/InvalidArgumentError';
+import { EnumOutOfRangeArgumentError } from 'src/shared/errors';
 import {
   BUILD_ORIGIN,
   BUILD_TYPE,
@@ -66,10 +63,7 @@ const getOneSignalResourceUrlPath = () => {
   } else if (BUILD_TYPE === EnvironmentKind.Production) {
     origin = 'https://onesignal.com';
   } else {
-    throw new InvalidArgumentError(
-      'buildEnv',
-      InvalidArgumentReason.EnumOutOfRange,
-    );
+    throw EnumOutOfRangeArgumentError('buildEnv');
   }
   return new URL(`${origin}/sdks/web/v16`);
 };

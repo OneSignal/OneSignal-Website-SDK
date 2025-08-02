@@ -1,4 +1,3 @@
-import { SdkInitError, SdkInitErrorKind } from 'src/shared/errors/SdkInitError';
 import { IS_SERVICE_WORKER } from 'src/shared/utils/EnvVariables';
 import { type AppConfig } from './types';
 
@@ -27,9 +26,7 @@ export function checkRestrictedOrigin(appConfig: AppConfig) {
   if (IS_SERVICE_WORKER) return;
 
   if (!doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
-    throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
-      siteUrl: appConfig.origin,
-    });
+    throw new Error(`Can only be used on: ${new URL(appConfig.origin).origin}`);
   }
 }
 
