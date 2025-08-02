@@ -6,6 +6,11 @@ import {
 } from 'src/shared/config';
 import { windowEnvString } from 'src/shared/environment';
 import {
+  EmptyArgumentError,
+  MissingSafariWebIdError,
+  WrongTypeArgumentError,
+} from 'src/shared/errors';
+import {
   getConsentRequired,
   removeLegacySubscriptionOptions,
   setConsentRequired as setStorageConsentRequired,
@@ -27,11 +32,6 @@ import Context from '../page/models/Context';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../shared/errors/InvalidArgumentError';
-import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
 import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
@@ -99,21 +99,15 @@ export default class OneSignal {
     logMethodCall('login', { externalId, jwtToken });
 
     if (typeof externalId === 'undefined') {
-      throw new InvalidArgumentError('externalId', InvalidArgumentReason.Empty);
+      throw EmptyArgumentError('externalId');
     }
 
     if (typeof externalId !== 'string') {
-      throw new InvalidArgumentError(
-        'externalId',
-        InvalidArgumentReason.WrongType,
-      );
+      throw WrongTypeArgumentError('externalId');
     }
 
     if (jwtToken !== undefined && typeof jwtToken !== 'string') {
-      throw new InvalidArgumentError(
-        'jwtToken',
-        InvalidArgumentReason.WrongType,
-      );
+      throw WrongTypeArgumentError('jwtToken');
     }
 
     await LoginManager.login(externalId, jwtToken);
@@ -148,7 +142,7 @@ export default class OneSignal {
        * support on Chrome/Firefox and don't intend to support Safari but don't
        * place conditional initialization checks.
        */
-      Log.warn(new SdkInitError(SdkInitErrorKind.MissingSafariWebId));
+      Log.warn(MissingSafariWebIdError);
       return;
     }
 
@@ -230,14 +224,11 @@ export default class OneSignal {
     logMethodCall('setConsentGiven', { consent });
 
     if (typeof consent === 'undefined') {
-      throw new InvalidArgumentError('consent', InvalidArgumentReason.Empty);
+      throw EmptyArgumentError('consent');
     }
 
     if (typeof consent !== 'boolean') {
-      throw new InvalidArgumentError(
-        'consent',
-        InvalidArgumentReason.WrongType,
-      );
+      throw WrongTypeArgumentError('consent');
     }
 
     await Database.setConsentGiven(consent);
@@ -248,17 +239,11 @@ export default class OneSignal {
     logMethodCall('setConsentRequired', { requiresConsent });
 
     if (typeof requiresConsent === 'undefined') {
-      throw new InvalidArgumentError(
-        'requiresConsent',
-        InvalidArgumentReason.Empty,
-      );
+      throw EmptyArgumentError('requiresConsent');
     }
 
     if (typeof requiresConsent !== 'boolean') {
-      throw new InvalidArgumentError(
-        'requiresConsent',
-        InvalidArgumentReason.WrongType,
-      );
+      throw WrongTypeArgumentError('requiresConsent');
     }
 
     setStorageConsentRequired(requiresConsent);

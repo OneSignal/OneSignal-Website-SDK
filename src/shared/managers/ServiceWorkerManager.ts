@@ -5,7 +5,7 @@ import {
 } from '../../sw/helpers/registration';
 import { timeoutPromise } from '../context';
 import { supportsServiceWorkers } from '../environment/environment';
-import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
+import { SWRegistrationError } from '../errors';
 import ServiceWorkerHelper, {
   ServiceWorkerActiveState,
   type ServiceWorkerActiveStateValue,
@@ -481,10 +481,7 @@ export class ServiceWorkerManager {
     } catch (error) {
       const response = await fetch(workerHref);
       if (response.status === 403 || response.status === 404) {
-        throw new ServiceWorkerRegistrationError(
-          response.status,
-          response.statusText,
-        );
+        throw new SWRegistrationError(response.status, response.statusText);
       }
 
       throw error;

@@ -45,6 +45,7 @@ const version = __VERSION__;
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
+vi.spyOn(Log, 'debug').mockImplementation(() => {});
 
 let { isServiceWorker } = vi.hoisted(() => {
   return { isServiceWorker: false };
@@ -720,12 +721,10 @@ vi.mock(
 
 // -- push subscription id mock
 const pushSubscriptionId = '1234';
-vi.mock('../helpers/ModelCacheDirectAccess', () => ({
-  ModelCacheDirectAccess: {
-    getPushSubscriptionIdByToken: vi
-      .fn()
-      .mockImplementation(() => pushSubscriptionId),
-  },
+vi.mock('./helpers', () => ({
+  getPushSubscriptionIdByToken: vi
+    .fn()
+    .mockImplementation(() => pushSubscriptionId),
 }));
 
 // -- awaitable timeout mock

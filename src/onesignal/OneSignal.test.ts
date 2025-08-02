@@ -387,17 +387,17 @@ describe('OneSignal', () => {
       test('should validate external id', async () => {
         // @ts-expect-error - testing invalid argument
         await expect(window.OneSignal.login()).rejects.toThrowError(
-          "Supply a non-empty value to 'externalId'.",
+          '"externalId" is empty',
         );
 
         // @ts-expect-error - testing invalid argument
         await expect(window.OneSignal.login(null)).rejects.toThrowError(
-          "The value for 'externalId' was of the wrong type.",
+          '"externalId" is the wrong type',
         );
 
         // @ts-expect-error - testing invalid argument
         await expect(window.OneSignal.login('', 1)).rejects.toThrowError(
-          "The value for 'jwtToken' was of the wrong type.",
+          '"jwtToken" is the wrong type',
         );
 
         // TODO: add consent required test
@@ -407,9 +407,7 @@ describe('OneSignal', () => {
         await vi.waitUntil(() => errorSpy.mock.calls.length === 1);
 
         const error = errorSpy.mock.calls[0][1] as Error;
-        expect(error.message).toBe(
-          'Login: Consent required but not given, skipping login',
-        );
+        expect(error.message).toBe('Consent required but not given');
       });
 
       test('can login with a new external id', async () => {
