@@ -13,7 +13,6 @@ import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
 import type { ContextInterface } from '../../../page/models/Context';
-import OneSignalError from '../../../shared/errors/OneSignalError';
 import MainHelper from '../../helpers/MainHelper';
 import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/WorkerMessenger';
@@ -93,18 +92,14 @@ export class SessionManager implements ISessionManager {
       await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (!identityModel || !identityModel.onesignalId) {
-      throw new OneSignalError(
-        'Abort _getOneSignalAndSubscriptionIds: no identity',
-      );
+      throw new Error('No identity');
     }
 
     if (
       !pushSubscriptionModel ||
       !isCompleteSubscriptionObject(pushSubscriptionModel)
     ) {
-      throw new OneSignalError(
-        'Abort _getOneSignalAndSubscriptionIds: no subscription',
-      );
+      throw new Error('No subscription');
     }
 
     const { onesignalId } = identityModel;

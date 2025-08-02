@@ -4,18 +4,7 @@ import {
   getOneSignalApiUrl,
   useSafariLegacyPush,
 } from '../environment/environment';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../errors/InvalidArgumentError';
-import {
-  InvalidStateError,
-  InvalidStateReason,
-} from '../errors/InvalidStateError';
-import {
-  NotSubscribedError,
-  NotSubscribedReason,
-} from '../errors/NotSubscribedError';
+import { AppIDMissingError, MalformedArgumentError } from '../errors';
 import Log from '../libraries/Log';
 import type {
   AppUserConfigPromptOptions,
@@ -47,16 +36,14 @@ export default class MainHelper {
 
     const appConfig = await Database.getAppConfig();
 
-    if (!appConfig.appId)
-      throw new InvalidStateError(InvalidStateReason.MissingAppId);
+    if (!appConfig.appId) throw AppIDMissingError;
     if (!OneSignal.Notifications.permission)
-      throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
-    if (!ValidatorUtils.isValidUrl(url))
-      throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
+      throw new Error('User is not subscribed');
+    if (!ValidatorUtils.isValidUrl(url)) throw MalformedArgumentError('url');
     if (
       !ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true })
     )
-      throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
+      throw MalformedArgumentError('icon');
     if (!icon) {
       // get default icon
       const icons = await MainHelper.getNotificationIcons();
@@ -126,7 +113,7 @@ export default class MainHelper {
   static async getNotificationIcons() {
     const appId = MainHelper.getAppId();
     if (!appId) {
-      throw new InvalidStateError(InvalidStateReason.MissingAppId);
+      throw AppIDMissingError;
     }
     const url = `${getOneSignalApiUrl().toString()}apps/${appId}/icon`;
     const response = await fetch(url);

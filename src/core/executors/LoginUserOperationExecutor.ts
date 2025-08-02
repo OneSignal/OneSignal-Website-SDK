@@ -3,7 +3,6 @@ import {
   ExecutionResult,
   type IOperationExecutor,
 } from 'src/core/types/operation';
-import OneSignalError from 'src/shared/errors/OneSignalError';
 import { getTimeZoneId } from 'src/shared/helpers/general';
 import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import {
@@ -84,9 +83,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     const consentGiven = await Database.getConsentGiven();
 
     if (consentRequired && !consentGiven) {
-      throw new OneSignalError(
-        'Login: Consent required but not given, skipping login',
-      );
+      throw new Error('Consent required but not given');
     }
 
     // When there is no existing user to attempt to associate with the externalId provided, we go right to

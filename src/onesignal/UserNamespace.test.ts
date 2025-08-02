@@ -109,70 +109,70 @@ describe('UserNamespace', () => {
       // wrong types
       // @ts-expect-error - mock invalid argument
       expect(() => userNamespace.addAlias(1234, '5678')).toThrowError(
-        "The value for 'label' was of the wrong type.",
+        '"label" is the wrong type',
       );
       // @ts-expect-error - mock invalid argument
       expect(() => userNamespace.addAlias('some-label', 1234)).toThrowError(
-        "The value for 'id' was of the wrong type.",
+        '"id" is the wrong type',
       );
       // @ts-expect-error - mock invalid argument
       expect(() => userNamespace.addAliases(['some-label'])).toThrowError(
-        "The value for 'aliases' was of the wrong type.",
+        '"aliases" is the wrong type',
       );
       expect(() =>
         userNamespace.addAliases({
           // @ts-expect-error - mock invalid argument
           'some-label': 1234,
         }),
-      ).toThrowError("The value for 'key: some-label' was of the wrong type.");
+      ).toThrowError('"key: some-label" is the wrong type');
 
       // empty values
       expect(() => userNamespace.addAliases({})).toThrowError(
-        "Supply a non-empty value to 'aliases'.",
+        '"aliases" is empty',
       );
       expect(() => userNamespace.addAlias('', 'some-id')).toThrowError(
-        "Supply a non-empty value to 'label'.",
+        '"label" is empty',
       );
       expect(() => userNamespace.addAlias('some-label', '')).toThrowError(
-        "Supply a non-empty value to 'id'.",
+        '"id" is empty',
       );
 
       // reserved aliases
       expect(() =>
         userNamespace.addAlias('external_id', 'some-id'),
-      ).toThrowError("The value for 'external_id' is reserved.");
+      ).toThrowError('"external_id" is reserved');
       expect(() =>
         userNamespace.addAlias('onesignal_id', 'some-id'),
-      ).toThrowError("The value for 'onesignal_id' is reserved.");
+      ).toThrowError('"onesignal_id" is reserved');
       expect(() =>
         userNamespace.addAliases({
           external_id: 'some-id',
         }),
-      ).toThrowError("The value for 'external_id' is reserved.");
+      ).toThrowError('"external_id" is reserved');
       expect(() =>
         userNamespace.addAliases({
           onesignal_id: 'some-id',
         }),
-      ).toThrowError("The value for 'onesignal_id' is reserved.");
+      ).toThrowError('"onesignal_id" is reserved');
     });
 
     test('can validate remove aliases', () => {
       // wrong types
       // @ts-expect-error - mock invalid argument
       expect(() => userNamespace.removeAliases(1234)).toThrowError(
-        "The value for 'aliases' was of the wrong type.",
+        '"aliases" is the wrong type',
       );
       // @ts-expect-error - mock invalid argument
       expect(() => userNamespace.removeAlias(1234)).toThrowError(
-        "The value for 'label' was of the wrong type.",
+        '"label" is the wrong type',
       );
 
       // empty values
       expect(() => userNamespace.removeAliases([])).toThrowError(
-        "Supply a non-empty value to 'aliases'.",
+        '"aliases" is empty',
       );
       expect(() => userNamespace.removeAlias('')).toThrowError(
-        "Supply a non-empty value to 'label'.",
+        '"label" is empty',
       );
     });
   });
@@ -343,7 +343,7 @@ describe('UserNamespace', () => {
 
       // @ts-expect-error - mock invalid argument
       expect(() => userNamespace.setLanguage(123)).toThrowError(
-        "The value for 'language' was of the wrong type.",
+        '"language" is the wrong type',
       );
 
       userNamespace.setLanguage(language);

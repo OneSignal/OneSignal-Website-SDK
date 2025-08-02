@@ -1,9 +1,5 @@
 import { containsMatch } from 'src/shared/context';
 import {
-  InvalidStateError,
-  InvalidStateReason,
-} from 'src/shared/errors/InvalidStateError';
-import {
   addCssClass,
   hasCssClass,
   removeCssClass,
@@ -37,7 +33,7 @@ export default class Launcher extends ActiveAnimatedElement {
   async resize(size: BellSize) {
     if (!this.element) {
       // Notify button doesn't exist
-      throw new InvalidStateError(InvalidStateReason.MissingDomElement);
+      throw new Error('Missing DOM element');
     }
 
     // If the size is the same, do nothing and resolve an empty promise

@@ -1,7 +1,4 @@
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../errors/InvalidArgumentError';
+import { EmptyArgumentError } from '../errors';
 
 /**
  * Represents a normalized path.
@@ -15,8 +12,7 @@ export default class Path {
   private readonly path: string;
 
   constructor(path: string) {
-    if (!path)
-      throw new InvalidArgumentError('path', InvalidArgumentReason.Empty);
+    if (!path) throw EmptyArgumentError('path');
     this.path = path.trim();
   }
 
