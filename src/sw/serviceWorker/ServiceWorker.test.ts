@@ -11,6 +11,7 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import { ConfigIntegrationKind, type AppConfig } from 'src/shared/config';
+import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
 import {
   DEFAULT_DEVICE_ID,
@@ -33,7 +34,6 @@ import {
   type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session';
 import { NotificationType } from 'src/shared/subscriptions';
-import Log from '../libraries/Log';
 import { ServiceWorker } from './ServiceWorker';
 
 declare const self: ServiceWorkerGlobalScope;

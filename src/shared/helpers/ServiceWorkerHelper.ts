@@ -2,10 +2,10 @@ import {
   cancelableTimeout,
   type CancelableTimeoutPromise,
 } from '../../sw/helpers/CancelableTimeout';
-import Log from '../../sw/libraries/Log';
 import type { OSServiceWorkerFields } from '../../sw/serviceWorker/types';
 import OneSignalApiSW from '../api/OneSignalApiSW';
 import Utils from '../context/Utils';
+import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import type { OutcomesConfig } from '../outcomes/types';

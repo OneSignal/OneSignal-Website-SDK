@@ -1,3 +1,5 @@
+import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { ModelName } from 'src/core/types/models';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
 import { type AppConfig, getServerAppConfig } from 'src/shared/config';
@@ -5,6 +7,7 @@ import { Utils } from 'src/shared/context/Utils';
 import { getDeviceType } from 'src/shared/environment';
 import { delay } from 'src/shared/helpers/general';
 import ServiceWorkerHelper from 'src/shared/helpers/ServiceWorkerHelper';
+import Log from 'src/shared/libraries/Log';
 import {
   WorkerMessenger,
   WorkerMessengerCommand,
@@ -34,13 +37,11 @@ import {
 import { Browser, getBrowserName } from 'src/shared/useragent';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
-import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import {
   isValidPayload,
   toNativeNotificationAction,
   toOSNotification,
 } from '../helpers/notifications';
-import Log from '../libraries/Log';
 import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
 import type {
   OSMinifiedNotificationPayload,
@@ -67,7 +68,7 @@ export class ServiceWorker {
       await self.registration.pushManager.getSubscription();
     const pushToken = pushSubscription?.endpoint;
     if (!pushToken) return undefined;
-    return ModelCacheDirectAccess.getPushSubscriptionIdByToken(pushToken);
+    return getPushSubscriptionIdByToken(pushToken);
   }
 
   /**
@@ -78,7 +79,7 @@ export class ServiceWorker {
    */
   static get workerMessenger(): WorkerMessenger {
     if (!(self as any).workerMessenger) {
-      (self as any).workerMessenger = new WorkerMessenger();
+      (self as any).workerMessenger = new WorkerMessenger(undefined);
     }
     return (self as any).workerMessenger;
   }
@@ -1171,6 +1172,25 @@ export class ServiceWorker {
       return false;
     }
   }
+}
+
+/**
+ * WARNING: This is a temp workaround for the ServiceWorker context only!
+ * PURPOSE: CoreModuleDirector doesn't work in the SW context.
+ * TODO: This is duplicated logic tech debt to address later
+ */
+async function getPushSubscriptionIdByToken(
+  token: string,
+): Promise<string | undefined> {
+  const pushSubscriptions = await Database.getAll<SubscriptionModel>(
+    ModelName.Subscriptions,
+  );
+  for (const pushSubscription of pushSubscriptions) {
+    if (pushSubscription['token'] === token) {
+      return pushSubscription['id'] as string;
+    }
+  }
+  return undefined;
 }
 
 // Expose this class to the global scope
