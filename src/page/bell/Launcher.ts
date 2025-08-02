@@ -1,3 +1,4 @@
+import { containsMatch } from 'src/shared/context';
 import {
   InvalidStateError,
   InvalidStateReason,
@@ -10,7 +11,7 @@ import {
 import { nothing } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import type { BellSize } from 'src/shared/prompts';
-import { contains, once } from 'src/shared/utils/utils';
+import { once } from 'src/shared/utils/utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Bell from './Bell';
 
@@ -81,7 +82,7 @@ export default class Launcher extends ActiveAnimatedElement {
             (event: Event, destroyListenerFn: () => void) => {
               if (
                 event.target === this.element &&
-                contains(
+                containsMatch(
                   this.targetTransitionEvents,
                   (event as any).propertyName,
                 )

@@ -1,4 +1,4 @@
-import { Utils } from '../../shared/context/Utils';
+import { sortArrayOfObjects } from '../context';
 import Log from '../libraries/Log';
 import type { OutcomeProps } from '../models/OutcomeProps';
 import {
@@ -272,7 +272,7 @@ export default class OutcomesHelper {
          * we check the appId on notifications to match the current app.
          */
 
-        const allReceivedNotificationSorted = Utils.sortArrayOfObjects(
+        const allReceivedNotificationSorted = sortArrayOfObjects(
           allReceivedNotification,
           (notif: OutcomesNotificationReceived) => notif.timestamp,
           true,

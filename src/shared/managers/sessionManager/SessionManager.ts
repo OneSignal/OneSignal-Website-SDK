@@ -1,6 +1,7 @@
 import { IdentityConstants } from 'src/core/constants';
 import { updateUserByAlias } from 'src/core/requestService';
 import type { IUpdateUser } from 'src/core/types/api';
+import { enforceAlias, enforceAppId } from 'src/shared/context';
 import { supportsServiceWorkers } from 'src/shared/environment';
 import {
   SessionOrigin,
@@ -12,7 +13,6 @@ import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
 import type { ContextInterface } from '../../../page/models/Context';
-import Utils from '../../../shared/context/Utils';
 import OneSignalError from '../../../shared/errors/OneSignalError';
 import MainHelper from '../../helpers/MainHelper';
 import Log from '../../libraries/Log';
@@ -394,8 +394,8 @@ export class SessionManager implements ISessionManager {
       };
 
       const appId = MainHelper.getAppId();
-      Utils.enforceAppId(appId);
-      Utils.enforceAlias(aliasPair);
+      enforceAppId(appId);
+      enforceAlias(aliasPair);
       try {
         await updateUserByAlias(
           { appId, subscriptionId },

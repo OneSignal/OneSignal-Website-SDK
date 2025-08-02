@@ -3,7 +3,7 @@ import { ModelName } from 'src/core/types/models';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
 import { type AppConfig, getServerAppConfig } from 'src/shared/config';
-import { Utils } from 'src/shared/context/Utils';
+import { containsMatch } from 'src/shared/context';
 import { getDeviceType } from 'src/shared/environment';
 import { delay } from 'src/shared/helpers/general';
 import ServiceWorkerHelper from 'src/shared/helpers/ServiceWorkerHelper';
@@ -693,7 +693,7 @@ export class ServiceWorker {
     return (
       url !== 'javascript:void(0);' &&
       url !== 'do_not_open' &&
-      !Utils.contains(url, '_osp=do_not_open')
+      !containsMatch(url, '_osp=do_not_open')
     );
   }
 

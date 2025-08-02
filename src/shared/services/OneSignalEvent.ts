@@ -1,4 +1,4 @@
-import Utils from '../context/Utils';
+import { containsMatch } from '../context';
 import { windowEnvString } from '../environment/environment';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
@@ -27,7 +27,7 @@ export default class OneSignalEvent {
    * @param emitter Emitter to emit the event from.
    */
   static async trigger(eventName: string, data?: any, emitter?: Emitter) {
-    if (!Utils.contains(SILENT_EVENTS, eventName)) {
+    if (!containsMatch(SILENT_EVENTS, eventName)) {
       const displayData = data;
 
       if (displayData || displayData === false) {

@@ -1,18 +1,18 @@
 import deepmerge from 'deepmerge';
-import { DelayedPromptType } from 'src/shared/prompts/constants';
 import {
   getMergedConfig,
   type AppConfig,
   type AppUserConfig,
   type ConfigIntegrationKindValue,
   type ServerAppConfig,
-} from '../../../src/shared/config';
+} from 'src/shared/config';
 import {
   ConfigIntegrationKind,
   NotificationClickActionBehavior,
   NotificationClickMatchBehavior,
-} from '../../../src/shared/config/constants';
-import type { RecursivePartial } from '../../../src/shared/context/Utils';
+} from 'src/shared/config/constants';
+import type { RecursivePartial } from 'src/shared/context';
+import { DelayedPromptType } from 'src/shared/prompts/constants';
 import { APP_ID } from '../../constants';
 import type { TestEnvironmentConfig } from './TestEnvironment';
 
