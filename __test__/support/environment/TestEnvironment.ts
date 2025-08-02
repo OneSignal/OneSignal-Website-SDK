@@ -3,7 +3,7 @@ import type {
   ConfigIntegrationKindValue,
   ServerAppConfig,
 } from 'src/shared/config';
-import type { RecursivePartial } from 'src/shared/context/Utils';
+import type { RecursivePartial } from 'src/shared/context';
 import MainHelper from 'src/shared/helpers/MainHelper';
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../../constants';
 import { generateNewSubscription } from '../helpers/core';

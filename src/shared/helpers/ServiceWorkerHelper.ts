@@ -4,7 +4,7 @@ import {
 } from '../../sw/helpers/CancelableTimeout';
 import type { OSServiceWorkerFields } from '../../sw/serviceWorker/types';
 import OneSignalApiSW from '../api/OneSignalApiSW';
-import Utils from '../context/Utils';
+import { encodeHashAsUriComponent } from '../context';
 import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
@@ -41,8 +41,8 @@ export default class ServiceWorkerHelper {
     sdkVersion: string,
   ): string {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
-    const appIdAsQueryParam = Utils.encodeHashAsUriComponent({ appId });
-    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({
+    const appIdAsQueryParam = encodeHashAsUriComponent({ appId });
+    const sdkVersionAsQueryParam = encodeHashAsUriComponent({
       sdkVersion,
     });
     return `${fullPath}?${appIdAsQueryParam}&${sdkVersionAsQueryParam}`;

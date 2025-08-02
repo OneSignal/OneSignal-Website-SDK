@@ -3,7 +3,7 @@ import {
   getSWRegistration,
   waitUntilActive,
 } from '../../sw/helpers/registration';
-import { Utils } from '../context/Utils';
+import { timeoutPromise } from '../context';
 import { supportsServiceWorkers } from '../environment/environment';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
 import ServiceWorkerHelper, {
@@ -230,10 +230,7 @@ export class ServiceWorkerManager {
     Log.info('[Service Worker Update] Checking service worker version...');
     let workerVersion: string;
     try {
-      workerVersion = await Utils.timeoutPromise(
-        this.getWorkerVersion(),
-        2_000,
-      );
+      workerVersion = await timeoutPromise(this.getWorkerVersion(), 2_000);
     } catch (e) {
       Log.info(
         '[Service Worker Update] Worker did not reply to version query; assuming older version and updating.',

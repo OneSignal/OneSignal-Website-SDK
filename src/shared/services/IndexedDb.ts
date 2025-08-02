@@ -1,5 +1,5 @@
 import { ModelName } from 'src/core/types/models';
-import Utils from '../context/Utils';
+import { containsMatch } from '../context';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 
@@ -74,11 +74,11 @@ export default class IndexedDb {
     event.preventDefault();
     const error = event.target.error;
     if (
-      Utils.contains(
+      containsMatch(
         error.message,
         'The operation failed for reasons unrelated to the database itself and not covered by any other error code',
       ) ||
-      Utils.contains(
+      containsMatch(
         error.message,
         'A mutation operation was attempted on a database that did not allow mutations',
       )

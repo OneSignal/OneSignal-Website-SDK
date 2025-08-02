@@ -1,5 +1,4 @@
 import type { NotificationIcons } from 'src/shared/notifications';
-import { Utils } from '../context/Utils';
 import Log from '../libraries/Log';
 import { Browser, getBrowserName } from '../useragent';
 import { IS_SERVICE_WORKER } from './EnvVariables';
@@ -28,13 +27,6 @@ export async function triggerNotificationPermissionChanged(
 
 export function logMethodCall(methodName: string, ...args: any[]) {
   return OneSignalUtils.logMethodCall(methodName, ...args);
-}
-
-/**
- * Returns true if match is in string; otherwise, returns false.
- */
-export function contains(indexOfAble: any, match: string) {
-  return Utils.contains(indexOfAble, match);
 }
 
 /**

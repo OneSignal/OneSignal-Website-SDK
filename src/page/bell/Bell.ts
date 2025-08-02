@@ -1,4 +1,5 @@
 import type { AppUserConfigNotifyButton } from 'src/shared/config';
+import { containsMatch } from 'src/shared/context';
 import {
   addCssClass,
   addDomElement,
@@ -14,7 +15,7 @@ import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import { NotificationPermission } from '../../shared/models/NotificationPermission';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { contains, once } from '../../shared/utils/utils';
+import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
 import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
@@ -130,18 +131,21 @@ export default class Bell {
   }
 
   private validateOptions(options: AppUserConfigNotifyButton) {
-    if (!options.size || !contains(['small', 'medium', 'large'], options.size))
+    if (
+      !options.size ||
+      !containsMatch(['small', 'medium', 'large'], options.size)
+    )
       throw new Error(
         `Invalid size ${options.size} for notify button. Choose among 'small', 'medium', or 'large'.`,
       );
     if (
       !options.position ||
-      !contains(['bottom-left', 'bottom-right'], options.position)
+      !containsMatch(['bottom-left', 'bottom-right'], options.position)
     )
       throw new Error(
         `Invalid position ${options.position} for notify button. Choose either 'bottom-left', or 'bottom-right'.`,
       );
-    if (!options.theme || !contains(['default', 'inverse'], options.theme))
+    if (!options.theme || !containsMatch(['default', 'inverse'], options.theme))
       throw new Error(
         `Invalid theme ${options.theme} for notify button. Choose either 'default', or 'inverse'.`,
       );

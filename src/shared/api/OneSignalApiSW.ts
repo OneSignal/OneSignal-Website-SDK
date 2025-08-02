@@ -2,7 +2,7 @@ import { IdentityConstants } from 'src/core/constants';
 import { updateUserByAlias } from 'src/core/requestService';
 import type { IUpdateUser } from 'src/core/types/api';
 import type { ServerAppConfig } from '../config';
-import Utils from '../context/Utils';
+import { enforceAlias, enforceAppId } from '../context';
 import { getSubscriptionType } from '../environment';
 import Log from '../libraries/Log';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
@@ -19,7 +19,7 @@ export class OneSignalApiSW {
   static async downloadServerAppConfig(
     appId: string,
   ): Promise<ServerAppConfig> {
-    Utils.enforceAppId(appId);
+    enforceAppId(appId);
     const response = await OneSignalApiBase.get<ServerAppConfig>(
       `sync/${appId}/web`,
       null,
@@ -37,7 +37,7 @@ export class OneSignalApiSW {
     identifier: string,
   ): Promise<string | null> {
     // Calling POST /players with an existing identifier returns us that player ID
-    Utils.enforceAppId(appId);
+    enforceAppId(appId);
     return OneSignalApiBase.post<{ id: string }>('players', {
       app_id: appId,
       device_type: deviceType,
@@ -78,8 +78,8 @@ export class OneSignalApiSW {
       },
     };
 
-    Utils.enforceAppId(appId);
-    Utils.enforceAlias(aliasPair);
+    enforceAppId(appId);
+    enforceAlias(aliasPair);
     try {
       await updateUserByAlias(
         { appId, subscriptionId },
