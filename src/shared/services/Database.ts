@@ -9,11 +9,14 @@ import type { ModelNameType } from 'src/core/types/models';
 import type { AppConfig } from '../config/types';
 import {
   type NotificationClickForOpenHandlingSchema,
-  NotificationClickForOpenHandlingSerializer,
-  NotificationClickedForOutcomesSerializer,
   type NotificationReceivedForOutcomesSchema,
-  NotificationReceivedForOutcomesSerializer,
-} from '../helpers/OSNotificationDatabaseSerializer';
+  notificationClickFromDatabase,
+  notificationClickToDatabase,
+  notificationClickedForOutcomesFromDatabase,
+  notificationClickedForOutcomesToDatabase,
+  notificationReceivedForOutcomesFromDatabase,
+  notificationReceivedForOutcomesToDatabase,
+} from '../helpers/serializer';
 import Log from '../libraries/Log';
 import {
   AppState,
@@ -437,7 +440,7 @@ export default class Database {
         TABLE_OUTCOMES_NOTIFICATION_CLICKED,
       );
     return notifications.map((notification) =>
-      NotificationClickedForOutcomesSerializer.fromDatabase(notification),
+      notificationClickedForOutcomesFromDatabase(notification),
     );
   }
 
@@ -447,7 +450,7 @@ export default class Database {
   ): Promise<void> {
     await this.put(
       TABLE_OUTCOMES_NOTIFICATION_CLICKED,
-      NotificationClickedForOutcomesSerializer.toDatabase(appId, event),
+      notificationClickedForOutcomesToDatabase(appId, event),
     );
   }
 
@@ -456,7 +459,7 @@ export default class Database {
   ): Promise<void> {
     await this.put(
       TABLE_NOTIFICATION_OPENED,
-      NotificationClickForOpenHandlingSerializer.toDatabase(event),
+      notificationClickToDatabase(event),
     );
   }
 
@@ -467,8 +470,7 @@ export default class Database {
         TABLE_NOTIFICATION_OPENED,
       );
     for (const eventFromDb of eventsFromDb) {
-      const event =
-        NotificationClickForOpenHandlingSerializer.fromDatabase(eventFromDb);
+      const event = notificationClickFromDatabase(eventFromDb);
       const url = event.result.url;
       if (!url) {
         continue;
@@ -490,7 +492,7 @@ export default class Database {
         TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
       );
     return notifications.map((notification) =>
-      NotificationReceivedForOutcomesSerializer.fromDatabase(notification),
+      notificationReceivedForOutcomesFromDatabase(notification),
     );
   }
 
@@ -500,7 +502,7 @@ export default class Database {
   ): Promise<void> {
     await this.put(
       TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
-      NotificationReceivedForOutcomesSerializer.toDatabase(
+      notificationReceivedForOutcomesToDatabase(
         appId,
         notification,
         new Date().getTime(),
