@@ -5,36 +5,99 @@ import type { AppConfig } from 'src/shared/config/types';
 import Database from '../services/Database';
 import InitHelper from './InitHelper';
 
-describe('InitHelper', () => {
-  test('correct degree of persistNotification setting should be stored', async () => {
-    await TestEnvironment.initialize({
-      initOptions: {},
-    });
+beforeEach(async () => {
+  await TestEnvironment.initialize();
+});
 
-    const appConfig = TestContext.getFakeMergedConfig();
-    OneSignal.context = new Context(appConfig);
-    OneSignal.config = appConfig;
-    const config: AppConfig = OneSignal.config;
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
-    // If not set, default to true
-    delete config.userConfig.persistNotification;
-    await InitHelper.saveInitOptions();
-    let persistNotification = await Database.get(
-      'Options',
-      'persistNotification',
-    );
-    expect(persistNotification).toBe(true);
-
-    // If set to false, ensure value is false
-    config.userConfig.persistNotification = false;
-    await InitHelper.saveInitOptions();
-    persistNotification = await Database.get('Options', 'persistNotification');
-    expect(persistNotification).toBe(false);
-
-    // If set to true, ensure value is true
-    config.userConfig.persistNotification = true;
-    await InitHelper.saveInitOptions();
-    persistNotification = await Database.get('Options', 'persistNotification');
-    expect(persistNotification).toBe(true);
+/** onSdkInitialized */
+test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
+  OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+    expect(true).toBe(true);
   });
+  await InitHelper.onSdkInitialized();
+  expect.assertions(1);
+});
+
+test('onSdkInitialized: processes expiring subscriptions', async () => {
+  const spy = vi
+    .spyOn(InitHelper, 'processExpiringSubscriptions')
+    .mockResolvedValue(false);
+  await InitHelper.onSdkInitialized();
+  expect(spy).toHaveBeenCalledTimes(1);
+});
+
+test('onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false', async () => {
+  const spy = vi
+    .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
+    .mockResolvedValue(undefined);
+
+  OneSignal.config!.userConfig.promptOptions!.autoPrompt = false;
+  OneSignal.config!.userConfig.autoResubscribe = false;
+
+  await InitHelper.onSdkInitialized();
+
+  expect(spy).toHaveBeenCalledTimes(1);
+});
+
+test('onSdkInitialized: does not send on session update', async () => {
+  const spy = vi
+    .spyOn(OneSignal.context.updateManager, 'sendOnSessionUpdate')
+    .mockResolvedValue(undefined);
+
+  OneSignal.config!.userConfig.promptOptions!.autoPrompt = true;
+  OneSignal.config!.userConfig.autoResubscribe = true;
+
+  await InitHelper.onSdkInitialized();
+
+  expect(spy).not.toHaveBeenCalled();
+
+  OneSignal.config!.userConfig.promptOptions!.autoPrompt = false;
+  OneSignal.config!.userConfig.autoResubscribe = true;
+
+  await InitHelper.onSdkInitialized();
+
+  expect(spy).not.toHaveBeenCalled();
+
+  OneSignal.config!.userConfig.promptOptions!.autoPrompt = true;
+  OneSignal.config!.userConfig.autoResubscribe = false;
+
+  await InitHelper.onSdkInitialized();
+
+  expect(spy).not.toHaveBeenCalled();
+});
+
+test('correct degree of persistNotification setting should be stored', async () => {
+  await TestEnvironment.initialize({
+    initOptions: {},
+  });
+
+  const appConfig = TestContext.getFakeMergedConfig();
+  OneSignal.context = new Context(appConfig);
+  OneSignal.config = appConfig;
+  const config: AppConfig = OneSignal.config;
+
+  // If not set, default to true
+  delete config.userConfig.persistNotification;
+  await InitHelper.saveInitOptions();
+  let persistNotification = await Database.get(
+    'Options',
+    'persistNotification',
+  );
+  expect(persistNotification).toBe(true);
+
+  // If set to false, ensure value is false
+  config.userConfig.persistNotification = false;
+  await InitHelper.saveInitOptions();
+  persistNotification = await Database.get('Options', 'persistNotification');
+  expect(persistNotification).toBe(false);
+
+  // If set to true, ensure value is true
+  config.userConfig.persistNotification = true;
+  await InitHelper.saveInitOptions();
+  persistNotification = await Database.get('Options', 'persistNotification');
+  expect(persistNotification).toBe(true);
 });

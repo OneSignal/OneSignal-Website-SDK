@@ -6,11 +6,12 @@ import {
 import { timeoutPromise } from '../context/helpers';
 import { supportsServiceWorkers } from '../environment/detect';
 import { SWRegistrationError } from '../errors/common';
-import ServiceWorkerHelper, {
+import {
+  getServiceWorkerHref,
   ServiceWorkerActiveState,
   type ServiceWorkerActiveStateValue,
   type ServiceWorkerManagerConfig,
-} from '../helpers/ServiceWorkerHelper';
+} from '../helpers/service-worker';
 import Log from '../libraries/Log';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { triggerNotificationClick } from '../listeners';
@@ -203,7 +204,7 @@ export class ServiceWorkerManager {
 
     // 3. Different href?, asking if (path + filename + queryParams) is different
     const availableWorker = getAvailableServiceWorker(workerRegistration);
-    const serviceWorkerHref = ServiceWorkerHelper.getServiceWorkerHref(
+    const serviceWorkerHref = getServiceWorkerHref(
       this.config,
       this.context.appConfig.appId,
       VERSION,
@@ -407,7 +408,7 @@ export class ServiceWorkerManager {
       );
     }
 
-    const workerHref = ServiceWorkerHelper.getServiceWorkerHref(
+    const workerHref = getServiceWorkerHref(
       this.config,
       this.context.appConfig.appId,
       VERSION,
@@ -452,7 +453,7 @@ export class ServiceWorkerManager {
       registrationOptions: this.config.registrationOptions,
     };
 
-    const workerHref = ServiceWorkerHelper.getServiceWorkerHref(
+    const workerHref = getServiceWorkerHref(
       configWithBetaWorkerName,
       this.context.appConfig.appId,
       VERSION,

@@ -10,7 +10,7 @@ import {
   PermissionBlockedError,
   SWRegistrationError,
 } from '../errors/common';
-import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
+import { ServiceWorkerActiveState } from '../helpers/service-worker';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
 import { NotificationPermission } from '../models/NotificationPermission';

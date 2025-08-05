@@ -5,7 +5,10 @@ import type { AppConfig } from 'src/shared/config/types';
 import { containsMatch } from 'src/shared/context/helpers';
 import { getDeviceType } from 'src/shared/environment/detect';
 import { delay } from 'src/shared/helpers/general';
-import ServiceWorkerHelper from 'src/shared/helpers/ServiceWorkerHelper';
+import {
+  deactivateSession,
+  upsertSession,
+} from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import {
   WorkerMessenger,
@@ -393,7 +396,7 @@ export class ServiceWorker {
     options: UpsertOrDeactivateSessionPayload,
   ) {
     if (hasAnyActiveSessions) {
-      await ServiceWorkerHelper.upsertSession(
+      await upsertSession(
         options.appId,
         options.onesignalId,
         options.subscriptionId,
@@ -403,7 +406,7 @@ export class ServiceWorker {
         options.outcomesConfig,
       );
     } else {
-      const cancelableFinalize = await ServiceWorkerHelper.deactivateSession(
+      const cancelableFinalize = await deactivateSession(
         options.appId,
         options.onesignalId,
         options.subscriptionId,
