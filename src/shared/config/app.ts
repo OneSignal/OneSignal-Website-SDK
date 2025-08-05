@@ -1,6 +1,7 @@
 import OneSignalApi from '../api/OneSignalApi';
 import { InvalidAppIdError } from '../errors/common';
-import { isValidUuid, valueOrDefault } from '../helpers/general';
+import { valueOrDefault } from '../helpers/general';
+import { isValidUuid } from '../helpers/validators';
 import { checkRestrictedOrigin, checkUnsupportedSubdomain } from './domain';
 import {
   getConfigIntegrationKind,

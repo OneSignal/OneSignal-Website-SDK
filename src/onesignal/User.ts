@@ -5,7 +5,7 @@ import {
   ReservedArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
-import { isObject, isValidEmail } from 'src/shared/helpers/general';
+import { isObject, isValidEmail } from 'src/shared/helpers/validators';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {

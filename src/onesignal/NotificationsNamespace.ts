@@ -3,13 +3,13 @@ import {
   MalformedArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
+import { isValidUrl } from 'src/shared/helpers/validators';
 import { fireStoredNotificationClicks } from 'src/shared/listeners';
 import type {
   NotificationEventName,
   NotificationEventTypeMap,
 } from 'src/shared/notifications/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
-import { ValidatorUtils } from '../page/utils/ValidatorUtils';
 import { NotificationPermission } from '../shared/models/NotificationPermission';
 import Database from '../shared/services/Database';
 import {
@@ -60,7 +60,7 @@ export default class NotificationsNamespace extends EventListenerBase {
       throw WrongTypeArgumentError('url');
     }
 
-    if (!ValidatorUtils.isValidUrl(url, { allowNull: true }))
+    if (!isValidUrl(url, { allowNull: true }))
       throw MalformedArgumentError('url');
     await awaitOneSignalInitAndSupported();
     logMethodCall('setDefaultNotificationUrl', url);

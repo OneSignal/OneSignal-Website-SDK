@@ -9,7 +9,6 @@ import {
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
-import { ValidatorUtils } from '../page/utils/ValidatorUtils';
 import Log from '../shared/libraries/Log';
 import { Subscription } from '../shared/models/Subscription';
 import Database from '../shared/services/Database';
@@ -129,7 +128,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     if (!appConfig.appId) {
       throw AppIDMissingError;
     }
-    if (!ValidatorUtils.isValidBoolean(enabled)) {
+    if (typeof enabled !== 'boolean') {
       throw MalformedArgumentError('enabled');
     }
 
