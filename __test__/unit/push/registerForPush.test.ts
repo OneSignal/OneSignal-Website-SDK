@@ -1,4 +1,4 @@
-import InitHelper from '../../../src/shared/helpers/InitHelper';
+import * as InitHelper from '../../../src/shared/helpers/init';
 import Log from '../../../src/shared/libraries/Log';
 import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';

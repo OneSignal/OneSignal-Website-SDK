@@ -9,6 +9,7 @@ import {
 } from 'src/shared/errors/common';
 import { InvalidChannelInputField } from 'src/shared/errors/constants';
 import { delay } from 'src/shared/helpers/general';
+import { registerForPushNotifications } from 'src/shared/helpers/init';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -17,7 +18,6 @@ import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
-import InitHelper from '../../../shared/helpers/InitHelper';
 import Log from '../../../shared/libraries/Log';
 import { NotificationPermission } from '../../../shared/models/NotificationPermission';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
@@ -130,10 +130,6 @@ export class SlidedownManager {
     return true;
   }
 
-  private registerForPush(): void {
-    InitHelper.registerForPushNotifications();
-  }
-
   private async handleAllowForCategoryType(): Promise<void> {
     if (!this.slidedown) {
       throw SlidedownMissingError;
@@ -142,7 +138,7 @@ export class SlidedownManager {
     const tags = TaggingContainer.getValuesFromTaggingContainer();
     this.context.tagManager.storeTagValuesToUpdate(tags);
 
-    this.registerForPush();
+    registerForPushNotifications();
     await this.context.tagManager.sendTags(true);
   }
 
@@ -361,7 +357,7 @@ export class SlidedownManager {
     try {
       switch (slidedownType) {
         case DelayedPromptType.Push:
-          this.registerForPush();
+          registerForPushNotifications();
           break;
         case DelayedPromptType.Category:
           await this.handleAllowForCategoryType();

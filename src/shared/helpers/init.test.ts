@@ -1,12 +1,19 @@
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import Context from 'src/page/models/Context';
-import type { AppConfig } from 'src/shared/config/types';
+import { type AppConfig } from 'src/shared/config/types';
+import type { Mock } from 'vitest';
 import Database from '../services/Database';
-import InitHelper from './InitHelper';
+import * as InitHelper from './init';
+
+let isSubscriptionExpiringSpy: Mock;
 
 beforeEach(async () => {
   await TestEnvironment.initialize();
+  isSubscriptionExpiringSpy = vi.spyOn(
+    OneSignal.context.subscriptionManager,
+    'isSubscriptionExpiring',
+  );
 });
 
 afterEach(() => {
@@ -23,11 +30,8 @@ test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
 });
 
 test('onSdkInitialized: processes expiring subscriptions', async () => {
-  const spy = vi
-    .spyOn(InitHelper, 'processExpiringSubscriptions')
-    .mockResolvedValue(false);
   await InitHelper.onSdkInitialized();
-  expect(spy).toHaveBeenCalledTimes(1);
+  expect(isSubscriptionExpiringSpy).toHaveBeenCalledTimes(1);
 });
 
 test('onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false', async () => {

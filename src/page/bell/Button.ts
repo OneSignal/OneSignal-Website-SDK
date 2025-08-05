@@ -1,5 +1,5 @@
 import { addDomElement, removeDomElement } from 'src/shared/helpers/dom';
-import InitHelper from 'src/shared/helpers/InitHelper';
+import { registerForPushNotifications } from 'src/shared/helpers/init';
 import LimitStore from 'src/shared/services/LimitStore';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
@@ -114,7 +114,7 @@ export default class Button extends ActiveAnimatedElement {
         });
       } else {
         // The user is actually subscribed, register him for notifications
-        InitHelper.registerForPushNotifications();
+        registerForPushNotifications();
         this.bell._ignoreSubscriptionState = true;
         OneSignal.emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
           this.bell.message

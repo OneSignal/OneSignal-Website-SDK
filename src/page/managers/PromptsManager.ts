@@ -1,4 +1,5 @@
 import { delay } from 'src/shared/helpers/general';
+import { registerForPushNotifications } from 'src/shared/helpers/init';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -20,7 +21,6 @@ import {
   requiresUserInteraction,
 } from 'src/shared/useragent/detect';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
-import InitHelper from '../../shared/helpers/InitHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
@@ -185,7 +185,7 @@ export class PromptsManager {
     }
 
     this.isNativePromptShowing = true;
-    await InitHelper.registerForPushNotifications();
+    await registerForPushNotifications();
     this.isNativePromptShowing = false;
     DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
   }
