@@ -13,7 +13,7 @@ import {
   NotificationClickMatchBehavior,
 } from '../../../src/shared/config/constants';
 import type { RecursivePartial } from '../../../src/shared/context/Utils';
-import { APP_ID } from '../constants';
+import { APP_ID } from '../../constants';
 import type { TestEnvironmentConfig } from './TestEnvironment';
 
 export default class TestContext {

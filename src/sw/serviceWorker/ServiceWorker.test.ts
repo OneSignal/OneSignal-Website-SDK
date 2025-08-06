@@ -2,7 +2,7 @@ import {
   APP_ID,
   DUMMY_ONESIGNAL_ID,
   DUMMY_SUBSCRIPTION_ID,
-} from '__test__/support/constants';
+} from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
@@ -19,13 +19,6 @@ import {
 } from 'src/shared/managers/SubscriptionManager';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import {
-  ONESIGNAL_SESSION_KEY,
-  SessionOrigin,
-  SessionStatus,
-  type Session,
-  type UpsertOrDeactivateSessionPayload,
-} from 'src/shared/models/Session';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import Database, {
   TABLE_NOTIFICATION_OPENED,
@@ -33,6 +26,13 @@ import Database, {
   TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
   TABLE_SESSIONS,
 } from 'src/shared/services/Database';
+import {
+  ONESIGNAL_SESSION_KEY,
+  SessionOrigin,
+  SessionStatus,
+  type Session,
+  type UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session';
 import Log from '../libraries/Log';
 import { ServiceWorker } from './ServiceWorker';
 
@@ -198,17 +198,14 @@ describe('ServiceWorker', () => {
     });
 
     test('should confirm delivery', async () => {
-      mockBowser.mockReturnValue({
-        name: 'Chrome',
-        version: '130',
-      });
-
       const payload = mockOSMinifiedNotificationPayload({
         custom: {
           rr: 'y',
         },
       });
       await dispatchEvent(new PushEvent('push', payload));
+
+      await vi.runOnlyPendingTimersAsync();
 
       expect(apiPutSpy).toHaveBeenCalledWith(
         `notifications/${payload.custom.i}/report_received`,
@@ -715,9 +712,11 @@ const mockSender = {
 vi.mock(
   'src/sw/webhooks/notifications/OSWebhookNotificationEventSender',
   () => ({
-    OSWebhookNotificationEventSender: vi
-      .fn()
-      .mockImplementation(() => mockSender),
+    OSWebhookNotificationEventSender: class {
+      willDisplay = mockSender.willDisplay;
+      dismiss = mockSender.dismiss;
+      click = mockSender.click;
+    },
   }),
 );
 
@@ -729,15 +728,6 @@ vi.mock('../helpers/ModelCacheDirectAccess', () => ({
       .fn()
       .mockImplementation(() => pushSubscriptionId),
   },
-}));
-
-// -- browser info mock
-const mockBowser = vi.fn().mockReturnValue({
-  name: 'Safari',
-  version: '18',
-});
-vi.mock('../../../src/shared/utils/bowserCastle', () => ({
-  bowserCastle: () => mockBowser(),
 }));
 
 // -- awaitable timeout mock

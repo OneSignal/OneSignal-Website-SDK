@@ -1,20 +1,16 @@
-import { mockUserAgent } from '__test__/support/environment/TestEnvironmentHelpers';
-import { generateNewSubscription } from '__test__/support/helpers/core';
-import { nock } from '__test__/support/helpers/general';
-import AliasPair from '../../../src/core/requestService/AliasPair';
-import { RequestService } from '../../../src/core/requestService/RequestService';
 import {
   APP_ID,
   DUMMY_EXTERNAL_ID,
   DUMMY_SUBSCRIPTION_ID,
-} from '../../support/constants';
+} from '__test__/constants';
+import { generateNewSubscription } from '__test__/support/helpers/core';
+import { nock } from '__test__/support/helpers/general';
+import AliasPair from '../../../src/core/requestService/AliasPair';
+import { RequestService } from '../../../src/core/requestService/RequestService';
 import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
 
 describe('Sdk Version Header Tests', () => {
-  beforeAll(() => {
-    nock({});
-    mockUserAgent();
-  });
+  beforeAll(() => nock({}));
 
   test('POST /users: SDK-Version header is sent', () => {
     // @ts-expect-error - partial identity object

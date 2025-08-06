@@ -1,4 +1,4 @@
-import { DUMMY_PUSH_TOKEN } from '../constants';
+import { DUMMY_PUSH_TOKEN } from '../../constants';
 
 export const getSubscriptionFn = vi
   .fn<() => Promise<Partial<PushSubscription>>>()

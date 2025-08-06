@@ -1,7 +1,4 @@
-import {
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_PUSH_TOKEN,
-} from '__test__/support/constants';
+import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '__test__/constants';
 import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';

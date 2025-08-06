@@ -4,18 +4,15 @@ import {
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
   DUMMY_SUBSCRIPTION_ID_3,
-} from '__test__/support/constants';
+} from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import {
-  createPushSub,
-  mockUserAgent,
-} from '__test__/support/environment/TestEnvironmentHelpers';
+import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import Emitter from 'src/shared/libraries/Emitter';
+import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 import { AppState } from 'src/shared/models/AppState';
 import Database from 'src/shared/services/Database';
 import { PermissionUtils } from 'src/shared/utils/PermissionUtils';
-import EventHelper from '../../../src/shared/helpers/EventHelper';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 
@@ -29,7 +26,6 @@ vi.useFakeTimers();
 
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(async () => {
-    mockUserAgent();
     await TestEnvironment.initialize();
     OneSignal.emitter = new Emitter();
   });
@@ -122,7 +118,7 @@ describe('Notification Types are set correctly on subscription change', () => {
       });
       OneSignal.coreDirector.addSubscriptionModel(pushModel);
 
-      await EventHelper.checkAndTriggerSubscriptionChanged();
+      await checkAndTriggerSubscriptionChanged();
       expect(changeListener).not.toHaveBeenCalled();
     });
 
@@ -140,7 +136,7 @@ describe('Notification Types are set correctly on subscription change', () => {
       });
       OneSignal.coreDirector.subscriptionModelStore.add(pushModel);
 
-      await EventHelper.checkAndTriggerSubscriptionChanged();
+      await checkAndTriggerSubscriptionChanged();
       expect(changeListener).toHaveBeenCalledWith({
         current: {
           id: DUMMY_SUBSCRIPTION_ID_2,

@@ -7,7 +7,7 @@ import {
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
   DUMMY_SUBSCRIPTION_ID_3,
-} from '__test__/support/constants';
+} from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import { waitForOperations } from '__test__/support/helpers/executors';
@@ -98,6 +98,7 @@ describe('OneSignal', () => {
   afterEach(async () => {
     window.OneSignal.coreDirector.operationRepo.queue = [];
     await Database.remove('operations');
+    await waitForOperations();
     window.OneSignal.coreDirector.subscriptionModelStore.replaceAll(
       [],
       ModelChangeTags.HYDRATE,
@@ -270,9 +271,8 @@ describe('OneSignal', () => {
 
         await waitForOperations(6);
         window.OneSignal.User.removeEmail(email);
-        await waitForOperations(4);
 
-        expect(deleteSubscriptionFn).toHaveBeenCalled();
+        await vi.waitUntil(() => deleteSubscriptionFn.mock.calls.length === 1);
         dbSubscriptions = await getEmailSubscriptionDbItems();
         expect(dbSubscriptions).toHaveLength(0);
       });
@@ -977,7 +977,7 @@ describe('OneSignal', () => {
       OneSignal.coreDirector
         .getIdentityModel()
         .setProperty('external_id', 'some-id', ModelChangeTags.NO_PROPOGATE);
-      window.OneSignal.User.trackEvent(name, properties);
+      window.OneSignal.User.trackEvent(name);
 
       await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1);
 
@@ -989,7 +989,6 @@ describe('OneSignal', () => {
             onesignal_id: DUMMY_ONESIGNAL_ID,
             payload: {
               os_sdk: OS_SDK,
-              test_property: 'test_value',
             },
             timestamp: expect.any(String),
           },

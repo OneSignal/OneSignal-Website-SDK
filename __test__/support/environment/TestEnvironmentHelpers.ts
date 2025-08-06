@@ -1,4 +1,3 @@
-import bowser from 'bowser';
 import { type DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
@@ -17,38 +16,23 @@ import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElemen
 import Emitter from '../../../src/shared/libraries/Emitter';
 import Database from '../../../src/shared/services/Database';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
-import * as bowerCastleHelpers from '../../../src/shared/utils/bowserCastle';
 import {
+  DEFAULT_USER_AGENT,
   DEVICE_OS,
   DUMMY_ONESIGNAL_ID,
   DUMMY_SUBSCRIPTION_ID_3,
-} from '../constants';
+} from '../../constants';
 import MockNotification from '../mocks/MockNotification';
-import BrowserUserAgent from '../models/BrowserUserAgent';
 import Random from '../utils/Random';
 import TestContext from './TestContext';
 import { type TestEnvironmentConfig } from './TestEnvironment';
 
 declare const global: any;
 
-const bowserCastleSpy = vi.spyOn(bowerCastleHelpers, 'bowserCastle');
-
 export function resetDatabase() {
   // Erase and reset IndexedDb database name to something random
   Database.resetInstance();
   Database.databaseInstanceName = Random.getRandomString(10);
-}
-
-export function mockUserAgent(config: TestEnvironmentConfig = {}): void {
-  // @ts-expect-error - bowser is not typed correctly
-  const info = bowser._detect(config.userAgent ?? BrowserUserAgent.Default);
-  // Modify the mock implementation
-  bowserCastleSpy.mockReturnValue({
-    mobile: info.mobile,
-    tablet: info.tablet,
-    name: info.name.toLowerCase(),
-    version: info.version,
-  });
 }
 
 export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
@@ -107,7 +91,7 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   const resourceLoader = new ResourceLoader({
     userAgent: config.userAgent
       ? config.userAgent.toString()
-      : BrowserUserAgent.Default.toString(),
+      : DEFAULT_USER_AGENT.toString(),
   });
 
   // global document object must be defined for `getSlidedownElement` to work correctly.

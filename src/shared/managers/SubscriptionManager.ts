@@ -29,7 +29,6 @@ import type { ContextSWInterface } from '../models/ContextSW';
 import { NotificationPermission } from '../models/NotificationPermission';
 import type { PushSubscriptionState } from '../models/PushSubscriptionState';
 import { RawPushSubscription } from '../models/RawPushSubscription';
-import { SessionOrigin } from '../models/Session';
 import { Subscription } from '../models/Subscription';
 import {
   SubscriptionStrategyKind,
@@ -41,11 +40,12 @@ import {
 } from '../models/UnsubscriptionStrategy';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
-import { bowserCastle } from '../utils/bowserCastle';
+import { SessionOrigin } from '../session';
+import { Browser, getBrowserName } from '../useragent';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { PermissionUtils } from '../utils/PermissionUtils';
-import { executeCallback, logMethodCall } from '../utils/utils';
+import { logMethodCall } from '../utils/utils';
 import { IDManager } from './IDManager';
 export const DEFAULT_DEVICE_ID = '99999999-9999-9999-9999-999999999999';
 
@@ -98,6 +98,13 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
     pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
   }
 };
+
+function executeCallback<T>(callback?: (...args: any[]) => T, ...args: any[]) {
+  if (callback) {
+    // eslint-disable-next-line prefer-spread
+    return callback.apply(null, args);
+  }
+}
 
 export class SubscriptionManager {
   private context: ContextSWInterface;
@@ -179,7 +186,7 @@ export class SubscriptionManager {
           PushPermissionNotGrantedErrorReason.Blocked,
         );
 
-      if (useSafariLegacyPush) {
+      if (useSafariLegacyPush()) {
         rawPushSubscription = await this.subscribeSafari();
         await updatePushSubscriptionModelWithRawSubscription(
           rawPushSubscription,
@@ -281,7 +288,7 @@ export class SubscriptionManager {
     subscription.deviceId = DEFAULT_DEVICE_ID;
     subscription.optedOut = false;
     if (pushSubscription) {
-      if (useSafariLegacyPush) {
+      if (useSafariLegacyPush()) {
         subscription.subscriptionToken = pushSubscription.safariDeviceToken;
       } else {
         subscription.subscriptionToken = pushSubscription.w3cEndpoint
@@ -534,7 +541,7 @@ export class SubscriptionManager {
 
     const swRegistration = self.registration;
 
-    if (!swRegistration.active && bowserCastle().name !== 'firefox') {
+    if (!swRegistration.active && getBrowserName() !== Browser.Firefox) {
       throw new InvalidStateError(InvalidStateReason.ServiceWorkerNotActivated);
       /*
         Or should we wait for the service worker to be ready?
@@ -574,7 +581,7 @@ export class SubscriptionManager {
     // Specifically return undefined instead of null if the key isn't available
     let key = undefined;
 
-    if (bowserCastle().name === 'firefox') {
+    if (getBrowserName() === Browser.Firefox) {
       /*
         Firefox uses VAPID for application identification instead of
         authentication, and so all apps share an identification key.
@@ -822,7 +829,7 @@ export class SubscriptionManager {
       pushSubscriptionModel,
     );
 
-    if (useSafariLegacyPush) {
+    if (useSafariLegacyPush()) {
       const subscriptionState = window.safari?.pushNotification?.permission(
         this.config.safariWebId,
       );

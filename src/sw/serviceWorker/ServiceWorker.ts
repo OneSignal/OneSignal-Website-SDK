@@ -1,54 +1,50 @@
-import OneSignalApiBase from '../../../src/shared/api/OneSignalApiBase';
-import OneSignalApiSW from '../../../src/shared/api/OneSignalApiSW';
+import {
+  NotificationType,
+  type NotificationTypeValue,
+} from 'src/core/types/subscription';
+import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
+import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
+import { type AppConfig, getServerAppConfig } from 'src/shared/config';
+import { Utils } from 'src/shared/context/Utils';
+import { getDeviceType } from 'src/shared/environment';
+import { delay } from 'src/shared/helpers/general';
+import ServiceWorkerHelper from 'src/shared/helpers/ServiceWorkerHelper';
 import {
   WorkerMessenger,
   WorkerMessengerCommand,
   type WorkerMessengerMessage,
-} from '../../../src/shared/libraries/WorkerMessenger';
-import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
-import { Utils } from '../../shared/context/Utils';
-import ServiceWorkerHelper from '../../shared/helpers/ServiceWorkerHelper';
-import {
-  type NotificationClickEventInternal,
-  type NotificationForegroundWillDisplayEventSerializable,
-} from '../../shared/models/NotificationEvent';
-import {
-  type IMutableOSNotification,
-  type IOSNotification,
-} from '../../shared/models/OSNotification';
+} from 'src/shared/libraries/WorkerMessenger';
+import ContextSW from 'src/shared/models/ContextSW';
+import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
+import type {
+  NotificationClickEventInternal,
+  NotificationForegroundWillDisplayEventSerializable,
+} from 'src/shared/models/NotificationEvent';
+import type {
+  IMutableOSNotification,
+  IOSNotification,
+} from 'src/shared/models/OSNotification';
+import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
+import Database from 'src/shared/services/Database';
 import {
   type PageVisibilityRequest,
   type PageVisibilityResponse,
   SessionStatus,
   type UpsertOrDeactivateSessionPayload,
-} from '../../shared/models/Session';
-import { SubscriptionStrategyKind } from '../../shared/models/SubscriptionStrategyKind';
-import Database from '../../shared/services/Database';
-import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
+} from 'src/shared/session';
+import { Browser, getBrowserName } from 'src/shared/useragent';
+import { VERSION } from 'src/shared/utils/EnvVariables';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
+import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import Log from '../libraries/Log';
 import {
   type OSMinifiedNotificationPayload,
   OSMinifiedNotificationPayloadHelper,
 } from '../models/OSMinifiedNotificationPayload';
-import {
-  type OSServiceWorkerFields,
-  type SubscriptionChangeEvent,
-} from './types';
-
-import {
-  NotificationType,
-  type NotificationTypeValue,
-} from 'src/core/types/subscription';
-import { type AppConfig, getServerAppConfig } from 'src/shared/config';
-import { getDeviceType } from 'src/shared/environment';
-import ContextSW from 'src/shared/models/ContextSW';
-import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
-import { VERSION } from 'src/shared/utils/EnvVariables';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
-import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
 import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
 import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
+import type { OSServiceWorkerFields, SubscriptionChangeEvent } from './types';
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -359,7 +355,7 @@ export class ServiceWorker {
       `Called sendConfirmedDelivery(${JSON.stringify(notification, null, 4)})`,
     );
 
-    await awaitableTimeout(
+    await delay(
       Math.floor(Math.random() * MAX_CONFIRMED_DELIVERY_DELAY * 1_000),
     );
     await OneSignalApiBase.put(
@@ -378,7 +374,7 @@ export class ServiceWorker {
    * to be safe we are disabling it for all Safari browsers.
    */
   static browserSupportsConfirmedDelivery(): boolean {
-    return bowserCastle().name !== 'safari';
+    return getBrowserName() !== Browser.Safari;
   }
 
   /**
@@ -673,7 +669,7 @@ export class ServiceWorker {
     );
 
     if (this.requiresMacOS15ChromiumAfterDisplayWorkaround()) {
-      await awaitableTimeout(1_000);
+      await delay(1_000);
     }
   }
 

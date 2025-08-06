@@ -1,10 +1,10 @@
 import {
   DelayedPromptType,
+  getFirstSlidedownPromptOptionsWithType,
   type SlidedownPromptOptions,
 } from 'src/shared/prompts';
-import PromptsHelper from './PromptsHelper';
 
-describe('PromptsHelper', () => {
+describe('Prompt Helpers', () => {
   test('should return true if the category slidedown is configured', () => {
     const prompts: SlidedownPromptOptions[] = [
       {
@@ -29,14 +29,14 @@ describe('PromptsHelper', () => {
     ];
 
     // should return matching prompt
-    const result = PromptsHelper.getFirstSlidedownPromptOptionsWithType(
+    const result = getFirstSlidedownPromptOptionsWithType(
       prompts,
       DelayedPromptType.Push,
     );
     expect(result).toBe(prompts[1]);
 
     // if no prompts are provided, it should return undefined
-    const result2 = PromptsHelper.getFirstSlidedownPromptOptionsWithType(
+    const result2 = getFirstSlidedownPromptOptionsWithType(
       undefined,
       DelayedPromptType.Category,
     );

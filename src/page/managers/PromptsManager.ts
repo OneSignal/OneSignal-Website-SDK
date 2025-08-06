@@ -1,22 +1,27 @@
-import { Browser } from 'src/shared/models/Browser';
+import { delay } from 'src/shared/helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
+  getFirstSlidedownPromptOptionsWithType,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
   type AppUserConfigPromptOptions,
   type DelayedPromptOptions,
   type DelayedPromptTypeValue,
   type SlidedownPromptOptions,
 } from 'src/shared/prompts';
+import {
+  Browser,
+  getBrowserName,
+  getBrowserVersion,
+  isMobileBrowser,
+  isTabletBrowser,
+  requiresUserInteraction,
+} from 'src/shared/useragent';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import InitHelper from '../../shared/helpers/InitHelper';
-import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { awaitableTimeout } from '../../shared/utils/AwaitableTimeout';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
-import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
 import type { ContextInterface } from '../models/Context';
 import { DismissPrompt } from '../models/Dismiss';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
@@ -41,15 +46,12 @@ export class PromptsManager {
   }
 
   private shouldForceSlidedownOverNative(): boolean {
-    const { environmentInfo } = OneSignal;
-    const { browserType, browserVersion, requiresUserInteraction } =
-      environmentInfo!;
-
+    const browserVersion = getBrowserVersion();
     return (
-      (browserType === Browser.Chrome &&
-        Number(browserVersion) >= 63 &&
-        (bowserCastle().tablet || bowserCastle().mobile)) ||
-      requiresUserInteraction
+      (getBrowserName() === Browser.Chrome &&
+        browserVersion >= 63 &&
+        (isTabletBrowser() || isMobileBrowser())) ||
+      requiresUserInteraction()
     );
   }
 
@@ -87,11 +89,10 @@ export class PromptsManager {
     }
 
     // if slidedown not configured, condition met with native options, & should force slidedown over native:
-    const isPushSlidedownConfigured =
-      !!PromptsHelper.getFirstSlidedownPromptOptionsWithType(
-        userPromptOptions?.slidedown?.prompts,
-        DelayedPromptType.Push,
-      );
+    const isPushSlidedownConfigured = !!getFirstSlidedownPromptOptionsWithType(
+      userPromptOptions?.slidedown?.prompts,
+      DelayedPromptType.Push,
+    );
 
     if (forceSlidedownWithNativeOptions && !isPushSlidedownConfigured) {
       this.internalShowDelayedPrompt(
@@ -141,14 +142,12 @@ export class PromptsManager {
       return;
     }
 
-    const { requiresUserInteraction } =
-      EnvironmentInfoHelper.getEnvironmentInfo();
-    if (requiresUserInteraction && type === DelayedPromptType.Native) {
+    if (requiresUserInteraction() && type === DelayedPromptType.Native) {
       type = DelayedPromptType.Push; // Push Slidedown for cases where user interaction is needed
     }
 
     if (timeDelaySeconds > 0) {
-      await awaitableTimeout(timeDelaySeconds * 1_000);
+      await delay(timeDelaySeconds * 1_000);
     }
 
     switch (type) {
@@ -266,10 +265,7 @@ export class PromptsManager {
       this.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
     const slidedownPromptOptions =
       options?.slidedownPromptOptions ||
-      PromptsHelper.getFirstSlidedownPromptOptionsWithType(
-        prompts,
-        typeToPullFromConfig,
-      );
+      getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
 
     if (!slidedownPromptOptions) {
       if (typeToPullFromConfig !== DelayedPromptType.Push) {
@@ -377,7 +373,7 @@ export class PromptsManager {
       case DelayedPromptType.Sms:
       case DelayedPromptType.SmsAndEmail: {
         const { userConfig } = this.context.appConfig;
-        const options = PromptsHelper.getFirstSlidedownPromptOptionsWithType(
+        const options = getFirstSlidedownPromptOptionsWithType(
           userConfig.promptOptions?.slidedown?.prompts || [],
           type,
         );

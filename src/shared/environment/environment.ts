@@ -2,14 +2,12 @@ import {
   SubscriptionType,
   type SubscriptionTypeValue,
 } from 'src/core/types/subscription';
-import { EnvironmentInfoHelper } from 'src/page/helpers/EnvironmentInfoHelper';
 import {
   DeliveryPlatformKind,
   type DeliveryPlatformKindValue,
 } from '../models/DeliveryPlatformKind';
-import { bowserCastle } from '../utils/bowserCastle';
+import { Browser, getBrowserName, getBrowserVersion } from '../useragent';
 import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
-import OneSignalUtils from '../utils/OneSignalUtils';
 import { EnvironmentKind } from './constants';
 
 export const isBrowser = typeof window !== 'undefined';
@@ -21,7 +19,7 @@ export const supportsServiceWorkers = () => {
 
 export const windowEnvString = IS_SERVICE_WORKER ? 'Service Worker' : 'Browser';
 
-export const useSafariLegacyPush =
+export const useSafariLegacyPush = () =>
   isBrowser && window.safari?.pushNotification != undefined;
 
 export const supportsVapidPush =
@@ -30,7 +28,9 @@ export const supportsVapidPush =
   PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey');
 
 export const useSafariVapidPush = () =>
-  bowserCastle().name == 'safari' && supportsVapidPush && !useSafariLegacyPush;
+  getBrowserName() === Browser.Safari &&
+  supportsVapidPush &&
+  !useSafariLegacyPush();
 
 // for determing the api url
 const API_URL_PORT = 3000;
@@ -73,14 +73,14 @@ const isTurbineEndpoint = (action?: string): boolean => {
 };
 
 export const getSubscriptionType = (): SubscriptionTypeValue => {
-  const browser = OneSignalUtils.redetectBrowserUserAgent();
-  if (browser.firefox) {
+  const isFirefox = getBrowserName() === Browser.Firefox;
+  if (isFirefox) {
     return SubscriptionType.FirefoxPush;
   }
   if (useSafariVapidPush()) {
     return SubscriptionType.SafariPush;
   }
-  if (useSafariLegacyPush) {
+  if (useSafariLegacyPush()) {
     return SubscriptionType.SafariLegacyPush;
   }
   // Other browsers, like Edge, are Chromium based so we consider them "Chrome".
@@ -104,10 +104,7 @@ export function getDeviceType(): DeliveryPlatformKindValue {
 }
 
 export function getDeviceOS(): string {
-  const environment = EnvironmentInfoHelper.getEnvironmentInfo();
-  return String(
-    isNaN(environment.browserVersion) ? -1 : environment.browserVersion,
-  );
+  return String(getBrowserVersion());
 }
 
 export function getDeviceModel(): string {

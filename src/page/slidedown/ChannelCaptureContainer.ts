@@ -1,4 +1,9 @@
 import {
+  addCssClass,
+  getDomElementOrStub,
+  removeCssClass,
+} from 'src/shared/helpers/dom';
+import {
   DelayedPromptType,
   type DelayedPromptTypeValue,
   type SlidedownPromptOptions,
@@ -10,11 +15,6 @@ import {
   DANGER_ICON,
   SLIDEDOWN_CSS_IDS,
 } from '../../shared/slidedown/constants';
-import {
-  addCssClass,
-  getDomElementOrStub,
-  removeCssClass,
-} from '../../shared/utils/utils';
 import {
   ItiScriptURLHashes,
   ItiScriptURLs,

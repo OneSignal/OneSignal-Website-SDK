@@ -4,15 +4,15 @@ import {
   type IOperationExecutor,
 } from 'src/core/types/operation';
 import OneSignalError from 'src/shared/errors/OneSignalError';
-import EventHelper from 'src/shared/helpers/EventHelper';
+import { getTimeZoneId } from 'src/shared/helpers/general';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
+import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import Database from 'src/shared/services/Database';
 import LocalStorage from 'src/shared/utils/LocalStorage';
-import { getTimeZoneId } from 'src/shared/utils/utils';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -250,7 +250,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         );
       }
 
-      EventHelper.checkAndTriggerUserChanged();
+      checkAndTriggerUserChanged();
 
       const followUp =
         Object.keys(identity).length > 0

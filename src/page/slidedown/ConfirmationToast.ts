@@ -1,17 +1,17 @@
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import {
   addCssClass,
-  once,
-  removeDomElement,
   getDomElementOrStub,
-} from '../../shared/utils/utils';
+  removeDomElement,
+} from 'src/shared/helpers/dom';
+import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import {
   SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_CSS_IDS,
   TOAST_CLASSES,
   TOAST_IDS,
-} from '../../shared/slidedown/constants';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
+} from 'src/shared/slidedown/constants';
+import { isMobileBrowser } from 'src/shared/useragent';
+import { once } from 'src/shared/utils/utils';
 
 export default class ConfirmationToast {
   private message: string;
@@ -47,7 +47,7 @@ export default class ConfirmationToast {
     // Animate it in depending on environment
     addCssClass(
       this.container,
-      bowserCastle().mobile
+      isMobileBrowser()
         ? SLIDEDOWN_CSS_CLASSES.slideUp
         : SLIDEDOWN_CSS_CLASSES.slideDown,
     );

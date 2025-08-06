@@ -4,7 +4,6 @@
   "description": "Web push notifications from OneSignal.",
   "type": "module",
   "dependencies": {
-    "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "jsonp": "github:OneSignal/jsonp#onesignal",
     "uuid": "^11.1.0"
   },
@@ -54,7 +53,7 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
-    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/coverage-v8": "4.0.0-beta.6",
     "concurrently": "^9.2.0",
     "deepmerge": "^4.2.2",
     "eslint": "^8.23.0",
@@ -71,7 +70,7 @@
     "vite-bundle-analyzer": "^1.1.0",
     "vite-plugin-mkcert": "^1.17.8",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "3.2.4"
+    "vitest": "4.0.0-beta.6"
   },
   "size-limit": [
     {
@@ -81,12 +80,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "64 kB",
+      "limit": "61.1 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "34 kB",
+      "limit": "25.1 kB",
       "gzip": true
     },
     {

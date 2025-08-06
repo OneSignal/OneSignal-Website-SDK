@@ -1,27 +1,26 @@
-import { getValueOrDefault } from 'src/shared/helpers/general';
-import {
-  DelayedPromptType,
-  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
-  type SlidedownPromptOptions,
-} from 'src/shared/prompts';
-import MainHelper from '../../shared/helpers/MainHelper';
-import PromptsHelper from '../../shared/helpers/PromptsHelper';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import {
-  COLORS,
-  SLIDEDOWN_CSS_CLASSES,
-  SLIDEDOWN_CSS_IDS,
-} from '../../shared/slidedown/constants';
-import { bowserCastle } from '../../shared/utils/bowserCastle';
 import {
   addCssClass,
   addDomElement,
   getDomElementOrStub,
-  getPlatformNotificationIcon,
-  once,
   removeCssClass,
   removeDomElement,
-} from '../../shared/utils/utils';
+} from 'src/shared/helpers/dom';
+import { getValueOrDefault } from 'src/shared/helpers/general';
+import MainHelper from 'src/shared/helpers/MainHelper';
+import {
+  DelayedPromptType,
+  isSlidedownPushDependent,
+  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
+  type SlidedownPromptOptions,
+} from 'src/shared/prompts';
+import OneSignalEvent from 'src/shared/services/OneSignalEvent';
+import {
+  COLORS,
+  SLIDEDOWN_CSS_CLASSES,
+  SLIDEDOWN_CSS_IDS,
+} from 'src/shared/slidedown/constants';
+import { isMobileBrowser } from 'src/shared/useragent';
+import { getPlatformNotificationIcon, once } from 'src/shared/utils/utils';
 import {
   InvalidChannelInputField,
   type InvalidChannelInputFieldValue,
@@ -136,7 +135,7 @@ export default class Slidedown {
       // Animate it in depending on environment
       addCssClass(
         this.container,
-        bowserCastle().mobile
+        isMobileBrowser()
           ? SLIDEDOWN_CSS_CLASSES.slideUp
           : SLIDEDOWN_CSS_CLASSES.slideDown,
       );
@@ -280,7 +279,7 @@ export default class Slidedown {
     removeDomElement('#onesignal-button-indicator-holder');
     removeCssClass(this.allowButton, 'onesignal-error-state-button');
 
-    if (!PromptsHelper.isSlidedownPushDependent(this.options.type)) {
+    if (!isSlidedownPushDependent(this.options.type)) {
       ChannelCaptureContainer.resetInputErrorStates(this.options.type);
     }
 

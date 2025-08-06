@@ -5,13 +5,20 @@ import {
   type AppUserConfig,
 } from 'src/shared/config';
 import { windowEnvString } from 'src/shared/environment';
+import {
+  _onSubscriptionChanged,
+  checkAndTriggerSubscriptionChanged,
+} from 'src/shared/listeners';
+import {
+  Browser,
+  getBrowserName,
+  getBrowserVersion,
+} from 'src/shared/useragent';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
-import { EnvironmentInfoHelper } from '../page/helpers/EnvironmentInfoHelper';
 import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
-import type { EnvironmentInfo } from '../page/models/EnvironmentInfo';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
@@ -20,14 +27,12 @@ import {
   InvalidArgumentReason,
 } from '../shared/errors/InvalidArgumentError';
 import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
-import EventHelper from '../shared/helpers/EventHelper';
 import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
 import Database from '../shared/services/Database';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
-import { bowserCastle } from '../shared/utils/bowserCastle';
 import LocalStorage from '../shared/utils/LocalStorage';
 import { logMethodCall } from '../shared/utils/utils';
 import DebugNamespace from './DebugNamesapce';
@@ -56,11 +61,8 @@ export default class OneSignal {
 
     Log.debug('OneSignal: Final web app config:', appConfig);
 
-    // TODO: environmentInfo is explicitly dependent on existence of OneSignal.config. Needs refactor.
     // Workaround to temp assign config so that it can be used in context.
     OneSignal.config = appConfig;
-    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
-
     OneSignal.context = new Context(appConfig);
     OneSignal.config = OneSignal.context.appConfig;
   }
@@ -125,7 +127,7 @@ export default class OneSignal {
   static async init(options: AppUserConfig) {
     logMethodCall('init');
     Log.debug(
-      `Browser Environment: ${bowserCastle().name} ${bowserCastle().version}`,
+      `Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`,
     );
 
     LocalStorage.removeLegacySubscriptionOptions();
@@ -136,7 +138,7 @@ export default class OneSignal {
       throw new Error('OneSignal config not initialized!');
     }
 
-    if (bowserCastle().name == 'safari' && !OneSignal.config.safariWebId) {
+    if (getBrowserName() === Browser.Safari && !OneSignal.config.safariWebId) {
       /**
        * Don't throw an error for missing Safari config; many users set up
        * support on Chrome/Firefox and don't intend to support Safari but don't
@@ -171,11 +173,11 @@ export default class OneSignal {
 
       OneSignal.emitter.on(
         OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-        EventHelper.onNotificationPermissionChange,
+        checkAndTriggerSubscriptionChanged,
       );
       OneSignal.emitter.on(
         OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-        EventHelper._onSubscriptionChanged,
+        _onSubscriptionChanged,
       );
       OneSignal.emitter.on(
         OneSignal.EVENTS.SDK_INITIALIZED,
@@ -272,7 +274,6 @@ export default class OneSignal {
 
   static __doNotShowWelcomeNotification: boolean;
   static VERSION = VERSION;
-  static environmentInfo?: EnvironmentInfo;
   static config: AppConfig | null = null;
   static _sessionInitAlreadyRunning = false;
   static _isNewVisitor = false;
