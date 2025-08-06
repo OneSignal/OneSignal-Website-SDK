@@ -82,7 +82,20 @@ function convertConfigToVersionOne(
 
   const { slidedown } = promptOptions;
 
-  // Use nullish coalescing for cleaner fallback logic
+  /**
+   * we should give preference to the lower level ("slidedown" level) text settings in the case that
+   * text settings are configured at the higher level as well as the lower level
+   *
+   * Example:
+   * "promptOptions": {
+   *      "acceptButtonText": "",
+   *      "cancelButtonText": "",
+   *      "slidedown": {
+   *          "acceptButtonText": "", <--
+   *          "cancelButtonText": ""  <--
+   *      }
+   * }
+   */
   slidedown.acceptButtonText =
     slidedown.acceptButtonText ??
     promptOptions.acceptButtonText ??
