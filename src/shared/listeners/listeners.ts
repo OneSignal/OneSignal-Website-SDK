@@ -249,11 +249,6 @@ export async function onInternalSubscriptionSet(optedOut: boolean) {
   LimitStore.put('subscription.optedOut', optedOut);
 }
 
-/**
- * NOTE: This uses the OneSignal REST API POST /notifications with
- * include_player_ids. This field will be dropped by 2025 so a
- * replacement will needed by then.
- */
 async function onSubscriptionChanged_showWelcomeNotification(
   isSubscribed: boolean | undefined,
   pushSubscriptionId: string | undefined | null,

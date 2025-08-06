@@ -12,6 +12,7 @@ import {
 import {
   Browser,
   getBrowserName,
+  getBrowserVersion,
   isMobileBrowser,
   isTabletBrowser,
   requiresUserInteraction,
@@ -45,8 +46,10 @@ export class PromptsManager {
   }
 
   private shouldForceSlidedownOverNative(): boolean {
+    const browserVersion = getBrowserVersion();
     return (
       (getBrowserName() === Browser.Chrome &&
+        browserVersion >= 63 &&
         (isTabletBrowser() || isMobileBrowser())) ||
       requiresUserInteraction()
     );

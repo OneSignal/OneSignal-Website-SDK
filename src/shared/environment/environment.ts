@@ -19,7 +19,7 @@ export const supportsServiceWorkers = () => {
 
 export const windowEnvString = IS_SERVICE_WORKER ? 'Service Worker' : 'Browser';
 
-export const useSafariLegacyPush =
+export const useSafariLegacyPush = () =>
   isBrowser && window.safari?.pushNotification != undefined;
 
 export const supportsVapidPush =
@@ -30,7 +30,7 @@ export const supportsVapidPush =
 export const useSafariVapidPush = () =>
   getBrowserName() === Browser.Safari &&
   supportsVapidPush &&
-  !useSafariLegacyPush;
+  !useSafariLegacyPush();
 
 // for determing the api url
 const API_URL_PORT = 3000;
@@ -80,7 +80,7 @@ export const getSubscriptionType = (): SubscriptionTypeValue => {
   if (useSafariVapidPush()) {
     return SubscriptionType.SafariPush;
   }
-  if (useSafariLegacyPush) {
+  if (useSafariLegacyPush()) {
     return SubscriptionType.SafariLegacyPush;
   }
   // Other browsers, like Edge, are Chromium based so we consider them "Chrome".

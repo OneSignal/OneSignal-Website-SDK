@@ -9,6 +9,7 @@ interface IBrowserResult {
   version: string;
 }
 
+// Top popular browsers set
 const BROWSER_CONFIGS: BrowserConfig[] = [
   {
     name: 'Opera',
@@ -82,6 +83,7 @@ const isAndroid = (userAgent: string): boolean =>
 const getIOSDeviceType = (userAgent: string): string =>
   userAgent.match(/(iphone|ipod|ipad)/i)?.[1]?.toLowerCase() || '';
 
+// Based off detect-ua logic: https://github.com/TimvanScherpenzeel/detect-ua
 export function isTabletBrowser(userAgent = navigator.userAgent): boolean {
   const ios = getIOSDeviceType(userAgent);
 
@@ -93,6 +95,7 @@ export function isTabletBrowser(userAgent = navigator.userAgent): boolean {
   );
 }
 
+// Based off detect-ua logic: https://github.com/TimvanScherpenzeel/detect-ua
 export function isMobileBrowser(userAgent = navigator.userAgent): boolean {
   if (isTabletBrowser(userAgent)) return false;
 

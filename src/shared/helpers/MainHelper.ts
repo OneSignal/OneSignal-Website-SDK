@@ -239,7 +239,7 @@ export default class MainHelper {
 
   // TO DO: unit test
   static async getCurrentPushToken(): Promise<string | undefined> {
-    if (useSafariLegacyPush) {
+    if (useSafariLegacyPush()) {
       const safariToken = window.safari?.pushNotification?.permission(
         OneSignal.config?.safariWebId,
       ).deviceToken;

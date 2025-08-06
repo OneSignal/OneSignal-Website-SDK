@@ -186,7 +186,7 @@ export class SubscriptionManager {
           PushPermissionNotGrantedErrorReason.Blocked,
         );
 
-      if (useSafariLegacyPush) {
+      if (useSafariLegacyPush()) {
         rawPushSubscription = await this.subscribeSafari();
         await updatePushSubscriptionModelWithRawSubscription(
           rawPushSubscription,
@@ -288,7 +288,7 @@ export class SubscriptionManager {
     subscription.deviceId = DEFAULT_DEVICE_ID;
     subscription.optedOut = false;
     if (pushSubscription) {
-      if (useSafariLegacyPush) {
+      if (useSafariLegacyPush()) {
         subscription.subscriptionToken = pushSubscription.safariDeviceToken;
       } else {
         subscription.subscriptionToken = pushSubscription.w3cEndpoint
@@ -829,7 +829,7 @@ export class SubscriptionManager {
       pushSubscriptionModel,
     );
 
-    if (useSafariLegacyPush) {
+    if (useSafariLegacyPush()) {
       const subscriptionState = window.safari?.pushNotification?.permission(
         this.config.safariWebId,
       );

@@ -712,9 +712,11 @@ const mockSender = {
 vi.mock(
   'src/sw/webhooks/notifications/OSWebhookNotificationEventSender',
   () => ({
-    OSWebhookNotificationEventSender: vi
-      .fn()
-      .mockImplementation(() => mockSender),
+    OSWebhookNotificationEventSender: class {
+      willDisplay = mockSender.willDisplay;
+      dismiss = mockSender.dismiss;
+      click = mockSender.click;
+    },
   }),
 );
 

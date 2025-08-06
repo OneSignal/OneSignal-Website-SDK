@@ -53,7 +53,7 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
-    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/coverage-v8": "4.0.0-beta.6",
     "concurrently": "^9.2.0",
     "deepmerge": "^4.2.2",
     "eslint": "^8.23.0",
@@ -70,7 +70,7 @@
     "vite-bundle-analyzer": "^1.1.0",
     "vite-plugin-mkcert": "^1.17.8",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "3.2.4"
+    "vitest": "4.0.0-beta.6"
   },
   "size-limit": [
     {

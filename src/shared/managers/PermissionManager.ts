@@ -39,7 +39,7 @@ export default class PermissionManager {
   public async getNotificationPermission(
     safariWebId?: string,
   ): Promise<NotificationPermission> {
-    if (useSafariLegacyPush) {
+    if (useSafariLegacyPush()) {
       return PermissionManager.getLegacySafariNotificationPermission(
         safariWebId,
       );

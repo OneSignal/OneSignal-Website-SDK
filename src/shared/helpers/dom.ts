@@ -1,4 +1,4 @@
-import Log from 'src/sw/libraries/Log';
+import Log from 'src/shared/libraries/Log';
 
 export function addDomElement(
   targetSelectorOrElement: string | Element,
