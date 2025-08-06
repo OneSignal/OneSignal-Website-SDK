@@ -1,14 +1,14 @@
 import { IdentityConstants } from 'src/core/constants';
-import { updateUserByAlias } from 'src/core/requestService';
+import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
-import { enforceAlias, enforceAppId } from 'src/shared/context';
-import { supportsServiceWorkers } from 'src/shared/environment';
-import {
-  SessionOrigin,
-  type SessionOriginValue,
-  type UpsertOrDeactivateSessionPayload,
-} from 'src/shared/session';
-import { NotificationType } from 'src/shared/subscriptions';
+import { enforceAlias, enforceAppId } from 'src/shared/context/helpers';
+import { supportsServiceWorkers } from 'src/shared/environment/detect';
+import { SessionOrigin } from 'src/shared/session/constants';
+import type {
+  SessionOriginValue,
+  UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session/types';
+import { NotificationType } from 'src/shared/subscriptions/constants';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';

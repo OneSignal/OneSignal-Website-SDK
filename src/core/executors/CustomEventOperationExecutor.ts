@@ -2,7 +2,7 @@ import {
   getDeviceModel,
   getDeviceOS,
   getSubscriptionType,
-} from 'src/shared/environment';
+} from 'src/shared/environment/detect';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -13,7 +13,7 @@ import { OPERATION_NAME } from '../constants';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
-import { sendCustomEvent } from '../requestService';
+import { sendCustomEvent } from '../requests/api';
 import type { ICustomEventMetadata } from '../types/customEvents';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 

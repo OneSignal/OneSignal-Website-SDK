@@ -2,7 +2,7 @@ import type {
   IOSNotification,
   IOSNotificationActionButton,
   NotificationClickEventInternal,
-} from 'src/shared/notifications';
+} from 'src/shared/notifications/types';
 import type {
   OutcomesNotificationClicked,
   OutcomesNotificationReceived,

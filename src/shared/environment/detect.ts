@@ -2,8 +2,10 @@ import {
   DeliveryPlatformKind,
   type DeliveryPlatformKindValue,
 } from '../models/DeliveryPlatformKind';
-import { SubscriptionType, type SubscriptionTypeValue } from '../subscriptions';
-import { Browser, getBrowserName, getBrowserVersion } from '../useragent';
+import { SubscriptionType } from '../subscriptions/constants';
+import type { SubscriptionTypeValue } from '../subscriptions/types';
+import { Browser } from '../useragent/constants';
+import { getBrowserName, getBrowserVersion } from '../useragent/detect';
 import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { EnvironmentKind } from './constants';
 

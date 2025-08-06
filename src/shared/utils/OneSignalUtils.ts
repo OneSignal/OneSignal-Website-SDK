@@ -1,5 +1,5 @@
-import { stringify } from '../context';
-import { isBrowser } from '../environment/environment';
+import { stringify } from '../context/helpers';
+import { isBrowser } from '../environment/detect';
 import Log from '../libraries/Log';
 
 export class OneSignalUtils {

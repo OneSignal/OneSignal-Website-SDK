@@ -2,8 +2,8 @@ import type {
   AppUserConfig,
   ConfigIntegrationKindValue,
   ServerAppConfig,
-} from 'src/shared/config';
-import type { RecursivePartial } from 'src/shared/context';
+} from 'src/shared/config/types';
+import type { RecursivePartial } from 'src/shared/context/types';
 import MainHelper from 'src/shared/helpers/MainHelper';
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../../constants';
 import { generateNewSubscription } from '../helpers/core';

@@ -1,7 +1,7 @@
 import type {
   IOSNotification,
   NotificationClickEvent,
-} from 'src/shared/notifications';
+} from 'src/shared/notifications/types';
 import { OSWebhookSender } from './../OSWebhookSender';
 import { OSWebhookPayloadNotificationClick } from './payloads/OSWebhookPayloadNotificationClick';
 import { OSWebhookPayloadNotificationDismiss } from './payloads/OSWebhookPayloadNotificationDismiss';

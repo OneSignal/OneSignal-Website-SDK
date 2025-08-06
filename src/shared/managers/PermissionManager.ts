@@ -1,5 +1,5 @@
-import { useSafariLegacyPush } from '../environment/environment';
-import { EmptyArgumentError } from '../errors';
+import { useSafariLegacyPush } from '../environment/detect';
+import { EmptyArgumentError } from '../errors/common';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions

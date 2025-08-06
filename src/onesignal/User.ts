@@ -4,15 +4,15 @@ import {
   MalformedArgumentError,
   ReservedArgumentError,
   WrongTypeArgumentError,
-} from 'src/shared/errors';
+} from 'src/shared/errors/common';
 import { isObject, isValidEmail } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   NotificationType,
   SubscriptionType,
-  type SubscriptionTypeValue,
-} from 'src/shared/subscriptions';
+} from 'src/shared/subscriptions/constants';
+import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from '../shared/utils/utils';
 
 export default class User {

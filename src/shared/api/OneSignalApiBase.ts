@@ -1,5 +1,5 @@
-import { getOneSignalApiUrl } from '../environment/environment';
-import { AppIDMissingError, RetryLimitError } from '../errors';
+import { getOneSignalApiUrl } from '../environment/detect';
+import { AppIDMissingError, RetryLimitError } from '../errors/common';
 import { delay, isValidUuid } from '../helpers/general';
 import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';

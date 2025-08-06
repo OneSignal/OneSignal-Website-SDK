@@ -1,6 +1,6 @@
 import { DEVICE_OS } from '__test__/constants';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
-import { SubscriptionType } from 'src/shared/subscriptions';
+import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { generateNewSubscription } from '../../support/helpers/core';
 
 describe('Model tests', () => {

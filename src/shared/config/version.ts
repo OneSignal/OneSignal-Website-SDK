@@ -1,9 +1,9 @@
-import {
-  DelayedPromptType,
-  type AppUserConfigPromptOptions,
-  type SlidedownOptions,
-  type SlidedownOptionsVersion1,
-} from '../prompts';
+import { DelayedPromptType } from '../prompts/constants';
+import type {
+  AppUserConfigPromptOptions,
+  SlidedownOptions,
+  SlidedownOptionsVersion1,
+} from '../prompts/types';
 import type { AppUserConfig } from './types';
 
 /**

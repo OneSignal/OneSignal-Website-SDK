@@ -2,7 +2,10 @@ import { type DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
-import { NotificationType, SubscriptionType } from 'src/shared/subscriptions';
+import {
+  NotificationType,
+  SubscriptionType,
+} from 'src/shared/subscriptions/constants';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 import OneSignal from '../../../src/onesignal/OneSignal';

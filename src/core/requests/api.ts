@@ -1,4 +1,4 @@
-import { InvalidAppIdError } from 'src/shared/errors';
+import { InvalidAppIdError } from 'src/shared/errors/common';
 import OneSignalApiBase from '../../shared/api/OneSignalApiBase';
 import type OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
 import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';

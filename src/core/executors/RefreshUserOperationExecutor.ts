@@ -5,7 +5,7 @@ import {
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import Log from 'src/shared/libraries/Log';
 import Database from 'src/shared/services/Database';
-import { NotificationType } from 'src/shared/subscriptions';
+import { NotificationType } from 'src/shared/subscriptions/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
 import {
@@ -20,7 +20,7 @@ import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
-import { getUserByAlias } from '../requestService';
+import { getUserByAlias } from '../requests/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';

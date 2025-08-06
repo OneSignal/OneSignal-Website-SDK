@@ -1,7 +1,7 @@
 import { ResourceLoadState } from '../../page/services/DynamicResourceLoader';
 import { addCssClass } from '../helpers/dom';
 import Log from '../libraries/Log';
-import type { AppUserConfigCustomLinkOptions } from '../prompts';
+import type { AppUserConfigCustomLinkOptions } from '../prompts/types';
 import {
   CUSTOM_LINK_CSS_CLASSES,
   CUSTOM_LINK_CSS_SELECTORS,

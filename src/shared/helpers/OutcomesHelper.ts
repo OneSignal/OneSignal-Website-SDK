@@ -1,4 +1,4 @@
-import { sortArrayOfObjects } from '../context';
+import { sortArrayOfObjects } from '../context/helpers';
 import Log from '../libraries/Log';
 import type { OutcomeProps } from '../models/OutcomeProps';
 import {

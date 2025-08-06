@@ -1,15 +1,12 @@
 import type Bell from 'src/page/bell/Bell';
-import {
-  getAppConfig,
-  type AppConfig,
-  type AppUserConfig,
-} from 'src/shared/config';
-import { windowEnvString } from 'src/shared/environment';
+import { getAppConfig } from 'src/shared/config/app';
+import type { AppConfig, AppUserConfig } from 'src/shared/config/types';
+import { windowEnvString } from 'src/shared/environment/detect';
 import {
   EmptyArgumentError,
   MissingSafariWebIdError,
   WrongTypeArgumentError,
-} from 'src/shared/errors';
+} from 'src/shared/errors/common';
 import {
   getConsentRequired,
   removeLegacySubscriptionOptions,
@@ -19,11 +16,8 @@ import {
   _onSubscriptionChanged,
   checkAndTriggerSubscriptionChanged,
 } from 'src/shared/listeners';
-import {
-  Browser,
-  getBrowserName,
-  getBrowserVersion,
-} from 'src/shared/useragent';
+import { Browser } from 'src/shared/useragent/constants';
+import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';

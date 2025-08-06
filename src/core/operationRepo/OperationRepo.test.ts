@@ -6,7 +6,7 @@ import {
 import { fakeWaitForOperations } from '__test__/support/helpers/executors';
 import Log from 'src/shared/libraries/Log';
 import Database, { type OperationItem } from 'src/shared/services/Database';
-import { SubscriptionType } from 'src/shared/subscriptions';
+import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { describe, expect, type Mock, vi } from 'vitest';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';

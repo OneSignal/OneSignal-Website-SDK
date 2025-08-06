@@ -1,8 +1,6 @@
-import {
-  DelayedPromptType,
-  getFirstSlidedownPromptOptionsWithType,
-  type SlidedownPromptOptions,
-} from 'src/shared/prompts';
+import { DelayedPromptType } from './constants';
+import { getFirstSlidedownPromptOptionsWithType } from './helpers';
+import type { SlidedownPromptOptions } from './types';
 
 describe('Prompt Helpers', () => {
   test('should return true if the category slidedown is configured', () => {

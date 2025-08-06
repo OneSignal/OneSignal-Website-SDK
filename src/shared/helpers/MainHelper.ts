@@ -1,10 +1,7 @@
-import type { NotificationIcons } from 'src/shared/notifications';
+import type { NotificationIcons } from 'src/shared/notifications/types';
 import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
-import {
-  getOneSignalApiUrl,
-  useSafariLegacyPush,
-} from '../environment/environment';
-import { AppIDMissingError, MalformedArgumentError } from '../errors';
+import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
+import { AppIDMissingError, MalformedArgumentError } from '../errors/common';
 import Log from '../libraries/Log';
 import type {
   AppUserConfigPromptOptions,

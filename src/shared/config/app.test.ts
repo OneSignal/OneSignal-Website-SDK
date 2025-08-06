@@ -4,14 +4,15 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { getFinalAppConfig } from '__test__/support/helpers/configHelper';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import type { TagCategory } from 'src/page/tags';
+import type { TagCategory } from 'src/page/tags/types';
 import OneSignalApi from 'src/shared/api/OneSignalApi';
-import { type AppUserConfig, ConfigIntegrationKind } from 'src/shared/config';
-import { getAppConfig, getMergedConfig } from './config';
+import { getAppConfig, getMergedConfig } from './app';
+import { ConfigIntegrationKind } from './constants';
 import {
   getUserConfigForConfigIntegrationKind,
   limitCategoriesToMaxCount,
-} from './config-integration';
+} from './integration';
+import type { AppUserConfig } from './types';
 vi.useFakeTimers();
 
 const SERVICE_WORKER_PATH = 'push/onesignal/';

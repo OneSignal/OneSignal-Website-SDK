@@ -1,4 +1,4 @@
-import type { TagCategory } from 'src/page/tags';
+import type { TagCategory } from 'src/page/tags/types';
 import {
   addCssClass,
   addDomElement,
@@ -15,7 +15,7 @@ import {
   TAGGING_CONTAINER_STRINGS,
 } from '../../shared/slidedown/constants';
 import TagUtils from '../../shared/utils/TagUtils';
-import type { TagsObjectWithBoolean } from '../tags';
+import type { TagsObjectWithBoolean } from '../tags/types';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 
 export default class TaggingContainer {

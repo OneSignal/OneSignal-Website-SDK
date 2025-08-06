@@ -1,21 +1,18 @@
 import OneSignalApi from '../api/OneSignalApi';
-import { InvalidAppIdError } from '../errors';
+import { InvalidAppIdError } from '../errors/common';
 import { isValidUuid, valueOrDefault } from '../helpers/general';
-import {
-  checkRestrictedOrigin,
-  checkUnsupportedSubdomain,
-} from './config-domain';
+import { checkRestrictedOrigin, checkUnsupportedSubdomain } from './domain';
 import {
   getConfigIntegrationKind,
   getUserConfigForConfigIntegrationKind,
   hasUnsupportedSubdomainForConfigIntegrationKind,
-} from './config-integration';
-import { upgradeConfigToVersionTwo } from './config-version';
+} from './integration';
 import {
   type AppConfig,
   type AppUserConfig,
   type ServerAppConfig,
 } from './types';
+import { upgradeConfigToVersionTwo } from './version';
 
 // local constants
 const SERVER_CONFIG_DEFAULTS_SESSION = {

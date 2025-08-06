@@ -2,16 +2,14 @@ import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
 import UserDirector from 'src/onesignal/UserDirector';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
-import {
-  NotificationType,
-  type NotificationTypeValue,
-} from 'src/shared/subscriptions';
-import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment';
+import { NotificationType } from 'src/shared/subscriptions/constants';
+import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
+import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
 import {
   MissingSafariWebIdError,
   PermissionBlockedError,
   SWRegistrationError,
-} from '../errors';
+} from '../errors/common';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
@@ -29,8 +27,9 @@ import {
 } from '../models/UnsubscriptionStrategy';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
-import { SessionOrigin } from '../session';
-import { Browser, getBrowserName } from '../useragent';
+import { SessionOrigin } from '../session/constants';
+import { Browser } from '../useragent/constants';
+import { getBrowserName } from '../useragent/detect';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { PermissionUtils } from '../utils/PermissionUtils';

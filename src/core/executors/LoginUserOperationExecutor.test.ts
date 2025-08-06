@@ -19,7 +19,10 @@ import {
   setCreateUserResponse,
 } from '__test__/support/helpers/requests';
 import Database from 'src/shared/services/Database';
-import { NotificationType, SubscriptionType } from 'src/shared/subscriptions';
+import {
+  NotificationType,
+  SubscriptionType,
+} from 'src/shared/subscriptions/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';

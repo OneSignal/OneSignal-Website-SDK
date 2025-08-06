@@ -1,8 +1,8 @@
-let getOneSignalApiUrl: typeof import('src/shared/environment').getOneSignalApiUrl;
+let getOneSignalApiUrl: typeof import('src/shared/environment/detect').getOneSignalApiUrl;
 
 const resetModules = async () => {
   vi.resetModules();
-  getOneSignalApiUrl = (await import('src/shared/environment'))
+  getOneSignalApiUrl = (await import('src/shared/environment/detect'))
     .getOneSignalApiUrl;
 };
 

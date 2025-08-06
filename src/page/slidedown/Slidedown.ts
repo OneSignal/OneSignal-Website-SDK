@@ -1,7 +1,5 @@
-import {
-  InvalidChannelInputField,
-  type InvalidChannelInputFieldValue,
-} from 'src/shared/errors';
+import { InvalidChannelInputField } from 'src/shared/errors/constants';
+import type { InvalidChannelInputFieldValue } from 'src/shared/errors/types';
 import {
   addCssClass,
   addDomElement,
@@ -11,22 +9,22 @@ import {
 } from 'src/shared/helpers/dom';
 import { getValueOrDefault } from 'src/shared/helpers/general';
 import MainHelper from 'src/shared/helpers/MainHelper';
-import type { NotificationIcons } from 'src/shared/notifications';
+import type { NotificationIcons } from 'src/shared/notifications/types';
 import {
   DelayedPromptType,
-  isSlidedownPushDependent,
   SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
-  type SlidedownPromptOptions,
-} from 'src/shared/prompts';
+} from 'src/shared/prompts/constants';
+import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
+import type { SlidedownPromptOptions } from 'src/shared/prompts/types';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import {
   COLORS,
   SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_CSS_IDS,
 } from 'src/shared/slidedown/constants';
-import { isMobileBrowser } from 'src/shared/useragent';
+import { isMobileBrowser } from 'src/shared/useragent/detect';
 import { getPlatformNotificationIcon, once } from 'src/shared/utils/utils';
-import type { TagCategory } from '../tags';
+import type { TagCategory } from '../tags/types';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';

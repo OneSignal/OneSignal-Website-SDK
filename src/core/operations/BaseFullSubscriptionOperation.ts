@@ -1,8 +1,8 @@
-import { getDeviceModel, getDeviceOS } from 'src/shared/environment';
-import {
-  type NotificationTypeValue,
-  type SubscriptionTypeValue,
-} from 'src/shared/subscriptions';
+import { getDeviceModel, getDeviceOS } from 'src/shared/environment/detect';
+import type {
+  NotificationTypeValue,
+  SubscriptionTypeValue,
+} from 'src/shared/subscriptions/types';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import type { ICreateUserSubscription } from '../types/api';
 import { BaseSubscriptionOperation } from './BaseSubscriptionOperation';

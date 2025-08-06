@@ -1,4 +1,7 @@
-import { AppIDMissingError, MalformedArgumentError } from 'src/shared/errors';
+import {
+  AppIDMissingError,
+  MalformedArgumentError,
+} from 'src/shared/errors/common';
 import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,

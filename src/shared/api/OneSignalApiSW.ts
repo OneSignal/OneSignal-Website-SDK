@@ -1,9 +1,9 @@
 import { IdentityConstants } from 'src/core/constants';
-import { updateUserByAlias } from 'src/core/requestService';
+import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
-import type { ServerAppConfig } from '../config';
-import { enforceAlias, enforceAppId } from '../context';
-import { getSubscriptionType } from '../environment';
+import type { ServerAppConfig } from '../config/types';
+import { enforceAlias, enforceAppId } from '../context/helpers';
+import { getSubscriptionType } from '../environment/detect';
 import Log from '../libraries/Log';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
@@ -11,7 +11,7 @@ import {
   type OutcomeAttribution,
 } from '../models/Outcomes';
 import type { OutcomeRequestData } from '../outcomes/types';
-import { NotificationType } from '../subscriptions';
+import { NotificationType } from '../subscriptions/constants';
 import { OneSignalApiBase } from './OneSignalApiBase';
 import OneSignalApiShared from './OneSignalApiShared';
 

@@ -10,7 +10,8 @@ import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifc
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
-import { ConfigIntegrationKind, type AppConfig } from 'src/shared/config';
+import { ConfigIntegrationKind } from 'src/shared/config/constants';
+import type { AppConfig } from 'src/shared/config/types';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
 import {
@@ -30,10 +31,12 @@ import {
   ONESIGNAL_SESSION_KEY,
   SessionOrigin,
   SessionStatus,
-  type Session,
-  type UpsertOrDeactivateSessionPayload,
-} from 'src/shared/session';
-import { NotificationType } from 'src/shared/subscriptions';
+} from 'src/shared/session/constants';
+import type {
+  Session,
+  UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session/types';
+import { NotificationType } from 'src/shared/subscriptions/constants';
 import { ServiceWorker } from './ServiceWorker';
 
 declare const self: ServiceWorkerGlobalScope;

@@ -1,3 +1,5 @@
+export const ONESIGNAL_SESSION_KEY = 'oneSignalSession';
+
 export const SessionStatus = {
   Active: 'active',
   Inactive: 'inactive',

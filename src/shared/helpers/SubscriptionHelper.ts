@@ -1,9 +1,11 @@
 import {
   SubscriptionChannel,
-  type SubscriptionChannelValue,
   SubscriptionType,
-  type SubscriptionTypeValue,
-} from 'src/shared/subscriptions';
+} from 'src/shared/subscriptions/constants';
+import type {
+  SubscriptionChannelValue,
+  SubscriptionTypeValue,
+} from 'src/shared/subscriptions/types';
 import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';

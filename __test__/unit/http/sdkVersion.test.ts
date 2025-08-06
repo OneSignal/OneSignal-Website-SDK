@@ -16,7 +16,7 @@ import {
   getUserIdentity,
   updateSubscriptionById,
   updateUserByAlias,
-} from 'src/core/requestService';
+} from 'src/core/requests/api';
 import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
 
 describe('Sdk Version Header Tests', () => {

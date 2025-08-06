@@ -1,21 +1,21 @@
 import UserNamespace from 'src/onesignal/UserNamespace';
 import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
-import { decodeHtmlEntities } from '../helpers/dom';
-import MainHelper from '../helpers/MainHelper';
-import Log from '../libraries/Log';
-import { CustomLinkManager } from '../managers/CustomLinkManager';
-import type { ContextSWInterface } from '../models/ContextSW';
+import { decodeHtmlEntities } from './helpers/dom';
+import MainHelper from './helpers/MainHelper';
+import Log from './libraries/Log';
+import { CustomLinkManager } from './managers/CustomLinkManager';
+import type { ContextSWInterface } from './models/ContextSW';
 import type {
   NotificationClickEvent,
   NotificationClickEventInternal,
-} from '../notifications';
-import { isCategorySlidedownConfigured } from '../prompts';
-import Database from '../services/Database';
-import LimitStore from '../services/LimitStore';
-import OneSignalEvent from '../services/OneSignalEvent';
-import OneSignalUtils from '../utils/OneSignalUtils';
-import { awaitOneSignalInitAndSupported } from '../utils/utils';
+} from './notifications/types';
+import { isCategorySlidedownConfigured } from './prompts/helpers';
+import Database from './services/Database';
+import LimitStore from './services/LimitStore';
+import OneSignalEvent from './services/OneSignalEvent';
+import OneSignalUtils from './utils/OneSignalUtils';
+import { awaitOneSignalInitAndSupported } from './utils/utils';
 
 export async function checkAndTriggerSubscriptionChanged() {
   OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');

@@ -1,6 +1,7 @@
-import type { NotificationIcons } from 'src/shared/notifications';
+import type { NotificationIcons } from 'src/shared/notifications/types';
 import Log from '../libraries/Log';
-import { Browser, getBrowserName } from '../useragent';
+import { Browser } from '../useragent/constants';
+import { getBrowserName } from '../useragent/detect';
 import { IS_SERVICE_WORKER } from './EnvVariables';
 import { OneSignalUtils } from './OneSignalUtils';
 import { PermissionUtils } from './PermissionUtils';

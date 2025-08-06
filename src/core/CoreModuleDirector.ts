@@ -2,9 +2,9 @@ import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscript
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   SubscriptionChannel,
-  type SubscriptionChannelValue,
   SubscriptionType,
-} from 'src/shared/subscriptions';
+} from 'src/shared/subscriptions/constants';
+import type { SubscriptionChannelValue } from 'src/shared/subscriptions/types';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';

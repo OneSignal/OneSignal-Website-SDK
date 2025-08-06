@@ -1,5 +1,5 @@
 import { ModelName } from 'src/core/types/models';
-import { containsMatch } from '../context';
+import { containsMatch } from '../context/helpers';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 

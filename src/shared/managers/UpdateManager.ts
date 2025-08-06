@@ -1,12 +1,12 @@
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import User from '../../onesignal/User';
 import OneSignalApiShared from '../api/OneSignalApiShared';
-import { getSubscriptionType } from '../environment';
+import { getSubscriptionType } from '../environment/detect';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
 import type { OutcomeRequestData } from '../outcomes/types';
-import { SessionOrigin } from '../session';
-import { NotificationType } from '../subscriptions';
+import { SessionOrigin } from '../session/constants';
+import { NotificationType } from '../subscriptions/constants';
 import { logMethodCall } from '../utils/utils';
 
 export class UpdateManager {

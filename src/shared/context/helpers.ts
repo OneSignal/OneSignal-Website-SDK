@@ -6,10 +6,6 @@ interface IndexOfAble {
   indexOf(match: string): number;
 }
 
-export type RecursivePartial<T> = {
-  [P in keyof T]?: RecursivePartial<T[P]>;
-};
-
 /**
  * Returns true if match is in string; otherwise, returns false.
  */

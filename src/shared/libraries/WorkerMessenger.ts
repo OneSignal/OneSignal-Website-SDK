@@ -1,7 +1,7 @@
 import type { Serializable } from '../../page/models/Serializable';
 import { getAvailableServiceWorker } from '../../sw/helpers/registration';
-import { supportsServiceWorkers } from '../environment/environment';
-import { EmptyArgumentError } from '../errors';
+import { supportsServiceWorkers } from '../environment/detect';
+import { EmptyArgumentError } from '../errors/common';
 import type { ContextSWInterface } from '../models/ContextSW';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import Log from './Log';

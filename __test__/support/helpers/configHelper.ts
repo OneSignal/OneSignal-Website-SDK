@@ -1,9 +1,6 @@
-import {
-  ConfigIntegrationKind,
-  getServerAppConfig,
-  type AppConfig,
-  type ServerAppConfig,
-} from 'src/shared/config';
+import { getServerAppConfig } from 'src/shared/config/app';
+import { ConfigIntegrationKind } from 'src/shared/config/constants';
+import type { AppConfig, ServerAppConfig } from 'src/shared/config/types';
 import TestContext from '../environment/TestContext';
 
 /**

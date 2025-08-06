@@ -24,7 +24,7 @@ import {
   deleteSubscriptionById,
   transferSubscriptionById,
   updateSubscriptionById,
-} from '../requestService';
+} from '../requests/api';
 import { ModelChangeTags } from '../types/models';
 
 // Implements logic similar to Android SDK's SubscriptionOperationExecutor

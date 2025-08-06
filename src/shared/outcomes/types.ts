@@ -1,4 +1,4 @@
-import type { SubscriptionTypeValue } from '../subscriptions';
+import type { SubscriptionTypeValue } from '../subscriptions/types';
 
 export interface OutcomesConfig {
   direct: {

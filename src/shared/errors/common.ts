@@ -1,4 +1,6 @@
 import type { DelayedPromptTypeValue } from '../prompts/types';
+import { InvalidChannelInputField } from './constants';
+import type { InvalidChannelInputFieldValue } from './types';
 
 export class SWRegistrationError extends Error {
   public readonly status: number;
@@ -10,15 +12,6 @@ export class SWRegistrationError extends Error {
     this.statusText = statusText;
   }
 }
-
-export const InvalidChannelInputField = {
-  InvalidSms: 0,
-  InvalidEmail: 1,
-  InvalidEmailAndSms: 2,
-} as const;
-
-export type InvalidChannelInputFieldValue =
-  (typeof InvalidChannelInputField)[keyof typeof InvalidChannelInputField];
 
 export class ChannelCaptureError extends Error {
   reason: InvalidChannelInputFieldValue;

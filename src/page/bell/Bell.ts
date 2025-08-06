@@ -1,5 +1,5 @@
-import type { AppUserConfigNotifyButton } from 'src/shared/config';
-import { containsMatch } from 'src/shared/context';
+import type { AppUserConfigNotifyButton } from 'src/shared/config/types';
+import { containsMatch } from 'src/shared/context/helpers';
 import {
   addCssClass,
   addDomElement,
@@ -7,8 +7,13 @@ import {
   removeDomElement,
 } from 'src/shared/helpers/dom';
 import { delay, nothing } from 'src/shared/helpers/general';
-import type { BellPosition, BellSize, BellText } from 'src/shared/prompts';
-import { Browser, getBrowserName } from 'src/shared/useragent';
+import type {
+  BellPosition,
+  BellSize,
+  BellText,
+} from 'src/shared/prompts/types';
+import { Browser } from 'src/shared/useragent/constants';
+import { getBrowserName } from 'src/shared/useragent/detect';
 import OneSignal from '../../onesignal/OneSignal';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';

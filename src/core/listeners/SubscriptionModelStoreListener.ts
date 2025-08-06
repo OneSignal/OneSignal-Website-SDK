@@ -1,8 +1,6 @@
 import MainHelper from 'src/shared/helpers/MainHelper';
-import {
-  NotificationType,
-  type NotificationTypeValue,
-} from 'src/shared/subscriptions';
+import { NotificationType } from 'src/shared/subscriptions/constants';
+import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';

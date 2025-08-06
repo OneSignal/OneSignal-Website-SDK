@@ -1,5 +1,8 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { EmptyArgumentError, WrongTypeArgumentError } from 'src/shared/errors';
+import {
+  EmptyArgumentError,
+  WrongTypeArgumentError,
+} from 'src/shared/errors/common';
 import Database from 'src/shared/services/Database';
 import NotificationsNamespace from './NotificationsNamespace';
 

@@ -2,7 +2,7 @@ import type {
   IOSNotification,
   IOSNotificationActionButton,
   NotificationAction,
-} from 'src/shared/notifications';
+} from 'src/shared/notifications/types';
 import type {
   OSMinifiedButtonsPayload,
   OSMinifiedNotificationPayload,

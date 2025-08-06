@@ -2,7 +2,7 @@ import type {
   TagCategory,
   TagsObjectForApi,
   TagsObjectWithBoolean,
-} from 'src/page/tags';
+} from 'src/page/tags/types';
 import TagUtils from './TagUtils';
 
 describe('TagUtils', () => {

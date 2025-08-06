@@ -1,7 +1,5 @@
-import { SessionStatus } from './constants';
+import { ONESIGNAL_SESSION_KEY, SessionStatus } from './constants';
 import type { Session } from './types';
-
-export const ONESIGNAL_SESSION_KEY = 'oneSignalSession';
 
 type NewSessionOptions = Partial<Session> & { appId: string };
 

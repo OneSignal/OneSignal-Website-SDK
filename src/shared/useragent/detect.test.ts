@@ -5,7 +5,7 @@ import {
   getBrowserVersion,
   isMobileBrowser,
   isTabletBrowser,
-} from './useragent';
+} from './detect';
 
 const mockUserAgent = (userAgent: string) => {
   Object.defineProperty(navigator, 'userAgent', {

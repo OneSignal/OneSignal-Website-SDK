@@ -1,4 +1,4 @@
-import { EmptyArgumentError } from '../errors';
+import { EmptyArgumentError } from '../errors/common';
 
 /**
  * Represents a normalized path.

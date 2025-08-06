@@ -1,10 +1,10 @@
 import { getValueOrDefault } from '../helpers/general';
-import {
-  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-  type AppUserConfigCustomLinkOptions,
-  type AppUserConfigPromptOptions,
-  type SlidedownPromptOptions,
-} from '../prompts';
+import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../prompts/constants';
+import type {
+  AppUserConfigCustomLinkOptions,
+  AppUserConfigPromptOptions,
+  SlidedownPromptOptions,
+} from '../prompts/types';
 import type { ServerAppConfig } from './types';
 
 /**

@@ -16,7 +16,7 @@ import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { type Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
-import { addAlias, deleteAlias } from '../requestService';
+import { addAlias, deleteAlias } from '../requests/api';
 
 // Implements logic similar to Android SDK's IdentityOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/IdentityOperationExecutor.kt

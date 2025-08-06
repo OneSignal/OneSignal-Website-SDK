@@ -1,5 +1,5 @@
-import { EnvironmentKind } from 'src/shared/environment';
-import { EnumOutOfRangeArgumentError } from 'src/shared/errors';
+import { EnvironmentKind } from 'src/shared/environment/constants';
+import { EnumOutOfRangeArgumentError } from 'src/shared/errors/common';
 import {
   BUILD_ORIGIN,
   BUILD_TYPE,

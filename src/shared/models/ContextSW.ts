@@ -1,5 +1,5 @@
 import { SessionManager } from '../../sw/managers/sessionManager/SessionManager';
-import type { AppConfig } from '../config';
+import type { AppConfig } from '../config/types';
 import ContextHelper from '../helpers/ContextHelper';
 import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { PageViewManager } from '../managers/PageViewManager';

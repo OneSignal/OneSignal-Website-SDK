@@ -2,21 +2,23 @@ import { delay } from 'src/shared/helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
-  getFirstSlidedownPromptOptionsWithType,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-  type AppUserConfigPromptOptions,
-  type DelayedPromptOptions,
-  type DelayedPromptTypeValue,
-  type SlidedownPromptOptions,
-} from 'src/shared/prompts';
+} from 'src/shared/prompts/constants';
+import { getFirstSlidedownPromptOptionsWithType } from 'src/shared/prompts/helpers';
+import type {
+  AppUserConfigPromptOptions,
+  DelayedPromptOptions,
+  DelayedPromptTypeValue,
+  SlidedownPromptOptions,
+} from 'src/shared/prompts/types';
+import { Browser } from 'src/shared/useragent/constants';
 import {
-  Browser,
   getBrowserName,
   getBrowserVersion,
   isMobileBrowser,
   isTabletBrowser,
   requiresUserInteraction,
-} from 'src/shared/useragent';
+} from 'src/shared/useragent/detect';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import InitHelper from '../../shared/helpers/InitHelper';
 import Log from '../../shared/libraries/Log';

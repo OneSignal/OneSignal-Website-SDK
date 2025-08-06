@@ -1,8 +1,9 @@
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
-import { type AppConfig, getServerAppConfig } from 'src/shared/config';
-import { containsMatch } from 'src/shared/context';
-import { getDeviceType } from 'src/shared/environment';
+import { getServerAppConfig } from 'src/shared/config/app';
+import type { AppConfig } from 'src/shared/config/types';
+import { containsMatch } from 'src/shared/context/helpers';
+import { getDeviceType } from 'src/shared/environment/detect';
 import { delay } from 'src/shared/helpers/general';
 import ServiceWorkerHelper from 'src/shared/helpers/ServiceWorkerHelper';
 import Log from 'src/shared/libraries/Log';
@@ -20,19 +21,18 @@ import type {
   IOSNotification,
   NotificationClickEventInternal,
   NotificationForegroundWillDisplayEventSerializable,
-} from 'src/shared/notifications';
+} from 'src/shared/notifications/types';
 import Database from 'src/shared/services/Database';
-import {
-  type PageVisibilityRequest,
-  type PageVisibilityResponse,
-  SessionStatus,
-  type UpsertOrDeactivateSessionPayload,
-} from 'src/shared/session';
-import {
-  NotificationType,
-  type NotificationTypeValue,
-} from 'src/shared/subscriptions';
-import { Browser, getBrowserName } from 'src/shared/useragent';
+import { SessionStatus } from 'src/shared/session/constants';
+import type {
+  PageVisibilityRequest,
+  PageVisibilityResponse,
+  UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session/types';
+import { NotificationType } from 'src/shared/subscriptions/constants';
+import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
+import { Browser } from 'src/shared/useragent/constants';
+import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import {

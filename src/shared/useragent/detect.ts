@@ -1,3 +1,6 @@
+import { Browser } from './constants';
+import type { BrowserValue } from './types';
+
 interface BrowserConfig {
   name: string;
   pattern: RegExp;
@@ -105,5 +108,33 @@ export function isMobileBrowser(userAgent = navigator.userAgent): boolean {
     ios === 'iphone' ||
     ios === 'ipod' ||
     isAndroid(userAgent)
+  );
+}
+
+const BROWSER_MAP: Record<string, BrowserValue> = {
+  Chrome: Browser.Chrome,
+  Chromium: Browser.Chrome,
+  Firefox: Browser.Firefox,
+  'Microsoft Edge': Browser.Edge,
+  Safari: Browser.Safari,
+};
+
+export function getBrowserName(): BrowserValue {
+  return BROWSER_MAP[getBrowser(navigator.userAgent).name] || Browser.Other;
+}
+
+export const getBrowserVersion = (): number => {
+  const version = getBrowser(navigator.userAgent).version;
+  if (!version) return -1;
+  const [major, minor = '0'] = version.split('.');
+  return +`${major}.${minor}`;
+};
+
+export function requiresUserInteraction(): boolean {
+  const browserName = getBrowserName();
+  const version = getBrowserVersion();
+  return (
+    (browserName === Browser.Firefox && version >= 72) ||
+    (browserName === Browser.Safari && version >= 12.1)
   );
 }

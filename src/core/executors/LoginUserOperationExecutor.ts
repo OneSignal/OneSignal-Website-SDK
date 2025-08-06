@@ -26,7 +26,7 @@ import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import { createNewUser } from '../requestService';
+import { createNewUser } from '../requests/api';
 import type {
   ICreateUserIdentity,
   ICreateUserSubscription,

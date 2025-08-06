@@ -1,5 +1,5 @@
-import { containsMatch } from '../context';
-import { windowEnvString } from '../environment/environment';
+import { containsMatch } from '../context/helpers';
+import { windowEnvString } from '../environment/detect';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';

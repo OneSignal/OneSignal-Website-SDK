@@ -1,4 +1,4 @@
-import type { AppConfig } from 'src/shared/config';
+import type { AppConfig } from 'src/shared/config/types';
 import ContextHelper from '../../shared/helpers/ContextHelper';
 import { WorkerMessenger } from '../../shared/libraries/WorkerMessenger';
 import { PageViewManager } from '../../shared/managers/PageViewManager';

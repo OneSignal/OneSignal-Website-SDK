@@ -3,9 +3,9 @@ import {
   getSWRegistration,
   waitUntilActive,
 } from '../../sw/helpers/registration';
-import { timeoutPromise } from '../context';
-import { supportsServiceWorkers } from '../environment/environment';
-import { SWRegistrationError } from '../errors';
+import { timeoutPromise } from '../context/helpers';
+import { supportsServiceWorkers } from '../environment/detect';
+import { SWRegistrationError } from '../errors/common';
 import ServiceWorkerHelper, {
   ServiceWorkerActiveState,
   type ServiceWorkerActiveStateValue,
@@ -16,14 +16,17 @@ import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { triggerNotificationClick } from '../listeners';
 import type { ContextSWInterface } from '../models/ContextSW';
 import Path from '../models/Path';
-import {
-  type NotificationClickEventInternal,
-  type NotificationForegroundWillDisplayEvent,
-  type NotificationForegroundWillDisplayEventSerializable,
-} from '../notifications';
+import type {
+  NotificationClickEventInternal,
+  NotificationForegroundWillDisplayEvent,
+  NotificationForegroundWillDisplayEventSerializable,
+} from '../notifications/types';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
-import type { PageVisibilityRequest, PageVisibilityResponse } from '../session';
+import type {
+  PageVisibilityRequest,
+  PageVisibilityResponse,
+} from '../session/types';
 import { VERSION } from '../utils/EnvVariables';
 import OneSignalUtils from '../utils/OneSignalUtils';
 

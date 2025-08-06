@@ -1,17 +1,20 @@
-import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags';
+import type {
+  TagsObjectForApi,
+  TagsObjectWithBoolean,
+} from 'src/page/tags/types';
 import {
   ChannelCaptureError,
   ExistingChannelError,
-  InvalidChannelInputField,
   PermissionBlockedError,
-} from 'src/shared/errors';
+} from 'src/shared/errors/common';
+import { InvalidChannelInputField } from 'src/shared/errors/constants';
 import { delay } from 'src/shared/helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
-  isSlidedownPushDependent,
-  type DelayedPromptTypeValue,
-} from 'src/shared/prompts';
+} from 'src/shared/prompts/constants';
+import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
+import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import InitHelper from '../../../shared/helpers/InitHelper';
