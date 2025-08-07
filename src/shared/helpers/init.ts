@@ -9,8 +9,9 @@ import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
-import { once, triggerNotificationPermissionChanged } from '../utils/utils';
+import { once } from '../utils/utils';
 import MainHelper from './MainHelper';
+import { triggerNotificationPermissionChanged } from './permissions';
 import SubscriptionHelper from './SubscriptionHelper';
 
 export async function internalInit() {

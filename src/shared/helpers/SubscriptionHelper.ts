@@ -11,7 +11,7 @@ import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
-import { PermissionUtils } from '../utils/PermissionUtils';
+import { triggerNotificationPermissionChanged } from './permissions';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -30,7 +30,7 @@ export default class SubscriptionHelper {
       subscription =
         await context.subscriptionManager.registerSubscription(rawSubscription);
       context.pageViewManager.incrementPageViewCount();
-      await PermissionUtils.triggerNotificationPermissionChanged();
+      await triggerNotificationPermissionChanged();
       await checkAndTriggerSubscriptionChanged();
     } catch (e) {
       Log.error(e);

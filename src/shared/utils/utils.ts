@@ -4,7 +4,6 @@ import { Browser } from '../useragent/constants';
 import { getBrowserName } from '../useragent/detect';
 import { IS_SERVICE_WORKER } from './EnvVariables';
 import { OneSignalUtils } from './OneSignalUtils';
-import { PermissionUtils } from './PermissionUtils';
 
 /**
  * Helper method for public APIs that waits until OneSignal is initialized, rejects if push notifications are
@@ -16,14 +15,6 @@ export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
       OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
     else resolve();
   });
-}
-
-export async function triggerNotificationPermissionChanged(
-  updateIfIdentical = false,
-) {
-  return PermissionUtils.triggerNotificationPermissionChanged(
-    updateIfIdentical,
-  );
 }
 
 export function logMethodCall(methodName: string, ...args: any[]) {

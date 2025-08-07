@@ -10,6 +10,7 @@ import {
   PermissionBlockedError,
   SWRegistrationError,
 } from '../errors/common';
+import { triggerNotificationPermissionChanged } from '../helpers/permissions';
 import { ServiceWorkerActiveState } from '../helpers/service-worker';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
@@ -32,7 +33,6 @@ import { Browser } from '../useragent/constants';
 import { getBrowserName } from '../useragent/detect';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
-import { PermissionUtils } from '../utils/PermissionUtils';
 import { logMethodCall } from '../utils/utils';
 import { IDManager } from './IDManager';
 export const DEFAULT_DEVICE_ID = '99999999-9999-9999-9999-999999999999';
@@ -406,7 +406,7 @@ export class SubscriptionManager {
     */
     OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     const deviceToken = await this.subscribeSafariPromptPermission();
-    PermissionUtils.triggerNotificationPermissionChanged();
+    triggerNotificationPermissionChanged();
     if (deviceToken) {
       pushSubscriptionDetails.setFromSafariSubscription(deviceToken);
     } else {
@@ -446,9 +446,7 @@ export class SubscriptionManager {
        */
       const forcePermissionChangeEvent =
         permission === NotificationPermission.Default;
-      await PermissionUtils.triggerNotificationPermissionChanged(
-        forcePermissionChangeEvent,
-      );
+      await triggerNotificationPermissionChanged(forcePermissionChangeEvent);
 
       // If the user did not grant push permissions, throw and exit
       switch (permission) {

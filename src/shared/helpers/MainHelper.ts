@@ -10,9 +10,9 @@ import type {
   SlidedownOptions,
 } from '../prompts/types';
 import Database from '../services/Database';
-import { PermissionUtils } from '../utils/PermissionUtils';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
 import { getValueOrDefault } from './general';
+import { triggerNotificationPermissionChanged } from './permissions';
 import { isValidUrl } from './validators';
 
 export default class MainHelper {
@@ -100,7 +100,7 @@ export default class MainHelper {
       await OneSignal.context.permissionManager.getPermissionStatus();
 
     if (previousPermission !== currentPermission) {
-      await PermissionUtils.triggerNotificationPermissionChanged();
+      await triggerNotificationPermissionChanged();
       await Database.put('Options', {
         key: 'notificationPermission',
         value: currentPermission,
