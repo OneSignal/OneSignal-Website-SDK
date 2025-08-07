@@ -4,10 +4,12 @@ import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 
 //stub dismisshelper
-vi.mock('../../../src/shared/helpers/DismissHelper');
+vi.mock('src/shared/helpers/DismissHelper');
 
 //stub log
 vi.mock('src/shared/libraries/Log');
+
+const spy = vi.spyOn(InitHelper, 'registerForPushNotifications');
 
 describe('Register for push', () => {
   beforeEach(async () => {
@@ -24,7 +26,6 @@ describe('Register for push', () => {
     (global as any).OneSignal.initialized = false;
     (global as any).OneSignal._initCalled = false;
 
-    const spy = vi.spyOn(InitHelper, 'registerForPushNotifications');
     const promise = OneSignal.User.PushSubscription.optIn();
 
     expect(spy).not.toHaveBeenCalled();
@@ -40,7 +41,6 @@ describe('Register for push', () => {
     (global as any).OneSignal.initialized = true;
     (global as any).OneSignal._initCalled = false;
 
-    const spy = vi.spyOn(InitHelper, 'registerForPushNotifications');
     await InitHelper.registerForPushNotifications();
     expect(Log.error).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledTimes(1);

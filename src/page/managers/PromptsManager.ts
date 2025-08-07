@@ -1,5 +1,6 @@
 import { delay } from 'src/shared/helpers/general';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
+import { getLocalPageViewCount } from 'src/shared/helpers/localStorage';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -339,7 +340,7 @@ export class PromptsManager {
       return false;
     }
 
-    const localPageViews = this.context.pageViewManager.getLocalPageViewCount();
+    const localPageViews = getLocalPageViewCount();
     return localPageViews >= options.pageViews;
   }
 

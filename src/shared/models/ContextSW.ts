@@ -1,8 +1,10 @@
 import { SessionManager } from '../../sw/managers/sessionManager/SessionManager';
 import type { AppConfig } from '../config/types';
-import ContextHelper from '../helpers/ContextHelper';
+import {
+  getServiceWorkerManager,
+  getSubscriptionManager,
+} from '../helpers/context';
 import { WorkerMessenger } from '../libraries/WorkerMessenger';
-import { PageViewManager } from '../managers/PageViewManager';
 import PermissionManager from '../managers/PermissionManager';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
@@ -17,7 +19,6 @@ export interface ContextSWInterface {
   appConfig: AppConfig;
   subscriptionManager: SubscriptionManager;
   serviceWorkerManager: ServiceWorkerManager;
-  pageViewManager: PageViewManager;
   sessionManager: ISessionManager;
   permissionManager: PermissionManager;
   workerMessenger: WorkerMessenger;
@@ -28,7 +29,6 @@ export default class ContextSW implements ContextSWInterface {
   public appConfig: AppConfig;
   public subscriptionManager: SubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
-  public pageViewManager: PageViewManager;
   public sessionManager: ISessionManager;
   public permissionManager: PermissionManager;
   public workerMessenger: WorkerMessenger;
@@ -36,9 +36,8 @@ export default class ContextSW implements ContextSWInterface {
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
-    this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
-    this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
-    this.pageViewManager = new PageViewManager();
+    this.subscriptionManager = getSubscriptionManager(this);
+    this.serviceWorkerManager = getServiceWorkerManager(this);
     this.sessionManager = new SessionManager();
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);

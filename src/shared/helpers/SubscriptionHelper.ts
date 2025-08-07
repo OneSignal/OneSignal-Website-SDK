@@ -11,6 +11,7 @@ import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 
 export default class SubscriptionHelper {
@@ -29,7 +30,7 @@ export default class SubscriptionHelper {
       );
       subscription =
         await context.subscriptionManager.registerSubscription(rawSubscription);
-      context.pageViewManager.incrementPageViewCount();
+      incrementPageViewCount();
       await triggerNotificationPermissionChanged();
       await checkAndTriggerSubscriptionChanged();
     } catch (e) {

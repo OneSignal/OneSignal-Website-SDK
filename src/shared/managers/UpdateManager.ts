@@ -2,6 +2,7 @@ import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import User from '../../onesignal/User';
 import OneSignalApiShared from '../api/OneSignalApiShared';
 import { getSubscriptionType } from '../environment/detect';
+import { getPageViewCount, isFirstPageView } from '../helpers/pageview';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
 import type { OutcomeRequestData } from '../outcomes/types';
@@ -16,7 +17,7 @@ export class UpdateManager {
 
   constructor(context: ContextSWInterface) {
     this.context = context;
-    this.onSessionSent = context.pageViewManager.getPageViewCount() > 1;
+    this.onSessionSent = getPageViewCount() > 1;
   }
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
@@ -38,7 +39,7 @@ export class UpdateManager {
       return;
     }
 
-    if (!this.context.pageViewManager.isFirstPageView()) {
+    if (!isFirstPageView()) {
       return;
     }
 

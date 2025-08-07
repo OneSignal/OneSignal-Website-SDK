@@ -10,6 +10,7 @@ import {
   PermissionBlockedError,
   SWRegistrationError,
 } from '../errors/common';
+import { incrementPageViewCount, isFirstPageView } from '../helpers/pageview';
 import { triggerNotificationPermissionChanged } from '../helpers/permissions';
 import { ServiceWorkerActiveState } from '../helpers/service-worker';
 import Log from '../libraries/Log';
@@ -871,12 +872,12 @@ export class SubscriptionManager {
     subscriptionState: SubscriptionStateServiceWorkerNotIntalled,
     context: ContextSWInterface,
   ) {
-    if (context.pageViewManager.isFirstPageView()) {
+    if (isFirstPageView()) {
       context.subscriptionManager.registerSubscription(
         new RawPushSubscription(),
         subscriptionState,
       );
-      context.pageViewManager.incrementPageViewCount();
+      incrementPageViewCount();
     }
   }
 }

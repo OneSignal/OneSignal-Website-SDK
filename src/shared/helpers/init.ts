@@ -11,6 +11,7 @@ import OneSignalEvent from '../services/OneSignalEvent';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once } from '../utils/utils';
 import MainHelper from './MainHelper';
+import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 import SubscriptionHelper from './SubscriptionHelper';
 
@@ -25,7 +26,7 @@ export async function internalInit() {
     OneSignal.EVENTS.SESSION_STARTED,
     sessionManager.sendOnSessionUpdateFromPage.bind(sessionManager),
   );
-  OneSignal.context.pageViewManager.incrementPageViewCount();
+  incrementPageViewCount();
 
   if (document.visibilityState !== 'visible') {
     postponeSessionInitUntilPageIsInFocus();

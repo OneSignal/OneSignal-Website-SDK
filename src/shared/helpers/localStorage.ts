@@ -24,6 +24,9 @@ export function setLocalPageViewCount(count: number): void {
   localStorage.setItem(PAGE_VIEWS, count.toString());
 }
 
+/**
+ * Returns Page Views saved to Local Storage (Persists Longer than Single Session)
+ */
 export function getLocalPageViewCount(): number {
   return Number(localStorage.getItem(PAGE_VIEWS));
 }
