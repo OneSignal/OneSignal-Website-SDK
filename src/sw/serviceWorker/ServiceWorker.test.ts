@@ -13,7 +13,7 @@ import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import type { AppConfig } from 'src/shared/config/types';
 import Log from 'src/shared/libraries/Log';
-import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
+import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
 import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
@@ -35,7 +35,7 @@ import type {
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import { ServiceWorker } from './ServiceWorker';
+import { OneSignalServiceWorker } from './ServiceWorker';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -113,7 +113,7 @@ describe('ServiceWorker', () => {
       // @ts-expect-error - search is readonly but we need to set it for testing
       self.location.search = '?appId=some-app-id';
 
-      const appId = await ServiceWorker.getAppId();
+      const appId = await OneSignalServiceWorker.getAppId();
       expect(appId).toBe('some-app-id');
     });
   });
@@ -183,7 +183,7 @@ describe('ServiceWorker', () => {
         title: payload.title,
       };
       expect(
-        ServiceWorker.webhookNotificationEventSender.willDisplay,
+        OneSignalServiceWorker.webhookNotificationEventSender.willDisplay,
       ).toHaveBeenCalledWith(
         expect.objectContaining(notificationInfo),
         pushSubscriptionId,
@@ -232,7 +232,7 @@ describe('ServiceWorker', () => {
       await dispatchEvent(event);
 
       expect(
-        ServiceWorker.webhookNotificationEventSender.dismiss,
+        OneSignalServiceWorker.webhookNotificationEventSender.dismiss,
       ).toHaveBeenCalledWith(
         {
           notificationId,
@@ -284,7 +284,7 @@ describe('ServiceWorker', () => {
 
       // should emit clicked event
       expect(
-        ServiceWorker.webhookNotificationEventSender.click,
+        OneSignalServiceWorker.webhookNotificationEventSender.click,
       ).toHaveBeenCalledWith(
         {
           notification: {

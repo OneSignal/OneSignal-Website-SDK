@@ -6,9 +6,9 @@ import { SubscriptionManagerPage } from '../managers/subscription/page';
 import { SubscriptionManagerSW } from '../managers/subscription/sw';
 import Path from '../models/Path';
 
-export function getServiceWorkerManager<
-  C extends ContextInterface | ContextSWInterface,
->(context: C): ServiceWorkerManager<C> {
+export function getServiceWorkerManager(
+  context: ContextInterface,
+): ServiceWorkerManager {
   const config: AppConfig = context.appConfig;
 
   const serviceWorkerManagerConfig = {

@@ -1,10 +1,10 @@
 import type { AppConfig } from 'src/shared/config/types';
 import type { ContextInterface } from 'src/shared/context/types';
+import { WorkerMessengerPage } from 'src/shared/libraries/workerMessenger/page';
 import {
   getServiceWorkerManager,
   getSubscriptionManagerPage,
 } from '../../shared/helpers/context';
-import { WorkerMessenger } from '../../shared/libraries/WorkerMessenger';
 import PermissionManager from '../../shared/managers/PermissionManager';
 import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager';
 import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';
@@ -22,8 +22,8 @@ export default class Context implements ContextInterface {
   public appConfig: AppConfig;
   public dynamicResourceLoader: DynamicResourceLoader;
   public subscriptionManager: SubscriptionManagerPage;
-  public serviceWorkerManager: ServiceWorkerManager<ContextInterface>;
-  public workerMessenger: WorkerMessenger<ContextInterface>;
+  public serviceWorkerManager: ServiceWorkerManager;
+  public workerMessenger: WorkerMessengerPage;
   public permissionManager: PermissionManager;
   public updateManager: UpdateManager<ContextInterface>;
   public promptsManager: PromptsManager;
@@ -36,7 +36,7 @@ export default class Context implements ContextInterface {
     this.subscriptionManager = getSubscriptionManagerPage(this);
     this.serviceWorkerManager = getServiceWorkerManager(this);
     this.permissionManager = new PermissionManager();
-    this.workerMessenger = new WorkerMessenger(this);
+    this.workerMessenger = new WorkerMessengerPage(this);
     this.updateManager = new UpdateManager(this);
     this.sessionManager = new SessionManager(this);
     this.tagManager = new TagManager(this);

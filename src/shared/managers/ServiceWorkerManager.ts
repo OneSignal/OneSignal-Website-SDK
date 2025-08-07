@@ -4,7 +4,7 @@ import {
   waitUntilActive,
 } from '../../sw/helpers/registration';
 import { timeoutPromise } from '../context/helpers';
-import type { ContextInterface, ContextSWInterface } from '../context/types';
+import type { ContextInterface } from '../context/types';
 import { supportsServiceWorkers } from '../environment/detect';
 import { SWRegistrationError } from '../errors/common';
 import {
@@ -14,7 +14,7 @@ import {
   type ServiceWorkerManagerConfig,
 } from '../helpers/service-worker';
 import Log from '../libraries/Log';
-import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
+import { WorkerMessengerCommand } from '../libraries/workerMessenger/constants';
 import { triggerNotificationClick } from '../listeners';
 import Path from '../models/Path';
 import type {
@@ -31,13 +31,11 @@ import type {
 import { VERSION } from '../utils/EnvVariables';
 import OneSignalUtils from '../utils/OneSignalUtils';
 
-export class ServiceWorkerManager<
-  C extends ContextSWInterface | ContextInterface,
-> {
-  private context: C;
+export class ServiceWorkerManager {
+  private context: ContextInterface;
   private readonly config: ServiceWorkerManagerConfig;
 
-  constructor(context: C, config: ServiceWorkerManagerConfig) {
+  constructor(context: ContextInterface, config: ServiceWorkerManagerConfig) {
     this.context = context;
     this.config = config;
   }

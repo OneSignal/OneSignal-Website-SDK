@@ -16,7 +16,7 @@ import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
 import MainHelper from '../../helpers/MainHelper';
 import Log from '../../libraries/Log';
-import { WorkerMessengerCommand } from '../../libraries/WorkerMessenger';
+import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constants';
 import { OneSignalUtils } from '../../utils/OneSignalUtils';
 import type { ISessionManager } from './types';
 
