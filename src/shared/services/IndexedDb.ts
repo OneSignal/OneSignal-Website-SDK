@@ -2,7 +2,6 @@ import { ModelName } from 'src/core/types/models';
 import { containsMatch } from '../context/helpers';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
-import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 
 const DATABASE_VERSION = 7;
 
@@ -188,7 +187,7 @@ export default class IndexedDb {
       db.createObjectStore(ModelName.Operations, { keyPath: 'modelId' });
     }
     // Wrap in conditional for tests
-    if (!IS_SERVICE_WORKER && typeof OneSignal !== 'undefined') {
+    if (typeof OneSignal !== 'undefined') {
       OneSignal._isNewVisitor = true;
     }
   }

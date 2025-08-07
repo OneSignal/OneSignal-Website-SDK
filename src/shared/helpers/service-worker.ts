@@ -12,8 +12,8 @@ import Database from '../services/Database';
 import { SessionOrigin, SessionStatus } from '../session/constants';
 import { initializeNewSession } from '../session/helpers';
 import type { Session, SessionOriginValue } from '../session/types';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
 import { getConfigAttribution } from './OutcomesHelper';
+import { getBaseUrl } from './general';
 
 export function getServiceWorkerHref(
   config: ServiceWorkerManagerConfig,
@@ -32,7 +32,7 @@ function appendServiceWorkerParams(
   appId: string,
   sdkVersion: string,
 ): string {
-  const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
+  const fullPath = new URL(workerFullPath, getBaseUrl()).href;
   const appIdAsQueryParam = encodeHashAsUriComponent({ appId });
   const sdkVersionAsQueryParam = encodeHashAsUriComponent({
     sdkVersion,

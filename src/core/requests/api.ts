@@ -1,8 +1,8 @@
 import { InvalidAppIdError } from 'src/shared/errors/common';
+import { isValidUuid } from 'src/shared/helpers/validators';
 import OneSignalApiBase from '../../shared/api/OneSignalApiBase';
 import type OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
 import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
-import OneSignalUtils from '../../shared/utils/OneSignalUtils';
 import type {
   AliasPair,
   ICreateUser,
@@ -82,7 +82,7 @@ export async function updateUserByAlias(
   payload: IUpdateUser,
 ) {
   const { appId, subscriptionId } = requestMetadata;
-  if (!OneSignalUtils.isValidUuid(appId)) {
+  if (!isValidUuid(appId)) {
     throw InvalidAppIdError;
   }
 

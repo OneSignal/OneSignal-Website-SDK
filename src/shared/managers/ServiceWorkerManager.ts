@@ -5,8 +5,9 @@ import {
 } from '../../sw/helpers/registration';
 import { timeoutPromise } from '../context/helpers';
 import type { ContextInterface } from '../context/types';
-import { supportsServiceWorkers } from '../environment/detect';
+import { hasSafariWindow, supportsServiceWorkers } from '../environment/detect';
 import { SWRegistrationError } from '../errors/common';
+import { getBaseUrl } from '../helpers/general';
 import {
   getServiceWorkerHref,
   ServiceWorkerActiveState,
@@ -29,7 +30,6 @@ import type {
   PageVisibilityResponse,
 } from '../session/types';
 import { VERSION } from '../utils/EnvVariables';
-import OneSignalUtils from '../utils/OneSignalUtils';
 
 export class ServiceWorkerManager {
   private context: ContextInterface;
@@ -332,7 +332,7 @@ export class ServiceWorkerManager {
       },
     );
 
-    const isSafari = OneSignalUtils.isSafari();
+    const isSafari = hasSafariWindow();
 
     workerMessenger.on(
       WorkerMessengerCommand.AreYouVisible,
@@ -414,9 +414,7 @@ export class ServiceWorkerManager {
       VERSION,
     );
 
-    const scope = `${OneSignalUtils.getBaseUrl()}${
-      this.config.registrationOptions.scope
-    }`;
+    const scope = `${getBaseUrl()}${this.config.registrationOptions.scope}`;
     Log.info(
       `[Service Worker Installation] Installing service worker ${workerHref} ${scope}.`,
     );
@@ -459,9 +457,7 @@ export class ServiceWorkerManager {
       VERSION,
     );
 
-    const scope = `${OneSignalUtils.getBaseUrl()}${
-      this.config.registrationOptions.scope
-    }`;
+    const scope = `${getBaseUrl()}${this.config.registrationOptions.scope}`;
 
     Log.info(
       `[Service Worker Installation] Attempting to install v16 Beta Worker ${workerHref} ${scope}.`,

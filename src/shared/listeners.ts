@@ -13,11 +13,10 @@ import { isCategorySlidedownConfigured } from './prompts/helpers';
 import Database from './services/Database';
 import LimitStore from './services/LimitStore';
 import OneSignalEvent from './services/OneSignalEvent';
-import OneSignalUtils from './utils/OneSignalUtils';
-import { awaitOneSignalInitAndSupported } from './utils/utils';
+import { awaitOneSignalInitAndSupported, logMethodCall } from './utils/utils';
 
 export async function checkAndTriggerSubscriptionChanged() {
-  OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
+  logMethodCall('checkAndTriggerSubscriptionChanged');
   const context = OneSignal.context;
   // isPushEnabled = subscribed && is not opted out
   const isPushEnabled: boolean =
@@ -93,7 +92,7 @@ export function triggerNotificationClick(
 }
 
 export async function checkAndTriggerUserChanged() {
-  OneSignalUtils.logMethodCall('checkAndTriggerUserChanged');
+  logMethodCall('checkAndTriggerUserChanged');
 
   const userState = await Database.getUserState();
   const { previousOneSignalId, previousExternalId } = userState;

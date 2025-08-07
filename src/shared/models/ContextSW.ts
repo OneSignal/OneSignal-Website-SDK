@@ -6,7 +6,7 @@ import { WorkerMessengerSW } from '../libraries/workerMessenger/sw';
 import PermissionManager from '../managers/PermissionManager';
 import type { ISessionManager } from '../managers/sessionManager/types';
 import { SubscriptionManagerSW } from '../managers/subscription/sw';
-import { UpdateManager } from '../managers/UpdateManager';
+import { UpdateManagerSW } from '../managers/update/sw';
 
 export default class ContextSW implements ContextSWInterface {
   public appConfig: AppConfig;
@@ -14,7 +14,7 @@ export default class ContextSW implements ContextSWInterface {
   public sessionManager: ISessionManager;
   public permissionManager: PermissionManager;
   public workerMessenger: WorkerMessengerSW;
-  public updateManager: UpdateManager<ContextSWInterface>;
+  public updateManager: UpdateManagerSW;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -22,6 +22,6 @@ export default class ContextSW implements ContextSWInterface {
     this.sessionManager = new SessionManager();
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessengerSW(this);
-    this.updateManager = new UpdateManager(this);
+    this.updateManager = new UpdateManagerSW(this);
   }
 }

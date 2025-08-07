@@ -17,12 +17,12 @@ import {
 } from 'src/shared/prompts/constants';
 import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
+import { logMethodCall } from 'src/shared/utils/utils';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import Log from '../../../shared/libraries/Log';
 import { NotificationPermission } from '../../../shared/models/NotificationPermission';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
-import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';
 import TagUtils from '../../../shared/utils/TagUtils';
 import { DismissPrompt } from '../../models/Dismiss';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
@@ -284,7 +284,7 @@ export class SlidedownManager {
   private async mountTaggingContainer(
     options: AutoPromptOptions,
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('mountTaggingContainer');
+    logMethodCall('mountTaggingContainer');
     try {
       // show slidedown with tagging container
       let tagsForComponent: TagsObjectWithBoolean = {};
@@ -322,7 +322,7 @@ export class SlidedownManager {
   private async mountChannelCaptureContainer(
     options: AutoPromptOptions,
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('mountChannelCaptureContainer');
+    logMethodCall('mountChannelCaptureContainer');
     try {
       if (!!options.slidedownPromptOptions) {
         const channelCaptureContainer = new ChannelCaptureContainer(
@@ -435,7 +435,7 @@ export class SlidedownManager {
   }
 
   public async createSlidedown(options: AutoPromptOptions): Promise<void> {
-    OneSignalUtils.logMethodCall('createSlidedown');
+    logMethodCall('createSlidedown');
     try {
       const showPrompt = await this.checkIfSlidedownShouldBeShown(options);
       if (!showPrompt) {

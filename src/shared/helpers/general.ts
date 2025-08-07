@@ -11,14 +11,6 @@ export function nothing(): Promise<any> {
   return Promise.resolve();
 }
 
-type Nullable = undefined | null;
-export function valueOrDefault<T>(value: T | Nullable, defaultValue: T): T {
-  if (typeof value === 'undefined' || value === null) {
-    return defaultValue;
-  }
-  return value;
-}
-
 export function getValueOrDefault<T>(
   value: T | undefined | null,
   defaultValue: T,
@@ -31,4 +23,8 @@ export function getValueOrDefault<T>(
 
 export function getTimeZoneId() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+export function getBaseUrl() {
+  return location.origin;
 }

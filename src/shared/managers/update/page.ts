@@ -1,82 +1,13 @@
-import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
-import User from '../../onesignal/User';
-import OneSignalApiShared from '../api/OneSignalApiShared';
-import type { ContextInterface, ContextSWInterface } from '../context/types';
-import { getSubscriptionType } from '../environment/detect';
-import { getPageViewCount, isFirstPageView } from '../helpers/pageview';
-import Log from '../libraries/Log';
-import type { OutcomeRequestData } from '../outcomes/types';
-import { SessionOrigin } from '../session/constants';
-import { NotificationType } from '../subscriptions/constants';
-import { logMethodCall } from '../utils/utils';
+import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
+import OneSignalApiShared from 'src/shared/api/OneSignalApiShared';
+import type { ContextInterface } from 'src/shared/context/types';
+import { getSubscriptionType } from 'src/shared/environment/detect';
+import Log from 'src/shared/libraries/Log';
+import type { OutcomeRequestData } from 'src/shared/outcomes/types';
+import { logMethodCall } from 'src/shared/utils/utils';
+import { UpdateManagerBase } from './base';
 
-export class UpdateManager<C extends ContextInterface | ContextSWInterface> {
-  private context: C;
-
-  private onSessionSent: boolean;
-
-  constructor(context: C) {
-    this.context = context;
-    this.onSessionSent = getPageViewCount() > 1;
-  }
-
-  public async sendPushDeviceRecordUpdate(): Promise<void> {
-    if (!User.singletonInstance?.onesignalId) {
-      Log.debug(
-        'Not sending the update because user is not registered with OneSignal (no onesignal_id)',
-      );
-      return;
-    }
-
-    if (!this.onSessionSent) {
-      await this.sendOnSessionUpdate();
-    }
-  }
-
-  // If user has been subscribed before, send the on_session update to our backend on the first page view.
-  public async sendOnSessionUpdate(): Promise<void> {
-    if (this.onSessionSent) {
-      return;
-    }
-
-    if (!isFirstPageView()) {
-      return;
-    }
-
-    const existingUser =
-      await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-    if (!existingUser) {
-      Log.debug(
-        'Not sending the on session because user is not registered with OneSignal (no device id)',
-      );
-      return;
-    }
-
-    const subscriptionModel =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
-
-    if (
-      subscriptionModel?.notification_types !== NotificationType.Subscribed &&
-      OneSignal.config?.enableOnSession !== true
-    ) {
-      return;
-    }
-
-    try {
-      // Not sending on_session here but from SW instead.
-
-      // Not awaiting here on purpose
-      this.context.sessionManager.upsertSession(SessionOrigin.UserNewSession);
-      this.onSessionSent = true;
-    } catch (e) {
-      if (e instanceof Error) {
-        Log.error(
-          `Failed to update user session. Error "${e.message}" ${e.stack}`,
-        );
-      }
-    }
-  }
-
+export class UpdateManagerPage extends UpdateManagerBase<ContextInterface> {
   public async sendOutcomeDirect(
     appId: string,
     notificationIds: string[],

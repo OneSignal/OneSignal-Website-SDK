@@ -9,7 +9,8 @@ import type { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import type { ISessionManager } from '../managers/sessionManager/types';
 import type { SubscriptionManagerPage } from '../managers/subscription/page';
 import type { SubscriptionManagerSW } from '../managers/subscription/sw';
-import type { UpdateManager } from '../managers/UpdateManager';
+import type { UpdateManagerPage } from '../managers/update/page';
+import type { UpdateManagerSW } from '../managers/update/sw';
 
 export type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
@@ -24,7 +25,7 @@ export interface ContextBase {
 export interface ContextSWInterface extends ContextBase {
   subscriptionManager: SubscriptionManagerSW;
   workerMessenger: WorkerMessengerSW;
-  updateManager: UpdateManager<ContextSWInterface>;
+  updateManager: UpdateManagerSW;
 }
 
 export interface ContextInterface extends ContextBase {
@@ -34,5 +35,5 @@ export interface ContextInterface extends ContextBase {
   dynamicResourceLoader: DynamicResourceLoader;
   tagManager: ITagManager;
   slidedownManager: ISlidedownManager;
-  updateManager: UpdateManager<ContextInterface>;
+  updateManager: UpdateManagerPage;
 }

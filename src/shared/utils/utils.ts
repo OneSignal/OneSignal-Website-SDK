@@ -1,9 +1,9 @@
 import type { NotificationIcons } from 'src/shared/notifications/types';
+import { stringify } from '../context/helpers';
 import Log from '../libraries/Log';
 import { Browser } from '../useragent/constants';
 import { getBrowserName } from '../useragent/detect';
 import { IS_SERVICE_WORKER } from './EnvVariables';
-import { OneSignalUtils } from './OneSignalUtils';
 
 /**
  * Helper method for public APIs that waits until OneSignal is initialized, rejects if push notifications are
@@ -18,7 +18,7 @@ export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
 }
 
 export function logMethodCall(methodName: string, ...args: any[]) {
-  return OneSignalUtils.logMethodCall(methodName, ...args);
+  return Log.debug(`Called ${methodName}(${args.map(stringify).join(', ')})`);
 }
 
 /**
