@@ -10,7 +10,7 @@ import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager
 import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';
 import type { ISessionManager } from '../../shared/managers/sessionManager/types';
 import { SubscriptionManagerPage } from '../../shared/managers/subscription/page';
-import { UpdateManagerPage } from '../../shared/managers/update/page';
+import { UpdateManager } from '../../shared/managers/UpdateManager';
 import { PromptsManager } from '../managers/PromptsManager';
 import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
 import type { ISlidedownManager } from '../managers/slidedownManager/types';
@@ -25,7 +25,7 @@ export default class Context implements ContextInterface {
   public serviceWorkerManager: ServiceWorkerManager;
   public workerMessenger: WorkerMessengerPage;
   public permissionManager: PermissionManager;
-  public updateManager: UpdateManagerPage;
+  public updateManager: UpdateManager;
   public promptsManager: PromptsManager;
   public sessionManager: ISessionManager;
   public tagManager: ITagManager;
@@ -37,7 +37,7 @@ export default class Context implements ContextInterface {
     this.serviceWorkerManager = getServiceWorkerManager(this);
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessengerPage(this);
-    this.updateManager = new UpdateManagerPage(this);
+    this.updateManager = new UpdateManager(this);
     this.sessionManager = new SessionManager(this);
     this.tagManager = new TagManager(this);
     this.slidedownManager = new SlidedownManager(this);

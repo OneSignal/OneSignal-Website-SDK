@@ -76,7 +76,9 @@ export class SubscriptionManagerBase<
     }
 
     if (await this.isAlreadyRegisteredWithOneSignal()) {
-      await this.context.updateManager.sendPushDeviceRecordUpdate();
+      if ('updateManager' in this.context) {
+        await this.context.updateManager.sendPushDeviceRecordUpdate();
+      }
     } else {
       this.context.sessionManager.upsertSession(SessionOrigin.UserCreate);
     }

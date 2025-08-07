@@ -75,10 +75,6 @@ export function incrementPageViewCount() {
       newCountAccrossTabs: ${newCountAcrossTabs}.`);
 }
 
-export function simulatePageNavigationOrRefresh() {
-  incrementedPageViewCount = false;
-}
-
 /**
  * Returns true if this page is running OneSignal for the first time and has
  * not been navigated or refreshed.

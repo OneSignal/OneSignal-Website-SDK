@@ -1,7 +1,5 @@
 import type { AliasPair } from 'src/core/types/api';
 
-type Nullable = undefined | null;
-
 interface IndexOfAble {
   indexOf(match: string): number;
 }
@@ -15,40 +13,6 @@ export function containsMatch(
 ) {
   if (!indexOfAble) return false;
   return indexOfAble.indexOf(match) !== -1;
-}
-
-/**
- * Returns the current object without keys that have undefined values.
- * Regardless of whether the return result is used, the passed-in object is destructively modified.
- * Only affects keys that the object directly contains (i.e. not those inherited via the object's prototype).
- * @param object
- */
-export function trimUndefined(object: Record<string, unknown>) {
-  for (const property in object) {
-    if (object[property] === undefined) {
-      delete object[property];
-    }
-  }
-  return object;
-}
-
-/**
- * Capitalizes the first letter of the string.
- * @returns {string} The string with the first letter capitalized.
- */
-export function capitalize(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-export function isNullOrUndefined<T>(value: T | Nullable): boolean {
-  return typeof value === 'undefined' || value === null;
-}
-
-export function valueOrDefault<T>(value: T | Nullable, defaultValue: T): T {
-  if (typeof value === 'undefined' || value === null) {
-    return defaultValue;
-  }
-  return value;
 }
 
 /**
@@ -96,38 +60,6 @@ export function timeoutPromise(
     }, milliseconds);
   });
   return Promise.race([promise, timeoutPromise]);
-}
-
-/**
- * Returns trimmed version number
- * e.g: "10.01.30" becomes "10.01"
- * @param version - version number we want to check
- */
-export function parseVersionString(version: string | number): number {
-  const osVersionParts = version.toString().split('.');
-  const majorVersion = String(osVersionParts[0]).padStart(2, '0');
-  let minorVersion: string;
-  if (osVersionParts[1]) {
-    minorVersion = String(osVersionParts[1]).padStart(2, '0');
-  } else {
-    minorVersion = '00';
-  }
-
-  return Number(`${majorVersion}.${minorVersion}`);
-}
-
-/**
- * Gives back the last x number of parts providing a string with a delimiter.
- * Example: lastParts("api.staging.onesignal.com", ".", 3) will return "staging.onesignal.com"
- */
-export function lastParts(
-  subject: string,
-  delimiter: string,
-  maxParts: number,
-): string {
-  const parts = subject.split(delimiter);
-  const skipParts = Math.max(parts.length - maxParts, 0);
-  return parts.slice(skipParts).join(delimiter);
 }
 
 export function enforceAppId(appId: string | undefined | null): void {
