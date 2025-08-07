@@ -300,18 +300,6 @@ describe('ServiceWorker', () => {
         pushSubscriptionId,
       );
 
-      // should update DB and call open url
-      const pendingUrlOpening = await db.getAll('NotificationOpened');
-      expect(pendingUrlOpening).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: notificationId,
-            timestamp: expect.any(Number),
-            url: launchURL,
-          }),
-        ]),
-      );
-
       // should open url
       expect(self.clients.openWindow).toHaveBeenCalledWith(launchURL);
     });

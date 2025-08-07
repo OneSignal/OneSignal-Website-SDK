@@ -5,7 +5,6 @@ import {
 } from '../../sw/helpers/registration';
 import { timeoutPromise } from '../context/helpers';
 import type { ContextInterface } from '../context/types';
-import { putNotificationClickedEventPendingUrlOpening } from '../database/notifications';
 import { hasSafariWindow, supportsServiceWorkers } from '../environment/detect';
 import { SWRegistrationError } from '../errors/common';
 import { getBaseUrl } from '../helpers/general';
@@ -309,13 +308,6 @@ export class ServiceWorkerManager {
           Log.debug(
             'notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.',
           );
-          /* For empty notifications without a URL, use the current document's URL */
-          let url = event.result.url;
-          if (!url) {
-            // Least likely to modify, since modifying this property changes the page's URL
-            url = location.href;
-          }
-          await putNotificationClickedEventPendingUrlOpening(event);
         } else {
           await triggerNotificationClick(event);
         }

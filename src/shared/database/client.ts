@@ -72,6 +72,8 @@ export const getDb = async (version = VERSION) => {
       if (newDbVersion >= 7 && oldVersion < 7) {
         _db.createObjectStore(ModelName.Operations, { keyPath: 'modelId' });
       }
+
+      // TODO: next version delete NotificationOpened table
     },
   });
   return dbInstance;
