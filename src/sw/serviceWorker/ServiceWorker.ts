@@ -10,7 +10,6 @@ import {
 } from 'src/shared/database/client';
 import { getAppState, getDBAppConfig } from 'src/shared/database/config';
 import {
-  putNotificationClickedEventPendingUrlOpening,
   putNotificationClickedForOutcomes,
   putNotificationReceivedForOutcomes,
 } from 'src/shared/database/notifications';
@@ -916,9 +915,6 @@ export class OneSignalServiceWorker {
             try {
               if (notificationOpensLink) {
                 Log.debug(`Redirecting HTTPS site to (${launchUrl}).`);
-                await putNotificationClickedEventPendingUrlOpening(
-                  notificationClickEvent,
-                );
                 await client.navigate(launchUrl);
               } else {
                 Log.debug('Not navigating because link is special.');
@@ -928,9 +924,6 @@ export class OneSignalServiceWorker {
             }
           } else {
             // If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
-            await putNotificationClickedEventPendingUrlOpening(
-              notificationClickEvent,
-            );
             await OneSignalServiceWorker.openUrl(launchUrl);
           }
         }
@@ -940,9 +933,6 @@ export class OneSignalServiceWorker {
     }
 
     if (notificationOpensLink && !doNotOpenLink) {
-      await putNotificationClickedEventPendingUrlOpening(
-        notificationClickEvent,
-      );
       await OneSignalServiceWorker.openUrl(launchUrl);
     }
     if (saveNotificationClickedPromise) {

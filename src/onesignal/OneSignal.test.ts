@@ -772,7 +772,11 @@ describe('OneSignal', () => {
 
           await waitForOperations(5);
 
-          const dbSubscriptions = await db.getAll('subscriptions');
+          let dbSubscriptions: SubscriptionSchema[] = [];
+          await vi.waitUntil(async () => {
+            dbSubscriptions = await db.getAll('subscriptions');
+            return dbSubscriptions.length === 3;
+          });
 
           expect(dbSubscriptions).toHaveLength(3);
 
@@ -800,8 +804,11 @@ describe('OneSignal', () => {
             ModelChangeTags.NO_PROPOGATE,
           );
 
-          const dbSubscriptions = await db.getAll('subscriptions');
-          expect(dbSubscriptions).toHaveLength(1);
+          let dbSubscriptions: SubscriptionSchema[] = [];
+          await vi.waitUntil(async () => {
+            dbSubscriptions = await db.getAll('subscriptions');
+            return dbSubscriptions.length === 1;
+          });
 
           await window.OneSignal.login(externalId);
 
@@ -952,7 +959,7 @@ describe('OneSignal', () => {
           const _queue = window.OneSignal.coreDirector.operationRepo.queue;
           return _queue.length === length ? _queue : null;
         },
-        { interval: 1 },
+        { interval: 0 },
       );
       return queue;
     };

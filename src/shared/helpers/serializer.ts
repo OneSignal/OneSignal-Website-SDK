@@ -81,44 +81,6 @@ function toDatabaseButtons(
   );
 }
 
-export function notificationClickFromDatabase(
-  record: NotificationClickForOpenHandlingSchema,
-): NotificationClickEventInternal {
-  return {
-    result: {
-      actionId: record.action,
-      url: record.url,
-    },
-    notification: {
-      notificationId: record.id,
-      title: record.heading,
-      body: record.content,
-      additionalData: record.data,
-      launchURL: record.url,
-      confirmDelivery: record.rr,
-      icon: record.icon,
-      image: record.image,
-      topic: record.tag,
-      badgeIcon: record.badge,
-      actionButtons: toOSNotificationButtons(record.buttons),
-    },
-    timestamp: record.timestamp,
-  };
-}
-
-function toOSNotificationButtons(
-  buttons?: NotificationButtonsClickForOpenHandlingSchema[],
-): IOSNotificationActionButton[] | undefined {
-  return buttons?.map(
-    (button): IOSNotificationActionButton => ({
-      actionId: button.action,
-      text: button.title,
-      icon: button.icon,
-      launchURL: button.url,
-    }),
-  );
-}
-
 export interface NotificationClickedForOutcomesSchema {
   readonly appId: string;
   readonly notificationId: string; // indexDb's keyPath
