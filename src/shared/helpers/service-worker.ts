@@ -13,7 +13,7 @@ import { SessionOrigin, SessionStatus } from '../session/constants';
 import { initializeNewSession } from '../session/helpers';
 import type { Session, SessionOriginValue } from '../session/types';
 import { OneSignalUtils } from '../utils/OneSignalUtils';
-import OutcomesHelper from './OutcomesHelper';
+import { getConfigAttribution } from './OutcomesHelper';
 
 export function getServiceWorkerHref(
   config: ServiceWorkerManagerConfig,
@@ -225,7 +225,7 @@ async function finalizeSession(
     Log.debug(
       `send on_focus reporting session duration -> ${session.accumulatedDuration}s`,
     );
-    const attribution = await OutcomesHelper.getAttribution(outcomesConfig);
+    const attribution = await getConfigAttribution(outcomesConfig);
     Log.debug('send on_focus with attribution', attribution);
     await OneSignalApiSW.sendSessionDuration(
       appId,

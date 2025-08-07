@@ -1,15 +1,14 @@
 import type { AppConfig } from '../config/types';
+import type { ContextInterface, ContextSWInterface } from '../context/types';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
-import {
-  SubscriptionManager,
-  type SubscriptionManagerConfig,
-} from '../managers/SubscriptionManager';
-import type { ContextSWInterface } from '../models/ContextSW';
+import type { SubscriptionManagerConfig } from '../managers/subscription/base';
+import { SubscriptionManagerPage } from '../managers/subscription/page';
+import { SubscriptionManagerSW } from '../managers/subscription/sw';
 import Path from '../models/Path';
 
-export function getServiceWorkerManager(
-  context: ContextSWInterface,
-): ServiceWorkerManager {
+export function getServiceWorkerManager<
+  C extends ContextInterface | ContextSWInterface,
+>(context: C): ServiceWorkerManager<C> {
   const config: AppConfig = context.appConfig;
 
   const serviceWorkerManagerConfig = {
@@ -31,15 +30,31 @@ export function getServiceWorkerManager(
   return new ServiceWorkerManager(context, serviceWorkerManagerConfig);
 }
 
-export function getSubscriptionManager(
-  context: ContextSWInterface,
-): SubscriptionManager {
-  const config: AppConfig = context.appConfig;
-  const subscriptionManagerConfig: SubscriptionManagerConfig = {
+function createSubscriptionManagerConfig(
+  config: AppConfig,
+): SubscriptionManagerConfig {
+  return {
     safariWebId: config.safariWebId,
     appId: config.appId,
     vapidPublicKey: config.vapidPublicKey,
     onesignalVapidPublicKey: config.onesignalVapidPublicKey,
   };
-  return new SubscriptionManager(context, subscriptionManagerConfig);
+}
+
+export function getSubscriptionManagerPage(
+  context: ContextInterface,
+): SubscriptionManagerPage {
+  return new SubscriptionManagerPage(
+    context,
+    createSubscriptionManagerConfig(context.appConfig),
+  );
+}
+
+export function getSubscriptionManagerSW(
+  context: ContextSWInterface,
+): SubscriptionManagerSW {
+  return new SubscriptionManagerSW(
+    context,
+    createSubscriptionManagerConfig(context.appConfig),
+  );
 }

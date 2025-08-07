@@ -5,7 +5,6 @@ import { decodeHtmlEntities } from './helpers/dom';
 import MainHelper from './helpers/MainHelper';
 import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
-import type { ContextSWInterface } from './models/ContextSW';
 import type {
   NotificationClickEvent,
   NotificationClickEventInternal,
@@ -19,7 +18,7 @@ import { awaitOneSignalInitAndSupported } from './utils/utils';
 
 export async function checkAndTriggerSubscriptionChanged() {
   OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
-  const context: ContextSWInterface = OneSignal.context;
+  const context = OneSignal.context;
   // isPushEnabled = subscribed && is not opted out
   const isPushEnabled: boolean =
     await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();

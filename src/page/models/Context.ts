@@ -1,16 +1,16 @@
 import type { AppConfig } from 'src/shared/config/types';
+import type { ContextInterface } from 'src/shared/context/types';
 import {
   getServiceWorkerManager,
-  getSubscriptionManager,
+  getSubscriptionManagerPage,
 } from '../../shared/helpers/context';
 import { WorkerMessenger } from '../../shared/libraries/WorkerMessenger';
 import PermissionManager from '../../shared/managers/PermissionManager';
 import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager';
 import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';
 import type { ISessionManager } from '../../shared/managers/sessionManager/types';
-import { SubscriptionManager } from '../../shared/managers/SubscriptionManager';
+import { SubscriptionManagerPage } from '../../shared/managers/subscription/page';
 import { UpdateManager } from '../../shared/managers/UpdateManager';
-import type { ContextSWInterface } from '../../shared/models/ContextSW';
 import { PromptsManager } from '../managers/PromptsManager';
 import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
 import type { ISlidedownManager } from '../managers/slidedownManager/types';
@@ -18,20 +18,14 @@ import TagManager from '../managers/tagManager/TagManager';
 import type { ITagManager } from '../managers/tagManager/types';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 
-export interface ContextInterface extends ContextSWInterface {
-  dynamicResourceLoader: DynamicResourceLoader;
-  tagManager: ITagManager;
-  slidedownManager: ISlidedownManager;
-}
-
 export default class Context implements ContextInterface {
   public appConfig: AppConfig;
   public dynamicResourceLoader: DynamicResourceLoader;
-  public subscriptionManager: SubscriptionManager;
-  public serviceWorkerManager: ServiceWorkerManager;
-  public workerMessenger: WorkerMessenger;
+  public subscriptionManager: SubscriptionManagerPage;
+  public serviceWorkerManager: ServiceWorkerManager<ContextInterface>;
+  public workerMessenger: WorkerMessenger<ContextInterface>;
   public permissionManager: PermissionManager;
-  public updateManager: UpdateManager;
+  public updateManager: UpdateManager<ContextInterface>;
   public promptsManager: PromptsManager;
   public sessionManager: ISessionManager;
   public tagManager: ITagManager;
@@ -39,7 +33,7 @@ export default class Context implements ContextInterface {
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
-    this.subscriptionManager = getSubscriptionManager(this);
+    this.subscriptionManager = getSubscriptionManagerPage(this);
     this.serviceWorkerManager = getServiceWorkerManager(this);
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);

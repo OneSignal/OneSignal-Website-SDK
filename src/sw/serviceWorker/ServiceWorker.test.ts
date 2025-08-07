@@ -14,10 +14,8 @@ import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import type { AppConfig } from 'src/shared/config/types';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
-import {
-  DEFAULT_DEVICE_ID,
-  SubscriptionManager,
-} from 'src/shared/managers/SubscriptionManager';
+import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
+import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
@@ -49,6 +47,8 @@ const version = __VERSION__;
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
 vi.spyOn(Log, 'debug').mockImplementation(() => {});
+
+const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, 'subscribe');
 
 let { isServiceWorker } = vi.hoisted(() => {
   return { isServiceWorker: false };
@@ -321,7 +321,7 @@ describe('ServiceWorker', () => {
 
   describe('pushsubscriptionchange', () => {
     const registerSubscriptionCall = vi.spyOn(
-      SubscriptionManager.prototype,
+      SubscriptionManagerSW.prototype,
       'registerSubscription',
     );
 
@@ -337,6 +337,9 @@ describe('ServiceWorker', () => {
     });
 
     test('with old subscription and no device id', async () => {
+      subscribeCall.mockImplementationOnce(() => {
+        throw new Error('cant get raw sub');
+      });
       server.use(
         http.post(`**/players`, () => HttpResponse.json({ id: null })),
       );
@@ -366,10 +369,9 @@ describe('ServiceWorker', () => {
     });
 
     test('with old subscription and a device id', async () => {
-      const subscribeCall = vi.spyOn(
-        SubscriptionManager.prototype,
-        'subscribe',
-      );
+      subscribeCall.mockImplementationOnce(() => {
+        throw new Error('cant get raw sub');
+      });
 
       const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
         oldSubscription: {},

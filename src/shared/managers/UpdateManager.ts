@@ -1,21 +1,21 @@
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 import User from '../../onesignal/User';
 import OneSignalApiShared from '../api/OneSignalApiShared';
+import type { ContextInterface, ContextSWInterface } from '../context/types';
 import { getSubscriptionType } from '../environment/detect';
 import { getPageViewCount, isFirstPageView } from '../helpers/pageview';
 import Log from '../libraries/Log';
-import type { ContextSWInterface } from '../models/ContextSW';
 import type { OutcomeRequestData } from '../outcomes/types';
 import { SessionOrigin } from '../session/constants';
 import { NotificationType } from '../subscriptions/constants';
 import { logMethodCall } from '../utils/utils';
 
-export class UpdateManager {
-  private context: ContextSWInterface;
+export class UpdateManager<C extends ContextInterface | ContextSWInterface> {
+  private context: C;
 
   private onSessionSent: boolean;
 
-  constructor(context: ContextSWInterface) {
+  constructor(context: C) {
     this.context = context;
     this.onSessionSent = getPageViewCount() > 1;
   }

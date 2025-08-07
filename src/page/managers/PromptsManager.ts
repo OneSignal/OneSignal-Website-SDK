@@ -1,3 +1,4 @@
+import type { ContextInterface } from 'src/shared/context/types';
 import { delay } from 'src/shared/helpers/general';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
 import { getLocalPageViewCount } from 'src/shared/helpers/localStorage';
@@ -25,7 +26,6 @@ import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import OneSignalUtils from '../../shared/utils/OneSignalUtils';
-import type { ContextInterface } from '../models/Context';
 import { DismissPrompt } from '../models/Dismiss';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Slidedown from '../slidedown/Slidedown';

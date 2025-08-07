@@ -2,6 +2,7 @@ import type {
   TagsObjectForApi,
   TagsObjectWithBoolean,
 } from 'src/page/tags/types';
+import type { ContextInterface } from 'src/shared/context/types';
 import {
   ChannelCaptureError,
   ExistingChannelError,
@@ -23,7 +24,6 @@ import { NotificationPermission } from '../../../shared/models/NotificationPermi
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';
 import TagUtils from '../../../shared/utils/TagUtils';
-import type { ContextInterface } from '../../models/Context';
 import { DismissPrompt } from '../../models/Dismiss';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';

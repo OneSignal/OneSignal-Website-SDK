@@ -1,8 +1,8 @@
 import type { Serializable } from '../../page/models/Serializable';
 import { getAvailableServiceWorker } from '../../sw/helpers/registration';
+import type { ContextInterface, ContextSWInterface } from '../context/types';
 import { supportsServiceWorkers } from '../environment/detect';
 import { EmptyArgumentError } from '../errors/common';
-import type { ContextSWInterface } from '../models/ContextSW';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import Log from './Log';
 
@@ -110,12 +110,16 @@ export type WorkerMessengerPayload =
  * A Promise-based PostMessage helper to ease back-and-forth replies between
  * service workers and window frames.
  */
-export class WorkerMessenger {
-  private context?: ContextSWInterface;
+export class WorkerMessenger<
+  C extends ContextInterface | ContextSWInterface =
+    | ContextInterface
+    | ContextSWInterface,
+> {
+  private context?: C;
   private replies: WorkerMessengerReplyBuffer;
 
   constructor(
-    context?: ContextSWInterface,
+    context?: C,
     replies: WorkerMessengerReplyBuffer = new WorkerMessengerReplyBuffer(),
   ) {
     this.context = context;
