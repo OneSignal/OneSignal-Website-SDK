@@ -5,7 +5,7 @@ import {
   DismissTimeKey,
 } from '../../page/models/Dismiss';
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
-import { windowEnvString } from '../environment/environment';
+import { windowEnvString } from '../environment/detect';
 import Log from '../libraries/Log';
 import Database from '../services/Database';
 

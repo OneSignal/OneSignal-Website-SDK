@@ -1,5 +1,8 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { InvalidArgumentError } from 'src/shared/errors/InvalidArgumentError';
+import {
+  EmptyArgumentError,
+  WrongTypeArgumentError,
+} from 'src/shared/errors/common';
 import Database from 'src/shared/services/Database';
 import NotificationsNamespace from './NotificationsNamespace';
 
@@ -16,12 +19,12 @@ describe('NotificationsNamespace', () => {
     expect(appState.defaultNotificationUrl).toBe('https://test.com');
 
     await expect(notifications.setDefaultUrl(undefined)).rejects.toThrow(
-      InvalidArgumentError,
+      EmptyArgumentError('url'),
     );
 
     // @ts-expect-error - testing throwing invalid type
     await expect(notifications.setDefaultUrl(1)).rejects.toThrow(
-      InvalidArgumentError,
+      WrongTypeArgumentError('url'),
     );
   });
 
@@ -34,11 +37,11 @@ describe('NotificationsNamespace', () => {
 
     // @ts-expect-error - testing throwing invalid type
     await expect(notifications.setDefaultTitle(1)).rejects.toThrow(
-      InvalidArgumentError,
+      WrongTypeArgumentError('title'),
     );
 
     await expect(notifications.setDefaultTitle(undefined)).rejects.toThrow(
-      InvalidArgumentError,
+      EmptyArgumentError('title'),
     );
   });
 });

@@ -6,7 +6,7 @@ import type {
   IUserProperties,
 } from 'src/core/types/api';
 import type { ModelNameType } from 'src/core/types/models';
-import type { AppConfig } from '../config';
+import type { AppConfig } from '../config/types';
 import {
   type NotificationClickForOpenHandlingSchema,
   NotificationClickForOpenHandlingSerializer,
@@ -19,8 +19,6 @@ import {
   AppState,
   type PendingNotificationClickEvents,
 } from '../models/AppState';
-import type { NotificationClickEventInternal } from '../models/NotificationEvent';
-import type { IOSNotification } from '../models/OSNotification';
 import type { SentUniqueOutcome } from '../models/Outcomes';
 import type {
   OutcomesNotificationClicked,
@@ -28,7 +26,12 @@ import type {
 } from '../models/OutcomesNotificationEvents';
 import { Subscription } from '../models/Subscription';
 import { UserState } from '../models/UserState';
-import { ONESIGNAL_SESSION_KEY, type Session } from '../session';
+import type {
+  IOSNotification,
+  NotificationClickEventInternal,
+} from '../notifications/types';
+import { ONESIGNAL_SESSION_KEY } from '../session/constants';
+import type { Session } from '../session/types';
 
 const DatabaseEventName = {
   SET: 0,

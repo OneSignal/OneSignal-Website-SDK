@@ -1,9 +1,5 @@
-import { useSafariLegacyPush } from '../environment/environment';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../errors/InvalidArgumentError';
-import OneSignalError from '../errors/OneSignalError';
+import { useSafariLegacyPush } from '../environment/detect';
+import { EmptyArgumentError } from '../errors/common';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -20,9 +16,7 @@ export default class PermissionManager {
    */
   async getPermissionStatus(): Promise<NotificationPermission> {
     if (!OneSignal.context) {
-      throw new OneSignalError(
-        `OneSignal.context is undefined. Make sure to call OneSignal.init() before calling getPermissionStatus().`,
-      );
+      throw new Error(`OneSignal.context is undefined. Call init first`);
     }
 
     return await OneSignal.context.permissionManager.getNotificationPermission(
@@ -58,7 +52,7 @@ export default class PermissionManager {
     if (safariWebId)
       return window.safari?.pushNotification?.permission(safariWebId)
         .permission as NotificationPermission;
-    throw new InvalidArgumentError('safariWebId', InvalidArgumentReason.Empty);
+    throw EmptyArgumentError('safariWebId');
   }
 
   /**

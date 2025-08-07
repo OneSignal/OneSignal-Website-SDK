@@ -1,4 +1,6 @@
 import MainHelper from 'src/shared/helpers/MainHelper';
+import { NotificationType } from 'src/shared/subscriptions/constants';
+import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
@@ -7,10 +9,6 @@ import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOpe
 import { type Operation } from '../operations/Operation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import type { IOperationRepo } from '../types/operation';
-import {
-  NotificationType,
-  type NotificationTypeValue,
-} from '../types/subscription';
 import { ModelStoreListener } from './ModelStoreListener';
 
 // Implements logic similar to Android SDK's SubscriptionModelStoreListener

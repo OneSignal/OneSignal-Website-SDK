@@ -19,6 +19,10 @@ import {
   setCreateUserResponse,
 } from '__test__/support/helpers/requests';
 import Database from 'src/shared/services/Database';
+import {
+  NotificationType,
+  SubscriptionType,
+} from 'src/shared/subscriptions/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -35,7 +39,6 @@ import { TransferSubscriptionOperation } from '../operations/TransferSubscriptio
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
-import { NotificationType, SubscriptionType } from '../types/subscription';
 import { IdentityOperationExecutor } from './IdentityOperationExecutor';
 import { LoginUserOperationExecutor } from './LoginUserOperationExecutor';
 

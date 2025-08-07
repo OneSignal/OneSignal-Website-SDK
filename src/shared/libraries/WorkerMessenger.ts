@@ -1,11 +1,7 @@
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../errors/InvalidArgumentError';
-
 import type { Serializable } from '../../page/models/Serializable';
-import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
-import { supportsServiceWorkers } from '../environment/environment';
+import { getAvailableServiceWorker } from '../../sw/helpers/registration';
+import { supportsServiceWorkers } from '../environment/detect';
+import { EmptyArgumentError } from '../errors/common';
 import type { ContextSWInterface } from '../models/ContextSW';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import Log from './Log';
@@ -165,10 +161,7 @@ export class WorkerMessenger {
   ) {
     if (IS_SERVICE_WORKER) {
       if (!windowClient) {
-        throw new InvalidArgumentError(
-          'windowClient',
-          InvalidArgumentReason.Empty,
-        );
+        throw EmptyArgumentError('windowClient');
       } else {
         Log.debug(
           `[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${
@@ -205,8 +198,7 @@ export class WorkerMessenger {
       return;
     }
 
-    const availableWorker =
-      ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    const availableWorker = getAvailableServiceWorker(workerRegistration);
     if (!availableWorker) {
       Log.error(
         '`[Worker Messenger] [Page -> SW] Could not get ServiceWorker to postMessage!',

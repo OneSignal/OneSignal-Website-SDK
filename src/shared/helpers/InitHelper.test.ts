@@ -1,7 +1,7 @@
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import Context from 'src/page/models/Context';
-import { type AppConfig } from 'src/shared/config';
+import type { AppConfig } from 'src/shared/config/types';
 import Database from '../services/Database';
 import InitHelper from './InitHelper';
 

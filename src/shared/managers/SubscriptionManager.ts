@@ -1,28 +1,15 @@
-import {
-  NotificationType,
-  type NotificationTypeValue,
-} from 'src/core/types/subscription';
+import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
 import UserDirector from 'src/onesignal/UserDirector';
 import LoginManager from 'src/page/managers/LoginManager';
-import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
-import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
+import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import { NotificationType } from 'src/shared/subscriptions/constants';
+import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
+import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
 import {
-  getOneSignalApiUrl,
-  useSafariLegacyPush,
-} from '../environment/environment';
-import {
-  InvalidStateError,
-  InvalidStateReason,
-} from '../errors/InvalidStateError';
-import NotImplementedError from '../errors/NotImplementedError';
-import PushPermissionNotGrantedError, {
-  PushPermissionNotGrantedErrorReason,
-} from '../errors/PushPermissionNotGrantedError';
-import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
-import SubscriptionError, {
-  SubscriptionErrorReason,
-} from '../errors/SubscriptionError';
+  MissingSafariWebIdError,
+  PermissionBlockedError,
+  SWRegistrationError,
+} from '../errors/common';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import Log from '../libraries/Log';
 import type { ContextSWInterface } from '../models/ContextSW';
@@ -40,8 +27,9 @@ import {
 } from '../models/UnsubscriptionStrategy';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
-import { SessionOrigin } from '../session';
-import { Browser, getBrowserName } from '../useragent';
+import { SessionOrigin } from '../session/constants';
+import { Browser } from '../useragent/constants';
+import { getBrowserName } from '../useragent/detect';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { PermissionUtils } from '../utils/PermissionUtils';
@@ -105,6 +93,8 @@ function executeCallback<T>(callback?: (...args: any[]) => T, ...args: any[]) {
     return callback.apply(null, args);
   }
 }
+
+const NotImplementedError = new Error('Not implemented');
 
 export class SubscriptionManager {
   private context: ContextSWInterface;
@@ -182,9 +172,7 @@ export class SubscriptionManager {
         (await OneSignal.context.permissionManager.getPermissionStatus()) ===
         NotificationPermission.Denied
       )
-        throw new PushPermissionNotGrantedError(
-          PushPermissionNotGrantedErrorReason.Blocked,
-        );
+        throw PermissionBlockedError;
 
       if (useSafariLegacyPush()) {
         rawPushSubscription = await this.subscribeSafari();
@@ -321,15 +309,15 @@ export class SubscriptionManager {
 
   public async unsubscribe(strategy: UnsubscriptionStrategyValue) {
     if (strategy === UnsubscriptionStrategy.DestroySubscription) {
-      throw new NotImplementedError();
+      throw NotImplementedError;
     } else if (strategy === UnsubscriptionStrategy.MarkUnsubscribed) {
       if (IS_SERVICE_WORKER) {
         await Database.put('Options', { key: 'optedOut', value: true });
       } else {
-        throw new NotImplementedError();
+        throw NotImplementedError;
       }
     } else {
-      throw new NotImplementedError();
+      throw NotImplementedError;
     }
   }
 
@@ -388,7 +376,7 @@ export class SubscriptionManager {
   private async subscribeSafari(): Promise<RawPushSubscription> {
     const pushSubscriptionDetails = new RawPushSubscription();
     if (!this.config.safariWebId) {
-      throw new SdkInitError(SdkInitErrorKind.MissingSafariWebId);
+      throw MissingSafariWebIdError;
     }
 
     const { deviceToken: existingDeviceToken } =
@@ -423,7 +411,7 @@ export class SubscriptionManager {
       pushSubscriptionDetails.setFromSafariSubscription(deviceToken);
     } else {
       this.safariPermissionPromptFailed = true;
-      throw new SubscriptionError(SubscriptionErrorReason.InvalidSafariSetup);
+      throw new Error('Safari url/icon/certificate invalid or in private mode');
     }
     return pushSubscriptionDetails;
   }
@@ -469,17 +457,13 @@ export class SubscriptionManager {
             'Exiting subscription and not registering worker because the permission was dismissed.',
           );
           OneSignal._sessionInitAlreadyRunning = false;
-          throw new PushPermissionNotGrantedError(
-            PushPermissionNotGrantedErrorReason.Dismissed,
-          );
+          throw new Error('Permission dismissed');
         case NotificationPermission.Denied:
           Log.debug(
             'Exiting subscription and not registering worker because the permission was blocked.',
           );
           OneSignal._sessionInitAlreadyRunning = false;
-          throw new PushPermissionNotGrantedError(
-            PushPermissionNotGrantedErrorReason.Blocked,
-          );
+          throw PermissionBlockedError;
       }
     }
 
@@ -489,7 +473,7 @@ export class SubscriptionManager {
       workerRegistration =
         await this.context.serviceWorkerManager.installWorker();
     } catch (err) {
-      if (err instanceof ServiceWorkerRegistrationError) {
+      if (err instanceof SWRegistrationError) {
         // TODO: This doesn't register the subscription any more, most likely broke
         // in some refactoring in the v16 major release. It would be useful if a
         // subscription was created so the customer knows this failed by seeing
@@ -542,7 +526,7 @@ export class SubscriptionManager {
     const swRegistration = self.registration;
 
     if (!swRegistration.active && getBrowserName() !== Browser.Firefox) {
-      throw new InvalidStateError(InvalidStateReason.ServiceWorkerNotActivated);
+      throw new Error('SW not activated');
       /*
         Or should we wait for the service worker to be ready?
 
@@ -557,13 +541,9 @@ export class SubscriptionManager {
       userVisibleOnly: true,
     });
     if (pushPermission === 'denied') {
-      throw new PushPermissionNotGrantedError(
-        PushPermissionNotGrantedErrorReason.Blocked,
-      );
+      throw PermissionBlockedError;
     } else if (pushPermission === 'prompt') {
-      throw new PushPermissionNotGrantedError(
-        PushPermissionNotGrantedErrorReason.Default,
-      );
+      throw new Error('Permission not granted');
     }
 
     return await this.subscribeWithVapidKey(
@@ -738,7 +718,7 @@ export class SubscriptionManager {
         !existingSubscription,
       ];
     } catch (e) {
-      if (e instanceof InvalidStateError) {
+      if (e instanceof Error) {
         // This exception is thrown if the key for the existing applicationServerKey is different,
         //    so we must unregister first.
         // In Chrome, e.message contains will be the following in this case for reference;

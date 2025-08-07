@@ -1,19 +1,23 @@
 import type Bell from 'src/page/bell/Bell';
+import { getAppConfig } from 'src/shared/config/app';
+import type { AppConfig, AppUserConfig } from 'src/shared/config/types';
+import { windowEnvString } from 'src/shared/environment/detect';
 import {
-  getAppConfig,
-  type AppConfig,
-  type AppUserConfig,
-} from 'src/shared/config';
-import { windowEnvString } from 'src/shared/environment';
+  EmptyArgumentError,
+  MissingSafariWebIdError,
+  WrongTypeArgumentError,
+} from 'src/shared/errors/common';
+import {
+  getConsentRequired,
+  removeLegacySubscriptionOptions,
+  setConsentRequired as setStorageConsentRequired,
+} from 'src/shared/helpers/localStorage';
 import {
   _onSubscriptionChanged,
   checkAndTriggerSubscriptionChanged,
 } from 'src/shared/listeners';
-import {
-  Browser,
-  getBrowserName,
-  getBrowserVersion,
-} from 'src/shared/useragent';
+import { Browser } from 'src/shared/useragent/constants';
+import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
@@ -22,18 +26,12 @@ import Context from '../page/models/Context';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../shared/errors/InvalidArgumentError';
-import { SdkInitError, SdkInitErrorKind } from '../shared/errors/SdkInitError';
 import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
 import Database from '../shared/services/Database';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
-import LocalStorage from '../shared/utils/LocalStorage';
 import { logMethodCall } from '../shared/utils/utils';
 import DebugNamespace from './DebugNamesapce';
 import NotificationsNamespace from './NotificationsNamespace';
@@ -95,21 +93,15 @@ export default class OneSignal {
     logMethodCall('login', { externalId, jwtToken });
 
     if (typeof externalId === 'undefined') {
-      throw new InvalidArgumentError('externalId', InvalidArgumentReason.Empty);
+      throw EmptyArgumentError('externalId');
     }
 
     if (typeof externalId !== 'string') {
-      throw new InvalidArgumentError(
-        'externalId',
-        InvalidArgumentReason.WrongType,
-      );
+      throw WrongTypeArgumentError('externalId');
     }
 
     if (jwtToken !== undefined && typeof jwtToken !== 'string') {
-      throw new InvalidArgumentError(
-        'jwtToken',
-        InvalidArgumentReason.WrongType,
-      );
+      throw WrongTypeArgumentError('jwtToken');
     }
 
     await LoginManager.login(externalId, jwtToken);
@@ -130,7 +122,7 @@ export default class OneSignal {
       `Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`,
     );
 
-    LocalStorage.removeLegacySubscriptionOptions();
+    removeLegacySubscriptionOptions();
 
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);
@@ -144,13 +136,13 @@ export default class OneSignal {
        * support on Chrome/Firefox and don't intend to support Safari but don't
        * place conditional initialization checks.
        */
-      Log.warn(new SdkInitError(SdkInitErrorKind.MissingSafariWebId));
+      Log.warn(MissingSafariWebIdError);
       return;
     }
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
 
-    if (LocalStorage.getConsentRequired()) {
+    if (getConsentRequired()) {
       const providedConsent = await Database.getConsentGiven();
       if (!providedConsent) {
         OneSignal.pendingInit = true;
@@ -226,14 +218,11 @@ export default class OneSignal {
     logMethodCall('setConsentGiven', { consent });
 
     if (typeof consent === 'undefined') {
-      throw new InvalidArgumentError('consent', InvalidArgumentReason.Empty);
+      throw EmptyArgumentError('consent');
     }
 
     if (typeof consent !== 'boolean') {
-      throw new InvalidArgumentError(
-        'consent',
-        InvalidArgumentReason.WrongType,
-      );
+      throw WrongTypeArgumentError('consent');
     }
 
     await Database.setConsentGiven(consent);
@@ -244,20 +233,14 @@ export default class OneSignal {
     logMethodCall('setConsentRequired', { requiresConsent });
 
     if (typeof requiresConsent === 'undefined') {
-      throw new InvalidArgumentError(
-        'requiresConsent',
-        InvalidArgumentReason.Empty,
-      );
+      throw EmptyArgumentError('requiresConsent');
     }
 
     if (typeof requiresConsent !== 'boolean') {
-      throw new InvalidArgumentError(
-        'requiresConsent',
-        InvalidArgumentReason.WrongType,
-      );
+      throw WrongTypeArgumentError('requiresConsent');
     }
 
-    LocalStorage.setConsentRequired(requiresConsent);
+    setStorageConsentRequired(requiresConsent);
   }
 
   /**

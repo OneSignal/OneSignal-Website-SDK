@@ -2,7 +2,7 @@ import type {
   TagCategory,
   TagsObjectForApi,
   TagsObjectWithBoolean,
-} from 'src/page/tags';
+} from 'src/page/tags/types';
 
 export default class TagUtils {
   static convertTagsApiToBooleans(

@@ -4,12 +4,17 @@ import type { APIHeaders } from 'src/shared/models/APIHeaders';
 import type {
   NotificationTypeValue,
   SubscriptionTypeValue,
-} from './subscription';
+} from 'src/shared/subscriptions/types';
 
 export interface RequestMetadata {
   appId: string;
   subscriptionId?: string;
   jwtHeader?: APIHeaders;
+}
+
+export interface AliasPair {
+  label: string;
+  id: string;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

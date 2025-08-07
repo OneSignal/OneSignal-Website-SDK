@@ -1,9 +1,5 @@
-import { getOneSignalApiUrl } from '../environment/environment';
-import {
-  OneSignalApiError,
-  OneSignalApiErrorKind,
-} from '../errors/OneSignalApiError';
-import OneSignalError from '../errors/OneSignalError';
+import { getOneSignalApiUrl } from '../environment/detect';
+import { AppIDMissingError, RetryLimitError } from '../errors/common';
 import { delay, isValidUuid } from '../helpers/general';
 import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';
@@ -68,9 +64,7 @@ export class OneSignalApiBase {
     headers: APIHeaders | undefined,
   ): Promise<OneSignalApiBaseResponse<T>> {
     if (!this.requestHasAppId(action, data)) {
-      return Promise.reject(
-        new OneSignalApiError(OneSignalApiErrorKind.MissingAppId),
-      );
+      return Promise.reject(AppIDMissingError);
     }
 
     const callHeaders = new Headers();
@@ -104,9 +98,7 @@ export class OneSignalApiBase {
     retry = 5,
   ): Promise<OneSignalApiBaseResponse<T>> {
     if (retry === 0) {
-      return Promise.reject(
-        new OneSignalApiError(OneSignalApiErrorKind.RetryLimitReached),
-      );
+      return Promise.reject(RetryLimitError);
     }
     try {
       const response = await fetch(url, contents);
@@ -127,9 +119,7 @@ export class OneSignalApiBase {
         );
         return OneSignalApiBase.executeFetch(url, contents, retry - 1);
       }
-      throw new OneSignalError(
-        `OneSignalApiBase: failed to execute HTTP call: ${e}`,
-      );
+      throw new Error(`Failed to execute HTTP call: ${e}`);
     }
   }
 

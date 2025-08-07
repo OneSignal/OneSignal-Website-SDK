@@ -1,8 +1,8 @@
 import type {
   IOSNotification,
   IOSNotificationActionButton,
-} from 'src/shared/models/OSNotification';
-import type { NotificationClickEventInternal } from '../models/NotificationEvent';
+  NotificationClickEventInternal,
+} from 'src/shared/notifications/types';
 import type {
   OutcomesNotificationClicked,
   OutcomesNotificationReceived,

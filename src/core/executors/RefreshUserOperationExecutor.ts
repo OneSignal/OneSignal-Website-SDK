@@ -5,6 +5,7 @@ import {
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import Log from 'src/shared/libraries/Log';
 import Database from 'src/shared/services/Database';
+import { NotificationType } from 'src/shared/subscriptions/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
 import {
@@ -19,11 +20,9 @@ import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
-import AliasPair from '../requestService/AliasPair';
-import { RequestService } from '../requestService/RequestService';
+import { getUserByAlias } from '../requests/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import { NotificationType } from '../types/subscription';
 import { type IRebuildUserService } from '../types/user';
 
 // Implements logic similar to Android SDK's RefreshUserOperationExecutor
@@ -70,9 +69,12 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   private async getUser(op: RefreshUserOperation): Promise<ExecutionResponse> {
-    const response = await RequestService.getUser(
+    const response = await getUserByAlias(
       { appId: op.appId },
-      new AliasPair(IdentityConstants.ONESIGNAL_ID, op.onesignalId),
+      {
+        label: IdentityConstants.ONESIGNAL_ID,
+        id: op.onesignalId,
+      },
     );
 
     const { ok, result, retryAfterSeconds, status } = response;

@@ -1,19 +1,18 @@
+import { IdentityConstants } from 'src/core/constants';
+import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
-import { NotificationType } from 'src/core/types/subscription';
-import { supportsServiceWorkers } from 'src/shared/environment';
-import {
-  SessionOrigin,
-  type SessionOriginValue,
-  type UpsertOrDeactivateSessionPayload,
-} from 'src/shared/session';
-import AliasPair from '../../../core/requestService/AliasPair';
-import { RequestService } from '../../../core/requestService/RequestService';
+import { enforceAlias, enforceAppId } from 'src/shared/context/helpers';
+import { supportsServiceWorkers } from 'src/shared/environment/detect';
+import { SessionOrigin } from 'src/shared/session/constants';
+import type {
+  SessionOriginValue,
+  UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session/types';
+import { NotificationType } from 'src/shared/subscriptions/constants';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
 import type { ContextInterface } from '../../../page/models/Context';
-import Utils from '../../../shared/context/Utils';
-import OneSignalError from '../../../shared/errors/OneSignalError';
 import MainHelper from '../../helpers/MainHelper';
 import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/WorkerMessenger';
@@ -93,18 +92,14 @@ export class SessionManager implements ISessionManager {
       await OneSignal.coreDirector.getPushSubscriptionModel();
 
     if (!identityModel || !identityModel.onesignalId) {
-      throw new OneSignalError(
-        'Abort _getOneSignalAndSubscriptionIds: no identity',
-      );
+      throw new Error('No identity');
     }
 
     if (
       !pushSubscriptionModel ||
       !isCompleteSubscriptionObject(pushSubscriptionModel)
     ) {
-      throw new OneSignalError(
-        'Abort _getOneSignalAndSubscriptionIds: no subscription',
-      );
+      throw new Error('No subscription');
     }
 
     const { onesignalId } = identityModel;
@@ -381,7 +376,10 @@ export class SessionManager implements ISessionManager {
     }
 
     try {
-      const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+      const aliasPair = {
+        label: IdentityConstants.ONESIGNAL_ID,
+        id: onesignalId,
+      };
       // TO DO: in future, we should aggregate session count in case network call fails
       const updateUserPayload: IUpdateUser = {
         refresh_device_metadata: true,
@@ -391,10 +389,10 @@ export class SessionManager implements ISessionManager {
       };
 
       const appId = MainHelper.getAppId();
-      Utils.enforceAppId(appId);
-      Utils.enforceAlias(aliasPair);
+      enforceAppId(appId);
+      enforceAlias(aliasPair);
       try {
-        await RequestService.updateUser(
+        await updateUserByAlias(
           { appId, subscriptionId },
           aliasPair,
           updateUserPayload,

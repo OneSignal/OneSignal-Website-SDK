@@ -5,7 +5,7 @@ import { ModelChangeTags } from 'src/core/types/models';
 import {
   NotificationType,
   SubscriptionType,
-} from 'src/core/types/subscription';
+} from 'src/shared/subscriptions/constants';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 import OneSignal from '../../../src/onesignal/OneSignal';

@@ -13,6 +13,10 @@ import {
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
 import Database from 'src/shared/services/Database';
+import {
+  NotificationType,
+  SubscriptionType,
+} from 'src/shared/subscriptions/constants';
 import type { MockInstance } from 'vitest';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
@@ -23,7 +27,6 @@ import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { ExecutionResult } from '../types/operation';
-import { NotificationType, SubscriptionType } from '../types/subscription';
 import { RefreshUserOperationExecutor } from './RefreshUserOperationExecutor';
 
 let identityModelStore: IdentityModelStore;

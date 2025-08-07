@@ -1,4 +1,8 @@
 import {
+  AppIDMissingError,
+  MalformedArgumentError,
+} from 'src/shared/errors/common';
+import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
@@ -6,14 +10,6 @@ import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { ValidatorUtils } from '../page/utils/ValidatorUtils';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../shared/errors/InvalidArgumentError';
-import {
-  InvalidStateError,
-  InvalidStateReason,
-} from '../shared/errors/InvalidStateError';
 import Log from '../shared/libraries/Log';
 import { Subscription } from '../shared/models/Subscription';
 import Database from '../shared/services/Database';
@@ -131,13 +127,10 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     const subscriptionFromDb = await Database.getSubscription();
 
     if (!appConfig.appId) {
-      throw new InvalidStateError(InvalidStateReason.MissingAppId);
+      throw AppIDMissingError;
     }
     if (!ValidatorUtils.isValidBoolean(enabled)) {
-      throw new InvalidArgumentError(
-        'enabled',
-        InvalidArgumentReason.Malformed,
-      );
+      throw MalformedArgumentError('enabled');
     }
 
     subscriptionFromDb.optedOut = !enabled;

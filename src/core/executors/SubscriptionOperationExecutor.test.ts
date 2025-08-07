@@ -8,6 +8,10 @@ import { SomeOperation } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Database from 'src/shared/services/Database';
+import {
+  NotificationType,
+  SubscriptionType,
+} from 'src/shared/subscriptions/constants';
 import type { MockInstance } from 'vitest';
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
@@ -22,7 +26,6 @@ import { TransferSubscriptionOperation } from '../operations/TransferSubscriptio
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
-import { NotificationType, SubscriptionType } from '../types/subscription';
 import { SubscriptionOperationExecutor } from './SubscriptionOperationExecutor';
 
 let subscriptionModelStore: SubscriptionModelStore;

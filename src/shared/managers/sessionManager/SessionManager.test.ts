@@ -3,7 +3,7 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import LoginManager from 'src/page/managers/LoginManager';
 import Log from 'src/shared/libraries/Log';
-import { SessionOrigin } from 'src/shared/session';
+import { SessionOrigin } from 'src/shared/session/constants';
 import { SessionManager } from './SessionManager';
 
 vi.spyOn(Log, 'error').mockImplementation(() => '');

@@ -2,21 +2,17 @@ import {
   cancelableTimeout,
   type CancelableTimeoutPromise,
 } from '../../sw/helpers/CancelableTimeout';
-import Log from '../../sw/libraries/Log';
 import type { OSServiceWorkerFields } from '../../sw/serviceWorker/types';
 import OneSignalApiSW from '../api/OneSignalApiSW';
-import Utils from '../context/Utils';
+import { encodeHashAsUriComponent } from '../context/helpers';
+import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import type { OutcomesConfig } from '../outcomes/types';
 import Database from '../services/Database';
-import {
-  initializeNewSession,
-  type Session,
-  SessionOrigin,
-  type SessionOriginValue,
-  SessionStatus,
-} from '../session';
+import { SessionOrigin, SessionStatus } from '../session/constants';
+import { initializeNewSession } from '../session/helpers';
+import type { Session, SessionOriginValue } from '../session/types';
 import { OneSignalUtils } from '../utils/OneSignalUtils';
 import OutcomesHelper from './OutcomesHelper';
 
@@ -41,8 +37,8 @@ export default class ServiceWorkerHelper {
     sdkVersion: string,
   ): string {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
-    const appIdAsQueryParam = Utils.encodeHashAsUriComponent({ appId });
-    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({
+    const appIdAsQueryParam = encodeHashAsUriComponent({ appId });
+    const sdkVersionAsQueryParam = encodeHashAsUriComponent({
       sdkVersion,
     });
     return `${fullPath}?${appIdAsQueryParam}&${sdkVersionAsQueryParam}`;

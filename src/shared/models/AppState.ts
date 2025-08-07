@@ -1,4 +1,4 @@
-import type { NotificationClickEventInternal } from './NotificationEvent';
+import type { NotificationClickEventInternal } from '../notifications/types';
 
 // NotificationsClickEvents that are waiting to fire until these conditions are meet:
 // 1. Page is opened to the result.url; that is once a page is open to the intended URL

@@ -1,4 +1,4 @@
-import type { SessionOriginValue } from 'src/shared/session';
+import type { SessionOriginValue } from 'src/shared/session/types';
 import type { ISessionManager } from '../../../shared/managers/sessionManager/types';
 
 export class SessionManager implements ISessionManager {

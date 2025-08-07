@@ -1,25 +1,21 @@
-import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags';
+import type {
+  TagsObjectForApi,
+  TagsObjectWithBoolean,
+} from 'src/page/tags/types';
+import {
+  ChannelCaptureError,
+  ExistingChannelError,
+  PermissionBlockedError,
+} from 'src/shared/errors/common';
+import { InvalidChannelInputField } from 'src/shared/errors/constants';
 import { delay } from 'src/shared/helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
-  isSlidedownPushDependent,
-  type DelayedPromptTypeValue,
-} from 'src/shared/prompts';
+} from 'src/shared/prompts/constants';
+import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
+import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
-import {
-  ChannelCaptureError,
-  InvalidChannelInputField,
-} from '../../../page/errors/ChannelCaptureError';
-import ExistingChannelError from '../../../page/errors/ExistingChannelError';
-import {
-  NotSubscribedError,
-  NotSubscribedReason,
-} from '../../../shared/errors/NotSubscribedError';
-import OneSignalError from '../../../shared/errors/OneSignalError';
-import PushPermissionNotGrantedError, {
-  PushPermissionNotGrantedErrorReason,
-} from '../../../shared/errors/PushPermissionNotGrantedError';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import InitHelper from '../../../shared/helpers/InitHelper';
 import Log from '../../../shared/libraries/Log';
@@ -27,8 +23,6 @@ import { NotificationPermission } from '../../../shared/models/NotificationPermi
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';
 import TagUtils from '../../../shared/utils/TagUtils';
-import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
-import PermissionMessageDismissedError from '../../errors/PermissionMessageDismissedError';
 import type { ContextInterface } from '../../models/Context';
 import { DismissPrompt } from '../../models/Dismiss';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
@@ -81,22 +75,18 @@ export class SlidedownManager {
           return true;
         }
 
-        Log.info(new AlreadySubscribedError());
+        Log.info(new Error('User is already subscribed'));
         return false;
       }
 
       wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
 
       if (optedOut) {
-        throw new NotSubscribedError(NotSubscribedReason.OptedOut);
+        throw new Error('User is opted out');
       }
 
       if (permissionDenied) {
-        Log.info(
-          new PushPermissionNotGrantedError(
-            PushPermissionNotGrantedErrorReason.Blocked,
-          ),
-        );
+        Log.info(PermissionBlockedError);
         return false;
       }
     } else {
@@ -110,17 +100,17 @@ export class SlidedownManager {
         const bothSubscribed = smsSubscribed && emailSubscribed;
 
         if (smsSubscribed && slidedownType === DelayedPromptType.Sms) {
-          Log.info(new ExistingChannelError(DelayedPromptType.Sms));
+          Log.info(ExistingChannelError(DelayedPromptType.Sms));
           return false;
         }
 
         if (emailSubscribed && slidedownType === DelayedPromptType.Email) {
-          Log.info(new ExistingChannelError(DelayedPromptType.Email));
+          Log.info(ExistingChannelError(DelayedPromptType.Email));
           return false;
         }
 
         if (bothSubscribed && slidedownType === DelayedPromptType.SmsAndEmail) {
-          Log.info(new ExistingChannelError(DelayedPromptType.SmsAndEmail));
+          Log.info(ExistingChannelError(DelayedPromptType.SmsAndEmail));
           return false;
         }
       }
@@ -131,7 +121,9 @@ export class SlidedownManager {
     }
 
     if (wasDismissed && !options.force && !options.isInUpdateMode) {
-      Log.info(new PermissionMessageDismissedError(slidedownType));
+      Log.info(
+        new Error(`${slidedownType || 'unknown'} was previously dismissed`),
+      );
       return false;
     }
 
@@ -144,9 +136,7 @@ export class SlidedownManager {
 
   private async handleAllowForCategoryType(): Promise<void> {
     if (!this.slidedown) {
-      throw new OneSignalError(
-        `SlidedownManager: handleAllowForCategoryType: this.slidedown is undefined`,
-      );
+      throw SlidedownMissingError;
     }
 
     const tags = TaggingContainer.getValuesFromTaggingContainer();
@@ -158,9 +148,7 @@ export class SlidedownManager {
 
   private async handleAllowForEmailType(): Promise<void> {
     if (!this.slidedown) {
-      throw new OneSignalError(
-        `SlidedownManager: handleAllowForEmailType: this.slidedown is undefined`,
-      );
+      throw SlidedownMissingError;
     }
 
     const emailInputFieldIsValid =
@@ -179,9 +167,7 @@ export class SlidedownManager {
 
   private async handleAllowForSmsType(): Promise<void> {
     if (!this.slidedown) {
-      throw new OneSignalError(
-        `SlidedownManager: handleAllowForSmsType: this.slidedown is undefined`,
-      );
+      throw SlidedownMissingError;
     }
 
     const smsInputFieldIsValid =
@@ -199,9 +185,7 @@ export class SlidedownManager {
 
   private async handleAllowForSmsAndEmailType(): Promise<void> {
     if (!this.slidedown) {
-      throw new OneSignalError(
-        `SlidedownManager: handleAllowForSmsAndEmailType: this.slidedown is undefined`,
-      );
+      throw SlidedownMissingError;
     }
 
     const smsInputFieldIsValid =
@@ -269,9 +253,7 @@ export class SlidedownManager {
 
   private async showConfirmationToast(): Promise<void> {
     if (!this.slidedown) {
-      throw new OneSignalError(
-        `SlidedownManager: showConfirmationToast: this.slidedown is undefined`,
-      );
+      throw SlidedownMissingError;
     }
 
     const confirmMessage = this.slidedown.options.text.confirmMessage;
@@ -368,9 +350,7 @@ export class SlidedownManager {
 
   public async handleAllowClick(): Promise<void> {
     if (!this.slidedown) {
-      throw new OneSignalError(
-        `SlidedownManager: handleAllowClick: this.slidedown is undefined`,
-      );
+      throw SlidedownMissingError;
     }
     const slidedownType: DelayedPromptTypeValue = this.slidedown.options.type;
 
@@ -494,3 +474,5 @@ export class SlidedownManager {
     }
   }
 }
+
+const SlidedownMissingError = new Error('Slidedown is missing');

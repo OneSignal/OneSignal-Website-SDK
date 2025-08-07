@@ -1,4 +1,7 @@
-import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags';
+import type {
+  TagsObjectForApi,
+  TagsObjectWithBoolean,
+} from 'src/page/tags/types';
 import Log from '../../../shared/libraries/Log';
 import TagUtils from '../../../shared/utils/TagUtils';
 import type { ContextInterface } from '../../models/Context';

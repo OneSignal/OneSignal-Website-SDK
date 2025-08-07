@@ -1,14 +1,14 @@
-import type {
-  NotificationTypeValue,
-  SubscriptionTypeValue,
-} from 'src/core/types/subscription';
-import { NotificationType } from 'src/core/types/subscription';
 import {
   getDeviceModel,
   getDeviceOS,
   getSubscriptionType,
-} from 'src/shared/environment';
+} from 'src/shared/environment/detect';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import { NotificationType } from 'src/shared/subscriptions/constants';
+import type {
+  NotificationTypeValue,
+  SubscriptionTypeValue,
+} from 'src/shared/subscriptions/types';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import type { Serializable } from '../models/Serializable';
 

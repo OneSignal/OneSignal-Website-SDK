@@ -1,17 +1,17 @@
+import { IdentityConstants } from 'src/core/constants';
+import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
-import { NotificationType } from 'src/core/types/subscription';
-import AliasPair from '../../core/requestService/AliasPair';
-import { RequestService } from '../../core/requestService/RequestService';
-import type { OutcomeRequestData } from '../../page/models/OutcomeRequestData';
-import type { ServerAppConfig } from '../config';
-import Utils from '../context/Utils';
-import { getSubscriptionType } from '../environment';
+import type { ServerAppConfig } from '../config/types';
+import { enforceAlias, enforceAppId } from '../context/helpers';
+import { getSubscriptionType } from '../environment/detect';
 import Log from '../libraries/Log';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
   OutcomeAttributionType,
   type OutcomeAttribution,
 } from '../models/Outcomes';
+import type { OutcomeRequestData } from '../outcomes/types';
+import { NotificationType } from '../subscriptions/constants';
 import { OneSignalApiBase } from './OneSignalApiBase';
 import OneSignalApiShared from './OneSignalApiShared';
 
@@ -19,7 +19,7 @@ export class OneSignalApiSW {
   static async downloadServerAppConfig(
     appId: string,
   ): Promise<ServerAppConfig> {
-    Utils.enforceAppId(appId);
+    enforceAppId(appId);
     const response = await OneSignalApiBase.get<ServerAppConfig>(
       `sync/${appId}/web`,
       null,
@@ -37,7 +37,7 @@ export class OneSignalApiSW {
     identifier: string,
   ): Promise<string | null> {
     // Calling POST /players with an existing identifier returns us that player ID
-    Utils.enforceAppId(appId);
+    enforceAppId(appId);
     return OneSignalApiBase.post<{ id: string }>('players', {
       app_id: appId,
       device_type: deviceType,
@@ -66,7 +66,10 @@ export class OneSignalApiSW {
     onesignalId: string,
     subscriptionId: string,
   ): Promise<void> {
-    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+    const aliasPair = {
+      label: IdentityConstants.ONESIGNAL_ID,
+      id: onesignalId,
+    };
     // TO DO: in future, we should aggregate session count in case network call fails
     const updateUserPayload: IUpdateUser = {
       refresh_device_metadata: true,
@@ -75,10 +78,10 @@ export class OneSignalApiSW {
       },
     };
 
-    Utils.enforceAppId(appId);
-    Utils.enforceAlias(aliasPair);
+    enforceAppId(appId);
+    enforceAlias(aliasPair);
     try {
-      await RequestService.updateUser(
+      await updateUserByAlias(
         { appId, subscriptionId },
         aliasPair,
         updateUserPayload,
@@ -102,7 +105,10 @@ export class OneSignalApiSW {
       },
     };
 
-    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+    const aliasPair = {
+      label: IdentityConstants.ONESIGNAL_ID,
+      id: onesignalId,
+    };
 
     const outcomePayload: OutcomeRequestData = {
       id: 'os__session_duration',
@@ -120,7 +126,7 @@ export class OneSignalApiSW {
       attribution.type === OutcomeAttributionType.Direct ? true : false;
 
     try {
-      await RequestService.updateUser(
+      await updateUserByAlias(
         { appId, subscriptionId },
         aliasPair,
         updateUserPayload,

@@ -10,7 +10,7 @@ import {
   TOAST_CLASSES,
   TOAST_IDS,
 } from 'src/shared/slidedown/constants';
-import { isMobileBrowser } from 'src/shared/useragent';
+import { isMobileBrowser } from 'src/shared/useragent/detect';
 import { once } from 'src/shared/utils/utils';
 
 export default class ConfirmationToast {

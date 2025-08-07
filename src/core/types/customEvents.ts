@@ -1,4 +1,4 @@
-import type { SubscriptionTypeValue } from './subscription';
+import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 
 export interface ICustomEvent {
   name: string;

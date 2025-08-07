@@ -1,5 +1,5 @@
-import type { NotificationClickEvent } from '../../../../shared/models/NotificationEvent';
-import type { IOSWebhookEventPayload } from '../../IOSWebhookEventPayload';
+import type { NotificationClickEvent } from 'src/shared/notifications/types';
+import type { IOSWebhookEventPayload } from 'src/sw/serviceWorker/types';
 
 export class OSWebhookPayloadNotificationClick
   implements IOSWebhookEventPayload

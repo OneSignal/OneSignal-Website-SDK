@@ -1,14 +1,12 @@
-import {
-  NotificationType,
-  type NotificationTypeValue,
-} from 'src/core/types/subscription';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
-import { type AppConfig, getServerAppConfig } from 'src/shared/config';
-import { Utils } from 'src/shared/context/Utils';
-import { getDeviceType } from 'src/shared/environment';
+import { getServerAppConfig } from 'src/shared/config/app';
+import type { AppConfig } from 'src/shared/config/types';
+import { containsMatch } from 'src/shared/context/helpers';
+import { getDeviceType } from 'src/shared/environment/detect';
 import { delay } from 'src/shared/helpers/general';
 import ServiceWorkerHelper from 'src/shared/helpers/ServiceWorkerHelper';
+import Log from 'src/shared/libraries/Log';
 import {
   WorkerMessenger,
   WorkerMessengerCommand,
@@ -16,35 +14,39 @@ import {
 } from 'src/shared/libraries/WorkerMessenger';
 import ContextSW from 'src/shared/models/ContextSW';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
-import type {
-  NotificationClickEventInternal,
-  NotificationForegroundWillDisplayEventSerializable,
-} from 'src/shared/models/NotificationEvent';
+import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import type {
   IMutableOSNotification,
   IOSNotification,
-} from 'src/shared/models/OSNotification';
-import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
+  NotificationClickEventInternal,
+  NotificationForegroundWillDisplayEventSerializable,
+} from 'src/shared/notifications/types';
 import Database from 'src/shared/services/Database';
-import {
-  type PageVisibilityRequest,
-  type PageVisibilityResponse,
-  SessionStatus,
-  type UpsertOrDeactivateSessionPayload,
-} from 'src/shared/session';
-import { Browser, getBrowserName } from 'src/shared/useragent';
+import { SessionStatus } from 'src/shared/session/constants';
+import type {
+  PageVisibilityRequest,
+  PageVisibilityResponse,
+  UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session/types';
+import { NotificationType } from 'src/shared/subscriptions/constants';
+import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
+import { Browser } from 'src/shared/useragent/constants';
+import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
-import { ModelCacheDirectAccess } from '../helpers/ModelCacheDirectAccess';
-import Log from '../libraries/Log';
 import {
-  type OSMinifiedNotificationPayload,
-  OSMinifiedNotificationPayloadHelper,
-} from '../models/OSMinifiedNotificationPayload';
-import { OSNotificationButtonsConverter } from '../models/OSNotificationButtonsConverter';
+  isValidPayload,
+  toNativeNotificationAction,
+  toOSNotification,
+} from '../helpers/notifications';
 import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
-import type { OSServiceWorkerFields, SubscriptionChangeEvent } from './types';
+import { getPushSubscriptionIdByToken } from './helpers';
+import type {
+  OSMinifiedNotificationPayload,
+  OSServiceWorkerFields,
+  SubscriptionChangeEvent,
+} from './types';
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -65,7 +67,7 @@ export class ServiceWorker {
       await self.registration.pushManager.getSubscription();
     const pushToken = pushSubscription?.endpoint;
     if (!pushToken) return undefined;
-    return ModelCacheDirectAccess.getPushSubscriptionIdByToken(pushToken);
+    return getPushSubscriptionIdByToken(pushToken);
   }
 
   /**
@@ -76,7 +78,7 @@ export class ServiceWorker {
    */
   static get workerMessenger(): WorkerMessenger {
     if (!(self as any).workerMessenger) {
-      (self as any).workerMessenger = new WorkerMessenger();
+      (self as any).workerMessenger = new WorkerMessenger(undefined);
     }
     return (self as any).workerMessenger;
   }
@@ -266,10 +268,7 @@ export class ServiceWorker {
 
             for (const rawNotification of rawNotificationsArray) {
               Log.debug('Raw Notification from OneSignal:', rawNotification);
-              const notification =
-                OSMinifiedNotificationPayloadHelper.toOSNotification(
-                  rawNotification,
-                );
+              const notification = toOSNotification(rawNotification);
 
               notificationReceivedPromises.push(
                 Database.putNotificationReceivedForOutcomes(
@@ -627,9 +626,7 @@ export class ServiceWorker {
        notification. Clicking either button takes the user to a link. See:
        https://developers.google.com/web/updates/2016/01/notification-actions
        */
-      actions: OSNotificationButtonsConverter.toNative(
-        notification.actionButtons,
-      ),
+      actions: toNativeNotificationAction(notification.actionButtons),
       /*
        Tags are any string value that groups notifications together. Two
        or notifications sharing a tag replace each other.
@@ -695,7 +692,7 @@ export class ServiceWorker {
     return (
       url !== 'javascript:void(0);' &&
       url !== 'do_not_open' &&
-      !Utils.contains(url, '_osp=do_not_open')
+      !containsMatch(url, '_osp=do_not_open')
     );
   }
 
@@ -1160,7 +1157,7 @@ export class ServiceWorker {
   static isValidPushPayload(rawData: PushMessageData) {
     try {
       const payload = rawData.json();
-      if (OSMinifiedNotificationPayloadHelper.isValid(payload)) {
+      if (isValidPayload(payload)) {
         return true;
       } else {
         Log.debug(

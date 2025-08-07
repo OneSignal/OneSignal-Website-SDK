@@ -1,5 +1,8 @@
+import {
+  getLocalPageViewCount as getStoragePageViewCount,
+  setLocalPageViewCount as setStoragePageViewCount,
+} from '../helpers/localStorage';
 import Log from '../libraries/Log';
-import LocalStorage from '../utils/LocalStorage';
 
 export class PageViewManager {
   private static SESSION_STORAGE_KEY_NAME = 'onesignal-pageview-count';
@@ -94,13 +97,13 @@ export class PageViewManager {
    * Returns Page Views saved to Local Storage (Persists Longer than Single Session)
    */
   getLocalPageViewCount() {
-    return LocalStorage.getLocalPageViewCount();
+    return getStoragePageViewCount();
   }
 
   /**
    * Sets Page Views to Local Storage
    */
   setLocalPageViewCount(count: number) {
-    LocalStorage.setLocalPageViewCount(count);
+    setStoragePageViewCount(count);
   }
 }

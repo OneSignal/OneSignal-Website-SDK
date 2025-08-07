@@ -1,7 +1,8 @@
+import { containsMatch } from 'src/shared/context/helpers';
 import { addCssClass, removeCssClass } from 'src/shared/helpers/dom';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { contains, once } from '../../shared/utils/utils';
+import { once } from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
 
 export default class ActiveAnimatedElement extends AnimatedElement {
@@ -74,7 +75,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
               (event: Event, destroyListenerFn: () => void) => {
                 if (
                   event.target === this.element &&
-                  contains(
+                  containsMatch(
                     this.targetTransitionEvents,
                     (event as any).propertyName,
                   )
@@ -136,7 +137,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
               (event: Event, destroyListenerFn: () => void) => {
                 if (
                   event.target === this.element &&
-                  contains(
+                  containsMatch(
                     this.targetTransitionEvents,
                     (event as any).propertyName,
                   )

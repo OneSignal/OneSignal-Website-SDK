@@ -9,9 +9,10 @@ import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import { NotificationType } from 'src/core/types/subscription';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
-import { ConfigIntegrationKind, type AppConfig } from 'src/shared/config';
+import { ConfigIntegrationKind } from 'src/shared/config/constants';
+import type { AppConfig } from 'src/shared/config/types';
+import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/WorkerMessenger';
 import {
   DEFAULT_DEVICE_ID,
@@ -30,10 +31,12 @@ import {
   ONESIGNAL_SESSION_KEY,
   SessionOrigin,
   SessionStatus,
-  type Session,
-  type UpsertOrDeactivateSessionPayload,
-} from 'src/shared/session';
-import Log from '../libraries/Log';
+} from 'src/shared/session/constants';
+import type {
+  Session,
+  UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session/types';
+import { NotificationType } from 'src/shared/subscriptions/constants';
 import { ServiceWorker } from './ServiceWorker';
 
 declare const self: ServiceWorkerGlobalScope;
@@ -45,6 +48,7 @@ const version = __VERSION__;
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
+vi.spyOn(Log, 'debug').mockImplementation(() => {});
 
 let { isServiceWorker } = vi.hoisted(() => {
   return { isServiceWorker: false };
@@ -722,12 +726,10 @@ vi.mock(
 
 // -- push subscription id mock
 const pushSubscriptionId = '1234';
-vi.mock('../helpers/ModelCacheDirectAccess', () => ({
-  ModelCacheDirectAccess: {
-    getPushSubscriptionIdByToken: vi
-      .fn()
-      .mockImplementation(() => pushSubscriptionId),
-  },
+vi.mock('./helpers', () => ({
+  getPushSubscriptionIdByToken: vi
+    .fn()
+    .mockImplementation(() => pushSubscriptionId),
 }));
 
 // -- awaitable timeout mock

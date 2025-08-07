@@ -1,4 +1,4 @@
-import type { SessionOriginValue } from '../../session';
+import type { SessionOriginValue } from '../../session/types';
 
 export interface ISessionManager {
   setupSessionEventListeners(): void;

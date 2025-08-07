@@ -1,16 +1,18 @@
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import {
-  NotificationType,
-  SubscriptionType,
-  type SubscriptionTypeValue,
-} from 'src/core/types/subscription';
+  EmptyArgumentError,
+  MalformedArgumentError,
+  ReservedArgumentError,
+  WrongTypeArgumentError,
+} from 'src/shared/errors/common';
 import { isObject, isValidEmail } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../shared/errors/InvalidArgumentError';
+  NotificationType,
+  SubscriptionType,
+} from 'src/shared/subscriptions/constants';
+import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from '../shared/utils/utils';
 
 export default class User {
@@ -34,25 +36,15 @@ export default class User {
   }
 
   private validateStringLabel(label: string, labelName: string): void {
-    if (typeof label !== 'string')
-      throw new InvalidArgumentError(
-        labelName,
-        InvalidArgumentReason.WrongType,
-      );
+    if (typeof label !== 'string') throw WrongTypeArgumentError(labelName);
 
-    if (!label)
-      throw new InvalidArgumentError(labelName, InvalidArgumentReason.Empty);
+    if (!label) throw EmptyArgumentError(labelName);
   }
 
   private validateArray(array: string[], arrayName: string): void {
-    if (!Array.isArray(array))
-      throw new InvalidArgumentError(
-        arrayName,
-        InvalidArgumentReason.WrongType,
-      );
+    if (!Array.isArray(array)) throw WrongTypeArgumentError(arrayName);
 
-    if (array.length === 0)
-      throw new InvalidArgumentError(arrayName, InvalidArgumentReason.Empty);
+    if (array.length === 0) throw EmptyArgumentError(arrayName);
 
     for (const label of array) {
       this.validateLabel(label, 'label');
@@ -60,21 +52,17 @@ export default class User {
   }
 
   private validateObject(object: unknown, objectName: string): void {
-    if (!isObject(object))
-      throw new InvalidArgumentError(
-        objectName,
-        InvalidArgumentReason.WrongType,
-      );
+    if (!isObject(object)) throw WrongTypeArgumentError(objectName);
 
     if (!object || Object.keys(object).length === 0)
-      throw new InvalidArgumentError(objectName, InvalidArgumentReason.Empty);
+      throw EmptyArgumentError(objectName);
   }
 
   private validateLabel(label: string, labelName: string): void {
     this.validateStringLabel(label, labelName);
 
     if (label === 'external_id' || label === 'onesignal_id') {
-      throw new InvalidArgumentError(label, InvalidArgumentReason.Reserved);
+      throw ReservedArgumentError(label);
     }
   }
 
@@ -168,8 +156,7 @@ export default class User {
 
     this.validateStringLabel(email, 'email');
 
-    if (!isValidEmail(email))
-      throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
+    if (!isValidEmail(email)) throw MalformedArgumentError('email');
 
     this.addSubscriptionToModels({
       type: SubscriptionType.Email,

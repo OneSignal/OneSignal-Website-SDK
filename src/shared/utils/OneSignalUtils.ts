@@ -1,5 +1,5 @@
-import { Utils } from '../context/Utils';
-import { isBrowser } from '../environment/environment';
+import { stringify } from '../context/helpers';
+import { isBrowser } from '../environment/detect';
 import Log from '../libraries/Log';
 
 export class OneSignalUtils {
@@ -19,9 +19,7 @@ export class OneSignalUtils {
   }
 
   public static logMethodCall(methodName: string, ...args: any[]) {
-    return Log.debug(
-      `Called ${methodName}(${args.map(Utils.stringify).join(', ')})`,
-    );
+    return Log.debug(`Called ${methodName}(${args.map(stringify).join(', ')})`);
   }
 
   static isSafari(): boolean {

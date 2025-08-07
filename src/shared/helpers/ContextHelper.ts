@@ -1,4 +1,4 @@
-import type { AppConfig } from '../config';
+import type { AppConfig } from '../config/types';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import {
   SubscriptionManager,

@@ -1,85 +1,41 @@
-import { LOGGING } from '../utils/EnvVariables';
-
-type ConsoleLog = (message?: unknown, ...optionalParams: unknown[]) => void;
+import { IS_SERVICE_WORKER, LOGGING } from '../utils/EnvVariables';
 
 export default class Log {
-  static debug: ConsoleLog;
-  static trace: ConsoleLog;
-  static info: ConsoleLog;
-  static warn: ConsoleLog;
-  static error: ConsoleLog;
-
-  private static proxyMethodsCreated: boolean | undefined;
-
   private static shouldLog(): boolean {
+    if (IS_SERVICE_WORKER) return !!(self as any).shouldLog;
     try {
-      if (
-        typeof window === 'undefined' ||
-        typeof window.localStorage === 'undefined'
-      ) {
-        return false;
-      }
-      const level = window.localStorage.getItem('loglevel');
-      if (level && level.toLowerCase() === 'trace') {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (e) {
       /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
+      const level = window.localStorage.getItem('loglevel');
+      return level?.toLowerCase() === 'trace';
+    } catch (e) {
       return false;
     }
   }
 
+  /**
+   * Sets the log level for page context.
+   * Will not do anything in service worker context.
+   */
   public static setLevel(level: string) {
-    if (
-      typeof window === 'undefined' ||
-      typeof window.localStorage === 'undefined'
-    ) {
-      return;
-    }
+    if (IS_SERVICE_WORKER) return;
+
+    /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
     try {
       window.localStorage.setItem('loglevel', level);
-      Log.proxyMethodsCreated = undefined;
-      Log.createProxyMethods();
     } catch (e) {
-      /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
-      return;
+      console.error(e);
     }
   }
 
-  public static createProxyMethods() {
-    if (typeof Log.proxyMethodsCreated !== 'undefined') {
-      return;
-    } else {
-      Log.proxyMethodsCreated = true;
-    }
-
-    const methods = {
-      log: 'debug',
-      trace: 'trace',
-      info: 'info',
-      warn: 'warn',
-      error: 'error',
-    } as const;
-    for (const nativeMethod of Object.keys(
-      methods,
-    ) as (keyof typeof methods)[]) {
-      const nativeMethodExists = typeof console[nativeMethod] !== 'undefined';
-      const methodToMapTo = methods[nativeMethod];
-      const shouldMap =
-        nativeMethodExists &&
-        (LOGGING || Log.shouldLog() || methodToMapTo === 'error');
-
-      if (shouldMap) {
-        Log[methodToMapTo] = console[nativeMethod].bind(console);
-      } else {
-        // We want to skip logging, so this is internally an empty function.
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        Log[methodToMapTo] = function () {};
+  private static createLogMethod(consoleMethod: keyof Console) {
+    return (...args: unknown[]): void => {
+      if (LOGGING || this.shouldLog() || consoleMethod === 'error') {
+        (console[consoleMethod] as (...args: unknown[]) => void)(...args);
       }
-    }
+    };
   }
+  static debug = Log.createLogMethod('debug');
+  static info = Log.createLogMethod('info');
+  static warn = Log.createLogMethod('warn');
+  static error = Log.createLogMethod('error');
 }
-
-Log.createProxyMethods();

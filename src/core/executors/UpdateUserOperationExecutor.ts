@@ -4,7 +4,7 @@ import {
 } from 'src/shared/helpers/NetworkUtils';
 import { PropertyOperationHelper } from 'src/shared/helpers/PropertyOperationHelper';
 import Log from 'src/shared/libraries/Log';
-import { OPERATION_NAME } from '../constants';
+import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -13,8 +13,7 @@ import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
-import AliasPair from '../requestService/AliasPair';
-import { RequestService } from '../requestService/RequestService';
+import { updateUserByAlias } from '../requests/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';
@@ -82,9 +81,12 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     if (!appId || !onesignalId)
       return new ExecutionResponse(ExecutionResult.SUCCESS);
 
-    const response = await RequestService.updateUser(
+    const response = await updateUserByAlias(
       { appId },
-      new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId),
+      {
+        label: IdentityConstants.ONESIGNAL_ID,
+        id: onesignalId,
+      },
       {
         properties: propertiesObject,
         refresh_device_metadata: refreshDeviceMetadata,

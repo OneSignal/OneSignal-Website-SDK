@@ -1,7 +1,11 @@
-import ServiceWorkerUtilHelper from 'src/sw/helpers/ServiceWorkerUtilHelper';
-import { Utils } from '../context/Utils';
-import { supportsServiceWorkers } from '../environment/environment';
-import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
+import {
+  getAvailableServiceWorker,
+  getSWRegistration,
+  waitUntilActive,
+} from '../../sw/helpers/registration';
+import { timeoutPromise } from '../context/helpers';
+import { supportsServiceWorkers } from '../environment/detect';
+import { SWRegistrationError } from '../errors/common';
 import ServiceWorkerHelper, {
   ServiceWorkerActiveState,
   type ServiceWorkerActiveStateValue,
@@ -11,15 +15,18 @@ import Log from '../libraries/Log';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { triggerNotificationClick } from '../listeners';
 import type { ContextSWInterface } from '../models/ContextSW';
-import {
-  type NotificationClickEventInternal,
-  type NotificationForegroundWillDisplayEvent,
-  type NotificationForegroundWillDisplayEventSerializable,
-} from '../models/NotificationEvent';
 import Path from '../models/Path';
+import type {
+  NotificationClickEventInternal,
+  NotificationForegroundWillDisplayEvent,
+  NotificationForegroundWillDisplayEventSerializable,
+} from '../notifications/types';
 import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
-import type { PageVisibilityRequest, PageVisibilityResponse } from '../session';
+import type {
+  PageVisibilityRequest,
+  PageVisibilityResponse,
+} from '../session/types';
 import { VERSION } from '../utils/EnvVariables';
 import OneSignalUtils from '../utils/OneSignalUtils';
 
@@ -41,9 +48,7 @@ export class ServiceWorkerManager {
   public async getRegistration(): Promise<
     ServiceWorkerRegistration | undefined
   > {
-    return ServiceWorkerUtilHelper.getRegistration(
-      this.config.registrationOptions.scope,
-    );
+    return getSWRegistration(this.config.registrationOptions.scope);
   }
 
   /**
@@ -76,8 +81,7 @@ export class ServiceWorkerManager {
   private static activeSwFileName(
     workerRegistration: ServiceWorkerRegistration,
   ): string | null | undefined {
-    const serviceWorker =
-      ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    const serviceWorker = getAvailableServiceWorker(workerRegistration);
     if (!serviceWorker) {
       return null;
     }
@@ -198,8 +202,7 @@ export class ServiceWorkerManager {
     }
 
     // 3. Different href?, asking if (path + filename + queryParams) is different
-    const availableWorker =
-      ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    const availableWorker = getAvailableServiceWorker(workerRegistration);
     const serviceWorkerHref = ServiceWorkerHelper.getServiceWorkerHref(
       this.config,
       this.context.appConfig.appId,
@@ -230,10 +233,7 @@ export class ServiceWorkerManager {
     Log.info('[Service Worker Update] Checking service worker version...');
     let workerVersion: string;
     try {
-      workerVersion = await Utils.timeoutPromise(
-        this.getWorkerVersion(),
-        2_000,
-      );
+      workerVersion = await timeoutPromise(this.getWorkerVersion(), 2_000);
     } catch (e) {
       Log.info(
         '[Service Worker Update] Worker did not reply to version query; assuming older version and updating.',
@@ -436,7 +436,7 @@ export class ServiceWorkerManager {
       `[Service Worker Installation] Service worker installed. Waiting for activation`,
     );
 
-    await ServiceWorkerUtilHelper.waitUntilActive(registration);
+    await waitUntilActive(registration);
 
     Log.debug(`[Service Worker Installation] Service worker active`);
 
@@ -484,10 +484,7 @@ export class ServiceWorkerManager {
     } catch (error) {
       const response = await fetch(workerHref);
       if (response.status === 403 || response.status === 404) {
-        throw new ServiceWorkerRegistrationError(
-          response.status,
-          response.statusText,
-        );
+        throw new SWRegistrationError(response.status, response.statusText);
       }
 
       throw error;

@@ -3,8 +3,8 @@ import {
   ExecutionResult,
   type IOperationExecutor,
 } from 'src/core/types/operation';
-import OneSignalError from 'src/shared/errors/OneSignalError';
 import { getTimeZoneId } from 'src/shared/helpers/general';
+import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -12,7 +12,6 @@ import {
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import Database from 'src/shared/services/Database';
-import LocalStorage from 'src/shared/utils/LocalStorage';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -27,7 +26,7 @@ import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import { RequestService } from '../requestService/RequestService';
+import { createNewUser } from '../requests/api';
 import type {
   ICreateUserIdentity,
   ICreateUserSubscription,
@@ -80,13 +79,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     loginUserOp: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
-    const consentRequired = LocalStorage.getConsentRequired();
+    const consentRequired = getConsentRequired();
     const consentGiven = await Database.getConsentGiven();
 
     if (consentRequired && !consentGiven) {
-      throw new OneSignalError(
-        'Login: Consent required but not given, skipping login',
-      );
+      throw new Error('Consent required but not given');
     }
 
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
@@ -182,7 +179,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     }
 
     const subscriptionList = Object.entries(subscriptions);
-    const response = await RequestService.createUser(
+    const response = await createNewUser(
       { appId: createUserOperation.appId },
       {
         identity,

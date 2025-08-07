@@ -1,7 +1,4 @@
-import {
-  InvalidStateError,
-  InvalidStateReason,
-} from 'src/shared/errors/InvalidStateError';
+import { containsMatch } from 'src/shared/context/helpers';
 import {
   addCssClass,
   hasCssClass,
@@ -9,8 +6,8 @@ import {
 } from 'src/shared/helpers/dom';
 import { nothing } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
-import type { BellSize } from 'src/shared/prompts';
-import { contains, once } from 'src/shared/utils/utils';
+import type { BellSize } from 'src/shared/prompts/types';
+import { once } from 'src/shared/utils/utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Bell from './Bell';
 
@@ -36,7 +33,7 @@ export default class Launcher extends ActiveAnimatedElement {
   async resize(size: BellSize) {
     if (!this.element) {
       // Notify button doesn't exist
-      throw new InvalidStateError(InvalidStateReason.MissingDomElement);
+      throw new Error('Missing DOM element');
     }
 
     // If the size is the same, do nothing and resolve an empty promise
@@ -81,7 +78,7 @@ export default class Launcher extends ActiveAnimatedElement {
             (event: Event, destroyListenerFn: () => void) => {
               if (
                 event.target === this.element &&
-                contains(
+                containsMatch(
                   this.targetTransitionEvents,
                   (event as any).propertyName,
                 )
