@@ -5,7 +5,6 @@ import {
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
 import { isValidUrl } from 'src/shared/helpers/validators';
-import { fireStoredNotificationClicks } from 'src/shared/listeners';
 import type {
   NotificationEventName,
   NotificationEventTypeMap,
@@ -125,10 +124,6 @@ export default class NotificationsNamespace extends EventListenerBase {
     listener: (obj: NotificationEventTypeMap[K]) => void,
   ): void {
     OneSignal.emitter.on(event, listener);
-
-    if (event === 'click') {
-      fireStoredNotificationClicks();
-    }
   }
 
   removeEventListener<K extends NotificationEventName>(

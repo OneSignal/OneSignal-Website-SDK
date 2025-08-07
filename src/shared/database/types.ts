@@ -11,7 +11,7 @@ import { ModelName } from './constants';
 
 export type ModelNameType = (typeof ModelName)[keyof typeof ModelName];
 
-type IdKey = 'appId' | 'registrationId' | 'userId' | 'jwtToken';
+export type IdKey = 'appId' | 'registrationId' | 'userId' | 'jwtToken';
 
 export type OptionKey =
   | 'appState'
@@ -124,7 +124,7 @@ export interface IndexedDBSchema extends DBSchema {
     key: OptionKey;
     value: {
       key: OptionKey;
-      value: boolean | number | string | AppState | undefined;
+      value: boolean | number | string | AppState | undefined | null;
     };
   };
 
@@ -175,7 +175,8 @@ export interface IndexedDBSchema extends DBSchema {
     value: {
       modelId: string;
       modelName: 'operations';
-      [key: string]: any;
+      name: string;
+      [key: string]: unknown;
     };
   };
 }

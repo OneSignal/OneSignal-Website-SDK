@@ -3,7 +3,11 @@ import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
 import { getServerAppConfig } from 'src/shared/config/app';
 import type { AppConfig } from 'src/shared/config/types';
 import { containsMatch } from 'src/shared/context/helpers';
-import { db, getCurrentSession } from 'src/shared/database/client';
+import {
+  db,
+  getCurrentSession,
+  getOptionsValue,
+} from 'src/shared/database/client';
 import { getAppState, getDBAppConfig } from 'src/shared/database/config';
 import {
   putNotificationClickedEventPendingUrlOpening,
@@ -598,13 +602,13 @@ export class OneSignalServiceWorker {
     );
 
     // Use the default title if one isn't provided
-    const defaultTitle: string = await OneSignalServiceWorker._getTitle();
+    const defaultTitle = await OneSignalServiceWorker._getTitle();
     // Use the default icon if one isn't provided
-    const defaultIcon: string = (await db.get('Options', 'defaultIcon'))
-      ?.value as string;
+    const defaultIcon = await getOptionsValue<string>('defaultIcon');
     // Get option of whether we should leave notification displaying indefinitely
-    const persistNotification = (await db.get('Options', 'persistNotification'))
-      ?.value as boolean;
+    const persistNotification = await getOptionsValue<boolean>(
+      'persistNotification',
+    );
 
     // Get app ID for tag value
     const appId = await OneSignalServiceWorker.getAppId();
@@ -784,14 +788,14 @@ export class OneSignalServiceWorker {
     let notificationClickHandlerMatch = 'exact';
     let notificationClickHandlerAction = 'navigate';
 
-    const matchPreference = (
-      await db.get('Options', 'notificationClickHandlerMatch')
-    )?.value as string;
+    const matchPreference = await getOptionsValue<string>(
+      'notificationClickHandlerMatch',
+    );
     if (matchPreference) notificationClickHandlerMatch = matchPreference;
 
-    const actionPreference = (
-      await db.get('Options', 'notificationClickHandlerAction')
-    )?.value as string;
+    const actionPreference = await getOptionsValue<string>(
+      'notificationClickHandlerAction',
+    );
     if (actionPreference) notificationClickHandlerAction = actionPreference;
 
     const launchUrl = await OneSignalServiceWorker.getNotificationUrlToOpen(
@@ -1117,12 +1121,8 @@ export class OneSignalServiceWorker {
   static _getTitle(): Promise<string> {
     return new Promise((resolve) => {
       Promise.all([
-        db
-          .get('Options', 'defaultTitle')
-          .then((res) => (res?.value as string | null) ?? null),
-        db
-          .get('Options', 'pageTitle')
-          .then((res) => (res?.value as string | null) ?? null),
+        getOptionsValue<string>('defaultTitle'),
+        getOptionsValue<string>('pageTitle'),
       ]).then(([defaultTitle, pageTitle]) => {
         if (defaultTitle !== null) {
           resolve(defaultTitle);

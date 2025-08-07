@@ -1,4 +1,4 @@
-import { openDB } from 'idb';
+import { openDB, type StoreNames } from 'idb';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import {
   DATABASE_NAME,
@@ -6,7 +6,7 @@ import {
   ModelName,
   VERSION,
 } from './constants';
-import type { IndexedDBSchema } from './types';
+import type { IdKey, IndexedDBSchema, OptionKey } from './types';
 import {
   migrateModelNameSubscriptionsTableForV6,
   migrateOutcomesNotificationClickedTableForV5,
@@ -77,31 +77,55 @@ export const getDb = async () => {
   return dbInstance;
 };
 
+type StoreName = StoreNames<IndexedDBSchema>;
+
 // Export db object with the same API as before
 export const db = {
-  async get(storeName: keyof IndexedDBSchema, key?: string) {
+  async get<K extends StoreName>(
+    storeName: K,
+    key: string,
+  ): Promise<IndexedDBSchema[K]['value'] | undefined> {
     const _db = await getDb();
-    return key ? _db.get(storeName as any, key) : _db.getAll(storeName as any);
+    return _db.get(storeName, key);
   },
-  async getAll(storeName: keyof IndexedDBSchema) {
+  async getAll<K extends StoreName>(
+    storeName: K,
+  ): Promise<IndexedDBSchema[K]['value'][]> {
     const _db = await getDb();
-    return _db.getAll(storeName as any);
+    return _db.getAll(storeName);
   },
-  async put(storeName: keyof IndexedDBSchema, value: any) {
+  async put<K extends StoreName>(
+    storeName: K,
+    value: IndexedDBSchema[K]['value'],
+  ) {
     const _db = await getDb();
-    return _db.put(storeName as any, value);
+    return _db.put(storeName, value);
   },
-  async delete(storeName: keyof IndexedDBSchema, key: string) {
+  async delete<K extends StoreName>(storeName: K, key: string) {
     const _db = await getDb();
-    return _db.delete(storeName as any, key);
+    return _db.delete(storeName, key);
   },
-  async clear(storeName: keyof IndexedDBSchema) {
+  async clear<K extends StoreName>(storeName: K) {
     const _db = await getDb();
-    return _db.clear(storeName as any);
+    return _db.clear(storeName);
   },
   get objectStoreNames() {
     return dbInstance?.objectStoreNames || [];
   },
+};
+
+export const getOptionsValue = async <T extends unknown>(
+  key: OptionKey,
+): Promise<T | null> => {
+  const result = await db.get('Options', key);
+  if (result && 'value' in result) return result.value as T;
+  return null;
+};
+
+export const getIdsValue = async <T>(key: IdKey): Promise<T | null> => {
+  const result = await db.get('Ids', key);
+  if (result && 'id' in result) return result.id as T;
+  return null;
 };
 
 export const getCurrentSession = async () => {

@@ -1,6 +1,6 @@
 class UserState {
-  previousOneSignalId: string | undefined;
-  previousExternalId: string | undefined;
+  previousOneSignalId: string | null | undefined;
+  previousExternalId: string | null | undefined;
 }
 
 export { UserState };
