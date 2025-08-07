@@ -1,12 +1,14 @@
-import type { NotificationIcons } from 'src/shared/notifications/types';
+import { db } from '../database/client';
+import { getDBAppConfig } from '../database/config';
+import { getSubscription } from '../database/subscription';
 import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
 import { AppIDMissingError, MalformedArgumentError } from '../errors/common';
 import Log from '../libraries/Log';
+import type { NotificationIcons } from '../notifications/types';
 import type {
   AppUserConfigPromptOptions,
   SlidedownOptions,
 } from '../prompts/types';
-import Database from '../services/Database';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
 import { getValueOrDefault } from './general';
 import { triggerNotificationPermissionChanged } from './permissions';
@@ -31,7 +33,7 @@ export default class MainHelper {
       buttons,
     );
 
-    const appConfig = await Database.getAppConfig();
+    const appConfig = await getDBAppConfig();
 
     if (!appConfig.appId) throw AppIDMissingError;
     if (!OneSignal.Notifications.permission)
@@ -89,16 +91,16 @@ export default class MainHelper {
   }
 
   static async checkAndTriggerNotificationPermissionChanged() {
-    const previousPermission = await Database.get(
-      'Options',
-      'notificationPermission',
-    );
+    const previousPermission = (
+      await db.get('Options', 'notificationPermission')
+    )?.value as string | undefined;
+
     const currentPermission =
       await OneSignal.context.permissionManager.getPermissionStatus();
 
     if (previousPermission !== currentPermission) {
       await triggerNotificationPermissionChanged();
-      await Database.put('Options', {
+      await db.put('Options', {
         key: 'notificationPermission',
         value: currentPermission,
       });
@@ -215,7 +217,7 @@ export default class MainHelper {
   }
 
   static async getDeviceId(): Promise<string | undefined> {
-    const subscription = await OneSignal.database.getSubscription();
+    const subscription = await getSubscription();
     return subscription.deviceId || undefined;
   }
 

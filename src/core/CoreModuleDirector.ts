@@ -1,15 +1,15 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import { getPushToken, setPushId } from 'src/shared/database/subscription';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   SubscriptionChannel,
   SubscriptionType,
 } from 'src/shared/subscriptions/constants';
 import type { SubscriptionChannelValue } from 'src/shared/subscriptions/types';
+import { logMethodCall } from 'src/shared/utils/utils';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
-import Database from '../shared/services/Database';
-import { logMethodCall } from '../shared/utils/utils';
 import CoreModule from './CoreModule';
 import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';
@@ -61,7 +61,7 @@ export class CoreModuleDirector {
       new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
     );
     model.id = IDManager.createLocalId();
-    Database.setPushId(model.id);
+    setPushId(model.id);
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
     this.core.subscriptionModelStore.add(model, ModelChangeTags.HYDRATE);
@@ -136,7 +136,7 @@ export class CoreModuleDirector {
     logMethodCall(
       'CoreModuleDirector.getPushSubscriptionModelByLastKnownToken',
     );
-    const lastKnownPushToken = await Database.getPushToken();
+    const lastKnownPushToken = await getPushToken();
     if (lastKnownPushToken) {
       return this.getSubscriptionOfTypeWithToken(
         SubscriptionChannel.Push,

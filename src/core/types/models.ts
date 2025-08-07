@@ -1,13 +1,5 @@
 import type { Model, ModelChangedArgs } from 'src/core/models/Model';
 
-export const ModelName = {
-  Operations: 'operations',
-  Identity: 'identity',
-  Properties: 'properties',
-  Subscriptions: 'subscriptions',
-} as const;
-export type ModelNameType = (typeof ModelName)[keyof typeof ModelName];
-
 export const ModelChangeTags = {
   /**
    * A change was performed through normal means.

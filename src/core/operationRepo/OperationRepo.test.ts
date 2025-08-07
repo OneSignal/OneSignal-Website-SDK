@@ -4,8 +4,10 @@ import {
   DUMMY_SUBSCRIPTION_ID,
 } from '__test__/constants';
 import { fakeWaitForOperations } from '__test__/support/helpers/executors';
+import { db } from 'src/shared/database/client';
+import { ModelName } from 'src/shared/database/constants';
+import type { IndexedDBSchema } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
-import Database, { type OperationItem } from 'src/shared/services/Database';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { describe, expect, type Mock, vi } from 'vitest';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
@@ -16,7 +18,6 @@ import {
   Operation as OperationBase,
 } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
-import { ModelName } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import {
   OP_REPO_EXECUTION_INTERVAL,
@@ -48,7 +49,7 @@ describe('OperationRepo', () => {
   ];
 
   beforeEach(async () => {
-    await Database.remove(ModelName.Operations);
+    await db.clear(ModelName.Operations);
 
     mockOperationModelStore = new OperationModelStore();
     opRepo = new OperationRepo(
@@ -63,9 +64,7 @@ describe('OperationRepo', () => {
     // for tests that call start on the op repo
     if (!opRepo.isPaused) {
       await vi.waitUntil(async () => {
-        const dbOps = await Database.getAll<OperationItem>(
-          ModelName.Operations,
-        );
+        const dbOps = await db.getAll(ModelName.Operations);
         return dbOps.length === 0;
       });
     }
@@ -129,9 +128,9 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore.list()).toEqual([op1, op2]);
 
       // persist happens in the background, so we need to wait for it to complete
-      let ops: OperationItem[] = [];
+      let ops: IndexedDBSchema['operations']['value'][] = [];
       await vi.waitUntil(async () => {
-        ops = await Database.getAll<OperationItem>(ModelName.Operations);
+        ops = await db.getAll(ModelName.Operations);
         return ops.length === 2;
       });
 
@@ -155,12 +154,12 @@ describe('OperationRepo', () => {
     test('operations can be loaded from IndexedDb on start', async () => {
       const op = new SetAliasOperation();
       const op2 = new CreateSubscriptionOperation();
-      await Database.put(ModelName.Operations, {
+      await db.put(ModelName.Operations, {
         ...op.toJSON(),
         modelId: '1',
         modelName: ModelName.Operations,
       });
-      await Database.put(ModelName.Operations, {
+      await db.put(ModelName.Operations, {
         ...op2.toJSON(),
         modelId: '2',
         modelName: ModelName.Operations,
@@ -168,7 +167,7 @@ describe('OperationRepo', () => {
 
       await opRepo.loadSavedOperations();
 
-      const list = await Database.getAll<OperationItem>(ModelName.Operations);
+      const list = await db.getAll(ModelName.Operations);
       expect(list).toEqual([
         {
           ...op.toJSON(),

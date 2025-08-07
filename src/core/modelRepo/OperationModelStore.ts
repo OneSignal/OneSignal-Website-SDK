@@ -1,3 +1,4 @@
+import { ModelName } from 'src/shared/database/constants';
 import Log from 'src/shared/libraries/Log';
 import { OPERATION_NAME } from '../constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -11,7 +12,6 @@ import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import { ModelName } from '../types/models';
 import { ModelStore } from './ModelStore';
 
 // Implements logic similar to Android SDK's OperationModelStore

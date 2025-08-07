@@ -17,7 +17,7 @@ export class Subscription implements Serializable {
    * A UTC timestamp of when this subscription was created. This value is not modified when a
    * subscription is merely refreshed, only when a subscription is created anew.
    */
-  createdAt: number | undefined;
+  createdAt: number | null | undefined;
   /**
    * This property is stored on the native PushSubscription object.
    */

@@ -2,8 +2,8 @@ import { SimpleModelStore } from 'src/core/modelStores/SimpleModelStore';
 import {
   ModelChangeTags,
   type ModelChangeTagValue,
-  ModelName,
 } from 'src/core/types/models';
+import { ModelName } from 'src/shared/database/constants';
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 

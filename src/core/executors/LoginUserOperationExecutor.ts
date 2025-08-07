@@ -3,6 +3,12 @@ import {
   ExecutionResult,
   type IOperationExecutor,
 } from 'src/core/types/operation';
+import { getConsentGiven } from 'src/shared/database/config';
+import {
+  getPushId,
+  setPushId,
+  setPushToken,
+} from 'src/shared/database/subscription';
 import { getTimeZoneId } from 'src/shared/helpers/general';
 import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import {
@@ -11,7 +17,6 @@ import {
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
-import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -80,7 +85,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     operations: Operation[],
   ): Promise<ExecutionResponse> {
     const consentRequired = getConsentRequired();
-    const consentGiven = await Database.getConsentGiven();
+    const consentGiven = await getConsentGiven();
 
     if (consentRequired && !consentGiven) {
       throw new Error('Consent required but not given');
@@ -231,10 +236,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         if (!backendSub || !('id' in backendSub)) continue;
         idTranslations[localId] = backendSub.id;
 
-        const pushSubscriptionId = await Database.getPushId();
+        const pushSubscriptionId = await getPushId();
         if (pushSubscriptionId === localId) {
-          await Database.setPushId(backendSub.id);
-          await Database.setPushToken(backendSub.token);
+          await setPushId(backendSub.id);
+          await setPushToken(backendSub.token);
         }
 
         const model =

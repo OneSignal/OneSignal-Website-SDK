@@ -5,6 +5,7 @@ import {
 } from '../../sw/helpers/registration';
 import { timeoutPromise } from '../context/helpers';
 import type { ContextInterface } from '../context/types';
+import { putNotificationClickedEventPendingUrlOpening } from '../database/notifications';
 import { hasSafariWindow, supportsServiceWorkers } from '../environment/detect';
 import { SWRegistrationError } from '../errors/common';
 import { getBaseUrl } from '../helpers/general';
@@ -23,7 +24,6 @@ import type {
   NotificationForegroundWillDisplayEvent,
   NotificationForegroundWillDisplayEventSerializable,
 } from '../notifications/types';
-import Database from '../services/Database';
 import OneSignalEvent from '../services/OneSignalEvent';
 import type {
   PageVisibilityRequest,
@@ -315,7 +315,7 @@ export class ServiceWorkerManager {
             // Least likely to modify, since modifying this property changes the page's URL
             url = location.href;
           }
-          await Database.putNotificationClickedEventPendingUrlOpening(event);
+          await putNotificationClickedEventPendingUrlOpening(event);
         } else {
           await triggerNotificationClick(event);
         }
