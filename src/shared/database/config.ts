@@ -1,55 +1,26 @@
-import {
-  type NotificationClickForOpenHandlingSchema,
-  notificationClickFromDatabase,
-} from '../helpers/serializer';
-import {
-  AppState,
-  type PendingNotificationClickEvents,
-} from '../models/AppState';
-import { db } from './client';
+import { AppState } from '../models/AppState';
+import { db, getIdsValue, getOptionsValue } from './client';
 
 export const getDBAppConfig = async () => {
   const config: any = {};
-  const appIdStr: string = (await db.get('Ids', 'appId'))?.id as string;
+  const appIdStr = await getIdsValue<string>('appId');
   config.appId = appIdStr;
-  config.vapidPublicKey = (await db.get('Options', 'vapidPublicKey'))?.value;
+  config.vapidPublicKey = await getOptionsValue<string>('vapidPublicKey');
   return config;
 };
 
-const getAllPendingNotificationClickEvents =
-  async (): Promise<PendingNotificationClickEvents> => {
-    const clickedNotifications: PendingNotificationClickEvents = {};
-    const eventsFromDb = await db.getAll('NotificationOpened');
-    for (const eventFromDb of eventsFromDb) {
-      const event = notificationClickFromDatabase(eventFromDb);
-      const url = event.result.url;
-      if (!url) {
-        continue;
-      }
-      clickedNotifications[url] = event;
-    }
-    return clickedNotifications;
-  };
-
 export const getAppState = async (): Promise<AppState> => {
   const state = new AppState();
-  state.defaultNotificationUrl = (await db.get('Options', 'defaultUrl'))
-    ?.value as string;
-  state.defaultNotificationTitle = (await db.get('Options', 'defaultTitle'))
-    ?.value as string;
-  state.lastKnownPushEnabled = (await db.get('Options', 'isPushEnabled'))
-    ?.value as boolean;
-  state.pendingNotificationClickEvents =
-    await getAllPendingNotificationClickEvents();
+  state.defaultNotificationUrl = await getOptionsValue<string>('defaultUrl');
+  state.defaultNotificationTitle =
+    await getOptionsValue<string>('defaultTitle');
+  state.lastKnownPushEnabled = await getOptionsValue<boolean>('isPushEnabled');
 
   // lastKnown<PushId|PushToken|OptedIn> are used to track changes to the user's subscription
   // state. Displayed in the `current` & `previous` fields of the `subscriptionChange` event.
-  state.lastKnownPushId = (await db.get('Options', 'lastPushId'))
-    ?.value as string;
-  state.lastKnownPushToken = (await db.get('Options', 'lastPushToken'))
-    ?.value as string;
-  state.lastKnownOptedIn = (await db.get('Options', 'lastOptedIn'))
-    ?.value as boolean;
+  state.lastKnownPushId = await getOptionsValue<string>('lastPushId');
+  state.lastKnownPushToken = await getOptionsValue<string>('lastPushToken');
+  state.lastKnownOptedIn = await getOptionsValue<boolean>('lastOptedIn');
   return state;
 };
 
@@ -91,35 +62,8 @@ export const setAppState = async (appState: AppState) => {
       key: 'lastOptedIn',
       value: appState.lastKnownOptedIn,
     });
-
-  if (appState.pendingNotificationClickEvents) {
-    const clickedNotificationUrls = Object.keys(
-      appState.pendingNotificationClickEvents,
-    );
-    for (const url of clickedNotificationUrls) {
-      const notificationDetails =
-        appState.pendingNotificationClickEvents[
-          url as keyof typeof appState.pendingNotificationClickEvents
-        ];
-
-      if (notificationDetails) {
-        await db.put('NotificationOpened', {
-          url: url,
-          data: (notificationDetails as any).data,
-          timestamp: (notificationDetails as any).timestamp,
-        } as NotificationClickForOpenHandlingSchema);
-      } else if (notificationDetails === null) {
-        // If we get an object like:
-        // { "http://site.com/page": null}
-        // It means we need to remove that entry
-        await db.delete('NotificationOpened', url);
-      }
-    }
-  }
 };
 
 export const getConsentGiven = async () => {
-  return (await db.get('Options', 'consentGiven'))?.value as
-    | boolean
-    | undefined;
+  return await getOptionsValue<boolean>('consentGiven');
 };

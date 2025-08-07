@@ -8,7 +8,7 @@ import {
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
-import { db } from 'src/shared/database/client';
+import { db, getOptionsValue } from 'src/shared/database/client';
 import { setAppState as setDBAppState } from 'src/shared/database/config';
 import * as PermissionUtils from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
@@ -78,8 +78,9 @@ describe('Notification Types are set correctly on subscription change', () => {
       await MainHelper.checkAndTriggerNotificationPermissionChanged();
 
       // should update the db
-      const dbPermission = (await db.get('Options', 'notificationPermission'))
-        ?.value;
+      const dbPermission = await getOptionsValue<NotificationPermission>(
+        'notificationPermission',
+      );
       expect(dbPermission).toBe(NotificationPermission.Granted);
       expect(permChangeListener).toHaveBeenCalledWith(true);
       expect(permChangeStringListener).toHaveBeenCalledWith('granted');
@@ -88,8 +89,7 @@ describe('Notification Types are set correctly on subscription change', () => {
 
   describe('checkAndTriggerSubscriptionChanged', async () => {
     const setAppState = async (appState: Partial<AppState>) => {
-      const currentAppState = (await db.get('Options', 'appState'))
-        ?.value as AppState;
+      const currentAppState = (await getOptionsValue<AppState>('appState'))!;
       await setDBAppState({
         ...currentAppState,
         ...appState,

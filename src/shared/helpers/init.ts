@@ -3,6 +3,7 @@ import type { AppConfig } from '../config/types';
 import type { ContextInterface } from '../context/types';
 import { db } from '../database/client';
 import { getSubscription, setSubscription } from '../database/subscription';
+import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { NotificationPermission } from '../models/NotificationPermission';
@@ -306,13 +307,16 @@ export async function saveInitOptions() {
     ) {
       opPromises.push(
         db.put('Options', {
-          key: `webhooks.${event}`,
+          key: `webhooks.${event}` as OptionKey,
           value: webhookOptions[event as keyof typeof webhookOptions],
         }),
       );
     } else {
       opPromises.push(
-        db.put('Options', { key: `webhooks.${event}`, value: false }),
+        db.put('Options', {
+          key: `webhooks.${event}` as OptionKey,
+          value: false,
+        }),
       );
     }
   });

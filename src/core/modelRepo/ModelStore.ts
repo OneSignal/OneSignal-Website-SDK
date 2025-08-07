@@ -161,12 +161,12 @@ export abstract class ModelStore<
   protected async load(): Promise<void> {
     if (!this.modelName) return;
 
-    const jsonArray = await db.getAll(this.modelName);
+    const jsonArray = (await db.getAll(this.modelName)) as unknown as DBModel[];
 
     const shouldRePersist = this.models.length > 0;
 
     for (let index = jsonArray.length - 1; index >= 0; index--) {
-      const newModel = this.create(jsonArray[index] as DBModel);
+      const newModel = this.create(jsonArray[index]);
       if (!newModel) continue;
 
       this.models.unshift(newModel);
