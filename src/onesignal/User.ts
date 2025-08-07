@@ -16,7 +16,7 @@ import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from '../shared/utils/utils';
 
 export default class User {
-  static singletonInstance?: User = undefined;
+  static singletonInstance?: User;
 
   /**
    * Creates a user singleton

@@ -1,8 +1,5 @@
 import type { NotificationIcons } from 'src/shared/notifications/types';
-import {
-  getOneSignalApiUrl,
-  useSafariLegacyPush,
-} from '../environment/detect';
+import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
 import { AppIDMissingError, MalformedArgumentError } from '../errors/common';
 import Log from '../libraries/Log';
 import type {

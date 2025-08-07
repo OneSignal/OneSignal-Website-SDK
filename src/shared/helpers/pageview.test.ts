@@ -1,17 +1,15 @@
 let getPageViewCount: typeof import('./pageview').getPageViewCount;
 let incrementPageViewCount: typeof import('./pageview').incrementPageViewCount;
-let simulatePageNavigationOrRefresh: typeof import('./pageview').simulatePageNavigationOrRefresh;
+
+const resetModules = async () => {
+  vi.resetModules();
+  ({ getPageViewCount, incrementPageViewCount } = await import('./pageview'));
+};
 
 beforeEach(async () => {
   sessionStorage.clear();
   localStorage.clear();
-  vi.resetModules();
-
-  ({
-    getPageViewCount,
-    incrementPageViewCount,
-    simulatePageNavigationOrRefresh,
-  } = await import('./pageview'));
+  await resetModules();
 });
 
 test('should increment page view count once for current page', () => {
@@ -23,14 +21,13 @@ test('should increment page view count once for current page', () => {
   expect(getPageViewCount()).toBe(1);
 });
 
-test('should increment page view count once for each page refresh', () => {
+test('should increment page view count once for each page refresh', async () => {
   expect(getPageViewCount()).toBe(0);
 
   incrementPageViewCount();
-  simulatePageNavigationOrRefresh();
   expect(getPageViewCount()).toBe(1);
 
+  await resetModules();
   incrementPageViewCount();
-  simulatePageNavigationOrRefresh();
   expect(getPageViewCount()).toBe(2);
 });
