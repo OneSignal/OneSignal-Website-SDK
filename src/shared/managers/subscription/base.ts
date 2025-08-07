@@ -1,3 +1,7 @@
+import {
+  getSubscription,
+  setSubscription,
+} from 'src/shared/database/subscription';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
@@ -8,7 +12,6 @@ import {
   SubscriptionStrategyKind,
   type SubscriptionStrategyKindValue,
 } from '../../models/SubscriptionStrategyKind';
-import Database from '../../services/Database';
 import OneSignalEvent from '../../services/OneSignalEvent';
 import { SessionOrigin } from '../../session/constants';
 import { Browser } from '../../useragent/constants';
@@ -83,7 +86,7 @@ export class SubscriptionManagerBase<
       this.context.sessionManager.upsertSession(SessionOrigin.UserCreate);
     }
 
-    const subscription = await Database.getSubscription();
+    const subscription = await getSubscription();
     // User Model: TO DO: Remove this once we have a better way to determine if the user is subscribed
     subscription.deviceId = DEFAULT_DEVICE_ID;
     subscription.optedOut = false;
@@ -98,7 +101,7 @@ export class SubscriptionManagerBase<
     } else {
       subscription.subscriptionToken = null;
     }
-    await Database.setSubscription(subscription);
+    await setSubscription(subscription);
 
     if (!IS_SERVICE_WORKER) {
       OneSignalEvent.trigger(OneSignal.EVENTS.REGISTERED);
@@ -111,7 +114,7 @@ export class SubscriptionManagerBase<
   }
 
   public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
-    const { deviceId } = await Database.getSubscription();
+    const { deviceId } = await getSubscription();
     return !!deviceId;
   }
 
@@ -235,12 +238,12 @@ export class SubscriptionManagerBase<
     updateCreatedAt: boolean,
     expirationTime: number | null,
   ): Promise<void> {
-    const bundle = await Database.getSubscription();
+    const bundle = await getSubscription();
     if (updateCreatedAt) {
       bundle.createdAt = new Date().getTime();
     }
     bundle.expirationTime = expirationTime;
-    await Database.setSubscription(bundle);
+    await setSubscription(bundle);
   }
 
   // Subscribes the ServiceWorker for a pushToken.

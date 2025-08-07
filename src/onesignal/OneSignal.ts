@@ -1,6 +1,9 @@
 import type Bell from 'src/page/bell/Bell';
 import { getAppConfig } from 'src/shared/config/app';
 import type { AppConfig, AppUserConfig } from 'src/shared/config/types';
+import { db } from 'src/shared/database/client';
+import { getConsentGiven } from 'src/shared/database/config';
+import { getSubscription } from 'src/shared/database/subscription';
 import { windowEnvString } from 'src/shared/environment/detect';
 import {
   EmptyArgumentError,
@@ -26,6 +29,7 @@ import {
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/EnvVariables';
+import { logMethodCall } from 'src/shared/utils/utils';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import LoginManager from '../page/managers/LoginManager';
@@ -36,9 +40,7 @@ import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCal
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
-import Database from '../shared/services/Database';
 import OneSignalEvent from '../shared/services/OneSignalEvent';
-import { logMethodCall } from '../shared/utils/utils';
 import DebugNamespace from './DebugNamesapce';
 import NotificationsNamespace from './NotificationsNamespace';
 import { ONESIGNAL_EVENTS } from './OneSignalEvents';
@@ -53,7 +55,7 @@ export default class OneSignal {
     const core = new CoreModule();
     await core.init();
     OneSignal.coreDirector = new CoreModuleDirector(core);
-    const subscription = await Database.getSubscription();
+    const subscription = await getSubscription();
     const permission =
       await OneSignal.context.permissionManager.getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);
@@ -149,7 +151,7 @@ export default class OneSignal {
     await OneSignal._initializeCoreModuleAndOSNamespaces();
 
     if (getConsentRequired()) {
-      const providedConsent = await Database.getConsentGiven();
+      const providedConsent = await getConsentGiven();
       if (!providedConsent) {
         OneSignal.pendingInit = true;
         return;
@@ -228,7 +230,8 @@ export default class OneSignal {
       throw WrongTypeArgumentError('consent');
     }
 
-    await Database.setConsentGiven(consent);
+    await db.put('Options', { key: 'userConsent', value: consent });
+
     if (consent && OneSignal.pendingInit) await OneSignal._delayedInit();
   }
 
@@ -267,7 +270,7 @@ export default class OneSignal {
   static initialized = false;
   static _didLoadITILibrary = false;
   static notifyButton: Bell | null = null;
-  static database = Database;
+  static database = db;
   static event = OneSignalEvent;
   private static pendingInit = true;
 

@@ -1,3 +1,4 @@
+import { getAppState, setAppState } from 'src/shared/database/config';
 import {
   EmptyArgumentError,
   MalformedArgumentError,
@@ -11,7 +12,6 @@ import type {
 } from 'src/shared/notifications/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { NotificationPermission } from '../shared/models/NotificationPermission';
-import Database from '../shared/services/Database';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
@@ -64,9 +64,9 @@ export default class NotificationsNamespace extends EventListenerBase {
       throw MalformedArgumentError('url');
     await awaitOneSignalInitAndSupported();
     logMethodCall('setDefaultNotificationUrl', url);
-    const appState = await Database.getAppState();
+    const appState = await getAppState();
     appState.defaultNotificationUrl = url;
-    await Database.setAppState(appState);
+    await setAppState(appState);
   }
 
   /**
@@ -87,9 +87,9 @@ export default class NotificationsNamespace extends EventListenerBase {
     }
 
     await awaitOneSignalInitAndSupported();
-    const appState = await Database.getAppState();
+    const appState = await getAppState();
     appState.defaultNotificationTitle = title;
-    await Database.setAppState(appState);
+    await setAppState(appState);
   }
 
   /**

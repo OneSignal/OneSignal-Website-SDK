@@ -12,6 +12,12 @@ import { http, HttpResponse } from 'msw';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import type { AppConfig } from 'src/shared/config/types';
+import { clearAll, db, getCurrentSession } from 'src/shared/database/client';
+import {
+  getAllNotificationClickedForOutcomes,
+  putNotificationClickedForOutcomes,
+} from 'src/shared/database/notifications';
+import { getSubscription } from 'src/shared/database/subscription';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
@@ -19,12 +25,6 @@ import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
-import Database, {
-  TABLE_NOTIFICATION_OPENED,
-  TABLE_OUTCOMES_NOTIFICATION_CLICKED,
-  TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
-  TABLE_SESSIONS,
-} from 'src/shared/services/Database';
 import {
   ONESIGNAL_SESSION_KEY,
   SessionOrigin,
@@ -92,8 +92,8 @@ describe('ServiceWorker', () => {
 
   beforeEach(async () => {
     isServiceWorker = false;
-    await Database.cleanupCurrentSession();
-    await Database.put('Ids', {
+    await clearAll();
+    await db.put('Ids', {
       type: 'appId',
       id: appId,
     });
@@ -162,8 +162,8 @@ describe('ServiceWorker', () => {
       const notificationId = payload.custom.i;
 
       // db should mark the notification as received
-      const notifcationReceived = await Database.getAll(
-        TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
+      const notifcationReceived = await db.getAll(
+        'Outcomes.NotificationReceived',
       );
       expect(notifcationReceived).toEqual(
         expect.arrayContaining([
@@ -258,8 +258,8 @@ describe('ServiceWorker', () => {
       expect(notificationClose).toHaveBeenCalled();
 
       // should save clicked info to db
-      const notificationClicked = await Database.getAll(
-        TABLE_OUTCOMES_NOTIFICATION_CLICKED,
+      const notificationClicked = await db.getAll(
+        'Outcomes.NotificationClicked',
       );
       expect(notificationClicked).toEqual(
         expect.arrayContaining([
@@ -301,9 +301,7 @@ describe('ServiceWorker', () => {
       );
 
       // should update DB and call open url
-      const pendingUrlOpening = await Database.getAll(
-        TABLE_NOTIFICATION_OPENED,
-      );
+      const pendingUrlOpening = await db.getAll('NotificationOpened');
       expect(pendingUrlOpening).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -344,11 +342,11 @@ describe('ServiceWorker', () => {
         http.post(`**/players`, () => HttpResponse.json({ id: null })),
       );
 
-      await Database.put('Ids', {
+      await db.put('Ids', {
         type: 'userId',
         id: null,
       });
-      await Database.put('Ids', {
+      await db.put('Ids', {
         type: 'registrationId',
         id: '456',
       });
@@ -359,7 +357,7 @@ describe('ServiceWorker', () => {
       await dispatchEvent(event);
 
       // should remove previous ids
-      const ids = await Database.getAll('Ids');
+      const ids = await db.getAll('Ids');
       expect(ids).toEqual([
         {
           type: 'appId',
@@ -388,7 +386,7 @@ describe('ServiceWorker', () => {
       );
 
       // the device id will be reset regardless of the old subscription state
-      const subscription = await Database.getSubscription();
+      const subscription = await getSubscription();
       expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
     });
 
@@ -463,9 +461,7 @@ describe('ServiceWorker', () => {
       timestamp: Date.now(),
     };
 
-    beforeEach(async () => {
-      await Database.cleanupCurrentSession();
-    });
+    beforeEach(async () => {});
 
     describe('session upsert event', () => {
       test('with safari client', async () => {
@@ -473,7 +469,7 @@ describe('ServiceWorker', () => {
         // @ts-expect-error - custom property, not part of the spec
         self.cancel = cancel;
 
-        await Database.put(TABLE_SESSIONS, session);
+        await db.put('Sessions', session);
 
         const event = new ExtendableMessageEvent('message', {
           command: WorkerMessengerCommand.SessionUpsert,
@@ -492,14 +488,14 @@ describe('ServiceWorker', () => {
         });
 
         // should de-active session since can't determine focused window for Safari
-        const updatedSession = (await Database.getCurrentSession())!;
+        const updatedSession = (await getCurrentSession())!;
         expect(updatedSession.status).toBe(SessionStatus.Inactive);
         expect(updatedSession.lastDeactivatedTimestamp).not.toBeNull();
         expect(updatedSession.accumulatedDuration).not.toBe(0);
       });
 
       test('with non-safari client', async () => {
-        await Database.putNotificationClickedForOutcomes(appId, clickOutcome);
+        await putNotificationClickedForOutcomes(appId, clickOutcome);
 
         const event = new ExtendableMessageEvent('message', {
           command: WorkerMessengerCommand.SessionUpsert,
@@ -511,7 +507,7 @@ describe('ServiceWorker', () => {
         await dispatchEvent(event);
 
         // should create a new session
-        const updatedSession = (await Database.getCurrentSession())!;
+        const updatedSession = (await getCurrentSession())!;
         expect(updatedSession).toEqual(
           expect.objectContaining({
             accumulatedDuration: 0,
@@ -554,11 +550,11 @@ describe('ServiceWorker', () => {
         );
 
         matchAllFn.mockResolvedValueOnce([unfocusedClient]);
-        await Database.put(TABLE_SESSIONS, {
+        await db.put('Sessions', {
           ...session,
           status: SessionStatus.Inactive,
         });
-        await Database.putNotificationClickedForOutcomes(appId, clickOutcome);
+        await putNotificationClickedForOutcomes(appId, clickOutcome);
 
         const event = new ExtendableMessageEvent('message', {
           command: WorkerMessengerCommand.SessionDeactivate,
@@ -574,9 +570,9 @@ describe('ServiceWorker', () => {
 
         // should finalize session then clean up sessions
         await vi.advanceTimersByTimeAsync(15000);
-        const currentSession = await Database.getCurrentSession();
+        const currentSession = await getCurrentSession();
         const notificationClicked =
-          await Database.getAllNotificationClickedForOutcomes();
+          await getAllNotificationClickedForOutcomes();
 
         expect(currentSession).toBeNull();
         expect(notificationClicked).toEqual([]);

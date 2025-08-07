@@ -13,7 +13,7 @@ import {
   SubscriptionType,
 } from 'src/shared/subscriptions/constants';
 import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
-import { logMethodCall } from '../shared/utils/utils';
+import { logMethodCall } from 'src/shared/utils/utils';
 
 export default class User {
   static singletonInstance?: User;

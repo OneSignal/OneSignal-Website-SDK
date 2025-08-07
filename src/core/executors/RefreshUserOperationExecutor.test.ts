@@ -12,7 +12,8 @@ import {
   setGetUserError,
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
-import Database from 'src/shared/services/Database';
+import { clearAll } from 'src/shared/database/client';
+import { setPushId } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
@@ -40,7 +41,7 @@ vi.mock('src/shared/libraries/Log');
 
 describe('RefreshUserOperationExecutor', () => {
   beforeEach(async () => {
-    await Database.clear(); // in case subscription model (from previous tests) are loaded from db
+    await clearAll(); // in case subscription model (from previous tests) are loaded from db
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
     subscriptionModelStore = new SubscriptionModelStore();
@@ -181,7 +182,7 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.notification_types = NotificationType.Subscribed;
 
       subscriptionModelStore.add(pushSubModel);
-      await Database.setPushId(DUMMY_SUBSCRIPTION_ID_2);
+      await setPushId(DUMMY_SUBSCRIPTION_ID_2);
 
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);

@@ -1,3 +1,8 @@
+import { getDBAppConfig } from 'src/shared/database/config';
+import {
+  getSubscription,
+  setSubscription,
+} from 'src/shared/database/subscription';
 import {
   AppIDMissingError,
   MalformedArgumentError,
@@ -11,7 +16,6 @@ import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeE
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
 import { Subscription } from '../shared/models/Subscription';
-import Database from '../shared/services/Database';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
@@ -122,8 +126,8 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
   private async _enable(enabled: boolean): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    const appConfig = await Database.getAppConfig();
-    const subscriptionFromDb = await Database.getSubscription();
+    const appConfig = await getDBAppConfig();
+    const subscriptionFromDb = await getSubscription();
 
     if (!appConfig.appId) {
       throw AppIDMissingError;
@@ -133,7 +137,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     }
 
     subscriptionFromDb.optedOut = !enabled;
-    await Database.setSubscription(subscriptionFromDb);
+    await setSubscription(subscriptionFromDb);
     onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch((e) => {
       Log.error(e);
     });

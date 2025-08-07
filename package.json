@@ -4,6 +4,7 @@
   "description": "Web push notifications from OneSignal.",
   "type": "module",
   "dependencies": {
+    "idb": "^8.0.3",
     "jsonp": "github:OneSignal/jsonp#onesignal",
     "uuid": "^11.1.0"
   },
@@ -80,12 +81,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "58.6 kB",
+      "limit": "58 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "22.4 kB",
+      "limit": "21.4 kB",
       "gzip": true
     },
     {

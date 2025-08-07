@@ -1,4 +1,4 @@
-import Database from '../services/Database';
+import { db } from '../database/client';
 import OneSignalEvent from '../services/OneSignalEvent';
 
 // This flag prevents firing the NOTIFICATION_PERMISSION_CHANGED_AS_STRING event twice
@@ -24,7 +24,7 @@ export const triggerNotificationPermissionChanged = async (force = false) => {
 const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
   const newPermission: NotificationPermission =
     await OneSignal.context.permissionManager.getPermissionStatus();
-  const previousPermission: NotificationPermission = await Database.get(
+  const previousPermission: NotificationPermission = await db.get(
     'Options',
     'notificationPermission',
   );
@@ -34,7 +34,7 @@ const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
     return;
   }
 
-  await Database.put('Options', {
+  await db.put('Options', {
     key: 'notificationPermission',
     value: newPermission,
   });

@@ -1,5 +1,5 @@
+import { ModelName } from 'src/shared/database/constants';
 import { IdentityModel } from '../models/IdentityModel';
-import { ModelName } from '../types/models';
 import { SimpleModelStore } from './SimpleModelStore';
 import { SingletonModelStore } from './SingletonModelStore';
 
