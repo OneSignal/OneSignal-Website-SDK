@@ -7,10 +7,10 @@
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "jsdom": "^9.12.0",
     "jsonp": "github:OneSignal/jsonp#onesignal",
-    "node-sass": "^4.9.0",
     "npm-css": "https://registry.npmjs.org/npm-css/-/npm-css-0.2.3.tgz",
     "postcss-discard-comments": "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-2.0.4.tgz",
     "postcss-filter-plugins": "https://registry.npmjs.org/postcss-filter-plugins/-/postcss-filter-plugins-2.0.2.tgz",
+    "sass": "^1.90.0",
     "tslib": "^1.9.0",
     "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz"
   },
@@ -88,7 +88,7 @@
     "nyc": "^11.1.0",
     "postcss-loader": "^2.0.6",
     "prettier": "^2.7.1",
-    "sass-loader": "^6.0.6",
+    "sass-loader": "8.0.2",
     "sinon": "^2.4.1",
     "svgo": "^0.7.2",
     "text-encoding": "^0.6.4",
@@ -98,7 +98,7 @@
     "uglifyjs-webpack-plugin": "^1.2.4",
     "webpack": "^4.3.0",
     "webpack-bundle-analyzer": "^3.3.2",
-    "webpack-cli": "^2.0.13"
+    "webpack-cli": "3.3.12"
   },
   "ava": {
     "extensions": [
@@ -150,5 +150,6 @@
       "maxSize": "9 kB",
       "compression": "gzip"
     }
-  ]
+  ],
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
