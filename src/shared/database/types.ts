@@ -66,7 +66,9 @@ export interface IndexedDBSchema extends DBSchema {
    */
   pushSubscriptions: {
     key: string;
-    value: SubscriptionSchema;
+    value: Omit<SubscriptionSchema, 'modelName'> & {
+      modelName: 'pushSubscriptions';
+    };
   };
 
   /**
@@ -74,7 +76,9 @@ export interface IndexedDBSchema extends DBSchema {
    */
   smsSubscriptions: {
     key: string;
-    value: SubscriptionSchema;
+    value: Omit<SubscriptionSchema, 'modelName'> & {
+      modelName: 'smsSubscriptions';
+    };
   };
 
   /**
@@ -82,7 +86,9 @@ export interface IndexedDBSchema extends DBSchema {
    */
   emailSubscriptions: {
     key: string;
-    value: SubscriptionSchema;
+    value: Omit<SubscriptionSchema, 'modelName'> & {
+      modelName: 'emailSubscriptions';
+    };
   };
 
   /**
@@ -143,7 +149,8 @@ export interface IndexedDBSchema extends DBSchema {
     value: {
       modelId: string;
       modelName: 'identity';
-      onesignal_id: string;
+      onesignal_id?: string;
+      onesignalId?: string;
       external_id?: string;
       externalId?: string;
     };

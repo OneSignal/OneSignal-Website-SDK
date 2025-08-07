@@ -16,11 +16,11 @@ import {
 let dbInstance: Awaited<ReturnType<typeof openDB<IndexedDBSchema>>> | null =
   null;
 
-export const getDb = async () => {
+export const getDb = async (version = VERSION) => {
   if (dbInstance) return dbInstance;
-  dbInstance = await openDB<IndexedDBSchema>(DATABASE_NAME, VERSION, {
+  dbInstance = await openDB<IndexedDBSchema>(DATABASE_NAME, version, {
     async upgrade(_db, oldVersion, newVersion, transaction) {
-      const newDbVersion = newVersion || VERSION;
+      const newDbVersion = newVersion || version;
       if (newDbVersion >= 1 && oldVersion < 1) {
         _db.createObjectStore('Ids', { keyPath: 'type' });
         _db.createObjectStore('NotificationOpened', { keyPath: 'url' });
@@ -83,7 +83,7 @@ type StoreName = StoreNames<IndexedDBSchema>;
 export const db = {
   async get<K extends StoreName>(
     storeName: K,
-    key: string,
+    key: IndexedDBSchema[K]['key'],
   ): Promise<IndexedDBSchema[K]['value'] | undefined> {
     const _db = await getDb();
     return _db.get(storeName, key);
@@ -101,7 +101,10 @@ export const db = {
     const _db = await getDb();
     return _db.put(storeName, value);
   },
-  async delete<K extends StoreName>(storeName: K, key: string) {
+  async delete<K extends StoreName>(
+    storeName: K,
+    key: IndexedDBSchema[K]['key'],
+  ) {
     const _db = await getDb();
     return _db.delete(storeName, key);
   },
@@ -136,10 +139,14 @@ export const cleanupCurrentSession = async () => {
   await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
 };
 
-// check if used in non tests
 export const clearAll = async () => {
   const objectStoreNames = db.objectStoreNames;
   for (const storeName of objectStoreNames) {
     await db.clear(storeName);
   }
+};
+
+export const closeDb = async () => {
+  await dbInstance?.close();
+  dbInstance = null;
 };
