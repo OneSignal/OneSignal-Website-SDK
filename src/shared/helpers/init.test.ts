@@ -87,18 +87,19 @@ test('correct degree of persistNotification setting should be stored', async () 
   // If not set, default to true
   delete config.userConfig.persistNotification;
   await InitHelper.saveInitOptions();
-  let persistNotification = await db.get('Options', 'persistNotification');
+  let persistNotification = (await db.get('Options', 'persistNotification'))
+    ?.value;
   expect(persistNotification).toBe(true);
 
   // If set to false, ensure value is false
   config.userConfig.persistNotification = false;
   await InitHelper.saveInitOptions();
-  persistNotification = await db.get('Options', 'persistNotification');
+  persistNotification = (await db.get('Options', 'persistNotification'))?.value;
   expect(persistNotification).toBe(false);
 
   // If set to true, ensure value is true
   config.userConfig.persistNotification = true;
   await InitHelper.saveInitOptions();
-  persistNotification = await db.get('Options', 'persistNotification');
+  persistNotification = (await db.get('Options', 'persistNotification'))?.value;
   expect(persistNotification).toBe(true);
 });
