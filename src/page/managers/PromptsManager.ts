@@ -5,6 +5,7 @@ import { getLocalPageViewCount } from 'src/shared/helpers/localStorage';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
+  DismissPrompt,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
 } from 'src/shared/prompts/constants';
 import { getFirstSlidedownPromptOptionsWithType } from 'src/shared/prompts/helpers';
@@ -26,7 +27,6 @@ import { logMethodCall } from 'src/shared/utils/utils';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { DismissPrompt } from '../models/Dismiss';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Slidedown from '../slidedown/Slidedown';
 

@@ -16,24 +16,6 @@ export function containsMatch(
 }
 
 /**
- * JSON.stringify() but converts functions to "[Function]" so they aren't lost.
- * Helps when logging method calls.
- */
-export function stringify(obj: any) {
-  return JSON.stringify(
-    obj,
-    (_, value) => {
-      if (typeof value === 'function') {
-        return '[Function]';
-      } else {
-        return value;
-      }
-    },
-    4,
-  );
-}
-
-/**
  * Used for generating query params
  *  e.g: -> hash = { appId } // with appId = '1234'
  *       -> returns "appId=1234"

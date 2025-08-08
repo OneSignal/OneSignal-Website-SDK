@@ -140,7 +140,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   async isOptedOut(
     callback?: (optedOut: boolean | undefined | null) => void,
   ): Promise<boolean | undefined | null> {
-    logMethodCall('isOptedOut', callback);
+    logMethodCall('isOptedOut');
     const { optedOut } = await getSubscription();
     executeCallback(callback, optedOut);
     return optedOut;

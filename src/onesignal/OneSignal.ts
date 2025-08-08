@@ -269,8 +269,6 @@ export default class OneSignal {
 
   static emitter: Emitter = new Emitter();
   static cache: any = {};
-  static _LOGGING = false;
-  static LOGGING = false;
   static _initCalled = false;
   static __initAlreadyCalled = false;
   static context: Context;

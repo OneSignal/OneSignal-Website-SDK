@@ -1,5 +1,8 @@
 import type { Categories, TagCategory } from 'src/page/tags/types';
-import type { DelayedPromptType } from './constants';
+import type { DelayedPromptType, DismissPrompt } from './constants';
+
+export type DismissPromptValue =
+  (typeof DismissPrompt)[keyof typeof DismissPrompt];
 
 export type DelayedPromptTypeValue =
   (typeof DelayedPromptType)[keyof typeof DelayedPromptType];

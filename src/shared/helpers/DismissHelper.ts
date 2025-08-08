@@ -1,13 +1,13 @@
 import { db } from 'src/shared/database/client';
-import {
-  DismissCountKey,
-  DismissPrompt,
-  type DismissPromptValue,
-  DismissTimeKey,
-} from '../../page/models/Dismiss';
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
 import { windowEnvString } from '../environment/detect';
 import Log from '../libraries/Log';
+import {
+  DismissCountKey,
+  DismissPrompt,
+  DismissTimeKey,
+} from '../prompts/constants';
+import type { DismissPromptValue } from '../prompts/types';
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
