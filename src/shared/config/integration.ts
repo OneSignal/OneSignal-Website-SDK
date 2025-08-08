@@ -5,7 +5,11 @@ import type {
   ServerAppConfig,
   ServiceWorkerConfigParams,
 } from 'src/shared/config/types';
-import { getValueOrDefault, valueOrDefault } from '../helpers/general';
+import {
+  DEFAULT_SERVICE_WORKER_OPTIONS,
+  DEFAULT_SERVICE_WORKER_PATH,
+} from '../context/constants';
+import { getValueOrDefault } from '../helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -212,9 +216,6 @@ export function getUserConfigForConfigIntegrationKind(
             Ignores dashboard configuration and uses code-based configuration only.
             Except injecting some default values for prompts.
           */
-      const defaultServiceWorkerParam = { scope: '/' };
-      const defaultServiceWorkerPath = 'OneSignalSDKWorker.js';
-
       const config = {
         ...userConfig,
         promptOptions: injectDefaultsIntoPromptOptions(
@@ -225,10 +226,10 @@ export function getUserConfigForConfigIntegrationKind(
         ...{
           serviceWorkerParam: !!userConfig.serviceWorkerParam
             ? userConfig.serviceWorkerParam
-            : defaultServiceWorkerParam,
+            : DEFAULT_SERVICE_WORKER_OPTIONS,
           serviceWorkerPath: !!userConfig.serviceWorkerPath
             ? userConfig.serviceWorkerPath
-            : defaultServiceWorkerPath,
+            : DEFAULT_SERVICE_WORKER_PATH,
           path: !!userConfig.path ? userConfig.path : '/',
         },
         outcomes: {
@@ -270,15 +271,18 @@ function getServiceWorkerValues(
 
   return {
     path: useUserOverride
-      ? valueOrDefault(userConfig.path, serviceWorker.path)
+      ? getValueOrDefault(userConfig.path, serviceWorker.path)
       : serviceWorker.path,
     serviceWorkerParam: useUserOverride
-      ? valueOrDefault(userConfig.serviceWorkerParam, {
+      ? getValueOrDefault(userConfig.serviceWorkerParam, {
           scope: serviceWorker.registrationScope,
         })
       : { scope: serviceWorker.registrationScope },
     serviceWorkerPath: useUserOverride
-      ? valueOrDefault(userConfig.serviceWorkerPath, serviceWorker.workerName)
+      ? getValueOrDefault(
+          userConfig.serviceWorkerPath,
+          serviceWorker.workerName,
+        )
       : serviceWorker.workerName,
   };
 }
@@ -303,36 +307,36 @@ function injectDefaultsIntoPromptOptions(
   const promptOptionsConfig: AppUserConfigPromptOptions = {
     ...promptOptions,
     customlink: {
-      enabled: valueOrDefault(
+      enabled: getValueOrDefault(
         customlinkUser.enabled,
         customlinkDefaults.enabled,
       ),
-      style: valueOrDefault(customlinkUser.style, customlinkDefaults.style),
-      size: valueOrDefault(customlinkUser.size, customlinkDefaults.size),
-      unsubscribeEnabled: valueOrDefault(
+      style: getValueOrDefault(customlinkUser.style, customlinkDefaults.style),
+      size: getValueOrDefault(customlinkUser.size, customlinkDefaults.size),
+      unsubscribeEnabled: getValueOrDefault(
         customlinkUser.unsubscribeEnabled,
         customlinkDefaults.unsubscribeEnabled,
       ),
       text: {
-        subscribe: valueOrDefault(
+        subscribe: getValueOrDefault(
           customlinkUser.text ? customlinkUser.text.subscribe : undefined,
           customlinkDefaults.text.subscribe,
         ),
-        unsubscribe: valueOrDefault(
+        unsubscribe: getValueOrDefault(
           customlinkUser.text ? customlinkUser.text.unsubscribe : undefined,
           customlinkDefaults.text.unsubscribe,
         ),
-        explanation: valueOrDefault(
+        explanation: getValueOrDefault(
           customlinkUser.text ? customlinkUser.text.explanation : undefined,
           customlinkDefaults.text.explanation,
         ),
       },
       color: {
-        button: valueOrDefault(
+        button: getValueOrDefault(
           customlinkUser.color ? customlinkUser.color.button : undefined,
           customlinkDefaults.color.button,
         ),
-        text: valueOrDefault(
+        text: getValueOrDefault(
           customlinkUser.color ? customlinkUser.color.text : undefined,
           customlinkDefaults.color.text,
         ),
@@ -343,7 +347,7 @@ function injectDefaultsIntoPromptOptions(
   if (promptOptionsConfig.slidedown) {
     promptOptionsConfig.slidedown.prompts =
       promptOptionsConfig.slidedown?.prompts?.map((promptOption) => {
-        promptOption.type = valueOrDefault(
+        promptOption.type = getValueOrDefault(
           promptOption.type,
           DelayedPromptType.Push,
         );
@@ -351,7 +355,7 @@ function injectDefaultsIntoPromptOptions(
         if (promptOption.type === DelayedPromptType.Category) {
           promptOption.text = {
             ...promptOption.text,
-            positiveUpdateButton: valueOrDefault(
+            positiveUpdateButton: getValueOrDefault(
               promptOption.text?.positiveUpdateButton,
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults
                 .positiveUpdateButton,

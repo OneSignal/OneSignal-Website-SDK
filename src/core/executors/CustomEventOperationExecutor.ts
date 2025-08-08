@@ -20,8 +20,6 @@ import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 // Implements logic similar to Android SDK's CustomEventOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/main/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/CustomEventOperationExecutor.kt
 export class CustomEventsOperationExecutor implements IOperationExecutor {
-  constructor() {}
-
   get operations(): string[] {
     return [OPERATION_NAME.CUSTOM_EVENT];
   }

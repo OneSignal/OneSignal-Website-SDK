@@ -8,11 +8,11 @@ import {
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
+import * as PermissionUtils from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 import { AppState } from 'src/shared/models/AppState';
 import Database from 'src/shared/services/Database';
-import { PermissionUtils } from 'src/shared/utils/PermissionUtils';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 

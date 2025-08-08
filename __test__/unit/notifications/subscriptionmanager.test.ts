@@ -1,8 +1,8 @@
-import MockNotification from '../../support/mocks/MockNotification';
-import { SubscriptionManager } from '../../../src/shared/managers/SubscriptionManager';
+import { SubscriptionManagerPage } from '../../../src/shared/managers/subscription/page';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
+import MockNotification from '../../support/mocks/MockNotification';
 
-describe('SubscriptionManager', () => {
+describe('SubscriptionManagerPage', () => {
   describe('requestNotificationPermission', () => {
     beforeEach(() => {
       window.Notification = MockNotification;
@@ -10,23 +10,23 @@ describe('SubscriptionManager', () => {
 
     test('default', async () => {
       MockNotification.permission = 'default';
-      expect(await SubscriptionManager.requestNotificationPermission()).toBe(
-        NotificationPermission.Default,
-      );
+      expect(
+        await SubscriptionManagerPage.requestNotificationPermission(),
+      ).toBe(NotificationPermission.Default);
     });
 
     test('denied', async () => {
       MockNotification.permission = 'denied';
-      expect(await SubscriptionManager.requestNotificationPermission()).toBe(
-        NotificationPermission.Denied,
-      );
+      expect(
+        await SubscriptionManagerPage.requestNotificationPermission(),
+      ).toBe(NotificationPermission.Denied);
     });
 
     test('granted', async () => {
       MockNotification.permission = 'granted';
-      expect(await SubscriptionManager.requestNotificationPermission()).toBe(
-        NotificationPermission.Granted,
-      );
+      expect(
+        await SubscriptionManagerPage.requestNotificationPermission(),
+      ).toBe(NotificationPermission.Granted);
     });
   });
 });

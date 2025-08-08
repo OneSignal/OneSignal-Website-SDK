@@ -1,6 +1,7 @@
 import OneSignalApi from '../api/OneSignalApi';
 import { InvalidAppIdError } from '../errors/common';
-import { isValidUuid, valueOrDefault } from '../helpers/general';
+import { getValueOrDefault } from '../helpers/general';
+import { isValidUuid } from '../helpers/validators';
 import { checkRestrictedOrigin, checkUnsupportedSubdomain } from './domain';
 import {
   getConfigIntegrationKind,
@@ -87,15 +88,15 @@ export function getMergedConfig(
     vapidPublicKey: serverConfig.config.vapid_public_key,
     onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
     userConfig: mergedUserConfig,
-    enableOnSession: valueOrDefault(
+    enableOnSession: getValueOrDefault(
       serverConfig.features.enable_on_session,
       SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed,
     ),
-    sessionThreshold: valueOrDefault(
+    sessionThreshold: getValueOrDefault(
       serverConfig.features.session_threshold,
       SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold,
     ),
-    enableSessionDuration: valueOrDefault(
+    enableSessionDuration: getValueOrDefault(
       serverConfig.features.web_on_focus_enabled,
       SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
     ),

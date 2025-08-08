@@ -1,5 +1,5 @@
+import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
 import RealPermissionManager from '../../../src/shared/managers/PermissionManager';
-import { PermissionUtils } from '../../../src/shared/utils/PermissionUtils';
 
 export class PermissionManager {
   public static async mockNotificationPermissionChange(
@@ -10,6 +10,6 @@ export class PermissionManager {
       'getPermissionStatus',
     ).mockResolvedValue(nativePermission);
     // mimick native permission change
-    await PermissionUtils.triggerNotificationPermissionChanged();
+    await triggerNotificationPermissionChanged();
   }
 }

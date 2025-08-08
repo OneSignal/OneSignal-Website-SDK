@@ -11,6 +11,9 @@ import { EnvironmentKind } from './constants';
 
 export const isBrowser = typeof window !== 'undefined';
 
+export const hasSafariWindow = () =>
+  isBrowser && typeof window.safari !== 'undefined';
+
 export const supportsServiceWorkers = () => {
   if (IS_SERVICE_WORKER) return true;
   return typeof navigator !== 'undefined' && 'serviceWorker' in navigator;

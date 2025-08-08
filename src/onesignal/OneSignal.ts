@@ -8,6 +8,13 @@ import {
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
 import {
+  errorIfInitAlreadyCalled,
+  initSaveState,
+  internalInit,
+  onSdkInitialized,
+  saveInitOptions,
+} from 'src/shared/helpers/init';
+import {
   getConsentRequired,
   removeLegacySubscriptionOptions,
   setConsentRequired as setStorageConsentRequired,
@@ -26,7 +33,6 @@ import Context from '../page/models/Context';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
-import InitHelper from '../shared/helpers/InitHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
@@ -124,7 +130,7 @@ export default class OneSignal {
 
     removeLegacySubscriptionOptions();
 
-    InitHelper.errorIfInitAlreadyCalled();
+    errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);
     if (!OneSignal.config) {
       throw new Error('OneSignal config not initialized!');
@@ -171,10 +177,7 @@ export default class OneSignal {
         OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
         _onSubscriptionChanged,
       );
-      OneSignal.emitter.on(
-        OneSignal.EVENTS.SDK_INITIALIZED,
-        InitHelper.onSdkInitialized,
-      );
+      OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
 
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,
@@ -182,9 +185,9 @@ export default class OneSignal {
         MainHelper.checkAndTriggerNotificationPermissionChanged();
       });
 
-      await InitHelper.initSaveState();
-      await InitHelper.saveInitOptions();
-      await InitHelper.internalInit();
+      await initSaveState();
+      await saveInitOptions();
+      await internalInit();
     }
 
     if (

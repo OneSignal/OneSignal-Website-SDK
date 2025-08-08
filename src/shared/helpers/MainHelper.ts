@@ -1,5 +1,4 @@
 import type { NotificationIcons } from 'src/shared/notifications/types';
-import { ValidatorUtils } from '../../page/utils/ValidatorUtils';
 import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
 import { AppIDMissingError, MalformedArgumentError } from '../errors/common';
 import Log from '../libraries/Log';
@@ -8,9 +7,10 @@ import type {
   SlidedownOptions,
 } from '../prompts/types';
 import Database from '../services/Database';
-import { PermissionUtils } from '../utils/PermissionUtils';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
 import { getValueOrDefault } from './general';
+import { triggerNotificationPermissionChanged } from './permissions';
+import { isValidUrl } from './validators';
 
 export default class MainHelper {
   static async showLocalNotification(
@@ -36,10 +36,8 @@ export default class MainHelper {
     if (!appConfig.appId) throw AppIDMissingError;
     if (!OneSignal.Notifications.permission)
       throw new Error('User is not subscribed');
-    if (!ValidatorUtils.isValidUrl(url)) throw MalformedArgumentError('url');
-    if (
-      !ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true })
-    )
+    if (!isValidUrl(url)) throw MalformedArgumentError('url');
+    if (!isValidUrl(icon, { allowEmpty: true, requireHttps: true }))
       throw MalformedArgumentError('icon');
     if (!icon) {
       // get default icon
@@ -99,7 +97,7 @@ export default class MainHelper {
       await OneSignal.context.permissionManager.getPermissionStatus();
 
     if (previousPermission !== currentPermission) {
-      await PermissionUtils.triggerNotificationPermissionChanged();
+      await triggerNotificationPermissionChanged();
       await Database.put('Options', {
         key: 'notificationPermission',
         value: currentPermission,

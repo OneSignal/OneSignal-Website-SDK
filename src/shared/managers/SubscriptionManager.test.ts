@@ -11,7 +11,7 @@ import {
 } from '__test__/support/mocks/MockServiceWorker';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
-import { updatePushSubscriptionModelWithRawSubscription } from './SubscriptionManager';
+import { updatePushSubscriptionModelWithRawSubscription } from './subscription/page';
 
 const getRawSubscription = (): RawPushSubscription => {
   const rawSubscription = new RawPushSubscription();

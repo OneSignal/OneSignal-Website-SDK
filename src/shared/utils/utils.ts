@@ -1,10 +1,8 @@
 import type { NotificationIcons } from 'src/shared/notifications/types';
+import { stringify } from '../context/helpers';
 import Log from '../libraries/Log';
 import { Browser } from '../useragent/constants';
 import { getBrowserName } from '../useragent/detect';
-import { IS_SERVICE_WORKER } from './EnvVariables';
-import { OneSignalUtils } from './OneSignalUtils';
-import { PermissionUtils } from './PermissionUtils';
 
 /**
  * Helper method for public APIs that waits until OneSignal is initialized, rejects if push notifications are
@@ -18,52 +16,8 @@ export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
   });
 }
 
-export async function triggerNotificationPermissionChanged(
-  updateIfIdentical = false,
-) {
-  return PermissionUtils.triggerNotificationPermissionChanged(
-    updateIfIdentical,
-  );
-}
-
 export function logMethodCall(methodName: string, ...args: any[]) {
-  return OneSignalUtils.logMethodCall(methodName, ...args);
-}
-
-/**
- * Unsubscribe from push notifications without removing the active service worker.
- */
-export function unsubscribeFromPush() {
-  Log.warn('OneSignal: Unsubscribing from push.');
-  if (!IS_SERVICE_WORKER) {
-    return (self as any).registration.pushManager
-      .getSubscription()
-      .then((subscription: PushSubscription) => {
-        if (subscription) {
-          return subscription.unsubscribe();
-        } else throw new Error('Cannot unsubscribe because not subscribed.');
-      });
-  }
-  return (
-    OneSignal.context.serviceWorkerManager
-      .getRegistration()
-      // @ts-expect-error - TODO: improve type
-      .then((serviceWorker) => {
-        if (!serviceWorker) {
-          return Promise.resolve();
-        }
-        return serviceWorker;
-      })
-      .then((registration) => registration?.pushManager)
-      .then((pushManager) => pushManager?.getSubscription())
-      .then((subscription) => {
-        if (subscription) {
-          return subscription.unsubscribe().then(() => void 0);
-        } else {
-          return Promise.resolve();
-        }
-      })
-  );
+  return Log.debug(`Called ${methodName}(${args.map(stringify).join(', ')})`);
 }
 
 export function once(

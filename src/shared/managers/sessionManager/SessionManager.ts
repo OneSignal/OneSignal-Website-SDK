@@ -2,7 +2,12 @@ import { IdentityConstants } from 'src/core/constants';
 import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
 import { enforceAlias, enforceAppId } from 'src/shared/context/helpers';
-import { supportsServiceWorkers } from 'src/shared/environment/detect';
+import type { ContextInterface } from 'src/shared/context/types';
+import {
+  hasSafariWindow,
+  supportsServiceWorkers,
+} from 'src/shared/environment/detect';
+import { isFirstPageView } from 'src/shared/helpers/pageview';
 import { SessionOrigin } from 'src/shared/session/constants';
 import type {
   SessionOriginValue,
@@ -12,11 +17,9 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
-import type { ContextInterface } from '../../../page/models/Context';
 import MainHelper from '../../helpers/MainHelper';
 import Log from '../../libraries/Log';
-import { WorkerMessengerCommand } from '../../libraries/WorkerMessenger';
-import { OneSignalUtils } from '../../utils/OneSignalUtils';
+import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constants';
 import type { ISessionManager } from './types';
 
 export class SessionManager implements ISessionManager {
@@ -39,7 +42,7 @@ export class SessionManager implements ISessionManager {
       sessionThreshold: this.context.appConfig.sessionThreshold || 0,
       enableSessionDuration: !!this.context.appConfig.enableSessionDuration,
       sessionOrigin,
-      isSafari: OneSignalUtils.isSafari(),
+      isSafari: hasSafariWindow(),
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
@@ -67,7 +70,7 @@ export class SessionManager implements ISessionManager {
       sessionThreshold: this.context.appConfig.sessionThreshold!,
       enableSessionDuration: this.context.appConfig.enableSessionDuration!,
       sessionOrigin,
-      isSafari: OneSignalUtils.isSafari(),
+      isSafari: hasSafariWindow(),
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
@@ -188,7 +191,7 @@ export class SessionManager implements ISessionManager {
         sessionThreshold: this.context.appConfig.sessionThreshold!,
         enableSessionDuration: this.context.appConfig.enableSessionDuration!,
         sessionOrigin: SessionOrigin.BeforeUnload,
-        isSafari: OneSignalUtils.isSafari(),
+        isSafari: hasSafariWindow(),
         outcomesConfig: this.context.appConfig.userConfig.outcomes!,
       };
 
@@ -344,8 +347,7 @@ export class SessionManager implements ISessionManager {
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
   async sendOnSessionUpdateFromPage(): Promise<void> {
-    const earlyReturn =
-      this.onSessionSent || !this.context.pageViewManager.isFirstPageView();
+    const earlyReturn = this.onSessionSent || !isFirstPageView();
 
     if (earlyReturn) {
       return;

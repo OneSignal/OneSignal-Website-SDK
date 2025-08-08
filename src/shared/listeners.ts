@@ -5,7 +5,6 @@ import { decodeHtmlEntities } from './helpers/dom';
 import MainHelper from './helpers/MainHelper';
 import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
-import type { ContextSWInterface } from './models/ContextSW';
 import type {
   NotificationClickEvent,
   NotificationClickEventInternal,
@@ -14,12 +13,11 @@ import { isCategorySlidedownConfigured } from './prompts/helpers';
 import Database from './services/Database';
 import LimitStore from './services/LimitStore';
 import OneSignalEvent from './services/OneSignalEvent';
-import OneSignalUtils from './utils/OneSignalUtils';
-import { awaitOneSignalInitAndSupported } from './utils/utils';
+import { awaitOneSignalInitAndSupported, logMethodCall } from './utils/utils';
 
 export async function checkAndTriggerSubscriptionChanged() {
-  OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
-  const context: ContextSWInterface = OneSignal.context;
+  logMethodCall('checkAndTriggerSubscriptionChanged');
+  const context = OneSignal.context;
   // isPushEnabled = subscribed && is not opted out
   const isPushEnabled: boolean =
     await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
@@ -94,7 +92,7 @@ export function triggerNotificationClick(
 }
 
 export async function checkAndTriggerUserChanged() {
-  OneSignalUtils.logMethodCall('checkAndTriggerUserChanged');
+  logMethodCall('checkAndTriggerUserChanged');
 
   const userState = await Database.getUserState();
   const { previousOneSignalId, previousExternalId } = userState;

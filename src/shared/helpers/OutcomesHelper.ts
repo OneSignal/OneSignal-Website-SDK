@@ -49,7 +49,7 @@ export default class OutcomesHelper {
    * @returns Promise
    */
   async getAttribution(): Promise<OutcomeAttribution> {
-    return await OutcomesHelper.getAttribution(this.config);
+    return await getConfigAttribution(this.config);
   }
 
   /**
@@ -216,110 +216,110 @@ export default class OutcomesHelper {
   }
 
   // statics
+}
 
+/**
+ * Static method: returns `OutcomeAttribution` object which includes
+ *    1) attribution type
+ *    2) notification ids
+ *
+ * Note: this just looks at notifications that fall within the attribution window and
+ *       does not check if they have been previously attributed (used in both sendOutcome & sendUniqueOutcome)
+ * @param  {OutcomesConfig} config
+ * @returns Promise
+ */
+export async function getConfigAttribution(
+  config: OutcomesConfig,
+): Promise<OutcomeAttribution> {
   /**
-   * Static method: returns `OutcomeAttribution` object which includes
-   *    1) attribution type
-   *    2) notification ids
-   *
-   * Note: this just looks at notifications that fall within the attribution window and
-   *       does not check if they have been previously attributed (used in both sendOutcome & sendUniqueOutcome)
-   * @param  {OutcomesConfig} config
-   * @returns Promise
+   * Flow:
+   * 1. check if the url was opened as a result of a notif;
+   * 2. if so, send an api call reporting direct notification outcome
+   *    (currently takes into account the match strategy selected in the app's settings);
+   * 3. else check all received notifs within timeframe from config;
+   * 4. send an api call reporting an influenced outcome for each matching notification
+   *    respecting the limit from config too;
+   * 5. if no influencing notification found, report unattributed outcome to the api.
    */
-  static async getAttribution(
-    config: OutcomesConfig,
-  ): Promise<OutcomeAttribution> {
-    /**
-     * Flow:
-     * 1. check if the url was opened as a result of a notif;
-     * 2. if so, send an api call reporting direct notification outcome
-     *    (currently takes into account the match strategy selected in the app's settings);
-     * 3. else check all received notifs within timeframe from config;
-     * 4. send an api call reporting an influenced outcome for each matching notification
-     *    respecting the limit from config too;
-     * 5. if no influencing notification found, report unattributed outcome to the api.
-     */
 
-    /* direct notifications */
-    if (config.direct && config.direct.enabled) {
-      const clickedNotifications =
-        await Database.getAllNotificationClickedForOutcomes();
-      if (clickedNotifications.length > 0) {
+  /* direct notifications */
+  if (config.direct && config.direct.enabled) {
+    const clickedNotifications =
+      await Database.getAllNotificationClickedForOutcomes();
+    if (clickedNotifications.length > 0) {
+      return {
+        type: OutcomeAttributionType.Direct,
+        notificationIds: [clickedNotifications[0].notificationId],
+      };
+    }
+  }
+
+  /* influencing notifications */
+  if (config.indirect && config.indirect.enabled) {
+    const timeframeMs = config.indirect.influencedTimePeriodMin * 60 * 1000;
+    const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
+    const maxTimestamp = beginningOfTimeframe.getTime();
+
+    const allReceivedNotification =
+      await Database.getAllNotificationReceivedForOutcomes();
+    Log.debug(
+      `\tFound total of ${allReceivedNotification.length} received notifications`,
+    );
+
+    if (allReceivedNotification.length > 0) {
+      const max: number = config.indirect.influencedNotificationsLimit;
+      /**
+       * To handle correctly the case when user got subscribed to a new app id
+       * we check the appId on notifications to match the current app.
+       */
+
+      const allReceivedNotificationSorted = sortArrayOfObjects(
+        allReceivedNotification,
+        (notif: OutcomesNotificationReceived) => notif.timestamp,
+        true,
+        false,
+      );
+      const matchingNotificationIds = allReceivedNotificationSorted
+        .filter((notif) => notif.timestamp >= maxTimestamp)
+        .slice(0, max)
+        .map((notif) => notif.notificationId);
+      Log.debug(
+        `\tTotal of ${matchingNotificationIds.length} received notifications are within reporting window.`,
+      );
+
+      // Deleting all unmatched received notifications
+      const notificationIdsToDelete = allReceivedNotificationSorted
+        .filter(
+          (notif) =>
+            matchingNotificationIds.indexOf(notif.notificationId) === -1,
+        )
+        .map((notif) => notif.notificationId);
+      notificationIdsToDelete.forEach((id) =>
+        Database.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED, id),
+      );
+      Log.debug(
+        `\t${notificationIdsToDelete.length} received notifications will be deleted.`,
+      );
+
+      if (matchingNotificationIds.length > 0) {
         return {
-          type: OutcomeAttributionType.Direct,
-          notificationIds: [clickedNotifications[0].notificationId],
+          type: OutcomeAttributionType.Indirect,
+          notificationIds: matchingNotificationIds,
         };
       }
     }
+  }
 
-    /* influencing notifications */
-    if (config.indirect && config.indirect.enabled) {
-      const timeframeMs = config.indirect.influencedTimePeriodMin * 60 * 1000;
-      const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
-      const maxTimestamp = beginningOfTimeframe.getTime();
-
-      const allReceivedNotification =
-        await Database.getAllNotificationReceivedForOutcomes();
-      Log.debug(
-        `\tFound total of ${allReceivedNotification.length} received notifications`,
-      );
-
-      if (allReceivedNotification.length > 0) {
-        const max: number = config.indirect.influencedNotificationsLimit;
-        /**
-         * To handle correctly the case when user got subscribed to a new app id
-         * we check the appId on notifications to match the current app.
-         */
-
-        const allReceivedNotificationSorted = sortArrayOfObjects(
-          allReceivedNotification,
-          (notif: OutcomesNotificationReceived) => notif.timestamp,
-          true,
-          false,
-        );
-        const matchingNotificationIds = allReceivedNotificationSorted
-          .filter((notif) => notif.timestamp >= maxTimestamp)
-          .slice(0, max)
-          .map((notif) => notif.notificationId);
-        Log.debug(
-          `\tTotal of ${matchingNotificationIds.length} received notifications are within reporting window.`,
-        );
-
-        // Deleting all unmatched received notifications
-        const notificationIdsToDelete = allReceivedNotificationSorted
-          .filter(
-            (notif) =>
-              matchingNotificationIds.indexOf(notif.notificationId) === -1,
-          )
-          .map((notif) => notif.notificationId);
-        notificationIdsToDelete.forEach((id) =>
-          Database.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED, id),
-        );
-        Log.debug(
-          `\t${notificationIdsToDelete.length} received notifications will be deleted.`,
-        );
-
-        if (matchingNotificationIds.length > 0) {
-          return {
-            type: OutcomeAttributionType.Indirect,
-            notificationIds: matchingNotificationIds,
-          };
-        }
-      }
-    }
-
-    /* unattributed outcome report */
-    if (config.unattributed && config.unattributed.enabled) {
-      return {
-        type: OutcomeAttributionType.Unattributed,
-        notificationIds: [],
-      };
-    }
-
+  /* unattributed outcome report */
+  if (config.unattributed && config.unattributed.enabled) {
     return {
-      type: OutcomeAttributionType.NotSupported,
+      type: OutcomeAttributionType.Unattributed,
       notificationIds: [],
     };
   }
+
+  return {
+    type: OutcomeAttributionType.NotSupported,
+    notificationIds: [],
+  };
 }

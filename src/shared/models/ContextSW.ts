@@ -1,47 +1,21 @@
 import { SessionManager } from '../../sw/managers/sessionManager/SessionManager';
 import type { AppConfig } from '../config/types';
-import ContextHelper from '../helpers/ContextHelper';
-import { WorkerMessenger } from '../libraries/WorkerMessenger';
-import { PageViewManager } from '../managers/PageViewManager';
-import PermissionManager from '../managers/PermissionManager';
-import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
-import { SubscriptionManager } from '../managers/SubscriptionManager';
-import { UpdateManager } from '../managers/UpdateManager';
+import type { ContextSWInterface } from '../context/types';
+import { getSubscriptionManagerSW } from '../helpers/context';
+import { WorkerMessengerSW } from '../libraries/workerMessenger/sw';
 import type { ISessionManager } from '../managers/sessionManager/types';
-
-// TODO: Ideally this file should only import classes used by ServiceWorker.ts.
-//       Example, ServiceWorkerManager should be remove as it is used by the page / browser,
-//         not the ServiceWorker itself internally.
-
-export interface ContextSWInterface {
-  appConfig: AppConfig;
-  subscriptionManager: SubscriptionManager;
-  serviceWorkerManager: ServiceWorkerManager;
-  pageViewManager: PageViewManager;
-  sessionManager: ISessionManager;
-  permissionManager: PermissionManager;
-  workerMessenger: WorkerMessenger;
-  updateManager: UpdateManager;
-}
+import { SubscriptionManagerSW } from '../managers/subscription/sw';
 
 export default class ContextSW implements ContextSWInterface {
   public appConfig: AppConfig;
-  public subscriptionManager: SubscriptionManager;
-  public serviceWorkerManager: ServiceWorkerManager;
-  public pageViewManager: PageViewManager;
+  public subscriptionManager: SubscriptionManagerSW;
   public sessionManager: ISessionManager;
-  public permissionManager: PermissionManager;
-  public workerMessenger: WorkerMessenger;
-  public updateManager: UpdateManager;
+  public workerMessenger: WorkerMessengerSW;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
-    this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
-    this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
-    this.pageViewManager = new PageViewManager();
+    this.subscriptionManager = getSubscriptionManagerSW(this);
     this.sessionManager = new SessionManager();
-    this.permissionManager = new PermissionManager();
-    this.workerMessenger = new WorkerMessenger(this);
-    this.updateManager = new UpdateManager(this);
+    this.workerMessenger = new WorkerMessengerSW(this);
   }
 }

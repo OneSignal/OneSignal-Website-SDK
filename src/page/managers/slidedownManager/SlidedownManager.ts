@@ -2,6 +2,7 @@ import type {
   TagsObjectForApi,
   TagsObjectWithBoolean,
 } from 'src/page/tags/types';
+import type { ContextInterface } from 'src/shared/context/types';
 import {
   ChannelCaptureError,
   ExistingChannelError,
@@ -9,21 +10,20 @@ import {
 } from 'src/shared/errors/common';
 import { InvalidChannelInputField } from 'src/shared/errors/constants';
 import { delay } from 'src/shared/helpers/general';
+import { registerForPushNotifications } from 'src/shared/helpers/init';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
 } from 'src/shared/prompts/constants';
 import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
+import { logMethodCall } from 'src/shared/utils/utils';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
-import InitHelper from '../../../shared/helpers/InitHelper';
 import Log from '../../../shared/libraries/Log';
 import { NotificationPermission } from '../../../shared/models/NotificationPermission';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
-import { OneSignalUtils } from '../../../shared/utils/OneSignalUtils';
 import TagUtils from '../../../shared/utils/TagUtils';
-import type { ContextInterface } from '../../models/Context';
 import { DismissPrompt } from '../../models/Dismiss';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';
@@ -130,10 +130,6 @@ export class SlidedownManager {
     return true;
   }
 
-  private registerForPush(): void {
-    InitHelper.registerForPushNotifications();
-  }
-
   private async handleAllowForCategoryType(): Promise<void> {
     if (!this.slidedown) {
       throw SlidedownMissingError;
@@ -142,7 +138,7 @@ export class SlidedownManager {
     const tags = TaggingContainer.getValuesFromTaggingContainer();
     this.context.tagManager.storeTagValuesToUpdate(tags);
 
-    this.registerForPush();
+    registerForPushNotifications();
     await this.context.tagManager.sendTags(true);
   }
 
@@ -288,7 +284,7 @@ export class SlidedownManager {
   private async mountTaggingContainer(
     options: AutoPromptOptions,
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('mountTaggingContainer');
+    logMethodCall('mountTaggingContainer');
     try {
       // show slidedown with tagging container
       let tagsForComponent: TagsObjectWithBoolean = {};
@@ -326,7 +322,7 @@ export class SlidedownManager {
   private async mountChannelCaptureContainer(
     options: AutoPromptOptions,
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('mountChannelCaptureContainer');
+    logMethodCall('mountChannelCaptureContainer');
     try {
       if (!!options.slidedownPromptOptions) {
         const channelCaptureContainer = new ChannelCaptureContainer(
@@ -361,7 +357,7 @@ export class SlidedownManager {
     try {
       switch (slidedownType) {
         case DelayedPromptType.Push:
-          this.registerForPush();
+          registerForPushNotifications();
           break;
         case DelayedPromptType.Category:
           await this.handleAllowForCategoryType();
@@ -439,7 +435,7 @@ export class SlidedownManager {
   }
 
   public async createSlidedown(options: AutoPromptOptions): Promise<void> {
-    OneSignalUtils.logMethodCall('createSlidedown');
+    logMethodCall('createSlidedown');
     try {
       const showPrompt = await this.checkIfSlidedownShouldBeShown(options);
       if (!showPrompt) {

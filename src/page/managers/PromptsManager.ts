@@ -1,4 +1,7 @@
+import type { ContextInterface } from 'src/shared/context/types';
 import { delay } from 'src/shared/helpers/general';
+import { registerForPushNotifications } from 'src/shared/helpers/init';
+import { getLocalPageViewCount } from 'src/shared/helpers/localStorage';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -19,12 +22,10 @@ import {
   isTabletBrowser,
   requiresUserInteraction,
 } from 'src/shared/useragent/detect';
+import { logMethodCall } from 'src/shared/utils/utils';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
-import InitHelper from '../../shared/helpers/InitHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import OneSignalUtils from '../../shared/utils/OneSignalUtils';
-import type { ContextInterface } from '../models/Context';
 import { DismissPrompt } from '../models/Dismiss';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Slidedown from '../slidedown/Slidedown';
@@ -138,7 +139,7 @@ export class PromptsManager {
     timeDelaySeconds: number,
     options?: AutoPromptOptions,
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('internalShowDelayedPrompt');
+    logMethodCall('internalShowDelayedPrompt');
     if (typeof timeDelaySeconds !== 'number') {
       Log.error('internalShowDelayedPrompt: timeDelay not a number');
       return;
@@ -177,7 +178,7 @@ export class PromptsManager {
   }
 
   public async internalShowNativePrompt(): Promise<void> {
-    OneSignalUtils.logMethodCall('internalShowNativePrompt');
+    logMethodCall('internalShowNativePrompt');
 
     if (this.isNativePromptShowing) {
       Log.debug('Already showing autoprompt. Abort showing a native prompt.');
@@ -185,7 +186,7 @@ export class PromptsManager {
     }
 
     this.isNativePromptShowing = true;
-    await InitHelper.registerForPushNotifications();
+    await registerForPushNotifications();
     this.isNativePromptShowing = false;
     DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
   }
@@ -193,7 +194,7 @@ export class PromptsManager {
   private async internalShowSlidedownPrompt(
     options: AutoPromptOptions = { force: false },
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('internalShowSlidedownPrompt');
+    logMethodCall('internalShowSlidedownPrompt');
 
     if (!options.slidedownPromptOptions) {
       options.slidedownPromptOptions = CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
@@ -218,7 +219,7 @@ export class PromptsManager {
   public async internalShowCategorySlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('internalShowCategorySlidedown');
+    logMethodCall('internalShowCategorySlidedown');
     await this.internalShowParticularSlidedown(
       DelayedPromptType.Category,
       options,
@@ -228,14 +229,14 @@ export class PromptsManager {
   public async internalShowSmsSlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('internalShowSmsSlidedown');
+    logMethodCall('internalShowSmsSlidedown');
     await this.internalShowParticularSlidedown(DelayedPromptType.Sms, options);
   }
 
   public async internalShowEmailSlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('internalShowEmailSlidedown');
+    logMethodCall('internalShowEmailSlidedown');
     await this.internalShowParticularSlidedown(
       DelayedPromptType.Email,
       options,
@@ -245,7 +246,7 @@ export class PromptsManager {
   public async internalShowSmsAndEmailSlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
-    OneSignalUtils.logMethodCall('internalShowSmsAndEmailSlidedown');
+    logMethodCall('internalShowSmsAndEmailSlidedown');
     await this.internalShowParticularSlidedown(
       DelayedPromptType.SmsAndEmail,
       options,
@@ -339,7 +340,7 @@ export class PromptsManager {
       return false;
     }
 
-    const localPageViews = this.context.pageViewManager.getLocalPageViewCount();
+    const localPageViews = getLocalPageViewCount();
     return localPageViews >= options.pageViews;
   }
 

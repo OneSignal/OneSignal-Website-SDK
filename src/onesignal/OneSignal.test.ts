@@ -53,8 +53,16 @@ import Database, {
 const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
 
-const getIdentityItem = async () =>
-  (await Database.get<IdentityItem[]>('identity'))[0];
+const getIdentityItem = async (
+  condition: (identity: IdentityItem) => boolean = () => true,
+) => {
+  let identity: IdentityItem | undefined;
+  await vi.waitUntil(async () => {
+    identity = (await Database.get<IdentityItem[]>('identity'))?.[0];
+    return identity && condition(identity);
+  });
+  return identity;
+};
 
 const getPropertiesItem = async () =>
   (await Database.get<PropertiesItem[]>('properties'))[0];
@@ -346,7 +354,7 @@ describe('OneSignal', () => {
         // cant add the same sms twice
         window.OneSignal.User.addSms(sms);
         expect(createSubscriptionFn).toHaveBeenCalledTimes(1);
-        await waitForOperations(1);
+        await waitForOperations(2);
 
         dbSubscriptions = await getSmsSubscriptionDbItems(1);
         expect(dbSubscriptions).toMatchObject([
@@ -430,7 +438,9 @@ describe('OneSignal', () => {
         });
 
         // should also update the identity in the IndexedDB
-        identityData = await getIdentityItem();
+        identityData = await getIdentityItem(
+          (i) => i.onesignal_id === DUMMY_ONESIGNAL_ID,
+        );
         expect(identityData).toEqual({
           external_id: externalId,
           modelId: expect.any(String),
@@ -544,18 +554,16 @@ describe('OneSignal', () => {
         });
 
         // calls refresh user
-        await waitForOperations(4);
-
         // onesignal id should be changed
-        const identityData = await getIdentityItem();
+        const identityData = await getIdentityItem(
+          (i) => i.onesignal_id === DUMMY_ONESIGNAL_ID_2,
+        );
         expect(identityData).toEqual({
           external_id: externalId,
           modelId: expect.any(String),
           modelName: 'identity',
           onesignal_id: DUMMY_ONESIGNAL_ID_2,
         });
-
-        // subscriptions should be kept
       });
 
       describe('subscription creation after login', () => {
@@ -964,7 +972,7 @@ describe('OneSignal', () => {
           const _queue = window.OneSignal.coreDirector.operationRepo.queue;
           return _queue.length === length ? _queue : null;
         },
-        { interval: 1 },
+        { interval: 0 },
       );
       return queue;
     };

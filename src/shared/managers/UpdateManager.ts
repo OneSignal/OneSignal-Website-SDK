@@ -1,22 +1,22 @@
-import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
-import User from '../../onesignal/User';
+import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
+import User from 'src/onesignal/User';
+import type { ContextInterface } from 'src/shared/context/types';
+import { getPageViewCount, isFirstPageView } from 'src/shared/helpers/pageview';
+import Log from 'src/shared/libraries/Log';
+import { SessionOrigin } from 'src/shared/session/constants';
+import { NotificationType } from 'src/shared/subscriptions/constants';
 import OneSignalApiShared from '../api/OneSignalApiShared';
 import { getSubscriptionType } from '../environment/detect';
-import Log from '../libraries/Log';
-import type { ContextSWInterface } from '../models/ContextSW';
 import type { OutcomeRequestData } from '../outcomes/types';
-import { SessionOrigin } from '../session/constants';
-import { NotificationType } from '../subscriptions/constants';
 import { logMethodCall } from '../utils/utils';
 
 export class UpdateManager {
-  private context: ContextSWInterface;
-
+  protected context: ContextInterface;
   private onSessionSent: boolean;
 
-  constructor(context: ContextSWInterface) {
+  constructor(context: ContextInterface) {
     this.context = context;
-    this.onSessionSent = context.pageViewManager.getPageViewCount() > 1;
+    this.onSessionSent = getPageViewCount() > 1;
   }
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
@@ -38,7 +38,7 @@ export class UpdateManager {
       return;
     }
 
-    if (!this.context.pageViewManager.isFirstPageView()) {
+    if (!isFirstPageView()) {
       return;
     }
 
