@@ -73,7 +73,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(`UpdateUserOperationExecutor(operation: ${operations})`);
+    Log.debug(`UpdateUser(ops: ${JSON.stringify(operations)})`);
 
     const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
       this.processOperations(operations);

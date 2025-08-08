@@ -49,7 +49,7 @@ import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
-const debugSpy = vi.spyOn(Log, 'debug');
+const warnSpy = vi.spyOn(Log, 'warn');
 
 const getIdentityItem = async () => (await db.getAll('identity'))[0];
 
@@ -444,9 +444,7 @@ describe('OneSignal', () => {
         await window.OneSignal.login(externalId);
 
         expect(addAliasFn).toHaveBeenCalledTimes(1);
-        expect(debugSpy).toHaveBeenCalledWith(
-          'Login: External ID already set, skipping login',
-        );
+        expect(warnSpy).toHaveBeenCalledWith('External ID already set');
         await waitForOperations();
         expect(transferSubscriptionFn).toHaveBeenCalledTimes(1);
       });
@@ -846,9 +844,7 @@ describe('OneSignal', () => {
         expect(identityModel.externalId).toBeUndefined();
 
         window.OneSignal.logout();
-        expect(debugSpy).toHaveBeenCalledWith(
-          'Logout: User is not logged in, skipping logout',
-        );
+        expect(warnSpy).toHaveBeenCalledWith('User is not logged in');
       });
 
       test('can logout the user with existing external id and subscription', async () => {

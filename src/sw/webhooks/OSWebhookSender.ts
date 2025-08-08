@@ -25,12 +25,7 @@ export class OSWebhookSender {
         'Content-Type': 'application/json',
       };
     }
-    Log.debug(
-      `Executing ${payload.event} webhook ${
-        isServerCorsEnabled ? 'with' : 'without'
-      } CORS POST ${webhookTargetUrl}`,
-      payload,
-    );
+    Log.debug(`Executing ${payload.event} webhook`);
     await fetch(webhookTargetUrl, fetchOptions);
     return;
   }

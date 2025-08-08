@@ -17,9 +17,7 @@ export default class UserDirector {
     const hasExternalId = !!identityModel.externalId;
 
     if (!hasAnySubscription && !hasExternalId) {
-      return Log.info(
-        'No subscriptions or external ID found, skipping user creation',
-      );
+      return Log.info('Subscription or external id is required');
     }
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();

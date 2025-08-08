@@ -17,14 +17,7 @@ import './stylesheet.scss';
 function onesignalSdkInit() {
   incrementSdkLoadCount();
   if (getSdkLoadCount() > 1) {
-    Log.warn(
-      `OneSignal: The web push SDK is included more than once. For optimal performance, please include our ` +
-        `SDK only once on your page.`,
-    );
-    Log.debug(
-      `OneSignal: Exiting from SDK initialization to prevent double-initialization errors. ` +
-        `Occurred ${getSdkLoadCount()} times.`,
-    );
+    Log.warn(`SDK included more than once (${getSdkLoadCount()}). Exiting.`);
     return;
   }
 

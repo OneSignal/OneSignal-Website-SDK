@@ -26,14 +26,9 @@ export class OperationModelStore extends ModelStore<Operation> {
   }
 
   create(jsonObject?: { name?: string } | null): Operation | null {
-    if (jsonObject === null) {
-      Log.error('null jsonObject sent to OperationModelStore.create');
-      return null;
-    }
+    if (jsonObject === null) return null;
 
-    if (!this.isValidOperation(jsonObject)) {
-      return null;
-    }
+    if (!this.isValidOperation(jsonObject)) return null;
 
     // Determine the type of operation based on the name property in the json
     const operationName = jsonObject.name;
@@ -96,7 +91,7 @@ export class OperationModelStore extends ModelStore<Operation> {
   } {
     const operationName = object?.name;
     if (!operationName) {
-      Log.error("jsonObject must have 'name' attribute");
+      Log.error("Missing 'name' prop");
       return false;
     }
 
@@ -104,9 +99,7 @@ export class OperationModelStore extends ModelStore<Operation> {
 
     // Must have onesignalId if it is not one of the excluded operations above
     if (!object.onesignalId && !excluded.has(operationName)) {
-      Log.error(
-        `${operationName} jsonObject must have 'onesignalId' attribute`,
-      );
+      Log.error(`Missing 'onesignalId' prop`);
       return false;
     }
 

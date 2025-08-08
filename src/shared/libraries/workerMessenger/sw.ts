@@ -21,9 +21,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       'message',
       this.onWorkerMessageReceivedFromPage.bind(this),
     );
-    Log.debug(
-      '[Worker Messenger] Service worker is now listening for messages.',
-    );
+    Log.debug('SW is listening for messages');
   }
 
   onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
@@ -40,10 +38,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    Log.debug(
-      `[Worker Messenger] Service worker received message:`,
-      event.data,
-    );
+    Log.debug(`[SW] Received message:`, event.data);
 
     for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {
@@ -73,7 +68,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     });
     for (const client of clients) {
       Log.debug(
-        `[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${
+        `[SW -> Page] Broadcasting '${command.toString()}' to window client ${
           client.url
         }.`,
       );
@@ -97,7 +92,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     }
 
     Log.debug(
-      `[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${
+      `[SW -> Page] Unicasting '${command.toString()}' to window client ${
         windowClient.url
       }.`,
     );

@@ -65,7 +65,7 @@ export default class OneSignal {
   private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await getAppConfig(options);
 
-    Log.debug('OneSignal: Final web app config:', appConfig);
+    Log.debug('AppConfig:', appConfig);
 
     // Workaround to temp assign config so that it can be used in context.
     OneSignal.config = appConfig;
@@ -126,9 +126,7 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
-    Log.debug(
-      `Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`,
-    );
+    Log.debug(`Browser:${getBrowserName()} ${getBrowserVersion()}`);
 
     removeLegacySubscriptionOptions();
 
@@ -198,10 +196,6 @@ export default class OneSignal {
     )
       await __init();
     else {
-      Log.debug(
-        'OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
-          ' initialization...',
-      );
       window.addEventListener('DOMContentLoaded', () => {
         __init();
       });
@@ -303,12 +297,4 @@ export default class OneSignal {
   /* END NEW USER MODEL CHANGES */
 }
 
-Log.info(
-  `OneSignal Web SDK loaded (version ${VERSION},
-  ${windowEnvString} environment).`,
-);
-Log.debug(
-  `Current Page URL: ${
-    typeof location === 'undefined' ? 'NodeJS' : location.href
-  }`,
-);
+Log.info(`Web SDK loaded (v${VERSION}, ${windowEnvString}).`);

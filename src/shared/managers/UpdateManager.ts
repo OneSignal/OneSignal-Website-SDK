@@ -21,9 +21,7 @@ export class UpdateManager {
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
     if (!User.singletonInstance?.onesignalId) {
-      Log.debug(
-        'Not sending the update because user is not registered with OneSignal (no onesignal_id)',
-      );
+      Log.debug('Not sending update: no OneSignal id');
       return;
     }
 
@@ -45,9 +43,7 @@ export class UpdateManager {
     const existingUser =
       await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
-      Log.debug(
-        'Not sending the on session because user is not registered with OneSignal (no device id)',
-      );
+      Log.debug('Not sending on session: no device id');
       return;
     }
 
@@ -69,9 +65,7 @@ export class UpdateManager {
       this.onSessionSent = true;
     } catch (e) {
       if (e instanceof Error) {
-        Log.error(
-          `Failed to update user session. Error "${e.message}" ${e.stack}`,
-        );
+        Log.error('Failed updating user session', e);
       }
     }
   }
@@ -106,9 +100,7 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    Log.warn(
-      `Send outcome aborted because pushSubscriptionModel is not available.`,
-    );
+    Log.warn('Send outcome aborted: no push subscription');
   }
 
   public async sendOutcomeInfluenced(
@@ -141,9 +133,7 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    Log.warn(
-      `Send outcome aborted because pushSubscriptionModel is not available.`,
-    );
+    Log.warn('Send outcome aborted: no push subscription');
   }
 
   public async sendOutcomeUnattributed(
@@ -173,8 +163,6 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    Log.warn(
-      `Send outcome aborted because pushSubscriptionModel is not available.`,
-    );
+    Log.warn('Send outcome aborted: no push subscription');
   }
 }

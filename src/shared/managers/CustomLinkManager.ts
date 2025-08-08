@@ -46,9 +46,7 @@ export class CustomLinkManager {
 
   private async mountExplanationNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
-        "CustomLink: required property 'text' is missing in the config",
-      );
+      Log.error("CustomLink: 'text' is missing in config");
       return;
     }
 
@@ -76,9 +74,7 @@ export class CustomLinkManager {
 
   private async mountSubscriptionNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
-        "CustomLink: required property 'text' is missing in the config",
-      );
+      Log.error("CustomLink: 'text' is missing config");
       return;
     }
 

@@ -58,7 +58,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(`SubscriptionOperationExecutor(operations: ${operations})`);
+    Log.debug(`Subscriptions(ops: ${JSON.stringify(operations)})`);
 
     const startingOp = operations[0];
     if (startingOp instanceof CreateSubscriptionOperation)

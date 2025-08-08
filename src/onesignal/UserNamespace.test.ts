@@ -437,7 +437,7 @@ describe('UserNamespace', () => {
       };
 
       userNamespace.trackEvent(name, {});
-      expect(errorSpy).toHaveBeenCalledWith('User must be logged in first.');
+      expect(errorSpy).toHaveBeenCalledWith('Login required');
       errorSpy.mockClear();
 
       const identityModel = OneSignal.coreDirector.getIdentityModel();
@@ -451,7 +451,7 @@ describe('UserNamespace', () => {
       // @ts-expect-error - mock invalid argument
       userNamespace.trackEvent(name, 123);
       expect(errorSpy).toHaveBeenCalledWith(
-        'Custom event properties must be a JSON-serializable object',
+        'Properties must be JSON-serializable',
       );
 
       // big ints can't be serialized
@@ -459,7 +459,7 @@ describe('UserNamespace', () => {
         data: 10n,
       });
       expect(errorSpy).toHaveBeenCalledWith(
-        'Custom event properties must be a JSON-serializable object',
+        'Properties must be JSON-serializable',
       );
 
       userNamespace.trackEvent(name, properties);
