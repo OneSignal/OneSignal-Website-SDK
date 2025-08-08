@@ -34,19 +34,13 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
-      `CustomEventsOperationExecutor(operations: ${JSON.stringify(
-        operations,
-      )})`,
-    );
+    Log.debug(`CustomEvents(ops: ${JSON.stringify(operations)})`);
 
     // TODO: each trackEvent is sent individually right now; may need to batch in the future
     const operation = operations[0];
 
     if (!(operation instanceof TrackCustomEventOperation)) {
-      throw new Error(
-        `Unrecognized operation! Expected TrackEventOperation, got: ${operation.constructor.name}`,
-      );
+      throw new Error(`Unknown op: ${operation.constructor.name}`);
     }
 
     const response = await sendCustomEvent(

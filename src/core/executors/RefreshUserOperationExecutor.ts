@@ -53,16 +53,10 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
-      `RefreshUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
-    );
+    Log.debug(`RefreshUser(ops: ${JSON.stringify(operations)})`);
 
     if (operations.some((op) => !(op instanceof RefreshUserOperation)))
-      throw new Error(
-        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-          operations,
-        )}`,
-      );
+      throw new Error(`Unknown ops:\n${JSON.stringify(operations)}`);
 
     const startingOp = operations[0];
     return this.getUser(startingOp);

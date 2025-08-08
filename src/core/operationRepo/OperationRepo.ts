@@ -96,7 +96,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public enqueue(operation: Operation): void {
-    Log.debug(`OperationRepo.enqueue(operation: ${operation})`);
+    Log.debug(`enqueue(op: ${operation})`);
 
     this.internalEnqueue(
       new OperationQueueItem({
@@ -108,7 +108,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async enqueueAndWait(operation: Operation): Promise<void> {
-    Log.debug(`OperationRepo.enqueueAndWaitoperation: ${operation})`);
+    Log.debug(`enqueueAndWait(op: ${operation})`);
 
     await new Promise((resolve) => {
       this.internalEnqueue(
@@ -131,9 +131,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       (item) => item.operation.modelId === queueItem.operation.modelId,
     );
     if (hasExisting) {
-      Log.debug(
-        `OperationRepo: internalEnqueue - operation.modelId: ${queueItem.operation.modelId} already exists in the queue.`,
-      );
+      Log.debug(`internalEnqueue: duplicate ${queueItem.operation.modelId}`);
       return;
     }
 
@@ -153,11 +151,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     let runningOps = false;
 
     setInterval(async () => {
-      if (this.paused) return Log.debug('OpRepo is paused');
-      if (runningOps) return Log.debug('Operations in progress');
+      if (this.paused) return Log.debug('Paused ops');
+      if (runningOps) return Log.debug('Processing ops');
 
       const ops = this.getNextOps(this.executeBucket);
-      Log.debug(`processQueueForever:ops:\n${ops}`);
+      Log.debug(`Ops:\n${ops}`);
 
       if (ops) {
         runningOps = true;
@@ -175,16 +173,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       const executor = this.executorsMap.get(startingOp.operation.name);
 
       if (!executor) {
-        throw new Error(
-          `Could not find executor for operation ${startingOp.operation.name}`,
-        );
+        throw new Error(`No executor for op: ${startingOp.operation.name}`);
       }
 
       const operations = ops.map((op) => op.operation);
       const response = await executor.execute(operations);
       const idTranslations = response.idTranslations;
 
-      Log.debug(`OperationRepo: execute response = ${response.result}`);
+      Log.debug(`Response: ${response.result}`);
 
       // Handle ID translations
       if (idTranslations) {
@@ -211,7 +207,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult.FAIL_UNAUTHORIZED:
         case ExecutionResult.FAIL_NORETRY:
         case ExecutionResult.FAIL_CONFLICT:
-          Log.error(`Operation execution failed without retry: ${operations}`);
+          Log.error(`Op failed: ${operations}`);
           ops.forEach((op) => {
             this.operationModelStore.remove(op.operation.modelId);
           });
@@ -230,7 +226,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult.FAIL_RETRY:
-          Log.error(`Operation execution failed, retrying: ${operations}`);
+          Log.error(`Retrying: ${operations}`);
           // Add back all operations to front of queue
           ops.toReversed().forEach((op) => {
             removeOpFromDB(op.operation);
@@ -243,9 +239,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult.FAIL_PAUSE_OPREPO:
-          Log.error(
-            `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
-          );
+          Log.error(`Op failed with retry, pausing ops: ${operations}`);
           this.paused = true;
           ops.toReversed().forEach((op) => {
             removeOpFromDB(op.operation);
@@ -275,7 +269,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
-      Log.error(`Error attempting to execute operation: ${ops}`, e);
+      Log.error(`Error executing op: ${ops}`, e);
 
       // On failure remove operations from store
       ops.forEach((op) => {
@@ -296,7 +290,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     if (delayFor < 1) return;
 
-    Log.error(`Operations being delay for: ${delayFor} ms`);
+    Log.error(`Delaying op for: ${delayFor} ms`);
     await delay(delayFor);
   }
 

@@ -79,9 +79,7 @@ describe('RefreshUserOperationExecutor', () => {
 
     const result = executor.execute(ops);
     await expect(() => result).rejects.toThrow(
-      `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-        ops,
-      )}`,
+      `Unknown ops:\n${JSON.stringify(ops)}`,
     );
   });
 

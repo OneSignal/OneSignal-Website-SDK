@@ -1,3 +1,4 @@
+import { WrongTypeArgumentError } from 'src/shared/errors/common';
 import OutcomesHelper from '../shared/helpers/OutcomesHelper';
 import Log from '../shared/libraries/Log';
 import { OutcomeAttributionType } from '../shared/models/Outcomes';
@@ -9,7 +10,7 @@ export class SessionNamespace {
   ): Promise<void> {
     const config = OneSignal.config?.userConfig.outcomes;
     if (!config) {
-      Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
+      Log.error(`No config for:${outcomeName}`);
       return;
     }
 
@@ -23,8 +24,7 @@ export class SessionNamespace {
       typeof outcomeWeight !== 'undefined' &&
       typeof outcomeWeight !== 'number'
     ) {
-      Log.error('Outcome weight can only be a number if present.');
-      return;
+      throw WrongTypeArgumentError('outcomeWeight');
     }
 
     if (!(await outcomesHelper.beforeOutcomeSend())) {
@@ -43,7 +43,7 @@ export class SessionNamespace {
   async sendUniqueOutcome(outcomeName: string): Promise<void> {
     const config = OneSignal.config?.userConfig.outcomes;
     if (!config) {
-      Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
+      Log.error(`No config for: ${outcomeName}`);
       return;
     }
 
@@ -60,9 +60,7 @@ export class SessionNamespace {
     const outcomeAttribution = await outcomesHelper.getAttribution();
 
     if (outcomeAttribution.type === OutcomeAttributionType.NotSupported) {
-      Log.warn(
-        'You are on a free plan. Please upgrade to use this functionality.',
-      );
+      Log.warn('Upgrade your plan to use this feature.');
       return;
     }
 
@@ -80,7 +78,7 @@ export class SessionNamespace {
         newNotifsToAttributeWithOutcome,
       )
     ) {
-      Log.warn(`'${outcomeName}' was already reported for all notifications.`);
+      Log.warn(`'${outcomeName}' already reported.`);
       return;
     }
 

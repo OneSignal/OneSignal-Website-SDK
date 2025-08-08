@@ -189,9 +189,7 @@ export default class OutcomesHelper {
       case OutcomeAttributionType.Unattributed:
         if (this.isUnique) {
           if (await this.wasSentDuringSession()) {
-            Log.warn(
-              `(Unattributed) unique outcome was already sent during this session`,
-            );
+            Log.warn('(Unattributed) unique outcome was already sent');
             return;
           }
           await this.saveSentUniqueOutcome([]);
@@ -203,9 +201,7 @@ export default class OutcomesHelper {
         );
         return;
       default:
-        Log.warn(
-          'You are on a free plan. Please upgrade to use this functionality.',
-        );
+        Log.warn('Upgrade your plan to use this feature.');
         return;
     }
   }
@@ -257,7 +253,7 @@ export async function getConfigAttribution(
     const allReceivedNotification =
       await getAllNotificationReceivedForOutcomes();
     Log.debug(
-      `\tFound total of ${allReceivedNotification.length} received notifications`,
+      `\tFound ${allReceivedNotification.length} received notifications`,
     );
 
     if (allReceivedNotification.length > 0) {
@@ -278,7 +274,7 @@ export async function getConfigAttribution(
         .slice(0, max)
         .map((notif) => notif.notificationId);
       Log.debug(
-        `\tTotal of ${matchingNotificationIds.length} received notifications are within reporting window.`,
+        `\t${matchingNotificationIds.length} notifications within reportingwindow`,
       );
 
       // Deleting all unmatched received notifications
@@ -292,7 +288,7 @@ export async function getConfigAttribution(
         db.delete('Outcomes.NotificationReceived', id),
       );
       Log.debug(
-        `\t${notificationIdsToDelete.length} received notifications will be deleted.`,
+        `\t${notificationIdsToDelete.length} notifications to be deleted`,
       );
 
       if (matchingNotificationIds.length > 0) {

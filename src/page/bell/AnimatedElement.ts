@@ -53,9 +53,7 @@ export default class AnimatedElement {
         OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWING, this);
         const element = this.element;
         if (!element) {
-          Log.error(
-            `(show) could not find animated element with selector ${this.selector}`,
-          );
+          Log.error(`Element missing for: ${this.selector}`);
         } else {
           if (this.hideClass) removeCssClass(element, this.hideClass);
           if (this.showClass) addCssClass(element, this.showClass);
@@ -65,9 +63,7 @@ export default class AnimatedElement {
           return resolve(this);
         } else {
           const timerId = setTimeout(() => {
-            Log.debug(
-              `Element did not completely show (state: ${this.state}).`,
-            );
+            Log.debug(`Show incomplete (${this.state}).`);
           }, this.transitionCheckTimeout);
           once(
             this.element,
@@ -107,9 +103,7 @@ export default class AnimatedElement {
         OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDING, this);
         const element = this.element;
         if (!element) {
-          Log.error(
-            `(hide) could not find animated element with selector ${this.selector}`,
-          );
+          Log.error(`Element missing for: ${this.selector}`);
         } else {
           if (this.showClass) removeCssClass(element, this.showClass);
           if (this.hideClass) addCssClass(element, this.hideClass);
@@ -123,9 +117,7 @@ export default class AnimatedElement {
             'transitionend',
             (event: Event, destroyListenerFn: () => void) => {
               const timerId = setTimeout(() => {
-                Log.debug(
-                  `Element did not completely hide (state: ${this.state}).`,
-                );
+                Log.debug(`Hide incomplete (${this.state}).`);
               }, this.transitionCheckTimeout);
               if (
                 event.target === this.element &&

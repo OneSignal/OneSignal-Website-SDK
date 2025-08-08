@@ -96,7 +96,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   ): Promise<void> {
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
     if (!pushModel) {
-      Log.info('No Push Subscription yet to update notification_types.');
+      Log.info('No push subscription to update');
       return;
     }
 
@@ -262,9 +262,9 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       Log.info('Installing SW on Safari');
       try {
         await this.context.serviceWorkerManager.installWorker();
-        Log.info('SW on Safari successfully installed');
+        Log.info('Safari SW installed');
       } catch (e) {
-        Log.error('SW on Safari failed to install.');
+        Log.error('Safari SW failed to install');
       }
     } else {
       rawPushSubscription =
@@ -384,15 +384,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
         case NotificationPermission.Default:
-          Log.debug(
-            'Exiting subscription and not registering worker because the permission was dismissed.',
-          );
+          Log.debug('Permission dismissed, not registering SW');
           OneSignal._sessionInitAlreadyRunning = false;
           throw new Error('Permission dismissed');
         case NotificationPermission.Denied:
-          Log.debug(
-            'Exiting subscription and not registering worker because the permission was blocked.',
-          );
+          Log.debug('Permission blocked, not registering SW');
           OneSignal._sessionInitAlreadyRunning = false;
           throw PermissionBlockedError;
       }
@@ -423,11 +419,9 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     if (!workerRegistration) {
-      throw new Error('OneSignal service worker not found!');
+      throw new Error('SW not found');
     }
-    Log.debug(
-      '[Subscription Manager] Service worker is ready to continue subscribing.',
-    );
+    Log.debug('SW ready to subscribe');
 
     return await this.subscribeWithVapidKey(
       workerRegistration.pushManager,

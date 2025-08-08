@@ -47,6 +47,7 @@ const version = __VERSION__;
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
 vi.spyOn(Log, 'debug').mockImplementation(() => {});
+const logErrorSpy = vi.spyOn(Log, 'error').mockImplementation(() => {});
 
 const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, 'subscribe');
 
@@ -133,25 +134,25 @@ describe('ServiceWorker', () => {
 
       // missing event.data
       await vi.runOnlyPendingTimersAsync();
-      expect(logDebugSpy).toHaveBeenCalledWith(
-        'Failed to display a notification:',
-        'Missing event.data on push payload!',
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        'Notification display failed:',
+        'Missing event.data',
       );
 
       // malformed event.data
-      logDebugSpy.mockClear();
+      logErrorSpy.mockClear();
       await dispatchEvent(new PushEvent('push', 'some message'));
 
-      expect(logDebugSpy).toHaveBeenCalledWith(
-        'Failed to display a notification:',
-        'Unexpected push message payload received: some message',
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        'Notification display failed:',
+        'Unexpected payload:some message',
       );
 
       // with missing notification id
-      logDebugSpy.mockClear();
+      logErrorSpy.mockClear();
       await dispatchEvent(new PushEvent('push', {}));
-      expect(logDebugSpy).toHaveBeenCalledWith(
-        'isValidPushPayload: Valid JSON but missing notification UUID:',
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        'Missing notification UUID:',
         {},
       );
     });
@@ -525,7 +526,7 @@ describe('ServiceWorker', () => {
         await dispatchEvent(event);
 
         expect(Log.debug).toHaveBeenCalledWith(
-          'No active session found. Cannot deactivate.',
+          'No active session found to deactivate',
         );
       });
 
@@ -681,9 +682,7 @@ describe('ServiceWorker', () => {
 });
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const logDebugSpy = vi.spyOn(Log, 'debug');
 // -- one signal api base mock
-
 // @ts-expect-error - for mocking
 const apiPutSpy = vi.spyOn(OneSignalApiBase, 'put').mockResolvedValue({
   result: {},

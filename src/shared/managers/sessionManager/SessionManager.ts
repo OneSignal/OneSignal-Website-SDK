@@ -46,7 +46,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      Log.debug('Notify SW to upsert session');
+      Log.debug('Notify SW: upsert session');
       await this.context.workerMessenger.unicast(
         WorkerMessengerCommand.SessionUpsert,
         payload,
@@ -166,9 +166,9 @@ export class SessionManager implements ISessionManager {
       }
 
       // it should never be anything else at this point
-      Log.warn('Unhandled visibility state happened', visibilityState);
+      Log.warn('Unhandled visibility state', visibilityState);
     } catch (e) {
-      Log.error('Error handling visibility change:', e);
+      Log.error('Visibility change error:', e);
     }
   }
 
@@ -195,7 +195,7 @@ export class SessionManager implements ISessionManager {
         outcomesConfig: this.context.appConfig.userConfig.outcomes!,
       };
 
-      Log.debug('Notify SW to deactivate session (beforeunload)');
+      Log.debug('Deactivating session (beforeunload)');
       this.context.workerMessenger.directPostMessageToSW(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
@@ -289,9 +289,7 @@ export class SessionManager implements ISessionManager {
   setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (!supportsServiceWorkers()) {
-      Log.debug(
-        'Not setting session event listeners. No service worker possible.',
-      );
+      Log.debug('No SW; skipping session listeners');
       return;
     }
 
@@ -357,9 +355,7 @@ export class SessionManager implements ISessionManager {
     const onesignalId = identityModel.onesignalId;
 
     if (!onesignalId) {
-      Log.debug(
-        'Not sending the on session because user is not registered with OneSignal (no onesignal id)',
-      );
+      Log.debug('Not sending on session: no OneSignal id');
       return;
     }
 
@@ -405,9 +401,7 @@ export class SessionManager implements ISessionManager {
       }
     } catch (e) {
       if (e instanceof Error) {
-        Log.error(
-          `Failed to update user session. Error "${e.message}" ${e.stack}`,
-        );
+        Log.error(`Failed updating user session`, e);
       }
     }
   }

@@ -87,11 +87,7 @@ describe('IdentityOperationExecutor', () => {
     // with invalid ops
     const ops = [setAliasOp, deleteAliasOp, someOp];
     const result = executor.execute(ops);
-    await expect(() => result).rejects.toThrow(
-      `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-        ops,
-      )}`,
-    );
+    await expect(() => result).rejects.toThrow(`Unknown ops: SomeOperation`);
 
     // with both set and delete alias ops
     const ops2 = [setAliasOp, deleteAliasOp];

@@ -140,10 +140,6 @@ export class PromptsManager {
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowDelayedPrompt');
-    if (typeof timeDelaySeconds !== 'number') {
-      Log.error('internalShowDelayedPrompt: timeDelay not a number');
-      return;
-    }
 
     if (requiresUserInteraction() && type === DelayedPromptType.Native) {
       type = DelayedPromptType.Push; // Push Slidedown for cases where user interaction is needed

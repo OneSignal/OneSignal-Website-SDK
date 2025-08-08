@@ -40,9 +40,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
-      `IdentityOperationExecutor(operations: ${JSON.stringify(operations)})`,
-    );
+    Log.debug(`Identity(ops: ${JSON.stringify(operations)})`);
 
     const invalidOps = operations.filter(
       (op) =>
@@ -52,9 +50,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
     );
     if (invalidOps.length > 0) {
       throw new Error(
-        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-          operations,
-        )}`,
+        `Unknown ops: ${invalidOps.map((op) => op.constructor.name).join(', ')}`,
       );
     }
 

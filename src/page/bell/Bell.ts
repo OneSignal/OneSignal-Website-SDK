@@ -431,7 +431,7 @@ export default class Bell {
     const sdkStylesLoadResult =
       await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug('Not showing notify button because styles failed to load.');
+      Log.debug('Styles failed to load');
       return;
     }
 
@@ -512,7 +512,7 @@ export default class Bell {
     this.setCustomColorsIfSpecified();
     this.patchSafariSvgFilterBug();
 
-    Log.info('Showing the notify button.');
+    Log.info('Showing the notify button');
 
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
       .then(() => {
@@ -571,7 +571,7 @@ export default class Bell {
       const element = this.launcher.element as HTMLElement;
 
       if (!element) {
-        Log.error('Could not find bell dom element');
+        Log.error('Element missing');
         return;
       }
       // Reset styles first

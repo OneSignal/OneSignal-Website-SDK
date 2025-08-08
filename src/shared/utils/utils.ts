@@ -27,10 +27,10 @@ export function once(
   manualDestroy = false,
 ) {
   if (!event) {
-    Log.error('Cannot call on() with no event: ', event);
+    Log.error('No event:', event);
   }
   if (!task) {
-    Log.error('Cannot call on() with no task: ', task);
+    Log.error('No task:', task);
   }
   if (typeof targetSelectorOrElement === 'string') {
     const els = document.querySelectorAll(targetSelectorOrElement);

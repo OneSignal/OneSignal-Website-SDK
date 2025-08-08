@@ -28,9 +28,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
       'message',
       this.onPageMessageReceivedFromServiceWorker.bind(this),
     );
-    Log.debug(
-      `(${location.origin}) [Worker Messenger] Page is now listening for messages.`,
-    );
+    Log.debug(`(${location.origin}) Page is listening for messages`);
   }
 
   /*
@@ -52,7 +50,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    Log.debug(`[Worker Messenger] Page received message:`, event.data);
+    Log.debug(`Page received message:`, event.data);
 
     for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {
@@ -76,9 +74,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
   ) {
-    Log.debug(
-      `[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`,
-    );
+    Log.debug(`[Page -> SW] Unicasting '${command.toString()}'`);
     this.directPostMessageToSW(command, payload);
   }
 
@@ -86,24 +82,18 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
   ): Promise<void> {
-    Log.debug(
-      `[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`,
-    );
+    Log.debug(`[Page -> SW] Direct command '${command.toString()}'`);
 
     const workerRegistration =
       await this.context?.serviceWorkerManager.getOneSignalRegistration();
     if (!workerRegistration) {
-      Log.error(
-        '`[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!',
-      );
+      Log.error('[Page -> SW] No registration for postMessage');
       return;
     }
 
     const availableWorker = getAvailableServiceWorker(workerRegistration);
     if (!availableWorker) {
-      Log.error(
-        '`[Worker Messenger] [Page -> SW] Could not get ServiceWorker to postMessage!',
-      );
+      Log.error('[Page -> SW] No worker for postMessage');
       return;
     }
 
