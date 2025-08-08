@@ -5,6 +5,10 @@ import type {
   ServerAppConfig,
   ServiceWorkerConfigParams,
 } from 'src/shared/config/types';
+import {
+  DEFAULT_SERVICE_WORKER_OPTIONS,
+  DEFAULT_SERVICE_WORKER_PATH,
+} from '../context/constants';
 import { getValueOrDefault } from '../helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
@@ -212,9 +216,6 @@ export function getUserConfigForConfigIntegrationKind(
             Ignores dashboard configuration and uses code-based configuration only.
             Except injecting some default values for prompts.
           */
-      const defaultServiceWorkerParam = { scope: '/' };
-      const defaultServiceWorkerPath = 'OneSignalSDKWorker.js';
-
       const config = {
         ...userConfig,
         promptOptions: injectDefaultsIntoPromptOptions(
@@ -225,10 +226,10 @@ export function getUserConfigForConfigIntegrationKind(
         ...{
           serviceWorkerParam: !!userConfig.serviceWorkerParam
             ? userConfig.serviceWorkerParam
-            : defaultServiceWorkerParam,
+            : DEFAULT_SERVICE_WORKER_OPTIONS,
           serviceWorkerPath: !!userConfig.serviceWorkerPath
             ? userConfig.serviceWorkerPath
-            : defaultServiceWorkerPath,
+            : DEFAULT_SERVICE_WORKER_PATH,
           path: !!userConfig.path ? userConfig.path : '/',
         },
         outcomes: {

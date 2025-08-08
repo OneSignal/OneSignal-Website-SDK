@@ -1,4 +1,8 @@
 import type { AppConfig } from '../config/types';
+import {
+  DEFAULT_SERVICE_WORKER_OPTIONS,
+  DEFAULT_SERVICE_WORKER_PATH,
+} from '../context/constants';
 import type { ContextInterface, ContextSWInterface } from '../context/types';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import type { SubscriptionManagerConfig } from '../managers/subscription/base';
@@ -12,8 +16,8 @@ export function getServiceWorkerManager(
   const config: AppConfig = context.appConfig;
 
   const serviceWorkerManagerConfig = {
-    workerPath: new Path(`OneSignalSDKWorker.js`),
-    registrationOptions: { scope: '/' },
+    workerPath: new Path(DEFAULT_SERVICE_WORKER_PATH),
+    registrationOptions: DEFAULT_SERVICE_WORKER_OPTIONS,
   };
 
   if (config.userConfig) {

@@ -79,7 +79,7 @@ export interface SubscriptionItem extends ModelItem, ICreateUserSubscription {
   onesignalId: string;
 }
 export interface IdentityItem extends ModelItem {
-  onesignalId: string;
+  onesignal_id: string;
   externalId: string;
 }
 export interface PropertiesItem extends ModelItem, IUserProperties {
