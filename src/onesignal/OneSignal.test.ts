@@ -43,7 +43,10 @@ import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
 import { ModelName } from 'src/shared/database/constants';
-import type { SubscriptionSchema } from 'src/shared/database/types';
+import type {
+  IndexedDBSchema,
+  SubscriptionSchema,
+} from 'src/shared/database/types';
 import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -51,18 +54,20 @@ import { IDManager } from 'src/shared/managers/IDManager';
 const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
 
+type IdentityItem = IndexedDBSchema['identity']['value'];
+
 const getIdentityItem = async (
   condition: (identity: IdentityItem) => boolean = () => true,
 ) => {
   let identity: IdentityItem | undefined;
   await vi.waitUntil(async () => {
-    identity = (await Database.get<IdentityItem[]>('identity'))?.[0];
+    identity = (await db.getAll('identity'))?.[0];
     return identity && condition(identity);
   });
   return identity;
 };
 
-const getPropertiesItem = async () => (await db.getAll('properties'))[0];
+const getPropertiesItem = async () => (await db.getAll('properties'))?.[0];
 
 const setupIdentity = async () => {
   await db.put(ModelName.Identity, {
@@ -193,7 +198,9 @@ describe('OneSignal', () => {
       const email = 'test@test.com';
 
       const getEmailSubscriptionDbItems = async () =>
-        (await db.getAll('subscriptions')).filter((s) => s.type === 'Email');
+        (await db.getAll<'subscriptions'>('subscriptions')).filter(
+          (s) => s.type === 'Email',
+        );
 
       beforeEach(() => {
         // id not returned for sms or email
@@ -285,9 +292,9 @@ describe('OneSignal', () => {
       const getSmsSubscriptionDbItems = async (length: number) => {
         let subscriptions: SubscriptionSchema[] = [];
         await vi.waitUntil(async () => {
-          subscriptions = (await db.getAll('subscriptions')).filter(
-            (s) => s.type === 'SMS',
-          );
+          subscriptions = (
+            await db.getAll<'subscriptions'>('subscriptions')
+          ).filter((s) => s.type === 'SMS');
           return subscriptions.length === length;
         });
         return subscriptions;
@@ -644,7 +651,7 @@ describe('OneSignal', () => {
 
           let dbSubscriptions: SubscriptionSchema[] = [];
           await vi.waitUntil(async () => {
-            dbSubscriptions = await db.getAll('subscriptions');
+            dbSubscriptions = await db.getAll<'subscriptions'>('subscriptions');
             return dbSubscriptions.length === 3;
           });
 
@@ -781,7 +788,11 @@ describe('OneSignal', () => {
 
           await waitForOperations(5);
 
-          const dbSubscriptions = await db.getAll('subscriptions');
+          let dbSubscriptions: SubscriptionSchema[] = [];
+          await vi.waitUntil(async () => {
+            dbSubscriptions = await db.getAll<'subscriptions'>('subscriptions');
+            return dbSubscriptions.length === 3;
+          });
 
           expect(dbSubscriptions).toHaveLength(3);
 
@@ -809,8 +820,11 @@ describe('OneSignal', () => {
             ModelChangeTags.NO_PROPOGATE,
           );
 
-          const dbSubscriptions = await db.getAll('subscriptions');
-          expect(dbSubscriptions).toHaveLength(1);
+          let dbSubscriptions: SubscriptionSchema[] = [];
+          await vi.waitUntil(async () => {
+            dbSubscriptions = await db.getAll<'subscriptions'>('subscriptions');
+            return dbSubscriptions.length === 1;
+          });
 
           await window.OneSignal.login(externalId);
 

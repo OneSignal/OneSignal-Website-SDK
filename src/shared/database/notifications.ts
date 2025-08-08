@@ -1,7 +1,6 @@
 import {
   notificationClickedForOutcomesFromDatabase,
   notificationClickedForOutcomesToDatabase,
-  notificationClickToDatabase,
   notificationReceivedForOutcomesFromDatabase,
   notificationReceivedForOutcomesToDatabase,
 } from '../helpers/serializer';
@@ -33,12 +32,6 @@ export const putNotificationReceivedForOutcomes = async (
     'Outcomes.NotificationReceived',
     notificationReceivedForOutcomesToDatabase(appId, notification, Date.now()),
   );
-};
-
-export const putNotificationClickedEventPendingUrlOpening = async (
-  event: NotificationClickEventInternal,
-) => {
-  await db.put('NotificationOpened', notificationClickToDatabase(event));
 };
 
 export const getAllNotificationClickedForOutcomes = async (): Promise<

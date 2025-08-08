@@ -23,6 +23,15 @@ describe('general', () => {
     { key: 'defaultTitle', value: 'title' },
   ];
 
+  test('should set _isNewVisitor to true if OneSignal is defined', async () => {
+    (global as any).OneSignal = {
+      _isNewVisitor: false,
+    };
+    const OneSignal = (global as any).OneSignal;
+    await getDb();
+    expect(OneSignal._isNewVisitor).toBe(true);
+  });
+
   test('can get 1 or all values', async () => {
     const db = await getDb();
     for (const value of values) {

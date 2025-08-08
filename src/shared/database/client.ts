@@ -1,5 +1,6 @@
 import { openDB, type StoreNames } from 'idb';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import {
   DATABASE_NAME,
   LegacyModelName,
@@ -71,6 +72,12 @@ export const getDb = async (version = VERSION) => {
 
       if (newDbVersion >= 7 && oldVersion < 7) {
         _db.createObjectStore(ModelName.Operations, { keyPath: 'modelId' });
+      }
+
+      // TODO: next version delete NotificationOpened table
+
+      if (!IS_SERVICE_WORKER && typeof OneSignal !== 'undefined') {
+        OneSignal._isNewVisitor = true;
       }
     },
   });
