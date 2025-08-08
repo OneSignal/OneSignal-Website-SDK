@@ -82,7 +82,9 @@ export class SubscriptionManagerBase<
       if ('updateManager' in this.context) {
         await this.context.updateManager.sendPushDeviceRecordUpdate();
       }
-    } else {
+
+      // TODO: how should it be implemented if called from inside of service worker?
+    } else if ('sessionManager' in this.context) {
       this.context.sessionManager.upsertSession(SessionOrigin.UserCreate);
     }
 

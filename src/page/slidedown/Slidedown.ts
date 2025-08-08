@@ -8,7 +8,7 @@ import {
   removeDomElement,
 } from 'src/shared/helpers/dom';
 import { getValueOrDefault } from 'src/shared/helpers/general';
-import MainHelper from 'src/shared/helpers/MainHelper';
+import { getNotificationIcons } from 'src/shared/helpers/main';
 import type { NotificationIcons } from 'src/shared/notifications/types';
 import {
   DelayedPromptType,
@@ -85,7 +85,7 @@ export default class Slidedown {
   async create(isInUpdateMode?: boolean): Promise<void> {
     // TODO: dynamically change btns depending on if its first or repeat display of slidedown (subscribe vs update)
     if (this.notificationIcons === null) {
-      const icons = await MainHelper.getNotificationIcons();
+      const icons = await getNotificationIcons();
 
       this.notificationIcons = icons;
 

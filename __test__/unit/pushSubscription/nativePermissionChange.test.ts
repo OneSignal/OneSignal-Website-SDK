@@ -14,7 +14,7 @@ import * as PermissionUtils from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 import { AppState } from 'src/shared/models/AppState';
-import MainHelper from '../../../src/shared/helpers/MainHelper';
+import * as MainHelper from '../../../src/shared/helpers/main';
 import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 
 vi.mock('src/shared/libraries/Log');

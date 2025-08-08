@@ -7,6 +7,7 @@ import {
   removeDomElement,
 } from 'src/shared/helpers/dom';
 import { delay, nothing } from 'src/shared/helpers/general';
+import { getNotificationIcons } from 'src/shared/helpers/main';
 import type {
   BellPosition,
   BellSize,
@@ -16,7 +17,6 @@ import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
 import OneSignal from '../../onesignal/OneSignal';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
-import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import { NotificationPermission } from '../../shared/models/NotificationPermission';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
@@ -344,7 +344,7 @@ export default class Bell {
             this.badge.hide();
           }
           if (this.dialog.notificationIcons === null) {
-            const icons = await MainHelper.getNotificationIcons();
+            const icons = await getNotificationIcons();
             this.dialog.notificationIcons = icons;
           }
         }
@@ -517,7 +517,7 @@ export default class Bell {
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
       .then(() => {
         if (isPushEnabled && this.dialog.notificationIcons === null) {
-          return MainHelper.getNotificationIcons().then((icons) => {
+          return getNotificationIcons().then((icons) => {
             this.dialog.notificationIcons = icons;
           });
         } else return nothing();

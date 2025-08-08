@@ -2,7 +2,7 @@ import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
-import MainHelper from 'src/shared/helpers/MainHelper';
+import { getAppId } from 'src/shared/helpers/main';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
 import Log from '../../shared/libraries/Log';
@@ -45,7 +45,7 @@ export default class LoginManager {
     );
     const newIdentityOneSignalId = identityModel.onesignalId;
 
-    const appId = MainHelper.getAppId();
+    const appId = getAppId();
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
     if (pushOp) {

@@ -5,7 +5,7 @@ import type {
 } from 'src/shared/config/types';
 import type { RecursivePartial } from 'src/shared/context/types';
 import { clearAll } from 'src/shared/database/client';
-import MainHelper from 'src/shared/helpers/MainHelper';
+import * as MainHelper from 'src/shared/helpers/main';
 import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../../constants';
 import { generateNewSubscription } from '../helpers/core';
 import {

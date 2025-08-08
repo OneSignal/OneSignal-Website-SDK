@@ -1,5 +1,6 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import { getPushToken, setPushId } from 'src/shared/database/subscription';
+import { getCurrentPushToken } from 'src/shared/helpers/main';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   SubscriptionChannel,
@@ -8,7 +9,6 @@ import {
 import type { SubscriptionChannelValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
-import MainHelper from '../shared/helpers/MainHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import CoreModule from './CoreModule';
 import { IdentityModel } from './models/IdentityModel';
@@ -118,7 +118,7 @@ export class CoreModuleDirector {
     SubscriptionModel | undefined
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
-    const pushToken = await MainHelper.getCurrentPushToken();
+    const pushToken = await getCurrentPushToken();
     if (pushToken) {
       return this.getSubscriptionOfTypeWithToken(
         SubscriptionChannel.Push,
