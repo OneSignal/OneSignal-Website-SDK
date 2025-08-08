@@ -1,9 +1,9 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { getAppState } from 'src/shared/database/config';
 import {
   EmptyArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
-import Database from 'src/shared/services/Database';
 import NotificationsNamespace from './NotificationsNamespace';
 
 describe('NotificationsNamespace', () => {
@@ -15,7 +15,7 @@ describe('NotificationsNamespace', () => {
     const notifications = new NotificationsNamespace();
     await notifications.setDefaultUrl('https://test.com');
 
-    const appState = await Database.getAppState();
+    const appState = await getAppState();
     expect(appState.defaultNotificationUrl).toBe('https://test.com');
 
     await expect(notifications.setDefaultUrl(undefined)).rejects.toThrow(
@@ -32,7 +32,7 @@ describe('NotificationsNamespace', () => {
     const notifications = new NotificationsNamespace();
     await notifications.setDefaultTitle('My notification title');
 
-    const appState = await Database.getAppState();
+    const appState = await getAppState();
     expect(appState.defaultNotificationTitle).toBe('My notification title');
 
     // @ts-expect-error - testing throwing invalid type

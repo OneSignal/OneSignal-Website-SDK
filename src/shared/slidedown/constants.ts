@@ -111,7 +111,6 @@ export const CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES = {
 };
 
 export const CHANNEL_CAPTURE_CONTAINER_CSS_IDS = {
-  channelCaptureContainer: 'channel-capture-container', // currently unused
   smsInputWithValidationElement: 'sms-input-with-validation-element',
   emailInputWithValidationElement: 'email-input-with-validation-element',
   onesignalSmsInput: 'iti-onesignal-sms-input',

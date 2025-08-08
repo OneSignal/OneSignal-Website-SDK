@@ -18,7 +18,8 @@ import {
   setCreateUserError,
   setCreateUserResponse,
 } from '__test__/support/helpers/requests';
-import Database from 'src/shared/services/Database';
+import { clearAll } from 'src/shared/database/client';
+import { getPushId, setPushId } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
@@ -55,7 +56,7 @@ describe('LoginUserOperationExecutor', () => {
   });
 
   beforeEach(async () => {
-    await Database.clear();
+    await clearAll();
     identityModelStore = new IdentityModelStore();
     propertiesModelStore = new PropertiesModelStore();
     subscriptionModelStore = new SubscriptionModelStore();
@@ -165,7 +166,7 @@ describe('LoginUserOperationExecutor', () => {
         DUMMY_ONESIGNAL_ID,
       );
       propertiesModelStore.model.setProperty('onesignalId', DUMMY_ONESIGNAL_ID);
-      await Database.setPushId(DUMMY_SUBSCRIPTION_ID);
+      await setPushId(DUMMY_SUBSCRIPTION_ID);
 
       const subscriptionModel = new SubscriptionModel();
       subscriptionModel.setProperty('id', DUMMY_SUBSCRIPTION_ID);
@@ -191,7 +192,7 @@ describe('LoginUserOperationExecutor', () => {
       expect(propertiesModelStore.model.getProperty('onesignalId')).toEqual(
         DUMMY_ONESIGNAL_ID_2,
       );
-      expect(await Database.getPushId()).toEqual(DUMMY_SUBSCRIPTION_ID_2);
+      expect(await getPushId()).toEqual(DUMMY_SUBSCRIPTION_ID_2);
       expect(subscriptionModel.getProperty('id')).toEqual(
         DUMMY_SUBSCRIPTION_ID_2,
       );

@@ -1,19 +1,19 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import * as eventListeners from 'src/shared/listeners';
+import OneSignal from 'src/onesignal/OneSignal';
+import type { Mock } from 'vitest';
 
-describe('Notification Listeners', () => {
-  beforeEach(async () => {
-    await TestEnvironment.initialize();
-  });
+let emitterSpy: Mock;
 
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
+beforeEach(async () => {
+  await TestEnvironment.initialize();
+  emitterSpy = vi.spyOn(OneSignal.emitter, 'on');
+});
 
-  test('Adding click listener fires internal EventHelper', async () => {
-    const stub = vi.spyOn(eventListeners, 'fireStoredNotificationClicks');
-    // @ts-expect-error - listener doesnt matter
-    OneSignal.Notifications.addEventListener('click', null);
-    expect(stub).toHaveBeenCalledTimes(1);
-  });
+afterEach(() => {
+  vi.resetAllMocks();
+});
+
+test('Adding click listener fires internal EventHelper', async () => {
+  OneSignal.Notifications.addEventListener('click', () => {});
+  expect(emitterSpy).toHaveBeenCalledTimes(1);
 });

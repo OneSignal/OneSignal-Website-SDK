@@ -11,13 +11,5 @@ export const NotificationClickActionBehavior = {
 export const ConfigIntegrationKind = {
   TypicalSite: 'typical',
   WordPress: 'wordpress',
-  Shopify: 'shopify',
-  Blogger: 'blogger',
-  Magento: 'magento',
-  Drupal: 'drupal',
-  SquareSpace: 'squarespace',
-  Joomla: 'joomla',
-  Weebly: 'weebly',
-  Wix: 'wix',
   Custom: 'custom',
 } as const;

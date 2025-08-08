@@ -1,19 +1,16 @@
+import { getOptionsValue } from 'src/shared/database/client';
+import type { OptionKey } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
-import Database from '../../shared/services/Database';
 import type { IOSWebhookEventPayload } from '../serviceWorker/types';
 
 export class OSWebhookSender {
   async send(payload: IOSWebhookEventPayload): Promise<void> {
-    const webhookTargetUrl = await Database.get<string>(
-      'Options',
-      `webhooks.${payload.event}`,
+    const webhookTargetUrl = await getOptionsValue<string>(
+      `webhooks.${payload.event}` as OptionKey,
     );
     if (!webhookTargetUrl) return;
 
-    const isServerCorsEnabled = await Database.get<boolean>(
-      'Options',
-      'webhooks.cors',
-    );
+    const isServerCorsEnabled = await getOptionsValue<boolean>('webhooks.cors');
 
     const fetchOptions: RequestInit = {
       method: 'post',

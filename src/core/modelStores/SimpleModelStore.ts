@@ -1,6 +1,7 @@
 import { ModelStore } from 'src/core/modelRepo/ModelStore';
 import { Model } from 'src/core/models/Model';
-import type { DatabaseModel, ModelNameType } from 'src/core/types/models';
+import type { DatabaseModel } from 'src/core/types/models';
+import type { ModelNameType } from 'src/shared/database/types';
 
 // Implements logic similar to Android SDK's SimpleModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/modeling/SimpleModelStore.kt

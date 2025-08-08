@@ -4,11 +4,16 @@ import {
 } from '../../sw/helpers/CancelableTimeout';
 import OneSignalApiSW from '../api/OneSignalApiSW';
 import { encodeHashAsUriComponent } from '../context/helpers';
+import {
+  cleanupCurrentSession,
+  db,
+  getCurrentSession,
+} from '../database/client';
+import { getAllNotificationClickedForOutcomes } from '../database/notifications';
 import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import type { OutcomesConfig } from '../outcomes/types';
-import Database from '../services/Database';
 import { SessionOrigin, SessionStatus } from '../session/constants';
 import { initializeNewSession } from '../session/helpers';
 import type { Session, SessionOriginValue } from '../session/types';
@@ -49,19 +54,19 @@ export async function upsertSession(
   sessionOrigin: SessionOriginValue,
   outcomesConfig: OutcomesConfig,
 ): Promise<void> {
-  const existingSession = await Database.getCurrentSession();
+  const existingSession = await getCurrentSession();
 
   if (!existingSession) {
     const session: Session = initializeNewSession({ appId });
 
     // if there is a record about a clicked notification in our database, attribute session to it.
     const clickedNotification: OutcomesNotificationClicked | null =
-      await Database.getLastNotificationClickedForOutcomes(appId);
+      await getLastNotificationClickedForOutcomes(appId);
     if (clickedNotification) {
       session.notificationId = clickedNotification.notificationId;
     }
 
-    await Database.upsertSession(session);
+    await db.put('Sessions', session);
     await sendOnSessionCallIfNotPlayerCreate(
       appId,
       onesignalId,
@@ -94,7 +99,7 @@ export async function upsertSession(
     existingSession.status = SessionStatus.Active;
     existingSession.lastActivatedTimestamp = currentTimestamp;
     existingSession.lastDeactivatedTimestamp = null;
-    await Database.upsertSession(existingSession);
+    await db.put('Sessions', existingSession);
     return;
   }
 
@@ -110,7 +115,7 @@ export async function upsertSession(
     outcomesConfig,
   );
   const session: Session = initializeNewSession({ appId });
-  await Database.upsertSession(session);
+  await db.put('Sessions', session);
   await sendOnSessionCallIfNotPlayerCreate(
     appId,
     onesignalId,
@@ -128,7 +133,7 @@ export async function deactivateSession(
   sendOnFocusEnabled: boolean,
   outcomesConfig: OutcomesConfig,
 ): Promise<CancelableTimeoutPromise | undefined> {
-  const existingSession = await Database.getCurrentSession();
+  const existingSession = await getCurrentSession();
 
   if (!existingSession) {
     Log.debug('No active session found. Cannot deactivate.');
@@ -181,7 +186,7 @@ export async function deactivateSession(
     thresholdInSeconds,
   );
 
-  await Database.upsertSession(existingSession);
+  await db.put('Sessions', existingSession);
 
   return cancelableFinalize;
 }
@@ -201,8 +206,8 @@ async function sendOnSessionCallIfNotPlayerCreate(
     return;
   }
 
-  Database.upsertSession(session);
-  Database.resetSentUniqueOutcomes();
+  db.put('Sessions', session);
+  resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
   await OneSignalApiSW.updateUserSession(appId, onesignalId, subscriptionId);
@@ -237,14 +242,37 @@ async function finalizeSession(
   }
 
   await Promise.all([
-    Database.cleanupCurrentSession(),
-    Database.removeAllNotificationClickedForOutcomes(),
+    cleanupCurrentSession(),
+    db.clear('Outcomes.NotificationClicked'),
   ]);
   Log.debug(
     'Finalize session finished',
     `started: ${new Date(session.startTimestamp)}`,
   );
 }
+
+const resetSentUniqueOutcomes = async (): Promise<void> => {
+  const outcomes = await db.getAll('SentUniqueOutcome');
+  const promises = outcomes.map((o) => {
+    o.sentDuringSession = null;
+    return db.put('SentUniqueOutcome', o);
+  });
+  await Promise.all(promises);
+};
+
+const getLastNotificationClickedForOutcomes = async (
+  appId: string,
+): Promise<OutcomesNotificationClicked | null> => {
+  let allClickedNotifications: OutcomesNotificationClicked[] = [];
+  try {
+    allClickedNotifications = await getAllNotificationClickedForOutcomes();
+  } catch (e) {
+    Log.error('Database.getLastNotificationClickedForOutcomes', e);
+  }
+  const predicate = (notification: OutcomesNotificationClicked) =>
+    notification.appId === appId;
+  return allClickedNotifications.find(predicate) || null;
+};
 
 function timeInSecondsBetweenTimestamps(
   timestamp1: number,

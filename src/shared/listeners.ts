@@ -1,19 +1,21 @@
 import UserNamespace from 'src/onesignal/UserNamespace';
 import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
+import { db, getOptionsValue } from './database/client';
+import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
 import MainHelper from './helpers/MainHelper';
 import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
+import { UserState } from './models/UserState';
 import type {
   NotificationClickEvent,
   NotificationClickEventInternal,
 } from './notifications/types';
 import { isCategorySlidedownConfigured } from './prompts/helpers';
-import Database from './services/Database';
 import LimitStore from './services/LimitStore';
 import OneSignalEvent from './services/OneSignalEvent';
-import { awaitOneSignalInitAndSupported, logMethodCall } from './utils/utils';
+import { logMethodCall } from './utils/utils';
 
 export async function checkAndTriggerSubscriptionChanged() {
   logMethodCall('checkAndTriggerSubscriptionChanged');
@@ -23,9 +25,9 @@ export async function checkAndTriggerSubscriptionChanged() {
     await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
   // isOptedIn = native permission granted && is not opted out
   const isOptedIn: boolean =
-    await OneSignal.context.subscriptionManager.isOptedIn();
+    await OneSignal.context.subscriptionManager.isOptedIn!();
 
-  const appState = await Database.getAppState();
+  const appState = await getAppState();
   const {
     lastKnownPushEnabled,
     lastKnownPushId,
@@ -49,13 +51,13 @@ export async function checkAndTriggerSubscriptionChanged() {
   }
 
   // update notification_types via core module
-  await context.subscriptionManager.updateNotificationTypes();
+  await context.subscriptionManager.updateNotificationTypes!();
 
   appState.lastKnownPushEnabled = isPushEnabled;
   appState.lastKnownPushToken = currentPushToken;
   appState.lastKnownPushId = pushSubscriptionId;
   appState.lastKnownOptedIn = isOptedIn;
-  await Database.setAppState(appState);
+  await setAppState(appState);
 
   const change: SubscriptionChangeEvent = {
     previous: {
@@ -91,10 +93,35 @@ export function triggerNotificationClick(
   );
 }
 
+const getUserState = async (): Promise<UserState> => {
+  const userState = new UserState();
+  userState.previousOneSignalId = '';
+  userState.previousExternalId = '';
+  // previous<OneSignalId|ExternalId> are used to track changes to the user's state.
+  // Displayed in the `current` & `previous` fields of the `userChange` event.
+  userState.previousOneSignalId = await getOptionsValue<string>(
+    'previousOneSignalId',
+  );
+  userState.previousExternalId =
+    await getOptionsValue<string>('previousExternalId');
+  return userState;
+};
+
+const setUserState = async (userState: UserState) => {
+  await db.put('Options', {
+    key: 'previousOneSignalId',
+    value: userState.previousOneSignalId,
+  });
+  await db.put('Options', {
+    key: 'previousExternalId',
+    value: userState.previousExternalId,
+  });
+};
+
 export async function checkAndTriggerUserChanged() {
   logMethodCall('checkAndTriggerUserChanged');
 
-  const userState = await Database.getUserState();
+  const userState = await getUserState();
   const { previousOneSignalId, previousExternalId } = userState;
 
   const identityModel = await OneSignal.coreDirector.getIdentityModel();
@@ -110,7 +137,7 @@ export async function checkAndTriggerUserChanged() {
 
   userState.previousOneSignalId = currentOneSignalId;
   userState.previousExternalId = currentExternalId;
-  await Database.setUserState(userState);
+  await setUserState(userState);
 
   const change: UserChangeEvent = {
     current: {
@@ -128,86 +155,6 @@ function triggerUserChanged(change: UserChangeEvent) {
     change,
     UserNamespace.emitter,
   );
-}
-
-/**
- * When notifications are clicked, because the site isn't open, the notification is stored in the database. The next
- * time the page opens, the event is triggered if its less than 5 minutes (usually page opens instantly from click).
- */
-export async function fireStoredNotificationClicks() {
-  await awaitOneSignalInitAndSupported();
-  const url =
-    OneSignal.config?.pageUrl ||
-    OneSignal.config?.userConfig.pageUrl ||
-    document.URL;
-
-  async function fireEventWithNotification(
-    selectedEvent: NotificationClickEventInternal,
-  ) {
-    // Remove the notification from the recently clicked list
-    // Once this page processes this retroactively provided clicked event, nothing should get the same event
-    const appState = await Database.getAppState();
-    // @ts-expect-error - TODO: address this is a workaround to fix the type error
-    appState.pendingNotificationClickEvents![selectedEvent.result.url!] = null;
-    await Database.setAppState(appState);
-
-    const timestamp = selectedEvent.timestamp;
-    if (timestamp) {
-      const minutesSinceNotificationClicked =
-        (Date.now() - timestamp) / 1000 / 60;
-      if (minutesSinceNotificationClicked > 5) return;
-    }
-
-    triggerNotificationClick(selectedEvent);
-  }
-
-  const appState = await Database.getAppState();
-
-  /* Is the flag notificationClickHandlerMatch: origin enabled?
-
-       If so, this means we should provide a retroactive notification.clicked event as long as there exists any recently clicked
-       notification that matches this site's origin.
-
-       Otherwise, the default behavior is to only provide a retroactive notification.clicked event if this page's URL exactly
-       matches the notification's URL.
-    */
-  const notificationClickHandlerMatch = await Database.get<string>(
-    'Options',
-    'notificationClickHandlerMatch',
-  );
-  if (notificationClickHandlerMatch === 'origin') {
-    for (const clickedNotificationUrl of Object.keys(
-      appState.pendingNotificationClickEvents!,
-    )) {
-      // Using notificationClickHandlerMatch: 'origin', as long as the notification's URL's origin matches our current tab's origin,
-      // fire the clicked event
-      if (new URL(clickedNotificationUrl).origin === location.origin) {
-        const clickedNotification =
-          appState.pendingNotificationClickEvents![clickedNotificationUrl];
-        await fireEventWithNotification(clickedNotification);
-      }
-    }
-  } else {
-    /*
-        If a user is on https://site.com, document.URL and location.href both report the page's URL as https://site.com/.
-        This causes checking for notifications for the current URL to fail, since there is a notification for https://site.com,
-        but there is no notification for https://site.com/.
-
-        As a workaround, if there are no notifications for https://site.com/, we'll do a check for https://site.com.
-      */
-    let pageClickedNotifications =
-      appState.pendingNotificationClickEvents?.[url];
-    if (pageClickedNotifications) {
-      await fireEventWithNotification(pageClickedNotifications);
-    } else if (!pageClickedNotifications && url.endsWith('/')) {
-      const urlWithoutTrailingSlash = url.substring(0, url.length - 1);
-      pageClickedNotifications =
-        appState.pendingNotificationClickEvents?.[urlWithoutTrailingSlash];
-      if (pageClickedNotifications) {
-        await fireEventWithNotification(pageClickedNotifications);
-      }
-    }
-  }
 }
 
 async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
