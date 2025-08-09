@@ -2,12 +2,14 @@ import {
   getSubscription,
   setSubscription,
 } from 'src/shared/database/subscription';
-import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
+import type {
+  NotificationTypeValue,
+  StoredSubscription,
+} from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
 import Log from '../../libraries/Log';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
-import type { Subscription } from '../../models/Subscription';
 import {
   SubscriptionStrategyKind,
   type SubscriptionStrategyKindValue,
@@ -65,7 +67,7 @@ export class SubscriptionManagerBase<
     pushSubscription: RawPushSubscription | undefined,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _subscriptionState?: NotificationTypeValue | null,
-  ): Promise<Subscription> {
+  ): Promise<StoredSubscription> {
     /*
       This may be called after the RawPushSubscription has been serialized across a postMessage
       frame. This means it will only have object properties and none of the functions. We have to

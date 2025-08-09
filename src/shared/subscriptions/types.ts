@@ -12,3 +12,11 @@ export type SubscriptionTypeValue =
 
 export type NotificationTypeValue =
   (typeof NotificationType)[keyof typeof NotificationType];
+
+export type StoredSubscription = {
+  deviceId?: string | null;
+  subscriptionToken?: string | null;
+  optedOut?: boolean;
+  createdAt?: number | null;
+  expirationTime?: number | null;
+};

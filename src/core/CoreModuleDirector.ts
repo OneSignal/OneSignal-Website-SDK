@@ -6,9 +6,9 @@ import {
   SubscriptionChannel,
   SubscriptionType,
 } from 'src/shared/subscriptions/constants';
+import { isPushSubscriptionType } from 'src/shared/subscriptions/helpers';
 import type { SubscriptionChannelValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
-import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import CoreModule from './CoreModule';
 import { IdentityModel } from './models/IdentityModel';
@@ -109,9 +109,7 @@ export class CoreModuleDirector {
   public getAllPushSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getAllPushSubscriptionModels');
     const subscriptions = this.core.subscriptionModelStore.list();
-    return subscriptions.filter((s) =>
-      SubscriptionHelper.isPushSubscriptionType(s.type),
-    );
+    return subscriptions.filter((s) => isPushSubscriptionType(s.type));
   }
 
   private async getPushSubscriptionModelByCurrentToken(): Promise<

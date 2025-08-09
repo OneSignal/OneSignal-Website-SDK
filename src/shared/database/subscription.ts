@@ -1,4 +1,4 @@
-import { Subscription } from '../models/Subscription';
+import type { StoredSubscription } from '../subscriptions/types';
 import { db } from './client';
 
 export const getPushId = async () => {
@@ -18,9 +18,12 @@ export const setPushToken = async (pushToken: string | undefined) => {
 };
 
 export const getSubscription = async () => {
-  const subscription = new Subscription();
-  subscription.deviceId = (await db.get('Ids', 'userId'))?.id;
-  subscription.subscriptionToken = (await db.get('Ids', 'registrationId'))?.id;
+  const subscription: StoredSubscription = {};
+  subscription.deviceId = (await db.get('Ids', 'userId'))?.id as
+    | string
+    | undefined;
+  subscription.subscriptionToken = (await db.get('Ids', 'registrationId'))
+    ?.id as string | undefined;
 
   // The preferred database key to store our subscription
   const dbOptedOut = ((await db.get('Options', 'optedOut'))?.value ?? null) as
@@ -48,7 +51,7 @@ export const getSubscription = async () => {
   return subscription;
 };
 
-export const setSubscription = async (subscription: Subscription) => {
+export const setSubscription = async (subscription: StoredSubscription) => {
   if (subscription.deviceId) {
     await db.put('Ids', {
       type: 'userId',

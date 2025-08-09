@@ -10,12 +10,12 @@ import { NotificationPermission } from '../models/NotificationPermission';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import LimitStore from '../services/LimitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
+import { registerForPush } from '../subscriptions/helpers';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once } from '../utils/utils';
 import { getAppId } from './main';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
-import SubscriptionHelper from './SubscriptionHelper';
 
 export async function internalInit() {
   Log.debug('Called internalInit()');
@@ -95,7 +95,7 @@ async function sessionInit(): Promise<void> {
 }
 
 export async function registerForPushNotifications(): Promise<void> {
-  await SubscriptionHelper.registerForPush();
+  await registerForPush();
 }
 
 /**
@@ -381,7 +381,7 @@ async function handleAutoResubscribe(isOptedOut: boolean) {
         OneSignal.context.appConfig.safariWebId,
       );
     if (currentPermission == NotificationPermission.Granted) {
-      await SubscriptionHelper.registerForPush();
+      await registerForPush();
     }
   }
 }

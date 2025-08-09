@@ -207,7 +207,7 @@ export class OneSignalServiceWorker {
           );
         OneSignalServiceWorker.workerMessenger.broadcast(
           WorkerMessengerCommand.Subscribe,
-          subscription.serialize(),
+          subscription,
         );
       },
     );
@@ -227,7 +227,7 @@ export class OneSignalServiceWorker {
 
         OneSignalServiceWorker.workerMessenger.broadcast(
           WorkerMessengerCommand.SubscribeNew,
-          subscription.serialize(),
+          subscription,
         );
       },
     );

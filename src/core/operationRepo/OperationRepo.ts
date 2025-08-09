@@ -40,10 +40,6 @@ export class OperationQueueItem {
     this.retries = props.retries ?? 0;
     this.resolver = props.resolver;
   }
-
-  toString(): string {
-    return `bucket:${this.bucket}, retries:${this.retries}, operation:${this.operation}\n`;
-  }
 }
 
 // OperationRepo Class

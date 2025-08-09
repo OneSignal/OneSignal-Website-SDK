@@ -2,9 +2,9 @@ import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '__test__/constants';
 import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
+import type { StoredSubscription } from 'src/shared/subscriptions/types';
 import { TestEnvironment } from '../../__test__/support/environment/TestEnvironment';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
-import { Subscription } from '../shared/models/Subscription';
 import User from './User';
 import UserNamespace from './UserNamespace';
 
@@ -414,11 +414,12 @@ describe('UserNamespace', () => {
     });
 
     test('should use provided subscription and permission when initializing', () => {
-      const subscription = new Subscription();
-      subscription.deviceId = 'device-123';
-      subscription.subscriptionToken = DUMMY_PUSH_TOKEN;
-      subscription.optedOut = false;
-      subscription.createdAt = Date.now();
+      const subscription: StoredSubscription = {
+        deviceId: 'device-123',
+        subscriptionToken: DUMMY_PUSH_TOKEN,
+        optedOut: false,
+        createdAt: Date.now(),
+      };
 
       const permission: NotificationPermission = 'granted';
 

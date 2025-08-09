@@ -11,11 +11,11 @@ import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
+import type { StoredSubscription } from 'src/shared/subscriptions/types';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
-import { Subscription } from '../shared/models/Subscription';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
@@ -29,7 +29,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
   constructor(
     initialize: boolean,
-    subscription?: Subscription,
+    subscription?: StoredSubscription,
     permission?: NotificationPermission,
   ) {
     super();

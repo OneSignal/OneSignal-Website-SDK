@@ -4,7 +4,7 @@ import {
   type ModelChangeTagValue,
 } from 'src/core/types/models';
 import { ModelName } from 'src/shared/database/constants';
-import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
+import { isPushSubscriptionType } from 'src/shared/subscriptions/helpers';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 
 // Implements logic similar to Android SDK's SubscriptionModelStore
@@ -28,7 +28,7 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
 
     // When hydrating, preserve properties from existing PUSH subscription
     for (const model of models) {
-      if (SubscriptionHelper.isPushSubscriptionType(model.type)) {
+      if (isPushSubscriptionType(model.type)) {
         const existingPushModel = this.get(model.modelId);
         if (existingPushModel) {
           model.sdk = existingPushModel.sdk;

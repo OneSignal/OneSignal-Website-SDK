@@ -97,8 +97,4 @@ export abstract class Operation<
       this.onesignalId = map[this.onesignalId];
     }
   }
-
-  toString(): string {
-    return JSON.stringify(this.toJSON());
-  }
 }

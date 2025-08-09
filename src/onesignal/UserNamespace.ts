@@ -1,7 +1,7 @@
+import type { StoredSubscription } from 'src/shared/subscriptions/types';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
-import { Subscription } from '../shared/models/Subscription';
 import PushSubscriptionNamespace from './PushSubscriptionNamespace';
 import User from './User';
 
@@ -14,7 +14,7 @@ export default class UserNamespace extends EventListenerBase {
 
   constructor(
     initialize: boolean,
-    subscription?: Subscription,
+    subscription?: StoredSubscription,
     permission?: NotificationPermission,
   ) {
     super();

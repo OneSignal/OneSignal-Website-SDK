@@ -3,9 +3,9 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
-import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import Log from 'src/shared/libraries/Log';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+import { isPushSubscriptionType } from 'src/shared/subscriptions/helpers';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
 import {
@@ -109,7 +109,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
 
         // We only add a non-push subscriptions. For push, the device is the source of truth
         // so we don't want to cache these subscriptions from the backend.
-        if (!SubscriptionHelper.isPushSubscriptionType(model.type)) {
+        if (!isPushSubscriptionType(model.type)) {
           subscriptionModels.push(model);
         }
       }

@@ -46,17 +46,17 @@
   "devDependencies": {
     "@size-limit/file": "^11.2.0",
     "@types/body-parser": "latest",
-    "@types/express": "^4.17.17",
+    "@types/express": "^4.17.23",
     "@types/intl-tel-input": "^18.1.4",
     "@types/jsdom": "^21.1.7",
     "@types/jsonp": "^0.2.3",
-    "@types/node": "^24.1.0",
+    "@types/node": "^24.2.1",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
-    "@vitest/coverage-v8": "4.0.0-beta.6",
+    "@vitest/coverage-v8": "4.0.0-beta.7",
     "concurrently": "^9.2.0",
-    "deepmerge": "^4.2.2",
+    "deepmerge": "^4.3.1",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "9.0.0",
     "fake-indexeddb": "5.0.2",
@@ -64,14 +64,14 @@
     "msw": "^2.10.4",
     "prettier": "3.6.2",
     "prettylint": "^2.0.0",
-    "sass-embedded": "^1.89.2",
+    "sass-embedded": "^1.90.0",
     "type-fest": "^4.41.0",
-    "typescript": "^5.8.3",
-    "vite": "^7.0.6",
-    "vite-bundle-analyzer": "^1.1.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1",
+    "vite-bundle-analyzer": "^1.2.0",
     "vite-plugin-mkcert": "^1.17.8",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "4.0.0-beta.6"
+    "vitest": "4.0.0-beta.7"
   },
   "size-limit": [
     {
@@ -81,12 +81,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "53.6 kB",
+      "limit": "53.33 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "15.9 kB",
+      "limit": "14.975 kB",
       "gzip": true
     },
     {
