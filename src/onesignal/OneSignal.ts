@@ -34,7 +34,6 @@ import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
-import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
@@ -302,5 +301,9 @@ function processItem(
     throw new Error('Callback is not a function');
   }
 }
+
+export type OneSignalDeferredLoadedCallback = (
+  onesignal: typeof OneSignal,
+) => void;
 
 Log.info(`Web SDK loaded (v${VERSION})`);

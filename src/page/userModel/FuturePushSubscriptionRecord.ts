@@ -10,29 +10,28 @@ import type {
   SubscriptionTypeValue,
 } from 'src/shared/subscriptions/types';
 import { VERSION } from 'src/shared/utils/EnvVariables';
-import type { Serializable } from '../models/Serializable';
 
-export default class FuturePushSubscriptionRecord implements Serializable {
+export default class FuturePushSubscriptionRecord {
   readonly type: SubscriptionTypeValue;
   readonly token?: string; // maps to legacy player.identifier
   readonly enabled?: boolean;
-  readonly notificationTypes?: NotificationTypeValue;
+  readonly notification_types?: NotificationTypeValue;
   readonly sdk: string;
-  readonly deviceModel: string;
-  readonly deviceOs: string;
-  readonly webAuth?: string;
-  readonly webp256?: string;
+  readonly device_model: string;
+  readonly device_os: string;
+  readonly web_auth?: string;
+  readonly web_p256?: string;
 
   constructor(rawPushSubscription: RawPushSubscription) {
     this.token = this._getToken(rawPushSubscription);
     this.type = getSubscriptionType();
     this.enabled = true;
-    this.notificationTypes = NotificationType.Subscribed;
+    this.notification_types = NotificationType.Subscribed;
     this.sdk = VERSION;
-    this.deviceModel = getDeviceModel();
-    this.deviceOs = getDeviceOS();
-    this.webAuth = rawPushSubscription.w3cAuth;
-    this.webp256 = rawPushSubscription.w3cP256dh;
+    this.device_model = getDeviceModel();
+    this.device_os = getDeviceOS();
+    this.web_auth = rawPushSubscription.w3cAuth;
+    this.web_p256 = rawPushSubscription.w3cP256dh;
   }
 
   private _getToken(subscription: RawPushSubscription): string | undefined {
@@ -40,19 +39,5 @@ export default class FuturePushSubscriptionRecord implements Serializable {
       return subscription.w3cEndpoint.toString();
     }
     return subscription.safariDeviceToken;
-  }
-
-  serialize() {
-    return {
-      type: this.type,
-      token: this.token,
-      enabled: this.enabled,
-      notification_types: this.notificationTypes,
-      sdk: this.sdk,
-      device_model: this.deviceModel,
-      device_os: this.deviceOs,
-      web_auth: this.webAuth,
-      web_p256: this.webp256,
-    };
   }
 }

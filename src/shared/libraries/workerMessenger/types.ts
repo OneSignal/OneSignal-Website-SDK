@@ -1,8 +1,6 @@
-import type { Serializable } from 'src/page/models/Serializable';
 import type { WorkerMessengerCommand } from './constants';
 
 export type WorkerMessengerPayload =
-  | Serializable
   | number
   | string
   | object

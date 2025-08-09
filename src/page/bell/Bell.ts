@@ -17,7 +17,7 @@ import type {
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
 import OneSignal from '../../onesignal/OneSignal';
-import { DismissHelper } from '../../shared/helpers/DismissHelper';
+import { wasPromptOfTypeDismissed } from '../../shared/helpers/dismiss';
 import Log from '../../shared/libraries/Log';
 import { NotificationPermission } from '../../shared/models/NotificationPermission';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
@@ -497,7 +497,7 @@ export default class Bell {
 
     const isPushEnabled =
       await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-    DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
+    wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
     // where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small

@@ -169,14 +169,10 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   ) {
     const predicateResult = await displayPredicate();
     if (predicateResult !== false) {
-      Log.debug(
-        'Showing notify button because display predicate returned true.',
-      );
+      Log.debug('Showing notify button');
       OneSignal.notifyButton.launcher.show();
     } else {
-      Log.debug(
-        'Hiding notify button because display predicate returned false.',
-      );
+      Log.debug('Hiding notify button');
       OneSignal.notifyButton.launcher.hide();
     }
   }
@@ -199,9 +195,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   pushSubscriptionId: string | undefined | null,
 ) {
   if (OneSignal.__doNotShowWelcomeNotification) {
-    Log.debug(
-      'Not showing welcome notification because user has previously subscribed.',
-    );
+    Log.debug('User previously subscribed, not showing welcome notification');
     return;
   }
   const welcome_notification_opts =

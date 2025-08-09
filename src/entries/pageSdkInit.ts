@@ -2,7 +2,7 @@
  * This is OneSignalSDK.page.es6.js(ES6)
  * Loaded from OneSignalSDK.page.js only if the browser supports push.
  */
-import type { OneSignalDeferredLoadedCallback } from 'src/page/models/OneSignalDeferredLoadedCallback';
+import type { OneSignalDeferredLoadedCallback } from 'src/onesignal/OneSignal';
 import OneSignal from '../onesignal/OneSignal';
 import Log from '../shared/libraries/Log';
 import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';
@@ -14,9 +14,9 @@ import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';
 import './stylesheet.scss';
 
 async function processOneSignalDeferredArray(
-  onesignalDeferred: OneSignalDeferredLoadedCallback[],
+  onesignalDeferred: typeof window.OneSignalDeferred,
 ): Promise<void> {
-  for (const item of onesignalDeferred) {
+  for (const item of onesignalDeferred!) {
     try {
       await OneSignal.push(item);
     } catch (e) {

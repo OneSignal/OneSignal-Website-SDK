@@ -18,7 +18,7 @@ import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 
 export async function internalInit() {
-  Log.debug('Called internalInit()');
+  Log.debug('Called internalInit');
 
   // Always check for an updated service worker
   await OneSignal.context.serviceWorkerManager.installWorker();
@@ -53,10 +53,10 @@ function postponeSessionInitUntilPageIsInFocus(): void {
 }
 
 async function sessionInit(): Promise<void> {
-  Log.debug(`Called sessionInit()`);
+  Log.debug(`Called sessionInit`);
 
   if (OneSignal._sessionInitAlreadyRunning) {
-    Log.debug('Returning from sessionInit because it has already been called.');
+    Log.debug('sessionInit already called');
     return;
   }
   OneSignal._sessionInitAlreadyRunning = true;
@@ -241,9 +241,7 @@ async function showNotifyButton() {
           );
           OneSignal.notifyButton.create();
         } else {
-          Log.debug(
-            'Notify button display predicate returned false so not showing the notify button.',
-          );
+          Log.debug('Notify button not shown');
         }
       });
     } else {
@@ -278,9 +276,7 @@ async function installNativePromptPermissionChangedHook() {
   } catch (e) {
     // Some browsers (Safari 16.3 and older) have the API navigator.permissions.query, but don't support the
     // { name: 'notifications' } param and throws.
-    Log.warn(
-      `Could not install native notification permission change hook w/ error: ${e}`,
-    );
+    Log.warn('Failed to install notification permission hook:', e);
   }
 }
 
@@ -367,7 +363,7 @@ export async function initSaveState(overridingPageTitle?: string) {
   const pageTitle: string =
     overridingPageTitle || config.siteName || document.title || 'Notification';
   await db.put('Options', { key: 'pageTitle', value: pageTitle });
-  Log.info(`OneSignal: Set pageTitle to be '${pageTitle}'.`);
+  Log.info(`Set pageTitle to '${pageTitle}'`);
 }
 
 async function handleAutoResubscribe(isOptedOut: boolean) {

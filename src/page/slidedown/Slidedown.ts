@@ -220,7 +220,7 @@ export default class Slidedown {
    */
   removeSaveState(): void {
     this.allowButton.textContent = this.positiveUpdateButton ?? '';
-    removeDomElement(`#${SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder}`);
+    removeDomElement(`#${SLIDEDOWN_CSS_IDS.buttonIndicatorHolder}`);
     this.allowButton.disabled = false;
     removeCssClass(this.allowButton, 'disabled');
     removeCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
@@ -291,7 +291,7 @@ export default class Slidedown {
   getIndicatorHolder(): Element {
     const indicatorHolder = document.createElement('div');
     indicatorHolder.id = SLIDEDOWN_CSS_IDS.buttonIndicatorHolder;
-    addCssClass(indicatorHolder, SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder);
+    addCssClass(indicatorHolder, SLIDEDOWN_CSS_IDS.buttonIndicatorHolder);
     return indicatorHolder;
   }
 

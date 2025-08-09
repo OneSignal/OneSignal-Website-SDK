@@ -1,4 +1,4 @@
-import { OneSignalDeferredLoadedCallback } from './page/models/OneSignalDeferredLoadedCallback';
+import type { OneSignalDeferredLoadedCallback } from './onesignal/OneSignal';
 
 /**
  * Types and names collected from:

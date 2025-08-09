@@ -71,7 +71,7 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
   const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
     rawPushSubscription,
-  ).serialize();
+  );
   for (const key in serializedSubscriptionRecord) {
     const modelKey = key as keyof typeof serializedSubscriptionRecord;
     pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);

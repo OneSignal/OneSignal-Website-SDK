@@ -1,8 +1,5 @@
 export const SLIDEDOWN_CSS_CLASSES = {
-  allowButton: 'onesignal-slidedown-allow-button',
   body: 'slidedown-body',
-  buttonIndicatorHolder: 'onesignal-button-indicator-holder',
-  cancelButton: 'onesignal-slidedown-cancel-button',
   container: 'onesignal-slidedown-container',
   dialog: 'onesignal-slidedown-dialog',
   footer: 'slidedown-footer',

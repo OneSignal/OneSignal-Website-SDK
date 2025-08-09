@@ -1,3 +1,4 @@
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { Browser } from './constants';
 import type { BrowserValue } from './types';
 
@@ -14,56 +15,64 @@ interface IBrowserResult {
 
 // Top popular browsers set
 const BROWSER_CONFIGS: BrowserConfig[] = [
-  {
-    name: 'Opera',
-    pattern: /(?:opera|opr|opios)/i,
-    versionPattern: /(?:opera|opr|opios)[ /](\d+(?:\.\d+)?)/i,
-  },
-  {
-    name: 'Facebook',
-    pattern: /FBAN\//i,
-    versionPattern: /FBAV\/(\d+(?:\.\d+)?)/i,
-  },
-  {
-    name: 'Samsung Browser',
-    pattern: /samsungbrowser/i,
-    versionPattern: /samsungbrowser[ /](\d+(?:\.\d+)?)/i,
-  },
-  {
-    name: 'Yandex Browser',
-    pattern: /yabrowser/i,
-    versionPattern: /yabrowser[ /](\d+(?:\.\d+)?)/i,
-  },
-  {
-    name: 'Vivaldi',
-    pattern: /vivaldi/i,
-    versionPattern: /vivaldi[ /](\d+(?:\.\d+)?)/i,
-  },
-  {
-    name: 'UC Browser',
-    pattern: /ucbrowser/i,
-    versionPattern: /ucbrowser[ /](\d+(?:\.\d+)?)/i,
-  },
-  {
-    name: 'Microsoft Edge',
-    pattern: /edg/i,
-    versionPattern: /edg[ /](\d+(?:\.\d+)?)/i,
-  },
+  ...(!IS_SERVICE_WORKER
+    ? [
+        {
+          name: 'Opera',
+          pattern: /(?:opera|opr|opios)/i,
+          versionPattern: /(?:opera|opr|opios)[ /](\d+(?:\.\d+)?)/i,
+        },
+        {
+          name: 'Facebook',
+          pattern: /FBAN\//i,
+          versionPattern: /FBAV\/(\d+(?:\.\d+)?)/i,
+        },
+        {
+          name: 'Samsung Browser',
+          pattern: /samsungbrowser/i,
+          versionPattern: /samsungbrowser[ /](\d+(?:\.\d+)?)/i,
+        },
+        {
+          name: 'Yandex Browser',
+          pattern: /yabrowser/i,
+          versionPattern: /yabrowser[ /](\d+(?:\.\d+)?)/i,
+        },
+        {
+          name: 'Vivaldi',
+          pattern: /vivaldi/i,
+          versionPattern: /vivaldi[ /](\d+(?:\.\d+)?)/i,
+        },
+        {
+          name: 'UC Browser',
+          pattern: /ucbrowser/i,
+          versionPattern: /ucbrowser[ /](\d+(?:\.\d+)?)/i,
+        },
+        {
+          name: 'Microsoft Edge',
+          pattern: /edg/i,
+          versionPattern: /edg[ /](\d+(?:\.\d+)?)/i,
+        },
+      ]
+    : []),
   {
     name: 'Firefox',
     pattern: /firefox|iceweasel|fxios/i,
     versionPattern: /(?:firefox|iceweasel|fxios)[ /](\d+(?:\.\d+)?)/i,
   },
-  {
-    name: 'Chromium',
-    pattern: /chromium/i,
-    versionPattern: /chromium[ /](\d+(?:\.\d+)?)/i,
-  },
-  {
-    name: 'Chrome',
-    pattern: /chrome|crios|crmo/i,
-    versionPattern: /(?:chrome|crios|crmo)[ /](\d+(?:\.\d+)?)/i,
-  },
+  ...(!IS_SERVICE_WORKER
+    ? [
+        {
+          name: 'Chromium',
+          pattern: /chromium/i,
+          versionPattern: /chromium[ /](\d+(?:\.\d+)?)/i,
+        },
+        {
+          name: 'Chrome',
+          pattern: /chrome|crios|crmo/i,
+          versionPattern: /(?:chrome|crios|crmo)[ /](\d+(?:\.\d+)?)/i,
+        },
+      ]
+    : []),
   {
     name: 'Safari',
     pattern: /safari|applewebkit/i,

@@ -58,7 +58,7 @@ export class CoreModuleDirector {
     });
     const model = new SubscriptionModel();
     model.initializeFromJson(
-      new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
+      new FuturePushSubscriptionRecord(rawPushSubscription),
     );
     model.id = IDManager.createLocalId();
     setPushId(model.id);

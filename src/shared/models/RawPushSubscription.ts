@@ -1,6 +1,4 @@
-import type { Serializable } from '../../page/models/Serializable';
-
-export class RawPushSubscription implements Serializable {
+export class RawPushSubscription {
   /**
    * The GCM/FCM registration token, along with the full URL. Not used for Safari.
    */
@@ -73,18 +71,6 @@ export class RawPushSubscription implements Serializable {
       return;
     }
     this.safariDeviceToken = safariDeviceToken;
-  }
-
-  public serialize() {
-    const serializedBundle = {
-      /* Old Parameters */
-      w3cEndpoint: this.w3cEndpoint ? this.w3cEndpoint.toString() : null,
-      w3cP256dh: this.w3cP256dh,
-      w3cAuth: this.w3cAuth,
-      safariDeviceToken: this.safariDeviceToken,
-    };
-
-    return serializedBundle;
   }
 
   // TODO: had a hard to debug bug here due to "any" type bypassing typescript validation.
