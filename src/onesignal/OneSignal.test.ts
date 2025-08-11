@@ -278,7 +278,7 @@ describe('OneSignal', () => {
         let dbSubscriptions = await getEmailSubscriptionDbItems();
         expect(dbSubscriptions).toHaveLength(1);
 
-        await waitForOperations(6);
+        await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 1);
         window.OneSignal.User.removeEmail(email);
 
         await vi.waitUntil(() => deleteSubscriptionFn.mock.calls.length === 1);

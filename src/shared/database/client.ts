@@ -1,4 +1,5 @@
 import { openDB, type StoreNames } from 'idb';
+import Log from '../libraries/Log';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import {
@@ -20,7 +21,7 @@ let dbInstance: Awaited<ReturnType<typeof openDB<IndexedDBSchema>>> | null =
 export const getDb = async (version = VERSION) => {
   if (dbInstance) return dbInstance;
   dbInstance = await openDB<IndexedDBSchema>(DATABASE_NAME, version, {
-    async upgrade(_db, oldVersion, newVersion, transaction) {
+    upgrade(_db, oldVersion, newVersion, transaction) {
       const newDbVersion = newVersion || version;
       if (newDbVersion >= 1 && oldVersion < 1) {
         _db.createObjectStore('Ids', { keyPath: 'type' });
@@ -79,6 +80,9 @@ export const getDb = async (version = VERSION) => {
       if (!IS_SERVICE_WORKER && typeof OneSignal !== 'undefined') {
         OneSignal._isNewVisitor = true;
       }
+    },
+    blocked() {
+      Log.debug('IndexedDB: Blocked event');
     },
   });
   return dbInstance;
