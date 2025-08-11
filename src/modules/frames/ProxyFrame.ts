@@ -100,6 +100,7 @@ export default class ProxyFrame extends RemoteFrame {
 
     // 3/30/16: For HTTP sites, put the host page URL as default URL if one doesn't exist already
     const defaultUrl = await Database.get('Options', 'defaultUrl');
+    Log.info("Default URL from database:", defaultUrl, new URL(OneSignal.config.pageUrl).origin);
     if (!defaultUrl) {
       await Database.put('Options', { key: 'defaultUrl', value: new URL(OneSignal.config.pageUrl).origin });
     }
