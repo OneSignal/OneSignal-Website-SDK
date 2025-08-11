@@ -249,7 +249,7 @@ export class ServiceWorker {
               const appId = await ServiceWorker.getAppId();
 
               for (const rawNotification of notifications) {
-                Log.debug('Raw Notification from OneSignal:', rawNotification);
+                Log.debug('Raw Notification from OneSignal:', JSON.stringify(rawNotification));
                 const notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
 
                 const notificationReceived: NotificationReceived = {
@@ -266,10 +266,16 @@ export class ServiceWorker {
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
                       .then(() => {
+                        console.log(`Notification displayed then 1`);
                         return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => Log.error(e));
                       })
-                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif)
-                      .then(() => ServiceWorker.sendConfirmedDelivery(notif)).catch(e => Log.error(e)));
+                      .then(() => {
+                        console.log(`Notification displayed then 2`);
+                        ServiceWorker.executeWebhooks('notification.displayed', notif)})
+                      .then(() => {
+                        console.log(`Notification displayed then 3`);
+                        ServiceWorker.sendConfirmedDelivery(notif)
+                      }).catch(e => Log.error(e));
                 }).bind(null, notification));
               }
 
@@ -631,6 +637,7 @@ export class ServiceWorker {
     const persistNotification = await Database.get('Options', 'persistNotification');
     // Get app ID for tag value
     const appId = await ServiceWorker.getAppId();
+    Log.debug("appId", appId);
 
     notification.heading = notification.heading ? notification.heading : defaultTitle;
     notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
@@ -644,8 +651,10 @@ export class ServiceWorker {
       overrides = {};
     notification = { ...notification, ...overrides };
 
+    Log.debug("before ensureNotificationResourcesHttps", );
     ServiceWorker.ensureNotificationResourcesHttps(notification);
 
+    Log.debug("after ensureNotificationResourcesHttps", );
     const notificationOptions = {
       body: notification.content,
       icon: notification.icon,
@@ -679,7 +688,7 @@ export class ServiceWorker {
        seconds unless requireInteraction is set to true. See:
        https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
        */
-      requireInteraction: extra.persistNotification,
+      // requireInteraction: extra.persistNotification,
       /*
        On Chrome 50+, by default notifications replacing
        identically-tagged notifications no longer vibrate/signal the user
@@ -708,9 +717,12 @@ export class ServiceWorker {
       long to pause. For example [300, 100, 400] would vibrate 300ms,
       pause 100ms, then vibrate 400ms.
        */
-      vibrate: notification.vibrate
+      vibrate: notification.vibrate,
+      requireInteraction: true, // Forces notification to stay visible
+      silent: false
     };
 
+    Log.debug("before showNotification", self.registration, notification.heading, notificationOptions);
     return self.registration.showNotification(notification.heading, notificationOptions);
   }
 
@@ -720,9 +732,12 @@ export class ServiceWorker {
    * @param url
      */
   static shouldOpenNotificationUrl(url) {
-    return (url !== 'javascript:void(0);' &&
-            url !== 'do_not_open' &&
-            !Utils.contains(url, '_osp=do_not_open'));
+    const shouldOpen =(url !== 'javascript:void(0);' &&
+      url !== 'do_not_open' &&
+      !Utils.contains(url, '_osp=do_not_open'));
+
+    Log.debug(`Called %cshouldOpenNotificationUrl(${url}):`, url, shouldOpen);
+    return shouldOpen;
   }
 
   /**
@@ -744,6 +759,7 @@ export class ServiceWorker {
    * notification body was clicked.
    */
   static async getNotificationUrlToOpen(notification): Promise<string> {
+    Log.debug("getNotificationUrlToOpen", JSON.stringify(notification));
     // Defaults to the URL the service worker was registered
     // TODO: This should be fixed for HTTP sites
     let launchUrl = location.origin;
@@ -753,9 +769,10 @@ export class ServiceWorker {
     if (dbDefaultNotificationUrl)
       launchUrl = dbDefaultNotificationUrl;
 
+    Log.debug("SW URL", launchUrl, dbDefaultNotificationUrl, notification?.url)
     // If the user clicked an action button, use the URL provided by the action button
     // Unless the action button URL is null
-    if (notification.action) {
+    if (notification && notification.action) {
       // Find the URL tied to the action button that was clicked
       for (const button of notification.buttons) {
         if (button.action === notification.action &&
@@ -764,7 +781,7 @@ export class ServiceWorker {
           launchUrl = button.url;
         }
       }
-    } else if (notification.url &&
+    } else if (notification && notification.url &&
                notification.url !== '') {
       // The user clicked the notification body instead of an action button
       launchUrl = notification.url;
@@ -778,7 +795,7 @@ export class ServiceWorker {
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
   static async onNotificationClicked(event: NotificationEventInit) {
-    Log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
+    Log.debug("Called onNotificationClicked", JSON.stringify(event));
 
     // Close the notification first here, before we do anything that might fail
     event.notification.close();
@@ -805,9 +822,10 @@ export class ServiceWorker {
     const appId = await ServiceWorker.getAppId();
     const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
+    Log.info("NotificationClicked appId", appId);
     let saveNotificationClickedPromise: Promise<void> | undefined;
     const notificationClicked: NotificationClicked = {
-      notificationId: notificationData.id,
+      notificationId: notificationData?.id,
       appId,
       url: launchUrl,
       timestamp: new Date().getTime(),
