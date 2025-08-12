@@ -13,7 +13,7 @@ export interface OSServiceWorkerFields {
   cancel?: () => void;
 }
 
-export interface SubscriptionChangeEvent {
+export interface PushSubscriptionChangeEvent {
   oldSubscription: PushSubscription | null;
   newSubscription: PushSubscription | null;
 }

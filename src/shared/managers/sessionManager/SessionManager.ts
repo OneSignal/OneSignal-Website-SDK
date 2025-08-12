@@ -15,9 +15,9 @@ import type {
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
+import { isCompleteSubscriptionObject } from 'src/shared/subscriptions/helpers';
 import User from '../../../onesignal/User';
-import LoginManager from '../../../page/managers/LoginManager';
+import LoginManager from '../../../page/managers/Login';
 import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constants';
 import type { ISessionManager } from './types';

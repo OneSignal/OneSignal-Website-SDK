@@ -8,6 +8,7 @@ import {
 } from 'src/shared/helpers/dom';
 import { delay, nothing } from 'src/shared/helpers/general';
 import { getNotificationIcons } from 'src/shared/helpers/main';
+import type { SubscriptionChangeEvent } from 'src/shared/listeners';
 import { DismissPrompt } from 'src/shared/prompts/constants';
 import type {
   BellPosition,
@@ -22,8 +23,7 @@ import Log from '../../shared/libraries/Log';
 import { NotificationPermission } from '../../shared/models/NotificationPermission';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
-import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent';
-import { ResourceLoadState } from '../services/DynamicResourceLoader';
+import { ResourceLoadState } from '../services/resourceLoader';
 import Badge from './Badge';
 import Button from './Button';
 import Dialog from './Dialog';

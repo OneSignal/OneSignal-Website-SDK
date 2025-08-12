@@ -1,5 +1,5 @@
 import { EmptyArgumentError } from 'src/shared/errors/common';
-import type ContextSW from 'src/shared/models/ContextSW';
+import type ContextSW from 'src/sw/ContextSW';
 import Log from '../Log';
 import { WorkerMessengerBase } from './base';
 import type {

@@ -30,3 +30,71 @@ export function setLocalPageViewCount(count: number): void {
 export function getLocalPageViewCount(): number {
   return Number(localStorage.getItem(PAGE_VIEWS));
 }
+
+// timed storage
+export function isLocalStorageSupported(): boolean {
+  try {
+    if (typeof localStorage === 'undefined') {
+      return false;
+    }
+    localStorage.getItem('test');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+export function setTempItem(
+  key: string,
+  value: any,
+  expirationInMinutes?: number,
+): void {
+  if (!isLocalStorageSupported()) {
+    return;
+  }
+  const expirationInMilliseconds =
+    typeof expirationInMinutes !== 'undefined'
+      ? expirationInMinutes * 60 * 1000
+      : 0;
+  const record = {
+    value: JSON.stringify(value),
+    timestamp:
+      typeof expirationInMinutes !== 'undefined'
+        ? new Date().getTime() + expirationInMilliseconds
+        : undefined,
+  };
+  localStorage.setItem(key, JSON.stringify(record));
+}
+
+export function getTempItem(key: string): any | null {
+  if (!isLocalStorageSupported()) {
+    return null;
+  }
+  const record = localStorage.getItem(key);
+  let parsedRecord;
+  try {
+    // @ts-expect-error - we have this in a try catch
+    parsedRecord = JSON.parse(record);
+  } catch (e) {
+    return null;
+  }
+  if (parsedRecord === null) {
+    return null;
+  }
+
+  if (
+    parsedRecord.timestamp &&
+    new Date().getTime() >= parsedRecord.timestamp
+  ) {
+    localStorage.removeItem(key);
+    return null;
+  }
+
+  let parsedRecordValue = parsedRecord.value;
+  try {
+    parsedRecordValue = JSON.parse(parsedRecord.value);
+  } catch (e) {
+    return parsedRecordValue;
+  }
+  return parsedRecordValue;
+}

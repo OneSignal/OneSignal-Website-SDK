@@ -1,6 +1,6 @@
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import Context from 'src/page/models/Context';
+import Context from 'src/page/Context';
 import { type AppConfig } from 'src/shared/config/types';
 import type { Mock } from 'vitest';
 import { db } from '../database/client';

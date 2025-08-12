@@ -2,7 +2,7 @@ import { InvalidAppIdError } from 'src/shared/errors/common';
 import { isValidUuid } from 'src/shared/helpers/validators';
 import OneSignalApiBase from '../../shared/api/OneSignalApiBase';
 import type OneSignalApiBaseResponse from '../../shared/api/OneSignalApiBaseResponse';
-import { encodeRFC3986URIComponent } from '../../shared/utils/Encoding';
+import { encodeRFC3986URIComponent } from '../../shared/helpers/encoding';
 import type {
   AliasPair,
   ICreateUser,

@@ -8,6 +8,7 @@ import type {
 } from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
+import { base64ToUint8Array } from '../../helpers/encoding';
 import Log from '../../libraries/Log';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
 import {
@@ -18,7 +19,6 @@ import OneSignalEvent from '../../services/OneSignalEvent';
 import { SessionOrigin } from '../../session/constants';
 import { Browser } from '../../useragent/constants';
 import { getBrowserName } from '../../useragent/detect';
-import { base64ToUint8Array } from '../../utils/Encoding';
 import { IS_SERVICE_WORKER } from '../../utils/EnvVariables';
 import { DEFAULT_DEVICE_ID } from './constants';
 

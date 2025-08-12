@@ -1,5 +1,4 @@
 import { db, getOptionsValue } from 'src/shared/database/client';
-import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
 import { windowEnvString } from '../environment/detect';
 import Log from '../libraries/Log';
 import {
@@ -8,6 +7,7 @@ import {
   DismissTimeKey,
 } from '../prompts/constants';
 import type { DismissPromptValue } from '../prompts/types';
+import { getTempItem, setTempItem } from './localStorage';
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
@@ -44,7 +44,7 @@ export async function markPromptDismissedWithType(type: DismissPromptValue) {
   await db.put('Options', { key: countKey, value: dismissCount });
 
   const dismissMinutes = dismissDays * 24 * 60;
-  return TimedLocalStorage.setItem(timeKey, 'dismissed', dismissMinutes);
+  return setTempItem(timeKey, 'dismissed', dismissMinutes);
 }
 
 /**
@@ -54,15 +54,10 @@ export function wasPromptOfTypeDismissed(type: DismissPromptValue): boolean {
   switch (type) {
     case DismissPrompt.Push:
       return (
-        TimedLocalStorage.getItem(
-          DismissTimeKey.OneSignalNotificationPrompt,
-        ) === 'dismissed'
+        getTempItem(DismissTimeKey.OneSignalNotificationPrompt) === 'dismissed'
       );
     case DismissPrompt.NonPush:
-      return (
-        TimedLocalStorage.getItem(DismissTimeKey.OneSignalNonPushPrompt) ===
-        'dismissed'
-      );
+      return getTempItem(DismissTimeKey.OneSignalNonPushPrompt) === 'dismissed';
     default:
       break;
   }

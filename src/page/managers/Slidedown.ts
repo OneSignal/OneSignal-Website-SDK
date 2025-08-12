@@ -19,24 +19,32 @@ import {
 import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
 import { logMethodCall } from 'src/shared/utils/utils';
-import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
+import { CoreModuleDirector } from '../../core/CoreModuleDirector';
 import {
   markPromptDismissedWithType,
   wasPromptOfTypeDismissed,
-} from '../../../shared/helpers/dismiss';
-import Log from '../../../shared/libraries/Log';
-import { NotificationPermission } from '../../../shared/models/NotificationPermission';
-import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
-import TagUtils from '../../../shared/utils/TagUtils';
-import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
-import ConfirmationToast from '../../slidedown/ConfirmationToast';
+} from '../../shared/helpers/dismiss';
+import Log from '../../shared/libraries/Log';
+import { NotificationPermission } from '../../shared/models/NotificationPermission';
+import type { PushSubscriptionState } from '../../shared/models/PushSubscriptionState';
+import TagUtils from '../../shared/utils/TagUtils';
+import ChannelCaptureContainer from '../slidedown/ChannelCaptureContainer';
+import ConfirmationToast from '../slidedown/ConfirmationToast';
 import Slidedown, {
   manageNotifyButtonStateWhileSlidedownShows,
-} from '../../slidedown/Slidedown';
-import TaggingContainer from '../../slidedown/TaggingContainer';
-import type { AutoPromptOptions } from '../PromptsManager';
+} from '../slidedown/Slidedown';
+import TaggingContainer from '../slidedown/TaggingContainer';
+import type { AutoPromptOptions } from './Prompts';
 
-export class SlidedownManager {
+export interface ISlidedownManager {
+  slidedown?: Slidedown;
+  setIsSlidedownShowing: (isShowing: boolean) => void;
+  showQueued: () => Promise<void>;
+  createSlidedown: (options: AutoPromptOptions) => Promise<void>;
+  handleAllowClick: () => Promise<void>;
+}
+
+export class SlidedownManager implements ISlidedownManager {
   private context: ContextInterface;
   private slidedownQueue: AutoPromptOptions[];
   private isSlidedownShowing: boolean;

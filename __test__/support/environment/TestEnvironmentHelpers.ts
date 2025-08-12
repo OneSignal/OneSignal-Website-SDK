@@ -12,7 +12,7 @@ import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespac
 import OneSignal from '../../../src/onesignal/OneSignal';
 import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
 import UserNamespace from '../../../src/onesignal/UserNamespace';
-import Context from '../../../src/page/models/Context';
+import Context from '../../../src/page/Context';
 import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElement';
 import Emitter from '../../../src/shared/libraries/Emitter';
 import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';

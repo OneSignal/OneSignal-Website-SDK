@@ -5,7 +5,7 @@ import {
   DynamicResourceLoader,
   ResourceLoadState,
   ResourceType,
-} from './DynamicResourceLoader';
+} from './resourceLoader';
 
 describe('DynamicResourceLoader', () => {
   beforeEach(async () => {

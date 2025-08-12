@@ -4,19 +4,17 @@ import { WorkerMessengerPage } from 'src/shared/libraries/workerMessenger/page';
 import {
   getServiceWorkerManager,
   getSubscriptionManagerPage,
-} from '../../shared/helpers/context';
-import PermissionManager from '../../shared/managers/PermissionManager';
-import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager';
-import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';
-import type { ISessionManager } from '../../shared/managers/sessionManager/types';
-import { SubscriptionManagerPage } from '../../shared/managers/subscription/page';
-import { UpdateManager } from '../../shared/managers/UpdateManager';
-import { PromptsManager } from '../managers/PromptsManager';
-import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
-import type { ISlidedownManager } from '../managers/slidedownManager/types';
-import TagManager from '../managers/tagManager/TagManager';
-import type { ITagManager } from '../managers/tagManager/types';
-import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
+} from '../shared/helpers/context';
+import PermissionManager from '../shared/managers/PermissionManager';
+import { ServiceWorkerManager } from '../shared/managers/ServiceWorkerManager';
+import { SessionManager } from '../shared/managers/sessionManager/SessionManager';
+import type { ISessionManager } from '../shared/managers/sessionManager/types';
+import { SubscriptionManagerPage } from '../shared/managers/subscription/page';
+import { UpdateManager } from '../shared/managers/UpdateManager';
+import { PromptsManager } from './managers/Prompts';
+import { SlidedownManager, type ISlidedownManager } from './managers/Slidedown';
+import { TagManager, type ITagManager } from './managers/Tag';
+import { DynamicResourceLoader } from './services/resourceLoader';
 
 export default class Context implements ContextInterface {
   public appConfig: AppConfig;

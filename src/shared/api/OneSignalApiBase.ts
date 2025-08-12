@@ -1,9 +1,9 @@
+import type { APIHeaders } from 'src/core/types/api';
 import { getOneSignalApiUrl } from '../environment/detect';
 import { AppIDMissingError, RetryLimitError } from '../errors/common';
 import { delay } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';
 import Log from '../libraries/Log';
-import type { APIHeaders } from '../models/APIHeaders';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/EnvVariables';
 import type OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
 import { RETRY_BACKOFF } from './RetryBackoff';

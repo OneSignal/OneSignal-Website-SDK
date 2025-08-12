@@ -1,6 +1,4 @@
 import UserNamespace from 'src/onesignal/UserNamespace';
-import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
-import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
 import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
@@ -16,6 +14,26 @@ import { isCategorySlidedownConfigured } from './prompts/helpers';
 import LimitStore from './services/LimitStore';
 import OneSignalEvent from './services/OneSignalEvent';
 import { logMethodCall } from './utils/utils';
+
+interface PushSubscriptionNamespaceProperties {
+  id: string | null | undefined;
+  token: string | null | undefined;
+  optedIn: boolean;
+}
+
+export interface SubscriptionChangeEvent {
+  previous: PushSubscriptionNamespaceProperties;
+  current: PushSubscriptionNamespaceProperties;
+}
+
+export type UserNamespaceProperties = {
+  onesignalId: string | undefined;
+  externalId: string | undefined;
+};
+
+export type UserChangeEvent = {
+  current: UserNamespaceProperties;
+};
 
 export async function checkAndTriggerSubscriptionChanged() {
   logMethodCall('checkAndTriggerSubscriptionChanged');

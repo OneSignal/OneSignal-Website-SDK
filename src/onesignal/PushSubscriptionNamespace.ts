@@ -10,10 +10,10 @@ import {
 import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,
+  type SubscriptionChangeEvent,
 } from 'src/shared/listeners';
+import { isCompleteSubscriptionObject } from 'src/shared/subscriptions/helpers';
 import type { StoredSubscription } from 'src/shared/subscriptions/types';
-import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
-import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
 import {
@@ -46,7 +46,6 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
       .getPushSubscriptionModel()
       .then((pushModel) => {
         if (isCompleteSubscriptionObject(pushModel)) {
-          pushModel;
           this._id = pushModel.id;
         }
       })

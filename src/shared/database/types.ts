@@ -1,10 +1,10 @@
 import type { DBSchema } from 'idb';
+import type { AppState } from '../context/types';
 import type {
   NotificationClickedForOutcomesSchema,
   NotificationClickForOpenHandlingSchema,
   NotificationReceivedForOutcomesSchema,
 } from '../helpers/serializer';
-import type { AppState } from '../models/AppState';
 import type { SentUniqueOutcome } from '../models/Outcomes';
 import type { Session } from '../session/types';
 import { ModelName } from './constants';

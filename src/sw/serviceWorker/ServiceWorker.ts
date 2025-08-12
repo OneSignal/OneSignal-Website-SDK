@@ -27,7 +27,6 @@ import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
 import type { WorkerMessengerMessage } from 'src/shared/libraries/workerMessenger/types';
-import ContextSW from 'src/shared/models/ContextSW';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
@@ -48,18 +47,19 @@ import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/EnvVariables';
-import { cancelableTimeout } from '../helpers/CancelableTimeout';
+import ContextSW from 'src/sw/ContextSW';
 import {
   isValidPayload,
   toNativeNotificationAction,
   toOSNotification,
 } from '../helpers/notifications';
+import { cancelableTimeout } from '../helpers/timeout';
 import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
 import { getPushSubscriptionIdByToken } from './helpers';
 import type {
   OSMinifiedNotificationPayload,
   OSServiceWorkerFields,
-  SubscriptionChangeEvent,
+  PushSubscriptionChangeEvent,
 } from './types';
 
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
@@ -115,7 +115,7 @@ export class OneSignalServiceWorker {
     self.addEventListener('pushsubscriptionchange', (event: Event) => {
       (event as FetchEvent).waitUntil(
         OneSignalServiceWorker.onPushSubscriptionChange(
-          event as unknown as SubscriptionChangeEvent,
+          event as unknown as PushSubscriptionChangeEvent,
         ),
       );
     });
@@ -1003,7 +1003,7 @@ export class OneSignalServiceWorker {
     event.waitUntil(self.clients.claim());
   }
 
-  static async onPushSubscriptionChange(event: SubscriptionChangeEvent) {
+  static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {
     Log.debug(
       `[SW]onPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`,
       event,

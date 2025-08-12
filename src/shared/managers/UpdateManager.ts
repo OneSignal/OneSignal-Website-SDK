@@ -1,4 +1,3 @@
-import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
 import User from 'src/onesignal/User';
 import type { ContextInterface } from 'src/shared/context/types';
 import { getPageViewCount, isFirstPageView } from 'src/shared/helpers/pageview';
@@ -8,6 +7,7 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 import OneSignalApiShared from '../api/OneSignalApiShared';
 import { getSubscriptionType } from '../environment/detect';
 import type { OutcomeRequestData } from '../outcomes/types';
+import { isCompleteSubscriptionObject } from '../subscriptions/helpers';
 import { logMethodCall } from '../utils/utils';
 
 export class UpdateManager {

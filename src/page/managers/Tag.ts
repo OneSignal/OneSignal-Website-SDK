@@ -3,14 +3,20 @@ import type {
   TagsObjectWithBoolean,
 } from 'src/page/tags/types';
 import type { ContextInterface } from 'src/shared/context/types';
-import Log from '../../../shared/libraries/Log';
-import TagUtils from '../../../shared/utils/TagUtils';
-import type { ITagManager } from './types';
+import Log from 'src/shared/libraries/Log';
+import TagUtils from 'src/shared/utils/TagUtils';
+
+export interface ITagManager {
+  sendTags: (isInUpdateMode?: boolean) => Promise<TagsObjectForApi | null>;
+  storeTagValuesToUpdate: (tags: TagsObjectWithBoolean) => void;
+  storeRemotePlayerTags: (tags: TagsObjectForApi) => void;
+  remoteTags: TagsObjectForApi;
+}
 
 /**
  * Manages tags for the TaggingContainer
  */
-export default class TagManager implements ITagManager {
+export class TagManager implements ITagManager {
   // local tags from tagging container
   private tagsFromTaggingContainer: TagsObjectWithBoolean = {};
   private context: ContextInterface;
@@ -39,9 +45,7 @@ export default class TagManager implements ITagManager {
       await OneSignal.User.addTags(finalTagsObject);
       return finalTagsObject;
     }
-    Log.warn(
-      'OneSignal: no change detected in Category preferences. Skipping tag update.',
-    );
+    Log.warn('No tag changes. Skipping update.');
     // no change detected, return {}
     return finalTagsObject;
   }

@@ -1,4 +1,4 @@
-import { ResourceLoadState } from '../../page/services/DynamicResourceLoader';
+import { ResourceLoadState } from '../../page/services/resourceLoader';
 import { addCssClass } from '../helpers/dom';
 import Log from '../libraries/Log';
 import type { AppUserConfigCustomLinkOptions } from '../prompts/types';

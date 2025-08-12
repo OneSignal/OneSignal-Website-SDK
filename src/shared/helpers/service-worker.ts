@@ -1,7 +1,7 @@
 import {
   cancelableTimeout,
   type CancelableTimeoutPromise,
-} from '../../sw/helpers/CancelableTimeout';
+} from '../../sw/helpers/timeout';
 import OneSignalApiSW from '../api/OneSignalApiSW';
 import { encodeHashAsUriComponent } from '../context/helpers';
 import {

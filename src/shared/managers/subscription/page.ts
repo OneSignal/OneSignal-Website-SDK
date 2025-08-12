@@ -1,6 +1,5 @@
-import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
 import UserDirector from 'src/onesignal/UserDirector';
-import LoginManager from 'src/page/managers/LoginManager';
+import LoginManager from 'src/page/managers/Login';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
 import { getSubscription } from 'src/shared/database/subscription';
@@ -30,6 +29,7 @@ import {
 } from 'src/shared/models/UnsubscriptionStrategy';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+import { isCompleteSubscriptionObject } from 'src/shared/subscriptions/helpers';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 import { IDManager } from '../IDManager';

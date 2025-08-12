@@ -1,8 +1,8 @@
-import type { AppConfig } from '../config/types';
-import type { ContextSWInterface } from '../context/types';
-import { getSubscriptionManagerSW } from '../helpers/context';
-import { WorkerMessengerSW } from '../libraries/workerMessenger/sw';
-import { SubscriptionManagerSW } from '../managers/subscription/sw';
+import type { AppConfig } from '../shared/config/types';
+import type { ContextSWInterface } from '../shared/context/types';
+import { getSubscriptionManagerSW } from '../shared/helpers/context';
+import { WorkerMessengerSW } from '../shared/libraries/workerMessenger/sw';
+import { SubscriptionManagerSW } from '../shared/managers/subscription/sw';
 
 export default class ContextSW implements ContextSWInterface {
   public appConfig: AppConfig;

@@ -8,12 +8,12 @@ import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
-import { PropertiesObject } from '../objects/PropertiesObject';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { updateUserByAlias } from '../requests/api';
+import type { IUserProperties } from '../types/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';
@@ -45,7 +45,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   private processOperations(operations: Operation[]) {
     let appId: string | null = null;
     let onesignalId: string | null = null;
-    let propertiesObject = new PropertiesObject();
+    let propertiesObject: IUserProperties = {};
     const refreshDeviceMetadata = false;
 
     for (const operation of operations) {

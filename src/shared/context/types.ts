@@ -1,6 +1,6 @@
-import type { ISlidedownManager } from 'src/page/managers/slidedownManager/types';
-import type { ITagManager } from 'src/page/managers/tagManager/types';
-import type { DynamicResourceLoader } from 'src/page/services/DynamicResourceLoader';
+import type { ISlidedownManager } from 'src/page/managers/Slidedown';
+import type { ITagManager } from 'src/page/managers/Tag';
+import type { DynamicResourceLoader } from 'src/page/services/resourceLoader';
 import type { AppConfig } from '../config/types';
 import type { WorkerMessengerPage } from '../libraries/workerMessenger/page';
 import type { WorkerMessengerSW } from '../libraries/workerMessenger/sw';
@@ -34,4 +34,21 @@ export interface ContextInterface extends ContextBase {
   tagManager: ITagManager;
   updateManager: UpdateManager;
   workerMessenger: WorkerMessengerPage;
+}
+
+export interface AppState {
+  defaultNotificationUrl?: string | null;
+  defaultNotificationTitle?: string | null;
+
+  /**
+   * Whether the user is currently completely subscribed, including not opted out. Database cached version of
+   * isPushNotificationsEnabled().
+   */
+  lastKnownPushEnabled?: boolean | null;
+
+  lastKnownPushToken?: string | null;
+
+  lastKnownPushId?: string | null;
+
+  lastKnownOptedIn?: boolean | null;
 }

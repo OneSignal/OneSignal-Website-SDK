@@ -1,4 +1,4 @@
-import { AppState } from '../models/AppState';
+import type { AppState } from '../context/types';
 import { db, getIdsValue, getOptionsValue } from './client';
 
 export const getDBAppConfig = async () => {
@@ -10,7 +10,7 @@ export const getDBAppConfig = async () => {
 };
 
 export const getAppState = async (): Promise<AppState> => {
-  const state = new AppState();
+  const state: AppState = {};
   state.defaultNotificationUrl = await getOptionsValue<string>('defaultUrl');
   state.defaultNotificationTitle =
     await getOptionsValue<string>('defaultTitle');

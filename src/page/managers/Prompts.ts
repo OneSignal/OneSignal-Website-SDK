@@ -27,7 +27,7 @@ import { logMethodCall } from 'src/shared/utils/utils';
 import { markPromptDismissedWithType } from '../../shared/helpers/dismiss';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { ResourceLoadState } from '../services/DynamicResourceLoader';
+import { ResourceLoadState } from '../services/resourceLoader';
 import Slidedown from '../slidedown/Slidedown';
 
 export interface AutoPromptOptions {
