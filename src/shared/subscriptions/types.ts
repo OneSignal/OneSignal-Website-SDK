@@ -1,7 +1,9 @@
 import type {
   NotificationType,
   SubscriptionChannel,
+  SubscriptionStrategyKind,
   SubscriptionType,
+  UnsubscriptionStrategy,
 } from './constants';
 
 export type SubscriptionChannelValue =
@@ -20,3 +22,14 @@ export type StoredSubscription = {
   createdAt?: number | null;
   expirationTime?: number | null;
 };
+
+export interface PushSubscriptionState {
+  subscribed: boolean;
+  optedOut: boolean;
+}
+
+export type SubscriptionStrategyKindValue =
+  (typeof SubscriptionStrategyKind)[keyof typeof SubscriptionStrategyKind];
+
+export type UnsubscriptionStrategyValue =
+  (typeof UnsubscriptionStrategy)[keyof typeof UnsubscriptionStrategy];

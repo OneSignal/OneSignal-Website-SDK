@@ -3,4 +3,4 @@
  */
 import { OneSignalServiceWorker } from '../sw/serviceWorker/ServiceWorker';
 
-(self as any).OneSignal = OneSignalServiceWorker;
+(self as any).OneSignalWorker = OneSignalServiceWorker;

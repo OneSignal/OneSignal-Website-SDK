@@ -1,3 +1,4 @@
+import { CoreModuleDirector } from 'src/core/CoreModuleDirector';
 import type {
   TagsObjectForApi,
   TagsObjectWithBoolean,
@@ -9,8 +10,13 @@ import {
   PermissionBlockedError,
 } from 'src/shared/errors/common';
 import { InvalidChannelInputField } from 'src/shared/errors/constants';
+import {
+  markPromptDismissedWithType,
+  wasPromptOfTypeDismissed,
+} from 'src/shared/helpers/dismiss';
 import { delay } from 'src/shared/helpers/general';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
+import Log from 'src/shared/libraries/Log';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -18,16 +24,9 @@ import {
 } from 'src/shared/prompts/constants';
 import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
+import type { PushSubscriptionState } from 'src/shared/subscriptions/types';
+import TagUtils from 'src/shared/utils/TagUtils';
 import { logMethodCall } from 'src/shared/utils/utils';
-import { CoreModuleDirector } from '../../core/CoreModuleDirector';
-import {
-  markPromptDismissedWithType,
-  wasPromptOfTypeDismissed,
-} from '../../shared/helpers/dismiss';
-import Log from '../../shared/libraries/Log';
-import { NotificationPermission } from '../../shared/models/NotificationPermission';
-import type { PushSubscriptionState } from '../../shared/models/PushSubscriptionState';
-import TagUtils from '../../shared/utils/TagUtils';
 import ChannelCaptureContainer from '../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../slidedown/ConfirmationToast';
 import Slidedown, {
@@ -63,7 +62,7 @@ export class SlidedownManager implements ISlidedownManager {
   ): Promise<boolean> {
     const permissionDenied =
       (await OneSignal.context.permissionManager.getPermissionStatus()) ===
-      NotificationPermission.Denied;
+      'denied';
     let wasDismissed: boolean;
 
     const subscriptionInfo: PushSubscriptionState =

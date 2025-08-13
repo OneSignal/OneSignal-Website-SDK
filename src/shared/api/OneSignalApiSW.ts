@@ -4,13 +4,10 @@ import type { IUpdateUser } from 'src/core/types/api';
 import type { ServerAppConfig } from '../config/types';
 import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
+import type { DeliveryPlatformKindValue } from '../environment/types';
 import Log from '../libraries/Log';
-import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
-import {
-  OutcomeAttributionType,
-  type OutcomeAttribution,
-} from '../models/Outcomes';
-import type { OutcomeRequestData } from '../outcomes/types';
+import { OutcomeAttributionType } from '../outcomes/constants';
+import type { OutcomeAttribution, OutcomeRequestData } from '../outcomes/types';
 import { NotificationType } from '../subscriptions/constants';
 import { OneSignalApiBase } from './OneSignalApiBase';
 import OneSignalApiShared from './OneSignalApiShared';

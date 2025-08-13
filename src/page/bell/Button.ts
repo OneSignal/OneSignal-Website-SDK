@@ -1,7 +1,7 @@
 import { addDomElement, removeDomElement } from 'src/shared/helpers/dom';
+import { trigger } from 'src/shared/helpers/event';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
 import LimitStore from 'src/shared/services/LimitStore';
-import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Bell from './Bell';
 import Message from './Message';
@@ -72,14 +72,14 @@ export default class Button extends ActiveAnimatedElement {
       LimitStore.isEmpty(this.events.mouse) ||
       LimitStore.getLast(this.events.mouse) === 'out'
     ) {
-      OneSignalEvent.trigger(Bell.EVENTS.HOVERING);
+      trigger(Bell.EVENTS.HOVERING);
     }
     LimitStore.put(this.events.mouse, 'over');
   }
 
   onHovered() {
     LimitStore.put(this.events.mouse, 'out');
-    OneSignalEvent.trigger(Bell.EVENTS.HOVERED);
+    trigger(Bell.EVENTS.HOVERED);
   }
 
   onTap() {
@@ -94,8 +94,8 @@ export default class Button extends ActiveAnimatedElement {
   }
 
   onClick() {
-    OneSignalEvent.trigger(Bell.EVENTS.BELL_CLICK);
-    OneSignalEvent.trigger(Bell.EVENTS.LAUNCHER_CLICK);
+    trigger(Bell.EVENTS.BELL_CLICK);
+    trigger(Bell.EVENTS.LAUNCHER_CLICK);
 
     if (
       this.bell.message.shown &&

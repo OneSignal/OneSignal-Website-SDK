@@ -2,20 +2,18 @@ import {
   getSubscription,
   setSubscription,
 } from 'src/shared/database/subscription';
+import { SubscriptionStrategyKind } from 'src/shared/subscriptions/constants';
 import type {
   NotificationTypeValue,
   StoredSubscription,
+  SubscriptionStrategyKindValue,
 } from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
 import { base64ToUint8Array } from '../../helpers/encoding';
+import { trigger } from '../../helpers/event';
 import Log from '../../libraries/Log';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
-import {
-  SubscriptionStrategyKind,
-  type SubscriptionStrategyKindValue,
-} from '../../models/SubscriptionStrategyKind';
-import OneSignalEvent from '../../services/OneSignalEvent';
 import { SessionOrigin } from '../../session/constants';
 import { Browser } from '../../useragent/constants';
 import { getBrowserName } from '../../useragent/detect';
@@ -108,7 +106,7 @@ export class SubscriptionManagerBase<
     await setSubscription(subscription);
 
     if (!IS_SERVICE_WORKER) {
-      OneSignalEvent.trigger(OneSignal.EVENTS.REGISTERED);
+      trigger(OneSignal.EVENTS.REGISTERED);
     }
 
     if (typeof OneSignal !== 'undefined') {

@@ -12,6 +12,7 @@ import {
   PermissionBlockedError,
   SWRegistrationError,
 } from 'src/shared/errors/common';
+import { trigger } from 'src/shared/helpers/event';
 import {
   incrementPageViewCount,
   isFirstPageView,
@@ -19,18 +20,18 @@ import {
 import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
 import { ServiceWorkerActiveState } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
-import { NotificationPermission } from 'src/shared/models/NotificationPermission';
-import type { PushSubscriptionState } from 'src/shared/models/PushSubscriptionState';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';
 import {
+  NotificationType,
   UnsubscriptionStrategy,
-  type UnsubscriptionStrategyValue,
-} from 'src/shared/models/UnsubscriptionStrategy';
-import OneSignalEvent from 'src/shared/services/OneSignalEvent';
-import { NotificationType } from 'src/shared/subscriptions/constants';
+} from 'src/shared/subscriptions/constants';
 import { isCompleteSubscriptionObject } from 'src/shared/subscriptions/helpers';
-import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
+import type {
+  NotificationTypeValue,
+  PushSubscriptionState,
+  SubscriptionStrategyKindValue,
+  UnsubscriptionStrategyValue,
+} from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 import { IDManager } from '../IDManager';
 import { SubscriptionManagerBase } from './base';
@@ -218,7 +219,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     const isPushEnabled = !!(
       isValidPushSubscription &&
       subscriptionToken &&
-      notificationPermission === NotificationPermission.Granted
+      notificationPermission === 'granted'
     );
 
     return {
@@ -251,7 +252,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       */
     if (
       (await OneSignal.context.permissionManager.getPermissionStatus()) ===
-      NotificationPermission.Denied
+      'denied'
     )
       throw PermissionBlockedError;
 
@@ -306,7 +307,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       We'll show the permissionPromptDisplay event if the Safari user isn't already subscribed,
       otherwise an already subscribed Safari user would not see the permission request again.
     */
-    OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+    trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     const deviceToken = await this.subscribeSafariPromptPermission();
     triggerNotificationPermissionChanged();
     if (deviceToken) {
@@ -365,10 +366,8 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     /*
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
-    if (Notification.permission === NotificationPermission.Default) {
-      await OneSignalEvent.trigger(
-        OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED,
-      );
+    if (Notification.permission === 'default') {
+      await trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
       const permission =
         await SubscriptionManagerPage.requestPresubscribeNotificationPermission();
 
@@ -377,17 +376,16 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         prompt, because going from "default" permissions to "default"
         permissions isn't a change. We specifically broadcast "default" to "default" changes.
        */
-      const forcePermissionChangeEvent =
-        permission === NotificationPermission.Default;
+      const forcePermissionChangeEvent = permission === 'default';
       await triggerNotificationPermissionChanged(forcePermissionChangeEvent);
 
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
-        case NotificationPermission.Default:
+        case 'default':
           Log.debug('Permission dismissed, not registering SW');
           OneSignal._sessionInitAlreadyRunning = false;
           throw new Error('Permission dismissed');
-        case NotificationPermission.Denied:
+        case 'denied':
           Log.debug('Permission blocked, not registering SW');
           OneSignal._sessionInitAlreadyRunning = false;
           throw PermissionBlockedError;

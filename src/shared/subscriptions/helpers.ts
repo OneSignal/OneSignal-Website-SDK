@@ -1,4 +1,7 @@
-import { SubscriptionType } from 'src/shared/subscriptions/constants';
+import {
+  SubscriptionStrategyKind,
+  SubscriptionType,
+} from 'src/shared/subscriptions/constants';
 import type {
   StoredSubscription,
   SubscriptionTypeValue,
@@ -7,7 +10,6 @@ import { incrementPageViewCount } from '../helpers/pageview';
 import { triggerNotificationPermissionChanged } from '../helpers/permissions';
 import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
-import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 
 export async function registerForPush(): Promise<StoredSubscription | null> {

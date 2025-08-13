@@ -1,6 +1,6 @@
+import { trigger } from '../../../src/shared/helpers/event';
 import * as InitHelper from '../../../src/shared/helpers/init';
 import Log from '../../../src/shared/libraries/Log';
-import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 
 //stub dismisshelper
@@ -29,7 +29,7 @@ describe('Register for push', () => {
     const promise = OneSignal.User.PushSubscription.optIn();
 
     expect(spy).not.toHaveBeenCalled();
-    OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+    trigger(OneSignal.EVENTS.SDK_INITIALIZED);
     await promise;
     expect(Log.error).toHaveBeenCalled();
     expect(OneSignal.initialized).toBe(true);

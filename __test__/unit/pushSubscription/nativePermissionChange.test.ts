@@ -15,7 +15,6 @@ import * as PermissionUtils from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 import * as MainHelper from '../../../src/shared/helpers/main';
-import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 
 vi.mock('src/shared/libraries/Log');
 const triggerNotificationSpy = vi.spyOn(
@@ -47,9 +46,9 @@ describe('Notification Types are set correctly on subscription change', () => {
     test('should not trigger change if permission status is the same', async () => {
       vi.stubGlobal('Notification', {
         ...global.Notification,
-        permission: NotificationPermission.Granted,
+        permission: 'granted',
       });
-      await setDbPermission(NotificationPermission.Granted);
+      await setDbPermission('granted');
 
       await MainHelper.checkAndTriggerNotificationPermissionChanged();
       expect(triggerNotificationSpy).not.toHaveBeenCalled();
@@ -58,9 +57,9 @@ describe('Notification Types are set correctly on subscription change', () => {
     test('should trigger change if permission status is different', async () => {
       vi.stubGlobal('Notification', {
         ...global.Notification,
-        permission: NotificationPermission.Granted,
+        permission: 'granted',
       });
-      await setDbPermission(NotificationPermission.Denied);
+      await setDbPermission('denied');
 
       const permChangeStringListener = vi.fn();
       const permChangeListener = vi.fn();
@@ -81,7 +80,7 @@ describe('Notification Types are set correctly on subscription change', () => {
       const dbPermission = await getOptionsValue<NotificationPermission>(
         'notificationPermission',
       );
-      expect(dbPermission).toBe(NotificationPermission.Granted);
+      expect(dbPermission).toBe('granted');
       expect(permChangeListener).toHaveBeenCalledWith(true);
       expect(permChangeStringListener).toHaveBeenCalledWith('granted');
     });

@@ -18,6 +18,7 @@ import {
   setSubscription,
 } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
+import type { DeliveryPlatformKindValue } from 'src/shared/environment/types';
 import { delay } from 'src/shared/helpers/general';
 import {
   deactivateSession,
@@ -27,9 +28,7 @@ import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
 import type { WorkerMessengerMessage } from 'src/shared/libraries/workerMessenger/types';
-import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import type {
   IMutableOSNotification,
   IOSNotification,
@@ -42,7 +41,10 @@ import {
   type PageVisibilityResponse,
   type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
-import { NotificationType } from 'src/shared/subscriptions/constants';
+import {
+  NotificationType,
+  SubscriptionStrategyKind,
+} from 'src/shared/subscriptions/constants';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
@@ -251,7 +253,6 @@ export class OneSignalServiceWorker {
     OneSignalServiceWorker.workerMessenger.on(
       WorkerMessengerCommand.SetLogging,
       async (payload: { shouldLog: boolean }) => {
-        console.log('SetLogging', payload);
         if (payload.shouldLog) {
           self.shouldLog = true;
         } else {
@@ -937,7 +938,7 @@ export class OneSignalServiceWorker {
 
   /**
    * Makes network calls for the notification open event to;
-   *    1. OneSignal.com to increase the notification open count.
+   *    1. onesignal.com to increase the notification open count.
    *    2. A website developer defined webhook URL, if set.
    */
   static async sendConvertedAPIRequests(
@@ -968,9 +969,7 @@ export class OneSignalServiceWorker {
         },
       );
     } else {
-      console.error(
-        'No app Id, skipping OneSignal API call for notification open!',
-      );
+      Log.error('No app Id, skipping API call');
     }
 
     await OneSignalServiceWorker.webhookNotificationEventSender.click(
@@ -1169,5 +1168,4 @@ export class OneSignalServiceWorker {
 }
 
 // Expose this class to the global scope
-(self as any).OneSignalWorker = OneSignalServiceWorker;
 OneSignalServiceWorker.run();

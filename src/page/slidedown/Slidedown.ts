@@ -7,6 +7,7 @@ import {
   removeCssClass,
   removeDomElement,
 } from 'src/shared/helpers/dom';
+import { trigger } from 'src/shared/helpers/event';
 import { getValueOrDefault } from 'src/shared/helpers/general';
 import { getNotificationIcons } from 'src/shared/helpers/main';
 import type { NotificationIcons } from 'src/shared/notifications/types';
@@ -16,7 +17,6 @@ import {
 } from 'src/shared/prompts/constants';
 import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { SlidedownPromptOptions } from 'src/shared/prompts/types';
-import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import {
   COLORS,
   SLIDEDOWN_CSS_CLASSES,
@@ -151,17 +151,17 @@ export default class Slidedown {
   }
 
   static async triggerSlidedownEvent(eventName: string): Promise<void> {
-    await OneSignalEvent.trigger(eventName);
+    await trigger(eventName);
   }
 
   async onSlidedownAllowed(_: any): Promise<void> {
-    await Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
+    await trigger(Slidedown.EVENTS.ALLOW_CLICK);
   }
 
   onSlidedownCanceled(_: any): void {
-    Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
+    trigger(Slidedown.EVENTS.CANCEL_CLICK);
     this.close();
-    Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+    trigger(Slidedown.EVENTS.CLOSED);
   }
 
   close(): void {

@@ -47,4 +47,5 @@ export interface OSMinifiedButtonsPayload {
 
 export interface IOSWebhookEventPayload {
   readonly event: string;
+  [key: string]: unknown;
 }

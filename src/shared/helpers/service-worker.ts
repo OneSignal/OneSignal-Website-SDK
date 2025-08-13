@@ -11,9 +11,11 @@ import {
 } from '../database/client';
 import { getAllNotificationClickedForOutcomes } from '../database/notifications';
 import Log from '../libraries/Log';
-import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
-import type { OutcomesConfig } from '../outcomes/types';
+import type {
+  OutcomesConfig,
+  OutcomesNotificationClicked,
+} from '../outcomes/types';
 import { SessionOrigin, SessionStatus } from '../session/constants';
 import { initializeNewSession } from '../session/helpers';
 import type { Session, SessionOriginValue } from '../session/types';

@@ -19,9 +19,8 @@ import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
 import OneSignal from '../../onesignal/OneSignal';
 import { wasPromptOfTypeDismissed } from '../../shared/helpers/dismiss';
+import { trigger } from '../../shared/helpers/event';
 import Log from '../../shared/libraries/Log';
-import { NotificationPermission } from '../../shared/models/NotificationPermission';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 import { ResourceLoadState } from '../services/resourceLoader';
 import Badge from './Badge';
@@ -202,7 +201,7 @@ export default class Bell {
 
   private installEventHooks() {
     // Install event hooks
-    OneSignal.emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
+    trigger(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
       this._ignoreSubscriptionState = true;
       OneSignal.User.PushSubscription.optIn()
@@ -230,7 +229,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
+    trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
       this.dialog.unsubscribeButton.disabled = true;
       OneSignal.User.PushSubscription.optOut()
         .then(() => {
@@ -253,7 +252,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.HOVERING, () => {
+    trigger(Bell.EVENTS.HOVERING, () => {
       this.hovering = true;
       this.launcher.activateIfInactive();
 
@@ -297,7 +296,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.HOVERED, () => {
+    trigger(Bell.EVENTS.HOVERED, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
       if (this.message.contentType === Message.TYPES.MESSAGE) {
         return;
@@ -336,7 +335,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(
+    trigger(
       OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
       async (isSubscribed: SubscriptionChangeEvent) => {
         if (isSubscribed.current.optedIn) {
@@ -354,7 +353,7 @@ export default class Bell {
         let bellState: BellState;
         if (isSubscribed.current.optedIn) {
           bellState = Bell.STATES.SUBSCRIBED;
-        } else if (permission === NotificationPermission.Denied) {
+        } else if (permission === 'denied') {
           bellState = Bell.STATES.BLOCKED;
         } else {
           bellState = Bell.STATES.UNSUBSCRIBED;
@@ -363,7 +362,7 @@ export default class Bell {
       },
     );
 
-    OneSignal.emitter.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+    trigger(Bell.EVENTS.STATE_CHANGED, (state: { to: BellState }) => {
       if (!this.launcher.element) {
         // Notify button doesn't exist
         return;
@@ -375,12 +374,9 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(
-      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-      () => {
-        this.updateState();
-      },
-    );
+    trigger(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, () => {
+      this.updateState();
+    });
   }
 
   private addDefaultClasses() {
@@ -692,7 +688,7 @@ export default class Bell {
         this.setState(
           isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED,
         );
-        if (permission === NotificationPermission.Denied) {
+        if (permission === 'denied') {
           this.setState(Bell.STATES.BLOCKED);
         }
       })
@@ -709,7 +705,7 @@ export default class Bell {
     const lastState = this.state;
     this.state = newState;
     if (lastState !== newState && !silent) {
-      OneSignalEvent.trigger(Bell.EVENTS.STATE_CHANGED, {
+      trigger(Bell.EVENTS.STATE_CHANGED, {
         from: lastState,
         to: newState,
       });

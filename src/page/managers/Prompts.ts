@@ -25,8 +25,8 @@ import {
 } from 'src/shared/useragent/detect';
 import { logMethodCall } from 'src/shared/utils/utils';
 import { markPromptDismissedWithType } from '../../shared/helpers/dismiss';
+import { trigger } from '../../shared/helpers/event';
 import Log from '../../shared/libraries/Log';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { ResourceLoadState } from '../services/resourceLoader';
 import Slidedown from '../slidedown/Slidedown';
 
@@ -299,9 +299,7 @@ export class PromptsManager {
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       await this.context.slidedownManager.handleAllowClick();
-      OneSignalEvent.trigger(
-        OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
-      );
+      trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
       if (!this.context.slidedownManager.slidedown) {

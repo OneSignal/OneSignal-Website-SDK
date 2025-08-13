@@ -5,13 +5,13 @@ import {
   notificationReceivedForOutcomesToDatabase,
 } from '../helpers/serializer';
 import type {
-  OutcomesNotificationClicked,
-  OutcomesNotificationReceived,
-} from '../models/OutcomesNotificationEvents';
-import type {
   IOSNotification,
   NotificationClickEventInternal,
 } from '../notifications/types';
+import type {
+  OutcomesNotificationClicked,
+  OutcomesNotificationReceived,
+} from '../outcomes/types';
 import { db } from './client';
 
 export const putNotificationClickedForOutcomes = async (

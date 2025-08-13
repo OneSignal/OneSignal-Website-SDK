@@ -5,14 +5,14 @@ import {
   getAllNotificationReceivedForOutcomes,
 } from '../database/notifications';
 import Log from '../libraries/Log';
-import type { OutcomeProps } from '../models/OutcomeProps';
-import {
-  type OutcomeAttribution,
-  OutcomeAttributionType,
-  type SentUniqueOutcome,
-} from '../models/Outcomes';
-import type { OutcomesNotificationReceived } from '../models/OutcomesNotificationEvents';
-import type { OutcomesConfig } from '../outcomes/types';
+import { OutcomeAttributionType } from '../outcomes/constants';
+import type {
+  OutcomeAttribution,
+  OutcomeProps,
+  OutcomesConfig,
+  OutcomesNotificationReceived,
+  SentUniqueOutcome,
+} from '../outcomes/types';
 import { awaitOneSignalInitAndSupported, logMethodCall } from '../utils/utils';
 
 const SEND_OUTCOME = 'sendOutcome';
@@ -205,8 +205,6 @@ export default class OutcomesHelper {
         return;
     }
   }
-
-  // statics
 }
 
 /**

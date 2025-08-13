@@ -14,7 +14,7 @@ import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import {
   getResponseStatusType,
   ResponseStatusType,
-} from 'src/shared/helpers/NetworkUtils';
+} from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IdentityConstants, OPERATION_NAME } from '../constants';

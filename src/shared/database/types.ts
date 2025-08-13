@@ -5,7 +5,7 @@ import type {
   NotificationClickForOpenHandlingSchema,
   NotificationReceivedForOutcomesSchema,
 } from '../helpers/serializer';
-import type { SentUniqueOutcome } from '../models/Outcomes';
+import type { SentUniqueOutcome } from '../outcomes/types';
 import type { Session } from '../session/types';
 import { ModelName } from './constants';
 

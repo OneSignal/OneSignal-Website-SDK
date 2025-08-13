@@ -6,13 +6,12 @@ import { getSubscription, setSubscription } from '../database/subscription';
 import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
-import { NotificationPermission } from '../models/NotificationPermission';
-import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import LimitStore from '../services/LimitStore';
-import OneSignalEvent from '../services/OneSignalEvent';
+import { SubscriptionStrategyKind } from '../subscriptions/constants';
 import { registerForPush } from '../subscriptions/helpers';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once } from '../utils/utils';
+import { trigger } from './event';
 import { getAppId } from './main';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
@@ -91,7 +90,7 @@ async function sessionInit(): Promise<void> {
   }
 
   OneSignal._sessionInitAlreadyRunning = false;
-  await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  await trigger(OneSignal.EVENTS.SDK_INITIALIZED);
 }
 
 export async function registerForPushNotifications(): Promise<void> {
@@ -126,7 +125,7 @@ export async function onSdkInitialized() {
     await OneSignal.context.updateManager.sendOnSessionUpdate();
   }
 
-  await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
+  await trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
 }
 
 /** Helper methods */
@@ -157,7 +156,7 @@ async function setWelcomeNotificationFlag(): Promise<void> {
     await OneSignal.context.permissionManager.getNotificationPermission(
       OneSignal.context.appConfig.safariWebId,
     );
-  if (permission === NotificationPermission.Granted) {
+  if (permission === 'granted') {
     OneSignal.__doNotShowWelcomeNotification = true;
   }
 }
@@ -376,7 +375,7 @@ async function handleAutoResubscribe(isOptedOut: boolean) {
       await OneSignal.context.permissionManager.getNotificationPermission(
         OneSignal.context.appConfig.safariWebId,
       );
-    if (currentPermission == NotificationPermission.Granted) {
+    if (currentPermission == 'granted') {
       await registerForPush();
     }
   }

@@ -2,17 +2,16 @@ import UserNamespace from 'src/onesignal/UserNamespace';
 import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
+import { trigger } from './helpers/event';
 import { getCurrentPushToken, showLocalNotification } from './helpers/main';
 import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
-import { UserState } from './models/UserState';
 import type {
   NotificationClickEvent,
   NotificationClickEventInternal,
 } from './notifications/types';
 import { isCategorySlidedownConfigured } from './prompts/helpers';
 import LimitStore from './services/LimitStore';
-import OneSignalEvent from './services/OneSignalEvent';
 import { logMethodCall } from './utils/utils';
 
 interface PushSubscriptionNamespaceProperties {
@@ -26,14 +25,19 @@ export interface SubscriptionChangeEvent {
   current: PushSubscriptionNamespaceProperties;
 }
 
-export type UserNamespaceProperties = {
+export interface UserNamespaceProperties {
   onesignalId: string | undefined;
   externalId: string | undefined;
-};
+}
 
-export type UserChangeEvent = {
+export interface UserChangeEvent {
   current: UserNamespaceProperties;
-};
+}
+
+interface UserState {
+  previousOneSignalId: string | null | undefined;
+  previousExternalId: string | null | undefined;
+}
 
 export async function checkAndTriggerSubscriptionChanged() {
   logMethodCall('checkAndTriggerSubscriptionChanged');
@@ -95,7 +99,7 @@ export async function checkAndTriggerSubscriptionChanged() {
 }
 
 function triggerSubscriptionChanged(change: SubscriptionChangeEvent) {
-  OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
+  trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
 }
 
 export function triggerNotificationClick(
@@ -105,24 +109,16 @@ export function triggerNotificationClick(
     notification: event.notification,
     result: event.result,
   };
-  return OneSignalEvent.trigger(
-    OneSignal.EVENTS.NOTIFICATION_CLICKED,
-    publicEvent,
-  );
+  return trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, publicEvent);
 }
 
 const getUserState = async (): Promise<UserState> => {
-  const userState = new UserState();
-  userState.previousOneSignalId = '';
-  userState.previousExternalId = '';
   // previous<OneSignalId|ExternalId> are used to track changes to the user's state.
   // Displayed in the `current` & `previous` fields of the `userChange` event.
-  userState.previousOneSignalId = await getOptionsValue<string>(
-    'previousOneSignalId',
-  );
-  userState.previousExternalId =
-    await getOptionsValue<string>('previousExternalId');
-  return userState;
+  return {
+    previousOneSignalId: await getOptionsValue<string>('previousOneSignalId'),
+    previousExternalId: await getOptionsValue<string>('previousExternalId'),
+  };
 };
 
 const setUserState = async (userState: UserState) => {
@@ -168,11 +164,7 @@ export async function checkAndTriggerUserChanged() {
 }
 
 function triggerUserChanged(change: UserChangeEvent) {
-  OneSignalEvent.trigger(
-    OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-    change,
-    UserNamespace.emitter,
-  );
+  trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change, UserNamespace.emitter);
 }
 
 async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
@@ -267,7 +259,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
     { __isOneSignalWelcomeNotification: true },
     undefined,
   );
-  OneSignalEvent.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+  trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
     title: title,
     message: message,
     url: url,

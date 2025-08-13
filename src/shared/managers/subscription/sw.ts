@@ -1,6 +1,6 @@
 import { PermissionBlockedError } from 'src/shared/errors/common';
 import type { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';
+import type { SubscriptionStrategyKindValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
 import type { ContextSWInterface } from '../../context/types';

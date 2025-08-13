@@ -1,7 +1,7 @@
 import { WrongTypeArgumentError } from 'src/shared/errors/common';
 import OutcomesHelper from '../shared/helpers/OutcomesHelper';
 import Log from '../shared/libraries/Log';
-import { OutcomeAttributionType } from '../shared/models/Outcomes';
+import { OutcomeAttributionType } from '../shared/outcomes/constants';
 
 export class SessionNamespace {
   async sendOutcome(

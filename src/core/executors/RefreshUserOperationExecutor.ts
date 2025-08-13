@@ -2,7 +2,7 @@ import { getPushId } from 'src/shared/database/subscription';
 import {
   getResponseStatusType,
   ResponseStatusType,
-} from 'src/shared/helpers/NetworkUtils';
+} from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { isPushSubscriptionType } from 'src/shared/subscriptions/helpers';

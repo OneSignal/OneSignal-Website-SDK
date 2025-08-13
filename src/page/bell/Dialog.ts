@@ -7,7 +7,7 @@ import {
   isTabletBrowser,
 } from 'src/shared/useragent/detect';
 import { getPlatformNotificationIcon } from 'src/shared/utils/utils';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
+import { trigger } from '../../shared/helpers/event';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
@@ -139,12 +139,12 @@ export default class Dialog extends AnimatedElement {
               a notification shown in this resubscription case.
             */
             OneSignal.__doNotShowWelcomeNotification = false;
-            OneSignalEvent.trigger(Bell.EVENTS.SUBSCRIBE_CLICK);
+            trigger(Bell.EVENTS.SUBSCRIBE_CLICK);
           });
         }
         if (this.unsubscribeButton) {
           this.unsubscribeButton.addEventListener('click', () =>
-            OneSignalEvent.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK),
+            trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK),
           );
         }
         this.bell.setCustomColorsIfSpecified();

@@ -7,6 +7,7 @@ import { timeoutPromise } from '../context/helpers';
 import type { ContextInterface } from '../context/types';
 import { hasSafariWindow, supportsServiceWorkers } from '../environment/detect';
 import { SWRegistrationError } from '../errors/common';
+import { trigger } from '../helpers/event';
 import { getBaseUrl } from '../helpers/general';
 import {
   getServiceWorkerHref,
@@ -23,7 +24,6 @@ import type {
   NotificationForegroundWillDisplayEvent,
   NotificationForegroundWillDisplayEventSerializable,
 } from '../notifications/types';
-import OneSignalEvent from '../services/OneSignalEvent';
 import type {
   PageVisibilityRequest,
   PageVisibilityResponse,
@@ -262,10 +262,7 @@ export class ServiceWorkerManager {
             throw new Error('Browser does not support preventing display.');
           },
         };
-        await OneSignalEvent.trigger(
-          OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY,
-          publicEvent,
-        );
+        await trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, publicEvent);
       },
     );
 
@@ -307,10 +304,7 @@ export class ServiceWorkerManager {
     workerMessenger.on(
       WorkerMessengerCommand.NotificationDismissed,
       async (data) => {
-        await OneSignalEvent.trigger(
-          OneSignal.EVENTS.NOTIFICATION_DISMISSED,
-          data,
-        );
+        await trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
       },
     );
 

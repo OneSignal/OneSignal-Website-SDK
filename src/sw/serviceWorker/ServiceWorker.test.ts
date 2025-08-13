@@ -18,13 +18,12 @@ import {
   putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
+import { DeliveryPlatformKind } from 'src/shared/environment/constants';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
 import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
-import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
-import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import {
   ONESIGNAL_SESSION_KEY,
   SessionOrigin,
@@ -34,7 +33,10 @@ import type {
   Session,
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
-import { NotificationType } from 'src/shared/subscriptions/constants';
+import {
+  NotificationType,
+  SubscriptionStrategyKind,
+} from 'src/shared/subscriptions/constants';
 import { OneSignalServiceWorker } from './ServiceWorker';
 
 declare const self: ServiceWorkerGlobalScope;

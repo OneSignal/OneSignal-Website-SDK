@@ -21,6 +21,7 @@ import type {
   AppUserConfigPromptOptions,
   ServerAppPromptConfig,
 } from '../prompts/types';
+import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { ConfigIntegrationKind } from './constants';
 import {
   getPromptOptionsForDashboardConfiguration,
@@ -118,10 +119,11 @@ export function getUserConfigForConfigIntegrationKind(
         },
         notifyButton: {
           enable: serverConfig.config.staticPrompts.bell.enabled,
-          displayPredicate: serverConfig.config.staticPrompts.bell
-            .hideWhenSubscribed
-            ? () => !OneSignal.User.PushSubscription.optedIn
-            : null,
+          displayPredicate:
+            serverConfig.config.staticPrompts.bell.hideWhenSubscribed &&
+            !IS_SERVICE_WORKER
+              ? () => !OneSignal.User.PushSubscription.optedIn
+              : null,
           size: serverConfig.config.staticPrompts.bell.size,
           position: serverConfig.config.staticPrompts.bell.location,
           showCredit: false,

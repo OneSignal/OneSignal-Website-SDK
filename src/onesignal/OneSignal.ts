@@ -36,7 +36,6 @@ import Context from '../page/Context';
 import LoginManager from '../page/managers/Login';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
-import OneSignalEvent from '../shared/services/OneSignalEvent';
 import DebugNamespace from './DebugNamespace';
 import NotificationsNamespace from './NotificationsNamespace';
 import { ONESIGNAL_EVENTS } from './OneSignalEvents';
@@ -260,7 +259,6 @@ export default class OneSignal {
   static _didLoadITILibrary = false;
   static notifyButton: Bell | null = null;
   static database = db;
-  static event = OneSignalEvent;
   private static pendingInit = true;
 
   static emitter: Emitter = new Emitter();

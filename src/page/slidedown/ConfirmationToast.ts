@@ -3,7 +3,7 @@ import {
   getDomElementOrStub,
   removeDomElement,
 } from 'src/shared/helpers/dom';
-import OneSignalEvent from 'src/shared/services/OneSignalEvent';
+import { trigger } from 'src/shared/helpers/event';
 import {
   SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_CSS_IDS,
@@ -56,7 +56,7 @@ export default class ConfirmationToast {
   }
 
   static async triggerSlidedownEvent(eventName: string): Promise<void> {
-    await OneSignalEvent.trigger(eventName);
+    await trigger(eventName);
   }
 
   close(): void {

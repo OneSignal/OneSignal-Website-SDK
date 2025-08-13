@@ -1,12 +1,12 @@
 import type {
-  OutcomesNotificationClicked,
-  OutcomesNotificationReceived,
-} from '../models/OutcomesNotificationEvents';
-import type {
   IOSNotification,
   IOSNotificationActionButton,
   NotificationClickEventInternal,
 } from '../notifications/types';
+import type {
+  OutcomesNotificationClicked,
+  OutcomesNotificationReceived,
+} from '../outcomes/types';
 /**
  * Purpose: This file defines mapping so any changes to the public
  * classes don't break indexDb serialization.

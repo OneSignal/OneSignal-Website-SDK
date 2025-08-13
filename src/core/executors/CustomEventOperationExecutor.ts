@@ -6,7 +6,7 @@ import {
 import {
   getResponseStatusType,
   ResponseStatusType,
-} from 'src/shared/helpers/NetworkUtils';
+} from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import { OPERATION_NAME } from '../constants';
