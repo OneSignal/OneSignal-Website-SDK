@@ -193,7 +193,7 @@ export abstract class ModelStore<
     for (const model of this.models) {
       await db.put(this.modelName, {
         modelId: model.modelId,
-        modelName: this.modelName,
+        modelName: this.modelName, // TODO: ModelName is a legacy property, could be removed sometime after web refactor launch
         ...model.toJSON(),
       } as IndexedDBSchema[typeof this.modelName]['value']);
     }
