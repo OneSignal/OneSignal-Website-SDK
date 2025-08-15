@@ -13,6 +13,7 @@ import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
+import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { UpdateUserOperationExecutor } from './UpdateUserOperationExecutor';
 
@@ -49,6 +50,7 @@ describe('UpdateUserOperationExecutor', () => {
     identityModelStore.model.setProperty(
       IdentityConstants.ONESIGNAL_ID,
       DUMMY_ONESIGNAL_ID,
+      ModelChangeTags.HYDRATE,
     );
   });
 

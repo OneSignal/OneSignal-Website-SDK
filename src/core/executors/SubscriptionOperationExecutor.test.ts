@@ -52,14 +52,20 @@ describe('SubscriptionOperationExecutor', () => {
   });
 
   beforeEach(async () => {
+    setCreateSubscriptionResponse();
     subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
     newRecordsState = OneSignal.coreDirector.newRecordsState;
+    newRecordsState.records.clear();
 
     identityModelStore = OneSignal.coreDirector.identityModelStore;
     propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
     subscriptionsModelStore = OneSignal.coreDirector.subscriptionModelStore;
 
-    identityModelStore.model.onesignalId = DUMMY_ONESIGNAL_ID;
+    identityModelStore.model.setProperty(
+      'onesignal_id',
+      DUMMY_ONESIGNAL_ID,
+      ModelChangeTags.HYDRATE,
+    );
     buildUserService = new RebuildUserService(
       identityModelStore,
       propertiesModelStore,

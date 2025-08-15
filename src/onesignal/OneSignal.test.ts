@@ -35,55 +35,26 @@ import {
   transferSubscriptionFn,
   updateUserFn,
 } from '__test__/support/helpers/requests';
+import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { server } from '__test__/support/mocks/server';
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
-import { db } from 'src/shared/database/client';
+import { clearAll, db } from 'src/shared/database/client';
+import { setPushToken } from 'src/shared/database/subscription';
 import type {
-  IndexedDBSchema,
+  IdentitySchema,
   SubscriptionSchema,
 } from 'src/shared/database/types';
+import { registerForPushNotifications } from 'src/shared/helpers/init';
 import { setConsentRequired } from 'src/shared/helpers/localStorage';
+import MainHelper from 'src/shared/helpers/MainHelper';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-
-const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
-const debugSpy = vi.spyOn(Log, 'debug');
-
-type IdentityItem = IndexedDBSchema['identity']['value'];
-
-const getIdentityItem = async (
-  condition: (identity: IdentityItem) => boolean = () => true,
-) => {
-  let identity: IdentityItem | undefined;
-  await vi.waitUntil(async () => {
-    identity = (await db.getAll('identity'))?.[0];
-    return identity && condition(identity);
-  });
-  return identity;
-};
-
-const getDbSubscriptions = async (length: number) => {
-  let subscriptions: SubscriptionSchema[] = [];
-  await vi.waitUntil(async () => {
-    subscriptions = await db.getAll('subscriptions');
-    return subscriptions.length === length;
-  });
-  return subscriptions;
-};
-
-const getPropertiesItem = async () => (await db.getAll('properties'))[0];
-
-const setupIdentity = async () => {
-  await db.put('identity', {
-    modelId: '123',
-    modelName: 'identity',
-    onesignal_id: DUMMY_ONESIGNAL_ID,
-  });
-};
+import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
+import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
 describe('OneSignal', () => {
   beforeAll(async () => {
@@ -114,8 +85,8 @@ describe('OneSignal', () => {
   });
 
   afterEach(async () => {
+    await clearAll();
     window.OneSignal.coreDirector.operationRepo.queue = [];
-    await db.clear('operations');
     window.OneSignal.coreDirector.subscriptionModelStore.replaceAll(
       [],
       ModelChangeTags.HYDRATE,
@@ -137,7 +108,7 @@ describe('OneSignal', () => {
         expect(identityModel.getProperty('someLabel')).toBe('someId');
 
         // should make a request to the backend
-        await waitForOperations(3);
+        await vi.waitUntil(() => addAliasFn.mock.calls.length === 1);
         expect(addAliasFn).toHaveBeenCalledWith({
           identity: {
             someLabel: 'someId',
@@ -391,187 +362,183 @@ describe('OneSignal', () => {
     describe('login', () => {
       const externalId = 'jd-1';
 
-      beforeEach(async () => {
-        setAddAliasResponse();
-        addAliasFn.mockClear();
+      describe('login user', () => {
+        beforeEach(async () => {
+          setAddAliasResponse();
+          addAliasFn.mockClear();
 
-        await setupSubModelStore({
-          id: DUMMY_SUBSCRIPTION_ID,
-          token: 'abc123',
-        });
-      });
-
-      test('should validate external id', async () => {
-        // @ts-expect-error - testing invalid argument
-        await expect(window.OneSignal.login()).rejects.toThrowError(
-          '"externalId" is empty',
-        );
-
-        // @ts-expect-error - testing invalid argument
-        await expect(window.OneSignal.login(null)).rejects.toThrowError(
-          '"externalId" is the wrong type',
-        );
-
-        // @ts-expect-error - testing invalid argument
-        await expect(window.OneSignal.login('', 1)).rejects.toThrowError(
-          '"jwtToken" is the wrong type',
-        );
-
-        // TODO: add consent required test
-        // if needing consent required
-        setConsentRequired(true);
-        await window.OneSignal.login(externalId);
-        await vi.waitUntil(() => errorSpy.mock.calls.length === 1);
-
-        const error = errorSpy.mock.calls[0][1] as Error;
-        expect(error.message).toBe('Consent required but not given');
-      });
-
-      test('can login with a new external id', async () => {
-        setTransferSubscriptionResponse();
-        let identityData = await getIdentityItem();
-        await window.OneSignal.login(externalId);
-
-        // should not change the identity in the IndexedDB right away
-        expect(identityData).toEqual({
-          modelId: expect.any(String),
-          modelName: 'identity',
-          onesignal_id: DUMMY_ONESIGNAL_ID,
+          await setupSubModelStore({
+            id: DUMMY_SUBSCRIPTION_ID,
+            token: 'abc123',
+          });
         });
 
-        // wait for login user operation to complete
-        expect(addAliasFn).toHaveBeenCalledWith({
-          identity: {
+        test('should validate external id', async () => {
+          // @ts-expect-error - testing invalid argument
+          await expect(window.OneSignal.login()).rejects.toThrowError(
+            '"externalId" is empty',
+          );
+
+          // @ts-expect-error - testing invalid argument
+          await expect(window.OneSignal.login(null)).rejects.toThrowError(
+            '"externalId" is the wrong type',
+          );
+
+          // @ts-expect-error - testing invalid argument
+          await expect(window.OneSignal.login('', 1)).rejects.toThrowError(
+            '"jwtToken" is the wrong type',
+          );
+
+          // TODO: add consent required test
+          // if needing consent required
+          setConsentRequired(true);
+          await window.OneSignal.login(externalId);
+          await vi.waitUntil(() => errorSpy.mock.calls.length === 1);
+
+          const error = errorSpy.mock.calls[0][1] as Error;
+          expect(error.message).toBe('Consent required but not given');
+        });
+
+        test('can login with a new external id', async () => {
+          setTransferSubscriptionResponse();
+          let identityData = await getIdentityItem();
+          await window.OneSignal.login(externalId);
+
+          // should not change the identity in the IndexedDB right away
+          expect(identityData).toEqual({
+            modelId: expect.any(String),
+            modelName: 'identity',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+          });
+
+          // wait for login user operation to complete
+          expect(addAliasFn).toHaveBeenCalledWith({
+            identity: {
+              external_id: externalId,
+            },
+          });
+
+          // should also update the identity in the IndexedDB
+          identityData = await getIdentityItem(
+            (i) => i.onesignal_id === DUMMY_ONESIGNAL_ID,
+          );
+          expect(identityData).toEqual({
             external_id: externalId,
-          },
+            modelId: expect.any(String),
+            modelName: 'identity',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+          });
+
+          const identityModel =
+            window.OneSignal.coreDirector.getIdentityModel();
+          expect(identityModel.externalId).toBe(externalId);
+
+          await waitForOperations();
+          expect(transferSubscriptionFn).toHaveBeenCalled();
         });
 
-        // should also update the identity in the IndexedDB
-        identityData = await getIdentityItem(
-          (i) => i.onesignal_id === DUMMY_ONESIGNAL_ID,
-        );
-        expect(identityData).toEqual({
-          external_id: externalId,
-          modelId: expect.any(String),
-          modelName: 'identity',
-          onesignal_id: DUMMY_ONESIGNAL_ID,
+        test('login twice with same user -> only one call to identify user', async () => {
+          setTransferSubscriptionResponse();
+          await window.OneSignal.login(externalId);
+          await window.OneSignal.login(externalId);
+
+          expect(addAliasFn).toHaveBeenCalledTimes(1);
+          expect(debugSpy).toHaveBeenCalledWith(
+            'Login: External ID already set, skipping login',
+          );
+          await waitForOperations();
+          expect(transferSubscriptionFn).toHaveBeenCalledTimes(1);
         });
 
-        const identityModel = window.OneSignal.coreDirector.getIdentityModel();
-        expect(identityModel.externalId).toBe(externalId);
+        test('login twice with different user -> logs in to second user', async () => {
+          const newExternalId = 'jd-2';
+          setCreateUserResponse({
+            externalId: newExternalId,
+          });
+          setGetUserResponse({
+            externalId: newExternalId,
+          });
+          setTransferSubscriptionResponse();
 
-        await waitForOperations();
-        expect(transferSubscriptionFn).toHaveBeenCalled();
-      });
+          await window.OneSignal.login(externalId); // should call set alias
+          expect(addAliasFn).toHaveBeenCalledWith({
+            identity: {
+              external_id: externalId,
+            },
+          });
 
-      test('Login twice with same user -> only one call to identify user', async () => {
-        setTransferSubscriptionResponse();
-        await window.OneSignal.login(externalId);
-        await window.OneSignal.login(externalId);
+          await window.OneSignal.login(newExternalId); // should call create user
+          expect(createUserFn).toHaveBeenCalledWith({
+            identity: {
+              external_id: newExternalId,
+            },
+            ...baseIdentity,
+            subscriptions: [
+              {
+                id: DUMMY_SUBSCRIPTION_ID,
+              },
+            ],
+          });
 
-        expect(addAliasFn).toHaveBeenCalledTimes(1);
-        expect(debugSpy).toHaveBeenCalledWith(
-          'Login: External ID already set, skipping login',
-        );
-        await waitForOperations();
-        expect(transferSubscriptionFn).toHaveBeenCalledTimes(1);
-      });
+          await waitForOperations(3); // should call refresh user op
+          expect(getUserFn).toHaveBeenCalledWith();
 
-      test('Login twice with different user -> logs in to second user', async () => {
-        const newExternalId = 'jd-2';
-        setCreateUserResponse({
-          externalId: newExternalId,
-        });
-        setGetUserResponse({
-          externalId: newExternalId,
-        });
-        setTransferSubscriptionResponse();
-
-        await window.OneSignal.login(externalId); // should call set alias
-        expect(addAliasFn).toHaveBeenCalledWith({
-          identity: {
-            external_id: externalId,
-          },
-        });
-
-        await window.OneSignal.login(newExternalId); // should call create user
-        expect(createUserFn).toHaveBeenCalledWith({
-          identity: {
+          const identityData = await getIdentityItem();
+          expect(identityData).toEqual({
             external_id: newExternalId,
-          },
-          properties: {
-            language: 'en',
-            timezone_id: 'America/Los_Angeles',
-          },
-          refresh_device_metadata: true,
-          subscriptions: [
-            {
-              id: DUMMY_SUBSCRIPTION_ID,
+            modelId: expect.any(String),
+            modelName: 'identity',
+            onesignal_id: DUMMY_ONESIGNAL_ID,
+          });
+
+          const identityModel =
+            window.OneSignal.coreDirector.getIdentityModel();
+          expect(identityModel.externalId).toBe(newExternalId);
+        });
+
+        test('login conflict should keep old subscriptions', async () => {
+          setAddAliasError({
+            status: 409,
+          });
+          setCreateUserResponse({});
+          setGetUserResponse({
+            onesignalId: DUMMY_ONESIGNAL_ID,
+            newOnesignalId: DUMMY_ONESIGNAL_ID_2,
+            externalId,
+            subscriptions: [
+              {
+                id: DUMMY_SUBSCRIPTION_ID_2,
+                type: 'ChromePush',
+                token: 'def456',
+              },
+            ],
+          });
+
+          // calls create user with empty subscriptions
+          await window.OneSignal.login(externalId);
+          expect(createUserFn).toHaveBeenCalledWith({
+            identity: {
+              external_id: externalId,
             },
-          ],
-        });
+            ...baseIdentity,
+            subscriptions: [
+              {
+                id: DUMMY_SUBSCRIPTION_ID,
+              },
+            ],
+          });
 
-        await waitForOperations(3); // should call refresh user op
-        expect(getUserFn).toHaveBeenCalledWith();
-
-        const identityData = await getIdentityItem();
-        expect(identityData).toEqual({
-          external_id: newExternalId,
-          modelId: expect.any(String),
-          modelName: 'identity',
-          onesignal_id: DUMMY_ONESIGNAL_ID,
-        });
-
-        const identityModel = window.OneSignal.coreDirector.getIdentityModel();
-        expect(identityModel.externalId).toBe(newExternalId);
-      });
-
-      test('Login conflict should keep old subscriptions', async () => {
-        setAddAliasError({
-          status: 409,
-        });
-        setCreateUserResponse({});
-        setGetUserResponse({
-          onesignalId: DUMMY_ONESIGNAL_ID,
-          newOnesignalId: DUMMY_ONESIGNAL_ID_2,
-          externalId,
-          subscriptions: [
-            {
-              id: DUMMY_SUBSCRIPTION_ID_2,
-              type: 'ChromePush',
-              token: 'def456',
-            },
-          ],
-        });
-
-        // calls create user with empty subscriptions
-        await window.OneSignal.login(externalId);
-        expect(createUserFn).toHaveBeenCalledWith({
-          identity: {
+          // calls refresh user
+          // onesignal id should be changed
+          const identityData = await getIdentityItem(
+            (i) => i.onesignal_id === DUMMY_ONESIGNAL_ID_2,
+          );
+          expect(identityData).toEqual({
             external_id: externalId,
-          },
-          properties: {
-            language: 'en',
-            timezone_id: 'America/Los_Angeles',
-          },
-          refresh_device_metadata: true,
-          subscriptions: [
-            {
-              id: DUMMY_SUBSCRIPTION_ID,
-            },
-          ],
-        });
-
-        // calls refresh user
-        // onesignal id should be changed
-        const identityData = await getIdentityItem(
-          (i) => i.onesignal_id === DUMMY_ONESIGNAL_ID_2,
-        );
-        expect(identityData).toEqual({
-          external_id: externalId,
-          modelId: expect.any(String),
-          modelName: 'identity',
-          onesignal_id: DUMMY_ONESIGNAL_ID_2,
+            modelId: expect.any(String),
+            modelName: 'identity',
+            onesignal_id: DUMMY_ONESIGNAL_ID_2,
+          });
         });
       });
 
@@ -580,31 +547,20 @@ describe('OneSignal', () => {
         const sms = '+1234567890';
 
         beforeEach(async () => {
-          await db.delete('subscriptions', DUMMY_SUBSCRIPTION_ID);
+          setAddAliasResponse();
+          setTransferSubscriptionResponse();
+          setCreateSubscriptionResponse();
 
-          setCreateSubscriptionResponse({
-            response: {
-              id: DUMMY_SUBSCRIPTION_ID_2,
-              type: 'Email',
-              token: email,
-            },
+          await db.clear('subscriptions');
+          await setupSubModelStore({
+            id: DUMMY_SUBSCRIPTION_ID,
+            token: DUMMY_PUSH_TOKEN,
           });
-
-          setCreateUserResponse({
-            onesignalId: DUMMY_ONESIGNAL_ID,
-            externalId,
-          });
-
-          setGetUserResponse({
-            onesignalId: DUMMY_ONESIGNAL_ID,
-            externalId,
-          });
+          setPushToken(DUMMY_PUSH_TOKEN);
         });
 
         test('login before adding email and sms - it should create subscriptions with the external ID', async () => {
-          setTransferSubscriptionResponse();
           setGetUserResponse({
-            onesignalId: DUMMY_ONESIGNAL_ID,
             externalId,
             subscriptions: [
               {
@@ -619,7 +575,6 @@ describe('OneSignal', () => {
               },
             ],
           });
-
           await window.OneSignal.login(externalId);
 
           const identityData = await getIdentityItem();
@@ -657,11 +612,7 @@ describe('OneSignal', () => {
             },
           });
 
-          let dbSubscriptions: SubscriptionSchema[] = [];
-          await vi.waitUntil(async () => {
-            dbSubscriptions = await db.getAll<'subscriptions'>('subscriptions');
-            return dbSubscriptions.length === 3;
-          });
+          const dbSubscriptions = await getDbSubscriptions(3);
 
           const emailSubscriptions = dbSubscriptions.filter(
             (s) => s.type === 'Email',
@@ -680,16 +631,8 @@ describe('OneSignal', () => {
         });
 
         test('login without accepting web push permissions - it should create a new user without any subscriptions', async () => {
-          setCreateSubscriptionResponse({
-            response: {
-              id: DUMMY_SUBSCRIPTION_ID,
-              type: 'ChromePush',
-              token: DUMMY_PUSH_TOKEN,
-            },
-          });
-
-          await db.clear('subscriptions');
-
+          setGetUserResponse();
+          setCreateUserResponse();
           const identityModel = OneSignal.coreDirector.getIdentityModel();
           identityModel.setProperty(
             'external_id',
@@ -708,7 +651,9 @@ describe('OneSignal', () => {
           );
           await window.OneSignal.login(externalId);
 
-          const identityData = await getIdentityItem();
+          const identityData = await getIdentityItem(
+            (i) => i.onesignal_id === DUMMY_ONESIGNAL_ID,
+          );
           expect(identityData).toEqual({
             external_id: externalId,
             modelId: expect.any(String),
@@ -723,26 +668,21 @@ describe('OneSignal', () => {
             identity: {
               external_id: externalId,
             },
-            properties: {
-              language: 'en',
-              timezone_id: 'America/Los_Angeles',
-            },
-            refresh_device_metadata: true,
+            ...baseIdentity,
             subscriptions: [],
           });
         });
 
         test('login then add email, sms, and web push - all subscriptions should be created with the external ID', async () => {
-          setTransferSubscriptionResponse();
           setUpdateSubscriptionResponse();
           setGetUserResponse({
             onesignalId: DUMMY_ONESIGNAL_ID,
             externalId,
             subscriptions: [
               {
-                id: DUMMY_SUBSCRIPTION_ID,
+                id: 'some-other-push-id',
                 type: 'ChromePush',
-                token: DUMMY_PUSH_TOKEN,
+                token: 'some-other-push-token',
               },
               {
                 id: DUMMY_SUBSCRIPTION_ID_2,
@@ -813,6 +753,7 @@ describe('OneSignal', () => {
         });
 
         test('login with a prior web push subscription - it should transfer the subscription', async () => {
+          setCreateUserResponse();
           const identityModel = OneSignal.coreDirector.getIdentityModel();
           identityModel.setProperty(
             'onesignal_id',
@@ -841,17 +782,99 @@ describe('OneSignal', () => {
             identity: {
               external_id: externalId,
             },
-            properties: {
-              language: 'en',
-              timezone_id: 'America/Los_Angeles',
-            },
-            refresh_device_metadata: true,
+            ...baseIdentity,
             subscriptions: [
               {
                 id: DUMMY_SUBSCRIPTION_ID,
               },
             ],
           });
+        });
+
+        test('login then accept web push permissions - it should make two user calls', async () => {
+          OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+            [],
+            ModelChangeTags.NO_PROPOGATE,
+          );
+          setPushToken('');
+          setGetUserResponse();
+          subscribeFcmFromPageSpy.mockImplementation(
+            // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
+            async () => rawPushSubscription,
+          );
+
+          setCreateUserResponse({
+            onesignalId: DUMMY_ONESIGNAL_ID,
+            externalId,
+            subscriptions: [
+              {
+                id: DUMMY_SUBSCRIPTION_ID,
+              },
+            ],
+          });
+
+          // new/empty user
+          const newIdentity = new IdentityModel();
+          OneSignal.coreDirector.identityModelStore.replace(newIdentity);
+          OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+            [],
+            ModelChangeTags.NO_PROPOGATE,
+          );
+
+          // calling login before accept permissions
+          window.OneSignal.login(externalId);
+
+          // slidedown manager calls this on allow click
+          // @ts-expect-error - Notification is not defined in the global scope
+          global.Notification = {
+            permission: 'granted',
+          };
+          registerForPushNotifications();
+
+          // first call just sets the external id
+          await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
+            interval: 1,
+          });
+          expect(createUserFn).toHaveBeenCalledWith({
+            identity: {
+              external_id: externalId,
+            },
+            ...baseIdentity,
+            subscriptions: [],
+          });
+
+          // second call creates the subscription
+          await vi.waitUntil(() => createUserFn.mock.calls.length === 2);
+          expect(createUserFn).toHaveBeenCalledWith({
+            identity: {
+              external_id: externalId,
+            },
+            ...baseIdentity,
+            subscriptions: [
+              {
+                device_model: '',
+                device_os: DEVICE_OS,
+                enabled: true,
+                notification_types: 1,
+                sdk: __VERSION__,
+                token: DUMMY_PUSH_TOKEN,
+                type: 'ChromePush',
+                web_auth: 'w3cAuth',
+                web_p256: 'w3cP256dh',
+              },
+            ],
+          });
+
+          // const dbSubscriptions = await getDbSubscriptions(1);
+          // console.dir(dbSubscriptions, { depth: null });
+          let pushSub: SubscriptionSchema | undefined;
+          await vi.waitUntil(
+            async () => {
+              pushSub = (await db.getAll('subscriptions'))[0];
+              return pushSub && !IDManager.isLocalId(pushSub.id);
+            },
+            { interval: 1 },
+          );
         });
       });
     });
@@ -1182,6 +1205,52 @@ describe('OneSignal', () => {
     });
   });
 
+  describe('Listeners', () => {
+    test('can listen for subscription changed event', async () => {
+      await clearAll();
+      await db.put('Options', {
+        key: 'notificationPermission',
+        value: 'granted',
+      });
+
+      setCreateUserResponse({
+        subscriptions: [
+          {
+            id: DUMMY_SUBSCRIPTION_ID,
+          },
+        ],
+      });
+
+      const changeEvent = vi.fn();
+      OneSignal.User.PushSubscription.addEventListener('change', changeEvent);
+
+      subscribeFcmFromPageSpy.mockImplementation(
+        // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
+        async () => rawPushSubscription,
+      );
+
+      // @ts-expect-error - Notification is not defined in the global scope
+      global.Notification = {
+        permission: 'granted',
+      };
+      registerForPushNotifications();
+
+      await vi.waitUntil(() => changeEvent.mock.calls.length === 1);
+      expect(changeEvent).toHaveBeenCalledWith({
+        previous: {
+          id: undefined,
+          optedIn: true,
+          token: undefined,
+        },
+        current: {
+          id: DUMMY_SUBSCRIPTION_ID,
+          optedIn: true,
+          token: DUMMY_PUSH_TOKEN,
+        },
+      });
+    });
+  });
+
   test('should preserve operations order without needing await', async () => {
     await setupSubModelStore({
       id: DUMMY_SUBSCRIPTION_ID,
@@ -1240,3 +1309,67 @@ describe('OneSignal', () => {
     });
   });
 });
+
+Object.defineProperty(global.navigator, 'serviceWorker', {
+  value: new MockServiceWorker(),
+  writable: true,
+});
+
+const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+const debugSpy = vi.spyOn(Log, 'debug');
+
+const baseIdentity = {
+  properties: {
+    language: 'en',
+    timezone_id: 'America/Los_Angeles',
+  },
+  refresh_device_metadata: true,
+};
+
+const rawPushSubscription = new RawPushSubscription();
+rawPushSubscription.w3cEndpoint = new URL(DUMMY_PUSH_TOKEN);
+rawPushSubscription.w3cP256dh = 'w3cP256dh';
+rawPushSubscription.w3cAuth = 'w3cAuth';
+rawPushSubscription.safariDeviceToken = 'safariDeviceToken';
+
+const getIdentityItem = async (
+  condition: (identity: IdentitySchema) => boolean = () => true,
+) => {
+  let identity: IdentitySchema | undefined;
+  await vi.waitUntil(async () => {
+    identity = (await db.getAll('identity'))?.[0];
+    return identity && condition(identity);
+  });
+  return identity;
+};
+
+const getDbSubscriptions = async (length: number) => {
+  let subscriptions: SubscriptionSchema[] = [];
+  await vi.waitUntil(
+    async () => {
+      subscriptions = await db.getAll('subscriptions');
+      return subscriptions.length === length;
+    },
+    { interval: 1 },
+  );
+  return subscriptions;
+};
+
+const getPropertiesItem = async () => (await db.getAll('properties'))[0];
+
+const setupIdentity = async () => {
+  await db.put('identity', {
+    modelId: '123',
+    modelName: 'identity',
+    onesignal_id: DUMMY_ONESIGNAL_ID,
+  });
+};
+
+const subscribeFcmFromPageSpy = vi.spyOn(
+  SubscriptionManagerPage.prototype,
+  // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
+  'subscribeFcmFromPage',
+);
+
+const showLocalNotificationSpy = vi.spyOn(MainHelper, 'showLocalNotification');
+showLocalNotificationSpy.mockImplementation(async () => {});

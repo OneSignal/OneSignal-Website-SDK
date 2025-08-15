@@ -57,6 +57,15 @@ export interface SubscriptionSchema {
   sdk?: string;
 }
 
+export interface IdentitySchema {
+  modelId: string;
+  modelName: 'identity';
+  onesignal_id?: string;
+  onesignalId?: string;
+  external_id?: string;
+  externalId?: string;
+}
+
 export interface IndexedDBSchema extends DBSchema {
   /**
    * @deprecated - should be migrated in openDB()
@@ -143,14 +152,7 @@ export interface IndexedDBSchema extends DBSchema {
 
   identity: {
     key: string;
-    value: {
-      modelId: string;
-      modelName: 'identity';
-      onesignal_id?: string;
-      onesignalId?: string;
-      external_id?: string;
-      externalId?: string;
-    };
+    value: IdentitySchema;
   };
 
   properties: {

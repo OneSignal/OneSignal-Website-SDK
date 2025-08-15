@@ -4,15 +4,22 @@ import { setupSubModelStore } from '__test__/support/environment/TestEnvironment
 import {
   createUserFn,
   setCreateUserResponse,
+  setGetUserResponse,
 } from '__test__/support/helpers/requests';
+import MockNotification from '__test__/support/mocks/MockNotification';
 import {
   getSubscriptionFn,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
+import { ModelChangeTags } from 'src/core/types/models';
 import { setPushToken } from '../database/subscription';
+import { NotificationPermission } from '../models/NotificationPermission';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
-import { updatePushSubscriptionModelWithRawSubscription } from './subscription/page';
+import {
+  SubscriptionManagerPage,
+  updatePushSubscriptionModelWithRawSubscription,
+} from './subscription/page';
 
 const getRawSubscription = (): RawPushSubscription => {
   const rawSubscription = new RawPushSubscription();
@@ -100,8 +107,16 @@ describe('SubscriptionManager', () => {
 
       // create push sub with no id
       const identityModel = OneSignal.coreDirector.getIdentityModel();
-      identityModel.onesignalId = IDManager.createLocalId();
-      identityModel.externalId = 'some-external-id';
+      identityModel.setProperty(
+        'onesignal_id',
+        IDManager.createLocalId(),
+        ModelChangeTags.HYDRATE,
+      );
+      identityModel.setProperty(
+        'external_id',
+        'some-external-id',
+        ModelChangeTags.HYDRATE,
+      );
 
       await setupSubModelStore({
         id: IDManager.createLocalId(),
@@ -139,6 +154,7 @@ describe('SubscriptionManager', () => {
 
     test('should update the push subscription model if it already exists', async () => {
       setCreateUserResponse();
+      setGetUserResponse();
       const rawSubscription = getRawSubscription();
 
       await setPushToken(rawSubscription.w3cEndpoint?.toString());
@@ -161,6 +177,29 @@ describe('SubscriptionManager', () => {
       expect(updatedPushModel.web_auth).toBe(rawSubscription.w3cAuth);
       expect(updatedPushModel.web_p256).toBe(rawSubscription.w3cP256dh);
     });
+  });
+});
+
+describe('SubscriptionManagerPage', () => {
+  test('default', async () => {
+    MockNotification.permission = 'default';
+    expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
+      NotificationPermission.Default,
+    );
+  });
+
+  test('denied', async () => {
+    MockNotification.permission = 'denied';
+    expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
+      NotificationPermission.Denied,
+    );
+  });
+
+  test('granted', async () => {
+    MockNotification.permission = 'granted';
+    expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
+      NotificationPermission.Granted,
+    );
   });
 });
 

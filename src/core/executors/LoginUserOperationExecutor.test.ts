@@ -174,14 +174,22 @@ describe('LoginUserOperationExecutor', () => {
       await setPushToken(DUMMY_PUSH_TOKEN);
 
       const subscriptionModel = new SubscriptionModel();
-      subscriptionModel.setProperty('id', DUMMY_SUBSCRIPTION_ID);
+      subscriptionModel.setProperty(
+        'id',
+        DUMMY_SUBSCRIPTION_ID,
+        ModelChangeTags.HYDRATE,
+      );
       subscriptionModelStore.add(subscriptionModel, ModelChangeTags.HYDRATE);
 
       // perform operations with old onesignal id
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-      loginOp.setProperty('externalId', DUMMY_EXTERNAL_ID);
+      loginOp.setProperty(
+        'externalId',
+        DUMMY_EXTERNAL_ID,
+        ModelChangeTags.HYDRATE,
+      );
 
       const createSubOp = new CreateSubscriptionOperation(
         mockSubscriptionOpInfo,

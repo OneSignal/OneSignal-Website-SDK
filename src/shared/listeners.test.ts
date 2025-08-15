@@ -10,13 +10,15 @@ import * as eventListeners from 'src/shared/listeners';
 import type { MockInstance } from 'vitest';
 import { getAppState } from './database/config';
 import { setPushToken } from './database/subscription';
-
-Object.defineProperty(global.navigator, 'serviceWorker', {
-  value: new MockServiceWorker(),
-  writable: true,
-});
+import { SubscriptionManagerPage } from './managers/subscription/page';
 
 let emitterSpy: MockInstance;
+
+// dont want to make a call to update notification types
+vi.spyOn(
+  SubscriptionManagerPage.prototype,
+  'updateNotificationTypes',
+).mockImplementation(() => Promise.resolve());
 
 beforeEach(async () => {
   await TestEnvironment.initialize();
@@ -128,3 +130,14 @@ test('Adding click listener fires internal EventHelper', async () => {
   OneSignal.Notifications.addEventListener('click', () => {});
   expect(emitterSpy).toHaveBeenCalledTimes(1);
 });
+
+Object.defineProperty(global.navigator, 'serviceWorker', {
+  value: new MockServiceWorker(),
+  writable: true,
+});
+
+// dont want to make a call to update notification types
+vi.spyOn(
+  SubscriptionManagerPage.prototype,
+  'updateNotificationTypes',
+).mockResolvedValue();
