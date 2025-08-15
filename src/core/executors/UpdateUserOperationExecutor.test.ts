@@ -1,4 +1,5 @@
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/constants';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setUpdateUserError,
@@ -25,12 +26,15 @@ let getRebuildOpsSpy: MockInstance;
 vi.mock('src/shared/libraries/Log');
 
 describe('UpdateUserOperationExecutor', () => {
-  beforeEach(() => {
-    identityModelStore = new IdentityModelStore();
-    propertiesModelStore = new PropertiesModelStore();
-    newRecordsState = new NewRecordsState();
+  beforeAll(async () => {
+    await TestEnvironment.initialize();
+  });
 
-    subscriptionsModelStore = new SubscriptionModelStore();
+  beforeEach(() => {
+    identityModelStore = OneSignal.coreDirector.identityModelStore;
+    propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
+    newRecordsState = OneSignal.coreDirector.newRecordsState;
+    subscriptionsModelStore = OneSignal.coreDirector.subscriptionModelStore;
     buildUserService = new RebuildUserService(
       identityModelStore,
       propertiesModelStore,

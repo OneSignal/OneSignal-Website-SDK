@@ -66,7 +66,16 @@ const getIdentityItem = async (
   return identity;
 };
 
-const getPropertiesItem = async () => (await db.getAll('properties'))?.[0];
+const getDbSubscriptions = async (length: number) => {
+  let subscriptions: SubscriptionSchema[] = [];
+  await vi.waitUntil(async () => {
+    subscriptions = await db.getAll('subscriptions');
+    return subscriptions.length === length;
+  });
+  return subscriptions;
+};
+
+const getPropertiesItem = async () => (await db.getAll('properties'))[0];
 
 const setupIdentity = async () => {
   await db.put('identity', {
@@ -785,15 +794,7 @@ describe('OneSignal', () => {
             },
           });
 
-          await waitForOperations(5);
-
-          let dbSubscriptions: SubscriptionSchema[] = [];
-          await vi.waitUntil(async () => {
-            dbSubscriptions = await db.getAll<'subscriptions'>('subscriptions');
-            return dbSubscriptions.length === 3;
-          });
-
-          expect(dbSubscriptions).toHaveLength(3);
+          const dbSubscriptions = await getDbSubscriptions(3);
 
           const emailSubscriptions = dbSubscriptions.filter(
             (s) => s.type === 'Email',

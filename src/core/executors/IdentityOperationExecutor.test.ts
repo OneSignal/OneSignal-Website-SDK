@@ -1,4 +1,5 @@
 import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/constants';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setAddAliasError,
@@ -48,16 +49,20 @@ describe('IdentityOperationExecutor', () => {
     );
   };
 
+  beforeAll(async () => {
+    await TestEnvironment.initialize();
+  });
+
   beforeEach(() => {
     setAddAliasResponse();
     setDeleteAliasResponse();
 
-    identityModelStore = new IdentityModelStore();
+    identityModelStore = OneSignal.coreDirector.identityModelStore;
     identityModelStore.model.onesignalId = DUMMY_ONESIGNAL_ID;
 
-    newRecordsState = new NewRecordsState();
-    propertiesModelStore = new PropertiesModelStore();
-    subscriptionModelStore = new SubscriptionModelStore();
+    newRecordsState = OneSignal.coreDirector.newRecordsState;
+    propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
+    subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
 
     rebuildUserService = new RebuildUserService(
       identityModelStore,

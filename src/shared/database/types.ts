@@ -7,9 +7,6 @@ import type {
 import type { AppState } from '../models/AppState';
 import type { SentUniqueOutcome } from '../models/Outcomes';
 import type { Session } from '../session/types';
-import { ModelName } from './constants';
-
-export type ModelNameType = (typeof ModelName)[keyof typeof ModelName];
 
 export type IdKey = 'appId' | 'registrationId' | 'userId' | 'jwtToken';
 

@@ -7,13 +7,14 @@ import {
   DUMMY_SUBSCRIPTION_ID,
   DUMMY_SUBSCRIPTION_ID_2,
 } from '__test__/constants';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setGetUserError,
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
 import { clearAll } from 'src/shared/database/client';
-import { setPushId } from 'src/shared/database/subscription';
+import { setPushToken } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
@@ -24,7 +25,7 @@ import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
-import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
+import type { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { ExecutionResult } from '../types/operation';
@@ -40,12 +41,16 @@ let getRebuildOpsSpy: MockInstance;
 vi.mock('src/shared/libraries/Log');
 
 describe('RefreshUserOperationExecutor', () => {
+  beforeAll(async () => {
+    await TestEnvironment.initialize();
+  });
+
   beforeEach(async () => {
     await clearAll(); // in case subscription model (from previous tests) are loaded from db
-    identityModelStore = new IdentityModelStore();
-    propertiesModelStore = new PropertiesModelStore();
-    subscriptionModelStore = new SubscriptionModelStore();
-    newRecordsState = new NewRecordsState();
+    identityModelStore = OneSignal.coreDirector.identityModelStore;
+    propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
+    subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
+    newRecordsState = OneSignal.coreDirector.newRecordsState;
     buildUserService = new RebuildUserService(
       identityModelStore,
       propertiesModelStore,
@@ -182,7 +187,7 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.notification_types = NotificationType.Subscribed;
 
       subscriptionModelStore.add(pushSubModel);
-      await setPushId(DUMMY_SUBSCRIPTION_ID_2);
+      await setPushToken(DUMMY_PUSH_TOKEN);
 
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);

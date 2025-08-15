@@ -1,4 +1,3 @@
-import { getPushId } from 'src/shared/database/subscription';
 import { IdentityModel } from '../models/IdentityModel';
 import { PropertiesModel } from '../models/PropertiesModel';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -54,11 +53,8 @@ export class RebuildUserService implements IRebuildUserService {
       new LoginUserOperation(appId, onesignalId, identityModel.externalId),
     );
 
-    const pushSubscriptionId = await getPushId();
-    const pushSubscription = subscriptionModels.find(
-      (s) => s.id === pushSubscriptionId,
-    );
-
+    const pushSubscription =
+      await OneSignal.coreDirector.getPushSubscriptionModel();
     if (pushSubscription) {
       operations.push(
         new CreateSubscriptionOperation({

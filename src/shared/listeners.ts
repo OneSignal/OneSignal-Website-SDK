@@ -34,14 +34,11 @@ export async function checkAndTriggerSubscriptionChanged() {
     lastKnownPushToken,
     lastKnownOptedIn,
   } = appState;
-
   const currentPushToken = await MainHelper.getCurrentPushToken();
 
   const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
   const pushSubscriptionId = pushModel?.id;
-
   const didStateChange =
-    lastKnownPushEnabled === null ||
     isPushEnabled !== lastKnownPushEnabled ||
     currentPushToken !== lastKnownPushToken ||
     pushSubscriptionId !== lastKnownPushId;

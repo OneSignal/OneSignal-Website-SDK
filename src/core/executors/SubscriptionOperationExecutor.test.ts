@@ -1,14 +1,16 @@
 import {
   APP_ID,
   DUMMY_ONESIGNAL_ID,
+  DUMMY_PUSH_TOKEN,
   DUMMY_SUBSCRIPTION_ID_3,
 } from '__test__/constants';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { db } from 'src/shared/database/client';
-import { getPushId, setPushId } from 'src/shared/database/subscription';
+import { setPushToken } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
@@ -45,13 +47,17 @@ vi.mock('src/shared/libraries/Log');
 const pushSubscription = createPushSub();
 
 describe('SubscriptionOperationExecutor', () => {
-  beforeEach(async () => {
-    subscriptionModelStore = new SubscriptionModelStore();
-    newRecordsState = new NewRecordsState();
+  beforeAll(async () => {
+    await TestEnvironment.initialize();
+  });
 
-    identityModelStore = new IdentityModelStore();
-    propertiesModelStore = new PropertiesModelStore();
-    subscriptionsModelStore = new SubscriptionModelStore();
+  beforeEach(async () => {
+    subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
+    newRecordsState = OneSignal.coreDirector.newRecordsState;
+
+    identityModelStore = OneSignal.coreDirector.identityModelStore;
+    propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
+    subscriptionsModelStore = OneSignal.coreDirector.subscriptionModelStore;
 
     identityModelStore.model.onesignalId = DUMMY_ONESIGNAL_ID;
     buildUserService = new RebuildUserService(
@@ -134,10 +140,11 @@ describe('SubscriptionOperationExecutor', () => {
     test('should create subscription successfully', async () => {
       const model = new SubscriptionModel();
       model.setProperty('id', DUMMY_SUBSCRIPTION_ID, ModelChangeTags.HYDRATE);
+      model.setProperty('token', DUMMY_PUSH_TOKEN, ModelChangeTags.HYDRATE);
       subscriptionModelStore.add(model);
 
       setCreateSubscriptionResponse(BACKEND_SUBSCRIPTION_ID);
-      await setPushId(DUMMY_SUBSCRIPTION_ID);
+      await setPushToken(DUMMY_PUSH_TOKEN);
 
       const executor = getExecutor();
       const createOp = new CreateSubscriptionOperation({
@@ -159,7 +166,6 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Verify models were updated
-      await expect(getPushId()).resolves.toBe(BACKEND_SUBSCRIPTION_ID);
       const subscriptionModel = subscriptionModelStore.getBySubscriptionId(
         BACKEND_SUBSCRIPTION_ID,
       );
@@ -280,7 +286,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Missing error with rebuild ops
       subscriptionsModelStore.add(pushSubscription);
-      await setPushId(DUMMY_SUBSCRIPTION_ID_3);
+      await setPushToken(pushSubscription.token);
 
       const res6 = await executor.execute([createOp]);
       expect(res6).toMatchObject({

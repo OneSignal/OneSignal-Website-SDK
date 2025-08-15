@@ -2,7 +2,7 @@ import { type DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
-import { setPushId, setPushToken } from 'src/shared/database/subscription';
+import { setPushToken } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
@@ -146,7 +146,6 @@ export const setupSubModelStore = async ({
     token,
     onesignalId,
   });
-  await setPushId(pushModel.id);
   await setPushToken(pushModel.token);
   OneSignal.coreDirector.subscriptionModelStore.replaceAll(
     [pushModel],
