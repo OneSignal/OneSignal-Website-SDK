@@ -13,7 +13,6 @@ import {
 } from '__test__/support/mocks/MockServiceWorker';
 import { ModelChangeTags } from 'src/core/types/models';
 import { setPushToken } from '../database/subscription';
-import { NotificationPermission } from '../models/NotificationPermission';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
 import {
@@ -184,21 +183,21 @@ describe('SubscriptionManagerPage', () => {
   test('default', async () => {
     MockNotification.permission = 'default';
     expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
-      NotificationPermission.Default,
+      'default',
     );
   });
 
   test('denied', async () => {
     MockNotification.permission = 'denied';
     expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
-      NotificationPermission.Denied,
+      'denied',
     );
   });
 
   test('granted', async () => {
     MockNotification.permission = 'granted';
     expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
-      NotificationPermission.Granted,
+      'granted',
     );
   });
 });
