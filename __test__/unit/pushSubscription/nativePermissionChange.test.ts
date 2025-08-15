@@ -1,9 +1,9 @@
 import {
-  DUMMY_PUSH_TOKEN,
-  DUMMY_PUSH_TOKEN_2,
-  DUMMY_SUBSCRIPTION_ID,
-  DUMMY_SUBSCRIPTION_ID_2,
-  DUMMY_SUBSCRIPTION_ID_3,
+  PUSH_TOKEN,
+  PUSH_TOKEN_2,
+  SUB_ID,
+  SUB_ID_2,
+  SUB_ID_3,
 } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
@@ -15,7 +15,6 @@ import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 import { AppState } from 'src/shared/models/AppState';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
-import { NotificationPermission } from '../../../src/shared/models/NotificationPermission';
 
 vi.mock('src/shared/libraries/Log');
 const triggerNotificationSpy = vi.spyOn(
@@ -47,9 +46,9 @@ describe('Notification Types are set correctly on subscription change', () => {
     test('should not trigger change if permission status is the same', async () => {
       vi.stubGlobal('Notification', {
         ...global.Notification,
-        permission: NotificationPermission.Granted,
+        permission: 'granted',
       });
-      await setDbPermission(NotificationPermission.Granted);
+      await setDbPermission('granted');
 
       await MainHelper.checkAndTriggerNotificationPermissionChanged();
       expect(triggerNotificationSpy).not.toHaveBeenCalled();
@@ -58,9 +57,9 @@ describe('Notification Types are set correctly on subscription change', () => {
     test('should trigger change if permission status is different', async () => {
       vi.stubGlobal('Notification', {
         ...global.Notification,
-        permission: NotificationPermission.Granted,
+        permission: 'granted',
       });
-      await setDbPermission(NotificationPermission.Denied);
+      await setDbPermission('denied');
 
       const permChangeStringListener = vi.fn();
       const permChangeListener = vi.fn();
@@ -81,7 +80,7 @@ describe('Notification Types are set correctly on subscription change', () => {
       const dbPermission = await getOptionsValue<NotificationPermission>(
         'notificationPermission',
       );
-      expect(dbPermission).toBe(NotificationPermission.Granted);
+      expect(dbPermission).toBe('granted');
       expect(permChangeListener).toHaveBeenCalledWith(true);
       expect(permChangeStringListener).toHaveBeenCalledWith('granted');
     });
@@ -104,14 +103,14 @@ describe('Notification Types are set correctly on subscription change', () => {
     test('should not do anything if the state has not changed', async () => {
       addListener(changeListener);
       const pushModel = createPushSub({
-        id: DUMMY_SUBSCRIPTION_ID,
-        token: DUMMY_PUSH_TOKEN,
+        id: SUB_ID,
+        token: PUSH_TOKEN,
       });
 
       await setAppState({
         lastKnownPushEnabled: false,
-        lastKnownPushToken: DUMMY_PUSH_TOKEN,
-        lastKnownPushId: DUMMY_SUBSCRIPTION_ID,
+        lastKnownPushToken: PUSH_TOKEN,
+        lastKnownPushId: SUB_ID,
       });
       OneSignal.coreDirector.addSubscriptionModel(pushModel);
 
@@ -122,28 +121,28 @@ describe('Notification Types are set correctly on subscription change', () => {
     test('should emit change if app state data is different', async () => {
       addListener(changeListener);
       const pushModel = createPushSub({
-        id: DUMMY_SUBSCRIPTION_ID_2,
-        token: DUMMY_PUSH_TOKEN_2,
+        id: SUB_ID_2,
+        token: PUSH_TOKEN_2,
       });
 
       await setAppState({
         lastKnownPushEnabled: true,
-        lastKnownPushToken: DUMMY_PUSH_TOKEN_2,
-        lastKnownPushId: DUMMY_SUBSCRIPTION_ID_3,
+        lastKnownPushToken: PUSH_TOKEN_2,
+        lastKnownPushId: SUB_ID_3,
       });
       OneSignal.coreDirector.subscriptionModelStore.add(pushModel);
 
       await checkAndTriggerSubscriptionChanged();
       expect(changeListener).toHaveBeenCalledWith({
         current: {
-          id: DUMMY_SUBSCRIPTION_ID_2,
+          id: SUB_ID_2,
           optedIn: false,
-          token: DUMMY_PUSH_TOKEN,
+          token: PUSH_TOKEN,
         },
         previous: {
-          id: DUMMY_SUBSCRIPTION_ID_3,
+          id: SUB_ID_3,
           optedIn: true,
-          token: DUMMY_PUSH_TOKEN_2,
+          token: PUSH_TOKEN_2,
         },
       });
     });

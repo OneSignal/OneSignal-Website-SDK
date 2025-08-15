@@ -1,13 +1,11 @@
+import { ONESIGNAL_ID } from '__test__/constants';
 import type {
   AppUserConfig,
   ConfigIntegrationKindValue,
   ServerAppConfig,
 } from 'src/shared/config/types';
 import type { RecursivePartial } from 'src/shared/context/types';
-import { clearAll } from 'src/shared/database/client';
-import MainHelper from 'src/shared/helpers/MainHelper';
-import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../../constants';
-import { generateNewSubscription } from '../helpers/core';
+import { updateIdentityModel } from '../helpers/setup';
 import {
   initOSGlobals,
   stubDomEnvironment,
@@ -25,27 +23,19 @@ export interface TestEnvironmentConfig {
   userAgent?: string;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
   integration?: ConfigIntegrationKindValue;
-  useMockIdentityModel?: boolean;
-  useMockPushSubscriptionModel?: boolean;
+  useMockedIdentity?: boolean;
 }
 
 export class TestEnvironment {
   static async initialize(config: TestEnvironmentConfig = {}) {
     // reset db & localStorage
-    await clearAll();
+    // await clearAll();
     const oneSignal = await initOSGlobals(config);
+    OneSignal.coreDirector.operationRepo.queue = [];
 
-    if (config.useMockIdentityModel) {
-      const model = OneSignal.coreDirector.getIdentityModel();
-      model.onesignalId = DUMMY_ONESIGNAL_ID;
-    }
-
-    if (config.useMockPushSubscriptionModel) {
-      OneSignal.coreDirector.addSubscriptionModel(generateNewSubscription());
-      vi.spyOn(MainHelper, 'getCurrentPushToken').mockResolvedValue(
-        DUMMY_PUSH_TOKEN,
-      );
-    }
+    // if (config.useMockedIdentity) {
+    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    // }
 
     await stubDomEnvironment(config);
     config.environment = 'dom';

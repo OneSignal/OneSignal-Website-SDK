@@ -18,7 +18,6 @@ import OneSignal from '../../onesignal/OneSignal';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
-import { NotificationPermission } from '../../shared/models/NotificationPermission';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
@@ -354,7 +353,7 @@ export default class Bell {
         let bellState: BellState;
         if (isSubscribed.current.optedIn) {
           bellState = Bell.STATES.SUBSCRIBED;
-        } else if (permission === NotificationPermission.Denied) {
+        } else if (permission === 'denied') {
           bellState = Bell.STATES.BLOCKED;
         } else {
           bellState = Bell.STATES.UNSUBSCRIBED;
@@ -692,7 +691,7 @@ export default class Bell {
         this.setState(
           isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED,
         );
-        if (permission === NotificationPermission.Denied) {
+        if (permission === 'denied') {
           this.setState(Bell.STATES.BLOCKED);
         }
       })

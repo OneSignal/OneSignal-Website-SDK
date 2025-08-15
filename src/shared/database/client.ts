@@ -10,12 +10,8 @@ import {
   migrateOutcomesNotificationReceivedTableForV5,
 } from './upgrade';
 
-let dbInstance: Awaited<ReturnType<typeof openDB<IndexedDBSchema>>> | null =
-  null;
-
-export const getDb = async (version = VERSION) => {
-  if (dbInstance) return dbInstance;
-  dbInstance = await openDB<IndexedDBSchema>(DATABASE_NAME, version, {
+const open = async (version = VERSION) => {
+  return openDB<IndexedDBSchema>(DATABASE_NAME, version, {
     upgrade(_db, oldVersion, newVersion, transaction) {
       const newDbVersion = newVersion || version;
       if (newDbVersion >= 1 && oldVersion < 1) {
@@ -80,7 +76,12 @@ export const getDb = async (version = VERSION) => {
       Log.debug('IndexedDB: Blocked event');
     },
   });
-  return dbInstance;
+};
+let dbPromise = open();
+
+export const getDb = (version = VERSION) => {
+  dbPromise = open(version);
+  return dbPromise;
 };
 
 // Export db object with the same API as before
@@ -89,36 +90,35 @@ export const db = {
     storeName: K,
     key: IndexedDBSchema[K]['key'],
   ): Promise<IndexedDBSchema[K]['value'] | undefined> {
-    const _db = await getDb();
-    return _db.get(storeName, key);
+    return (await dbPromise).get(storeName, key);
   },
   async getAll<K extends IDBStoreName>(
     storeName: K,
   ): Promise<IndexedDBSchema[K]['value'][]> {
-    const _db = await getDb();
-    return _db.getAll(storeName);
+    return (await dbPromise).getAll(storeName);
   },
   async put<K extends IDBStoreName>(
     storeName: K,
     value: IndexedDBSchema[K]['value'],
   ) {
-    const _db = await getDb();
-    return _db.put(storeName, value);
+    return (await dbPromise).put(storeName, value);
   },
   async delete<K extends IDBStoreName>(
     storeName: K,
     key: IndexedDBSchema[K]['key'],
   ) {
-    const _db = await getDb();
-    return _db.delete(storeName, key);
+    return (await dbPromise).delete(storeName, key);
   },
   async clear<K extends IDBStoreName>(storeName: K) {
-    const _db = await getDb();
-    return _db.clear(storeName);
+    return (await dbPromise).clear(storeName);
   },
-  get objectStoreNames() {
-    return dbInstance?.objectStoreNames || [];
+  async close() {
+    return (await dbPromise).close();
   },
+};
+
+export const getObjectStoreNames = async () => {
+  return Array.from((await dbPromise).objectStoreNames);
 };
 
 export const getOptionsValue = async <T extends unknown>(
@@ -144,13 +144,12 @@ export const cleanupCurrentSession = async () => {
 };
 
 export const clearAll = async () => {
-  const objectStoreNames = db.objectStoreNames;
+  const objectStoreNames = await getObjectStoreNames();
   for (const storeName of objectStoreNames) {
     await db.clear(storeName);
   }
 };
 
 export const closeDb = async () => {
-  await dbInstance?.close();
-  dbInstance = null;
+  (await dbPromise).close();
 };

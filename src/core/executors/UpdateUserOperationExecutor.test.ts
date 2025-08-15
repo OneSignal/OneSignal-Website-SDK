@@ -1,19 +1,19 @@
-import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/constants';
+import { APP_ID, ONESIGNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setUpdateUserError,
   setUpdateUserResponse,
 } from '__test__/support/helpers/requests';
+import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { type MockInstance } from 'vitest';
-import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
-import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { UpdateUserOperationExecutor } from './UpdateUserOperationExecutor';
 
@@ -47,11 +47,7 @@ describe('UpdateUserOperationExecutor', () => {
     );
 
     // Set up initial model state
-    identityModelStore.model.setProperty(
-      IdentityConstants.ONESIGNAL_ID,
-      DUMMY_ONESIGNAL_ID,
-      ModelChangeTags.HYDRATE,
-    );
+    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
   });
 
   const getExecutor = () => {
@@ -88,7 +84,7 @@ describe('UpdateUserOperationExecutor', () => {
       const executor = getExecutor();
       const setPropertyOp = new SetPropertyOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
+        ONESIGNAL_ID,
         'language',
         'fr',
       );
@@ -102,7 +98,7 @@ describe('UpdateUserOperationExecutor', () => {
       const executor = getExecutor();
       const setPropertyOp = new SetPropertyOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
+        ONESIGNAL_ID,
         'tags',
         { tagA: 'valueA', tagB: 'valueB' },
       );
@@ -119,12 +115,9 @@ describe('UpdateUserOperationExecutor', () => {
   describe('Error Handling', () => {
     test('should handle network errors', async () => {
       const executor = getExecutor();
-      const setTagOp = new SetPropertyOperation(
-        APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        'tags',
-        { test_tag: 'test_value' },
-      );
+      const setTagOp = new SetPropertyOperation(APP_ID, ONESIGNAL_ID, 'tags', {
+        test_tag: 'test_value',
+      });
 
       // Retryable error
       setUpdateUserError({ status: 429, retryAfter: 10 });
@@ -159,18 +152,18 @@ describe('UpdateUserOperationExecutor', () => {
           {
             name: 'login-user',
             appId: APP_ID,
-            onesignalId: DUMMY_ONESIGNAL_ID,
+            onesignalId: ONESIGNAL_ID,
           },
           {
             name: 'refresh-user',
             appId: APP_ID,
-            onesignalId: DUMMY_ONESIGNAL_ID,
+            onesignalId: ONESIGNAL_ID,
           },
         ],
       });
 
       // Missing error in retry window
-      newRecordsState.add(DUMMY_ONESIGNAL_ID);
+      newRecordsState.add(ONESIGNAL_ID);
       setUpdateUserError({ status: 404, retryAfter: 20 });
       const res5 = await executor.execute([setTagOp]);
       expect(res5).toMatchObject({

@@ -1,19 +1,20 @@
-import { DEVICE_OS, DUMMY_EXTERNAL_ID } from '__test__/constants';
+import { DEVICE_OS, EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
   createUserFn,
   setCreateUserResponse,
   setGetUserResponse,
+  setUpdateSubscriptionResponse,
+  updateSubscriptionFn,
 } from '__test__/support/helpers/requests';
+import { updateIdentityModel } from '__test__/support/helpers/setup';
 import MockNotification from '__test__/support/mocks/MockNotification';
 import {
   getSubscriptionFn,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
-import { ModelChangeTags } from 'src/core/types/models';
 import { setPushToken } from '../database/subscription';
-import { NotificationPermission } from '../models/NotificationPermission';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
 import {
@@ -32,12 +33,12 @@ const getRawSubscription = (): RawPushSubscription => {
 
 describe('SubscriptionManager', () => {
   beforeEach(async () => {
-    vi.resetModules();
     await TestEnvironment.initialize();
   });
 
   describe('updatePushSubscriptionModelWithRawSubscription', () => {
     test('should create the push subscription model if it does not exist', async () => {
+      setGetUserResponse();
       setCreateUserResponse();
       const rawSubscription = getRawSubscription();
 
@@ -106,22 +107,14 @@ describe('SubscriptionManager', () => {
       });
 
       // create push sub with no id
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
-      identityModel.setProperty(
-        'onesignal_id',
-        IDManager.createLocalId(),
-        ModelChangeTags.HYDRATE,
-      );
-      identityModel.setProperty(
-        'external_id',
-        'some-external-id',
-        ModelChangeTags.HYDRATE,
-      );
+      const onesignalId = IDManager.createLocalId();
+      updateIdentityModel('onesignal_id', onesignalId);
+      updateIdentityModel('external_id', 'some-external-id');
 
       await setupSubModelStore({
         id: IDManager.createLocalId(),
         token: rawSubscription.w3cEndpoint?.toString(),
-        onesignalId: identityModel.onesignalId,
+        onesignalId,
       });
 
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
@@ -155,17 +148,18 @@ describe('SubscriptionManager', () => {
     test('should update the push subscription model if it already exists', async () => {
       setCreateUserResponse();
       setGetUserResponse();
+      setUpdateSubscriptionResponse({ subscriptionId: '123' });
       const rawSubscription = getRawSubscription();
 
       await setPushToken(rawSubscription.w3cEndpoint?.toString());
 
-      const pushModel = await setupSubModelStore({
+      await setupSubModelStore({
         id: '123',
         token: rawSubscription.w3cEndpoint?.toString(),
-        onesignalId: DUMMY_EXTERNAL_ID,
+        onesignalId: EXTERNAL_ID,
+        web_auth: 'old-web-auth',
+        web_p256: 'old-web-p256',
       });
-      pushModel.web_auth = 'old-web-auth';
-      pushModel.web_p256 = 'old-web-p256';
 
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
@@ -176,6 +170,8 @@ describe('SubscriptionManager', () => {
       );
       expect(updatedPushModel.web_auth).toBe(rawSubscription.w3cAuth);
       expect(updatedPushModel.web_p256).toBe(rawSubscription.w3cP256dh);
+
+      await vi.waitUntil(() => updateSubscriptionFn.mock.calls.length > 0);
     });
   });
 });
@@ -184,21 +180,21 @@ describe('SubscriptionManagerPage', () => {
   test('default', async () => {
     MockNotification.permission = 'default';
     expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
-      NotificationPermission.Default,
+      'default',
     );
   });
 
   test('denied', async () => {
     MockNotification.permission = 'denied';
     expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
-      NotificationPermission.Denied,
+      'denied',
     );
   });
 
   test('granted', async () => {
     MockNotification.permission = 'granted';
     expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
-      NotificationPermission.Granted,
+      'granted',
     );
   });
 });

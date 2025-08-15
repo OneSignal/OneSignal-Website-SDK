@@ -1,4 +1,6 @@
-import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '__test__/constants';
+import { ONESIGNAL_ID, PUSH_TOKEN } from '__test__/constants';
+import { setAddAliasResponse } from '__test__/support/helpers/requests';
+import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -9,6 +11,7 @@ import User from './User';
 import UserNamespace from './UserNamespace';
 
 const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+vi.useFakeTimers();
 
 describe('UserNamespace', () => {
   let userNamespace: UserNamespace;
@@ -21,29 +24,31 @@ describe('UserNamespace', () => {
 
   describe('User Identity Properties', () => {
     test('should return correct onesignalId', () => {
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
       userNamespace = new UserNamespace(true);
 
-      identityModel.setProperty('onesignal_id', undefined);
+      updateIdentityModel('onesignal_id', undefined);
       expect(userNamespace.onesignalId).toBe(undefined);
 
-      identityModel.onesignalId = IDManager.createLocalId();
+      updateIdentityModel('onesignal_id', IDManager.createLocalId());
       expect(userNamespace.onesignalId).toBe(undefined);
 
-      identityModel.onesignalId = DUMMY_ONESIGNAL_ID;
-      expect(userNamespace.onesignalId).toBe(DUMMY_ONESIGNAL_ID);
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      expect(userNamespace.onesignalId).toBe(ONESIGNAL_ID);
     });
 
     test('should return correct externalId', () => {
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
       const externalId = 'some-external-id';
-      identityModel.setProperty('external_id', externalId);
+      updateIdentityModel('external_id', externalId);
 
       expect(userNamespace.externalId).toBe(externalId);
     });
   });
 
   describe('Alias Management', () => {
+    beforeEach(() => {
+      setAddAliasResponse();
+    });
+
     test('can add a single alias', () => {
       const label = 'some-label';
       const id = 'some-id';
@@ -371,7 +376,7 @@ describe('UserNamespace', () => {
       const mockListener = vi.fn();
       const event: UserChangeEvent = {
         current: {
-          onesignalId: DUMMY_ONESIGNAL_ID,
+          onesignalId: ONESIGNAL_ID,
           externalId: undefined,
         },
       };
@@ -386,7 +391,7 @@ describe('UserNamespace', () => {
       const mockListener = vi.fn();
       const event: UserChangeEvent = {
         current: {
-          onesignalId: DUMMY_ONESIGNAL_ID,
+          onesignalId: ONESIGNAL_ID,
           externalId: undefined,
         },
       };
@@ -416,7 +421,7 @@ describe('UserNamespace', () => {
     test('should use provided subscription and permission when initializing', () => {
       const subscription = new Subscription();
       subscription.deviceId = 'device-123';
-      subscription.subscriptionToken = DUMMY_PUSH_TOKEN;
+      subscription.subscriptionToken = PUSH_TOKEN;
       subscription.optedOut = false;
       subscription.createdAt = Date.now();
 
@@ -436,6 +441,7 @@ describe('UserNamespace', () => {
         test_property: 'test_value',
       };
 
+      updateIdentityModel('onesignal_id', undefined);
       userNamespace.trackEvent(name, {});
       expect(errorSpy).toHaveBeenCalledWith('User must be logged in first.');
       errorSpy.mockClear();
@@ -443,7 +449,7 @@ describe('UserNamespace', () => {
       const identityModel = OneSignal.coreDirector.getIdentityModel();
       identityModel.setProperty(
         'onesignal_id',
-        DUMMY_ONESIGNAL_ID,
+        ONESIGNAL_ID,
         ModelChangeTags.NO_PROPOGATE,
       );
 

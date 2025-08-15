@@ -1,13 +1,13 @@
 import {
   APP_ID,
   DEVICE_OS,
-  DUMMY_EXTERNAL_ID,
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_ONESIGNAL_ID_2,
-  DUMMY_PUSH_TOKEN,
-  DUMMY_PUSH_TOKEN_2,
-  DUMMY_SUBSCRIPTION_ID,
-  DUMMY_SUBSCRIPTION_ID_2,
+  EXTERNAL_ID,
+  ONESIGNAL_ID,
+  ONESIGNAL_ID_2,
+  PUSH_TOKEN,
+  PUSH_TOKEN_2,
+  SUB_ID,
+  SUB_ID_2,
 } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
@@ -18,7 +18,10 @@ import {
   setCreateUserError,
   setCreateUserResponse,
 } from '__test__/support/helpers/requests';
-import { clearAll } from 'src/shared/database/client';
+import {
+  updateIdentityModel,
+  updatePropertiesModel,
+} from '__test__/support/helpers/setup';
 import { getPushToken, setPushToken } from 'src/shared/database/subscription';
 import {
   NotificationType,
@@ -56,7 +59,6 @@ describe('LoginUserOperationExecutor', () => {
   });
 
   beforeEach(async () => {
-    await clearAll();
     identityModelStore = OneSignal.coreDirector.identityModelStore;
     propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
     subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
@@ -102,7 +104,7 @@ describe('LoginUserOperationExecutor', () => {
   describe('create user', () => {
     beforeEach(() => {
       setCreateUserResponse({
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
       });
     });
 
@@ -110,12 +112,12 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       // login op with create subscription op and no externalId
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
 
       // login op with subscription op and random operation
       const transferSubOp = new TransferSubscriptionOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
+        ONESIGNAL_ID,
         mockSubscriptionOpInfo.subscriptionId,
       );
       const someOp = new SomeOperation();
@@ -129,7 +131,7 @@ describe('LoginUserOperationExecutor', () => {
     test('can create user if there is no onesignal id or externalId', async () => {
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2);
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID_2);
       const createSubOp = new CreateSubscriptionOperation(
         mockSubscriptionOpInfo,
       );
@@ -142,7 +144,7 @@ describe('LoginUserOperationExecutor', () => {
         retryAfterSeconds: undefined,
         operations: undefined,
         idTranslations: {
-          [DUMMY_ONESIGNAL_ID_2]: DUMMY_ONESIGNAL_ID,
+          [ONESIGNAL_ID_2]: ONESIGNAL_ID,
         },
       });
     });
@@ -150,46 +152,33 @@ describe('LoginUserOperationExecutor', () => {
     test('can create user with existing subscription and follow up operations', async () => {
       const someSubscription = {
         app_id: APP_ID,
-        id: DUMMY_SUBSCRIPTION_ID_2,
+        id: SUB_ID_2,
         type: SubscriptionType.ChromePush,
-        token: DUMMY_PUSH_TOKEN,
+        token: PUSH_TOKEN,
       };
       setCreateUserResponse({
-        onesignalId: DUMMY_ONESIGNAL_ID_2,
+        onesignalId: ONESIGNAL_ID_2,
         subscriptions: [someSubscription],
       });
 
       // have identity model, config, properties model have the same onesignalId to check
       // that their properties are updated
-      identityModelStore.model.setProperty(
-        IdentityConstants.ONESIGNAL_ID,
-        DUMMY_ONESIGNAL_ID,
-        ModelChangeTags.HYDRATE,
-      );
-      propertiesModelStore.model.setProperty(
-        'onesignalId',
-        DUMMY_ONESIGNAL_ID,
-        ModelChangeTags.HYDRATE,
-      );
-      await setPushToken(DUMMY_PUSH_TOKEN);
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
+      await setPushToken(PUSH_TOKEN);
 
       const subscriptionModel = new SubscriptionModel();
-      subscriptionModel.setProperty(
-        'id',
-        DUMMY_SUBSCRIPTION_ID,
-        ModelChangeTags.HYDRATE,
+      subscriptionModel.setProperty('id', SUB_ID, ModelChangeTags.NO_PROPOGATE);
+      subscriptionModelStore.add(
+        subscriptionModel,
+        ModelChangeTags.NO_PROPOGATE,
       );
-      subscriptionModelStore.add(subscriptionModel, ModelChangeTags.HYDRATE);
 
       // perform operations with old onesignal id
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-      loginOp.setProperty(
-        'externalId',
-        DUMMY_EXTERNAL_ID,
-        ModelChangeTags.HYDRATE,
-      );
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp.setProperty('externalId', EXTERNAL_ID);
 
       const createSubOp = new CreateSubscriptionOperation(
         mockSubscriptionOpInfo,
@@ -201,25 +190,23 @@ describe('LoginUserOperationExecutor', () => {
       // should update model properties
       expect(
         identityModelStore.model.getProperty(IdentityConstants.ONESIGNAL_ID),
-      ).toEqual(DUMMY_ONESIGNAL_ID_2);
+      ).toEqual(ONESIGNAL_ID_2);
       expect(propertiesModelStore.model.getProperty('onesignalId')).toEqual(
-        DUMMY_ONESIGNAL_ID_2,
+        ONESIGNAL_ID_2,
       );
-      expect(await getPushToken()).toEqual(DUMMY_PUSH_TOKEN);
-      expect(subscriptionModel.getProperty('id')).toEqual(
-        DUMMY_SUBSCRIPTION_ID_2,
-      );
+      expect(await getPushToken()).toEqual(PUSH_TOKEN);
+      expect(subscriptionModel.getProperty('id')).toEqual(SUB_ID_2);
 
       // should have a refresh user operation
-      const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2);
+      const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
       refreshOp.modelId = res.operations![0].modelId;
       expect(res).toEqual({
         result: ExecutionResult.SUCCESS,
         retryAfterSeconds: undefined,
         operations: [refreshOp],
         idTranslations: {
-          [DUMMY_ONESIGNAL_ID]: DUMMY_ONESIGNAL_ID_2,
-          [DUMMY_SUBSCRIPTION_ID]: DUMMY_SUBSCRIPTION_ID_2,
+          [ONESIGNAL_ID]: ONESIGNAL_ID_2,
+          [SUB_ID]: SUB_ID_2,
         },
       });
     });
@@ -227,7 +214,7 @@ describe('LoginUserOperationExecutor', () => {
     test('should handle network errors', async () => {
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
       const createSubOp = new CreateSubscriptionOperation(
         mockSubscriptionOpInfo,
       );
@@ -262,25 +249,17 @@ describe('LoginUserOperationExecutor', () => {
 
   describe('login user', () => {
     test('can add/set alias when logging in a user with existing onesignal id', async () => {
-      identityModelStore.model.setProperty(
-        IdentityConstants.ONESIGNAL_ID,
-        DUMMY_ONESIGNAL_ID,
-        ModelChangeTags.HYDRATE,
-      );
-      propertiesModelStore.model.setProperty(
-        'onesignalId',
-        DUMMY_ONESIGNAL_ID,
-        ModelChangeTags.HYDRATE,
-      );
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
 
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-      loginOp.setProperty('externalId', DUMMY_EXTERNAL_ID);
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp.setProperty('externalId', EXTERNAL_ID);
 
       // different id for testing id translations
-      loginOp.setProperty('existingOnesignalId', DUMMY_ONESIGNAL_ID_2);
-      setAddAliasResponse({ onesignalId: DUMMY_ONESIGNAL_ID_2 });
+      loginOp.setProperty('existingOnesignalId', ONESIGNAL_ID_2);
+      setAddAliasResponse({ onesignalId: ONESIGNAL_ID_2 });
 
       const ops = [loginOp];
       const res = await executor.execute(ops);
@@ -288,15 +267,15 @@ describe('LoginUserOperationExecutor', () => {
       // should update model properties
       expect(
         identityModelStore.model.getProperty(IdentityConstants.ONESIGNAL_ID),
-      ).toEqual(DUMMY_ONESIGNAL_ID_2);
+      ).toEqual(ONESIGNAL_ID_2);
       expect(propertiesModelStore.model.getProperty('onesignalId')).toEqual(
-        DUMMY_ONESIGNAL_ID_2,
+        ONESIGNAL_ID_2,
       );
 
       expect(res).toEqual({
         result: ExecutionResult.SUCCESS_STARTING_ONLY,
         idTranslations: {
-          [DUMMY_ONESIGNAL_ID]: DUMMY_ONESIGNAL_ID_2,
+          [ONESIGNAL_ID]: ONESIGNAL_ID_2,
         },
       });
     });
@@ -304,9 +283,9 @@ describe('LoginUserOperationExecutor', () => {
     test('can handle network errors', async () => {
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-      loginOp.setProperty('externalId', DUMMY_EXTERNAL_ID);
-      loginOp.setProperty('existingOnesignalId', DUMMY_ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp.setProperty('externalId', EXTERNAL_ID);
+      loginOp.setProperty('existingOnesignalId', ONESIGNAL_ID);
 
       // Conflict error - should create user
       setAddAliasError({ status: 409 });
@@ -318,7 +297,7 @@ describe('LoginUserOperationExecutor', () => {
       expect(res).toMatchObject({
         result: ExecutionResult.SUCCESS,
         idTranslations: {
-          [DUMMY_ONESIGNAL_ID]: '123',
+          [ONESIGNAL_ID]: '123',
         },
       });
 
@@ -332,7 +311,7 @@ describe('LoginUserOperationExecutor', () => {
       expect(res2).toMatchObject({
         result: ExecutionResult.SUCCESS,
         idTranslations: {
-          [DUMMY_ONESIGNAL_ID]: '456',
+          [ONESIGNAL_ID]: '456',
         },
       });
 
@@ -349,12 +328,12 @@ describe('LoginUserOperationExecutor', () => {
   describe('create subscriptions', () => {
     test('can create a subscriptions', async () => {
       setCreateUserResponse({
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-      loginOp.setProperty('externalId', DUMMY_EXTERNAL_ID);
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp.setProperty('externalId', EXTERNAL_ID);
 
       const createSubOp = new CreateSubscriptionOperation(
         mockSubscriptionOpInfo,
@@ -365,7 +344,7 @@ describe('LoginUserOperationExecutor', () => {
 
       expect(createUserFn).toHaveBeenCalledWith({
         identity: {
-          external_id: DUMMY_EXTERNAL_ID,
+          external_id: EXTERNAL_ID,
         },
         properties: {
           language: 'en',
@@ -386,12 +365,12 @@ describe('LoginUserOperationExecutor', () => {
 
     test('can update a subscription', async () => {
       setCreateUserResponse({
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-      loginOp.setProperty('externalId', DUMMY_EXTERNAL_ID);
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp.setProperty('externalId', EXTERNAL_ID);
 
       // needs to be created first for update to do anything
       const createSubOp = new CreateSubscriptionOperation(
@@ -400,7 +379,7 @@ describe('LoginUserOperationExecutor', () => {
       const updates = {
         enabled: false,
         notification_types: NotificationType.NotSubscribed,
-        token: DUMMY_PUSH_TOKEN_2,
+        token: PUSH_TOKEN_2,
       };
       const updateSubOp = new UpdateSubscriptionOperation({
         ...mockSubscriptionOpInfo,
@@ -437,12 +416,12 @@ describe('LoginUserOperationExecutor', () => {
 
     test('can transfer a subscription', async () => {
       setCreateUserResponse({
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-      loginOp.setProperty('externalId', DUMMY_EXTERNAL_ID);
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp.setProperty('externalId', EXTERNAL_ID);
 
       // need to create subscription first to test transfer
       const createSubOp = new CreateSubscriptionOperation(
@@ -450,7 +429,7 @@ describe('LoginUserOperationExecutor', () => {
       );
       const transferSubOp = new TransferSubscriptionOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
+        ONESIGNAL_ID,
         createSubOp.subscriptionId,
       );
 
@@ -464,7 +443,7 @@ describe('LoginUserOperationExecutor', () => {
             {
               device_model: '',
               device_os: DEVICE_OS,
-              id: DUMMY_SUBSCRIPTION_ID,
+              id: SUB_ID,
               sdk: __VERSION__,
               type: mockSubscriptionOpInfo.type,
               token: mockSubscriptionOpInfo.token,
@@ -476,13 +455,13 @@ describe('LoginUserOperationExecutor', () => {
 
     test('can delete a subscription', async () => {
       setCreateUserResponse({
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         subscriptions: [mockSubscriptionOpInfo],
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-      loginOp.setProperty('externalId', DUMMY_EXTERNAL_ID);
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp.setProperty('externalId', EXTERNAL_ID);
 
       // need to create subscription first to test delete
       const createSubOp = new CreateSubscriptionOperation(
@@ -490,7 +469,7 @@ describe('LoginUserOperationExecutor', () => {
       );
       const deleteSubOp = new DeleteSubscriptionOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
+        ONESIGNAL_ID,
         createSubOp.subscriptionId,
       );
 
@@ -506,8 +485,8 @@ describe('LoginUserOperationExecutor', () => {
 
 const mockSubscriptionOpInfo = {
   appId: APP_ID,
-  onesignalId: DUMMY_ONESIGNAL_ID,
-  subscriptionId: DUMMY_SUBSCRIPTION_ID,
-  token: DUMMY_PUSH_TOKEN,
+  onesignalId: ONESIGNAL_ID,
+  subscriptionId: SUB_ID,
+  token: PUSH_TOKEN,
   type: SubscriptionType.ChromePush,
 } satisfies SubscriptionWithAppId;

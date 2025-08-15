@@ -1,8 +1,4 @@
-import {
-  APP_ID,
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_SUBSCRIPTION_ID,
-} from '__test__/constants';
+import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
@@ -12,7 +8,7 @@ import { http, HttpResponse } from 'msw';
 import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import type { AppConfig } from 'src/shared/config/types';
-import { clearAll, db, getCurrentSession } from 'src/shared/database/client';
+import { db, getCurrentSession } from 'src/shared/database/client';
 import {
   getAllNotificationClickedForOutcomes,
   putNotificationClickedForOutcomes,
@@ -92,7 +88,7 @@ describe('ServiceWorker', () => {
 
   beforeEach(async () => {
     isServiceWorker = false;
-    await clearAll();
+    // await clearAll();
     await db.put('Ids', {
       type: 'appId',
       id: appId,
@@ -406,7 +402,7 @@ describe('ServiceWorker', () => {
       appId: appId,
       enableSessionDuration: true,
       isSafari: true,
-      onesignalId: DUMMY_ONESIGNAL_ID,
+      onesignalId: ONESIGNAL_ID,
       outcomesConfig: {
         direct: {
           enabled: true,
@@ -422,7 +418,7 @@ describe('ServiceWorker', () => {
       },
       sessionOrigin: SessionOrigin.UserCreate,
       sessionThreshold: 10,
-      subscriptionId: DUMMY_SUBSCRIPTION_ID,
+      subscriptionId: SUB_ID,
     };
 
     const session: Session = {

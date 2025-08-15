@@ -2,10 +2,10 @@
 import {
   APP_ID,
   DEVICE_OS,
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_PUSH_TOKEN,
-  DUMMY_SUBSCRIPTION_ID,
-  DUMMY_SUBSCRIPTION_ID_2,
+  ONESIGNAL_ID,
+  PUSH_TOKEN,
+  SUB_ID,
+  SUB_ID_2,
 } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
@@ -15,6 +15,7 @@ import {
   setCreateUserResponse,
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
+import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { server } from '__test__/support/mocks/server';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { db } from 'src/shared/database/client';
@@ -25,18 +26,19 @@ import { IDManager } from 'src/shared/managers/IDManager';
 describe('pageSdkInit 2', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize();
+    updateIdentityModel('onesignal_id', undefined);
     server.use(mockServerConfig());
   });
 
   test('can login and addEmail', async () => {
     const email = 'joe@example.com';
     const subModel = await setupSubModelStore({
-      id: DUMMY_SUBSCRIPTION_ID,
-      token: DUMMY_PUSH_TOKEN,
+      id: SUB_ID,
+      token: PUSH_TOKEN,
     });
     const emailSubModel = new SubscriptionModel();
     emailSubModel.mergeData({
-      id: DUMMY_SUBSCRIPTION_ID_2,
+      id: SUB_ID_2,
       token: email,
       type: 'Email',
     });
@@ -50,7 +52,7 @@ describe('pageSdkInit 2', () => {
       ],
     });
     setCreateUserResponse({
-      onesignalId: DUMMY_ONESIGNAL_ID,
+      onesignalId: ONESIGNAL_ID,
     });
     setCreateSubscriptionResponse({
       response: emailSubModel,
@@ -79,8 +81,8 @@ describe('pageSdkInit 2', () => {
 
       expect(subModels).toMatchObject([
         {
-          id: DUMMY_SUBSCRIPTION_ID,
-          onesignalId: DUMMY_ONESIGNAL_ID,
+          id: SUB_ID,
+          onesignalId: ONESIGNAL_ID,
           type: 'ChromePush',
         },
         {
@@ -115,7 +117,7 @@ describe('pageSdkInit 2', () => {
         ...shared,
         id: subModel.id,
         modelId: subModel.modelId,
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         token: subModel.token,
         type: 'ChromePush',
       },

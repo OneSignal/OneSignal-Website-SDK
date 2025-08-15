@@ -1,8 +1,4 @@
-import {
-  APP_ID,
-  DUMMY_EXTERNAL_ID,
-  DUMMY_ONESIGNAL_ID,
-} from '__test__/constants';
+import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID } from '__test__/constants';
 import { deleteDB, type IDBPDatabase } from 'idb';
 import { SubscriptionType } from '../subscriptions/constants';
 import { closeDb, getDb } from './client';
@@ -206,21 +202,21 @@ describe('migrations', () => {
       await db.put('emailSubscriptions', {
         modelId: '1',
         modelName: 'emailSubscriptions',
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         type: SubscriptionType.Email,
         token: 'email-token',
       });
       await db.put('pushSubscriptions', {
         modelId: '2',
         modelName: 'pushSubscriptions',
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         type: SubscriptionType.ChromePush,
         token: 'push-token',
       });
       await db.put('smsSubscriptions', {
         modelId: '3',
         modelName: 'smsSubscriptions',
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         type: SubscriptionType.SMS,
         token: 'sms-token',
       });
@@ -231,7 +227,7 @@ describe('migrations', () => {
         modelId: '1',
         modelName: 'subscriptions',
         externalId: undefined,
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         type: SubscriptionType.Email,
         token: 'email-token',
       },
@@ -239,7 +235,7 @@ describe('migrations', () => {
         modelId: '2',
         modelName: 'subscriptions',
         externalId: undefined,
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         type: SubscriptionType.ChromePush,
         token: 'push-token',
       },
@@ -247,7 +243,7 @@ describe('migrations', () => {
         modelId: '3',
         modelName: 'subscriptions',
         externalId: undefined,
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         type: SubscriptionType.SMS,
         token: 'sms-token',
       },
@@ -296,8 +292,8 @@ describe('migrations', () => {
       await db.put('identity', {
         modelId: '4',
         modelName: 'identity',
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        externalId: DUMMY_EXTERNAL_ID,
+        onesignalId: ONESIGNAL_ID,
+        externalId: EXTERNAL_ID,
       });
       await closeDb();
 
@@ -306,15 +302,15 @@ describe('migrations', () => {
       expect(result).toEqual([
         {
           ...migratedSubscriptions.email,
-          externalId: DUMMY_EXTERNAL_ID,
+          externalId: EXTERNAL_ID,
         },
         {
           ...migratedSubscriptions.push,
-          externalId: DUMMY_EXTERNAL_ID,
+          externalId: EXTERNAL_ID,
         },
         {
           ...migratedSubscriptions.sms,
-          externalId: DUMMY_EXTERNAL_ID,
+          externalId: EXTERNAL_ID,
         },
       ]);
     });

@@ -61,9 +61,28 @@ export interface IdentitySchema {
   modelId: string;
   modelName: 'identity';
   onesignal_id?: string;
+  /**
+   * @deprecated - use onesignal_id instead
+   */
   onesignalId?: string;
   external_id?: string;
+  /**
+   * @deprecated - use external_id instead
+   */
   externalId?: string;
+}
+
+export interface PropertiesSchema {
+  modelId: string;
+  modelName: 'properties';
+  country: string;
+  first_active: number;
+  ip: string;
+  language: string;
+  last_active: number;
+  onesignalId: string;
+  tags: Record<string, string>;
+  timezone_id: string;
 }
 
 export interface IndexedDBSchema extends DBSchema {
@@ -157,18 +176,7 @@ export interface IndexedDBSchema extends DBSchema {
 
   properties: {
     key: string;
-    value: {
-      modelId: string;
-      modelName: 'properties';
-      country: string;
-      first_active: number;
-      ip: string;
-      language: string;
-      last_active: number;
-      onesignalId: string;
-      tags: Record<string, string>;
-      timezone_id: string;
-    };
+    value: PropertiesSchema;
   };
 
   subscriptions: {

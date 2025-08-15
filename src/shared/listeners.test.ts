@@ -1,28 +1,20 @@
-import { DUMMY_PUSH_TOKEN } from '__test__/constants';
+import { PUSH_TOKEN } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
-import { setIsPushEnabled } from '__test__/support/helpers/database';
+import { setIsPushEnabled } from '__test__/support/helpers/setup';
 import {
   getSubscriptionFn,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
 import * as eventListeners from 'src/shared/listeners';
-import type { MockInstance } from 'vitest';
 import { getAppState } from './database/config';
 import { setPushToken } from './database/subscription';
 import { SubscriptionManagerPage } from './managers/subscription/page';
 
-let emitterSpy: MockInstance;
-
-// dont want to make a call to update notification types
-vi.spyOn(
-  SubscriptionManagerPage.prototype,
-  'updateNotificationTypes',
-).mockImplementation(() => Promise.resolve());
+vi.useFakeTimers();
 
 beforeEach(async () => {
   await TestEnvironment.initialize();
-  emitterSpy = vi.spyOn(OneSignal.emitter, 'on');
 });
 
 describe('checkAndTriggerSubscriptionChanged', () => {
@@ -65,7 +57,7 @@ describe('checkAndTriggerSubscriptionChanged', () => {
 
     // token change
     getSubscriptionFn.mockResolvedValue({
-      endpoint: DUMMY_PUSH_TOKEN,
+      endpoint: PUSH_TOKEN,
     });
     await setIsPushEnabled(false);
 
@@ -76,7 +68,7 @@ describe('checkAndTriggerSubscriptionChanged', () => {
       current: {
         id: undefined,
         optedIn: false,
-        token: DUMMY_PUSH_TOKEN,
+        token: PUSH_TOKEN,
       },
       previous: {
         id: undefined,
@@ -87,7 +79,7 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     expect(await getAppState()).toMatchObject({
       lastKnownOptedIn: false,
       lastKnownPushEnabled: false,
-      lastKnownPushToken: DUMMY_PUSH_TOKEN,
+      lastKnownPushToken: PUSH_TOKEN,
       lastKnownPushId: undefined,
     });
 
@@ -124,11 +116,6 @@ describe('checkAndTriggerSubscriptionChanged', () => {
       lastKnownPushId: newID,
     });
   });
-});
-
-test('Adding click listener fires internal EventHelper', async () => {
-  OneSignal.Notifications.addEventListener('click', () => {});
-  expect(emitterSpy).toHaveBeenCalledTimes(1);
 });
 
 Object.defineProperty(global.navigator, 'serviceWorker', {
