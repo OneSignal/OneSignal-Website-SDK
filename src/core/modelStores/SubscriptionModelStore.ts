@@ -3,7 +3,7 @@ import {
   ModelChangeTags,
   type ModelChangeTagValue,
 } from 'src/core/types/models';
-import { ModelName } from 'src/shared/database/constants';
+import type { IDBStoreName } from 'src/shared/database/types';
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 
@@ -11,7 +11,10 @@ import { SubscriptionModel } from '../models/SubscriptionModel';
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModelStore.kt
 export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> {
   constructor() {
-    super(() => new SubscriptionModel(), ModelName.Subscriptions);
+    super(
+      () => new SubscriptionModel(),
+      'subscriptions' satisfies IDBStoreName,
+    );
   }
 
   getBySubscriptionId(subscriptionId: string): SubscriptionModel | undefined {

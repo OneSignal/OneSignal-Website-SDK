@@ -1,6 +1,6 @@
 import { SimpleModelStore } from 'src/core/modelStores/SimpleModelStore';
 import { SingletonModelStore } from 'src/core/modelStores/SingletonModelStore';
-import { ModelName } from 'src/shared/database/constants';
+import type { IDBStoreName } from 'src/shared/database/types';
 import { PropertiesModel } from '../models/PropertiesModel';
 
 // Implements logic similar to Android's SDK's PropertiesModelStore
@@ -8,7 +8,10 @@ import { PropertiesModel } from '../models/PropertiesModel';
 export class PropertiesModelStore extends SingletonModelStore<PropertiesModel> {
   constructor() {
     super(
-      new SimpleModelStore(() => new PropertiesModel(), ModelName.Properties),
+      new SimpleModelStore(
+        () => new PropertiesModel(),
+        'properties' satisfies IDBStoreName,
+      ),
     );
   }
 }

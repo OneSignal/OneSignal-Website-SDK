@@ -1,5 +1,4 @@
 import type { IDBPDatabase, IDBPTransaction } from 'idb';
-import { LegacyModelName, ModelName } from './constants';
 import type { IndexedDBSchema } from './types';
 
 type Transaction = IDBPTransaction<IndexedDBSchema, any[], 'versionchange'>;
@@ -27,7 +26,7 @@ export async function migrateOutcomesNotificationClickedTableForV5(
   while (cursor) {
     const oldValue = cursor.value;
 
-    transaction.objectStore(newTableName).put({
+    await transaction.objectStore(newTableName).put({
       // notification.id was possible from 160000.beta4 to 160000.beta8
       notificationId: oldValue.notificationId || oldValue.notification.id,
       appId: oldValue.appId,
@@ -63,24 +62,26 @@ export async function migrateModelNameSubscriptionsTableForV6(
   db: IDBPDatabase<IndexedDBSchema>,
   transaction: Transaction,
 ) {
-  const newTableName = ModelName.Subscriptions;
+  const newTableName = 'subscriptions';
   db.createObjectStore(newTableName, { keyPath: 'modelId' });
 
   let currentExternalId: string | undefined;
-  const identityData = await transaction
-    .objectStore(ModelName.Identity)
-    .getAll();
+  const identityData = await transaction.objectStore('identity').getAll();
 
   if (identityData.length > 0) {
     currentExternalId = identityData[0].externalId;
   }
 
-  for (const legacyModelName of Object.values(LegacyModelName)) {
+  for (const legacyModelName of [
+    'emailSubscriptions',
+    'pushSubscriptions',
+    'smsSubscriptions',
+  ] as const) {
     let cursor = await transaction.objectStore(legacyModelName).openCursor();
     while (cursor) {
-      transaction.objectStore(newTableName).put({
+      await transaction.objectStore(newTableName).put({
         ...cursor.value,
-        modelName: ModelName.Subscriptions,
+        modelName: 'subscriptions',
         externalId: currentExternalId,
       });
       cursor = await cursor.continue();

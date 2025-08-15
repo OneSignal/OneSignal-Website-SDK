@@ -1,4 +1,4 @@
-import { db } from '../database/client';
+import { db, getOptionsValue } from '../database/client';
 import { getDBAppConfig } from '../database/config';
 import { getSubscription } from '../database/subscription';
 import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
@@ -91,9 +91,9 @@ export default class MainHelper {
   }
 
   static async checkAndTriggerNotificationPermissionChanged() {
-    const previousPermission = (
-      await db.get('Options', 'notificationPermission')
-    )?.value as string | undefined;
+    const previousPermission = await getOptionsValue<string>(
+      'notificationPermission',
+    );
 
     const currentPermission =
       await OneSignal.context.permissionManager.getPermissionStatus();

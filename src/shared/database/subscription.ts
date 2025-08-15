@@ -1,17 +1,15 @@
 import { Subscription } from '../models/Subscription';
-import { db } from './client';
+import { db, getOptionsValue } from './client';
 
 export const getPushId = async () => {
-  return (await db.get('Options', 'lastPushId'))?.value as string | undefined;
+  return await getOptionsValue<string>('lastPushId');
 };
 export const setPushId = async (pushId: string | undefined) => {
   await db.put('Options', { key: 'lastPushId', value: pushId });
 };
 
 export const getPushToken = async () => {
-  return (await db.get('Options', 'lastPushToken'))?.value as
-    | string
-    | undefined;
+  return await getOptionsValue<string>('lastPushToken');
 };
 export const setPushToken = async (pushToken: string | undefined) => {
   await db.put('Options', { key: 'lastPushToken', value: pushToken });
@@ -23,15 +21,13 @@ export const getSubscription = async () => {
   subscription.subscriptionToken = (await db.get('Ids', 'registrationId'))?.id;
 
   // The preferred database key to store our subscription
-  const dbOptedOut = ((await db.get('Options', 'optedOut'))?.value ?? null) as
-    | boolean
-    | null;
+  const dbOptedOut = await getOptionsValue<boolean>('optedOut');
   // For backwards compatibility, we need to read from this if the above is not found
-  const dbNotOptedOut = (await db.get('Options', 'subscription'))?.value;
-  const createdAt = (await db.get('Options', 'subscriptionCreatedAt'))
-    ?.value as number | undefined;
-  const expirationTime = (await db.get('Options', 'subscriptionExpirationTime'))
-    ?.value as number | undefined;
+  const dbNotOptedOut = await getOptionsValue<boolean>('subscription');
+  const createdAt = await getOptionsValue<number>('subscriptionCreatedAt');
+  const expirationTime = await getOptionsValue<number>(
+    'subscriptionExpirationTime',
+  );
 
   if (dbOptedOut != null) {
     subscription.optedOut = dbOptedOut;

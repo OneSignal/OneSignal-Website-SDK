@@ -1,14 +1,9 @@
-import { openDB, type StoreNames } from 'idb';
+import { openDB } from 'idb';
 import Log from '../libraries/Log';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
-import {
-  DATABASE_NAME,
-  LegacyModelName,
-  ModelName,
-  VERSION,
-} from './constants';
-import type { IdKey, IndexedDBSchema, OptionKey } from './types';
+import { DATABASE_NAME, VERSION } from './constants';
+import type { IDBStoreName, IdKey, IndexedDBSchema, OptionKey } from './types';
 import {
   migrateModelNameSubscriptionsTableForV6,
   migrateOutcomesNotificationClickedTableForV5,
@@ -49,15 +44,15 @@ export const getDb = async (version = VERSION) => {
       }
 
       if (newDbVersion >= 4 && oldVersion < 4) {
-        _db.createObjectStore(ModelName.Identity, { keyPath: 'modelId' });
-        _db.createObjectStore(ModelName.Properties, { keyPath: 'modelId' });
-        _db.createObjectStore(LegacyModelName.PushSubscriptions, {
+        _db.createObjectStore('identity', { keyPath: 'modelId' });
+        _db.createObjectStore('properties', { keyPath: 'modelId' });
+        _db.createObjectStore('pushSubscriptions', {
           keyPath: 'modelId',
         });
-        _db.createObjectStore(LegacyModelName.SmsSubscriptions, {
+        _db.createObjectStore('smsSubscriptions', {
           keyPath: 'modelId',
         });
-        _db.createObjectStore(LegacyModelName.EmailSubscriptions, {
+        _db.createObjectStore('emailSubscriptions', {
           keyPath: 'modelId',
         });
       }
@@ -72,7 +67,7 @@ export const getDb = async (version = VERSION) => {
       }
 
       if (newDbVersion >= 7 && oldVersion < 7) {
-        _db.createObjectStore(ModelName.Operations, { keyPath: 'modelId' });
+        _db.createObjectStore('operations', { keyPath: 'modelId' });
       }
 
       // TODO: next version delete NotificationOpened table
@@ -88,38 +83,36 @@ export const getDb = async (version = VERSION) => {
   return dbInstance;
 };
 
-type StoreName = StoreNames<IndexedDBSchema>;
-
 // Export db object with the same API as before
 export const db = {
-  async get<K extends StoreName>(
+  async get<K extends IDBStoreName>(
     storeName: K,
     key: IndexedDBSchema[K]['key'],
   ): Promise<IndexedDBSchema[K]['value'] | undefined> {
     const _db = await getDb();
     return _db.get(storeName, key);
   },
-  async getAll<K extends StoreName>(
+  async getAll<K extends IDBStoreName>(
     storeName: K,
   ): Promise<IndexedDBSchema[K]['value'][]> {
     const _db = await getDb();
     return _db.getAll(storeName);
   },
-  async put<K extends StoreName>(
+  async put<K extends IDBStoreName>(
     storeName: K,
     value: IndexedDBSchema[K]['value'],
   ) {
     const _db = await getDb();
     return _db.put(storeName, value);
   },
-  async delete<K extends StoreName>(
+  async delete<K extends IDBStoreName>(
     storeName: K,
     key: IndexedDBSchema[K]['key'],
   ) {
     const _db = await getDb();
     return _db.delete(storeName, key);
   },
-  async clear<K extends StoreName>(storeName: K) {
+  async clear<K extends IDBStoreName>(storeName: K) {
     const _db = await getDb();
     return _db.clear(storeName);
   },

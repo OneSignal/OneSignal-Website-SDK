@@ -42,7 +42,6 @@ import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
-import { ModelName } from 'src/shared/database/constants';
 import type {
   IndexedDBSchema,
   SubscriptionSchema,
@@ -70,7 +69,7 @@ const getIdentityItem = async (
 const getPropertiesItem = async () => (await db.getAll('properties'))?.[0];
 
 const setupIdentity = async () => {
-  await db.put(ModelName.Identity, {
+  await db.put('identity', {
     modelId: '123',
     modelName: 'identity',
     onesignal_id: DUMMY_ONESIGNAL_ID,

@@ -18,7 +18,6 @@ import {
 import { server } from '__test__/support/mocks/server';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { db } from 'src/shared/database/client';
-import { ModelName } from 'src/shared/database/constants';
 import type { SubscriptionSchema } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -97,7 +96,7 @@ describe('pageSdkInit 2', () => {
     // wait user subscriptions to be refresh/replaced
     let subscriptions: SubscriptionSchema[] = [];
     await vi.waitUntil(async () => {
-      subscriptions = await db.getAll(ModelName.Subscriptions);
+      subscriptions = await db.getAll('subscriptions');
       return subscriptions.length === 2;
     });
     subscriptions.sort((a, b) => a.type.localeCompare(b.type));

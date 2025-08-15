@@ -5,7 +5,6 @@ import {
 } from '__test__/constants';
 import { fakeWaitForOperations } from '__test__/support/helpers/executors';
 import { db } from 'src/shared/database/client';
-import { ModelName } from 'src/shared/database/constants';
 import type { IndexedDBSchema } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
@@ -49,7 +48,7 @@ describe('OperationRepo', () => {
   ];
 
   beforeEach(async () => {
-    await db.clear(ModelName.Operations);
+    await db.clear('operations');
 
     mockOperationModelStore = new OperationModelStore();
     opRepo = new OperationRepo(
@@ -64,7 +63,7 @@ describe('OperationRepo', () => {
     // for tests that call start on the op repo
     if (!opRepo.isPaused) {
       await vi.waitUntil(async () => {
-        const dbOps = await db.getAll(ModelName.Operations);
+        const dbOps = await db.getAll('operations');
         return dbOps.length === 0;
       });
     }
@@ -130,7 +129,7 @@ describe('OperationRepo', () => {
       // persist happens in the background, so we need to wait for it to complete
       let ops: IndexedDBSchema['operations']['value'][] = [];
       await vi.waitUntil(async () => {
-        ops = await db.getAll(ModelName.Operations);
+        ops = await db.getAll('operations');
         return ops.length === 2;
       });
 
@@ -141,12 +140,12 @@ describe('OperationRepo', () => {
         {
           ...op2.toJSON(),
           modelId: op2.modelId,
-          modelName: ModelName.Operations,
+          modelName: 'operations',
         },
         {
           ...op1.toJSON(),
           modelId: op1.modelId,
-          modelName: ModelName.Operations,
+          modelName: 'operations',
         },
       ]);
     });
@@ -154,30 +153,30 @@ describe('OperationRepo', () => {
     test('operations can be loaded from IndexedDb on start', async () => {
       const op = new SetAliasOperation();
       const op2 = new CreateSubscriptionOperation();
-      await db.put(ModelName.Operations, {
+      await db.put('operations', {
         ...op.toJSON(),
         modelId: '1',
-        modelName: ModelName.Operations,
+        modelName: 'operations',
       });
-      await db.put(ModelName.Operations, {
+      await db.put('operations', {
         ...op2.toJSON(),
         modelId: '2',
-        modelName: ModelName.Operations,
+        modelName: 'operations',
       });
 
       await opRepo.loadSavedOperations();
 
-      const list = await db.getAll(ModelName.Operations);
+      const list = await db.getAll('operations');
       expect(list).toEqual([
         {
           ...op.toJSON(),
           modelId: '1',
-          modelName: ModelName.Operations,
+          modelName: 'operations',
         },
         {
           ...op2.toJSON(),
           modelId: '2',
-          modelName: ModelName.Operations,
+          modelName: 'operations',
         },
       ]);
     });

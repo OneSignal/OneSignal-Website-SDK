@@ -5,7 +5,6 @@ import {
   type IStartableService,
 } from 'src/core/types/operation';
 import { db } from 'src/shared/database/client';
-import { ModelName } from 'src/shared/database/constants';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
@@ -18,7 +17,7 @@ import {
 import { type NewRecordsState } from './NewRecordsState';
 
 const removeOpFromDB = (op: Operation) => {
-  db.delete(ModelName.Operations, op.modelId);
+  db.delete('operations', op.modelId);
 };
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem

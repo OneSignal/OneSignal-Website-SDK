@@ -6,7 +6,7 @@ import {
 import { deleteDB, type IDBPDatabase } from 'idb';
 import { SubscriptionType } from '../subscriptions/constants';
 import { closeDb, getDb } from './client';
-import { DATABASE_NAME, LegacyModelName, ModelName } from './constants';
+import { DATABASE_NAME } from './constants';
 import type { IndexedDBSchema } from './types';
 
 vi.useRealTimers;
@@ -203,23 +203,23 @@ describe('migrations', () => {
     const populateLegacySubscriptions = async (
       db: IDBPDatabase<IndexedDBSchema>,
     ) => {
-      await db.put(LegacyModelName.EmailSubscriptions, {
+      await db.put('emailSubscriptions', {
         modelId: '1',
-        modelName: LegacyModelName.EmailSubscriptions,
+        modelName: 'emailSubscriptions',
         onesignalId: DUMMY_ONESIGNAL_ID,
         type: SubscriptionType.Email,
         token: 'email-token',
       });
-      await db.put(LegacyModelName.PushSubscriptions, {
+      await db.put('pushSubscriptions', {
         modelId: '2',
-        modelName: LegacyModelName.PushSubscriptions,
+        modelName: 'pushSubscriptions',
         onesignalId: DUMMY_ONESIGNAL_ID,
         type: SubscriptionType.ChromePush,
         token: 'push-token',
       });
-      await db.put(LegacyModelName.SmsSubscriptions, {
+      await db.put('smsSubscriptions', {
         modelId: '3',
-        modelName: LegacyModelName.SmsSubscriptions,
+        modelName: 'smsSubscriptions',
         onesignalId: DUMMY_ONESIGNAL_ID,
         type: SubscriptionType.SMS,
         token: 'sms-token',
@@ -229,7 +229,7 @@ describe('migrations', () => {
     const migratedSubscriptions = {
       email: {
         modelId: '1',
-        modelName: ModelName.Subscriptions,
+        modelName: 'subscriptions',
         externalId: undefined,
         onesignalId: DUMMY_ONESIGNAL_ID,
         type: SubscriptionType.Email,
@@ -237,7 +237,7 @@ describe('migrations', () => {
       },
       push: {
         modelId: '2',
-        modelName: ModelName.Subscriptions,
+        modelName: 'subscriptions',
         externalId: undefined,
         onesignalId: DUMMY_ONESIGNAL_ID,
         type: SubscriptionType.ChromePush,
@@ -245,7 +245,7 @@ describe('migrations', () => {
       },
       sms: {
         modelId: '3',
-        modelName: ModelName.Subscriptions,
+        modelName: 'subscriptions',
         externalId: undefined,
         onesignalId: DUMMY_ONESIGNAL_ID,
         type: SubscriptionType.SMS,
@@ -271,7 +271,7 @@ describe('migrations', () => {
       await closeDb();
 
       const db2 = await getDb(6);
-      const result = await db2.getAll(ModelName.Subscriptions);
+      const result = await db2.getAll('subscriptions');
       expect(result).toEqual([
         migratedSubscriptions.email,
         migratedSubscriptions.push,
@@ -280,9 +280,9 @@ describe('migrations', () => {
 
       // old tables should be removed
       const oldTableNames = [
-        LegacyModelName.EmailSubscriptions,
-        LegacyModelName.PushSubscriptions,
-        LegacyModelName.SmsSubscriptions,
+        'emailSubscriptions',
+        'pushSubscriptions',
+        'smsSubscriptions',
       ];
       for (const tableName of oldTableNames) {
         expect(db2.objectStoreNames).not.toContain(tableName);
@@ -293,16 +293,16 @@ describe('migrations', () => {
       const db = await getDb(5);
       await populateLegacySubscriptions(db);
       // user is logged in
-      await db.put(ModelName.Identity, {
+      await db.put('identity', {
         modelId: '4',
-        modelName: ModelName.Identity,
+        modelName: 'identity',
         onesignalId: DUMMY_ONESIGNAL_ID,
         externalId: DUMMY_EXTERNAL_ID,
       });
       await closeDb();
 
       const db2 = await getDb(6);
-      const result = await db2.getAll(ModelName.Subscriptions);
+      const result = await db2.getAll('subscriptions');
       expect(result).toEqual([
         {
           ...migratedSubscriptions.email,

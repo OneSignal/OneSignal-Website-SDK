@@ -1,4 +1,4 @@
-import { db } from 'src/shared/database/client';
+import { db, getOptionsValue } from 'src/shared/database/client';
 import {
   DismissCountKey,
   DismissPrompt,
@@ -27,7 +27,7 @@ export class DismissHelper {
     const countKey = DISMISS_TYPE_COUNT_MAP[type];
     const timeKey = DISMISS_TYPE_TIME_MAP[type];
 
-    let dismissCount = (await db.get('Options', countKey))?.value as number;
+    let dismissCount = await getOptionsValue<number>(countKey);
     if (!dismissCount) {
       dismissCount = 0;
     }

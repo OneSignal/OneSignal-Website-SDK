@@ -1,5 +1,4 @@
 import { db } from 'src/shared/database/client';
-import { ModelName } from 'src/shared/database/constants';
 
 /**
  * WARNING: This is a temp workaround for the ServiceWorker context only!
@@ -9,7 +8,7 @@ import { ModelName } from 'src/shared/database/constants';
 export async function getPushSubscriptionIdByToken(
   token: string,
 ): Promise<string | undefined> {
-  const pushSubscriptions = await db.getAll(ModelName.Subscriptions);
+  const pushSubscriptions = await db.getAll('subscriptions');
   for (const pushSubscription of pushSubscriptions) {
     if (pushSubscription['token'] === token) {
       return pushSubscription['id'] as string;

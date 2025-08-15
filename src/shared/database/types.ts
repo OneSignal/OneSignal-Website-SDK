@@ -1,4 +1,4 @@
-import type { DBSchema } from 'idb';
+import type { DBSchema, StoreNames } from 'idb';
 import type {
   NotificationClickedForOutcomesSchema,
   NotificationClickForOpenHandlingSchema,
@@ -187,3 +187,5 @@ export interface IndexedDBSchema extends DBSchema {
     };
   };
 }
+
+export type IDBStoreName = StoreNames<IndexedDBSchema>;
