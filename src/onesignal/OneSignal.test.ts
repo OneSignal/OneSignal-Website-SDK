@@ -41,34 +41,35 @@ import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
+import { db } from 'src/shared/database/client';
+import type {
+  IndexedDBSchema,
+  SubscriptionSchema,
+} from 'src/shared/database/types';
 import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import Database, {
-  type IdentityItem,
-  type PropertiesItem,
-  type SubscriptionItem,
-} from 'src/shared/services/Database';
 
 const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
+
+type IdentityItem = IndexedDBSchema['identity']['value'];
 
 const getIdentityItem = async (
   condition: (identity: IdentityItem) => boolean = () => true,
 ) => {
   let identity: IdentityItem | undefined;
   await vi.waitUntil(async () => {
-    identity = (await Database.get<IdentityItem[]>('identity'))?.[0];
+    identity = (await db.getAll('identity'))?.[0];
     return identity && condition(identity);
   });
   return identity;
 };
 
-const getPropertiesItem = async () =>
-  (await Database.get<PropertiesItem[]>('properties'))[0];
+const getPropertiesItem = async () => (await db.getAll('properties'))?.[0];
 
 const setupIdentity = async () => {
-  await Database.put('identity', {
+  await db.put('identity', {
     modelId: '123',
     modelName: 'identity',
     onesignal_id: DUMMY_ONESIGNAL_ID,
@@ -105,8 +106,7 @@ describe('OneSignal', () => {
 
   afterEach(async () => {
     window.OneSignal.coreDirector.operationRepo.queue = [];
-    await Database.remove('operations');
-    await waitForOperations();
+    await db.clear('operations');
     window.OneSignal.coreDirector.subscriptionModelStore.replaceAll(
       [],
       ModelChangeTags.HYDRATE,
@@ -197,7 +197,7 @@ describe('OneSignal', () => {
       const email = 'test@test.com';
 
       const getEmailSubscriptionDbItems = async () =>
-        (await Database.get<SubscriptionItem[]>('subscriptions')).filter(
+        (await db.getAll<'subscriptions'>('subscriptions')).filter(
           (s) => s.type === 'Email',
         );
 
@@ -277,7 +277,7 @@ describe('OneSignal', () => {
         let dbSubscriptions = await getEmailSubscriptionDbItems();
         expect(dbSubscriptions).toHaveLength(1);
 
-        await waitForOperations(6);
+        await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 1);
         window.OneSignal.User.removeEmail(email);
 
         await vi.waitUntil(() => deleteSubscriptionFn.mock.calls.length === 1);
@@ -289,10 +289,10 @@ describe('OneSignal', () => {
     describe('sms', () => {
       const sms = '+1234567890';
       const getSmsSubscriptionDbItems = async (length: number) => {
-        let subscriptions: SubscriptionItem[] = [];
+        let subscriptions: SubscriptionSchema[] = [];
         await vi.waitUntil(async () => {
           subscriptions = (
-            await Database.get<SubscriptionItem[]>('subscriptions')
+            await db.getAll<'subscriptions'>('subscriptions')
           ).filter((s) => s.type === 'SMS');
           return subscriptions.length === length;
         });
@@ -571,7 +571,7 @@ describe('OneSignal', () => {
         const sms = '+1234567890';
 
         beforeEach(async () => {
-          await Database.remove('subscriptions', DUMMY_SUBSCRIPTION_ID);
+          await db.delete('subscriptions', DUMMY_SUBSCRIPTION_ID);
 
           setCreateSubscriptionResponse({
             response: {
@@ -648,9 +648,9 @@ describe('OneSignal', () => {
             },
           });
 
-          let dbSubscriptions: SubscriptionItem[] = [];
+          let dbSubscriptions: SubscriptionSchema[] = [];
           await vi.waitUntil(async () => {
-            dbSubscriptions = await Database.get('subscriptions');
+            dbSubscriptions = await db.getAll<'subscriptions'>('subscriptions');
             return dbSubscriptions.length === 3;
           });
 
@@ -679,7 +679,7 @@ describe('OneSignal', () => {
             },
           });
 
-          await Database.remove('subscriptions');
+          await db.clear('subscriptions');
 
           const identityModel = OneSignal.coreDirector.getIdentityModel();
           identityModel.setProperty(
@@ -787,9 +787,11 @@ describe('OneSignal', () => {
 
           await waitForOperations(5);
 
-          const dbSubscriptions = (await Database.get(
-            'subscriptions',
-          )) as any[];
+          let dbSubscriptions: SubscriptionSchema[] = [];
+          await vi.waitUntil(async () => {
+            dbSubscriptions = await db.getAll<'subscriptions'>('subscriptions');
+            return dbSubscriptions.length === 3;
+          });
 
           expect(dbSubscriptions).toHaveLength(3);
 
@@ -817,10 +819,11 @@ describe('OneSignal', () => {
             ModelChangeTags.NO_PROPOGATE,
           );
 
-          const dbSubscriptions = (await Database.get(
-            'subscriptions',
-          )) as any[];
-          expect(dbSubscriptions).toHaveLength(1);
+          let dbSubscriptions: SubscriptionSchema[] = [];
+          await vi.waitUntil(async () => {
+            dbSubscriptions = await db.getAll<'subscriptions'>('subscriptions');
+            return dbSubscriptions.length === 1;
+          });
 
           await window.OneSignal.login(externalId);
 
@@ -933,8 +936,7 @@ describe('OneSignal', () => {
           onesignalId: DUMMY_ONESIGNAL_ID,
         });
 
-        const subscriptions =
-          await Database.get<SubscriptionItem[]>('subscriptions');
+        const subscriptions = await db.getAll('subscriptions');
         expect(subscriptions).toEqual([
           {
             device_model: '',

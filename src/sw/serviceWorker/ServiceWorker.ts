@@ -3,6 +3,20 @@ import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
 import { getServerAppConfig } from 'src/shared/config/app';
 import type { AppConfig } from 'src/shared/config/types';
 import { containsMatch } from 'src/shared/context/helpers';
+import {
+  db,
+  getCurrentSession,
+  getOptionsValue,
+} from 'src/shared/database/client';
+import { getAppState, getDBAppConfig } from 'src/shared/database/config';
+import {
+  putNotificationClickedForOutcomes,
+  putNotificationReceivedForOutcomes,
+} from 'src/shared/database/notifications';
+import {
+  getSubscription,
+  setSubscription,
+} from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
 import { delay } from 'src/shared/helpers/general';
 import {
@@ -23,12 +37,11 @@ import type {
   NotificationClickEventInternal,
   NotificationForegroundWillDisplayEventSerializable,
 } from 'src/shared/notifications/types';
-import Database from 'src/shared/services/Database';
 import { SessionStatus } from 'src/shared/session/constants';
-import type {
-  PageVisibilityRequest,
-  PageVisibilityResponse,
-  UpsertOrDeactivateSessionPayload,
+import {
+  type PageVisibilityRequest,
+  type PageVisibilityResponse,
+  type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
@@ -164,7 +177,7 @@ export class OneSignalServiceWorker {
         return appId;
       }
     }
-    const { appId } = await Database.getAppConfig();
+    const { appId } = await getDBAppConfig();
     return appId;
   }
 
@@ -275,10 +288,7 @@ export class OneSignalServiceWorker {
               const notification = toOSNotification(rawNotification);
 
               notificationReceivedPromises.push(
-                Database.putNotificationReceivedForOutcomes(
-                  appId,
-                  notification,
-                ),
+                putNotificationReceivedForOutcomes(appId, notification),
               );
               // TODO: decide what to do with all the notif received promises
               // Probably should have it's own error handling but not blocking the rest of the execution?
@@ -591,14 +601,14 @@ export class OneSignalServiceWorker {
     );
 
     // Use the default title if one isn't provided
-    const defaultTitle: string = await OneSignalServiceWorker._getTitle();
+    const defaultTitle = await OneSignalServiceWorker._getTitle();
     // Use the default icon if one isn't provided
-    const defaultIcon: string = await Database.get('Options', 'defaultIcon');
+    const defaultIcon = await getOptionsValue<string>('defaultIcon');
     // Get option of whether we should leave notification displaying indefinitely
-    const persistNotification = await Database.get(
-      'Options',
+    const persistNotification = await getOptionsValue<boolean>(
       'persistNotification',
     );
+
     // Get app ID for tag value
     const appId = await OneSignalServiceWorker.getAppId();
 
@@ -751,7 +761,7 @@ export class OneSignalServiceWorker {
     }
 
     const { defaultNotificationUrl: dbDefaultNotificationUrl } =
-      await Database.getAppState();
+      await getAppState();
     if (dbDefaultNotificationUrl) {
       return dbDefaultNotificationUrl;
     }
@@ -777,14 +787,12 @@ export class OneSignalServiceWorker {
     let notificationClickHandlerMatch = 'exact';
     let notificationClickHandlerAction = 'navigate';
 
-    const matchPreference = await Database.get<string>(
-      'Options',
+    const matchPreference = await getOptionsValue<string>(
       'notificationClickHandlerMatch',
     );
     if (matchPreference) notificationClickHandlerMatch = matchPreference;
 
-    const actionPreference = await Database.get<string>(
-      'Options',
+    const actionPreference = await getOptionsValue<string>(
       'notificationClickHandlerAction',
     );
     if (actionPreference) notificationClickHandlerAction = actionPreference;
@@ -810,7 +818,7 @@ export class OneSignalServiceWorker {
     Log.info('NotificationClicked', notificationClickEvent);
     const saveNotificationClickedPromise = (async (notificationClickEvent) => {
       try {
-        const existingSession = await Database.getCurrentSession();
+        const existingSession = await getCurrentSession();
         if (
           existingSession &&
           existingSession.status === SessionStatus.Active
@@ -818,17 +826,14 @@ export class OneSignalServiceWorker {
           return;
         }
 
-        await Database.putNotificationClickedForOutcomes(
-          appId,
-          notificationClickEvent,
-        );
+        await putNotificationClickedForOutcomes(appId, notificationClickEvent);
 
         // upgrade existing session to be directly attributed to the notif
         // if it results in re-focusing the site
         if (existingSession) {
           existingSession.notificationId =
             notificationClickEvent.notification.notificationId;
-          await Database.upsertSession(existingSession);
+          await db.put('Sessions', existingSession);
         }
       } catch (e) {
         Log.error('Failed to save clicked notification.', e);
@@ -910,9 +915,6 @@ export class OneSignalServiceWorker {
             try {
               if (notificationOpensLink) {
                 Log.debug(`Redirecting HTTPS site to (${launchUrl}).`);
-                await Database.putNotificationClickedEventPendingUrlOpening(
-                  notificationClickEvent,
-                );
                 await client.navigate(launchUrl);
               } else {
                 Log.debug('Not navigating because link is special.');
@@ -922,9 +924,6 @@ export class OneSignalServiceWorker {
             }
           } else {
             // If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
-            await Database.putNotificationClickedEventPendingUrlOpening(
-              notificationClickEvent,
-            );
             await OneSignalServiceWorker.openUrl(launchUrl);
           }
         }
@@ -934,9 +933,6 @@ export class OneSignalServiceWorker {
     }
 
     if (notificationOpensLink && !doNotOpenLink) {
-      await Database.putNotificationClickedEventPendingUrlOpening(
-        notificationClickEvent,
-      );
       await OneSignalServiceWorker.openUrl(launchUrl);
     }
     if (saveNotificationClickedPromise) {
@@ -1038,9 +1034,8 @@ export class OneSignalServiceWorker {
     // Get our current device ID
     let deviceIdExists: boolean;
     {
-      let deviceId: string | null | undefined = (
-        await Database.getSubscription()
-      ).deviceId;
+      let deviceId: string | null | undefined = (await getSubscription())
+        .deviceId;
 
       deviceIdExists = !!deviceId;
       if (!deviceIdExists && event.oldSubscription) {
@@ -1052,9 +1047,9 @@ export class OneSignalServiceWorker {
         );
 
         // Store the device ID, so it can be looked up when subscribing
-        const subscription = await Database.getSubscription();
+        const subscription = await getSubscription();
         subscription.deviceId = deviceId;
-        await Database.setSubscription(subscription);
+        await setSubscription(subscription);
       }
       deviceIdExists = !!deviceId;
     }
@@ -1081,8 +1076,8 @@ export class OneSignalServiceWorker {
     const hasNewSubscription = !!rawPushSubscription;
 
     if (!deviceIdExists && !hasNewSubscription) {
-      await Database.remove('Ids', 'userId');
-      await Database.remove('Ids', 'registrationId');
+      await db.delete('Ids', 'userId');
+      await db.delete('Ids', 'registrationId');
     } else {
       /*
         Determine subscription state we should set new record to.
@@ -1116,8 +1111,8 @@ export class OneSignalServiceWorker {
   static _getTitle(): Promise<string> {
     return new Promise((resolve) => {
       Promise.all([
-        Database.get<string>('Options', 'defaultTitle'),
-        Database.get<string>('Options', 'pageTitle'),
+        getOptionsValue<string>('defaultTitle'),
+        getOptionsValue<string>('pageTitle'),
       ]).then(([defaultTitle, pageTitle]) => {
         if (defaultTitle !== null) {
           resolve(defaultTitle);

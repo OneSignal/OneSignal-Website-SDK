@@ -1,11 +1,11 @@
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
+import { db } from 'src/shared/database/client';
 import MainHelper from 'src/shared/helpers/MainHelper';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
 import Log from '../../shared/libraries/Log';
-import Database from '../../shared/services/Database';
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users
@@ -20,7 +20,7 @@ export default class LoginManager {
     token?: string,
   ): Promise<void> {
     if (token) {
-      Database.setJWTToken(token);
+      db.put('Ids', { id: token, type: 'jwtToken' });
     }
 
     let identityModel = OneSignal.coreDirector.getIdentityModel();

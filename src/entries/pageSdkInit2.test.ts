@@ -17,10 +17,10 @@ import {
 } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
-import { ModelName } from 'src/core/types/models';
+import { db } from 'src/shared/database/client';
+import type { SubscriptionSchema } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import Database, { type SubscriptionItem } from 'src/shared/services/Database';
 
 describe('pageSdkInit 2', () => {
   beforeEach(async () => {
@@ -94,11 +94,9 @@ describe('pageSdkInit 2', () => {
     });
 
     // wait user subscriptions to be refresh/replaced
-    let subscriptions: SubscriptionItem[] = [];
+    let subscriptions: SubscriptionSchema[] = [];
     await vi.waitUntil(async () => {
-      subscriptions = await Database.getAll<SubscriptionItem>(
-        ModelName.Subscriptions,
-      );
+      subscriptions = await db.getAll('subscriptions');
       return subscriptions.length === 2;
     });
     subscriptions.sort((a, b) => a.type.localeCompare(b.type));

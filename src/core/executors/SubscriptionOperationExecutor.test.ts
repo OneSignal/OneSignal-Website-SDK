@@ -7,7 +7,8 @@ import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpe
 import { SomeOperation } from '__test__/support/helpers/executors';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import Database from 'src/shared/services/Database';
+import { db } from 'src/shared/database/client';
+import { getPushId, setPushId } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
@@ -65,7 +66,7 @@ describe('SubscriptionOperationExecutor', () => {
   });
 
   afterEach(async () => {
-    await Database.remove('subscriptions');
+    await db.clear('subscriptions');
   });
 
   const getExecutor = () => {
@@ -136,7 +137,7 @@ describe('SubscriptionOperationExecutor', () => {
       subscriptionModelStore.add(model);
 
       setCreateSubscriptionResponse(BACKEND_SUBSCRIPTION_ID);
-      await Database.setPushId(DUMMY_SUBSCRIPTION_ID);
+      await setPushId(DUMMY_SUBSCRIPTION_ID);
 
       const executor = getExecutor();
       const createOp = new CreateSubscriptionOperation({
@@ -158,7 +159,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Verify models were updated
-      await expect(Database.getPushId()).resolves.toBe(BACKEND_SUBSCRIPTION_ID);
+      await expect(getPushId()).resolves.toBe(BACKEND_SUBSCRIPTION_ID);
       const subscriptionModel = subscriptionModelStore.getBySubscriptionId(
         BACKEND_SUBSCRIPTION_ID,
       );
@@ -279,7 +280,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Missing error with rebuild ops
       subscriptionsModelStore.add(pushSubscription);
-      await Database.setPushId(DUMMY_SUBSCRIPTION_ID_3);
+      await setPushId(DUMMY_SUBSCRIPTION_ID_3);
 
       const res6 = await executor.execute([createOp]);
       expect(res6).toMatchObject({

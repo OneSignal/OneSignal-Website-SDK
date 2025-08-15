@@ -1,4 +1,9 @@
 import { sortArrayOfObjects } from '../context/helpers';
+import { db, getCurrentSession } from '../database/client';
+import {
+  getAllNotificationClickedForOutcomes,
+  getAllNotificationReceivedForOutcomes,
+} from '../database/notifications';
 import Log from '../libraries/Log';
 import type { OutcomeProps } from '../models/OutcomeProps';
 import {
@@ -8,9 +13,6 @@ import {
 } from '../models/Outcomes';
 import type { OutcomesNotificationReceived } from '../models/OutcomesNotificationEvents';
 import type { OutcomesConfig } from '../outcomes/types';
-import Database, {
-  TABLE_OUTCOMES_NOTIFICATION_RECEIVED,
-} from '../services/Database';
 import { awaitOneSignalInitAndSupported, logMethodCall } from '../utils/utils';
 
 const SEND_OUTCOME = 'sendOutcome';
@@ -90,8 +92,7 @@ export default class OutcomesHelper {
    * @returns Promise
    */
   async getAttributedNotifsByUniqueOutcomeName(): Promise<string[]> {
-    const sentOutcomes =
-      await Database.getAll<SentUniqueOutcome>('SentUniqueOutcome');
+    const sentOutcomes = await db.getAll('SentUniqueOutcome');
     return sentOutcomes
       .filter((o) => o.outcomeName === this.outcomeName)
       .reduce((acc: string[], curr: SentUniqueOutcome) => {
@@ -124,11 +125,8 @@ export default class OutcomesHelper {
 
   async saveSentUniqueOutcome(newNotificationIds: string[]): Promise<void> {
     const outcomeName = this.outcomeName;
-    const existingSentOutcome = await Database.get<SentUniqueOutcome>(
-      'SentUniqueOutcome',
-      outcomeName,
-    );
-    const currentSession = await Database.getCurrentSession();
+    const existingSentOutcome = await db.get('SentUniqueOutcome', outcomeName);
+    const currentSession = await getCurrentSession();
 
     const existingNotificationIds = !!existingSentOutcome
       ? existingSentOutcome.notificationIds
@@ -136,7 +134,7 @@ export default class OutcomesHelper {
     const notificationIds = [...existingNotificationIds, ...newNotificationIds];
 
     const timestamp = currentSession ? currentSession.startTimestamp : null;
-    await Database.put('SentUniqueOutcome', {
+    await db.put('SentUniqueOutcome', {
       outcomeName,
       notificationIds,
       sentDuringSession: timestamp,
@@ -144,16 +142,13 @@ export default class OutcomesHelper {
   }
 
   async wasSentDuringSession() {
-    const sentOutcome = await Database.get<SentUniqueOutcome>(
-      'SentUniqueOutcome',
-      this.outcomeName,
-    );
+    const sentOutcome = await db.get('SentUniqueOutcome', this.outcomeName);
 
     if (!sentOutcome) {
       return false;
     }
 
-    const session = await Database.getCurrentSession();
+    const session = await getCurrentSession();
 
     const sessionExistsAndWasPreviouslySent =
       session && sentOutcome.sentDuringSession === session.startTimestamp;
@@ -244,8 +239,7 @@ export async function getConfigAttribution(
 
   /* direct notifications */
   if (config.direct && config.direct.enabled) {
-    const clickedNotifications =
-      await Database.getAllNotificationClickedForOutcomes();
+    const clickedNotifications = await getAllNotificationClickedForOutcomes();
     if (clickedNotifications.length > 0) {
       return {
         type: OutcomeAttributionType.Direct,
@@ -261,7 +255,7 @@ export async function getConfigAttribution(
     const maxTimestamp = beginningOfTimeframe.getTime();
 
     const allReceivedNotification =
-      await Database.getAllNotificationReceivedForOutcomes();
+      await getAllNotificationReceivedForOutcomes();
     Log.debug(
       `\tFound total of ${allReceivedNotification.length} received notifications`,
     );
@@ -295,7 +289,7 @@ export async function getConfigAttribution(
         )
         .map((notif) => notif.notificationId);
       notificationIdsToDelete.forEach((id) =>
-        Database.remove(TABLE_OUTCOMES_NOTIFICATION_RECEIVED, id),
+        db.delete('Outcomes.NotificationReceived', id),
       );
       Log.debug(
         `\t${notificationIdsToDelete.length} received notifications will be deleted.`,

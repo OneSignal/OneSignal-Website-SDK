@@ -1,3 +1,4 @@
+import { db, getOptionsValue } from 'src/shared/database/client';
 import {
   DismissCountKey,
   DismissPrompt,
@@ -7,7 +8,6 @@ import {
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
 import { windowEnvString } from '../environment/detect';
 import Log from '../libraries/Log';
-import Database from '../services/Database';
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
@@ -27,7 +27,7 @@ export class DismissHelper {
     const countKey = DISMISS_TYPE_COUNT_MAP[type];
     const timeKey = DISMISS_TYPE_TIME_MAP[type];
 
-    let dismissCount = await Database.get<number>('Options', countKey);
+    let dismissCount = await getOptionsValue<number>(countKey);
     if (!dismissCount) {
       dismissCount = 0;
     }
@@ -43,7 +43,7 @@ export class DismissHelper {
       `(${windowEnvString} environment) OneSignal: User dismissed the ${type} ` +
         `notification prompt; reprompt after ${dismissDays} days.`,
     );
-    await Database.put('Options', { key: countKey, value: dismissCount });
+    await db.put('Options', { key: countKey, value: dismissCount });
 
     const dismissMinutes = dismissDays * 24 * 60;
     return TimedLocalStorage.setItem(timeKey, 'dismissed', dismissMinutes);

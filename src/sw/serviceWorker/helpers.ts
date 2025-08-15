@@ -1,6 +1,4 @@
-import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
-import { ModelName } from 'src/core/types/models';
-import Database from 'src/shared/services/Database';
+import { db } from 'src/shared/database/client';
 
 /**
  * WARNING: This is a temp workaround for the ServiceWorker context only!
@@ -10,9 +8,7 @@ import Database from 'src/shared/services/Database';
 export async function getPushSubscriptionIdByToken(
   token: string,
 ): Promise<string | undefined> {
-  const pushSubscriptions = await Database.getAll<SubscriptionModel>(
-    ModelName.Subscriptions,
-  );
+  const pushSubscriptions = await db.getAll('subscriptions');
   for (const pushSubscription of pushSubscriptions) {
     if (pushSubscription['token'] === token) {
       return pushSubscription['id'] as string;

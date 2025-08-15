@@ -1,3 +1,4 @@
+import type { IDBStoreName } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
 import { OPERATION_NAME } from '../constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -11,14 +12,13 @@ import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
-import { ModelName } from '../types/models';
 import { ModelStore } from './ModelStore';
 
 // Implements logic similar to Android SDK's OperationModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationModelStore.kt
 export class OperationModelStore extends ModelStore<Operation> {
   constructor() {
-    super(ModelName.Operations);
+    super('operations' satisfies IDBStoreName);
   }
 
   async loadOperations(): Promise<void> {

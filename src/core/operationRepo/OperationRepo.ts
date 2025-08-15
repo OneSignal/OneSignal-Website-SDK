@@ -4,12 +4,11 @@ import {
   type IOperationRepo,
   type IStartableService,
 } from 'src/core/types/operation';
+import { db } from 'src/shared/database/client';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
-import Database from 'src/shared/services/Database';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
-import { ModelName } from '../types/models';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
   OP_REPO_EXECUTION_INTERVAL,
@@ -18,7 +17,7 @@ import {
 import { type NewRecordsState } from './NewRecordsState';
 
 const removeOpFromDB = (op: Operation) => {
-  Database.remove(ModelName.Operations, op.modelId);
+  db.delete('operations', op.modelId);
 };
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem

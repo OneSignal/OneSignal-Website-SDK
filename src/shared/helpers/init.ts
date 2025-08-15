@@ -1,11 +1,13 @@
 import Bell from '../../page/bell/Bell';
 import type { AppConfig } from '../config/types';
 import type { ContextInterface } from '../context/types';
+import { db } from '../database/client';
+import { getSubscription, setSubscription } from '../database/subscription';
+import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
@@ -73,16 +75,16 @@ async function sessionInit(): Promise<void> {
   const isOptedOut =
     (await OneSignal.context.subscriptionManager.isOptedOut()) ?? false;
   // saves isOptedOut to localStorage. used for require user interaction functionality
-  const subscription = await Database.getSubscription();
+  const subscription = await getSubscription();
   subscription.optedOut = isOptedOut;
 
-  await Database.setSubscription(subscription);
+  await setSubscription(subscription);
   await handleAutoResubscribe(isOptedOut);
 
   const isSubscribed =
     await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
   // saves isSubscribed to IndexedDb. used for require user interaction functionality
-  await Database.setIsPushEnabled(!!isSubscribed);
+  await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
   if (OneSignal.config?.userConfig.promptOptions?.autoPrompt && !isOptedOut) {
     OneSignal.context.promptsManager.spawnAutoPrompts();
@@ -135,11 +137,11 @@ async function storeInitialValues() {
     await OneSignal.context.permissionManager.getPermissionStatus();
   const isOptedOut = await OneSignal.context.subscriptionManager.isOptedOut();
   LimitStore.put('subscription.optedOut', isOptedOut);
-  await Database.put('Options', {
+  await db.put('Options', {
     key: 'isPushEnabled',
     value: isPushEnabled,
   });
-  await Database.put('Options', {
+  await db.put('Options', {
     key: 'notificationPermission',
     value: notificationPermission,
   });
@@ -287,7 +289,7 @@ export async function saveInitOptions() {
 
   const persistNotification = OneSignal.config?.userConfig.persistNotification;
   opPromises.push(
-    Database.put('Options', {
+    db.put('Options', {
       key: 'persistNotification',
       value: persistNotification != null ? persistNotification : true,
     }),
@@ -304,37 +306,36 @@ export async function saveInitOptions() {
       webhookOptions[event as keyof typeof webhookOptions]
     ) {
       opPromises.push(
-        Database.put('Options', {
-          key: `webhooks.${event}`,
+        db.put('Options', {
+          key: `webhooks.${event}` as OptionKey,
           value: webhookOptions[event as keyof typeof webhookOptions],
         }),
       );
     } else {
       opPromises.push(
-        Database.put('Options', { key: `webhooks.${event}`, value: false }),
+        db.put('Options', {
+          key: `webhooks.${event}` as OptionKey,
+          value: false,
+        }),
       );
     }
   });
   if (webhookOptions && webhookOptions.cors) {
-    opPromises.push(
-      Database.put('Options', { key: `webhooks.cors`, value: true }),
-    );
+    opPromises.push(db.put('Options', { key: `webhooks.cors`, value: true }));
   } else {
-    opPromises.push(
-      Database.put('Options', { key: `webhooks.cors`, value: false }),
-    );
+    opPromises.push(db.put('Options', { key: `webhooks.cors`, value: false }));
   }
 
   if (OneSignal.config?.userConfig.notificationClickHandlerMatch) {
     opPromises.push(
-      Database.put('Options', {
+      db.put('Options', {
         key: 'notificationClickHandlerMatch',
         value: OneSignal.config.userConfig.notificationClickHandlerMatch,
       }),
     );
   } else {
     opPromises.push(
-      Database.put('Options', {
+      db.put('Options', {
         key: 'notificationClickHandlerMatch',
         value: 'exact',
       }),
@@ -343,14 +344,14 @@ export async function saveInitOptions() {
 
   if (OneSignal.config?.userConfig.notificationClickHandlerAction) {
     opPromises.push(
-      Database.put('Options', {
+      db.put('Options', {
         key: 'notificationClickHandlerAction',
         value: OneSignal.config.userConfig.notificationClickHandlerAction,
       }),
     );
   } else {
     opPromises.push(
-      Database.put('Options', {
+      db.put('Options', {
         key: 'notificationClickHandlerAction',
         value: 'navigate',
       }),
@@ -362,10 +363,10 @@ export async function saveInitOptions() {
 export async function initSaveState(overridingPageTitle?: string) {
   const appId = MainHelper.getAppId();
   const config: AppConfig = OneSignal.config!;
-  await Database.put('Ids', { type: 'appId', id: appId });
+  await db.put('Ids', { type: 'appId', id: appId });
   const pageTitle: string =
     overridingPageTitle || config.siteName || document.title || 'Notification';
-  await Database.put('Options', { key: 'pageTitle', value: pageTitle });
+  await db.put('Options', { key: 'pageTitle', value: pageTitle });
   Log.info(`OneSignal: Set pageTitle to be '${pageTitle}'.`);
 }
 

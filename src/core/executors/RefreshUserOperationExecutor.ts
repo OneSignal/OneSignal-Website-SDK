@@ -1,10 +1,10 @@
+import { getPushId } from 'src/shared/database/subscription';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
 import Log from 'src/shared/libraries/Log';
-import Database from 'src/shared/services/Database';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
@@ -120,7 +120,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         }
       }
 
-      const pushSubscriptionId = await Database.getPushId();
+      const pushSubscriptionId = await getPushId();
 
       if (pushSubscriptionId) {
         const cachedPushModel =

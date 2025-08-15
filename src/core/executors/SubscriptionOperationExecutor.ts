@@ -4,11 +4,15 @@ import {
 } from 'src/core/types/operation';
 import type { IRebuildUserService } from 'src/core/types/user';
 import {
+  getPushId,
+  setPushId,
+  setPushToken,
+} from 'src/shared/database/subscription';
+import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
-import Database from 'src/shared/services/Database';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -137,10 +141,10 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         );
       }
 
-      const pushSubscriptionId = await Database.getPushId();
+      const pushSubscriptionId = await getPushId();
       if (pushSubscriptionId === createOperation.subscriptionId) {
-        await Database.setPushId(backendSubscriptionId);
-        await Database.setPushToken(subscription?.token);
+        await setPushId(backendSubscriptionId);
+        await setPushToken(subscription?.token);
       }
 
       return new ExecutionResponse(

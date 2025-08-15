@@ -1,17 +1,16 @@
+import { getAppState, setAppState } from 'src/shared/database/config';
 import {
   EmptyArgumentError,
   MalformedArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
 import { isValidUrl } from 'src/shared/helpers/validators';
-import { fireStoredNotificationClicks } from 'src/shared/listeners';
 import type {
   NotificationEventName,
   NotificationEventTypeMap,
 } from 'src/shared/notifications/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { NotificationPermission } from '../shared/models/NotificationPermission';
-import Database from '../shared/services/Database';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
@@ -64,9 +63,9 @@ export default class NotificationsNamespace extends EventListenerBase {
       throw MalformedArgumentError('url');
     await awaitOneSignalInitAndSupported();
     logMethodCall('setDefaultNotificationUrl', url);
-    const appState = await Database.getAppState();
+    const appState = await getAppState();
     appState.defaultNotificationUrl = url;
-    await Database.setAppState(appState);
+    await setAppState(appState);
   }
 
   /**
@@ -87,9 +86,9 @@ export default class NotificationsNamespace extends EventListenerBase {
     }
 
     await awaitOneSignalInitAndSupported();
-    const appState = await Database.getAppState();
+    const appState = await getAppState();
     appState.defaultNotificationTitle = title;
-    await Database.setAppState(appState);
+    await setAppState(appState);
   }
 
   /**
@@ -125,10 +124,6 @@ export default class NotificationsNamespace extends EventListenerBase {
     listener: (obj: NotificationEventTypeMap[K]) => void,
   ): void {
     OneSignal.emitter.on(event, listener);
-
-    if (event === 'click') {
-      fireStoredNotificationClicks();
-    }
   }
 
   removeEventListener<K extends NotificationEventName>(

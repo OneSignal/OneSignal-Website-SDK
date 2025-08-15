@@ -9,6 +9,7 @@ import {
   getSubscriptionFn,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
+import { setPushToken } from '../database/subscription';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
 import { updatePushSubscriptionModelWithRawSubscription } from './subscription/page';
@@ -38,9 +39,7 @@ describe('SubscriptionManager', () => {
       expect(subModels.length).toBe(0);
 
       // mimicing the event helper checkAndTriggerSubscriptionChanged
-      await OneSignal.database.setPushToken(
-        rawSubscription.w3cEndpoint?.toString(),
-      );
+      await setPushToken(rawSubscription.w3cEndpoint?.toString());
 
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
@@ -142,9 +141,7 @@ describe('SubscriptionManager', () => {
       setCreateUserResponse();
       const rawSubscription = getRawSubscription();
 
-      await OneSignal.database.setPushToken(
-        rawSubscription.w3cEndpoint?.toString(),
-      );
+      await setPushToken(rawSubscription.w3cEndpoint?.toString());
 
       const pushModel = await setupSubModelStore({
         id: '123',

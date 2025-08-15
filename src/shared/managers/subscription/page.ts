@@ -3,6 +3,7 @@ import UserDirector from 'src/onesignal/UserDirector';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
+import { getSubscription } from 'src/shared/database/subscription';
 import {
   getOneSignalApiUrl,
   useSafariLegacyPush,
@@ -27,7 +28,6 @@ import {
   UnsubscriptionStrategy,
   type UnsubscriptionStrategyValue,
 } from 'src/shared/models/UnsubscriptionStrategy';
-import Database from 'src/shared/services/Database';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
@@ -105,7 +105,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   }
 
   async getNotificationTypes(): Promise<NotificationTypeValue> {
-    const { optedOut } = await Database.getSubscription();
+    const { optedOut } = await getSubscription();
     if (optedOut) {
       return NotificationType.UserOptedOut;
     }
@@ -141,7 +141,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     callback?: (optedOut: boolean | undefined | null) => void,
   ): Promise<boolean | undefined | null> {
     logMethodCall('isOptedOut', callback);
-    const { optedOut } = await Database.getSubscription();
+    const { optedOut } = await getSubscription();
     executeCallback(callback, optedOut);
     return optedOut;
   }
@@ -165,7 +165,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * Returns an object describing the user's actual push subscription state and opt-out status.
    */
   public async getSubscriptionState(): Promise<PushSubscriptionState> {
-    const { optedOut, subscriptionToken } = await Database.getSubscription();
+    const { optedOut, subscriptionToken } = await getSubscription();
 
     const pushSubscriptionModel =
       await OneSignal.coreDirector.getPushSubscriptionModel();
@@ -498,7 +498,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     // No push subscription expiration time
     if (!pushSubscription.expirationTime) return false;
 
-    let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
+    let { createdAt: subscriptionCreatedAt } = await getSubscription();
 
     if (!subscriptionCreatedAt) {
       /* If we don't have a record of when the subscription was created, set it into the future to

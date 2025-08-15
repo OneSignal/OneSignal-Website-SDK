@@ -7,10 +7,10 @@ import {
   type IModelStoreChangeHandler,
   ModelChangeTags,
   type ModelChangeTagValue,
-  type ModelNameType,
 } from 'src/core/types/models';
+import { db } from 'src/shared/database/client';
+import type { IndexedDBSchema, ModelNameType } from 'src/shared/database/types';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
-import Database from 'src/shared/services/Database';
 import type {
   IModelChangedHandler,
   Model,
@@ -119,7 +119,7 @@ export abstract class ModelStore<
       this.changeSubscription.fire((handler) =>
         handler.onModelRemoved(item, tag),
       );
-      Database.remove(this.modelName, item.modelId);
+      db.delete(this.modelName, item.modelId);
     }
 
     this.models = [];
@@ -146,7 +146,7 @@ export abstract class ModelStore<
     // no longer listen for changes to this model
     model.unsubscribe(this);
 
-    await Database.remove(this.modelName, model.modelId);
+    await db.delete(this.modelName, model.modelId);
     this.persist();
 
     this.changeSubscription.fire((handler) =>
@@ -161,7 +161,7 @@ export abstract class ModelStore<
   protected async load(): Promise<void> {
     if (!this.modelName) return;
 
-    const jsonArray: DBModel[] = await Database.getAll<DBModel>(this.modelName);
+    const jsonArray = (await db.getAll(this.modelName)) as unknown as DBModel[];
 
     const shouldRePersist = this.models.length > 0;
 
@@ -191,11 +191,11 @@ export abstract class ModelStore<
     if (!this.modelName || !this.hasLoadedFromCache) return;
 
     for (const model of this.models) {
-      await Database.put(this.modelName, {
+      await db.put(this.modelName, {
         modelId: model.modelId,
         modelName: this.modelName, // TODO: ModelName is a legacy property, could be removed sometime after web refactor launch
         ...model.toJSON(),
-      });
+      } as IndexedDBSchema[typeof this.modelName]['value']);
     }
   }
 
