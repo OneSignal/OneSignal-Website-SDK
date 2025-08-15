@@ -12,6 +12,7 @@ import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setGetUserError,
   setGetUserResponse,
+  setUpdateSubscriptionResponse,
 } from '__test__/support/helpers/requests';
 import { clearAll } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
@@ -28,6 +29,7 @@ import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import type { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
+import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { RefreshUserOperationExecutor } from './RefreshUserOperationExecutor';
 
@@ -60,6 +62,11 @@ describe('RefreshUserOperationExecutor', () => {
       buildUserService,
       'getRebuildOperationsIfCurrentUser',
     );
+
+    setUpdateSubscriptionResponse({
+      subscriptionId: '*',
+      response: {},
+    });
   });
 
   const getExecutor = () => {
@@ -96,6 +103,7 @@ describe('RefreshUserOperationExecutor', () => {
       identityModelStore.model.setProperty(
         IdentityConstants.ONESIGNAL_ID,
         DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.HYDRATE,
       );
     });
 
@@ -186,7 +194,7 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.token = DUMMY_PUSH_TOKEN;
       pushSubModel.notification_types = NotificationType.Subscribed;
 
-      subscriptionModelStore.add(pushSubModel);
+      subscriptionModelStore.add(pushSubModel, ModelChangeTags.HYDRATE);
       await setPushToken(DUMMY_PUSH_TOKEN);
 
       const executor = getExecutor();

@@ -164,8 +164,13 @@ describe('LoginUserOperationExecutor', () => {
       identityModelStore.model.setProperty(
         IdentityConstants.ONESIGNAL_ID,
         DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.HYDRATE,
       );
-      propertiesModelStore.model.setProperty('onesignalId', DUMMY_ONESIGNAL_ID);
+      propertiesModelStore.model.setProperty(
+        'onesignalId',
+        DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.HYDRATE,
+      );
       await setPushToken(DUMMY_PUSH_TOKEN);
 
       const subscriptionModel = new SubscriptionModel();
@@ -252,8 +257,13 @@ describe('LoginUserOperationExecutor', () => {
       identityModelStore.model.setProperty(
         IdentityConstants.ONESIGNAL_ID,
         DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.HYDRATE,
       );
-      propertiesModelStore.model.setProperty('onesignalId', DUMMY_ONESIGNAL_ID);
+      propertiesModelStore.model.setProperty(
+        'onesignalId',
+        DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.HYDRATE,
+      );
 
       const executor = getExecutor();
 
