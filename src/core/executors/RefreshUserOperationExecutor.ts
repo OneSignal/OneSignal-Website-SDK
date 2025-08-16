@@ -1,4 +1,3 @@
-import { getPushId } from 'src/shared/database/subscription';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -120,15 +119,10 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         }
       }
 
-      const pushSubscriptionId = await getPushId();
-
-      if (pushSubscriptionId) {
-        const cachedPushModel =
-          this._subscriptionsModelStore.getBySubscriptionId(pushSubscriptionId);
-        if (cachedPushModel) {
-          cachedPushModel.onesignalId = op.onesignalId;
-          subscriptionModels.push(cachedPushModel);
-        }
+      const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+      if (pushModel) {
+        pushModel.onesignalId = op.onesignalId;
+        subscriptionModels.push(pushModel);
       }
 
       this._identityModelStore.replace(identityModel, ModelChangeTags.HYDRATE);

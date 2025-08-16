@@ -4,11 +4,6 @@ import {
   type IOperationExecutor,
 } from 'src/core/types/operation';
 import { getConsentGiven } from 'src/shared/database/config';
-import {
-  getPushId,
-  setPushId,
-  setPushToken,
-} from 'src/shared/database/subscription';
 import { getTimeZoneId } from 'src/shared/helpers/general';
 import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import {
@@ -235,12 +230,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
         if (!backendSub || !('id' in backendSub)) continue;
         idTranslations[localId] = backendSub.id;
-
-        const pushSubscriptionId = await getPushId();
-        if (pushSubscriptionId === localId) {
-          await setPushId(backendSub.id);
-          await setPushToken(backendSub.token);
-        }
 
         const model =
           this._subscriptionsModelStore.getBySubscriptionId(localId);

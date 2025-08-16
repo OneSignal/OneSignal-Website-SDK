@@ -7,9 +7,6 @@ import type {
 import type { AppState } from '../models/AppState';
 import type { SentUniqueOutcome } from '../models/Outcomes';
 import type { Session } from '../session/types';
-import { ModelName } from './constants';
-
-export type ModelNameType = (typeof ModelName)[keyof typeof ModelName];
 
 export type IdKey = 'appId' | 'registrationId' | 'userId' | 'jwtToken';
 
@@ -58,6 +55,15 @@ export interface SubscriptionSchema {
   device_model?: string;
   device_os?: string;
   sdk?: string;
+}
+
+export interface IdentitySchema {
+  modelId: string;
+  modelName: 'identity';
+  onesignal_id?: string;
+  onesignalId?: string;
+  external_id?: string;
+  externalId?: string;
 }
 
 export interface IndexedDBSchema extends DBSchema {
@@ -146,14 +152,7 @@ export interface IndexedDBSchema extends DBSchema {
 
   identity: {
     key: string;
-    value: {
-      modelId: string;
-      modelName: 'identity';
-      onesignal_id?: string;
-      onesignalId?: string;
-      external_id?: string;
-      externalId?: string;
-    };
+    value: IdentitySchema;
   };
 
   properties: {

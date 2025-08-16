@@ -10,7 +10,6 @@ import type {
   NotificationEventTypeMap,
 } from 'src/shared/notifications/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
-import { NotificationPermission } from '../shared/models/NotificationPermission';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
@@ -25,13 +24,13 @@ export default class NotificationsNamespace extends EventListenerBase {
     super();
 
     this._permissionNative = permissionNative;
-    this._permission = permissionNative === NotificationPermission.Granted;
+    this._permission = permissionNative === 'granted';
 
     OneSignal.emitter.on(
       OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
       (permissionNative: NotificationPermission) => {
         this._permissionNative = permissionNative;
-        this._permission = permissionNative === NotificationPermission.Granted;
+        this._permission = permissionNative === 'granted';
       },
     );
   }

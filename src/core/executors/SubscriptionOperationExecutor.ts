@@ -4,11 +4,6 @@ import {
 } from 'src/core/types/operation';
 import type { IRebuildUserService } from 'src/core/types/user';
 import {
-  getPushId,
-  setPushId,
-  setPushToken,
-} from 'src/shared/database/subscription';
-import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
@@ -139,12 +134,6 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           createOperation.onesignalId,
           ModelChangeTags.HYDRATE,
         );
-      }
-
-      const pushSubscriptionId = await getPushId();
-      if (pushSubscriptionId === createOperation.subscriptionId) {
-        await setPushId(backendSubscriptionId);
-        await setPushToken(subscription?.token);
       }
 
       return new ExecutionResponse(

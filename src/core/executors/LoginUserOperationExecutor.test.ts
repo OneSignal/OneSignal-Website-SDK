@@ -19,7 +19,7 @@ import {
   setCreateUserResponse,
 } from '__test__/support/helpers/requests';
 import { clearAll } from 'src/shared/database/client';
-import { getPushId, setPushId } from 'src/shared/database/subscription';
+import { getPushToken, setPushToken } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
@@ -57,9 +57,9 @@ describe('LoginUserOperationExecutor', () => {
 
   beforeEach(async () => {
     await clearAll();
-    identityModelStore = new IdentityModelStore();
-    propertiesModelStore = new PropertiesModelStore();
-    subscriptionModelStore = new SubscriptionModelStore();
+    identityModelStore = OneSignal.coreDirector.identityModelStore;
+    propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
+    subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
     rebuildUserService = new RebuildUserService(
       identityModelStore,
       propertiesModelStore,
@@ -164,19 +164,32 @@ describe('LoginUserOperationExecutor', () => {
       identityModelStore.model.setProperty(
         IdentityConstants.ONESIGNAL_ID,
         DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.HYDRATE,
       );
-      propertiesModelStore.model.setProperty('onesignalId', DUMMY_ONESIGNAL_ID);
-      await setPushId(DUMMY_SUBSCRIPTION_ID);
+      propertiesModelStore.model.setProperty(
+        'onesignalId',
+        DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.HYDRATE,
+      );
+      await setPushToken(DUMMY_PUSH_TOKEN);
 
       const subscriptionModel = new SubscriptionModel();
-      subscriptionModel.setProperty('id', DUMMY_SUBSCRIPTION_ID);
+      subscriptionModel.setProperty(
+        'id',
+        DUMMY_SUBSCRIPTION_ID,
+        ModelChangeTags.HYDRATE,
+      );
       subscriptionModelStore.add(subscriptionModel, ModelChangeTags.HYDRATE);
 
       // perform operations with old onesignal id
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
-      loginOp.setProperty('externalId', DUMMY_EXTERNAL_ID);
+      loginOp.setProperty(
+        'externalId',
+        DUMMY_EXTERNAL_ID,
+        ModelChangeTags.HYDRATE,
+      );
 
       const createSubOp = new CreateSubscriptionOperation(
         mockSubscriptionOpInfo,
@@ -192,7 +205,7 @@ describe('LoginUserOperationExecutor', () => {
       expect(propertiesModelStore.model.getProperty('onesignalId')).toEqual(
         DUMMY_ONESIGNAL_ID_2,
       );
-      expect(await getPushId()).toEqual(DUMMY_SUBSCRIPTION_ID_2);
+      expect(await getPushToken()).toEqual(DUMMY_PUSH_TOKEN);
       expect(subscriptionModel.getProperty('id')).toEqual(
         DUMMY_SUBSCRIPTION_ID_2,
       );
@@ -252,8 +265,13 @@ describe('LoginUserOperationExecutor', () => {
       identityModelStore.model.setProperty(
         IdentityConstants.ONESIGNAL_ID,
         DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.HYDRATE,
       );
-      propertiesModelStore.model.setProperty('onesignalId', DUMMY_ONESIGNAL_ID);
+      propertiesModelStore.model.setProperty(
+        'onesignalId',
+        DUMMY_ONESIGNAL_ID,
+        ModelChangeTags.HYDRATE,
+      );
 
       const executor = getExecutor();
 

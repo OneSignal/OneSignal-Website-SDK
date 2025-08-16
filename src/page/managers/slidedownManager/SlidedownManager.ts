@@ -21,7 +21,6 @@ import { logMethodCall } from 'src/shared/utils/utils';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import Log from '../../../shared/libraries/Log';
-import { NotificationPermission } from '../../../shared/models/NotificationPermission';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import TagUtils from '../../../shared/utils/TagUtils';
 import { DismissPrompt } from '../../models/Dismiss';
@@ -52,7 +51,7 @@ export class SlidedownManager {
   ): Promise<boolean> {
     const permissionDenied =
       (await OneSignal.context.permissionManager.getPermissionStatus()) ===
-      NotificationPermission.Denied;
+      'denied';
     let wasDismissed: boolean;
 
     const subscriptionInfo: PushSubscriptionState =

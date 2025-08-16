@@ -1,5 +1,5 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
-import { getPushToken, setPushId } from 'src/shared/database/subscription';
+import { getPushToken } from 'src/shared/database/subscription';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   SubscriptionChannel,
@@ -46,6 +46,10 @@ export class CoreModuleDirector {
     return this.core.subscriptionModelStore;
   }
 
+  get newRecordsState(): NewRecordsState {
+    return this.core.newRecordsState;
+  }
+
   get customEventController(): ICustomEventController {
     return this.core.customEventController;
   }
@@ -61,7 +65,6 @@ export class CoreModuleDirector {
       new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
     );
     model.id = IDManager.createLocalId();
-    setPushId(model.id);
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
     this.core.subscriptionModelStore.add(model, ModelChangeTags.HYDRATE);
@@ -77,10 +80,6 @@ export class CoreModuleDirector {
   }
 
   /* G E T T E R S */
-  public getNewRecordsState(): NewRecordsState {
-    return this.core.newRecordsState;
-  }
-
   public getEmailSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getEmailSubscriptionModels');
     const subscriptions = this.core.subscriptionModelStore.list();

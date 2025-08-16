@@ -19,6 +19,23 @@
         });
       });
 
+      function pushSubscriptionChangeListener(event) {
+        console.warn('event.previous.id', event.previous.id);
+        console.warn('event.current.id', event.current.id);
+        console.warn('event.previous.token', event.previous.token);
+        console.warn('event.current.token', event.current.token);
+        console.warn('event.previous.optedIn', event.previous.optedIn);
+        console.warn('event.current.optedIn', event.current.optedIn);
+      }
+
+      // uncomment to test push subscription change listener
+      // OneSignalDeferred.push(function (OneSignal) {
+      //   OneSignal.User.PushSubscription.addEventListener(
+      //     'change',
+      //     pushSubscriptionChangeListener,
+      //   );
+      // });
+
       // uncomment to test login
       // OneSignalDeferred.push(async function (OneSignal) {
       //   await OneSignal.login('new-web-sdk');
