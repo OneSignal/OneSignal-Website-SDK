@@ -6,7 +6,7 @@ import type {
 import type { RecursivePartial } from 'src/shared/context/types';
 import { clearAll } from 'src/shared/database/client';
 import MainHelper from 'src/shared/helpers/MainHelper';
-import { DUMMY_ONESIGNAL_ID, DUMMY_PUSH_TOKEN } from '../../constants';
+import { DUMMY_PUSH_TOKEN } from '../../constants';
 import { generateNewSubscription } from '../helpers/core';
 import {
   initOSGlobals,
@@ -25,7 +25,6 @@ export interface TestEnvironmentConfig {
   userAgent?: string;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
   integration?: ConfigIntegrationKindValue;
-  useMockIdentityModel?: boolean;
   useMockPushSubscriptionModel?: boolean;
 }
 
@@ -34,11 +33,6 @@ export class TestEnvironment {
     // reset db & localStorage
     await clearAll();
     const oneSignal = await initOSGlobals(config);
-
-    if (config.useMockIdentityModel) {
-      const model = OneSignal.coreDirector.getIdentityModel();
-      model.onesignalId = DUMMY_ONESIGNAL_ID;
-    }
 
     if (config.useMockPushSubscriptionModel) {
       OneSignal.coreDirector.addSubscriptionModel(generateNewSubscription());

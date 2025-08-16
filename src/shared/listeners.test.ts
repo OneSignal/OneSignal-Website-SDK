@@ -14,15 +14,15 @@ import { SubscriptionManagerPage } from './managers/subscription/page';
 
 let emitterSpy: MockInstance;
 
-// dont want to make a call to update notification types
-vi.spyOn(
-  SubscriptionManagerPage.prototype,
-  'updateNotificationTypes',
-).mockImplementation(() => Promise.resolve());
-
 beforeEach(async () => {
   await TestEnvironment.initialize();
   emitterSpy = vi.spyOn(OneSignal.emitter, 'on');
+
+  // dont want to make a call to update notification types
+  vi.spyOn(
+    OneSignal.context.subscriptionManager,
+    'updateNotificationTypes',
+  ).mockImplementation(() => Promise.resolve());
 });
 
 describe('checkAndTriggerSubscriptionChanged', () => {

@@ -63,7 +63,6 @@ describe('OneSignal', () => {
     window.OneSignal = _onesignal;
 
     await setupIdentity();
-
     await window.OneSignal.init({ appId: APP_ID });
   });
 
@@ -86,7 +85,6 @@ describe('OneSignal', () => {
 
   afterEach(async () => {
     await clearAll();
-    window.OneSignal.coreDirector.operationRepo.queue = [];
     window.OneSignal.coreDirector.subscriptionModelStore.replaceAll(
       [],
       ModelChangeTags.HYDRATE,
@@ -753,6 +751,7 @@ describe('OneSignal', () => {
         });
 
         test('login with a prior web push subscription - it should transfer the subscription', async () => {
+          setGetUserResponse();
           setCreateUserResponse();
           const identityModel = OneSignal.coreDirector.getIdentityModel();
           identityModel.setProperty(
