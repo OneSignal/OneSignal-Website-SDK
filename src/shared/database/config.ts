@@ -15,12 +15,15 @@ export const getAppState = async (): Promise<AppState> => {
   state.defaultNotificationTitle =
     await getOptionsValue<string>('defaultTitle');
   state.lastKnownPushEnabled = await getOptionsValue<boolean>('isPushEnabled');
+  state.lastKnownOptedIn = await getOptionsValue<boolean>('lastOptedIn');
 
   // lastKnown<PushId|PushToken|OptedIn> are used to track changes to the user's subscription
   // state. Displayed in the `current` & `previous` fields of the `subscriptionChange` event.
-  state.lastKnownPushId = await getOptionsValue<string>('lastPushId');
-  state.lastKnownPushToken = await getOptionsValue<string>('lastPushToken');
-  state.lastKnownOptedIn = await getOptionsValue<boolean>('lastOptedIn');
+  // want undefined instead of null since its used to check for subscription changes
+  state.lastKnownPushId =
+    (await getOptionsValue<string>('lastPushId')) ?? undefined;
+  state.lastKnownPushToken =
+    (await getOptionsValue<string>('lastPushToken')) ?? undefined;
   return state;
 };
 

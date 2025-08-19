@@ -1,4 +1,5 @@
-import { APP_ID, DUMMY_ONESIGNAL_ID } from '__test__/constants';
+import { APP_ID, ONESIGNAL_ID } from '__test__/constants';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setAddAliasError,
@@ -6,9 +7,11 @@ import {
   setDeleteAliasError,
   setDeleteAliasResponse,
 } from '__test__/support/helpers/requests';
+import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { ExecutionResult } from 'src/core/types/operation';
+import type { IdentitySchema } from 'src/shared/database/types';
 import type { MockInstance } from 'vitest';
-import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -20,17 +23,8 @@ import { IdentityOperationExecutor } from './IdentityOperationExecutor';
 
 const label = 'test-label';
 const value = 'test-value';
-const setAliasOp = new SetAliasOperation(
-  APP_ID,
-  DUMMY_ONESIGNAL_ID,
-  label,
-  value,
-);
-const deleteAliasOp = new DeleteAliasOperation(
-  APP_ID,
-  DUMMY_ONESIGNAL_ID,
-  label,
-);
+const setAliasOp = new SetAliasOperation(APP_ID, ONESIGNAL_ID, label, value);
+const deleteAliasOp = new DeleteAliasOperation(APP_ID, ONESIGNAL_ID, label);
 
 let identityModelStore: IdentityModelStore;
 let newRecordsState: NewRecordsState;
@@ -48,16 +42,18 @@ describe('IdentityOperationExecutor', () => {
     );
   };
 
+  beforeAll(async () => {
+    await TestEnvironment.initialize();
+  });
+
   beforeEach(() => {
     setAddAliasResponse();
     setDeleteAliasResponse();
 
-    identityModelStore = new IdentityModelStore();
-    identityModelStore.model.onesignalId = DUMMY_ONESIGNAL_ID;
-
-    newRecordsState = new NewRecordsState();
-    propertiesModelStore = new PropertiesModelStore();
-    subscriptionModelStore = new SubscriptionModelStore();
+    identityModelStore = OneSignal.coreDirector.identityModelStore;
+    newRecordsState = OneSignal.coreDirector.newRecordsState;
+    propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
+    subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
 
     rebuildUserService = new RebuildUserService(
       identityModelStore,
@@ -102,10 +98,7 @@ describe('IdentityOperationExecutor', () => {
   });
 
   test('can execute set alias op', async () => {
-    identityModelStore.model.setProperty(
-      IdentityConstants.ONESIGNAL_ID,
-      DUMMY_ONESIGNAL_ID,
-    );
+    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     const executor = getExecutor();
     const ops = [setAliasOp];
     await executor.execute(ops);
@@ -115,11 +108,8 @@ describe('IdentityOperationExecutor', () => {
   });
 
   test('can execute delete alias op', async () => {
-    identityModelStore.model.setProperty(
-      IdentityConstants.ONESIGNAL_ID,
-      DUMMY_ONESIGNAL_ID,
-    );
-    identityModelStore.model.setProperty(label, value);
+    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    updateIdentityModel(label as keyof IdentitySchema, value);
 
     const executor = getExecutor();
 
@@ -164,13 +154,12 @@ describe('IdentityOperationExecutor', () => {
       const res5 = await executor.execute(ops);
 
       // no rebuild ops
-      // @ts-expect-error - for testing purposes
-      identityModelStore.model.onesignalId = undefined;
+      updateIdentityModel('onesignal_id', undefined);
       expect(res5.result).toBe(ExecutionResult.FAIL_NORETRY);
       expect(res5.retryAfterSeconds).toBeUndefined();
 
       // with rebuild ops
-      identityModelStore.model.onesignalId = DUMMY_ONESIGNAL_ID;
+      identityModelStore.model.onesignalId = ONESIGNAL_ID;
       const res7 = await executor.execute(ops);
       expect(res7.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res7.retryAfterSeconds).toBeUndefined();
@@ -178,17 +167,17 @@ describe('IdentityOperationExecutor', () => {
         {
           name: 'login-user',
           appId: APP_ID,
-          onesignalId: DUMMY_ONESIGNAL_ID,
+          onesignalId: ONESIGNAL_ID,
         },
         {
           name: 'refresh-user',
           appId: APP_ID,
-          onesignalId: DUMMY_ONESIGNAL_ID,
+          onesignalId: ONESIGNAL_ID,
         },
       ]);
 
       // in missing retry window
-      newRecordsState.add(DUMMY_ONESIGNAL_ID);
+      newRecordsState.add(ONESIGNAL_ID);
       setAddAliasError({ status: 404, retryAfter: 20 });
       const res6 = await executor.execute(ops);
       expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);
@@ -227,7 +216,7 @@ describe('IdentityOperationExecutor', () => {
       expect(res5.result).toBe(ExecutionResult.SUCCESS);
 
       // in missing retry window
-      newRecordsState.add(DUMMY_ONESIGNAL_ID);
+      newRecordsState.add(ONESIGNAL_ID);
       setDeleteAliasError({ status: 404, retryAfter: 20 });
       const res6 = await executor.execute(ops);
       expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);

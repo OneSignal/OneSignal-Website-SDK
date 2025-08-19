@@ -70,6 +70,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
   }
 
+  public clear(): void {
+    this.queue = [];
+  }
+
   public get isPaused(): boolean {
     return this.paused;
   }

@@ -1,9 +1,9 @@
-import { DUMMY_PUSH_TOKEN } from '../../constants';
+import { PUSH_TOKEN } from '../../constants';
 
 export const getSubscriptionFn = vi
   .fn<() => Promise<Partial<PushSubscription>>>()
   .mockResolvedValue({
-    endpoint: DUMMY_PUSH_TOKEN,
+    endpoint: PUSH_TOKEN,
   });
 
 export const getRegistrationFn = vi

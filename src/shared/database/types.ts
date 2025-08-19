@@ -7,9 +7,6 @@ import type {
 import type { AppState } from '../models/AppState';
 import type { SentUniqueOutcome } from '../models/Outcomes';
 import type { Session } from '../session/types';
-import { ModelName } from './constants';
-
-export type ModelNameType = (typeof ModelName)[keyof typeof ModelName];
 
 export type IdKey = 'appId' | 'registrationId' | 'userId' | 'jwtToken';
 
@@ -58,6 +55,34 @@ export interface SubscriptionSchema {
   device_model?: string;
   device_os?: string;
   sdk?: string;
+}
+
+export interface IdentitySchema {
+  modelId: string;
+  modelName: 'identity';
+  onesignal_id?: string;
+  /**
+   * @deprecated - use onesignal_id instead
+   */
+  onesignalId?: string;
+  external_id?: string;
+  /**
+   * @deprecated - use external_id instead
+   */
+  externalId?: string;
+}
+
+export interface PropertiesSchema {
+  modelId: string;
+  modelName: 'properties';
+  country: string;
+  first_active: number;
+  ip: string;
+  language: string;
+  last_active: number;
+  onesignalId: string;
+  tags: Record<string, string>;
+  timezone_id: string;
 }
 
 export interface IndexedDBSchema extends DBSchema {
@@ -146,30 +171,12 @@ export interface IndexedDBSchema extends DBSchema {
 
   identity: {
     key: string;
-    value: {
-      modelId: string;
-      modelName: 'identity';
-      onesignal_id?: string;
-      onesignalId?: string;
-      external_id?: string;
-      externalId?: string;
-    };
+    value: IdentitySchema;
   };
 
   properties: {
     key: string;
-    value: {
-      modelId: string;
-      modelName: 'properties';
-      country: string;
-      first_active: number;
-      ip: string;
-      language: string;
-      last_active: number;
-      onesignalId: string;
-      tags: Record<string, string>;
-      timezone_id: string;
-    };
+    value: PropertiesSchema;
   };
 
   subscriptions: {

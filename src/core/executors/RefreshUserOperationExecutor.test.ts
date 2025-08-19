@@ -1,32 +1,35 @@
 import {
   APP_ID,
   DEVICE_OS,
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_ONESIGNAL_ID_2,
-  DUMMY_PUSH_TOKEN,
-  DUMMY_SUBSCRIPTION_ID,
-  DUMMY_SUBSCRIPTION_ID_2,
+  ONESIGNAL_ID,
+  ONESIGNAL_ID_2,
+  PUSH_TOKEN,
+  SUB_ID,
+  SUB_ID_2,
 } from '__test__/constants';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setGetUserError,
   setGetUserResponse,
+  setUpdateSubscriptionResponse,
 } from '__test__/support/helpers/requests';
-import { clearAll } from 'src/shared/database/client';
-import { setPushId } from 'src/shared/database/subscription';
+import { updateIdentityModel } from '__test__/support/helpers/setup';
+import { setPushToken } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
 } from 'src/shared/subscriptions/constants';
 import type { MockInstance } from 'vitest';
-import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
-import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
+import type { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
+import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { RefreshUserOperationExecutor } from './RefreshUserOperationExecutor';
 
@@ -40,12 +43,15 @@ let getRebuildOpsSpy: MockInstance;
 vi.mock('src/shared/libraries/Log');
 
 describe('RefreshUserOperationExecutor', () => {
+  beforeAll(async () => {
+    await TestEnvironment.initialize();
+  });
+
   beforeEach(async () => {
-    await clearAll(); // in case subscription model (from previous tests) are loaded from db
-    identityModelStore = new IdentityModelStore();
-    propertiesModelStore = new PropertiesModelStore();
-    subscriptionModelStore = new SubscriptionModelStore();
-    newRecordsState = new NewRecordsState();
+    identityModelStore = OneSignal.coreDirector.identityModelStore;
+    propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
+    subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
+    newRecordsState = OneSignal.coreDirector.newRecordsState;
     buildUserService = new RebuildUserService(
       identityModelStore,
       propertiesModelStore,
@@ -88,21 +94,18 @@ describe('RefreshUserOperationExecutor', () => {
   describe('getUser', () => {
     beforeEach(async () => {
       // Set up initial model state
-      identityModelStore.model.setProperty(
-        IdentityConstants.ONESIGNAL_ID,
-        DUMMY_ONESIGNAL_ID,
-      );
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     });
 
     test('should ignore refresh if id is different in identity model store', async () => {
       setGetUserResponse({
-        onesignalId: DUMMY_ONESIGNAL_ID_2,
+        onesignalId: ONESIGNAL_ID_2,
         properties: {
           language: 'fr',
         },
       });
       const executor = getExecutor();
-      const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID_2);
+      const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
 
       const result = await executor.execute([refreshOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
@@ -124,7 +127,7 @@ describe('RefreshUserOperationExecutor', () => {
         subscriptions: [
           {
             app_id: APP_ID,
-            id: DUMMY_SUBSCRIPTION_ID,
+            id: SUB_ID,
             type: SubscriptionType.Email,
             token: 'test@example.com',
             notification_types: NotificationType.UserOptedOut,
@@ -136,14 +139,14 @@ describe('RefreshUserOperationExecutor', () => {
       });
 
       const executor = getExecutor();
-      const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
+      const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID);
 
       const result = await executor.execute([refreshOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       // Check identity model updates
       expect(identityModelStore.model.getProperty('onesignal_id')).toBe(
-        DUMMY_ONESIGNAL_ID,
+        ONESIGNAL_ID,
       );
       expect(identityModelStore.model.getProperty('external_id')).toBe(
         'test_user',
@@ -162,7 +165,7 @@ describe('RefreshUserOperationExecutor', () => {
       const subscriptions = subscriptionModelStore.list();
       expect(subscriptions.length).toBe(1);
       expect(subscriptions[0]).toMatchObject({
-        id: DUMMY_SUBSCRIPTION_ID,
+        id: SUB_ID,
         notification_types: NotificationType.UserOptedOut,
         enabled: false,
         token: 'test@example.com',
@@ -174,22 +177,23 @@ describe('RefreshUserOperationExecutor', () => {
     });
 
     test('should preserve cached push subscription when updating models', async () => {
+      setUpdateSubscriptionResponse({ subscriptionId: SUB_ID_2 });
       // Set up a push subscription in the store
       const pushSubModel = new SubscriptionModel();
-      pushSubModel.id = DUMMY_SUBSCRIPTION_ID_2;
+      pushSubModel.id = SUB_ID_2;
       pushSubModel.type = SubscriptionType.ChromePush;
-      pushSubModel.token = DUMMY_PUSH_TOKEN;
+      pushSubModel.token = PUSH_TOKEN;
       pushSubModel.notification_types = NotificationType.Subscribed;
 
-      subscriptionModelStore.add(pushSubModel);
-      await setPushId(DUMMY_SUBSCRIPTION_ID_2);
+      subscriptionModelStore.add(pushSubModel, ModelChangeTags.NO_PROPOGATE);
+      await setPushToken(PUSH_TOKEN);
 
       const executor = getExecutor();
-      const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
+      const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID);
 
       // Mock response without push subscription
       setGetUserResponse({
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         subscriptions: [
           {
             id: 'email-sub-id',
@@ -210,13 +214,13 @@ describe('RefreshUserOperationExecutor', () => {
         (sub: SubscriptionModel) => sub.type === SubscriptionType.ChromePush,
       );
       expect(pushSub).toBeDefined();
-      expect(pushSub?.id).toBe(DUMMY_SUBSCRIPTION_ID_2);
-      expect(pushSub?.token).toBe(DUMMY_PUSH_TOKEN);
+      expect(pushSub?.id).toBe(SUB_ID_2);
+      expect(pushSub?.token).toBe(PUSH_TOKEN);
     });
 
     test('should handle network errors', async () => {
       const executor = getExecutor();
-      const refreshOp = new RefreshUserOperation(APP_ID, DUMMY_ONESIGNAL_ID);
+      const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID);
 
       // retryable error
       setGetUserError({
@@ -262,18 +266,18 @@ describe('RefreshUserOperationExecutor', () => {
           {
             name: 'login-user',
             appId: APP_ID,
-            onesignalId: DUMMY_ONESIGNAL_ID,
+            onesignalId: ONESIGNAL_ID,
           },
           {
             name: 'refresh-user',
             appId: APP_ID,
-            onesignalId: DUMMY_ONESIGNAL_ID,
+            onesignalId: ONESIGNAL_ID,
           },
         ],
       });
 
       // -- in missing retry window
-      newRecordsState.add(DUMMY_ONESIGNAL_ID);
+      newRecordsState.add(ONESIGNAL_ID);
       setGetUserError({
         status: 404,
         retryAfter: 20,

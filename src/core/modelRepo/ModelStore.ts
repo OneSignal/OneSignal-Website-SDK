@@ -9,7 +9,7 @@ import {
   type ModelChangeTagValue,
 } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
-import type { IndexedDBSchema, ModelNameType } from 'src/shared/database/types';
+import type { IDBStoreName, IndexedDBSchema } from 'src/shared/database/types';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
 import type {
   IModelChangedHandler,
@@ -43,7 +43,7 @@ export abstract class ModelStore<
     IModelStore<TModel>,
     IModelChangedHandler
 {
-  public readonly modelName: ModelNameType;
+  public readonly modelName: IDBStoreName;
   private changeSubscription: EventProducer<IModelStoreChangeHandler<TModel>> =
     new EventProducer();
   private models: TModel[] = [];
@@ -52,7 +52,7 @@ export abstract class ModelStore<
   /**
    * @param modelName The persistable name of the model store. If not specified no persisting will occur.
    */
-  constructor(modelName: ModelNameType) {
+  constructor(modelName: IDBStoreName) {
     this.modelName = modelName;
   }
 

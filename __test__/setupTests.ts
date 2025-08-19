@@ -1,11 +1,25 @@
+import { clearAll } from 'src/shared/database/client';
 import { DEFAULT_USER_AGENT } from './constants';
 import { server } from './support/mocks/server';
+
 beforeAll(() =>
   server.listen({
     onUnhandledRequest: 'warn',
   }),
 );
-afterEach(() => server.resetHandlers());
+
+beforeEach(async () => {
+  if (typeof OneSignal !== 'undefined') {
+    OneSignal.coreDirector?.operationRepo.clear();
+    OneSignal.emitter?.removeAllListeners();
+  }
+  await clearAll();
+});
+
+afterEach(() => {
+  server.resetHandlers();
+});
+
 afterAll(() => server.close());
 
 // set timezone
@@ -20,10 +34,10 @@ Object.defineProperty(global, 'location', {
 
 // in case we want to await operations with real timers
 vi.mock('src/core/operationRepo/constants', () => ({
-  OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF: 5,
-  OP_REPO_POST_CREATE_DELAY: 5,
-  OP_REPO_EXECUTION_INTERVAL: 5,
-  OP_REPO_POST_CREATE_RETRY_UP_TO: 10,
+  OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF: 10,
+  OP_REPO_POST_CREATE_DELAY: 10,
+  OP_REPO_EXECUTION_INTERVAL: 10,
+  OP_REPO_POST_CREATE_RETRY_UP_TO: 20,
 }));
 
 Object.defineProperty(navigator, 'userAgent', {

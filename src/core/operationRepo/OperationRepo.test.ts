@@ -1,9 +1,4 @@
-import {
-  APP_ID,
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_SUBSCRIPTION_ID,
-} from '__test__/constants';
-import { fakeWaitForOperations } from '__test__/support/helpers/executors';
+import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
@@ -110,7 +105,7 @@ describe('OperationRepo', () => {
 
       const op1 = new SetAliasOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
+        ONESIGNAL_ID,
         'some-label',
         'some-value',
       );
@@ -118,10 +113,10 @@ describe('OperationRepo', () => {
 
       const op2 = new CreateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
+        onesignalId: ONESIGNAL_ID,
         token: 'some-token',
         type: SubscriptionType.ChromePush,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        subscriptionId: SUB_ID,
       });
       opRepo.enqueue(op2);
       expect(mockOperationModelStore.list()).toEqual([op1, op2]);
@@ -205,7 +200,7 @@ describe('OperationRepo', () => {
     expect(opRepo.queue.length).toBe(1);
 
     // index will be 1 if enqueue is after start
-    await fakeWaitForOperations();
+    await vi.waitUntil(() => getNextOpsSpy.mock.calls.length > 0);
 
     expect(getNextOpsSpy).toHaveBeenCalledWith(0);
     expect(opRepo.queue.length).toBe(0);
@@ -514,7 +509,7 @@ class Operation extends OperationBase<{ value: string }> {
     applyToRecordId = '',
     canStartExecute = true,
   ) {
-    super('mock-op', APP_ID, DUMMY_ONESIGNAL_ID);
+    super('mock-op', APP_ID, ONESIGNAL_ID);
     this.value = value;
     this._groupComparisonTypeValue = groupComparisonTypeValue;
     this._createComparisonKey = createComparisonKey;

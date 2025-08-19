@@ -6,7 +6,6 @@ import { getSubscription, setSubscription } from '../database/subscription';
 import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
-import { NotificationPermission } from '../models/NotificationPermission';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import LimitStore from '../services/LimitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
@@ -157,7 +156,7 @@ async function setWelcomeNotificationFlag(): Promise<void> {
     await OneSignal.context.permissionManager.getNotificationPermission(
       OneSignal.context.appConfig.safariWebId,
     );
-  if (permission === NotificationPermission.Granted) {
+  if (permission === 'granted') {
     OneSignal.__doNotShowWelcomeNotification = true;
   }
 }
@@ -380,7 +379,7 @@ async function handleAutoResubscribe(isOptedOut: boolean) {
       await OneSignal.context.permissionManager.getNotificationPermission(
         OneSignal.context.appConfig.safariWebId,
       );
-    if (currentPermission == NotificationPermission.Granted) {
+    if (currentPermission == 'granted') {
       await SubscriptionHelper.registerForPush();
     }
   }

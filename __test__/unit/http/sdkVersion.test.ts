@@ -1,8 +1,4 @@
-import {
-  APP_ID,
-  DUMMY_EXTERNAL_ID,
-  DUMMY_SUBSCRIPTION_ID,
-} from '__test__/constants';
+import { APP_ID, EXTERNAL_ID, SUB_ID } from '__test__/constants';
 import { generateNewSubscription } from '__test__/support/helpers/core';
 import { nock } from '__test__/support/helpers/general';
 import { IdentityConstants } from 'src/core/constants';
@@ -39,7 +35,7 @@ describe('Sdk Version Header Tests', () => {
 
   test('POST /users: header is sent with subscription id', () => {
     createNewUser(
-      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
+      { appId: APP_ID, subscriptionId: SUB_ID },
       // @ts-expect-error - partial identity object
       {},
     );
@@ -51,7 +47,7 @@ describe('Sdk Version Header Tests', () => {
       { appId: APP_ID },
       {
         label: IdentityConstants.EXTERNAL_ID,
-        id: DUMMY_EXTERNAL_ID,
+        id: EXTERNAL_ID,
       },
     );
     expectHeaderToBeSent();
@@ -62,7 +58,7 @@ describe('Sdk Version Header Tests', () => {
       { appId: APP_ID },
       {
         label: IdentityConstants.EXTERNAL_ID,
-        id: DUMMY_EXTERNAL_ID,
+        id: EXTERNAL_ID,
       },
       {},
     );
@@ -71,10 +67,10 @@ describe('Sdk Version Header Tests', () => {
 
   test('PATCH /users/by/<alias_label>/<alias_id>: header is sent with subscription id', () => {
     updateUserByAlias(
-      { appId: APP_ID, subscriptionId: DUMMY_SUBSCRIPTION_ID },
+      { appId: APP_ID, subscriptionId: SUB_ID },
       {
         label: IdentityConstants.EXTERNAL_ID,
-        id: DUMMY_EXTERNAL_ID,
+        id: EXTERNAL_ID,
       },
       {},
     );
@@ -86,7 +82,7 @@ describe('Sdk Version Header Tests', () => {
       { appId: APP_ID },
       {
         label: IdentityConstants.EXTERNAL_ID,
-        id: DUMMY_EXTERNAL_ID,
+        id: EXTERNAL_ID,
       },
     );
     expectHeaderToBeSent();
@@ -97,7 +93,7 @@ describe('Sdk Version Header Tests', () => {
       { appId: APP_ID },
       {
         label: IdentityConstants.EXTERNAL_ID,
-        id: DUMMY_EXTERNAL_ID,
+        id: EXTERNAL_ID,
       },
       {
         // @ts-expect-error - partial identity object
@@ -112,7 +108,7 @@ describe('Sdk Version Header Tests', () => {
       { appId: APP_ID },
       {
         label: IdentityConstants.EXTERNAL_ID,
-        id: DUMMY_EXTERNAL_ID,
+        id: EXTERNAL_ID,
       },
     );
     expectHeaderToBeSent();
@@ -123,7 +119,7 @@ describe('Sdk Version Header Tests', () => {
       { appId: APP_ID },
       {
         label: IdentityConstants.EXTERNAL_ID,
-        id: DUMMY_EXTERNAL_ID,
+        id: EXTERNAL_ID,
       },
       IdentityConstants.EXTERNAL_ID,
     );
@@ -133,7 +129,7 @@ describe('Sdk Version Header Tests', () => {
   test('PATCH /subscriptions/<subscription_id>: header is sent', () => {
     updateSubscriptionById(
       { appId: APP_ID },
-      DUMMY_EXTERNAL_ID,
+      EXTERNAL_ID,
       // @ts-expect-error - partial identity object
       {},
     );
@@ -141,7 +137,7 @@ describe('Sdk Version Header Tests', () => {
   });
 
   test('DELETE /subscriptions/<subscription_id>: header is sent', () => {
-    deleteSubscriptionById({ appId: APP_ID }, DUMMY_EXTERNAL_ID);
+    deleteSubscriptionById({ appId: APP_ID }, EXTERNAL_ID);
     expectHeaderToBeSent();
   });
 });

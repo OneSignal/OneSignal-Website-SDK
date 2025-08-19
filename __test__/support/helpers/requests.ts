@@ -1,11 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import type { ISubscription, IUserProperties } from 'src/core/types/api';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
-import {
-  APP_ID,
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_SUBSCRIPTION_ID,
-} from '../../constants';
+import { APP_ID, ONESIGNAL_ID, SUB_ID } from '../../constants';
 import TestContext from '../environment/TestContext';
 import { server } from '../mocks/server';
 
@@ -77,9 +73,9 @@ export const getHandler = ({
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // alias
-const getSetAliasUri = (onesignalId: string = DUMMY_ONESIGNAL_ID) =>
+const getSetAliasUri = (onesignalId: string = ONESIGNAL_ID) =>
   `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/identity`;
-const getDeleteAliasUri = (onesignalId: string = DUMMY_ONESIGNAL_ID) =>
+const getDeleteAliasUri = (onesignalId: string = ONESIGNAL_ID) =>
   `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/identity/*`;
 
 export const addAliasFn = vi.fn();
@@ -137,7 +133,7 @@ export const setDeleteAliasError = ({
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // subscription
-const getSetSubscriptionUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
+const getSetSubscriptionUri = (onesignalId = ONESIGNAL_ID) =>
   `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/subscriptions`;
 
 export const createSubscriptionFn = vi.fn();
@@ -149,13 +145,31 @@ export const setCreateSubscriptionResponse = ({
     uri: getSetSubscriptionUri(onesignalId),
     method: 'post',
     status: 200,
-    response,
+    response: {
+      subscription: response,
+    },
     callback: createSubscriptionFn,
+  });
+
+export const setCreateSubscriptionError = ({
+  onesignalId,
+  status,
+  retryAfter,
+}: {
+  onesignalId?: string;
+  status: number;
+  retryAfter?: number;
+}) =>
+  getHandler({
+    uri: getSetSubscriptionUri(onesignalId),
+    method: 'post',
+    status,
+    retryAfter,
   });
 
 export const deleteSubscriptionFn = vi.fn();
 
-const getSetDeleteSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
+const getSetDeleteSubscriptionUri = (subscriptionId = SUB_ID) =>
   `**/apps/${APP_ID}/subscriptions/${subscriptionId}`;
 
 export const setDeleteSubscriptionResponse = ({
@@ -170,10 +184,25 @@ export const setDeleteSubscriptionResponse = ({
     callback: deleteSubscriptionFn,
   });
 
+export const setDeleteSubscriptionError = ({
+  subscriptionId,
+  status,
+  retryAfter,
+}: {
+  subscriptionId?: string;
+  status: number;
+  retryAfter?: number;
+}) =>
+  getHandler({
+    uri: getSetDeleteSubscriptionUri(subscriptionId),
+    method: 'delete',
+    status,
+    retryAfter,
+  });
+
 export const updateSubscriptionFn = vi.fn();
-export const getUpdateSubscriptionUri = (
-  subscriptionId = DUMMY_SUBSCRIPTION_ID,
-) => `**/apps/${APP_ID}/subscriptions/${subscriptionId}`;
+export const getUpdateSubscriptionUri = (subscriptionId = SUB_ID) =>
+  `**/apps/${APP_ID}/subscriptions/${subscriptionId}`;
 export const setUpdateSubscriptionResponse = ({
   subscriptionId,
   response = {},
@@ -186,12 +215,27 @@ export const setUpdateSubscriptionResponse = ({
     callback: updateSubscriptionFn,
   });
 
+export const setUpdateSubscriptionError = ({
+  subscriptionId,
+  status,
+  retryAfter,
+}: {
+  subscriptionId?: string;
+  status: number;
+  retryAfter?: number;
+}) =>
+  getHandler({
+    uri: getUpdateSubscriptionUri(subscriptionId),
+    method: 'patch',
+    status,
+    retryAfter,
+  });
+
 // transfer subscription
 export const transferSubscriptionFn = vi.fn();
 
-export const getTransferSubscriptionUri = (
-  subscriptionId = DUMMY_SUBSCRIPTION_ID,
-) => `**/apps/${APP_ID}/subscriptions/${subscriptionId}/owner`;
+export const getTransferSubscriptionUri = (subscriptionId = SUB_ID) =>
+  `**/apps/${APP_ID}/subscriptions/${subscriptionId}/owner`;
 
 export const setTransferSubscriptionResponse = ({
   subscriptionId,
@@ -205,16 +249,32 @@ export const setTransferSubscriptionResponse = ({
     callback: transferSubscriptionFn,
   });
 
+export const setTransferSubscriptionError = ({
+  subscriptionId,
+  status,
+  retryAfter,
+}: {
+  subscriptionId?: string;
+  status: number;
+  retryAfter?: number;
+}) =>
+  getHandler({
+    uri: getTransferSubscriptionUri(subscriptionId),
+    method: 'patch',
+    status,
+    retryAfter,
+  });
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // user
-const getUserUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
+const getUserUri = (onesignalId = ONESIGNAL_ID) =>
   `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
 
 // get user
 export const getUserFn = vi.fn();
 export const setGetUserResponse = ({
-  onesignalId = DUMMY_ONESIGNAL_ID,
-  newOnesignalId = DUMMY_ONESIGNAL_ID,
+  onesignalId = ONESIGNAL_ID,
+  newOnesignalId = ONESIGNAL_ID,
   externalId,
   subscriptions = [],
   properties = {},
@@ -242,7 +302,7 @@ export const setGetUserResponse = ({
 
 // get user error
 export const setGetUserError = ({
-  onesignalId = DUMMY_ONESIGNAL_ID,
+  onesignalId = ONESIGNAL_ID,
   status,
   retryAfter,
 }: {
@@ -261,7 +321,7 @@ export const setGetUserError = ({
 const getCreateUserUri = () => `**/apps/${APP_ID}/users`;
 export const createUserFn = vi.fn();
 export const setCreateUserResponse = ({
-  onesignalId = DUMMY_ONESIGNAL_ID,
+  onesignalId = ONESIGNAL_ID,
   subscriptions = [],
   externalId,
 }: {
@@ -295,11 +355,11 @@ export const setCreateUserError = ({
 // update user
 export const updateUserFn = vi.fn();
 
-const getUpdateUserUri = (onesignalId = DUMMY_ONESIGNAL_ID) =>
+const getUpdateUserUri = (onesignalId = ONESIGNAL_ID) =>
   `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}`;
 
 export const setUpdateUserResponse = ({
-  onesignalId = DUMMY_ONESIGNAL_ID,
+  onesignalId = ONESIGNAL_ID,
   response = {},
 }: { onesignalId?: string; response?: object } = {}) =>
   getHandler({
@@ -311,7 +371,7 @@ export const setUpdateUserResponse = ({
   });
 
 export const setUpdateUserError = ({
-  onesignalId = DUMMY_ONESIGNAL_ID,
+  onesignalId = ONESIGNAL_ID,
   status,
   retryAfter,
 }: {

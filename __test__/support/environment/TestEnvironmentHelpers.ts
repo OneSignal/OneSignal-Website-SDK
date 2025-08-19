@@ -2,7 +2,8 @@ import { type DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
-import { setPushId, setPushToken } from 'src/shared/database/subscription';
+import { db } from 'src/shared/database/client';
+import { setPushToken } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
@@ -19,8 +20,8 @@ import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants
 import {
   DEFAULT_USER_AGENT,
   DEVICE_OS,
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_SUBSCRIPTION_ID_3,
+  ONESIGNAL_ID,
+  SUB_ID_3,
 } from '../../constants';
 import MockNotification from '../mocks/MockNotification';
 import TestContext from './TestContext';
@@ -109,9 +110,9 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
 }
 
 export const createPushSub = ({
-  id = DUMMY_SUBSCRIPTION_ID_3,
+  id = SUB_ID_3,
   token = 'push-token',
-  onesignalId = DUMMY_ONESIGNAL_ID,
+  onesignalId = ONESIGNAL_ID,
 }: {
   id?: string;
   token?: string;
@@ -136,22 +137,38 @@ export const setupSubModelStore = async ({
   id,
   token,
   onesignalId,
+  web_auth,
+  web_p256,
 }: {
   id?: string;
   token?: string;
   onesignalId?: string;
+  web_auth?: string;
+  web_p256?: string;
 } = {}) => {
   const pushModel = createPushSub({
     id,
     token,
     onesignalId,
   });
-  await setPushId(pushModel.id);
+  if (web_auth) {
+    pushModel.web_auth = web_auth;
+  }
+  if (web_p256) {
+    pushModel.web_p256 = web_p256;
+  }
   await setPushToken(pushModel.token);
   OneSignal.coreDirector.subscriptionModelStore.replaceAll(
     [pushModel],
     ModelChangeTags.NO_PROPOGATE,
   );
+
+  await vi.waitUntil(async () => {
+    const subscription = (await db.getAll('subscriptions'))[0];
+    return (
+      subscription.id === pushModel.id && subscription.token === pushModel.token
+    );
+  });
 
   return pushModel;
 };

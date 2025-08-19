@@ -1,14 +1,22 @@
-import {
-  APP_ID,
-  DUMMY_ONESIGNAL_ID,
-  DUMMY_SUBSCRIPTION_ID_3,
-} from '__test__/constants';
+import { APP_ID, ONESIGNAL_ID, PUSH_TOKEN, SUB_ID } from '__test__/constants';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { SomeOperation } from '__test__/support/helpers/executors';
-import { server } from '__test__/support/mocks/server';
-import { http, HttpResponse } from 'msw';
-import { db } from 'src/shared/database/client';
-import { getPushId, setPushId } from 'src/shared/database/subscription';
+import {
+  createSubscriptionFn,
+  setCreateSubscriptionError,
+  setCreateSubscriptionResponse,
+  setDeleteSubscriptionError,
+  setDeleteSubscriptionResponse,
+  setTransferSubscriptionError,
+  setTransferSubscriptionResponse,
+  setUpdateSubscriptionError,
+  setUpdateSubscriptionResponse,
+  transferSubscriptionFn,
+  updateSubscriptionFn,
+} from '__test__/support/helpers/requests';
+import { setupSubscriptionModel } from '__test__/support/helpers/setup';
+import { setPushToken } from 'src/shared/database/subscription';
 import {
   NotificationType,
   SubscriptionType,
@@ -16,7 +24,6 @@ import {
 import type { MockInstance } from 'vitest';
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
-import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
@@ -37,23 +44,26 @@ let propertiesModelStore: PropertiesModelStore;
 let subscriptionsModelStore: SubscriptionModelStore;
 let getRebuildOpsSpy: MockInstance;
 
-const DUMMY_SUBSCRIPTION_ID = 'test-subscription-id';
+const pushSubscription = createPushSub();
 const BACKEND_SUBSCRIPTION_ID = 'backend-subscription-id';
 
 vi.mock('src/shared/libraries/Log');
 
-const pushSubscription = createPushSub();
-
 describe('SubscriptionOperationExecutor', () => {
+  beforeAll(async () => {
+    await TestEnvironment.initialize();
+  });
+
   beforeEach(async () => {
-    subscriptionModelStore = new SubscriptionModelStore();
-    newRecordsState = new NewRecordsState();
+    setCreateSubscriptionResponse({});
+    subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
+    newRecordsState = OneSignal.coreDirector.newRecordsState;
+    newRecordsState.records.clear();
 
-    identityModelStore = new IdentityModelStore();
-    propertiesModelStore = new PropertiesModelStore();
-    subscriptionsModelStore = new SubscriptionModelStore();
+    identityModelStore = OneSignal.coreDirector.identityModelStore;
+    propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
+    subscriptionsModelStore = OneSignal.coreDirector.subscriptionModelStore;
 
-    identityModelStore.model.onesignalId = DUMMY_ONESIGNAL_ID;
     buildUserService = new RebuildUserService(
       identityModelStore,
       propertiesModelStore,
@@ -63,10 +73,6 @@ describe('SubscriptionOperationExecutor', () => {
       buildUserService,
       'getRebuildOperationsIfCurrentUser',
     );
-  });
-
-  afterEach(async () => {
-    await db.clear('subscriptions');
   });
 
   const getExecutor = () => {
@@ -99,13 +105,13 @@ describe('SubscriptionOperationExecutor', () => {
 
     const deleteOp = new DeleteSubscriptionOperation(
       APP_ID,
-      DUMMY_ONESIGNAL_ID,
-      DUMMY_SUBSCRIPTION_ID,
+      ONESIGNAL_ID,
+      SUB_ID,
     );
     const updateOp = new UpdateSubscriptionOperation({
       appId: APP_ID,
-      onesignalId: DUMMY_ONESIGNAL_ID,
-      subscriptionId: DUMMY_SUBSCRIPTION_ID,
+      onesignalId: ONESIGNAL_ID,
+      subscriptionId: SUB_ID,
       token: 'test',
       type: SubscriptionType.ChromePush,
     });
@@ -117,8 +123,8 @@ describe('SubscriptionOperationExecutor', () => {
 
     const transferOp = new TransferSubscriptionOperation(
       APP_ID,
-      DUMMY_ONESIGNAL_ID,
-      DUMMY_SUBSCRIPTION_ID,
+      ONESIGNAL_ID,
+      SUB_ID,
     );
     const res3 = executor.execute([transferOp, updateOp]);
     await expect(() => res3).rejects.toThrow(
@@ -132,18 +138,20 @@ describe('SubscriptionOperationExecutor', () => {
     });
 
     test('should create subscription successfully', async () => {
-      const model = new SubscriptionModel();
-      model.setProperty('id', DUMMY_SUBSCRIPTION_ID, ModelChangeTags.HYDRATE);
-      subscriptionModelStore.add(model);
+      setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
 
-      setCreateSubscriptionResponse(BACKEND_SUBSCRIPTION_ID);
-      await setPushId(DUMMY_SUBSCRIPTION_ID);
+      setCreateSubscriptionResponse({
+        response: {
+          id: BACKEND_SUBSCRIPTION_ID,
+        },
+      });
+      await setPushToken(PUSH_TOKEN);
 
       const executor = getExecutor();
       const createOp = new CreateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         type: SubscriptionType.ChromePush,
         token: 'test-token',
         enabled: true,
@@ -154,12 +162,11 @@ describe('SubscriptionOperationExecutor', () => {
       expect(result).toMatchObject({
         result: ExecutionResult.SUCCESS,
         idTranslations: {
-          [DUMMY_SUBSCRIPTION_ID]: BACKEND_SUBSCRIPTION_ID,
+          [SUB_ID]: BACKEND_SUBSCRIPTION_ID,
         },
       });
 
       // Verify models were updated
-      await expect(getPushId()).resolves.toBe(BACKEND_SUBSCRIPTION_ID);
       const subscriptionModel = subscriptionModelStore.getBySubscriptionId(
         BACKEND_SUBSCRIPTION_ID,
       );
@@ -170,8 +177,8 @@ describe('SubscriptionOperationExecutor', () => {
       const executor = getExecutor();
       const createOp = new CreateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         type: SubscriptionType.ChromePush,
         token: 'old-token',
         enabled: true,
@@ -180,8 +187,8 @@ describe('SubscriptionOperationExecutor', () => {
 
       const updateOp = new UpdateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         type: SubscriptionType.Email,
         token: 'new-token',
         enabled: false,
@@ -206,8 +213,8 @@ describe('SubscriptionOperationExecutor', () => {
       const executor = getExecutor();
       const createOp = new CreateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         type: SubscriptionType.ChromePush,
         token: 'test-token',
         enabled: true,
@@ -216,8 +223,8 @@ describe('SubscriptionOperationExecutor', () => {
 
       const deleteOp = new DeleteSubscriptionOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        DUMMY_SUBSCRIPTION_ID,
+        ONESIGNAL_ID,
+        SUB_ID,
       );
 
       const result = await executor.execute([createOp, deleteOp]);
@@ -231,8 +238,8 @@ describe('SubscriptionOperationExecutor', () => {
       const executor = getExecutor();
       const createOp = new CreateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         type: SubscriptionType.ChromePush,
         token: 'test-token',
         enabled: true,
@@ -240,7 +247,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Retryable error
-      setCreateSubscriptionError(429, 10);
+      setCreateSubscriptionError({ status: 429, retryAfter: 10 });
       const res1 = await executor.execute([createOp]);
       expect(res1).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -248,21 +255,21 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Conflict error
-      setCreateSubscriptionError(400, 10);
+      setCreateSubscriptionError({ status: 400, retryAfter: 10 });
       const res2 = await executor.execute([createOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
 
       // Invalid error
-      setCreateSubscriptionError(409, 10);
+      setCreateSubscriptionError({ status: 409, retryAfter: 10 });
       const res3 = await executor.execute([createOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
 
       // Unauthorized error
-      setCreateSubscriptionError(401, 15);
+      setCreateSubscriptionError({ status: 401, retryAfter: 15 });
       const res4 = await executor.execute([createOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_UNAUTHORIZED,
@@ -270,7 +277,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Missing error without rebuild ops
-      setCreateSubscriptionError(404, 5);
+      setCreateSubscriptionError({ status: 404, retryAfter: 5 });
       getRebuildOpsSpy.mockReturnValueOnce(null);
       const res5 = await executor.execute([createOp]);
 
@@ -279,8 +286,8 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Missing error with rebuild ops
-      subscriptionsModelStore.add(pushSubscription);
-      await setPushId(DUMMY_SUBSCRIPTION_ID_3);
+      subscriptionsModelStore.add(pushSubscription, ModelChangeTags.HYDRATE);
+      await setPushToken(pushSubscription.token);
 
       const res6 = await executor.execute([createOp]);
       expect(res6).toMatchObject({
@@ -290,28 +297,28 @@ describe('SubscriptionOperationExecutor', () => {
           {
             name: 'login-user',
             appId: APP_ID,
-            onesignalId: DUMMY_ONESIGNAL_ID,
+            onesignalId: ONESIGNAL_ID,
           },
           {
             name: 'create-subscription',
             appId: APP_ID,
-            onesignalId: DUMMY_ONESIGNAL_ID,
+            onesignalId: ONESIGNAL_ID,
             type: SubscriptionType.ChromePush,
-            token: 'push-token',
+            token: pushSubscription.token,
             enabled: true,
-            subscriptionId: DUMMY_SUBSCRIPTION_ID_3,
+            subscriptionId: pushSubscription.id,
           },
           {
             name: 'refresh-user',
             appId: APP_ID,
-            onesignalId: DUMMY_ONESIGNAL_ID,
+            onesignalId: ONESIGNAL_ID,
           },
         ],
       });
 
       // Missing error in retry window
-      newRecordsState.add(DUMMY_ONESIGNAL_ID);
-      setCreateSubscriptionError(404, 20);
+      newRecordsState.add(ONESIGNAL_ID);
+      setCreateSubscriptionError({ status: 404, retryAfter: 20 });
       const res7 = await executor.execute([createOp]);
       expect(res7).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -319,7 +326,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Other errors
-      setCreateSubscriptionError(400);
+      setCreateSubscriptionError({ status: 400 });
       const res8 = await executor.execute([createOp]);
       expect(res8).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
@@ -336,8 +343,8 @@ describe('SubscriptionOperationExecutor', () => {
       const executor = getExecutor();
       const updateOp = new UpdateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         type: SubscriptionType.ChromePush,
         token: 'updated-token',
         enabled: false,
@@ -365,8 +372,8 @@ describe('SubscriptionOperationExecutor', () => {
       const executor = getExecutor();
       const updateOp1 = new UpdateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         type: SubscriptionType.Email,
         token: 'first-update',
         enabled: true,
@@ -377,8 +384,8 @@ describe('SubscriptionOperationExecutor', () => {
 
       const updateOp2 = new UpdateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         type: SubscriptionType.ChromePush,
         token: 'second-update',
         enabled: false,
@@ -407,8 +414,8 @@ describe('SubscriptionOperationExecutor', () => {
       const executor = getExecutor();
       const updateOp = new UpdateSubscriptionOperation({
         appId: APP_ID,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         type: SubscriptionType.ChromePush,
         token: 'test-token',
         enabled: true,
@@ -416,7 +423,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Retryable error
-      setUpdateSubscriptionError(429, 15);
+      setUpdateSubscriptionError({ status: 429, retryAfter: 15 });
       const res1 = await executor.execute([updateOp]);
       expect(res1).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -424,14 +431,14 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Missing error
-      setUpdateSubscriptionError(404, 10);
+      setUpdateSubscriptionError({ status: 404, retryAfter: 10 });
       const res2 = await executor.execute([updateOp]);
       const subOp = new CreateSubscriptionOperation({
         appId: APP_ID,
         enabled: true,
         notification_types: NotificationType.Subscribed,
-        onesignalId: DUMMY_ONESIGNAL_ID,
-        subscriptionId: DUMMY_SUBSCRIPTION_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
         token: 'test-token',
         type: SubscriptionType.ChromePush,
       });
@@ -442,7 +449,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Missing error with record in retry window
-      newRecordsState.add(DUMMY_SUBSCRIPTION_ID);
+      newRecordsState.add(SUB_ID);
       const res3 = await executor.execute([updateOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -450,7 +457,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Other errors
-      setUpdateSubscriptionError(400);
+      setUpdateSubscriptionError({ status: 400 });
       const res4 = await executor.execute([updateOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
@@ -465,40 +472,38 @@ describe('SubscriptionOperationExecutor', () => {
 
     test('should delete subscription successfully', async () => {
       // Set up a subscription model to be deleted
-      const model = new SubscriptionModel();
-      model.setProperty('id', DUMMY_SUBSCRIPTION_ID, ModelChangeTags.HYDRATE);
-      subscriptionModelStore.add(model);
+      setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
 
       const executor = getExecutor();
       const deleteOp = new DeleteSubscriptionOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        DUMMY_SUBSCRIPTION_ID,
+        ONESIGNAL_ID,
+        SUB_ID,
       );
 
       const result = await executor.execute([deleteOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       // Verify model was removed
-      expect(subscriptionModelStore.get(DUMMY_SUBSCRIPTION_ID)).toBeUndefined();
+      expect(subscriptionModelStore.get(SUB_ID)).toBeUndefined();
     });
 
     test('should handle network errors', async () => {
       const executor = getExecutor();
       const deleteOp = new DeleteSubscriptionOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        DUMMY_SUBSCRIPTION_ID,
+        ONESIGNAL_ID,
+        SUB_ID,
       );
 
       // Missing error
-      setDeleteSubscriptionError(404);
+      setDeleteSubscriptionError({ status: 404 });
       const result = await executor.execute([deleteOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       // Missing error with record in retry window
-      newRecordsState.add(DUMMY_SUBSCRIPTION_ID);
-      setDeleteSubscriptionError(404, 5);
+      newRecordsState.add(SUB_ID);
+      setDeleteSubscriptionError({ status: 404, retryAfter: 5 });
       const res2 = await executor.execute([deleteOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -506,7 +511,11 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Retryable error
-      setDeleteSubscriptionError(429, 10);
+      setDeleteSubscriptionError({
+        status: 429,
+        retryAfter: 10,
+        subscriptionId: SUB_ID,
+      });
       const res3 = await executor.execute([deleteOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -514,7 +523,10 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Other errors
-      setDeleteSubscriptionError(400);
+      setDeleteSubscriptionError({
+        status: 400,
+        subscriptionId: SUB_ID,
+      });
       const res4 = await executor.execute([deleteOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
@@ -531,8 +543,8 @@ describe('SubscriptionOperationExecutor', () => {
       const executor = getExecutor();
       const transferOp = new TransferSubscriptionOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        DUMMY_SUBSCRIPTION_ID,
+        ONESIGNAL_ID,
+        SUB_ID,
       );
 
       const result = await executor.execute([transferOp]);
@@ -540,7 +552,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       expect(transferSubscriptionFn).toHaveBeenCalledWith({
         identity: {
-          onesignal_id: DUMMY_ONESIGNAL_ID,
+          onesignal_id: ONESIGNAL_ID,
         },
         retain_previous_owner: false,
       });
@@ -550,12 +562,12 @@ describe('SubscriptionOperationExecutor', () => {
       const executor = getExecutor();
       const transferOp = new TransferSubscriptionOperation(
         APP_ID,
-        DUMMY_ONESIGNAL_ID,
-        DUMMY_SUBSCRIPTION_ID,
+        ONESIGNAL_ID,
+        SUB_ID,
       );
 
       // Retryable error
-      setTransferSubscriptionError(429, 10);
+      setTransferSubscriptionError({ status: 429, retryAfter: 10 });
       const res2 = await executor.execute([transferOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -563,7 +575,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Other errors
-      setTransferSubscriptionError(400);
+      setTransferSubscriptionError({ status: 400 });
       const res3 = await executor.execute([transferOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
@@ -571,118 +583,3 @@ describe('SubscriptionOperationExecutor', () => {
     });
   });
 });
-
-const createSubscriptionFn = vi.fn();
-const updateSubscriptionFn = vi.fn();
-const deleteSubscriptionFn = vi.fn();
-const transferSubscriptionFn = vi.fn();
-
-const getCreateSubscriptionUri = () =>
-  `**/apps/${APP_ID}/users/by/onesignal_id/${DUMMY_ONESIGNAL_ID}/subscriptions`;
-const setCreateSubscriptionResponse = (
-  subscriptionId = DUMMY_SUBSCRIPTION_ID,
-) => {
-  server.use(
-    http.post(getCreateSubscriptionUri(), async ({ request }) => {
-      createSubscriptionFn(await request?.json());
-      return HttpResponse.json({
-        subscription: {
-          id: subscriptionId,
-        },
-      });
-    }),
-  );
-};
-const setCreateSubscriptionError = (status: number, retryAfter?: number) => {
-  server.use(
-    http.post(getCreateSubscriptionUri(), () =>
-      HttpResponse.json(
-        {},
-        {
-          status,
-          headers: retryAfter
-            ? { 'Retry-After': retryAfter?.toString() }
-            : undefined,
-        },
-      ),
-    ),
-  );
-};
-
-const getUpdateSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
-  `**/apps/${APP_ID}/subscriptions/${subscriptionId}`;
-const setUpdateSubscriptionResponse = () => {
-  server.use(
-    http.patch(getUpdateSubscriptionUri(), async ({ request }) => {
-      updateSubscriptionFn(await request?.json());
-      return HttpResponse.json({ success: true });
-    }),
-  );
-};
-const setUpdateSubscriptionError = (status: number, retryAfter?: number) => {
-  server.use(
-    http.patch(getUpdateSubscriptionUri(), () =>
-      HttpResponse.json(
-        {},
-        {
-          status,
-          headers: retryAfter
-            ? { 'Retry-After': retryAfter?.toString() }
-            : undefined,
-        },
-      ),
-    ),
-  );
-};
-
-const getDeleteSubscriptionUri = (subscriptionId = DUMMY_SUBSCRIPTION_ID) =>
-  `**/apps/${APP_ID}/subscriptions/${subscriptionId}`;
-const setDeleteSubscriptionResponse = () => {
-  server.use(
-    http.delete(getDeleteSubscriptionUri(), () => {
-      deleteSubscriptionFn();
-      return HttpResponse.json({ success: true });
-    }),
-  );
-};
-const setDeleteSubscriptionError = (status: number, retryAfter?: number) => {
-  server.use(
-    http.delete(getDeleteSubscriptionUri(), () =>
-      HttpResponse.json(
-        {},
-        {
-          status,
-          headers: retryAfter
-            ? { 'Retry-After': retryAfter?.toString() }
-            : undefined,
-        },
-      ),
-    ),
-  );
-};
-
-const getTransferSubscriptionUri = () =>
-  `**/apps/${APP_ID}/subscriptions/${DUMMY_SUBSCRIPTION_ID}/owner`;
-const setTransferSubscriptionResponse = () => {
-  server.use(
-    http.patch(getTransferSubscriptionUri(), async ({ request }) => {
-      transferSubscriptionFn(await request?.json());
-      return HttpResponse.json({ success: true });
-    }),
-  );
-};
-const setTransferSubscriptionError = (status: number, retryAfter?: number) => {
-  server.use(
-    http.patch(getTransferSubscriptionUri(), () =>
-      HttpResponse.json(
-        {},
-        {
-          status,
-          headers: retryAfter
-            ? { 'Retry-After': retryAfter?.toString() }
-            : undefined,
-        },
-      ),
-    ),
-  );
-};
