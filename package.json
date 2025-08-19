@@ -35,7 +35,7 @@
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig"
   },
   "config": {
-    "sdkVersion": "160500"
+    "sdkVersion": "160501"
   },
   "repository": {
     "type": "git",
@@ -81,12 +81,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "54.84 kB",
+      "limit": "54.81 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "15.36 kB",
+      "limit": "15.34 kB",
       "gzip": true
     },
     {
