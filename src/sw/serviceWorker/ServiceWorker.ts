@@ -91,10 +91,10 @@ export class OneSignalServiceWorker {
    * service worker to close all active notifications.
    */
   static get workerMessenger(): WorkerMessengerSW {
-    if (!(self as any).workerMessenger) {
-      (self as any).workerMessenger = new WorkerMessengerSW(undefined);
+    if (!self.workerMessenger) {
+      self.workerMessenger = new WorkerMessengerSW(undefined);
     }
-    return (self as any).workerMessenger;
+    return self.workerMessenger;
   }
 
   /**
@@ -1179,7 +1179,4 @@ export class OneSignalServiceWorker {
     }
   }
 }
-
-// Expose this class to the global scope
-(self as any).OneSignalWorker = OneSignalServiceWorker;
 OneSignalServiceWorker.run();

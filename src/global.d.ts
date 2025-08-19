@@ -48,4 +48,10 @@ declare global {
       };
     };
   }
+
+  interface WorkerGlobalScope {
+    OneSignalWorker: typeof import('./sw/serviceWorker/ServiceWorker').OneSignalServiceWorker;
+    workerMessenger: import('./sw/serviceWorker/WorkerMessengerSW').WorkerMessengerSW;
+    shouldLog: boolean;
+  }
 }
