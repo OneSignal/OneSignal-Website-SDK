@@ -1,4 +1,3 @@
-import { type DOMWindow, JSDOM, ResourceLoader } from 'jsdom';
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
@@ -14,15 +13,8 @@ import OneSignal from '../../../src/onesignal/OneSignal';
 import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
 import UserNamespace from '../../../src/onesignal/UserNamespace';
 import Context from '../../../src/page/models/Context';
-import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElement';
 import Emitter from '../../../src/shared/libraries/Emitter';
-import { CUSTOM_LINK_CSS_CLASSES } from '../../../src/shared/slidedown/constants';
-import {
-  DEFAULT_USER_AGENT,
-  DEVICE_OS,
-  ONESIGNAL_ID,
-  SUB_ID_3,
-} from '../../constants';
+import { DEVICE_OS, ONESIGNAL_ID, SUB_ID_3 } from '../../constants';
 import MockNotification from '../mocks/MockNotification';
 import TestContext from './TestContext';
 import { type TestEnvironmentConfig } from './TestEnvironment';
@@ -58,55 +50,6 @@ export function stubNotification(config: TestEnvironmentConfig) {
   if (config.environment === 'dom') {
     global.window.Notification = global.Notification;
   }
-}
-
-export async function stubDomEnvironment(config: TestEnvironmentConfig) {
-  if (!config) {
-    config = {};
-  }
-
-  let url = 'https://localhost:3001/webpush/sandbox?https=1';
-
-  if (config.url) {
-    url = config.url.toString();
-    global.location = url;
-  }
-
-  let html = '<!doctype html><html><head></head><body></body></html>';
-
-  if (config.addPrompts) {
-    html = `<!doctype html><html><head>\
-    <div class="${CUSTOM_LINK_CSS_CLASSES.containerClass}"></div>\
-    <div class="${CUSTOM_LINK_CSS_CLASSES.containerClass}"></div>\
-    </head><body>\
-      ${getSlidedownElement({}).outerHTML}</div></body></html>`;
-  }
-
-  const resourceLoader = new ResourceLoader({
-    userAgent: config.userAgent
-      ? config.userAgent.toString()
-      : DEFAULT_USER_AGENT.toString(),
-  });
-
-  // global document object must be defined for `getSlidedownElement` to work correctly.
-  // this line initializes the document object
-  const dom = new JSDOM(html, {
-    resources: resourceLoader,
-    url: url,
-    contentType: 'text/html',
-    runScripts: 'dangerously',
-    pretendToBeVisual: true,
-  });
-
-  const windowDef = dom.window;
-  (windowDef as any).location = url;
-
-  const windowTop: DOMWindow = windowDef;
-  dom.reconfigure({ url, windowTop });
-  global.window = windowDef;
-  global.window.isSecureContext = true;
-  global.document = windowDef.document;
-  return dom;
 }
 
 export const createPushSub = ({

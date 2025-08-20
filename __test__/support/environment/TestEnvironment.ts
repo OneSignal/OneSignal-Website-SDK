@@ -1,4 +1,5 @@
 import { ONESIGNAL_ID } from '__test__/constants';
+import { mockJsonp } from '__test__/setupTests';
 import type {
   AppUserConfig,
   ConfigIntegrationKindValue,
@@ -6,11 +7,7 @@ import type {
 } from 'src/shared/config/types';
 import type { RecursivePartial } from 'src/shared/context/types';
 import { updateIdentityModel } from '../helpers/setup';
-import {
-  initOSGlobals,
-  stubDomEnvironment,
-  stubNotification,
-} from './TestEnvironmentHelpers';
+import { initOSGlobals, stubNotification } from './TestEnvironmentHelpers';
 
 export interface TestEnvironmentConfig {
   userConfig?: AppUserConfig;
@@ -24,15 +21,30 @@ export interface TestEnvironmentConfig {
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
   integration?: ConfigIntegrationKindValue;
 }
+Object.defineProperty(document, 'readyState', {
+  value: 'complete',
+  writable: true,
+});
 
 export class TestEnvironment {
   static async initialize(config: TestEnvironmentConfig = {}) {
+    mockJsonp();
     const oneSignal = await initOSGlobals(config);
     OneSignal.coreDirector.operationRepo.queue = [];
 
     updateIdentityModel('onesignal_id', ONESIGNAL_ID);
 
-    await stubDomEnvironment(config);
+    // Set URL if provided
+    if (config.url) {
+      Object.defineProperty(window, 'location', {
+        value: new URL(config.url),
+        writable: true,
+      });
+    }
+
+    window.isSecureContext = true;
+
+    // await stubDomEnvironment(config);
     config.environment = 'dom';
     stubNotification(config);
     return oneSignal;

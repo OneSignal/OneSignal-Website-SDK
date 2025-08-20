@@ -1,30 +1,11 @@
 import { http, HttpResponse } from 'msw';
 import type { ISubscription, IUserProperties } from 'src/core/types/api';
-import { ConfigIntegrationKind } from 'src/shared/config/constants';
+import type { NotificationIcons } from 'src/shared/notifications/types';
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '../../constants';
-import TestContext from '../environment/TestContext';
 import { server } from '../mocks/server';
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // configs
-const serverConfig = TestContext.getFakeServerAppConfig(
-  ConfigIntegrationKind.Custom,
-);
-
-export const mockServerConfig = () => {
-  return http.get('**/sync/*/web', ({ request }) => {
-    const url = new URL(request.url);
-    const callbackParam = url.searchParams.get('callback');
-    return new HttpResponse(
-      `${callbackParam}(${JSON.stringify(serverConfig)})`,
-      {
-        headers: {
-          'Content-Type': 'application/javascript',
-        },
-      },
-    );
-  });
-};
 export const mockPageStylesCss = () => {
   return http.get(
     'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css',
@@ -397,3 +378,16 @@ export const setSendCustomEventResponse = () =>
     status: 200,
     callback: sendCustomEventFn,
   });
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// icons
+export const getNotificationIcons = () =>
+  server.use(
+    http.get('**/apps/:appId/icon', () => {
+      return HttpResponse.json({
+        chrome: 'https://onesignal.com/icon.png',
+        firefox: 'https://onesignal.com/icon.png',
+        safari: 'https://onesignal.com/icon.png',
+      } satisfies NotificationIcons);
+    }),
+  );

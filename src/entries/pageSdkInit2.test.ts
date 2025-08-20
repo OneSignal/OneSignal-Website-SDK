@@ -10,25 +10,27 @@ import {
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
-  mockServerConfig,
   setCreateSubscriptionResponse,
   setCreateUserResponse,
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
-import { server } from '__test__/support/mocks/server';
+import {
+  getDbSubscriptions,
+  updateIdentityModel,
+} from '__test__/support/helpers/setup';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
-import { db } from 'src/shared/database/client';
-import type { SubscriptionSchema } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 describe('pageSdkInit 2', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize();
-    server.use(mockServerConfig());
   });
 
   test('can login and addEmail', async () => {
+    const onesignalId = IDManager.createLocalId();
+    updateIdentityModel('onesignal_id', onesignalId);
+
     const email = 'joe@example.com';
     const subModel = await setupSubModelStore({
       id: SUB_ID,
@@ -94,11 +96,7 @@ describe('pageSdkInit 2', () => {
     });
 
     // wait user subscriptions to be refresh/replaced
-    let subscriptions: SubscriptionSchema[] = [];
-    await vi.waitUntil(async () => {
-      subscriptions = await db.getAll('subscriptions');
-      return subscriptions.length === 2;
-    });
+    const subscriptions = await getDbSubscriptions(2);
     subscriptions.sort((a, b) => a.type.localeCompare(b.type));
 
     // should the push subscription and the email be added to the subscriptions modelstore

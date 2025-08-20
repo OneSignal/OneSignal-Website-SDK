@@ -170,17 +170,6 @@ export default class User {
     OneSignal.coreDirector.addSubscriptionModel(newSubscription);
   }
 
-  /**
-   * Temporary fix, for now we expect the user to call login before adding an email/sms subscription
-   */
-  private validateUserExists(): boolean {
-    if (!this.onesignalId) {
-      Log.error('User must be logged in first.');
-      return false;
-    }
-    return true;
-  }
-
   public async addEmail(email: string): Promise<void> {
     logMethodCall('addEmail', { email });
 
@@ -243,6 +232,10 @@ export default class User {
   }
 
   public addTags(tags: { [key: string]: string }): void {
+    if (!this.onesignalId) {
+      Log.warn('Tags can only be synced after login.');
+    }
+
     logMethodCall('addTags', { tags });
 
     this.validateObject(tags, 'tags');
@@ -295,7 +288,15 @@ export default class User {
   }
 
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {
-    if (!this.validateUserExists()) return;
+    // login operation / non-local onesignalId is needed to send custom events
+    const hasLoginOp = OneSignal.coreDirector.operationRepo.queue.find(
+      (op) => op.operation instanceof LoginUserOperation,
+    );
+    if (!this.onesignalId && !hasLoginOp) {
+      Log.error('User must be logged in first.');
+      return;
+    }
+
     if (!isObjectSerializable(properties)) {
       return Log.error(
         'Custom event properties must be a JSON-serializable object',

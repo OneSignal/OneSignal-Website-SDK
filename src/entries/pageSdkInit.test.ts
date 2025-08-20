@@ -1,6 +1,5 @@
 import { APP_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { mockServerConfig } from '__test__/support/helpers/requests';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Log from 'src/shared/libraries/Log';
@@ -11,10 +10,7 @@ describe('pageSdkInit', () => {
     const cssURL =
       'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
 
-    server.use(
-      mockServerConfig(),
-      http.get(cssURL, () => HttpResponse.text('')),
-    );
+    server.use(http.get(cssURL, () => HttpResponse.text('')));
     await TestEnvironment.initialize();
   });
 

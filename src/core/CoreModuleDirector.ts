@@ -11,7 +11,6 @@ import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import CoreModule from './CoreModule';
-import type { OperationModelStore } from './modelRepo/OperationModelStore';
 import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';
 import { SubscriptionModel } from './models/SubscriptionModel';
@@ -46,7 +45,6 @@ export class CoreModuleDirector {
   get subscriptionModelStore(): SubscriptionModelStore {
     return this.core.subscriptionModelStore;
   }
-
 
   get newRecordsState(): NewRecordsState {
     return this.core.newRecordsState;

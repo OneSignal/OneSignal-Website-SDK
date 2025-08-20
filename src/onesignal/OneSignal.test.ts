@@ -18,7 +18,6 @@ import {
   deleteSubscriptionFn,
   getUserFn,
   mockPageStylesCss,
-  mockServerConfig,
   sendCustomEventFn,
   setAddAliasError,
   setAddAliasResponse,
@@ -58,7 +57,7 @@ import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
 describe('OneSignal', () => {
   beforeAll(async () => {
-    server.use(mockServerConfig(), mockPageStylesCss());
+    server.use(mockPageStylesCss());
     await TestEnvironment.initialize();
     await OneSignal.init({ appId: APP_ID });
   });
@@ -785,11 +784,7 @@ describe('OneSignal', () => {
 
         // existing user
         let identityModel = OneSignal.coreDirector.getIdentityModel();
-        identityModel.setProperty(
-          'external_id',
-          'jd-1',
-          ModelChangeTags.NO_PROPOGATE,
-        );
+        updateIdentityModel('external_id', 'jd-1');
 
         setCreateUserResponse({});
         setUpdateSubscriptionResponse();
@@ -891,10 +886,7 @@ describe('OneSignal', () => {
 
     test('can send a custom event', async () => {
       setSendCustomEventResponse();
-
-      OneSignal.coreDirector
-        .getIdentityModel()
-        .setProperty('external_id', 'some-id', ModelChangeTags.NO_PROPOGATE);
+      updateIdentityModel('external_id', 'some-id');
       OneSignal.User.trackEvent(name);
 
       await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1);
@@ -922,12 +914,8 @@ describe('OneSignal', () => {
       });
       setSendCustomEventResponse();
 
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
-      identityModel.setProperty(
-        'external_id',
-        'some-id',
-        ModelChangeTags.NO_PROPOGATE,
-      );
+      updateIdentityModel('onesignal_id', IDManager.createLocalId());
+      updateIdentityModel('external_id', 'some-id');
 
       OneSignal.login('some-id-2');
       OneSignal.User.trackEvent(name, properties);
@@ -940,13 +928,11 @@ describe('OneSignal', () => {
 
       // should translate ids for the custom event
       await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
-        interval: 1,
+        interval: 0,
       });
       expect(sendCustomEventFn).not.toHaveBeenCalled();
 
-      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
-        interval: 1,
-      });
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1);
       expect(sendCustomEventFn).toHaveBeenCalledWith({
         events: [
           {
@@ -1030,9 +1016,7 @@ describe('OneSignal', () => {
     });
 
     test('custom event can execute before login for an existing user w/ external id', async () => {
-      OneSignal.coreDirector
-        .getIdentityModel()
-        .setProperty('external_id', 'some-id', ModelChangeTags.NO_PROPOGATE);
+      updateIdentityModel('external_id', 'some-id');
 
       setSendCustomEventResponse();
       setCreateUserResponse({
@@ -1159,10 +1143,14 @@ describe('OneSignal', () => {
     );
 
     // its fine if login op is last since its the only one that can be executed
-    const setPropertyOp = queue[0];
-    expect(setPropertyOp.operation.name).toBe('set-property');
-    const loginOp = queue[2];
+    const loginOp = queue[0];
     expect(loginOp.operation.name).toBe('login-user');
+
+    const setPropertyOp = queue[1];
+    expect(setPropertyOp.operation.name).toBe('set-property');
+
+    const transferOp = queue[2];
+    expect(transferOp.operation.name).toBe('transfer-subscription');
 
     // tags should still be sync
     expect(tags).toEqual({
@@ -1202,14 +1190,6 @@ Object.defineProperty(global.navigator, 'serviceWorker', {
 
 const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
-
-const baseIdentity = {
-  properties: {
-    language: 'en',
-    timezone_id: 'America/Los_Angeles',
-  },
-  refresh_device_metadata: true,
-};
 
 const rawPushSubscription = new RawPushSubscription();
 rawPushSubscription.w3cEndpoint = new URL(PUSH_TOKEN);

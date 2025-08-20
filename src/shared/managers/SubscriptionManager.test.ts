@@ -1,4 +1,4 @@
-import { DEVICE_OS, EXTERNAL_ID } from '__test__/constants';
+import { BASE_IDENTITY, DEVICE_OS, EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
@@ -72,11 +72,7 @@ describe('SubscriptionManager', () => {
       await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
       expect(createUserFn).toHaveBeenCalledWith({
         identity: {},
-        properties: {
-          language: 'en',
-          timezone_id: 'America/Los_Angeles',
-        },
-        refresh_device_metadata: true,
+        ...BASE_IDENTITY,
         subscriptions: [
           {
             device_model: '',
@@ -126,11 +122,7 @@ describe('SubscriptionManager', () => {
         identity: {
           external_id: 'some-external-id',
         },
-        properties: {
-          language: 'en',
-          timezone_id: 'America/Los_Angeles',
-        },
-        refresh_device_metadata: true,
+        ...BASE_IDENTITY,
         subscriptions: [
           {
             device_model: '',

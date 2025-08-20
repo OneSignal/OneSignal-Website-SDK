@@ -189,10 +189,13 @@ export default class ChannelCaptureContainer {
       `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`,
     );
     if (onesignalSmsInput && !!window.intlTelInput) {
-      this.itiOneSignal = window.intlTelInput(onesignalSmsInput, {
-        autoPlaceholder: 'off',
-        separateDialCode: true,
-      });
+      this.itiOneSignal = window.intlTelInput(
+        onesignalSmsInput as HTMLInputElement,
+        {
+          autoPlaceholder: 'off',
+          separateDialCode: true,
+        },
+      );
     } else {
       Log.error(
         'OneSignal: there was a problem initializing International Telephone Input',
@@ -370,7 +373,7 @@ export default class ChannelCaptureContainer {
   getValueFromSmsInput(): string {
     return (
       this.itiOneSignal?.getNumber(
-        window.intlTelInputUtils.numberFormat.E164,
+        window.intlTelInputUtils?.numberFormat.E164,
       ) || ''
     );
   }

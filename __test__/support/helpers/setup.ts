@@ -3,10 +3,12 @@ import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
+import { ResourceLoadState } from 'src/page/services/DynamicResourceLoader';
 import { db } from 'src/shared/database/client';
 import type {
   IdentitySchema,
   PropertiesSchema,
+  SubscriptionSchema,
 } from 'src/shared/database/types';
 
 export const setIsPushEnabled = async (isPushEnabled: boolean) => {
@@ -33,6 +35,15 @@ export const getPropertiesItem = async (
     return properties && condition(properties);
   });
   return properties;
+};
+
+export const getDbSubscriptions = async (length: number) => {
+  let subscriptions: SubscriptionSchema[] = [];
+  await vi.waitUntil(async () => {
+    subscriptions = await db.getAll('subscriptions');
+    return subscriptions.length === length;
+  });
+  return subscriptions;
 };
 
 export const setupIdentityModel = async (
@@ -113,4 +124,11 @@ export const setupSubscriptionModel = async (
     [subscriptionModel],
     ModelChangeTags.NO_PROPOGATE,
   );
+};
+
+export const setupLoadStylesheet = async () => {
+  vi.spyOn(
+    OneSignal.context.dynamicResourceLoader,
+    'loadSdkStylesheet',
+  ).mockResolvedValue(ResourceLoadState.Loaded);
 };

@@ -1,5 +1,6 @@
 import {
   APP_ID,
+  BASE_IDENTITY,
   DEVICE_OS,
   EXTERNAL_ID,
   ONESIGNAL_ID,
@@ -346,11 +347,7 @@ describe('LoginUserOperationExecutor', () => {
         identity: {
           external_id: EXTERNAL_ID,
         },
-        properties: {
-          language: 'en',
-          timezone_id: 'America/Los_Angeles',
-        },
-        refresh_device_metadata: true,
+        ...BASE_IDENTITY,
         subscriptions: [
           {
             device_model: '',

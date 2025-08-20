@@ -441,7 +441,7 @@ describe('UserNamespace', () => {
         test_property: 'test_value',
       };
 
-      updateIdentityModel('onesignal_id', undefined);
+      updateIdentityModel('onesignal_id', IDManager.createLocalId());
       userNamespace.trackEvent(name, {});
       expect(errorSpy).toHaveBeenCalledWith('User must be logged in first.');
       errorSpy.mockClear();
