@@ -1,10 +1,14 @@
+import { IdentityConstants } from 'src/core/constants';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { ModelChangeTags } from 'src/core/types/models';
 import {
   EmptyArgumentError,
   MalformedArgumentError,
   ReservedArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
+import MainHelper from 'src/shared/helpers/MainHelper';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -25,6 +29,15 @@ export default class User {
   static createOrGetInstance(): User {
     if (!User.singletonInstance) {
       User.singletonInstance = new User();
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      if (!identityModel.onesignalId) {
+        const onesignalId = IDManager.createLocalId();
+        identityModel.setProperty(
+          IdentityConstants.ONESIGNAL_ID,
+          onesignalId,
+          ModelChangeTags.NO_PROPOGATE,
+        );
+      }
     }
 
     return User.singletonInstance;
@@ -124,11 +137,30 @@ export default class User {
       .find((model) => model.token === token && model.type === type);
     if (hasSubscription) return;
 
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const onesignalId = identityModel.onesignalId;
+
+    // Check if we need to enqueue a login operation for local IDs
+    if (IDManager.isLocalId(onesignalId)) {
+      const appId = MainHelper.getAppId();
+      const existingLoginOp = OneSignal.coreDirector.operationRepo.queue.find(
+        (item) =>
+          item.operation instanceof LoginUserOperation &&
+          item.operation.onesignalId === onesignalId,
+      );
+
+      if (!existingLoginOp) {
+        OneSignal.coreDirector.operationRepo.enqueue(
+          new LoginUserOperation(appId, onesignalId, identityModel.externalId),
+        );
+      }
+    }
+
     const subscription = {
       id: IDManager.createLocalId(),
       enabled: true,
       notification_types: NotificationType.Subscribed,
-      onesignalId: OneSignal.coreDirector.getIdentityModel().onesignalId,
+      onesignalId,
       token,
       type,
     };
@@ -142,16 +174,14 @@ export default class User {
    * Temporary fix, for now we expect the user to call login before adding an email/sms subscription
    */
   private validateUserExists(): boolean {
-    const hasOneSignalId =
-      !!OneSignal.coreDirector.getIdentityModel().onesignalId;
-    if (!hasOneSignalId) {
+    if (!this.onesignalId) {
       Log.error('User must be logged in first.');
+      return false;
     }
-    return hasOneSignalId;
+    return true;
   }
 
   public async addEmail(email: string): Promise<void> {
-    if (!this.validateUserExists()) return;
     logMethodCall('addEmail', { email });
 
     this.validateStringLabel(email, 'email');
@@ -165,7 +195,6 @@ export default class User {
   }
 
   public async addSms(sms: string): Promise<void> {
-    if (!this.validateUserExists()) return;
     logMethodCall('addSms', { sms });
 
     this.validateStringLabel(sms, 'sms');

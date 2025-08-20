@@ -9,7 +9,6 @@ import {
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { ExecutionResult } from 'src/core/types/operation';
-import type { IdentitySchema } from 'src/shared/database/types';
 import type { MockInstance } from 'vitest';
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
@@ -109,7 +108,7 @@ describe('IdentityOperationExecutor', () => {
 
   test('can execute delete alias op', async () => {
     updateIdentityModel('onesignal_id', ONESIGNAL_ID);
-    updateIdentityModel(label as keyof IdentitySchema, value);
+    updateIdentityModel(label, value);
 
     const executor = getExecutor();
 

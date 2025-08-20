@@ -15,7 +15,6 @@ import {
   setCreateUserResponse,
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
-import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { server } from '__test__/support/mocks/server';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { db } from 'src/shared/database/client';
@@ -26,7 +25,6 @@ import { IDManager } from 'src/shared/managers/IDManager';
 describe('pageSdkInit 2', () => {
   beforeEach(async () => {
     await TestEnvironment.initialize();
-    updateIdentityModel('onesignal_id', undefined);
     server.use(mockServerConfig());
   });
 

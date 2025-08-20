@@ -1,8 +1,10 @@
+import { IdentityConstants } from 'src/core/constants';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
 import MainHelper from 'src/shared/helpers/MainHelper';
+import { IDManager } from 'src/shared/managers/IDManager';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
 import Log from '../../shared/libraries/Log';
@@ -24,7 +26,9 @@ export default class LoginManager {
     }
 
     let identityModel = OneSignal.coreDirector.getIdentityModel();
-    const currentOneSignalId = identityModel.onesignalId;
+    const currentOneSignalId = !IDManager.isLocalId(identityModel.onesignalId)
+      ? identityModel.onesignalId
+      : undefined;
     const currentExternalId = identityModel.externalId;
 
     // if the current externalId is the same as the one we're trying to set, do nothing
@@ -39,33 +43,36 @@ export default class LoginManager {
     // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
     // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
     identityModel.setProperty(
-      'external_id',
+      IdentityConstants.EXTERNAL_ID,
       externalId,
       ModelChangeTags.HYDRATE,
     );
     const newIdentityOneSignalId = identityModel.onesignalId;
-
     const appId = MainHelper.getAppId();
 
-    const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
-    if (pushOp) {
-      OneSignal.coreDirector.operationRepo.enqueue(
-        new TransferSubscriptionOperation(
+    const promises: Promise<void>[] = [
+      OneSignal.coreDirector.getPushSubscriptionModel().then((pushOp) => {
+        if (pushOp) {
+          OneSignal.coreDirector.operationRepo.enqueue(
+            new TransferSubscriptionOperation(
+              appId,
+              newIdentityOneSignalId,
+              pushOp.id,
+            ),
+          );
+        }
+      }),
+      OneSignal.coreDirector.operationRepo.enqueueAndWait(
+        new LoginUserOperation(
           appId,
           newIdentityOneSignalId,
-          pushOp.id,
+          externalId,
+          !currentExternalId ? currentOneSignalId : undefined,
         ),
-      );
-    }
-
-    await OneSignal.coreDirector.operationRepo.enqueueAndWait(
-      new LoginUserOperation(
-        appId,
-        newIdentityOneSignalId,
-        externalId,
-        !currentExternalId ? currentOneSignalId : undefined,
       ),
-    );
+    ];
+
+    await Promise.all(promises);
   }
 
   static async logout(): Promise<void> {

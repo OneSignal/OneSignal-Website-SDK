@@ -79,7 +79,9 @@ export const setupPropertiesModel = async (
   await getPropertiesItem((p) => p.onesignalId === onesignalID);
 };
 
-export const updateIdentityModel = async <T extends keyof IdentitySchema>(
+export const updateIdentityModel = async <
+  T extends keyof IdentitySchema & string,
+>(
   property: T,
   value?: IdentitySchema[T],
 ) => {

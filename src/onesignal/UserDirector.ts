@@ -11,15 +11,16 @@ export default class UserDirector {
     const identityModel = OneSignal.coreDirector.getIdentityModel();
     const appId = MainHelper.getAppId();
 
-    const allSubscriptions =
-      await OneSignal.coreDirector.getAllSubscriptionsModels();
-    const hasAnySubscription = allSubscriptions.length > 0;
+    const hasAnySubscription =
+      OneSignal.coreDirector.subscriptionModelStore.list().length > 0;
+
     const hasExternalId = !!identityModel.externalId;
 
     if (!hasAnySubscription && !hasExternalId) {
-      return Log.info(
+      Log.error(
         'No subscriptions or external ID found, skipping user creation',
       );
+      return;
     }
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();

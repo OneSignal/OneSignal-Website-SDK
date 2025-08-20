@@ -23,19 +23,14 @@ export interface TestEnvironmentConfig {
   userAgent?: string;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
   integration?: ConfigIntegrationKindValue;
-  useMockedIdentity?: boolean;
 }
 
 export class TestEnvironment {
   static async initialize(config: TestEnvironmentConfig = {}) {
-    // reset db & localStorage
-    // await clearAll();
     const oneSignal = await initOSGlobals(config);
     OneSignal.coreDirector.operationRepo.queue = [];
 
-    // if (config.useMockedIdentity) {
     updateIdentityModel('onesignal_id', ONESIGNAL_ID);
-    // }
 
     await stubDomEnvironment(config);
     config.environment = 'dom';
