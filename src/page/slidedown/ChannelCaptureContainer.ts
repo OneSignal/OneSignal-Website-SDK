@@ -34,7 +34,7 @@ export default class ChannelCaptureContainer {
   public smsInputFieldIsValid = true;
   public emailInputFieldIsValid = true;
   private promptOptions: SlidedownPromptOptions;
-  private itiOneSignal: any; // iti library initialization return obj
+  private itiOneSignal: ReturnType<typeof window.intlTelInput> | undefined;
 
   constructor(promptOptions: SlidedownPromptOptions) {
     this.promptOptions = promptOptions;
@@ -207,7 +207,7 @@ export default class ChannelCaptureContainer {
 
     smsInput.addEventListener('keyup', (event) => {
       this.smsInputFieldIsValid =
-        this.itiOneSignal.isValidNumber() ||
+        this.itiOneSignal?.isValidNumber() ||
         (smsInput as HTMLInputElement)?.value === '';
 
       // @ts-expect-error - TODO: improve type
@@ -222,7 +222,7 @@ export default class ChannelCaptureContainer {
     // handles case where number is typed, then country is changed after
     smsInput.addEventListener('blur', () => {
       this.smsInputFieldIsValid =
-        this.itiOneSignal.isValidNumber() ||
+        this.itiOneSignal?.isValidNumber() ||
         (smsInput as HTMLInputElement)?.value === '';
 
       this.updateValidationOnSmsInputChange();
@@ -369,8 +369,8 @@ export default class ChannelCaptureContainer {
 
   getValueFromSmsInput(): string {
     return (
-      this.itiOneSignal.getNumber(
-        window.intlTelInput.utils.numberFormat.E164,
+      this.itiOneSignal?.getNumber(
+        window.intlTelInputUtils.numberFormat.E164,
       ) || ''
     );
   }

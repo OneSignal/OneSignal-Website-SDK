@@ -16,6 +16,16 @@
       OneSignalDeferred.push(async function (OneSignal) {
         await OneSignal.init({
           appId,
+          // promptOptions: {
+          //   slidedown: {
+          //     prompts: [
+          //       {
+          //         type: 'email',
+          //         // autoPrompt: false,
+          //       },
+          //     ],
+          //   },
+          // },
         });
       });
 

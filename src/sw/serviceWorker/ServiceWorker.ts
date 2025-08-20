@@ -1179,4 +1179,6 @@ export class OneSignalServiceWorker {
     }
   }
 }
+
+self.OneSignalWorker = OneSignalServiceWorker;
 OneSignalServiceWorker.run();
