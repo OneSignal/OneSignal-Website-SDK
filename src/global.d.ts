@@ -34,18 +34,27 @@ declare global {
     safari?: {
       pushNotification?: SafariRemoteNotification;
     };
-    intlTelInput: ((
+    intlTelInputUtils: {
+      numberFormat: {
+        E164: string;
+      };
+    };
+    intlTelInput: (
       element: Element,
       options: {
         autoPlaceholder: string;
         separateDialCode: boolean;
       },
-    ) => void) & {
-      utils: {
-        numberFormat: {
-          E164: string;
-        };
-      };
+    ) => {
+      isValidNumber: () => boolean;
+      getNumber: (format: string) => string;
     };
+  }
+
+  interface WorkerGlobalScope {
+    OneSignal: _OneSignal;
+    OneSignalWorker: typeof import('./sw/serviceWorker/ServiceWorker').OneSignalServiceWorker;
+    workerMessenger: import('./sw/serviceWorker/WorkerMessengerSW').WorkerMessengerSW;
+    shouldLog: boolean;
   }
 }

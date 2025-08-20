@@ -17,7 +17,6 @@ export type RecursivePartial<T> = {
 
 export interface ContextBase {
   appConfig: AppConfig;
-  sessionManager: ISessionManager;
 }
 
 export interface ContextSWInterface extends ContextBase {
@@ -30,6 +29,7 @@ export interface ContextInterface extends ContextBase {
   permissionManager: PermissionManager;
   serviceWorkerManager: ServiceWorkerManager;
   slidedownManager: ISlidedownManager;
+  sessionManager: ISessionManager;
   subscriptionManager: SubscriptionManagerPage;
   tagManager: ITagManager;
   updateManager: UpdateManager;

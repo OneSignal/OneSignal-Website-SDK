@@ -2,7 +2,8 @@ import { IS_SERVICE_WORKER, LOGGING } from '../utils/EnvVariables';
 
 export default class Log {
   private static shouldLog(): boolean {
-    if (IS_SERVICE_WORKER) return !!(self as any).shouldLog;
+    if (IS_SERVICE_WORKER)
+      return !!(self as unknown as ServiceWorkerGlobalScope).shouldLog;
     try {
       /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
       const level = window.localStorage.getItem('loglevel');

@@ -3,4 +3,5 @@
  */
 import { OneSignalServiceWorker } from '../sw/serviceWorker/ServiceWorker';
 
+// Expose this class to the global scope
 (self as any).OneSignal = OneSignalServiceWorker;

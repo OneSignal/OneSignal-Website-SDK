@@ -82,7 +82,9 @@ export class SubscriptionManagerBase<
       if ('updateManager' in this.context) {
         await this.context.updateManager.sendPushDeviceRecordUpdate();
       }
-    } else {
+
+      // NOTE: We only have sessionManager in the page context, should sw upsert do anything?
+    } else if ('sessionManager' in this.context) {
       this.context.sessionManager.upsertSession(SessionOrigin.UserCreate);
     }
 
