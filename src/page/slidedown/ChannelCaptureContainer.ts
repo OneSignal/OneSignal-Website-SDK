@@ -286,7 +286,7 @@ export default class ChannelCaptureContainer {
     );
   }
 
-  private async loadPhoneLibraryScripts(): Promise<void> {
+  async loadPhoneLibraryScripts(): Promise<void> {
     if (OneSignal._didLoadITILibrary) {
       return;
     }

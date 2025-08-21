@@ -1,7 +1,7 @@
 // separate test file to avoid side effects from pageSdkInit.test.ts
 import {
   APP_ID,
-  DEVICE_OS,
+  BASE_SUB,
   ONESIGNAL_ID,
   PUSH_TOKEN,
   SUB_ID,
@@ -23,8 +23,8 @@ import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 describe('pageSdkInit 2', () => {
-  beforeEach(async () => {
-    await TestEnvironment.initialize();
+  beforeEach(() => {
+    TestEnvironment.initialize();
   });
 
   test('can login and addEmail', async () => {
@@ -101,12 +101,8 @@ describe('pageSdkInit 2', () => {
 
     // should the push subscription and the email be added to the subscriptions modelstore
     const shared = {
-      device_model: '',
-      device_os: DEVICE_OS,
-      enabled: true,
+      ...BASE_SUB,
       modelName: 'subscriptions',
-      notification_types: 1,
-      sdk: __VERSION__,
     };
     expect(subscriptions).toEqual([
       {

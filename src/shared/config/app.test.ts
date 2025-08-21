@@ -29,8 +29,8 @@ vi.spyOn(OneSignalApi, 'jsonpLib').mockImplementation((url, fn) => {
 });
 
 describe('Config Helpers', () => {
-  beforeEach(async () => {
-    await TestEnvironment.initialize();
+  beforeEach(() => {
+    TestEnvironment.initialize();
     server.use(
       http.get('**/sync/*/web', () => HttpResponse.json(serverConfig)),
     );

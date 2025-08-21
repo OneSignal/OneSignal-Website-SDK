@@ -7,13 +7,15 @@ import { server } from '../mocks/server';
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // configs
 export const mockPageStylesCss = () => {
-  return http.get(
-    'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css',
-    () => {
-      return new HttpResponse('/* CSS */', {
-        headers: { 'Content-Type': 'text/css' },
-      });
-    },
+  server.use(
+    http.get(
+      'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css',
+      () => {
+        return new HttpResponse('/* CSS */', {
+          headers: { 'Content-Type': 'text/css' },
+        });
+      },
+    ),
   );
 };
 
@@ -384,10 +386,10 @@ export const setSendCustomEventResponse = () =>
 export const getNotificationIcons = () =>
   server.use(
     http.get('**/apps/:appId/icon', () => {
-      return HttpResponse.json({
+      return HttpResponse.json<NotificationIcons>({
         chrome: 'https://onesignal.com/icon.png',
         firefox: 'https://onesignal.com/icon.png',
         safari: 'https://onesignal.com/icon.png',
-      } satisfies NotificationIcons);
+      });
     }),
   );

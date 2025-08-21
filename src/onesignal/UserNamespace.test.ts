@@ -1,5 +1,4 @@
 import { ONESIGNAL_ID, PUSH_TOKEN } from '__test__/constants';
-import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
@@ -16,8 +15,8 @@ vi.useFakeTimers();
 describe('UserNamespace', () => {
   let userNamespace: UserNamespace;
 
-  beforeEach(async () => {
-    await TestEnvironment.initialize({});
+  beforeEach(() => {
+    TestEnvironment.initialize({});
 
     userNamespace = new UserNamespace(true);
   });
@@ -29,8 +28,9 @@ describe('UserNamespace', () => {
       updateIdentityModel('onesignal_id', undefined);
       expect(userNamespace.onesignalId).toBe(undefined);
 
-      updateIdentityModel('onesignal_id', IDManager.createLocalId());
-      expect(userNamespace.onesignalId).toBe(undefined);
+      const localId = IDManager.createLocalId();
+      updateIdentityModel('onesignal_id', localId);
+      expect(userNamespace.onesignalId).toBe(localId);
 
       updateIdentityModel('onesignal_id', ONESIGNAL_ID);
       expect(userNamespace.onesignalId).toBe(ONESIGNAL_ID);
@@ -45,10 +45,6 @@ describe('UserNamespace', () => {
   });
 
   describe('Alias Management', () => {
-    beforeEach(() => {
-      setAddAliasResponse();
-    });
-
     test('can add a single alias', () => {
       const label = 'some-label';
       const id = 'some-id';
@@ -457,7 +453,7 @@ describe('UserNamespace', () => {
       // @ts-expect-error - mock invalid argument
       userNamespace.trackEvent(name, 123);
       expect(errorSpy).toHaveBeenCalledWith(
-        'Custom event properties must be a JSON-serializable object',
+        'Properties must be JSON-serializable',
       );
 
       // big ints can't be serialized
@@ -465,7 +461,7 @@ describe('UserNamespace', () => {
         data: 10n,
       });
       expect(errorSpy).toHaveBeenCalledWith(
-        'Custom event properties must be a JSON-serializable object',
+        'Properties must be JSON-serializable',
       );
 
       userNamespace.trackEvent(name, properties);

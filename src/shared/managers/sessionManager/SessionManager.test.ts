@@ -1,11 +1,6 @@
 import { EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import {
-  setAddAliasResponse,
-  setCreateUserResponse,
-  setGetUserResponse,
-  setUpdateUserResponse,
-} from '__test__/support/helpers/requests';
+import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import LoginManager from 'src/page/managers/LoginManager';
 import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
@@ -15,12 +10,9 @@ vi.spyOn(Log, 'error').mockImplementation(() => '');
 
 describe('SessionManager', () => {
   describe('Switching Users', () => {
-    beforeEach(async () => {
-      setGetUserResponse();
-      setCreateUserResponse();
-      setUpdateUserResponse();
+    beforeEach(() => {
       setAddAliasResponse();
-      await TestEnvironment.initialize();
+      TestEnvironment.initialize();
     });
 
     test('handleOnFocus should wait for login promise', async () => {

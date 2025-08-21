@@ -41,8 +41,8 @@ describe('IdentityOperationExecutor', () => {
     );
   };
 
-  beforeAll(async () => {
-    await TestEnvironment.initialize();
+  beforeAll(() => {
+    TestEnvironment.initialize();
   });
 
   beforeEach(() => {

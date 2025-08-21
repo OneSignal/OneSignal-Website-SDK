@@ -1,3 +1,5 @@
+import { NotificationType } from 'src/shared/subscriptions/constants';
+
 export const APP_ID = '34fcbe85-278d-4fd2-a4ec-0f80e95072c5';
 
 export const PUSH_TOKEN = 'https://fcm.googleapis.com/fcm/send/01010101010101';
@@ -20,4 +22,12 @@ export const BASE_IDENTITY = {
     timezone_id: 'America/Los_Angeles',
   },
   refresh_device_metadata: true,
+};
+
+export const BASE_SUB = {
+  device_model: '',
+  device_os: '56',
+  enabled: true,
+  notification_types: NotificationType.Subscribed,
+  sdk: __VERSION__,
 };

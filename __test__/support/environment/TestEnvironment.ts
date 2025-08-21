@@ -11,13 +11,10 @@ import { initOSGlobals, stubNotification } from './TestEnvironmentHelpers';
 
 export interface TestEnvironmentConfig {
   userConfig?: AppUserConfig;
-  initOptions?: any;
   initUserAndPushSubscription?: boolean; // default: false - initializes User & PushSubscription in UserNamespace (e.g. creates an anonymous user)
-  environment?: string;
   permission?: NotificationPermission;
   addPrompts?: boolean;
   url?: string;
-  userAgent?: string;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
   integration?: ConfigIntegrationKindValue;
 }
@@ -27,9 +24,9 @@ Object.defineProperty(document, 'readyState', {
 });
 
 export class TestEnvironment {
-  static async initialize(config: TestEnvironmentConfig = {}) {
+  static initialize(config: TestEnvironmentConfig = {}) {
     mockJsonp();
-    const oneSignal = await initOSGlobals(config);
+    const oneSignal = initOSGlobals(config);
     OneSignal.coreDirector.operationRepo.queue = [];
 
     updateIdentityModel('onesignal_id', ONESIGNAL_ID);
@@ -44,8 +41,6 @@ export class TestEnvironment {
 
     window.isSecureContext = true;
 
-    // await stubDomEnvironment(config);
-    config.environment = 'dom';
     stubNotification(config);
     return oneSignal;
   }

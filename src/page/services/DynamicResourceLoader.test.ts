@@ -8,8 +8,8 @@ import {
 } from './DynamicResourceLoader';
 
 describe('DynamicResourceLoader', () => {
-  beforeEach(async () => {
-    await TestEnvironment.initialize();
+  beforeEach(() => {
+    TestEnvironment.initialize();
   });
 
   afterEach(() => {
@@ -148,7 +148,7 @@ describe('DynamicResourceLoader', () => {
     const scriptURL = 'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
     server.use(
       http.get(scriptURL, () => {
-        return HttpResponse.text('console.log("script loaded");');
+        return HttpResponse.text('');
       }),
     );
 

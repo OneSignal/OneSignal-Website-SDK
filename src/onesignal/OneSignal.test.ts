@@ -1,5 +1,6 @@
 import {
-  APP_ID,
+  BASE_IDENTITY,
+  BASE_SUB,
   DEVICE_OS,
   ONESIGNAL_ID,
   ONESIGNAL_ID_2,
@@ -28,19 +29,18 @@ import {
   setGetUserResponse,
   setSendCustomEventResponse,
   setTransferSubscriptionResponse,
-  setUpdateSubscriptionResponse,
   setUpdateUserResponse,
   transferSubscriptionFn,
   updateUserFn,
 } from '__test__/support/helpers/requests';
 import {
+  getDbSubscriptions,
   getIdentityItem,
   setupIdentityModel,
   setupPropertiesModel,
   updateIdentityModel,
 } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
-import { server } from '__test__/support/mocks/server';
 import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
@@ -55,11 +55,13 @@ import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
+mockPageStylesCss();
+
 describe('OneSignal', () => {
-  beforeAll(async () => {
-    server.use(mockPageStylesCss());
-    await TestEnvironment.initialize();
-    await OneSignal.init({ appId: APP_ID });
+  beforeAll(() => {
+    TestEnvironment.initialize({
+      initUserAndPushSubscription: true,
+    });
   });
 
   beforeEach(async () => {
@@ -67,18 +69,15 @@ describe('OneSignal', () => {
       [],
       ModelChangeTags.NO_PROPOGATE,
     );
-    // OneSignal.coreDirector.operationRepo.clear();
     setConsentRequired(false);
     setupPropertiesModel();
-    await setupIdentityModel();
+    setupIdentityModel();
   });
 
   describe('User', () => {
     describe('aliases', () => {
       beforeEach(() => {
         setAddAliasResponse();
-        addAliasFn.mockClear();
-        deleteAliasFn.mockClear();
       });
 
       test('can add an alias to the current user', async () => {
@@ -169,14 +168,10 @@ describe('OneSignal', () => {
           onesignalId: ONESIGNAL_ID,
           subscriptions: [
             {
+              ...BASE_SUB,
               id: SUB_ID_2,
               token: 'test@test.com',
               type: 'Email',
-              device_os: DEVICE_OS,
-              device_model: '',
-              sdk: __VERSION__,
-              enabled: true,
-              notification_types: 1,
             },
           ],
         });
@@ -331,7 +326,15 @@ describe('OneSignal', () => {
         OneSignal.User.addSms(sms);
         await getSmsSubscriptionDbItems(1);
 
+        await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 1);
+        await vi.waitUntil(async () => {
+          const sub = (await db.getAll('subscriptions'))[0];
+          return sub.id === SUB_ID_3;
+        });
+
         OneSignal.User.removeSms(sms);
+
+        await vi.waitUntil(() => deleteSubscriptionFn.mock.calls.length === 1);
 
         await getSmsSubscriptionDbItems(0);
       });
@@ -450,7 +453,7 @@ describe('OneSignal', () => {
             identity: {
               external_id: newExternalId,
             },
-            ...baseIdentity,
+            ...BASE_IDENTITY,
             subscriptions: [
               {
                 id: SUB_ID,
@@ -496,7 +499,7 @@ describe('OneSignal', () => {
             identity: {
               external_id: externalId,
             },
-            ...baseIdentity,
+            ...BASE_IDENTITY,
             subscriptions: [
               {
                 id: SUB_ID,
@@ -525,7 +528,6 @@ describe('OneSignal', () => {
         beforeEach(async () => {
           setAddAliasResponse();
           setTransferSubscriptionResponse();
-          setCreateSubscriptionResponse();
 
           await setupSubModelStore({
             id: SUB_ID,
@@ -534,10 +536,6 @@ describe('OneSignal', () => {
         });
 
         test('login before adding email and sms - it should create subscriptions with the external ID', async () => {
-          setGetUserResponse({
-            externalId,
-          });
-
           await OneSignal.login(externalId);
           await vi.waitUntil(() => addAliasFn.mock.calls.length === 1);
 
@@ -615,9 +613,9 @@ describe('OneSignal', () => {
             externalId,
           });
           setCreateUserResponse({});
-          setupIdentityModel({
-            onesignalID: undefined,
-          });
+
+          const localId = IDManager.createLocalId();
+          setupIdentityModel(localId);
 
           OneSignal.coreDirector.subscriptionModelStore.replaceAll(
             [],
@@ -625,7 +623,7 @@ describe('OneSignal', () => {
           );
 
           // wait for db to be updated
-          await getIdentityItem((i) => i.onesignal_id === undefined);
+          await getIdentityItem((i) => i.onesignal_id === localId);
           OneSignal.login(externalId);
 
           await vi.waitUntil(() => getUserFn.mock.calls.length === 1);
@@ -648,13 +646,12 @@ describe('OneSignal', () => {
             identity: {
               external_id: externalId,
             },
-            ...baseIdentity,
+            ...BASE_IDENTITY,
             subscriptions: [],
           });
         });
 
         test('login with a prior web push subscription - it should transfer the subscription', async () => {
-          setGetUserResponse();
           setCreateUserResponse();
           updateIdentityModel('onesignal_id', '');
 
@@ -675,7 +672,7 @@ describe('OneSignal', () => {
             identity: {
               external_id: externalId,
             },
-            ...baseIdentity,
+            ...BASE_IDENTITY,
             subscriptions: [
               {
                 id: SUB_ID,
@@ -707,7 +704,7 @@ describe('OneSignal', () => {
           });
 
           // new/empty user
-          setupIdentityModel({ onesignalID: undefined });
+          setupIdentityModel(IDManager.createLocalId());
 
           // calling login before accept permissions
           OneSignal.login(externalId);
@@ -721,13 +718,13 @@ describe('OneSignal', () => {
 
           // first call just sets the external id
           await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
-            interval: 1,
+            interval: 0,
           });
           expect(createUserFn).toHaveBeenCalledWith({
             identity: {
               external_id: externalId,
             },
-            ...baseIdentity,
+            ...BASE_IDENTITY,
             subscriptions: [],
           });
 
@@ -737,14 +734,10 @@ describe('OneSignal', () => {
             identity: {
               external_id: externalId,
             },
-            ...baseIdentity,
+            ...BASE_IDENTITY,
             subscriptions: [
               {
-                device_model: '',
-                device_os: DEVICE_OS,
-                enabled: true,
-                notification_types: 1,
-                sdk: __VERSION__,
+                ...BASE_SUB,
                 token: PUSH_TOKEN,
                 type: 'ChromePush',
                 web_auth: 'w3cAuth',
@@ -754,13 +747,10 @@ describe('OneSignal', () => {
           });
 
           let pushSub: SubscriptionSchema | undefined;
-          await vi.waitUntil(
-            async () => {
-              pushSub = (await db.getAll('subscriptions'))[0];
-              return pushSub && !IDManager.isLocalId(pushSub.id);
-            },
-            { interval: 1 },
-          );
+          await vi.waitUntil(async () => {
+            pushSub = (await db.getAll('subscriptions'))[0];
+            return pushSub && !IDManager.isLocalId(pushSub.id);
+          });
         });
       });
     });
@@ -787,7 +777,6 @@ describe('OneSignal', () => {
         updateIdentityModel('external_id', 'jd-1');
 
         setCreateUserResponse({});
-        setUpdateSubscriptionResponse();
 
         OneSignal.logout();
 
@@ -844,15 +833,11 @@ describe('OneSignal', () => {
         const subscriptions = await db.getAll('subscriptions');
         expect(subscriptions).toEqual([
           {
-            device_model: '',
-            device_os: DEVICE_OS,
-            enabled: true,
+            ...BASE_SUB,
             id: pushSub.id,
             modelId: expect.any(String),
             modelName: 'subscriptions',
-            notification_types: 1,
             onesignalId: ONESIGNAL_ID,
-            sdk: __VERSION__,
             token: pushSub.token,
             type: 'ChromePush',
           },
@@ -1196,15 +1181,6 @@ rawPushSubscription.w3cEndpoint = new URL(PUSH_TOKEN);
 rawPushSubscription.w3cP256dh = 'w3cP256dh';
 rawPushSubscription.w3cAuth = 'w3cAuth';
 rawPushSubscription.safariDeviceToken = 'safariDeviceToken';
-
-const getDbSubscriptions = async (length: number) => {
-  let subscriptions: SubscriptionSchema[] = [];
-  await vi.waitUntil(async () => {
-    subscriptions = await db.getAll('subscriptions');
-    return subscriptions.length === length;
-  });
-  return subscriptions;
-};
 
 const getPropertiesItem = async () => (await db.getAll('properties'))[0];
 

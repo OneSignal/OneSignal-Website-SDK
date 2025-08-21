@@ -55,11 +55,11 @@ let rebuildUserService: RebuildUserService;
 vi.mock('src/shared/libraries/Log');
 
 describe('LoginUserOperationExecutor', () => {
-  beforeAll(async () => {
-    await TestEnvironment.initialize();
+  beforeAll(() => {
+    TestEnvironment.initialize();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     identityModelStore = OneSignal.coreDirector.identityModelStore;
     propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
     subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;

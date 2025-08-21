@@ -1,12 +1,8 @@
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
-import { db } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
-import {
-  NotificationType,
-  SubscriptionType,
-} from 'src/shared/subscriptions/constants';
+import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 import OneSignal from '../../../src/onesignal/OneSignal';
@@ -14,14 +10,14 @@ import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
 import UserNamespace from '../../../src/onesignal/UserNamespace';
 import Context from '../../../src/page/models/Context';
 import Emitter from '../../../src/shared/libraries/Emitter';
-import { DEVICE_OS, ONESIGNAL_ID, SUB_ID_3 } from '../../constants';
+import { BASE_SUB, ONESIGNAL_ID, SUB_ID_3 } from '../../constants';
 import MockNotification from '../mocks/MockNotification';
 import TestContext from './TestContext';
 import { type TestEnvironmentConfig } from './TestEnvironment';
 
 declare const global: any;
 
-export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
+export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal = OneSignal;
   global.OneSignal.EVENTS = ONESIGNAL_EVENTS;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
@@ -45,11 +41,6 @@ export function stubNotification(config: TestEnvironmentConfig) {
   global.Notification.permission = config.permission
     ? config.permission
     : global.Notification.permission;
-
-  // window is only defined in dom environment, not in SW
-  if (config.environment === 'dom') {
-    global.window.Notification = global.Notification;
-  }
 }
 
 export const createPushSub = ({
@@ -63,14 +54,10 @@ export const createPushSub = ({
 } = {}) => {
   const pushSubscription = new SubscriptionModel();
   pushSubscription.initializeFromJson({
-    device_model: '',
-    device_os: DEVICE_OS,
-    enabled: true,
+    ...BASE_SUB,
     id,
-    notification_types: NotificationType.Subscribed,
     onesignalId,
     token,
-    sdk: __VERSION__,
     type: SubscriptionType.ChromePush,
   });
   return pushSubscription;
@@ -105,13 +92,6 @@ export const setupSubModelStore = async ({
     [pushModel],
     ModelChangeTags.NO_PROPOGATE,
   );
-
-  await vi.waitUntil(async () => {
-    const subscription = (await db.getAll('subscriptions'))[0];
-    return (
-      subscription.id === pushModel.id && subscription.token === pushModel.token
-    );
-  });
 
   return pushModel;
 };

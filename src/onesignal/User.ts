@@ -43,9 +43,8 @@ export default class User {
     return User.singletonInstance;
   }
 
-  get onesignalId(): string | undefined {
-    const oneSignalId = OneSignal.coreDirector.getIdentityModel().onesignalId;
-    return !IDManager.isLocalId(oneSignalId) ? oneSignalId : undefined;
+  get onesignalId(): string {
+    return OneSignal.coreDirector.getIdentityModel().onesignalId;
   }
 
   private validateStringLabel(label: string, labelName: string): void {
@@ -125,70 +124,25 @@ export default class User {
     this.updateIdentityModel(newAliases);
   }
 
-  private async addSubscriptionToModels({
-    type,
-    token,
-  }: {
-    type: SubscriptionTypeValue;
-    token: string;
-  }): Promise<void> {
-    const hasSubscription = OneSignal.coreDirector.subscriptionModelStore
-      .list()
-      .find((model) => model.token === token && model.type === type);
-    if (hasSubscription) return;
-
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    const onesignalId = identityModel.onesignalId;
-
-    // Check if we need to enqueue a login operation for local IDs
-    if (IDManager.isLocalId(onesignalId)) {
-      const appId = MainHelper.getAppId();
-      const existingLoginOp = OneSignal.coreDirector.operationRepo.queue.find(
-        (item) =>
-          item.operation instanceof LoginUserOperation &&
-          item.operation.onesignalId === onesignalId,
-      );
-
-      if (!existingLoginOp) {
-        OneSignal.coreDirector.operationRepo.enqueue(
-          new LoginUserOperation(appId, onesignalId, identityModel.externalId),
-        );
-      }
-    }
-
-    const subscription = {
-      id: IDManager.createLocalId(),
-      enabled: true,
-      notification_types: NotificationType.Subscribed,
-      onesignalId,
-      token,
-      type,
-    };
-
-    const newSubscription = new SubscriptionModel();
-    newSubscription.mergeData(subscription);
-    OneSignal.coreDirector.addSubscriptionModel(newSubscription);
-  }
-
-  public async addEmail(email: string): Promise<void> {
+  public addEmail(email: string): void {
     logMethodCall('addEmail', { email });
 
     this.validateStringLabel(email, 'email');
 
     if (!isValidEmail(email)) throw MalformedArgumentError('email');
 
-    this.addSubscriptionToModels({
+    addSubscriptionToModels({
       type: SubscriptionType.Email,
       token: email,
     });
   }
 
-  public async addSms(sms: string): Promise<void> {
+  public addSms(sms: string): void {
     logMethodCall('addSms', { sms });
 
     this.validateStringLabel(sms, 'sms');
 
-    this.addSubscriptionToModels({
+    addSubscriptionToModels({
       type: SubscriptionType.SMS,
       token: sms,
     });
@@ -232,8 +186,8 @@ export default class User {
   }
 
   public addTags(tags: { [key: string]: string }): void {
-    if (!this.onesignalId) {
-      Log.warn('Tags can only be synced after login.');
+    if (IDManager.isLocalId(this.onesignalId)) {
+      Log.warn('Login or subscribe to sync tags');
     }
 
     logMethodCall('addTags', { tags });
@@ -289,18 +243,15 @@ export default class User {
 
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {
     // login operation / non-local onesignalId is needed to send custom events
-    const hasLoginOp = OneSignal.coreDirector.operationRepo.queue.find(
-      (op) => op.operation instanceof LoginUserOperation,
-    );
-    if (!this.onesignalId && !hasLoginOp) {
+    const onesignalId = this.onesignalId;
+    if (IDManager.isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
       Log.error('User must be logged in first.');
       return;
     }
 
     if (!isObjectSerializable(properties)) {
-      return Log.error(
-        'Custom event properties must be a JSON-serializable object',
-      );
+      Log.error('Properties must be JSON-serializable');
+      return;
     }
 
     logMethodCall('trackEvent', { name, properties });
@@ -309,6 +260,54 @@ export default class User {
       properties,
     });
   }
+}
+
+function hasLoginOp(onesignalId: string) {
+  return OneSignal.coreDirector.operationRepo.queue.find(
+    (op) =>
+      op.operation instanceof LoginUserOperation &&
+      op.operation.onesignalId === onesignalId,
+  );
+}
+
+function addSubscriptionToModels({
+  type,
+  token,
+}: {
+  type: SubscriptionTypeValue;
+  token: string;
+}): void {
+  const hasSubscription = OneSignal.coreDirector.subscriptionModelStore
+    .list()
+    .find((model) => model.token === token && model.type === type);
+  if (hasSubscription) return;
+
+  const identityModel = OneSignal.coreDirector.getIdentityModel();
+  const onesignalId = identityModel.onesignalId;
+
+  // Check if we need to enqueue a login operation for local IDs
+  if (IDManager.isLocalId(onesignalId)) {
+    const appId = MainHelper.getAppId();
+
+    if (!hasLoginOp(onesignalId)) {
+      OneSignal.coreDirector.operationRepo.enqueue(
+        new LoginUserOperation(appId, onesignalId, identityModel.externalId),
+      );
+    }
+  }
+
+  const subscription = {
+    id: IDManager.createLocalId(),
+    enabled: true,
+    notification_types: NotificationType.Subscribed,
+    onesignalId,
+    token,
+    type,
+  };
+
+  const newSubscription = new SubscriptionModel();
+  newSubscription.mergeData(subscription);
+  OneSignal.coreDirector.addSubscriptionModel(newSubscription);
 }
 
 /**

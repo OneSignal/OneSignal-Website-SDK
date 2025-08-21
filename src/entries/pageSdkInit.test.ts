@@ -6,12 +6,12 @@ import Log from 'src/shared/libraries/Log';
 
 // need to wait for full OperationRepo rework
 describe('pageSdkInit', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     const cssURL =
       'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
 
     server.use(http.get(cssURL, () => HttpResponse.text('')));
-    await TestEnvironment.initialize();
+    TestEnvironment.initialize();
   });
 
   afterEach(async () => {

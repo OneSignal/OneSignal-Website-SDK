@@ -8,8 +8,8 @@ import * as InitHelper from './init';
 
 let isSubscriptionExpiringSpy: MockInstance;
 
-beforeEach(async () => {
-  await TestEnvironment.initialize();
+beforeEach(() => {
+  TestEnvironment.initialize();
   isSubscriptionExpiringSpy = vi.spyOn(
     OneSignal.context.subscriptionManager,
     'isSubscriptionExpiring',
@@ -75,9 +75,7 @@ test('onSdkInitialized: does not send on session update', async () => {
 });
 
 test('correct degree of persistNotification setting should be stored', async () => {
-  await TestEnvironment.initialize({
-    initOptions: {},
-  });
+  TestEnvironment.initialize();
 
   const appConfig = TestContext.getFakeMergedConfig();
   OneSignal.context = new Context(appConfig);

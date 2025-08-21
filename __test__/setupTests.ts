@@ -12,15 +12,15 @@ beforeAll(() =>
 );
 
 beforeEach(async () => {
-  if (typeof OneSignal !== 'undefined') {
-    OneSignal.coreDirector?.operationRepo.clear();
-    OneSignal.emitter?.removeAllListeners();
-  }
   await clearAll();
 });
 
 afterEach(() => {
   server.resetHandlers();
+  if (typeof OneSignal !== 'undefined') {
+    OneSignal.coreDirector?.operationRepo.clear();
+    OneSignal.emitter?.removeAllListeners();
+  }
 });
 
 afterAll(() => server.close());
