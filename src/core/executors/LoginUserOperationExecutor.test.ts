@@ -169,10 +169,10 @@ describe('LoginUserOperationExecutor', () => {
       await setPushToken(PUSH_TOKEN);
 
       const subscriptionModel = new SubscriptionModel();
-      subscriptionModel.setProperty('id', SUB_ID, ModelChangeTags.NO_PROPOGATE);
+      subscriptionModel.setProperty('id', SUB_ID, ModelChangeTags.NO_PROPAGATE);
       subscriptionModelStore.add(
         subscriptionModel,
-        ModelChangeTags.NO_PROPOGATE,
+        ModelChangeTags.NO_PROPAGATE,
       );
 
       // perform operations with old onesignal id

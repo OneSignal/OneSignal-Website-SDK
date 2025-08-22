@@ -183,7 +183,7 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.token = PUSH_TOKEN;
       pushSubModel.notification_types = NotificationType.Subscribed;
 
-      subscriptionModelStore.add(pushSubModel, ModelChangeTags.NO_PROPOGATE);
+      subscriptionModelStore.add(pushSubModel, ModelChangeTags.NO_PROPAGATE);
       await setPushToken(PUSH_TOKEN);
 
       const executor = getExecutor();

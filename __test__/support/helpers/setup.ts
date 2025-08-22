@@ -65,7 +65,7 @@ export const setupIdentityModel = async (
   newIdentityModel.onesignalId = onesignalID;
   OneSignal.coreDirector.identityModelStore.replace(
     newIdentityModel,
-    ModelChangeTags.NO_PROPOGATE,
+    ModelChangeTags.NO_PROPAGATE,
   );
 };
 
@@ -79,7 +79,7 @@ export const setupPropertiesModel = async (
   newPropertiesModel.onesignalId = onesignalID;
   OneSignal.coreDirector.propertiesModelStore.replace(
     newPropertiesModel,
-    ModelChangeTags.NO_PROPOGATE,
+    ModelChangeTags.NO_PROPAGATE,
   );
 
   // wait for db to be updated
@@ -96,7 +96,7 @@ export const updateIdentityModel = async <
   value?: IdentitySchema[T],
 ) => {
   const identityModel = OneSignal.coreDirector.getIdentityModel();
-  identityModel.setProperty(property, value, ModelChangeTags.NO_PROPOGATE);
+  identityModel.setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
 };
 
 /**
@@ -112,7 +112,7 @@ export const updatePropertiesModel = async <
   value?: PropertiesSchema[T],
 ) => {
   const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
-  propertiesModel.setProperty(property, value, ModelChangeTags.NO_PROPOGATE);
+  propertiesModel.setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
 };
 
 /**
@@ -127,7 +127,7 @@ export const setupSubscriptionModel = async (
   subscriptionModel.token = token || '';
   OneSignal.coreDirector.subscriptionModelStore.replaceAll(
     [subscriptionModel],
-    ModelChangeTags.NO_PROPOGATE,
+    ModelChangeTags.NO_PROPAGATE,
   );
 };
 

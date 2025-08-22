@@ -90,7 +90,7 @@ export const setupSubModelStore = async ({
   await setPushToken(pushModel.token);
   OneSignal.coreDirector.subscriptionModelStore.replaceAll(
     [pushModel],
-    ModelChangeTags.NO_PROPOGATE,
+    ModelChangeTags.NO_PROPAGATE,
   );
 
   return pushModel;

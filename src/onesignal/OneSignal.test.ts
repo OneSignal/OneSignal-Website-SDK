@@ -67,7 +67,7 @@ describe('OneSignal', () => {
   beforeEach(async () => {
     OneSignal.coreDirector.subscriptionModelStore.replaceAll(
       [],
-      ModelChangeTags.NO_PROPOGATE,
+      ModelChangeTags.NO_PROPAGATE,
     );
     setConsentRequired(false);
     setupPropertiesModel();
@@ -619,7 +619,7 @@ describe('OneSignal', () => {
 
           OneSignal.coreDirector.subscriptionModelStore.replaceAll(
             [],
-            ModelChangeTags.NO_PROPOGATE,
+            ModelChangeTags.NO_PROPAGATE,
           );
 
           // wait for db to be updated
@@ -685,7 +685,7 @@ describe('OneSignal', () => {
           setGetUserResponse();
           OneSignal.coreDirector.subscriptionModelStore.replaceAll(
             [],
-            ModelChangeTags.NO_PROPOGATE,
+            ModelChangeTags.NO_PROPAGATE,
           );
           setPushToken('');
           subscribeFcmFromPageSpy.mockImplementation(

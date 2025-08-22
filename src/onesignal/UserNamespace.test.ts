@@ -446,7 +446,7 @@ describe('UserNamespace', () => {
       identityModel.setProperty(
         'onesignal_id',
         ONESIGNAL_ID,
-        ModelChangeTags.NO_PROPOGATE,
+        ModelChangeTags.NO_PROPAGATE,
       );
 
       // should validate properties

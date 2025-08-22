@@ -35,7 +35,7 @@ export default class User {
         identityModel.setProperty(
           IdentityConstants.ONESIGNAL_ID,
           onesignalId,
-          ModelChangeTags.NO_PROPOGATE,
+          ModelChangeTags.NO_PROPAGATE,
         );
       }
     }
