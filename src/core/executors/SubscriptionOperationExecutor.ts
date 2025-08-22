@@ -7,7 +7,8 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
-import Log from 'src/shared/libraries/Log';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -53,7 +54,9 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(`SubscriptionOperationExecutor(operations: ${operations})`);
+    log(MessageTypePage.SubscriptionOperationExecutor, {
+      operations,
+    });
 
     const startingOp = operations[0];
     if (startingOp instanceof CreateSubscriptionOperation)

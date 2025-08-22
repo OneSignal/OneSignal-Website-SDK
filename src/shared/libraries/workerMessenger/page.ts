@@ -1,7 +1,8 @@
 import type { ContextInterface } from 'src/shared/context/types';
 import { supportsServiceWorkers } from 'src/shared/environment/detect';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import { getAvailableServiceWorker } from 'src/sw/helpers/registration';
-import Log from '../Log';
 import { WorkerMessengerBase } from './base';
 import type {
   WorkerMessengerCommandValue,
@@ -28,9 +29,9 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
       'message',
       this.onPageMessageReceivedFromServiceWorker.bind(this),
     );
-    Log.debug(
-      `(${location.origin}) [Worker Messenger] Page is now listening for messages.`,
-    );
+    log(MessageTypePage.WorkerMessengerPageListening, {
+      origin: location.origin,
+    });
   }
 
   /*
@@ -52,7 +53,9 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    Log.debug(`[Worker Messenger] Page received message:`, event.data);
+    log(MessageTypePage.WorkerMessengerPageReceived, {
+      eventData: event.data,
+    });
 
     for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {
@@ -76,9 +79,9 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
   ) {
-    Log.debug(
-      `[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`,
-    );
+    log(MessageTypePage.WorkerMessengerPageUnicast, {
+      command: command.toString(),
+    });
     this.directPostMessageToSW(command, payload);
   }
 
@@ -86,23 +89,23 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
   ): Promise<void> {
-    Log.debug(
-      `[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`,
-    );
+    log(MessageTypePage.WorkerMessengerPageDirect, {
+      command: command.toString(),
+    });
 
     const workerRegistration =
       await this.context?.serviceWorkerManager.getOneSignalRegistration();
     if (!workerRegistration) {
-      Log.error(
-        '`[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!',
+      log(
+        MessageTypePage.WorkerMessengerPageRegistrationError,
       );
       return;
     }
 
     const availableWorker = getAvailableServiceWorker(workerRegistration);
     if (!availableWorker) {
-      Log.error(
-        '`[Worker Messenger] [Page -> SW] Could not get ServiceWorker to postMessage!',
+      log(
+        MessageTypePage.WorkerMessengerPageServiceWorkerError,
       );
       return;
     }

@@ -3,7 +3,7 @@ import { analyzer } from 'vite-bundle-analyzer';
 import mkcert from 'vite-plugin-mkcert';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
-type Lib = 'sdk' | 'page' | 'worker';
+type Lib = 'sdk' | 'page' | 'worker' | 'logger';
 
 let prefix: string;
 switch (process.env.ENV) {
@@ -21,14 +21,22 @@ const libConfig: Record<Lib, LibraryOptions> = {
   sdk: {
     entry: './src/entries/sdk.ts',
     fileName: () => `${prefix}OneSignalSDK.page.js`,
+    name: 'OneSignal',
   },
   page: {
     entry: './src/entries/pageSdkInit.ts',
     fileName: () => `${prefix}OneSignalSDK.page.es6.js`,
+    name: 'OneSignal',
   },
   worker: {
     entry: './src/entries/worker.ts',
     fileName: () => `${prefix}OneSignalSDK.sw.js`,
+    name: 'OneSignal',
+  },
+  logger: {
+    entry: './src/entries/logger.ts',
+    fileName: () => `${prefix}OneSignalSDK.logger.js`,
+    name: 'OneSignalLogger',
   },
 };
 
@@ -134,7 +142,6 @@ export default defineConfig(({ mode }) => {
 
       lib: {
         ...libConfig[lib],
-        name: 'OneSignal',
         formats: ['iife'],
       },
       outDir: 'build/releases',
@@ -157,9 +164,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __API_TYPE__: JSON.stringify(process.env.API),
       __BUILD_TYPE__: JSON.stringify(process.env.ENV),
-      __LOGGING__: JSON.stringify(
-        getBooleanEnv(process.env.LOGGING) ?? !isProdEnv,
-      ),
+      __LOGGING__: JSON.stringify(getBooleanEnv(process.env.LOGGING)),
       __VERSION__: JSON.stringify(process.env.npm_package_config_sdkVersion),
       __IS_SERVICE_WORKER__: JSON.stringify(lib === 'worker'),
 

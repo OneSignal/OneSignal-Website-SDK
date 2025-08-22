@@ -4,7 +4,8 @@ import type { IUpdateUser } from 'src/core/types/api';
 import type { ServerAppConfig } from '../config/types';
 import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
-import Log from '../libraries/Log';
+import log from '../helpers/log';
+import { MessageTypeSW } from '../helpers/log/constants';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
   OutcomeAttributionType,
@@ -52,7 +53,9 @@ export class OneSignalApiSW {
         }
       })
       .catch((e) => {
-        Log.debug('Error getting user ID from subscription identifier:', e);
+        (self as any).OneSignalLogger(MessageTypeSW.ApiUserIdError, {
+          error: e,
+        });
         return null;
       });
   }
@@ -87,7 +90,9 @@ export class OneSignalApiSW {
         updateUserPayload,
       );
     } catch (e) {
-      Log.debug('Error updating user session:', e);
+      (self as any).OneSignalLogger(MessageTypeSW.ApiSessionError, {
+        error: e,
+      });
     }
   }
 
@@ -139,7 +144,9 @@ export class OneSignalApiSW {
         await OneSignalApiShared.sendOutcome(outcomePayload);
       }
     } catch (e) {
-      Log.debug('Error sending session duration:', e);
+      log(MessageTypeSW.ApiDurationError, {
+        error: e,
+      });
     }
   }
 }

@@ -1,6 +1,7 @@
 import { EmptyArgumentError } from 'src/shared/errors/common';
 import type ContextSW from 'src/shared/models/ContextSW';
-import Log from '../Log';
+import log from '../../helpers/log';
+import { MessageTypePage } from '../../helpers/log/constants';
 import { WorkerMessengerBase } from './base';
 import type {
   WorkerMessengerCommandValue,
@@ -21,9 +22,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       'message',
       this.onWorkerMessageReceivedFromPage.bind(this),
     );
-    Log.debug(
-      '[Worker Messenger] Service worker is now listening for messages.',
-    );
+    log(MessageTypePage.WorkerMessengerSWListening);
   }
 
   onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
@@ -40,8 +39,8 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    Log.debug(
-      `[Worker Messenger] Service worker received message:`,
+    log(
+      MessageTypePage.WorkerMessengerSWReceived,
       event.data,
     );
 
@@ -72,11 +71,10 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       includeUncontrolled: true,
     });
     for (const client of clients) {
-      Log.debug(
-        `[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${
-          client.url
-        }.`,
-      );
+      log(MessageTypePage.WorkerMessengerSWBroadcast, {
+        command: command.toString(),
+        url: client.url,
+      });
       client.postMessage({
         command: command,
         payload: payload,
@@ -96,11 +94,10 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       throw EmptyArgumentError('windowClient');
     }
 
-    Log.debug(
-      `[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${
-        windowClient.url
-      }.`,
-    );
+    log(MessageTypePage.WorkerMessengerSWUnicast, {
+      command: command.toString(),
+      url: windowClient.url,
+    });
     windowClient.postMessage({
       command: command,
       payload: payload,

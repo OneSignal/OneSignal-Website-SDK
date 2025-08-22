@@ -20,7 +20,7 @@ import { server } from '__test__/support/mocks/server';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { db } from 'src/shared/database/client';
 import type { SubscriptionSchema } from 'src/shared/database/types';
-import Log from 'src/shared/libraries/Log';
+import LogBase from 'src/shared/helpers/log/LogBase';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 describe('pageSdkInit 2', () => {
@@ -58,7 +58,7 @@ describe('pageSdkInit 2', () => {
       response: emailSubModel,
     });
 
-    const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+    const errorSpy = vi.spyOn(LogBase, 'error').mockImplementation(() => '');
 
     // wait for init so it can initialize user namespace otherwise it won't be available for addEmail
     window.OneSignalDeferred = [];

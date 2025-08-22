@@ -1,6 +1,7 @@
 import { getOptionsValue } from 'src/shared/database/client';
 import type { OptionKey } from 'src/shared/database/types';
-import Log from 'src/shared/libraries/Log';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import type { IOSWebhookEventPayload } from '../serviceWorker/types';
 
 export class OSWebhookSender {
@@ -25,12 +26,12 @@ export class OSWebhookSender {
         'Content-Type': 'application/json',
       };
     }
-    Log.debug(
-      `Executing ${payload.event} webhook ${
-        isServerCorsEnabled ? 'with' : 'without'
-      } CORS POST ${webhookTargetUrl}`,
+    log(MessageTypePage.OSWebhookExecute, {
+      event: payload.event,
+      corsEnabled: isServerCorsEnabled,
+      url: webhookTargetUrl,
       payload,
-    );
+    });
     await fetch(webhookTargetUrl, fetchOptions);
     return;
   }

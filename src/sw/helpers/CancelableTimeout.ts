@@ -1,4 +1,5 @@
-import Log from '../../shared/libraries/Log';
+import log from '../../shared/helpers/log';
+import { MessageTypePage } from '../../shared/helpers/log/constants';
 
 export interface CancelableTimeoutPromise {
   cancel: () => void;
@@ -24,13 +25,15 @@ export function cancelableTimeout(
         await callback();
         resolve();
       } catch (e) {
-        Log.error('Failed to execute callback', e);
+        log(MessageTypePage.CancelableTimeoutCallbackError, {
+          error: e,
+        });
         reject();
       }
     }, delayInMilliseconds);
 
     clearTimeoutHandle = () => {
-      Log.debug('Cancel called');
+      log(MessageTypePage.CancelableTimeoutCancel);
       self.clearTimeout(timerId);
       if (!startedExecution) {
         resolve();

@@ -21,7 +21,7 @@ export const VERSION = typeof __VERSION__ === 'undefined' ? '1' : __VERSION__;
 export const IS_HTTPS =
   typeof __IS_HTTPS__ === 'undefined' ? true : __IS_HTTPS__;
 
-export const LOGGING = typeof __LOGGING__ === 'undefined' ? true : __LOGGING__;
+export const LOGGING = typeof __LOGGING__ === 'undefined' ? false : __LOGGING__;
 
 export const NO_DEV_PORT =
   typeof __NO_DEV_PORT__ === 'undefined' ? false : __NO_DEV_PORT__;

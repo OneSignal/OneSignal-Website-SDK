@@ -1,6 +1,7 @@
 import { ResourceLoadState } from '../../page/services/DynamicResourceLoader';
 import { addCssClass } from '../helpers/dom';
-import Log from '../libraries/Log';
+import log from '../helpers/log';
+import { MessageTypePage } from '../helpers/log/constants';
 import type { AppUserConfigCustomLinkOptions } from '../prompts/types';
 import {
   CUSTOM_LINK_CSS_CLASSES,
@@ -23,7 +24,7 @@ export class CustomLinkManager {
       return;
     }
 
-    Log.info('OneSignal: initializing customlink');
+    log(MessageTypePage.CustomLinkManagerInit);
     const isPushEnabled =
       await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     if (!this.config?.unsubscribeEnabled && isPushEnabled) {
@@ -46,9 +47,7 @@ export class CustomLinkManager {
 
   private async mountExplanationNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
-        "CustomLink: required property 'text' is missing in the config",
-      );
+      log(MessageTypePage.CustomLinkManagerMissingText);
       return;
     }
 
@@ -76,9 +75,7 @@ export class CustomLinkManager {
 
   private async mountSubscriptionNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
-        "CustomLink: required property 'text' is missing in the config",
-      );
+      log(MessageTypePage.CustomLinkManagerMissingText);
       return;
     }
 
@@ -110,7 +107,7 @@ export class CustomLinkManager {
       await this.setTextFromPushStatus(subscribeButton);
 
       subscribeButton.addEventListener('click', async () => {
-        Log.info('CustomLink: subscribe clicked');
+        log(MessageTypePage.CustomLinkManagerSubscribeClicked);
         await this.handleClick(subscribeButton);
       });
 
@@ -126,9 +123,7 @@ export class CustomLinkManager {
     const sdkStylesLoadResult =
       await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug(
-        'Not initializing custom link button because styles failed to load.',
-      );
+      log(MessageTypePage.CustomLinkManagerStylesFailure);
       return false;
     }
     return true;

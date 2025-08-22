@@ -17,7 +17,11 @@ import { getBrowserName } from 'src/shared/useragent/detect';
 import OneSignal from '../../onesignal/OneSignal';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
-import Log from '../../shared/libraries/Log';
+import log from '../../shared/helpers/log';
+import {
+  MessageType,
+  MessageTypePage,
+} from '../../shared/helpers/log/constants';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
@@ -292,7 +296,7 @@ export default class Bell {
           this.hovering = false;
         })
         .catch((err) => {
-          Log.error(err);
+          log(MessageType.Error, err);
         });
     });
 
@@ -430,7 +434,7 @@ export default class Bell {
     const sdkStylesLoadResult =
       await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug('Not showing notify button because styles failed to load.');
+      log(MessageTypePage.BellNotifyButtonStylesError);
       return;
     }
 
@@ -511,7 +515,7 @@ export default class Bell {
     this.setCustomColorsIfSpecified();
     this.patchSafariSvgFilterBug();
 
-    Log.info('Showing the notify button.');
+    log(MessageTypePage.BellNotifyButtonShow);
 
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
       .then(() => {
@@ -570,7 +574,7 @@ export default class Bell {
       const element = this.launcher.element as HTMLElement;
 
       if (!element) {
-        Log.error('Could not find bell dom element');
+        log(MessageTypePage.BellDomElementNotFound);
         return;
       }
       // Reset styles first
@@ -696,7 +700,7 @@ export default class Bell {
         }
       })
       .catch((e) => {
-        Log.error(e);
+        log(MessageType.Error, e);
       });
   }
 

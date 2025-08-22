@@ -3,11 +3,12 @@ import {
   getDeviceOS,
   getSubscriptionType,
 } from 'src/shared/environment/detect';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
-import Log from 'src/shared/libraries/Log';
 import { VERSION } from 'src/shared/utils/EnvVariables';
 import { OPERATION_NAME } from '../constants';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
@@ -34,19 +35,13 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
-      `CustomEventsOperationExecutor(operations: ${JSON.stringify(
-        operations,
-      )})`,
-    );
+    log(MessageTypePage.CustomEvents, operations);
 
     // TODO: each trackEvent is sent individually right now; may need to batch in the future
     const operation = operations[0];
 
     if (!(operation instanceof TrackCustomEventOperation)) {
-      throw new Error(
-        `Unrecognized operation! Expected TrackEventOperation, got: ${operation.constructor.name}`,
-      );
+      throw new Error(`Unknown op, got: ${operation.constructor.name}`);
     }
 
     const response = await sendCustomEvent(

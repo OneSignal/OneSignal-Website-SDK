@@ -1,6 +1,7 @@
 import { containsMatch } from 'src/shared/context/helpers';
 import { addCssClass, removeCssClass } from 'src/shared/helpers/dom';
-import Log from '../../shared/libraries/Log';
+import log from '../../shared/helpers/log';
+import { MessageTypePage } from '../../shared/helpers/log/constants';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 
@@ -53,9 +54,10 @@ export default class AnimatedElement {
         OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWING, this);
         const element = this.element;
         if (!element) {
-          Log.error(
-            `(show) could not find animated element with selector ${this.selector}`,
-          );
+          log(MessageTypePage.BellAnimatedElementNotFound, {
+            selector: this.selector,
+            operation: 'show',
+          });
         } else {
           if (this.hideClass) removeCssClass(element, this.hideClass);
           if (this.showClass) addCssClass(element, this.showClass);
@@ -65,9 +67,9 @@ export default class AnimatedElement {
           return resolve(this);
         } else {
           const timerId = setTimeout(() => {
-            Log.debug(
-              `Element did not completely show (state: ${this.state}).`,
-            );
+            log(MessageTypePage.BellAnimatedElementShowTimeout, {
+              state: this.state,
+            });
           }, this.transitionCheckTimeout);
           once(
             this.element,
@@ -107,9 +109,10 @@ export default class AnimatedElement {
         OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDING, this);
         const element = this.element;
         if (!element) {
-          Log.error(
-            `(hide) could not find animated element with selector ${this.selector}`,
-          );
+          log(MessageTypePage.BellAnimatedElementNotFound, {
+            selector: this.selector,
+            operation: 'hide',
+          });
         } else {
           if (this.showClass) removeCssClass(element, this.showClass);
           if (this.hideClass) addCssClass(element, this.hideClass);
@@ -123,9 +126,9 @@ export default class AnimatedElement {
             'transitionend',
             (event: Event, destroyListenerFn: () => void) => {
               const timerId = setTimeout(() => {
-                Log.debug(
-                  `Element did not completely hide (state: ${this.state}).`,
-                );
+                log(MessageTypePage.BellAnimatedElementHideTimeout, {
+                  state: this.state,
+                });
               }, this.transitionCheckTimeout);
               if (
                 event.target === this.element &&

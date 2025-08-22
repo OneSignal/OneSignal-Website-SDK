@@ -2,9 +2,11 @@ import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
-import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
+import log from '../shared/helpers/log';
+import { MessageTypePage } from '../shared/helpers/log/constants';
 import MainHelper from '../shared/helpers/MainHelper';
+import OneSignal from './OneSignal';
 
 export default class UserDirector {
   static async createUserOnServer(): Promise<void> {
@@ -17,9 +19,8 @@ export default class UserDirector {
     const hasExternalId = !!identityModel.externalId;
 
     if (!hasAnySubscription && !hasExternalId) {
-      return Log.info(
-        'No subscriptions or external ID found, skipping user creation',
-      );
+      log(MessageTypePage.UserDirectorNoSubscriptionOrId);
+      return;
     }
 
     const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();

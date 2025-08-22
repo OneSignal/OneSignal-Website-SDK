@@ -16,12 +16,13 @@
     "build:sdk": "LIB=sdk vite build",
     "build:page": "LIB=page vite build",
     "build:sw": "LIB=worker vite build",
-    "build": "npm run build:sdk && npm run build:page && npm run build:sw",
+    "build:logger": "LIB=logger vite build",
+    "build": "npm run build:sdk && npm run build:page && npm run build:sw && npm run build:logger",
     "build:watch": "LIB=sdk vite build --watch",
     "build:dev": "ENV=development npm run build",
-    "build:dev:watch": "ENV=development concurrently \"LIB=sdk vite build --watch\" \"LIB=page vite build --watch\" \"LIB=worker vite build --watch\"",
-    "build:staging": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com npm run build",
-    "build:staging:watch": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com npm run build:watch",
+    "build:dev:watch": "ENV=development concurrently \"LIB=sdk vite build --watch\" \"LIB=page vite build --watch\" \"LIB=worker vite build --watch\" \"LIB=logger vite build --watch\"",
+    "build:staging": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com npm run build && npm run build:logger",
+    "build:staging:watch": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com npm run build:watch && npm run build:logger:watch",
     "build:prod": "ENV=production API=production npm run build && size-limit",
     "build:prod:watch": "ENV=production API=production npm run build:watch",
     "postbuild:prod": "npm run validate:build",
@@ -95,6 +96,11 @@
     {
       "path": "./build/releases/OneSignalSDK.page.styles.css",
       "limit": "8.81 kB",
+      "gzip": true
+    },
+    {
+      "path": "./build/releases/OneSignalSDK.logger.js",
+      "limit": "8 kB",
       "gzip": true
     }
   ]

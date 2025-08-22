@@ -10,7 +10,6 @@ import {
   getCurrentSession,
 } from '../database/client';
 import { getAllNotificationClickedForOutcomes } from '../database/notifications';
-import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import type { OutcomesConfig } from '../outcomes/types';
@@ -19,6 +18,8 @@ import { initializeNewSession } from '../session/helpers';
 import type { Session, SessionOriginValue } from '../session/types';
 import { getConfigAttribution } from './OutcomesHelper';
 import { getBaseUrl } from './general';
+import log from './log';
+import { MessageTypePage } from './log/constants';
 
 export function getServiceWorkerHref(
   config: ServiceWorkerManagerConfig,
@@ -78,12 +79,12 @@ export async function upsertSession(
   }
 
   if (existingSession.status === SessionStatus.Active) {
-    Log.debug('Session already active', existingSession);
+    log(MessageTypePage.ServiceWorkerHelperSessionActive, existingSession);
     return;
   }
 
   if (!existingSession.lastDeactivatedTimestamp) {
-    Log.debug('Session is in invalid state', existingSession);
+    log(MessageTypePage.ServiceWorkerHelperSessionInvalid, existingSession);
     // TODO: possibly recover by re-starting session if deviceId is present?
     return;
   }
@@ -136,7 +137,7 @@ export async function deactivateSession(
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
-    Log.debug('No active session found. Cannot deactivate.');
+    log(MessageTypePage.ServiceWorkerHelperNoActiveSession);
     return undefined;
   }
 
@@ -164,9 +165,9 @@ export async function deactivateSession(
    * For anything but active, logging a warning and doing early return.
    */
   if (existingSession.status !== SessionStatus.Active) {
-    Log.warn(
-      `Session in invalid state ${existingSession.status}. Cannot deactivate.`,
-    );
+    log(MessageTypePage.ServiceWorkerHelperInvalidStateDeactivate, {
+      status: existingSession.status,
+    });
     return undefined;
   }
 
@@ -221,17 +222,16 @@ async function finalizeSession(
   sendOnFocusEnabled: boolean,
   outcomesConfig: OutcomesConfig,
 ): Promise<void> {
-  Log.debug(
-    'Finalize session',
-    `started: ${new Date(session.startTimestamp)}`,
-    `duration: ${session.accumulatedDuration}s`,
-  );
+  log(MessageTypePage.ServiceWorkerHelperFinalizeSession, {
+    startTimestamp: session.startTimestamp,
+    accumulatedDuration: session.accumulatedDuration,
+  });
   if (sendOnFocusEnabled) {
-    Log.debug(
-      `send on_focus reporting session duration -> ${session.accumulatedDuration}s`,
-    );
+    log(MessageTypePage.ServiceWorkerHelperSendFocus, {
+      duration: session.accumulatedDuration,
+    });
     const attribution = await getConfigAttribution(outcomesConfig);
-    Log.debug('send on_focus with attribution', attribution);
+    log(MessageTypePage.ServiceWorkerHelperSendFocusAttribution, attribution);
     await OneSignalApiSW.sendSessionDuration(
       appId,
       onesignalId,
@@ -245,10 +245,10 @@ async function finalizeSession(
     cleanupCurrentSession(),
     db.clear('Outcomes.NotificationClicked'),
   ]);
-  Log.debug(
-    'Finalize session finished',
-    `started: ${new Date(session.startTimestamp)}`,
-  );
+  log(MessageTypePage.ServiceWorkerHelperFinalizeComplete, {
+    startTimestamp: session.startTimestamp,
+    accumulatedDuration: session.accumulatedDuration,
+  });
 }
 
 const resetSentUniqueOutcomes = async (): Promise<void> => {
@@ -267,7 +267,7 @@ const getLastNotificationClickedForOutcomes = async (
   try {
     allClickedNotifications = await getAllNotificationClickedForOutcomes();
   } catch (e) {
-    Log.error('Database.getLastNotificationClickedForOutcomes', e);
+    log(MessageTypePage.ServiceWorkerHelperDatabaseError, e);
   }
   const predicate = (notification: OutcomesNotificationClicked) =>
     notification.appId === appId;

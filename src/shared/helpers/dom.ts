@@ -1,4 +1,5 @@
-import Log from 'src/shared/libraries/Log';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 
 export function addDomElement(
   targetSelectorOrElement: string | Element,
@@ -59,7 +60,7 @@ export function clearDomElementChildren(
 export function getDomElementOrStub(selector: string): Element {
   const foundElement = document.querySelector(selector);
   if (!foundElement) {
-    Log.debug(`No instance of ${selector} found. Returning stub.`);
+    log(MessageTypePage.DomElementNotFound, { selector });
     return document.createElement('div');
   }
   return foundElement;

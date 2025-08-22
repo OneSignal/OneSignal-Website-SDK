@@ -30,6 +30,7 @@ declare global {
   interface Window {
     OneSignal: _OneSignal;
     OneSignalDeferred?: OneSignalDeferredLoadedCallback[];
+    OneSignalLog: (type: number, data?: any) => void;
     __oneSignalSdkLoadCount?: number;
     safari?: {
       pushNotification?: SafariRemoteNotification;
@@ -52,7 +53,7 @@ declare global {
   }
 
   interface WorkerGlobalScope {
-    OneSignal: _OneSignal;
+    OneSignalLog: (type: number, data?: any) => void;
     OneSignalWorker: typeof import('./sw/serviceWorker/ServiceWorker').OneSignalServiceWorker;
     workerMessenger: import('./sw/serviceWorker/WorkerMessengerSW').WorkerMessengerSW;
     shouldLog: boolean;

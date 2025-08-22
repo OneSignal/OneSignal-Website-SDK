@@ -1,7 +1,8 @@
 import { containsMatch } from '../context/helpers';
 import { windowEnvString } from '../environment/detect';
+import log from '../helpers/log';
+import { MessageTypePage } from '../helpers/log/constants';
 import Emitter from '../libraries/Emitter';
-import Log from '../libraries/Log';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 
 const SILENT_EVENTS = [
@@ -31,9 +32,16 @@ export default class OneSignalEvent {
       const displayData = data;
 
       if (displayData || displayData === false) {
-        Log.debug(`(${windowEnvString}) » ${eventName}:`, displayData);
+        log(MessageTypePage.OneSignalEventTrigger, {
+          windowEnvString,
+          eventName,
+          displayData,
+        });
       } else {
-        Log.debug(`(${windowEnvString}) » ${eventName}`);
+        log(MessageTypePage.OneSignalEventTrigger, {
+          windowEnvString,
+          eventName,
+        });
       }
     }
 

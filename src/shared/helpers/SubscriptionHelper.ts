@@ -6,11 +6,12 @@ import type {
   SubscriptionChannelValue,
   SubscriptionTypeValue,
 } from 'src/shared/subscriptions/types';
-import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import log from './log';
+import { MessageTypePage } from './log/constants';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 
@@ -34,7 +35,7 @@ export default class SubscriptionHelper {
       await triggerNotificationPermissionChanged();
       await checkAndTriggerSubscriptionChanged();
     } catch (e) {
-      Log.error(e);
+      log(MessageTypePage.SubscriptionHelperError, e);
     }
     return subscription;
   }

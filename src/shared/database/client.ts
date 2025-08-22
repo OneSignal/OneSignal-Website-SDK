@@ -1,5 +1,6 @@
 import { openDB } from 'idb';
-import Log from '../libraries/Log';
+import log from '../helpers/log';
+import { MessageType } from '../helpers/log/constants';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { DATABASE_NAME, VERSION } from './constants';
@@ -73,7 +74,7 @@ const open = async (version = VERSION) => {
       }
     },
     blocked() {
-      Log.debug('IndexedDB: Blocked event');
+      log(MessageType.DatabaseBlocked);
     },
   });
 };

@@ -3,7 +3,8 @@ import type {
   TagsObjectWithBoolean,
 } from 'src/page/tags/types';
 import type { ContextInterface } from 'src/shared/context/types';
-import Log from '../../../shared/libraries/Log';
+import log from '../../../shared/helpers/log';
+import { MessageTypePage } from '../../../shared/helpers/log/constants';
 import TagUtils from '../../../shared/utils/TagUtils';
 import type { ITagManager } from './types';
 
@@ -24,7 +25,9 @@ export default class TagManager implements ITagManager {
    * @returns Promise resolving TagsObject if successful, {} if no change detected, null if failed
    */
   public async sendTags(): Promise<TagsObjectForApi> {
-    Log.info('Category Slidedown Local Tags:', this.tagsFromTaggingContainer);
+    log(MessageTypePage.TagManagerLocalTags, {
+      tags: this.tagsFromTaggingContainer,
+    });
 
     const localTagsConvertedToApi = TagUtils.convertTagsBooleansToApi(
       this.tagsFromTaggingContainer,
@@ -39,9 +42,7 @@ export default class TagManager implements ITagManager {
       await OneSignal.User.addTags(finalTagsObject);
       return finalTagsObject;
     }
-    Log.warn(
-      'OneSignal: no change detected in Category preferences. Skipping tag update.',
-    );
+    log(MessageTypePage.TagManagerError);
     // no change detected, return {}
     return finalTagsObject;
   }

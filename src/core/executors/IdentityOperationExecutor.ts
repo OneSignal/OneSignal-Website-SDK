@@ -8,7 +8,8 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
-import Log from 'src/shared/libraries/Log';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -40,9 +41,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
-      `IdentityOperationExecutor(operations: ${JSON.stringify(operations)})`,
-    );
+    log(MessageTypePage.IdentityOp, operations);
 
     const invalidOps = operations.filter(
       (op) =>
@@ -51,11 +50,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         ),
     );
     if (invalidOps.length > 0) {
-      throw new Error(
-        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-          operations,
-        )}`,
-      );
+      throw new Error(`Uknown ops:${JSON.stringify(operations)}`);
     }
 
     const hasSetAlias = operations.some(
@@ -65,9 +60,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       (op) => op instanceof DeleteAliasOperation,
     );
     if (hasSetAlias && hasDeleteAlias) {
-      throw new Error(
-        `Can't process SetAliasOperation and DeleteAliasOperation at the same time.`,
-      );
+      throw new Error(`Can't process set & delete alias together`);
     }
 
     const lastOperation = operations[operations.length - 1] as

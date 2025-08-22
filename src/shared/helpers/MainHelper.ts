@@ -3,7 +3,6 @@ import { getDBAppConfig } from '../database/config';
 import { getSubscription } from '../database/subscription';
 import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
 import { AppIDMissingError, MalformedArgumentError } from '../errors/common';
-import Log from '../libraries/Log';
 import type { NotificationIcons } from '../notifications/types';
 import type {
   AppUserConfigPromptOptions,
@@ -11,6 +10,8 @@ import type {
 } from '../prompts/types';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
 import { getValueOrDefault } from './general';
+import log from './log';
+import { MessageTypePage } from './log/constants';
 import { triggerNotificationPermissionChanged } from './permissions';
 import { isValidUrl } from './validators';
 
@@ -74,7 +75,7 @@ export default class MainHelper {
       .getRegistration()
       .then(async (registration?: ServiceWorkerRegistration | null) => {
         if (!registration) {
-          Log.error('Service worker registration not available.');
+          log(MessageTypePage.MainHelperServiceWorkerError);
           return;
         }
 
@@ -116,7 +117,10 @@ export default class MainHelper {
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
-      Log.error(`API call ${url}`, 'failed with:', data.errors);
+      log(MessageTypePage.MainHelperApiCallFailed, {
+        url,
+        errors: data.errors,
+      });
       throw new Error('Failed to get notification icons.');
     }
     return data as NotificationIcons;

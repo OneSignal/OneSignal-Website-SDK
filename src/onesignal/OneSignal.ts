@@ -37,9 +37,10 @@ import Context from '../page/models/Context';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
+import log from '../shared/helpers/log';
+import { MessageType, MessageTypePage } from '../shared/helpers/log/constants';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
-import Log from '../shared/libraries/Log';
 import DebugNamespace from './DebugNamesapce';
 import NotificationsNamespace from './NotificationsNamespace';
 import { ONESIGNAL_EVENTS } from './OneSignalEvents';
@@ -64,7 +65,7 @@ export default class OneSignal {
   private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await getAppConfig(options);
 
-    Log.debug('OneSignal: Final web app config:', appConfig);
+    log(MessageTypePage.InitFinalConfig, { appConfig });
 
     // Workaround to temp assign config so that it can be used in context.
     OneSignal.config = appConfig;
@@ -125,9 +126,10 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
-    Log.debug(
-      `Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`,
-    );
+    log(MessageTypePage.InitBrowserEnvironment, {
+      browserName: getBrowserName(),
+      browserVersion: getBrowserVersion(),
+    });
 
     removeLegacySubscriptionOptions();
 
@@ -143,7 +145,7 @@ export default class OneSignal {
        * support on Chrome/Firefox and don't intend to support Safari but don't
        * place conditional initialization checks.
        */
-      Log.warn(MissingSafariWebIdError);
+      log(MessageType.Error, MissingSafariWebIdError);
       return;
     }
 
@@ -197,10 +199,7 @@ export default class OneSignal {
     )
       await __init();
     else {
-      Log.debug(
-        'OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
-          ' initialization...',
-      );
+      log(MessageTypePage.InitWaitingForDom);
       window.addEventListener('DOMContentLoaded', () => {
         __init();
       });
@@ -299,12 +298,10 @@ export default class OneSignal {
   /* END NEW USER MODEL CHANGES */
 }
 
-Log.info(
-  `OneSignal Web SDK loaded (version ${VERSION},
-  ${windowEnvString} environment).`,
-);
-Log.debug(
-  `Current Page URL: ${
-    typeof location === 'undefined' ? 'NodeJS' : location.href
-  }`,
-);
+log(MessageTypePage.OneSignalSdkLoaded, {
+  version: VERSION,
+  environment: windowEnvString,
+});
+log(MessageTypePage.InitCurrentPageUrl, {
+  url: location.href,
+});

@@ -5,7 +5,8 @@ import {
   removeCssClass,
 } from 'src/shared/helpers/dom';
 import { nothing } from 'src/shared/helpers/general';
-import Log from 'src/shared/libraries/Log';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import type { BellSize } from 'src/shared/prompts/types';
 import { once } from 'src/shared/utils/utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
@@ -68,9 +69,10 @@ export default class Launcher extends ActiveAnimatedElement {
           return resolve(this);
         } else {
           const timerId = setTimeout(() => {
-            Log.debug(
-              `Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`,
-            );
+            log(MessageTypePage.BellLauncherResizeTimeout, {
+              state: this.state,
+              activeState: this.activeState,
+            });
           }, this.transitionCheckTimeout);
           once(
             this.element!,

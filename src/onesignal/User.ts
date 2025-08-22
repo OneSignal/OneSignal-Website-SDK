@@ -6,7 +6,6 @@ import {
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
-import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   NotificationType,
@@ -14,6 +13,8 @@ import {
 } from 'src/shared/subscriptions/constants';
 import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
+import log from '../shared/helpers/log';
+import { MessageTypePage } from '../shared/helpers/log/constants';
 
 export default class User {
   static singletonInstance?: User;
@@ -145,7 +146,7 @@ export default class User {
     const hasOneSignalId =
       !!OneSignal.coreDirector.getIdentityModel().onesignalId;
     if (!hasOneSignalId) {
-      Log.error('User must be logged in first.');
+      log(MessageTypePage.UserNotLoggedIn);
     }
     return hasOneSignalId;
   }
@@ -268,9 +269,8 @@ export default class User {
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {
     if (!this.validateUserExists()) return;
     if (!isObjectSerializable(properties)) {
-      return Log.error(
-        'Custom event properties must be a JSON-serializable object',
-      );
+      log(MessageTypePage.UserCustomEventPropertiesNotSerializable);
+      return;
     }
 
     logMethodCall('trackEvent', { name, properties });

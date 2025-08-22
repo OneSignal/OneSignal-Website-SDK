@@ -18,7 +18,8 @@ import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
 import MainHelper from '../../helpers/MainHelper';
-import Log from '../../libraries/Log';
+import log from '../../helpers/log';
+import { MessageTypePage } from '../../helpers/log/constants';
 import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constants';
 import type { ISessionManager } from './types';
 
@@ -46,7 +47,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      Log.debug('Notify SW to upsert session');
+      log(MessageTypePage.SessionManagerUpsert);
       await this.context.workerMessenger.unicast(
         WorkerMessengerCommand.SessionUpsert,
         payload,
@@ -54,7 +55,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      Log.debug('Notify upsert: do nothing');
+      log(MessageTypePage.SessionManagerUpsert);
     }
   }
 
@@ -74,7 +75,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      Log.debug('Notify SW to deactivate session');
+      log(MessageTypePage.SessionManagerDeactivate);
       await this.context.workerMessenger.unicast(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
@@ -82,7 +83,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      Log.debug('Notify deactivate: do nothing');
+      log(MessageTypePage.SessionManagerDeactivate);
     }
   }
 
@@ -126,10 +127,9 @@ export class SessionManager implements ISessionManager {
       if (visibilityState === 'visible') {
         this.setupOnFocusAndOnBlurForSession();
 
-        Log.debug(
-          'handleVisibilityChange',
-          'visible',
-          `hasFocus: ${document.hasFocus()}`,
+        log(
+          MessageTypePage.SessionManagerVisibilityChange,
+          `visible hasFocus: ${document.hasFocus()}`,
         );
 
         if (document.hasFocus()) {
@@ -143,7 +143,10 @@ export class SessionManager implements ISessionManager {
       }
 
       if (visibilityState === 'hidden') {
-        Log.debug('handleVisibilityChange', 'hidden');
+        log(
+          MessageTypePage.SessionManagerVisibilityChange,
+          'hidden',
+        );
         if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
           window.removeEventListener(
             'focus',
@@ -166,9 +169,17 @@ export class SessionManager implements ISessionManager {
       }
 
       // it should never be anything else at this point
-      Log.warn('Unhandled visibility state happened', visibilityState);
+      log(
+        MessageTypePage.SessionManagerUnhandledVisibility,
+        visibilityState,
+      );
     } catch (e) {
-      Log.error('Error handling visibility change:', e);
+      log(
+        MessageTypePage.SessionManagerVisibilityChangeError,
+        {
+          error: e,
+        },
+      );
     }
   }
 
@@ -195,20 +206,22 @@ export class SessionManager implements ISessionManager {
         outcomesConfig: this.context.appConfig.userConfig.outcomes!,
       };
 
-      Log.debug('Notify SW to deactivate session (beforeunload)');
+      log(MessageTypePage.SessionManagerBeforeUnload);
       this.context.workerMessenger.directPostMessageToSW(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );
     } catch (e) {
-      Log.error('Error handling onbeforeunload:', e);
+      log(MessageTypePage.SessionManagerBeforeUnloadError, {
+        error: e,
+      });
     }
   }
 
   async handleOnFocus(e: Event): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    Log.debug('handleOnFocus', e);
+    log(MessageTypePage.SessionManagerFocus, e);
     if (!User.singletonInstance?.onesignalId) {
       return;
     }
@@ -231,14 +244,16 @@ export class SessionManager implements ISessionManager {
         SessionOrigin.Focus,
       );
     } catch (e) {
-      Log.error('Error handling focus:', e);
+      log(MessageTypePage.SessionManagerFocusError, {
+        error: e,
+      });
     }
   }
 
   async handleOnBlur(e: Event): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    Log.debug('handleOnBlur', e);
+    log(MessageTypePage.SessionManagerBlur, e);
     if (!User.singletonInstance?.onesignalId) {
       return;
     }
@@ -261,7 +276,9 @@ export class SessionManager implements ISessionManager {
         SessionOrigin.Blur,
       );
     } catch (e) {
-      Log.error('Error handling blur:', e);
+      log(MessageTypePage.SessionManagerBlurError, {
+        error: e,
+      });
     }
   }
 
@@ -289,9 +306,11 @@ export class SessionManager implements ISessionManager {
   setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (!supportsServiceWorkers()) {
-      Log.debug(
-        'Not setting session event listeners. No service worker possible.',
-      );
+      log(MessageTypePage.SessionManagerUpdate, {
+        message:
+          'Not setting session event listeners. No service worker possible.',
+        details: {},
+      });
       return;
     }
 
@@ -326,7 +345,7 @@ export class SessionManager implements ISessionManager {
   }
 
   setupOnFocusAndOnBlurForSession(): void {
-    Log.debug('setupOnFocusAndOnBlurForSession');
+    log(MessageTypePage.SessionManagerSetup);
 
     if (!OneSignal.cache.focusHandler) {
       OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
@@ -357,9 +376,11 @@ export class SessionManager implements ISessionManager {
     const onesignalId = identityModel.onesignalId;
 
     if (!onesignalId) {
-      Log.debug(
-        'Not sending the on session because user is not registered with OneSignal (no onesignal id)',
-      );
+      log(MessageTypePage.SessionManagerUpdate, {
+        message:
+          'Not sending the on session because user is not registered with OneSignal (no onesignal id)',
+        details: {},
+      });
       return;
     }
 
@@ -401,12 +422,17 @@ export class SessionManager implements ISessionManager {
         );
         this.onSessionSent = true;
       } catch (e) {
-        Log.debug('Error updating user session:', e);
+        log(MessageTypePage.SessionManagerUpdateError, {
+          error: e,
+        });
       }
     } catch (e) {
       if (e instanceof Error) {
-        Log.error(
-          `Failed to update user session. Error "${e.message}" ${e.stack}`,
+        log(
+          MessageTypePage.SessionManagerUpdateFailedError,
+          {
+            error: e,
+          },
         );
       }
     }

@@ -1,4 +1,5 @@
-import Log from '../../shared/libraries/Log';
+import log from '../../shared/helpers/log';
+import { MessageTypePage } from '../../shared/helpers/log/constants';
 
 // Get the service worker based on a relative scope.
 // A  relative scope is required as a domain can have none to many service workers installed.
@@ -11,11 +12,10 @@ export async function getSWRegistration(
     return await navigator.serviceWorker.getRegistration(url);
   } catch (e) {
     // This could be null in an HTTP context or error if the user doesn't accept cookies
-    Log.warn(
-      '[Service Worker Status] Error Checking service worker registration',
+    log(MessageTypePage.ServiceWorkerRegistrationError, {
       scope,
-      e,
-    );
+      error: e,
+    });
     return undefined;
   }
 }
@@ -28,7 +28,7 @@ export function getAvailableServiceWorker(
     registration.active || registration.installing || registration.waiting;
   // This never be null unless ServiceWorkerRegistration is pointing to a worker that is completely gone.
   if (!availableWorker) {
-    Log.warn('Could not find an available ServiceWorker instance!');
+    log(MessageTypePage.ServiceWorkerInstanceNotFound);
   }
   return availableWorker;
 }
@@ -45,10 +45,9 @@ export function waitUntilActive(
     const inactiveWorker = registration.installing || registration.waiting;
     if (inactiveWorker) {
       inactiveWorker.addEventListener('statechange', () => {
-        Log.debug(
-          'OneSignal Service Worker state changed:',
-          inactiveWorker.state,
-        );
+        log(MessageTypePage.ServiceWorkerManagerWorkerState, {
+          state: inactiveWorker.state,
+        });
         if (registration.active) {
           resolve();
         }

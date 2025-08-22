@@ -1,8 +1,9 @@
-import Log from '../libraries/Log';
 import {
   getLocalPageViewCount,
   setLocalPageViewCount as setStoragePageViewCount,
 } from './localStorage';
+import log from './log';
+import { MessageTypePage } from './log/constants';
 
 const SESSION_STORAGE_KEY_NAME = 'onesignal-pageview-count';
 let incrementedPageViewCount = false;
@@ -71,8 +72,10 @@ export function incrementPageViewCount() {
   setLocalPageViewCount(newCountAcrossTabs);
   incrementedPageViewCount = true;
 
-  Log.debug(`Incremented page view count: newCountSingleTab: ${newCountSingleTab},
-      newCountAccrossTabs: ${newCountAcrossTabs}.`);
+  log(MessageTypePage.PageViewIncremented, {
+    newCountSingleTab,
+    newCountCumulative: newCountAcrossTabs,
+  });
 }
 
 /**

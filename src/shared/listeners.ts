@@ -4,8 +4,9 @@ import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
 import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
+import log from './helpers/log';
+import { MessageTypePage } from './helpers/log/constants';
 import MainHelper from './helpers/MainHelper';
-import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
 import { UserState } from './models/UserState';
 import type {
@@ -70,7 +71,7 @@ export async function checkAndTriggerSubscriptionChanged() {
       optedIn: isOptedIn,
     },
   };
-  Log.info('Push Subscription state changed: ', change);
+  log(MessageTypePage.ListenersPushStateChanged, change);
   triggerSubscriptionChanged(change);
 }
 
@@ -143,7 +144,7 @@ export async function checkAndTriggerUserChanged() {
       externalId: currentExternalId,
     },
   };
-  Log.info('User state changed: ', change);
+  log(MessageTypePage.ListenersUserStateChanged, change);
   triggerUserChanged(change);
 }
 
@@ -167,14 +168,14 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   ) {
     const predicateResult = await displayPredicate();
     if (predicateResult !== false) {
-      Log.debug(
-        'Showing notify button because display predicate returned true.',
-      );
+      log(MessageTypePage.ListenersNotifyButton, {
+        show: true,
+      });
       OneSignal.notifyButton.launcher.show();
     } else {
-      Log.debug(
-        'Hiding notify button because display predicate returned false.',
-      );
+      log(MessageTypePage.ListenersNotifyButton, {
+        show: false,
+      });
       OneSignal.notifyButton.launcher.hide();
     }
   }
@@ -197,9 +198,9 @@ async function onSubscriptionChanged_showWelcomeNotification(
   pushSubscriptionId: string | undefined | null,
 ) {
   if (OneSignal.__doNotShowWelcomeNotification) {
-    Log.debug(
-      'Not showing welcome notification because user has previously subscribed.',
-    );
+    log(MessageTypePage.ListenersWelcomeNotification, {
+      skip: true,
+    });
     return;
   }
   const welcome_notification_opts =
@@ -244,7 +245,9 @@ async function onSubscriptionChanged_showWelcomeNotification(
   title = decodeHtmlEntities(title);
   message = decodeHtmlEntities(message);
 
-  Log.debug('Sending welcome notification.');
+  log(MessageTypePage.ListenersWelcomeNotification, {
+    skip: false,
+  });
   MainHelper.showLocalNotification(
     title,
     message,

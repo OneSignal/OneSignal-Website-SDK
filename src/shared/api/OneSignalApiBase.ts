@@ -1,8 +1,9 @@
 import { getOneSignalApiUrl } from '../environment/detect';
 import { AppIDMissingError, RetryLimitError } from '../errors/common';
 import { delay } from '../helpers/general';
+import log from '../helpers/log';
+import { MessageTypePage } from '../helpers/log/constants';
 import { isValidUuid } from '../helpers/validators';
-import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/EnvVariables';
 import type OneSignalApiBaseResponse from './OneSignalApiBaseResponse';
@@ -115,9 +116,9 @@ export class OneSignalApiBase {
     } catch (e) {
       if (e instanceof Error && e.name === 'TypeError') {
         await delay(RETRY_BACKOFF[retry]);
-        Log.error(
-          `OneSignal: Network timed out while calling ${url}. Retrying...`,
-        );
+        log(MessageTypePage.ApiError, {
+          url,
+        });
         return OneSignalApiBase.executeFetch(url, contents, retry - 1);
       }
       throw new Error(`Failed to execute HTTP call: ${e}`);

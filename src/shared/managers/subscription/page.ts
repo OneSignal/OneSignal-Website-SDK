@@ -13,13 +13,14 @@ import {
   PermissionBlockedError,
   SWRegistrationError,
 } from 'src/shared/errors/common';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import {
   incrementPageViewCount,
   isFirstPageView,
 } from 'src/shared/helpers/pageview';
 import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
 import { ServiceWorkerActiveState } from 'src/shared/helpers/service-worker';
-import Log from 'src/shared/libraries/Log';
 import type { PushSubscriptionState } from 'src/shared/models/PushSubscriptionState';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';
@@ -95,7 +96,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   ): Promise<void> {
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
     if (!pushModel) {
-      Log.info('No Push Subscription yet to update notification_types.');
+      log(MessageTypePage.SubscriptionNoPushYet);
       return;
     }
 
@@ -258,12 +259,12 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       rawPushSubscription = await this.subscribeSafari();
       await updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
       /* Now that permissions have been granted, install the service worker */
-      Log.info('Installing SW on Safari');
+      log(MessageTypePage.SubscriptionSafariInstalling);
       try {
         await this.context.serviceWorkerManager.installWorker();
-        Log.info('SW on Safari successfully installed');
+        log(MessageTypePage.SubscriptionSafariInstalled);
       } catch (e) {
-        Log.error('SW on Safari failed to install.');
+        log(MessageTypePage.SubscriptionSafariError);
       }
     } else {
       rawPushSubscription =
@@ -382,14 +383,16 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
         case 'default':
-          Log.debug(
-            'Exiting subscription and not registering worker because the permission was dismissed.',
+          log(
+            MessageTypePage.SubscriptionDebugPermissionDismissed,
+            {},
           );
           OneSignal._sessionInitAlreadyRunning = false;
           throw new Error('Permission dismissed');
         case 'denied':
-          Log.debug(
-            'Exiting subscription and not registering worker because the permission was blocked.',
+          log(
+            MessageTypePage.SubscriptionDebugPermissionBlocked,
+            {},
           );
           OneSignal._sessionInitAlreadyRunning = false;
           throw PermissionBlockedError;
@@ -423,9 +426,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     if (!workerRegistration) {
       throw new Error('OneSignal service worker not found!');
     }
-    Log.debug(
-      '[Subscription Manager] Service worker is ready to continue subscribing.',
-    );
+    log(MessageTypePage.SubscriptionDebugWorkerReady);
 
     return await this.subscribeWithVapidKey(
       workerRegistration.pushManager,

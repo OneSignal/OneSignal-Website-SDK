@@ -14,7 +14,7 @@ import {
   putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
-import Log from 'src/shared/libraries/Log';
+import LogBase from 'src/shared/helpers/log/LogBase';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
 import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
@@ -42,7 +42,7 @@ const version = __VERSION__;
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
-vi.spyOn(Log, 'debug').mockImplementation(() => {});
+vi.spyOn(LogBase, 'debug').mockImplementation(() => {});
 
 const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, 'subscribe');
 
@@ -520,7 +520,7 @@ describe('ServiceWorker', () => {
         });
         await dispatchEvent(event);
 
-        expect(Log.debug).toHaveBeenCalledWith(
+        expect(LogBase.debug).toHaveBeenCalledWith(
           'No active session found. Cannot deactivate.',
         );
       });
@@ -677,7 +677,7 @@ describe('ServiceWorker', () => {
 });
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const logDebugSpy = vi.spyOn(Log, 'debug');
+const logDebugSpy = vi.spyOn(LogBase, 'debug');
 // -- one signal api base mock
 
 // @ts-expect-error - for mocking

@@ -7,7 +7,8 @@ import {
 } from '../../page/models/Dismiss';
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
 import { windowEnvString } from '../environment/detect';
-import Log from '../libraries/Log';
+import log from './log';
+import { MessageTypePage } from './log/constants';
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
@@ -39,10 +40,11 @@ export class DismissHelper {
     } else if (dismissCount > 2) {
       dismissDays = 30;
     }
-    Log.debug(
-      `(${windowEnvString} environment) OneSignal: User dismissed the ${type} ` +
-        `notification prompt; reprompt after ${dismissDays} days.`,
-    );
+    log(MessageTypePage.DismissHelperPromptDismissed, {
+      windowEnvString,
+      type,
+      dismissDays,
+    });
     await db.put('Options', { key: countKey, value: dismissCount });
 
     const dismissMinutes = dismissDays * 24 * 60;

@@ -1,6 +1,6 @@
-import { IS_SERVICE_WORKER, LOGGING } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER, LOGGING } from '../../utils/EnvVariables';
 
-export default class Log {
+export default class LogBase {
   private static shouldLog(): boolean {
     if (IS_SERVICE_WORKER)
       return !!(self as unknown as ServiceWorkerGlobalScope).shouldLog;
@@ -35,8 +35,8 @@ export default class Log {
       }
     };
   }
-  static debug = Log.createLogMethod('debug');
-  static info = Log.createLogMethod('info');
-  static warn = Log.createLogMethod('warn');
-  static error = Log.createLogMethod('error');
+  static debug = LogBase.createLogMethod('debug');
+  static info = LogBase.createLogMethod('info');
+  static warn = LogBase.createLogMethod('warn');
+  static error = LogBase.createLogMethod('error');
 }

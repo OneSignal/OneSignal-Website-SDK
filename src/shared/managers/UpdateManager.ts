@@ -1,8 +1,9 @@
 import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
 import User from 'src/onesignal/User';
 import type { ContextInterface } from 'src/shared/context/types';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import { getPageViewCount, isFirstPageView } from 'src/shared/helpers/pageview';
-import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import OneSignalApiShared from '../api/OneSignalApiShared';
@@ -21,9 +22,7 @@ export class UpdateManager {
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
     if (!User.singletonInstance?.onesignalId) {
-      Log.debug(
-        'Not sending the update because user is not registered with OneSignal (no onesignal_id)',
-      );
+      log(MessageTypePage.UpdateManagerNotRegistered);
       return;
     }
 
@@ -45,9 +44,7 @@ export class UpdateManager {
     const existingUser =
       await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
-      Log.debug(
-        'Not sending the on session because user is not registered with OneSignal (no device id)',
-      );
+      log(MessageTypePage.UpdateManagerNoDevice);
       return;
     }
 
@@ -69,9 +66,10 @@ export class UpdateManager {
       this.onSessionSent = true;
     } catch (e) {
       if (e instanceof Error) {
-        Log.error(
-          `Failed to update user session. Error "${e.message}" ${e.stack}`,
-        );
+        log(MessageTypePage.UpdateManagerError, {
+          message: e.message,
+          stack: e.stack,
+        });
       }
     }
   }
@@ -106,9 +104,7 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    Log.warn(
-      `Send outcome aborted because pushSubscriptionModel is not available.`,
-    );
+    log(MessageTypePage.UpdateManagerOutcomeAborted);
   }
 
   public async sendOutcomeInfluenced(
@@ -141,9 +137,7 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    Log.warn(
-      `Send outcome aborted because pushSubscriptionModel is not available.`,
-    );
+    log(MessageTypePage.UpdateManagerOutcomeAborted);
   }
 
   public async sendOutcomeUnattributed(
@@ -173,8 +167,6 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    Log.warn(
-      `Send outcome aborted because pushSubscriptionModel is not available.`,
-    );
+    log(MessageTypePage.UpdateManagerOutcomeAborted);
   }
 }

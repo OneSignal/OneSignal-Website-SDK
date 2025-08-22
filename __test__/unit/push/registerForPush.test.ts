@@ -1,5 +1,5 @@
 import * as InitHelper from '../../../src/shared/helpers/init';
-import Log from '../../../src/shared/libraries/Log';
+import LogBase from '../../../src/shared/helpers/log/LogBase';
 import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 
@@ -31,7 +31,7 @@ describe('Register for push', () => {
     expect(spy).not.toHaveBeenCalled();
     OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
     await promise;
-    expect(Log.error).toHaveBeenCalled();
+    expect(LogBase.error).toHaveBeenCalled();
     expect(OneSignal.initialized).toBe(true);
     expect(spy).toHaveBeenCalledTimes(1);
   });
@@ -42,7 +42,7 @@ describe('Register for push', () => {
     (global as any).OneSignal._initCalled = false;
 
     await InitHelper.registerForPushNotifications();
-    expect(Log.error).toHaveBeenCalled();
+    expect(LogBase.error).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledTimes(1);
   });
 });

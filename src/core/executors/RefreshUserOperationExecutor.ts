@@ -1,9 +1,10 @@
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
-import Log from 'src/shared/libraries/Log';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
@@ -52,16 +53,10 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
-      `RefreshUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
-    );
+    log(MessageTypePage.RefreshUserExecute, operations);
 
     if (operations.some((op) => !(op instanceof RefreshUserOperation)))
-      throw new Error(
-        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-          operations,
-        )}`,
-      );
+      throw new Error(`Unknown ops:${JSON.stringify(operations)}`);
 
     const startingOp = operations[0];
     return this.getUser(startingOp);

@@ -1,9 +1,10 @@
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import { PropertyOperationHelper } from 'src/shared/helpers/PropertyOperationHelper';
-import Log from 'src/shared/libraries/Log';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -73,7 +74,9 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(`UpdateUserOperationExecutor(operation: ${operations})`);
+    log(MessageTypePage.UpdateUserOperationExecutor, {
+      operations,
+    });
 
     const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
       this.processOperations(operations);

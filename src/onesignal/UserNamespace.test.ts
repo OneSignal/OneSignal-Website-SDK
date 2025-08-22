@@ -2,7 +2,7 @@ import { ONESIGNAL_ID, PUSH_TOKEN } from '__test__/constants';
 import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { ModelChangeTags } from 'src/core/types/models';
-import Log from 'src/shared/libraries/Log';
+import LogBase from 'src/shared/helpers/log/LogBase';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { TestEnvironment } from '../../__test__/support/environment/TestEnvironment';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
@@ -10,7 +10,7 @@ import { Subscription } from '../shared/models/Subscription';
 import User from './User';
 import UserNamespace from './UserNamespace';
 
-const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+const errorSpy = vi.spyOn(LogBase, 'error').mockImplementation(() => '');
 vi.useFakeTimers();
 
 describe('UserNamespace', () => {

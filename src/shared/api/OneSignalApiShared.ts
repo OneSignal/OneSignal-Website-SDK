@@ -1,14 +1,17 @@
-import Log from '../libraries/Log';
+import log from '../helpers/log';
+import { MessageType } from '../helpers/log/constants';
 import type { OutcomeRequestData } from '../outcomes/types';
 import OneSignalApiBase from './OneSignalApiBase';
 
 export default class OneSignalApiShared {
   static async sendOutcome(data: OutcomeRequestData): Promise<void> {
-    Log.info('Outcome payload:', data);
+    log(MessageType.ApiOutcomePayload, {
+      payload: data,
+    });
     try {
       await OneSignalApiBase.post('outcomes/measure', data);
     } catch (e) {
-      Log.error('sendOutcome', e);
+      log(MessageType.ApiOutcomeError, { error: e });
     }
   }
 }

@@ -1,5 +1,6 @@
 import type { IDBStoreName } from 'src/shared/database/types';
-import Log from 'src/shared/libraries/Log';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import { OPERATION_NAME } from '../constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
@@ -27,7 +28,7 @@ export class OperationModelStore extends ModelStore<Operation> {
 
   create(jsonObject?: { name?: string } | null): Operation | null {
     if (jsonObject === null) {
-      Log.error('null jsonObject sent to OperationModelStore.create');
+      log(MessageTypePage.OperationModelStoreNullObject);
       return null;
     }
 
@@ -96,7 +97,7 @@ export class OperationModelStore extends ModelStore<Operation> {
   } {
     const operationName = object?.name;
     if (!operationName) {
-      Log.error("jsonObject must have 'name' attribute");
+      log(MessageTypePage.OperationModelStoreMissingName);
       return false;
     }
 
@@ -104,9 +105,9 @@ export class OperationModelStore extends ModelStore<Operation> {
 
     // Must have onesignalId if it is not one of the excluded operations above
     if (!object.onesignalId && !excluded.has(operationName)) {
-      Log.error(
-        `${operationName} jsonObject must have 'onesignalId' attribute`,
-      );
+      log(MessageTypePage.OperationModelStoreInvalidOperation, {
+        operationName: operationName,
+      });
       return false;
     }
 

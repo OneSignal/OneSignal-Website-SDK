@@ -6,11 +6,12 @@ import {
 import { getConsentGiven } from 'src/shared/database/config';
 import { getTimeZoneId } from 'src/shared/helpers/general';
 import { getConsentRequired } from 'src/shared/helpers/localStorage';
+import log from 'src/shared/helpers/log';
+import { MessageTypePage } from 'src/shared/helpers/log/constants';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
-import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
@@ -64,9 +65,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
-      `LoginUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
-    );
+    log(MessageTypePage.LoginUser, operations);
     const startingOp = operations[0];
 
     if (startingOp instanceof LoginUserOperation)
@@ -133,12 +132,16 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case ExecutionResult.FAIL_CONFLICT:
-        Log.debug(`Handling 409 for externalId: ${loginUserOp.externalId}`);
+        log(
+          MessageTypePage.LoginUserFailConflict,
+          loginUserOp,
+        );
         return this.createUser(loginUserOp, operations);
 
       case ExecutionResult.FAIL_NORETRY:
-        Log.error(
-          `Recovering from SetAlias failure for externalId: ${loginUserOp.externalId}`,
+        log(
+          MessageTypePage.LoginUserFailNoRetry,
+          loginUserOp,
         );
         return this.createUser(loginUserOp, operations);
 
