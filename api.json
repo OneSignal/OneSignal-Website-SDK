@@ -14,7 +14,8 @@
             "name": "jwtToken",
             "type": "string",
             "optional": true
-        }],
+          }
+        ],
         "returnType": "Promise<void>"
       },
       {
@@ -97,7 +98,7 @@
       {
         "name": "requestPermission",
         "isAsync": true,
-        "args":[],
+        "args": [],
         "returnType": "Promise<void>"
       },
       {
