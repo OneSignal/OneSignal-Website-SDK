@@ -1,4 +1,3 @@
-import { EnvironmentKind } from 'src/shared/environment/constants';
 import { EnumOutOfRangeArgumentError } from 'src/shared/errors/common';
 import {
   BUILD_ORIGIN,
@@ -38,11 +37,11 @@ const getOneSignalCssFileName = () => {
   const baseFileName = 'OneSignalSDK.page.styles.css';
 
   // using if statements to have better dead code elimination
-  if (BUILD_TYPE === EnvironmentKind.Development) return `Dev-${baseFileName}`;
+  if (BUILD_TYPE === 'development') return `Dev-${baseFileName}`;
 
-  if (BUILD_TYPE === EnvironmentKind.Staging) return `Staging-${baseFileName}`;
+  if (BUILD_TYPE === 'staging') return `Staging-${baseFileName}`;
 
-  if (BUILD_TYPE === EnvironmentKind.Production) return baseFileName;
+  if (BUILD_TYPE === 'production') return baseFileName;
 };
 
 const RESOURCE_HTTP_PORT = 4000;
@@ -54,13 +53,13 @@ const getOneSignalResourceUrlPath = () => {
   let origin: string;
 
   // using if statements to have better dead code elimination
-  if (BUILD_TYPE === EnvironmentKind.Development) {
+  if (BUILD_TYPE === 'development') {
     origin = NO_DEV_PORT
       ? `${protocol}://${BUILD_ORIGIN}`
       : `${protocol}://${BUILD_ORIGIN}:${port}`;
-  } else if (BUILD_TYPE === EnvironmentKind.Staging) {
+  } else if (BUILD_TYPE === 'staging') {
     origin = `https://${BUILD_ORIGIN}`;
-  } else if (BUILD_TYPE === EnvironmentKind.Production) {
+  } else if (BUILD_TYPE === 'production') {
     origin = 'https://onesignal.com';
   } else {
     throw EnumOutOfRangeArgumentError('buildEnv');

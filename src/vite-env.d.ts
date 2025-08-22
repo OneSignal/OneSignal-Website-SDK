@@ -17,7 +17,7 @@ declare const __API_ORIGIN__: string;
 /**
  * Which API environment to use (development, staging, production)
  */
-declare const __API_TYPE__: string;
+declare const __API_TYPE__: 'development' | 'staging' | 'production';
 
 /**
  * Whether or not a dev port should be used
@@ -32,7 +32,7 @@ declare const __BUILD_ORIGIN__: string;
 /**
  * Which build environment to use (development, staging, production)
  */
-declare const __BUILD_TYPE__: string;
+declare const __BUILD_TYPE__: 'development' | 'staging' | 'production';
 
 /**
  * Whether the current build is for a service worker
