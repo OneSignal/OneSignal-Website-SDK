@@ -60,7 +60,16 @@ export default defineConfig(({ mode }) => {
        * `var It=Object.defineProperty;` above the IIFE.
        */
       target: 'es2022',
-      minify: isProdEnv,
+      minify: isProdEnv ? 'terser' : false,
+      terserOptions: {
+        mangle: {
+          properties: {
+            // Enable property name mangling/minification for private-style properties (starting with _)
+            regex: /^_/,
+          },
+        },
+      },
+
       lib: {
         ...libConfig[lib],
         name: 'OneSignal',

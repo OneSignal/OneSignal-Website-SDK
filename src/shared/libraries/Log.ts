@@ -1,7 +1,7 @@
 import { IS_SERVICE_WORKER, LOGGING } from '../utils/EnvVariables';
 
 export default class Log {
-  private static shouldLog(): boolean {
+  private static _shouldLog(): boolean {
     if (IS_SERVICE_WORKER)
       return !!(self as unknown as ServiceWorkerGlobalScope).shouldLog;
     try {
@@ -30,7 +30,7 @@ export default class Log {
 
   private static createLogMethod(consoleMethod: keyof Console) {
     return (...args: unknown[]): void => {
-      if (LOGGING || this.shouldLog() || consoleMethod === 'error') {
+      if (LOGGING || this._shouldLog() || consoleMethod === 'error') {
         (console[consoleMethod] as (...args: unknown[]) => void)(...args);
       }
     };
