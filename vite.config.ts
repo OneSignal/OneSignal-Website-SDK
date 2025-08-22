@@ -86,6 +86,7 @@ export default defineConfig(({ mode }) => {
               'requestPermission',
               'permissionNative',
               'permission',
+              'setDefaultTitle',
 
               'Slidedown',
               'promptPush',
