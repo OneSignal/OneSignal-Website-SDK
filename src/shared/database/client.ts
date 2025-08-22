@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 import log from '../helpers/log';
-import { MessageType } from '../helpers/log/constants';
+import { LogMessage } from '../helpers/log/constants';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { DATABASE_NAME, VERSION } from './constants';
@@ -74,7 +74,7 @@ const open = async (version = VERSION) => {
       }
     },
     blocked() {
-      log(MessageType.DatabaseBlocked);
+      log(LogMessage.DatabaseBlocked);
     },
   });
 };

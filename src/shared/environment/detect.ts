@@ -10,6 +10,12 @@ import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
 
 export const isBrowser = typeof window !== 'undefined';
 
+export const isServiceWorker = (
+  scope: ServiceWorkerGlobalScope | Window,
+): scope is ServiceWorkerGlobalScope =>
+  typeof ServiceWorkerGlobalScope !== 'undefined' &&
+  scope instanceof ServiceWorkerGlobalScope;
+
 export const hasSafariWindow = () =>
   isBrowser && typeof window.safari !== 'undefined';
 

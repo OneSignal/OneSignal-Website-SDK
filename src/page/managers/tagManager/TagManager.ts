@@ -4,7 +4,7 @@ import type {
 } from 'src/page/tags/types';
 import type { ContextInterface } from 'src/shared/context/types';
 import log from '../../../shared/helpers/log';
-import { MessageTypePage } from '../../../shared/helpers/log/constants';
+import { LogMessage } from '../../../shared/helpers/log/constants';
 import TagUtils from '../../../shared/utils/TagUtils';
 import type { ITagManager } from './types';
 
@@ -25,7 +25,7 @@ export default class TagManager implements ITagManager {
    * @returns Promise resolving TagsObject if successful, {} if no change detected, null if failed
    */
   public async sendTags(): Promise<TagsObjectForApi> {
-    log(MessageTypePage.TagManagerLocalTags, {
+    log(LogMessage.TagManagerLocalTags, {
       tags: this.tagsFromTaggingContainer,
     });
 
@@ -42,7 +42,7 @@ export default class TagManager implements ITagManager {
       await OneSignal.User.addTags(finalTagsObject);
       return finalTagsObject;
     }
-    log(MessageTypePage.TagManagerError);
+    log(LogMessage.TagManagerError);
     // no change detected, return {}
     return finalTagsObject;
   }

@@ -1,7 +1,7 @@
 import { decodeHtmlEntities } from 'src/shared/helpers/dom';
 import { delay, nothing } from 'src/shared/helpers/general';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
@@ -38,7 +38,7 @@ export default class Message extends AnimatedElement {
   }
 
   display(type: string, content: string, duration = 0) {
-    log(MessageTypePage.BellMessageDisplay, {
+    log(LogMessage.BellMessageDisplay, {
       type,
       content,
       duration,

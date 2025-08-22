@@ -3,7 +3,7 @@ import {
   setLocalPageViewCount as setStoragePageViewCount,
 } from './localStorage';
 import log from './log';
-import { MessageTypePage } from './log/constants';
+import { LogMessage } from './log/constants';
 
 const SESSION_STORAGE_KEY_NAME = 'onesignal-pageview-count';
 let incrementedPageViewCount = false;
@@ -72,7 +72,7 @@ export function incrementPageViewCount() {
   setLocalPageViewCount(newCountAcrossTabs);
   incrementedPageViewCount = true;
 
-  log(MessageTypePage.PageViewIncremented, {
+  log(LogMessage.PageViewIncremented, {
     newCountSingleTab,
     newCountCumulative: newCountAcrossTabs,
   });

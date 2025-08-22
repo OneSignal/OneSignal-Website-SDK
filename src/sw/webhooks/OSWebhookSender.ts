@@ -1,7 +1,7 @@
 import { getOptionsValue } from 'src/shared/database/client';
 import type { OptionKey } from 'src/shared/database/types';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import type { IOSWebhookEventPayload } from '../serviceWorker/types';
 
 export class OSWebhookSender {
@@ -26,7 +26,7 @@ export class OSWebhookSender {
         'Content-Type': 'application/json',
       };
     }
-    log(MessageTypePage.OSWebhookExecute, {
+    log(LogMessage.OSWebhookExecute, {
       event: payload.event,
       corsEnabled: isServerCorsEnabled,
       url: webhookTargetUrl,

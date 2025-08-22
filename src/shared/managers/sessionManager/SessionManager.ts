@@ -19,7 +19,7 @@ import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
 import MainHelper from '../../helpers/MainHelper';
 import log from '../../helpers/log';
-import { MessageTypePage } from '../../helpers/log/constants';
+import { LogMessage } from '../../helpers/log/constants';
 import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constants';
 import type { ISessionManager } from './types';
 
@@ -47,7 +47,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      log(MessageTypePage.SessionManagerUpsert);
+      log(LogMessage.SessionManagerUpsert);
       await this.context.workerMessenger.unicast(
         WorkerMessengerCommand.SessionUpsert,
         payload,
@@ -55,7 +55,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      log(MessageTypePage.SessionManagerUpsert);
+      log(LogMessage.SessionManagerUpsert);
     }
   }
 
@@ -75,7 +75,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      log(MessageTypePage.SessionManagerDeactivate);
+      log(LogMessage.SessionManagerDeactivate);
       await this.context.workerMessenger.unicast(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
@@ -83,7 +83,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      log(MessageTypePage.SessionManagerDeactivate);
+      log(LogMessage.SessionManagerDeactivate);
     }
   }
 
@@ -128,7 +128,7 @@ export class SessionManager implements ISessionManager {
         this.setupOnFocusAndOnBlurForSession();
 
         log(
-          MessageTypePage.SessionManagerVisibilityChange,
+          LogMessage.SessionManagerVisibilityChange,
           `visible hasFocus: ${document.hasFocus()}`,
         );
 
@@ -143,10 +143,7 @@ export class SessionManager implements ISessionManager {
       }
 
       if (visibilityState === 'hidden') {
-        log(
-          MessageTypePage.SessionManagerVisibilityChange,
-          'hidden',
-        );
+        log(LogMessage.SessionManagerVisibilityChange, 'hidden');
         if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
           window.removeEventListener(
             'focus',
@@ -169,17 +166,11 @@ export class SessionManager implements ISessionManager {
       }
 
       // it should never be anything else at this point
-      log(
-        MessageTypePage.SessionManagerUnhandledVisibility,
-        visibilityState,
-      );
+      log(LogMessage.SessionManagerUnhandledVisibility, visibilityState);
     } catch (e) {
-      log(
-        MessageTypePage.SessionManagerVisibilityChangeError,
-        {
-          error: e,
-        },
-      );
+      log(LogMessage.SessionManagerVisibilityChangeError, {
+        error: e,
+      });
     }
   }
 
@@ -206,13 +197,13 @@ export class SessionManager implements ISessionManager {
         outcomesConfig: this.context.appConfig.userConfig.outcomes!,
       };
 
-      log(MessageTypePage.SessionManagerBeforeUnload);
+      log(LogMessage.SessionManagerBeforeUnload);
       this.context.workerMessenger.directPostMessageToSW(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );
     } catch (e) {
-      log(MessageTypePage.SessionManagerBeforeUnloadError, {
+      log(LogMessage.SessionManagerBeforeUnloadError, {
         error: e,
       });
     }
@@ -221,7 +212,7 @@ export class SessionManager implements ISessionManager {
   async handleOnFocus(e: Event): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    log(MessageTypePage.SessionManagerFocus, e);
+    log(LogMessage.SessionManagerFocus, e);
     if (!User.singletonInstance?.onesignalId) {
       return;
     }
@@ -244,7 +235,7 @@ export class SessionManager implements ISessionManager {
         SessionOrigin.Focus,
       );
     } catch (e) {
-      log(MessageTypePage.SessionManagerFocusError, {
+      log(LogMessage.SessionManagerFocusError, {
         error: e,
       });
     }
@@ -253,7 +244,7 @@ export class SessionManager implements ISessionManager {
   async handleOnBlur(e: Event): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    log(MessageTypePage.SessionManagerBlur, e);
+    log(LogMessage.SessionManagerBlur, e);
     if (!User.singletonInstance?.onesignalId) {
       return;
     }
@@ -276,7 +267,7 @@ export class SessionManager implements ISessionManager {
         SessionOrigin.Blur,
       );
     } catch (e) {
-      log(MessageTypePage.SessionManagerBlurError, {
+      log(LogMessage.SessionManagerBlurError, {
         error: e,
       });
     }
@@ -306,11 +297,7 @@ export class SessionManager implements ISessionManager {
   setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (!supportsServiceWorkers()) {
-      log(MessageTypePage.SessionManagerUpdate, {
-        message:
-          'Not setting session event listeners. No service worker possible.',
-        details: {},
-      });
+      log(LogMessage.SessionManagerSupportsSW);
       return;
     }
 
@@ -345,7 +332,7 @@ export class SessionManager implements ISessionManager {
   }
 
   setupOnFocusAndOnBlurForSession(): void {
-    log(MessageTypePage.SessionManagerSetup);
+    log(LogMessage.SessionManagerSetup);
 
     if (!OneSignal.cache.focusHandler) {
       OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
@@ -376,11 +363,7 @@ export class SessionManager implements ISessionManager {
     const onesignalId = identityModel.onesignalId;
 
     if (!onesignalId) {
-      log(MessageTypePage.SessionManagerUpdate, {
-        message:
-          'Not sending the on session because user is not registered with OneSignal (no onesignal id)',
-        details: {},
-      });
+      log(LogMessage.SessionManagerNoOnesignalId);
       return;
     }
 
@@ -422,18 +405,15 @@ export class SessionManager implements ISessionManager {
         );
         this.onSessionSent = true;
       } catch (e) {
-        log(MessageTypePage.SessionManagerUpdateError, {
+        log(LogMessage.SessionManagerUpdateError, {
           error: e,
         });
       }
     } catch (e) {
       if (e instanceof Error) {
-        log(
-          MessageTypePage.SessionManagerUpdateFailedError,
-          {
-            error: e,
-          },
-        );
+        log(LogMessage.SessionManagerUpdateFailedError, {
+          error: e,
+        });
       }
     }
   }

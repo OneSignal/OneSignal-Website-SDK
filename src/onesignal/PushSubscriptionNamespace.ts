@@ -15,7 +15,7 @@ import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import log from '../shared/helpers/log';
-import { MessageType, MessageTypePage } from '../shared/helpers/log/constants';
+import { LogMessage } from '../shared/helpers/log/constants';
 import { Subscription } from '../shared/models/Subscription';
 import {
   awaitOneSignalInitAndSupported,
@@ -35,7 +35,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
   ) {
     super();
     if (!initialize || !subscription) {
-      log(MessageTypePage.PushSubscriptionNamespaceInitSkipped, {
+      log(LogMessage.PushSubscriptionNamespaceInitSkipped, {
         initialize,
         subscription,
       });
@@ -55,7 +55,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
         }
       })
       .catch((e) => {
-        log(MessageType.Error, e);
+        log(LogMessage.Error, e);
       });
 
     OneSignal.emitter.on(
@@ -141,10 +141,10 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     subscriptionFromDb.optedOut = !enabled;
     await setSubscription(subscriptionFromDb);
     onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch((e) => {
-      log(MessageType.Error, e);
+      log(LogMessage.Error, e);
     });
     checkAndTriggerSubscriptionChanged().catch((e) => {
-      log(MessageType.Error, e);
+      log(LogMessage.Error, e);
     });
   }
 }

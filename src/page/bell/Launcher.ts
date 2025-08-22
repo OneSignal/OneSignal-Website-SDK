@@ -6,7 +6,7 @@ import {
 } from 'src/shared/helpers/dom';
 import { nothing } from 'src/shared/helpers/general';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import type { BellSize } from 'src/shared/prompts/types';
 import { once } from 'src/shared/utils/utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
@@ -69,7 +69,7 @@ export default class Launcher extends ActiveAnimatedElement {
           return resolve(this);
         } else {
           const timerId = setTimeout(() => {
-            log(MessageTypePage.BellLauncherResizeTimeout, {
+            log(LogMessage.BellLauncherResizeTimeout, {
               state: this.state,
               activeState: this.activeState,
             });

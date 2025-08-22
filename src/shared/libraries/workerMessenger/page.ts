@@ -1,7 +1,7 @@
 import type { ContextInterface } from 'src/shared/context/types';
 import { supportsServiceWorkers } from 'src/shared/environment/detect';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import { getAvailableServiceWorker } from 'src/sw/helpers/registration';
 import { WorkerMessengerBase } from './base';
 import type {
@@ -29,7 +29,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
       'message',
       this.onPageMessageReceivedFromServiceWorker.bind(this),
     );
-    log(MessageTypePage.WorkerMessengerPageListening, {
+    log(LogMessage.WorkerMessengerPageListening, {
       origin: location.origin,
     });
   }
@@ -53,7 +53,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    log(MessageTypePage.WorkerMessengerPageReceived, {
+    log(LogMessage.WorkerMessengerPageReceived, {
       eventData: event.data,
     });
 
@@ -79,7 +79,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
   ) {
-    log(MessageTypePage.WorkerMessengerPageUnicast, {
+    log(LogMessage.WorkerMessengerPageUnicast, {
       command: command.toString(),
     });
     this.directPostMessageToSW(command, payload);
@@ -89,24 +89,20 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
   ): Promise<void> {
-    log(MessageTypePage.WorkerMessengerPageDirect, {
+    log(LogMessage.WorkerMessengerPageDirect, {
       command: command.toString(),
     });
 
     const workerRegistration =
       await this.context?.serviceWorkerManager.getOneSignalRegistration();
     if (!workerRegistration) {
-      log(
-        MessageTypePage.WorkerMessengerPageRegistrationError,
-      );
+      log(LogMessage.WorkerMessengerPageRegistrationError);
       return;
     }
 
     const availableWorker = getAvailableServiceWorker(workerRegistration);
     if (!availableWorker) {
-      log(
-        MessageTypePage.WorkerMessengerPageServiceWorkerError,
-      );
+      log(LogMessage.WorkerMessengerPageServiceWorkerError);
       return;
     }
 

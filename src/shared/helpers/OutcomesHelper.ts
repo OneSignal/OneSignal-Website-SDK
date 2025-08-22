@@ -14,7 +14,7 @@ import type { OutcomesNotificationReceived } from '../models/OutcomesNotificatio
 import type { OutcomesConfig } from '../outcomes/types';
 import { awaitOneSignalInitAndSupported, logMethodCall } from '../utils/utils';
 import log from './log';
-import { MessageTypePage } from './log/constants';
+import { LogMessage } from './log/constants';
 
 const SEND_OUTCOME = 'sendOutcome';
 const SEND_UNIQUE_OUTCOME = 'sendUniqueOutcome';
@@ -67,12 +67,12 @@ export default class OutcomesHelper {
     logMethodCall(outcomeMethodString, this.outcomeName);
 
     if (!this.config) {
-      log(MessageTypePage.OutcomesNotSupported);
+      log(LogMessage.OutcomesNotSupported);
       return false;
     }
 
     if (!this.outcomeName) {
-      log(MessageTypePage.OutcomesNameRequired);
+      log(LogMessage.OutcomesNameRequired);
       return false;
     }
 
@@ -81,7 +81,7 @@ export default class OutcomesHelper {
     const isSubscribed =
       await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     if (!isSubscribed) {
-      log(MessageTypePage.OutcomesSubscribedOnly);
+      log(LogMessage.OutcomesSubscribedOnly);
       return false;
     }
     return true;
@@ -190,7 +190,9 @@ export default class OutcomesHelper {
       case OutcomeAttributionType.Unattributed:
         if (this.isUnique) {
           if (await this.wasSentDuringSession()) {
-            log(MessageTypePage.OutcomesRetryWarning);
+            log(LogMessage.SessionOutcomeReported, {
+              outcomeName: this.outcomeName,
+            });
             return;
           }
           await this.saveSentUniqueOutcome([]);
@@ -202,7 +204,7 @@ export default class OutcomesHelper {
         );
         return;
       default:
-        log(MessageTypePage.OutcomesOutcomeEventFailed);
+        log(LogMessage.OutcomesOutcomeEventFailed);
         return;
     }
   }
@@ -253,7 +255,7 @@ export async function getConfigAttribution(
 
     const allReceivedNotification =
       await getAllNotificationReceivedForOutcomes();
-    log(MessageTypePage.OutcomesInfluenceChannel, {
+    log(LogMessage.OutcomesInfluenceChannel, {
       count: allReceivedNotification.length,
       details: { count: allReceivedNotification.length },
     });
@@ -275,7 +277,7 @@ export async function getConfigAttribution(
         .filter((notif) => notif.timestamp >= maxTimestamp)
         .slice(0, max)
         .map((notif) => notif.notificationId);
-      log(MessageTypePage.OutcomesDirectChannel, {
+      log(LogMessage.OutcomesDirectChannel, {
         count: matchingNotificationIds.length,
         details: { count: matchingNotificationIds.length },
       });
@@ -290,7 +292,7 @@ export async function getConfigAttribution(
       notificationIdsToDelete.forEach((id) =>
         db.delete('Outcomes.NotificationReceived', id),
       );
-      log(MessageTypePage.OutcomesIndirectChannel, {
+      log(LogMessage.OutcomesIndirectChannel, {
         count: notificationIdsToDelete.length,
         details: { count: notificationIdsToDelete.length },
       });

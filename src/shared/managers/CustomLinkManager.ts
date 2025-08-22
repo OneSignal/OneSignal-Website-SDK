@@ -1,7 +1,7 @@
 import { ResourceLoadState } from '../../page/services/DynamicResourceLoader';
 import { addCssClass } from '../helpers/dom';
 import log from '../helpers/log';
-import { MessageTypePage } from '../helpers/log/constants';
+import { LogMessage } from '../helpers/log/constants';
 import type { AppUserConfigCustomLinkOptions } from '../prompts/types';
 import {
   CUSTOM_LINK_CSS_CLASSES,
@@ -24,7 +24,7 @@ export class CustomLinkManager {
       return;
     }
 
-    log(MessageTypePage.CustomLinkManagerInit);
+    log(LogMessage.CustomLinkManagerInit);
     const isPushEnabled =
       await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     if (!this.config?.unsubscribeEnabled && isPushEnabled) {
@@ -47,7 +47,7 @@ export class CustomLinkManager {
 
   private async mountExplanationNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      log(MessageTypePage.CustomLinkManagerMissingText);
+      log(LogMessage.CustomLinkManagerMissingText);
       return;
     }
 
@@ -75,7 +75,7 @@ export class CustomLinkManager {
 
   private async mountSubscriptionNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      log(MessageTypePage.CustomLinkManagerMissingText);
+      log(LogMessage.CustomLinkManagerMissingText);
       return;
     }
 
@@ -107,7 +107,7 @@ export class CustomLinkManager {
       await this.setTextFromPushStatus(subscribeButton);
 
       subscribeButton.addEventListener('click', async () => {
-        log(MessageTypePage.CustomLinkManagerSubscribeClicked);
+        log(LogMessage.CustomLinkManagerSubscribeClicked);
         await this.handleClick(subscribeButton);
       });
 
@@ -123,7 +123,7 @@ export class CustomLinkManager {
     const sdkStylesLoadResult =
       await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      log(MessageTypePage.CustomLinkManagerStylesFailure);
+      log(LogMessage.CustomLinkManagerStylesFailure);
       return false;
     }
     return true;

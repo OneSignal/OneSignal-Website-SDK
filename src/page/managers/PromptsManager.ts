@@ -25,7 +25,7 @@ import {
 import { logMethodCall } from 'src/shared/utils/utils';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import log from '../../shared/helpers/log';
-import { MessageTypePage } from '../../shared/helpers/log/constants';
+import { LogMessage } from '../../shared/helpers/log/constants';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { DismissPrompt } from '../models/Dismiss';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
@@ -142,7 +142,7 @@ export class PromptsManager {
   ): Promise<void> {
     logMethodCall('internalShowDelayedPrompt');
     if (typeof timeDelaySeconds !== 'number') {
-      log(MessageTypePage.PromptsManagerInvalidDelay);
+      log(LogMessage.PromptsManagerInvalidDelay);
       return;
     }
 
@@ -174,7 +174,7 @@ export class PromptsManager {
         await this.internalShowSmsAndEmailSlidedown(options);
         break;
       default:
-        log(MessageTypePage.PromptsManagerInvalidType);
+        log(LogMessage.PromptsManagerInvalidType);
     }
   }
 
@@ -182,7 +182,7 @@ export class PromptsManager {
     logMethodCall('internalShowNativePrompt');
 
     if (this.isNativePromptShowing) {
-      log(MessageTypePage.PromptsManagerAutopromptShowing);
+      log(LogMessage.PromptsManagerAutopromptShowing);
       return;
     }
 
@@ -204,7 +204,7 @@ export class PromptsManager {
     const sdkStylesLoadResult =
       await this.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      log(MessageTypePage.PromptsManagerStylesFailure);
+      log(LogMessage.PromptsManagerStylesFailure);
       return;
     }
 
@@ -271,12 +271,12 @@ export class PromptsManager {
 
     if (!slidedownPromptOptions) {
       if (typeToPullFromConfig !== DelayedPromptType.Push) {
-        log(MessageTypePage.PromptsManagerSlidedownConfigError, {
+        log(LogMessage.PromptsManagerSlidedownConfigError, {
           slidedownType: typeToPullFromConfig,
         });
         return;
       } else {
-        log(MessageTypePage.PromptsManagerDefaultTextSettings);
+        log(LogMessage.PromptsManagerDefaultTextSettings);
       }
     }
 
@@ -311,11 +311,11 @@ export class PromptsManager {
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
-          log(MessageTypePage.PromptsManagerDismissPush);
+          log(LogMessage.PromptsManagerDismissPush);
           DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
           break;
         default:
-          log(MessageTypePage.PromptsManagerDismissNonPush);
+          log(LogMessage.PromptsManagerDismissNonPush);
           DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);
           break;
       }

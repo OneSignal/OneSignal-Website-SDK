@@ -9,7 +9,7 @@ import { hasSafariWindow, supportsServiceWorkers } from '../environment/detect';
 import { SWRegistrationError } from '../errors/common';
 import { getBaseUrl } from '../helpers/general';
 import log from '../helpers/log';
-import { MessageTypePage } from '../helpers/log/constants';
+import { LogMessage } from '../helpers/log/constants';
 import {
   getServiceWorkerHref,
   ServiceWorkerActiveState,
@@ -98,7 +98,7 @@ export class ServiceWorkerManager {
       );
       const importedSw = searchParams.get('othersw');
       if (importedSw) {
-        log(MessageTypePage.ServiceWorkerManagerAkamaiSW, importedSw);
+        log(LogMessage.ServiceWorkerManagerAkamaiSW, importedSw);
         return new Path(new URL(importedSw).pathname).getFileName();
       }
     }
@@ -150,7 +150,7 @@ export class ServiceWorkerManager {
     // If not and notification permissions are enabled we should install.
     // This prevents an unnecessary install of the OneSignal worker which saves bandwidth
     const workerState = await this.getActiveState();
-    log(MessageTypePage.ServiceWorkerManagerWorkerState, workerState);
+    log(LogMessage.ServiceWorkerManagerWorkerState, workerState);
     if (
       workerState === ServiceWorkerActiveState.None ||
       workerState === ServiceWorkerActiveState.ThirdParty
@@ -161,7 +161,7 @@ export class ServiceWorkerManager {
         );
       const notificationsEnabled = permission === 'granted';
       if (notificationsEnabled) {
-        log(MessageTypePage.ServiceWorkerManagerInstallPermissions, {});
+        log(LogMessage.ServiceWorkerManagerInstallPermissions);
       }
       return notificationsEnabled;
     }
@@ -179,7 +179,7 @@ export class ServiceWorkerManager {
     // 1. No workerRegistration
     const workerRegistration = await this.getRegistration();
     if (!workerRegistration) {
-      log(MessageTypePage.ServiceWorkerManagerInstallNoRegistration, {
+      log(LogMessage.ServiceWorkerManagerInstallNoRegistration, {
         scope: this.config.registrationOptions.scope,
       });
       return true;
@@ -189,7 +189,7 @@ export class ServiceWorkerManager {
     const existingSwScope = new URL(workerRegistration.scope).pathname;
     const configuredSwScope = this.config.registrationOptions.scope;
     if (existingSwScope != configuredSwScope) {
-      log(MessageTypePage.ServiceWorkerManagerScopeChange, {
+      log(LogMessage.ServiceWorkerManagerScopeChange, {
         a_old: existingSwScope,
         b_new: configuredSwScope,
       });
@@ -209,7 +209,7 @@ export class ServiceWorkerManager {
     }
     // 3.2 If the new serviceWorkerHref (page-env SDK version as query param) is different than existing worker URL
     if (serviceWorkerHref !== availableWorker.scriptURL) {
-      log(MessageTypePage.ServiceWorkerManagerHrefChange, {
+      log(LogMessage.ServiceWorkerManagerHrefChange, {
         a_old: availableWorker?.scriptURL,
         b_new: serviceWorkerHref,
       });
@@ -225,38 +225,38 @@ export class ServiceWorkerManager {
    * file.
    */
   private async workerNeedsUpdate(): Promise<boolean> {
-    log(MessageTypePage.ServiceWorkerManagerVersionCheck);
+    log(LogMessage.ServiceWorkerManagerVersionCheck);
     let workerVersion: string;
     try {
       workerVersion = await timeoutPromise(this.getWorkerVersion(), 2_000);
     } catch (e) {
-      log(MessageTypePage.ServiceWorkerManagerVersionUpdateTimeout, {});
+      log(LogMessage.ServiceWorkerManagerVersionUpdateTimeout);
       return true;
     }
 
     if (workerVersion !== VERSION) {
-      log(MessageTypePage.ServiceWorkerManagerVersionUpdateNeeded, {
+      log(LogMessage.ServiceWorkerManagerVersionUpdateNeeded, {
         oldVersion: workerVersion,
         newVersion: VERSION,
       });
       return true;
     }
 
-    log(MessageTypePage.ServiceWorkerManagerVersionUpdateCurrent, {
+    log(LogMessage.ServiceWorkerManagerVersionUpdateCurrent, {
       version: workerVersion,
     });
     return false;
   }
 
   public async establishServiceWorkerChannel() {
-    log(MessageTypePage.ServiceWorkerManagerEstablishChannel, {});
+    log(LogMessage.ServiceWorkerManagerEstablishChannel);
     const workerMessenger = this.context.workerMessenger;
     workerMessenger.off();
 
     workerMessenger.on(
       WorkerMessengerCommand.NotificationWillDisplay,
       async (event: NotificationForegroundWillDisplayEventSerializable) => {
-        log(MessageTypePage.ServiceWorkerManagerNotificationDisplay, {
+        log(LogMessage.ServiceWorkerManagerNotificationDisplay, {
           origin: location.origin,
           notification: event,
         });
@@ -299,7 +299,7 @@ export class ServiceWorkerManager {
                    addListenerForNotificationOpened() returns no results even
                    though a notification was just clicked.
         */
-          log(MessageTypePage.ServiceWorkerManagerNotificationStore, {});
+          log(LogMessage.ServiceWorkerManagerNotificationStore);
         } else {
           await triggerNotificationClick(event);
         }
@@ -383,11 +383,11 @@ export class ServiceWorkerManager {
       return this.getOneSignalRegistration();
     }
 
-    log(MessageTypePage.ServiceWorkerManagerInstallWorker);
+    log(LogMessage.ServiceWorkerManagerInstallWorker);
     const workerState = await this.getActiveState();
 
     if (workerState === ServiceWorkerActiveState.ThirdParty) {
-      log(MessageTypePage.ServiceWorkerManagerInstallThirdParty, {});
+      log(LogMessage.ServiceWorkerManagerInstallThirdParty);
     }
 
     const workerHref = getServiceWorkerHref(
@@ -397,7 +397,7 @@ export class ServiceWorkerManager {
     );
 
     const scope = `${getBaseUrl()}${this.config.registrationOptions.scope}`;
-    log(MessageTypePage.ServiceWorkerManagerInstallStarting, {
+    log(LogMessage.ServiceWorkerManagerInstallStarting, {
       workerHref,
       scope,
     });
@@ -409,14 +409,14 @@ export class ServiceWorkerManager {
         type: import.meta.env.MODE === 'development' ? 'module' : undefined,
       });
     } catch (error) {
-      log(MessageTypePage.ServiceWorkerManagerInstallError, error);
+      log(LogMessage.ServiceWorkerManagerInstallError, error);
       registration = await this.fallbackToUserModelBetaWorker();
     }
-    log(MessageTypePage.ServiceWorkerManagerInstallComplete);
+    log(LogMessage.ServiceWorkerManagerInstallComplete);
 
     await waitUntilActive(registration);
 
-    log(MessageTypePage.ServiceWorkerManagerWorkerActive);
+    log(LogMessage.ServiceWorkerManagerWorkerActive);
 
     await this.establishServiceWorkerChannel();
     return registration;
@@ -438,7 +438,7 @@ export class ServiceWorkerManager {
 
     const scope = `${getBaseUrl()}${this.config.registrationOptions.scope}`;
 
-    log(MessageTypePage.ServiceWorkerManagerInstallBeta, {
+    log(LogMessage.ServiceWorkerManagerInstallBeta, {
       workerHref,
       scope,
     });
@@ -456,9 +456,7 @@ export class ServiceWorkerManager {
         OneSignalSDK.sw.js & OneSignalSDKWorker.js.
       `;
 
-      log(MessageTypePage.ServiceWorkerManagerDeprecationError, {
-        error: DEPRECATION_ERROR,
-      });
+      log(LogMessage.Error, DEPRECATION_ERROR);
       return registration;
     } catch (error) {
       const response = await fetch(workerHref);

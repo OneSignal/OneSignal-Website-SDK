@@ -1,4 +1,5 @@
 import { OneSignalDeferredLoadedCallback } from './page/models/OneSignalDeferredLoadedCallback';
+import type { LogFunction } from './shared/helpers/log/types';
 
 /**
  * Types and names collected from:
@@ -30,7 +31,7 @@ declare global {
   interface Window {
     OneSignal: _OneSignal;
     OneSignalDeferred?: OneSignalDeferredLoadedCallback[];
-    OneSignalLog: (type: number, data?: any) => void;
+    OneSignalLog: LogFunction;
     __oneSignalSdkLoadCount?: number;
     safari?: {
       pushNotification?: SafariRemoteNotification;
@@ -53,7 +54,7 @@ declare global {
   }
 
   interface WorkerGlobalScope {
-    OneSignalLog: (type: number, data?: any) => void;
+    OneSignalLog: LogFunction;
     OneSignalWorker: typeof import('./sw/serviceWorker/ServiceWorker').OneSignalServiceWorker;
     workerMessenger: import('./sw/serviceWorker/WorkerMessengerSW').WorkerMessengerSW;
     shouldLog: boolean;

@@ -1,7 +1,7 @@
 import { EmptyArgumentError } from 'src/shared/errors/common';
 import type ContextSW from 'src/shared/models/ContextSW';
 import log from '../../helpers/log';
-import { MessageTypePage } from '../../helpers/log/constants';
+import { LogMessage } from '../../helpers/log/constants';
 import { WorkerMessengerBase } from './base';
 import type {
   WorkerMessengerCommandValue,
@@ -22,7 +22,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       'message',
       this.onWorkerMessageReceivedFromPage.bind(this),
     );
-    log(MessageTypePage.WorkerMessengerSWListening);
+    log(LogMessage.WorkerMessengerSWListening);
   }
 
   onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
@@ -39,10 +39,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    log(
-      MessageTypePage.WorkerMessengerSWReceived,
-      event.data,
-    );
+    log(LogMessage.WorkerMessengerSWReceived, event.data);
 
     for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {
@@ -71,7 +68,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       includeUncontrolled: true,
     });
     for (const client of clients) {
-      log(MessageTypePage.WorkerMessengerSWBroadcast, {
+      log(LogMessage.WorkerMessengerSWBroadcast, {
         command: command.toString(),
         url: client.url,
       });
@@ -94,7 +91,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       throw EmptyArgumentError('windowClient');
     }
 
-    log(MessageTypePage.WorkerMessengerSWUnicast, {
+    log(LogMessage.WorkerMessengerSWUnicast, {
       command: command.toString(),
       url: windowClient.url,
     });

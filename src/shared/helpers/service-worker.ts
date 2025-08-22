@@ -19,7 +19,7 @@ import type { Session, SessionOriginValue } from '../session/types';
 import { getConfigAttribution } from './OutcomesHelper';
 import { getBaseUrl } from './general';
 import log from './log';
-import { MessageTypePage } from './log/constants';
+import { LogMessage } from './log/constants';
 
 export function getServiceWorkerHref(
   config: ServiceWorkerManagerConfig,
@@ -79,12 +79,12 @@ export async function upsertSession(
   }
 
   if (existingSession.status === SessionStatus.Active) {
-    log(MessageTypePage.ServiceWorkerHelperSessionActive, existingSession);
+    log(LogMessage.ServiceWorkerHelperSessionActive, existingSession);
     return;
   }
 
   if (!existingSession.lastDeactivatedTimestamp) {
-    log(MessageTypePage.ServiceWorkerHelperSessionInvalid, existingSession);
+    log(LogMessage.ServiceWorkerHelperSessionInvalid, existingSession);
     // TODO: possibly recover by re-starting session if deviceId is present?
     return;
   }
@@ -137,7 +137,7 @@ export async function deactivateSession(
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
-    log(MessageTypePage.ServiceWorkerHelperNoActiveSession);
+    log(LogMessage.ServiceWorkerHelperNoActiveSession);
     return undefined;
   }
 
@@ -165,7 +165,7 @@ export async function deactivateSession(
    * For anything but active, logging a warning and doing early return.
    */
   if (existingSession.status !== SessionStatus.Active) {
-    log(MessageTypePage.ServiceWorkerHelperInvalidStateDeactivate, {
+    log(LogMessage.ServiceWorkerHelperInvalidStateDeactivate, {
       status: existingSession.status,
     });
     return undefined;
@@ -222,16 +222,16 @@ async function finalizeSession(
   sendOnFocusEnabled: boolean,
   outcomesConfig: OutcomesConfig,
 ): Promise<void> {
-  log(MessageTypePage.ServiceWorkerHelperFinalizeSession, {
+  log(LogMessage.ServiceWorkerHelperFinalizeSession, {
     startTimestamp: session.startTimestamp,
     accumulatedDuration: session.accumulatedDuration,
   });
   if (sendOnFocusEnabled) {
-    log(MessageTypePage.ServiceWorkerHelperSendFocus, {
+    log(LogMessage.ServiceWorkerHelperSendFocus, {
       duration: session.accumulatedDuration,
     });
     const attribution = await getConfigAttribution(outcomesConfig);
-    log(MessageTypePage.ServiceWorkerHelperSendFocusAttribution, attribution);
+    log(LogMessage.ServiceWorkerHelperSendFocusAttribution, attribution);
     await OneSignalApiSW.sendSessionDuration(
       appId,
       onesignalId,
@@ -245,7 +245,7 @@ async function finalizeSession(
     cleanupCurrentSession(),
     db.clear('Outcomes.NotificationClicked'),
   ]);
-  log(MessageTypePage.ServiceWorkerHelperFinalizeComplete, {
+  log(LogMessage.ServiceWorkerHelperFinalizeComplete, {
     startTimestamp: session.startTimestamp,
     accumulatedDuration: session.accumulatedDuration,
   });
@@ -267,7 +267,7 @@ const getLastNotificationClickedForOutcomes = async (
   try {
     allClickedNotifications = await getAllNotificationClickedForOutcomes();
   } catch (e) {
-    log(MessageTypePage.ServiceWorkerHelperDatabaseError, e);
+    log(LogMessage.ServiceWorkerHelperDatabaseError, e);
   }
   const predicate = (notification: OutcomesNotificationClicked) =>
     notification.appId === appId;

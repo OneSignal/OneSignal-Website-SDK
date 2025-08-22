@@ -6,7 +6,7 @@ import MainHelper from 'src/shared/helpers/MainHelper';
 import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
 import log from '../../shared/helpers/log';
-import { MessageTypePage } from '../../shared/helpers/log/constants';
+import { LogMessage } from '../../shared/helpers/log/constants';
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users
@@ -30,7 +30,7 @@ export default class LoginManager {
 
     // if the current externalId is the same as the one we're trying to set, do nothing
     if (currentExternalId === externalId) {
-      log(MessageTypePage.LoginManagerAlreadySet);
+      log(LogMessage.LoginManagerAlreadySet);
       return;
     }
 
@@ -78,7 +78,7 @@ export default class LoginManager {
     const identityModel = OneSignal.coreDirector.getIdentityModel();
 
     if (!identityModel.externalId)
-      return log(MessageTypePage.LoginManagerNotLoggedIn);
+      return log(LogMessage.LoginManagerNotLoggedIn);
 
     UserDirector.resetUserModels();
 

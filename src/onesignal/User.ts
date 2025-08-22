@@ -14,7 +14,7 @@ import {
 import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 import log from '../shared/helpers/log';
-import { MessageTypePage } from '../shared/helpers/log/constants';
+import { LogMessage } from '../shared/helpers/log/constants';
 
 export default class User {
   static singletonInstance?: User;
@@ -146,7 +146,7 @@ export default class User {
     const hasOneSignalId =
       !!OneSignal.coreDirector.getIdentityModel().onesignalId;
     if (!hasOneSignalId) {
-      log(MessageTypePage.UserNotLoggedIn);
+      log(LogMessage.UserNotLoggedIn);
     }
     return hasOneSignalId;
   }
@@ -269,7 +269,7 @@ export default class User {
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {
     if (!this.validateUserExists()) return;
     if (!isObjectSerializable(properties)) {
-      log(MessageTypePage.UserCustomEventPropertiesNotSerializable);
+      log(LogMessage.UserCustomEventPropertiesNotSerializable);
       return;
     }
 

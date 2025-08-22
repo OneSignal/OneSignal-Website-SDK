@@ -38,7 +38,7 @@ import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDe
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
 import log from '../shared/helpers/log';
-import { MessageType, MessageTypePage } from '../shared/helpers/log/constants';
+import { LogMessage } from '../shared/helpers/log/constants';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import DebugNamespace from './DebugNamesapce';
@@ -65,7 +65,7 @@ export default class OneSignal {
   private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await getAppConfig(options);
 
-    log(MessageTypePage.InitFinalConfig, { appConfig });
+    log(LogMessage.InitFinalConfig, { appConfig });
 
     // Workaround to temp assign config so that it can be used in context.
     OneSignal.config = appConfig;
@@ -126,7 +126,7 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
-    log(MessageTypePage.InitBrowserEnvironment, {
+    log(LogMessage.InitBrowserEnvironment, {
       browserName: getBrowserName(),
       browserVersion: getBrowserVersion(),
     });
@@ -145,7 +145,7 @@ export default class OneSignal {
        * support on Chrome/Firefox and don't intend to support Safari but don't
        * place conditional initialization checks.
        */
-      log(MessageType.Error, MissingSafariWebIdError);
+      log(LogMessage.Error, MissingSafariWebIdError);
       return;
     }
 
@@ -199,7 +199,7 @@ export default class OneSignal {
     )
       await __init();
     else {
-      log(MessageTypePage.InitWaitingForDom);
+      log(LogMessage.InitWaitingForDom);
       window.addEventListener('DOMContentLoaded', () => {
         __init();
       });
@@ -298,10 +298,10 @@ export default class OneSignal {
   /* END NEW USER MODEL CHANGES */
 }
 
-log(MessageTypePage.OneSignalSdkLoaded, {
+log(LogMessage.OneSignalSdkLoaded, {
   version: VERSION,
   environment: windowEnvString,
 });
-log(MessageTypePage.InitCurrentPageUrl, {
+log(LogMessage.InitCurrentPageUrl, {
   url: location.href,
 });

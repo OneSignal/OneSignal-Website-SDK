@@ -5,7 +5,7 @@ import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
 import log from './helpers/log';
-import { MessageTypePage } from './helpers/log/constants';
+import { LogMessage } from './helpers/log/constants';
 import MainHelper from './helpers/MainHelper';
 import { CustomLinkManager } from './managers/CustomLinkManager';
 import { UserState } from './models/UserState';
@@ -71,7 +71,7 @@ export async function checkAndTriggerSubscriptionChanged() {
       optedIn: isOptedIn,
     },
   };
-  log(MessageTypePage.ListenersPushStateChanged, change);
+  log(LogMessage.ListenersPushStateChanged, change);
   triggerSubscriptionChanged(change);
 }
 
@@ -144,7 +144,7 @@ export async function checkAndTriggerUserChanged() {
       externalId: currentExternalId,
     },
   };
-  log(MessageTypePage.ListenersUserStateChanged, change);
+  log(LogMessage.ListenersUserStateChanged, change);
   triggerUserChanged(change);
 }
 
@@ -168,12 +168,12 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   ) {
     const predicateResult = await displayPredicate();
     if (predicateResult !== false) {
-      log(MessageTypePage.ListenersNotifyButton, {
+      log(LogMessage.ListenersNotifyButton, {
         show: true,
       });
       OneSignal.notifyButton.launcher.show();
     } else {
-      log(MessageTypePage.ListenersNotifyButton, {
+      log(LogMessage.ListenersNotifyButton, {
         show: false,
       });
       OneSignal.notifyButton.launcher.hide();
@@ -198,7 +198,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   pushSubscriptionId: string | undefined | null,
 ) {
   if (OneSignal.__doNotShowWelcomeNotification) {
-    log(MessageTypePage.ListenersWelcomeNotification, {
+    log(LogMessage.ListenersWelcomeNotification, {
       skip: true,
     });
     return;
@@ -245,7 +245,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   title = decodeHtmlEntities(title);
   message = decodeHtmlEntities(message);
 
-  log(MessageTypePage.ListenersWelcomeNotification, {
+  log(LogMessage.ListenersWelcomeNotification, {
     skip: false,
   });
   MainHelper.showLocalNotification(

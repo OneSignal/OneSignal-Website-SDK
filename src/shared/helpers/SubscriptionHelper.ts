@@ -11,7 +11,7 @@ import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import log from './log';
-import { MessageTypePage } from './log/constants';
+import { LogMessage } from './log/constants';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 
@@ -35,7 +35,7 @@ export default class SubscriptionHelper {
       await triggerNotificationPermissionChanged();
       await checkAndTriggerSubscriptionChanged();
     } catch (e) {
-      log(MessageTypePage.SubscriptionHelperError, e);
+      log(LogMessage.Error, e);
     }
     return subscription;
   }

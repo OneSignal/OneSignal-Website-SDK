@@ -22,21 +22,25 @@ const libConfig: Record<Lib, LibraryOptions> = {
     entry: './src/entries/sdk.ts',
     fileName: () => `${prefix}OneSignalSDK.page.js`,
     name: 'OneSignal',
+    formats: ['iife'],
   },
   page: {
     entry: './src/entries/pageSdkInit.ts',
     fileName: () => `${prefix}OneSignalSDK.page.es6.js`,
+    formats: ['iife'],
     name: 'OneSignal',
   },
   worker: {
     entry: './src/entries/worker.ts',
     fileName: () => `${prefix}OneSignalSDK.sw.js`,
-    name: 'OneSignal',
+    formats: ['iife'],
+    name: 'OneSignalWorker',
   },
   logger: {
     entry: './src/entries/logger.ts',
     fileName: () => `${prefix}OneSignalSDK.logger.js`,
-    name: 'OneSignalLogger',
+    formats: ['iife'],
+    name: 'OneSignalLog',
   },
 };
 
@@ -142,7 +146,6 @@ export default defineConfig(({ mode }) => {
 
       lib: {
         ...libConfig[lib],
-        formats: ['iife'],
       },
       outDir: 'build/releases',
       emptyOutDir: false,

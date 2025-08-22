@@ -1,6 +1,6 @@
 import type { IDBStoreName } from 'src/shared/database/types';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import { OPERATION_NAME } from '../constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
@@ -28,7 +28,7 @@ export class OperationModelStore extends ModelStore<Operation> {
 
   create(jsonObject?: { name?: string } | null): Operation | null {
     if (jsonObject === null) {
-      log(MessageTypePage.OperationModelStoreNullObject);
+      log(LogMessage.OperationModelStoreNullObject);
       return null;
     }
 
@@ -97,7 +97,7 @@ export class OperationModelStore extends ModelStore<Operation> {
   } {
     const operationName = object?.name;
     if (!operationName) {
-      log(MessageTypePage.OperationModelStoreMissingName);
+      log(LogMessage.OperationModelStoreMissingName);
       return false;
     }
 
@@ -105,7 +105,7 @@ export class OperationModelStore extends ModelStore<Operation> {
 
     // Must have onesignalId if it is not one of the excluded operations above
     if (!object.onesignalId && !excluded.has(operationName)) {
-      log(MessageTypePage.OperationModelStoreInvalidOperation, {
+      log(LogMessage.OperationModelStoreInvalidOperation, {
         operationName: operationName,
       });
       return false;

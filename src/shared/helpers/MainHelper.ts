@@ -11,7 +11,7 @@ import type {
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
 import { getValueOrDefault } from './general';
 import log from './log';
-import { MessageTypePage } from './log/constants';
+import { LogMessage } from './log/constants';
 import { triggerNotificationPermissionChanged } from './permissions';
 import { isValidUrl } from './validators';
 
@@ -75,7 +75,7 @@ export default class MainHelper {
       .getRegistration()
       .then(async (registration?: ServiceWorkerRegistration | null) => {
         if (!registration) {
-          log(MessageTypePage.MainHelperServiceWorkerError);
+          log(LogMessage.MainHelperServiceWorkerError);
           return;
         }
 
@@ -117,7 +117,7 @@ export default class MainHelper {
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
-      log(MessageTypePage.MainHelperApiCallFailed, {
+      log(LogMessage.MainHelperApiCallFailed, {
         url,
         errors: data.errors,
       });

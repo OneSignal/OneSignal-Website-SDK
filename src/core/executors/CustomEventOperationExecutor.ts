@@ -4,7 +4,7 @@ import {
   getSubscriptionType,
 } from 'src/shared/environment/detect';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -35,7 +35,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    log(MessageTypePage.CustomEvents, operations);
+    log(LogMessage.CustomEvents, operations);
 
     // TODO: each trackEvent is sent individually right now; may need to batch in the future
     const operation = operations[0];

@@ -1,30 +1,15 @@
-import { IS_SERVICE_WORKER, LOGGING } from '../../utils/EnvVariables';
+import { isServiceWorker } from 'src/shared/environment/detect';
+import { LOGGING } from '../../utils/EnvVariables';
 
 export default class LogBase {
   private static shouldLog(): boolean {
-    if (IS_SERVICE_WORKER)
-      return !!(self as unknown as ServiceWorkerGlobalScope).shouldLog;
+    if (isServiceWorker(self)) return !!self.shouldLog;
     try {
       /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
       const level = window.localStorage.getItem('loglevel');
       return level?.toLowerCase() === 'trace';
     } catch (e) {
       return false;
-    }
-  }
-
-  /**
-   * Sets the log level for page context.
-   * Will not do anything in service worker context.
-   */
-  public static setLevel(level: string) {
-    if (IS_SERVICE_WORKER) return;
-
-    /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
-    try {
-      window.localStorage.setItem('loglevel', level);
-    } catch (e) {
-      console.error(e);
     }
   }
 

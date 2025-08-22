@@ -1,5 +1,5 @@
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -74,7 +74,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    log(MessageTypePage.UpdateUserOperationExecutor, {
+    log(LogMessage.UpdateUserOperationExecutor, {
       operations,
     });
 

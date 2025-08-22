@@ -7,7 +7,7 @@ import { getConsentGiven } from 'src/shared/database/config';
 import { getTimeZoneId } from 'src/shared/helpers/general';
 import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -65,7 +65,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    log(MessageTypePage.LoginUser, operations);
+    log(LogMessage.LoginUser, operations);
     const startingOp = operations[0];
 
     if (startingOp instanceof LoginUserOperation)
@@ -132,17 +132,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case ExecutionResult.FAIL_CONFLICT:
-        log(
-          MessageTypePage.LoginUserFailConflict,
-          loginUserOp,
-        );
+        log(LogMessage.LoginUserFailConflict, loginUserOp);
         return this.createUser(loginUserOp, operations);
 
       case ExecutionResult.FAIL_NORETRY:
-        log(
-          MessageTypePage.LoginUserFailNoRetry,
-          loginUserOp,
-        );
+        log(LogMessage.LoginUserFailNoRetry, loginUserOp);
         return this.createUser(loginUserOp, operations);
 
       default:

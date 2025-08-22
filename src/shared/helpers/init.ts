@@ -11,14 +11,14 @@ import OneSignalEvent from '../services/OneSignalEvent';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once } from '../utils/utils';
 import log from './log';
-import { MessageTypePage } from './log/constants';
+import { LogMessage } from './log/constants';
 import MainHelper from './MainHelper';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 import SubscriptionHelper from './SubscriptionHelper';
 
 export async function internalInit() {
-  log(MessageTypePage.InitInternalInit);
+  log(LogMessage.InitInternalInit);
 
   // Always check for an updated service worker
   await OneSignal.context.serviceWorkerManager.installWorker();
@@ -53,10 +53,10 @@ function postponeSessionInitUntilPageIsInFocus(): void {
 }
 
 async function sessionInit(): Promise<void> {
-  log(MessageTypePage.InitSessionInit);
+  log(LogMessage.InitSessionInit);
 
   if (OneSignal._sessionInitAlreadyRunning) {
-    log(MessageTypePage.InitSessionAlreadyRunning);
+    log(LogMessage.InitSessionAlreadyRunning);
     return;
   }
   OneSignal._sessionInitAlreadyRunning = true;
@@ -167,7 +167,7 @@ async function establishServiceWorkerChannel(): Promise<void> {
     try {
       await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
     } catch (e) {
-      log(MessageTypePage.InitError, e);
+      log(LogMessage.Error, e);
     }
   }
 }
@@ -176,15 +176,15 @@ async function establishServiceWorkerChannel(): Promise<void> {
 export async function processExpiringSubscriptions(): Promise<boolean> {
   const context: ContextInterface = OneSignal.context;
 
-  log(MessageTypePage.InitSubscriptionExpiration);
+  log(LogMessage.InitSubscriptionExpiration);
   const isSubscriptionExpiring =
     await context.subscriptionManager.isSubscriptionExpiring();
   if (!isSubscriptionExpiring) {
-    log(MessageTypePage.InitSubscriptionNotExpired);
+    log(LogMessage.InitSubscriptionNotExpired);
     return false;
   }
 
-  log(MessageTypePage.InitSubscriptionExpiring);
+  log(LogMessage.InitSubscriptionExpiring);
   const rawPushSubscription = await context.subscriptionManager.subscribe(
     SubscriptionStrategyKind.SubscribeNew,
   );
@@ -207,7 +207,7 @@ async function doInitialize(): Promise<void> {
   try {
     await Promise.all(promises);
   } catch (e) {
-    log(MessageTypePage.InitError, e);
+    log(LogMessage.Error, e);
     throw new Error('Unknown init error');
   }
 }
@@ -241,7 +241,7 @@ async function showNotifyButton() {
           );
           OneSignal.notifyButton.create();
         } else {
-          log(MessageTypePage.InitNotifyButtonPredicate, {
+          log(LogMessage.InitNotifyButtonPredicate, {
             show: false,
           });
         }
@@ -278,7 +278,7 @@ async function installNativePromptPermissionChangedHook() {
   } catch (e) {
     // Some browsers (Safari 16.3 and older) have the API navigator.permissions.query, but don't support the
     // { name: 'notifications' } param and throws.
-    log(MessageTypePage.InitPermissionHookError, e);
+    log(LogMessage.InitPermissionHookError, e);
   }
 }
 
@@ -365,11 +365,11 @@ export async function initSaveState(overridingPageTitle?: string) {
   const pageTitle: string =
     overridingPageTitle || config.siteName || document.title || 'Notification';
   await db.put('Options', { key: 'pageTitle', value: pageTitle });
-  log(MessageTypePage.InitPageTitle, { title: pageTitle });
+  log(LogMessage.InitPageTitle, { title: pageTitle });
 }
 
 async function handleAutoResubscribe(isOptedOut: boolean) {
-  log(MessageTypePage.InitAutoResubscribe, {
+  log(LogMessage.InitAutoResubscribe, {
     autoResubscribe: OneSignal.config?.userConfig.autoResubscribe,
     isOptedOut,
   });

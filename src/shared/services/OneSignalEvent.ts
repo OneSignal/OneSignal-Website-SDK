@@ -1,7 +1,7 @@
 import { containsMatch } from '../context/helpers';
 import { windowEnvString } from '../environment/detect';
 import log from '../helpers/log';
-import { MessageTypePage } from '../helpers/log/constants';
+import { LogMessage } from '../helpers/log/constants';
 import Emitter from '../libraries/Emitter';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 
@@ -32,13 +32,13 @@ export default class OneSignalEvent {
       const displayData = data;
 
       if (displayData || displayData === false) {
-        log(MessageTypePage.OneSignalEventTrigger, {
+        log(LogMessage.OneSignalEventTrigger, {
           windowEnvString,
           eventName,
           displayData,
         });
       } else {
-        log(MessageTypePage.OneSignalEventTrigger, {
+        log(LogMessage.OneSignalEventTrigger, {
           windowEnvString,
           eventName,
         });

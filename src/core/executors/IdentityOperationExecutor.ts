@@ -9,7 +9,7 @@ import {
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -41,7 +41,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    log(MessageTypePage.IdentityOp, operations);
+    log(LogMessage.IdentityOp, operations);
 
     const invalidOps = operations.filter(
       (op) =>

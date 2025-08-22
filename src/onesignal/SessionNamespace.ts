@@ -1,6 +1,6 @@
 import OutcomesHelper from '../shared/helpers/OutcomesHelper';
 import log from '../shared/helpers/log';
-import { MessageTypePage } from '../shared/helpers/log/constants';
+import { LogMessage } from '../shared/helpers/log/constants';
 import { OutcomeAttributionType } from '../shared/models/Outcomes';
 
 export class SessionNamespace {
@@ -10,7 +10,7 @@ export class SessionNamespace {
   ): Promise<void> {
     const config = OneSignal.config?.userConfig.outcomes;
     if (!config) {
-      log(MessageTypePage.OutcomesConfigMissing, {
+      log(LogMessage.OutcomesConfigMissing, {
         outcomeName,
       });
       return;
@@ -26,7 +26,7 @@ export class SessionNamespace {
       typeof outcomeWeight !== 'undefined' &&
       typeof outcomeWeight !== 'number'
     ) {
-      log(MessageTypePage.OutcomesWeightInvalid);
+      log(LogMessage.OutcomesWeightInvalid);
       return;
     }
 
@@ -46,7 +46,7 @@ export class SessionNamespace {
   async sendUniqueOutcome(outcomeName: string): Promise<void> {
     const config = OneSignal.config?.userConfig.outcomes;
     if (!config) {
-      log(MessageTypePage.OutcomesConfigMissing, {
+      log(LogMessage.OutcomesConfigMissing, {
         outcomeName,
       });
       return;
@@ -65,7 +65,7 @@ export class SessionNamespace {
     const outcomeAttribution = await outcomesHelper.getAttribution();
 
     if (outcomeAttribution.type === OutcomeAttributionType.NotSupported) {
-      log(MessageTypePage.OutcomesOutcomeEventFailed);
+      log(LogMessage.OutcomesOutcomeEventFailed);
       return;
     }
 
@@ -83,7 +83,7 @@ export class SessionNamespace {
         newNotifsToAttributeWithOutcome,
       )
     ) {
-      log(MessageTypePage.OutcomesRetryWarning, {
+      log(LogMessage.SessionOutcomeReported, {
         outcomeName,
       });
       return;

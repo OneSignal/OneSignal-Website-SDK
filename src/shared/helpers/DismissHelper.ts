@@ -8,7 +8,7 @@ import {
 import TimedLocalStorage from '../../page/modules/TimedLocalStorage';
 import { windowEnvString } from '../environment/detect';
 import log from './log';
-import { MessageTypePage } from './log/constants';
+import { LogMessage } from './log/constants';
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
@@ -40,7 +40,7 @@ export class DismissHelper {
     } else if (dismissCount > 2) {
       dismissDays = 30;
     }
-    log(MessageTypePage.DismissHelperPromptDismissed, {
+    log(LogMessage.DismissHelperPromptDismissed, {
       windowEnvString,
       type,
       dismissDays,

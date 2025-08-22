@@ -21,10 +21,7 @@ import { logMethodCall } from 'src/shared/utils/utils';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import log from '../../../shared/helpers/log';
-import {
-  MessageType,
-  MessageTypePage,
-} from '../../../shared/helpers/log/constants';
+import { LogMessage } from '../../../shared/helpers/log/constants';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import TagUtils from '../../../shared/utils/TagUtils';
 import { DismissPrompt } from '../../models/Dismiss';
@@ -78,9 +75,7 @@ export class SlidedownManager {
           return true;
         }
 
-        log(MessageTypePage.SlidedownManagerSubscribed, {
-          error: new Error('User is already subscribed'),
-        });
+        log(LogMessage.SlidedownManagerSubscribed);
         return false;
       }
 
@@ -91,7 +86,7 @@ export class SlidedownManager {
       }
 
       if (permissionDenied) {
-        log(MessageType.Error, PermissionBlockedError);
+        log(LogMessage.Error, PermissionBlockedError);
         return false;
       }
     } else {
@@ -105,18 +100,18 @@ export class SlidedownManager {
         const bothSubscribed = smsSubscribed && emailSubscribed;
 
         if (smsSubscribed && slidedownType === DelayedPromptType.Sms) {
-          log(MessageType.Error, ExistingChannelError(DelayedPromptType.Sms));
+          log(LogMessage.Error, ExistingChannelError(DelayedPromptType.Sms));
           return false;
         }
 
         if (emailSubscribed && slidedownType === DelayedPromptType.Email) {
-          log(MessageType.Error, ExistingChannelError(DelayedPromptType.Email));
+          log(LogMessage.Error, ExistingChannelError(DelayedPromptType.Email));
           return false;
         }
 
         if (bothSubscribed && slidedownType === DelayedPromptType.SmsAndEmail) {
           log(
-            MessageType.Error,
+            LogMessage.Error,
             ExistingChannelError(DelayedPromptType.SmsAndEmail),
           );
           return false;
@@ -129,7 +124,7 @@ export class SlidedownManager {
     }
 
     if (wasDismissed && !options.force && !options.isInUpdateMode) {
-      log(MessageTypePage.SlidedownManagerDismissError, {
+      log(LogMessage.SlidedownManagerDismissError, {
         slidedownType,
       });
       return false;
@@ -320,7 +315,7 @@ export class SlidedownManager {
 
       taggingContainer.mount(categories, tagsForComponent);
     } catch (e) {
-      log(MessageTypePage.SlidedownManagerTaggingContainerError, {
+      log(LogMessage.SlidedownManagerTaggingContainerError, {
         error: e,
       });
     }
@@ -342,7 +337,7 @@ export class SlidedownManager {
         }
       }
     } catch (e) {
-      log(MessageTypePage.SlidedownManagerChannelCaptureError, {
+      log(LogMessage.SlidedownManagerChannelCaptureError, {
         error: e,
       });
     }
@@ -381,7 +376,7 @@ export class SlidedownManager {
           break;
       }
     } catch (e) {
-      log(MessageTypePage.SlidedownManagerUpdateError, {
+      log(LogMessage.SlidedownManagerUpdateError, {
         error: e,
       });
       // Display update error
@@ -409,11 +404,11 @@ export class SlidedownManager {
     switch (slidedownType) {
       case DelayedPromptType.Push:
       case DelayedPromptType.Category:
-        log(MessageTypePage.SlidedownManagerDismiss);
+        log(LogMessage.SlidedownManagerDismiss);
         DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
         break;
       default:
-        log(MessageTypePage.SlidedownManagerDismiss);
+        log(LogMessage.SlidedownManagerDismiss);
         DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);
         break;
     }
@@ -450,7 +445,7 @@ export class SlidedownManager {
         return;
       }
     } catch (e) {
-      log(MessageTypePage.SlidedownManagerShowError, {
+      log(LogMessage.SlidedownManagerShowError, {
         error: e,
       });
       return;
@@ -471,10 +466,10 @@ export class SlidedownManager {
       this.slidedown = new Slidedown(slidedownPromptOptions);
       await this.slidedown.create(options.isInUpdateMode);
       await this.mountAuxiliaryContainers(options);
-      log(MessageTypePage.SlidedownManagerShow);
+      log(LogMessage.SlidedownManagerShow);
       Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
     } catch (e) {
-      log(MessageTypePage.SlidedownManagerShowDebug, {
+      log(LogMessage.SlidedownManagerShowDebug, {
         error: e,
       });
       this.setIsSlidedownShowing(false);

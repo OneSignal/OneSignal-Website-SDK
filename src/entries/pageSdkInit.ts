@@ -6,7 +6,7 @@ import type { OneSignalDeferredLoadedCallback } from 'src/page/models/OneSignalD
 import OneSignal from '../onesignal/OneSignal';
 import { ReplayCallsOnOneSignal } from '../page/utils/ReplayCallsOnOneSignal';
 import log from '../shared/helpers/log';
-import { MessageTypePage } from '../shared/helpers/log/constants';
+import { LogMessage } from '../shared/helpers/log/constants';
 import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';
 
 /**
@@ -18,7 +18,7 @@ import './stylesheet.scss';
 function onesignalSdkInit() {
   incrementSdkLoadCount();
   if (getSdkLoadCount() > 1) {
-    log(MessageTypePage.InitSdkDoubleLoad, {
+    log(LogMessage.InitSdkDoubleLoad, {
       loadCount: getSdkLoadCount(),
     });
     return;

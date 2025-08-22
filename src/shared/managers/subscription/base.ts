@@ -6,7 +6,7 @@ import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
 import log from '../../helpers/log';
-import { MessageTypePage } from '../../helpers/log/constants';
+import { LogMessage } from '../../helpers/log/constants';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
 import type { Subscription } from '../../models/Subscription';
 import {
@@ -148,13 +148,9 @@ export class SubscriptionManagerBase<
         if (!existingPushSubscription) break;
 
         if (existingPushSubscription.options) {
-          log(
-            MessageTypePage.SubscriptionManagerExistingPushWithOptions,
-          );
+          log(LogMessage.SubscriptionManagerExistingPushWithOptions);
         } else {
-          log(
-            MessageTypePage.SubscriptionManagerExistingPushNoOptions,
-          );
+          log(LogMessage.SubscriptionManagerExistingPushNoOptions);
           /*
             NOTE: Only applies to rare edge case of migrating from senderId to a VAPID subscription
             There isn't a great solution if PushSubscriptionOptions (supported on Chrome 54+) isn't
@@ -266,10 +262,7 @@ export class SubscriptionManagerBase<
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey,
     };
-    log(
-      MessageTypePage.SubscriptionManagerSubscribeOptions,
-      subscriptionOptions,
-    );
+    log(LogMessage.SubscriptionManagerSubscribeOptions, subscriptionOptions);
     try {
       const existingSubscription = await pushManager.getSubscription();
       return [
@@ -283,10 +276,9 @@ export class SubscriptionManagerBase<
         // In Chrome, e.message contains will be the following in this case for reference;
         // Registration failed - A subscription with a different applicationServerKey (or gcm_sender_id) already exists;
         //    to change the applicationServerKey, unsubscribe then resubscribe.
-        log(
-          MessageTypePage.SubscriptionManagerApplicationServerKeyChange,
-          { error: e },
-        );
+        log(LogMessage.SubscriptionManagerApplicationServerKeyChange, {
+          error: e,
+        });
         const subscription = await pushManager.getSubscription();
         if (subscription) {
           await SubscriptionManagerBase.doPushUnsubscribe(subscription);
@@ -299,14 +291,11 @@ export class SubscriptionManagerBase<
   private static async doPushUnsubscribe(
     pushSubscription: PushSubscription,
   ): Promise<boolean> {
-    log(MessageTypePage.SubscriptionManagerUnsubscribing);
+    log(LogMessage.SubscriptionManagerUnsubscribing);
     const result = await pushSubscription.unsubscribe();
-    log(
-      MessageTypePage.SubscriptionManagerUnsubscribeResult,
-      {
-        result,
-      },
-    );
+    log(LogMessage.SubscriptionManagerUnsubscribeResult, {
+      result,
+    });
     return result;
   }
 }

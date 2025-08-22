@@ -1,7 +1,7 @@
 import { containsMatch } from 'src/shared/context/helpers';
 import { addCssClass, removeCssClass } from 'src/shared/helpers/dom';
 import log from '../../shared/helpers/log';
-import { MessageTypePage } from '../../shared/helpers/log/constants';
+import { LogMessage } from '../../shared/helpers/log/constants';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 
@@ -54,7 +54,7 @@ export default class AnimatedElement {
         OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWING, this);
         const element = this.element;
         if (!element) {
-          log(MessageTypePage.BellAnimatedElementNotFound, {
+          log(LogMessage.BellAnimatedElementNotFound, {
             selector: this.selector,
             operation: 'show',
           });
@@ -67,7 +67,7 @@ export default class AnimatedElement {
           return resolve(this);
         } else {
           const timerId = setTimeout(() => {
-            log(MessageTypePage.BellAnimatedElementShowTimeout, {
+            log(LogMessage.BellAnimatedElementShowTimeout, {
               state: this.state,
             });
           }, this.transitionCheckTimeout);
@@ -109,7 +109,7 @@ export default class AnimatedElement {
         OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDING, this);
         const element = this.element;
         if (!element) {
-          log(MessageTypePage.BellAnimatedElementNotFound, {
+          log(LogMessage.BellAnimatedElementNotFound, {
             selector: this.selector,
             operation: 'hide',
           });
@@ -126,7 +126,7 @@ export default class AnimatedElement {
             'transitionend',
             (event: Event, destroyListenerFn: () => void) => {
               const timerId = setTimeout(() => {
-                log(MessageTypePage.BellAnimatedElementHideTimeout, {
+                log(LogMessage.BellAnimatedElementHideTimeout, {
                   state: this.state,
                 });
               }, this.transitionCheckTimeout);

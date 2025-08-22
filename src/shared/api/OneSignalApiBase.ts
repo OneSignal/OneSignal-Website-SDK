@@ -2,7 +2,7 @@ import { getOneSignalApiUrl } from '../environment/detect';
 import { AppIDMissingError, RetryLimitError } from '../errors/common';
 import { delay } from '../helpers/general';
 import log from '../helpers/log';
-import { MessageTypePage } from '../helpers/log/constants';
+import { LogMessage } from '../helpers/log/constants';
 import { isValidUuid } from '../helpers/validators';
 import type { APIHeaders } from '../models/APIHeaders';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/EnvVariables';
@@ -116,7 +116,7 @@ export class OneSignalApiBase {
     } catch (e) {
       if (e instanceof Error && e.name === 'TypeError') {
         await delay(RETRY_BACKOFF[retry]);
-        log(MessageTypePage.ApiError, {
+        log(LogMessage.ApiError, {
           url,
         });
         return OneSignalApiBase.executeFetch(url, contents, retry - 1);

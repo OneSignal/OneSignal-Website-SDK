@@ -1,5 +1,5 @@
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 
 export function addDomElement(
   targetSelectorOrElement: string | Element,
@@ -60,7 +60,7 @@ export function clearDomElementChildren(
 export function getDomElementOrStub(selector: string): Element {
   const foundElement = document.querySelector(selector);
   if (!foundElement) {
-    log(MessageTypePage.DomElementNotFound, { selector });
+    log(LogMessage.DomElementNotFound, { selector });
     return document.createElement('div');
   }
   return foundElement;

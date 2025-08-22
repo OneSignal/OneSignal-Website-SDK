@@ -4,7 +4,7 @@ import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscript
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { IDManager } from 'src/shared/managers/IDManager';
 import log from '../shared/helpers/log';
-import { MessageTypePage } from '../shared/helpers/log/constants';
+import { LogMessage } from '../shared/helpers/log/constants';
 import MainHelper from '../shared/helpers/MainHelper';
 import OneSignal from './OneSignal';
 
@@ -19,7 +19,7 @@ export default class UserDirector {
     const hasExternalId = !!identityModel.externalId;
 
     if (!hasAnySubscription && !hasExternalId) {
-      log(MessageTypePage.UserDirectorNoSubscriptionOrId);
+      log(LogMessage.UserDirectorNoSubscriptionOrId);
       return;
     }
 

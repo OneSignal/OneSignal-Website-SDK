@@ -1,101 +1,99 @@
-import {
-  MessageType,
-  MessageTypePage,
-  MessageTypeSW,
-} from 'src/shared/helpers/log/constants';
+import { isServiceWorker } from 'src/shared/environment/detect';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import Log from 'src/shared/helpers/log/LogBase';
-import { IS_SERVICE_WORKER } from 'src/shared/utils/EnvVariables';
+import type { LogFunction } from 'src/shared/helpers/log/types';
 
-self.OneSignalLog = (type, data?) => {
+const typedLogger: LogFunction = (...args) => {
+  const [type, data] = args;
   // service worker messages
-  if (IS_SERVICE_WORKER) {
+  // Not using IS_SERVICE_WORKER because this will be a shared bundle used by both the page and the service worker
+  if (isServiceWorker(self)) {
     switch (type) {
-      case MessageTypeSW.ServiceWorkerSessionUpsert:
+      case LogMessage.ServiceWorkerSessionUpsert:
         Log.debug('[Service Worker] Received SessionUpsert', data);
         break;
-      case MessageTypeSW.ServiceWorkerSessionDeactivate:
+      case LogMessage.ServiceWorkerSessionDeactivate:
         Log.debug('[Service Worker] Received SessionDeactivate', data);
         break;
-      case MessageTypeSW.ServiceWorkerSetupListeners:
+      case LogMessage.ServiceWorkerSetupListeners:
         Log.debug('Setting up message listeners.');
         break;
-      case MessageTypeSW.ServiceWorkerWorkerVersion:
+      case LogMessage.ServiceWorkerWorkerVersion:
         Log.debug('[Service Worker] Received worker version message.');
         break;
-      case MessageTypeSW.ServiceWorkerSubscribe:
+      case LogMessage.ServiceWorkerSubscribe:
         Log.debug('[Service Worker] Received subscribe message.');
         break;
-      case MessageTypeSW.ServiceWorkerSubscribeNew:
+      case LogMessage.ServiceWorkerSubscribeNew:
         Log.debug('[Service Worker] Received subscribe new message.');
         break;
-      case MessageTypeSW.ServiceWorkerRawNotification:
+      case LogMessage.ServiceWorkerRawNotification:
         Log.debug('Raw Notification from OneSignal:', data);
         break;
-      case MessageTypeSW.ServiceWorkerError:
-        Log.error(data);
-        break;
-      case MessageTypeSW.ServiceWorkerConfirmedDelivery:
+      case LogMessage.ServiceWorkerConfirmedDelivery:
         Log.debug(
           `Called sendConfirmedDelivery(${JSON.stringify(data, null, 4)})`,
         );
         break;
-      case MessageTypeSW.ServiceWorkerNotificationDisplay:
+      case LogMessage.ServiceWorkerNotificationDisplay:
         Log.debug('Failed to display a notification:', data);
         break;
-      case MessageTypeSW.ServiceWorkerRefreshSession:
+      case LogMessage.ServiceWorkerRefreshSession:
         Log.debug('[Service Worker] refreshSession');
         break;
-      case MessageTypeSW.ServiceWorkerHasActiveSessions:
+      case LogMessage.ServiceWorkerHasActiveSessions:
         Log.debug('[Service Worker] hasAnyActiveSessions', data);
         break;
-      case MessageTypeSW.ServiceWorkerUpdateSession:
+      case LogMessage.ServiceWorkerUpdateSession:
         Log.debug('updateSessionBasedOnHasActive', data);
         break;
-      case MessageTypeSW.ServiceWorkerDebounceRefresh:
+      case LogMessage.ServiceWorkerDebounceRefresh:
         Log.debug('[Service Worker] debounceRefreshSession', data);
         break;
-      case MessageTypeSW.ServiceWorkerImageResource:
+      case LogMessage.ServiceWorkerImageResource:
         Log.error('ensureImageResourceHttps: ', data);
         break;
-      case MessageTypeSW.NotificationClicked:
+      case LogMessage.NotificationClicked:
         Log.info('NotificationClicked', data);
         break;
-      case MessageTypeSW.NotificationSaveError:
+      case LogMessage.NotificationSaveError:
         Log.error('Failed to save clicked notification.', data);
         break;
-      case MessageTypeSW.NotificationOriginError:
+      case LogMessage.NotificationOriginError:
         Log.error(`Failed to get the HTTP site's actual origin:`, data);
         break;
-      case MessageTypeSW.ServiceWorkerVisibilityResponse:
+      case LogMessage.ServiceWorkerVisibilityResponse:
         Log.debug('[Service Worker] Received response for AreYouVisible', data);
         break;
-      case MessageTypeSW.ServiceWorkerPushReceived:
+      case LogMessage.ServiceWorkerPushReceived:
         Log.debug(
           `Called onPushReceived(${JSON.stringify(data, null, 4)}):`,
           data,
         );
         break;
-      case MessageTypeSW.ServiceWorkerActivated:
+      case LogMessage.ServiceWorkerActivated:
         Log.info(
           `OneSignal Service Worker activated (version ${data.version || 'unknown'})`,
         );
         break;
-      case MessageTypeSW.ServiceWorkerPushSubscriptionChange:
+      case LogMessage.ServiceWorkerPushSubscriptionChange:
         Log.debug(
           `Called onPushSubscriptionChange(${JSON.stringify(data, null, 4)}):`,
           data,
         );
         break;
-      case MessageTypeSW.ServiceWorkerPushPayload:
-        Log.debug('Received a valid encrypted push payload.');
+      case LogMessage.ServiceWorkerPushPayload:
+        Log.debug('Received a valid encrypted push payloadata.');
         break;
-      case MessageTypeSW.ServiceWorkerLaunchUrl:
-        Log.debug(data.message, data.details);
+      case LogMessage.ServiceWorkerFocus:
+        Log.debug(
+          'Client is standard HTTPS site. Attempting to focus() client.',
+        );
         break;
-      case MessageTypeSW.ServiceWorkerFocusError:
+      case LogMessage.ServiceWorkerFocusError:
         Log.error('Failed to focus:', data.client, data.error);
         break;
-      case MessageTypeSW.ServiceWorkerNavigateError:
+      case LogMessage.ServiceWorkerNavigateError:
         Log.error(
           'Failed to navigate:',
           data.client,
@@ -103,43 +101,43 @@ self.OneSignalLog = (type, data?) => {
           data.error,
         );
         break;
-      case MessageTypeSW.ServiceWorkerRedirectUrl:
+      case LogMessage.ServiceWorkerRedirectUrl:
         Log.debug(`Redirecting HTTPS site to (${data.launchUrl}).`);
         break;
-      case MessageTypeSW.ServiceWorkerNoNavigation:
+      case LogMessage.ServiceWorkerNoNavigation:
         Log.debug('Not navigating because link is special.');
         break;
-      case MessageTypeSW.ServiceWorkerOpenUrl:
+      case LogMessage.ServiceWorkerOpenUrl:
         Log.debug('Opening notification URL:', data.url);
         break;
-      case MessageTypeSW.ServiceWorkerOpenUrlError:
+      case LogMessage.ServiceWorkerOpenUrlError:
         Log.warn(`Failed to open the URL '${data.url}':`, data.error);
         break;
-      case MessageTypeSW.ServiceWorkerLaunchUrlParseError:
+      case LogMessage.ServiceWorkerLaunchUrlParseError:
         Log.error(`Failed parse launchUrl:`, data);
         break;
-      case MessageTypeSW.ServiceWorkerJSONParseError:
+      case LogMessage.ServiceWorkerJSONParseError:
         Log.debug('isValidPushPayload: Parsing to JSON failed with:', data);
         break;
-      case MessageTypeSW.ServiceWorkerDisplayNotification:
+      case LogMessage.ServiceWorkerDisplayNotification:
         Log.debug(
           `Called displayNotification(${JSON.stringify(data, null, 4)}):`,
           data,
         );
         break;
-      case MessageTypeSW.ServiceWorkerNotificationClosed:
+      case LogMessage.ServiceWorkerNotificationClosed:
         Log.debug(
           `Called onNotificationClosed(${JSON.stringify(data, null, 4)}):`,
           data,
         );
         break;
-      case MessageTypeSW.ServiceWorkerNotificationClicked:
+      case LogMessage.ServiceWorkerNotificationClicked:
         Log.debug(
           `Called onNotificationClicked(${JSON.stringify(data, null, 4)}):`,
           data,
         );
         break;
-      case MessageTypeSW.ServiceWorkerInvalidPayload:
+      case LogMessage.ServiceWorkerInvalidPayload:
         Log.debug(
           'isValidPushPayload: Valid JSON but missing notification UUID:',
           data,
@@ -147,46 +145,29 @@ self.OneSignalLog = (type, data?) => {
         break;
 
       // SW - API Errors
-      case MessageTypeSW.ApiUserIdError:
+      case LogMessage.ApiUserIdError:
         Log.debug(
           'Error getting user ID from subscription identifier:',
           data.error,
         );
         break;
-      case MessageTypeSW.ApiSessionError:
+      case LogMessage.ApiSessionError:
         Log.debug('Error updating user session:', data.error);
         break;
-      case MessageTypeSW.ApiDurationError:
+      case LogMessage.ApiDurationError:
         Log.debug('Error sending session duration:', data.error);
         break;
 
-      // SW - Worker Messenger
-      case MessageTypePage.WorkerMessengerSWListening:
-        Log.debug(
-          '[Worker Messenger] Service worker is now listening for messages.',
-        );
-        break;
-      case MessageTypePage.WorkerMessengerSWReceived:
-        Log.debug(`[Worker Messenger] Service worker received message:`, data);
-        break;
-      case MessageTypePage.WorkerMessengerSWBroadcast:
-        Log.debug(
-          `[Worker Messenger] [SW -> Page] Broadcasting '${data.command}' to window client ${data.url}.`,
-        );
-        break;
-      case MessageTypePage.WorkerMessengerSWUnicast:
-        Log.debug(
-          `[Worker Messenger] [SW -> Page] Unicasting '${data.command}' to window client ${data.url}.`,
-        );
-        break;
-
       // SW - Utils
-      case MessageTypePage.CancelableTimeoutCancel:
+      case LogMessage.CancelableTimeoutCancel:
         Log.debug('Cancel called');
+        break;
+      case LogMessage.CancelableTimeoutCallbackError:
+        Log.error('Failed to execute callback', data.error);
         break;
 
       // SW - Webhook
-      case MessageTypePage.OSWebhookExecute:
+      case LogMessage.OSWebhookExecute:
         Log.debug(
           `Executing ${data.event} webhook ${data.corsEnabled ? 'with' : 'without'} CORS POST ${data.url}`,
           data.payload,
@@ -196,251 +177,243 @@ self.OneSignalLog = (type, data?) => {
   } else {
     // page messages
     switch (type) {
-      case MessageTypePage.CustomEvents:
+      case LogMessage.CustomEvents:
         Log.debug(
           `CustomEventsOperationExecutor(operations: ${JSON.stringify(data)})`,
         );
         break;
-      case MessageTypePage.IdentityOp:
+      case LogMessage.IdentityOp:
         Log.debug(
           `IdentityOperationExecutor(operations: ${JSON.stringify(data)})`,
         );
         break;
-      case MessageTypePage.LoginUser:
+      case LogMessage.LoginUser:
         Log.debug(
           `LoginUserOperationExecutor(operations: ${JSON.stringify(data)})`,
         );
         break;
-      case MessageTypePage.LoginUserFailConflict:
+      case LogMessage.LoginUserFailConflict:
         Log.debug(`Handling 409 for externalId: ${data.externalId}`);
         break;
-      case MessageTypePage.LoginUserFailNoRetry:
+      case LogMessage.LoginUserFailNoRetry:
         Log.debug(
           `Recovering from SetAlias failure for externalId: ${data.externalId}`,
         );
         break;
-      case MessageTypePage.RefreshUserExecute:
+      case LogMessage.RefreshUserExecute:
         Log.debug(
           `RefreshUserOperationExecutor(operation: ${JSON.stringify(data)})`,
         );
         break;
 
       // Page - Session Manager
-      case MessageTypePage.SessionManagerUpsert:
+      case LogMessage.SessionManagerUpsert:
         Log.debug('Notify SW to upsert session');
         break;
-      case MessageTypePage.SessionManagerDeactivate:
+      case LogMessage.SessionManagerDeactivate:
         Log.debug('Notify SW to deactivate session');
         break;
-      case MessageTypePage.SessionManagerVisibilityChange:
+      case LogMessage.SessionManagerVisibilityChange:
         Log.debug('handleVisibilityChange', data);
         break;
-      case MessageTypePage.SessionManagerVisibilityError:
+      case LogMessage.SessionManagerVisibilityError:
         Log.error('Error handling visibility change:', data);
         break;
-      case MessageTypePage.SessionManagerUnhandledVisibility:
+      case LogMessage.SessionManagerUnhandledVisibility:
         Log.warn('Unhandled visibility state happened', data);
         break;
-      case MessageTypePage.SessionManagerBeforeUnload:
+      case LogMessage.SessionManagerBeforeUnload:
         Log.debug('Notify SW to deactivate session (beforeunload)');
         break;
-      case MessageTypePage.SessionManagerFocus:
+      case LogMessage.SessionManagerFocus:
         Log.debug('handleOnFocus', data);
         break;
-      case MessageTypePage.SessionManagerBlur:
+      case LogMessage.SessionManagerBlur:
         Log.debug('handleOnBlur', data);
         break;
-      case MessageTypePage.SessionManagerError:
-        Log.error(data.message, data.error);
-        break;
-      case MessageTypePage.SessionManagerSetup:
+      case LogMessage.SessionManagerSetup:
         Log.debug('setupOnFocusAndOnBlurForSession');
         break;
-      case MessageTypePage.SessionManagerUpdate:
-        Log.debug(data.message, data.details);
+      case LogMessage.SessionManagerSupportsSW:
+        Log.debug(
+          'Not setting session event listeners. No service worker possible.',
+        );
+        break;
+      case LogMessage.SessionManagerNoOnesignalId:
+        Log.debug(
+          'Not sending the on session because user is not registered with OneSignal (no onesignal id)',
+        );
         break;
 
       // Page -Service Worker Manager
-      case MessageTypePage.ServiceWorkerManagerWorkerState:
+      case LogMessage.ServiceWorkerManagerWorkerState:
         Log.debug('[shouldInstallWorker] workerState', data);
         break;
-      case MessageTypePage.ServiceWorkerManagerInstall:
-        Log.info(data.message);
-        break;
-      case MessageTypePage.ServiceWorkerManagerInstallPermissions:
+      case LogMessage.ServiceWorkerManagerInstallPermissions:
         Log.info(
           '[shouldInstallWorker] Notification Permissions enabled, will install ServiceWorker',
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerInstallNoRegistration:
+      case LogMessage.ServiceWorkerManagerInstallNoRegistration:
         Log.info(
           `[changedServiceWorkerParams] workerRegistration not found at scope: ${data.scope}`,
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerInstallThirdParty:
+      case LogMessage.ServiceWorkerManagerInstallThirdParty:
         Log.info(
-          '[Service Worker Installation] 3rd party service worker detected.',
+          '[Service Worker Installation] 3rd party service worker detectedata.',
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerInstallStarting:
+      case LogMessage.ServiceWorkerManagerInstallStarting:
         Log.info(
           `[Service Worker Installation] Installing service worker ${data.workerHref} ${data.scope}.`,
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerScopeChange:
+      case LogMessage.ServiceWorkerManagerScopeChange:
         Log.info(
           '[changedServiceWorkerParams] ServiceWorker scope changing',
           data,
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerHrefChange:
+      case LogMessage.ServiceWorkerManagerHrefChange:
         Log.info(
           '[changedServiceWorkerParams] ServiceWorker href changing:',
           data,
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerVersionCheck:
+      case LogMessage.ServiceWorkerManagerVersionCheck:
         Log.info('[Service Worker Update] Checking service worker version...');
         break;
-      case MessageTypePage.ServiceWorkerManagerVersionUpdate:
-        Log.info(data.message, data.details);
-        break;
-      case MessageTypePage.ServiceWorkerManagerVersionUpdateTimeout:
+      case LogMessage.ServiceWorkerManagerVersionUpdateTimeout:
         Log.info(
           '[Service Worker Update] Worker did not reply to version query; assuming older version and updating.',
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerVersionUpdateNeeded:
+      case LogMessage.ServiceWorkerManagerVersionUpdateNeeded:
         Log.info(
           `[Service Worker Update] Updating service worker from ${data.oldVersion} --> ${data.newVersion}.`,
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerVersionUpdateCurrent:
+      case LogMessage.ServiceWorkerManagerVersionUpdateCurrent:
         Log.info(
           `[Service Worker Update] Service worker version is current at ${data.version} (no update required).`,
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerEstablishChannel:
+      case LogMessage.ServiceWorkerManagerEstablishChannel:
         Log.debug('establishServiceWorkerChannel');
         break;
-      case MessageTypePage.ServiceWorkerManagerNotificationDisplay:
+      case LogMessage.ServiceWorkerManagerNotificationDisplay:
         Log.debug(
           data.origin,
           'Received notification display event from service worker.',
           data.notification,
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerNotificationStore:
+      case LogMessage.ServiceWorkerManagerNotificationStore:
         Log.debug(
           'notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.',
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerInstallWorker:
+      case LogMessage.ServiceWorkerManagerInstallWorker:
         Log.info('Installing worker...');
         break;
-      case MessageTypePage.ServiceWorkerManagerInstallError:
+      case LogMessage.ServiceWorkerManagerInstallError:
         Log.error(
           `[Service Worker Installation] Installing service worker failed ${data}`,
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerInstallComplete:
+      case LogMessage.ServiceWorkerManagerInstallComplete:
         Log.debug(
-          '[Service Worker Installation] Service worker installed. Waiting for activation',
+          '[Service Worker Installation] Service worker installedata. Waiting for activation',
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerWorkerActive:
+      case LogMessage.ServiceWorkerManagerWorkerActive:
         Log.debug(`[Service Worker Installation] Service worker active`);
         break;
-      case MessageTypePage.ServiceWorkerManagerInstallBeta:
+      case LogMessage.ServiceWorkerManagerInstallBeta:
         Log.info(
           `[Service Worker Installation] Attempting to install v16 Beta Worker ${data.workerHref} ${data.scope}.`,
         );
         break;
-      case MessageTypePage.ServiceWorkerManagerDeprecationError:
-        Log.error(data.error);
-        break;
-      case MessageTypePage.ServiceWorkerManagerAkamaiSW:
+      case LogMessage.ServiceWorkerManagerAkamaiSW:
         Log.debug(
           "Found a ServiceWorker under Akamai's akam-sw.js?othersw=",
           data,
         );
         break;
-      case MessageTypePage.ServiceWorkerRegistrationError:
+      case LogMessage.ServiceWorkerRegistrationError:
         Log.warn(
           '[Service Worker Status] Error Checking service worker registration',
           data.scope,
           data.error,
         );
         break;
-      case MessageTypePage.ServiceWorkerInstanceNotFound:
+      case LogMessage.ServiceWorkerInstanceNotFound:
         Log.warn('Could not find an available ServiceWorker instance!');
         break;
 
       // Page - Update Manager
-      case MessageTypePage.UpdateManagerNotRegistered:
+      case LogMessage.UpdateManagerNotRegistered:
         Log.debug(
           'Not sending the update because user is not registered with OneSignal (no onesignal_id)',
         );
         break;
-      case MessageTypePage.UpdateManagerNoDevice:
+      case LogMessage.UpdateManagerNoDevice:
         Log.debug(
           'Not sending the on session because user is not registered with OneSignal (no device id)',
         );
         break;
-      case MessageTypePage.UpdateManagerError:
+      case LogMessage.UpdateManagerError:
         Log.error(
           `Failed to update user session. Error "${data.message}" ${data.stack}`,
         );
         break;
-      case MessageTypePage.UpdateManagerOutcomeAborted:
+      case LogMessage.UpdateManagerOutcomeAborted:
         Log.warn(
           'Send outcome aborted because pushSubscriptionModel is not available.',
         );
         break;
 
       // Page - Custom Link Manager
-      case MessageTypePage.CustomLinkManagerInit:
+      case LogMessage.CustomLinkManagerInit:
         Log.info('OneSignal: initializing customlink');
         break;
-      case MessageTypePage.CustomLinkManagerMissingText:
+      case LogMessage.CustomLinkManagerMissingText:
         Log.error(
           "CustomLink: required property 'text' is missing in the config",
         );
         break;
-      case MessageTypePage.CustomLinkManagerSubscribeClicked:
+      case LogMessage.CustomLinkManagerSubscribeClicked:
         Log.info('CustomLink: subscribe clicked');
         break;
-      case MessageTypePage.CustomLinkManagerStylesFailure:
+      case LogMessage.CustomLinkManagerStylesFailure:
         Log.debug(
-          'Not initializing custom link button because styles failed to load.',
+          'Not initializing custom link button because styles failed to loadata.',
         );
         break;
 
       // Page - Init
-      case MessageTypePage.InitInternalInit:
+      case LogMessage.InitInternalInit:
         Log.debug('Called internalInit()');
         break;
-      case MessageTypePage.InitSessionInit:
+      case LogMessage.InitSessionInit:
         Log.debug('Called sessionInit()');
         break;
-      case MessageTypePage.InitSessionAlreadyRunning:
+      case LogMessage.InitSessionAlreadyRunning:
         Log.debug(
-          'Returning from sessionInit because it has already been called.',
+          'Returning from sessionInit because it has already been calledata.',
         );
         break;
-      case MessageTypePage.InitError:
-        Log.error(data);
-        break;
-      case MessageTypePage.InitSubscriptionExpiration:
+      case LogMessage.InitSubscriptionExpiration:
         Log.debug('Checking subscription expiration...');
         break;
-      case MessageTypePage.InitSubscriptionNotExpired:
-        Log.debug('Subscription is not considered expired.');
+      case LogMessage.InitSubscriptionNotExpired:
+        Log.debug('Subscription is not considered expiredata.');
         break;
-      case MessageTypePage.InitSubscriptionExpiring:
+      case LogMessage.InitSubscriptionExpiring:
         Log.debug('Subscription is considered expiring.');
         break;
-      case MessageTypePage.InitNotifyButtonPredicate:
+      case LogMessage.InitNotifyButtonPredicate:
         if (data.show) {
           Log.debug(
             'Showing notify button because display predicate returned true.',
@@ -451,49 +424,49 @@ self.OneSignalLog = (type, data?) => {
           );
         }
         break;
-      case MessageTypePage.InitPermissionHookError:
+      case LogMessage.InitPermissionHookError:
         Log.warn(
           `Could not install native notification permission change hook w/ error: ${data}`,
         );
         break;
-      case MessageTypePage.InitPageTitle:
+      case LogMessage.InitPageTitle:
         Log.info(`OneSignal: Set pageTitle to be '${data.title}'.`);
         break;
-      case MessageTypePage.InitAutoResubscribe:
+      case LogMessage.InitAutoResubscribe:
         Log.info('handleAutoResubscribe', data);
         break;
-      case MessageTypePage.InitSdkDoubleLoad:
+      case LogMessage.InitSdkDoubleLoad:
         Log.debug(
           `OneSignal: Exiting from SDK initialization to prevent double-initialization errors. ` +
             `Occurred ${data.loadCount} times.`,
         );
         break;
-      case MessageTypePage.InitFinalConfig:
+      case LogMessage.InitFinalConfig:
         Log.debug('OneSignal: Final web app config:', data.appConfig);
         break;
-      case MessageTypePage.InitBrowserEnvironment:
+      case LogMessage.InitBrowserEnvironment:
         Log.debug(
           `Browser Environment: ${data.browserName} ${data.browserVersion}`,
         );
         break;
-      case MessageTypePage.InitWaitingForDom:
+      case LogMessage.InitWaitingForDom:
         Log.debug(
           'OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
             ' initialization...',
         );
         break;
-      case MessageTypePage.InitCurrentPageUrl:
+      case LogMessage.InitCurrentPageUrl:
         Log.debug(`Current Page URL: ${data.url}`);
         break;
 
       // Page - Listeners
-      case MessageTypePage.ListenersPushStateChanged:
+      case LogMessage.ListenersPushStateChanged:
         Log.info('Push Subscription state changed: ', data);
         break;
-      case MessageTypePage.ListenersUserStateChanged:
+      case LogMessage.ListenersUserStateChanged:
         Log.info('User state changed: ', data);
         break;
-      case MessageTypePage.ListenersNotifyButton:
+      case LogMessage.ListenersNotifyButton:
         if (data.show) {
           Log.debug(
             'Showing notify button because display predicate returned true.',
@@ -504,10 +477,10 @@ self.OneSignalLog = (type, data?) => {
           );
         }
         break;
-      case MessageTypePage.ListenersWelcomeNotification:
+      case LogMessage.ListenersWelcomeNotification:
         if (data.skip) {
           Log.debug(
-            'Not showing welcome notification because user has previously subscribed.',
+            'Not showing welcome notification because user has previously subscribedata.',
           );
         } else {
           Log.debug('Sending welcome notification.');
@@ -515,45 +488,45 @@ self.OneSignalLog = (type, data?) => {
         break;
 
       // Page - Service Worker Helper
-      case MessageTypePage.ServiceWorkerHelperSessionActive:
+      case LogMessage.ServiceWorkerHelperSessionActive:
         Log.debug('Session already active', data);
         break;
-      case MessageTypePage.ServiceWorkerHelperSessionInvalid:
+      case LogMessage.ServiceWorkerHelperSessionInvalid:
         Log.debug('Session is in invalid state', data);
         break;
-      case MessageTypePage.ServiceWorkerHelperNoActiveSession:
-        Log.debug('No active session found. Cannot deactivate.');
+      case LogMessage.ServiceWorkerHelperNoActiveSession:
+        Log.debug('No active session foundata. Cannot deactivate.');
         break;
-      case MessageTypePage.ServiceWorkerHelperInvalidStateDeactivate:
+      case LogMessage.ServiceWorkerHelperInvalidStateDeactivate:
         Log.warn(`Session in invalid state ${data.status}. Cannot deactivate.`);
         break;
-      case MessageTypePage.ServiceWorkerHelperFinalizeSession:
+      case LogMessage.ServiceWorkerHelperFinalizeSession:
         Log.debug(
           'Finalize session',
           `started: ${new Date(data.startTimestamp)}`,
           `duration: ${data.accumulatedDuration}`,
         );
         break;
-      case MessageTypePage.ServiceWorkerHelperSendFocus:
+      case LogMessage.ServiceWorkerHelperSendFocus:
         Log.debug(
           `send on_focus reporting session duration -> ${data.duration}s`,
         );
         break;
-      case MessageTypePage.ServiceWorkerHelperSendFocusAttribution:
+      case LogMessage.ServiceWorkerHelperSendFocusAttribution:
         Log.debug('send on_focus with attribution', data);
         break;
-      case MessageTypePage.ServiceWorkerHelperFinalizeComplete:
+      case LogMessage.ServiceWorkerHelperFinalizeComplete:
         Log.debug(
           'Finalize session finished',
           `started: ${new Date(data.startTimestamp)}`,
           `duration: ${data.accumulatedDuration}`,
         );
         break;
-      case MessageTypePage.ServiceWorkerHelperDatabaseError:
+      case LogMessage.ServiceWorkerHelperDatabaseError:
         Log.error('Database.getLastNotificationClickedForOutcomes', data);
         break;
 
-      case MessageTypePage.OneSignalEventTrigger:
+      case LogMessage.OneSignalEventTrigger:
         if (data.displayData !== undefined) {
           Log.debug(
             `(${data.windowEnvString}) » ${data.eventName}:`,
@@ -563,332 +536,330 @@ self.OneSignalLog = (type, data?) => {
           Log.debug(`(${data.windowEnvString}) » ${data.eventName}`);
         }
         break;
-      case MessageTypePage.PageViewIncremented:
+      case LogMessage.PageViewIncremented:
         Log.debug(
           `Incremented page view count: newCountSingleTab: ${data.newCountSingleTab}, newCountCumulative: ${data.newCountCumulative}`,
         );
         break;
-      case MessageTypePage.DomElementNotFound:
-        Log.debug(`No instance of ${data.selector} found. Returning stub.`);
-        break;
-
-      case MessageTypePage.SubscriptionHelperError:
-        Log.error(data);
+      case LogMessage.DomElementNotFound:
+        Log.debug(`No instance of ${data.selector} foundata. Returning stub.`);
         break;
 
       // Page - Outcomes
-      case MessageTypePage.OutcomesNotSupported:
+      case LogMessage.OutcomesNotSupported:
         Log.debug('Outcomes feature not supported by main application yet.');
         break;
-      case MessageTypePage.OutcomesNameRequired:
+      case LogMessage.OutcomesNameRequired:
         Log.error('Outcome name is required');
         break;
-      case MessageTypePage.OutcomesSubscribedOnly:
+      case LogMessage.OutcomesSubscribedOnly:
         Log.warn('Reporting outcomes is supported only for subscribed users.');
         break;
-      case MessageTypePage.OutcomesRetryWarning:
+      case LogMessage.OutcomesSentDuringSession:
         Log.warn(
-          data.outcomeName
-            ? `'${data.outcomeName}' was already reported for all notifications.`
-            : '(Unattributed) unique outcome was already sent during this session',
+          '(Unattributed) unique outcome was already sent during this session',
         );
         break;
-      case MessageTypePage.OutcomesOutcomeEventFailed:
+      case LogMessage.SessionOutcomeReported:
+        Log.warn(
+          `'${data.outcomeName}' was already reported for all notifications.`,
+        );
+        break;
+      case LogMessage.OutcomesOutcomeEventFailed:
         Log.warn(
           'You are on a free plan. Please upgrade to use this functionality.',
         );
         break;
-      case MessageTypePage.OutcomesInfluenceChannel:
+      case LogMessage.OutcomesInfluenceChannel:
         Log.debug(
           `\tFound total of ${data.count} received notifications`,
           data.details,
         );
         break;
-      case MessageTypePage.OutcomesDirectChannel:
+      case LogMessage.OutcomesDirectChannel:
         Log.debug(
           `\tTotal of ${data.count} received notifications are within reporting window.`,
           data.details,
         );
         break;
-      case MessageTypePage.OutcomesIndirectChannel:
+      case LogMessage.OutcomesIndirectChannel:
         Log.debug(
-          `\t${data.count} received notifications will be deleted.`,
+          `\t${data.count} received notifications will be deletedata.`,
           data.details,
         );
         break;
-      case MessageTypePage.OutcomesConfigMissing:
+      case LogMessage.OutcomesConfigMissing:
         Log.error(
-          `Could not send ${data.outcomeName}. No outcomes config found.`,
+          `Could not send ${data.outcomeName}. No outcomes config foundata.`,
         );
         break;
-      case MessageTypePage.OutcomesWeightInvalid:
+      case LogMessage.OutcomesWeightInvalid:
         Log.error('Outcome weight can only be a number if present.');
         break;
 
       // Page - Operation Repo
-      case MessageTypePage.OperationRepoEnqueue:
+      case LogMessage.OperationRepoEnqueue:
         Log.debug(`OperationRepo.enqueue(operation: ${data.operation})`);
         break;
-      case MessageTypePage.OperationRepoEnqueueAndWait:
+      case LogMessage.OperationRepoEnqueueAndWait:
         Log.debug(`OperationRepo.enqueueAndWaitoperation: ${data.operation})`);
         break;
-      case MessageTypePage.OperationRepoInternalEnqueueExists:
+      case LogMessage.OperationRepoInternalEnqueueExists:
         Log.debug(
           `OperationRepo: internalEnqueue - operation.modelId: ${data.modelId} already exists in the queue.`,
         );
         break;
-      case MessageTypePage.OperationRepoPaused:
+      case LogMessage.OperationRepoPaused:
         Log.debug('OpRepo is paused');
         break;
-      case MessageTypePage.OperationRepoInProgress:
+      case LogMessage.OperationRepoInProgress:
         Log.debug('Operations in progress');
         break;
-      case MessageTypePage.OperationRepoProcessQueue:
+      case LogMessage.OperationRepoProcessQueue:
         Log.debug(`processQueueForever:ops:\n${data.operations}`);
         break;
-      case MessageTypePage.OperationRepoExecuteResponse:
+      case LogMessage.OperationRepoExecuteResponse:
         Log.debug(`OperationRepo: execute response = ${data.result}`);
         break;
-      case MessageTypePage.OperationRepoFailNoRetry:
+      case LogMessage.OperationRepoFailNoRetry:
         Log.error(
           `Operation execution failed without retry: ${data.operations}`,
         );
         break;
-      case MessageTypePage.OperationRepoFailRetry:
+      case LogMessage.OperationRepoFailRetry:
         Log.error(`Operation execution failed, retrying: ${data.operations}`);
         break;
-      case MessageTypePage.OperationRepoFailPause:
+      case LogMessage.OperationRepoFailPause:
         Log.error(
           `Operation execution failed with eventual retry, pausing the operation repo: ${data.operations}`,
         );
         break;
-      case MessageTypePage.OperationRepoExecuteError:
+      case LogMessage.OperationRepoExecuteError:
         Log.error(
           `Error attempting to execute operation: ${data.operations}`,
           data.error,
         );
         break;
-      case MessageTypePage.OperationRepoRetrySeconds:
+      case LogMessage.OperationRepoRetrySeconds:
         Log.debug(`retryAfterSeconds: ${data.seconds}`);
         break;
-      case MessageTypePage.OperationRepoDelay:
+      case LogMessage.OperationRepoDelay:
         Log.error(`Operations being delay for: ${data.delayMs} ms`);
         break;
 
       // Page - Main Helper
-      case MessageTypePage.MainHelperServiceWorkerError:
+      case LogMessage.MainHelperServiceWorkerError:
         Log.error('Service worker registration not available.');
         break;
-      case MessageTypePage.MainHelperApiCallFailed:
+      case LogMessage.MainHelperApiCallFailed:
         Log.error(`API call ${data.url}`, 'failed with:', data.errors);
         break;
 
       // Page - Operation Model Store
-      case MessageTypePage.OperationModelStoreNullObject:
+      case LogMessage.OperationModelStoreNullObject:
         Log.error('null jsonObject sent to OperationModelStore.create');
         break;
-      case MessageTypePage.OperationModelStoreMissingName:
+      case LogMessage.OperationModelStoreMissingName:
         Log.error("jsonObject must have 'name' attribute");
         break;
-      case MessageTypePage.OperationModelStoreInvalidOperation:
+      case LogMessage.OperationModelStoreInvalidOperation:
         Log.error(
           `${data.operationName} jsonObject must have 'onesignalId' attribute`,
         );
         break;
 
       // Page - Executors
-      case MessageTypePage.UpdateUserOperationExecutor:
+      case LogMessage.UpdateUserOperationExecutor:
         Log.debug(`UpdateUserOperationExecutor(operation: ${data.operations})`);
         break;
-      case MessageTypePage.SubscriptionOperationExecutor:
+      case LogMessage.SubscriptionOperationExecutor:
         Log.debug(
           `SubscriptionOperationExecutor(operations: ${data.operations})`,
         );
         break;
 
       // Page - Bell
-      case MessageTypePage.BellMessageDisplay:
+      case LogMessage.BellMessageDisplay:
         Log.debug(
           `Calling display(${data.type}, ${data.content}, ${data.duration}).`,
         );
         break;
-      case MessageTypePage.BellLauncherShow:
-        Log.debug(data.message);
+      case LogMessage.BellNotifyButtonStylesError:
+        Log.debug(
+          'Not showing notify button because styles failed to loadata.',
+        );
         break;
-      case MessageTypePage.BellNotifyButtonStylesError:
-        Log.debug('Not showing notify button because styles failed to load.');
-        break;
-      case MessageTypePage.BellNotifyButtonShow:
+      case LogMessage.BellNotifyButtonShow:
         Log.info('Showing the notify button.');
         break;
-      case MessageTypePage.BellActiveElementTransition:
+      case LogMessage.BellActiveElementTransition:
         Log.debug(`Ending activate() transition (alternative).`);
         break;
-      case MessageTypePage.BellActiveElementActivationTimeout:
+      case LogMessage.BellActiveElementActivationTimeout:
         Log.debug(
           `Element did not completely activate (state: ${data.state}, activeState: ${data.activeState}).`,
         );
         break;
-      case MessageTypePage.BellActiveElementInactivationTimeout:
+      case LogMessage.BellActiveElementInactivationTimeout:
         Log.debug(
           `Element did not completely inactivate (state: ${data.state}, activeState: ${data.activeState}).`,
         );
         break;
-      case MessageTypePage.BellAnimatedElementShowTimeout:
+      case LogMessage.BellAnimatedElementShowTimeout:
         Log.debug(`Element did not completely show (state: ${data.state}).`);
         break;
-      case MessageTypePage.BellAnimatedElementHideTimeout:
+      case LogMessage.BellAnimatedElementHideTimeout:
         Log.debug(`Element did not completely hide (state: ${data.state}).`);
         break;
-      case MessageTypePage.BellLauncherResizeTimeout:
+      case LogMessage.BellLauncherResizeTimeout:
         Log.debug(
           `Launcher did not completely resize (state: ${data.state}, activeState: ${data.activeState}).`,
         );
         break;
-      case MessageTypePage.BellDomElementNotFound:
+      case LogMessage.BellDomElementNotFound:
         Log.error('Could not find bell dom element');
         break;
-      case MessageTypePage.BellActiveAnimatedElementNotFound:
+      case LogMessage.BellActiveAnimatedElementNotFound:
         Log.error('Could not find active animated element');
         break;
-      case MessageTypePage.BellAnimatedElementNotFound:
+      case LogMessage.BellAnimatedElementNotFound:
         Log.error(
-          `Could not find animated element with selector ${data.selector}`,
+          `${data.operation} could not find animated element with selector ${data.selector}`,
         );
         break;
 
       // Page - Tag Manager
-      case MessageTypePage.TagManagerLocalTags:
+      case LogMessage.TagManagerLocalTags:
         Log.info('Category Slidedown Local Tags:', data.tags);
         break;
-      case MessageTypePage.TagManagerError:
+      case LogMessage.TagManagerError:
         Log.warn(
           'OneSignal: no change detected in Category preferences. Skipping tag update.',
         );
         break;
 
       // Page - Slidedown Manager
-      case MessageTypePage.SlidedownManagerSubscribed:
+      case LogMessage.SlidedownManagerSubscribed:
         Log.info(new Error('User is already subscribed'));
         break;
-      case MessageTypePage.SlidedownManagerDismissError:
+      case LogMessage.SlidedownManagerDismissError:
         Log.info(
           new Error(
             `${data.slidedownType || 'unknown'} was previously dismissed`,
           ),
         );
         break;
-      case MessageTypePage.SlidedownManagerTaggingContainerError:
+      case LogMessage.SlidedownManagerTaggingContainerError:
         Log.error(
           'OneSignal: Attempted to create tagging container with error',
           data.error,
         );
         break;
-      case MessageTypePage.SlidedownManagerChannelCaptureError:
+      case LogMessage.SlidedownManagerChannelCaptureError:
         Log.error(
           'OneSignal: Attempted to create channel capture container with error',
           data.error,
         );
         break;
-      case MessageTypePage.SlidedownManagerUpdateError:
+      case LogMessage.SlidedownManagerUpdateError:
         Log.warn('OneSignal Slidedown failed to update:', data.error);
         break;
-      case MessageTypePage.SlidedownManagerDismiss:
+      case LogMessage.SlidedownManagerDismiss:
         Log.debug('Setting flag to not show the slidedown to the user again.');
         break;
-      case MessageTypePage.SlidedownManagerShowError:
+      case LogMessage.SlidedownManagerShowError:
         Log.warn('checkIfSlidedownShouldBeShown returned an error', data.error);
         break;
-      case MessageTypePage.SlidedownManagerShowDebug:
+      case LogMessage.SlidedownManagerShowDebug:
         Log.error(
           'There was an error showing the OneSignal Slidedown:',
           data.error,
         );
         break;
-      case MessageTypePage.SlidedownManagerShow:
+      case LogMessage.SlidedownManagerShow:
         Log.debug('Showing OneSignal Slidedown');
         break;
-      case MessageTypePage.SlidedownInternationalTelephoneInputError:
+      case LogMessage.SlidedownInternationalTelephoneInputError:
         Log.error(
           'OneSignal: there was a problem initializing International Telephone Input',
         );
         break;
-      case MessageTypePage.SlidedownValidationElementNotFound:
+      case LogMessage.SlidedownValidationElementNotFound:
         Log.error("OneSignal: couldn't find slidedown validation element");
         break;
 
       // Page - Prompts Manager
-      case MessageTypePage.PromptsManagerInvalidDelay:
+      case LogMessage.PromptsManagerInvalidDelay:
         Log.error('internalShowDelayedPrompt: timeDelay not a number');
         break;
-      case MessageTypePage.PromptsManagerInvalidType:
+      case LogMessage.PromptsManagerInvalidType:
         Log.error('Invalid Delayed Prompt type');
         break;
-      case MessageTypePage.PromptsManagerAutopromptShowing:
+      case LogMessage.PromptsManagerAutopromptShowing:
         Log.debug('Already showing autoprompt. Abort showing a native prompt.');
         break;
-      case MessageTypePage.PromptsManagerStylesFailure:
+      case LogMessage.PromptsManagerStylesFailure:
         Log.debug(
-          'Not showing slidedown permission message because styles failed to load.',
+          'Not showing slidedown permission message because styles failed to loadata.',
         );
         break;
-      case MessageTypePage.PromptsManagerDismissPush:
+      case LogMessage.PromptsManagerDismissPush:
         Log.debug('Setting flag to not show the slidedown to the user again.');
         break;
-      case MessageTypePage.PromptsManagerDismissNonPush:
+      case LogMessage.PromptsManagerDismissNonPush:
         Log.debug('Setting flag to not show the slidedown to the user again.');
         break;
-      case MessageTypePage.PromptsManagerDefaultTextSettings:
+      case LogMessage.PromptsManagerDefaultTextSettings:
         Log.warn(
           `The OneSignal 'push' slidedown will be shown with default text settings. To customize, see the OneSignal documentation.`,
         );
         break;
-      case MessageTypePage.PromptsManagerSlidedownConfigError:
+      case LogMessage.PromptsManagerSlidedownConfigError:
         Log.error(
           `OneSignal: slidedown of type '${data.slidedownType}' couldn't be shown. Check your configuration on the OneSignal dashboard or your custom code initialization.`,
         );
         break;
 
       // Page - Login Manager
-      case MessageTypePage.LoginManagerAlreadySet:
+      case LogMessage.LoginManagerAlreadySet:
         Log.debug('Login: External ID already set, skipping login');
         break;
-      case MessageTypePage.LoginManagerNotLoggedIn:
+      case LogMessage.LoginManagerNotLoggedIn:
         Log.debug('Logout: User is not logged in, skipping logout');
         break;
-      case MessageTypePage.UserTagSync:
+      case LogMessage.UserTagSync:
         Log.warn('Not logged in, tags will not be synced');
         break;
-      case MessageTypePage.UserNotLoggedIn:
+      case LogMessage.UserNotLoggedIn:
         Log.warn('User must be logged in first');
         break;
-      case MessageTypePage.UserCustomEventPropertiesNotSerializable:
+      case LogMessage.UserCustomEventPropertiesNotSerializable:
         Log.error('Properties must be JSON-serializable');
         break;
-      case MessageTypePage.UserDirectorNoSubscriptionOrId:
+      case LogMessage.UserDirectorNoSubscriptionOrId:
         Log.info(
           'No subscriptions or external ID found, skipping user creation',
         );
         break;
 
       // Page - OneSignal SDK
-      case MessageTypePage.OneSignalSdkLoaded:
+      case LogMessage.OneSignalSdkLoaded:
         Log.info(
           `OneSignal Web SDK loaded (version ${data.version}, ${data.environment} environment).`,
         );
         break;
 
       // Page - Utils
-      case MessageTypePage.UtilsLogMethodCall:
+      case LogMessage.UtilsLogMethodCall:
         Log.debug(`Called ${data.methodName}(${data.args})`);
         break;
-      case MessageTypePage.UtilsOnceNoEvent:
+      case LogMessage.UtilsOnceNoEvent:
         Log.error('Cannot call on() with no event: ', data.event);
         break;
-      case MessageTypePage.UtilsOnceNoTask:
+      case LogMessage.UtilsOnceNoTask:
         Log.error('Cannot call on() with no task: ', data.task);
         break;
-      case MessageTypePage.DismissHelperPromptDismissed:
+      case LogMessage.DismissHelperPromptDismissed:
         Log.debug(
           `(${data.windowEnvString} environment) OneSignal: User dismissed the ${data.type} ` +
             `notification prompt; reprompt after ${data.dismissDays} days.`,
@@ -896,41 +867,41 @@ self.OneSignalLog = (type, data?) => {
         break;
 
       // Page - PushSubscription Namespace
-      case MessageTypePage.PushSubscriptionNamespaceInitSkipped:
+      case LogMessage.PushSubscriptionNamespaceInitSkipped:
         Log.warn(
           `PushSubscriptionNamespace: skipping initialization. One or more required params are falsy: initialize: ${data.initialize}, subscription: ${data.subscription}`,
         );
         break;
 
       // Page - Subscription Manager
-      case MessageTypePage.SubscriptionNoPushYet:
+      case LogMessage.SubscriptionNoPushYet:
         Log.info('No Push Subscription yet to update notification_types.');
         break;
-      case MessageTypePage.SubscriptionSafariInstalling:
+      case LogMessage.SubscriptionSafariInstalling:
         Log.info('Installing SW on Safari');
         break;
-      case MessageTypePage.SubscriptionSafariInstalled:
+      case LogMessage.SubscriptionSafariInstalled:
         Log.info('SW on Safari successfully installed');
         break;
-      case MessageTypePage.SubscriptionSafariError:
+      case LogMessage.SubscriptionSafariError:
         Log.error('SW on Safari failed to install.');
         break;
-      case MessageTypePage.SubscriptionDebugPermissionDismissed:
+      case LogMessage.SubscriptionDebugPermissionDismissed:
         Log.debug(
-          'Exiting subscription and not registering worker because the permission was dismissed.',
+          'Exiting subscription and not registering worker because the permission was dismissedata.',
         );
         break;
-      case MessageTypePage.SubscriptionDebugPermissionBlocked:
+      case LogMessage.SubscriptionDebugPermissionBlocked:
         Log.debug(
-          'Exiting subscription and not registering worker because the permission was blocked.',
+          'Exiting subscription and not registering worker because the permission was blockedata.',
         );
         break;
-      case MessageTypePage.SubscriptionDebugWorkerReady:
+      case LogMessage.SubscriptionDebugWorkerReady:
         Log.debug('Service worker is ready to continue subscribing.');
         break;
 
       // Page - API Errors
-      case MessageTypePage.ApiError:
+      case LogMessage.ApiError:
         Log.error(
           new Error(
             `OneSignal: Network timed out while calling ${data.url}. Retrying...`,
@@ -939,22 +910,22 @@ self.OneSignalLog = (type, data?) => {
         break;
 
       // Session Manager Specific Errors
-      case MessageTypePage.SessionManagerVisibilityChangeError:
+      case LogMessage.SessionManagerVisibilityChangeError:
         Log.error('Error handling visibility change:', data.error);
         break;
-      case MessageTypePage.SessionManagerBeforeUnloadError:
+      case LogMessage.SessionManagerBeforeUnloadError:
         Log.error('Error handling onbeforeunload:', data.error);
         break;
-      case MessageTypePage.SessionManagerFocusError:
+      case LogMessage.SessionManagerFocusError:
         Log.error('Error handling focus:', data.error);
         break;
-      case MessageTypePage.SessionManagerBlurError:
+      case LogMessage.SessionManagerBlurError:
         Log.error('Error handling blur:', data.error);
         break;
-      case MessageTypePage.SessionManagerUpdateError:
+      case LogMessage.SessionManagerUpdateError:
         Log.error('Error updating user session:', data.error);
         break;
-      case MessageTypePage.SessionManagerUpdateFailedError:
+      case LogMessage.SessionManagerUpdateFailedError:
         Log.error(
           `Failed to update user session. Error "${data.error.message}" ${data.error.stack}`,
           data.error,
@@ -966,119 +937,103 @@ self.OneSignalLog = (type, data?) => {
   // shared messages
   switch (type) {
     // Shared - Error
-    case MessageType.Error:
-      Log.error(data satisfies Error);
+    case LogMessage.Error:
+      Log.error(data);
       break;
 
     // Shared - Database
-    case MessageType.DatabaseBlocked:
+    case LogMessage.DatabaseBlocked:
       Log.debug('IndexedDB: Blocked event');
       break;
 
     // Shared - API
-    case MessageType.ApiOutcomePayload:
+    case LogMessage.ApiOutcomePayload:
       Log.info('Outcome payload:', data.payload);
       break;
-    case MessageType.ApiOutcomeError:
+    case LogMessage.ApiOutcomeError:
       Log.error('sendOutcome', data.error);
       break;
 
     // Page - Worker Messenger
-    case MessageTypePage.WorkerMessengerPageReceived:
+    case LogMessage.WorkerMessengerPageReceived:
       Log.debug(`[Worker Messenger] Page received message:`, data.eventData);
       break;
-    case MessageTypePage.WorkerMessengerPageListening:
+    case LogMessage.WorkerMessengerPageListening:
       Log.debug(
         `(${data.origin}) [Worker Messenger] Page is now listening for messages.`,
       );
       break;
-    case MessageTypePage.WorkerMessengerPageUnicast:
+    case LogMessage.WorkerMessengerPageUnicast:
       Log.debug(
         `[Worker Messenger] [Page -> SW] Unicasting '${data.command}' to service worker.`,
       );
       break;
-    case MessageTypePage.WorkerMessengerPageDirect:
+    case LogMessage.WorkerMessengerPageDirect:
       Log.debug(
         `[Worker Messenger] [Page -> SW] Direct command '${data.command}' to service worker.`,
       );
       break;
-    case MessageTypePage.WorkerMessengerPageRegistrationError:
+    case LogMessage.WorkerMessengerPageRegistrationError:
       Log.error(
         '[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!',
       );
       break;
-    case MessageTypePage.WorkerMessengerPageServiceWorkerError:
+    case LogMessage.WorkerMessengerPageServiceWorkerError:
       Log.error(
         '[Worker Messenger] [Page -> SW] Could not get ServiceWorker to postMessage!',
       );
       break;
-    case MessageTypePage.WorkerMessengerSWListening:
+    case LogMessage.WorkerMessengerSWListening:
       Log.debug(
         '[Worker Messenger] Service worker is now listening for messages.',
       );
       break;
-    case MessageTypePage.WorkerMessengerSWReceived:
+    case LogMessage.WorkerMessengerSWReceived:
       Log.debug(`[Worker Messenger] Service worker received message:`, data);
       break;
-    case MessageTypePage.WorkerMessengerSWBroadcast:
+    case LogMessage.WorkerMessengerSWBroadcast:
       Log.debug(
         `[Worker Messenger] [SW -> Page] Broadcasting '${data.command}' to window client ${data.url}.`,
       );
       break;
-    case MessageTypePage.WorkerMessengerSWUnicast:
+    case LogMessage.WorkerMessengerSWUnicast:
       Log.debug(
         `[Worker Messenger] [SW -> Page] Unicasting '${data.command}' to window client ${data.url}.`,
       );
       break;
 
     // Page - Subscription Manager
-    case MessageTypePage.SubscriptionManagerExistingPushWithOptions:
+    case LogMessage.SubscriptionManagerExistingPushWithOptions:
       Log.debug(
         "[Subscription Manager] An existing push subscription exists and it's options is not null.",
       );
       break;
-    case MessageTypePage.SubscriptionManagerExistingPushNoOptions:
+    case LogMessage.SubscriptionManagerExistingPushNoOptions:
       Log.debug(
         '[Subscription Manager] An existing push subscription exists and options is null. Unsubscribing from push first now.',
       );
       break;
-    case MessageTypePage.SubscriptionManagerSubscribeOptions:
+    case LogMessage.SubscriptionManagerSubscribeOptions:
       Log.debug(
         '[Subscription Manager] Subscribing to web push with these options:',
         data,
       );
       break;
-    case MessageTypePage.SubscriptionManagerUnsubscribing:
+    case LogMessage.SubscriptionManagerUnsubscribing:
       Log.debug(
         '[Subscription Manager] Unsubscribing existing push subscription.',
       );
       break;
-    case MessageTypePage.SubscriptionManagerUnsubscribeResult:
+    case LogMessage.SubscriptionManagerUnsubscribeResult:
       Log.debug(
         `[Subscription Manager] Unsubscribing existing push subscription result: ${data.result}`,
       );
       break;
-    case MessageTypePage.SubscriptionManagerApplicationServerKeyChange:
+    case LogMessage.SubscriptionManagerApplicationServerKeyChange:
       Log.warn(
         `[Subscription Manager] Couldn't re-subscribe due to applicationServerKey changing, unsubscribe and attempting to subscribe with new key.`,
         data.error,
       );
-      break;
-
-    // Page - Webhook
-    case MessageTypePage.OSWebhookExecute:
-      Log.debug(
-        `Executing ${data.event} webhook ${data.corsEnabled ? 'with' : 'without'} CORS POST ${data.url}`,
-        data.payload,
-      );
-      break;
-
-    // Shared - Utils
-    case MessageTypePage.CancelableTimeoutCancel:
-      Log.debug('Cancel called');
-      break;
-    case MessageTypePage.CancelableTimeoutCallbackError:
-      Log.error('Failed to execute callback', data.error);
       break;
 
     default:
@@ -1086,4 +1041,4 @@ self.OneSignalLog = (type, data?) => {
   }
 };
 
-export const noop = () => {};
+self.OneSignalLog = typedLogger;

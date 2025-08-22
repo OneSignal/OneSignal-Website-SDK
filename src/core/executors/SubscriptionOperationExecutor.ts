@@ -8,7 +8,7 @@ import {
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -54,7 +54,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    log(MessageTypePage.SubscriptionOperationExecutor, {
+    log(LogMessage.SubscriptionOperationExecutor, {
       operations,
     });
 

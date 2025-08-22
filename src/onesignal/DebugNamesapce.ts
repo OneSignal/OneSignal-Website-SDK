@@ -1,6 +1,5 @@
 import { addScriptToPage, getPathAndPrefix } from 'src/shared/helpers/script';
 import { LOGGING, VERSION } from 'src/shared/utils/EnvVariables';
-import LogBase from '../shared/helpers/log/LogBase';
 
 export default class DebugNamespace {
   /**
@@ -8,7 +7,7 @@ export default class DebugNamespace {
    * @param logLevel - string
    */
   async setLogLevel(logLevel: string) {
-    LogBase.setLevel(logLevel);
+    window.localStorage.setItem('loglevel', logLevel);
     setupLogging();
   }
 }

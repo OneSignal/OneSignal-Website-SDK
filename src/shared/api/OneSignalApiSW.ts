@@ -5,7 +5,7 @@ import type { ServerAppConfig } from '../config/types';
 import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
 import log from '../helpers/log';
-import { MessageTypeSW } from '../helpers/log/constants';
+import { LogMessage } from '../helpers/log/constants';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import {
   OutcomeAttributionType,
@@ -53,7 +53,7 @@ export class OneSignalApiSW {
         }
       })
       .catch((e) => {
-        (self as any).OneSignalLogger(MessageTypeSW.ApiUserIdError, {
+        log(LogMessage.ApiUserIdError, {
           error: e,
         });
         return null;
@@ -90,7 +90,7 @@ export class OneSignalApiSW {
         updateUserPayload,
       );
     } catch (e) {
-      (self as any).OneSignalLogger(MessageTypeSW.ApiSessionError, {
+      log(LogMessage.ApiSessionError, {
         error: e,
       });
     }
@@ -144,7 +144,7 @@ export class OneSignalApiSW {
         await OneSignalApiShared.sendOutcome(outcomePayload);
       }
     } catch (e) {
-      log(MessageTypeSW.ApiDurationError, {
+      log(LogMessage.ApiDurationError, {
         error: e,
       });
     }

@@ -7,7 +7,7 @@ import {
 import { db } from 'src/shared/database/client';
 import { delay } from 'src/shared/helpers/general';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
@@ -100,7 +100,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public enqueue(operation: Operation): void {
-    log(MessageTypePage.OperationRepoEnqueue, { operation });
+    log(LogMessage.OperationRepoEnqueue, { operation });
 
     this.internalEnqueue(
       new OperationQueueItem({
@@ -112,7 +112,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async enqueueAndWait(operation: Operation): Promise<void> {
-    log(MessageTypePage.OperationRepoEnqueueAndWait, {
+    log(LogMessage.OperationRepoEnqueueAndWait, {
       operation,
     });
 
@@ -137,7 +137,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       (item) => item.operation.modelId === queueItem.operation.modelId,
     );
     if (hasExisting) {
-      log(MessageTypePage.OperationRepoInternalEnqueueExists, {
+      log(LogMessage.OperationRepoInternalEnqueueExists, {
         modelId: queueItem.operation.modelId,
       });
       return;
@@ -159,11 +159,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     let runningOps = false;
 
     setInterval(async () => {
-      if (this.paused) return log(MessageTypePage.OperationRepoPaused);
-      if (runningOps) return log(MessageTypePage.OperationRepoInProgress);
+      if (this.paused) return log(LogMessage.OperationRepoPaused);
+      if (runningOps) return log(LogMessage.OperationRepoInProgress);
 
       const ops = this.getNextOps(this.executeBucket);
-      log(MessageTypePage.OperationRepoProcessQueue, {
+      log(LogMessage.OperationRepoProcessQueue, {
         operations: ops,
       });
 
@@ -192,7 +192,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       const response = await executor.execute(operations);
       const idTranslations = response.idTranslations;
 
-      log(MessageTypePage.OperationRepoExecuteResponse, {
+      log(LogMessage.OperationRepoExecuteResponse, {
         result: response.result,
       });
 
@@ -221,7 +221,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult.FAIL_UNAUTHORIZED:
         case ExecutionResult.FAIL_NORETRY:
         case ExecutionResult.FAIL_CONFLICT:
-          log(MessageTypePage.OperationRepoFailNoRetry, {
+          log(LogMessage.OperationRepoFailNoRetry, {
             operations,
           });
           ops.forEach((op) => {
@@ -242,7 +242,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult.FAIL_RETRY:
-          log(MessageTypePage.OperationRepoFailRetry, {
+          log(LogMessage.OperationRepoFailRetry, {
             operations,
           });
           // Add back all operations to front of queue
@@ -257,7 +257,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult.FAIL_PAUSE_OPREPO:
-          log(MessageTypePage.OperationRepoFailPause, {
+          log(LogMessage.OperationRepoFailPause, {
             operations,
           });
           this.paused = true;
@@ -289,7 +289,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
-      log(MessageTypePage.OperationRepoExecuteError, {
+      log(LogMessage.OperationRepoExecuteError, {
         operations: ops,
         error: e,
       });
@@ -306,7 +306,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     retries: number,
     retryAfterSeconds?: number,
   ): Promise<void> {
-    log(MessageTypePage.OperationRepoRetrySeconds, {
+    log(LogMessage.OperationRepoRetrySeconds, {
       seconds: retryAfterSeconds,
     });
     const retryAfterSecondsMs = (retryAfterSeconds || 0) * 1000;
@@ -315,7 +315,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     if (delayFor < 1) return;
 
-    log(MessageTypePage.OperationRepoDelay, {
+    log(LogMessage.OperationRepoDelay, {
       delayMs: delayFor,
     });
     await delay(delayFor);

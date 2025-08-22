@@ -2,7 +2,7 @@ import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
 import User from 'src/onesignal/User';
 import type { ContextInterface } from 'src/shared/context/types';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import { getPageViewCount, isFirstPageView } from 'src/shared/helpers/pageview';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { NotificationType } from 'src/shared/subscriptions/constants';
@@ -22,7 +22,7 @@ export class UpdateManager {
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
     if (!User.singletonInstance?.onesignalId) {
-      log(MessageTypePage.UpdateManagerNotRegistered);
+      log(LogMessage.UpdateManagerNotRegistered);
       return;
     }
 
@@ -44,7 +44,7 @@ export class UpdateManager {
     const existingUser =
       await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
-      log(MessageTypePage.UpdateManagerNoDevice);
+      log(LogMessage.UpdateManagerNoDevice);
       return;
     }
 
@@ -66,7 +66,7 @@ export class UpdateManager {
       this.onSessionSent = true;
     } catch (e) {
       if (e instanceof Error) {
-        log(MessageTypePage.UpdateManagerError, {
+        log(LogMessage.UpdateManagerError, {
           message: e.message,
           stack: e.stack,
         });
@@ -104,7 +104,7 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    log(MessageTypePage.UpdateManagerOutcomeAborted);
+    log(LogMessage.UpdateManagerOutcomeAborted);
   }
 
   public async sendOutcomeInfluenced(
@@ -137,7 +137,7 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    log(MessageTypePage.UpdateManagerOutcomeAborted);
+    log(LogMessage.UpdateManagerOutcomeAborted);
   }
 
   public async sendOutcomeUnattributed(
@@ -167,6 +167,6 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    log(MessageTypePage.UpdateManagerOutcomeAborted);
+    log(LogMessage.UpdateManagerOutcomeAborted);
   }
 }

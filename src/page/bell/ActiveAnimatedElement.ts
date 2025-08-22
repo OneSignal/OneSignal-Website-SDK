@@ -1,7 +1,7 @@
 import { containsMatch } from 'src/shared/context/helpers';
 import { addCssClass, removeCssClass } from 'src/shared/helpers/dom';
 import log from '../../shared/helpers/log';
-import { MessageTypePage } from '../../shared/helpers/log/constants';
+import { LogMessage } from '../../shared/helpers/log/constants';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
@@ -55,7 +55,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
         const element = this.element;
         if (!element) {
-          log(MessageTypePage.BellActiveAnimatedElementNotFound);
+          log(LogMessage.BellActiveAnimatedElementNotFound);
         } else {
           if (this.inactiveClass) removeCssClass(element, this.inactiveClass);
           if (this.activeClass) addCssClass(element, this.activeClass);
@@ -66,7 +66,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
             return resolve(this);
           } else {
             const timerId = setTimeout(() => {
-              log(MessageTypePage.BellActiveElementActivationTimeout, {
+              log(LogMessage.BellActiveElementActivationTimeout, {
                 state: this.state,
                 activeState: this.activeState,
               });
@@ -97,7 +97,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
             );
           }
         } else {
-          log(MessageTypePage.BellActiveElementTransition);
+          log(LogMessage.BellActiveElementTransition);
           this.activeState = 'active';
           OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
           return resolve(this);
@@ -118,7 +118,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
         const element = this.element;
         if (!element) {
-          log(MessageTypePage.BellActiveAnimatedElementNotFound);
+          log(LogMessage.BellActiveAnimatedElementNotFound);
         } else {
           if (this.activeClass) removeCssClass(element, this.activeClass);
           if (this.inactiveClass) addCssClass(element, this.inactiveClass);
@@ -129,7 +129,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
             return resolve(this);
           } else {
             const timerId = setTimeout(() => {
-              log(MessageTypePage.BellActiveElementInactivationTimeout, {
+              log(LogMessage.BellActiveElementInactivationTimeout, {
                 state: this.state,
                 activeState: this.activeState,
               });

@@ -4,7 +4,7 @@ import {
   removeCssClass,
 } from 'src/shared/helpers/dom';
 import log from 'src/shared/helpers/log';
-import { MessageTypePage } from 'src/shared/helpers/log/constants';
+import { LogMessage } from 'src/shared/helpers/log/constants';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
 import type {
   DelayedPromptTypeValue,
@@ -195,7 +195,7 @@ export default class ChannelCaptureContainer {
         separateDialCode: true,
       });
     } else {
-      log(MessageTypePage.SlidedownInternationalTelephoneInputError);
+      log(LogMessage.SlidedownInternationalTelephoneInputError);
     }
   }
 
@@ -384,7 +384,7 @@ export default class ChannelCaptureContainer {
     );
 
     if (!validationElement || !inputElement) {
-      log(MessageTypePage.SlidedownValidationElementNotFound);
+      log(LogMessage.SlidedownValidationElementNotFound);
       return;
     }
 
@@ -414,7 +414,7 @@ export default class ChannelCaptureContainer {
     );
 
     if (!validationElement || !inputElement) {
-      log(MessageTypePage.SlidedownValidationElementNotFound);
+      log(LogMessage.SlidedownValidationElementNotFound);
       return;
     }
 

@@ -18,10 +18,7 @@ import OneSignal from '../../onesignal/OneSignal';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import log from '../../shared/helpers/log';
-import {
-  MessageType,
-  MessageTypePage,
-} from '../../shared/helpers/log/constants';
+import { LogMessage } from '../../shared/helpers/log/constants';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
@@ -296,7 +293,7 @@ export default class Bell {
           this.hovering = false;
         })
         .catch((err) => {
-          log(MessageType.Error, err);
+          log(LogMessage.Error, err);
         });
     });
 
@@ -434,7 +431,7 @@ export default class Bell {
     const sdkStylesLoadResult =
       await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      log(MessageTypePage.BellNotifyButtonStylesError);
+      log(LogMessage.BellNotifyButtonStylesError);
       return;
     }
 
@@ -515,7 +512,7 @@ export default class Bell {
     this.setCustomColorsIfSpecified();
     this.patchSafariSvgFilterBug();
 
-    log(MessageTypePage.BellNotifyButtonShow);
+    log(LogMessage.BellNotifyButtonShow);
 
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
       .then(() => {
@@ -574,7 +571,7 @@ export default class Bell {
       const element = this.launcher.element as HTMLElement;
 
       if (!element) {
-        log(MessageTypePage.BellDomElementNotFound);
+        log(LogMessage.BellDomElementNotFound);
         return;
       }
       // Reset styles first
@@ -700,7 +697,7 @@ export default class Bell {
         }
       })
       .catch((e) => {
-        log(MessageType.Error, e);
+        log(LogMessage.Error, e);
       });
   }
 
