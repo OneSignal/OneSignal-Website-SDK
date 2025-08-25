@@ -12,7 +12,6 @@ import { SomeOperation } from '__test__/support/helpers/executors';
 import {
   setGetUserError,
   setGetUserResponse,
-  setUpdateSubscriptionResponse,
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { setPushToken } from 'src/shared/database/subscription';
@@ -43,11 +42,11 @@ let getRebuildOpsSpy: MockInstance;
 vi.mock('src/shared/libraries/Log');
 
 describe('RefreshUserOperationExecutor', () => {
-  beforeAll(async () => {
-    await TestEnvironment.initialize();
+  beforeAll(() => {
+    TestEnvironment.initialize();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     identityModelStore = OneSignal.coreDirector.identityModelStore;
     propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
     subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
@@ -177,7 +176,6 @@ describe('RefreshUserOperationExecutor', () => {
     });
 
     test('should preserve cached push subscription when updating models', async () => {
-      setUpdateSubscriptionResponse({ subscriptionId: SUB_ID_2 });
       // Set up a push subscription in the store
       const pushSubModel = new SubscriptionModel();
       pushSubModel.id = SUB_ID_2;
@@ -185,7 +183,7 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.token = PUSH_TOKEN;
       pushSubModel.notification_types = NotificationType.Subscribed;
 
-      subscriptionModelStore.add(pushSubModel, ModelChangeTags.NO_PROPOGATE);
+      subscriptionModelStore.add(pushSubModel, ModelChangeTags.NO_PROPAGATE);
       await setPushToken(PUSH_TOKEN);
 
       const executor = getExecutor();

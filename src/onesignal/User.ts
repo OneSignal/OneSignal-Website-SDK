@@ -1,10 +1,14 @@
+import { IdentityConstants } from 'src/core/constants';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { ModelChangeTags } from 'src/core/types/models';
 import {
   EmptyArgumentError,
   MalformedArgumentError,
   ReservedArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
+import MainHelper from 'src/shared/helpers/MainHelper';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -25,14 +29,22 @@ export default class User {
   static createOrGetInstance(): User {
     if (!User.singletonInstance) {
       User.singletonInstance = new User();
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      if (!identityModel.onesignalId) {
+        const onesignalId = IDManager.createLocalId();
+        identityModel.setProperty(
+          IdentityConstants.ONESIGNAL_ID,
+          onesignalId,
+          ModelChangeTags.NO_PROPAGATE,
+        );
+      }
     }
 
     return User.singletonInstance;
   }
 
-  get onesignalId(): string | undefined {
-    const oneSignalId = OneSignal.coreDirector.getIdentityModel().onesignalId;
-    return !IDManager.isLocalId(oneSignalId) ? oneSignalId : undefined;
+  get onesignalId(): string {
+    return OneSignal.coreDirector.getIdentityModel().onesignalId;
   }
 
   private validateStringLabel(label: string, labelName: string): void {
@@ -112,65 +124,25 @@ export default class User {
     this.updateIdentityModel(newAliases);
   }
 
-  private async addSubscriptionToModels({
-    type,
-    token,
-  }: {
-    type: SubscriptionTypeValue;
-    token: string;
-  }): Promise<void> {
-    const hasSubscription = OneSignal.coreDirector.subscriptionModelStore
-      .list()
-      .find((model) => model.token === token && model.type === type);
-    if (hasSubscription) return;
-
-    const subscription = {
-      id: IDManager.createLocalId(),
-      enabled: true,
-      notification_types: NotificationType.Subscribed,
-      onesignalId: OneSignal.coreDirector.getIdentityModel().onesignalId,
-      token,
-      type,
-    };
-
-    const newSubscription = new SubscriptionModel();
-    newSubscription.mergeData(subscription);
-    OneSignal.coreDirector.addSubscriptionModel(newSubscription);
-  }
-
-  /**
-   * Temporary fix, for now we expect the user to call login before adding an email/sms subscription
-   */
-  private validateUserExists(): boolean {
-    const hasOneSignalId =
-      !!OneSignal.coreDirector.getIdentityModel().onesignalId;
-    if (!hasOneSignalId) {
-      Log.error('User must be logged in first.');
-    }
-    return hasOneSignalId;
-  }
-
-  public async addEmail(email: string): Promise<void> {
-    if (!this.validateUserExists()) return;
+  public addEmail(email: string): void {
     logMethodCall('addEmail', { email });
 
     this.validateStringLabel(email, 'email');
 
     if (!isValidEmail(email)) throw MalformedArgumentError('email');
 
-    this.addSubscriptionToModels({
+    addSubscriptionToModels({
       type: SubscriptionType.Email,
       token: email,
     });
   }
 
-  public async addSms(sms: string): Promise<void> {
-    if (!this.validateUserExists()) return;
+  public addSms(sms: string): void {
     logMethodCall('addSms', { sms });
 
     this.validateStringLabel(sms, 'sms');
 
-    this.addSubscriptionToModels({
+    addSubscriptionToModels({
       type: SubscriptionType.SMS,
       token: sms,
     });
@@ -214,6 +186,10 @@ export default class User {
   }
 
   public addTags(tags: { [key: string]: string }): void {
+    if (IDManager.isLocalId(this.onesignalId)) {
+      Log.warn('Call after login to sync tags');
+    }
+
     logMethodCall('addTags', { tags });
 
     this.validateObject(tags, 'tags');
@@ -266,11 +242,16 @@ export default class User {
   }
 
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {
-    if (!this.validateUserExists()) return;
+    // login operation / non-local onesignalId is needed to send custom events
+    const onesignalId = this.onesignalId;
+    if (IDManager.isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
+      Log.error('User must be logged in first.');
+      return;
+    }
+
     if (!isObjectSerializable(properties)) {
-      return Log.error(
-        'Custom event properties must be a JSON-serializable object',
-      );
+      Log.error('Properties must be JSON-serializable');
+      return;
     }
 
     logMethodCall('trackEvent', { name, properties });
@@ -279,6 +260,54 @@ export default class User {
       properties,
     });
   }
+}
+
+function hasLoginOp(onesignalId: string) {
+  return OneSignal.coreDirector.operationRepo.queue.find(
+    (op) =>
+      op.operation instanceof LoginUserOperation &&
+      op.operation.onesignalId === onesignalId,
+  );
+}
+
+function addSubscriptionToModels({
+  type,
+  token,
+}: {
+  type: SubscriptionTypeValue;
+  token: string;
+}): void {
+  const hasSubscription = OneSignal.coreDirector.subscriptionModelStore
+    .list()
+    .find((model) => model.token === token && model.type === type);
+  if (hasSubscription) return;
+
+  const identityModel = OneSignal.coreDirector.getIdentityModel();
+  const onesignalId = identityModel.onesignalId;
+
+  // Check if we need to enqueue a login operation for local IDs
+  if (IDManager.isLocalId(onesignalId)) {
+    const appId = MainHelper.getAppId();
+
+    if (!hasLoginOp(onesignalId)) {
+      OneSignal.coreDirector.operationRepo.enqueue(
+        new LoginUserOperation(appId, onesignalId, identityModel.externalId),
+      );
+    }
+  }
+
+  const subscription = {
+    id: IDManager.createLocalId(),
+    enabled: true,
+    notification_types: NotificationType.Subscribed,
+    onesignalId,
+    token,
+    type,
+  };
+
+  const newSubscription = new SubscriptionModel();
+  newSubscription.mergeData(subscription);
+  OneSignal.coreDirector.addSubscriptionModel(newSubscription);
 }
 
 /**

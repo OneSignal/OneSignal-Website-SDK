@@ -5,8 +5,8 @@ import { TestEnvironment } from '../../support/environment/TestEnvironment';
 vi.mock('../../../src/shared/libraries/Log');
 
 describe('User tests', () => {
-  test('getTags called with unset tags should return empty tags', async () => {
-    await TestEnvironment.initialize();
+  test('getTags called with unset tags should return empty tags', () => {
+    TestEnvironment.initialize();
 
     const user = User.createOrGetInstance();
     const tags = user.getTags();
@@ -14,8 +14,8 @@ describe('User tests', () => {
     expect(tags).toStrictEqual({});
   });
 
-  test('getTags called with empty tags in properties model should return empty tags', async () => {
-    await TestEnvironment.initialize();
+  test('getTags called with empty tags in properties model should return empty tags', () => {
+    TestEnvironment.initialize();
 
     const user = User.createOrGetInstance();
     const tags = user.getTags();
@@ -23,8 +23,8 @@ describe('User tests', () => {
     expect(tags).toStrictEqual({});
   });
 
-  test('getTags called with tags in properties model should return tags', async () => {
-    await TestEnvironment.initialize();
+  test('getTags called with tags in properties model should return tags', () => {
+    TestEnvironment.initialize();
 
     const tagsSample = { key1: 'value1' };
     const propModel = OneSignal.coreDirector.getPropertiesModel();
@@ -36,8 +36,8 @@ describe('User tests', () => {
     expect(tags).toBe(tagsSample);
   });
 
-  test('getLanguage should return the correct user language', async () => {
-    await TestEnvironment.initialize();
+  test('getLanguage should return the correct user language', () => {
+    TestEnvironment.initialize();
 
     const languageSample = 'fr';
 
@@ -50,8 +50,8 @@ describe('User tests', () => {
     expect(language).toBe(languageSample);
   });
 
-  test('setLanguage should call the properties model set method', async () => {
-    await TestEnvironment.initialize();
+  test('setLanguage should call the properties model set method', () => {
+    TestEnvironment.initialize();
 
     const languageSample = 'fr';
 

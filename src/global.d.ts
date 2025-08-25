@@ -1,3 +1,4 @@
+import intlTelInput from 'intl-tel-input';
 import { OneSignalDeferredLoadedCallback } from './page/models/OneSignalDeferredLoadedCallback';
 
 /**
@@ -34,21 +35,8 @@ declare global {
     safari?: {
       pushNotification?: SafariRemoteNotification;
     };
-    intlTelInputUtils: {
-      numberFormat: {
-        E164: string;
-      };
-    };
-    intlTelInput: (
-      element: Element,
-      options: {
-        autoPlaceholder: string;
-        separateDialCode: boolean;
-      },
-    ) => {
-      isValidNumber: () => boolean;
-      getNumber: (format: string) => string;
-    };
+    intlTelInputUtils: (typeof intlTelInput)['utils'];
+    intlTelInput: typeof intlTelInput;
   }
 
   interface WorkerGlobalScope {
