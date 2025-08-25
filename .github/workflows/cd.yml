@@ -18,7 +18,7 @@ jobs:
       - name: '[Build] Staging'
         run: npm run build:staging
       - name: '[Build] Production'
-        run: npm run build:prod
+        run: VERBOSE=true npm run build:prod
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
         with:

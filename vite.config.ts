@@ -64,8 +64,70 @@ export default defineConfig(({ mode }) => {
       terserOptions: {
         mangle: {
           properties: {
-            // Enable property name mangling/minification for private-style properties (starting with _)
-            regex: /^_/,
+            // Mangle / minify properties
+            regex: /./,
+            reserved: [
+              // OneSignal methods
+              'OneSignal',
+              'login',
+              'logout',
+              'init',
+              'setConsentGiven',
+              'setConsentRequired',
+
+              // general
+              'addEventListener',
+              'removeEventListener',
+
+              // namesapces
+              'Notifications',
+              'setDefaultUrl',
+              'isPushSupported',
+              'requestPermission',
+              'permissionNative',
+              'permission',
+              'setDefaultTitle',
+
+              'Slidedown',
+              'promptPush',
+              'promptPushCategories',
+              'promptSms',
+              'promptEmail',
+              'promptSmsAndEmail',
+
+              'Debug',
+              'setLogLevel',
+
+              'Session',
+              'sendOutcome',
+              'sendUniqueOutcome',
+
+              'User',
+              'addAlias',
+              'addAliases',
+              'removeAlias',
+              'removeAliases',
+              'addEmail',
+              'removeEmail',
+              'addSms',
+              'removeSms',
+              'addTag',
+              'addTags',
+              'removeTag',
+              'removeTags',
+              'getTags',
+              'setLanguage',
+              'getLanguage',
+              'onesignalId',
+              'externalId',
+
+              'PushSubscription',
+              'optIn',
+              'optOut',
+              'id',
+              'token',
+              'optedIn',
+            ],
           },
         },
       },
