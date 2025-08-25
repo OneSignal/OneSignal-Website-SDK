@@ -7,7 +7,6 @@ import type { SubscriptionTypeValue } from '../subscriptions/types';
 import { Browser } from '../useragent/constants';
 import { getBrowserName, getBrowserVersion } from '../useragent/detect';
 import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
-import { EnvironmentKind } from './constants';
 
 export const isBrowser = typeof window !== 'undefined';
 
@@ -46,16 +45,15 @@ export const getOneSignalApiUrl = ({
   legacy?: boolean;
 } = {}): URL => {
   // using if statements to have better dead code elimination
-  if (API_TYPE === EnvironmentKind.Development) {
+  if (API_TYPE === 'development') {
     return isTurbineEndpoint(action)
       ? new URL(`http://${API_ORIGIN}:${TURBINE_API_URL_PORT}/api/v1/`)
       : new URL(`http://${API_ORIGIN}:${API_URL_PORT}/api/v1/`);
   }
 
-  if (API_TYPE === EnvironmentKind.Staging)
-    return new URL(`https://${API_ORIGIN}/api/v1/`);
+  if (API_TYPE === 'staging') return new URL(`https://${API_ORIGIN}/api/v1/`);
 
-  if (API_TYPE === EnvironmentKind.Production)
+  if (API_TYPE === 'production')
     return new URL(
       legacy ? 'https://onesignal.com/api/v1/' : 'https://api.onesignal.com/',
     );

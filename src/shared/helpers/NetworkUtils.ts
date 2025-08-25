@@ -1,11 +1,11 @@
 // Implements logic similar to Android SDK's NetworkUtils
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/common/NetworkUtils.kt
 export const ResponseStatusType = {
-  INVALID: 'INVALID',
-  RETRYABLE: 'RETRYABLE',
-  UNAUTHORIZED: 'UNAUTHORIZED',
-  MISSING: 'MISSING',
-  CONFLICT: 'CONFLICT',
+  INVALID: 0,
+  RETRYABLE: 1,
+  UNAUTHORIZED: 2,
+  MISSING: 3,
+  CONFLICT: 4,
 } as const;
 
 type ResponseStatusValue =
