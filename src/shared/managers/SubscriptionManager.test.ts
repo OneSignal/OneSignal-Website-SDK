@@ -1,10 +1,9 @@
-import { DEVICE_OS, EXTERNAL_ID } from '__test__/constants';
+import { BASE_IDENTITY, BASE_SUB, EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
   createUserFn,
   setCreateUserResponse,
-  setGetUserResponse,
   setUpdateSubscriptionResponse,
   updateSubscriptionFn,
 } from '__test__/support/helpers/requests';
@@ -32,13 +31,12 @@ const getRawSubscription = (): RawPushSubscription => {
 };
 
 describe('SubscriptionManager', () => {
-  beforeEach(async () => {
-    await TestEnvironment.initialize();
+  beforeEach(() => {
+    TestEnvironment.initialize();
   });
 
   describe('updatePushSubscriptionModelWithRawSubscription', () => {
     test('should create the push subscription model if it does not exist', async () => {
-      setGetUserResponse();
       setCreateUserResponse();
       const rawSubscription = getRawSubscription();
 
@@ -58,11 +56,7 @@ describe('SubscriptionManager', () => {
       expect(IDManager.isLocalId(id)).toBe(true);
       expect(subModels[0].toJSON()).toEqual({
         id,
-        device_model: '',
-        device_os: DEVICE_OS,
-        enabled: true,
-        notification_types: 1,
-        sdk: __VERSION__,
+        ...BASE_SUB,
         token: rawSubscription.w3cEndpoint?.toString(),
         type: 'ChromePush',
         web_auth: rawSubscription.w3cAuth,
@@ -72,18 +66,10 @@ describe('SubscriptionManager', () => {
       await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
       expect(createUserFn).toHaveBeenCalledWith({
         identity: {},
-        properties: {
-          language: 'en',
-          timezone_id: 'America/Los_Angeles',
-        },
-        refresh_device_metadata: true,
+        ...BASE_IDENTITY,
         subscriptions: [
           {
-            device_model: '',
-            device_os: DEVICE_OS,
-            enabled: true,
-            notification_types: 1,
-            sdk: __VERSION__,
+            ...BASE_SUB,
             token: rawSubscription.w3cEndpoint?.toString(),
             type: 'ChromePush',
             web_auth: rawSubscription.w3cAuth,
@@ -126,18 +112,10 @@ describe('SubscriptionManager', () => {
         identity: {
           external_id: 'some-external-id',
         },
-        properties: {
-          language: 'en',
-          timezone_id: 'America/Los_Angeles',
-        },
-        refresh_device_metadata: true,
+        ...BASE_IDENTITY,
         subscriptions: [
           {
-            device_model: '',
-            device_os: DEVICE_OS,
-            enabled: true,
-            notification_types: 1,
-            sdk: __VERSION__,
+            ...BASE_SUB,
             token: rawSubscription.w3cEndpoint?.toString(),
             type: 'ChromePush',
           },
@@ -146,8 +124,6 @@ describe('SubscriptionManager', () => {
     });
 
     test('should update the push subscription model if it already exists', async () => {
-      setCreateUserResponse();
-      setGetUserResponse();
       setUpdateSubscriptionResponse({ subscriptionId: '123' });
       const rawSubscription = getRawSubscription();
 

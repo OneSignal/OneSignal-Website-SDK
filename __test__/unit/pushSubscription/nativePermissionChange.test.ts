@@ -25,8 +25,8 @@ const triggerNotificationSpy = vi.spyOn(
 vi.useFakeTimers();
 
 describe('Notification Types are set correctly on subscription change', () => {
-  beforeEach(async () => {
-    await TestEnvironment.initialize();
+  beforeEach(() => {
+    TestEnvironment.initialize();
     OneSignal.emitter = new Emitter();
   });
 

@@ -1,5 +1,8 @@
+import OneSignalApi from 'src/shared/api/OneSignalApi';
+import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { clearAll } from 'src/shared/database/client';
 import { DEFAULT_USER_AGENT } from './constants';
+import TestContext from './support/environment/TestContext';
 import { server } from './support/mocks/server';
 
 beforeAll(() =>
@@ -9,15 +12,15 @@ beforeAll(() =>
 );
 
 beforeEach(async () => {
-  if (typeof OneSignal !== 'undefined') {
-    OneSignal.coreDirector?.operationRepo.clear();
-    OneSignal.emitter?.removeAllListeners();
-  }
   await clearAll();
 });
 
 afterEach(() => {
   server.resetHandlers();
+  if (typeof OneSignal !== 'undefined') {
+    OneSignal.coreDirector?.operationRepo.clear();
+    OneSignal.emitter?.removeAllListeners();
+  }
 });
 
 afterAll(() => server.close());
@@ -44,3 +47,12 @@ Object.defineProperty(navigator, 'userAgent', {
   value: DEFAULT_USER_AGENT,
   writable: true,
 });
+
+export const mockJsonp = () => {
+  const serverConfig = TestContext.getFakeServerAppConfig(
+    ConfigIntegrationKind.Custom,
+  );
+  vi.spyOn(OneSignalApi, 'jsonpLib').mockImplementation((_, fn) => {
+    fn(null, serverConfig);
+  });
+};

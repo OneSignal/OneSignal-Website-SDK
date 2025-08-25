@@ -1,4 +1,5 @@
 import { ONESIGNAL_ID } from '__test__/constants';
+import { mockJsonp } from '__test__/setupTests';
 import type {
   AppUserConfig,
   ConfigIntegrationKindValue,
@@ -6,39 +7,40 @@ import type {
 } from 'src/shared/config/types';
 import type { RecursivePartial } from 'src/shared/context/types';
 import { updateIdentityModel } from '../helpers/setup';
-import {
-  initOSGlobals,
-  stubDomEnvironment,
-  stubNotification,
-} from './TestEnvironmentHelpers';
+import { initOSGlobals, stubNotification } from './TestEnvironmentHelpers';
 
 export interface TestEnvironmentConfig {
   userConfig?: AppUserConfig;
-  initOptions?: any;
   initUserAndPushSubscription?: boolean; // default: false - initializes User & PushSubscription in UserNamespace (e.g. creates an anonymous user)
-  environment?: string;
   permission?: NotificationPermission;
   addPrompts?: boolean;
   url?: string;
-  userAgent?: string;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
   integration?: ConfigIntegrationKindValue;
-  useMockedIdentity?: boolean;
 }
+Object.defineProperty(document, 'readyState', {
+  value: 'complete',
+  writable: true,
+});
 
 export class TestEnvironment {
-  static async initialize(config: TestEnvironmentConfig = {}) {
-    // reset db & localStorage
-    // await clearAll();
-    const oneSignal = await initOSGlobals(config);
+  static initialize(config: TestEnvironmentConfig = {}) {
+    mockJsonp();
+    const oneSignal = initOSGlobals(config);
     OneSignal.coreDirector.operationRepo.queue = [];
 
-    // if (config.useMockedIdentity) {
     updateIdentityModel('onesignal_id', ONESIGNAL_ID);
-    // }
 
-    await stubDomEnvironment(config);
-    config.environment = 'dom';
+    // Set URL if provided
+    if (config.url) {
+      Object.defineProperty(window, 'location', {
+        value: new URL(config.url),
+        writable: true,
+      });
+    }
+
+    window.isSecureContext = true;
+
     stubNotification(config);
     return oneSignal;
   }

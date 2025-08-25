@@ -34,7 +34,7 @@
       "__test__/*": ["./__test__/*"],
       "src/*": ["./src/*"]
     },
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "node"]
   },
   "include": ["src", "__test__"]
 }

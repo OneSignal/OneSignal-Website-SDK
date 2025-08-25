@@ -37,7 +37,7 @@
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig"
   },
   "config": {
-    "sdkVersion": "160502"
+    "sdkVersion": "160503"
   },
   "repository": {
     "type": "git",
@@ -52,7 +52,7 @@
     "@types/intl-tel-input": "^18.1.4",
     "@types/jsdom": "^21.1.7",
     "@types/jsonp": "^0.2.3",
-    "@types/node": "^24.1.0",
+    "@types/node": "^24.3.0",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
@@ -62,6 +62,7 @@
     "eslint": "^8.23.0",
     "eslint-config-prettier": "9.0.0",
     "fake-indexeddb": "5.0.2",
+    "intl-tel-input": "^25.4.0",
     "jsdom": "^26.1.0",
     "msw": "^2.10.5",
     "prettier": "3.6.2",
@@ -84,7 +85,7 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "46.995 kB",
+      "limit": "47.071 kB",
       "gzip": true
     },
     {

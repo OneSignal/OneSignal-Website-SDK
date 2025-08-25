@@ -7,8 +7,8 @@ import {
 import NotificationsNamespace from './NotificationsNamespace';
 
 describe('NotificationsNamespace', () => {
-  beforeEach(async () => {
-    await TestEnvironment.initialize();
+  beforeEach(() => {
+    TestEnvironment.initialize();
   });
 
   test('should set the default url', async () => {

@@ -1,5 +1,6 @@
 import {
   APP_ID,
+  BASE_IDENTITY,
   DEVICE_OS,
   EXTERNAL_ID,
   ONESIGNAL_ID,
@@ -54,11 +55,11 @@ let rebuildUserService: RebuildUserService;
 vi.mock('src/shared/libraries/Log');
 
 describe('LoginUserOperationExecutor', () => {
-  beforeAll(async () => {
-    await TestEnvironment.initialize();
+  beforeAll(() => {
+    TestEnvironment.initialize();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     identityModelStore = OneSignal.coreDirector.identityModelStore;
     propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
     subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
@@ -168,10 +169,10 @@ describe('LoginUserOperationExecutor', () => {
       await setPushToken(PUSH_TOKEN);
 
       const subscriptionModel = new SubscriptionModel();
-      subscriptionModel.setProperty('id', SUB_ID, ModelChangeTags.NO_PROPOGATE);
+      subscriptionModel.setProperty('id', SUB_ID, ModelChangeTags.NO_PROPAGATE);
       subscriptionModelStore.add(
         subscriptionModel,
-        ModelChangeTags.NO_PROPOGATE,
+        ModelChangeTags.NO_PROPAGATE,
       );
 
       // perform operations with old onesignal id
@@ -346,11 +347,7 @@ describe('LoginUserOperationExecutor', () => {
         identity: {
           external_id: EXTERNAL_ID,
         },
-        properties: {
-          language: 'en',
-          timezone_id: 'America/Los_Angeles',
-        },
-        refresh_device_metadata: true,
+        ...BASE_IDENTITY,
         subscriptions: [
           {
             device_model: '',

@@ -17,8 +17,8 @@ function expectPermissionChangeEvent(
 }
 
 describe('Notifications namespace permission properties', () => {
-  beforeEach(async () => {
-    await TestEnvironment.initialize();
+  beforeEach(() => {
+    TestEnvironment.initialize();
   });
 
   afterEach(() => {

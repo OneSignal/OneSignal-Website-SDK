@@ -50,12 +50,11 @@ const BACKEND_SUBSCRIPTION_ID = 'backend-subscription-id';
 vi.mock('src/shared/libraries/Log');
 
 describe('SubscriptionOperationExecutor', () => {
-  beforeAll(async () => {
-    await TestEnvironment.initialize();
+  beforeAll(() => {
+    TestEnvironment.initialize();
   });
 
-  beforeEach(async () => {
-    setCreateSubscriptionResponse({});
+  beforeEach(() => {
     subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
     newRecordsState = OneSignal.coreDirector.newRecordsState;
     newRecordsState.records.clear();

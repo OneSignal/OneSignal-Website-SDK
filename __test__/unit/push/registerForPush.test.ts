@@ -12,8 +12,8 @@ vi.mock('src/shared/libraries/Log');
 const spy = vi.spyOn(InitHelper, 'registerForPushNotifications');
 
 describe('Register for push', () => {
-  beforeEach(async () => {
-    await TestEnvironment.initialize({
+  beforeEach(() => {
+    TestEnvironment.initialize({
       addPrompts: true,
     });
   });

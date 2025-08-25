@@ -289,6 +289,7 @@ describe('migrations', () => {
       const db = await getDb(5);
       await populateLegacySubscriptions(db);
       // user is logged in
+      // @ts-expect-error - for testing legacy migration
       await db.put('identity', {
         modelId: '4',
         modelName: 'identity',

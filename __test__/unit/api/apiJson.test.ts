@@ -1,35 +1,28 @@
 import OneSignal from '../../../src/onesignal/OneSignal';
 import { matchApiToSpec } from '../../support/helpers/api';
-import type { OneSignalWithIndex } from './OneSignalWithIndex';
 
 describe('API matches spec file', () => {
-  let OneSignalWithIndex: OneSignalWithIndex;
-
-  beforeAll(() => {
-    OneSignalWithIndex = OneSignal as OneSignalWithIndex;
-  });
-
   test('Check top-level OneSignal API', async () => {
-    await matchApiToSpec({ OneSignal: OneSignalWithIndex }, 'OneSignal');
+    await matchApiToSpec({ OneSignal }, 'OneSignal');
   });
 
   test('Check Slidedown namespace', async () => {
-    await matchApiToSpec(OneSignalWithIndex, 'Slidedown');
+    await matchApiToSpec(OneSignal, 'Slidedown');
   });
 
   test('Check Notifications namespace', async () => {
-    await matchApiToSpec(OneSignalWithIndex, 'Notifications');
+    await matchApiToSpec(OneSignal, 'Notifications');
   });
 
   test('Check Session namespace', async () => {
-    await matchApiToSpec(OneSignalWithIndex, 'Session');
+    await matchApiToSpec(OneSignal, 'Session');
   });
 
   test('Check User namespace', async () => {
-    await matchApiToSpec(OneSignalWithIndex, 'User');
+    await matchApiToSpec(OneSignal, 'User');
   });
 
   test('Check PushSubscription namespace', async () => {
-    await matchApiToSpec(OneSignalWithIndex['User'], 'PushSubscription');
+    await matchApiToSpec(OneSignal['User'], 'PushSubscription');
   });
 });

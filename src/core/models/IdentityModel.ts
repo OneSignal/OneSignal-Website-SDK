@@ -1,18 +1,13 @@
+import type { IdentitySchema } from 'src/shared/database/types';
 import { IdentityConstants } from '../constants';
 import { Model } from './Model';
-
-type IIdentityModel = {
-  [IdentityConstants.ONESIGNAL_ID]: string;
-  [IdentityConstants.EXTERNAL_ID]?: string | undefined;
-  [key: string]: string | undefined;
-};
 
 /**
  * The identity model as a MapModel: a simple key-value pair where the key represents
  * the alias label and the value represents the alias ID for that alias label.
  * This model provides simple access to more well-defined aliases.
  */
-export class IdentityModel extends Model<IIdentityModel> {
+export class IdentityModel extends Model<IdentitySchema> {
   /**
    * The OneSignal ID for this identity.
    * WARNING: This *might* be a local ID depending on whether the user has been

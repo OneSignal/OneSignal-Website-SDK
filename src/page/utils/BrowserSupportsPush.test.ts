@@ -5,7 +5,7 @@ import {
 } from './BrowserSupportsPush';
 
 describe('BrowserSupportsPush', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     Object.defineProperty(global, 'PushSubscriptionOptions', {
       value: {
         prototype: {
@@ -14,7 +14,7 @@ describe('BrowserSupportsPush', () => {
       },
       writable: true,
     });
-    await TestEnvironment.initialize();
+    TestEnvironment.initialize();
   });
 
   test('can check if browser supports push notifications', () => {
