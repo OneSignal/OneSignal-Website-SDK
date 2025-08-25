@@ -77,8 +77,8 @@ const serverConfig = TestContext.getFakeServerAppConfig(
 );
 
 describe('ServiceWorker', () => {
-  beforeAll(async () => {
-    await TestEnvironment.initialize();
+  beforeAll(() => {
+    TestEnvironment.initialize();
 
     // @ts-expect-error - Notification is not defined in the global scope
     global.Notification = {

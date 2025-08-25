@@ -13,8 +13,8 @@ import { SubscriptionManagerPage } from './managers/subscription/page';
 
 vi.useFakeTimers();
 
-beforeEach(async () => {
-  await TestEnvironment.initialize();
+beforeEach(() => {
+  TestEnvironment.initialize();
 });
 
 describe('checkAndTriggerSubscriptionChanged', () => {

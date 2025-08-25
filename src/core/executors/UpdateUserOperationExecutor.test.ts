@@ -27,8 +27,8 @@ let getRebuildOpsSpy: MockInstance;
 vi.mock('src/shared/libraries/Log');
 
 describe('UpdateUserOperationExecutor', () => {
-  beforeAll(async () => {
-    await TestEnvironment.initialize();
+  beforeAll(() => {
+    TestEnvironment.initialize();
   });
 
   beforeEach(() => {

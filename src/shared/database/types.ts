@@ -60,16 +60,9 @@ export interface SubscriptionSchema {
 export interface IdentitySchema {
   modelId: string;
   modelName: 'identity';
-  onesignal_id?: string;
-  /**
-   * @deprecated - use onesignal_id instead
-   */
-  onesignalId?: string;
+  onesignal_id: string;
   external_id?: string;
-  /**
-   * @deprecated - use external_id instead
-   */
-  externalId?: string;
+  [key: string]: string | undefined;
 }
 
 export interface PropertiesSchema {
