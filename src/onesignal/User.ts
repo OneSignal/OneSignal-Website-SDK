@@ -187,7 +187,7 @@ export default class User {
 
   public addTags(tags: { [key: string]: string }): void {
     if (IDManager.isLocalId(this.onesignalId)) {
-      Log.warn('Login or subscribe to sync tags');
+      Log.warn('Call after login to sync tags');
     }
 
     logMethodCall('addTags', { tags });
