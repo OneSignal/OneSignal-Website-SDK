@@ -2,9 +2,9 @@ import { Browser } from './constants';
 import type { BrowserValue } from './types';
 
 interface BrowserConfig {
-  _name: string;
-  _pattern: RegExp;
-  _versionPattern: RegExp;
+  name: string;
+  pattern: RegExp;
+  versionPattern: RegExp;
 }
 
 interface IBrowserResult {
@@ -15,67 +15,67 @@ interface IBrowserResult {
 // Top popular browsers set
 const BROWSER_CONFIGS: BrowserConfig[] = [
   {
-    _name: 'Opera',
-    _pattern: /(?:opera|opr|opios)/i,
-    _versionPattern: /(?:opera|opr|opios)[ /](\d+(?:\.\d+)?)/i,
+    name: 'Opera',
+    pattern: /(?:opera|opr|opios)/i,
+    versionPattern: /(?:opera|opr|opios)[ /](\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'Facebook',
-    _pattern: /FBAN\//i,
-    _versionPattern: /FBAV\/(\d+(?:\.\d+)?)/i,
+    name: 'Facebook',
+    pattern: /FBAN\//i,
+    versionPattern: /FBAV\/(\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'Samsung Browser',
-    _pattern: /samsungbrowser/i,
-    _versionPattern: /samsungbrowser[ /](\d+(?:\.\d+)?)/i,
+    name: 'Samsung Browser',
+    pattern: /samsungbrowser/i,
+    versionPattern: /samsungbrowser[ /](\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'Yandex Browser',
-    _pattern: /yabrowser/i,
-    _versionPattern: /yabrowser[ /](\d+(?:\.\d+)?)/i,
+    name: 'Yandex Browser',
+    pattern: /yabrowser/i,
+    versionPattern: /yabrowser[ /](\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'Vivaldi',
-    _pattern: /vivaldi/i,
-    _versionPattern: /vivaldi[ /](\d+(?:\.\d+)?)/i,
+    name: 'Vivaldi',
+    pattern: /vivaldi/i,
+    versionPattern: /vivaldi[ /](\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'UC Browser',
-    _pattern: /ucbrowser/i,
-    _versionPattern: /ucbrowser[ /](\d+(?:\.\d+)?)/i,
+    name: 'UC Browser',
+    pattern: /ucbrowser/i,
+    versionPattern: /ucbrowser[ /](\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'Microsoft Edge',
-    _pattern: /edg/i,
-    _versionPattern: /edg[ /](\d+(?:\.\d+)?)/i,
+    name: 'Microsoft Edge',
+    pattern: /edg/i,
+    versionPattern: /edg[ /](\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'Firefox',
-    _pattern: /firefox|iceweasel|fxios/i,
-    _versionPattern: /(?:firefox|iceweasel|fxios)[ /](\d+(?:\.\d+)?)/i,
+    name: 'Firefox',
+    pattern: /firefox|iceweasel|fxios/i,
+    versionPattern: /(?:firefox|iceweasel|fxios)[ /](\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'Chromium',
-    _pattern: /chromium/i,
-    _versionPattern: /chromium[ /](\d+(?:\.\d+)?)/i,
+    name: 'Chromium',
+    pattern: /chromium/i,
+    versionPattern: /chromium[ /](\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'Chrome',
-    _pattern: /chrome|crios|crmo/i,
-    _versionPattern: /(?:chrome|crios|crmo)[ /](\d+(?:\.\d+)?)/i,
+    name: 'Chrome',
+    pattern: /chrome|crios|crmo/i,
+    versionPattern: /(?:chrome|crios|crmo)[ /](\d+(?:\.\d+)?)/i,
   },
   {
-    _name: 'Safari',
-    _pattern: /safari|applewebkit/i,
-    _versionPattern: /version[ /](\d+(?:\.\d+)?)/i,
+    name: 'Safari',
+    pattern: /safari|applewebkit/i,
+    versionPattern: /version[ /](\d+(?:\.\d+)?)/i,
   },
 ];
 
 export function getBrowser(userAgent: string): IBrowserResult {
   for (const config of BROWSER_CONFIGS) {
-    if (config._pattern.test(userAgent)) {
-      const version = userAgent.match(config._versionPattern)?.[1] ?? '';
-      return { name: config._name, version };
+    if (config.pattern.test(userAgent)) {
+      const version = userAgent.match(config.versionPattern)?.[1] ?? '';
+      return { name: config.name, version };
     }
   }
   return { name: 'Unknown', version: '' };

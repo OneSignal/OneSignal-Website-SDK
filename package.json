@@ -24,6 +24,7 @@
     "build:staging:watch": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com npm run build:watch",
     "build:prod": "ENV=production API=production npm run build && size-limit",
     "build:prod:watch": "ENV=production API=production npm run build:watch",
+    "postbuild:prod": "npm run validate:build",
     "build:dev-dev": "API=development npm run build:dev",
     "build:dev-dev:watch": "API=development npm run build:dev:watch",
     "build:dev-prod": "API=production API_ORIGIN=onesignal.com npm run build:dev",
@@ -32,6 +33,7 @@
     "build:dev-stag:watch": "API=staging API_ORIGIN=onesignal.com npm run build:dev:watch",
     "test": "vitest run --coverage",
     "test:watch": "vitest watch --coverage",
+    "validate:build": "node build/scripts/validate.js",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig"
   },
   "config": {
@@ -83,12 +85,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "52.322 kB",
+      "limit": "47.26 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "14.564 kB",
+      "limit": "13.3 kB",
       "gzip": true
     },
     {
