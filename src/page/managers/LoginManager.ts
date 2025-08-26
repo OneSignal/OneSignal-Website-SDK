@@ -5,7 +5,6 @@ import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
 import MainHelper from 'src/shared/helpers/MainHelper';
 import { IDManager } from 'src/shared/managers/IDManager';
-import OneSignal from '../../onesignal/OneSignal';
 import UserDirector from '../../onesignal/UserDirector';
 import Log from '../../shared/libraries/Log';
 

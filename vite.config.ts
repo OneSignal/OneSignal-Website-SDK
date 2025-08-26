@@ -66,6 +66,7 @@ export default defineConfig(({ mode }) => {
           properties: {
             // Enable property name mangling/minification for private-style properties (starting with _)
             regex: /^_/,
+            keep_quoted: true,
           },
         },
       },

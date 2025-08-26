@@ -36,7 +36,6 @@ import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
-import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
@@ -257,7 +256,7 @@ export default class OneSignal {
    *  OneSignalDeferred.push(function(onesignal) { onesignal.functionName(param1, param2); });
    */
   static async push(item: OneSignalDeferredLoadedCallback) {
-    return ProcessOneSignalPushCalls.processItem(OneSignal, item);
+    return processItem(OneSignal, item);
   }
 
   static __doNotShowWelcomeNotification: boolean;
@@ -287,6 +286,16 @@ export default class OneSignal {
   static User = new UserNamespace(false);
   static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
+}
+
+function processItem(
+  oneSignalInstance: typeof OneSignal,
+  item: OneSignalDeferredLoadedCallback,
+) {
+  if (typeof item === 'function') return item(oneSignalInstance);
+  else {
+    throw new Error('Callback is not a function');
+  }
 }
 
 Log.info(
