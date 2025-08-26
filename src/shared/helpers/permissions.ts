@@ -38,7 +38,7 @@ const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
     value: newPermission,
   });
 
-  OneSignalEvent.trigger(
+  await OneSignalEvent.trigger(
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
     newPermission,
   );

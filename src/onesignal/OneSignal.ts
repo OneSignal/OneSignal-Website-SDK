@@ -36,11 +36,9 @@ import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import TimedLocalStorage from '../page/modules/TimedLocalStorage';
-import { ProcessOneSignalPushCalls } from '../page/utils/ProcessOneSignalPushCalls';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
-import OneSignalEvent from '../shared/services/OneSignalEvent';
 import DebugNamespace from './DebugNamesapce';
 import NotificationsNamespace from './NotificationsNamespace';
 import { ONESIGNAL_EVENTS } from './OneSignalEvents';
@@ -167,9 +165,9 @@ export default class OneSignal {
     OneSignal.context.workerMessenger.listen();
 
     async function __init() {
-      if (OneSignal.__initAlreadyCalled) return;
+      if (OneSignal._initAlreadyCalled) return;
 
-      OneSignal.__initAlreadyCalled = true;
+      OneSignal._initAlreadyCalled = true;
 
       OneSignal.emitter.on(
         OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
@@ -258,7 +256,7 @@ export default class OneSignal {
    *  OneSignalDeferred.push(function(onesignal) { onesignal.functionName(param1, param2); });
    */
   static async push(item: OneSignalDeferredLoadedCallback) {
-    return ProcessOneSignalPushCalls.processItem(OneSignal, item);
+    return processItem(OneSignal, item);
   }
 
   static __doNotShowWelcomeNotification: boolean;
@@ -271,36 +269,33 @@ export default class OneSignal {
   static _didLoadITILibrary = false;
   static notifyButton: Bell | null = null;
   static database = db;
-  static event = OneSignalEvent;
   private static pendingInit = true;
 
   static emitter: Emitter = new Emitter();
   static cache: any = {};
-  static _LOGGING = false;
-  static LOGGING = false;
   static _initCalled = false;
-  static __initAlreadyCalled = false;
+  static _initAlreadyCalled = false;
   static context: Context;
 
   /* NEW USER MODEL CHANGES */
   static coreDirector: CoreModuleDirector;
 
-  static _notifications: NotificationsNamespace;
-  static get Notifications() {
-    if (!this._notifications) {
-      this._notifications = new NotificationsNamespace();
-    }
-    return this._notifications;
-  }
-  static set Notifications(value: NotificationsNamespace) {
-    this._notifications = value;
-  }
-
+  static Notifications = new NotificationsNamespace();
   static Slidedown = new SlidedownNamespace();
   static Session = new SessionNamespace();
   static User = new UserNamespace(false);
   static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
+}
+
+function processItem(
+  oneSignalInstance: typeof OneSignal,
+  item: OneSignalDeferredLoadedCallback,
+) {
+  if (typeof item === 'function') return item(oneSignalInstance);
+  else {
+    throw new Error('Callback is not a function');
+  }
 }
 
 Log.info(

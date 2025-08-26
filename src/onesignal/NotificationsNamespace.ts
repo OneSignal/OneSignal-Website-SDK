@@ -14,7 +14,6 @@ import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
 } from '../shared/utils/utils';
-import OneSignal from './OneSignal';
 
 export default class NotificationsNamespace extends EventListenerBase {
   private _permission: boolean;
@@ -26,13 +25,15 @@ export default class NotificationsNamespace extends EventListenerBase {
     this._permissionNative = permissionNative;
     this._permission = permissionNative === 'granted';
 
-    OneSignal.emitter.on(
-      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-      (permissionNative: NotificationPermission) => {
-        this._permissionNative = permissionNative;
-        this._permission = permissionNative === 'granted';
-      },
-    );
+    if (typeof OneSignal !== 'undefined') {
+      OneSignal.emitter.on(
+        OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
+        (permissionNative: NotificationPermission) => {
+          this._permissionNative = permissionNative;
+          this._permission = permissionNative === 'granted';
+        },
+      );
+    }
   }
 
   get permissionNative(): NotificationPermission | undefined {

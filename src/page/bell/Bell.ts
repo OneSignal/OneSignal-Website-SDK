@@ -14,7 +14,6 @@ import type {
 } from 'src/shared/prompts/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
-import OneSignal from '../../onesignal/OneSignal';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';

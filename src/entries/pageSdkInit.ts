@@ -4,7 +4,6 @@
  */
 import type { OneSignalDeferredLoadedCallback } from 'src/page/models/OneSignalDeferredLoadedCallback';
 import OneSignal from '../onesignal/OneSignal';
-import { ReplayCallsOnOneSignal } from '../page/utils/ReplayCallsOnOneSignal';
 import Log from '../shared/libraries/Log';
 import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';
 
@@ -13,6 +12,19 @@ import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';
  * generate a separate CSS file.
  */
 import './stylesheet.scss';
+
+async function processOneSignalDeferredArray(
+  onesignalDeferred: OneSignalDeferredLoadedCallback[],
+): Promise<void> {
+  for (const item of onesignalDeferred) {
+    try {
+      await OneSignal.push(item);
+    } catch (e) {
+      // Catch and log error here so other elements still run
+      Log.error(e);
+    }
+  }
+}
 
 function onesignalSdkInit() {
   incrementSdkLoadCount();
@@ -35,9 +47,7 @@ function onesignalSdkInit() {
   window.OneSignal = OneSignal;
   window.OneSignalDeferred = window.OneSignalDeferred ?? [];
 
-  const promise = ReplayCallsOnOneSignal.processOneSignalDeferredArray(
-    window.OneSignalDeferred,
-  );
+  const promise = processOneSignalDeferredArray(window.OneSignalDeferred);
 
   Object.defineProperty(window.OneSignalDeferred, 'push', {
     value: async function (item: OneSignalDeferredLoadedCallback) {
