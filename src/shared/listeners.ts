@@ -75,7 +75,7 @@ export async function checkAndTriggerSubscriptionChanged() {
 }
 
 function triggerSubscriptionChanged(change: SubscriptionChangeEvent) {
-  OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
+  OneSignalEvent.trigger('change', change);
 }
 
 export function triggerNotificationClick(
@@ -85,10 +85,7 @@ export function triggerNotificationClick(
     notification: event.notification,
     result: event.result,
   };
-  return OneSignalEvent.trigger(
-    OneSignal.EVENTS.NOTIFICATION_CLICKED,
-    publicEvent,
-  );
+  return OneSignalEvent.trigger('click', publicEvent);
 }
 
 const getUserState = async (): Promise<UserState> => {
@@ -148,11 +145,7 @@ export async function checkAndTriggerUserChanged() {
 }
 
 function triggerUserChanged(change: UserChangeEvent) {
-  OneSignalEvent.trigger(
-    OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-    change,
-    UserNamespace.emitter,
-  );
+  OneSignalEvent.trigger('change', change, UserNamespace.emitter);
 }
 
 async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
@@ -253,7 +246,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
     { __isOneSignalWelcomeNotification: true },
     undefined,
   );
-  OneSignalEvent.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+  OneSignalEvent.trigger('sendWelcomeNotification', {
     title: title,
     message: message,
     url: url,

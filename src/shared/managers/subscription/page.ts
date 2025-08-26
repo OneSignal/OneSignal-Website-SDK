@@ -305,7 +305,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       We'll show the permissionPromptDisplay event if the Safari user isn't already subscribed,
       otherwise an already subscribed Safari user would not see the permission request again.
     */
-    OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+    OneSignalEvent.trigger('permissionPromptDisplay');
     const deviceToken = await this.subscribeSafariPromptPermission();
     triggerNotificationPermissionChanged();
     if (deviceToken) {
@@ -365,9 +365,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (Notification.permission === 'default') {
-      await OneSignalEvent.trigger(
-        OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED,
-      );
+      await OneSignalEvent.trigger('permissionPromptDisplay');
       const permission =
         await SubscriptionManagerPage.requestPresubscribeNotificationPermission();
 

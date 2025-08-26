@@ -22,7 +22,7 @@ afterEach(() => {
 
 /** onSdkInitialized */
 test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
-  OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+  OneSignal.emitter.on('initialize', () => {
     expect(true).toBe(true);
   });
   await InitHelper.onSdkInitialized();

@@ -138,21 +138,6 @@ export interface NotificationDismissEvent {
   notification: IOSNotification;
 }
 
-export type NotificationEventTypeMap = {
-  click: NotificationClickEvent;
-  foregroundWillDisplay: NotificationForegroundWillDisplayEvent;
-  dismiss: NotificationDismissEvent;
-  permissionChange: boolean;
-  permissionPromptDisplay: void;
-};
-
-export type NotificationEventName =
-  | 'click'
-  | 'foregroundWillDisplay'
-  | 'dismiss'
-  | 'permissionChange'
-  | 'permissionPromptDisplay';
-
 export interface NotificationIcons {
   chrome: string | null;
   firefox: string | null;

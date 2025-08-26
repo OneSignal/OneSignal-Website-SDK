@@ -58,11 +58,11 @@ export default class Message extends AnimatedElement {
   }
 
   getTipForState(): string {
-    if (this.bell._state === Bell._STATES.UNSUBSCRIBED)
+    if (this.bell._state === 'unsubscribed')
       return this.bell._options.text['tip.state.unsubscribed'];
-    else if (this.bell._state === Bell._STATES.SUBSCRIBED)
+    else if (this.bell._state === 'subscribed')
       return this.bell._options.text['tip.state.subscribed'];
-    else if (this.bell._state === Bell._STATES.BLOCKED)
+    else if (this.bell._state === 'blocked')
       return this.bell._options.text['tip.state.blocked'];
     return '';
   }

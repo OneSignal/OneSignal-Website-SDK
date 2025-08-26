@@ -106,7 +106,7 @@ export class SubscriptionManagerBase<
     await setSubscription(subscription);
 
     if (!IS_SERVICE_WORKER) {
-      OneSignalEvent.trigger(OneSignal.EVENTS.REGISTERED);
+      OneSignalEvent.trigger('register');
     }
 
     if (typeof OneSignal !== 'undefined') {

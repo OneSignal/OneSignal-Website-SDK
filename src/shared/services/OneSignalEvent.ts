@@ -1,8 +1,8 @@
 import { containsMatch } from '../context/helpers';
 import { windowEnvString } from '../environment/detect';
-import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import type { EventTriggerArgs } from './types';
 
 const SILENT_EVENTS = [
   'notifyButtonHovering',
@@ -26,7 +26,8 @@ export default class OneSignalEvent {
    * @param data Any JavaScript variable to be passed with the event.
    * @param emitter Emitter to emit the event from.
    */
-  static async trigger(eventName: string, data?: any, emitter?: Emitter) {
+  static async trigger(...args: EventTriggerArgs) {
+    const [eventName, data, emitter] = args;
     if (!containsMatch(SILENT_EVENTS, eventName)) {
       const displayData = data;
 

@@ -61,7 +61,6 @@ export default class Button extends ActiveAnimatedElement {
       });
 
       element.addEventListener('click', () => {
-        this.onHovered();
         this.onClick();
       });
     }
@@ -72,14 +71,14 @@ export default class Button extends ActiveAnimatedElement {
       LimitStore.isEmpty(this.events.mouse) ||
       LimitStore.getLast(this.events.mouse) === 'out'
     ) {
-      OneSignalEvent.trigger(Bell._EVENTS.HOVERING);
+      OneSignalEvent.trigger('notifyButtonHovering');
     }
     LimitStore.put(this.events.mouse, 'over');
   }
 
   onHovered() {
     LimitStore.put(this.events.mouse, 'out');
-    OneSignalEvent.trigger(Bell._EVENTS.HOVERED);
+    OneSignalEvent.trigger('notifyButtonHover');
   }
 
   onTap() {
@@ -94,8 +93,8 @@ export default class Button extends ActiveAnimatedElement {
   }
 
   onClick() {
-    OneSignalEvent.trigger(Bell._EVENTS.BELL_CLICK);
-    OneSignalEvent.trigger(Bell._EVENTS.LAUNCHER_CLICK);
+    OneSignalEvent.trigger('notifyButtonButtonClick');
+    OneSignalEvent.trigger('notifyButtonLauncherClick');
 
     if (
       this.bell.__message.shown &&
@@ -116,7 +115,7 @@ export default class Button extends ActiveAnimatedElement {
         // The user is actually subscribed, register him for notifications
         registerForPushNotifications();
         this.bell._ignoreSubscriptionState = true;
-        OneSignal.emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
+        OneSignal.emitter.once('change', () => {
           this.bell.__message
             .display(
               Message.TYPES.MESSAGE,

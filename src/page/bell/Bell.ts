@@ -20,7 +20,6 @@ import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
-import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Badge from './Badge';
 import Button from './Button';
@@ -30,7 +29,11 @@ import Message from './Message';
 
 const logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
-type BellState = 'uninitialized' | 'subscribed' | 'unsubscribed' | 'blocked';
+export type BellState =
+  | 'uninitialized'
+  | 'subscribed'
+  | 'unsubscribed'
+  | 'blocked';
 
 const DEFAULT_SIZE: BellSize = 'medium';
 const DEFAULT_POSITION: BellPosition = 'bottom-right';
@@ -38,7 +41,7 @@ const DEFAULT_THEME = 'default';
 
 export default class Bell {
   public _options: AppUserConfigNotifyButton;
-  public _state: BellState = Bell._STATES.UNINITIALIZED;
+  public _state: BellState = 'uninitialized';
   public _ignoreSubscriptionState = false;
   public _hovering = false;
   public _initialized = false;
@@ -47,27 +50,6 @@ export default class Bell {
   public _badge: Badge | undefined = undefined;
   public _message: Message | undefined = undefined;
   public _dialog: Dialog | undefined = undefined;
-
-  static get _EVENTS() {
-    return {
-      STATE_CHANGED: 'notifyButtonStateChange',
-      LAUNCHER_CLICK: 'notifyButtonLauncherClick',
-      BELL_CLICK: 'notifyButtonButtonClick',
-      SUBSCRIBE_CLICK: 'notifyButtonSubscribeClick',
-      UNSUBSCRIBE_CLICK: 'notifyButtonUnsubscribeClick',
-      HOVERING: 'notifyButtonHovering',
-      HOVERED: 'notifyButtonHover',
-    };
-  }
-
-  static get _STATES() {
-    return {
-      UNINITIALIZED: 'uninitialized' as BellState,
-      SUBSCRIBED: 'subscribed' as BellState,
-      UNSUBSCRIBED: 'unsubscribed' as BellState,
-      BLOCKED: 'blocked' as BellState,
-    };
-  }
 
   constructor(config: Partial<AppUserConfigNotifyButton>, launcher?: Launcher) {
     this._options = {
@@ -91,7 +73,7 @@ export default class Bell {
     if (!this._options.enable) return;
 
     this._validateOptions(this._options);
-    this._state = Bell._STATES.UNINITIALIZED;
+    this._state = 'uninitialized';
     this._ignoreSubscriptionState = false;
 
     this._installEventHooks();
@@ -191,7 +173,7 @@ export default class Bell {
 
   private _installEventHooks() {
     // Install event hooks
-    OneSignal.emitter.on(Bell._EVENTS.SUBSCRIBE_CLICK, () => {
+    OneSignal.emitter.on('notifyButtonSubscribeClick', () => {
       this.__dialog!.subscribeButton!.disabled = true;
       this._ignoreSubscriptionState = true;
       OneSignal.User.PushSubscription.optIn()
@@ -219,7 +201,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell._EVENTS.UNSUBSCRIBE_CLICK, () => {
+    OneSignal.emitter.on('notifyButtonUnsubscribeClick', () => {
       this.__dialog!.unsubscribeButton!.disabled = true;
       OneSignal.User.PushSubscription.optOut()
         .then(() => {
@@ -242,7 +224,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell._EVENTS.HOVERING, () => {
+    OneSignal.emitter.on('notifyButtonHovering', () => {
       this._hovering = true;
       this.__launcher.activateIfInactive();
 
@@ -286,7 +268,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell._EVENTS.HOVERED, () => {
+    OneSignal.emitter.on('notifyButtonHover', () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
       if (this.__message.contentType === Message.TYPES.MESSAGE) {
         return;
@@ -325,54 +307,45 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(
-      OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-      async (isSubscribed: SubscriptionChangeEvent) => {
-        if (isSubscribed.current.optedIn) {
-          if (this.__badge.shown && this._options.prenotify) {
-            this.__badge.hide();
-          }
-          if (this.__dialog.notificationIcons === null) {
-            const icons = await MainHelper.getNotificationIcons();
-            this.__dialog.notificationIcons = icons;
-          }
+    OneSignal.emitter.on('change', async (isSubscribed) => {
+      if (isSubscribed?.current.optedIn) {
+        if (this.__badge.shown && this._options.prenotify) {
+          this.__badge.hide();
         }
-
-        const permission =
-          await OneSignal.context.permissionManager.getPermissionStatus();
-        let bellState: BellState;
-        if (isSubscribed.current.optedIn) {
-          bellState = Bell._STATES.SUBSCRIBED;
-        } else if (permission === 'denied') {
-          bellState = Bell._STATES.BLOCKED;
-        } else {
-          bellState = Bell._STATES.UNSUBSCRIBED;
+        if (this.__dialog.notificationIcons === null) {
+          const icons = await MainHelper.getNotificationIcons();
+          this.__dialog.notificationIcons = icons;
         }
-        this._setState(bellState, this._ignoreSubscriptionState);
-      },
-    );
+      }
 
-    OneSignal.emitter.on(Bell._EVENTS.STATE_CHANGED, (state) => {
+      const permission =
+        await OneSignal.context.permissionManager.getPermissionStatus();
+      let bellState: BellState;
+      if (isSubscribed?.current.optedIn) {
+        bellState = 'subscribed';
+      } else if (permission === 'denied') {
+        bellState = 'blocked';
+      } else {
+        bellState = 'unsubscribed';
+      }
+      this._setState(bellState, this._ignoreSubscriptionState);
+    });
+
+    OneSignal.emitter.on('notifyButtonStateChange', (state) => {
       if (!this.__launcher.element) {
         // Notify button doesn't exist
         return;
       }
-      if (state.to === Bell._STATES.SUBSCRIBED) {
+      if (state.to === 'subscribed') {
         this.__launcher.inactivate();
-      } else if (
-        state.to === Bell._STATES.UNSUBSCRIBED ||
-        Bell._STATES.BLOCKED
-      ) {
+      } else if (state.to === 'unsubscribed' || state.to === 'blocked') {
         this.__launcher.activate();
       }
     });
 
-    OneSignal.emitter.on(
-      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-      () => {
-        this._updateState();
-      },
-    );
+    OneSignal.emitter.on('permissionChangeAsString', () => {
+      this._updateState();
+    });
   }
 
   private _addDefaultClasses() {
@@ -686,11 +659,9 @@ export default class Bell {
       OneSignal.context.permissionManager.getPermissionStatus(),
     ])
       .then(([isEnabled, permission]) => {
-        this._setState(
-          isEnabled ? Bell._STATES.SUBSCRIBED : Bell._STATES.UNSUBSCRIBED,
-        );
+        this._setState(isEnabled ? 'subscribed' : 'unsubscribed');
         if (permission === 'denied') {
-          this._setState(Bell._STATES.BLOCKED);
+          this._setState('blocked');
         }
       })
       .catch((e) => {
@@ -706,7 +677,7 @@ export default class Bell {
     const lastState = this._state;
     this._state = newState;
     if (lastState !== newState && !silent) {
-      OneSignalEvent.trigger(Bell._EVENTS.STATE_CHANGED, {
+      OneSignalEvent.trigger('notifyButtonStateChange', {
         from: lastState,
         to: newState,
       });
@@ -750,14 +721,14 @@ export default class Bell {
   }
 
   get _subscribed() {
-    return this._state === Bell._STATES.SUBSCRIBED;
+    return this._state === 'subscribed';
   }
 
   get _unsubscribed() {
-    return this._state === Bell._STATES.UNSUBSCRIBED;
+    return this._state === 'unsubscribed';
   }
 
   get _blocked() {
-    return this._state === Bell._STATES.BLOCKED;
+    return this._state === 'blocked';
   }
 }

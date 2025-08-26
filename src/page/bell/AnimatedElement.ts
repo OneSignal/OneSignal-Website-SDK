@@ -50,7 +50,7 @@ export default class AnimatedElement {
     } else
       return new Promise((resolve) => {
         this.state = 'showing';
-        OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWING, this);
+        OneSignalEvent.trigger('animatedElementShowing', this);
         const element = this.element;
         if (!element) {
           Log.error(
@@ -84,7 +84,7 @@ export default class AnimatedElement {
                 // Uninstall the event listener for transitionend
                 destroyListenerFn();
                 this.state = 'shown';
-                OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWN, this);
+                OneSignalEvent.trigger('animatedElementShown', this);
                 return resolve(this);
               }
             },
@@ -104,7 +104,7 @@ export default class AnimatedElement {
     } else
       return new Promise((resolve) => {
         this.state = 'hiding';
-        OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDING, this);
+        OneSignalEvent.trigger('animatedElementHiding', this);
         const element = this.element;
         if (!element) {
           Log.error(
@@ -138,7 +138,7 @@ export default class AnimatedElement {
                 // Uninstall the event listener for transitionend
                 destroyListenerFn();
                 this.state = 'hidden';
-                OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDDEN, this);
+                OneSignalEvent.trigger('animatedElementHidden', this);
                 return resolve(this);
               }
             },
@@ -156,7 +156,7 @@ export default class AnimatedElement {
     if (this.state === 'shown') return Promise.resolve(this);
     else
       return new Promise((resolve) => {
-        OneSignal.emitter.once(AnimatedElement.EVENTS.SHOWN, (event) => {
+        OneSignal.emitter.once('animatedElementShown', (event) => {
           if (event === this) {
             return resolve(this);
           }
@@ -172,21 +172,12 @@ export default class AnimatedElement {
     if (this.state === 'hidden') return Promise.resolve(this);
     else
       return new Promise((resolve) => {
-        OneSignal.emitter.once(AnimatedElement.EVENTS.HIDDEN, (event) => {
+        OneSignal.emitter.once('animatedElementHidden', (event) => {
           if (event === this) {
             return resolve(this);
           }
         });
       });
-  }
-
-  static get EVENTS() {
-    return {
-      SHOWING: 'animatedElementShowing',
-      SHOWN: 'animatedElementShown',
-      HIDING: 'animatedElementHiding',
-      HIDDEN: 'animatedElementHidden',
-    };
   }
 
   /**

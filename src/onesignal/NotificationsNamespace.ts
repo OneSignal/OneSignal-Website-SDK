@@ -6,16 +6,18 @@ import {
 } from 'src/shared/errors/common';
 import { isValidUrl } from 'src/shared/helpers/validators';
 import type {
-  NotificationEventName,
-  NotificationEventTypeMap,
-} from 'src/shared/notifications/types';
+  EventsMap,
+  NotificationEventsMap,
+} from 'src/shared/services/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
 } from '../shared/utils/utils';
 
-export default class NotificationsNamespace extends EventListenerBase {
+export default class NotificationsNamespace extends EventListenerBase<
+  keyof NotificationEventsMap
+> {
   private _permission: boolean;
   private _permissionNative?: NotificationPermission;
 
@@ -26,13 +28,10 @@ export default class NotificationsNamespace extends EventListenerBase {
     this._permission = permissionNative === 'granted';
 
     if (typeof OneSignal !== 'undefined') {
-      OneSignal.emitter.on(
-        OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-        (permissionNative: NotificationPermission) => {
-          this._permissionNative = permissionNative;
-          this._permission = permissionNative === 'granted';
-        },
-      );
+      OneSignal.emitter.on('permissionChangeAsString', (permissionNative) => {
+        this._permissionNative = permissionNative;
+        this._permission = permissionNative === 'granted';
+      });
     }
   }
 
@@ -119,16 +118,16 @@ export default class NotificationsNamespace extends EventListenerBase {
     await OneSignal.context.promptsManager.internalShowNativePrompt();
   }
 
-  addEventListener<K extends NotificationEventName>(
+  addEventListener<K extends keyof NotificationEventsMap>(
     event: K,
-    listener: (obj: NotificationEventTypeMap[K]) => void,
+    listener: (obj: EventsMap[K]) => void,
   ): void {
     OneSignal.emitter.on(event, listener);
   }
 
-  removeEventListener<K extends NotificationEventName>(
+  removeEventListener<K extends keyof NotificationEventsMap>(
     event: K,
-    listener: (obj: NotificationEventTypeMap[K]) => void,
+    listener: (obj: EventsMap[K]) => void,
   ): void {
     OneSignal.emitter.off(event, listener);
   }

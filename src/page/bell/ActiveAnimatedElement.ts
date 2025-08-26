@@ -51,7 +51,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     } else
       return new Promise((resolve) => {
         this.activeState = 'activating';
-        OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
+        OneSignalEvent.trigger('activeAnimatedElementActivating', this);
         const element = this.element;
         if (!element) {
           Log.error('Could not find active animated element');
@@ -84,10 +84,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
                   // Uninstall the event listener for transitionend
                   destroyListenerFn();
                   this.activeState = 'active';
-                  OneSignalEvent.trigger(
-                    ActiveAnimatedElement.EVENTS.ACTIVE,
-                    this,
-                  );
+                  OneSignalEvent.trigger('activeAnimatedElementActive', this);
                   return resolve(this);
                 }
               },
@@ -97,7 +94,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         } else {
           Log.debug(`Ending activate() transition (alternative).`);
           this.activeState = 'active';
-          OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
+          OneSignalEvent.trigger('activeAnimatedElementActive', this);
           return resolve(this);
         }
       });
@@ -113,7 +110,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     } else
       return new Promise((resolve) => {
         this.activeState = 'inactivating';
-        OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
+        OneSignalEvent.trigger('activeAnimatedElementInactivating', this);
         const element = this.element;
         if (!element) {
           Log.error('Could not find active animated element');
@@ -146,10 +143,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
                   // Uninstall the event listener for transitionend
                   destroyListenerFn();
                   this.activeState = 'inactive';
-                  OneSignalEvent.trigger(
-                    ActiveAnimatedElement.EVENTS.INACTIVE,
-                    this,
-                  );
+                  OneSignalEvent.trigger('activeAnimatedElementInactive', this);
                   return resolve(this);
                 }
               },
@@ -158,7 +152,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           }
         } else {
           this.activeState = 'inactive';
-          OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
+          OneSignalEvent.trigger('activeAnimatedElementInactive', this);
           return resolve(this);
         }
       });
@@ -172,7 +166,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.active) return Promise.resolve(this);
     else
       return new Promise((resolve) => {
-        OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.ACTIVE, (event) => {
+        OneSignal.emitter.once('activeAnimatedElementActive', (event) => {
           if (event === this) {
             return resolve(this);
           }
@@ -188,27 +182,12 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.inactive) return Promise.resolve(this);
     else
       return new Promise((resolve) => {
-        OneSignal.emitter.once(
-          ActiveAnimatedElement.EVENTS.INACTIVE,
-          (event) => {
-            if (event === this) {
-              return resolve(this);
-            }
-          },
-        );
+        OneSignal.emitter.once('activeAnimatedElementInactive', (event) => {
+          if (event === this) {
+            return resolve(this);
+          }
+        });
       });
-  }
-
-  static get EVENTS() {
-    return {
-      ...AnimatedElement.EVENTS,
-      ...{
-        ACTIVATING: 'activeAnimatedElementActivating',
-        ACTIVE: 'activeAnimatedElementActive',
-        INACTIVATING: 'activeAnimatedElementInactivating',
-        INACTIVE: 'activeAnimatedElementInactive',
-      },
-    };
   }
 
   /**

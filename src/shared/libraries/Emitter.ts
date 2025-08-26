@@ -2,14 +2,7 @@
  * Source: https://github.com/pazguille/emitter-es6
  */
 
-export type EventHandler = (...args: any[]) => any;
-export type OnceEventHandler = {
-  listener: EventHandler;
-};
-
-interface ListenerMap {
-  [index: string]: (EventHandler | OnceEventHandler)[];
-}
+import type { EventsMap } from '../services/types';
 
 /**
  * Creates a new instance of Emitter.
@@ -19,7 +12,7 @@ interface ListenerMap {
  * var emitter = new Emitter();
  */
 export default class Emitter {
-  private _events: ListenerMap;
+  private _events: { [key: string]: ((...args: any[]) => void)[] };
 
   constructor() {
     this._events = {};
@@ -28,9 +21,12 @@ export default class Emitter {
   /**
    * Adds a listener to the collection for a specified event.
    */
-  public on(event: string, listener: EventHandler): Emitter {
-    this._events[event] = this._events[event] || [];
-    this._events[event].push(listener);
+  public on<K extends keyof EventsMap>(
+    eventName: K,
+    listener: (data: EventsMap[K]) => void,
+  ): Emitter {
+    this._events[eventName] = this._events[eventName] || [];
+    this._events[eventName].push(listener);
     return this;
   }
 
@@ -38,11 +34,14 @@ export default class Emitter {
    * Adds a one time listener to the collection for a specified event. It will
    * execute only once.
    */
-  public once(event: string, listener: EventHandler): Emitter {
+  public once<K extends keyof EventsMap>(
+    event: K,
+    listener: (data: EventsMap[K]) => void,
+  ): Emitter {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
 
-    function fn(this: EventHandler) {
+    function fn(this: Emitter) {
       that.off(event, fn);
       // @ts-expect-error - arguments is not typed
       listener.apply(this, arguments);
@@ -57,14 +56,18 @@ export default class Emitter {
   /**
    * Removes a listener from the collection for a specified event.
    */
-  public off(event: string, listener: EventHandler): Emitter {
+  public off<K extends keyof EventsMap>(
+    event: K,
+    listener: (data: EventsMap[K]) => void,
+  ): Emitter {
     const listeners = this._events[event];
 
     if (listeners !== undefined) {
       for (let j = 0; j < listeners.length; j += 1) {
         if (
           listeners[j] === listener ||
-          (listeners[j] as OnceEventHandler).listener === listener
+          (listeners[j] as unknown as { listener: (...args: any[]) => void })
+            .listener === listener
         ) {
           listeners.splice(j, 1);
           break;
@@ -97,9 +100,7 @@ export default class Emitter {
    * @example
    * me.listeners('ready');
    */
-  public listeners(
-    event: string,
-  ): (EventHandler | OnceEventHandler)[] | undefined {
+  public listeners(event: string): ((...args: any[]) => void)[] | undefined {
     try {
       return this._events[event];
     } catch (e) {

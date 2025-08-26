@@ -11,7 +11,7 @@ import { getBrowserName } from '../useragent/detect';
 export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
   return new Promise((resolve) => {
     if (!OneSignal.initialized)
-      OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
+      OneSignal.emitter.once('initializeInternal', resolve);
     else resolve();
   });
 }

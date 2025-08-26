@@ -80,9 +80,9 @@ export default class Dialog extends AnimatedElement {
         }
 
         if (
-          (this.bell._state === Bell._STATES.SUBSCRIBED &&
+          (this.bell._state === 'subscribed' &&
             currentSetSubscription === true) ||
-          (this.bell._state === Bell._STATES.UNSUBSCRIBED &&
+          (this.bell._state === 'unsubscribed' &&
             currentSetSubscription === false)
         ) {
           let notificationIconHtml = '';
@@ -94,13 +94,13 @@ export default class Dialog extends AnimatedElement {
           }
 
           let buttonHtml = '';
-          if (this.bell._state !== Bell._STATES.SUBSCRIBED)
+          if (this.bell._state !== 'subscribed')
             buttonHtml = `<button type="button" class="action" id="${this.subscribeButtonSelectorId}">${this.bell._options.text['dialog.main.button.subscribe']}</button>`;
           else
             buttonHtml = `<button type="button" class="action" id="${this.unsubscribeButtonSelectorId}">${this.bell._options.text['dialog.main.button.unsubscribe']}</button>`;
 
           contents = `<h1>${this.bell._options.text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${notificationIconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container">${buttonHtml}</div>${footer}`;
-        } else if (this.bell._state === Bell._STATES.BLOCKED) {
+        } else if (this.bell._state === 'blocked') {
           let imageUrl = null;
 
           const browserName = getBrowserName();
@@ -143,12 +143,12 @@ export default class Dialog extends AnimatedElement {
               a notification shown in this resubscription case.
             */
             OneSignal.__doNotShowWelcomeNotification = false;
-            OneSignalEvent.trigger(Bell._EVENTS.SUBSCRIBE_CLICK);
+            OneSignalEvent.trigger('notifyButtonSubscribeClick');
           });
         }
         if (this.unsubscribeButton) {
           this.unsubscribeButton.addEventListener('click', () =>
-            OneSignalEvent.trigger(Bell._EVENTS.UNSUBSCRIBE_CLICK),
+            OneSignalEvent.trigger('notifyButtonUnsubscribeClick'),
           );
         }
         this.bell._setCustomColorsIfSpecified();
