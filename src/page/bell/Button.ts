@@ -2,23 +2,21 @@ import { addDomElement, removeDomElement } from 'src/shared/helpers/dom';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
 import LimitStore from 'src/shared/services/LimitStore';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
-import ActiveAnimatedElement from './ActiveAnimatedElement';
+import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 import Message from './Message';
 
-export default class Button extends ActiveAnimatedElement {
+export default class Button extends AnimatedElement {
   public events: any;
   public bell: Bell;
+  private _isHandlingClick = false;
 
   constructor(bell: Bell) {
     super(
       '.onesignal-bell-launcher-button',
       undefined,
-      undefined,
       'onesignal-bell-launcher-button-active',
       undefined,
-      'shown',
-      '',
     );
 
     this.bell = bell;
@@ -92,52 +90,72 @@ export default class Button extends ActiveAnimatedElement {
     this.bell.__badge.inactivate();
   }
 
-  onClick() {
-    OneSignalEvent.trigger('notifyButtonButtonClick');
-    OneSignalEvent.trigger('notifyButtonLauncherClick');
-
-    if (
-      this.bell.__message.shown &&
-      this.bell.__message.contentType == Message.TYPES.MESSAGE
-    ) {
-      // A message is being shown, it'll disappear soon
+  async onClick() {
+    // Prevent concurrent clicks (fixes GitHub issue #409)
+    if (this._isHandlingClick) {
       return;
     }
+    this._isHandlingClick = true;
 
-    const optedOut = LimitStore.getLast<boolean>('subscription.optedOut');
-    if (this.bell._unsubscribed) {
-      if (optedOut) {
-        // The user is manually opted out, but still "really" subscribed
-        this.bell.__launcher.activateIfInactive().then(() => {
-          this.bell._showDialogProcedure();
-        });
-      } else {
-        // The user is actually subscribed, register him for notifications
+    try {
+      OneSignalEvent.trigger('notifyButtonButtonClick');
+      OneSignalEvent.trigger('notifyButtonLauncherClick');
+
+      if (
+        this.bell.__message.shown &&
+        this.bell.__message.contentType == Message.TYPES.MESSAGE
+      ) {
+        // A message is being shown, it'll disappear soon
+        return;
+      }
+
+      const optedOut = LimitStore.getLast<boolean>('subscription.optedOut');
+
+      // Handle resubscription case
+      if (this.bell._unsubscribed && !optedOut) {
         registerForPushNotifications();
         this.bell._ignoreSubscriptionState = true;
-        OneSignal.emitter.once('change', () => {
-          this.bell.__message
-            .display(
+        OneSignal.emitter.once('change', async () => {
+          try {
+            await this.bell.__message.display(
               Message.TYPES.MESSAGE,
               this.bell._options.text['message.action.subscribed'],
               Message.TIMEOUT,
-            )
-            .then(() => {
-              this.bell._ignoreSubscriptionState = false;
-              this.bell.__launcher.inactivate();
-            });
+            );
+            this.bell._ignoreSubscriptionState = false;
+            await this.bell.__launcher.inactivate();
+          } catch (error) {
+            this.bell._ignoreSubscriptionState = false;
+            throw error;
+          }
         });
+        return;
       }
-    } else if (this.bell._subscribed) {
-      this.bell.__launcher.activateIfInactive().then(() => {
-        this.bell._showDialogProcedure();
-      });
-    } else if (this.bell._blocked) {
-      this.bell.__launcher.activateIfInactive().then(() => {
-        this.bell._showDialogProcedure();
-      });
+
+      // Handle dialog toggle for all other cases
+      if (
+        this.bell._unsubscribed ||
+        this.bell._subscribed ||
+        this.bell._blocked
+      ) {
+        await this.bell.__launcher.activateIfInactive();
+        await this.toggleDialog();
+      }
+
+      await this.bell.__message.hide();
+    } finally {
+      this._isHandlingClick = false;
     }
-    return this.bell.__message.hide();
+  }
+
+  private async toggleDialog() {
+    if (this.bell.__dialog.shown) {
+      // Close dialog if already open (toggle behavior)
+      await this.bell.__dialog.hide();
+      await this.bell.__launcher.inactivateIfWasInactive();
+    } else {
+      await this.bell._showDialogProcedure();
+    }
   }
 
   pulse() {

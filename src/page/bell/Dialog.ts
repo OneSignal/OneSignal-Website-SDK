@@ -24,8 +24,7 @@ export default class Dialog extends AnimatedElement {
       '.onesignal-bell-launcher-dialog',
       'onesignal-bell-launcher-dialog-opened',
       undefined,
-      'hidden',
-      ['opacity', 'transform'],
+      undefined,
       '.onesignal-bell-launcher-dialog-body',
     );
 
@@ -37,8 +36,13 @@ export default class Dialog extends AnimatedElement {
     this.notificationIcons = null;
   }
 
-  show() {
-    return this.updateBellLauncherDialogBody().then(() => super.show());
+  async show(): Promise<AnimatedElement> {
+    if (this.shown) {
+      return this;
+    }
+
+    await this.updateBellLauncherDialogBody();
+    return await super.show();
   }
 
   get subscribeButtonSelectorId() {
@@ -131,6 +135,7 @@ export default class Dialog extends AnimatedElement {
         if (this.nestedContentSelector) {
           addDomElement(this.nestedContentSelector, 'beforeend', contents);
         }
+        // Add event listeners (race conditions now prevented at Button/Bell level)
         if (this.subscribeButton) {
           this.subscribeButton.addEventListener('click', () => {
             /*

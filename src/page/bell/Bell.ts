@@ -1,5 +1,4 @@
 import type { AppUserConfigNotifyButton } from 'src/shared/config/types';
-import { containsMatch } from 'src/shared/context/helpers';
 import {
   addCssClass,
   addDomElement,
@@ -12,15 +11,14 @@ import type {
   BellSize,
   BellText,
 } from 'src/shared/prompts/types';
-import { Browser } from 'src/shared/useragent/constants';
-import { getBrowserName } from 'src/shared/useragent/detect';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { once } from '../../shared/utils/utils';
+
 import { DismissPrompt } from '../models/Dismiss';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
+import '../stylesheets/bell.css';
 import Badge from './Badge';
 import Button from './Button';
 import Dialog from './Dialog';
@@ -45,6 +43,7 @@ export default class Bell {
   public _ignoreSubscriptionState = false;
   public _hovering = false;
   public _initialized = false;
+  private _showingDialog = false;
   public _launcher: Launcher | undefined;
   public _button: Button | undefined = undefined;
   public _badge: Badge | undefined = undefined;
@@ -72,7 +71,6 @@ export default class Bell {
 
     if (!this._options.enable) return;
 
-    this._validateOptions(this._options);
     this._state = 'uninitialized';
     this._ignoreSubscriptionState = false;
 
@@ -80,59 +78,20 @@ export default class Bell {
     this._updateState();
   }
 
-  _showDialogProcedure() {
-    if (!this.__dialog.shown) {
-      this.__dialog.show().then(() => {
-        once(
-          document,
-          'click',
-          (e: Event, destroyEventListener: () => void) => {
-            const wasDialogClicked = this.__dialog!.element!.contains(
-              e.target as Node,
-            );
-            if (wasDialogClicked) {
-              return;
-            }
-            destroyEventListener();
-            if (this.__dialog.shown) {
-              this.__dialog.hide().then(() => {
-                this.__launcher.inactivateIfWasInactive();
-              });
-            }
-          },
-          true,
-        );
-      });
+  async _showDialogProcedure() {
+    // Prevent concurrent dialog operations (fixes GitHub issue #409)
+    if (this._showingDialog || this.__dialog.shown) {
+      return;
     }
-  }
+    this._showingDialog = true;
 
-  private _validateOptions(options: AppUserConfigNotifyButton) {
-    if (
-      !options.size ||
-      !containsMatch(['small', 'medium', 'large'], options.size)
-    )
-      throw new Error(
-        `Invalid size ${options.size} for notify button. Choose among 'small', 'medium', or 'large'.`,
-      );
-    if (
-      !options.position ||
-      !containsMatch(['bottom-left', 'bottom-right'], options.position)
-    )
-      throw new Error(
-        `Invalid position ${options.position} for notify button. Choose either 'bottom-left', or 'bottom-right'.`,
-      );
-    if (!options.theme || !containsMatch(['default', 'inverse'], options.theme))
-      throw new Error(
-        `Invalid theme ${options.theme} for notify button. Choose either 'default', or 'inverse'.`,
-      );
-    if (!options.showLauncherAfter || options.showLauncherAfter < 0)
-      throw new Error(
-        `Invalid delay duration of ${this._options.showLauncherAfter} for showing the notify button. Choose a value above 0.`,
-      );
-    if (!options.showBadgeAfter || options.showBadgeAfter < 0)
-      throw new Error(
-        `Invalid delay duration of ${this._options.showBadgeAfter} for showing the notify button's badge. Choose a value above 0.`,
-      );
+    try {
+      await this.__dialog.show();
+      // Dialog stays open until user explicitly closes it via button actions
+      // No more complex document click handling!
+    } finally {
+      this._showingDialog = false;
+    }
   }
 
   private _setDefaultTextOptions(text: Partial<BellText>): BellText {
@@ -286,7 +245,7 @@ export default class Bell {
         // immediately after because of the way mobile click events work. Basically only happens if HOVERING and HOVERED
         // fire within a few milliseconds of each other
         this.__message
-          .waitUntilShown()
+          .show()
           .then(() => delay(Message.TIMEOUT))
           .then(() => this.__message.hide())
           .then(() => {
@@ -472,10 +431,8 @@ export default class Bell {
     await this.__launcher.resize(resizeTo);
 
     this._addDefaultClasses();
-
     this._applyOffsetIfSpecified();
     this._setCustomColorsIfSpecified();
-    this._patchSafariSvgFilterBug();
 
     Log.info('Showing the notify button.');
 
@@ -508,28 +465,6 @@ export default class Bell {
       .then(() => (this._initialized = true));
   }
 
-  _patchSafariSvgFilterBug() {
-    if (getBrowserName() !== Browser.Safari) {
-      const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
-      const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
-      const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
-      this._graphic.setAttribute(
-        'style',
-        `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`,
-      );
-      this.__badge.element.setAttribute(
-        'style',
-        `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`,
-      );
-      this.__dialog!.element!.setAttribute(
-        'style',
-        `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
-      );
-    } else {
-      this.__badge.element.setAttribute('style', `display: none;`);
-    }
-  }
-
   _applyOffsetIfSpecified() {
     const offset = this._options.offset;
     if (offset) {
@@ -558,87 +493,14 @@ export default class Bell {
     }
   }
 
-  private _getDialogButton() {
-    return this._dialog!.element!.querySelector('button.action') as HTMLElement;
-  }
-
-  private _applyCustomColors() {
-    if (!this._options.colors) return;
-
-    const colorMappings: Record<string, (color: string) => void | string> = {
-      'circle.background': (color: string) =>
-        ((
-          this._graphic.querySelector('.background') as HTMLElement
-        ).style.cssText += `fill: ${color}`),
-      'circle.foreground': (color: string) => {
-        this._graphic
-          .querySelectorAll('.foreground')
-          .forEach(
-            (el) => ((el as HTMLElement).style.cssText += `fill: ${color}`),
-          );
-        (this._graphic.querySelector('.stroke') as HTMLElement).style.cssText +=
-          `stroke: ${color}`;
-      },
-      'badge.background': (color: string) =>
-        (this.__badge.element.style.cssText += `background: ${color}`),
-      'badge.bordercolor': (color: string) =>
-        (this.__badge.element.style.cssText += `border-color: ${color}`),
-      'badge.foreground': (color: string) =>
-        (this.__badge.element.style.cssText += `color: ${color}`),
-    };
-
-    const dialogButton = this._getDialogButton();
-    if (dialogButton) {
-      dialogButton.style.cssText = '';
-      colorMappings['dialog.button.background'] = (color: string) =>
-        (dialogButton.style.cssText = `background: ${color}`);
-      colorMappings['dialog.button.foreground'] = (color: string) =>
-        (dialogButton.style.cssText = `color: ${color}`);
-      colorMappings['dialog.button.background.hovering'] = (color: string) =>
-        this._addCssToHead(
-          'onesignal-background-hover-style',
-          `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:hover { background: ${color} !important; }`,
-        );
-      colorMappings['dialog.button.background.active'] = (color: string) =>
-        this._addCssToHead(
-          'onesignal-background-active-style',
-          `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:active { background: ${color} !important; }`,
-        );
-      colorMappings['dialog.button.background.active'] = (color: string) =>
-        this._addCssToHead(
-          'onesignal-background-active-style',
-          `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:active { background: ${color} !important; }`,
-        );
-    }
-
-    const pulseRing = this.__button.element.querySelector('.pulse-ring');
-    if (pulseRing) {
-      (pulseRing as HTMLElement).style.cssText = '';
-      colorMappings['pulse.color'] = (color: string) =>
-        ((pulseRing as HTMLElement).style.cssText = `border-color: ${color}`);
-    }
+  public _setCustomColorsIfSpecified() {
+    const container = this._container;
+    if (!container || !this._options.colors) return;
 
     Object.entries(this._options.colors).forEach(([key, color]) => {
-      const mapper = colorMappings[key as keyof typeof colorMappings];
-      if (mapper) mapper(color);
+      const cssVarName = `--onesignal-${key.replace(/\./g, '-')}`;
+      (container as HTMLElement).style.setProperty(cssVarName, color);
     });
-  }
-
-  _setCustomColorsIfSpecified() {
-    // Some common vars first
-    // Reset added styles first
-    (this._graphic.querySelector('.background') as HTMLElement).style.cssText =
-      '';
-    const foregroundElements = this._graphic.querySelectorAll('.foreground');
-    for (let i = 0; i < foregroundElements.length; i++) {
-      const element = foregroundElements[i] as HTMLElement;
-      element.style.cssText = '';
-    }
-    (this._graphic.querySelector('.stroke') as HTMLElement).style.cssText = '';
-    (this.__badge.element as HTMLElement).style.cssText = '';
-
-    // Set new styles
-    this._applyCustomColors();
   }
 
   _addCssToHead(id: string, css: string) {

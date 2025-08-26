@@ -1,6 +1,4 @@
 import type UserNamespace from 'src/onesignal/UserNamespace';
-import type ActiveAnimatedElement from 'src/page/bell/ActiveAnimatedElement';
-import type AnimatedElement from 'src/page/bell/AnimatedElement';
 import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
 import type { BellState } from '../../page/bell/Bell';
@@ -12,16 +10,6 @@ import type {
 } from '../notifications/types';
 
 export type EventsMap = {
-  activeAnimatedElementActivating: ActiveAnimatedElement;
-  activeAnimatedElementActive: ActiveAnimatedElement;
-  activeAnimatedElementInactivating: ActiveAnimatedElement;
-  activeAnimatedElementInactive: ActiveAnimatedElement;
-
-  animatedElementHidden: AnimatedElement;
-  animatedElementHiding: AnimatedElement;
-  animatedElementShowing: AnimatedElement;
-  animatedElementShown: AnimatedElement;
-
   change: SubscriptionChangeEvent | undefined;
   click: NotificationClickEvent;
   dismiss: NotificationDismissEvent;

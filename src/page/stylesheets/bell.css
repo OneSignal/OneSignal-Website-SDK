@@ -1,0 +1,878 @@
+:root {
+  /* Colors */
+  --onesignal-red: #e54b4d;
+  --onesignal-gray: #d5d7d9;
+
+  /* Sizes */
+  --onesignal-sm-size: 32px;
+  --onesignal-md-size: 48px;
+  --onesignal-lg-size: 64px;
+  --onesignal-dock-offset: 20px;
+
+  /* Typography */
+  --onesignal-message-font-size-base: 14px;
+  --onesignal-badge-font-size-base: 12px;
+  --onesignal-font-sans-serif: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  /* Bell styling */
+  --onesignal-bell-border-width: 3px;
+  --onesignal-bell-shadow: drop-shadow(0 2px 4px rgba(34, 36, 38, 0.35));
+  --onesignal-badge-shadow: drop-shadow(0 2px 4px rgba(34, 36, 38, 0));
+  --onesignal-transition-duration: 175ms;
+  --onesignal-inactive-opacity: 0.5;
+
+  /* Dialog styling */
+  --onesignal-dialog-background: white;
+  --onesignal-dialog-border-width: 2px;
+  --onesignal-dialog-border-color: rgba(0, 0, 0, 0.1);
+  --onesignal-dialog-shadow: drop-shadow(0px 2px 2px rgba(34, 36, 38, 0.15));
+}
+
+/* Main container */
+#onesignal-bell-container.onesignal-reset {
+  z-index: 2147483000;
+  position: fixed;
+
+  &.onesignal-bell-container-bottom-left {
+    bottom: 0;
+    left: 0;
+  }
+
+  &.onesignal-bell-container-bottom-right {
+    bottom: 0;
+    right: 0;
+  }
+
+  /* CSS variable overrides with maximum specificity */
+  &.onesignal-bell-container-bottom-left,
+  &.onesignal-bell-container-bottom-right {
+    .onesignal-bell-launcher {
+      &.onesignal-bell-launcher-theme-default,
+      &.onesignal-bell-launcher-theme-inverse {
+        .onesignal-bell-launcher-button svg {
+          .background {
+            fill: var(--onesignal-circle-background);
+          }
+          .foreground {
+            fill: var(--onesignal-circle-foreground);
+          }
+          .stroke {
+            stroke: var(--onesignal-circle-foreground);
+          }
+        }
+
+        .onesignal-bell-launcher-badge {
+          background: var(--onesignal-badge-background);
+          border-color: var(--onesignal-badge-bordercolor);
+          color: var(--onesignal-badge-foreground);
+        }
+
+        .pulse-ring {
+          border-color: var(--onesignal-pulse-color);
+        }
+
+        .onesignal-bell-launcher-dialog button.action {
+          background: var(--onesignal-dialog-button-background);
+          color: var(--onesignal-dialog-button-foreground);
+
+          &:hover {
+            filter: brightness(0.9);
+          }
+
+          &:active {
+            filter: brightness(0.8);
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Bell launcher */
+.onesignal-bell-launcher {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-font-smoothing: initial;
+  position: absolute;
+  z-index: 2147483000;
+  font-family: var(--onesignal-font-sans-serif);
+  transform: scale(0.01) translateZ(0);
+  opacity: 0;
+  transition:
+    transform var(--onesignal-transition-duration) ease-in-out,
+    opacity var(--onesignal-transition-duration) ease-in-out;
+
+  /* Position variants */
+  &.onesignal-bell-launcher-bottom-left {
+    bottom: var(--onesignal-dock-offset);
+    left: var(--onesignal-dock-offset);
+
+    .onesignal-bell-launcher-badge {
+      left: 4px;
+    }
+
+    .onesignal-bell-launcher-message {
+      transform-origin: left center;
+
+      &:after {
+        right: 100%;
+        border-right-color: black;
+      }
+    }
+
+    .onesignal-bell-launcher-button {
+      left: 0px;
+    }
+
+    /* Size-specific message positioning */
+    &.onesignal-bell-launcher-sm .onesignal-bell-launcher-message {
+      left: calc(
+        var(--onesignal-sm-size) + calc(var(--onesignal-sm-size) * 0.20625) +
+          3px
+      );
+    }
+
+    &.onesignal-bell-launcher-md .onesignal-bell-launcher-message {
+      left: calc(
+        var(--onesignal-md-size) + calc(var(--onesignal-md-size) * 0.20625) +
+          3px
+      );
+    }
+
+    &.onesignal-bell-launcher-lg .onesignal-bell-launcher-message {
+      left: calc(
+        var(--onesignal-lg-size) + calc(var(--onesignal-lg-size) * 0.20625) +
+          3px
+      );
+    }
+
+    /* Size-specific dialog positioning */
+    &.onesignal-bell-launcher-sm .onesignal-bell-launcher-dialog {
+      bottom: calc(
+        var(--onesignal-sm-size) + calc(var(--onesignal-sm-size) * 0.20625)
+      );
+      left: 0;
+      transform-origin: left bottom;
+
+      &:before {
+        left: calc(
+          calc(var(--onesignal-sm-size) * 0.5) - 5px -
+            calc(
+              var(--onesignal-dialog-border-width) +
+                calc(calc(var(--onesignal-sm-size) * 0.20625) * 0.5)
+            )
+        );
+      }
+
+      &:after {
+        left: calc(
+          calc(var(--onesignal-sm-size) * 0.5) - 5px -
+            calc(calc(var(--onesignal-sm-size) * 0.20625) * 0.5)
+        );
+      }
+    }
+
+    &.onesignal-bell-launcher-md .onesignal-bell-launcher-dialog {
+      bottom: calc(
+        var(--onesignal-md-size) + calc(var(--onesignal-md-size) * 0.20625)
+      );
+      left: 0;
+      transform-origin: left bottom;
+
+      &:before {
+        left: calc(
+          calc(var(--onesignal-md-size) * 0.5) - 5px -
+            calc(
+              var(--onesignal-dialog-border-width) +
+                calc(calc(var(--onesignal-md-size) * 0.20625) * 0.5)
+            )
+        );
+      }
+
+      &:after {
+        left: calc(
+          calc(var(--onesignal-md-size) * 0.5) - 5px -
+            calc(calc(var(--onesignal-md-size) * 0.20625) * 0.5)
+        );
+      }
+    }
+
+    &.onesignal-bell-launcher-lg .onesignal-bell-launcher-dialog {
+      bottom: calc(
+        var(--onesignal-lg-size) + calc(var(--onesignal-lg-size) * 0.20625)
+      );
+      left: 0;
+      transform-origin: left bottom;
+
+      &:before {
+        left: calc(
+          calc(var(--onesignal-lg-size) * 0.5) - 5px -
+            calc(
+              var(--onesignal-dialog-border-width) +
+                calc(calc(var(--onesignal-lg-size) * 0.20625) * 0.5)
+            )
+        );
+      }
+
+      &:after {
+        left: calc(
+          calc(var(--onesignal-lg-size) * 0.5) - 5px -
+            calc(calc(var(--onesignal-lg-size) * 0.20625) * 0.5)
+        );
+      }
+    }
+  }
+
+  &.onesignal-bell-launcher-bottom-right {
+    bottom: var(--onesignal-dock-offset);
+    right: var(--onesignal-dock-offset);
+
+    .onesignal-bell-launcher-badge {
+      right: 4px;
+    }
+
+    .onesignal-bell-launcher-message {
+      transform-origin: right center;
+
+      &:after {
+        left: 100%;
+        border-left-color: black;
+      }
+    }
+
+    .onesignal-bell-launcher-button {
+      right: 0px;
+    }
+
+    /* Size-specific message positioning */
+    &.onesignal-bell-launcher-sm .onesignal-bell-launcher-message {
+      right: calc(
+        var(--onesignal-sm-size) + calc(var(--onesignal-sm-size) * 0.20625) +
+          3px
+      );
+    }
+
+    &.onesignal-bell-launcher-md .onesignal-bell-launcher-message {
+      right: calc(
+        var(--onesignal-md-size) + calc(var(--onesignal-md-size) * 0.20625) +
+          3px
+      );
+    }
+
+    &.onesignal-bell-launcher-lg .onesignal-bell-launcher-message {
+      right: calc(
+        var(--onesignal-lg-size) + calc(var(--onesignal-lg-size) * 0.20625) +
+          3px
+      );
+    }
+
+    /* Size-specific dialog positioning */
+    &.onesignal-bell-launcher-sm .onesignal-bell-launcher-dialog {
+      bottom: calc(
+        var(--onesignal-sm-size) + calc(var(--onesignal-sm-size) * 0.20625)
+      );
+      right: 0;
+      transform-origin: right bottom;
+
+      &:before {
+        right: calc(
+          calc(var(--onesignal-sm-size) * 0.5) - 5px -
+            calc(
+              var(--onesignal-dialog-border-width) +
+                calc(calc(var(--onesignal-sm-size) * 0.20625) * 0.5)
+            )
+        );
+      }
+
+      &:after {
+        right: calc(
+          calc(var(--onesignal-sm-size) * 0.5) - 5px -
+            calc(calc(var(--onesignal-sm-size) * 0.20625) * 0.5)
+        );
+      }
+    }
+
+    &.onesignal-bell-launcher-md .onesignal-bell-launcher-dialog {
+      bottom: calc(
+        var(--onesignal-md-size) + calc(var(--onesignal-md-size) * 0.20625)
+      );
+      right: 0;
+      transform-origin: right bottom;
+
+      &:before {
+        right: calc(
+          calc(var(--onesignal-md-size) * 0.5) - 5px -
+            calc(
+              var(--onesignal-dialog-border-width) +
+                calc(calc(var(--onesignal-md-size) * 0.20625) * 0.5)
+            )
+        );
+      }
+
+      &:after {
+        right: calc(
+          calc(var(--onesignal-md-size) * 0.5) - 5px -
+            calc(calc(var(--onesignal-md-size) * 0.20625) * 0.5)
+        );
+      }
+    }
+
+    &.onesignal-bell-launcher-lg .onesignal-bell-launcher-dialog {
+      bottom: calc(
+        var(--onesignal-lg-size) + calc(var(--onesignal-lg-size) * 0.20625)
+      );
+      right: 0;
+      transform-origin: right bottom;
+
+      &:before {
+        right: calc(
+          calc(var(--onesignal-lg-size) * 0.5) - 5px -
+            calc(
+              var(--onesignal-dialog-border-width) +
+                calc(calc(var(--onesignal-lg-size) * 0.20625) * 0.5)
+            )
+        );
+      }
+
+      &:after {
+        right: calc(
+          calc(var(--onesignal-lg-size) * 0.5) - 5px -
+            calc(calc(var(--onesignal-lg-size) * 0.20625) * 0.5)
+        );
+      }
+    }
+  }
+
+  /* Size variants */
+  &.onesignal-bell-launcher-sm {
+    height: var(--onesignal-sm-size);
+    transform-origin: center center;
+    width: var(--onesignal-sm-size);
+
+    .onesignal-bell-launcher-button {
+      width: var(--onesignal-sm-size);
+      height: var(--onesignal-sm-size);
+    }
+
+    .onesignal-bell-launcher-badge {
+      font-size: 8px;
+      width: calc(var(--onesignal-sm-size) * 0.375);
+      height: calc(var(--onesignal-sm-size) * 0.375);
+      line-height: calc(var(--onesignal-sm-size) * 0.375);
+    }
+
+    .onesignal-bell-launcher-message {
+      padding: calc(var(--onesignal-sm-size) * 0.3);
+
+      &:after {
+        border-width: calc(var(--onesignal-sm-size) * 0.20625);
+        margin-top: calc(var(--onesignal-sm-size) * -0.20625);
+      }
+    }
+
+    .onesignal-bell-launcher-dialog {
+      &:after {
+        border-top-color: var(--onesignal-dialog-background);
+        border-width: calc(var(--onesignal-sm-size) * 0.20625);
+      }
+
+      &:before {
+        border-top-color: rgba(180, 180, 180, 0.1);
+        border-width: calc(
+          calc(var(--onesignal-sm-size) * 0.20625) +
+            var(--onesignal-dialog-border-width)
+        );
+      }
+    }
+  }
+
+  &.onesignal-bell-launcher-md {
+    height: var(--onesignal-md-size);
+    transform-origin: center center;
+    width: var(--onesignal-md-size);
+
+    .onesignal-bell-launcher-button {
+      width: var(--onesignal-md-size);
+      height: var(--onesignal-md-size);
+    }
+
+    .onesignal-bell-launcher-badge {
+      font-size: var(--onesignal-badge-font-size-base);
+      width: calc(var(--onesignal-md-size) * 0.375);
+      height: calc(var(--onesignal-md-size) * 0.375);
+      line-height: calc(var(--onesignal-md-size) * 0.375);
+    }
+
+    .onesignal-bell-launcher-message {
+      padding: calc(var(--onesignal-md-size) * 0.3);
+
+      &:after {
+        border-width: calc(var(--onesignal-md-size) * 0.20625);
+        margin-top: calc(var(--onesignal-md-size) * -0.20625);
+      }
+    }
+
+    .onesignal-bell-launcher-dialog {
+      &:after {
+        border-top-color: var(--onesignal-dialog-background);
+        border-width: calc(var(--onesignal-md-size) * 0.20625);
+      }
+
+      &:before {
+        border-top-color: rgba(180, 180, 180, 0.1);
+        border-width: calc(
+          calc(var(--onesignal-md-size) * 0.20625) +
+            var(--onesignal-dialog-border-width)
+        );
+      }
+    }
+  }
+
+  &.onesignal-bell-launcher-lg {
+    height: var(--onesignal-lg-size);
+    transform-origin: center center;
+    width: var(--onesignal-lg-size);
+
+    .onesignal-bell-launcher-button {
+      width: var(--onesignal-lg-size);
+      height: var(--onesignal-lg-size);
+    }
+
+    .onesignal-bell-launcher-badge {
+      font-size: var(--onesignal-badge-font-size-base);
+      width: calc(var(--onesignal-lg-size) * 0.375);
+      height: calc(var(--onesignal-lg-size) * 0.375);
+      line-height: calc(var(--onesignal-lg-size) * 0.375);
+    }
+
+    .onesignal-bell-launcher-message {
+      padding: calc(var(--onesignal-lg-size) * 0.3);
+
+      &:after {
+        border-width: calc(var(--onesignal-lg-size) * 0.20625);
+        margin-top: calc(var(--onesignal-lg-size) * -0.20625);
+      }
+    }
+
+    .onesignal-bell-launcher-dialog {
+      &:after {
+        border-top-color: var(--onesignal-dialog-background);
+        border-width: calc(var(--onesignal-lg-size) * 0.20625);
+      }
+
+      &:before {
+        border-top-color: rgba(180, 180, 180, 0.1);
+        border-width: calc(
+          calc(var(--onesignal-lg-size) * 0.20625) +
+            var(--onesignal-dialog-border-width)
+        );
+      }
+    }
+  }
+
+  /* State classes */
+  &.onesignal-bell-launcher-enabled,
+  &.onesignal-bell-launcher-active {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  &.onesignal-bell-launcher-disabled {
+    visibility: hidden;
+  }
+
+  &.onesignal-bell-launcher-inactive {
+    opacity: var(--onesignal-inactive-opacity);
+  }
+
+  /* Theme styles */
+  &.onesignal-bell-launcher-theme-default,
+  &.onesignal-bell-launcher-theme-inverse {
+    .onesignal-bell-launcher-button {
+      svg {
+        .background {
+          fill: var(--onesignal-circle-background);
+        }
+
+        .foreground {
+          fill: var(--onesignal-circle-foreground);
+        }
+
+        .stroke {
+          fill: none;
+          stroke: var(--onesignal-circle-foreground);
+          stroke-width: var(--onesignal-bell-border-width);
+          stroke-miterlimit: 10;
+        }
+      }
+
+      &.onesignal-bell-launcher-button-active,
+      &.onesignal-bell-launcher-badge-active {
+        svg .background {
+          fill: var(--onesignal-circle-background);
+        }
+      }
+
+      .pulse-ring {
+        border: 7px solid var(--onesignal-pulse-color);
+      }
+    }
+
+    .onesignal-bell-launcher-badge {
+      border: 1px solid var(--onesignal-badge-bordercolor);
+      background: var(--onesignal-badge-background);
+      color: var(--onesignal-badge-foreground);
+    }
+  }
+}
+
+/* Button styles */
+.onesignal-bell-launcher-button {
+  position: absolute;
+  bottom: 0;
+  border-radius: 50%;
+  transition:
+    transform var(--onesignal-transition-duration) ease-in-out,
+    border var(--onesignal-transition-duration) ease-in-out,
+    width var(--onesignal-transition-duration) ease-in-out,
+    height var(--onesignal-transition-duration) ease-in-out;
+  cursor: pointer;
+  z-index: 2147483000;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    -webkit-filter: var(--onesignal-bell-shadow);
+    filter: var(--onesignal-bell-shadow);
+  }
+
+  &.onesignal-bell-launcher-button-hover {
+    cursor: pointer;
+  }
+}
+
+/* Badge styles */
+.onesignal-bell-launcher-badge {
+  position: absolute;
+  bottom: 0;
+  border-radius: 50%;
+  text-align: center;
+  top: 0;
+  cursor: pointer;
+  -webkit-filter: var(--onesignal-badge-shadow);
+  filter: var(--onesignal-badge-shadow);
+  transition:
+    transform var(--onesignal-transition-duration) ease-in-out,
+    border var(--onesignal-transition-duration) ease-in-out,
+    opacity calc(var(--onesignal-transition-duration) * 1.2) ease-in-out,
+    width calc(var(--onesignal-transition-duration) * 1.2) ease-in-out,
+    height calc(var(--onesignal-transition-duration) * 1.2) ease-in-out,
+    position calc(var(--onesignal-transition-duration) * 1.2) ease-in-out,
+    right calc(var(--onesignal-transition-duration) * 1.2) ease-in-out,
+    top calc(var(--onesignal-transition-duration) * 1.2) ease-in-out,
+    bottom calc(var(--onesignal-transition-duration) * 1.2) ease-in-out,
+    left calc(var(--onesignal-transition-duration) * 1.2) ease-in-out;
+  z-index: 2147483400;
+  opacity: 0;
+  transform: scale(0.01);
+  pointer-events: none;
+
+  &.onesignal-bell-launcher-badge-hover {
+    cursor: pointer;
+  }
+
+  &.onesignal-bell-launcher-badge-opened {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Message styles */
+.onesignal-bell-launcher-message {
+  position: absolute;
+  color: white;
+  background: black;
+  cursor: pointer;
+  border-radius: 5px;
+  transform: translateY(-50%) scaleX(0) translateZ(0);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--onesignal-transition-duration) ease-in-out,
+    opacity var(--onesignal-transition-duration) ease-in-out;
+  top: 50%;
+  z-index: 2147481000;
+
+  &:after {
+    top: 50%;
+    border: solid transparent;
+    content: ' ';
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+    border-color: transparent;
+  }
+
+  &.onesignal-bell-launcher-message-opened {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(-50%) scaleX(1) translateZ(0);
+  }
+}
+
+.onesignal-bell-launcher-message-body {
+  z-index: 2147482000;
+  max-width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--onesignal-message-font-size-base);
+}
+
+/* Dialog styles */
+.onesignal-bell-launcher-dialog {
+  cursor: pointer;
+  position: absolute;
+  background-color: var(--onesignal-dialog-background);
+  border-radius: 5px;
+  border: 1px solid var(--onesignal-dialog-border-color);
+  -webkit-filter: var(--onesignal-dialog-shadow);
+  filter: var(--onesignal-dialog-shadow);
+  opacity: 0;
+  width: 200px;
+  transform: scale(0, 0) translateZ(0);
+  transition:
+    transform var(--onesignal-transition-duration) ease-in-out,
+    opacity var(--onesignal-transition-duration) ease-in-out;
+  z-index: 2147481000;
+  padding: 0.3em 0.8em 0.6em 0.8em;
+  color: rgb(51, 51, 51);
+
+  &:after,
+  &:before {
+    top: 100%;
+    border: solid transparent;
+    content: ' ';
+    height: 0;
+    width: 0;
+    position: absolute;
+  }
+
+  &.onesignal-bell-launcher-dialog-opened {
+    transform: scale(1, 1) translateZ(0);
+    opacity: 1;
+  }
+
+  ol {
+    counter-reset: foo;
+    display: table;
+    border-spacing: 0.3em 0.75em;
+
+    > li {
+      counter-increment: foo;
+      display: table-row;
+      margin-bottom: 0.75em;
+
+      &::before {
+        content: counter(foo) '.';
+        display: table-cell;
+        text-align: right;
+      }
+    }
+  }
+
+  a {
+    box-sizing: border-box;
+    text-decoration: none;
+    color: initial;
+
+    &:visited,
+    &:hover,
+    &:hover:active,
+    &:active,
+    &:focus {
+      text-decoration: none;
+      color: initial;
+    }
+  }
+
+  button {
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    padding: 0.625em 1em;
+    box-shadow: none;
+    border-radius: 4px;
+    font-weight: 400;
+    font-family: var(--onesignal-font-sans-serif);
+    font-size: calc(var(--onesignal-message-font-size-base) - 2px);
+    letter-spacing: 0.65px;
+    cursor: pointer;
+
+    &.action {
+      color: white;
+      background: var(--onesignal-red);
+      width: 100%;
+
+      &:hover {
+        background: #cc4345;
+      }
+
+      &:active {
+        background: #b33c3e;
+      }
+    }
+  }
+}
+
+.onesignal-bell-launcher-dialog-body {
+  z-index: 2147482000;
+  max-width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--onesignal-font-sans-serif);
+  font-size: var(--onesignal-message-font-size-base);
+
+  h1 {
+    font-size: 15px;
+    line-height: 1.2em;
+    font-weight: 500;
+    font-family: var(--onesignal-font-sans-serif);
+    letter-spacing: 0.2px;
+    text-align: center;
+    color: #942c2e;
+  }
+
+  p {
+    font-size: var(--onesignal-message-font-size-base);
+    font-weight: 400;
+    font-family: var(--onesignal-font-sans-serif);
+  }
+
+  .divider {
+    border-bottom: 1px solid var(--onesignal-dialog-border-color);
+    margin: 0.25em -0.93em;
+  }
+
+  .kickback {
+    text-align: center;
+    font-family: var(--onesignal-font-sans-serif);
+    font-weight: 300;
+    font-size: calc(var(--onesignal-message-font-size-base) * 0.7);
+    letter-spacing: 0.5px;
+  }
+
+  .instructions {
+    max-width: 95vw;
+    max-height: 70vh;
+    font-family: var(--onesignal-font-sans-serif);
+    font-weight: 400;
+    font-size: var(--onesignal-message-font-size-base);
+
+    img {
+      width: 100%;
+    }
+  }
+
+  .push-notification {
+    display: flex;
+    max-width: 330px;
+    border: 1px solid var(--onesignal-dialog-border-color);
+    border-radius: 3px;
+    background: rgba(250, 250, 250, 0.5);
+    overflow: auto;
+    margin: 0.5em 0;
+
+    .push-notification-icon {
+      width: 50px;
+      height: 50px;
+      margin: 6px;
+      margin-right: 3px;
+      border-radius: 2px;
+
+      &.push-notification-icon-default {
+        background: var(--onesignal-gray);
+      }
+
+      img {
+        width: 50px;
+        height: 50px;
+        border-radius: 1px;
+      }
+    }
+
+    .push-notification-text-container {
+      margin: 6px;
+      margin-left: 3px;
+      flex: 1;
+
+      .push-notification-text {
+        height: 5px;
+        width: 100%;
+        background: var(--onesignal-gray);
+        margin: 5px 0;
+        border-radius: 1px;
+
+        &.push-notification-text-short {
+          width: 75%;
+        }
+
+        &.push-notification-text-medium {
+          width: 87%;
+        }
+
+        &:first-of-type {
+          margin-top: 2px;
+        }
+
+        &:last-of-type {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}
+
+/* Pulse animation */
+.pulse-ring {
+  border-radius: 50%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  animation: notifyButtonPulse 0.35s ease-in-out;
+  animation-iteration-count: 1;
+  opacity: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Print styles */
+@media print {
+  #onesignal-bell-container {
+    display: none;
+  }
+}
+
+/* Keyframes */
+@keyframes notifyButtonPulse {
+  0% {
+    transform: scale(0.1);
+    opacity: 0;
+    border-width: 10px;
+  }
+  50% {
+    opacity: 1;
+    border-width: 5px;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+    border-width: 1px;
+  }
+}

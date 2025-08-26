@@ -1,17 +1,13 @@
-import { containsMatch } from 'src/shared/context/helpers';
 import {
   addCssClass,
   hasCssClass,
   removeCssClass,
 } from 'src/shared/helpers/dom';
-import { nothing } from 'src/shared/helpers/general';
-import Log from 'src/shared/libraries/Log';
 import type { BellSize } from 'src/shared/prompts/types';
-import { once } from 'src/shared/utils/utils';
-import ActiveAnimatedElement from './ActiveAnimatedElement';
+import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
-export default class Launcher extends ActiveAnimatedElement {
+export default class Launcher extends AnimatedElement {
   public bell: Bell;
   public wasInactive: boolean;
 
@@ -20,10 +16,7 @@ export default class Launcher extends ActiveAnimatedElement {
       '.onesignal-bell-launcher',
       'onesignal-bell-launcher-active',
       undefined,
-      undefined,
       'onesignal-bell-launcher-inactive',
-      'hidden',
-      'active',
     );
 
     this.bell = bell;
@@ -32,8 +25,8 @@ export default class Launcher extends ActiveAnimatedElement {
 
   async resize(size: BellSize) {
     if (!this.element) {
-      // Notify button doesn't exist
-      throw new Error('Missing DOM element');
+      // DOM element doesn't exist yet, skip resize
+      return this;
     }
 
     // If the size is the same, do nothing and resolve an empty promise
@@ -62,88 +55,57 @@ export default class Launcher extends ActiveAnimatedElement {
     if (!this.shown) {
       return this;
     } else {
-      return await new Promise((resolve) => {
-        // Once the launcher has finished shrinking down
-        if (this.targetTransitionEvents.length == 0) {
-          return resolve(this);
-        } else {
-          const timerId = setTimeout(() => {
-            Log.debug(
-              `Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`,
-            );
-          }, this.transitionCheckTimeout);
-          once(
-            this.element!,
-            'transitionend',
-            (event: Event, destroyListenerFn: () => void) => {
-              if (
-                event.target === this.element &&
-                containsMatch(
-                  this.targetTransitionEvents,
-                  (event as any).propertyName,
-                )
-              ) {
-                clearTimeout(timerId);
-                // Uninstall the event listener for transitionend
-                destroyListenerFn();
-                return resolve(this);
-              }
-            },
-            true,
-          );
-        }
-      });
+      // Wait for animations using the modern approach
+      await this.waitForAnimations();
+      return this;
     }
   }
 
-  activateIfInactive() {
+  async activateIfInactive() {
     if (this.inactive) {
       this.wasInactive = true;
-      return this.activate();
-    } else return nothing();
+      await this.activate();
+    }
+    return this;
   }
 
-  inactivateIfWasInactive() {
+  async inactivateIfWasInactive() {
     if (this.wasInactive) {
       this.wasInactive = false;
-      return this.inactivate();
-    } else return nothing();
+      await this.inactivate();
+      return this;
+    } else {
+      return this;
+    }
   }
 
   clearIfWasInactive() {
     this.wasInactive = false;
   }
 
-  inactivate() {
-    return this.bell.__message.hide().then(() => {
-      if (this.bell.__badge.content.length > 0) {
-        return this.bell.__badge
-          .hide()
-          .then(() => Promise.all([super.inactivate(), this.resize('small')]))
-          .then(() => this.bell.__badge.show());
-      } else {
-        return Promise.all([super.inactivate(), this.resize('small')]).then(
-          () => this,
-        );
-      }
-    });
+  async inactivate(): Promise<AnimatedElement> {
+    await this.bell.__message.hide();
+    if (this.bell.__badge.content.length > 0) {
+      await this.bell.__badge.hide();
+      await super.inactivate();
+      await this.resize('small');
+      await this.bell.__badge.show();
+    } else {
+      await super.inactivate();
+      await this.resize('small');
+    }
+    return this;
   }
 
-  activate() {
+  async activate(): Promise<AnimatedElement> {
     if (this.bell.__badge.content.length > 0) {
-      return this.bell.__badge
-        .hide()
-        .then(() =>
-          Promise.all([
-            super.activate(),
-            this.resize(this.bell._options.size!),
-          ]),
-        );
+      await this.bell.__badge.hide();
+      await super.activate();
+      await this.resize(this.bell._options.size!);
     } else {
-      return Promise.all([
-        super.activate(),
-        this.resize(this.bell._options.size!),
-      ]);
+      await super.activate();
+      await this.resize(this.bell._options.size!);
     }
+    return this;
   }
 }
