@@ -7,7 +7,7 @@ import Bell from './Bell';
 export default class Message extends AnimatedElement {
   public bell: Bell;
   public contentType: string;
-  public queued: any;
+  public queued: string[];
 
   constructor(bell: Bell) {
     super(
@@ -58,49 +58,51 @@ export default class Message extends AnimatedElement {
   }
 
   getTipForState(): string {
-    if (this.bell.state === Bell.STATES.UNSUBSCRIBED)
-      return this.bell.options.text['tip.state.unsubscribed'];
-    else if (this.bell.state === Bell.STATES.SUBSCRIBED)
-      return this.bell.options.text['tip.state.subscribed'];
-    else if (this.bell.state === Bell.STATES.BLOCKED)
-      return this.bell.options.text['tip.state.blocked'];
+    if (this.bell._state === Bell._STATES.UNSUBSCRIBED)
+      return this.bell._options.text['tip.state.unsubscribed'];
+    else if (this.bell._state === Bell._STATES.SUBSCRIBED)
+      return this.bell._options.text['tip.state.subscribed'];
+    else if (this.bell._state === Bell._STATES.BLOCKED)
+      return this.bell._options.text['tip.state.blocked'];
     return '';
   }
 
   enqueue(message: string) {
     this.queued.push(decodeHtmlEntities(message));
     return new Promise<void>((resolve) => {
-      if (this.bell.badge.shown) {
-        this.bell.badge
+      if (this.bell.__badge.shown) {
+        this.bell.__badge
           .hide()
-          .then(() => this.bell.badge.increment())
-          .then(() => this.bell.badge.show())
-          .then(resolve);
+          .then(() => this.bell.__badge.increment())
+          .then(() => this.bell.__badge.show())
+          .then(() => resolve());
       } else {
-        this.bell.badge.increment();
-        if (this.bell.initialized) this.bell.badge.show().then(resolve);
+        this.bell.__badge.increment();
+        if (this.bell._initialized)
+          this.bell.__badge.show().then(() => resolve());
         else resolve();
       }
     });
   }
 
-  dequeue(message: string) {
-    const dequeuedMessage = this.queued.pop(message);
+  dequeue() {
+    const dequeuedMessage = this.queued.pop();
     return new Promise((resolve) => {
-      if (this.bell.badge.shown) {
-        this.bell.badge
+      if (this.bell.__badge.shown) {
+        this.bell.__badge
           .hide()
-          .then(() => this.bell.badge.decrement())
-          .then((numMessagesLeft: number) => {
+          .then(() => this.bell.__badge.decrement())
+          .then(() => {
+            const numMessagesLeft = Number(this.bell.__badge.content) || 0;
             if (numMessagesLeft > 0) {
-              return this.bell.badge.show();
+              return this.bell.__badge.show();
             } else {
               return Promise.resolve(this);
             }
           })
-          .then(resolve(dequeuedMessage));
+          .then(() => resolve(dequeuedMessage));
       } else {
-        this.bell.badge.decrement();
+        this.bell.__badge.decrement();
         resolve(dequeuedMessage);
       }
     });

@@ -115,29 +115,34 @@ export default class Launcher extends ActiveAnimatedElement {
   }
 
   inactivate() {
-    return this.bell.message.hide().then(() => {
-      if (this.bell.badge.content.length > 0) {
-        return this.bell.badge
+    return this.bell.__message.hide().then(() => {
+      if (this.bell.__badge.content.length > 0) {
+        return this.bell.__badge
           .hide()
           .then(() => Promise.all([super.inactivate(), this.resize('small')]))
-          .then(() => this.bell.badge.show());
+          .then(() => this.bell.__badge.show());
       } else {
-        return Promise.all([super.inactivate(), this.resize('small')]);
+        return Promise.all([super.inactivate(), this.resize('small')]).then(
+          () => this,
+        );
       }
     });
   }
 
   activate() {
-    if (this.bell.badge.content.length > 0) {
-      return this.bell.badge
+    if (this.bell.__badge.content.length > 0) {
+      return this.bell.__badge
         .hide()
         .then(() =>
-          Promise.all([super.activate(), this.resize(this.bell.options.size!)]),
+          Promise.all([
+            super.activate(),
+            this.resize(this.bell._options.size!),
+          ]),
         );
     } else {
       return Promise.all([
         super.activate(),
-        this.resize(this.bell.options.size!),
+        this.resize(this.bell._options.size!),
       ]);
     }
   }

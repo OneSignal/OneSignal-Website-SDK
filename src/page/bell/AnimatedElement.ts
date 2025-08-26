@@ -232,7 +232,7 @@ export default class AnimatedElement {
    * @returns {Element | null} Returns the native {Element} via document.querySelector() or {null} if not found.
    */
   get element() {
-    return document.querySelector(this.selector);
+    return document.querySelector(this.selector) as HTMLElement;
   }
 
   /* States an element can be in */

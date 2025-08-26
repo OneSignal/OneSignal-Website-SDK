@@ -72,73 +72,73 @@ export default class Button extends ActiveAnimatedElement {
       LimitStore.isEmpty(this.events.mouse) ||
       LimitStore.getLast(this.events.mouse) === 'out'
     ) {
-      OneSignalEvent.trigger(Bell.EVENTS.HOVERING);
+      OneSignalEvent.trigger(Bell._EVENTS.HOVERING);
     }
     LimitStore.put(this.events.mouse, 'over');
   }
 
   onHovered() {
     LimitStore.put(this.events.mouse, 'out');
-    OneSignalEvent.trigger(Bell.EVENTS.HOVERED);
+    OneSignalEvent.trigger(Bell._EVENTS.HOVERED);
   }
 
   onTap() {
     this.pulse();
     this.activate();
-    this.bell.badge.activate();
+    this.bell.__badge.activate();
   }
 
   onEndTap() {
     this.inactivate();
-    this.bell.badge.inactivate();
+    this.bell.__badge.inactivate();
   }
 
   onClick() {
-    OneSignalEvent.trigger(Bell.EVENTS.BELL_CLICK);
-    OneSignalEvent.trigger(Bell.EVENTS.LAUNCHER_CLICK);
+    OneSignalEvent.trigger(Bell._EVENTS.BELL_CLICK);
+    OneSignalEvent.trigger(Bell._EVENTS.LAUNCHER_CLICK);
 
     if (
-      this.bell.message.shown &&
-      this.bell.message.contentType == Message.TYPES.MESSAGE
+      this.bell.__message.shown &&
+      this.bell.__message.contentType == Message.TYPES.MESSAGE
     ) {
       // A message is being shown, it'll disappear soon
       return;
     }
 
     const optedOut = LimitStore.getLast<boolean>('subscription.optedOut');
-    if (this.bell.unsubscribed) {
+    if (this.bell._unsubscribed) {
       if (optedOut) {
         // The user is manually opted out, but still "really" subscribed
-        this.bell.launcher.activateIfInactive().then(() => {
-          this.bell.showDialogProcedure();
+        this.bell.__launcher.activateIfInactive().then(() => {
+          this.bell._showDialogProcedure();
         });
       } else {
         // The user is actually subscribed, register him for notifications
         registerForPushNotifications();
         this.bell._ignoreSubscriptionState = true;
         OneSignal.emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
-          this.bell.message
+          this.bell.__message
             .display(
               Message.TYPES.MESSAGE,
-              this.bell.options.text['message.action.subscribed'],
+              this.bell._options.text['message.action.subscribed'],
               Message.TIMEOUT,
             )
             .then(() => {
               this.bell._ignoreSubscriptionState = false;
-              this.bell.launcher.inactivate();
+              this.bell.__launcher.inactivate();
             });
         });
       }
-    } else if (this.bell.subscribed) {
-      this.bell.launcher.activateIfInactive().then(() => {
-        this.bell.showDialogProcedure();
+    } else if (this.bell._subscribed) {
+      this.bell.__launcher.activateIfInactive().then(() => {
+        this.bell._showDialogProcedure();
       });
-    } else if (this.bell.blocked) {
-      this.bell.launcher.activateIfInactive().then(() => {
-        this.bell.showDialogProcedure();
+    } else if (this.bell._blocked) {
+      this.bell.__launcher.activateIfInactive().then(() => {
+        this.bell._showDialogProcedure();
       });
     }
-    return this.bell.message.hide();
+    return this.bell.__message.hide();
   }
 
   pulse() {
@@ -150,6 +150,6 @@ export default class Button extends ActiveAnimatedElement {
         '<div class="pulse-ring"></div>',
       );
     }
-    this.bell.setCustomColorsIfSpecified();
+    this.bell._setCustomColorsIfSpecified();
   }
 }
