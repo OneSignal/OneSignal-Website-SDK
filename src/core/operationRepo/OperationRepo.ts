@@ -50,7 +50,7 @@ export class OperationQueueItem {
 export class OperationRepo implements IOperationRepo, IStartableService {
   private executorsMap: Map<string, IOperationExecutor>;
   public queue: OperationQueueItem[] = [];
-  public _timerID: NodeJS.Timeout | undefined = undefined;
+  public timerID: NodeJS.Timeout | undefined = undefined;
   private enqueueIntoBucket = 0;
   private operationModelStore: OperationModelStore;
   private newRecordState: NewRecordsState;
@@ -90,13 +90,13 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async start(): Promise<void> {
-    await this.loadSavedOperations();
-    this.processQueueForever();
+    await this._loadSavedOperations();
+    this._processQueueForever();
   }
 
-  public _pause(): void {
-    clearInterval(this._timerID);
-    this._timerID = undefined;
+  public pause(): void {
+    clearInterval(this.timerID);
+    this.timerID = undefined;
     Log.debug('OperationRepo: Paused');
   }
 
@@ -153,24 +153,24 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
   }
 
-  private async processQueueForever(): Promise<void> {
+  private async _processQueueForever(): Promise<void> {
     this.enqueueIntoBucket++;
     let runningOps = false;
 
     if (isConsentRequired()) {
-      this._pause();
+      this.pause();
       Log.debug('Consent not given; not executing operations');
       return;
     }
 
-    this._timerID = setInterval(async () => {
+    this.timerID = setInterval(async () => {
       if (runningOps) return Log.debug('Operations in progress');
 
-      const ops = this.getNextOps(this.executeBucket);
+      const ops = this._getNextOps(this.executeBucket);
 
       if (ops) {
         runningOps = true;
-        await this.executeOperations(ops);
+        await this._executeOperations(ops);
         runningOps = false;
       } else {
         this.enqueueIntoBucket++;
@@ -178,7 +178,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }, OP_REPO_EXECUTION_INTERVAL);
   }
 
-  public async executeOperations(ops: OperationQueueItem[]): Promise<void> {
+  public async _executeOperations(ops: OperationQueueItem[]): Promise<void> {
     try {
       const startingOp = ops[0];
       const executor = this.executorsMap.get(startingOp.operation.name);
@@ -255,7 +255,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           Log.error(
             `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
           );
-          this._pause();
+          this.pause();
           ops.toReversed().forEach((op) => {
             removeOpFromDB(op.operation);
             this.queue.unshift(op);
@@ -276,7 +276,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
 
       // Wait before next execution
-      await this.delayBeforeNextExecution(
+      await this._delayBeforeNextExecution(
         highestRetries,
         response.retryAfterSeconds,
       );
@@ -294,7 +294,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
   }
 
-  public async delayBeforeNextExecution(
+  public async _delayBeforeNextExecution(
     retries: number,
     retryAfterSeconds?: number,
   ): Promise<void> {
@@ -309,7 +309,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     await delay(delayFor);
   }
 
-  public getNextOps(bucketFilter: number): OperationQueueItem[] | null {
+  public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
     const startingOpIndex = this.queue.findIndex(
       (item) =>
         item.operation.canStartExecute &&
@@ -320,13 +320,13 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     if (startingOpIndex !== -1) {
       const startingOp = this.queue[startingOpIndex];
       this.queue.splice(startingOpIndex, 1);
-      return this.getGroupableOperations(startingOp);
+      return this._getGroupableOperations(startingOp);
     }
 
     return null;
   }
 
-  public getGroupableOperations(
+  public _getGroupableOperations(
     startingOp: OperationQueueItem,
   ): OperationQueueItem[] {
     const ops = [startingOp];
@@ -366,7 +366,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return ops;
   }
 
-  public async loadSavedOperations(): Promise<void> {
+  public async _loadSavedOperations(): Promise<void> {
     await this.operationModelStore.loadOperations();
     const operations = this.operationModelStore.list().toReversed();
 

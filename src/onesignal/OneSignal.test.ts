@@ -58,10 +58,6 @@ import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 mockPageStylesCss();
 
 describe('OneSignal', () => {
-  beforeAll(() => {
-    setConsentRequired(true);
-  });
-
   beforeEach(() => {
     TestEnvironment.initialize({
       initUserAndPushSubscription: true,
@@ -674,6 +670,8 @@ describe('OneSignal', () => {
         });
 
         test('login then accept web push permissions - it should make two user calls', async () => {
+          const { promise, resolve } = Promise.withResolvers();
+          OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, resolve);
           setGetUserResponse();
           setCreateUserResponse({
             onesignalId: ONESIGNAL_ID,
@@ -719,6 +717,7 @@ describe('OneSignal', () => {
             ...BASE_IDENTITY,
             subscriptions: [],
           });
+          await promise;
 
           // second call creates the subscription
           await vi.waitUntil(() => createUserFn.mock.calls.length === 2);

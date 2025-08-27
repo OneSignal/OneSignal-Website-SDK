@@ -238,7 +238,7 @@ export default class OneSignal {
     if (consent) {
       OneSignal.coreDirector.operationRepo.start();
     } else {
-      OneSignal.coreDirector.operationRepo._pause();
+      OneSignal.coreDirector.operationRepo.pause();
     }
 
     if (consent && OneSignal.pendingInit) await OneSignal._delayedInit();

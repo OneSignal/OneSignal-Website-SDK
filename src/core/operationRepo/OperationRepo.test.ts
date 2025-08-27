@@ -71,7 +71,7 @@ describe('OperationRepo', () => {
   afterEach(async () => {
     // since the perist call in model store is not awaited, we need to flush the queue
     // for tests that call start on the op repo
-    if (opRepo._timerID !== undefined) {
+    if (opRepo.timerID !== undefined) {
       await vi.waitUntil(async () => {
         const dbOps = await db.getAll('operations');
         return dbOps.length === 0;
@@ -116,7 +116,7 @@ describe('OperationRepo', () => {
     });
 
     test('enqueue should persist operations in IndexedDb', async () => {
-      await opRepo.loadSavedOperations();
+      await opRepo._loadSavedOperations();
 
       const op1 = new SetAliasOperation(
         APP_ID,
@@ -174,7 +174,7 @@ describe('OperationRepo', () => {
         modelName: 'operations',
       });
 
-      await opRepo.loadSavedOperations();
+      await opRepo._loadSavedOperations();
 
       const list = await db.getAll('operations');
       expect(list).toEqual([
@@ -208,7 +208,7 @@ describe('OperationRepo', () => {
   });
 
   test('operations should be processed after start call', async () => {
-    const getNextOpsSpy = vi.spyOn(opRepo, 'getNextOps');
+    const getNextOpsSpy = vi.spyOn(opRepo, '_getNextOps');
     await opRepo.start();
     opRepo.enqueue(mockOperation);
 
@@ -231,7 +231,7 @@ describe('OperationRepo', () => {
     });
 
     // single operation should be returned as is
-    expect(opRepo.getGroupableOperations(op)).toEqual([op]);
+    expect(opRepo._getGroupableOperations(op)).toEqual([op]);
 
     // can group operations by same create comparison key
     op = new OperationQueueItem({
@@ -243,7 +243,7 @@ describe('OperationRepo', () => {
       bucket: 0,
     });
     opRepo.enqueue(op2.operation);
-    expect(opRepo.getGroupableOperations(op)).toEqual([op, op2]);
+    expect(opRepo._getGroupableOperations(op)).toEqual([op, op2]);
 
     // can group operations by same modify comparison key
     op = new OperationQueueItem({
@@ -255,7 +255,7 @@ describe('OperationRepo', () => {
       bucket: 0,
     });
     opRepo.enqueue(op2.operation);
-    expect(opRepo.getGroupableOperations(op)).toEqual([op, op2]);
+    expect(opRepo._getGroupableOperations(op)).toEqual([op, op2]);
 
     // throws for no comparison keys
     op = new OperationQueueItem({
@@ -263,7 +263,7 @@ describe('OperationRepo', () => {
       bucket: 0,
     });
     opRepo.enqueue(op2.operation);
-    expect(() => opRepo.getGroupableOperations(op)).toThrow(
+    expect(() => opRepo._getGroupableOperations(op)).toThrow(
       'Both comparison keys cannot be blank!',
     );
 
@@ -279,7 +279,7 @@ describe('OperationRepo', () => {
     op2.operation.setProperty('onesignalId', blockedId);
 
     opRepo.enqueue(op2.operation);
-    expect(opRepo.getGroupableOperations(op)).toEqual([op]);
+    expect(opRepo._getGroupableOperations(op)).toEqual([op]);
   });
 
   describe('Executor Operations', () => {
@@ -344,7 +344,7 @@ describe('OperationRepo', () => {
         result: ExecutionResult.SUCCESS_STARTING_ONLY,
       });
 
-      const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
+      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const groupedOps = getGroupedOp();
       opRepo.enqueue(groupedOps[0]);
@@ -377,7 +377,7 @@ describe('OperationRepo', () => {
         retryAfterSeconds: 30,
       });
 
-      const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
+      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const groupedOps = getGroupedOp();
       opRepo.enqueue(groupedOps[0]);
@@ -432,7 +432,7 @@ describe('OperationRepo', () => {
       ]);
 
       // op repo should be paused
-      expect(opRepo._timerID).toBe(undefined);
+      expect(opRepo.timerID).toBe(undefined);
     });
 
     test('can process delay for translations', async () => {
@@ -444,7 +444,7 @@ describe('OperationRepo', () => {
         idTranslations,
       });
 
-      const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
+      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const newOp = new Operation('2', GroupComparisonType.NONE);
       const opTranslateIdsSpy = vi.spyOn(newOp, 'translateIds');
@@ -466,7 +466,7 @@ describe('OperationRepo', () => {
     });
 
     test('should process non-groupable operations separately', async () => {
-      const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
+      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const newOp = new Operation('2', GroupComparisonType.NONE);
       opRepo.enqueue(mockOperation);
@@ -509,7 +509,7 @@ describe('OperationRepo', () => {
     opRepo.enqueue(mockOperation);
     await executeOps(opRepo);
 
-    await vi.waitUntil(() => opRepo._timerID === undefined);
+    await vi.waitUntil(() => opRepo.timerID === undefined);
     expect(debugSpy).toHaveBeenCalledWith(
       'Consent not given; not executing operations',
     );
