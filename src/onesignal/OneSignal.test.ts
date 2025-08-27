@@ -59,12 +59,13 @@ mockPageStylesCss();
 
 describe('OneSignal', () => {
   beforeAll(() => {
+    setConsentRequired(true);
+  });
+
+  beforeEach(() => {
     TestEnvironment.initialize({
       initUserAndPushSubscription: true,
     });
-  });
-
-  beforeEach(async () => {
     OneSignal.coreDirector.subscriptionModelStore.replaceAll(
       [],
       ModelChangeTags.NO_PROPAGATE,
@@ -368,15 +369,6 @@ describe('OneSignal', () => {
           await expect(OneSignal.login('', 1)).rejects.toThrowError(
             '"jwtToken" is the wrong type',
           );
-
-          // TODO: add consent required test
-          // if needing consent required
-          setConsentRequired(true);
-          await OneSignal.login(externalId);
-          await vi.waitUntil(() => errorSpy.mock.calls.length === 1);
-
-          const error = errorSpy.mock.calls[0][1] as Error;
-          expect(error.message).toBe('Consent required but not given');
         });
 
         test('can login with a new external id', async () => {
@@ -683,16 +675,6 @@ describe('OneSignal', () => {
 
         test('login then accept web push permissions - it should make two user calls', async () => {
           setGetUserResponse();
-          OneSignal.coreDirector.subscriptionModelStore.replaceAll(
-            [],
-            ModelChangeTags.NO_PROPAGATE,
-          );
-          setPushToken('');
-          subscribeFcmFromPageSpy.mockImplementation(
-            // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
-            async () => rawPushSubscription,
-          );
-
           setCreateUserResponse({
             onesignalId: ONESIGNAL_ID,
             externalId,
@@ -702,6 +684,16 @@ describe('OneSignal', () => {
               },
             ],
           });
+
+          OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+            [],
+            ModelChangeTags.NO_PROPAGATE,
+          );
+          setPushToken('');
+          subscribeFcmFromPageSpy.mockImplementation(
+            // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
+            async () => rawPushSubscription,
+          );
 
           // new/empty user
           setupIdentityModel(IDManager.createLocalId());
@@ -1105,6 +1097,48 @@ describe('OneSignal', () => {
     });
   });
 
+  describe('Consent', () => {
+    beforeEach(() => {
+      setConsentRequired(true);
+    });
+
+    test('should not execute operations if consent is not given', async () => {
+      setUpdateUserResponse();
+
+      OneSignal.User.addTag('some-tag', 'some-value');
+      await OneSignal.login('login-user');
+
+      // should not execute login op
+      await vi.waitUntil(() => {
+        const calls = debugSpy.mock.calls.map((call) => call[0]);
+        return calls.includes('Consent not given; not executing operations');
+      });
+
+      // should not execute any other ops
+      expect(addAliasFn).not.toHaveBeenCalled();
+      expect(OneSignal.coreDirector.operationRepo.queue).toMatchObject([
+        {
+          operation: {
+            name: 'set-property',
+          },
+        },
+      ]);
+
+      // can resume operations if consent is given
+      OneSignal.setConsentGiven(true);
+      expect(OneSignal._consentGiven).toBe(true);
+      await vi.waitUntil(() => updateUserFn.mock.calls.length === 1);
+      expect(updateUserFn).toHaveBeenCalledWith({
+        properties: {
+          tags: {
+            'some-tag': 'some-value',
+          },
+        },
+        refresh_device_metadata: false,
+      });
+    });
+  });
+
   test('should preserve operations order without needing await', async () => {
     await setupSubModelStore({
       id: SUB_ID,
@@ -1173,7 +1207,7 @@ Object.defineProperty(global.navigator, 'serviceWorker', {
   writable: true,
 });
 
-const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
 
 const rawPushSubscription = new RawPushSubscription();

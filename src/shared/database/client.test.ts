@@ -14,9 +14,9 @@ beforeEach(async () => {
 
 describe('general', () => {
   const values: IndexedDBSchema['Options']['value'][] = [
-    { key: 'consentGiven', value: true },
     { key: 'defaultIcon', value: 'icon' },
     { key: 'defaultTitle', value: 'title' },
+    { key: 'userConsent', value: true },
   ];
 
   test('should set _isNewVisitor to true if OneSignal is defined', async () => {
@@ -34,9 +34,9 @@ describe('general', () => {
       await db.put('Options', value);
     }
 
-    const retrievedValue = await db.get('Options', 'consentGiven');
+    const retrievedValue = await db.get('Options', 'userConsent');
     expect(retrievedValue).toEqual({
-      key: 'consentGiven',
+      key: 'userConsent',
       value: true,
     });
 
@@ -46,18 +46,18 @@ describe('general', () => {
 
   test('can set/update a value', async () => {
     const db = await getDb();
-    await db.put('Options', { key: 'consentGiven', value: 'optionsValue' });
-    const retrievedValue = await db.get('Options', 'consentGiven');
+    await db.put('Options', { key: 'userConsent', value: 'optionsValue' });
+    const retrievedValue = await db.get('Options', 'userConsent');
     expect(retrievedValue).toEqual({
-      key: 'consentGiven',
+      key: 'userConsent',
       value: 'optionsValue',
     });
 
     // can update value
-    await db.put('Options', { key: 'consentGiven', value: 'optionsValue2' });
-    const retrievedValue2 = await db.get('Options', 'consentGiven');
+    await db.put('Options', { key: 'userConsent', value: 'optionsValue2' });
+    const retrievedValue2 = await db.get('Options', 'userConsent');
     expect(retrievedValue2).toEqual({
-      key: 'consentGiven',
+      key: 'userConsent',
       value: 'optionsValue2',
     });
 
@@ -76,8 +76,8 @@ describe('general', () => {
     }
 
     // can remove a single value
-    await db.delete('Options', 'consentGiven');
-    const retrievedValue = await db.get('Options', 'consentGiven');
+    await db.delete('Options', 'userConsent');
+    const retrievedValue = await db.get('Options', 'userConsent');
     expect(retrievedValue).toBeUndefined();
 
     // can remove remaining values

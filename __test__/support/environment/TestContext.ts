@@ -221,7 +221,7 @@ export default class TestContext {
                 right: 0,
                 bottom: 0,
               },
-              enabled: true,
+              enabled: false,
               message: {
                 subscribing: 'Thanks for subscribing!',
                 unsubscribing: "You won't receive notifications again",
@@ -239,7 +239,7 @@ export default class TestContext {
               prompts: [
                 {
                   type: DelayedPromptType.Push,
-                  autoPrompt: true,
+                  autoPrompt: false,
                   text: {
                     acceptButton: 'Allow',
                     cancelButton: 'No Thanks',
@@ -252,7 +252,7 @@ export default class TestContext {
             fullscreen: {
               title: 'example.com',
               caption: 'You can unsubscribe anytime',
-              enabled: true,
+              enabled: false,
               message: 'This is an example notification message.',
               acceptButton: 'Continue',
               cancelButton: 'No Thanks',
@@ -262,7 +262,7 @@ export default class TestContext {
               customizeTextEnabled: true,
             },
             customlink: {
-              enabled: true,
+              enabled: false,
               style: 'button',
               size: 'medium',
               color: {
@@ -350,7 +350,7 @@ export default class TestContext {
   static getFakeAppUserConfig(appId: string = APP_ID): AppUserConfig {
     return {
       appId,
-      autoRegister: true,
+      autoRegister: false,
       autoResubscribe: true,
       path: '/fake-page',
       serviceWorkerPath: 'fakeWorkerName.js',
@@ -365,7 +365,7 @@ export default class TestContext {
           prompts: [
             {
               type: DelayedPromptType.Push,
-              autoPrompt: true,
+              autoPrompt: false,
               text: {
                 acceptButton: 'Allow',
                 cancelButton: 'No Thanks',

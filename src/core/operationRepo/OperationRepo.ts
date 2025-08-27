@@ -5,9 +5,8 @@ import {
   type IStartableService,
 } from 'src/core/types/operation';
 import { db } from 'src/shared/database/client';
-import { getConsentGiven } from 'src/shared/database/config';
+import { isConsentRequired } from 'src/shared/database/config';
 import { delay } from 'src/shared/helpers/general';
-import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
@@ -51,7 +50,7 @@ export class OperationQueueItem {
 export class OperationRepo implements IOperationRepo, IStartableService {
   private executorsMap: Map<string, IOperationExecutor>;
   public queue: OperationQueueItem[] = [];
-  private paused = true;
+  public _timerID: NodeJS.Timeout | undefined = undefined;
   private enqueueIntoBucket = 0;
   private operationModelStore: OperationModelStore;
   private newRecordState: NewRecordsState;
@@ -76,10 +75,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     this.queue = [];
   }
 
-  public get isPaused(): boolean {
-    return this.paused;
-  }
-
   public get records(): Map<string, number> {
     return this.newRecordState.records;
   }
@@ -95,9 +90,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async start(): Promise<void> {
-    this.paused = false;
     await this.loadSavedOperations();
     this.processQueueForever();
+  }
+
+  public _pause(): void {
+    clearInterval(this._timerID);
+    this._timerID = undefined;
+    Log.debug('OperationRepo: Paused');
   }
 
   public enqueue(operation: Operation): void {
@@ -153,24 +153,18 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
   }
 
-  private async _isAllowedToExecute(): Promise<boolean> {
-    const consentRequired = getConsentRequired();
-    const consentGiven = await getConsentGiven();
-
-    if (!consentRequired) return true;
-    return !!consentGiven;
-  }
-
   private async processQueueForever(): Promise<void> {
     this.enqueueIntoBucket++;
     let runningOps = false;
 
-    setInterval(async () => {
-      const isAllowedToExecute = await this._isAllowedToExecute();
+    if (isConsentRequired()) {
+      this._pause();
+      Log.debug('Consent not given; not executing operations');
+      return;
+    }
 
-      if (this.paused) return Log.debug('OpRepo is paused');
+    this._timerID = setInterval(async () => {
       if (runningOps) return Log.debug('Operations in progress');
-      if (!isAllowedToExecute) return Log.debug('Not allowed to execute');
 
       const ops = this.getNextOps(this.executeBucket);
 
@@ -261,7 +255,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           Log.error(
             `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
           );
-          this.paused = true;
+          this._pause();
           ops.toReversed().forEach((op) => {
             removeOpFromDB(op.operation);
             this.queue.unshift(op);

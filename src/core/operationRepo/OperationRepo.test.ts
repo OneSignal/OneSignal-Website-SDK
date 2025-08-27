@@ -1,6 +1,7 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
+import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { describe, expect, type Mock, vi } from 'vitest';
@@ -25,6 +26,8 @@ vi.spyOn(Log, 'error').mockImplementation((msg) => {
     return '';
   return msg;
 });
+const debugSpy = vi.spyOn(Log, 'debug');
+
 vi.useFakeTimers();
 
 // for the sake of testing, we want to use a simple mock operation and execturo
@@ -33,6 +36,18 @@ vi.spyOn(OperationModelStore.prototype, 'create').mockImplementation(() => {
 });
 
 let mockOperationModelStore: OperationModelStore;
+
+const executeOps = async (opRepo: OperationRepo) => {
+  await opRepo.start();
+  await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
+};
+
+// need to mock this since it may timeout due to use of fake timers
+const isConsentRequired = vi.hoisted(() => vi.fn(() => false));
+
+vi.mock('src/shared/database/config', () => ({
+  isConsentRequired: isConsentRequired,
+}));
 
 describe('OperationRepo', () => {
   let opRepo: OperationRepo;
@@ -43,7 +58,7 @@ describe('OperationRepo', () => {
   ];
 
   beforeEach(async () => {
-    await db.clear('operations');
+    setConsentRequired(false);
 
     mockOperationModelStore = new OperationModelStore();
     opRepo = new OperationRepo(
@@ -56,7 +71,7 @@ describe('OperationRepo', () => {
   afterEach(async () => {
     // since the perist call in model store is not awaited, we need to flush the queue
     // for tests that call start on the op repo
-    if (!opRepo.isPaused) {
+    if (opRepo._timerID !== undefined) {
       await vi.waitUntil(async () => {
         const dbOps = await db.getAll('operations');
         return dbOps.length === 0;
@@ -268,11 +283,6 @@ describe('OperationRepo', () => {
   });
 
   describe('Executor Operations', () => {
-    const executeOps = async (opRepo: OperationRepo) => {
-      await opRepo.start();
-      await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
-    };
-
     test('can handle success operation and process additional operations', async () => {
       const additionalOps = [
         new Operation('3', GroupComparisonType.NONE),
@@ -422,7 +432,7 @@ describe('OperationRepo', () => {
       ]);
 
       // op repo should be paused
-      expect(opRepo.isPaused).toBe(true);
+      expect(opRepo._timerID).toBe(undefined);
     });
 
     test('can process delay for translations', async () => {
@@ -490,6 +500,30 @@ describe('OperationRepo', () => {
       await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
       expect(executeOperationsSpy).toHaveBeenCalledTimes(2);
     });
+  });
+
+  test('should not execute operations if consent is not given', async () => {
+    isConsentRequired.mockReturnValue(true);
+    setConsentRequired(true);
+
+    opRepo.enqueue(mockOperation);
+    await executeOps(opRepo);
+
+    await vi.waitUntil(() => opRepo._timerID === undefined);
+    expect(debugSpy).toHaveBeenCalledWith(
+      'Consent not given; not executing operations',
+    );
+
+    // operation did not execute
+    expect(opRepo.queue).toEqual([
+      {
+        operation: mockOperation,
+        bucket: 0,
+        retries: 0,
+      },
+    ]);
+
+    await db.clear('operations');
   });
 });
 

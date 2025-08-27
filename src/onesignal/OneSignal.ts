@@ -49,7 +49,10 @@ import UserNamespace from './UserNamespace';
 export default class OneSignal {
   static EVENTS = ONESIGNAL_EVENTS;
 
+  static _consentGiven = false;
+
   private static async _initializeCoreModuleAndOSNamespaces() {
+    OneSignal._consentGiven = await getConsentGiven();
     const core = new CoreModule();
     await core.init();
     OneSignal.coreDirector = new CoreModuleDirector(core);
@@ -228,7 +231,15 @@ export default class OneSignal {
       throw WrongTypeArgumentError('consent');
     }
 
+    // for quick access as to not wait for async operations / loading from DB
+    OneSignal._consentGiven = consent;
     await db.put('Options', { key: 'userConsent', value: consent });
+
+    if (consent) {
+      OneSignal.coreDirector.operationRepo.start();
+    } else {
+      OneSignal.coreDirector.operationRepo._pause();
+    }
 
     if (consent && OneSignal.pendingInit) await OneSignal._delayedInit();
   }

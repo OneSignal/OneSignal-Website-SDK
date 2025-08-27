@@ -3,6 +3,7 @@ import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
+import { isConsentRequired } from 'src/shared/database/config';
 import MainHelper from 'src/shared/helpers/MainHelper';
 import { IDManager } from 'src/shared/managers/IDManager';
 import UserDirector from '../../onesignal/UserDirector';
@@ -23,6 +24,8 @@ export default class LoginManager {
     if (token) {
       db.put('Ids', { id: token, type: 'jwtToken' });
     }
+
+    if (isConsentRequired()) return;
 
     let identityModel = OneSignal.coreDirector.getIdentityModel();
     const currentOneSignalId = !IDManager.isLocalId(identityModel.onesignalId)
