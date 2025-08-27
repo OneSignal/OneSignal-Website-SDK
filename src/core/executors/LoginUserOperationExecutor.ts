@@ -3,9 +3,7 @@ import {
   ExecutionResult,
   type IOperationExecutor,
 } from 'src/core/types/operation';
-import { getConsentGiven } from 'src/shared/database/config';
 import { getTimeZoneId } from 'src/shared/helpers/general';
-import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -79,13 +77,6 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     loginUserOp: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
-    const consentRequired = getConsentRequired();
-    const consentGiven = await getConsentGiven();
-
-    if (consentRequired && !consentGiven) {
-      throw new Error('Consent required but not given');
-    }
-
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.

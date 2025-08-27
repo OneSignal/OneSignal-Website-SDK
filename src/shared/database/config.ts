@@ -68,5 +68,5 @@ export const setAppState = async (appState: AppState) => {
 };
 
 export const getConsentGiven = async () => {
-  return await getOptionsValue<boolean>('consentGiven');
+  return await getOptionsValue<boolean>('userConsent');
 };

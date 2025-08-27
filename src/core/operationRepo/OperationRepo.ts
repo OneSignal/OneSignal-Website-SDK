@@ -5,7 +5,9 @@ import {
   type IStartableService,
 } from 'src/core/types/operation';
 import { db } from 'src/shared/database/client';
+import { getConsentGiven } from 'src/shared/database/config';
 import { delay } from 'src/shared/helpers/general';
+import { getConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
@@ -151,16 +153,26 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
   }
 
+  private async _isAllowedToExecute(): Promise<boolean> {
+    const consentRequired = getConsentRequired();
+    const consentGiven = await getConsentGiven();
+
+    if (!consentRequired) return true;
+    return !!consentGiven;
+  }
+
   private async processQueueForever(): Promise<void> {
     this.enqueueIntoBucket++;
     let runningOps = false;
 
     setInterval(async () => {
+      const isAllowedToExecute = await this._isAllowedToExecute();
+
       if (this.paused) return Log.debug('OpRepo is paused');
       if (runningOps) return Log.debug('Operations in progress');
+      if (!isAllowedToExecute) return Log.debug('Not allowed to execute');
 
       const ops = this.getNextOps(this.executeBucket);
-      Log.debug(`processQueueForever:ops:\n${ops}`);
 
       if (ops) {
         runningOps = true;

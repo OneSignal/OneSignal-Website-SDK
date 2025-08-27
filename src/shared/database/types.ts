@@ -12,7 +12,6 @@ export type IdKey = 'appId' | 'registrationId' | 'userId' | 'jwtToken';
 
 export type OptionKey =
   | 'appState'
-  | 'consentGiven'
   | 'defaultIcon'
   | 'defaultTitle'
   | 'defaultUrl'
