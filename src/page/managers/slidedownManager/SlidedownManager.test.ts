@@ -9,7 +9,9 @@ import {
   setupIdentityModel,
   setupLoadStylesheet,
 } from '__test__/support/helpers/setup';
+import { SlidedownManager } from 'src/page/managers/slidedownManager/SlidedownManager';
 import ChannelCaptureContainer from 'src/page/slidedown/ChannelCaptureContainer';
+import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
@@ -26,104 +28,120 @@ beforeEach(() => {
   mockPhoneLibraryLoading();
 });
 
-test('can show email slidedown', async () => {
-  const addEmailSpy = vi.spyOn(OneSignal.User, 'addEmail');
-  setCreateUserResponse();
-  await OneSignal.Slidedown.promptEmail();
+describe('Slidedown Types', () => {
+  test('can show email slidedown', async () => {
+    const addEmailSpy = vi.spyOn(OneSignal.User, 'addEmail');
+    setCreateUserResponse();
+    await OneSignal.Slidedown.promptEmail();
 
-  expect(getMessageText()).toBe(message);
+    expect(getMessageText()).toBe(message);
 
-  const submitButton = getSubmitButton();
-  const emailInput = getEmailInput();
+    const submitButton = getSubmitButton();
+    const emailInput = getEmailInput();
 
-  // should validate empty email
-  expect(getEmailValidationMessage()).toBe('Please enter a valid email');
-  expect(addEmailSpy).not.toHaveBeenCalled();
+    // should validate empty email
+    expect(getEmailValidationMessage()).toBe('Please enter a valid email');
+    expect(addEmailSpy).not.toHaveBeenCalled();
 
-  // can add email subscription
-  emailInput.value = 'test@test.com';
-  submitButton.click();
+    // can add email subscription
+    emailInput.value = 'test@test.com';
+    submitButton.click();
 
-  expect(addEmailSpy).toHaveBeenCalled();
-  await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
-  expect(createUserFn).toHaveBeenCalledWith({
-    identity: {},
-    ...BASE_IDENTITY,
-    subscriptions: [
-      {
-        ...BASE_SUB,
-        token: 'test@test.com',
-        type: SubscriptionType.Email,
-      },
-    ],
+    expect(addEmailSpy).toHaveBeenCalled();
+    await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
+    expect(createUserFn).toHaveBeenCalledWith({
+      identity: {},
+      ...BASE_IDENTITY,
+      subscriptions: [
+        {
+          ...BASE_SUB,
+          token: 'test@test.com',
+          type: SubscriptionType.Email,
+        },
+      ],
+    });
+  });
+
+  test('can show sms slidedown', async () => {
+    const addSmsSpy = vi.spyOn(OneSignal.User, 'addSms');
+    setCreateUserResponse();
+    await OneSignal.Slidedown.promptSms();
+
+    expect(getMessageText()).toBe(message);
+
+    const submitButton = getSubmitButton();
+    const smsInput = getSmsInput();
+
+    // has validation message
+    expect(getSmsValidationMessage()).toBe('Please enter a valid phone number');
+
+    // can add sms subscription
+    smsInput.value = '+11234567890';
+    submitButton.click();
+
+    expect(addSmsSpy).toHaveBeenCalled();
+    await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
+    expect(createUserFn).toHaveBeenCalledWith({
+      identity: {},
+      ...BASE_IDENTITY,
+      subscriptions: [
+        {
+          ...BASE_SUB,
+          token: '+1234567890',
+          type: SubscriptionType.SMS,
+        },
+      ],
+    });
+  });
+
+  test('can add sms and email', async () => {
+    const addSmsSpy = vi.spyOn(OneSignal.User, 'addSms');
+    const addEmailSpy = vi.spyOn(OneSignal.User, 'addEmail');
+    setCreateUserResponse();
+    await OneSignal.Slidedown.promptSmsAndEmail();
+
+    const submitButton = getSubmitButton();
+    const smsInput = getSmsInput();
+    const emailInput = getEmailInput();
+
+    // can add sms and email subscription
+    smsInput.value = '+11234567890';
+    emailInput.value = 'test@test.com';
+    submitButton.click();
+
+    expect(addSmsSpy).toHaveBeenCalled();
+    expect(addEmailSpy).toHaveBeenCalled();
+    await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
+    expect(createUserFn).toHaveBeenCalledWith({
+      identity: {},
+      ...BASE_IDENTITY,
+      subscriptions: [
+        {
+          ...BASE_SUB,
+          token: 'test@test.com',
+          type: SubscriptionType.Email,
+        },
+        {
+          ...BASE_SUB,
+          token: '+1234567890',
+          type: SubscriptionType.SMS,
+        },
+      ],
+    });
   });
 });
 
-test('can show sms slidedown', async () => {
-  const addSmsSpy = vi.spyOn(OneSignal.User, 'addSms');
-  setCreateUserResponse();
-  await OneSignal.Slidedown.promptSms();
-
-  expect(getMessageText()).toBe(message);
-
-  const submitButton = getSubmitButton();
-  const smsInput = getSmsInput();
-
-  // has validation message
-  expect(getSmsValidationMessage()).toBe('Please enter a valid phone number');
-
-  // can add sms subscription
-  smsInput.value = '+11234567890';
-  submitButton.click();
-
-  expect(addSmsSpy).toHaveBeenCalled();
-  await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
-  expect(createUserFn).toHaveBeenCalledWith({
-    identity: {},
-    ...BASE_IDENTITY,
-    subscriptions: [
-      {
-        ...BASE_SUB,
-        token: '+1234567890',
-        type: SubscriptionType.SMS,
-      },
-    ],
+const warnSpy = vi.spyOn(Log, 'warn');
+describe('Consent Required', () => {
+  beforeEach(() => {
+    TestEnvironment.initialize();
+    OneSignal.setConsentRequired(true);
   });
-});
 
-test('can add sms and email', async () => {
-  const addSmsSpy = vi.spyOn(OneSignal.User, 'addSms');
-  const addEmailSpy = vi.spyOn(OneSignal.User, 'addEmail');
-  setCreateUserResponse();
-  await OneSignal.Slidedown.promptSmsAndEmail();
-
-  const submitButton = getSubmitButton();
-  const smsInput = getSmsInput();
-  const emailInput = getEmailInput();
-
-  // can add sms and email subscription
-  smsInput.value = '+11234567890';
-  emailInput.value = 'test@test.com';
-  submitButton.click();
-
-  expect(addSmsSpy).toHaveBeenCalled();
-  expect(addEmailSpy).toHaveBeenCalled();
-  await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
-  expect(createUserFn).toHaveBeenCalledWith({
-    identity: {},
-    ...BASE_IDENTITY,
-    subscriptions: [
-      {
-        ...BASE_SUB,
-        token: 'test@test.com',
-        type: SubscriptionType.Email,
-      },
-      {
-        ...BASE_SUB,
-        token: '+1234567890',
-        type: SubscriptionType.SMS,
-      },
-    ],
+  test('should not show slidedown if consent is required but not given', async () => {
+    const slidedownManager = new SlidedownManager(OneSignal.context);
+    await slidedownManager.createSlidedown({});
+    expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
   });
 });
 

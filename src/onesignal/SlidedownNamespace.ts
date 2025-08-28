@@ -1,8 +1,8 @@
+import { isConsentRequiredButNotGiven } from 'src/shared/database/config';
 import type { AutoPromptOptions } from '../page/managers/PromptsManager';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { DelayedPromptType } from '../shared/prompts/constants';
 import { awaitOneSignalInitAndSupported } from '../shared/utils/utils';
-
 export default class SlidedownNamespace extends EventListenerBase {
   constructor() {
     super();
@@ -13,6 +13,7 @@ export default class SlidedownNamespace extends EventListenerBase {
    * @PublicApi
    */
   async promptPush(options?: AutoPromptOptions): Promise<void> {
+    if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowParticularSlidedown(
       DelayedPromptType.Push,
@@ -21,6 +22,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   }
 
   async promptPushCategories(options?: AutoPromptOptions): Promise<void> {
+    if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
     const isPushEnabled =
       await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
@@ -31,6 +33,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   }
 
   async promptSms(options?: AutoPromptOptions): Promise<void> {
+    if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowSmsSlidedown({
       ...options,
@@ -38,6 +41,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   }
 
   async promptEmail(options?: AutoPromptOptions): Promise<void> {
+    if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowEmailSlidedown({
       ...options,
@@ -45,6 +49,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   }
 
   async promptSmsAndEmail(options?: AutoPromptOptions): Promise<void> {
+    if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowSmsAndEmailSlidedown({
       ...options,

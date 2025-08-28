@@ -5,7 +5,6 @@ import {
   type IStartableService,
 } from 'src/core/types/operation';
 import { db } from 'src/shared/database/client';
-import { isConsentRequired } from 'src/shared/database/config';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
@@ -156,12 +155,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   private async _processQueueForever(): Promise<void> {
     this._enqueueIntoBucket++;
     let runningOps = false;
-
-    if (isConsentRequired()) {
-      this._pause();
-      Log.debug('Consent not given; not executing operations');
-      return;
-    }
 
     this._timerID = setInterval(async () => {
       if (runningOps) return Log.debug('Operations in progress');

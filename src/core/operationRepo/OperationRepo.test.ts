@@ -26,7 +26,6 @@ vi.spyOn(Log, 'error').mockImplementation((msg) => {
     return '';
   return msg;
 });
-const debugSpy = vi.spyOn(Log, 'debug');
 
 vi.useFakeTimers();
 
@@ -500,30 +499,6 @@ describe('OperationRepo', () => {
       await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
       expect(executeOperationsSpy).toHaveBeenCalledTimes(2);
     });
-  });
-
-  test('should not execute operations if consent is not given', async () => {
-    isConsentRequired.mockReturnValue(true);
-    setConsentRequired(true);
-
-    opRepo.enqueue(mockOperation);
-    await executeOps(opRepo);
-
-    await vi.waitUntil(() => opRepo._timerID === undefined);
-    expect(debugSpy).toHaveBeenCalledWith(
-      'Consent not given; not executing operations',
-    );
-
-    // operation did not execute
-    expect(opRepo.queue).toEqual([
-      {
-        operation: mockOperation,
-        bucket: 0,
-        retries: 0,
-      },
-    ]);
-
-    await db.clear('operations');
   });
 });
 

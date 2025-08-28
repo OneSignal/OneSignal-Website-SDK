@@ -2,7 +2,10 @@ import type Bell from 'src/page/bell/Bell';
 import { getAppConfig } from 'src/shared/config/app';
 import type { AppConfig, AppUserConfig } from 'src/shared/config/types';
 import { db } from 'src/shared/database/client';
-import { getConsentGiven } from 'src/shared/database/config';
+import {
+  getConsentGiven,
+  isConsentRequiredButNotGiven,
+} from 'src/shared/database/config';
 import { getSubscription } from 'src/shared/database/subscription';
 import { windowEnvString } from 'src/shared/environment/detect';
 import {
@@ -51,7 +54,6 @@ export default class OneSignal {
   static _consentGiven = false;
 
   private static async _initializeCoreModuleAndOSNamespaces() {
-    OneSignal._consentGiven = await getConsentGiven();
     const core = new CoreModule();
     await core.init();
     OneSignal.coreDirector = new CoreModuleDirector(core);
@@ -99,6 +101,7 @@ export default class OneSignal {
    */
   static async login(externalId: string, jwtToken?: string): Promise<void> {
     logMethodCall('login', { externalId, jwtToken });
+    if (isConsentRequiredButNotGiven()) return;
 
     if (typeof externalId === 'undefined') {
       throw EmptyArgumentError('externalId');
@@ -117,6 +120,7 @@ export default class OneSignal {
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
+    if (isConsentRequiredButNotGiven()) return;
     await LoginManager.logout();
   }
 
@@ -150,9 +154,9 @@ export default class OneSignal {
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
 
+    OneSignal._consentGiven = await getConsentGiven();
     if (getConsentRequired()) {
-      const providedConsent = await getConsentGiven();
-      if (!providedConsent) {
+      if (!OneSignal._consentGiven) {
         OneSignal.pendingInit = true;
         return;
       }
@@ -233,12 +237,6 @@ export default class OneSignal {
     // for quick access as to not wait for async operations / loading from DB
     OneSignal._consentGiven = consent;
     await db.put('Options', { key: 'userConsent', value: consent });
-
-    if (consent) {
-      OneSignal.coreDirector.operationRepo._start();
-    } else {
-      OneSignal.coreDirector.operationRepo._pause();
-    }
 
     if (consent && OneSignal.pendingInit) await OneSignal._delayedInit();
   }

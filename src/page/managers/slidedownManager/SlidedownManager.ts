@@ -3,6 +3,7 @@ import type {
   TagsObjectWithBoolean,
 } from 'src/page/tags/types';
 import type { ContextInterface } from 'src/shared/context/types';
+import { isConsentRequiredButNotGiven } from 'src/shared/database/config';
 import {
   ChannelCaptureError,
   ExistingChannelError,
@@ -435,6 +436,7 @@ export class SlidedownManager {
 
   public async createSlidedown(options: AutoPromptOptions): Promise<void> {
     logMethodCall('createSlidedown');
+    if (isConsentRequiredButNotGiven()) return;
     try {
       const showPrompt = await this.checkIfSlidedownShouldBeShown(options);
       if (!showPrompt) {

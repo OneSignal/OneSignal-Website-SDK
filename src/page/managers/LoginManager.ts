@@ -3,7 +3,6 @@ import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
-import { isConsentRequired } from 'src/shared/database/config';
 import MainHelper from 'src/shared/helpers/MainHelper';
 import { IDManager } from 'src/shared/managers/IDManager';
 import UserDirector from '../../onesignal/UserDirector';
@@ -50,7 +49,6 @@ export default class LoginManager {
     const newIdentityOneSignalId = identityModel.onesignalId;
     const appId = MainHelper.getAppId();
 
-    const consentRequired = isConsentRequired();
     const promises: Promise<void>[] = [
       OneSignal.coreDirector.getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
@@ -63,16 +61,12 @@ export default class LoginManager {
           );
         }
       }),
-      Promise.resolve(
-        OneSignal.coreDirector.operationRepo[
-          consentRequired ? 'enqueue' : 'enqueueAndWait'
-        ](
-          new LoginUserOperation(
-            appId,
-            newIdentityOneSignalId,
-            externalId,
-            !currentExternalId ? currentOneSignalId : undefined,
-          ),
+      OneSignal.coreDirector.operationRepo.enqueueAndWait(
+        new LoginUserOperation(
+          appId,
+          newIdentityOneSignalId,
+          externalId,
+          !currentExternalId ? currentOneSignalId : undefined,
         ),
       ),
     ];

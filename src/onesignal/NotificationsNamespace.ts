@@ -1,4 +1,8 @@
-import { getAppState, setAppState } from 'src/shared/database/config';
+import {
+  getAppState,
+  isConsentRequiredButNotGiven,
+  setAppState,
+} from 'src/shared/database/config';
 import {
   EmptyArgumentError,
   MalformedArgumentError,
@@ -115,6 +119,7 @@ export default class NotificationsNamespace extends EventListenerBase {
    * @PublicApi
    */
   async requestPermission(): Promise<void> {
+    if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowNativePrompt();
   }
