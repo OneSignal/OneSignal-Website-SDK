@@ -6,27 +6,27 @@ import {
 } from './constants';
 
 export class NewRecordsState {
-  private _records: Map<string, number> = new Map();
+  private _recordsMap: Map<string, number> = new Map();
 
-  public get records(): Map<string, number> {
-    return this._records;
+  public get _records(): Map<string, number> {
+    return this._recordsMap;
   }
 
-  public add(id: string): void {
-    this._records.set(id, Date.now());
+  public _add(id: string): void {
+    this._recordsMap.set(id, Date.now());
   }
 
-  public canAccess(key: string | undefined): boolean {
+  public _canAccess(key: string | undefined): boolean {
     if (!key) return true;
 
-    const timeLastMovedOrCreated = this._records.get(key);
+    const timeLastMovedOrCreated = this._recordsMap.get(key);
     if (!timeLastMovedOrCreated) return true;
 
     return Date.now() - timeLastMovedOrCreated >= OP_REPO_POST_CREATE_DELAY;
   }
 
-  public isInMissingRetryWindow(key: string): boolean {
-    const timeLastMovedOrCreated = this._records.get(key);
+  public _isInMissingRetryWindow(key: string): boolean {
+    const timeLastMovedOrCreated = this._recordsMap.get(key);
     if (!timeLastMovedOrCreated) return false;
 
     return (

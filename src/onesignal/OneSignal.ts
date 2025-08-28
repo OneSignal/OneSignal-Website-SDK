@@ -35,7 +35,6 @@ import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
-import TimedLocalStorage from '../page/modules/TimedLocalStorage';
 import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
@@ -236,9 +235,9 @@ export default class OneSignal {
     await db.put('Options', { key: 'userConsent', value: consent });
 
     if (consent) {
-      OneSignal.coreDirector.operationRepo.start();
+      OneSignal.coreDirector.operationRepo._start();
     } else {
-      OneSignal.coreDirector.operationRepo.pause();
+      OneSignal.coreDirector.operationRepo._pause();
     }
 
     if (consent && OneSignal.pendingInit) await OneSignal._delayedInit();
@@ -275,7 +274,6 @@ export default class OneSignal {
   static config: AppConfig | null = null;
   static _sessionInitAlreadyRunning = false;
   static _isNewVisitor = false;
-  static timedLocalStorage = TimedLocalStorage;
   static initialized = false;
   static _didLoadITILibrary = false;
   static notifyButton: Bell | null = null;

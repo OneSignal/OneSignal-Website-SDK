@@ -65,7 +65,7 @@ export default class CoreModule {
     );
 
     this.listeners = this.initializeListeners();
-    this.initPromise = this.operationRepo.start();
+    this.initPromise = this.operationRepo._start();
   }
 
   public async init() {

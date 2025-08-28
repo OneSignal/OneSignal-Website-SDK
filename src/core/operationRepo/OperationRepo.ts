@@ -48,65 +48,65 @@ export class OperationQueueItem {
 
 // OperationRepo Class
 export class OperationRepo implements IOperationRepo, IStartableService {
-  private executorsMap: Map<string, IOperationExecutor>;
+  private _executorsMap: Map<string, IOperationExecutor>;
   public queue: OperationQueueItem[] = [];
-  public timerID: NodeJS.Timeout | undefined = undefined;
-  private enqueueIntoBucket = 0;
-  private operationModelStore: OperationModelStore;
-  private newRecordState: NewRecordsState;
+  public _timerID: NodeJS.Timeout | undefined = undefined;
+  private _enqueueIntoBucket = 0;
+  private _operationModelStore: OperationModelStore;
+  private _newRecordState: NewRecordsState;
 
   constructor(
     executors: IOperationExecutor[],
     operationModelStore: OperationModelStore,
     newRecordState: NewRecordsState,
   ) {
-    this.operationModelStore = operationModelStore;
-    this.newRecordState = newRecordState;
+    this._operationModelStore = operationModelStore;
+    this._newRecordState = newRecordState;
 
-    this.executorsMap = new Map<string, IOperationExecutor>();
+    this._executorsMap = new Map<string, IOperationExecutor>();
     for (const executor of executors) {
       for (const operation of executor.operations) {
-        this.executorsMap.set(operation, executor);
+        this._executorsMap.set(operation, executor);
       }
     }
   }
 
-  public clear(): void {
+  public _clear(): void {
     this.queue = [];
   }
 
-  public get records(): Map<string, number> {
-    return this.newRecordState.records;
+  public get _records(): Map<string, number> {
+    return this._newRecordState._records;
   }
 
-  private get executeBucket(): number {
-    return this.enqueueIntoBucket === 0 ? 0 : this.enqueueIntoBucket - 1;
+  private get _executeBucket(): number {
+    return this._enqueueIntoBucket === 0 ? 0 : this._enqueueIntoBucket - 1;
   }
 
-  public containsInstanceOf<T extends Operation>(
+  public _containsInstanceOf<T extends Operation>(
     type: new (...args: any[]) => T,
   ): boolean {
     return this.queue.some((item) => item.operation instanceof type);
   }
 
-  public async start(): Promise<void> {
+  public async _start(): Promise<void> {
     await this._loadSavedOperations();
     this._processQueueForever();
   }
 
-  public pause(): void {
-    clearInterval(this.timerID);
-    this.timerID = undefined;
+  public _pause(): void {
+    clearInterval(this._timerID);
+    this._timerID = undefined;
     Log.debug('OperationRepo: Paused');
   }
 
   public enqueue(operation: Operation): void {
     Log.debug(`OperationRepo.enqueue(operation: ${operation})`);
 
-    this.internalEnqueue(
+    this._internalEnqueue(
       new OperationQueueItem({
         operation,
-        bucket: this.enqueueIntoBucket,
+        bucket: this._enqueueIntoBucket,
       }),
       true,
     );
@@ -116,10 +116,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     Log.debug(`OperationRepo.enqueueAndWaitoperation: ${operation})`);
 
     await new Promise((resolve) => {
-      this.internalEnqueue(
+      this._internalEnqueue(
         new OperationQueueItem({
           operation,
-          bucket: this.enqueueIntoBucket,
+          bucket: this._enqueueIntoBucket,
           resolver: resolve,
         }),
         true,
@@ -127,7 +127,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     });
   }
 
-  private internalEnqueue(
+  private _internalEnqueue(
     queueItem: OperationQueueItem,
     addToStore: boolean,
     index?: number,
@@ -149,31 +149,31 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
 
     if (addToStore) {
-      this.operationModelStore.add(queueItem.operation);
+      this._operationModelStore.add(queueItem.operation);
     }
   }
 
   private async _processQueueForever(): Promise<void> {
-    this.enqueueIntoBucket++;
+    this._enqueueIntoBucket++;
     let runningOps = false;
 
     if (isConsentRequired()) {
-      this.pause();
+      this._pause();
       Log.debug('Consent not given; not executing operations');
       return;
     }
 
-    this.timerID = setInterval(async () => {
+    this._timerID = setInterval(async () => {
       if (runningOps) return Log.debug('Operations in progress');
 
-      const ops = this._getNextOps(this.executeBucket);
+      const ops = this._getNextOps(this._executeBucket);
 
       if (ops) {
         runningOps = true;
         await this._executeOperations(ops);
         runningOps = false;
       } else {
-        this.enqueueIntoBucket++;
+        this._enqueueIntoBucket++;
       }
     }, OP_REPO_EXECUTION_INTERVAL);
   }
@@ -181,7 +181,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public async _executeOperations(ops: OperationQueueItem[]): Promise<void> {
     try {
       const startingOp = ops[0];
-      const executor = this.executorsMap.get(startingOp.operation.name);
+      const executor = this._executorsMap.get(startingOp.operation.name);
 
       if (!executor) {
         throw new Error(
@@ -203,7 +203,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         );
 
         Object.values(idTranslations).forEach((id) =>
-          this.newRecordState.add(id),
+          this._newRecordState._add(id),
         );
       }
 
@@ -212,7 +212,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult.SUCCESS:
           // Remove operations from store
           ops.forEach((op) => {
-            this.operationModelStore.remove(op.operation.modelId);
+            this._operationModelStore.remove(op.operation.modelId);
           });
           ops.forEach((op) => op.resolver?.(true));
           break;
@@ -222,14 +222,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult.FAIL_CONFLICT:
           Log.error(`Operation execution failed without retry: ${operations}`);
           ops.forEach((op) => {
-            this.operationModelStore.remove(op.operation.modelId);
+            this._operationModelStore.remove(op.operation.modelId);
           });
           ops.forEach((op) => op.resolver?.(false));
           break;
 
         case ExecutionResult.SUCCESS_STARTING_ONLY:
           // Remove starting operation and re-add others to the queue
-          this.operationModelStore.remove(startingOp.operation.modelId);
+          this._operationModelStore.remove(startingOp.operation.modelId);
 
           startingOp.resolver?.(true);
           ops
@@ -255,7 +255,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           Log.error(
             `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
           );
-          this.pause();
+          this._pause();
           ops.toReversed().forEach((op) => {
             removeOpFromDB(op.operation);
             this.queue.unshift(op);
@@ -271,7 +271,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
             bucket: 0,
           });
           this.queue.unshift(queueItem);
-          this.operationModelStore.addAt(0, queueItem.operation);
+          this._operationModelStore.addAt(0, queueItem.operation);
         }
       }
 
@@ -288,7 +288,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       // On failure remove operations from store
       ops.forEach((op) => {
-        this.operationModelStore.remove(op.operation.modelId);
+        this._operationModelStore.remove(op.operation.modelId);
       });
       ops.forEach((op) => op.resolver?.(false));
     }
@@ -313,7 +313,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     const startingOpIndex = this.queue.findIndex(
       (item) =>
         item.operation.canStartExecute &&
-        this.newRecordState.canAccess(item.operation.applyToRecordId) &&
+        this._newRecordState._canAccess(item.operation.applyToRecordId) &&
         item.bucket <= bucketFilter,
     );
 
@@ -351,7 +351,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       if (itemKey === '' && startingKey === '')
         throw new Error('Both comparison keys cannot be blank!');
 
-      if (!this.newRecordState.canAccess(item.operation.applyToRecordId))
+      if (!this._newRecordState._canAccess(item.operation.applyToRecordId))
         continue;
 
       if (itemKey === startingKey) {
@@ -367,14 +367,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async _loadSavedOperations(): Promise<void> {
-    await this.operationModelStore.loadOperations();
-    const operations = this.operationModelStore.list().toReversed();
+    await this._operationModelStore.loadOperations();
+    const operations = this._operationModelStore.list().toReversed();
 
     for (const operation of operations) {
-      this.internalEnqueue(
+      this._internalEnqueue(
         new OperationQueueItem({
           operation,
-          bucket: this.enqueueIntoBucket,
+          bucket: this._enqueueIntoBucket,
         }),
         false,
         0,

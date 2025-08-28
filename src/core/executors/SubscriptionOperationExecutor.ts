@@ -177,7 +177,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       case ResponseStatusType.MISSING: {
         if (
           status === 404 &&
-          this._newRecordState.isInMissingRetryWindow(
+          this._newRecordState._isInMissingRetryWindow(
             createOperation.onesignalId,
           )
         ) {
@@ -242,7 +242,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         if (
           status === 404 &&
           [lastOp.onesignalId, lastOp.subscriptionId].some((id) =>
-            this._newRecordState.isInMissingRetryWindow(id),
+            this._newRecordState._isInMissingRetryWindow(id),
           )
         ) {
           return new ExecutionResponse(
@@ -319,7 +319,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       case ResponseStatusType.MISSING:
         if (
           [op.onesignalId, op.subscriptionId].some((id) =>
-            this._newRecordState.isInMissingRetryWindow(id),
+            this._newRecordState._isInMissingRetryWindow(id),
           )
         ) {
           return new ExecutionResponse(

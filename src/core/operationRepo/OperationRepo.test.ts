@@ -38,7 +38,7 @@ vi.spyOn(OperationModelStore.prototype, 'create').mockImplementation(() => {
 let mockOperationModelStore: OperationModelStore;
 
 const executeOps = async (opRepo: OperationRepo) => {
-  await opRepo.start();
+  await opRepo._start();
   await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
 };
 
@@ -71,7 +71,7 @@ describe('OperationRepo', () => {
   afterEach(async () => {
     // since the perist call in model store is not awaited, we need to flush the queue
     // for tests that call start on the op repo
-    if (opRepo.timerID !== undefined) {
+    if (opRepo._timerID !== undefined) {
       await vi.waitUntil(async () => {
         const dbOps = await db.getAll('operations');
         return dbOps.length === 0;
@@ -95,7 +95,7 @@ describe('OperationRepo', () => {
       ]);
 
       // cached operations are added to the front of the queue and should maintain order
-      await opRepo.start();
+      await opRepo._start();
       expect(opRepo.queue).toEqual([
         {
           operation: cachedOperations[0],
@@ -203,13 +203,13 @@ describe('OperationRepo', () => {
 
     opRepo.enqueue(new MyOperation());
 
-    expect(opRepo.containsInstanceOf(MyOperation)).toBe(true);
-    expect(opRepo.containsInstanceOf(MyOperation2)).toBe(false);
+    expect(opRepo._containsInstanceOf(MyOperation)).toBe(true);
+    expect(opRepo._containsInstanceOf(MyOperation2)).toBe(false);
   });
 
   test('operations should be processed after start call', async () => {
     const getNextOpsSpy = vi.spyOn(opRepo, '_getNextOps');
-    await opRepo.start();
+    await opRepo._start();
     opRepo.enqueue(mockOperation);
 
     expect(opRepo.queue.length).toBe(1);
@@ -269,7 +269,7 @@ describe('OperationRepo', () => {
 
     // returns the starting operation if other operations cant access record
     const blockedId = '456';
-    const records = opRepo.records;
+    const records = opRepo._records;
     records.set(blockedId, Date.now());
 
     op = new OperationQueueItem({
@@ -432,7 +432,7 @@ describe('OperationRepo', () => {
       ]);
 
       // op repo should be paused
-      expect(opRepo.timerID).toBe(undefined);
+      expect(opRepo._timerID).toBe(undefined);
     });
 
     test('can process delay for translations', async () => {
@@ -454,7 +454,7 @@ describe('OperationRepo', () => {
       await executeOps(opRepo);
 
       expect(opTranslateIdsSpy).toHaveBeenCalledWith(idTranslations);
-      expect(opRepo.records).toEqual(new Map([['2', Date.now()]]));
+      expect(opRepo._records).toEqual(new Map([['2', Date.now()]]));
 
       // should wait 5 seconds before processing the queue again
       await vi.advanceTimersByTimeAsync(OP_REPO_POST_CREATE_DELAY);
@@ -509,7 +509,7 @@ describe('OperationRepo', () => {
     opRepo.enqueue(mockOperation);
     await executeOps(opRepo);
 
-    await vi.waitUntil(() => opRepo.timerID === undefined);
+    await vi.waitUntil(() => opRepo._timerID === undefined);
     expect(debugSpy).toHaveBeenCalledWith(
       'Consent not given; not executing operations',
     );

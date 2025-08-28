@@ -153,7 +153,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       case ResponseStatusType.MISSING: {
         if (
           status === 404 &&
-          this._newRecordState.isInMissingRetryWindow(op.onesignalId)
+          this._newRecordState._isInMissingRetryWindow(op.onesignalId)
         )
           return new ExecutionResponse(
             ExecutionResult.FAIL_RETRY,

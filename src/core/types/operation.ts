@@ -54,11 +54,11 @@ export interface IOperationExecutor {
 
 export interface IOperationRepo {
   enqueue(operation: Operation, flush?: boolean): void;
-  containsInstanceOf<T extends Operation>(
+  _containsInstanceOf<T extends Operation>(
     type: new (...args: any[]) => T,
   ): boolean;
 }
 
 export interface IStartableService {
-  start(): void;
+  _start(): void;
 }

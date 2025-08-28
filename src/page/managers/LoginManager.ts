@@ -25,8 +25,6 @@ export default class LoginManager {
       db.put('Ids', { id: token, type: 'jwtToken' });
     }
 
-    if (isConsentRequired()) return;
-
     let identityModel = OneSignal.coreDirector.getIdentityModel();
     const currentOneSignalId = !IDManager.isLocalId(identityModel.onesignalId)
       ? identityModel.onesignalId
@@ -52,6 +50,7 @@ export default class LoginManager {
     const newIdentityOneSignalId = identityModel.onesignalId;
     const appId = MainHelper.getAppId();
 
+    const consentRequired = isConsentRequired();
     const promises: Promise<void>[] = [
       OneSignal.coreDirector.getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
@@ -64,12 +63,16 @@ export default class LoginManager {
           );
         }
       }),
-      OneSignal.coreDirector.operationRepo.enqueueAndWait(
-        new LoginUserOperation(
-          appId,
-          newIdentityOneSignalId,
-          externalId,
-          !currentExternalId ? currentOneSignalId : undefined,
+      Promise.resolve(
+        OneSignal.coreDirector.operationRepo[
+          consentRequired ? 'enqueue' : 'enqueueAndWait'
+        ](
+          new LoginUserOperation(
+            appId,
+            newIdentityOneSignalId,
+            externalId,
+            !currentExternalId ? currentOneSignalId : undefined,
+          ),
         ),
       ),
     ];

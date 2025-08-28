@@ -57,18 +57,22 @@ import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
 mockPageStylesCss();
 
-describe('OneSignal', () => {
-  beforeEach(() => {
-    TestEnvironment.initialize({
-      initUserAndPushSubscription: true,
-    });
-    OneSignal.coreDirector.subscriptionModelStore.replaceAll(
-      [],
-      ModelChangeTags.NO_PROPAGATE,
-    );
-    setConsentRequired(false);
-    setupPropertiesModel();
-    setupIdentityModel();
+const setupEnv = (consentRequired: boolean) => {
+  setConsentRequired(consentRequired);
+  TestEnvironment.initialize({
+    initUserAndPushSubscription: true,
+  });
+  OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+    [],
+    ModelChangeTags.NO_PROPAGATE,
+  );
+  setupPropertiesModel();
+  setupIdentityModel();
+};
+
+describe('OneSignal - No Consent Required', () => {
+  beforeEach(async () => {
+    setupEnv(false);
   });
 
   describe('User', () => {
@@ -1096,48 +1100,6 @@ describe('OneSignal', () => {
     });
   });
 
-  describe('Consent', () => {
-    beforeEach(() => {
-      setConsentRequired(true);
-    });
-
-    test('should not execute operations if consent is not given', async () => {
-      setUpdateUserResponse();
-
-      OneSignal.User.addTag('some-tag', 'some-value');
-      await OneSignal.login('login-user');
-
-      // should not execute login op
-      await vi.waitUntil(() => {
-        const calls = debugSpy.mock.calls.map((call) => call[0]);
-        return calls.includes('Consent not given; not executing operations');
-      });
-
-      // should not execute any other ops
-      expect(addAliasFn).not.toHaveBeenCalled();
-      expect(OneSignal.coreDirector.operationRepo.queue).toMatchObject([
-        {
-          operation: {
-            name: 'set-property',
-          },
-        },
-      ]);
-
-      // can resume operations if consent is given
-      OneSignal.setConsentGiven(true);
-      expect(OneSignal._consentGiven).toBe(true);
-      await vi.waitUntil(() => updateUserFn.mock.calls.length === 1);
-      expect(updateUserFn).toHaveBeenCalledWith({
-        properties: {
-          tags: {
-            'some-tag': 'some-value',
-          },
-        },
-        refresh_device_metadata: false,
-      });
-    });
-  });
-
   test('should preserve operations order without needing await', async () => {
     await setupSubModelStore({
       id: SUB_ID,
@@ -1190,6 +1152,60 @@ describe('OneSignal', () => {
     await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, {
       interval: 1,
     });
+    expect(updateUserFn).toHaveBeenCalledWith({
+      properties: {
+        tags: {
+          'some-tag': 'some-value',
+        },
+      },
+      refresh_device_metadata: false,
+    });
+  });
+});
+
+describe('OneSignal - Consent Required', () => {
+  beforeEach(() => {
+    setupEnv(true);
+  });
+
+  test('should not execute operations if consent is not given', async () => {
+    setAddAliasResponse();
+    setUpdateUserResponse();
+    OneSignal.User.addTag('some-tag', 'some-value');
+    OneSignal.login('login-user');
+
+    // should not execute login op
+    await vi.waitUntil(() => {
+      const calls = debugSpy.mock.calls.map((call) => call[0]);
+      return calls.includes('Consent not given; not executing operations');
+    });
+
+    // should not execute any other ops
+    expect(addAliasFn).not.toHaveBeenCalled();
+    expect(OneSignal.coreDirector.operationRepo.queue).toMatchObject([
+      {
+        operation: {
+          name: 'set-property',
+        },
+      },
+      {
+        operation: {
+          name: 'login-user',
+        },
+      },
+    ]);
+
+    // can resume operations if consent is given
+    OneSignal.setConsentGiven(true);
+    expect(OneSignal._consentGiven).toBe(true);
+    await vi.waitUntil(() => addAliasFn.mock.calls.length === 1);
+    expect(addAliasFn).toHaveBeenCalledWith({
+      identity: {
+        external_id: 'login-user',
+      },
+    });
+
+    await vi.waitUntil(() => updateUserFn.mock.calls.length === 1);
     expect(updateUserFn).toHaveBeenCalledWith({
       properties: {
         tags: {
