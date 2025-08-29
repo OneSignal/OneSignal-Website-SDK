@@ -151,7 +151,7 @@ function triggerUserChanged(change: UserChangeEvent) {
   OneSignalEvent.trigger(
     OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
     change,
-    UserNamespace.emitter,
+    UserNamespace._emitter,
   );
 }
 

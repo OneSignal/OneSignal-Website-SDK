@@ -10,7 +10,7 @@ export default class UserNamespace extends EventListenerBase {
 
   readonly PushSubscription = new PushSubscriptionNamespace(false);
 
-  static emitter = new Emitter();
+  static _emitter = new Emitter();
 
   constructor(
     initialize: boolean,
@@ -113,13 +113,13 @@ export default class UserNamespace extends EventListenerBase {
     event: 'change',
     listener: (userChange: UserChangeEvent) => void,
   ): void {
-    UserNamespace.emitter.on(event, listener);
+    UserNamespace._emitter.on(event, listener);
   }
 
   removeEventListener(
     event: 'change',
     listener: (userChange: UserChangeEvent) => void,
   ): void {
-    UserNamespace.emitter.off(event, listener);
+    UserNamespace._emitter.off(event, listener);
   }
 }

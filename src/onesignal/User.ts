@@ -31,10 +31,21 @@ export default class User {
     if (!User.singletonInstance) {
       User.singletonInstance = new User();
       const identityModel = OneSignal.coreDirector.getIdentityModel();
+      const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+
+      const onesignalId =
+        identityModel.onesignalId ?? IDManager.createLocalId();
       if (!identityModel.onesignalId) {
-        const onesignalId = IDManager.createLocalId();
         identityModel.setProperty(
           IdentityConstants.ONESIGNAL_ID,
+          onesignalId,
+          ModelChangeTags.NO_PROPAGATE,
+        );
+      }
+
+      if (!propertiesModel.onesignalId) {
+        propertiesModel.setProperty(
+          'onesignalId',
           onesignalId,
           ModelChangeTags.NO_PROPAGATE,
         );
