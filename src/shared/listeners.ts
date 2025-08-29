@@ -170,12 +170,12 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
       Log.debug(
         'Showing notify button because display predicate returned true.',
       );
-      OneSignal.notifyButton._launcher?.show();
+      OneSignal.notifyButton.__launcher._show();
     } else {
       Log.debug(
         'Hiding notify button because display predicate returned false.',
       );
-      OneSignal.notifyButton._launcher?.hide();
+      OneSignal.notifyButton.__launcher._hide();
     }
   }
 }

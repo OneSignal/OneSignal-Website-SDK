@@ -19,6 +19,9 @@
 
         await OneSignal.init({
           appId,
+          notifyButton: {
+            enable: true,
+          },
           // requiresUserPrivacyConsent: true, // requires custom site sestting in dashboard
           // promptOptions: {
           //   slidedown: {

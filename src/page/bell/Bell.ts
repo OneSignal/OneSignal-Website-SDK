@@ -24,6 +24,7 @@ import Button from './Button';
 import Dialog from './Dialog';
 import Launcher from './Launcher';
 import Message from './Message';
+import { MESSAGE_TIMEOUT, MessageType } from './constants';
 
 const logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
@@ -80,13 +81,13 @@ export default class Bell {
 
   async _showDialogProcedure() {
     // Prevent concurrent dialog operations (fixes GitHub issue #409)
-    if (this._showingDialog || this.__dialog.shown) {
+    if (this._showingDialog || this.__dialog._shown) {
       return;
     }
     this._showingDialog = true;
 
     try {
-      await this.__dialog.show();
+      await this.__dialog._show();
       // Dialog stays open until user explicitly closes it via button actions
       // No more complex document click handling!
     } finally {
@@ -133,24 +134,24 @@ export default class Bell {
   private _installEventHooks() {
     // Install event hooks
     OneSignal.emitter.on('notifyButtonSubscribeClick', () => {
-      this.__dialog!.subscribeButton!.disabled = true;
+      this.__dialog!._subscribeButton!.disabled = true;
       this._ignoreSubscriptionState = true;
       OneSignal.User.PushSubscription.optIn()
         .then(() => {
-          this.__dialog!.subscribeButton!.disabled = false;
-          return this.__dialog.hide();
+          this.__dialog!._subscribeButton!.disabled = false;
+          return this.__dialog._hide();
         })
         .then(() => {
-          return this.__message.display(
-            Message.TYPES.MESSAGE,
+          return this.__message._display(
+            MessageType._Message,
             this._options.text['message.action.resubscribed'],
-            Message.TIMEOUT,
+            MESSAGE_TIMEOUT,
           );
         })
         .then(() => {
           this._ignoreSubscriptionState = false;
-          this.__launcher.clearIfWasInactive();
-          return this.__launcher.inactivate();
+          this.__launcher._clearIfWasInactive();
+          return this.__launcher._inactivate();
         })
         .then(() => {
           return this._updateState();
@@ -161,21 +162,21 @@ export default class Bell {
     });
 
     OneSignal.emitter.on('notifyButtonUnsubscribeClick', () => {
-      this.__dialog!.unsubscribeButton!.disabled = true;
+      this.__dialog!._unsubscribeButton!.disabled = true;
       OneSignal.User.PushSubscription.optOut()
         .then(() => {
-          this.__dialog!.unsubscribeButton!.disabled = false;
-          return this.__dialog.hide();
+          this.__dialog!._unsubscribeButton!.disabled = false;
+          return this.__dialog._hide();
         })
         .then(() => {
-          this.__launcher.clearIfWasInactive();
-          return this.__launcher.activate();
+          this.__launcher._clearIfWasInactive();
+          return this.__launcher._activate();
         })
         .then(() => {
-          return this.__message.display(
-            Message.TYPES.MESSAGE,
+          return this.__message._display(
+            MessageType._Message,
             this._options.text['message.action.unsubscribed'],
-            Message.TIMEOUT,
+            MESSAGE_TIMEOUT,
           );
         })
         .then(() => {
@@ -185,39 +186,39 @@ export default class Bell {
 
     OneSignal.emitter.on('notifyButtonHovering', () => {
       this._hovering = true;
-      this.__launcher.activateIfInactive();
+      this.__launcher._activateIfInactive();
 
       // If there's already a message being force shown, do not override
-      if (this.__message.shown || this.__dialog.shown) {
+      if (this.__message._shown || this.__dialog._shown) {
         this._hovering = false;
         return;
       }
 
       // If the message is a message and not a tip, don't show it (only show tips)
       // Messages will go away on their own
-      if (this.__message.contentType === Message.TYPES.MESSAGE) {
+      if (this.__message._contentType === MessageType._Message) {
         this._hovering = false;
         return;
       }
 
       new Promise<void>((resolve) => {
         // If a message is being shown
-        if (this.__message.queued.length > 0) {
-          return this.__message.dequeue().then((msg) => {
-            this.__message.content = msg as string;
-            this.__message.contentType = Message.TYPES.QUEUED;
+        if (this.__message._queued.length > 0) {
+          return this.__message._dequeue().then((msg) => {
+            this.__message._content = msg as string;
+            this.__message._contentType = MessageType._Queued;
             resolve();
           });
         } else {
-          this.__message.content = decodeHtmlEntities(
-            this.__message.getTipForState(),
+          this.__message._content = decodeHtmlEntities(
+            this.__message._getTipForState(),
           );
-          this.__message.contentType = Message.TYPES.TIP;
+          this.__message._contentType = MessageType._Tip;
           resolve();
         }
       })
         .then(() => {
-          return this.__message.show();
+          return this.__message._show();
         })
         .then(() => {
           this._hovering = false;
@@ -229,12 +230,12 @@ export default class Bell {
 
     OneSignal.emitter.on('notifyButtonHover', () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
-      if (this.__message.contentType === Message.TYPES.MESSAGE) {
+      if (this.__message._contentType === MessageType._Message) {
         return;
       }
 
-      if (!this.__dialog.hidden) {
-        // If the dialog is being brought up when clicking button, don't shrink
+      // If the dialog is being brought up when clicking button, don't shrink
+      if (this.__dialog._shown) {
         return;
       }
 
@@ -245,22 +246,22 @@ export default class Bell {
         // immediately after because of the way mobile click events work. Basically only happens if HOVERING and HOVERED
         // fire within a few milliseconds of each other
         this.__message
-          .show()
-          .then(() => delay(Message.TIMEOUT))
-          .then(() => this.__message.hide())
+          ._show()
+          .then(() => delay(MESSAGE_TIMEOUT))
+          .then(() => this.__message._hide())
           .then(() => {
-            if (this.__launcher.wasInactive && this.__dialog.hidden) {
-              this.__launcher.inactivate();
-              this.__launcher.wasInactive = false;
+            if (this.__launcher._wasInactive && !this.__dialog._shown) {
+              this.__launcher._inactivate();
+              this.__launcher._wasInactive = false;
             }
           });
       }
 
-      if (this.__message.shown) {
-        this.__message.hide().then(() => {
-          if (this.__launcher.wasInactive && this.__dialog.hidden) {
-            this.__launcher.inactivate();
-            this.__launcher.wasInactive = false;
+      if (this.__message._shown) {
+        this.__message._hide().then(() => {
+          if (this.__launcher._wasInactive && !this.__dialog._shown) {
+            this.__launcher._inactivate();
+            this.__launcher._wasInactive = false;
           }
         });
       }
@@ -268,12 +269,12 @@ export default class Bell {
 
     OneSignal.emitter.on('change', async (isSubscribed) => {
       if (isSubscribed?.current.optedIn) {
-        if (this.__badge.shown && this._options.prenotify) {
-          this.__badge.hide();
+        if (this.__badge._shown && this._options.prenotify) {
+          this.__badge._hide();
         }
-        if (this.__dialog.notificationIcons === null) {
+        if (this.__dialog._notificationIcons === null) {
           const icons = await MainHelper.getNotificationIcons();
-          this.__dialog.notificationIcons = icons;
+          this.__dialog._notificationIcons = icons;
         }
       }
 
@@ -291,14 +292,14 @@ export default class Bell {
     });
 
     OneSignal.emitter.on('notifyButtonStateChange', (state) => {
-      if (!this.__launcher.element) {
+      if (!this.__launcher._element) {
         // Notify button doesn't exist
         return;
       }
       if (state.to === 'subscribed') {
-        this.__launcher.inactivate();
+        this.__launcher._inactivate();
       } else if (state.to === 'unsubscribed' || state.to === 'blocked') {
-        this.__launcher.activate();
+        this.__launcher._activate();
       }
     });
 
@@ -315,7 +316,7 @@ export default class Bell {
         addCssClass(container, 'onesignal-bell-container-bottom-left');
       }
       addCssClass(
-        this.__launcher.selector,
+        this.__launcher._selector,
         'onesignal-bell-launcher-bottom-left',
       );
     } else if (this._options.position === 'bottom-right') {
@@ -323,7 +324,7 @@ export default class Bell {
         addCssClass(container, 'onesignal-bell-container-bottom-right');
       }
       addCssClass(
-        this.__launcher.selector,
+        this.__launcher._selector,
         'onesignal-bell-launcher-bottom-right',
       );
     } else {
@@ -334,12 +335,12 @@ export default class Bell {
 
     if (this._options.theme === 'default') {
       addCssClass(
-        this.__launcher.selector,
+        this.__launcher._selector,
         'onesignal-bell-launcher-theme-default',
       );
     } else if (this._options.theme === 'inverse') {
       addCssClass(
-        this.__launcher.selector,
+        this.__launcher._selector,
         'onesignal-bell-launcher-theme-inverse',
       );
     } else {
@@ -381,35 +382,35 @@ export default class Bell {
 
     // Insert the bell launcher button
     addDomElement(
-      this.__launcher.selector,
+      this.__launcher._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-button"></div>',
     );
     // Insert the bell launcher badge
     addDomElement(
-      this.__launcher.selector,
+      this.__launcher._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-badge"></div>',
     );
     // Insert the bell launcher message
     addDomElement(
-      this.__launcher.selector,
+      this.__launcher._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-message"></div>',
     );
     addDomElement(
-      this.__message.selector,
+      this.__message._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-message-body"></div>',
     );
     // Insert the bell launcher dialog
     addDomElement(
-      this.__launcher.selector,
+      this.__launcher._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-dialog"></div>',
     );
     addDomElement(
-      this.__dialog.selector,
+      this.__dialog._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-dialog-body"></div>',
     );
@@ -417,7 +418,7 @@ export default class Bell {
     // Install events
 
     // Add visual elements
-    addDomElement(this.__button.selector, 'beforeend', logoSvg);
+    addDomElement(this.__button._selector, 'beforeend', logoSvg);
 
     const isPushEnabled =
       await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
@@ -428,7 +429,7 @@ export default class Bell {
     const resizeTo = isPushEnabled
       ? 'small'
       : this._options.size || DEFAULT_SIZE;
-    await this.__launcher.resize(resizeTo);
+    await this.__launcher._resize(resizeTo);
 
     this._addDefaultClasses();
     this._applyOffsetIfSpecified();
@@ -436,17 +437,17 @@ export default class Bell {
 
     Log.info('Showing the notify button.');
 
-    await (isPushEnabled ? this.__launcher.inactivate() : nothing())
+    await (isPushEnabled ? this.__launcher._inactivate() : nothing())
       .then(() => {
-        if (isPushEnabled && this.__dialog.notificationIcons === null) {
+        if (isPushEnabled && this.__dialog._notificationIcons === null) {
           return MainHelper.getNotificationIcons().then((icons) => {
-            this.__dialog.notificationIcons = icons;
+            this.__dialog._notificationIcons = icons;
           });
         } else return nothing();
       })
       .then(() => delay(this._options.showLauncherAfter || 0))
       .then(() => {
-        return this.__launcher.show();
+        return this.__launcher._show();
       })
       .then(() => {
         return delay(this._options.showBadgeAfter || 0);
@@ -458,8 +459,8 @@ export default class Bell {
           OneSignal._isNewVisitor
         ) {
           return this.__message
-            .enqueue(this._options.text['message.prenotify'])
-            .then(() => this.__badge.show());
+            ._enqueue(this._options.text['message.prenotify'])
+            .then(() => this.__badge._show());
         } else return nothing();
       })
       .then(() => (this._initialized = true));
@@ -468,7 +469,7 @@ export default class Bell {
   _applyOffsetIfSpecified() {
     const offset = this._options.offset;
     if (offset) {
-      const element = this.__launcher.element as HTMLElement;
+      const element = this.__launcher._element as HTMLElement;
 
       if (!element) {
         Log.error('Could not find bell dom element');
@@ -554,7 +555,7 @@ export default class Bell {
   }
 
   get _graphic() {
-    return this.__button.element!.querySelector('svg') as SVGElement;
+    return this.__button._element!.querySelector('svg') as SVGElement;
   }
 
   get __launcher() {
