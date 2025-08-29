@@ -72,11 +72,11 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
  * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
  */
 export class OneSignalServiceWorker {
-  static get webhookNotificationEventSender() {
+  static get _webhookNotificationEventSender() {
     return new OSWebhookNotificationEventSender();
   }
 
-  static async getPushSubscriptionId(): Promise<string | undefined> {
+  static async _getPushSubscriptionId(): Promise<string | undefined> {
     const pushSubscription =
       await self.registration.pushManager.getSubscription();
     const pushToken = pushSubscription?.endpoint;
@@ -90,31 +90,31 @@ export class OneSignalServiceWorker {
    * fired on the clients. It also allows the clients to communicate with the
    * service worker to close all active notifications.
    */
-  static get workerMessenger(): WorkerMessengerSW {
-    if (!self.workerMessenger) {
-      self.workerMessenger = new WorkerMessengerSW(undefined);
+  static get _workerMessenger(): WorkerMessengerSW {
+    if (!self._workerMessenger) {
+      self._workerMessenger = new WorkerMessengerSW(undefined);
     }
-    return self.workerMessenger;
+    return self._workerMessenger;
   }
 
   /**
    * Service worker entry point.
    */
-  static run() {
+  static _run() {
     self.addEventListener(
       'activate',
-      OneSignalServiceWorker.onServiceWorkerActivated,
+      OneSignalServiceWorker._onServiceWorkerActivated,
     );
-    self.addEventListener('push', OneSignalServiceWorker.onPushReceived);
+    self.addEventListener('push', OneSignalServiceWorker._onPushReceived);
     self.addEventListener('notificationclose', (event: NotificationEvent) =>
-      event.waitUntil(OneSignalServiceWorker.onNotificationClosed(event)),
+      event.waitUntil(OneSignalServiceWorker._onNotificationClosed(event)),
     );
     self.addEventListener('notificationclick', (event: NotificationEvent) =>
-      event.waitUntil(OneSignalServiceWorker.onNotificationClicked(event)),
+      event.waitUntil(OneSignalServiceWorker._onNotificationClicked(event)),
     );
     self.addEventListener('pushsubscriptionchange', (event: Event) => {
       (event as FetchEvent).waitUntil(
-        OneSignalServiceWorker.onPushSubscriptionChange(
+        OneSignalServiceWorker._onPushSubscriptionChange(
           event as unknown as SubscriptionChangeEvent,
         ),
       );
@@ -127,14 +127,14 @@ export class OneSignalServiceWorker {
       switch (data?.command) {
         case WorkerMessengerCommand.SessionUpsert:
           Log.debug('[Service Worker] Received SessionUpsert', payload);
-          OneSignalServiceWorker.debounceRefreshSession(
+          OneSignalServiceWorker._debounceRefreshSession(
             event,
             payload as UpsertOrDeactivateSessionPayload,
           );
           break;
         case WorkerMessengerCommand.SessionDeactivate:
           Log.debug('[Service Worker] Received SessionDeactivate', payload);
-          OneSignalServiceWorker.debounceRefreshSession(
+          OneSignalServiceWorker._debounceRefreshSession(
             event,
             payload as UpsertOrDeactivateSessionPayload,
           );
@@ -161,14 +161,14 @@ export class OneSignalServiceWorker {
     // delay for setting up test mocks like global.ServiceWorkerGlobalScope
     setTimeout(() => {
       // self.addEventListener('message') is statically added inside the listen() method
-      OneSignalServiceWorker.workerMessenger.listen();
+      OneSignalServiceWorker._workerMessenger.listen();
 
       // Install messaging event handlers for page <-> service worker communication
-      OneSignalServiceWorker.setupMessageListeners();
+      OneSignalServiceWorker._setupMessageListeners();
     }, 0);
   }
 
-  static async getAppId(): Promise<string> {
+  static async _getAppId(): Promise<string> {
     if (self.location.search) {
       const match = self.location.search.match(/appId=([0-9a-z-]+)&?/i);
       // Successful regex matches are at position 1
@@ -181,18 +181,18 @@ export class OneSignalServiceWorker {
     return appId;
   }
 
-  static setupMessageListeners() {
-    OneSignalServiceWorker.workerMessenger.on(
+  static _setupMessageListeners() {
+    OneSignalServiceWorker._workerMessenger.on(
       WorkerMessengerCommand.WorkerVersion,
       () => {
         Log.debug('[Service Worker] Received worker version message.');
-        OneSignalServiceWorker.workerMessenger.broadcast(
+        OneSignalServiceWorker._workerMessenger.broadcast(
           WorkerMessengerCommand.WorkerVersion,
           VERSION,
         );
       },
     );
-    OneSignalServiceWorker.workerMessenger.on(
+    OneSignalServiceWorker._workerMessenger.on(
       WorkerMessengerCommand.Subscribe,
       async (appConfigBundle: AppConfig) => {
         const appConfig = appConfigBundle;
@@ -205,13 +205,13 @@ export class OneSignalServiceWorker {
           await context._subscriptionManager.registerSubscription(
             rawSubscription,
           );
-        OneSignalServiceWorker.workerMessenger.broadcast(
+        OneSignalServiceWorker._workerMessenger.broadcast(
           WorkerMessengerCommand.Subscribe,
           subscription.serialize(),
         );
       },
     );
-    OneSignalServiceWorker.workerMessenger.on(
+    OneSignalServiceWorker._workerMessenger.on(
       WorkerMessengerCommand.SubscribeNew,
       async (appConfigBundle: AppConfig) => {
         const appConfig = appConfigBundle;
@@ -225,14 +225,14 @@ export class OneSignalServiceWorker {
             rawSubscription,
           );
 
-        OneSignalServiceWorker.workerMessenger.broadcast(
+        OneSignalServiceWorker._workerMessenger.broadcast(
           WorkerMessengerCommand.SubscribeNew,
           subscription.serialize(),
         );
       },
     );
 
-    OneSignalServiceWorker.workerMessenger.on(
+    OneSignalServiceWorker._workerMessenger.on(
       WorkerMessengerCommand.AreYouVisibleResponse,
       async (payload: PageVisibilityResponse) => {
         Log.debug(
@@ -251,7 +251,7 @@ export class OneSignalServiceWorker {
         }
       },
     );
-    OneSignalServiceWorker.workerMessenger.on(
+    OneSignalServiceWorker._workerMessenger.on(
       WorkerMessengerCommand.SetLogging,
       async (payload: { shouldLog: boolean }) => {
         if (payload.shouldLog) {
@@ -268,20 +268,20 @@ export class OneSignalServiceWorker {
    * This method handles the receipt of a push signal on all web browsers except Safari, which uses the OS to handle
    * notifications.
    */
-  static onPushReceived(event: PushEvent): void {
+  static _onPushReceived(event: PushEvent): void {
     Log.debug(
       `Called onPushReceived(${JSON.stringify(event, null, 4)}):`,
       event,
     );
 
     event.waitUntil(
-      OneSignalServiceWorker.parseOrFetchNotifications(event)
+      OneSignalServiceWorker._parseOrFetchNotifications(event)
         .then(
           async (rawNotificationsArray: OSMinifiedNotificationPayload[]) => {
             //Display push notifications in the order we received them
             const notificationEventPromiseFns = [];
             const notificationReceivedPromises: Promise<void>[] = [];
-            const appId = await OneSignalServiceWorker.getAppId();
+            const appId = await OneSignalServiceWorker._getAppId();
 
             for (const rawNotification of rawNotificationsArray) {
               Log.debug('Raw Notification from OneSignal:', rawNotification);
@@ -300,23 +300,23 @@ export class OneSignalServiceWorker {
                     {
                       notification: notif,
                     };
-                  await OneSignalServiceWorker.workerMessenger
+                  await OneSignalServiceWorker._workerMessenger
                     .broadcast(
                       WorkerMessengerCommand.NotificationWillDisplay,
                       event,
                     )
                     .catch((e) => Log.error(e));
                   const pushSubscriptionId =
-                    await OneSignalServiceWorker.getPushSubscriptionId();
+                    await OneSignalServiceWorker._getPushSubscriptionId();
 
-                  OneSignalServiceWorker.webhookNotificationEventSender.willDisplay(
+                  OneSignalServiceWorker._webhookNotificationEventSender.willDisplay(
                     notif,
                     pushSubscriptionId,
                   );
 
-                  return OneSignalServiceWorker.displayNotification(notif)
+                  return OneSignalServiceWorker._displayNotification(notif)
                     .then(() =>
-                      OneSignalServiceWorker.sendConfirmedDelivery(notif),
+                      OneSignalServiceWorker._sendConfirmedDelivery(notif),
                     )
                     .catch((e) => Log.error(e));
                 }).bind(null, notification),
@@ -341,17 +341,18 @@ export class OneSignalServiceWorker {
    * @param notification A JSON object containing notification details.
    * @returns {Promise}
    */
-  static async sendConfirmedDelivery(
+  static async _sendConfirmedDelivery(
     notification: IOSNotification,
   ): Promise<void | null> {
     if (!notification) return;
 
-    if (!OneSignalServiceWorker.browserSupportsConfirmedDelivery()) return null;
+    if (!OneSignalServiceWorker._browserSupportsConfirmedDelivery())
+      return null;
 
     if (!notification.confirmDelivery) return;
 
-    const appId = await OneSignalServiceWorker.getAppId();
-    const pushSubscriptionId = await this.getPushSubscriptionId();
+    const appId = await OneSignalServiceWorker._getAppId();
+    const pushSubscriptionId = await this._getPushSubscriptionId();
 
     // app and notification ids are required, decided to exclude deviceId from required params
     // In rare case we don't have it we can still report as confirmed to backend to increment count
@@ -388,7 +389,7 @@ export class OneSignalServiceWorker {
    * macOS 13.3 didn't seem to have this restriction when testing up to a 25 secound delay, however
    * to be safe we are disabling it for all Safari browsers.
    */
-  static browserSupportsConfirmedDelivery(): boolean {
+  static _browserSupportsConfirmedDelivery(): boolean {
     return getBrowserName() !== Browser.Safari;
   }
 
@@ -396,14 +397,14 @@ export class OneSignalServiceWorker {
    * Gets an array of window clients
    * @returns {Promise}
    */
-  static async getWindowClients(): Promise<ReadonlyArray<WindowClient>> {
+  static async _getWindowClients(): Promise<ReadonlyArray<WindowClient>> {
     return await self.clients.matchAll({
       type: 'window',
       includeUncontrolled: true,
     });
   }
 
-  static async updateSessionBasedOnHasActive(
+  static async _updateSessionBasedOnHasActive(
     event: ExtendableMessageEvent,
     hasAnyActiveSessions: boolean,
     options: UpsertOrDeactivateSessionPayload,
@@ -434,7 +435,7 @@ export class OneSignalServiceWorker {
     }
   }
 
-  static async refreshSession(
+  static async _refreshSession(
     event: ExtendableMessageEvent,
     options: UpsertOrDeactivateSessionPayload,
   ): Promise<void> {
@@ -444,10 +445,10 @@ export class OneSignalServiceWorker {
      * unfortunately, not enough for safari, it always returns false for focused state of a client
      * have to workaround it with messaging to the client.
      */
-    const windowClients = await this.getWindowClients();
+    const windowClients = await this._getWindowClients();
 
     if (options.isSafari) {
-      await OneSignalServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(
+      await OneSignalServiceWorker._checkIfAnyClientsFocusedAndUpdateSession(
         event,
         windowClients,
         options,
@@ -457,7 +458,7 @@ export class OneSignalServiceWorker {
         (w) => (w as WindowClient).focused,
       );
       Log.debug('[Service Worker] hasAnyActiveSessions', hasAnyActiveSessions);
-      await OneSignalServiceWorker.updateSessionBasedOnHasActive(
+      await OneSignalServiceWorker._updateSessionBasedOnHasActive(
         event,
         hasAnyActiveSessions,
         options,
@@ -465,7 +466,7 @@ export class OneSignalServiceWorker {
     }
   }
 
-  static async checkIfAnyClientsFocusedAndUpdateSession(
+  static async _checkIfAnyClientsFocusedAndUpdateSession(
     event: ExtendableMessageEvent,
     windowClients: ReadonlyArray<Client>,
     sessionInfo: UpsertOrDeactivateSessionPayload,
@@ -485,7 +486,7 @@ export class OneSignalServiceWorker {
     });
     const updateOnHasActive = async () => {
       Log.debug('updateSessionBasedOnHasActive', self.clientsStatus);
-      await OneSignalServiceWorker.updateSessionBasedOnHasActive(
+      await OneSignalServiceWorker._updateSessionBasedOnHasActive(
         event,
         self.clientsStatus!.hasAnyActiveSessions,
         sessionInfo,
@@ -500,7 +501,7 @@ export class OneSignalServiceWorker {
     event.waitUntil(getClientStatusesCancelable.promise);
   }
 
-  static debounceRefreshSession(
+  static _debounceRefreshSession(
     event: ExtendableMessageEvent,
     options: UpsertOrDeactivateSessionPayload,
   ) {
@@ -512,7 +513,7 @@ export class OneSignalServiceWorker {
     }
 
     const executeRefreshSession = async () => {
-      await OneSignalServiceWorker.refreshSession(event, options);
+      await OneSignalServiceWorker._refreshSession(event, options);
     };
 
     const cancelableRefreshSession = cancelableTimeout(
@@ -529,7 +530,7 @@ export class OneSignalServiceWorker {
    * If the image protocol is HTTPS, or origin contains localhost or starts with 192.168.*.*, we do not proxy the image.
    * @param imageUrl An HTTP or HTTPS image URL.
    */
-  static ensureImageResourceHttps(imageUrl?: string) {
+  static _ensureImageResourceHttps(imageUrl?: string) {
     if (imageUrl) {
       try {
         const parsedImageUrl = new URL(imageUrl);
@@ -563,24 +564,24 @@ export class OneSignalServiceWorker {
   /**
    * Given a structured notification object, HTTPS-ifies the notification icons and action button icons, if they exist.
    */
-  static ensureNotificationResourcesHttps(
+  static _ensureNotificationResourcesHttps(
     notification: IMutableOSNotification,
   ) {
     if (notification) {
       if (notification.icon) {
-        notification.icon = OneSignalServiceWorker.ensureImageResourceHttps(
+        notification.icon = OneSignalServiceWorker._ensureImageResourceHttps(
           notification.icon,
         );
       }
       if (notification.image) {
-        notification.image = OneSignalServiceWorker.ensureImageResourceHttps(
+        notification.image = OneSignalServiceWorker._ensureImageResourceHttps(
           notification.image,
         );
       }
       if (notification.actionButtons && notification.actionButtons.length > 0) {
         for (const button of notification.actionButtons) {
           if (button.icon) {
-            button.icon = OneSignalServiceWorker.ensureImageResourceHttps(
+            button.icon = OneSignalServiceWorker._ensureImageResourceHttps(
               button.icon,
             );
           }
@@ -594,7 +595,7 @@ export class OneSignalServiceWorker {
    * Any event needing to display a notification calls this so that all the display options can be centralized here.
    * @param notification A structured notification object.
    */
-  static async displayNotification(notification: IMutableOSNotification) {
+  static async _displayNotification(notification: IMutableOSNotification) {
     Log.debug(
       `Called displayNotification(${JSON.stringify(notification, null, 4)}):`,
       notification,
@@ -610,7 +611,7 @@ export class OneSignalServiceWorker {
     );
 
     // Get app ID for tag value
-    const appId = await OneSignalServiceWorker.getAppId();
+    const appId = await OneSignalServiceWorker._getAppId();
 
     notification.title = notification.title ? notification.title : defaultTitle;
     notification.icon = notification.icon
@@ -619,7 +620,7 @@ export class OneSignalServiceWorker {
         ? defaultIcon
         : undefined;
 
-    OneSignalServiceWorker.ensureNotificationResourcesHttps(notification);
+    OneSignalServiceWorker._ensureNotificationResourcesHttps(notification);
 
     const notificationOptions: NotificationOptions = {
       body: notification.body,
@@ -683,7 +684,7 @@ export class OneSignalServiceWorker {
       notificationOptions,
     );
 
-    if (this.requiresMacOS15ChromiumAfterDisplayWorkaround()) {
+    if (this._requiresMacOS15ChromiumAfterDisplayWorkaround()) {
       await delay(1_000);
     }
   }
@@ -692,7 +693,7 @@ export class OneSignalServiceWorker {
   // when background rules are followed.
   // For reference, the notification body is "This site has been updated in the background".
   // https://issues.chromium.org/issues/378103918
-  static requiresMacOS15ChromiumAfterDisplayWorkaround(): boolean {
+  static _requiresMacOS15ChromiumAfterDisplayWorkaround(): boolean {
     const userAgentData = (navigator as any).userAgentData;
     const isMacOS = userAgentData?.platform === 'macOS';
     const isChromium = !!userAgentData?.brands?.some(
@@ -706,7 +707,7 @@ export class OneSignalServiceWorker {
    * notification. Otherwise returns true and the link will be opened.
    * @param url
    */
-  static shouldOpenNotificationUrl(url: string) {
+  static _shouldOpenNotificationUrl(url: string) {
     return (
       url !== 'javascript:void(0);' &&
       url !== 'do_not_open' &&
@@ -718,20 +719,20 @@ export class OneSignalServiceWorker {
    * Occurs when a notification is dismissed by the user (clicking the 'X') or all notifications are cleared.
    * Supported on: Chrome 50+ only
    */
-  static async onNotificationClosed(event: NotificationEvent) {
+  static async _onNotificationClosed(event: NotificationEvent) {
     Log.debug(
       `Called onNotificationClosed(${JSON.stringify(event, null, 4)}):`,
       event,
     );
     const notification = event.notification.data as IOSNotification;
 
-    OneSignalServiceWorker.workerMessenger
+    OneSignalServiceWorker._workerMessenger
       .broadcast(WorkerMessengerCommand.NotificationDismissed, notification)
       .catch((e) => Log.error(e));
     const pushSubscriptionId =
-      await OneSignalServiceWorker.getPushSubscriptionId();
+      await OneSignalServiceWorker._getPushSubscriptionId();
 
-    OneSignalServiceWorker.webhookNotificationEventSender.dismiss(
+    OneSignalServiceWorker._webhookNotificationEventSender.dismiss(
       notification,
       pushSubscriptionId,
     );
@@ -741,7 +742,7 @@ export class OneSignalServiceWorker {
    * After clicking a notification, determines the URL to open based on whether an action button was clicked or the
    * notification body was clicked.
    */
-  static async getNotificationUrlToOpen(
+  static async _getNotificationUrlToOpen(
     notification: IOSNotification,
     actionId?: string,
   ): Promise<string> {
@@ -773,7 +774,7 @@ export class OneSignalServiceWorker {
    * Occurs when the notification's body or action buttons are clicked. Does not occur if the notification is
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
-  static async onNotificationClicked(event: NotificationEvent) {
+  static async _onNotificationClicked(event: NotificationEvent) {
     Log.debug(
       `Called onNotificationClicked(${JSON.stringify(event, null, 4)}):`,
       event,
@@ -797,13 +798,13 @@ export class OneSignalServiceWorker {
     );
     if (actionPreference) notificationClickHandlerAction = actionPreference;
 
-    const launchUrl = await OneSignalServiceWorker.getNotificationUrlToOpen(
+    const launchUrl = await OneSignalServiceWorker._getNotificationUrlToOpen(
       osNotification,
       event.action,
     );
     const notificationOpensLink: boolean =
-      OneSignalServiceWorker.shouldOpenNotificationUrl(launchUrl);
-    const appId = await OneSignalServiceWorker.getAppId();
+      OneSignalServiceWorker._shouldOpenNotificationUrl(launchUrl);
+    const appId = await OneSignalServiceWorker._getAppId();
     const deviceType = getDeviceType();
 
     const notificationClickEvent: NotificationClickEventInternal = {
@@ -842,9 +843,9 @@ export class OneSignalServiceWorker {
 
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
-    const pushSubscriptionId = await this.getPushSubscriptionId();
+    const pushSubscriptionId = await this._getPushSubscriptionId();
     const convertedAPIRequests =
-      OneSignalServiceWorker.sendConvertedAPIRequests(
+      OneSignalServiceWorker._sendConvertedAPIRequests(
         appId,
         pushSubscriptionId,
         notificationClickEvent,
@@ -857,7 +858,7 @@ export class OneSignalServiceWorker {
      an identical new tab being created. With a special setting, any existing tab matching the origin will
      be focused instead of an identical new tab being created.
      */
-    const activeClients = await OneSignalServiceWorker.getWindowClients();
+    const activeClients = await OneSignalServiceWorker._getWindowClients();
     let doNotOpenLink = false;
     for (const client of activeClients) {
       const clientUrl = client.url;
@@ -886,7 +887,7 @@ export class OneSignalServiceWorker {
           (notificationClickHandlerAction === 'focus' &&
             clientOrigin === launchOrigin)
         ) {
-          OneSignalServiceWorker.workerMessenger.unicast(
+          OneSignalServiceWorker._workerMessenger.unicast(
             WorkerMessengerCommand.NotificationClicked,
             notificationClickEvent,
             client,
@@ -924,7 +925,7 @@ export class OneSignalServiceWorker {
             }
           } else {
             // If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
-            await OneSignalServiceWorker.openUrl(launchUrl);
+            await OneSignalServiceWorker._openUrl(launchUrl);
           }
         }
         doNotOpenLink = true;
@@ -933,7 +934,7 @@ export class OneSignalServiceWorker {
     }
 
     if (notificationOpensLink && !doNotOpenLink) {
-      await OneSignalServiceWorker.openUrl(launchUrl);
+      await OneSignalServiceWorker._openUrl(launchUrl);
     }
     if (saveNotificationClickedPromise) {
       await saveNotificationClickedPromise;
@@ -947,7 +948,7 @@ export class OneSignalServiceWorker {
    *    1. OneSignal.com to increase the notification open count.
    *    2. A website developer defined webhook URL, if set.
    */
-  static async sendConvertedAPIRequests(
+  static async _sendConvertedAPIRequests(
     appId: string | undefined | null,
     pushSubscriptionId: string | undefined,
     notificationClickEvent: NotificationClickEventInternal,
@@ -980,7 +981,7 @@ export class OneSignalServiceWorker {
       );
     }
 
-    await OneSignalServiceWorker.webhookNotificationEventSender.click(
+    await OneSignalServiceWorker._webhookNotificationEventSender.click(
       notificationClickEvent,
       pushSubscriptionId,
     );
@@ -991,7 +992,7 @@ export class OneSignalServiceWorker {
    * Attempts to open the given url in a new browser tab. Called when a notification is clicked.
    * @param url May not be well-formed.
    */
-  static async openUrl(url: string): Promise<Client | null> {
+  static async _openUrl(url: string): Promise<Client | null> {
     Log.debug('Opening notification URL:', url);
     try {
       return await self.clients.openWindow(url);
@@ -1005,18 +1006,18 @@ export class OneSignalServiceWorker {
    * Fires when the ServiceWorker can control pages.
    * @param event
    */
-  static onServiceWorkerActivated(event: ExtendableEvent) {
+  static _onServiceWorkerActivated(event: ExtendableEvent) {
     Log.info(`OneSignal Service Worker activated (version ${VERSION})`);
     event.waitUntil(self.clients.claim());
   }
 
-  static async onPushSubscriptionChange(event: SubscriptionChangeEvent) {
+  static async _onPushSubscriptionChange(event: SubscriptionChangeEvent) {
     Log.debug(
       `Called onPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`,
       event,
     );
 
-    const appId = await OneSignalServiceWorker.getAppId();
+    const appId = await OneSignalServiceWorker._getAppId();
     if (!appId) {
       // Without an app ID, we can't make any calls
       return;
@@ -1131,14 +1132,14 @@ export class OneSignalServiceWorker {
    * @returns An array of notifications. The new web push protocol will only ever contain one notification, however
    * an array is returned for backwards compatibility with the rest of the service worker plumbing.
    */
-  static parseOrFetchNotifications(
+  static _parseOrFetchNotifications(
     event: PushEvent,
   ): Promise<OSMinifiedNotificationPayload[]> {
     if (!event || !event.data) {
       return Promise.reject('Missing event.data on push payload!');
     }
 
-    const isValidPayload = OneSignalServiceWorker.isValidPushPayload(
+    const isValidPayload = OneSignalServiceWorker._isValidPushPayload(
       event.data,
     );
     if (isValidPayload) {
@@ -1161,7 +1162,7 @@ export class OneSignalServiceWorker {
    * Otherwise returns false.
    * @param rawData The raw PushMessageData from the push event's event.data, not already parsed to JSON.
    */
-  static isValidPushPayload(rawData: PushMessageData) {
+  static _isValidPushPayload(rawData: PushMessageData) {
     try {
       const payload = rawData.json();
       if (isValidPayload(payload)) {
@@ -1180,5 +1181,4 @@ export class OneSignalServiceWorker {
   }
 }
 
-self.OneSignalWorker = OneSignalServiceWorker;
-OneSignalServiceWorker.run();
+OneSignalServiceWorker._run();

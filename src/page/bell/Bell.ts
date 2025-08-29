@@ -12,8 +12,6 @@ import type {
   BellSize,
   BellText,
 } from 'src/shared/prompts/types';
-import { Browser } from 'src/shared/useragent/constants';
-import { getBrowserName } from 'src/shared/useragent/detect';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
@@ -508,7 +506,7 @@ export default class Bell {
 
     this.applyOffsetIfSpecified();
     this.setCustomColorsIfSpecified();
-    this.patchSafariSvgFilterBug();
+    this.addBadgeShadow();
 
     Log.info('Showing the notify button.');
 
@@ -541,26 +539,22 @@ export default class Bell {
       .then(() => (this.initialized = true));
   }
 
-  patchSafariSvgFilterBug() {
-    if (getBrowserName() !== Browser.Safari) {
-      const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
-      const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
-      const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
-      this.graphic.setAttribute(
-        'style',
-        `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`,
-      );
-      this.badge.element.setAttribute(
-        'style',
-        `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`,
-      );
-      this.dialog.element.setAttribute(
-        'style',
-        `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
-      );
-    } else {
-      this.badge.element.setAttribute('style', `display: none;`);
-    }
+  addBadgeShadow() {
+    const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
+    const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
+    const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
+    this.graphic.setAttribute(
+      'style',
+      `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`,
+    );
+    this.badge.element.setAttribute(
+      'style',
+      `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`,
+    );
+    this.dialog.element.setAttribute(
+      'style',
+      `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
+    );
   }
 
   applyOffsetIfSpecified() {

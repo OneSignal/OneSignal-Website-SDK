@@ -109,7 +109,7 @@ describe('ServiceWorker', () => {
       // @ts-expect-error - search is readonly but we need to set it for testing
       self.location.search = '?appId=some-app-id';
 
-      const appId = await OneSignalServiceWorker.getAppId();
+      const appId = await OneSignalServiceWorker._getAppId();
       expect(appId).toBe('some-app-id');
     });
   });
@@ -179,7 +179,7 @@ describe('ServiceWorker', () => {
         title: payload.title,
       };
       expect(
-        OneSignalServiceWorker.webhookNotificationEventSender.willDisplay,
+        OneSignalServiceWorker._webhookNotificationEventSender.willDisplay,
       ).toHaveBeenCalledWith(
         expect.objectContaining(notificationInfo),
         pushSubscriptionId,
@@ -228,7 +228,7 @@ describe('ServiceWorker', () => {
       await dispatchEvent(event);
 
       expect(
-        OneSignalServiceWorker.webhookNotificationEventSender.dismiss,
+        OneSignalServiceWorker._webhookNotificationEventSender.dismiss,
       ).toHaveBeenCalledWith(
         {
           notificationId,
@@ -280,7 +280,7 @@ describe('ServiceWorker', () => {
 
       // should emit clicked event
       expect(
-        OneSignalServiceWorker.webhookNotificationEventSender.click,
+        OneSignalServiceWorker._webhookNotificationEventSender.click,
       ).toHaveBeenCalledWith(
         {
           notification: {
