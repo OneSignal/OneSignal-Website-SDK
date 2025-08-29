@@ -59,4 +59,4 @@ export const ONESIGNAL_EVENTS = {
    */
   TEST_FINISHED_ALLOW_CLICK_HANDLING: 'testFinishedAllowClickHandling',
   SESSION_STARTED: 'os.sessionStarted',
-};
+} as const;

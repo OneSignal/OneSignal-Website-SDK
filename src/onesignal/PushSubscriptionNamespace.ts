@@ -11,9 +11,9 @@ import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
+import type { EventsMap } from 'src/shared/services/types';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
-import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
 import { Subscription } from '../shared/models/Subscription';
@@ -22,7 +22,7 @@ import {
   logMethodCall,
 } from '../shared/utils/utils';
 
-export default class PushSubscriptionNamespace extends EventListenerBase {
+export default class PushSubscriptionNamespace extends EventListenerBase<'change'> {
   private _id?: string | null;
   private _token?: string | null;
   private _optedIn?: boolean;
@@ -56,20 +56,14 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
         Log._error(e);
       });
 
-    OneSignal.emitter.on(
-      OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-      async (change: SubscriptionChangeEvent | undefined) => {
-        this._id = change?.current.id;
-        this._token = change?.current.token;
-      },
-    );
+    OneSignal.emitter.on('change', async (change) => {
+      this._id = change?.current.id;
+      this._token = change?.current.token;
+    });
 
-    OneSignal.emitter.on(
-      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-      async (permission: NotificationPermission) => {
-        this._permission = permission;
-      },
-    );
+    OneSignal.emitter.on('permissionChangeAsString', async (permission) => {
+      this._permission = permission;
+    });
   }
 
   get id(): string | null | undefined {
@@ -110,14 +104,14 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
   addEventListener(
     event: 'change',
-    listener: (change: SubscriptionChangeEvent) => void,
+    listener: (change: EventsMap['change']) => void,
   ): void {
     OneSignal.emitter.on(event, listener);
   }
 
   removeEventListener(
     event: 'change',
-    listener: (change: SubscriptionChangeEvent) => void,
+    listener: (change: EventsMap['change']) => void,
   ): void {
     OneSignal.emitter.off(event, listener);
   }
