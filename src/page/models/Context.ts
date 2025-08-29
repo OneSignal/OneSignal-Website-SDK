@@ -19,29 +19,29 @@ import type { ITagManager } from '../managers/tagManager/types';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 
 export default class Context implements ContextInterface {
-  public appConfig: AppConfig;
-  public dynamicResourceLoader: DynamicResourceLoader;
-  public subscriptionManager: SubscriptionManagerPage;
-  public serviceWorkerManager: ServiceWorkerManager;
-  public workerMessenger: WorkerMessengerPage;
-  public permissionManager: PermissionManager;
-  public updateManager: UpdateManager;
+  public _appConfig: AppConfig;
+  public _dynamicResourceLoader: DynamicResourceLoader;
+  public _subscriptionManager: SubscriptionManagerPage;
+  public _serviceWorkerManager: ServiceWorkerManager;
+  public _workerMessenger: WorkerMessengerPage;
+  public _permissionManager: PermissionManager;
+  public _updateManager: UpdateManager;
   public promptsManager: PromptsManager;
-  public sessionManager: ISessionManager;
-  public tagManager: ITagManager;
-  public slidedownManager: ISlidedownManager;
+  public _sessionManager: ISessionManager;
+  public _tagManager: ITagManager;
+  public _slidedownManager: ISlidedownManager;
 
   constructor(appConfig: AppConfig) {
-    this.appConfig = appConfig;
-    this.subscriptionManager = getSubscriptionManagerPage(this);
-    this.serviceWorkerManager = getServiceWorkerManager(this);
-    this.permissionManager = new PermissionManager();
-    this.workerMessenger = new WorkerMessengerPage(this);
-    this.updateManager = new UpdateManager(this);
-    this.sessionManager = new SessionManager(this);
-    this.tagManager = new TagManager(this);
-    this.slidedownManager = new SlidedownManager(this);
+    this._appConfig = appConfig;
+    this._subscriptionManager = getSubscriptionManagerPage(this);
+    this._serviceWorkerManager = getServiceWorkerManager(this);
+    this._permissionManager = new PermissionManager();
+    this._workerMessenger = new WorkerMessengerPage(this);
+    this._updateManager = new UpdateManager(this);
+    this._sessionManager = new SessionManager(this);
+    this._tagManager = new TagManager(this);
+    this._slidedownManager = new SlidedownManager(this);
     this.promptsManager = new PromptsManager(this);
-    this.dynamicResourceLoader = new DynamicResourceLoader();
+    this._dynamicResourceLoader = new DynamicResourceLoader();
   }
 }

@@ -59,6 +59,6 @@ export default class TagManager implements ITagManager {
    * @returns void
    */
   storeRemotePlayerTags(remoteTags: TagsObjectForApi): void {
-    this.context.tagManager.remoteTags = remoteTags;
+    this.context._tagManager.remoteTags = remoteTags;
   }
 }

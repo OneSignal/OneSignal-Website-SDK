@@ -22,10 +22,10 @@ export async function checkAndTriggerSubscriptionChanged() {
   const context = OneSignal.context;
   // isPushEnabled = subscribed && is not opted out
   const isPushEnabled: boolean =
-    await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
   // isOptedIn = native permission granted && is not opted out
   const isOptedIn: boolean =
-    await OneSignal.context.subscriptionManager.isOptedIn!();
+    await OneSignal.context._subscriptionManager.isOptedIn!();
 
   const appState = await getAppState();
   const {
@@ -49,7 +49,7 @@ export async function checkAndTriggerSubscriptionChanged() {
   }
 
   // update notification_types via core module
-  await context.subscriptionManager.updateNotificationTypes!();
+  await context._subscriptionManager.updateNotificationTypes!();
 
   appState.lastKnownPushEnabled = isPushEnabled;
   appState.lastKnownPushToken = currentPushToken;
@@ -266,9 +266,9 @@ async function onSubscriptionChanged_sendCategorySlidedownTags(
   if (isSubscribed !== true) return;
 
   const prompts =
-    OneSignal.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
+    OneSignal.context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
   if (isCategorySlidedownConfigured(prompts)) {
-    await OneSignal.context.tagManager.sendTags();
+    await OneSignal.context._tagManager.sendTags();
   }
 }
 

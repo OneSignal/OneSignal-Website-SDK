@@ -112,7 +112,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const permission =
-      await OneSignal.context.permissionManager.getPermissionStatus();
+      await OneSignal.context._permissionManager.getPermissionStatus();
     if (permission === 'granted') {
       return NotificationType.Subscribed;
     }
@@ -129,7 +129,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   async isOptedIn(): Promise<boolean> {
     const subscriptionState = await this.getSubscriptionState();
     const permission =
-      await OneSignal.context.permissionManager.getPermissionStatus();
+      await OneSignal.context._permissionManager.getPermissionStatus();
     return permission === 'granted' && !subscriptionState.optedOut;
   }
 
@@ -192,10 +192,10 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const workerRegistration =
-      await this.context.serviceWorkerManager.getOneSignalRegistration();
+      await this.context._serviceWorkerManager.getOneSignalRegistration();
     const notificationPermission =
-      await this.context.permissionManager.getNotificationPermission(
-        this.context.appConfig.safariWebId,
+      await this.context._permissionManager.getNotificationPermission(
+        this.context._appConfig.safariWebId,
       );
     if (!workerRegistration) {
       /* You can't be subscribed without a service worker registration */
@@ -251,7 +251,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         here.
       */
     if (
-      (await OneSignal.context.permissionManager.getPermissionStatus()) ===
+      (await OneSignal.context._permissionManager.getPermissionStatus()) ===
       'denied'
     )
       throw PermissionBlockedError;
@@ -262,7 +262,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       /* Now that permissions have been granted, install the service worker */
       Log.info('Installing SW on Safari');
       try {
-        await this.context.serviceWorkerManager.installWorker();
+        await this.context._serviceWorkerManager.installWorker();
         Log.info('SW on Safari successfully installed');
       } catch (e) {
         Log.error('SW on Safari failed to install.');
@@ -402,7 +402,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     let workerRegistration: ServiceWorkerRegistration | undefined | null;
     try {
       workerRegistration =
-        await this.context.serviceWorkerManager.installWorker();
+        await this.context._serviceWorkerManager.installWorker();
     } catch (err) {
       if (err instanceof SWRegistrationError) {
         // TODO: This doesn't register the subscription any more, most likely broke
@@ -410,11 +410,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         // subscription was created so the customer knows this failed by seeing
         // subscriptions in this state on the OneSignal dashboard.
         if (err.status === 403) {
-          await this.context.subscriptionManager.registerFailedSubscription(
+          await this.context._subscriptionManager.registerFailedSubscription(
             NotificationType.ServiceWorkerStatus403,
           );
         } else if (err.status === 404) {
-          await this.context.subscriptionManager.registerFailedSubscription(
+          await this.context._subscriptionManager.registerFailedSubscription(
             NotificationType.ServiceWorkerStatus404,
           );
         }
@@ -444,7 +444,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     subscriptionState: SubscriptionStateServiceWorkerNotIntalled,
   ) {
     if (isFirstPageView()) {
-      this.context.subscriptionManager.registerSubscription(
+      this.context._subscriptionManager.registerSubscription(
         new RawPushSubscription(),
         subscriptionState,
       );
@@ -476,14 +476,14 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
   public async isSubscriptionExpiring(): Promise<boolean> {
     const serviceWorkerState =
-      await this.context.serviceWorkerManager.getActiveState();
+      await this.context._serviceWorkerManager.getActiveState();
     if (!(serviceWorkerState === ServiceWorkerActiveState.OneSignalWorker)) {
       /* If the service worker isn't activated, there's no subscription to look for */
       return false;
     }
 
     const serviceWorkerRegistration =
-      await this.context.serviceWorkerManager.getOneSignalRegistration();
+      await this.context._serviceWorkerManager.getOneSignalRegistration();
     if (!serviceWorkerRegistration) return false;
 
     // It's possible to get here in Safari 11.1+ version

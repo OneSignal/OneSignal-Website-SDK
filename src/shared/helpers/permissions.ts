@@ -23,7 +23,7 @@ export const triggerNotificationPermissionChanged = async (force = false) => {
 
 const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
   const newPermission: NotificationPermission =
-    await OneSignal.context.permissionManager.getPermissionStatus();
+    await OneSignal.context._permissionManager.getPermissionStatus();
   const previousPermission = await getOptionsValue<NotificationPermission>(
     'notificationPermission',
   );

@@ -13,7 +13,7 @@ import Path from '../models/Path';
 export function getServiceWorkerManager(
   context: ContextInterface,
 ): ServiceWorkerManager {
-  const config: AppConfig = context.appConfig;
+  const config: AppConfig = context._appConfig;
 
   const serviceWorkerManagerConfig = {
     workerPath: new Path(DEFAULT_SERVICE_WORKER_PATH),
@@ -50,7 +50,7 @@ export function getSubscriptionManagerPage(
 ): SubscriptionManagerPage {
   return new SubscriptionManagerPage(
     context,
-    createSubscriptionManagerConfig(context.appConfig),
+    createSubscriptionManagerConfig(context._appConfig),
   );
 }
 
@@ -59,6 +59,6 @@ export function getSubscriptionManagerSW(
 ): SubscriptionManagerSW {
   return new SubscriptionManagerSW(
     context,
-    createSubscriptionManagerConfig(context.appConfig),
+    createSubscriptionManagerConfig(context._appConfig),
   );
 }

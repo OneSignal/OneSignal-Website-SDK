@@ -127,13 +127,13 @@ export class ServiceWorkerManager {
   public async getWorkerVersion(): Promise<string> {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<string>(async (resolve) => {
-      this.context.workerMessenger.once(
+      this.context._workerMessenger.once(
         WorkerMessengerCommand.WorkerVersion,
         (workerVersion) => {
           resolve(workerVersion);
         },
       );
-      await this.context.workerMessenger.unicast(
+      await this.context._workerMessenger.unicast(
         WorkerMessengerCommand.WorkerVersion,
       );
     });
@@ -158,7 +158,7 @@ export class ServiceWorkerManager {
       workerState === ServiceWorkerActiveState.ThirdParty
     ) {
       const permission =
-        await OneSignal.context.permissionManager.getNotificationPermission(
+        await OneSignal.context._permissionManager.getNotificationPermission(
           OneSignal.config!.safariWebId,
         );
       const notificationsEnabled = permission === 'granted';
@@ -205,7 +205,7 @@ export class ServiceWorkerManager {
     const availableWorker = getAvailableServiceWorker(workerRegistration);
     const serviceWorkerHref = getServiceWorkerHref(
       this.config,
-      this.context.appConfig.appId,
+      this.context._appConfig.appId,
       VERSION,
     );
     // 3.1 If we can't get a scriptURL assume it is different
@@ -256,7 +256,7 @@ export class ServiceWorkerManager {
 
   public async establishServiceWorkerChannel() {
     Log.debug('establishServiceWorkerChannel');
-    const workerMessenger = this.context.workerMessenger;
+    const workerMessenger = this.context._workerMessenger;
     workerMessenger.off();
 
     workerMessenger.on(
@@ -402,7 +402,7 @@ export class ServiceWorkerManager {
 
     const workerHref = getServiceWorkerHref(
       this.config,
-      this.context.appConfig.appId,
+      this.context._appConfig.appId,
       VERSION,
     );
 
@@ -445,7 +445,7 @@ export class ServiceWorkerManager {
 
     const workerHref = getServiceWorkerHref(
       configWithBetaWorkerName,
-      this.context.appConfig.appId,
+      this.context._appConfig.appId,
       VERSION,
     );
 

@@ -90,7 +90,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     this._optedIn = true;
 
     const permissionStatus =
-      await OneSignal.context.permissionManager.getPermissionStatus();
+      await OneSignal.context._permissionManager.getPermissionStatus();
 
     if (permissionStatus !== 'granted') {
       // TO DO: use user-config options prompting method

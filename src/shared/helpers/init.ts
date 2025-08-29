@@ -20,9 +20,9 @@ export async function internalInit() {
   Log.debug('Called internalInit()');
 
   // Always check for an updated service worker
-  await OneSignal.context.serviceWorkerManager.installWorker();
+  await OneSignal.context._serviceWorkerManager.installWorker();
 
-  const sessionManager = OneSignal.context.sessionManager;
+  const sessionManager = OneSignal.context._sessionManager;
   OneSignal.emitter.on(
     OneSignal.EVENTS.SESSION_STARTED,
     sessionManager.sendOnSessionUpdateFromPage.bind(sessionManager),
@@ -72,7 +72,7 @@ async function sessionInit(): Promise<void> {
    * prevent the popup from opening.
    */
   const isOptedOut =
-    (await OneSignal.context.subscriptionManager.isOptedOut()) ?? false;
+    (await OneSignal.context._subscriptionManager.isOptedOut()) ?? false;
   // saves isOptedOut to localStorage. used for require user interaction functionality
   const subscription = await getSubscription();
   subscription.optedOut = isOptedOut;
@@ -81,7 +81,7 @@ async function sessionInit(): Promise<void> {
   await handleAutoResubscribe(isOptedOut);
 
   const isSubscribed =
-    await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
   // saves isSubscribed to IndexedDb. used for require user interaction functionality
   await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
@@ -112,17 +112,17 @@ export async function onSdkInitialized() {
    * In all other cases we would send an on_session request.
    */
   const isExistingUser: boolean =
-    await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    await OneSignal.context._subscriptionManager.isAlreadyRegisteredWithOneSignal();
   if (isExistingUser) {
-    OneSignal.context.sessionManager.setupSessionEventListeners();
+    OneSignal.context._sessionManager.setupSessionEventListeners();
     if (!wasUserResubscribed) {
-      await OneSignal.context.updateManager.sendOnSessionUpdate();
+      await OneSignal.context._updateManager.sendOnSessionUpdate();
     }
   } else if (
     !OneSignal.config?.userConfig.promptOptions?.autoPrompt &&
     !OneSignal.config?.userConfig.autoResubscribe
   ) {
-    await OneSignal.context.updateManager.sendOnSessionUpdate();
+    await OneSignal.context._updateManager.sendOnSessionUpdate();
   }
 
   await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
@@ -131,10 +131,10 @@ export async function onSdkInitialized() {
 /** Helper methods */
 async function storeInitialValues() {
   const isPushEnabled =
-    await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
   const notificationPermission =
-    await OneSignal.context.permissionManager.getPermissionStatus();
-  const isOptedOut = await OneSignal.context.subscriptionManager.isOptedOut();
+    await OneSignal.context._permissionManager.getPermissionStatus();
+  const isOptedOut = await OneSignal.context._subscriptionManager.isOptedOut();
   LimitStore.put('subscription.optedOut', isOptedOut);
   await db.put('Options', {
     key: 'isPushEnabled',
@@ -153,8 +153,8 @@ async function setWelcomeNotificationFlag(): Promise<void> {
    * automatically resubscribed.
    */
   const permission: NotificationPermission =
-    await OneSignal.context.permissionManager.getNotificationPermission(
-      OneSignal.context.appConfig.safariWebId,
+    await OneSignal.context._permissionManager.getNotificationPermission(
+      OneSignal.context._appConfig.safariWebId,
     );
   if (permission === 'granted') {
     OneSignal.__doNotShowWelcomeNotification = true;
@@ -164,7 +164,7 @@ async function setWelcomeNotificationFlag(): Promise<void> {
 async function establishServiceWorkerChannel(): Promise<void> {
   if (navigator.serviceWorker && window.isSecureContext) {
     try {
-      await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
+      await OneSignal.context._serviceWorkerManager.establishServiceWorkerChannel();
     } catch (e) {
       Log.error(e);
     }
@@ -177,17 +177,17 @@ export async function processExpiringSubscriptions(): Promise<boolean> {
 
   Log.debug('Checking subscription expiration...');
   const isSubscriptionExpiring =
-    await context.subscriptionManager.isSubscriptionExpiring();
+    await context._subscriptionManager.isSubscriptionExpiring();
   if (!isSubscriptionExpiring) {
     Log.debug('Subscription is not considered expired.');
     return false;
   }
 
   Log.debug('Subscription is considered expiring.');
-  const rawPushSubscription = await context.subscriptionManager.subscribe(
+  const rawPushSubscription = await context._subscriptionManager.subscribe(
     SubscriptionStrategyKind.SubscribeNew,
   );
-  await context.subscriptionManager.registerSubscription(rawPushSubscription);
+  await context._subscriptionManager.registerSubscription(rawPushSubscription);
   return true;
 }
 
@@ -376,8 +376,8 @@ async function handleAutoResubscribe(isOptedOut: boolean) {
   });
   if (OneSignal.config?.userConfig.autoResubscribe && !isOptedOut) {
     const currentPermission: NotificationPermission =
-      await OneSignal.context.permissionManager.getNotificationPermission(
-        OneSignal.context.appConfig.safariWebId,
+      await OneSignal.context._permissionManager.getNotificationPermission(
+        OneSignal.context._appConfig.safariWebId,
       );
     if (currentPermission == 'granted') {
       await SubscriptionHelper.registerForPush();

@@ -19,7 +19,7 @@ export default class PermissionManager {
       throw new Error(`OneSignal.context is undefined. Call init first`);
     }
 
-    return await OneSignal.context.permissionManager.getNotificationPermission(
+    return await OneSignal.context._permissionManager.getNotificationPermission(
       OneSignal.config!.safariWebId,
     );
   }

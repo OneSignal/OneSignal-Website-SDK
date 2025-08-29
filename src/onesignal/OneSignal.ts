@@ -59,7 +59,7 @@ export default class OneSignal {
     OneSignal._coreDirector = new CoreModuleDirector(core);
     const subscription = await getSubscription();
     const permission =
-      await OneSignal.context.permissionManager.getPermissionStatus();
+      await OneSignal.context._permissionManager.getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);
     this.Notifications = new NotificationsNamespace(permission);
   }
@@ -72,7 +72,7 @@ export default class OneSignal {
     // Workaround to temp assign config so that it can be used in context.
     OneSignal.config = appConfig;
     OneSignal.context = new Context(appConfig);
-    OneSignal.config = OneSignal.context.appConfig;
+    OneSignal.config = OneSignal.context._appConfig;
   }
 
   /**
@@ -168,7 +168,7 @@ export default class OneSignal {
   private static async _delayedInit(): Promise<void> {
     OneSignal.pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
-    OneSignal.context.workerMessenger.listen();
+    OneSignal.context._workerMessenger.listen();
 
     async function __init() {
       if (OneSignal._initAlreadyCalled) return;

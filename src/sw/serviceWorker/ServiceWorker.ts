@@ -198,11 +198,11 @@ export class OneSignalServiceWorker {
         const appConfig = appConfigBundle;
         Log.debug('[Service Worker] Received subscribe message.');
         const context = new ContextSW(appConfig);
-        const rawSubscription = await context.subscriptionManager.subscribe(
+        const rawSubscription = await context._subscriptionManager.subscribe(
           SubscriptionStrategyKind.ResubscribeExisting,
         );
         const subscription =
-          await context.subscriptionManager.registerSubscription(
+          await context._subscriptionManager.registerSubscription(
             rawSubscription,
           );
         OneSignalServiceWorker.workerMessenger.broadcast(
@@ -217,11 +217,11 @@ export class OneSignalServiceWorker {
         const appConfig = appConfigBundle;
         Log.debug('[Service Worker] Received subscribe new message.');
         const context = new ContextSW(appConfig);
-        const rawSubscription = await context.subscriptionManager.subscribe(
+        const rawSubscription = await context._subscriptionManager.subscribe(
           SubscriptionStrategyKind.SubscribeNew,
         );
         const subscription =
-          await context.subscriptionManager.registerSubscription(
+          await context._subscriptionManager.registerSubscription(
             rawSubscription,
           );
 
@@ -1066,7 +1066,7 @@ export class OneSignalServiceWorker {
     } else {
       // Otherwise set our push registration by resubscribing
       try {
-        rawPushSubscription = await context.subscriptionManager.subscribe(
+        rawPushSubscription = await context._subscriptionManager.subscribe(
           SubscriptionStrategyKind.SubscribeNew,
         );
       } catch (e) {
@@ -1098,7 +1098,7 @@ export class OneSignalServiceWorker {
       }
 
       // rawPushSubscription may be null if no push subscription was retrieved
-      await context.subscriptionManager.registerSubscription(
+      await context._subscriptionManager.registerSubscription(
         rawPushSubscription,
         subscriptionState,
       );

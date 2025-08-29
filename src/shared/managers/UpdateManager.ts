@@ -43,7 +43,7 @@ export class UpdateManager {
     }
 
     const existingUser =
-      await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+      await this.context._subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
       Log.debug(
         'Not sending the on session because user is not registered with OneSignal (no device id)',
@@ -65,7 +65,7 @@ export class UpdateManager {
       // Not sending on_session here but from SW instead.
 
       // Not awaiting here on purpose
-      this.context.sessionManager.upsertSession(SessionOrigin.UserNewSession);
+      this.context._sessionManager.upsertSession(SessionOrigin.UserNewSession);
       this.onSessionSent = true;
     } catch (e) {
       if (e instanceof Error) {

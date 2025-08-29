@@ -38,16 +38,16 @@ export class SessionManager implements ISessionManager {
     const payload: UpsertOrDeactivateSessionPayload = {
       onesignalId,
       subscriptionId,
-      appId: this.context.appConfig.appId,
-      sessionThreshold: this.context.appConfig.sessionThreshold || 0,
-      enableSessionDuration: !!this.context.appConfig.enableSessionDuration,
+      appId: this.context._appConfig.appId,
+      sessionThreshold: this.context._appConfig.sessionThreshold || 0,
+      enableSessionDuration: !!this.context._appConfig.enableSessionDuration,
       sessionOrigin,
       isSafari: hasSafariWindow(),
-      outcomesConfig: this.context.appConfig.userConfig.outcomes!,
+      outcomesConfig: this.context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
       Log.debug('Notify SW to upsert session');
-      await this.context.workerMessenger.unicast(
+      await this.context._workerMessenger.unicast(
         WorkerMessengerCommand.SessionUpsert,
         payload,
       );
@@ -64,18 +64,18 @@ export class SessionManager implements ISessionManager {
     sessionOrigin: SessionOriginValue,
   ): Promise<void> {
     const payload: UpsertOrDeactivateSessionPayload = {
-      appId: this.context.appConfig.appId,
+      appId: this.context._appConfig.appId,
       subscriptionId,
       onesignalId,
-      sessionThreshold: this.context.appConfig.sessionThreshold!,
-      enableSessionDuration: this.context.appConfig.enableSessionDuration!,
+      sessionThreshold: this.context._appConfig.sessionThreshold!,
+      enableSessionDuration: this.context._appConfig.enableSessionDuration!,
       sessionOrigin,
       isSafari: hasSafariWindow(),
-      outcomesConfig: this.context.appConfig.userConfig.outcomes!,
+      outcomesConfig: this.context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
       Log.debug('Notify SW to deactivate session');
-      await this.context.workerMessenger.unicast(
+      await this.context._workerMessenger.unicast(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );
@@ -185,18 +185,18 @@ export class SessionManager implements ISessionManager {
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
       const payload: UpsertOrDeactivateSessionPayload = {
-        appId: this.context.appConfig.appId,
+        appId: this.context._appConfig.appId,
         onesignalId,
         subscriptionId,
-        sessionThreshold: this.context.appConfig.sessionThreshold!,
-        enableSessionDuration: this.context.appConfig.enableSessionDuration!,
+        sessionThreshold: this.context._appConfig.sessionThreshold!,
+        enableSessionDuration: this.context._appConfig.enableSessionDuration!,
         sessionOrigin: SessionOrigin.BeforeUnload,
         isSafari: hasSafariWindow(),
-        outcomesConfig: this.context.appConfig.userConfig.outcomes!,
+        outcomesConfig: this.context._appConfig.userConfig.outcomes!,
       };
 
       Log.debug('Notify SW to deactivate session (beforeunload)');
-      this.context.workerMessenger.directPostMessageToSW(
+      this.context._workerMessenger.directPostMessageToSW(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );

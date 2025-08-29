@@ -201,7 +201,7 @@ export class PromptsManager {
     }
 
     const sdkStylesLoadResult =
-      await this.context.dynamicResourceLoader.loadSdkStylesheet();
+      await this.context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log.debug(
         'Not showing slidedown permission message because styles failed to load.',
@@ -213,7 +213,7 @@ export class PromptsManager {
       this.installEventHooksForSlidedown();
     }
 
-    await this.context.slidedownManager.createSlidedown(options);
+    await this.context._slidedownManager.createSlidedown(options);
   }
 
   public async internalShowCategorySlidedown(
@@ -265,7 +265,7 @@ export class PromptsManager {
     options?: AutoPromptOptions,
   ): Promise<void> {
     const prompts =
-      this.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
+      this.context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
     const slidedownPromptOptions =
       options?.slidedownPromptOptions ||
       getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
@@ -295,24 +295,24 @@ export class PromptsManager {
     this.eventHooksInstalled = true;
 
     OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
-      this.context.slidedownManager.setIsSlidedownShowing(true);
+      this.context._slidedownManager.setIsSlidedownShowing(true);
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CLOSED, () => {
-      this.context.slidedownManager.setIsSlidedownShowing(false);
-      this.context.slidedownManager.showQueued();
+      this.context._slidedownManager.setIsSlidedownShowing(false);
+      this.context._slidedownManager.showQueued();
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
-      await this.context.slidedownManager.handleAllowClick();
+      await this.context._slidedownManager.handleAllowClick();
       OneSignalEvent.trigger(
         OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
       );
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
-      if (!this.context.slidedownManager.slidedown) {
+      if (!this.context._slidedownManager.slidedown) {
         return;
       }
 
-      const type = this.context.slidedownManager.slidedown?.options.type;
+      const type = this.context._slidedownManager.slidedown?.options.type;
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
@@ -375,7 +375,7 @@ export class PromptsManager {
       case DelayedPromptType.Email:
       case DelayedPromptType.Sms:
       case DelayedPromptType.SmsAndEmail: {
-        const { userConfig } = this.context.appConfig;
+        const { userConfig } = this.context._appConfig;
         const options = getFirstSlidedownPromptOptionsWithType(
           userConfig.promptOptions?.slidedown?.prompts || [],
           type,

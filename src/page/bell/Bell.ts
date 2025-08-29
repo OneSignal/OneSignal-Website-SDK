@@ -348,7 +348,7 @@ export default class Bell {
         }
 
         const permission =
-          await OneSignal.context.permissionManager.getPermissionStatus();
+          await OneSignal.context._permissionManager.getPermissionStatus();
         let bellState: BellState;
         if (isSubscribed.current.optedIn) {
           bellState = Bell.STATES.SUBSCRIBED;
@@ -427,7 +427,7 @@ export default class Bell {
     if (!this.options.enable) return;
 
     const sdkStylesLoadResult =
-      await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
+      await OneSignal.context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log.debug('Not showing notify button because styles failed to load.');
       return;
@@ -494,7 +494,7 @@ export default class Bell {
     addDomElement(this.button.selector, 'beforeend', logoSvg);
 
     const isPushEnabled =
-      await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
     DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
@@ -683,8 +683,8 @@ export default class Bell {
    */
   updateState() {
     Promise.all([
-      OneSignal.context.subscriptionManager.isPushNotificationsEnabled(),
-      OneSignal.context.permissionManager.getPermissionStatus(),
+      OneSignal.context._subscriptionManager.isPushNotificationsEnabled(),
+      OneSignal.context._permissionManager.getPermissionStatus(),
     ])
       .then(([isEnabled, permission]) => {
         this.setState(
