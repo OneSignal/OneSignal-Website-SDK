@@ -544,5 +544,11 @@ describe('UserNamespace', () => {
       user.removeAliases(['test_label']);
       expectConsentRequired();
     });
+
+    test('should not track event if consent is required but not given', () => {
+      const user = new UserNamespace(true);
+      user.trackEvent('test_event');
+      expectConsentRequired();
+    });
   });
 });

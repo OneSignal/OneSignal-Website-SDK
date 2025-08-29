@@ -243,6 +243,7 @@ export default class User {
 
   public setLanguage(language: string): void {
     logMethodCall('setLanguage', { language });
+    if (isConsentRequiredButNotGiven()) return;
 
     this.validateStringLabel(language, 'language');
 
@@ -256,6 +257,8 @@ export default class User {
   }
 
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {
+    if (isConsentRequiredButNotGiven()) return;
+
     // login operation / non-local onesignalId is needed to send custom events
     const onesignalId = this.onesignalId;
     if (IDManager.isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
@@ -267,8 +270,8 @@ export default class User {
       Log.error('Properties must be JSON-serializable');
       return;
     }
-
     logMethodCall('trackEvent', { name, properties });
+
     OneSignal.coreDirector.customEventController.sendCustomEvent({
       name,
       properties,

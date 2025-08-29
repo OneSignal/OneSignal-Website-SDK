@@ -1,4 +1,3 @@
-import { isConsentRequiredButNotGiven } from 'src/shared/database/config';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
@@ -93,7 +92,6 @@ export default class UserNamespace extends EventListenerBase {
   }
 
   public setLanguage(language: string): void {
-    if (isConsentRequiredButNotGiven()) return;
     this._currentUser?.setLanguage(language);
   }
 
