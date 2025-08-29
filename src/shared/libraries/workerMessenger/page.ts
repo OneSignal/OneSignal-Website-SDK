@@ -48,7 +48,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
       return;
     }
 
-    const listenerRecords = this.replies.findListenersForMessage(data.command);
+    const listenerRecords = this._replies.findListenersForMessage(data.command);
     const listenersToRemove = [];
     const listenersToCall = [];
 
@@ -62,7 +62,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     }
     for (let i = listenersToRemove.length - 1; i >= 0; i--) {
       const listenerRecord = listenersToRemove[i];
-      this.replies.deleteListenerRecord(data.command, listenerRecord);
+      this._replies.deleteListenerRecord(data.command, listenerRecord);
     }
     for (const listenerRecord of listenersToCall) {
       listenerRecord.callback.apply(null, [data.payload]);
@@ -91,7 +91,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     );
 
     const workerRegistration =
-      await this.context?._serviceWorkerManager.getOneSignalRegistration();
+      await this._context?._serviceWorkerManager.getOneSignalRegistration();
     if (!workerRegistration) {
       Log.error(
         '`[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!',

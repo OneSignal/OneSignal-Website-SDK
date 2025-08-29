@@ -16,7 +16,7 @@ import { OneSignalApiBase } from './OneSignalApiBase';
 import OneSignalApiShared from './OneSignalApiShared';
 
 export class OneSignalApiSW {
-  static async downloadServerAppConfig(
+  static async _downloadServerAppConfig(
     appId: string,
   ): Promise<ServerAppConfig> {
     enforceAppId(appId);
@@ -31,7 +31,7 @@ export class OneSignalApiSW {
    * Given a GCM or Firefox subscription endpoint or Safari device token, returns the user ID from OneSignal's server.
    * Used if the user clears his or her IndexedDB database and we need the user ID again.
    */
-  static getUserIdFromSubscriptionIdentifier(
+  static _getUserIdFromSubscriptionIdentifier(
     appId: string,
     deviceType: DeliveryPlatformKindValue,
     identifier: string,
@@ -61,7 +61,7 @@ export class OneSignalApiSW {
    *  Main on_session call
    * @returns
    */
-  public static async updateUserSession(
+  public static async _updateUserSession(
     appId: string,
     onesignalId: string,
     subscriptionId: string,
@@ -91,7 +91,7 @@ export class OneSignalApiSW {
     }
   }
 
-  public static async sendSessionDuration(
+  public static async _sendSessionDuration(
     appId: string,
     onesignalId: string,
     subscriptionId: string,

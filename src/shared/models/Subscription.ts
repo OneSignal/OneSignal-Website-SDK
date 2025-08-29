@@ -23,7 +23,7 @@ export class Subscription implements Serializable {
    */
   expirationTime: number | null | undefined;
 
-  serialize() {
+  _serialize() {
     return {
       deviceId: this.deviceId,
       subscriptionToken: this.subscriptionToken,

@@ -37,12 +37,12 @@ export interface SubscriptionManagerConfig {
 export class SubscriptionManagerBase<
   C extends ContextSWInterface | ContextInterface,
 > {
-  protected context: C;
-  protected config: SubscriptionManagerConfig;
+  protected _context: C;
+  protected _config: SubscriptionManagerConfig;
 
   constructor(context: C, config: SubscriptionManagerConfig) {
-    this.context = context;
-    this.config = config;
+    this._context = context;
+    this._config = config;
   }
 
   /**
@@ -61,7 +61,7 @@ export class SubscriptionManagerBase<
    * an identifier, and a new device record will be created if the identifier didn't exist. These
    * records are marked with a special subscription state for tracking purposes.
    */
-  public async registerSubscription(
+  public async _registerSubscription(
     pushSubscription: RawPushSubscription | undefined,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _subscriptionState?: NotificationTypeValue | null,
@@ -75,17 +75,17 @@ export class SubscriptionManagerBase<
       (blocked permission).
     */
     if (pushSubscription) {
-      pushSubscription = RawPushSubscription.deserialize(pushSubscription);
+      pushSubscription = RawPushSubscription._deserialize(pushSubscription);
     }
 
-    if (await this.isAlreadyRegisteredWithOneSignal()) {
-      if ('_updateManager' in this.context) {
-        await this.context._updateManager.sendPushDeviceRecordUpdate();
+    if (await this._isAlreadyRegisteredWithOneSignal()) {
+      if ('_updateManager' in this._context) {
+        await this._context._updateManager.sendPushDeviceRecordUpdate();
       }
 
       // NOTE: We only have sessionManager in the page context, should sw upsert do anything?
-    } else if ('_sessionManager' in this.context) {
-      this.context._sessionManager.upsertSession(SessionOrigin.UserCreate);
+    } else if ('_sessionManager' in this._context) {
+      this._context._sessionManager.upsertSession(SessionOrigin.UserCreate);
     }
 
     const subscription = await getSubscription();
@@ -115,7 +115,7 @@ export class SubscriptionManagerBase<
     return subscription;
   }
 
-  public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
+  public async _isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
     const { deviceId } = await getSubscription();
     return !!deviceId;
   }
@@ -130,7 +130,7 @@ export class SubscriptionManagerBase<
    * push subscription is resubscribed as-is leaving it unchanged, or unsubscribed to make room for
    * a new push subscription.
    */
-  public async subscribeWithVapidKey(
+  public async _subscribeWithVapidKey(
     pushManager: PushManager,
     subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
@@ -172,7 +172,7 @@ export class SubscriptionManagerBase<
           */
 
           /* We're unsubscribing, so we want to store the created at timestamp */
-          await SubscriptionManagerBase.doPushUnsubscribe(
+          await SubscriptionManagerBase._doPushUnsubscribe(
             existingPushSubscription,
           );
         }
@@ -180,7 +180,7 @@ export class SubscriptionManagerBase<
       case SubscriptionStrategyKind.SubscribeNew:
         /* Since we want a new subscription every time with this strategy, just unsubscribe. */
         if (existingPushSubscription) {
-          await SubscriptionManagerBase.doPushUnsubscribe(
+          await SubscriptionManagerBase._doPushUnsubscribe(
             existingPushSubscription,
           );
         }
@@ -189,20 +189,20 @@ export class SubscriptionManagerBase<
 
     // Actually subscribe the user to push
     const [newPushSubscription, isNewSubscription] =
-      await SubscriptionManagerBase.doPushSubscribe(
+      await SubscriptionManagerBase._doPushSubscribe(
         pushManager,
-        this.getVapidKeyForBrowser(),
+        this._getVapidKeyForBrowser(),
       );
 
     // Update saved create and expired times
-    await SubscriptionManagerBase.updateSubscriptionTime(
+    await SubscriptionManagerBase._updateSubscriptionTime(
       isNewSubscription,
       newPushSubscription.expirationTime,
     );
 
     // Create our own custom object from the browser's native PushSubscription object
     const pushSubscriptionDetails =
-      RawPushSubscription.setFromW3cSubscription(newPushSubscription);
+      RawPushSubscription._setFromW3cSubscription(newPushSubscription);
     return pushSubscriptionDetails;
   }
 
@@ -211,7 +211,7 @@ export class SubscriptionManagerBase<
    *
    * If the VAPID key isn't present, undefined is returned instead of null.
    */
-  public getVapidKeyForBrowser(): ArrayBuffer | undefined {
+  public _getVapidKeyForBrowser(): ArrayBuffer | undefined {
     // Specifically return undefined instead of null if the key isn't available
     let key = undefined;
 
@@ -220,13 +220,13 @@ export class SubscriptionManagerBase<
         Firefox uses VAPID for application identification instead of
         authentication, and so all apps share an identification key.
        */
-      key = this.config.onesignalVapidPublicKey;
+      key = this._config.onesignalVapidPublicKey;
     } else {
       /*
         Chrome and Chrome-like browsers including Opera and Yandex use VAPID for
         authentication, and so each app uses a uniquely generated key.
        */
-      key = this.config.vapidPublicKey;
+      key = this._config.vapidPublicKey;
     }
 
     if (key) {
@@ -236,7 +236,7 @@ export class SubscriptionManagerBase<
     }
   }
 
-  private static async updateSubscriptionTime(
+  private static async _updateSubscriptionTime(
     updateCreatedAt: boolean,
     expirationTime: number | null,
   ): Promise<void> {
@@ -252,7 +252,7 @@ export class SubscriptionManagerBase<
   // If there is an error doing so unsubscribe from existing and try again
   //    - This handles subscribing to new server VAPID key if it has changed.
   // return type - [PushSubscription, createdNewPushSubscription(boolean)]
-  private static async doPushSubscribe(
+  private static async _doPushSubscribe(
     pushManager: PushManager,
     applicationServerKey: ArrayBuffer | undefined,
   ): Promise<[PushSubscription, boolean]> {
@@ -290,14 +290,14 @@ export class SubscriptionManagerBase<
         );
         const subscription = await pushManager.getSubscription();
         if (subscription) {
-          await SubscriptionManagerBase.doPushUnsubscribe(subscription);
+          await SubscriptionManagerBase._doPushUnsubscribe(subscription);
         }
         return [await pushManager.subscribe(subscriptionOptions), true];
       } else throw e; // If some other error, bubble the exception up
     }
   }
 
-  private static async doPushUnsubscribe(
+  private static async _doPushUnsubscribe(
     pushSubscription: PushSubscription,
   ): Promise<boolean> {
     Log.debug(

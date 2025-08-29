@@ -29,7 +29,7 @@ export default class SubscriptionHelper {
         SubscriptionStrategyKind.ResubscribeExisting,
       );
       subscription =
-        await context._subscriptionManager.registerSubscription(
+        await context._subscriptionManager._registerSubscription(
           rawSubscription,
         );
 

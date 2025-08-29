@@ -44,7 +44,7 @@ vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
 vi.spyOn(Log, 'debug').mockImplementation(() => {});
 
-const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, 'subscribe');
+const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, '_subscribe');
 
 let { isServiceWorker } = vi.hoisted(() => {
   return { isServiceWorker: false };
@@ -304,7 +304,7 @@ describe('ServiceWorker', () => {
   describe('pushsubscriptionchange', () => {
     const registerSubscriptionCall = vi.spyOn(
       SubscriptionManagerSW.prototype,
-      'registerSubscription',
+      '_registerSubscription',
     );
 
     const someDeviceId = '123';

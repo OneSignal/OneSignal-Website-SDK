@@ -211,7 +211,7 @@ async function sendOnSessionCallIfNotPlayerCreate(
   resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
-  await OneSignalApiSW.updateUserSession(appId, onesignalId, subscriptionId);
+  await OneSignalApiSW._updateUserSession(appId, onesignalId, subscriptionId);
 }
 
 async function finalizeSession(
@@ -233,7 +233,7 @@ async function finalizeSession(
     );
     const attribution = await getConfigAttribution(outcomesConfig);
     Log.debug('send on_focus with attribution', attribution);
-    await OneSignalApiSW.sendSessionDuration(
+    await OneSignalApiSW._sendSessionDuration(
       appId,
       onesignalId,
       subscriptionId,

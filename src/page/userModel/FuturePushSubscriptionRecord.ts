@@ -42,7 +42,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     return subscription.safariDeviceToken;
   }
 
-  serialize() {
+  _serialize() {
     return {
       type: this.type,
       token: this.token,

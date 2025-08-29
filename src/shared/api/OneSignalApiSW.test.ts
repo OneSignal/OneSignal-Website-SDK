@@ -6,7 +6,7 @@ import { OneSignalApiSW } from './OneSignalApiSW';
 describe('OneSignalApiSW', () => {
   test('downloadServerAppConfig', async () => {
     nock({});
-    const appConfig = await OneSignalApiSW.downloadServerAppConfig(APP_ID);
+    const appConfig = await OneSignalApiSW._downloadServerAppConfig(APP_ID);
     expect(appConfig).toBeDefined();
   });
 });

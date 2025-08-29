@@ -127,7 +127,7 @@ export class ServiceWorkerManager {
   public async getWorkerVersion(): Promise<string> {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<string>(async (resolve) => {
-      this.context._workerMessenger.once(
+      this.context._workerMessenger._once(
         WorkerMessengerCommand.WorkerVersion,
         (workerVersion) => {
           resolve(workerVersion);
@@ -257,9 +257,9 @@ export class ServiceWorkerManager {
   public async establishServiceWorkerChannel() {
     Log.debug('establishServiceWorkerChannel');
     const workerMessenger = this.context._workerMessenger;
-    workerMessenger.off();
+    workerMessenger._off();
 
-    workerMessenger.on(
+    workerMessenger._on(
       WorkerMessengerCommand.NotificationWillDisplay,
       async (event: NotificationForegroundWillDisplayEventSerializable) => {
         Log.debug(
@@ -279,7 +279,7 @@ export class ServiceWorkerManager {
       },
     );
 
-    workerMessenger.on(
+    workerMessenger._on(
       WorkerMessengerCommand.NotificationClicked,
       async (event: NotificationClickEventInternal) => {
         const clickedListenerCallbackCount =
@@ -314,7 +314,7 @@ export class ServiceWorkerManager {
       },
     );
 
-    workerMessenger.on(
+    workerMessenger._on(
       WorkerMessengerCommand.NotificationDismissed,
       async (data) => {
         await OneSignalEvent.trigger(
@@ -326,7 +326,7 @@ export class ServiceWorkerManager {
 
     const isSafari = hasSafariWindow();
 
-    workerMessenger.on(
+    workerMessenger._on(
       WorkerMessengerCommand.AreYouVisible,
       async (incomingPayload: PageVisibilityRequest) => {
         // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.

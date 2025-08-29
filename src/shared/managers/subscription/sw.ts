@@ -15,13 +15,13 @@ export class SubscriptionManagerSW extends SubscriptionManagerBase<ContextSWInte
    * This method can be called from the page context or a webpage a service worker context
    * and will select the correct method.
    */
-  public async subscribe(
+  public async _subscribe(
     subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
-    return await this.subscribeFcmFromWorker(subscriptionStrategy);
+    return await this._subscribeFcmFromWorker(subscriptionStrategy);
   }
 
-  public async subscribeFcmFromWorker(
+  public async _subscribeFcmFromWorker(
     subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
     /*
@@ -61,7 +61,7 @@ export class SubscriptionManagerSW extends SubscriptionManagerBase<ContextSWInte
       throw new Error('Permission not granted');
     }
 
-    return await this.subscribeWithVapidKey(
+    return await this._subscribeWithVapidKey(
       swRegistration.pushManager,
       subscriptionStrategy,
     );

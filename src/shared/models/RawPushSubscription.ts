@@ -18,7 +18,7 @@ export class RawPushSubscription implements Serializable {
    *
    * @param pushSubscription A native browser W3C push subscription.
    */
-  public static setFromW3cSubscription(
+  public static _setFromW3cSubscription(
     pushSubscription: PushSubscription,
   ): RawPushSubscription {
     const rawPushSubscription = new RawPushSubscription();
@@ -68,14 +68,14 @@ export class RawPushSubscription implements Serializable {
    *
    * @param safariDeviceToken A native browser Safari push subscription.
    */
-  public setFromSafariSubscription(safariDeviceToken?: string | null) {
+  public _setFromSafariSubscription(safariDeviceToken?: string | null) {
     if (!safariDeviceToken) {
       return;
     }
     this.safariDeviceToken = safariDeviceToken;
   }
 
-  public serialize() {
+  public _serialize() {
     const serializedBundle = {
       /* Old Parameters */
       w3cEndpoint: this.w3cEndpoint ? this.w3cEndpoint.toString() : null,
@@ -89,7 +89,7 @@ export class RawPushSubscription implements Serializable {
 
   // TODO: had a hard to debug bug here due to "any" type bypassing typescript validation.
   // Check the usage and maybe change with strict type
-  public static deserialize(bundle: any): RawPushSubscription {
+  public static _deserialize(bundle: any): RawPushSubscription {
     const subscription = new RawPushSubscription();
     if (!bundle) {
       return subscription;

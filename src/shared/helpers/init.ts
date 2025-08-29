@@ -112,7 +112,7 @@ export async function onSdkInitialized() {
    * In all other cases we would send an on_session request.
    */
   const isExistingUser: boolean =
-    await OneSignal.context._subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    await OneSignal.context._subscriptionManager._isAlreadyRegisteredWithOneSignal();
   if (isExistingUser) {
     OneSignal.context._sessionManager.setupSessionEventListeners();
     if (!wasUserResubscribed) {
@@ -187,7 +187,7 @@ export async function processExpiringSubscriptions(): Promise<boolean> {
   const rawPushSubscription = await context._subscriptionManager.subscribe(
     SubscriptionStrategyKind.SubscribeNew,
   );
-  await context._subscriptionManager.registerSubscription(rawPushSubscription);
+  await context._subscriptionManager._registerSubscription(rawPushSubscription);
   return true;
 }
 

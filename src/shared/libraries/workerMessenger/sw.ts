@@ -16,17 +16,17 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
    * synchronously add self.addEventListener('message') if we are running in the
    * service worker.
    */
-  public async listen() {
+  public async _listen() {
     self.addEventListener(
       'message',
-      this.onWorkerMessageReceivedFromPage.bind(this),
+      this._onWorkerMessageReceivedFromPage.bind(this),
     );
     Log.debug(
       '[Worker Messenger] Service worker is now listening for messages.',
     );
   }
 
-  onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
+  _onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */
@@ -36,7 +36,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       return;
     }
 
-    const listenerRecords = this.replies.findListenersForMessage(data.command);
+    const listenerRecords = this._replies.findListenersForMessage(data.command);
     const listenersToRemove = [];
     const listenersToCall = [];
 
@@ -53,7 +53,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     }
     for (let i = listenersToRemove.length - 1; i >= 0; i--) {
       const listenerRecord = listenersToRemove[i];
-      this.replies.deleteListenerRecord(data.command, listenerRecord);
+      this._replies.deleteListenerRecord(data.command, listenerRecord);
     }
     for (const listenerRecord of listenersToCall) {
       listenerRecord.callback.apply(null, [data.payload]);
@@ -63,7 +63,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
   /**
    * Broadcasts a message from a service worker to all clients, including uncontrolled clients.
    */
-  async broadcast(
+  async _broadcast(
     command: WorkerMessengerCommandValue,
     payload: WorkerMessengerPayload,
   ) {
@@ -87,7 +87,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
   /**
    * Sends a postMessage() to the supplied windowClient
    */
-  async unicast(
+  async _unicast(
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
     windowClient?: Client,

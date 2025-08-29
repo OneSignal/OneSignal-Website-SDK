@@ -73,26 +73,26 @@ export class WorkerMessengerBase<
     | ContextInterface
     | ContextSWInterface,
 > {
-  protected context?: C;
-  protected replies: WorkerMessengerReplyBuffer;
+  protected _context?: C;
+  protected _replies: WorkerMessengerReplyBuffer;
 
   constructor(
     context?: C,
     replies: WorkerMessengerReplyBuffer = new WorkerMessengerReplyBuffer(),
   ) {
-    this.context = context;
-    this.replies = replies;
+    this._context = context;
+    this._replies = replies;
   }
 
   /*
     Subscribes a callback to be notified every time a service worker sends a
     message to the window frame with the specific command.
    */
-  on(
+  _on(
     command: WorkerMessengerCommandValue,
     callback: (WorkerMessengerPayload: any) => void,
   ): void {
-    this.replies.addListener(command, callback, false);
+    this._replies.addListener(command, callback, false);
   }
 
   /*
@@ -101,22 +101,22 @@ export class WorkerMessengerBase<
 
   The callback is executed once at most.
   */
-  once(
+  _once(
     command: WorkerMessengerCommandValue,
     callback: (WorkerMessengerPayload: any) => void,
   ): void {
-    this.replies.addListener(command, callback, true);
+    this._replies.addListener(command, callback, true);
   }
 
   /**
     Unsubscribe a callback from being notified about service worker messages
     with the specified command.
    */
-  off(command?: WorkerMessengerCommandValue): void {
+  _off(command?: WorkerMessengerCommandValue): void {
     if (command) {
-      this.replies.deleteListenerRecords(command);
+      this._replies.deleteListenerRecords(command);
     } else {
-      this.replies.deleteAllListenerRecords();
+      this._replies.deleteAllListenerRecords();
     }
   }
 }

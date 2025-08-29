@@ -161,7 +161,7 @@ export class OneSignalServiceWorker {
     // delay for setting up test mocks like global.ServiceWorkerGlobalScope
     setTimeout(() => {
       // self.addEventListener('message') is statically added inside the listen() method
-      OneSignalServiceWorker._workerMessenger.listen();
+      OneSignalServiceWorker._workerMessenger._listen();
 
       // Install messaging event handlers for page <-> service worker communication
       OneSignalServiceWorker._setupMessageListeners();
@@ -182,57 +182,57 @@ export class OneSignalServiceWorker {
   }
 
   static _setupMessageListeners() {
-    OneSignalServiceWorker._workerMessenger.on(
+    OneSignalServiceWorker._workerMessenger._on(
       WorkerMessengerCommand.WorkerVersion,
       () => {
         Log.debug('[Service Worker] Received worker version message.');
-        OneSignalServiceWorker._workerMessenger.broadcast(
+        OneSignalServiceWorker._workerMessenger._broadcast(
           WorkerMessengerCommand.WorkerVersion,
           VERSION,
         );
       },
     );
-    OneSignalServiceWorker._workerMessenger.on(
+    OneSignalServiceWorker._workerMessenger._on(
       WorkerMessengerCommand.Subscribe,
       async (appConfigBundle: AppConfig) => {
         const appConfig = appConfigBundle;
         Log.debug('[Service Worker] Received subscribe message.');
         const context = new ContextSW(appConfig);
-        const rawSubscription = await context._subscriptionManager.subscribe(
+        const rawSubscription = await context._subscriptionManager._subscribe(
           SubscriptionStrategyKind.ResubscribeExisting,
         );
         const subscription =
-          await context._subscriptionManager.registerSubscription(
+          await context._subscriptionManager._registerSubscription(
             rawSubscription,
           );
-        OneSignalServiceWorker._workerMessenger.broadcast(
+        OneSignalServiceWorker._workerMessenger._broadcast(
           WorkerMessengerCommand.Subscribe,
-          subscription.serialize(),
+          subscription._serialize(),
         );
       },
     );
-    OneSignalServiceWorker._workerMessenger.on(
+    OneSignalServiceWorker._workerMessenger._on(
       WorkerMessengerCommand.SubscribeNew,
       async (appConfigBundle: AppConfig) => {
         const appConfig = appConfigBundle;
         Log.debug('[Service Worker] Received subscribe new message.');
         const context = new ContextSW(appConfig);
-        const rawSubscription = await context._subscriptionManager.subscribe(
+        const rawSubscription = await context._subscriptionManager._subscribe(
           SubscriptionStrategyKind.SubscribeNew,
         );
         const subscription =
-          await context._subscriptionManager.registerSubscription(
+          await context._subscriptionManager._registerSubscription(
             rawSubscription,
           );
 
-        OneSignalServiceWorker._workerMessenger.broadcast(
+        OneSignalServiceWorker._workerMessenger._broadcast(
           WorkerMessengerCommand.SubscribeNew,
-          subscription.serialize(),
+          subscription._serialize(),
         );
       },
     );
 
-    OneSignalServiceWorker._workerMessenger.on(
+    OneSignalServiceWorker._workerMessenger._on(
       WorkerMessengerCommand.AreYouVisibleResponse,
       async (payload: PageVisibilityResponse) => {
         Log.debug(
@@ -251,7 +251,7 @@ export class OneSignalServiceWorker {
         }
       },
     );
-    OneSignalServiceWorker._workerMessenger.on(
+    OneSignalServiceWorker._workerMessenger._on(
       WorkerMessengerCommand.SetLogging,
       async (payload: { shouldLog: boolean }) => {
         if (payload.shouldLog) {
@@ -301,7 +301,7 @@ export class OneSignalServiceWorker {
                       notification: notif,
                     };
                   await OneSignalServiceWorker._workerMessenger
-                    .broadcast(
+                    ._broadcast(
                       WorkerMessengerCommand.NotificationWillDisplay,
                       event,
                     )
@@ -727,7 +727,7 @@ export class OneSignalServiceWorker {
     const notification = event.notification.data as IOSNotification;
 
     OneSignalServiceWorker._workerMessenger
-      .broadcast(WorkerMessengerCommand.NotificationDismissed, notification)
+      ._broadcast(WorkerMessengerCommand.NotificationDismissed, notification)
       .catch((e) => Log.error(e));
     const pushSubscriptionId =
       await OneSignalServiceWorker._getPushSubscriptionId();
@@ -887,7 +887,7 @@ export class OneSignalServiceWorker {
           (notificationClickHandlerAction === 'focus' &&
             clientOrigin === launchOrigin)
         ) {
-          OneSignalServiceWorker._workerMessenger.unicast(
+          OneSignalServiceWorker._workerMessenger._unicast(
             WorkerMessengerCommand.NotificationClicked,
             notificationClickEvent,
             client,
@@ -1024,7 +1024,7 @@ export class OneSignalServiceWorker {
     }
     const appConfig = await getServerAppConfig(
       { appId },
-      OneSignalApiSW.downloadServerAppConfig,
+      OneSignalApiSW._downloadServerAppConfig,
     );
     if (!appConfig) {
       // Without a valid app config (e.g. deleted app), we can't make any calls
@@ -1041,7 +1041,7 @@ export class OneSignalServiceWorker {
       deviceIdExists = !!deviceId;
       if (!deviceIdExists && event.oldSubscription) {
         // We don't have the device ID stored, but we can look it up from our old subscription
-        deviceId = await OneSignalApiSW.getUserIdFromSubscriptionIdentifier(
+        deviceId = await OneSignalApiSW._getUserIdFromSubscriptionIdentifier(
           appId,
           getDeviceType(),
           event.oldSubscription.endpoint,
@@ -1061,13 +1061,13 @@ export class OneSignalServiceWorker {
     // Set it initially by the provided new push subscription
     const providedNewSubscription = event.newSubscription;
     if (providedNewSubscription) {
-      rawPushSubscription = RawPushSubscription.setFromW3cSubscription(
+      rawPushSubscription = RawPushSubscription._setFromW3cSubscription(
         providedNewSubscription,
       );
     } else {
       // Otherwise set our push registration by resubscribing
       try {
-        rawPushSubscription = await context._subscriptionManager.subscribe(
+        rawPushSubscription = await context._subscriptionManager._subscribe(
           SubscriptionStrategyKind.SubscribeNew,
         );
       } catch (e) {
@@ -1099,7 +1099,7 @@ export class OneSignalServiceWorker {
       }
 
       // rawPushSubscription may be null if no push subscription was retrieved
-      await context._subscriptionManager.registerSubscription(
+      await context._subscriptionManager._registerSubscription(
         rawPushSubscription,
         subscriptionState,
       );
