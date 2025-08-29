@@ -2,6 +2,7 @@ import { IdentityConstants } from 'src/core/constants';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { ModelChangeTags } from 'src/core/types/models';
+import { isConsentRequiredButNotGiven } from 'src/shared/database/config';
 import {
   EmptyArgumentError,
   MalformedArgumentError,
@@ -90,6 +91,7 @@ export default class User {
   /* PUBLIC API METHODS */
   public addAlias(label: string, id: string): void {
     logMethodCall('addAlias', { label, id });
+    if (isConsentRequiredButNotGiven()) return;
 
     this.validateStringLabel(label, 'label');
     this.validateStringLabel(id, 'id');
@@ -99,6 +101,8 @@ export default class User {
 
   public addAliases(aliases: { [key: string]: string }): void {
     logMethodCall('addAliases', { aliases });
+    if (isConsentRequiredButNotGiven()) return;
+
     this.validateObject(aliases, 'aliases');
 
     for (const label of Object.keys(aliases)) {
@@ -111,11 +115,15 @@ export default class User {
 
   public removeAlias(label: string): void {
     logMethodCall('removeAlias', { label });
+    if (isConsentRequiredButNotGiven()) return;
+
     this.removeAliases([label]);
   }
 
   public removeAliases(aliases: string[]): void {
     logMethodCall('removeAliases', { aliases });
+    if (isConsentRequiredButNotGiven()) return;
+
     this.validateArray(aliases, 'aliases');
 
     const newAliases = Object.fromEntries(
@@ -126,6 +134,7 @@ export default class User {
 
   public addEmail(email: string): void {
     logMethodCall('addEmail', { email });
+    if (isConsentRequiredButNotGiven()) return;
 
     this.validateStringLabel(email, 'email');
 
@@ -139,6 +148,7 @@ export default class User {
 
   public addSms(sms: string): void {
     logMethodCall('addSms', { sms });
+    if (isConsentRequiredButNotGiven()) return;
 
     this.validateStringLabel(sms, 'sms');
 
@@ -150,6 +160,7 @@ export default class User {
 
   public removeEmail(email: string): void {
     logMethodCall('removeEmail', { email });
+    if (isConsentRequiredButNotGiven()) return;
 
     this.validateStringLabel(email, 'email');
 
@@ -165,6 +176,7 @@ export default class User {
 
   public removeSms(smsNumber: string): void {
     logMethodCall('removeSms', { smsNumber });
+    if (isConsentRequiredButNotGiven()) return;
 
     this.validateStringLabel(smsNumber, 'smsNumber');
 
@@ -178,6 +190,7 @@ export default class User {
 
   public addTag(key: string, value: string): void {
     logMethodCall('addTag', { key, value });
+    if (isConsentRequiredButNotGiven()) return;
 
     this.validateStringLabel(key, 'key');
     this.validateStringLabel(value, 'value');
@@ -186,12 +199,11 @@ export default class User {
   }
 
   public addTags(tags: { [key: string]: string }): void {
-    if (IDManager.isLocalId(this.onesignalId)) {
-      Log.warn('Call after login to sync tags');
-    }
-
     logMethodCall('addTags', { tags });
+    if (isConsentRequiredButNotGiven()) return;
 
+    if (IDManager.isLocalId(this.onesignalId))
+      Log.warn('Call after login to sync tags');
     this.validateObject(tags, 'tags');
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
@@ -201,6 +213,7 @@ export default class User {
 
   public removeTag(tagKey: string): void {
     logMethodCall('removeTag', { tagKey });
+    if (isConsentRequiredButNotGiven()) return;
 
     this.validateStringLabel(tagKey, 'tagKey');
 
@@ -209,6 +222,7 @@ export default class User {
 
   public removeTags(tagKeys: string[]): void {
     logMethodCall('removeTags', { tagKeys });
+    if (isConsentRequiredButNotGiven()) return;
 
     this.validateArray(tagKeys, 'tagKeys');
 

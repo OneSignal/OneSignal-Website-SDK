@@ -135,7 +135,9 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       case ResponseStatusType.MISSING: {
         if (
           status === 404 &&
-          this._newRecordState.isInMissingRetryWindow(lastOperation.onesignalId)
+          this._newRecordState._isInMissingRetryWindow(
+            lastOperation.onesignalId,
+          )
         )
           return new ExecutionResponse(
             ExecutionResult.FAIL_RETRY,

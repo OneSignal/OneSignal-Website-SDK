@@ -66,8 +66,8 @@ export interface AppConfig {
 }
 
 export interface AppUserConfig {
-  [key: string]: any;
   appId?: string;
+  bell?: Partial<AppUserConfigNotifyButton>;
   autoRegister?: boolean;
   autoResubscribe?: boolean;
   path?: string;
@@ -84,6 +84,7 @@ export interface AppUserConfig {
   pageUrl?: string;
   outcomes?: OutcomesConfig;
   serviceWorkerOverrideForTypical?: boolean;
+  requiresUserPrivacyConsent?: boolean;
 }
 
 export interface AppUserConfigWelcomeNotification {

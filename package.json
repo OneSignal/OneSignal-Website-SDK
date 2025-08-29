@@ -5,8 +5,7 @@
   "type": "module",
   "dependencies": {
     "idb": "^8.0.3",
-    "jsonp": "github:OneSignal/jsonp#onesignal",
-    "uuid": "^11.1.0"
+    "jsonp": "github:OneSignal/jsonp#onesignal"
   },
   "scripts": {
     "dev": "LOGGING=false vite",
@@ -56,7 +55,7 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
-    "@vitest/coverage-v8": "4.0.0-beta.8",
+    "@vitest/coverage-v8": "4.0.0-beta.9",
     "concurrently": "^9.2.0",
     "deepmerge": "^4.2.2",
     "eslint": "^8.23.0",
@@ -75,7 +74,7 @@
     "vite-bundle-analyzer": "^1.1.0",
     "vite-plugin-mkcert": "^1.17.8",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "4.0.0-beta.8"
+    "vitest": "4.0.0-beta.9"
   },
   "size-limit": [
     {
@@ -85,7 +84,7 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "52.21 kB",
+      "limit": "52.19 kB",
       "gzip": true
     },
     {

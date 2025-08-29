@@ -176,7 +176,7 @@ describe('IdentityOperationExecutor', () => {
       ]);
 
       // in missing retry window
-      newRecordsState.add(ONESIGNAL_ID);
+      newRecordsState._add(ONESIGNAL_ID);
       setAddAliasError({ status: 404, retryAfter: 20 });
       const res6 = await executor.execute(ops);
       expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);
@@ -215,7 +215,7 @@ describe('IdentityOperationExecutor', () => {
       expect(res5.result).toBe(ExecutionResult.SUCCESS);
 
       // in missing retry window
-      newRecordsState.add(ONESIGNAL_ID);
+      newRecordsState._add(ONESIGNAL_ID);
       setDeleteAliasError({ status: 404, retryAfter: 20 });
       const res6 = await executor.execute(ops);
       expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);

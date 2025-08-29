@@ -10,6 +10,7 @@ import User from './User';
 import UserNamespace from './UserNamespace';
 
 const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+const warnSpy = vi.spyOn(Log, 'warn').mockImplementation(() => '');
 vi.useFakeTimers();
 
 describe('UserNamespace', () => {
@@ -466,6 +467,82 @@ describe('UserNamespace', () => {
 
       userNamespace.trackEvent(name, properties);
       expect(trackEventSpy).toHaveBeenCalledWith(name, properties);
+    });
+  });
+
+  describe('Consent Required', () => {
+    beforeEach(async () => {
+      OneSignal.setConsentRequired(true);
+      await OneSignal.setConsentGiven(false);
+    });
+
+    const expectConsentRequired = () => {
+      expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
+    };
+
+    test('should not add/remove email if consent is required but not given', () => {
+      const email = 'mail@mail.com';
+      const user = new UserNamespace(true);
+      user.addEmail(email);
+      expectConsentRequired();
+
+      warnSpy.mockClear();
+      user.removeEmail(email);
+      expectConsentRequired();
+    });
+
+    test('should not add/remove SMS if consent is required but not given', () => {
+      const smsNumber = '+15551234567';
+      const user = new UserNamespace(true);
+
+      user.addSms(smsNumber);
+      expectConsentRequired();
+
+      warnSpy.mockClear();
+      user.removeSms(smsNumber);
+      expectConsentRequired();
+    });
+
+    test('should not add/remove tag(s) if consent is required but not given', () => {
+      const user = new UserNamespace(true);
+      user.addTag('test_tag', 'test_value');
+      expectConsentRequired();
+
+      warnSpy.mockClear();
+      user.removeTag('test_tag');
+      expectConsentRequired();
+
+      warnSpy.mockClear();
+      user.addTags({ tag1: 'value1', tag2: 'value2' });
+      expectConsentRequired();
+
+      warnSpy.mockClear();
+      user.removeTags(['tag1', 'tag2']);
+      expectConsentRequired();
+    });
+
+    test('should not set language if consent is required but not given', () => {
+      const user = new UserNamespace(true);
+      user.setLanguage('fr');
+      expectConsentRequired();
+    });
+
+    test('should not add/remove alias if consent is required but not given', () => {
+      const user = new UserNamespace(true);
+      user.addAlias('test_label', 'test_value');
+      expectConsentRequired();
+
+      warnSpy.mockClear();
+      user.addAliases({ test_label: 'test_value' });
+      expectConsentRequired();
+
+      warnSpy.mockClear();
+      user.removeAlias('test_label');
+      expectConsentRequired();
+
+      warnSpy.mockClear();
+      user.removeAliases(['test_label']);
+      expectConsentRequired();
     });
   });
 });

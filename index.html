@@ -14,8 +14,12 @@
 
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function (OneSignal) {
+        // for testing consent required
+        // OneSignal.setConsentRequired(true);
+
         await OneSignal.init({
           appId,
+          // requiresUserPrivacyConsent: true, // requires custom site sestting in dashboard
           // promptOptions: {
           //   slidedown: {
           //     prompts: [
@@ -27,6 +31,8 @@
           //   },
           // },
         });
+
+        // OneSignal.setConsentRequired(true);
       });
 
       // function pushSubscriptionChangeListener(event) {

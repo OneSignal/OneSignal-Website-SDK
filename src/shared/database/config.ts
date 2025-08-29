@@ -1,3 +1,5 @@
+import { getConsentRequired } from '../helpers/localStorage';
+import Log from '../libraries/Log';
 import { AppState } from '../models/AppState';
 import { db, getIdsValue, getOptionsValue } from './client';
 
@@ -67,6 +69,17 @@ export const setAppState = async (appState: AppState) => {
     });
 };
 
+// make sure to also set OneSignal._consentGiven when updating 'userConsent'
 export const getConsentGiven = async () => {
-  return await getOptionsValue<boolean>('consentGiven');
+  return (await getOptionsValue<boolean>('userConsent')) ?? false;
+};
+
+export const isConsentRequiredButNotGiven = () => {
+  const consentRequired = getConsentRequired();
+  const consentGiven = OneSignal._consentGiven;
+
+  const requiredButNotGiven = consentRequired && !consentGiven;
+  if (requiredButNotGiven) Log.warn('Consent required but not given');
+
+  return requiredButNotGiven;
 };

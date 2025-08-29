@@ -275,7 +275,7 @@ describe('RefreshUserOperationExecutor', () => {
       });
 
       // -- in missing retry window
-      newRecordsState.add(ONESIGNAL_ID);
+      newRecordsState._add(ONESIGNAL_ID);
       setGetUserError({
         status: 404,
         retryAfter: 20,

@@ -17,7 +17,12 @@ export function setConsentRequired(value: boolean): void {
 }
 
 export function getConsentRequired(): boolean {
-  return localStorage.getItem(REQUIRES_PRIVACY_CONSENT) === 'true';
+  const requiresUserPrivacyConsent =
+    OneSignal.config?.userConfig.requiresUserPrivacyConsent ?? false;
+  return (
+    localStorage.getItem(REQUIRES_PRIVACY_CONSENT) === 'true' ||
+    requiresUserPrivacyConsent
+  );
 }
 
 export function setLocalPageViewCount(count: number): void {

@@ -57,7 +57,7 @@ describe('SubscriptionOperationExecutor', () => {
   beforeEach(() => {
     subscriptionModelStore = OneSignal.coreDirector.subscriptionModelStore;
     newRecordsState = OneSignal.coreDirector.newRecordsState;
-    newRecordsState.records.clear();
+    newRecordsState._records.clear();
 
     identityModelStore = OneSignal.coreDirector.identityModelStore;
     propertiesModelStore = OneSignal.coreDirector.propertiesModelStore;
@@ -316,7 +316,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Missing error in retry window
-      newRecordsState.add(ONESIGNAL_ID);
+      newRecordsState._add(ONESIGNAL_ID);
       setCreateSubscriptionError({ status: 404, retryAfter: 20 });
       const res7 = await executor.execute([createOp]);
       expect(res7).toMatchObject({
@@ -448,7 +448,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Missing error with record in retry window
-      newRecordsState.add(SUB_ID);
+      newRecordsState._add(SUB_ID);
       const res3 = await executor.execute([updateOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
@@ -501,7 +501,7 @@ describe('SubscriptionOperationExecutor', () => {
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       // Missing error with record in retry window
-      newRecordsState.add(SUB_ID);
+      newRecordsState._add(SUB_ID);
       setDeleteSubscriptionError({ status: 404, retryAfter: 5 });
       const res2 = await executor.execute([deleteOp]);
       expect(res2).toMatchObject({

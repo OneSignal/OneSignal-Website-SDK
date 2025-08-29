@@ -1,6 +1,7 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
+import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { describe, expect, type Mock, vi } from 'vitest';
@@ -25,6 +26,7 @@ vi.spyOn(Log, 'error').mockImplementation((msg) => {
     return '';
   return msg;
 });
+
 vi.useFakeTimers();
 
 // for the sake of testing, we want to use a simple mock operation and execturo
@@ -33,6 +35,18 @@ vi.spyOn(OperationModelStore.prototype, 'create').mockImplementation(() => {
 });
 
 let mockOperationModelStore: OperationModelStore;
+
+const executeOps = async (opRepo: OperationRepo) => {
+  await opRepo._start();
+  await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
+};
+
+// need to mock this since it may timeout due to use of fake timers
+const isConsentRequired = vi.hoisted(() => vi.fn(() => false));
+
+vi.mock('src/shared/database/config', () => ({
+  isConsentRequired: isConsentRequired,
+}));
 
 describe('OperationRepo', () => {
   let opRepo: OperationRepo;
@@ -43,7 +57,7 @@ describe('OperationRepo', () => {
   ];
 
   beforeEach(async () => {
-    await db.clear('operations');
+    setConsentRequired(false);
 
     mockOperationModelStore = new OperationModelStore();
     opRepo = new OperationRepo(
@@ -56,7 +70,7 @@ describe('OperationRepo', () => {
   afterEach(async () => {
     // since the perist call in model store is not awaited, we need to flush the queue
     // for tests that call start on the op repo
-    if (!opRepo.isPaused) {
+    if (opRepo._timerID !== undefined) {
       await vi.waitUntil(async () => {
         const dbOps = await db.getAll('operations');
         return dbOps.length === 0;
@@ -80,7 +94,7 @@ describe('OperationRepo', () => {
       ]);
 
       // cached operations are added to the front of the queue and should maintain order
-      await opRepo.start();
+      await opRepo._start();
       expect(opRepo.queue).toEqual([
         {
           operation: cachedOperations[0],
@@ -101,7 +115,7 @@ describe('OperationRepo', () => {
     });
 
     test('enqueue should persist operations in IndexedDb', async () => {
-      await opRepo.loadSavedOperations();
+      await opRepo._loadSavedOperations();
 
       const op1 = new SetAliasOperation(
         APP_ID,
@@ -159,7 +173,7 @@ describe('OperationRepo', () => {
         modelName: 'operations',
       });
 
-      await opRepo.loadSavedOperations();
+      await opRepo._loadSavedOperations();
 
       const list = await db.getAll('operations');
       expect(list).toEqual([
@@ -188,13 +202,13 @@ describe('OperationRepo', () => {
 
     opRepo.enqueue(new MyOperation());
 
-    expect(opRepo.containsInstanceOf(MyOperation)).toBe(true);
-    expect(opRepo.containsInstanceOf(MyOperation2)).toBe(false);
+    expect(opRepo._containsInstanceOf(MyOperation)).toBe(true);
+    expect(opRepo._containsInstanceOf(MyOperation2)).toBe(false);
   });
 
   test('operations should be processed after start call', async () => {
-    const getNextOpsSpy = vi.spyOn(opRepo, 'getNextOps');
-    await opRepo.start();
+    const getNextOpsSpy = vi.spyOn(opRepo, '_getNextOps');
+    await opRepo._start();
     opRepo.enqueue(mockOperation);
 
     expect(opRepo.queue.length).toBe(1);
@@ -216,7 +230,7 @@ describe('OperationRepo', () => {
     });
 
     // single operation should be returned as is
-    expect(opRepo.getGroupableOperations(op)).toEqual([op]);
+    expect(opRepo._getGroupableOperations(op)).toEqual([op]);
 
     // can group operations by same create comparison key
     op = new OperationQueueItem({
@@ -228,7 +242,7 @@ describe('OperationRepo', () => {
       bucket: 0,
     });
     opRepo.enqueue(op2.operation);
-    expect(opRepo.getGroupableOperations(op)).toEqual([op, op2]);
+    expect(opRepo._getGroupableOperations(op)).toEqual([op, op2]);
 
     // can group operations by same modify comparison key
     op = new OperationQueueItem({
@@ -240,7 +254,7 @@ describe('OperationRepo', () => {
       bucket: 0,
     });
     opRepo.enqueue(op2.operation);
-    expect(opRepo.getGroupableOperations(op)).toEqual([op, op2]);
+    expect(opRepo._getGroupableOperations(op)).toEqual([op, op2]);
 
     // throws for no comparison keys
     op = new OperationQueueItem({
@@ -248,13 +262,13 @@ describe('OperationRepo', () => {
       bucket: 0,
     });
     opRepo.enqueue(op2.operation);
-    expect(() => opRepo.getGroupableOperations(op)).toThrow(
+    expect(() => opRepo._getGroupableOperations(op)).toThrow(
       'Both comparison keys cannot be blank!',
     );
 
     // returns the starting operation if other operations cant access record
     const blockedId = '456';
-    const records = opRepo.records;
+    const records = opRepo._records;
     records.set(blockedId, Date.now());
 
     op = new OperationQueueItem({
@@ -264,15 +278,10 @@ describe('OperationRepo', () => {
     op2.operation.setProperty('onesignalId', blockedId);
 
     opRepo.enqueue(op2.operation);
-    expect(opRepo.getGroupableOperations(op)).toEqual([op]);
+    expect(opRepo._getGroupableOperations(op)).toEqual([op]);
   });
 
   describe('Executor Operations', () => {
-    const executeOps = async (opRepo: OperationRepo) => {
-      await opRepo.start();
-      await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
-    };
-
     test('can handle success operation and process additional operations', async () => {
       const additionalOps = [
         new Operation('3', GroupComparisonType.NONE),
@@ -334,7 +343,7 @@ describe('OperationRepo', () => {
         result: ExecutionResult.SUCCESS_STARTING_ONLY,
       });
 
-      const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
+      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const groupedOps = getGroupedOp();
       opRepo.enqueue(groupedOps[0]);
@@ -367,7 +376,7 @@ describe('OperationRepo', () => {
         retryAfterSeconds: 30,
       });
 
-      const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
+      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const groupedOps = getGroupedOp();
       opRepo.enqueue(groupedOps[0]);
@@ -422,7 +431,7 @@ describe('OperationRepo', () => {
       ]);
 
       // op repo should be paused
-      expect(opRepo.isPaused).toBe(true);
+      expect(opRepo._timerID).toBe(undefined);
     });
 
     test('can process delay for translations', async () => {
@@ -434,7 +443,7 @@ describe('OperationRepo', () => {
         idTranslations,
       });
 
-      const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
+      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const newOp = new Operation('2', GroupComparisonType.NONE);
       const opTranslateIdsSpy = vi.spyOn(newOp, 'translateIds');
@@ -444,7 +453,7 @@ describe('OperationRepo', () => {
       await executeOps(opRepo);
 
       expect(opTranslateIdsSpy).toHaveBeenCalledWith(idTranslations);
-      expect(opRepo.records).toEqual(new Map([['2', Date.now()]]));
+      expect(opRepo._records).toEqual(new Map([['2', Date.now()]]));
 
       // should wait 5 seconds before processing the queue again
       await vi.advanceTimersByTimeAsync(OP_REPO_POST_CREATE_DELAY);
@@ -456,7 +465,7 @@ describe('OperationRepo', () => {
     });
 
     test('should process non-groupable operations separately', async () => {
-      const executeOperationsSpy = vi.spyOn(opRepo, 'executeOperations');
+      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const newOp = new Operation('2', GroupComparisonType.NONE);
       opRepo.enqueue(mockOperation);

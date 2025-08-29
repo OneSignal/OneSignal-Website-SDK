@@ -163,7 +163,7 @@ describe('UpdateUserOperationExecutor', () => {
       });
 
       // Missing error in retry window
-      newRecordsState.add(ONESIGNAL_ID);
+      newRecordsState._add(ONESIGNAL_ID);
       setUpdateUserError({ status: 404, retryAfter: 20 });
       const res5 = await executor.execute([setTagOp]);
       expect(res5).toMatchObject({

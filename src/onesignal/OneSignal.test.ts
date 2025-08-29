@@ -48,7 +48,6 @@ import { db } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
 import type { SubscriptionSchema } from 'src/shared/database/types';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
-import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import MainHelper from 'src/shared/helpers/MainHelper';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -57,21 +56,24 @@ import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
 mockPageStylesCss();
 
-describe('OneSignal', () => {
-  beforeAll(() => {
-    TestEnvironment.initialize({
-      initUserAndPushSubscription: true,
-    });
+const setupEnv = (consentRequired: boolean) => {
+  TestEnvironment.initialize({
+    initUserAndPushSubscription: true,
+    userConfig: {
+      requiresUserPrivacyConsent: consentRequired,
+    },
   });
+  OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+    [],
+    ModelChangeTags.NO_PROPAGATE,
+  );
+  setupPropertiesModel();
+  setupIdentityModel();
+};
 
+describe('OneSignal - No Consent Required', () => {
   beforeEach(async () => {
-    OneSignal.coreDirector.subscriptionModelStore.replaceAll(
-      [],
-      ModelChangeTags.NO_PROPAGATE,
-    );
-    setConsentRequired(false);
-    setupPropertiesModel();
-    setupIdentityModel();
+    setupEnv(false);
   });
 
   describe('User', () => {
@@ -368,15 +370,6 @@ describe('OneSignal', () => {
           await expect(OneSignal.login('', 1)).rejects.toThrowError(
             '"jwtToken" is the wrong type',
           );
-
-          // TODO: add consent required test
-          // if needing consent required
-          setConsentRequired(true);
-          await OneSignal.login(externalId);
-          await vi.waitUntil(() => errorSpy.mock.calls.length === 1);
-
-          const error = errorSpy.mock.calls[0][1] as Error;
-          expect(error.message).toBe('Consent required but not given');
         });
 
         test('can login with a new external id', async () => {
@@ -682,17 +675,9 @@ describe('OneSignal', () => {
         });
 
         test('login then accept web push permissions - it should make two user calls', async () => {
+          const { promise, resolve } = Promise.withResolvers();
+          OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, resolve);
           setGetUserResponse();
-          OneSignal.coreDirector.subscriptionModelStore.replaceAll(
-            [],
-            ModelChangeTags.NO_PROPAGATE,
-          );
-          setPushToken('');
-          subscribeFcmFromPageSpy.mockImplementation(
-            // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
-            async () => rawPushSubscription,
-          );
-
           setCreateUserResponse({
             onesignalId: ONESIGNAL_ID,
             externalId,
@@ -702,6 +687,16 @@ describe('OneSignal', () => {
               },
             ],
           });
+
+          OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+            [],
+            ModelChangeTags.NO_PROPAGATE,
+          );
+          setPushToken('');
+          subscribeFcmFromPageSpy.mockImplementation(
+            // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
+            async () => rawPushSubscription,
+          );
 
           // new/empty user
           setupIdentityModel(IDManager.createLocalId());
@@ -727,6 +722,7 @@ describe('OneSignal', () => {
             ...BASE_IDENTITY,
             subscriptions: [],
           });
+          await promise;
 
           // second call creates the subscription
           await vi.waitUntil(() => createUserFn.mock.calls.length === 2);
@@ -1168,13 +1164,36 @@ describe('OneSignal', () => {
   });
 });
 
+describe('OneSignal - Consent Required', () => {
+  beforeEach(() => {
+    setupEnv(true);
+    OneSignal.setConsentGiven(false);
+  });
+
+  test('cannot call login if consent is required but not given', async () => {
+    OneSignal.login('some-id');
+    expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
+
+    OneSignal.setConsentGiven(true);
+    warnSpy.mockClear();
+    OneSignal.login('some-id');
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test('cannot call logout if consent is required but not given', async () => {
+    OneSignal.logout();
+    expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
+  });
+});
+
 Object.defineProperty(global.navigator, 'serviceWorker', {
   value: new MockServiceWorker(),
   writable: true,
 });
 
-const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
+const warnSpy = vi.spyOn(Log, 'warn');
 
 const rawPushSubscription = new RawPushSubscription();
 rawPushSubscription.w3cEndpoint = new URL(PUSH_TOKEN);
