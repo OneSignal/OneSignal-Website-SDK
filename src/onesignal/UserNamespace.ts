@@ -1,12 +1,12 @@
 import { isConsentRequiredButNotGiven } from 'src/shared/database/config';
-import type { UserChangeEvent } from '../page/models/UserChangeEvent';
+import type { EventsMap } from 'src/shared/services/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
 import { Subscription } from '../shared/models/Subscription';
 import PushSubscriptionNamespace from './PushSubscriptionNamespace';
 import User from './User';
 
-export default class UserNamespace extends EventListenerBase {
+export default class UserNamespace extends EventListenerBase<'change'> {
   private _currentUser?: User;
 
   readonly PushSubscription = new PushSubscriptionNamespace(false);
@@ -113,14 +113,14 @@ export default class UserNamespace extends EventListenerBase {
 
   addEventListener(
     event: 'change',
-    listener: (userChange: UserChangeEvent) => void,
+    listener: (obj: EventsMap['change']) => void,
   ): void {
     UserNamespace.emitter.on(event, listener);
   }
 
   removeEventListener(
     event: 'change',
-    listener: (userChange: UserChangeEvent) => void,
+    listener: (obj: EventsMap['change']) => void,
   ): void {
     UserNamespace.emitter.off(event, listener);
   }

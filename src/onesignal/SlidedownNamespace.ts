@@ -3,7 +3,8 @@ import type { AutoPromptOptions } from '../page/managers/PromptsManager';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { DelayedPromptType } from '../shared/prompts/constants';
 import { awaitOneSignalInitAndSupported } from '../shared/utils/utils';
-export default class SlidedownNamespace extends EventListenerBase {
+
+export default class SlidedownNamespace extends EventListenerBase<'slidedownShown'> {
   constructor() {
     super();
   }
