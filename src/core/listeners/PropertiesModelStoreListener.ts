@@ -29,6 +29,7 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
     newValue: unknown,
   ): Operation | null {
     const appId = MainHelper.getAppId();
+
     return new SetPropertyOperation(
       appId,
       model.onesignalId,

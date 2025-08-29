@@ -30,7 +30,9 @@ export default class SubscriptionHelper {
       );
       subscription =
         await context.subscriptionManager.registerSubscription(rawSubscription);
+
       incrementPageViewCount();
+
       await triggerNotificationPermissionChanged();
       await checkAndTriggerSubscriptionChanged();
     } catch (e) {

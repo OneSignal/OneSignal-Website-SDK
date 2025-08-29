@@ -7,28 +7,21 @@ import {
   setUpdateSubscriptionResponse,
   updateSubscriptionFn,
 } from '__test__/support/helpers/requests';
-import { updateIdentityModel } from '__test__/support/helpers/setup';
+import {
+  getRawPushSubscription,
+  updateIdentityModel,
+} from '__test__/support/helpers/setup';
 import MockNotification from '__test__/support/mocks/MockNotification';
 import {
   getSubscriptionFn,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
 import { setPushToken } from '../database/subscription';
-import { RawPushSubscription } from '../models/RawPushSubscription';
 import { IDManager } from './IDManager';
 import {
   SubscriptionManagerPage,
   updatePushSubscriptionModelWithRawSubscription,
 } from './subscription/page';
-
-const getRawSubscription = (): RawPushSubscription => {
-  const rawSubscription = new RawPushSubscription();
-  rawSubscription.w3cAuth = 'auth';
-  rawSubscription.w3cP256dh = 'p256dh';
-  rawSubscription.w3cEndpoint = new URL('https://example.com/endpoint');
-  rawSubscription.safariDeviceToken = 'safariDeviceToken';
-  return rawSubscription;
-};
 
 describe('SubscriptionManager', () => {
   beforeEach(() => {
@@ -38,7 +31,7 @@ describe('SubscriptionManager', () => {
   describe('updatePushSubscriptionModelWithRawSubscription', () => {
     test('should create the push subscription model if it does not exist', async () => {
       setCreateUserResponse();
-      const rawSubscription = getRawSubscription();
+      const rawSubscription = getRawPushSubscription();
 
       let subModels =
         await OneSignal.coreDirector.subscriptionModelStore.list();
@@ -84,7 +77,7 @@ describe('SubscriptionManager', () => {
         OneSignal.coreDirector,
         'generatePushSubscriptionModel',
       );
-      const rawSubscription = getRawSubscription();
+      const rawSubscription = getRawPushSubscription();
       getSubscriptionFn.mockResolvedValue({
         endpoint: rawSubscription.w3cEndpoint?.toString(),
       });
@@ -125,7 +118,7 @@ describe('SubscriptionManager', () => {
 
     test('should update the push subscription model if it already exists', async () => {
       setUpdateSubscriptionResponse({ subscriptionId: '123' });
-      const rawSubscription = getRawSubscription();
+      const rawSubscription = getRawPushSubscription();
 
       await setPushToken(rawSubscription.w3cEndpoint?.toString());
 

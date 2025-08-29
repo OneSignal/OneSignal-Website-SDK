@@ -6,11 +6,12 @@ import type {
   ServerAppConfig,
 } from 'src/shared/config/types';
 import type { RecursivePartial } from 'src/shared/context/types';
-import { updateIdentityModel } from '../helpers/setup';
+import { updateIdentityModel, updatePropertiesModel } from '../helpers/setup';
 import { initOSGlobals, stubNotification } from './TestEnvironmentHelpers';
 
 export interface TestEnvironmentConfig {
   userConfig?: AppUserConfig;
+  initOneSignalId?: boolean;
   initUserAndPushSubscription?: boolean; // default: false - initializes User & PushSubscription in UserNamespace (e.g. creates an anonymous user)
   permission?: NotificationPermission;
   addPrompts?: boolean;
@@ -24,12 +25,19 @@ Object.defineProperty(document, 'readyState', {
 });
 
 export class TestEnvironment {
-  static initialize(config: TestEnvironmentConfig = {}) {
+  static initialize(
+    config: TestEnvironmentConfig = {
+      initOneSignalId: true,
+    },
+  ) {
     mockJsonp();
     const oneSignal = initOSGlobals(config);
     OneSignal.coreDirector.operationRepo.queue = [];
 
-    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    if (config.initOneSignalId) {
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
+    }
 
     // Set URL if provided
     if (config.url) {

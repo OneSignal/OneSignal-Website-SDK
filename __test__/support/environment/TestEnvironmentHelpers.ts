@@ -7,6 +7,7 @@ import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 import OneSignal from '../../../src/onesignal/OneSignal';
 import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
+import User from '../../../src/onesignal/User';
 import UserNamespace from '../../../src/onesignal/UserNamespace';
 import Context from '../../../src/page/models/Context';
 import Emitter from '../../../src/shared/libraries/Emitter';
@@ -26,9 +27,12 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal.emitter = new Emitter();
   const core = new CoreModule();
   global.OneSignal.coreDirector = new CoreModuleDirector(core);
-  global.OneSignal.User = new UserNamespace(
-    !!config.initUserAndPushSubscription,
-  ); // TO DO: pass in subscription, and permission
+
+  // Clear the User singleton before creating new instance
+  User.singletonInstance = undefined;
+
+  const userNamespace = new UserNamespace(!!config.initUserAndPushSubscription); // TO DO: pass in subscription, and permission
+  global.OneSignal.User = userNamespace;
   global.OneSignal.Notifications = new NotificationsNamespace(
     config.permission,
   );
