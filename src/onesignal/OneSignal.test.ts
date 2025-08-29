@@ -36,6 +36,7 @@ import {
 import {
   getDbSubscriptions,
   getIdentityItem,
+  getRawPushSubscription,
   setupIdentityModel,
   setupPropertiesModel,
   updateIdentityModel,
@@ -52,7 +53,6 @@ import MainHelper from 'src/shared/helpers/MainHelper';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
-import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
 mockPageStylesCss();
 
@@ -693,9 +693,8 @@ describe('OneSignal - No Consent Required', () => {
             ModelChangeTags.NO_PROPAGATE,
           );
           setPushToken('');
-          subscribeFcmFromPageSpy.mockImplementation(
-            // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
-            async () => rawPushSubscription,
+          subscribeFcmFromPageSpy.mockImplementation(async () =>
+            getRawPushSubscription(),
           );
 
           // new/empty user
@@ -1074,9 +1073,8 @@ describe('OneSignal - No Consent Required', () => {
       const changeEvent = vi.fn();
       OneSignal.User.PushSubscription.addEventListener('change', changeEvent);
 
-      subscribeFcmFromPageSpy.mockImplementation(
-        // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
-        async () => rawPushSubscription,
+      subscribeFcmFromPageSpy.mockImplementation(async () =>
+        getRawPushSubscription(),
       );
 
       // @ts-expect-error - Notification is not defined in the global scope
@@ -1195,18 +1193,11 @@ vi.spyOn(Log, 'error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, 'debug');
 const warnSpy = vi.spyOn(Log, 'warn');
 
-const rawPushSubscription = new RawPushSubscription();
-rawPushSubscription.w3cEndpoint = new URL(PUSH_TOKEN);
-rawPushSubscription.w3cP256dh = 'w3cP256dh';
-rawPushSubscription.w3cAuth = 'w3cAuth';
-rawPushSubscription.safariDeviceToken = 'safariDeviceToken';
-
 const getPropertiesItem = async () => (await db.getAll('properties'))[0];
 
 const subscribeFcmFromPageSpy = vi.spyOn(
   SubscriptionManagerPage.prototype,
-  // @ts-expect-error - subscribeFcmFromPage is a private method of SubscriptionManagerPage
-  'subscribeFcmFromPage',
+  '_subscribeFcmFromPage',
 );
 
 const showLocalNotificationSpy = vi.spyOn(MainHelper, 'showLocalNotification');

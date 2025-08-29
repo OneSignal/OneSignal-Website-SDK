@@ -1,34 +1,39 @@
-import { BASE_IDENTITY, BASE_SUB } from '__test__/constants';
+import { BASE_IDENTITY, BASE_SUB, PUSH_TOKEN } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import {
   createUserFn,
   getNotificationIcons,
   setCreateUserResponse,
+  setUpdateUserResponse,
+  updateUserFn,
 } from '__test__/support/helpers/requests';
 import {
-  setupIdentityModel,
+  getRawPushSubscription,
   setupLoadStylesheet,
 } from '__test__/support/helpers/setup';
+import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { SlidedownManager } from 'src/page/managers/slidedownManager/SlidedownManager';
 import ChannelCaptureContainer from 'src/page/slidedown/ChannelCaptureContainer';
 import Log from 'src/shared/libraries/Log';
-import { IDManager } from 'src/shared/managers/IDManager';
+import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 
-beforeEach(() => {
-  getNotificationIcons();
-  TestEnvironment.initialize({
-    userConfig: config,
-    initUserAndPushSubscription: true,
-  });
-  document.body.innerHTML = '';
-  setupIdentityModel(IDManager.createLocalId());
-  setupLoadStylesheet();
-  mockPhoneLibraryLoading();
-});
+vi.spyOn(Log, 'error').mockImplementation(() => '');
 
 describe('Slidedown Types', () => {
+  beforeEach(() => {
+    getNotificationIcons();
+    TestEnvironment.initialize({
+      userConfig: config,
+      initUserAndPushSubscription: true,
+      initOneSignalId: false,
+    });
+    document.body.innerHTML = '';
+    setupLoadStylesheet();
+    mockPhoneLibraryLoading();
+  });
+
   test('can show email slidedown', async () => {
     const addEmailSpy = vi.spyOn(OneSignal.User, 'addEmail');
     setCreateUserResponse();
@@ -129,6 +134,54 @@ describe('Slidedown Types', () => {
       ],
     });
   });
+
+  test('can show category slidedown', async () => {
+    mockSubscribeCall();
+    await OneSignal.Slidedown.promptPushCategories();
+
+    expect(getMessageText()).toBe(message);
+
+    const submitButton = getSubmitButton();
+
+    // toggle sports
+    const sportsCheckbox = document.querySelector(
+      'input[value="sports"]',
+    ) as HTMLInputElement;
+    expect(sportsCheckbox.checked).toBe(true);
+
+    sportsCheckbox.click();
+    expect(sportsCheckbox.checked).toBe(false);
+
+    setCreateUserResponse();
+    setUpdateUserResponse();
+    submitButton.click();
+
+    await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
+    expect(createUserFn).toHaveBeenCalledWith({
+      identity: {},
+      ...BASE_IDENTITY,
+      subscriptions: [
+        {
+          ...BASE_SUB,
+          token: PUSH_TOKEN,
+          type: SubscriptionType.ChromePush,
+          web_auth: 'w3cAuth',
+          web_p256: 'w3cP256dh',
+        },
+      ],
+    });
+    await vi.waitUntil(() => updateUserFn.mock.calls.length > 0);
+    expect(updateUserFn).toHaveBeenCalledWith({
+      properties: {
+        tags: {
+          politics: '1',
+          sports: '0',
+          world_news: '1',
+        },
+      },
+      refresh_device_metadata: false,
+    });
+  });
 });
 
 const warnSpy = vi.spyOn(Log, 'warn');
@@ -180,6 +233,21 @@ const config = {
       prompts: [
         {
           autoPrompt: true,
+          categories: [
+            { tag: 'world_news', label: 'World News', checked: true },
+            { tag: 'sports', label: 'Sports', checked: true },
+            { tag: 'politics', label: 'Politics', checked: true },
+          ],
+          isTagsEnabled: true,
+          text: {
+            acceptButton: 'Submit',
+            cancelButton: 'No Thanks',
+            actionMessage: message,
+          },
+          type: DelayedPromptType.Category,
+        },
+        {
+          autoPrompt: true,
           text: {
             acceptButton: 'Submit',
             cancelButton: 'No Thanks',
@@ -213,6 +281,21 @@ const config = {
     },
   },
 };
+
+const subscribeFcmFromPageSpy = vi.spyOn(
+  SubscriptionManagerPage.prototype,
+  '_subscribeFcmFromPage',
+);
+
+const mockSubscribeCall = () => {
+  const rawPushSubscription = getRawPushSubscription();
+  subscribeFcmFromPageSpy.mockImplementation(async () => rawPushSubscription);
+};
+
+Object.defineProperty(global.navigator, 'serviceWorker', {
+  value: new MockServiceWorker(),
+  writable: true,
+});
 
 export const mockPhoneLibraryLoading = () => {
   vi.spyOn(

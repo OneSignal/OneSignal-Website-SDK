@@ -210,7 +210,6 @@ export default class User {
   }
 
   public addTags(tags: { [key: string]: string }): void {
-    logMethodCall('addTags', { tags });
     if (isConsentRequiredButNotGiven()) return;
 
     if (IDManager.isLocalId(this.onesignalId))

@@ -267,7 +267,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       }
     } else {
       rawPushSubscription =
-        await this.subscribeFcmFromPage(subscriptionStrategy);
+        await this._subscribeFcmFromPage(subscriptionStrategy);
       await updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
     }
 
@@ -351,7 +351,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
   }
 
-  private async subscribeFcmFromPage(
+  async _subscribeFcmFromPage(
     subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
     /*

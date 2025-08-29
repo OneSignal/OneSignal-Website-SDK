@@ -1,4 +1,4 @@
-import { ONESIGNAL_ID } from '__test__/constants';
+import { ONESIGNAL_ID, PUSH_TOKEN } from '__test__/constants';
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
@@ -10,6 +10,7 @@ import type {
   PropertiesSchema,
   SubscriptionSchema,
 } from 'src/shared/database/types';
+import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
 export const setIsPushEnabled = async (isPushEnabled: boolean) => {
   await db.put('Options', { key: 'isPushEnabled', value: isPushEnabled });
@@ -139,4 +140,13 @@ export const setupLoadStylesheet = async () => {
     OneSignal.context.dynamicResourceLoader,
     'loadSdkStylesheet',
   ).mockResolvedValue(ResourceLoadState.Loaded);
+};
+
+export const getRawPushSubscription = () => {
+  const rawPushSubscription = new RawPushSubscription();
+  rawPushSubscription.w3cEndpoint = new URL(PUSH_TOKEN);
+  rawPushSubscription.w3cP256dh = 'w3cP256dh';
+  rawPushSubscription.w3cAuth = 'w3cAuth';
+  rawPushSubscription.safariDeviceToken = 'safariDeviceToken';
+  return rawPushSubscription;
 };
