@@ -269,7 +269,7 @@ export default class User {
     // login operation / non-local onesignalId is needed to send custom events
     const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
     if (IDManager._isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
-      Log.error('User must be logged in first.');
+      Log._error('User must be logged in first.');
       return;
     }
 

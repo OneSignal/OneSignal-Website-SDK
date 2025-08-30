@@ -79,12 +79,12 @@ export class SubscriptionManagerBase<
     }
 
     if (await this._isAlreadyRegisteredWithOneSignal()) {
-      if ('_updateManager' in this._context) {
+      if (!IS_SERVICE_WORKER && '_updateManager' in this._context) {
         await this._context._updateManager.sendPushDeviceRecordUpdate();
       }
 
       // NOTE: We only have sessionManager in the page context, should sw upsert do anything?
-    } else if ('_sessionManager' in this._context) {
+    } else if (!IS_SERVICE_WORKER && '_sessionManager' in this._context) {
       this._context._sessionManager.upsertSession(SessionOrigin.UserCreate);
     }
 

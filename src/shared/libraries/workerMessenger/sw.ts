@@ -36,7 +36,9 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       return;
     }
 
-    const listenerRecords = this._replies.findListenersForMessage(data.command);
+    const listenerRecords = this._replies._findListenersForMessage(
+      data.command,
+    );
     const listenersToRemove = [];
     const listenersToCall = [];
 
@@ -53,7 +55,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     }
     for (let i = listenersToRemove.length - 1; i >= 0; i--) {
       const listenerRecord = listenersToRemove[i];
-      this._replies.deleteListenerRecord(data.command, listenerRecord);
+      this._replies._deleteListenerRecord(data.command, listenerRecord);
     }
     for (const listenerRecord of listenersToCall) {
       listenerRecord.callback.apply(null, [data.payload]);

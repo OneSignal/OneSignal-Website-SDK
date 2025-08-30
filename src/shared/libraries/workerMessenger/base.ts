@@ -4,18 +4,16 @@ import type {
   WorkerMessengerReplyBufferRecord,
 } from './types';
 
-declare let self: ServiceWorkerGlobalScope;
-
 export class WorkerMessengerReplyBuffer {
-  private replies: {
+  private _replies: {
     [index: string]: WorkerMessengerReplyBufferRecord[] | null;
   };
 
   constructor() {
-    this.replies = {};
+    this._replies = {};
   }
 
-  public addListener(
+  public _addListener(
     command: WorkerMessengerCommandValue,
     callback: (param: unknown) => void,
     onceListenerOnly: boolean,
@@ -25,30 +23,30 @@ export class WorkerMessengerReplyBuffer {
       onceListenerOnly,
     };
 
-    const replies = this.replies[command.toString()];
+    const replies = this._replies[command.toString()];
     if (replies) replies.push(record);
-    else this.replies[command.toString()] = [record];
+    else this._replies[command.toString()] = [record];
   }
 
-  public findListenersForMessage(
+  public _findListenersForMessage(
     command: WorkerMessengerCommandValue,
   ): WorkerMessengerReplyBufferRecord[] {
-    return this.replies[command.toString()] || [];
+    return this._replies[command.toString()] || [];
   }
 
-  public deleteListenerRecords(command: WorkerMessengerCommandValue) {
-    this.replies[command.toString()] = null;
+  public _deleteListenerRecords(command: WorkerMessengerCommandValue) {
+    this._replies[command.toString()] = null;
   }
 
-  public deleteAllListenerRecords() {
-    this.replies = {};
+  public _deleteAllListenerRecords() {
+    this._replies = {};
   }
 
-  public deleteListenerRecord(
+  public _deleteListenerRecord(
     command: WorkerMessengerCommandValue,
     targetRecord: object,
   ) {
-    const listenersForCommand = this.replies[command.toString()];
+    const listenersForCommand = this._replies[command.toString()];
     if (listenersForCommand == null) return;
 
     for (
@@ -92,7 +90,7 @@ export class WorkerMessengerBase<
     command: WorkerMessengerCommandValue,
     callback: (WorkerMessengerPayload: any) => void,
   ): void {
-    this._replies.addListener(command, callback, false);
+    this._replies._addListener(command, callback, false);
   }
 
   /*
@@ -105,7 +103,7 @@ export class WorkerMessengerBase<
     command: WorkerMessengerCommandValue,
     callback: (WorkerMessengerPayload: any) => void,
   ): void {
-    this._replies.addListener(command, callback, true);
+    this._replies._addListener(command, callback, true);
   }
 
   /**
@@ -114,9 +112,9 @@ export class WorkerMessengerBase<
    */
   _off(command?: WorkerMessengerCommandValue): void {
     if (command) {
-      this._replies.deleteListenerRecords(command);
+      this._replies._deleteListenerRecords(command);
     } else {
-      this._replies.deleteAllListenerRecords();
+      this._replies._deleteAllListenerRecords();
     }
   }
 }
