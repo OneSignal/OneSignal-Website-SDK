@@ -10,10 +10,10 @@ import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpe
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { clearStore, db, getOptionsValue } from 'src/shared/database/client';
 import { setAppState as setDBAppState } from 'src/shared/database/config';
+import type { AppState } from 'src/shared/database/types';
 import * as PermissionUtils from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
-import { AppState } from 'src/shared/models/AppState';
 import MainHelper from '../../../src/shared/helpers/MainHelper';
 
 vi.mock('src/shared/libraries/Log');
