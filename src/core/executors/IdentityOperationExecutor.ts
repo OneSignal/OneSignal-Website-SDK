@@ -40,7 +40,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
+    Log._debug(
       `IdentityOperationExecutor(operations: ${JSON.stringify(operations)})`,
     );
 

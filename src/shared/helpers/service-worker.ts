@@ -79,12 +79,12 @@ export async function upsertSession(
   }
 
   if (existingSession.status === SessionStatus.Active) {
-    Log.debug('Session already active', existingSession);
+    Log._debug('Session already active', existingSession);
     return;
   }
 
   if (!existingSession.lastDeactivatedTimestamp) {
-    Log.debug('Session is in invalid state', existingSession);
+    Log._debug('Session is in invalid state', existingSession);
     // TODO: possibly recover by re-starting session if deviceId is present?
     return;
   }
@@ -137,7 +137,7 @@ export async function deactivateSession(
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
-    Log.debug('No active session found. Cannot deactivate.');
+    Log._debug('No active session found. Cannot deactivate.');
     return undefined;
   }
 
@@ -165,7 +165,7 @@ export async function deactivateSession(
    * For anything but active, logging a warning and doing early return.
    */
   if (existingSession.status !== SessionStatus.Active) {
-    Log.warn(
+    Log._warn(
       `Session in invalid state ${existingSession.status}. Cannot deactivate.`,
     );
     return undefined;
@@ -222,17 +222,17 @@ async function finalizeSession(
   sendOnFocusEnabled: boolean,
   outcomesConfig: OutcomesConfig,
 ): Promise<void> {
-  Log.debug(
+  Log._debug(
     'Finalize session',
     `started: ${new Date(session.startTimestamp)}`,
     `duration: ${session.accumulatedDuration}s`,
   );
   if (sendOnFocusEnabled) {
-    Log.debug(
+    Log._debug(
       `send on_focus reporting session duration -> ${session.accumulatedDuration}s`,
     );
     const attribution = await getConfigAttribution(outcomesConfig);
-    Log.debug('send on_focus with attribution', attribution);
+    Log._debug('send on_focus with attribution', attribution);
     await OneSignalApiSW._sendSessionDuration(
       appId,
       onesignalId,
@@ -246,7 +246,7 @@ async function finalizeSession(
     cleanupCurrentSession(),
     clearStore('Outcomes.NotificationClicked'),
   ]);
-  Log.debug(
+  Log._debug(
     'Finalize session finished',
     `started: ${new Date(session.startTimestamp)}`,
   );
@@ -268,7 +268,7 @@ const getLastNotificationClickedForOutcomes = async (
   try {
     allClickedNotifications = await getAllNotificationClickedForOutcomes();
   } catch (e) {
-    Log.error('Database.getLastNotificationClickedForOutcomes', e);
+    Log._error('Database.getLastNotificationClickedForOutcomes', e);
   }
   const predicate = (notification: OutcomesNotificationClicked) =>
     notification.appId === appId;

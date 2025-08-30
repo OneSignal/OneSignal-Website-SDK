@@ -17,7 +17,7 @@ export default class UserDirector {
     const hasExternalId = !!identityModel.externalId;
 
     if (!hasAnySubscription && !hasExternalId) {
-      Log.error(
+      Log._error(
         'No subscriptions or external ID found, skipping user creation',
       );
       return;

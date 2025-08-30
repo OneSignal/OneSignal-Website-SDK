@@ -53,7 +53,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(`SubscriptionOperationExecutor(operations: ${operations})`);
+    Log._debug(`SubscriptionOperationExecutor(operations: ${operations})`);
 
     const startingOp = operations[0];
     if (startingOp instanceof CreateSubscriptionOperation)

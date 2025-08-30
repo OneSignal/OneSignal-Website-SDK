@@ -23,7 +23,7 @@ export class CustomLinkManager {
       return;
     }
 
-    Log.info('OneSignal: initializing customlink');
+    Log._info('OneSignal: initializing customlink');
     const isPushEnabled =
       await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
     if (!this.config?.unsubscribeEnabled && isPushEnabled) {
@@ -46,7 +46,7 @@ export class CustomLinkManager {
 
   private async mountExplanationNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
+      Log._error(
         "CustomLink: required property 'text' is missing in the config",
       );
       return;
@@ -76,7 +76,7 @@ export class CustomLinkManager {
 
   private async mountSubscriptionNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
+      Log._error(
         "CustomLink: required property 'text' is missing in the config",
       );
       return;
@@ -110,7 +110,7 @@ export class CustomLinkManager {
       await this.setTextFromPushStatus(subscribeButton);
 
       subscribeButton.addEventListener('click', async () => {
-        Log.info('CustomLink: subscribe clicked');
+        Log._info('CustomLink: subscribe clicked');
         await this.handleClick(subscribeButton);
       });
 
@@ -126,7 +126,7 @@ export class CustomLinkManager {
     const sdkStylesLoadResult =
       await OneSignal.context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug(
+      Log._debug(
         'Not initializing custom link button because styles failed to load.',
       );
       return false;

@@ -34,7 +34,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
+    Log._debug(
       `CustomEventsOperationExecutor(operations: ${JSON.stringify(
         operations,
       )})`,

@@ -74,7 +74,7 @@ export default class MainHelper {
       .getRegistration()
       .then(async (registration?: ServiceWorkerRegistration | null) => {
         if (!registration) {
-          Log.error('Service worker registration not available.');
+          Log._error('Service worker registration not available.');
           return;
         }
 
@@ -116,7 +116,7 @@ export default class MainHelper {
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
-      Log.error(`API call ${url}`, 'failed with:', data.errors);
+      Log._error(`API call ${url}`, 'failed with:', data.errors);
       throw new Error('Failed to get notification icons.');
     }
     return data as NotificationIcons;

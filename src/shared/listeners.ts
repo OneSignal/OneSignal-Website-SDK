@@ -70,7 +70,7 @@ export async function checkAndTriggerSubscriptionChanged() {
       optedIn: isOptedIn,
     },
   };
-  Log.info('Push Subscription state changed: ', change);
+  Log._info('Push Subscription state changed: ', change);
   triggerSubscriptionChanged(change);
 }
 
@@ -143,7 +143,7 @@ export async function checkAndTriggerUserChanged() {
       externalId: currentExternalId,
     },
   };
-  Log.info('User state changed: ', change);
+  Log._info('User state changed: ', change);
   triggerUserChanged(change);
 }
 
@@ -167,12 +167,12 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   ) {
     const predicateResult = await displayPredicate();
     if (predicateResult !== false) {
-      Log.debug(
+      Log._debug(
         'Showing notify button because display predicate returned true.',
       );
       OneSignal.notifyButton.launcher.show();
     } else {
-      Log.debug(
+      Log._debug(
         'Hiding notify button because display predicate returned false.',
       );
       OneSignal.notifyButton.launcher.hide();
@@ -197,7 +197,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   pushSubscriptionId: string | undefined | null,
 ) {
   if (OneSignal.__doNotShowWelcomeNotification) {
-    Log.debug(
+    Log._debug(
       'Not showing welcome notification because user has previously subscribed.',
     );
     return;
@@ -244,7 +244,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   title = decodeHtmlEntities(title);
   message = decodeHtmlEntities(message);
 
-  Log.debug('Sending welcome notification.');
+  Log._debug('Sending welcome notification.');
   MainHelper.showLocalNotification(
     title,
     message,

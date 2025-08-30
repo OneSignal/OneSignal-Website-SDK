@@ -141,7 +141,7 @@ export class PromptsManager {
   ): Promise<void> {
     logMethodCall('internalShowDelayedPrompt');
     if (typeof timeDelaySeconds !== 'number') {
-      Log.error('internalShowDelayedPrompt: timeDelay not a number');
+      Log._error('internalShowDelayedPrompt: timeDelay not a number');
       return;
     }
 
@@ -173,7 +173,7 @@ export class PromptsManager {
         await this.internalShowSmsAndEmailSlidedown(options);
         break;
       default:
-        Log.error('Invalid Delayed Prompt type');
+        Log._error('Invalid Delayed Prompt type');
     }
   }
 
@@ -181,7 +181,7 @@ export class PromptsManager {
     logMethodCall('internalShowNativePrompt');
 
     if (this.isNativePromptShowing) {
-      Log.debug('Already showing autoprompt. Abort showing a native prompt.');
+      Log._debug('Already showing autoprompt. Abort showing a native prompt.');
       return;
     }
 
@@ -203,7 +203,7 @@ export class PromptsManager {
     const sdkStylesLoadResult =
       await this.context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug(
+      Log._debug(
         'Not showing slidedown permission message because styles failed to load.',
       );
       return;
@@ -272,13 +272,13 @@ export class PromptsManager {
 
     if (!slidedownPromptOptions) {
       if (typeToPullFromConfig !== DelayedPromptType.Push) {
-        Log.error(
+        Log._error(
           `OneSignal: slidedown of type '${typeToPullFromConfig}' couldn't be shown. Check your configuration` +
             ` on the OneSignal dashboard or your custom code initialization.`,
         );
         return;
       } else {
-        Log.warn(
+        Log._warn(
           `The OneSignal 'push' slidedown will be shown with default text settings.` +
             ` To customize, see the OneSignal documentation.`,
         );
@@ -316,13 +316,13 @@ export class PromptsManager {
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
-          Log.debug(
+          Log._debug(
             'Setting flag to not show the slidedown to the user again.',
           );
           DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
           break;
         default:
-          Log.debug(
+          Log._debug(
             'Setting flag to not show the slidedown to the user again.',
           );
           DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);

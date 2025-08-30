@@ -31,9 +31,9 @@ export default class OneSignalEvent {
       const displayData = data;
 
       if (displayData || displayData === false) {
-        Log.debug(`(${windowEnvString}) » ${eventName}:`, displayData);
+        Log._debug(`(${windowEnvString}) » ${eventName}:`, displayData);
       } else {
-        Log.debug(`(${windowEnvString}) » ${eventName}`);
+        Log._debug(`(${windowEnvString}) » ${eventName}`);
       }
     }
 

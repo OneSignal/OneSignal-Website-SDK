@@ -25,7 +25,7 @@ export class OSWebhookSender {
         'Content-Type': 'application/json',
       };
     }
-    Log.debug(
+    Log._debug(
       `Executing ${payload.event} webhook ${
         isServerCorsEnabled ? 'with' : 'without'
       } CORS POST ${webhookTargetUrl}`,

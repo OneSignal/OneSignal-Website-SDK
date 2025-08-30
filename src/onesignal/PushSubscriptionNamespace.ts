@@ -35,7 +35,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
   ) {
     super();
     if (!initialize || !subscription) {
-      Log.warn(
+      Log._warn(
         `PushSubscriptionNamespace: skipping initialization. One or more required params are falsy: initialize: ${initialize}, subscription: ${subscription}`,
       );
       return;
@@ -53,7 +53,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
         }
       })
       .catch((e) => {
-        Log.error(e);
+        Log._error(e);
       });
 
     OneSignal.emitter.on(
@@ -139,10 +139,10 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     subscriptionFromDb.optedOut = !enabled;
     await setSubscription(subscriptionFromDb);
     onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch((e) => {
-      Log.error(e);
+      Log._error(e);
     });
     checkAndTriggerSubscriptionChanged().catch((e) => {
-      Log.error(e);
+      Log._error(e);
     });
   }
 }

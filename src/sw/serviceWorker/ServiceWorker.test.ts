@@ -42,7 +42,7 @@ const version = __VERSION__;
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
-vi.spyOn(Log, 'debug').mockImplementation(() => {});
+vi.spyOn(Log, '_debug').mockImplementation(() => {});
 
 const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, '_subscribe');
 
@@ -520,7 +520,7 @@ describe('ServiceWorker', () => {
         });
         await dispatchEvent(event);
 
-        expect(Log.debug).toHaveBeenCalledWith(
+        expect(Log._debug).toHaveBeenCalledWith(
           'No active session found. Cannot deactivate.',
         );
       });
@@ -677,7 +677,7 @@ describe('ServiceWorker', () => {
 });
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const logDebugSpy = vi.spyOn(Log, 'debug');
+const logDebugSpy = vi.spyOn(Log, '_debug');
 // -- one signal api base mock
 
 // @ts-expect-error - for mocking

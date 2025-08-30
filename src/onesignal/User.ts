@@ -274,7 +274,7 @@ export default class User {
     }
 
     if (!isObjectSerializable(properties)) {
-      Log.error('Properties must be JSON-serializable');
+      Log._error('Properties must be JSON-serializable');
       return;
     }
     logMethodCall('trackEvent', { name, properties });

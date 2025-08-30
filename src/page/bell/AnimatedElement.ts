@@ -53,7 +53,7 @@ export default class AnimatedElement {
         OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWING, this);
         const element = this.element;
         if (!element) {
-          Log.error(
+          Log._error(
             `(show) could not find animated element with selector ${this.selector}`,
           );
         } else {
@@ -65,7 +65,7 @@ export default class AnimatedElement {
           return resolve(this);
         } else {
           const timerId = setTimeout(() => {
-            Log.debug(
+            Log._debug(
               `Element did not completely show (state: ${this.state}).`,
             );
           }, this.transitionCheckTimeout);
@@ -107,7 +107,7 @@ export default class AnimatedElement {
         OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDING, this);
         const element = this.element;
         if (!element) {
-          Log.error(
+          Log._error(
             `(hide) could not find animated element with selector ${this.selector}`,
           );
         } else {
@@ -123,7 +123,7 @@ export default class AnimatedElement {
             'transitionend',
             (event: Event, destroyListenerFn: () => void) => {
               const timerId = setTimeout(() => {
-                Log.debug(
+                Log._debug(
                   `Element did not completely hide (state: ${this.state}).`,
                 );
               }, this.transitionCheckTimeout);

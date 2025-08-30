@@ -10,8 +10,8 @@ import { Subscription } from '../shared/models/Subscription';
 import User from './User';
 import UserNamespace from './UserNamespace';
 
-const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
-const warnSpy = vi.spyOn(Log, 'warn').mockImplementation(() => '');
+const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
+const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => '');
 vi.useFakeTimers();
 
 const setup = () => {

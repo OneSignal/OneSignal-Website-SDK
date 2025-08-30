@@ -38,7 +38,7 @@ export default class SubscriptionHelper {
       await triggerNotificationPermissionChanged();
       await checkAndTriggerSubscriptionChanged();
     } catch (e) {
-      Log.error(e);
+      Log._error(e);
     }
     return subscription;
   }

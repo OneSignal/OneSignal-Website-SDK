@@ -46,7 +46,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this.context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      Log.debug('Notify SW to upsert session');
+      Log._debug('Notify SW to upsert session');
       await this.context._workerMessenger.unicast(
         WorkerMessengerCommand.SessionUpsert,
         payload,
@@ -54,7 +54,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      Log.debug('Notify upsert: do nothing');
+      Log._debug('Notify upsert: do nothing');
     }
   }
 
@@ -74,7 +74,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this.context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      Log.debug('Notify SW to deactivate session');
+      Log._debug('Notify SW to deactivate session');
       await this.context._workerMessenger.unicast(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
@@ -82,7 +82,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      Log.debug('Notify deactivate: do nothing');
+      Log._debug('Notify deactivate: do nothing');
     }
   }
 
@@ -126,7 +126,7 @@ export class SessionManager implements ISessionManager {
       if (visibilityState === 'visible') {
         this.setupOnFocusAndOnBlurForSession();
 
-        Log.debug(
+        Log._debug(
           'handleVisibilityChange',
           'visible',
           `hasFocus: ${document.hasFocus()}`,
@@ -143,7 +143,7 @@ export class SessionManager implements ISessionManager {
       }
 
       if (visibilityState === 'hidden') {
-        Log.debug('handleVisibilityChange', 'hidden');
+        Log._debug('handleVisibilityChange', 'hidden');
         if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
           window.removeEventListener(
             'focus',
@@ -166,9 +166,9 @@ export class SessionManager implements ISessionManager {
       }
 
       // it should never be anything else at this point
-      Log.warn('Unhandled visibility state happened', visibilityState);
+      Log._warn('Unhandled visibility state happened', visibilityState);
     } catch (e) {
-      Log.error('Error handling visibility change:', e);
+      Log._error('Error handling visibility change:', e);
     }
   }
 
@@ -195,20 +195,20 @@ export class SessionManager implements ISessionManager {
         outcomesConfig: this.context._appConfig.userConfig.outcomes!,
       };
 
-      Log.debug('Notify SW to deactivate session (beforeunload)');
+      Log._debug('Notify SW to deactivate session (beforeunload)');
       this.context._workerMessenger.directPostMessageToSW(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );
     } catch (e) {
-      Log.error('Error handling onbeforeunload:', e);
+      Log._error('Error handling onbeforeunload:', e);
     }
   }
 
   async handleOnFocus(e: Event): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    Log.debug('handleOnFocus', e);
+    Log._debug('handleOnFocus', e);
     if (!User.singletonInstance?.onesignalId) {
       return;
     }
@@ -231,14 +231,14 @@ export class SessionManager implements ISessionManager {
         SessionOrigin.Focus,
       );
     } catch (e) {
-      Log.error('Error handling focus:', e);
+      Log._error('Error handling focus:', e);
     }
   }
 
   async handleOnBlur(e: Event): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    Log.debug('handleOnBlur', e);
+    Log._debug('handleOnBlur', e);
     if (!User.singletonInstance?.onesignalId) {
       return;
     }
@@ -261,7 +261,7 @@ export class SessionManager implements ISessionManager {
         SessionOrigin.Blur,
       );
     } catch (e) {
-      Log.error('Error handling blur:', e);
+      Log._error('Error handling blur:', e);
     }
   }
 
@@ -289,7 +289,7 @@ export class SessionManager implements ISessionManager {
   setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (!supportsServiceWorkers()) {
-      Log.debug(
+      Log._debug(
         'Not setting session event listeners. No service worker possible.',
       );
       return;
@@ -326,7 +326,7 @@ export class SessionManager implements ISessionManager {
   }
 
   setupOnFocusAndOnBlurForSession(): void {
-    Log.debug('setupOnFocusAndOnBlurForSession');
+    Log._debug('setupOnFocusAndOnBlurForSession');
 
     if (!OneSignal.cache.focusHandler) {
       OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
@@ -357,7 +357,7 @@ export class SessionManager implements ISessionManager {
     const onesignalId = identityModel.onesignalId;
 
     if (!onesignalId) {
-      Log.debug(
+      Log._debug(
         'Not sending the on session because user is not registered with OneSignal (no onesignal id)',
       );
       return;
@@ -401,11 +401,11 @@ export class SessionManager implements ISessionManager {
         );
         this.onSessionSent = true;
       } catch (e) {
-        Log.debug('Error updating user session:', e);
+        Log._debug('Error updating user session:', e);
       }
     } catch (e) {
       if (e instanceof Error) {
-        Log.error(
+        Log._error(
           `Failed to update user session. Error "${e.message}" ${e.stack}`,
         );
       }

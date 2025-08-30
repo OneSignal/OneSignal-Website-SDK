@@ -52,7 +52,7 @@ export class OneSignalApiSW {
         }
       })
       .catch((e) => {
-        Log.debug('Error getting user ID from subscription identifier:', e);
+        Log._debug('Error getting user ID from subscription identifier:', e);
         return null;
       });
   }
@@ -87,7 +87,7 @@ export class OneSignalApiSW {
         updateUserPayload,
       );
     } catch (e) {
-      Log.debug('Error updating user session:', e);
+      Log._debug('Error updating user session:', e);
     }
   }
 
@@ -139,7 +139,7 @@ export class OneSignalApiSW {
         await OneSignalApiShared.sendOutcome(outcomePayload);
       }
     } catch (e) {
-      Log.debug('Error sending session duration:', e);
+      Log._debug('Error sending session duration:', e);
     }
   }
 }

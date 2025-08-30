@@ -62,7 +62,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
+    Log._debug(
       `LoginUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
     );
     const startingOp = operations[0];
@@ -124,11 +124,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case ExecutionResult.FAIL_CONFLICT:
-        Log.debug(`Handling 409 for externalId: ${loginUserOp.externalId}`);
+        Log._debug(`Handling 409 for externalId: ${loginUserOp.externalId}`);
         return this.createUser(loginUserOp, operations);
 
       case ExecutionResult.FAIL_NORETRY:
-        Log.error(
+        Log._error(
           `Recovering from SetAlias failure for externalId: ${loginUserOp.externalId}`,
         );
         return this.createUser(loginUserOp, operations);

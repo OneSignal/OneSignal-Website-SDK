@@ -97,7 +97,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   ): Promise<void> {
     const pushModel = await OneSignal._coreDirector.getPushSubscriptionModel();
     if (!pushModel) {
-      Log.info('No Push Subscription yet to update notification_types.');
+      Log._info('No Push Subscription yet to update notification_types.');
       return;
     }
 
@@ -260,12 +260,12 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       rawPushSubscription = await this.subscribeSafari();
       await updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
       /* Now that permissions have been granted, install the service worker */
-      Log.info('Installing SW on Safari');
+      Log._info('Installing SW on Safari');
       try {
         await this._context._serviceWorkerManager.installWorker();
-        Log.info('SW on Safari successfully installed');
+        Log._info('SW on Safari successfully installed');
       } catch (e) {
-        Log.error('SW on Safari failed to install.');
+        Log._error('SW on Safari failed to install.');
       }
     } else {
       rawPushSubscription =
@@ -384,13 +384,13 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
         case 'default':
-          Log.debug(
+          Log._debug(
             'Exiting subscription and not registering worker because the permission was dismissed.',
           );
           OneSignal._sessionInitAlreadyRunning = false;
           throw new Error('Permission dismissed');
         case 'denied':
-          Log.debug(
+          Log._debug(
             'Exiting subscription and not registering worker because the permission was blocked.',
           );
           OneSignal._sessionInitAlreadyRunning = false;
@@ -425,7 +425,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     if (!workerRegistration) {
       throw new Error('OneSignal service worker not found!');
     }
-    Log.debug(
+    Log._debug(
       '[Subscription Manager] Service worker is ready to continue subscribing.',
     );
 

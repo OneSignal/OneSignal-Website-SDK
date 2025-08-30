@@ -6,7 +6,7 @@ import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { SessionManager } from './SessionManager';
 
-vi.spyOn(Log, 'error').mockImplementation(() => '');
+vi.spyOn(Log, '_error').mockImplementation(() => '');
 
 describe('SessionManager', () => {
   describe('Switching Users', () => {

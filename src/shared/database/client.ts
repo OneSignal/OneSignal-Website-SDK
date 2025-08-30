@@ -74,7 +74,7 @@ const open = async (version = VERSION) => {
       }
     },
     blocked() {
-      Log.debug('IndexedDB: Blocked event');
+      Log._debug('IndexedDB: Blocked event');
     },
     terminated() {
       // reopen if db was terminated

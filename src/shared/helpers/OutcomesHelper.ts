@@ -66,12 +66,12 @@ export default class OutcomesHelper {
     logMethodCall(outcomeMethodString, this.outcomeName);
 
     if (!this.config) {
-      Log.debug('Outcomes feature not supported by main application yet.');
+      Log._debug('Outcomes feature not supported by main application yet.');
       return false;
     }
 
     if (!this.outcomeName) {
-      Log.error('Outcome name is required');
+      Log._error('Outcome name is required');
       return false;
     }
 
@@ -80,7 +80,7 @@ export default class OutcomesHelper {
     const isSubscribed =
       await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
     if (!isSubscribed) {
-      Log.warn('Reporting outcomes is supported only for subscribed users.');
+      Log._warn('Reporting outcomes is supported only for subscribed users.');
       return false;
     }
     return true;
@@ -189,7 +189,7 @@ export default class OutcomesHelper {
       case OutcomeAttributionType.Unattributed:
         if (this.isUnique) {
           if (await this.wasSentDuringSession()) {
-            Log.warn(
+            Log._warn(
               `(Unattributed) unique outcome was already sent during this session`,
             );
             return;
@@ -203,7 +203,7 @@ export default class OutcomesHelper {
         );
         return;
       default:
-        Log.warn(
+        Log._warn(
           'You are on a free plan. Please upgrade to use this functionality.',
         );
         return;
@@ -256,7 +256,7 @@ export async function getConfigAttribution(
 
     const allReceivedNotification =
       await getAllNotificationReceivedForOutcomes();
-    Log.debug(
+    Log._debug(
       `\tFound total of ${allReceivedNotification.length} received notifications`,
     );
 
@@ -277,7 +277,7 @@ export async function getConfigAttribution(
         .filter((notif) => notif.timestamp >= maxTimestamp)
         .slice(0, max)
         .map((notif) => notif.notificationId);
-      Log.debug(
+      Log._debug(
         `\tTotal of ${matchingNotificationIds.length} received notifications are within reporting window.`,
       );
 
@@ -291,7 +291,7 @@ export async function getConfigAttribution(
       notificationIdsToDelete.forEach((id) =>
         db.delete('Outcomes.NotificationReceived', id),
       );
-      Log.debug(
+      Log._debug(
         `\t${notificationIdsToDelete.length} received notifications will be deleted.`,
       );
 

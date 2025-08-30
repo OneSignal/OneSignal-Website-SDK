@@ -21,7 +21,7 @@ import {
 import { NewRecordsState } from './NewRecordsState';
 import { OperationQueueItem, OperationRepo } from './OperationRepo';
 
-vi.spyOn(Log, 'error').mockImplementation((msg) => {
+vi.spyOn(Log, '_error').mockImplementation((msg) => {
   if (typeof msg === 'string' && msg.includes('Operation execution failed'))
     return '';
   return msg;

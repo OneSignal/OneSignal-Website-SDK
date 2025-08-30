@@ -79,7 +79,7 @@ export const isConsentRequiredButNotGiven = () => {
   const consentGiven = OneSignal._consentGiven;
 
   const requiredButNotGiven = consentRequired && !consentGiven;
-  if (requiredButNotGiven) Log.warn('Consent required but not given');
+  if (requiredButNotGiven) Log._warn('Consent required but not given');
 
   return requiredButNotGiven;
 };

@@ -289,7 +289,7 @@ export default class Bell {
           this.hovering = false;
         })
         .catch((err) => {
-          Log.error(err);
+          Log._error(err);
         });
     });
 
@@ -427,7 +427,7 @@ export default class Bell {
     const sdkStylesLoadResult =
       await OneSignal.context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug('Not showing notify button because styles failed to load.');
+      Log._debug('Not showing notify button because styles failed to load.');
       return;
     }
 
@@ -508,7 +508,7 @@ export default class Bell {
     this.setCustomColorsIfSpecified();
     this.addBadgeShadow();
 
-    Log.info('Showing the notify button.');
+    Log._info('Showing the notify button.');
 
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
       .then(() => {
@@ -563,7 +563,7 @@ export default class Bell {
       const element = this.launcher.element as HTMLElement;
 
       if (!element) {
-        Log.error('Could not find bell dom element');
+        Log._error('Could not find bell dom element');
         return;
       }
       // Reset styles first
@@ -689,7 +689,7 @@ export default class Bell {
         }
       })
       .catch((e) => {
-        Log.error(e);
+        Log._error(e);
       });
   }
 

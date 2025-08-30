@@ -21,7 +21,7 @@ export class UpdateManager {
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
     if (!User.singletonInstance?.onesignalId) {
-      Log.debug(
+      Log._debug(
         'Not sending the update because user is not registered with OneSignal (no onesignal_id)',
       );
       return;
@@ -45,7 +45,7 @@ export class UpdateManager {
     const existingUser =
       await this.context._subscriptionManager._isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
-      Log.debug(
+      Log._debug(
         'Not sending the on session because user is not registered with OneSignal (no device id)',
       );
       return;
@@ -69,7 +69,7 @@ export class UpdateManager {
       this.onSessionSent = true;
     } catch (e) {
       if (e instanceof Error) {
-        Log.error(
+        Log._error(
           `Failed to update user session. Error "${e.message}" ${e.stack}`,
         );
       }
@@ -106,7 +106,7 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    Log.warn(
+    Log._warn(
       `Send outcome aborted because pushSubscriptionModel is not available.`,
     );
   }
@@ -141,7 +141,7 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    Log.warn(
+    Log._warn(
       `Send outcome aborted because pushSubscriptionModel is not available.`,
     );
   }
@@ -173,7 +173,7 @@ export class UpdateManager {
       await OneSignalApiShared.sendOutcome(outcomeRequestData);
       return;
     }
-    Log.warn(
+    Log._warn(
       `Send outcome aborted because pushSubscriptionModel is not available.`,
     );
   }

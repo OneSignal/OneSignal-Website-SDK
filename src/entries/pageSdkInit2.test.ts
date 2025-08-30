@@ -58,7 +58,7 @@ describe('pageSdkInit 2', () => {
       response: emailSubModel,
     });
 
-    const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+    const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
 
     // wait for init so it can initialize user namespace otherwise it won't be available for addEmail
     window.OneSignalDeferred = [];

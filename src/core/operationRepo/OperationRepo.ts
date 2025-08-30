@@ -96,11 +96,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public _pause(): void {
     clearInterval(this._timerID);
     this._timerID = undefined;
-    Log.debug('OperationRepo: Paused');
+    Log._debug('OperationRepo: Paused');
   }
 
   public enqueue(operation: Operation): void {
-    Log.debug(`OperationRepo.enqueue(operation: ${operation})`);
+    Log._debug(`OperationRepo.enqueue(operation: ${operation})`);
 
     this._internalEnqueue(
       new OperationQueueItem({
@@ -112,7 +112,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async enqueueAndWait(operation: Operation): Promise<void> {
-    Log.debug(`OperationRepo.enqueueAndWaitoperation: ${operation})`);
+    Log._debug(`OperationRepo.enqueueAndWaitoperation: ${operation})`);
 
     await new Promise((resolve) => {
       this._internalEnqueue(
@@ -135,7 +135,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       (item) => item.operation.modelId === queueItem.operation.modelId,
     );
     if (hasExisting) {
-      Log.debug(
+      Log._debug(
         `OperationRepo: internalEnqueue - operation.modelId: ${queueItem.operation.modelId} already exists in the queue.`,
       );
       return;
@@ -157,7 +157,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     let runningOps = false;
 
     this._timerID = setInterval(async () => {
-      if (runningOps) return Log.debug('Operations in progress');
+      if (runningOps) return Log._debug('Operations in progress');
 
       const ops = this._getNextOps(this._executeBucket);
 
@@ -186,7 +186,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       const response = await executor.execute(operations);
       const idTranslations = response.idTranslations;
 
-      Log.debug(`OperationRepo: execute response = ${response.result}`);
+      Log._debug(`OperationRepo: execute response = ${response.result}`);
 
       // Handle ID translations
       if (idTranslations) {
@@ -213,7 +213,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult.FAIL_UNAUTHORIZED:
         case ExecutionResult.FAIL_NORETRY:
         case ExecutionResult.FAIL_CONFLICT:
-          Log.error(`Operation execution failed without retry: ${operations}`);
+          Log._error(`Operation execution failed without retry: ${operations}`);
           ops.forEach((op) => {
             this._operationModelStore.remove(op.operation.modelId);
           });
@@ -232,7 +232,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult.FAIL_RETRY:
-          Log.error(`Operation execution failed, retrying: ${operations}`);
+          Log._error(`Operation execution failed, retrying: ${operations}`);
           // Add back all operations to front of queue
           ops.toReversed().forEach((op) => {
             removeOpFromDB(op.operation);
@@ -245,7 +245,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult.FAIL_PAUSE_OPREPO:
-          Log.error(
+          Log._error(
             `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
           );
           this._pause();
@@ -277,7 +277,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
-      Log.error(`Error attempting to execute operation: ${ops}`, e);
+      Log._error(`Error attempting to execute operation: ${ops}`, e);
 
       // On failure remove operations from store
       ops.forEach((op) => {
@@ -291,14 +291,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     retries: number,
     retryAfterSeconds?: number,
   ): Promise<void> {
-    Log.debug(`retryAfterSeconds: ${retryAfterSeconds}`);
+    Log._debug(`retryAfterSeconds: ${retryAfterSeconds}`);
     const retryAfterSecondsMs = (retryAfterSeconds || 0) * 1000;
     const delayForOnRetries = retries * OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF;
     const delayFor = Math.max(delayForOnRetries, retryAfterSecondsMs);
 
     if (delayFor < 1) return;
 
-    Log.error(`Operations being delay for: ${delayFor} ms`);
+    Log._error(`Operations being delay for: ${delayFor} ms`);
     await delay(delayFor);
   }
 

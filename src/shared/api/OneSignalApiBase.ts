@@ -115,7 +115,7 @@ export class OneSignalApiBase {
     } catch (e) {
       if (e instanceof Error && e.name === 'TypeError') {
         await delay(RETRY_BACKOFF[retry]);
-        Log.error(
+        Log._error(
           `OneSignal: Network timed out while calling ${url}. Retrying...`,
         );
         return OneSignalApiBase.executeFetch(url, contents, retry - 1);

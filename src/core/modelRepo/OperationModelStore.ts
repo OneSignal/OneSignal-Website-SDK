@@ -27,7 +27,7 @@ export class OperationModelStore extends ModelStore<Operation> {
 
   create(jsonObject?: { name?: string } | null): Operation | null {
     if (jsonObject === null) {
-      Log.error('null jsonObject sent to OperationModelStore.create');
+      Log._error('null jsonObject sent to OperationModelStore.create');
       return null;
     }
 
@@ -96,7 +96,7 @@ export class OperationModelStore extends ModelStore<Operation> {
   } {
     const operationName = object?.name;
     if (!operationName) {
-      Log.error("jsonObject must have 'name' attribute");
+      Log._error("jsonObject must have 'name' attribute");
       return false;
     }
 
@@ -104,7 +104,7 @@ export class OperationModelStore extends ModelStore<Operation> {
 
     // Must have onesignalId if it is not one of the excluded operations above
     if (!object.onesignalId && !excluded.has(operationName)) {
-      Log.error(
+      Log._error(
         `${operationName} jsonObject must have 'onesignalId' attribute`,
       );
       return false;

@@ -24,13 +24,13 @@ export function cancelableTimeout(
         await callback();
         resolve();
       } catch (e) {
-        Log.error('Failed to execute callback', e);
+        Log._error('Failed to execute callback', e);
         reject();
       }
     }, delayInMilliseconds);
 
     clearTimeoutHandle = () => {
-      Log.debug('Cancel called');
+      Log._debug('Cancel called');
       self.clearTimeout(timerId);
       if (!startedExecution) {
         resolve();

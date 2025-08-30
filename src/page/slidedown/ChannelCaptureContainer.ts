@@ -197,7 +197,7 @@ export default class ChannelCaptureContainer {
         },
       );
     } else {
-      Log.error(
+      Log._error(
         'OneSignal: there was a problem initializing International Telephone Input',
       );
     }
@@ -388,7 +388,7 @@ export default class ChannelCaptureContainer {
     );
 
     if (!validationElement || !inputElement) {
-      Log.error("OneSignal: couldn't find slidedown validation element");
+      Log._error("OneSignal: couldn't find slidedown validation element");
       return;
     }
 
@@ -418,7 +418,7 @@ export default class ChannelCaptureContainer {
     );
 
     if (!validationElement || !inputElement) {
-      Log.error("OneSignal: couldn't find slidedown validation element");
+      Log._error("OneSignal: couldn't find slidedown validation element");
       return;
     }
 
