@@ -47,4 +47,11 @@ export interface OSMinifiedButtonsPayload {
 
 export interface IOSWebhookEventPayload {
   readonly event: string;
+  readonly notificationId: string;
+  readonly heading?: string;
+  readonly content: string;
+  readonly additionalData?: object;
+  readonly actionId?: string;
+  readonly url?: string;
+  readonly subscriptionId?: string;
 }
