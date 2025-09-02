@@ -323,6 +323,7 @@ test('should reopen db when terminated', async () => {
   let terminatedCallback = vi.hoisted(() => vi.fn(() => false));
 
   const openFn = vi.hoisted(() => vi.fn());
+  const deleteDatabaseFn = vi.hoisted(() => vi.fn());
 
   vi.mock('idb', async (importOriginal) => {
     const actual = (await importOriginal()) as typeof idb;
@@ -331,6 +332,10 @@ test('should reopen db when terminated', async () => {
       openDB: openFn.mockImplementation((name, version, callbacks) => {
         terminatedCallback = callbacks!.terminated!;
         return actual.openDB(name, version, callbacks);
+      }),
+      deleteDB: deleteDatabaseFn.mockImplementation((name) => {
+        terminatedCallback();
+        return actual.deleteDB(name);
       }),
     };
   });
@@ -341,10 +346,7 @@ test('should reopen db when terminated', async () => {
   await db.put('Options', { key: 'userConsent', value: true });
 
   // real world db.close() will trigger the terminated callback
-  vi.spyOn(db, 'close').mockImplementationOnce(async () => {
-    terminatedCallback();
-  });
-  db.close();
+  deleteDB(DATABASE_NAME);
 
   // terminate callback should reopen the db
   expect(openFn).toHaveBeenCalledTimes(2);

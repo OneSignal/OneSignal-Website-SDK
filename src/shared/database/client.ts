@@ -117,12 +117,10 @@ export const db = {
   ) {
     return (await dbPromise).delete(storeName, key);
   },
-  async clear<K extends IDBStoreName>(storeName: K) {
-    return (await dbPromise).clear(storeName);
-  },
-  async close() {
-    return (await dbPromise).close();
-  },
+};
+
+export const clearStore = async <K extends IDBStoreName>(storeName: K) => {
+  return (await dbPromise).clear(storeName);
 };
 
 export const getObjectStoreNames = async () => {
@@ -154,7 +152,7 @@ export const cleanupCurrentSession = async () => {
 export const clearAll = async () => {
   const objectStoreNames = await getObjectStoreNames();
   for (const storeName of objectStoreNames) {
-    await db.clear(storeName);
+    await clearStore(storeName);
   }
 };
 

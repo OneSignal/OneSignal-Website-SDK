@@ -6,6 +6,7 @@ import OneSignalApiSW from '../api/OneSignalApiSW';
 import { encodeHashAsUriComponent } from '../context/helpers';
 import {
   cleanupCurrentSession,
+  clearStore,
   db,
   getCurrentSession,
 } from '../database/client';
@@ -243,7 +244,7 @@ async function finalizeSession(
 
   await Promise.all([
     cleanupCurrentSession(),
-    db.clear('Outcomes.NotificationClicked'),
+    clearStore('Outcomes.NotificationClicked'),
   ]);
   Log.debug(
     'Finalize session finished',
