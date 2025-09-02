@@ -43,8 +43,8 @@ export abstract class BaseSubscriptionOperation<
 
   override get canStartExecute(): boolean {
     return (
-      !IDManager.isLocalId(this.onesignalId) &&
-      !IDManager.isLocalId(this.subscriptionId)
+      !IDManager._isLocalId(this.onesignalId) &&
+      !IDManager._isLocalId(this.subscriptionId)
     );
   }
 

@@ -28,7 +28,7 @@ describe('pageSdkInit 2', () => {
   });
 
   test('can login and addEmail', async () => {
-    const onesignalId = IDManager.createLocalId();
+    const onesignalId = IDManager._createLocalId();
     updateIdentityModel('onesignal_id', onesignalId);
 
     const email = 'joe@example.com';
@@ -74,7 +74,7 @@ describe('pageSdkInit 2', () => {
       OneSignal.User.addEmail(email);
 
       // waiting for indexedb to update, addEmail should add a new subscription item with temporary id
-      const subModels = OneSignal.coreDirector.subscriptionModelStore
+      const subModels = OneSignal._coreDirector.subscriptionModelStore
         .list()
         .map((m) => m.toJSON());
       subModels.sort((a, b) => a.type.localeCompare(b.type));
@@ -92,7 +92,7 @@ describe('pageSdkInit 2', () => {
           type: 'Email',
         },
       ]);
-      expect(IDManager.isLocalId(subModels[1].id)).toBe(true);
+      expect(IDManager._isLocalId(subModels[1].id)).toBe(true);
     });
 
     // wait user subscriptions to be refresh/replaced

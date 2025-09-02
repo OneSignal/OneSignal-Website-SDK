@@ -44,7 +44,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     this._permission = permission;
     this._token = subscription.subscriptionToken;
 
-    OneSignal.coreDirector
+    OneSignal._coreDirector
       .getPushSubscriptionModel()
       .then((pushModel) => {
         if (isCompleteSubscriptionObject(pushModel)) {

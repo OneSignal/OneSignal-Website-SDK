@@ -78,7 +78,7 @@ export class TrackCustomEventOperation extends Operation<ITrackEventOp> {
     return GroupComparisonType.NONE;
   }
   override get canStartExecute(): boolean {
-    return !IDManager.isLocalId(this.onesignalId);
+    return !IDManager._isLocalId(this.onesignalId);
   }
   override get applyToRecordId(): string {
     return this.onesignalId;

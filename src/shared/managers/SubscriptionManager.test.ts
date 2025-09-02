@@ -34,7 +34,7 @@ describe('SubscriptionManager', () => {
       const rawSubscription = getRawPushSubscription();
 
       let subModels =
-        await OneSignal.coreDirector.subscriptionModelStore.list();
+        await OneSignal._coreDirector.subscriptionModelStore.list();
       expect(subModels.length).toBe(0);
 
       // mimicing the event helper checkAndTriggerSubscriptionChanged
@@ -42,11 +42,11 @@ describe('SubscriptionManager', () => {
 
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
-      subModels = await OneSignal.coreDirector.subscriptionModelStore.list();
+      subModels = await OneSignal._coreDirector.subscriptionModelStore.list();
       expect(subModels.length).toBe(1);
 
       const id = subModels[0].id;
-      expect(IDManager.isLocalId(id)).toBe(true);
+      expect(IDManager._isLocalId(id)).toBe(true);
       expect(subModels[0].toJSON()).toEqual({
         id,
         ...BASE_SUB,
@@ -74,7 +74,7 @@ describe('SubscriptionManager', () => {
 
     test('should create user if push subscription model has a local id', async () => {
       const generatePushSubscriptionModelSpy = vi.spyOn(
-        OneSignal.coreDirector,
+        OneSignal._coreDirector,
         'generatePushSubscriptionModel',
       );
       const rawSubscription = getRawPushSubscription();
@@ -86,12 +86,12 @@ describe('SubscriptionManager', () => {
       });
 
       // create push sub with no id
-      const onesignalId = IDManager.createLocalId();
+      const onesignalId = IDManager._createLocalId();
       updateIdentityModel('onesignal_id', onesignalId);
       updateIdentityModel('external_id', 'some-external-id');
 
       await setupSubModelStore({
-        id: IDManager.createLocalId(),
+        id: IDManager._createLocalId(),
         token: rawSubscription.w3cEndpoint?.toString(),
         onesignalId,
       });
@@ -133,7 +133,7 @@ describe('SubscriptionManager', () => {
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
       const updatedPushModel =
-        (await OneSignal.coreDirector.getPushSubscriptionModel())!;
+        (await OneSignal._coreDirector.getPushSubscriptionModel())!;
       expect(updatedPushModel.token).toBe(
         rawSubscription.w3cEndpoint?.toString(),
       );

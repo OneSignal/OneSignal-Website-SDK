@@ -36,7 +36,7 @@ export async function checkAndTriggerSubscriptionChanged() {
   } = appState;
   const currentPushToken = await MainHelper.getCurrentPushToken();
 
-  const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+  const pushModel = await OneSignal._coreDirector.getPushSubscriptionModel();
   const pushSubscriptionId = pushModel?.id;
 
   const didStateChange =
@@ -122,7 +122,7 @@ export async function checkAndTriggerUserChanged() {
   const userState = await getUserState();
   const { previousOneSignalId, previousExternalId } = userState;
 
-  const identityModel = await OneSignal.coreDirector.getIdentityModel();
+  const identityModel = await OneSignal._coreDirector._getIdentityModel();
   const currentOneSignalId = identityModel?.onesignalId;
   const currentExternalId = identityModel?.externalId;
 

@@ -64,7 +64,7 @@ export const setupIdentityModel = async (
 ) => {
   const newIdentityModel = new IdentityModel();
   newIdentityModel.onesignalId = onesignalID;
-  OneSignal.coreDirector.identityModelStore.replace(
+  OneSignal._coreDirector.identityModelStore.replace(
     newIdentityModel,
     ModelChangeTags.NO_PROPAGATE,
   );
@@ -78,7 +78,7 @@ export const setupPropertiesModel = async (
 ) => {
   const newPropertiesModel = new PropertiesModel();
   newPropertiesModel.onesignalId = onesignalID;
-  OneSignal.coreDirector.propertiesModelStore.replace(
+  OneSignal._coreDirector.propertiesModelStore.replace(
     newPropertiesModel,
     ModelChangeTags.NO_PROPAGATE,
   );
@@ -96,7 +96,7 @@ export const updateIdentityModel = async <
   property: T,
   value?: IdentitySchema[T],
 ) => {
-  const identityModel = OneSignal.coreDirector.getIdentityModel();
+  const identityModel = OneSignal._coreDirector._getIdentityModel();
   identityModel.setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
 };
 
@@ -112,7 +112,7 @@ export const updatePropertiesModel = async <
   property: T,
   value?: PropertiesSchema[T],
 ) => {
-  const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+  const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
   propertiesModel.setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
 };
 
@@ -126,7 +126,7 @@ export const setupSubscriptionModel = async (
   const subscriptionModel = new SubscriptionModel();
   subscriptionModel.id = id || '';
   subscriptionModel.token = token || '';
-  OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+  OneSignal._coreDirector.subscriptionModelStore.replaceAll(
     [subscriptionModel],
     ModelChangeTags.NO_PROPAGATE,
   );

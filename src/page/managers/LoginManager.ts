@@ -24,8 +24,8 @@ export default class LoginManager {
       db.put('Ids', { id: token, type: 'jwtToken' });
     }
 
-    let identityModel = OneSignal.coreDirector.getIdentityModel();
-    const currentOneSignalId = !IDManager.isLocalId(identityModel.onesignalId)
+    let identityModel = OneSignal._coreDirector._getIdentityModel();
+    const currentOneSignalId = !IDManager._isLocalId(identityModel.onesignalId)
       ? identityModel.onesignalId
       : undefined;
     const currentExternalId = identityModel.externalId;
@@ -37,7 +37,7 @@ export default class LoginManager {
     }
 
     UserDirector.resetUserModels();
-    identityModel = OneSignal.coreDirector.getIdentityModel();
+    identityModel = OneSignal._coreDirector._getIdentityModel();
 
     // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
     // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
@@ -50,9 +50,9 @@ export default class LoginManager {
     const appId = MainHelper.getAppId();
 
     const promises: Promise<void>[] = [
-      OneSignal.coreDirector.getPushSubscriptionModel().then((pushOp) => {
+      OneSignal._coreDirector.getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
-          OneSignal.coreDirector.operationRepo.enqueue(
+          OneSignal._coreDirector.operationRepo.enqueue(
             new TransferSubscriptionOperation(
               appId,
               newIdentityOneSignalId,
@@ -61,7 +61,7 @@ export default class LoginManager {
           );
         }
       }),
-      OneSignal.coreDirector.operationRepo.enqueueAndWait(
+      OneSignal._coreDirector.operationRepo.enqueueAndWait(
         new LoginUserOperation(
           appId,
           newIdentityOneSignalId,
@@ -80,7 +80,7 @@ export default class LoginManager {
 
   private static async _logout(): Promise<void> {
     // check if user is already logged out
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
 
     if (!identityModel.externalId)
       return Log.debug('Logout: User is not logged in, skipping logout');

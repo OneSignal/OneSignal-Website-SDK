@@ -92,10 +92,10 @@ export class SlidedownManager {
     } else {
       if (!options.force) {
         const smsSubscribed = await (
-          OneSignal.coreDirector as CoreModuleDirector
+          OneSignal._coreDirector as CoreModuleDirector
         ).hasSms();
         const emailSubscribed = await (
-          OneSignal.coreDirector as CoreModuleDirector
+          OneSignal._coreDirector as CoreModuleDirector
         ).hasEmail();
         const bothSubscribed = smsSubscribed && emailSubscribed;
 
@@ -295,7 +295,7 @@ export class SlidedownManager {
         throw new Error('Categories not defined');
       }
 
-      const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+      const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
       const existingTags = propertiesModel.tags;
 
       if (options.isInUpdateMode && existingTags) {

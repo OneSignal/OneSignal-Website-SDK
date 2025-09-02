@@ -38,7 +38,7 @@ describe('pageSdkInit', () => {
     await vi.waitUntil(async () => {
       return logoutSpy.mock.calls.length > 0;
     });
-    expect(window.OneSignal.coreDirector).toBeDefined();
+    expect(window.OneSignal._coreDirector).toBeDefined();
   });
 
   test('can process deferred items long after page init', async () => {

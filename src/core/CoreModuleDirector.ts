@@ -64,7 +64,7 @@ export class CoreModuleDirector {
     model.initializeFromJson(
       new FuturePushSubscriptionRecord(rawPushSubscription).serialize(),
     );
-    model.id = IDManager.createLocalId();
+    model.id = IDManager._createLocalId();
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
     this.core.subscriptionModelStore.add(model, ModelChangeTags.HYDRATE);
@@ -159,12 +159,12 @@ export class CoreModuleDirector {
     );
   }
 
-  public getIdentityModel(): IdentityModel {
+  public _getIdentityModel(): IdentityModel {
     logMethodCall('CoreModuleDirector.getIdentityModel');
     return this.core.identityModelStore.model;
   }
 
-  public getPropertiesModel(): PropertiesModel {
+  public _getPropertiesModel(): PropertiesModel {
     logMethodCall('CoreModuleDirector.getPropertiesModel');
     return this.core.propertiesModelStore.model;
   }
