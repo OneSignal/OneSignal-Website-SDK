@@ -57,7 +57,7 @@ export default class Dialog extends AnimatedElement {
   }
 
   _updateBellLauncherDialogBody() {
-    return OneSignal.context.subscriptionManager
+    return OneSignal.context._subscriptionManager
       .isPushNotificationsEnabled()
       .then((currentSetSubscription: boolean) => {
         if (this._nestedContentSelector) {

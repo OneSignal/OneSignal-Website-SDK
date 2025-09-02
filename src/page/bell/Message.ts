@@ -24,7 +24,7 @@ export default class Message extends AnimatedElement {
   }
 
   _display(type: string, content: string, duration = 0) {
-    Log.debug(`Calling display(${type}, ${content}, ${duration}).`);
+    Log._debug(`Calling display(${type}, ${content}, ${duration}).`);
     return (this._shown ? this._hide() : nothing())
       .then(() => {
         this._content = decodeHtmlEntities(content);

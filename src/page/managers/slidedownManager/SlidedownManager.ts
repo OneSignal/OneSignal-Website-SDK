@@ -462,7 +462,7 @@ export class SlidedownManager {
       this.slidedown = new Slidedown(slidedownPromptOptions);
       await this.slidedown.create(options.isInUpdateMode);
       await this.mountAuxiliaryContainers(options);
-      Log.debug('Showing OneSignal Slidedown');
+      Log._debug('Showing OneSignal Slidedown');
       Slidedown._triggerSlidedownEvent('slidedownShown');
     } catch (e) {
       Log._error('There was an error showing the OneSignal Slidedown:', e);

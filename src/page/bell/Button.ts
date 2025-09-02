@@ -138,7 +138,7 @@ export default class Button extends AnimatedElement {
         this._bell._subscribed ||
         this._bell._blocked
       ) {
-        await this._bell._launcher._activateIfInactive();
+        // await this._bell._launcher._activateIfInactive();
         await this._toggleDialog();
       }
 
@@ -148,7 +148,7 @@ export default class Button extends AnimatedElement {
     }
   }
 
-  private async _toggleDialog() {
+  async _toggleDialog() {
     if (this._bell._dialog._shown) {
       // Close dialog if already open (toggle behavior)
       await this._bell._dialog._hide();

@@ -279,7 +279,7 @@ export default class Bell {
       }
 
       const permission =
-        await OneSignal.context.permissionManager.getPermissionStatus();
+        await OneSignal.context._permissionManager.getPermissionStatus();
       let bellState: BellState;
       if (isSubscribed?.current.optedIn) {
         bellState = 'subscribed';
@@ -435,7 +435,7 @@ export default class Bell {
     this._applyOffsetIfSpecified();
     this._setCustomColorsIfSpecified();
 
-    Log.info('Showing the notify button.');
+    Log._info('Showing the notify button.');
 
     await (isPushEnabled ? this._launcher._inactivate() : nothing())
       .then(() => {
