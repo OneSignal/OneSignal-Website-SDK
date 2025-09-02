@@ -35,7 +35,7 @@ export default class UserNamespace extends EventListenerBase {
   }
 
   get externalId(): string | undefined {
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     return identityModel?.externalId;
   }
 

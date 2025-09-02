@@ -11,6 +11,7 @@ import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
+import { IDManager } from 'src/shared/managers/IDManager';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
@@ -44,11 +45,10 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     this._permission = permission;
     this._token = subscription.subscriptionToken;
 
-    OneSignal.coreDirector
+    OneSignal._coreDirector
       .getPushSubscriptionModel()
       .then((pushModel) => {
         if (isCompleteSubscriptionObject(pushModel)) {
-          pushModel;
           this._id = pushModel.id;
         }
       })
@@ -73,7 +73,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
   }
 
   get id(): string | null | undefined {
-    return this._id;
+    return IDManager._isLocalId(this._id) ? undefined : this._id;
   }
 
   get token(): string | null | undefined {

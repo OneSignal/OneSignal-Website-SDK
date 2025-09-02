@@ -74,7 +74,7 @@ export class LoginUserOperation extends Operation<ILoginOp> {
   override get canStartExecute(): boolean {
     return (
       !this.existingOnesignalId ||
-      !IDManager.isLocalId(this.existingOnesignalId)
+      !IDManager._isLocalId(this.existingOnesignalId)
     );
   }
 

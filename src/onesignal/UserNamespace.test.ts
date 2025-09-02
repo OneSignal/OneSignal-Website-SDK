@@ -31,9 +31,9 @@ describe('User Identity Properties', () => {
     updateIdentityModel('onesignal_id', undefined);
     expect(userNamespace.onesignalId).toBe(undefined);
 
-    const localId = IDManager.createLocalId();
+    const localId = IDManager._createLocalId();
     updateIdentityModel('onesignal_id', localId);
-    expect(userNamespace.onesignalId).toBe(localId);
+    expect(userNamespace.onesignalId).toBe(undefined);
 
     updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     expect(userNamespace.onesignalId).toBe(ONESIGNAL_ID);
@@ -56,7 +56,7 @@ describe('Alias Management', () => {
 
     userNamespace.addAlias(label, id);
 
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     expect(identityModel.getProperty(label)).toBe(id);
   });
 
@@ -69,7 +69,7 @@ describe('Alias Management', () => {
 
     userNamespace.addAliases(aliases);
 
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     expect(identityModel.getProperty('someLabel')).toBe(aliases.someLabel);
     expect(identityModel.getProperty('anotherLabel')).toBe(
       aliases.anotherLabel,
@@ -80,7 +80,7 @@ describe('Alias Management', () => {
     const userNamespace = new UserNamespace(true);
     const label = 'some-label';
     const id = 'some-id';
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
 
     // First add the alias
     userNamespace.addAlias(label, id);
@@ -98,7 +98,7 @@ describe('Alias Management', () => {
       someLabel: 'some-id',
       anotherLabel: 'another-id',
     };
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
 
     // First add the aliases
     userNamespace.addAliases(aliases);
@@ -192,17 +192,17 @@ describe('Email Management', () => {
   const userNamespace = new UserNamespace(true);
   const getEmailSubscription = (email: string) => {
     const subscriptionModels =
-      OneSignal.coreDirector.getEmailSubscriptionModels();
+      OneSignal._coreDirector.getEmailSubscriptionModels();
     return subscriptionModels.find((model) => model.token === email);
   };
 
   test('can add an email subscription', async () => {
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    identityModel.onesignalId = IDManager.createLocalId();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
+    identityModel.onesignalId = IDManager._createLocalId();
 
     const email = 'test@example.com';
     const addSubscriptionSpy = vi.spyOn(
-      OneSignal.coreDirector,
+      OneSignal._coreDirector,
       'addSubscriptionModel',
     );
 
@@ -215,8 +215,8 @@ describe('Email Management', () => {
   });
 
   test('should remove an email subscription', async () => {
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    identityModel.onesignalId = IDManager.createLocalId();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
+    identityModel.onesignalId = IDManager._createLocalId();
 
     const email = 'test@example.com';
 
@@ -227,7 +227,7 @@ describe('Email Management', () => {
 
     // Then remove it
     const removeSubscriptionSpy = vi.spyOn(
-      OneSignal.coreDirector,
+      OneSignal._coreDirector,
       'removeSubscriptionModel',
     );
     userNamespace.removeEmail(email);
@@ -241,18 +241,18 @@ describe('Email Management', () => {
 describe('SMS Management', () => {
   const getSmsSubscription = (smsNumber: string) => {
     const subscriptionModels =
-      OneSignal.coreDirector.getSmsSubscriptionModels();
+      OneSignal._coreDirector.getSmsSubscriptionModels();
     return subscriptionModels.find((model) => model.token === smsNumber);
   };
 
   test('should add an SMS subscription', async () => {
     const userNamespace = new UserNamespace(true);
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    identityModel.onesignalId = IDManager.createLocalId();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
+    identityModel.onesignalId = IDManager._createLocalId();
 
     const smsNumber = '+15551234567';
     const addSubscriptionSpy = vi.spyOn(
-      OneSignal.coreDirector,
+      OneSignal._coreDirector,
       'addSubscriptionModel',
     );
 
@@ -268,8 +268,8 @@ describe('SMS Management', () => {
     const userNamespace = new UserNamespace(true);
     const smsNumber = '+15551234567';
 
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
-    identityModel.onesignalId = IDManager.createLocalId();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
+    identityModel.onesignalId = IDManager._createLocalId();
 
     // First add the SMS
     await userNamespace.addSms(smsNumber);
@@ -278,7 +278,7 @@ describe('SMS Management', () => {
 
     // Then remove it
     const removeSubscriptionSpy = vi.spyOn(
-      OneSignal.coreDirector,
+      OneSignal._coreDirector,
       'removeSubscriptionModel',
     );
     userNamespace.removeSms(smsNumber);
@@ -373,7 +373,7 @@ describe('Language Management', () => {
   test('should get language', () => {
     const userNamespace = new UserNamespace(true);
     const language = 'es';
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     propertiesModel.language = language;
 
     expect(userNamespace.getLanguage()).toBe(language);
@@ -381,7 +381,7 @@ describe('Language Management', () => {
 
   test('should return empty string if language is not set', () => {
     const userNamespace = new UserNamespace(true);
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     propertiesModel.language = undefined;
 
     expect(userNamespace.getLanguage()).toBe('');
@@ -455,12 +455,12 @@ describe('Initialization', () => {
     // with an existing onesignalId
     updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     const user = new UserNamespace(true);
-    expect(IDManager.isLocalId(user.onesignalId)).toBe(false);
+    expect(IDManager._isLocalId(user.onesignalId)).toBe(false);
 
     // identity and properties models should have the same onesignalId
     const onesignalId = user.onesignalId;
 
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     expect(propertiesModel.onesignalId).toBe(onesignalId);
   });
 
@@ -469,12 +469,12 @@ describe('Initialization', () => {
     updateIdentityModel(IdentityConstants.ONESIGNAL_ID, undefined);
 
     const user = new UserNamespace(true);
-    expect(IDManager.isLocalId(user.onesignalId)).toBe(true);
+    expect(user.onesignalId).toBe(undefined); // since its local
+    const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
+    expect(IDManager._isLocalId(onesignalId)).toBe(true);
 
     // identity and properties models should have the same onesignalId
-    const onesignalId = user.onesignalId;
-
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     expect(propertiesModel.onesignalId).toBe(onesignalId);
   });
 });
@@ -488,12 +488,12 @@ describe('Custom Events', () => {
       test_property: 'test_value',
     };
 
-    updateIdentityModel('onesignal_id', IDManager.createLocalId());
+    updateIdentityModel('onesignal_id', IDManager._createLocalId());
     userNamespace.trackEvent(name, {});
     expect(errorSpy).toHaveBeenCalledWith('User must be logged in first.');
     errorSpy.mockClear();
 
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     identityModel.setProperty(
       'onesignal_id',
       ONESIGNAL_ID,

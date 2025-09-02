@@ -52,7 +52,7 @@ export class UpdateManager {
     }
 
     const subscriptionModel =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector.getPushSubscriptionModel();
 
     if (
       subscriptionModel?.notification_types !== NotificationType.Subscribed &&
@@ -84,7 +84,7 @@ export class UpdateManager {
   ) {
     logMethodCall('sendOutcomeDirect');
     const pushSubscriptionModel =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector.getPushSubscriptionModel();
 
     if (
       pushSubscriptionModel &&
@@ -119,7 +119,7 @@ export class UpdateManager {
   ) {
     logMethodCall('sendOutcomeInfluenced');
     const pushSubscriptionModel =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector.getPushSubscriptionModel();
 
     if (
       pushSubscriptionModel &&
@@ -153,7 +153,7 @@ export class UpdateManager {
   ) {
     logMethodCall('sendOutcomeUnattributed');
     const pushSubscriptionModel =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector.getPushSubscriptionModel();
 
     if (
       pushSubscriptionModel &&

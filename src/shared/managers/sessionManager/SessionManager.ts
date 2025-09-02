@@ -90,9 +90,9 @@ export class SessionManager implements ISessionManager {
     onesignalId: string;
     subscriptionId: string;
   }> {
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     const pushSubscriptionModel =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector.getPushSubscriptionModel();
 
     if (!identityModel || !identityModel.onesignalId) {
       throw new Error('No identity');
@@ -353,7 +353,7 @@ export class SessionManager implements ISessionManager {
       return;
     }
 
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     const onesignalId = identityModel.onesignalId;
 
     if (!onesignalId) {
@@ -364,7 +364,7 @@ export class SessionManager implements ISessionManager {
     }
 
     const pushSubscription =
-      await OneSignal.coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector.getPushSubscriptionModel();
     if (
       pushSubscription?.notification_types !== NotificationType.Subscribed &&
       OneSignal.config?.enableOnSession !== true

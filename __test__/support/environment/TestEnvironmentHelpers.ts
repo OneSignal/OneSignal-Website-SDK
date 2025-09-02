@@ -26,7 +26,7 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal.initialized = true;
   global.OneSignal.emitter = new Emitter();
   const core = new CoreModule();
-  global.OneSignal.coreDirector = new CoreModuleDirector(core);
+  global.OneSignal._coreDirector = new CoreModuleDirector(core);
 
   // Clear the User singleton before creating new instance
   User.singletonInstance = undefined;
@@ -92,7 +92,7 @@ export const setupSubModelStore = async ({
     pushModel.web_p256 = web_p256;
   }
   await setPushToken(pushModel.token);
-  OneSignal.coreDirector.subscriptionModelStore.replaceAll(
+  OneSignal._coreDirector.subscriptionModelStore.replaceAll(
     [pushModel],
     ModelChangeTags.NO_PROPAGATE,
   );

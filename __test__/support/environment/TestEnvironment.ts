@@ -32,7 +32,7 @@ export class TestEnvironment {
   ) {
     mockJsonp();
     const oneSignal = initOSGlobals(config);
-    OneSignal.coreDirector.operationRepo.queue = [];
+    OneSignal._coreDirector.operationRepo.queue = [];
 
     if (config.initOneSignalId) {
       updateIdentityModel('onesignal_id', ONESIGNAL_ID);

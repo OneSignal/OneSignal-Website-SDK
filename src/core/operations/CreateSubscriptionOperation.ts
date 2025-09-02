@@ -20,7 +20,7 @@ export class CreateSubscriptionOperation extends BaseFullSubscriptionOperation {
   }
 
   override get canStartExecute(): boolean {
-    return !IDManager.isLocalId(this.onesignalId);
+    return !IDManager._isLocalId(this.onesignalId);
   }
 
   override get applyToRecordId(): string {

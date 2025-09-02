@@ -56,7 +56,7 @@ export default class OneSignal {
   private static async _initializeCoreModuleAndOSNamespaces() {
     const core = new CoreModule();
     await core.init();
-    OneSignal.coreDirector = new CoreModuleDirector(core);
+    OneSignal._coreDirector = new CoreModuleDirector(core);
     const subscription = await getSubscription();
     const permission =
       await OneSignal.context.permissionManager.getPermissionStatus();
@@ -285,7 +285,7 @@ export default class OneSignal {
   static context: Context;
 
   /* NEW USER MODEL CHANGES */
-  static coreDirector: CoreModuleDirector;
+  static _coreDirector: CoreModuleDirector;
 
   static Notifications = new NotificationsNamespace();
   static Slidedown = new SlidedownNamespace();

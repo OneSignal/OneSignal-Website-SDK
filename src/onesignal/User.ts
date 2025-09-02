@@ -30,11 +30,11 @@ export default class User {
   static createOrGetInstance(): User {
     if (!User.singletonInstance) {
       User.singletonInstance = new User();
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
-      const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+      const identityModel = OneSignal._coreDirector._getIdentityModel();
+      const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
 
       const onesignalId =
-        identityModel.onesignalId ?? IDManager.createLocalId();
+        identityModel.onesignalId ?? IDManager._createLocalId();
       if (!identityModel.onesignalId) {
         identityModel.setProperty(
           IdentityConstants.ONESIGNAL_ID,
@@ -55,8 +55,9 @@ export default class User {
     return User.singletonInstance;
   }
 
-  get onesignalId(): string {
-    return OneSignal.coreDirector.getIdentityModel().onesignalId;
+  get onesignalId(): string | undefined {
+    const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
+    return IDManager._isLocalId(onesignalId) ? undefined : onesignalId;
   }
 
   private validateStringLabel(label: string, labelName: string): void {
@@ -93,7 +94,7 @@ export default class User {
   private updateIdentityModel(aliases: {
     [key: string]: string | undefined;
   }): void {
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     Object.keys(aliases).forEach((label) => {
       identityModel.setProperty(label, aliases[label]);
     });
@@ -176,11 +177,11 @@ export default class User {
     this.validateStringLabel(email, 'email');
 
     const emailSubscriptions =
-      OneSignal.coreDirector.getEmailSubscriptionModels();
+      OneSignal._coreDirector.getEmailSubscriptionModels();
 
     emailSubscriptions.forEach((model) => {
       if (model.token === email) {
-        OneSignal.coreDirector.removeSubscriptionModel(model.modelId);
+        OneSignal._coreDirector.removeSubscriptionModel(model.modelId);
       }
     });
   }
@@ -191,10 +192,10 @@ export default class User {
 
     this.validateStringLabel(smsNumber, 'smsNumber');
 
-    const smsSubscriptions = OneSignal.coreDirector.getSmsSubscriptionModels();
+    const smsSubscriptions = OneSignal._coreDirector.getSmsSubscriptionModels();
     smsSubscriptions.forEach((model) => {
       if (model.token === smsNumber) {
-        OneSignal.coreDirector.removeSubscriptionModel(model.modelId);
+        OneSignal._coreDirector.removeSubscriptionModel(model.modelId);
       }
     });
   }
@@ -212,11 +213,7 @@ export default class User {
   public addTags(tags: { [key: string]: string }): void {
     if (isConsentRequiredButNotGiven()) return;
 
-    if (IDManager.isLocalId(this.onesignalId))
-      Log.warn('Call after login to sync tags');
-    this.validateObject(tags, 'tags');
-
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     const newTags = { ...propertiesModel.tags, ...tags };
     propertiesModel.tags = newTags;
   }
@@ -236,7 +233,7 @@ export default class User {
 
     this.validateArray(tagKeys, 'tagKeys');
 
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     const newTags = { ...propertiesModel.tags };
 
     // need to set the tag to an empty string to remove it
@@ -248,7 +245,7 @@ export default class User {
 
   public getTags(): { [key: string]: string } {
     logMethodCall('getTags');
-    return OneSignal.coreDirector.getPropertiesModel().tags;
+    return OneSignal._coreDirector._getPropertiesModel().tags;
   }
 
   public setLanguage(language: string): void {
@@ -257,21 +254,21 @@ export default class User {
 
     this.validateStringLabel(language, 'language');
 
-    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     propertiesModel.language = language;
   }
 
   public getLanguage(): string | undefined {
     logMethodCall('getLanguage');
-    return OneSignal.coreDirector.getPropertiesModel().language;
+    return OneSignal._coreDirector._getPropertiesModel().language;
   }
 
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {
     if (isConsentRequiredButNotGiven()) return;
 
     // login operation / non-local onesignalId is needed to send custom events
-    const onesignalId = this.onesignalId;
-    if (IDManager.isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
+    const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
+    if (IDManager._isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
       Log.error('User must be logged in first.');
       return;
     }
@@ -282,7 +279,7 @@ export default class User {
     }
     logMethodCall('trackEvent', { name, properties });
 
-    OneSignal.coreDirector.customEventController.sendCustomEvent({
+    OneSignal._coreDirector.customEventController.sendCustomEvent({
       name,
       properties,
     });
@@ -290,7 +287,7 @@ export default class User {
 }
 
 function hasLoginOp(onesignalId: string) {
-  return OneSignal.coreDirector.operationRepo.queue.find(
+  return OneSignal._coreDirector.operationRepo.queue.find(
     (op) =>
       op.operation instanceof LoginUserOperation &&
       op.operation.onesignalId === onesignalId,
@@ -304,27 +301,27 @@ function addSubscriptionToModels({
   type: SubscriptionTypeValue;
   token: string;
 }): void {
-  const hasSubscription = OneSignal.coreDirector.subscriptionModelStore
+  const hasSubscription = OneSignal._coreDirector.subscriptionModelStore
     .list()
     .find((model) => model.token === token && model.type === type);
   if (hasSubscription) return;
 
-  const identityModel = OneSignal.coreDirector.getIdentityModel();
+  const identityModel = OneSignal._coreDirector._getIdentityModel();
   const onesignalId = identityModel.onesignalId;
 
   // Check if we need to enqueue a login operation for local IDs
-  if (IDManager.isLocalId(onesignalId)) {
+  if (IDManager._isLocalId(onesignalId)) {
     const appId = MainHelper.getAppId();
 
     if (!hasLoginOp(onesignalId)) {
-      OneSignal.coreDirector.operationRepo.enqueue(
+      OneSignal._coreDirector.operationRepo.enqueue(
         new LoginUserOperation(appId, onesignalId, identityModel.externalId),
       );
     }
   }
 
   const subscription = {
-    id: IDManager.createLocalId(),
+    id: IDManager._createLocalId(),
     enabled: true,
     notification_types: NotificationType.Subscribed,
     onesignalId,
@@ -334,7 +331,7 @@ function addSubscriptionToModels({
 
   const newSubscription = new SubscriptionModel();
   newSubscription.mergeData(subscription);
-  OneSignal.coreDirector.addSubscriptionModel(newSubscription);
+  OneSignal._coreDirector.addSubscriptionModel(newSubscription);
 }
 
 /**

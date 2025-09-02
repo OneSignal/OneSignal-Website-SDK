@@ -85,7 +85,7 @@ export abstract class Operation<
    * Whether the operation can currently execute given its current state.
    */
   get canStartExecute(): boolean {
-    return !IDManager.isLocalId(this.onesignalId);
+    return !IDManager._isLocalId(this.onesignalId);
   }
 
   /**

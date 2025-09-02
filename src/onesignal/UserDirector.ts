@@ -8,11 +8,11 @@ import MainHelper from '../shared/helpers/MainHelper';
 
 export default class UserDirector {
   static async createUserOnServer(): Promise<void> {
-    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     const appId = MainHelper.getAppId();
 
     const hasAnySubscription =
-      OneSignal.coreDirector.subscriptionModelStore.list().length > 0;
+      OneSignal._coreDirector.subscriptionModelStore.list().length > 0;
 
     const hasExternalId = !!identityModel.externalId;
 
@@ -23,18 +23,18 @@ export default class UserDirector {
       return;
     }
 
-    const pushOp = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushOp = await OneSignal._coreDirector.getPushSubscriptionModel();
     if (pushOp) {
       const subData = pushOp.toJSON();
 
-      OneSignal.coreDirector.operationRepo.enqueue(
+      OneSignal._coreDirector.operationRepo.enqueue(
         new LoginUserOperation(
           appId,
           identityModel.onesignalId,
           identityModel.externalId,
         ),
       );
-      await OneSignal.coreDirector.operationRepo.enqueueAndWait(
+      await OneSignal._coreDirector.operationRepo.enqueueAndWait(
         new CreateSubscriptionOperation({
           ...subData,
           appId,
@@ -43,7 +43,7 @@ export default class UserDirector {
         }),
       );
     } else {
-      OneSignal.coreDirector.operationRepo.enqueue(
+      OneSignal._coreDirector.operationRepo.enqueue(
         new LoginUserOperation(
           appId,
           identityModel.onesignalId,
@@ -60,11 +60,11 @@ export default class UserDirector {
     const newIdentityModel = new IdentityModel();
     const newPropertiesModel = new PropertiesModel();
 
-    const sdkId = IDManager.createLocalId();
+    const sdkId = IDManager._createLocalId();
     newIdentityModel.onesignalId = sdkId;
     newPropertiesModel.onesignalId = sdkId;
 
-    OneSignal.coreDirector.identityModelStore.replace(newIdentityModel);
-    OneSignal.coreDirector.propertiesModelStore.replace(newPropertiesModel);
+    OneSignal._coreDirector.identityModelStore.replace(newIdentityModel);
+    OneSignal._coreDirector.propertiesModelStore.replace(newPropertiesModel);
   }
 }

@@ -18,7 +18,7 @@ beforeEach(async () => {
 afterEach(() => {
   server.resetHandlers();
   if (typeof OneSignal !== 'undefined') {
-    OneSignal.coreDirector?.operationRepo._clear();
+    OneSignal._coreDirector?.operationRepo._clear();
     OneSignal.emitter?.removeAllListeners();
   }
 });
