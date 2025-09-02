@@ -1,11 +1,10 @@
 import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID } from '__test__/constants';
+import type * as idb from 'idb';
 import { deleteDB, type IDBPDatabase } from 'idb';
 import { SubscriptionType } from '../subscriptions/constants';
 import { closeDb, getDb } from './client';
 import { DATABASE_NAME } from './constants';
 import type { IndexedDBSchema } from './types';
-
-vi.useRealTimers;
 
 beforeEach(async () => {
   await closeDb();
@@ -315,5 +314,45 @@ describe('migrations', () => {
         },
       ]);
     });
+  });
+});
+
+test('should reopen db when terminated', async () => {
+  // mocking to keep track of the terminated callback
+  vi.resetModules();
+  let terminatedCallback = vi.hoisted(() => vi.fn(() => false));
+
+  const openFn = vi.hoisted(() => vi.fn());
+  const deleteDatabaseFn = vi.hoisted(() => vi.fn());
+
+  vi.mock('idb', async (importOriginal) => {
+    const actual = (await importOriginal()) as typeof idb;
+    return {
+      ...actual,
+      openDB: openFn.mockImplementation((name, version, callbacks) => {
+        terminatedCallback = callbacks!.terminated!;
+        return actual.openDB(name, version, callbacks);
+      }),
+      deleteDB: deleteDatabaseFn.mockImplementation((name) => {
+        terminatedCallback();
+        return actual.deleteDB(name);
+      }),
+    };
+  });
+
+  const { db } = await vi.importActual<typeof import('./client')>('./client');
+  expect(openFn).toHaveBeenCalledTimes(1); // initial open
+
+  await db.put('Options', { key: 'userConsent', value: true });
+
+  // real world db.close() will trigger the terminated callback
+  deleteDB(DATABASE_NAME);
+
+  // terminate callback should reopen the db
+  expect(openFn).toHaveBeenCalledTimes(2);
+
+  expect(await db.get('Options', 'userConsent')).toEqual({
+    key: 'userConsent',
+    value: true,
   });
 });

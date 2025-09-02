@@ -8,7 +8,7 @@ import {
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
-import { db, getOptionsValue } from 'src/shared/database/client';
+import { clearStore, db, getOptionsValue } from 'src/shared/database/client';
 import { setAppState as setDBAppState } from 'src/shared/database/config';
 import * as PermissionUtils from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
@@ -31,8 +31,8 @@ describe('Notification Types are set correctly on subscription change', () => {
   });
 
   afterEach(async () => {
-    await db.clear('subscriptions');
-    await db.clear('Options');
+    await clearStore('subscriptions');
+    await clearStore('Options');
   });
 
   const setDbPermission = async (permission: NotificationPermission) => {

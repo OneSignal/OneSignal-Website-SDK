@@ -10,6 +10,7 @@ import {
   migrateOutcomesNotificationReceivedTableForV5,
 } from './upgrade';
 
+let terminated = false;
 const open = async (version = VERSION) => {
   return openDB<IndexedDBSchema>(DATABASE_NAME, version, {
     upgrade(_db, oldVersion, newVersion, transaction) {
@@ -67,13 +68,20 @@ const open = async (version = VERSION) => {
       }
 
       // TODO: next version delete NotificationOpened table
-
+      terminated = false;
       if (!IS_SERVICE_WORKER && typeof OneSignal !== 'undefined') {
         OneSignal._isNewVisitor = true;
       }
     },
     blocked() {
       Log.debug('IndexedDB: Blocked event');
+    },
+    terminated() {
+      // reopen if db was terminated
+      if (!terminated) {
+        terminated = true;
+        getDb();
+      }
     },
   });
 };
@@ -109,12 +117,10 @@ export const db = {
   ) {
     return (await dbPromise).delete(storeName, key);
   },
-  async clear<K extends IDBStoreName>(storeName: K) {
-    return (await dbPromise).clear(storeName);
-  },
-  async close() {
-    return (await dbPromise).close();
-  },
+};
+
+export const clearStore = async <K extends IDBStoreName>(storeName: K) => {
+  return (await dbPromise).clear(storeName);
 };
 
 export const getObjectStoreNames = async () => {
@@ -146,7 +152,7 @@ export const cleanupCurrentSession = async () => {
 export const clearAll = async () => {
   const objectStoreNames = await getObjectStoreNames();
   for (const storeName of objectStoreNames) {
-    await db.clear(storeName);
+    await clearStore(storeName);
   }
 };
 
