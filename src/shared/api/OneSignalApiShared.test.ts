@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import Log from '../libraries/Log';
 import OneSignalApiShared from './OneSignalApiShared';
 
-const LogErrorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+const LogErrorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
 
 describe('OneSignalApiShared', () => {
   test('can send outcome  ', async () => {

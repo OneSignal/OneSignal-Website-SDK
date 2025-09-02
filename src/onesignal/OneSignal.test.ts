@@ -1189,9 +1189,9 @@ Object.defineProperty(global.navigator, 'serviceWorker', {
   writable: true,
 });
 
-vi.spyOn(Log, 'error').mockImplementation(() => '');
-const debugSpy = vi.spyOn(Log, 'debug');
-const warnSpy = vi.spyOn(Log, 'warn');
+vi.spyOn(Log, '_error').mockImplementation(() => '');
+const debugSpy = vi.spyOn(Log, '_debug');
+const warnSpy = vi.spyOn(Log, '_warn');
 
 const getPropertiesItem = async () => (await db.getAll('properties'))[0];
 

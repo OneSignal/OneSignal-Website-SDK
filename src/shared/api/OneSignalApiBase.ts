@@ -64,7 +64,7 @@ export class OneSignalApiBase {
     data: any,
     headers: APIHeaders | undefined,
   ): Promise<OneSignalApiBaseResponse<T>> {
-    if (!this.requestHasAppId(action, data)) {
+    if (!this._requestHasAppId(action, data)) {
       return Promise.reject(AppIDMissingError);
     }
 
@@ -115,7 +115,7 @@ export class OneSignalApiBase {
     } catch (e) {
       if (e instanceof Error && e.name === 'TypeError') {
         await delay(RETRY_BACKOFF[retry]);
-        Log.error(
+        Log._error(
           `OneSignal: Network timed out while calling ${url}. Retrying...`,
         );
         return OneSignalApiBase.executeFetch(url, contents, retry - 1);
@@ -126,7 +126,7 @@ export class OneSignalApiBase {
 
   // OneSignal's backend requires that all request have a
   // have a app_id in the UUID format in the request
-  private static requestHasAppId(
+  private static _requestHasAppId(
     url: string,
     body?: Record<string, unknown>,
   ): boolean {

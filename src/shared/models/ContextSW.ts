@@ -5,13 +5,13 @@ import { WorkerMessengerSW } from '../libraries/workerMessenger/sw';
 import { SubscriptionManagerSW } from '../managers/subscription/sw';
 
 export default class ContextSW implements ContextSWInterface {
-  public appConfig: AppConfig;
-  public subscriptionManager: SubscriptionManagerSW;
-  public workerMessenger: WorkerMessengerSW;
+  public _appConfig: AppConfig;
+  public _subscriptionManager: SubscriptionManagerSW;
+  public _workerMessenger: WorkerMessengerSW;
 
   constructor(appConfig: AppConfig) {
-    this.appConfig = appConfig;
-    this.subscriptionManager = getSubscriptionManagerSW(this);
-    this.workerMessenger = new WorkerMessengerSW(this);
+    this._appConfig = appConfig;
+    this._subscriptionManager = getSubscriptionManagerSW(this);
+    this._workerMessenger = new WorkerMessengerSW(this);
   }
 }

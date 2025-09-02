@@ -31,7 +31,7 @@ export default class OneSignalApi {
         );
       });
     } else {
-      return await OneSignalApiSW.downloadServerAppConfig(appId);
+      return await OneSignalApiSW._downloadServerAppConfig(appId);
     }
   }
 }

@@ -12,8 +12,6 @@ import type {
   BellSize,
   BellText,
 } from 'src/shared/prompts/types';
-import { Browser } from 'src/shared/useragent/constants';
-import { getBrowserName } from 'src/shared/useragent/detect';
 import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
@@ -291,7 +289,7 @@ export default class Bell {
           this.hovering = false;
         })
         .catch((err) => {
-          Log.error(err);
+          Log._error(err);
         });
     });
 
@@ -348,7 +346,7 @@ export default class Bell {
         }
 
         const permission =
-          await OneSignal.context.permissionManager.getPermissionStatus();
+          await OneSignal.context._permissionManager.getPermissionStatus();
         let bellState: BellState;
         if (isSubscribed.current.optedIn) {
           bellState = Bell.STATES.SUBSCRIBED;
@@ -427,9 +425,9 @@ export default class Bell {
     if (!this.options.enable) return;
 
     const sdkStylesLoadResult =
-      await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
+      await OneSignal.context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug('Not showing notify button because styles failed to load.');
+      Log._debug('Not showing notify button because styles failed to load.');
       return;
     }
 
@@ -494,7 +492,7 @@ export default class Bell {
     addDomElement(this.button.selector, 'beforeend', logoSvg);
 
     const isPushEnabled =
-      await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
     DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
@@ -508,9 +506,9 @@ export default class Bell {
 
     this.applyOffsetIfSpecified();
     this.setCustomColorsIfSpecified();
-    this.patchSafariSvgFilterBug();
+    this.addBadgeShadow();
 
-    Log.info('Showing the notify button.');
+    Log._info('Showing the notify button.');
 
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
       .then(() => {
@@ -541,26 +539,22 @@ export default class Bell {
       .then(() => (this.initialized = true));
   }
 
-  patchSafariSvgFilterBug() {
-    if (getBrowserName() !== Browser.Safari) {
-      const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
-      const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
-      const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
-      this.graphic.setAttribute(
-        'style',
-        `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`,
-      );
-      this.badge.element.setAttribute(
-        'style',
-        `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`,
-      );
-      this.dialog.element.setAttribute(
-        'style',
-        `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
-      );
-    } else {
-      this.badge.element.setAttribute('style', `display: none;`);
-    }
+  addBadgeShadow() {
+    const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
+    const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
+    const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
+    this.graphic.setAttribute(
+      'style',
+      `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`,
+    );
+    this.badge.element.setAttribute(
+      'style',
+      `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`,
+    );
+    this.dialog.element.setAttribute(
+      'style',
+      `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
+    );
   }
 
   applyOffsetIfSpecified() {
@@ -569,7 +563,7 @@ export default class Bell {
       const element = this.launcher.element as HTMLElement;
 
       if (!element) {
-        Log.error('Could not find bell dom element');
+        Log._error('Could not find bell dom element');
         return;
       }
       // Reset styles first
@@ -683,8 +677,8 @@ export default class Bell {
    */
   updateState() {
     Promise.all([
-      OneSignal.context.subscriptionManager.isPushNotificationsEnabled(),
-      OneSignal.context.permissionManager.getPermissionStatus(),
+      OneSignal.context._subscriptionManager.isPushNotificationsEnabled(),
+      OneSignal.context._permissionManager.getPermissionStatus(),
     ])
       .then(([isEnabled, permission]) => {
         this.setState(
@@ -695,7 +689,7 @@ export default class Bell {
         }
       })
       .catch((e) => {
-        Log.error(e);
+        Log._error(e);
       });
   }
 

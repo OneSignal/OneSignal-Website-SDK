@@ -3,9 +3,6 @@ import type {
   NotificationClickEvent,
 } from 'src/shared/notifications/types';
 import { OSWebhookSender } from './../OSWebhookSender';
-import { OSWebhookPayloadNotificationClick } from './payloads/OSWebhookPayloadNotificationClick';
-import { OSWebhookPayloadNotificationDismiss } from './payloads/OSWebhookPayloadNotificationDismiss';
-import { OSWebhookPayloadNotificationWillDisplay } from './payloads/OSWebhookPayloadNotificationWillDisplay';
 
 export class OSWebhookNotificationEventSender {
   private readonly sender: OSWebhookSender;
@@ -18,26 +15,46 @@ export class OSWebhookNotificationEventSender {
     event: NotificationClickEvent,
     subscriptionId: string | undefined,
   ): Promise<void> {
-    return await this.sender.send(
-      new OSWebhookPayloadNotificationClick(event, subscriptionId),
-    );
+    const notification = event.notification;
+    return await this.sender.send({
+      event: 'notification.clicked',
+      notificationId: notification.notificationId,
+      heading: notification.title,
+      content: notification.body,
+      additionalData: notification.additionalData,
+      actionId: event.result.actionId,
+      url: event.result.url,
+      subscriptionId,
+    });
   }
 
   async willDisplay(
     notification: IOSNotification,
     subscriptionId: string | undefined,
   ): Promise<void> {
-    return await this.sender.send(
-      new OSWebhookPayloadNotificationWillDisplay(notification, subscriptionId),
-    );
+    return await this.sender.send({
+      event: 'notification.willDisplay',
+      notificationId: notification.notificationId,
+      heading: notification.title,
+      content: notification.body,
+      additionalData: notification.additionalData,
+      url: notification.launchURL,
+      subscriptionId,
+    });
   }
 
   async dismiss(
     notification: IOSNotification,
     subscriptionId: string | undefined,
   ): Promise<void> {
-    return await this.sender.send(
-      new OSWebhookPayloadNotificationDismiss(notification, subscriptionId),
-    );
+    return await this.sender.send({
+      event: 'notification.dismissed',
+      notificationId: notification.notificationId,
+      heading: notification.title,
+      content: notification.body,
+      additionalData: notification.additionalData,
+      url: notification.launchURL,
+      subscriptionId,
+    });
   }
 }

@@ -4,7 +4,6 @@ import type {
   NotificationClickForOpenHandlingSchema,
   NotificationReceivedForOutcomesSchema,
 } from '../helpers/serializer';
-import type { AppState } from '../models/AppState';
 import type { SentUniqueOutcome } from '../models/Outcomes';
 import type { Session } from '../session/types';
 
@@ -185,6 +184,24 @@ export interface IndexedDBSchema extends DBSchema {
       [key: string]: unknown;
     };
   };
+}
+
+export interface AppState {
+  defaultNotificationUrl: string | null | undefined;
+  defaultNotificationTitle: string | null | undefined;
+
+  /**
+   * Whether the user is currently completely subscribed, including not opted out. Database cached version of
+   * isPushNotificationsEnabled().
+   */
+  lastKnownPushEnabled: boolean | null | undefined;
+
+  lastKnownPushToken: string | null | undefined;
+
+  lastKnownPushId: string | null | undefined;
+
+  // default true
+  lastKnownOptedIn: boolean | null;
 }
 
 export type IDBStoreName = StoreNames<IndexedDBSchema>;

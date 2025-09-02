@@ -72,7 +72,7 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
   const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
     rawPushSubscription,
-  ).serialize();
+  )._serialize();
   for (const key in serializedSubscriptionRecord) {
     const modelKey = key as keyof typeof serializedSubscriptionRecord;
     pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
@@ -97,7 +97,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   ): Promise<void> {
     const pushModel = await OneSignal._coreDirector.getPushSubscriptionModel();
     if (!pushModel) {
-      Log.info('No Push Subscription yet to update notification_types.');
+      Log._info('No Push Subscription yet to update notification_types.');
       return;
     }
 
@@ -112,7 +112,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const permission =
-      await OneSignal.context.permissionManager.getPermissionStatus();
+      await OneSignal.context._permissionManager.getPermissionStatus();
     if (permission === 'granted') {
       return NotificationType.Subscribed;
     }
@@ -129,7 +129,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   async isOptedIn(): Promise<boolean> {
     const subscriptionState = await this.getSubscriptionState();
     const permission =
-      await OneSignal.context.permissionManager.getPermissionStatus();
+      await OneSignal.context._permissionManager.getPermissionStatus();
     return permission === 'granted' && !subscriptionState.optedOut;
   }
 
@@ -176,7 +176,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
     if (useSafariLegacyPush()) {
       const subscriptionState = window.safari?.pushNotification?.permission(
-        this.config.safariWebId,
+        this._config.safariWebId,
       );
       const isSubscribedToSafari = !!(
         isValidPushSubscription &&
@@ -192,10 +192,10 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const workerRegistration =
-      await this.context.serviceWorkerManager.getOneSignalRegistration();
+      await this._context._serviceWorkerManager.getOneSignalRegistration();
     const notificationPermission =
-      await this.context.permissionManager.getNotificationPermission(
-        this.context.appConfig.safariWebId,
+      await this._context._permissionManager.getNotificationPermission(
+        this._context._appConfig.safariWebId,
       );
     if (!workerRegistration) {
       /* You can't be subscribed without a service worker registration */
@@ -251,7 +251,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         here.
       */
     if (
-      (await OneSignal.context.permissionManager.getPermissionStatus()) ===
+      (await OneSignal.context._permissionManager.getPermissionStatus()) ===
       'denied'
     )
       throw PermissionBlockedError;
@@ -260,12 +260,12 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       rawPushSubscription = await this.subscribeSafari();
       await updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
       /* Now that permissions have been granted, install the service worker */
-      Log.info('Installing SW on Safari');
+      Log._info('Installing SW on Safari');
       try {
-        await this.context.serviceWorkerManager.installWorker();
-        Log.info('SW on Safari successfully installed');
+        await this._context._serviceWorkerManager.installWorker();
+        Log._info('SW on Safari successfully installed');
       } catch (e) {
-        Log.error('SW on Safari failed to install.');
+        Log._error('SW on Safari failed to install.');
       }
     } else {
       rawPushSubscription =
@@ -278,16 +278,16 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
   private async subscribeSafari(): Promise<RawPushSubscription> {
     const pushSubscriptionDetails = new RawPushSubscription();
-    if (!this.config.safariWebId) {
+    if (!this._config.safariWebId) {
       throw MissingSafariWebIdError;
     }
 
     const { deviceToken: existingDeviceToken } =
-      window.safari?.pushNotification?.permission(this.config.safariWebId) ||
+      window.safari?.pushNotification?.permission(this._config.safariWebId) ||
       {};
 
     if (existingDeviceToken) {
-      pushSubscriptionDetails.setFromSafariSubscription(
+      pushSubscriptionDetails._setFromSafariSubscription(
         existingDeviceToken.toLowerCase(),
       );
       return pushSubscriptionDetails;
@@ -311,7 +311,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     const deviceToken = await this.subscribeSafariPromptPermission();
     triggerNotificationPermissionChanged();
     if (deviceToken) {
-      pushSubscriptionDetails.setFromSafariSubscription(deviceToken);
+      pushSubscriptionDetails._setFromSafariSubscription(deviceToken);
     } else {
       this.safariPermissionPromptFailed = true;
       throw new Error('Safari url/icon/certificate invalid or in private mode');
@@ -324,8 +324,8 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       return new Promise<string | null>((resolve) => {
         window.safari?.pushNotification?.requestPermission(
           url,
-          this.config.safariWebId,
-          { app_id: this.config.appId },
+          this._config.safariWebId,
+          { app_id: this._config.appId },
           (response) => {
             if (response && response.deviceToken) {
               resolve(response.deviceToken.toLowerCase());
@@ -341,7 +341,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       return requestPermission(
         `${getOneSignalApiUrl({
           legacy: true,
-        }).toString()}safari/apps/${this.config.appId}`,
+        }).toString()}safari/apps/${this._config.appId}`,
       );
     } else {
       // If last attempt failed, retry with the legacy URL
@@ -384,13 +384,13 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
         case 'default':
-          Log.debug(
+          Log._debug(
             'Exiting subscription and not registering worker because the permission was dismissed.',
           );
           OneSignal._sessionInitAlreadyRunning = false;
           throw new Error('Permission dismissed');
         case 'denied':
-          Log.debug(
+          Log._debug(
             'Exiting subscription and not registering worker because the permission was blocked.',
           );
           OneSignal._sessionInitAlreadyRunning = false;
@@ -402,7 +402,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     let workerRegistration: ServiceWorkerRegistration | undefined | null;
     try {
       workerRegistration =
-        await this.context.serviceWorkerManager.installWorker();
+        await this._context._serviceWorkerManager.installWorker();
     } catch (err) {
       if (err instanceof SWRegistrationError) {
         // TODO: This doesn't register the subscription any more, most likely broke
@@ -410,11 +410,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         // subscription was created so the customer knows this failed by seeing
         // subscriptions in this state on the OneSignal dashboard.
         if (err.status === 403) {
-          await this.context.subscriptionManager.registerFailedSubscription(
+          await this._context._subscriptionManager.registerFailedSubscription(
             NotificationType.ServiceWorkerStatus403,
           );
         } else if (err.status === 404) {
-          await this.context.subscriptionManager.registerFailedSubscription(
+          await this._context._subscriptionManager.registerFailedSubscription(
             NotificationType.ServiceWorkerStatus404,
           );
         }
@@ -425,11 +425,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     if (!workerRegistration) {
       throw new Error('OneSignal service worker not found!');
     }
-    Log.debug(
+    Log._debug(
       '[Subscription Manager] Service worker is ready to continue subscribing.',
     );
 
-    return await this.subscribeWithVapidKey(
+    return await this._subscribeWithVapidKey(
       workerRegistration.pushManager,
       subscriptionStrategy,
     );
@@ -444,7 +444,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     subscriptionState: SubscriptionStateServiceWorkerNotIntalled,
   ) {
     if (isFirstPageView()) {
-      this.context.subscriptionManager.registerSubscription(
+      this._context._subscriptionManager._registerSubscription(
         new RawPushSubscription(),
         subscriptionState,
       );
@@ -476,14 +476,14 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
   public async isSubscriptionExpiring(): Promise<boolean> {
     const serviceWorkerState =
-      await this.context.serviceWorkerManager.getActiveState();
+      await this._context._serviceWorkerManager.getActiveState();
     if (!(serviceWorkerState === ServiceWorkerActiveState.OneSignalWorker)) {
       /* If the service worker isn't activated, there's no subscription to look for */
       return false;
     }
 
     const serviceWorkerRegistration =
-      await this.context.serviceWorkerManager.getOneSignalRegistration();
+      await this._context._serviceWorkerManager.getOneSignalRegistration();
     if (!serviceWorkerRegistration) return false;
 
     // It's possible to get here in Safari 11.1+ version

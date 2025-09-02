@@ -21,7 +21,7 @@ async function processOneSignalDeferredArray(
       await OneSignal.push(item);
     } catch (e) {
       // Catch and log error here so other elements still run
-      Log.error(e);
+      Log._error(e);
     }
   }
 }
@@ -29,11 +29,11 @@ async function processOneSignalDeferredArray(
 function onesignalSdkInit() {
   incrementSdkLoadCount();
   if (getSdkLoadCount() > 1) {
-    Log.warn(
+    Log._warn(
       `OneSignal: The web push SDK is included more than once. For optimal performance, please include our ` +
         `SDK only once on your page.`,
     );
-    Log.debug(
+    Log._debug(
       `OneSignal: Exiting from SDK initialization to prevent double-initialization errors. ` +
         `Occurred ${getSdkLoadCount()} times.`,
     );

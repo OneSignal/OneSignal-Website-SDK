@@ -52,7 +52,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   async execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log.debug(
+    Log._debug(
       `RefreshUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
     );
 

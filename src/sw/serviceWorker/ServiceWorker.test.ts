@@ -42,9 +42,9 @@ const version = __VERSION__;
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
-vi.spyOn(Log, 'debug').mockImplementation(() => {});
+vi.spyOn(Log, '_debug').mockImplementation(() => {});
 
-const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, 'subscribe');
+const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, '_subscribe');
 
 let { isServiceWorker } = vi.hoisted(() => {
   return { isServiceWorker: false };
@@ -109,7 +109,7 @@ describe('ServiceWorker', () => {
       // @ts-expect-error - search is readonly but we need to set it for testing
       self.location.search = '?appId=some-app-id';
 
-      const appId = await OneSignalServiceWorker.getAppId();
+      const appId = await OneSignalServiceWorker._getAppId();
       expect(appId).toBe('some-app-id');
     });
   });
@@ -179,7 +179,7 @@ describe('ServiceWorker', () => {
         title: payload.title,
       };
       expect(
-        OneSignalServiceWorker.webhookNotificationEventSender.willDisplay,
+        OneSignalServiceWorker._webhookNotificationEventSender.willDisplay,
       ).toHaveBeenCalledWith(
         expect.objectContaining(notificationInfo),
         pushSubscriptionId,
@@ -228,7 +228,7 @@ describe('ServiceWorker', () => {
       await dispatchEvent(event);
 
       expect(
-        OneSignalServiceWorker.webhookNotificationEventSender.dismiss,
+        OneSignalServiceWorker._webhookNotificationEventSender.dismiss,
       ).toHaveBeenCalledWith(
         {
           notificationId,
@@ -280,7 +280,7 @@ describe('ServiceWorker', () => {
 
       // should emit clicked event
       expect(
-        OneSignalServiceWorker.webhookNotificationEventSender.click,
+        OneSignalServiceWorker._webhookNotificationEventSender.click,
       ).toHaveBeenCalledWith(
         {
           notification: {
@@ -304,7 +304,7 @@ describe('ServiceWorker', () => {
   describe('pushsubscriptionchange', () => {
     const registerSubscriptionCall = vi.spyOn(
       SubscriptionManagerSW.prototype,
-      'registerSubscription',
+      '_registerSubscription',
     );
 
     const someDeviceId = '123';
@@ -520,7 +520,7 @@ describe('ServiceWorker', () => {
         });
         await dispatchEvent(event);
 
-        expect(Log.debug).toHaveBeenCalledWith(
+        expect(Log._debug).toHaveBeenCalledWith(
           'No active session found. Cannot deactivate.',
         );
       });
@@ -677,7 +677,7 @@ describe('ServiceWorker', () => {
 });
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const logDebugSpy = vi.spyOn(Log, 'debug');
+const logDebugSpy = vi.spyOn(Log, '_debug');
 // -- one signal api base mock
 
 // @ts-expect-error - for mocking

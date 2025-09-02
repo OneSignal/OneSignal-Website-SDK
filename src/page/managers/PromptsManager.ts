@@ -141,7 +141,7 @@ export class PromptsManager {
   ): Promise<void> {
     logMethodCall('internalShowDelayedPrompt');
     if (typeof timeDelaySeconds !== 'number') {
-      Log.error('internalShowDelayedPrompt: timeDelay not a number');
+      Log._error('internalShowDelayedPrompt: timeDelay not a number');
       return;
     }
 
@@ -173,7 +173,7 @@ export class PromptsManager {
         await this.internalShowSmsAndEmailSlidedown(options);
         break;
       default:
-        Log.error('Invalid Delayed Prompt type');
+        Log._error('Invalid Delayed Prompt type');
     }
   }
 
@@ -181,7 +181,7 @@ export class PromptsManager {
     logMethodCall('internalShowNativePrompt');
 
     if (this.isNativePromptShowing) {
-      Log.debug('Already showing autoprompt. Abort showing a native prompt.');
+      Log._debug('Already showing autoprompt. Abort showing a native prompt.');
       return;
     }
 
@@ -201,9 +201,9 @@ export class PromptsManager {
     }
 
     const sdkStylesLoadResult =
-      await this.context.dynamicResourceLoader.loadSdkStylesheet();
+      await this.context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug(
+      Log._debug(
         'Not showing slidedown permission message because styles failed to load.',
       );
       return;
@@ -213,7 +213,7 @@ export class PromptsManager {
       this.installEventHooksForSlidedown();
     }
 
-    await this.context.slidedownManager.createSlidedown(options);
+    await this.context._slidedownManager.createSlidedown(options);
   }
 
   public async internalShowCategorySlidedown(
@@ -265,20 +265,20 @@ export class PromptsManager {
     options?: AutoPromptOptions,
   ): Promise<void> {
     const prompts =
-      this.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
+      this.context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
     const slidedownPromptOptions =
       options?.slidedownPromptOptions ||
       getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
 
     if (!slidedownPromptOptions) {
       if (typeToPullFromConfig !== DelayedPromptType.Push) {
-        Log.error(
+        Log._error(
           `OneSignal: slidedown of type '${typeToPullFromConfig}' couldn't be shown. Check your configuration` +
             ` on the OneSignal dashboard or your custom code initialization.`,
         );
         return;
       } else {
-        Log.warn(
+        Log._warn(
           `The OneSignal 'push' slidedown will be shown with default text settings.` +
             ` To customize, see the OneSignal documentation.`,
         );
@@ -295,34 +295,34 @@ export class PromptsManager {
     this.eventHooksInstalled = true;
 
     OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
-      this.context.slidedownManager.setIsSlidedownShowing(true);
+      this.context._slidedownManager.setIsSlidedownShowing(true);
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CLOSED, () => {
-      this.context.slidedownManager.setIsSlidedownShowing(false);
-      this.context.slidedownManager.showQueued();
+      this.context._slidedownManager.setIsSlidedownShowing(false);
+      this.context._slidedownManager.showQueued();
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
-      await this.context.slidedownManager.handleAllowClick();
+      await this.context._slidedownManager.handleAllowClick();
       OneSignalEvent.trigger(
         OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
       );
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
-      if (!this.context.slidedownManager.slidedown) {
+      if (!this.context._slidedownManager.slidedown) {
         return;
       }
 
-      const type = this.context.slidedownManager.slidedown?.options.type;
+      const type = this.context._slidedownManager.slidedown?.options.type;
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
-          Log.debug(
+          Log._debug(
             'Setting flag to not show the slidedown to the user again.',
           );
           DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
           break;
         default:
-          Log.debug(
+          Log._debug(
             'Setting flag to not show the slidedown to the user again.',
           );
           DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);
@@ -375,7 +375,7 @@ export class PromptsManager {
       case DelayedPromptType.Email:
       case DelayedPromptType.Sms:
       case DelayedPromptType.SmsAndEmail: {
-        const { userConfig } = this.context.appConfig;
+        const { userConfig } = this.context._appConfig;
         const options = getFirstSlidedownPromptOptionsWithType(
           userConfig.promptOptions?.slidedown?.prompts || [],
           type,

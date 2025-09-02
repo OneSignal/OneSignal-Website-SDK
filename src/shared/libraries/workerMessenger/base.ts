@@ -4,18 +4,16 @@ import type {
   WorkerMessengerReplyBufferRecord,
 } from './types';
 
-declare let self: ServiceWorkerGlobalScope;
-
 export class WorkerMessengerReplyBuffer {
-  private replies: {
+  private _replies: {
     [index: string]: WorkerMessengerReplyBufferRecord[] | null;
   };
 
   constructor() {
-    this.replies = {};
+    this._replies = {};
   }
 
-  public addListener(
+  public _addListener(
     command: WorkerMessengerCommandValue,
     callback: (param: unknown) => void,
     onceListenerOnly: boolean,
@@ -25,30 +23,30 @@ export class WorkerMessengerReplyBuffer {
       onceListenerOnly,
     };
 
-    const replies = this.replies[command.toString()];
+    const replies = this._replies[command.toString()];
     if (replies) replies.push(record);
-    else this.replies[command.toString()] = [record];
+    else this._replies[command.toString()] = [record];
   }
 
-  public findListenersForMessage(
+  public _findListenersForMessage(
     command: WorkerMessengerCommandValue,
   ): WorkerMessengerReplyBufferRecord[] {
-    return this.replies[command.toString()] || [];
+    return this._replies[command.toString()] || [];
   }
 
-  public deleteListenerRecords(command: WorkerMessengerCommandValue) {
-    this.replies[command.toString()] = null;
+  public _deleteListenerRecords(command: WorkerMessengerCommandValue) {
+    this._replies[command.toString()] = null;
   }
 
-  public deleteAllListenerRecords() {
-    this.replies = {};
+  public _deleteAllListenerRecords() {
+    this._replies = {};
   }
 
-  public deleteListenerRecord(
+  public _deleteListenerRecord(
     command: WorkerMessengerCommandValue,
     targetRecord: object,
   ) {
-    const listenersForCommand = this.replies[command.toString()];
+    const listenersForCommand = this._replies[command.toString()];
     if (listenersForCommand == null) return;
 
     for (
@@ -73,26 +71,26 @@ export class WorkerMessengerBase<
     | ContextInterface
     | ContextSWInterface,
 > {
-  protected context?: C;
-  protected replies: WorkerMessengerReplyBuffer;
+  protected _context?: C;
+  protected _replies: WorkerMessengerReplyBuffer;
 
   constructor(
     context?: C,
     replies: WorkerMessengerReplyBuffer = new WorkerMessengerReplyBuffer(),
   ) {
-    this.context = context;
-    this.replies = replies;
+    this._context = context;
+    this._replies = replies;
   }
 
   /*
     Subscribes a callback to be notified every time a service worker sends a
     message to the window frame with the specific command.
    */
-  on(
+  _on(
     command: WorkerMessengerCommandValue,
     callback: (WorkerMessengerPayload: any) => void,
   ): void {
-    this.replies.addListener(command, callback, false);
+    this._replies._addListener(command, callback, false);
   }
 
   /*
@@ -101,22 +99,22 @@ export class WorkerMessengerBase<
 
   The callback is executed once at most.
   */
-  once(
+  _once(
     command: WorkerMessengerCommandValue,
     callback: (WorkerMessengerPayload: any) => void,
   ): void {
-    this.replies.addListener(command, callback, true);
+    this._replies._addListener(command, callback, true);
   }
 
   /**
     Unsubscribe a callback from being notified about service worker messages
     with the specified command.
    */
-  off(command?: WorkerMessengerCommandValue): void {
+  _off(command?: WorkerMessengerCommandValue): void {
     if (command) {
-      this.replies.deleteListenerRecords(command);
+      this._replies._deleteListenerRecords(command);
     } else {
-      this.replies.deleteAllListenerRecords();
+      this._replies._deleteAllListenerRecords();
     }
   }
 }

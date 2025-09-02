@@ -25,18 +25,20 @@ export default class SubscriptionHelper {
 
     if (IS_SERVICE_WORKER) throw new Error('Unsupported environment');
     try {
-      const rawSubscription = await context.subscriptionManager.subscribe(
+      const rawSubscription = await context._subscriptionManager.subscribe(
         SubscriptionStrategyKind.ResubscribeExisting,
       );
       subscription =
-        await context.subscriptionManager.registerSubscription(rawSubscription);
+        await context._subscriptionManager._registerSubscription(
+          rawSubscription,
+        );
 
       incrementPageViewCount();
 
       await triggerNotificationPermissionChanged();
       await checkAndTriggerSubscriptionChanged();
     } catch (e) {
-      Log.error(e);
+      Log._error(e);
     }
     return subscription;
   }

@@ -39,7 +39,7 @@ export class DismissHelper {
     } else if (dismissCount > 2) {
       dismissDays = 30;
     }
-    Log.debug(
+    Log._debug(
       `(${windowEnvString} environment) OneSignal: User dismissed the ${type} ` +
         `notification prompt; reprompt after ${dismissDays} days.`,
     );

@@ -17,7 +17,7 @@ export default class Log {
    * Sets the log level for page context.
    * Will not do anything in service worker context.
    */
-  public static setLevel(level: string) {
+  public static _setLevel(level: string) {
     if (IS_SERVICE_WORKER) return;
 
     /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
@@ -28,15 +28,15 @@ export default class Log {
     }
   }
 
-  private static createLogMethod(consoleMethod: keyof Console) {
+  private static _createLogMethod(consoleMethod: keyof Console) {
     return (...args: unknown[]): void => {
       if (LOGGING || this._shouldLog() || consoleMethod === 'error') {
         (console[consoleMethod] as (...args: unknown[]) => void)(...args);
       }
     };
   }
-  static debug = Log.createLogMethod('debug');
-  static info = Log.createLogMethod('info');
-  static warn = Log.createLogMethod('warn');
-  static error = Log.createLogMethod('error');
+  static _debug = Log._createLogMethod('debug');
+  static _info = Log._createLogMethod('info');
+  static _warn = Log._createLogMethod('warn');
+  static _error = Log._createLogMethod('error');
 }

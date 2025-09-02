@@ -6,6 +6,6 @@ export default class DebugNamespace {
    * @param logLevel - string
    */
   setLogLevel(logLevel: string) {
-    Log.setLevel(logLevel);
+    Log._setLevel(logLevel);
   }
 }

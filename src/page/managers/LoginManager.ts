@@ -32,7 +32,7 @@ export default class LoginManager {
 
     // if the current externalId is the same as the one we're trying to set, do nothing
     if (currentExternalId === externalId) {
-      Log.debug('Login: External ID already set, skipping login');
+      Log._debug('Login: External ID already set, skipping login');
       return;
     }
 
@@ -83,7 +83,7 @@ export default class LoginManager {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
 
     if (!identityModel.externalId)
-      return Log.debug('Logout: User is not logged in, skipping logout');
+      return Log._debug('Logout: User is not logged in, skipping logout');
 
     UserDirector.resetUserModels();
 

@@ -42,7 +42,7 @@ describe('pageSdkInit', () => {
   });
 
   test('can process deferred items long after page init', async () => {
-    vi.spyOn(Log, 'error').mockImplementation(() => '');
+    vi.spyOn(Log, '_error').mockImplementation(() => '');
     await import('./pageSdkInit');
     const initSpy = vi.spyOn(window.OneSignal, 'init');
 

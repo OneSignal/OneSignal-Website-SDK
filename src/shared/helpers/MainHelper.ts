@@ -70,11 +70,11 @@ export default class MainHelper {
         : undefined,
     };
 
-    OneSignal.context.serviceWorkerManager
+    OneSignal.context._serviceWorkerManager
       .getRegistration()
       .then(async (registration?: ServiceWorkerRegistration | null) => {
         if (!registration) {
-          Log.error('Service worker registration not available.');
+          Log._error('Service worker registration not available.');
           return;
         }
 
@@ -96,7 +96,7 @@ export default class MainHelper {
     );
 
     const currentPermission =
-      await OneSignal.context.permissionManager.getPermissionStatus();
+      await OneSignal.context._permissionManager.getPermissionStatus();
 
     if (previousPermission !== currentPermission) {
       await triggerNotificationPermissionChanged();
@@ -116,7 +116,7 @@ export default class MainHelper {
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
-      Log.error(`API call ${url}`, 'failed with:', data.errors);
+      Log._error(`API call ${url}`, 'failed with:', data.errors);
       throw new Error('Failed to get notification icons.');
     }
     return data as NotificationIcons;
@@ -231,7 +231,7 @@ export default class MainHelper {
     }
 
     const registration =
-      await OneSignal.context.serviceWorkerManager.getRegistration();
+      await OneSignal.context._serviceWorkerManager.getRegistration();
     if (!registration) {
       return undefined;
     }

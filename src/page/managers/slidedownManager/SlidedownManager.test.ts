@@ -19,7 +19,7 @@ import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 
-vi.spyOn(Log, 'error').mockImplementation(() => '');
+vi.spyOn(Log, '_error').mockImplementation(() => '');
 
 describe('Slidedown Types', () => {
   beforeEach(() => {
@@ -184,7 +184,7 @@ describe('Slidedown Types', () => {
   });
 });
 
-const warnSpy = vi.spyOn(Log, 'warn');
+const warnSpy = vi.spyOn(Log, '_warn');
 describe('Consent Required', () => {
   beforeEach(() => {
     TestEnvironment.initialize();

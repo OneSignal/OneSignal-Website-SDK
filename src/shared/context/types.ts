@@ -16,22 +16,22 @@ export type RecursivePartial<T> = {
 };
 
 export interface ContextBase {
-  appConfig: AppConfig;
+  _appConfig: AppConfig;
 }
 
 export interface ContextSWInterface extends ContextBase {
-  subscriptionManager: SubscriptionManagerSW;
-  workerMessenger: WorkerMessengerSW;
+  _subscriptionManager: SubscriptionManagerSW;
+  _workerMessenger: WorkerMessengerSW;
 }
 
 export interface ContextInterface extends ContextBase {
-  dynamicResourceLoader: DynamicResourceLoader;
-  permissionManager: PermissionManager;
-  serviceWorkerManager: ServiceWorkerManager;
-  slidedownManager: ISlidedownManager;
-  sessionManager: ISessionManager;
-  subscriptionManager: SubscriptionManagerPage;
-  tagManager: ITagManager;
-  updateManager: UpdateManager;
-  workerMessenger: WorkerMessengerPage;
+  _dynamicResourceLoader: DynamicResourceLoader;
+  _permissionManager: PermissionManager;
+  _serviceWorkerManager: ServiceWorkerManager;
+  _slidedownManager: ISlidedownManager;
+  _sessionManager: ISessionManager;
+  _subscriptionManager: SubscriptionManagerPage;
+  _tagManager: ITagManager;
+  _updateManager: UpdateManager;
+  _workerMessenger: WorkerMessengerPage;
 }

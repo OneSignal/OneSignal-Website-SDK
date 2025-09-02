@@ -54,7 +54,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
         const element = this.element;
         if (!element) {
-          Log.error('Could not find active animated element');
+          Log._error('Could not find active animated element');
         } else {
           if (this.inactiveClass) removeCssClass(element, this.inactiveClass);
           if (this.activeClass) addCssClass(element, this.activeClass);
@@ -65,7 +65,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
             return resolve(this);
           } else {
             const timerId = setTimeout(() => {
-              Log.debug(
+              Log._debug(
                 `Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`,
               );
             }, this.transitionCheckTimeout);
@@ -95,7 +95,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
             );
           }
         } else {
-          Log.debug(`Ending activate() transition (alternative).`);
+          Log._debug(`Ending activate() transition (alternative).`);
           this.activeState = 'active';
           OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
           return resolve(this);
@@ -116,7 +116,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
         const element = this.element;
         if (!element) {
-          Log.error('Could not find active animated element');
+          Log._error('Could not find active animated element');
         } else {
           if (this.activeClass) removeCssClass(element, this.activeClass);
           if (this.inactiveClass) addCssClass(element, this.inactiveClass);
@@ -127,7 +127,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
             return resolve(this);
           } else {
             const timerId = setTimeout(() => {
-              Log.debug(
+              Log._debug(
                 `Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`,
               );
             }, this.transitionCheckTimeout);

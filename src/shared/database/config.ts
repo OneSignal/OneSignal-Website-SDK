@@ -1,7 +1,7 @@
 import { getConsentRequired } from '../helpers/localStorage';
 import Log from '../libraries/Log';
-import { AppState } from '../models/AppState';
 import { db, getIdsValue, getOptionsValue } from './client';
+import type { AppState } from './types';
 
 export const getDBAppConfig = async () => {
   const config: any = {};
@@ -12,21 +12,27 @@ export const getDBAppConfig = async () => {
 };
 
 export const getAppState = async (): Promise<AppState> => {
-  const state = new AppState();
-  state.defaultNotificationUrl = await getOptionsValue<string>('defaultUrl');
-  state.defaultNotificationTitle =
+  const defaultNotificationUrl = await getOptionsValue<string>('defaultUrl');
+  const defaultNotificationTitle =
     await getOptionsValue<string>('defaultTitle');
-  state.lastKnownPushEnabled = await getOptionsValue<boolean>('isPushEnabled');
-  state.lastKnownOptedIn = await getOptionsValue<boolean>('lastOptedIn');
+  const lastKnownPushEnabled = await getOptionsValue<boolean>('isPushEnabled');
+  const lastKnownOptedIn = await getOptionsValue<boolean>('lastOptedIn');
 
   // lastKnown<PushId|PushToken|OptedIn> are used to track changes to the user's subscription
   // state. Displayed in the `current` & `previous` fields of the `subscriptionChange` event.
   // want undefined instead of null since its used to check for subscription changes
-  state.lastKnownPushId =
+  const lastKnownPushId =
     (await getOptionsValue<string>('lastPushId')) ?? undefined;
-  state.lastKnownPushToken =
+  const lastKnownPushToken =
     (await getOptionsValue<string>('lastPushToken')) ?? undefined;
-  return state;
+  return {
+    defaultNotificationUrl,
+    defaultNotificationTitle,
+    lastKnownPushEnabled,
+    lastKnownPushId,
+    lastKnownPushToken,
+    lastKnownOptedIn,
+  };
 };
 
 export const setAppState = async (appState: AppState) => {
@@ -79,7 +85,7 @@ export const isConsentRequiredButNotGiven = () => {
   const consentGiven = OneSignal._consentGiven;
 
   const requiredButNotGiven = consentRequired && !consentGiven;
-  if (requiredButNotGiven) Log.warn('Consent required but not given');
+  if (requiredButNotGiven) Log._warn('Consent required but not given');
 
   return requiredButNotGiven;
 };

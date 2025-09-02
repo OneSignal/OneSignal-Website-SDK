@@ -46,7 +46,7 @@ test('should set the default title', async () => {
   );
 });
 
-const warnSpy = vi.spyOn(Log, 'warn');
+const warnSpy = vi.spyOn(Log, '_warn');
 describe('Consent Required', () => {
   beforeEach(() => {
     OneSignal.setConsentRequired(true);

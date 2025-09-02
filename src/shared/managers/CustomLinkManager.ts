@@ -23,9 +23,9 @@ export class CustomLinkManager {
       return;
     }
 
-    Log.info('OneSignal: initializing customlink');
+    Log._info('OneSignal: initializing customlink');
     const isPushEnabled =
-      await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
     if (!this.config?.unsubscribeEnabled && isPushEnabled) {
       this.hideCustomLinkContainers();
       return;
@@ -46,7 +46,7 @@ export class CustomLinkManager {
 
   private async mountExplanationNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
+      Log._error(
         "CustomLink: required property 'text' is missing in the config",
       );
       return;
@@ -63,7 +63,7 @@ export class CustomLinkManager {
       }
 
       if (
-        await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()
+        await OneSignal.context._subscriptionManager.isPushNotificationsEnabled()
       ) {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
@@ -76,7 +76,7 @@ export class CustomLinkManager {
 
   private async mountSubscriptionNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
+      Log._error(
         "CustomLink: required property 'text' is missing in the config",
       );
       return;
@@ -96,7 +96,7 @@ export class CustomLinkManager {
       }
 
       if (
-        await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()
+        await OneSignal.context._subscriptionManager.isPushNotificationsEnabled()
       ) {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
@@ -110,7 +110,7 @@ export class CustomLinkManager {
       await this.setTextFromPushStatus(subscribeButton);
 
       subscribeButton.addEventListener('click', async () => {
-        Log.info('CustomLink: subscribe clicked');
+        Log._info('CustomLink: subscribe clicked');
         await this.handleClick(subscribeButton);
       });
 
@@ -124,9 +124,9 @@ export class CustomLinkManager {
 
   private async loadSdkStyles(): Promise<boolean> {
     const sdkStylesLoadResult =
-      await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
+      await OneSignal.context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug(
+      Log._debug(
         'Not initializing custom link button because styles failed to load.',
       );
       return false;
@@ -165,7 +165,7 @@ export class CustomLinkManager {
   private async setTextFromPushStatus(element: HTMLElement): Promise<void> {
     if (this.config?.text?.subscribe) {
       if (
-        !(await OneSignal.context.subscriptionManager.isPushNotificationsEnabled())
+        !(await OneSignal.context._subscriptionManager.isPushNotificationsEnabled())
       ) {
         element.textContent = this.config.text.subscribe;
       }
@@ -173,7 +173,7 @@ export class CustomLinkManager {
 
     if (this.config?.text?.unsubscribe) {
       if (
-        await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()
+        await OneSignal.context._subscriptionManager.isPushNotificationsEnabled()
       ) {
         element.textContent = this.config.text.unsubscribe;
       }
