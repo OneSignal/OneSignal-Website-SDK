@@ -5,102 +5,91 @@ import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
 export default class Message extends AnimatedElement {
-  public bell: Bell;
-  public contentType: string;
-  public queued: any;
+  public _bell: Bell;
+  public _contentType: string;
+  public _queued: string[];
 
   constructor(bell: Bell) {
     super(
       '.onesignal-bell-launcher-message',
       'onesignal-bell-launcher-message-opened',
       undefined,
-      'hidden',
-      ['opacity', 'transform'],
+      undefined,
       '.onesignal-bell-launcher-message-body',
     );
 
-    this.bell = bell;
-    this.contentType = '';
-    this.queued = [];
+    this._bell = bell;
+    this._contentType = '';
+    this._queued = [];
   }
 
-  static get TIMEOUT() {
-    return 2500;
-  }
-
-  static get TYPES() {
-    return {
-      TIP: 'tip', // Appears on button hover, disappears on button endhover
-      MESSAGE: 'message', // Appears manually for a specified duration, site visitor cannot control its display. Messages override tips
-      QUEUED: 'queued', // This message was a user-queued message
-    };
-  }
-
-  display(type: string, content: string, duration = 0) {
+  _display(type: string, content: string, duration = 0) {
     Log._debug(`Calling display(${type}, ${content}, ${duration}).`);
-    return (this.shown ? this.hide() : nothing())
+    return (this._shown ? this._hide() : nothing())
       .then(() => {
-        this.content = decodeHtmlEntities(content);
-        this.contentType = type;
+        this._content = decodeHtmlEntities(content);
+        this._contentType = type;
       })
       .then(() => {
-        return this.show();
+        return this._show();
       })
       .then(() => delay(duration))
       .then(() => {
-        return this.hide();
+        return this._hide();
       })
       .then(() => {
         // Reset back to normal content type so stuff can show a gain
-        this.content = this.getTipForState();
-        this.contentType = 'tip';
+        this._content = this._getTipForState();
+        this._contentType = 'tip';
       });
   }
 
-  getTipForState(): string {
-    if (this.bell.state === Bell.STATES.UNSUBSCRIBED)
-      return this.bell.options.text['tip.state.unsubscribed'];
-    else if (this.bell.state === Bell.STATES.SUBSCRIBED)
-      return this.bell.options.text['tip.state.subscribed'];
-    else if (this.bell.state === Bell.STATES.BLOCKED)
-      return this.bell.options.text['tip.state.blocked'];
+  _getTipForState(): string {
+    if (this._bell._state === 'unsubscribed')
+      return this._bell._options.text['tip.state.unsubscribed'];
+    else if (this._bell._state === 'subscribed')
+      return this._bell._options.text['tip.state.subscribed'];
+    else if (this._bell._state === 'blocked')
+      return this._bell._options.text['tip.state.blocked'];
     return '';
   }
 
-  enqueue(message: string) {
-    this.queued.push(decodeHtmlEntities(message));
+  _enqueue(message: string) {
+    this._queued.push(decodeHtmlEntities(message));
     return new Promise<void>((resolve) => {
-      if (this.bell.badge.shown) {
-        this.bell.badge
-          .hide()
-          .then(() => this.bell.badge.increment())
-          .then(() => this.bell.badge.show())
-          .then(resolve);
+      if (this._bell._badge._shown) {
+        this._bell._badge
+          ._hide()
+          .then(() => this._bell._badge._increment())
+          .then(() => this._bell._badge._show())
+          .then(() => resolve());
       } else {
-        this.bell.badge.increment();
-        if (this.bell.initialized) this.bell.badge.show().then(resolve);
+        this._bell._badge._increment();
+        if (this._bell._initialized)
+          this._bell._badge._show().then(() => resolve());
         else resolve();
       }
     });
   }
 
-  dequeue(message: string) {
-    const dequeuedMessage = this.queued.pop(message);
+  _dequeue() {
+    const dequeuedMessage = this._queued.pop();
     return new Promise((resolve) => {
-      if (this.bell.badge.shown) {
-        this.bell.badge
-          .hide()
-          .then(() => this.bell.badge.decrement())
-          .then((numMessagesLeft: number) => {
+      if (this._bell._badge._shown) {
+        this._bell._badge
+          ._hide()
+          .then(() => this._bell._badge._decrement())
+          .then(() => {
+            const numMessagesLeft = Number(this._bell._badge._content) || 0;
             if (numMessagesLeft > 0) {
-              return this.bell.badge.show();
+              return this._bell._badge._show();
             } else {
               return Promise.resolve(this);
             }
           })
-          .then(resolve(dequeuedMessage));
+          .then(() => resolve(dequeuedMessage));
       } else {
-        this.bell.badge.decrement();
+        this._bell._badge._decrement();
         resolve(dequeuedMessage);
       }
     });
