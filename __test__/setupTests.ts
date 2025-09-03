@@ -1,4 +1,4 @@
-import * as OneSignalApi from 'src/shared/api/OneSignalApi';
+import * as OneSignalApi from 'src/shared/api/page';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { clearAll } from 'src/shared/database/client';
 import { DEFAULT_USER_AGENT } from './constants';

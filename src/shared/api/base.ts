@@ -5,7 +5,6 @@ import { isValidUuid } from '../helpers/validators';
 import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/EnvVariables';
-import { RETRY_BACKOFF } from './RetryBackoff';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -122,7 +121,7 @@ async function executeFetch<T = unknown>(
     };
   } catch (e) {
     if (e instanceof Error && e.name === 'TypeError') {
-      await delay(RETRY_BACKOFF[retry]);
+      await delay(retry * 1e4);
       Log._error(
         `OneSignal: Network timed out while calling ${url}. Retrying...`,
       );

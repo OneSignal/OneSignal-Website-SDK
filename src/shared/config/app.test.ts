@@ -5,7 +5,7 @@ import { getFinalAppConfig } from '__test__/support/helpers/configHelper';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import type { TagCategory } from 'src/page/tags/types';
-import * as OneSignalApi from 'src/shared/api/OneSignalApi';
+import * as OneSignalApi from 'src/shared/api/page';
 import { getAppConfig, getMergedConfig } from './app';
 import { ConfigIntegrationKind } from './constants';
 import {
