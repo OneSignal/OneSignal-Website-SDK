@@ -1,4 +1,4 @@
-import { getItem, setItem } from 'src/page/modules/timedStorage.test';
+import { getItem, setItem } from 'src/page/modules/timedStorage';
 import { db, getOptionsValue } from 'src/shared/database/client';
 import {
   DismissCountKey,
