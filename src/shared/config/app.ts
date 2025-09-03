@@ -1,4 +1,4 @@
-import OneSignalApi from '../api/OneSignalApi';
+import * as OneSignalApi from '../api/OneSignalApi';
 import { InvalidAppIdError } from '../errors/common';
 import { getValueOrDefault } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';

@@ -1,6 +1,6 @@
 import Log from '../libraries/Log';
 import type { OutcomeRequestData } from '../outcomes/types';
-import OneSignalApiBase from './OneSignalApiBase';
+import * as OneSignalApiBase from './base';
 
 export default class OneSignalApiShared {
   static async sendOutcome(data: OutcomeRequestData): Promise<void> {
