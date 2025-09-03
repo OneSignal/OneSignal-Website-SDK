@@ -34,13 +34,6 @@ test.each([
 ] as const)(
   'When permission changes to %s, ensure permissionChange fires with %s',
   async (permission, expected) => {
-    if (permission !== 'granted') {
-      await db.put('Options', {
-        key: 'notificationPermission',
-        value: 'granted',
-      });
-    }
-
     const expectedPromise = expectPermissionChangeEvent(expected);
     await callPermissionChange(permission);
     await expectedPromise;
@@ -85,6 +78,23 @@ test('Should update Notification.permission in time', async () => {
   });
 
   // should wait for permission change (string) event first then this permission change (boolean) event
+  const { resolve, promise } = Promise.withResolvers<void>();
+  OneSignal.Notifications.addEventListener('permissionChange', (isGranted) => {
+    expect(isGranted).toBe(false);
+    expect(OneSignal.Notifications.permission).toBe(false);
+    expect(OneSignal.Notifications.permissionNative).toBe('denied');
+    resolve();
+  });
+
+  callPermissionChange('denied');
+  await promise;
+});
+
+test('should handle denied permission', async () => {
+  TestEnvironment.initialize({
+    permission: 'default',
+  });
+
   const { resolve, promise } = Promise.withResolvers<void>();
   OneSignal.Notifications.addEventListener('permissionChange', (isGranted) => {
     expect(isGranted).toBe(false);

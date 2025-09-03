@@ -51,12 +51,10 @@ const triggerBooleanPermissionChangeEvent = (
   force: boolean,
 ): void => {
   const newPermissionBoolean = newPermission === 'granted';
-  const previousPermissionBoolean = previousPermission === 'granted';
-  const triggerEvent =
-    newPermissionBoolean !== previousPermissionBoolean || force;
-  if (!triggerEvent) {
-    return;
-  }
+
+  const triggerEvent = newPermission !== previousPermission || force;
+  if (!triggerEvent) return;
+
   OneSignalEvent.trigger(
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN,
     newPermissionBoolean,
