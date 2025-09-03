@@ -20,7 +20,7 @@ export async function internalInit() {
   Log._debug('Called internalInit()');
 
   // Always check for an updated service worker
-  await OneSignal.context._serviceWorkerManager.installWorker();
+  await OneSignal.context._serviceWorkerManager._installWorker();
 
   const sessionManager = OneSignal.context._sessionManager;
   OneSignal.emitter.on(
@@ -166,7 +166,7 @@ async function setWelcomeNotificationFlag(): Promise<void> {
 async function establishServiceWorkerChannel(): Promise<void> {
   if (navigator.serviceWorker && window.isSecureContext) {
     try {
-      await OneSignal.context._serviceWorkerManager.establishServiceWorkerChannel();
+      await OneSignal.context._serviceWorkerManager._establishServiceWorkerChannel();
     } catch (e) {
       Log._error(e);
     }

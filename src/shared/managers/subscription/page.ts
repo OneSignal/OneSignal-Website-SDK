@@ -192,7 +192,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const workerRegistration =
-      await this._context._serviceWorkerManager.getOneSignalRegistration();
+      await this._context._serviceWorkerManager._getOneSignalRegistration();
     const notificationPermission =
       await this._context._permissionManager.getNotificationPermission(
         this._context._appConfig.safariWebId,
@@ -262,7 +262,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       /* Now that permissions have been granted, install the service worker */
       Log._info('Installing SW on Safari');
       try {
-        await this._context._serviceWorkerManager.installWorker();
+        await this._context._serviceWorkerManager._installWorker();
         Log._info('SW on Safari successfully installed');
       } catch (e) {
         Log._error('SW on Safari failed to install.');
@@ -402,7 +402,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     let workerRegistration: ServiceWorkerRegistration | undefined | null;
     try {
       workerRegistration =
-        await this._context._serviceWorkerManager.installWorker();
+        await this._context._serviceWorkerManager._installWorker();
     } catch (err) {
       if (err instanceof SWRegistrationError) {
         // TODO: This doesn't register the subscription any more, most likely broke
@@ -476,14 +476,14 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
   public async isSubscriptionExpiring(): Promise<boolean> {
     const serviceWorkerState =
-      await this._context._serviceWorkerManager.getActiveState();
+      await this._context._serviceWorkerManager._getActiveState();
     if (!(serviceWorkerState === ServiceWorkerActiveState.OneSignalWorker)) {
       /* If the service worker isn't activated, there's no subscription to look for */
       return false;
     }
 
     const serviceWorkerRegistration =
-      await this._context._serviceWorkerManager.getOneSignalRegistration();
+      await this._context._serviceWorkerManager._getOneSignalRegistration();
     if (!serviceWorkerRegistration) return false;
 
     // It's possible to get here in Safari 11.1+ version

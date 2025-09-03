@@ -71,7 +71,7 @@ export default class MainHelper {
     };
 
     OneSignal.context._serviceWorkerManager
-      .getRegistration()
+      ._getRegistration()
       .then(async (registration?: ServiceWorkerRegistration | null) => {
         if (!registration) {
           Log._error('Service worker registration not available.');
@@ -231,7 +231,7 @@ export default class MainHelper {
     }
 
     const registration =
-      await OneSignal.context._serviceWorkerManager.getRegistration();
+      await OneSignal.context._serviceWorkerManager._getRegistration();
     if (!registration) {
       return undefined;
     }

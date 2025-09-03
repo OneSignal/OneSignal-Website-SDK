@@ -31,12 +31,12 @@ import type {
 import { VERSION } from '../utils/EnvVariables';
 
 export class ServiceWorkerManager {
-  private context: ContextInterface;
-  private readonly config: ServiceWorkerManagerConfig;
+  private _context: ContextInterface;
+  private readonly _config: ServiceWorkerManagerConfig;
 
   constructor(context: ContextInterface, config: ServiceWorkerManagerConfig) {
-    this.context = context;
-    this.config = config;
+    this._context = context;
+    this._config = config;
   }
 
   /**
@@ -45,40 +45,40 @@ export class ServiceWorkerManager {
    * WARNING: This might be a non-OneSignal service worker, use
    * getOneSignalRegistration() instead if you need this guarantee.
    */
-  public async getRegistration(): Promise<
+  public async _getRegistration(): Promise<
     ServiceWorkerRegistration | undefined
   > {
-    return getSWRegistration(this.config.registrationOptions.scope);
+    return getSWRegistration(this._config.registrationOptions.scope);
   }
 
   /**
    *  Gets the OneSignal ServiceWorkerRegistration reference, if it was registered
    */
-  public async getOneSignalRegistration(): Promise<
+  public async _getOneSignalRegistration(): Promise<
     ServiceWorkerRegistration | undefined
   > {
-    const state = await this.getActiveState();
+    const state = await this._getActiveState();
     if (state === ServiceWorkerActiveState.OneSignalWorker) {
-      return this.getRegistration();
+      return this._getRegistration();
     }
     return undefined;
   }
 
-  public async getActiveState(): Promise<ServiceWorkerActiveStateValue> {
-    const workerRegistration = await this.getRegistration();
+  public async _getActiveState(): Promise<ServiceWorkerActiveStateValue> {
+    const workerRegistration = await this._getRegistration();
     if (!workerRegistration) {
       return ServiceWorkerActiveState.None;
     }
 
     // We are now; 1. Getting the filename of the SW; 2. Checking if it is ours or a 3rd parties.
     const swFileName =
-      ServiceWorkerManager.activeSwFileName(workerRegistration);
-    const workerState = this.swActiveStateByFileName(swFileName);
+      ServiceWorkerManager._activeSwFileName(workerRegistration);
+    const workerState = this._swActiveStateByFileName(swFileName);
     return workerState;
   }
 
   // Get the file name of the active ServiceWorker
-  private static activeSwFileName(
+  private static _activeSwFileName(
     workerRegistration: ServiceWorkerRegistration,
   ): string | null | undefined {
     const serviceWorker = getAvailableServiceWorker(workerRegistration);
@@ -108,14 +108,14 @@ export class ServiceWorkerManager {
   }
 
   // Check if the ServiceWorker file name is ours or a third party's
-  private swActiveStateByFileName(
+  private _swActiveStateByFileName(
     fileName?: string | null,
   ): ServiceWorkerActiveStateValue {
     if (!fileName) {
       return ServiceWorkerActiveState.None;
     }
     const isValidOSWorker =
-      fileName == this.config.workerPath.getFileName() ||
+      fileName == this._config.workerPath.getFileName() ||
       fileName == 'OneSignalSDK.sw.js'; // For backwards compatibility with temporary v16 user model beta filename (remove after 5/5/24 deprecation)
 
     if (isValidOSWorker) {
@@ -124,16 +124,16 @@ export class ServiceWorkerManager {
     return ServiceWorkerActiveState.ThirdParty;
   }
 
-  public async getWorkerVersion(): Promise<string> {
+  public async _getWorkerVersion(): Promise<string> {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<string>(async (resolve) => {
-      this.context._workerMessenger._once(
+      this._context._workerMessenger._once(
         WorkerMessengerCommand.WorkerVersion,
         (workerVersion) => {
           resolve(workerVersion);
         },
       );
-      await this.context._workerMessenger.unicast(
+      await this._context._workerMessenger.unicast(
         WorkerMessengerCommand.WorkerVersion,
       );
     });
@@ -141,7 +141,7 @@ export class ServiceWorkerManager {
 
   // Returns false if the OneSignal service worker can't be installed
   // or is already installed and doesn't need updating.
-  private async shouldInstallWorker(): Promise<boolean> {
+  private async _shouldInstallWorker(): Promise<boolean> {
     // 1. Does the browser support ServiceWorkers?
     if (!supportsServiceWorkers()) return false;
 
@@ -151,7 +151,7 @@ export class ServiceWorkerManager {
     // 3. Is a OneSignal ServiceWorker not installed now?
     // If not and notification permissions are enabled we should install.
     // This prevents an unnecessary install of the OneSignal worker which saves bandwidth
-    const workerState = await this.getActiveState();
+    const workerState = await this._getActiveState();
     Log._debug('[shouldInstallWorker] workerState', workerState);
     if (
       workerState === ServiceWorkerActiveState.None ||
@@ -171,28 +171,28 @@ export class ServiceWorkerManager {
     }
 
     // 4. We have a OneSignal ServiceWorker installed, but did the path or scope of the ServiceWorker change?
-    if (await this.haveParamsChanged()) {
+    if (await this._haveParamsChanged()) {
       return true;
     }
 
     // 5. We have a OneSignal ServiceWorker installed, is there an update?
-    return this.workerNeedsUpdate();
+    return this._workerNeedsUpdate();
   }
 
-  private async haveParamsChanged(): Promise<boolean> {
+  private async _haveParamsChanged(): Promise<boolean> {
     // 1. No workerRegistration
-    const workerRegistration = await this.getRegistration();
+    const workerRegistration = await this._getRegistration();
     if (!workerRegistration) {
       Log._info(
         '[changedServiceWorkerParams] workerRegistration not found at scope',
-        this.config.registrationOptions.scope,
+        this._config.registrationOptions.scope,
       );
       return true;
     }
 
     // 2. Different scope
     const existingSwScope = new URL(workerRegistration.scope).pathname;
-    const configuredSwScope = this.config.registrationOptions.scope;
+    const configuredSwScope = this._config.registrationOptions.scope;
     if (existingSwScope != configuredSwScope) {
       Log._info('[changedServiceWorkerParams] ServiceWorker scope changing', {
         a_old: existingSwScope,
@@ -204,8 +204,8 @@ export class ServiceWorkerManager {
     // 3. Different href?, asking if (path + filename + queryParams) is different
     const availableWorker = getAvailableServiceWorker(workerRegistration);
     const serviceWorkerHref = getServiceWorkerHref(
-      this.config,
-      this.context._appConfig.appId,
+      this._config,
+      this._context._appConfig.appId,
       VERSION,
     );
     // 3.1 If we can't get a scriptURL assume it is different
@@ -229,11 +229,11 @@ export class ServiceWorkerManager {
    * with a content-identical but differently named alternate service worker
    * file.
    */
-  private async workerNeedsUpdate(): Promise<boolean> {
+  private async _workerNeedsUpdate(): Promise<boolean> {
     Log._info('[Service Worker Update] Checking service worker version...');
     let workerVersion: string;
     try {
-      workerVersion = await timeoutPromise(this.getWorkerVersion(), 2_000);
+      workerVersion = await timeoutPromise(this._getWorkerVersion(), 2_000);
     } catch (e) {
       Log._info(
         '[Service Worker Update] Worker did not reply to version query; assuming older version and updating.',
@@ -254,9 +254,9 @@ export class ServiceWorkerManager {
     return false;
   }
 
-  public async establishServiceWorkerChannel() {
+  public async _establishServiceWorkerChannel() {
     Log._debug('establishServiceWorkerChannel');
-    const workerMessenger = this.context._workerMessenger;
+    const workerMessenger = this._context._workerMessenger;
     workerMessenger._off();
 
     workerMessenger._on(
@@ -384,15 +384,15 @@ export class ServiceWorkerManager {
    * additional query parameters, but this must then stay consistent.
    */
 
-  public async installWorker(): Promise<
+  public async _installWorker(): Promise<
     ServiceWorkerRegistration | undefined | null
   > {
-    if (!(await this.shouldInstallWorker())) {
-      return this.getOneSignalRegistration();
+    if (!(await this._shouldInstallWorker())) {
+      return this._getOneSignalRegistration();
     }
 
     Log._info('Installing worker...');
-    const workerState = await this.getActiveState();
+    const workerState = await this._getActiveState();
 
     if (workerState === ServiceWorkerActiveState.ThirdParty) {
       Log._info(
@@ -401,12 +401,12 @@ export class ServiceWorkerManager {
     }
 
     const workerHref = getServiceWorkerHref(
-      this.config,
-      this.context._appConfig.appId,
+      this._config,
+      this._context._appConfig.appId,
       VERSION,
     );
 
-    const scope = `${getBaseUrl()}${this.config.registrationOptions.scope}`;
+    const scope = `${getBaseUrl()}${this._config.registrationOptions.scope}`;
     Log._info(
       `[Service Worker Installation] Installing service worker ${workerHref} ${scope}.`,
     );
@@ -421,7 +421,7 @@ export class ServiceWorkerManager {
       Log._error(
         `[Service Worker Installation] Installing service worker failed ${error}`,
       );
-      registration = await this.fallbackToUserModelBetaWorker();
+      registration = await this._fallbackToUserModelBetaWorker();
     }
     Log._debug(
       `[Service Worker Installation] Service worker installed. Waiting for activation`,
@@ -431,25 +431,25 @@ export class ServiceWorkerManager {
 
     Log._debug(`[Service Worker Installation] Service worker active`);
 
-    await this.establishServiceWorkerChannel();
+    await this._establishServiceWorkerChannel();
     return registration;
   }
 
-  async fallbackToUserModelBetaWorker(): Promise<ServiceWorkerRegistration> {
+  async _fallbackToUserModelBetaWorker(): Promise<ServiceWorkerRegistration> {
     const BETA_WORKER_NAME = 'OneSignalSDK.sw.js';
 
     const configWithBetaWorkerName: ServiceWorkerManagerConfig = {
       workerPath: new Path(`/${BETA_WORKER_NAME}`),
-      registrationOptions: this.config.registrationOptions,
+      registrationOptions: this._config.registrationOptions,
     };
 
     const workerHref = getServiceWorkerHref(
       configWithBetaWorkerName,
-      this.context._appConfig.appId,
+      this._context._appConfig.appId,
       VERSION,
     );
 
-    const scope = `${getBaseUrl()}${this.config.registrationOptions.scope}`;
+    const scope = `${getBaseUrl()}${this._config.registrationOptions.scope}`;
 
     Log._info(
       `[Service Worker Installation] Attempting to install v16 Beta Worker ${workerHref} ${scope}.`,
