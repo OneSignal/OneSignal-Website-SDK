@@ -1,94 +1,51 @@
-/**
- * LocalStorage with expiring keys.
- *
- * Used when synchronous data access is required, like when clicking the notify button to show the
- * popup conditionally based on a storage value. IndexedDb and cross-frame communication is
- * asynchronous and loses the direct user action privilege required to show a popup.
- */
-/**
- * Performs a feature test to determine whether LocalStorage is accessible. For example, a user's
- * browser preferences set to prevent saving website data will disable LocalStorage.
- */
-export function isLocalStorageSupported(): boolean {
-  try {
-    if (typeof localStorage === 'undefined') {
-      return false;
-    }
-    localStorage.getItem('test');
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+import * as TimedLocalStorage from './timedStorage';
 
-/**
- * Sets a key in LocalStorage with an expiration time measured in minutes.
- */
-export function setItem(
-  key: string,
-  value: any,
-  expirationInMinutes?: number,
-): void {
-  if (!isLocalStorageSupported()) {
-    return;
-  }
-  const expirationInMilliseconds =
-    typeof expirationInMinutes !== 'undefined'
-      ? expirationInMinutes * 60 * 1000
-      : 0;
-  const record = {
-    value: JSON.stringify(value),
-    timestamp:
-      typeof expirationInMinutes !== 'undefined'
-        ? new Date().getTime() + expirationInMilliseconds
-        : undefined,
-  };
-  localStorage.setItem(key, JSON.stringify(record));
-}
+const localStorageSpy = vi.spyOn(window, 'localStorage', 'get');
 
-/**
- * Retrieves a key from LocalStorage if the expiration time when the key was set hasn't already
- * expired.
- */
-export function getItem(key: string): any | null {
-  if (!isLocalStorageSupported()) {
-    return null;
-  }
-  const record = localStorage.getItem(key);
-  let parsedRecord;
-  try {
-    // @ts-expect-error - we have this in a try catch
-    parsedRecord = JSON.parse(record);
-  } catch (e) {
-    return null;
-  }
-  if (parsedRecord === null) {
-    return null;
-  }
+vi.useFakeTimers();
 
-  if (
-    parsedRecord.timestamp &&
-    new Date().getTime() >= parsedRecord.timestamp
-  ) {
-    localStorage.removeItem(key);
-    return null;
-  }
+describe('TimedLocalStorage', () => {
+  test('can check if localStorage is supported', () => {
+    expect(TimedLocalStorage.isLocalStorageSupported()).toBe(true);
 
-  let parsedRecordValue = parsedRecord.value;
-  try {
-    parsedRecordValue = JSON.parse(parsedRecord.value);
-  } catch (e) {
-    return parsedRecordValue;
-  }
-  return parsedRecordValue;
-}
+    // @ts-expect-error - purposely setting to undefined
+    localStorageSpy.mockReturnValueOnce(undefined);
+    expect(TimedLocalStorage.isLocalStorageSupported()).toBe(false);
+  });
 
-/**
- * Removes an item from LocalStorage.
- */
-export function removeItem(key: string): null | void {
-  if (!isLocalStorageSupported()) {
-    return null;
-  }
-  localStorage.removeItem(key);
-}
+  test('can set and get item with expiration', () => {
+    TimedLocalStorage.setItem('my-key', 'my-value', 3);
+    expect(TimedLocalStorage.getItem('my-key')).toBe('my-value');
+
+    vi.advanceTimersByTime(3 * 60 * 1000);
+    expect(TimedLocalStorage.getItem('my-key')).toBe(null);
+  });
+
+  test('can set and get an object', () => {
+    TimedLocalStorage.setItem('my-key', { value: 'my-value' });
+    expect(TimedLocalStorage.getItem('my-key')).toEqual({ value: 'my-value' });
+
+    // should do nothing if localStorage is not supported
+    // @ts-expect-error - purposely setting to undefined
+    localStorageSpy.mockReturnValueOnce(undefined);
+    TimedLocalStorage.setItem('my-key-2', { value: 'my-value' });
+
+    // @ts-expect-error - purposely setting to undefined
+    localStorageSpy.mockReturnValueOnce(undefined);
+    expect(TimedLocalStorage.getItem('my-key-2')).toBe(null);
+  });
+
+  test('can remove item', () => {
+    TimedLocalStorage.setItem('temp-key', 'my-value');
+
+    // should do nothing if localStorage is not supported
+    // @ts-expect-error - purposely setting to undefined
+    localStorageSpy.mockReturnValueOnce(undefined);
+    TimedLocalStorage.removeItem('temp-key');
+    expect(TimedLocalStorage.getItem('temp-key')).toBe('my-value');
+
+    // should remove item if localStorage is supported
+    TimedLocalStorage.removeItem('temp-key');
+    expect(TimedLocalStorage.getItem('temp-key')).toBe(null);
+  });
+});
