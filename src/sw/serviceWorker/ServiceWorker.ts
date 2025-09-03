@@ -1,4 +1,4 @@
-import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
+import * as OneSignalApiBase from 'src/shared/api/base';
 import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
 import { getServerAppConfig } from 'src/shared/config/app';
 import type { AppConfig } from 'src/shared/config/types';

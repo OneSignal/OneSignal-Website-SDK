@@ -12,7 +12,7 @@ import {
 } from '../models/Outcomes';
 import type { OutcomeRequestData } from '../outcomes/types';
 import { NotificationType } from '../subscriptions/constants';
-import { OneSignalApiBase } from './OneSignalApiBase';
+import * as OneSignalApiBase from './base';
 import OneSignalApiShared from './OneSignalApiShared';
 
 export class OneSignalApiSW {
