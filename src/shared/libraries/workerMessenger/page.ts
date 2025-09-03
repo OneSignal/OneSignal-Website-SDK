@@ -93,7 +93,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     );
 
     const workerRegistration =
-      await this._context?._serviceWorkerManager.getOneSignalRegistration();
+      await this._context?._serviceWorkerManager._getOneSignalRegistration();
     if (!workerRegistration) {
       Log._error(
         '`[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!',

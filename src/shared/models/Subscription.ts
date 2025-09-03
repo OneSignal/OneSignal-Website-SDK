@@ -33,7 +33,7 @@ export class Subscription implements Serializable {
     };
   }
 
-  static deserialize(bundle: any): Subscription {
+  static _deserialize(bundle: any): Subscription {
     const subscription = new Subscription();
     subscription.deviceId = bundle.deviceId;
     subscription.subscriptionToken = bundle.subscriptionToken;

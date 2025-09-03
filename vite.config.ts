@@ -63,9 +63,6 @@ export default defineConfig(({ mode }) => {
       minify: isProdEnv ? 'terser' : false,
       terserOptions: {
         compress: {
-          // arrows: true,
-          // unsafe: true,
-          // unsafe_arrows: true,
           passes: 2,
         },
         mangle: {

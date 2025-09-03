@@ -1,4 +1,4 @@
-import TimedLocalStorage from './TimedLocalStorage';
+import * as TimedLocalStorage from './timedStorage.test';
 
 const localStorageSpy = vi.spyOn(window, 'localStorage', 'get');
 
