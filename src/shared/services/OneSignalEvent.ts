@@ -1,3 +1,4 @@
+import { Events } from 'src/page/bell/constants';
 import { containsMatch } from '../context/helpers';
 import { windowEnvString } from '../environment/detect';
 import Emitter from '../libraries/Emitter';
@@ -5,18 +6,10 @@ import Log from '../libraries/Log';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 
 const SILENT_EVENTS = [
-  'notifyButtonHovering',
-  'notifyButtonHover',
-  'notifyButtonButtonClick',
-  'notifyButtonLauncherClick',
-  'animatedElementHiding',
-  'animatedElementHidden',
-  'animatedElementShowing',
-  'animatedElementShown',
-  'activeAnimatedElementActivating',
-  'activeAnimatedElementActive',
-  'activeAnimatedElementInactivating',
-  'activeAnimatedElementInactive',
+  Events.Hovering,
+  Events.Hovered,
+  Events.BellClick,
+  Events.LauncherClick,
 ];
 
 export default class OneSignalEvent {

@@ -11,11 +11,11 @@ export const SUBSCRIBE_BUTTON_ID = 'subscribe-button';
 export const UNSUBSCRIBE_BUTTON_ID = 'unsubscribe-button';
 
 export const Events = {
-  StateChanged: 'notifyButtonStateChange',
-  LauncherClick: 'notifyButtonLauncherClick',
-  BellClick: 'notifyButtonButtonClick',
-  SubscribeClick: 'notifyButtonSubscribeClick',
-  UnsubscribeClick: 'notifyButtonUnsubscribeClick',
-  Hovering: 'notifyButtonHovering',
-  Hovered: 'notifyButtonHover',
+  StateChanged: 'notify0',
+  LauncherClick: 'notify1',
+  BellClick: 'notify2',
+  SubscribeClick: 'notify3',
+  UnsubscribeClick: 'notify4',
+  Hovering: 'notify5',
+  Hovered: 'notify6',
 };

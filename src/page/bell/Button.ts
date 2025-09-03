@@ -4,7 +4,7 @@ import LimitStore from 'src/shared/services/LimitStore';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
-import { MESSAGE_TIMEOUT, MessageType } from './constants';
+import { Events, MESSAGE_TIMEOUT, MessageType } from './constants';
 
 export default class Button extends AnimatedElement {
   public _events: Record<string, string>;
@@ -69,14 +69,14 @@ export default class Button extends AnimatedElement {
       LimitStore.isEmpty(this._events.mouse) ||
       LimitStore.getLast(this._events.mouse) === 'out'
     ) {
-      OneSignalEvent.trigger('notifyButtonHovering');
+      OneSignalEvent.trigger(Events.Hovering);
     }
     LimitStore.put(this._events.mouse, 'over');
   }
 
   _onHovered() {
     LimitStore.put(this._events.mouse, 'out');
-    OneSignalEvent.trigger('notifyButtonHover');
+    OneSignalEvent.trigger(Events.Hovered);
   }
 
   _onTap() {
@@ -98,8 +98,8 @@ export default class Button extends AnimatedElement {
     this._isHandlingClick = true;
 
     try {
-      OneSignalEvent.trigger('notifyButtonButtonClick');
-      OneSignalEvent.trigger('notifyButtonLauncherClick');
+      OneSignalEvent.trigger(Events.BellClick);
+      OneSignalEvent.trigger(Events.LauncherClick);
 
       if (
         this._bell._message._shown &&
@@ -115,20 +115,23 @@ export default class Button extends AnimatedElement {
       if (this._bell._unsubscribed && !optedOut) {
         registerForPushNotifications();
         this._bell._ignoreSubscriptionState = true;
-        OneSignal.emitter.once('change', async () => {
-          try {
-            await this._bell._message._display(
-              MessageType._Message,
-              this._bell._options.text['message.action.subscribed'],
-              MESSAGE_TIMEOUT,
-            );
-            this._bell._ignoreSubscriptionState = false;
-            await this._bell._launcher._inactivate();
-          } catch (error) {
-            this._bell._ignoreSubscriptionState = false;
-            throw error;
-          }
-        });
+        OneSignal.emitter.once(
+          OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
+          async () => {
+            try {
+              await this._bell._message._display(
+                MessageType._Message,
+                this._bell._options.text['message.action.subscribed'],
+                MESSAGE_TIMEOUT,
+              );
+              this._bell._ignoreSubscriptionState = false;
+              await this._bell._launcher._inactivate();
+            } catch (error) {
+              this._bell._ignoreSubscriptionState = false;
+              throw error;
+            }
+          },
+        );
         return;
       }
 
