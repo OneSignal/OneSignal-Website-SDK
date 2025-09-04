@@ -12,7 +12,7 @@ import {
   SubscriptionStrategyKind,
   type SubscriptionStrategyKindValue,
 } from '../../models/SubscriptionStrategyKind';
-import OneSignalEvent from '../../services/OneSignalEvent';
+import { trigger } from '../../services/event';
 import { SessionOrigin } from '../../session/constants';
 import { Browser } from '../../useragent/constants';
 import { getBrowserName } from '../../useragent/detect';
@@ -106,7 +106,7 @@ export class SubscriptionManagerBase<
     await setSubscription(subscription);
 
     if (!IS_SERVICE_WORKER) {
-      OneSignalEvent.trigger(OneSignal.EVENTS.REGISTERED);
+      trigger(OneSignal.EVENTS.REGISTERED);
     }
 
     if (typeof OneSignal !== 'undefined') {

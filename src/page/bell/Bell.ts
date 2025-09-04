@@ -16,7 +16,7 @@ import type {
 import { wasPromptOfTypeDismissed } from '../../shared/helpers/DismissHelper';
 import { getNotificationIcons } from '../../shared/helpers/main';
 import Log from '../../shared/libraries/Log';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
+import { trigger } from '../../shared/services/event';
 import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
 import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent';
@@ -701,7 +701,7 @@ export default class Bell {
     const lastState = this.state;
     this.state = newState;
     if (lastState !== newState && !silent) {
-      OneSignalEvent.trigger(Bell.EVENTS.STATE_CHANGED, {
+      trigger(Bell.EVENTS.STATE_CHANGED, {
         from: lastState,
         to: newState,
       });

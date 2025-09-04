@@ -1,7 +1,7 @@
 import { containsMatch } from 'src/shared/context/helpers';
 import { addCssClass, removeCssClass } from 'src/shared/helpers/dom';
 import Log from '../../shared/libraries/Log';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
+import { trigger } from '../../shared/services/event';
 import { once } from '../../shared/utils/utils';
 
 export default class AnimatedElement {
@@ -50,7 +50,7 @@ export default class AnimatedElement {
     } else
       return new Promise((resolve) => {
         this.state = 'showing';
-        OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWING, this);
+        trigger(AnimatedElement.EVENTS.SHOWING, this);
         const element = this.element;
         if (!element) {
           Log._error(
@@ -84,7 +84,7 @@ export default class AnimatedElement {
                 // Uninstall the event listener for transitionend
                 destroyListenerFn();
                 this.state = 'shown';
-                OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWN, this);
+                trigger(AnimatedElement.EVENTS.SHOWN, this);
                 return resolve(this);
               }
             },
@@ -104,7 +104,7 @@ export default class AnimatedElement {
     } else
       return new Promise((resolve) => {
         this.state = 'hiding';
-        OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDING, this);
+        trigger(AnimatedElement.EVENTS.HIDING, this);
         const element = this.element;
         if (!element) {
           Log._error(
@@ -138,7 +138,7 @@ export default class AnimatedElement {
                 // Uninstall the event listener for transitionend
                 destroyListenerFn();
                 this.state = 'hidden';
-                OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDDEN, this);
+                trigger(AnimatedElement.EVENTS.HIDDEN, this);
                 return resolve(this);
               }
             },

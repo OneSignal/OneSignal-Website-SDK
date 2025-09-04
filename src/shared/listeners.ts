@@ -14,7 +14,7 @@ import type {
 } from './notifications/types';
 import { isCategorySlidedownConfigured } from './prompts/helpers';
 import LimitStore from './services/LimitStore';
-import OneSignalEvent from './services/OneSignalEvent';
+import { trigger } from './services/event';
 import { logMethodCall } from './utils/utils';
 
 export async function checkAndTriggerSubscriptionChanged() {
@@ -75,7 +75,7 @@ export async function checkAndTriggerSubscriptionChanged() {
 }
 
 function triggerSubscriptionChanged(change: SubscriptionChangeEvent) {
-  OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
+  trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
 }
 
 export function triggerNotificationClick(
@@ -85,10 +85,7 @@ export function triggerNotificationClick(
     notification: event.notification,
     result: event.result,
   };
-  return OneSignalEvent.trigger(
-    OneSignal.EVENTS.NOTIFICATION_CLICKED,
-    publicEvent,
-  );
+  return trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, publicEvent);
 }
 
 const getUserState = async (): Promise<UserState> => {
@@ -148,7 +145,7 @@ export async function checkAndTriggerUserChanged() {
 }
 
 function triggerUserChanged(change: UserChangeEvent) {
-  OneSignalEvent.trigger(
+  trigger(
     OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
     change,
     UserNamespace._emitter,
@@ -253,7 +250,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
     { __isOneSignalWelcomeNotification: true },
     undefined,
   );
-  OneSignalEvent.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+  trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
     title: title,
     message: message,
     url: url,

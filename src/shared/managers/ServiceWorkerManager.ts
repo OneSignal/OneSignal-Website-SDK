@@ -23,7 +23,7 @@ import type {
   NotificationForegroundWillDisplayEvent,
   NotificationForegroundWillDisplayEventSerializable,
 } from '../notifications/types';
-import OneSignalEvent from '../services/OneSignalEvent';
+import { trigger } from '../services/event';
 import type {
   PageVisibilityRequest,
   PageVisibilityResponse,
@@ -272,10 +272,7 @@ export class ServiceWorkerManager {
             throw new Error('Browser does not support preventing display.');
           },
         };
-        await OneSignalEvent.trigger(
-          OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY,
-          publicEvent,
-        );
+        await trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, publicEvent);
       },
     );
 
@@ -317,10 +314,7 @@ export class ServiceWorkerManager {
     workerMessenger._on(
       WorkerMessengerCommand.NotificationDismissed,
       async (data) => {
-        await OneSignalEvent.trigger(
-          OneSignal.EVENTS.NOTIFICATION_DISMISSED,
-          data,
-        );
+        await trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
       },
     );
 

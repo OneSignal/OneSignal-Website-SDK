@@ -11,8 +11,8 @@ import {
   getPermissionStatus,
 } from '../managers/permission';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
+import { trigger } from '../services/event';
 import LimitStore from '../services/LimitStore';
-import OneSignalEvent from '../services/OneSignalEvent';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once } from '../utils/utils';
 import { getAppId } from './main';
@@ -96,7 +96,7 @@ async function sessionInit(): Promise<void> {
   }
 
   OneSignal._sessionInitAlreadyRunning = false;
-  await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  await trigger(OneSignal.EVENTS.SDK_INITIALIZED);
 }
 
 export async function registerForPushNotifications(): Promise<void> {
@@ -131,7 +131,7 @@ export async function onSdkInitialized() {
     await OneSignal._context._updateManager.sendOnSessionUpdate();
   }
 
-  await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
+  await trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
 }
 
 /** Helper methods */

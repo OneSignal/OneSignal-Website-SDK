@@ -1,7 +1,7 @@
 import { containsMatch } from 'src/shared/context/helpers';
 import { addCssClass, removeCssClass } from 'src/shared/helpers/dom';
 import Log from '../../shared/libraries/Log';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
+import { trigger } from '../../shared/services/event';
 import { once } from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
 
@@ -51,7 +51,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     } else
       return new Promise((resolve) => {
         this.activeState = 'activating';
-        OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
+        trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
         const element = this.element;
         if (!element) {
           Log._error('Could not find active animated element');
@@ -84,10 +84,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
                   // Uninstall the event listener for transitionend
                   destroyListenerFn();
                   this.activeState = 'active';
-                  OneSignalEvent.trigger(
-                    ActiveAnimatedElement.EVENTS.ACTIVE,
-                    this,
-                  );
+                  trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
                   return resolve(this);
                 }
               },
@@ -97,7 +94,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         } else {
           Log._debug(`Ending activate() transition (alternative).`);
           this.activeState = 'active';
-          OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
+          trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
           return resolve(this);
         }
       });
@@ -113,7 +110,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     } else
       return new Promise((resolve) => {
         this.activeState = 'inactivating';
-        OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
+        trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
         const element = this.element;
         if (!element) {
           Log._error('Could not find active animated element');
@@ -146,10 +143,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
                   // Uninstall the event listener for transitionend
                   destroyListenerFn();
                   this.activeState = 'inactive';
-                  OneSignalEvent.trigger(
-                    ActiveAnimatedElement.EVENTS.INACTIVE,
-                    this,
-                  );
+                  trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
                   return resolve(this);
                 }
               },
@@ -158,7 +152,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           }
         } else {
           this.activeState = 'inactive';
-          OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
+          trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
           return resolve(this);
         }
       });
