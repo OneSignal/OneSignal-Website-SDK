@@ -10,13 +10,16 @@ import Log from '../../shared/libraries/Log';
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users
-  static switchingUsersPromise: Promise<void> = Promise.resolve();
+  static _switchingUsersPromise: Promise<void> = Promise.resolve();
 
-  static async login(externalId: string, token?: string): Promise<void> {
-    await (this.switchingUsersPromise = LoginManager._login(externalId, token));
+  static async _login(externalId: string, token?: string): Promise<void> {
+    await (this._switchingUsersPromise = LoginManager._loginInner(
+      externalId,
+      token,
+    ));
   }
 
-  private static async _login(
+  private static async _loginInner(
     externalId: string,
     token?: string,
   ): Promise<void> {
@@ -74,11 +77,11 @@ export default class LoginManager {
     await Promise.all(promises);
   }
 
-  static async logout(): Promise<void> {
-    await (this.switchingUsersPromise = LoginManager._logout());
+  static async _logout(): Promise<void> {
+    await (this._switchingUsersPromise = LoginManager._logoutInner());
   }
 
-  private static async _logout(): Promise<void> {
+  private static async _logoutInner(): Promise<void> {
     // check if user is already logged out
     const identityModel = OneSignal._coreDirector._getIdentityModel();
 

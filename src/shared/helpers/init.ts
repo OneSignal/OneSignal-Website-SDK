@@ -25,7 +25,7 @@ export async function internalInit() {
   const sessionManager = OneSignal._context._sessionManager;
   OneSignal._emitter._on(
     OneSignal.EVENTS.SESSION_STARTED,
-    sessionManager.sendOnSessionUpdateFromPage.bind(sessionManager),
+    sessionManager._sendOnSessionUpdateFromPage.bind(sessionManager),
   );
   incrementPageViewCount();
 
@@ -88,7 +88,7 @@ async function sessionInit(): Promise<void> {
   await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
   if (OneSignal._config?.userConfig.promptOptions?.autoPrompt && !isOptedOut) {
-    OneSignal._context.promptsManager._spawnAutoPrompts();
+    OneSignal._context._promptsManager._spawnAutoPrompts();
   }
 
   OneSignal._sessionInitAlreadyRunning = false;
@@ -116,7 +116,7 @@ export async function onSdkInitialized() {
   const isExistingUser: boolean =
     await OneSignal._context._subscriptionManager._isAlreadyRegisteredWithOneSignal();
   if (isExistingUser) {
-    OneSignal._context._sessionManager.setupSessionEventListeners();
+    OneSignal._context._sessionManager._setupSessionEventListeners();
     if (!wasUserResubscribed) {
       await OneSignal._context._updateManager.sendOnSessionUpdate();
     }

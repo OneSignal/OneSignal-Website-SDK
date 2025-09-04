@@ -5,12 +5,11 @@ import type {
 import type { ContextInterface } from 'src/shared/context/types';
 import Log from '../../../shared/libraries/Log';
 import TagUtils from '../../../shared/utils/TagUtils';
-import type { ITagManager } from './types';
 
 /**
  * Manages tags for the TaggingContainer
  */
-export default class TagManager implements ITagManager {
+export default class TagManager {
   // local tags from tagging container
   private _tagsFromTaggingContainer: TagsObjectWithBoolean = {};
   private _context: ContextInterface;

@@ -115,13 +115,13 @@ export default class OneSignal {
       throw WrongTypeArgumentError('jwtToken');
     }
 
-    await LoginManager.login(externalId, jwtToken);
+    await LoginManager._login(externalId, jwtToken);
   }
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
     if (isConsentRequiredButNotGiven()) return;
-    await LoginManager.logout();
+    await LoginManager._logout();
   }
 
   /**

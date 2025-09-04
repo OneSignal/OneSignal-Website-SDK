@@ -213,7 +213,7 @@ export class PromptsManager {
       this._installEventHooksForSlidedown();
     }
 
-    await this._context._slidedownManager.createSlidedown(options);
+    await this._context._slidedownManager._createSlidedown(options);
   }
 
   public async _internalShowCategorySlidedown(
@@ -295,14 +295,14 @@ export class PromptsManager {
     this._eventHooksInstalled = true;
 
     OneSignal._emitter._on(Slidedown.EVENTS.SHOWN, () => {
-      this._context._slidedownManager.setIsSlidedownShowing(true);
+      this._context._slidedownManager._setIsSlidedownShowing(true);
     });
     OneSignal._emitter._on(Slidedown.EVENTS.CLOSED, () => {
-      this._context._slidedownManager.setIsSlidedownShowing(false);
-      this._context._slidedownManager.showQueued();
+      this._context._slidedownManager._setIsSlidedownShowing(false);
+      this._context._slidedownManager._showQueued();
     });
     OneSignal._emitter._on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
-      await this._context._slidedownManager.handleAllowClick();
+      await this._context._slidedownManager._handleAllowClick();
       OneSignalEvent.trigger(
         OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
       );

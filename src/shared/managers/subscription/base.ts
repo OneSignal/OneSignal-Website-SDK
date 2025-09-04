@@ -85,7 +85,7 @@ export class SubscriptionManagerBase<
 
       // NOTE: We only have sessionManager in the page context, should sw upsert do anything?
     } else if (!IS_SERVICE_WORKER && '_sessionManager' in this._context) {
-      this._context._sessionManager.upsertSession(SessionOrigin.UserCreate);
+      this._context._sessionManager._upsertSession(SessionOrigin.UserCreate);
     }
 
     const subscription = await getSubscription();

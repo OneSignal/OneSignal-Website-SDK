@@ -65,7 +65,7 @@ export class UpdateManager {
       // Not sending on_session here but from SW instead.
 
       // Not awaiting here on purpose
-      this.context._sessionManager.upsertSession(SessionOrigin.UserNewSession);
+      this.context._sessionManager._upsertSession(SessionOrigin.UserNewSession);
       this.onSessionSent = true;
     } catch (e) {
       if (e instanceof Error) {

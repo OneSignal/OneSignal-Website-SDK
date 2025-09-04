@@ -17,13 +17,13 @@ describe('SessionManager', () => {
 
     test('handleOnFocus should wait for login promise', async () => {
       const loginPromise = (async function () {
-        await LoginManager.login(EXTERNAL_ID);
+        await LoginManager._login(EXTERNAL_ID);
         return 'login';
       })();
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnFocus(new Event('{}'));
+        await sessionManager._handleOnFocus(new Event('{}'));
         return 'session';
       })();
 
@@ -33,13 +33,13 @@ describe('SessionManager', () => {
 
     test('handleOnFocus should wait for logout promise', async () => {
       const loginPromise = (async function () {
-        await LoginManager.logout();
+        await LoginManager._logout();
         return 'logout';
       })();
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnFocus(new Event('{}'));
+        await sessionManager._handleOnFocus(new Event('{}'));
         return 'session';
       })();
 
@@ -49,13 +49,13 @@ describe('SessionManager', () => {
 
     test('handleOnBlur should wait for login promise', async () => {
       const loginPromise = (async function () {
-        await LoginManager.login(EXTERNAL_ID);
+        await LoginManager._login(EXTERNAL_ID);
         return 'login';
       })();
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnBlur(new Event('{}'));
+        await sessionManager._handleOnBlur(new Event('{}'));
         return 'session';
       })();
 
@@ -65,13 +65,13 @@ describe('SessionManager', () => {
 
     test('handleOnBlur should wait for logout promise', async () => {
       const loginPromise = (async function () {
-        await LoginManager.logout();
+        await LoginManager._logout();
         return 'logout';
       })();
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnBlur(new Event('{}'));
+        await sessionManager._handleOnBlur(new Event('{}'));
         return 'session';
       })();
 
@@ -81,13 +81,13 @@ describe('SessionManager', () => {
 
     test('handleVisibilityChange should wait for login promise', async () => {
       const loginPromise = (async function () {
-        await LoginManager.login(EXTERNAL_ID);
+        await LoginManager._login(EXTERNAL_ID);
         return 'login';
       })();
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleVisibilityChange();
+        await sessionManager._handleVisibilityChange();
         return 'session';
       })();
 
@@ -97,13 +97,13 @@ describe('SessionManager', () => {
 
     test('handleOnBeforeUnload should wait for login promise', async () => {
       const loginPromise = (async function () {
-        await LoginManager.login(EXTERNAL_ID);
+        await LoginManager._login(EXTERNAL_ID);
         return 'login';
       })();
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnBeforeUnload();
+        await sessionManager._handleOnBeforeUnload();
         return 'session';
       })();
 
@@ -113,13 +113,13 @@ describe('SessionManager', () => {
 
     test('upsertSession should wait for login promise', async () => {
       const loginPromise = (async function () {
-        await LoginManager.login(EXTERNAL_ID);
+        await LoginManager._login(EXTERNAL_ID);
         return 'login';
       })();
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.upsertSession(SessionOrigin.UserCreate);
+        await sessionManager._upsertSession(SessionOrigin.UserCreate);
         return 'session';
       })();
 

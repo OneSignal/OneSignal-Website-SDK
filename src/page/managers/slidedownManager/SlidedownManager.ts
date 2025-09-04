@@ -37,20 +37,19 @@ import TaggingContainer from '../../slidedown/TaggingContainer';
 import type { AutoPromptOptions } from '../PromptsManager';
 
 export class SlidedownManager {
-  private context: ContextInterface;
-  private slidedownQueue: AutoPromptOptions[];
-  private isSlidedownShowing: boolean;
+  private _context: ContextInterface;
+  private _slidedownQueue: AutoPromptOptions[];
+  private _isSlidedownShowing: boolean;
   slidedown?: Slidedown;
 
   constructor(context: ContextInterface) {
-    this.context = context;
-    this.slidedownQueue = [];
-    this.isSlidedownShowing = false;
+    this._context = context;
+    this._slidedownQueue = [];
+    this._isSlidedownShowing = false;
   }
 
   /* P R I V A T E */
-
-  private async checkIfSlidedownShouldBeShown(
+  private async _checkIfSlidedownShouldBeShown(
     options: AutoPromptOptions,
   ): Promise<boolean> {
     const permissionDenied =
@@ -131,19 +130,19 @@ export class SlidedownManager {
     return true;
   }
 
-  private async handleAllowForCategoryType(): Promise<void> {
+  private async _handleAllowForCategoryType(): Promise<void> {
     if (!this.slidedown) {
       throw SlidedownMissingError;
     }
 
     const tags = TaggingContainer.getValuesFromTaggingContainer();
-    this.context._tagManager._storeTagValuesToUpdate(tags);
+    this._context._tagManager._storeTagValuesToUpdate(tags);
 
     registerForPushNotifications();
-    await this.context._tagManager._sendTags(true);
+    await this._context._tagManager._sendTags();
   }
 
-  private async handleAllowForEmailType(): Promise<void> {
+  private async _handleAllowForEmailType(): Promise<void> {
     if (!this.slidedown) {
       throw SlidedownMissingError;
     }
@@ -159,10 +158,10 @@ export class SlidedownManager {
 
     const email =
       this.slidedown.channelCaptureContainer?.getValueFromEmailInput();
-    this.updateEmail(email);
+    this._updateEmail(email);
   }
 
-  private async handleAllowForSmsType(): Promise<void> {
+  private async _handleAllowForSmsType(): Promise<void> {
     if (!this.slidedown) {
       throw SlidedownMissingError;
     }
@@ -177,10 +176,10 @@ export class SlidedownManager {
     }
 
     const sms = this.slidedown.channelCaptureContainer?.getValueFromSmsInput();
-    this.updateSMS(sms);
+    this._updateSMS(sms);
   }
 
-  private async handleAllowForSmsAndEmailType(): Promise<void> {
+  private async _handleAllowForSmsAndEmailType(): Promise<void> {
     if (!this.slidedown) {
       throw SlidedownMissingError;
     }
@@ -219,7 +218,7 @@ export class SlidedownManager {
      */
     if (emailInputFieldIsValid) {
       if (!isEmailEmpty) {
-        this.updateEmail(email);
+        this._updateEmail(email);
       }
     } else {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
@@ -227,28 +226,28 @@ export class SlidedownManager {
 
     if (smsInputFieldIsValid) {
       if (!isSmsEmpty) {
-        this.updateSMS(sms);
+        this._updateSMS(sms);
       }
     } else {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
     }
   }
 
-  private updateEmail(email?: string): void {
+  private _updateEmail(email?: string): void {
     if (!email) {
       return;
     }
     OneSignal.User.addEmail(email);
   }
 
-  private updateSMS(sms?: string): void {
+  private _updateSMS(sms?: string): void {
     if (!sms) {
       return;
     }
     OneSignal.User.addSms(sms);
   }
 
-  private async showConfirmationToast(): Promise<void> {
+  private async _showConfirmationToast(): Promise<void> {
     if (!this.slidedown) {
       throw SlidedownMissingError;
     }
@@ -265,24 +264,24 @@ export class SlidedownManager {
     ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
   }
 
-  private async mountAuxiliaryContainers(
+  private async _mountAuxiliaryContainers(
     options: AutoPromptOptions,
   ): Promise<void> {
     switch (options.slidedownPromptOptions?.type) {
       case DelayedPromptType.Category:
-        this.mountTaggingContainer(options);
+        this._mountTaggingContainer(options);
         break;
       case DelayedPromptType.Email:
       case DelayedPromptType.Sms:
       case DelayedPromptType.SmsAndEmail:
-        await this.mountChannelCaptureContainer(options);
+        await this._mountChannelCaptureContainer(options);
         break;
       default:
         break;
     }
   }
 
-  private async mountTaggingContainer(
+  private async _mountTaggingContainer(
     options: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('mountTaggingContainer');
@@ -300,7 +299,7 @@ export class SlidedownManager {
       const existingTags = propertiesModel.tags;
 
       if (options.isInUpdateMode && existingTags) {
-        this.context._tagManager._storeRemotePlayerTags(
+        this._context._tagManager._storeRemotePlayerTags(
           existingTags as TagsObjectForApi,
         );
         tagsForComponent = TagUtils.convertTagsApiToBooleans(
@@ -320,7 +319,7 @@ export class SlidedownManager {
     }
   }
 
-  private async mountChannelCaptureContainer(
+  private async _mountChannelCaptureContainer(
     options: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('mountChannelCaptureContainer');
@@ -344,8 +343,7 @@ export class SlidedownManager {
   }
 
   /* P U B L I C */
-
-  public async handleAllowClick(): Promise<void> {
+  public async _handleAllowClick(): Promise<void> {
     if (!this.slidedown) {
       throw SlidedownMissingError;
     }
@@ -361,16 +359,16 @@ export class SlidedownManager {
           registerForPushNotifications();
           break;
         case DelayedPromptType.Category:
-          await this.handleAllowForCategoryType();
+          await this._handleAllowForCategoryType();
           break;
         case DelayedPromptType.Email:
-          await this.handleAllowForEmailType();
+          await this._handleAllowForEmailType();
           break;
         case DelayedPromptType.Sms:
-          await this.handleAllowForSmsType();
+          await this._handleAllowForSmsType();
           break;
         case DelayedPromptType.SmsAndEmail:
-          await this.handleAllowForSmsAndEmailType();
+          await this._handleAllowForSmsAndEmailType();
           break;
         default:
           break;
@@ -391,7 +389,7 @@ export class SlidedownManager {
       this.slidedown.close();
 
       if (!isSlidedownPushDependent(slidedownType)) {
-        await this.showConfirmationToast();
+        await this._showConfirmationToast();
       }
       // timeout to allow slidedown close animation to finish in case another slidedown is queued
       await delay(1000);
@@ -412,34 +410,34 @@ export class SlidedownManager {
     }
   }
 
-  public setIsSlidedownShowing(isShowing: boolean): void {
-    this.isSlidedownShowing = isShowing;
+  public _setIsSlidedownShowing(isShowing: boolean): void {
+    this._isSlidedownShowing = isShowing;
   }
 
-  public async showQueued(): Promise<void> {
-    if (this.slidedownQueue.length > 0) {
-      const options = this.dequeue();
+  public async _showQueued(): Promise<void> {
+    if (this._slidedownQueue.length > 0) {
+      const options = this._dequeue();
 
       if (!!options) {
-        await this.createSlidedown(options);
+        await this._createSlidedown(options);
       }
     }
   }
 
-  public enqueue(options: AutoPromptOptions): void {
-    this.slidedownQueue.push(options);
+  public _enqueue(options: AutoPromptOptions): void {
+    this._slidedownQueue.push(options);
     Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.QUEUED);
   }
 
-  public dequeue(): AutoPromptOptions | undefined {
-    return this.slidedownQueue.shift();
+  public _dequeue(): AutoPromptOptions | undefined {
+    return this._slidedownQueue.shift();
   }
 
-  public async createSlidedown(options: AutoPromptOptions): Promise<void> {
+  public async _createSlidedown(options: AutoPromptOptions): Promise<void> {
     logMethodCall('createSlidedown');
     if (isConsentRequiredButNotGiven()) return;
     try {
-      const showPrompt = await this.checkIfSlidedownShouldBeShown(options);
+      const showPrompt = await this._checkIfSlidedownShouldBeShown(options);
       if (!showPrompt) {
         return;
       }
@@ -450,24 +448,24 @@ export class SlidedownManager {
 
     manageNotifyButtonStateWhileSlidedownShows();
 
-    if (this.isSlidedownShowing) {
+    if (this._isSlidedownShowing) {
       // already showing, enqueue
-      this.enqueue(options);
+      this._enqueue(options);
       return;
     }
 
     try {
-      this.setIsSlidedownShowing(true);
+      this._setIsSlidedownShowing(true);
       const slidedownPromptOptions =
         options.slidedownPromptOptions || CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
       this.slidedown = new Slidedown(slidedownPromptOptions);
       await this.slidedown.create(options.isInUpdateMode);
-      await this.mountAuxiliaryContainers(options);
+      await this._mountAuxiliaryContainers(options);
       Log._debug('Showing OneSignal Slidedown');
       Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
     } catch (e) {
       Log._error('There was an error showing the OneSignal Slidedown:', e);
-      this.setIsSlidedownShowing(false);
+      this._setIsSlidedownShowing(false);
       this.slidedown?.close();
     }
   }

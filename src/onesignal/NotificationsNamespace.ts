@@ -121,7 +121,7 @@ export default class NotificationsNamespace extends EventListenerBase {
   async requestPermission(): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal._context.promptsManager._internalShowNativePrompt();
+    await OneSignal._context._promptsManager._internalShowNativePrompt();
   }
 
   addEventListener<K extends NotificationEventName>(
