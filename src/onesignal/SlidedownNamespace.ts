@@ -60,13 +60,13 @@ export default class SlidedownNamespace extends EventListenerBase {
     event: 'slidedownShown',
     listener: (wasShown: boolean) => void,
   ): void {
-    OneSignal.emitter.on(event, listener);
+    OneSignal.emitter._on(event, listener);
   }
 
   removeEventListener(
     event: 'slidedownShown',
     listener: (wasShown: boolean) => void,
   ): void {
-    OneSignal.emitter.off(event, listener);
+    OneSignal.emitter._off(event, listener);
   }
 }

@@ -351,7 +351,7 @@ export function manageNotifyButtonStateWhileSlidedownShows(): void {
       OneSignal.notifyButton?.launcher?.hide();
     });
   }
-  OneSignal.emitter.once(Slidedown.EVENTS.CLOSED, () => {
+  OneSignal.emitter._once(Slidedown.EVENTS.CLOSED, () => {
     if (OneSignal.notifyButton && OneSignal.notifyButton.options.enable) {
       OneSignal.notifyButton.launcher.show();
     }

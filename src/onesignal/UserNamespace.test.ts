@@ -400,7 +400,7 @@ describe('Event Handling', () => {
     };
 
     userNamespace.addEventListener('change', mockListener);
-    UserNamespace._emitter.emit('change', event);
+    UserNamespace._emitter._emit('change', event);
 
     expect(mockListener).toHaveBeenCalledWith(event);
   });
@@ -417,7 +417,7 @@ describe('Event Handling', () => {
 
     userNamespace.addEventListener('change', mockListener);
     userNamespace.removeEventListener('change', mockListener);
-    UserNamespace._emitter.emit('change', event);
+    UserNamespace._emitter._emit('change', event);
 
     expect(mockListener).not.toHaveBeenCalled();
   });

@@ -282,7 +282,7 @@ export class SessionManager implements ISessionManager {
       this.setupSessionEventListeners();
     } else {
       this.onSessionSent = sessionOrigin === SessionOrigin.UserCreate;
-      OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+      OneSignal.emitter._emit(OneSignal.EVENTS.SESSION_STARTED);
     }
   }
 

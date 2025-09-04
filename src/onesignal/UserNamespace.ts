@@ -113,13 +113,13 @@ export default class UserNamespace extends EventListenerBase {
     event: 'change',
     listener: (userChange: UserChangeEvent) => void,
   ): void {
-    UserNamespace._emitter.on(event, listener);
+    UserNamespace._emitter._on(event, listener);
   }
 
   removeEventListener(
     event: 'change',
     listener: (userChange: UserChangeEvent) => void,
   ): void {
-    UserNamespace._emitter.off(event, listener);
+    UserNamespace._emitter._off(event, listener);
   }
 }

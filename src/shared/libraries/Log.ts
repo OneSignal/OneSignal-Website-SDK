@@ -6,7 +6,7 @@ export default class Log {
       return !!(self as unknown as ServiceWorkerGlobalScope).shouldLog;
     try {
       /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
-      const level = window.localStorage.getItem('loglevel');
+      const level = localStorage.getItem('loglevel');
       return level?.toLowerCase() === 'trace';
     } catch (e) {
       return false;
@@ -22,7 +22,7 @@ export default class Log {
 
     /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
     try {
-      window.localStorage.setItem('loglevel', level);
+      localStorage.setItem('loglevel', level);
     } catch (e) {
       console.error(e);
     }

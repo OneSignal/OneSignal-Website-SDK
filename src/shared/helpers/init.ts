@@ -23,7 +23,7 @@ export async function internalInit() {
   await OneSignal.context._serviceWorkerManager._installWorker();
 
   const sessionManager = OneSignal.context._sessionManager;
-  OneSignal.emitter.on(
+  OneSignal.emitter._on(
     OneSignal.EVENTS.SESSION_STARTED,
     sessionManager.sendOnSessionUpdateFromPage.bind(sessionManager),
   );
@@ -232,7 +232,7 @@ async function showNotifyButton() {
     const displayPredicate =
       OneSignal.config!.userConfig.notifyButton!.displayPredicate;
     if (displayPredicate && typeof displayPredicate === 'function') {
-      OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
+      OneSignal.emitter._once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
         const predicateValue = await Promise.resolve(
           OneSignal.config!.userConfig.notifyButton!.displayPredicate?.(),
         );

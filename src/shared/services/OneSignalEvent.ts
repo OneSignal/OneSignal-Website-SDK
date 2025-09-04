@@ -44,9 +44,9 @@ export default class OneSignalEvent {
         else OneSignal.initialized = true;
       }
       if (emitter) {
-        await emitter.emit(eventName, data);
+        await emitter._emit(eventName, data);
       } else {
-        await OneSignal.emitter.emit(eventName, data);
+        await OneSignal.emitter._emit(eventName, data);
       }
     }
   }

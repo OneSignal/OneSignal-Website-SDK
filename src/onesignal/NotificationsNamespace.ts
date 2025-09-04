@@ -30,7 +30,7 @@ export default class NotificationsNamespace extends EventListenerBase {
     this._permission = permissionNative === 'granted';
 
     if (typeof OneSignal !== 'undefined') {
-      OneSignal.emitter.on(
+      OneSignal.emitter._on(
         OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
         (permissionNative: NotificationPermission) => {
           this._permissionNative = permissionNative;
@@ -128,13 +128,13 @@ export default class NotificationsNamespace extends EventListenerBase {
     event: K,
     listener: (obj: NotificationEventTypeMap[K]) => void,
   ): void {
-    OneSignal.emitter.on(event, listener);
+    OneSignal.emitter._on(event, listener);
   }
 
   removeEventListener<K extends NotificationEventName>(
     event: K,
     listener: (obj: NotificationEventTypeMap[K]) => void,
   ): void {
-    OneSignal.emitter.off(event, listener);
+    OneSignal.emitter._off(event, listener);
   }
 }

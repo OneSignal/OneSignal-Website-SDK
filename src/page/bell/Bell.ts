@@ -198,7 +198,7 @@ export default class Bell {
 
   private installEventHooks() {
     // Install event hooks
-    OneSignal.emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
+    OneSignal.emitter._on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
       this._ignoreSubscriptionState = true;
       OneSignal.User.PushSubscription.optIn()
@@ -226,7 +226,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
+    OneSignal.emitter._on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
       this.dialog.unsubscribeButton.disabled = true;
       OneSignal.User.PushSubscription.optOut()
         .then(() => {
@@ -249,7 +249,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.HOVERING, () => {
+    OneSignal.emitter._on(Bell.EVENTS.HOVERING, () => {
       this.hovering = true;
       this.launcher.activateIfInactive();
 
@@ -293,7 +293,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.HOVERED, () => {
+    OneSignal.emitter._on(Bell.EVENTS.HOVERED, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
       if (this.message.contentType === Message.TYPES.MESSAGE) {
         return;
@@ -332,7 +332,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(
+    OneSignal.emitter._on(
       OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
       async (isSubscribed: SubscriptionChangeEvent) => {
         if (isSubscribed.current.optedIn) {
@@ -359,7 +359,7 @@ export default class Bell {
       },
     );
 
-    OneSignal.emitter.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+    OneSignal.emitter._on(Bell.EVENTS.STATE_CHANGED, (state) => {
       if (!this.launcher.element) {
         // Notify button doesn't exist
         return;
@@ -371,7 +371,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(
+    OneSignal.emitter._on(
       OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
       () => {
         this.updateState();

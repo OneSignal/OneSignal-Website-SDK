@@ -175,15 +175,15 @@ export default class OneSignal {
 
       OneSignal._initAlreadyCalled = true;
 
-      OneSignal.emitter.on(
+      OneSignal.emitter._on(
         OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
         checkAndTriggerSubscriptionChanged,
       );
-      OneSignal.emitter.on(
+      OneSignal.emitter._on(
         OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
         _onSubscriptionChanged,
       );
-      OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
+      OneSignal.emitter._on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
 
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,

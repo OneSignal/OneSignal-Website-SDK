@@ -73,8 +73,8 @@ test('Should update Notification.permission in time', async () => {
   });
 
   // simulating delay permission change event to fire after permission boolean change event
-  const originalEmit = OneSignal.emitter.emit.bind(OneSignal.emitter);
-  vi.spyOn(OneSignal.emitter, 'emit').mockImplementation(async (...args) => {
+  const originalEmit = OneSignal.emitter._emit.bind(OneSignal.emitter);
+  vi.spyOn(OneSignal.emitter, '_emit').mockImplementation(async (...args) => {
     if (args[0] === 'permissionChangeAsString') await delay(100);
     return originalEmit(...args);
   });

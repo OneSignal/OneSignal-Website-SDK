@@ -56,7 +56,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
         Log._error(e);
       });
 
-    OneSignal.emitter.on(
+    OneSignal.emitter._on(
       OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
       async (change: SubscriptionChangeEvent | undefined) => {
         this._id = change?.current.id;
@@ -64,7 +64,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
       },
     );
 
-    OneSignal.emitter.on(
+    OneSignal.emitter._on(
       OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
       async (permission: NotificationPermission) => {
         this._permission = permission;
@@ -112,14 +112,14 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     event: 'change',
     listener: (change: SubscriptionChangeEvent) => void,
   ): void {
-    OneSignal.emitter.on(event, listener);
+    OneSignal.emitter._on(event, listener);
   }
 
   removeEventListener(
     event: 'change',
     listener: (change: SubscriptionChangeEvent) => void,
   ): void {
-    OneSignal.emitter.off(event, listener);
+    OneSignal.emitter._off(event, listener);
   }
 
   /* P R I V A T E */
