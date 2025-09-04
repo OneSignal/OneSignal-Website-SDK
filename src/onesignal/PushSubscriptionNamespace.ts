@@ -12,6 +12,7 @@ import {
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
+import { getPermissionStatus } from 'src/shared/managers/permission';
 import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
@@ -89,8 +90,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     await awaitOneSignalInitAndSupported();
     this._optedIn = true;
 
-    const permissionStatus =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+    const permissionStatus = await getPermissionStatus();
 
     if (permissionStatus !== 'granted') {
       // TO DO: use user-config options prompting method

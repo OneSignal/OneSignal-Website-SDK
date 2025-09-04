@@ -5,7 +5,6 @@ import type { DynamicResourceLoader } from 'src/page/services/DynamicResourceLoa
 import type { AppConfig } from '../config/types';
 import type { WorkerMessengerPage } from '../libraries/workerMessenger/page';
 import type { WorkerMessengerSW } from '../libraries/workerMessenger/sw';
-import type PermissionManager from '../managers/PermissionManager';
 import type { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import type { SessionManager } from '../managers/sessionManager/SessionManager';
 import type { SubscriptionManagerPage } from '../managers/subscription/page';
@@ -27,7 +26,6 @@ export interface ContextSWInterface extends ContextBase {
 
 export interface ContextInterface extends ContextBase {
   _dynamicResourceLoader: DynamicResourceLoader;
-  _permissionManager: PermissionManager;
   _promptsManager: PromptsManager;
   _serviceWorkerManager: ServiceWorkerManager;
   _sessionManager: SessionManager;

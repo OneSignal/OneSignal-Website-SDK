@@ -5,7 +5,6 @@ import {
   getServiceWorkerManager,
   getSubscriptionManagerPage,
 } from '../../shared/helpers/context';
-import PermissionManager from '../../shared/managers/PermissionManager';
 import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager';
 import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';
 import { SubscriptionManagerPage } from '../../shared/managers/subscription/page';
@@ -21,7 +20,6 @@ export default class Context implements ContextInterface {
   public _subscriptionManager: SubscriptionManagerPage;
   public _serviceWorkerManager: ServiceWorkerManager;
   public _workerMessenger: WorkerMessengerPage;
-  public _permissionManager: PermissionManager;
   public _updateManager: UpdateManager;
   public _promptsManager: PromptsManager;
   public _sessionManager: SessionManager;
@@ -32,7 +30,6 @@ export default class Context implements ContextInterface {
     this._appConfig = appConfig;
     this._subscriptionManager = getSubscriptionManagerPage(this);
     this._serviceWorkerManager = getServiceWorkerManager(this);
-    this._permissionManager = new PermissionManager();
     this._workerMessenger = new WorkerMessengerPage(this);
     this._updateManager = new UpdateManager(this);
     this._sessionManager = new SessionManager(this);

@@ -30,6 +30,7 @@ import {
   _onSubscriptionChanged,
   checkAndTriggerSubscriptionChanged,
 } from 'src/shared/listeners';
+import { getPermissionStatus } from 'src/shared/managers/permission';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/EnvVariables';
@@ -58,8 +59,7 @@ export default class OneSignal {
     await core.init();
     OneSignal._coreDirector = new CoreModuleDirector(core);
     const subscription = await getSubscription();
-    const permission =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+    const permission = await getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);
     this.Notifications = new NotificationsNamespace(permission);
   }

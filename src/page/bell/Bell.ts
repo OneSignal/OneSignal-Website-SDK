@@ -7,6 +7,7 @@ import {
   removeDomElement,
 } from 'src/shared/helpers/dom';
 import { delay, nothing } from 'src/shared/helpers/general';
+import { getPermissionStatus } from 'src/shared/managers/permission';
 import type {
   BellPosition,
   BellSize,
@@ -345,8 +346,7 @@ export default class Bell {
           }
         }
 
-        const permission =
-          await OneSignal._context._permissionManager.getPermissionStatus();
+        const permission = await getPermissionStatus();
         let bellState: BellState;
         if (isSubscribed.current.optedIn) {
           bellState = Bell.STATES.SUBSCRIBED;
@@ -678,7 +678,7 @@ export default class Bell {
   updateState() {
     Promise.all([
       OneSignal._context._subscriptionManager.isPushNotificationsEnabled(),
-      OneSignal._context._permissionManager.getPermissionStatus(),
+      getPermissionStatus(),
     ])
       .then(([isEnabled, permission]) => {
         this.setState(

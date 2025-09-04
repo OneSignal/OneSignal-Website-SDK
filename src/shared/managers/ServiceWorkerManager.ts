@@ -29,6 +29,7 @@ import type {
   PageVisibilityResponse,
 } from '../session/types';
 import { VERSION } from '../utils/EnvVariables';
+import { getNotificationPermission } from './permission';
 
 export class ServiceWorkerManager {
   private _context: ContextInterface;
@@ -157,10 +158,9 @@ export class ServiceWorkerManager {
       workerState === ServiceWorkerActiveState.None ||
       workerState === ServiceWorkerActiveState.ThirdParty
     ) {
-      const permission =
-        await OneSignal._context._permissionManager.getNotificationPermission(
-          OneSignal._config!.safariWebId,
-        );
+      const permission = await getNotificationPermission(
+        OneSignal._config!.safariWebId,
+      );
       const notificationsEnabled = permission === 'granted';
       if (notificationsEnabled) {
         Log._info(

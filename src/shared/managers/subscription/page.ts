@@ -32,6 +32,7 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 import { IDManager } from '../IDManager';
+import { getNotificationPermission, getPermissionStatus } from '../permission';
 import { SubscriptionManagerBase } from './base';
 
 type SubscriptionStateServiceWorkerNotIntalled = Exclude<
@@ -111,8 +112,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       return NotificationType.UserOptedOut;
     }
 
-    const permission =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+    const permission = await getPermissionStatus();
     if (permission === 'granted') {
       return NotificationType.Subscribed;
     }
@@ -128,8 +128,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    */
   async isOptedIn(): Promise<boolean> {
     const subscriptionState = await this.getSubscriptionState();
-    const permission =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+    const permission = await getPermissionStatus();
     return permission === 'granted' && !subscriptionState.optedOut;
   }
 
@@ -193,10 +192,9 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
     const workerRegistration =
       await this._context._serviceWorkerManager._getOneSignalRegistration();
-    const notificationPermission =
-      await this._context._permissionManager.getNotificationPermission(
-        this._context._appConfig.safariWebId,
-      );
+    const notificationPermission = await getNotificationPermission(
+      this._context._appConfig.safariWebId,
+    );
     if (!workerRegistration) {
       /* You can't be subscribed without a service worker registration */
       return {
@@ -250,10 +248,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         Subscribing is only possible on the top-level frame, so there's no permission ambiguity
         here.
       */
-    if (
-      (await OneSignal._context._permissionManager.getPermissionStatus()) ===
-      'denied'
-    )
+    if ((await getPermissionStatus()) === 'denied')
       throw PermissionBlockedError;
 
     if (useSafariLegacyPush()) {

@@ -12,6 +12,7 @@ import {
 import { InvalidChannelInputField } from 'src/shared/errors/constants';
 import { delay } from 'src/shared/helpers/general';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
+import { getPermissionStatus } from 'src/shared/managers/permission';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -52,9 +53,7 @@ export class SlidedownManager {
   private async _checkIfSlidedownShouldBeShown(
     options: AutoPromptOptions,
   ): Promise<boolean> {
-    const permissionDenied =
-      (await OneSignal._context._permissionManager.getPermissionStatus()) ===
-      'denied';
+    const permissionDenied = (await getPermissionStatus()) === 'denied';
     let wasDismissed: boolean;
 
     const subscriptionInfo: PushSubscriptionState =

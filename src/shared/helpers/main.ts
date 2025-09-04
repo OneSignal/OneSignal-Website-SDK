@@ -4,6 +4,7 @@ import { getSubscription } from '../database/subscription';
 import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
 import { AppIDMissingError, MalformedArgumentError } from '../errors/common';
 import Log from '../libraries/Log';
+import { getPermissionStatus } from '../managers/permission';
 import type { NotificationIcons } from '../notifications/types';
 import type {
   AppUserConfigPromptOptions,
@@ -92,8 +93,7 @@ export async function checkAndTriggerNotificationPermissionChanged() {
     'notificationPermission',
   );
 
-  const currentPermission =
-    await OneSignal._context._permissionManager.getPermissionStatus();
+  const currentPermission = await getPermissionStatus();
 
   if (previousPermission !== currentPermission) {
     await triggerNotificationPermissionChanged();

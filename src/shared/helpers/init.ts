@@ -6,6 +6,10 @@ import { getSubscription, setSubscription } from '../database/subscription';
 import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
+import {
+  getNotificationPermission,
+  getPermissionStatus,
+} from '../managers/permission';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import LimitStore from '../services/LimitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
@@ -134,8 +138,7 @@ export async function onSdkInitialized() {
 async function storeInitialValues() {
   const isPushEnabled =
     await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
-  const notificationPermission =
-    await OneSignal._context._permissionManager.getPermissionStatus();
+  const notificationPermission = await getPermissionStatus();
   const isOptedOut = await OneSignal._context._subscriptionManager.isOptedOut();
   LimitStore.put('subscription.optedOut', isOptedOut);
   await db.put('Options', {
@@ -154,10 +157,9 @@ async function setWelcomeNotificationFlag(): Promise<void> {
    * already subscribed. Don't show welcome notifications if the user is
    * automatically resubscribed.
    */
-  const permission: NotificationPermission =
-    await OneSignal._context._permissionManager.getNotificationPermission(
-      OneSignal._context._appConfig.safariWebId,
-    );
+  const permission: NotificationPermission = await getNotificationPermission(
+    OneSignal._context._appConfig.safariWebId,
+  );
   if (permission === 'granted') {
     OneSignal._doNotShowWelcomeNotification = true;
   }
@@ -378,7 +380,7 @@ async function handleAutoResubscribe(isOptedOut: boolean) {
   });
   if (OneSignal._config?.userConfig.autoResubscribe && !isOptedOut) {
     const currentPermission: NotificationPermission =
-      await OneSignal._context._permissionManager.getNotificationPermission(
+      await getNotificationPermission(
         OneSignal._context._appConfig.safariWebId,
       );
     if (currentPermission == 'granted') {
