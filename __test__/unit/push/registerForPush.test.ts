@@ -32,7 +32,7 @@ describe('Register for push', () => {
     OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
     await promise;
     expect(Log._error).toHaveBeenCalled();
-    expect(OneSignal.initialized).toBe(true);
+    expect(OneSignal._initialized).toBe(true);
     expect(spy).toHaveBeenCalledTimes(1);
   });
 

@@ -7,14 +7,14 @@ export class SessionNamespace {
     outcomeName: string,
     outcomeWeight?: number | undefined,
   ): Promise<void> {
-    const config = OneSignal.config?.userConfig.outcomes;
+    const config = OneSignal._config?.userConfig.outcomes;
     if (!config) {
       Log._error(`Could not send ${outcomeName}. No outcomes config found.`);
       return;
     }
 
     const outcomesHelper = new OutcomesHelper(
-      OneSignal.config!.appId,
+      OneSignal._config!.appId,
       config,
       outcomeName,
       false,
@@ -41,14 +41,14 @@ export class SessionNamespace {
   }
 
   async sendUniqueOutcome(outcomeName: string): Promise<void> {
-    const config = OneSignal.config?.userConfig.outcomes;
+    const config = OneSignal._config?.userConfig.outcomes;
     if (!config) {
       Log._error(`Could not send ${outcomeName}. No outcomes config found.`);
       return;
     }
 
     const outcomesHelper = new OutcomesHelper(
-      OneSignal.config!.appId,
+      OneSignal._config!.appId,
       config,
       outcomeName,
       true,

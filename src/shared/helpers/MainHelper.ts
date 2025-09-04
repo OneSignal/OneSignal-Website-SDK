@@ -70,7 +70,7 @@ export default class MainHelper {
         : undefined,
     };
 
-    OneSignal.context._serviceWorkerManager
+    OneSignal._context._serviceWorkerManager
       ._getRegistration()
       .then(async (registration?: ServiceWorkerRegistration | null) => {
         if (!registration) {
@@ -96,7 +96,7 @@ export default class MainHelper {
     );
 
     const currentPermission =
-      await OneSignal.context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager.getPermissionStatus();
 
     if (previousPermission !== currentPermission) {
       await triggerNotificationPermissionChanged();
@@ -153,7 +153,7 @@ export default class MainHelper {
 
   static getPromptOptionsQueryString() {
     const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(
-      OneSignal.config?.userConfig.promptOptions,
+      OneSignal._config?.userConfig.promptOptions,
     );
     let promptOptionsStr = '';
     if (promptOptions) {
@@ -168,7 +168,7 @@ export default class MainHelper {
 
   static getPromptOptionsPostHash() {
     const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(
-      OneSignal.config?.userConfig.promptOptions,
+      OneSignal._config?.userConfig.promptOptions,
     );
     const hash: Record<string, string> = {};
     if (promptOptions) {
@@ -213,7 +213,7 @@ export default class MainHelper {
   }
 
   static getAppId(): string {
-    return OneSignal.config?.appId || '';
+    return OneSignal._config?.appId || '';
   }
 
   static async getDeviceId(): Promise<string | undefined> {
@@ -225,13 +225,13 @@ export default class MainHelper {
   static async getCurrentPushToken(): Promise<string | undefined> {
     if (useSafariLegacyPush()) {
       const safariToken = window.safari?.pushNotification?.permission(
-        OneSignal.config?.safariWebId,
+        OneSignal._config?.safariWebId,
       ).deviceToken;
       return safariToken?.toLowerCase() || undefined;
     }
 
     const registration =
-      await OneSignal.context._serviceWorkerManager._getRegistration();
+      await OneSignal._context._serviceWorkerManager._getRegistration();
     if (!registration) {
       return undefined;
     }

@@ -11,7 +11,7 @@ let isSubscriptionExpiringSpy: MockInstance;
 beforeEach(() => {
   TestEnvironment.initialize();
   isSubscriptionExpiringSpy = vi.spyOn(
-    OneSignal.context._subscriptionManager,
+    OneSignal._context._subscriptionManager,
     'isSubscriptionExpiring',
   );
 });
@@ -22,7 +22,7 @@ afterEach(() => {
 
 /** onSdkInitialized */
 test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
-  OneSignal.emitter._on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+  OneSignal._emitter._on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
     expect(true).toBe(true);
   });
   await InitHelper.onSdkInitialized();
@@ -36,11 +36,11 @@ test('onSdkInitialized: processes expiring subscriptions', async () => {
 
 test('onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false', async () => {
   const spy = vi
-    .spyOn(OneSignal.context._updateManager, 'sendOnSessionUpdate')
+    .spyOn(OneSignal._context._updateManager, 'sendOnSessionUpdate')
     .mockResolvedValue(undefined);
 
-  OneSignal.config!.userConfig.promptOptions!.autoPrompt = false;
-  OneSignal.config!.userConfig.autoResubscribe = false;
+  OneSignal._config!.userConfig.promptOptions!.autoPrompt = false;
+  OneSignal._config!.userConfig.autoResubscribe = false;
 
   await InitHelper.onSdkInitialized();
 
@@ -49,25 +49,25 @@ test('onSdkInitialized: sends on session update only if both autoPrompt and auto
 
 test('onSdkInitialized: does not send on session update', async () => {
   const spy = vi
-    .spyOn(OneSignal.context._updateManager, 'sendOnSessionUpdate')
+    .spyOn(OneSignal._context._updateManager, 'sendOnSessionUpdate')
     .mockResolvedValue(undefined);
 
-  OneSignal.config!.userConfig.promptOptions!.autoPrompt = true;
-  OneSignal.config!.userConfig.autoResubscribe = true;
+  OneSignal._config!.userConfig.promptOptions!.autoPrompt = true;
+  OneSignal._config!.userConfig.autoResubscribe = true;
 
   await InitHelper.onSdkInitialized();
 
   expect(spy).not.toHaveBeenCalled();
 
-  OneSignal.config!.userConfig.promptOptions!.autoPrompt = false;
-  OneSignal.config!.userConfig.autoResubscribe = true;
+  OneSignal._config!.userConfig.promptOptions!.autoPrompt = false;
+  OneSignal._config!.userConfig.autoResubscribe = true;
 
   await InitHelper.onSdkInitialized();
 
   expect(spy).not.toHaveBeenCalled();
 
-  OneSignal.config!.userConfig.promptOptions!.autoPrompt = true;
-  OneSignal.config!.userConfig.autoResubscribe = false;
+  OneSignal._config!.userConfig.promptOptions!.autoPrompt = true;
+  OneSignal._config!.userConfig.autoResubscribe = false;
 
   await InitHelper.onSdkInitialized();
 
@@ -78,9 +78,9 @@ test('correct degree of persistNotification setting should be stored', async () 
   TestEnvironment.initialize();
 
   const appConfig = TestContext.getFakeMergedConfig();
-  OneSignal.context = new Context(appConfig);
-  OneSignal.config = appConfig;
-  const config: AppConfig = OneSignal.config;
+  OneSignal._context = new Context(appConfig);
+  OneSignal._config = appConfig;
+  const config: AppConfig = OneSignal._config;
 
   // If not set, default to true
   delete config.userConfig.persistNotification;

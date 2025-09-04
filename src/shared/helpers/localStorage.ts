@@ -18,7 +18,7 @@ export function setConsentRequired(value: boolean): void {
 
 export function getConsentRequired(): boolean {
   const requiresUserPrivacyConsent =
-    OneSignal.config?.userConfig.requiresUserPrivacyConsent ?? false;
+    OneSignal._config?.userConfig.requiresUserPrivacyConsent ?? false;
   return (
     localStorage.getItem(REQUIRES_PRIVACY_CONSENT) === 'true' ||
     requiresUserPrivacyConsent

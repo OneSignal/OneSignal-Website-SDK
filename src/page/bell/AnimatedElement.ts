@@ -156,7 +156,7 @@ export default class AnimatedElement {
     if (this.state === 'shown') return Promise.resolve(this);
     else
       return new Promise((resolve) => {
-        OneSignal.emitter._once(AnimatedElement.EVENTS.SHOWN, (event) => {
+        OneSignal._emitter._once(AnimatedElement.EVENTS.SHOWN, (event) => {
           if (event === this) {
             return resolve(this);
           }
@@ -172,7 +172,7 @@ export default class AnimatedElement {
     if (this.state === 'hidden') return Promise.resolve(this);
     else
       return new Promise((resolve) => {
-        OneSignal.emitter._once(AnimatedElement.EVENTS.HIDDEN, (event) => {
+        OneSignal._emitter._once(AnimatedElement.EVENTS.HIDDEN, (event) => {
           if (event === this) {
             return resolve(this);
           }

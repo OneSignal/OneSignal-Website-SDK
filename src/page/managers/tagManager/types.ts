@@ -4,8 +4,8 @@ import type {
 } from 'src/page/tags/types';
 
 export interface ITagManager {
-  sendTags: (isInUpdateMode?: boolean) => Promise<TagsObjectForApi | null>;
-  storeTagValuesToUpdate: (tags: TagsObjectWithBoolean) => void;
-  storeRemotePlayerTags: (tags: TagsObjectForApi) => void;
-  remoteTags: TagsObjectForApi;
+  _sendTags: (isInUpdateMode?: boolean) => Promise<TagsObjectForApi | null>;
+  _storeTagValuesToUpdate: (tags: TagsObjectWithBoolean) => void;
+  _storeRemotePlayerTags: (tags: TagsObjectForApi) => void;
+  _remoteTags: TagsObjectForApi;
 }

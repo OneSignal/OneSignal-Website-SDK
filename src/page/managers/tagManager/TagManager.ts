@@ -12,26 +12,26 @@ import type { ITagManager } from './types';
  */
 export default class TagManager implements ITagManager {
   // local tags from tagging container
-  private tagsFromTaggingContainer: TagsObjectWithBoolean = {};
-  private context: ContextInterface;
-  public remoteTags: TagsObjectForApi = {};
+  private _tagsFromTaggingContainer: TagsObjectWithBoolean = {};
+  private _context: ContextInterface;
+  public _remoteTags: TagsObjectForApi = {};
 
   constructor(context: ContextInterface) {
-    this.context = context;
+    this._context = context;
   }
 
   /**
    * @returns Promise resolving TagsObject if successful, {} if no change detected, null if failed
    */
-  public async sendTags(): Promise<TagsObjectForApi> {
-    Log._info('Category Slidedown Local Tags:', this.tagsFromTaggingContainer);
+  public async _sendTags(): Promise<TagsObjectForApi> {
+    Log._info('Category Slidedown Local Tags:', this._tagsFromTaggingContainer);
 
     const localTagsConvertedToApi = TagUtils.convertTagsBooleansToApi(
-      this.tagsFromTaggingContainer,
+      this._tagsFromTaggingContainer,
     );
     const finalTagsObject = TagUtils.getObjectDifference(
       localTagsConvertedToApi,
-      this.remoteTags,
+      this._remoteTags,
     );
 
     const shouldSendUpdate = !TagUtils.isTagObjectEmpty(finalTagsObject);
@@ -50,15 +50,15 @@ export default class TagManager implements ITagManager {
    * @param  {TagsObject} tags - values of type "boolean"
    * @returns void
    */
-  storeTagValuesToUpdate(tags: TagsObjectWithBoolean): void {
-    this.tagsFromTaggingContainer = tags;
+  _storeTagValuesToUpdate(tags: TagsObjectWithBoolean): void {
+    this._tagsFromTaggingContainer = tags;
   }
 
   /**
    * @param  {TagsObject} remoteTags - values of type "number"
    * @returns void
    */
-  storeRemotePlayerTags(remoteTags: TagsObjectForApi): void {
-    this.context._tagManager.remoteTags = remoteTags;
+  _storeRemotePlayerTags(remoteTags: TagsObjectForApi): void {
+    this._context._tagManager._remoteTags = remoteTags;
   }
 }

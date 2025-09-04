@@ -146,7 +146,7 @@ export class ServiceWorkerManager {
     if (!supportsServiceWorkers()) return false;
 
     // 2. Is OneSignal initialized?
-    if (!OneSignal.config) return false;
+    if (!OneSignal._config) return false;
 
     // 3. Is a OneSignal ServiceWorker not installed now?
     // If not and notification permissions are enabled we should install.
@@ -158,8 +158,8 @@ export class ServiceWorkerManager {
       workerState === ServiceWorkerActiveState.ThirdParty
     ) {
       const permission =
-        await OneSignal.context._permissionManager.getNotificationPermission(
-          OneSignal.config!.safariWebId,
+        await OneSignal._context._permissionManager.getNotificationPermission(
+          OneSignal._config!.safariWebId,
         );
       const notificationsEnabled = permission === 'granted';
       if (notificationsEnabled) {
@@ -283,7 +283,7 @@ export class ServiceWorkerManager {
       WorkerMessengerCommand.NotificationClicked,
       async (event: NotificationClickEventInternal) => {
         const clickedListenerCallbackCount =
-          OneSignal.emitter._numberOfListeners(
+          OneSignal._emitter._numberOfListeners(
             OneSignal.EVENTS.NOTIFICATION_CLICKED,
           );
 

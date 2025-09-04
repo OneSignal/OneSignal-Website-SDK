@@ -676,7 +676,10 @@ describe('OneSignal - No Consent Required', () => {
 
         test('login then accept web push permissions - it should make two user calls', async () => {
           const { promise, resolve } = Promise.withResolvers();
-          OneSignal.emitter._on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, resolve);
+          OneSignal._emitter._on(
+            OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
+            resolve,
+          );
           setGetUserResponse();
           setCreateUserResponse({
             onesignalId: ONESIGNAL_ID,

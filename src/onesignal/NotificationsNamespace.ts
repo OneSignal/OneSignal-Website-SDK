@@ -30,7 +30,7 @@ export default class NotificationsNamespace extends EventListenerBase {
     this._permission = permissionNative === 'granted';
 
     if (typeof OneSignal !== 'undefined') {
-      OneSignal.emitter._on(
+      OneSignal._emitter._on(
         OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
         (permissionNative: NotificationPermission) => {
           this._permissionNative = permissionNative;
@@ -121,20 +121,20 @@ export default class NotificationsNamespace extends EventListenerBase {
   async requestPermission(): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowNativePrompt();
+    await OneSignal._context.promptsManager._internalShowNativePrompt();
   }
 
   addEventListener<K extends NotificationEventName>(
     event: K,
     listener: (obj: NotificationEventTypeMap[K]) => void,
   ): void {
-    OneSignal.emitter._on(event, listener);
+    OneSignal._emitter._on(event, listener);
   }
 
   removeEventListener<K extends NotificationEventName>(
     event: K,
     listener: (obj: NotificationEventTypeMap[K]) => void,
   ): void {
-    OneSignal.emitter._off(event, listener);
+    OneSignal._emitter._off(event, listener);
   }
 }

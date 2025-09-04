@@ -172,7 +172,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.active) return Promise.resolve(this);
     else
       return new Promise((resolve) => {
-        OneSignal.emitter._once(
+        OneSignal._emitter._once(
           ActiveAnimatedElement.EVENTS.ACTIVE,
           (event) => {
             if (event === this) {
@@ -191,7 +191,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.inactive) return Promise.resolve(this);
     else
       return new Promise((resolve) => {
-        OneSignal.emitter._once(
+        OneSignal._emitter._once(
           ActiveAnimatedElement.EVENTS.INACTIVE,
           (event) => {
             if (event === this) {

@@ -38,17 +38,17 @@ export interface AutoPromptOptions {
 }
 
 export class PromptsManager {
-  private isNativePromptShowing: boolean;
-  private context: ContextInterface;
-  private eventHooksInstalled: boolean;
+  private _isNativePromptShowing: boolean;
+  private _context: ContextInterface;
+  private _eventHooksInstalled: boolean;
 
   constructor(context: ContextInterface) {
-    this.isNativePromptShowing = false;
-    this.context = context;
-    this.eventHooksInstalled = false;
+    this._isNativePromptShowing = false;
+    this._context = context;
+    this._eventHooksInstalled = false;
   }
 
-  private shouldForceSlidedownOverNative(): boolean {
+  private _shouldForceSlidedownOverNative(): boolean {
     const browserVersion = getBrowserVersion();
     return (
       (getBrowserName() === Browser.Chrome &&
@@ -58,9 +58,9 @@ export class PromptsManager {
     );
   }
 
-  public async spawnAutoPrompts() {
+  public async _spawnAutoPrompts() {
     // user config prompt options
-    const userPromptOptions = OneSignal.config?.userConfig.promptOptions;
+    const userPromptOptions = OneSignal._config?.userConfig.promptOptions;
 
     /*
      * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
@@ -69,22 +69,22 @@ export class PromptsManager {
      * Same for Safari 12.1+ & Firefox 72+. It requires user interaction to request notification permissions.
      * It simply wouldn't work to try to show native prompt from script.
      */
-    const forceSlidedownOverNative = this.shouldForceSlidedownOverNative();
+    const forceSlidedownOverNative = this._shouldForceSlidedownOverNative();
 
     // show native prompt
-    const nativePromptOptions = this.getDelayedPromptOptions(
+    const nativePromptOptions = this._getDelayedPromptOptions(
       userPromptOptions,
       DelayedPromptType.Native,
     );
     const isPageViewConditionMetForNative: boolean =
-      this.isPageViewConditionMet(nativePromptOptions);
+      this._isPageViewConditionMet(nativePromptOptions);
     const conditionMetWithNativeOptions =
       nativePromptOptions.enabled && isPageViewConditionMetForNative;
     const forceSlidedownWithNativeOptions =
       forceSlidedownOverNative && conditionMetWithNativeOptions;
 
     if (conditionMetWithNativeOptions && !forceSlidedownWithNativeOptions) {
-      this.internalShowDelayedPrompt(
+      this._internalShowDelayedPrompt(
         DelayedPromptType.Native,
         nativePromptOptions.timeDelay || 0,
       );
@@ -98,7 +98,7 @@ export class PromptsManager {
     );
 
     if (forceSlidedownWithNativeOptions && !isPushSlidedownConfigured) {
-      this.internalShowDelayedPrompt(
+      this._internalShowDelayedPrompt(
         DelayedPromptType.Push,
         nativePromptOptions.timeDelay || 0,
       );
@@ -110,12 +110,12 @@ export class PromptsManager {
       for (let i = 0; i < prompts.length; i++) {
         const promptOptions = prompts[i];
 
-        const slidedownPromptOptions = this.getDelayedPromptOptions(
+        const slidedownPromptOptions = this._getDelayedPromptOptions(
           userPromptOptions,
           promptOptions.type,
         );
         const isPageViewConditionMetForSlidedown: boolean =
-          this.isPageViewConditionMet(slidedownPromptOptions);
+          this._isPageViewConditionMet(slidedownPromptOptions);
         const conditionMetWithSlidedownOptions =
           slidedownPromptOptions.enabled && isPageViewConditionMetForSlidedown;
 
@@ -124,7 +124,7 @@ export class PromptsManager {
         };
 
         if (conditionMetWithSlidedownOptions) {
-          this.internalShowDelayedPrompt(
+          this._internalShowDelayedPrompt(
             promptOptions.type,
             slidedownPromptOptions.timeDelay || 0,
             options,
@@ -134,7 +134,7 @@ export class PromptsManager {
     }
   }
 
-  public async internalShowDelayedPrompt(
+  public async _internalShowDelayedPrompt(
     type: DelayedPromptTypeValue,
     timeDelaySeconds: number,
     options?: AutoPromptOptions,
@@ -155,43 +155,43 @@ export class PromptsManager {
 
     switch (type) {
       case DelayedPromptType.Native:
-        await this.internalShowNativePrompt();
+        await this._internalShowNativePrompt();
         break;
       case DelayedPromptType.Push:
-        await this.internalShowSlidedownPrompt(options);
+        await this._internalShowSlidedownPrompt(options);
         break;
       case DelayedPromptType.Category:
-        await this.internalShowCategorySlidedown(options);
+        await this._internalShowCategorySlidedown(options);
         break;
       case DelayedPromptType.Sms:
-        await this.internalShowSmsSlidedown(options);
+        await this._internalShowSmsSlidedown(options);
         break;
       case DelayedPromptType.Email:
-        await this.internalShowEmailSlidedown(options);
+        await this._internalShowEmailSlidedown(options);
         break;
       case DelayedPromptType.SmsAndEmail:
-        await this.internalShowSmsAndEmailSlidedown(options);
+        await this._internalShowSmsAndEmailSlidedown(options);
         break;
       default:
         Log._error('Invalid Delayed Prompt type');
     }
   }
 
-  public async internalShowNativePrompt(): Promise<void> {
+  public async _internalShowNativePrompt(): Promise<void> {
     logMethodCall('internalShowNativePrompt');
 
-    if (this.isNativePromptShowing) {
+    if (this._isNativePromptShowing) {
       Log._debug('Already showing autoprompt. Abort showing a native prompt.');
       return;
     }
 
-    this.isNativePromptShowing = true;
+    this._isNativePromptShowing = true;
     await registerForPushNotifications();
-    this.isNativePromptShowing = false;
+    this._isNativePromptShowing = false;
     markPromptDismissedWithType(DismissPrompt.Push);
   }
 
-  private async internalShowSlidedownPrompt(
+  private async _internalShowSlidedownPrompt(
     options: AutoPromptOptions = { force: false },
   ): Promise<void> {
     logMethodCall('internalShowSlidedownPrompt');
@@ -201,7 +201,7 @@ export class PromptsManager {
     }
 
     const sdkStylesLoadResult =
-      await this.context._dynamicResourceLoader.loadSdkStylesheet();
+      await this._context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log._debug(
         'Not showing slidedown permission message because styles failed to load.',
@@ -209,45 +209,45 @@ export class PromptsManager {
       return;
     }
 
-    if (!this.eventHooksInstalled) {
-      this.installEventHooksForSlidedown();
+    if (!this._eventHooksInstalled) {
+      this._installEventHooksForSlidedown();
     }
 
-    await this.context._slidedownManager.createSlidedown(options);
+    await this._context._slidedownManager.createSlidedown(options);
   }
 
-  public async internalShowCategorySlidedown(
+  public async _internalShowCategorySlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowCategorySlidedown');
-    await this.internalShowParticularSlidedown(
+    await this._internalShowParticularSlidedown(
       DelayedPromptType.Category,
       options,
     );
   }
 
-  public async internalShowSmsSlidedown(
+  public async _internalShowSmsSlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowSmsSlidedown');
-    await this.internalShowParticularSlidedown(DelayedPromptType.Sms, options);
+    await this._internalShowParticularSlidedown(DelayedPromptType.Sms, options);
   }
 
-  public async internalShowEmailSlidedown(
+  public async _internalShowEmailSlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowEmailSlidedown');
-    await this.internalShowParticularSlidedown(
+    await this._internalShowParticularSlidedown(
       DelayedPromptType.Email,
       options,
     );
   }
 
-  public async internalShowSmsAndEmailSlidedown(
+  public async _internalShowSmsAndEmailSlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowSmsAndEmailSlidedown');
-    await this.internalShowParticularSlidedown(
+    await this._internalShowParticularSlidedown(
       DelayedPromptType.SmsAndEmail,
       options,
     );
@@ -260,12 +260,12 @@ export class PromptsManager {
    *
    * If present, `options.slidedownPromptOptions` overrides `typeToPullFromConfig`
    */
-  public async internalShowParticularSlidedown(
+  public async _internalShowParticularSlidedown(
     typeToPullFromConfig: DelayedPromptTypeValue,
     options?: AutoPromptOptions,
   ): Promise<void> {
     const prompts =
-      this.context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
+      this._context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
     const slidedownPromptOptions =
       options?.slidedownPromptOptions ||
       getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
@@ -285,34 +285,34 @@ export class PromptsManager {
       }
     }
 
-    await this.internalShowSlidedownPrompt({
+    await this._internalShowSlidedownPrompt({
       ...options,
       slidedownPromptOptions,
     });
   }
 
-  public installEventHooksForSlidedown(): void {
-    this.eventHooksInstalled = true;
+  public _installEventHooksForSlidedown(): void {
+    this._eventHooksInstalled = true;
 
-    OneSignal.emitter._on(Slidedown.EVENTS.SHOWN, () => {
-      this.context._slidedownManager.setIsSlidedownShowing(true);
+    OneSignal._emitter._on(Slidedown.EVENTS.SHOWN, () => {
+      this._context._slidedownManager.setIsSlidedownShowing(true);
     });
-    OneSignal.emitter._on(Slidedown.EVENTS.CLOSED, () => {
-      this.context._slidedownManager.setIsSlidedownShowing(false);
-      this.context._slidedownManager.showQueued();
+    OneSignal._emitter._on(Slidedown.EVENTS.CLOSED, () => {
+      this._context._slidedownManager.setIsSlidedownShowing(false);
+      this._context._slidedownManager.showQueued();
     });
-    OneSignal.emitter._on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
-      await this.context._slidedownManager.handleAllowClick();
+    OneSignal._emitter._on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+      await this._context._slidedownManager.handleAllowClick();
       OneSignalEvent.trigger(
         OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
       );
     });
-    OneSignal.emitter._on(Slidedown.EVENTS.CANCEL_CLICK, () => {
-      if (!this.context._slidedownManager.slidedown) {
+    OneSignal._emitter._on(Slidedown.EVENTS.CANCEL_CLICK, () => {
+      if (!this._context._slidedownManager.slidedown) {
         return;
       }
 
-      const type = this.context._slidedownManager.slidedown?.options.type;
+      const type = this._context._slidedownManager.slidedown?.options.type;
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
@@ -331,7 +331,7 @@ export class PromptsManager {
     });
   }
 
-  private isPageViewConditionMet(options?: DelayedPromptOptions): boolean {
+  private _isPageViewConditionMet(options?: DelayedPromptOptions): boolean {
     if (!options || typeof options.pageViews === 'undefined') {
       return false;
     }
@@ -344,7 +344,7 @@ export class PromptsManager {
     return localPageViews >= options.pageViews;
   }
 
-  private getDelayedPromptOptions(
+  private _getDelayedPromptOptions(
     promptOptions: AppUserConfigPromptOptions | undefined,
     type: DelayedPromptTypeValue,
   ): DelayedPromptOptions {
@@ -375,7 +375,7 @@ export class PromptsManager {
       case DelayedPromptType.Email:
       case DelayedPromptType.Sms:
       case DelayedPromptType.SmsAndEmail: {
-        const { userConfig } = this.context._appConfig;
+        const { userConfig } = this._context._appConfig;
         const options = getFirstSlidedownPromptOptionsWithType(
           userConfig.promptOptions?.slidedown?.prompts || [],
           type,

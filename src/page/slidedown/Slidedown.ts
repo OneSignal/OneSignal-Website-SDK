@@ -341,19 +341,19 @@ export default class Slidedown {
 }
 
 export function manageNotifyButtonStateWhileSlidedownShows(): void {
-  const notifyButton = OneSignal.notifyButton;
+  const notifyButton = OneSignal._notifyButton;
   if (
     notifyButton &&
     notifyButton.options?.enable &&
-    OneSignal.notifyButton?.launcher?.state !== 'hidden'
+    OneSignal._notifyButton?.launcher?.state !== 'hidden'
   ) {
-    OneSignal.notifyButton?.launcher?.waitUntilShown().then(() => {
-      OneSignal.notifyButton?.launcher?.hide();
+    OneSignal._notifyButton?.launcher?.waitUntilShown().then(() => {
+      OneSignal._notifyButton?.launcher?.hide();
     });
   }
-  OneSignal.emitter._once(Slidedown.EVENTS.CLOSED, () => {
-    if (OneSignal.notifyButton && OneSignal.notifyButton.options.enable) {
-      OneSignal.notifyButton.launcher.show();
+  OneSignal._emitter._once(Slidedown.EVENTS.CLOSED, () => {
+    if (OneSignal._notifyButton && OneSignal._notifyButton.options.enable) {
+      OneSignal._notifyButton.launcher.show();
     }
   });
 }

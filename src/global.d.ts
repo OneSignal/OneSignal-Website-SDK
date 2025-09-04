@@ -31,7 +31,6 @@ declare global {
   interface Window {
     OneSignal: _OneSignal;
     OneSignalDeferred?: OneSignalDeferredLoadedCallback[];
-    __oneSignalSdkLoadCount?: number;
     safari?: {
       pushNotification?: SafariRemoteNotification;
     };

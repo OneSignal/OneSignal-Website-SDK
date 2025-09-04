@@ -56,7 +56,7 @@ export class UpdateManager {
 
     if (
       subscriptionModel?.notification_types !== NotificationType.Subscribed &&
-      OneSignal.config?.enableOnSession !== true
+      OneSignal._config?.enableOnSession !== true
     ) {
       return;
     }

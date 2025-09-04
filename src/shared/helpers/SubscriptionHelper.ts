@@ -20,7 +20,7 @@ export default class SubscriptionHelper {
   }
 
   public static async internalRegisterForPush(): Promise<Subscription | null> {
-    const context = OneSignal.context;
+    const context = OneSignal._context;
     let subscription: Subscription | null = null;
 
     if (IS_SERVICE_WORKER) throw new Error('Unsupported environment');

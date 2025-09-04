@@ -85,6 +85,7 @@ const open = async (version = VERSION) => {
     },
   });
 };
+
 let dbPromise = open();
 
 export const getDb = (version = VERSION) => {

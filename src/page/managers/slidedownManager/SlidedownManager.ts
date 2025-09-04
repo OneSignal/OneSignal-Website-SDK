@@ -54,12 +54,12 @@ export class SlidedownManager {
     options: AutoPromptOptions,
   ): Promise<boolean> {
     const permissionDenied =
-      (await OneSignal.context._permissionManager.getPermissionStatus()) ===
+      (await OneSignal._context._permissionManager.getPermissionStatus()) ===
       'denied';
     let wasDismissed: boolean;
 
     const subscriptionInfo: PushSubscriptionState =
-      await OneSignal.context._subscriptionManager.getSubscriptionState();
+      await OneSignal._context._subscriptionManager.getSubscriptionState();
     const { subscribed, optedOut } = subscriptionInfo;
 
     const slidedownType = options.slidedownPromptOptions?.type;
@@ -137,10 +137,10 @@ export class SlidedownManager {
     }
 
     const tags = TaggingContainer.getValuesFromTaggingContainer();
-    this.context._tagManager.storeTagValuesToUpdate(tags);
+    this.context._tagManager._storeTagValuesToUpdate(tags);
 
     registerForPushNotifications();
-    await this.context._tagManager.sendTags(true);
+    await this.context._tagManager._sendTags(true);
   }
 
   private async handleAllowForEmailType(): Promise<void> {
@@ -300,7 +300,7 @@ export class SlidedownManager {
       const existingTags = propertiesModel.tags;
 
       if (options.isInUpdateMode && existingTags) {
-        this.context._tagManager.storeRemotePlayerTags(
+        this.context._tagManager._storeRemotePlayerTags(
           existingTags as TagsObjectForApi,
         );
         tagsForComponent = TagUtils.convertTagsApiToBooleans(
