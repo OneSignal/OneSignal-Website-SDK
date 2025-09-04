@@ -1,271 +1,163 @@
-import { containsMatch } from 'src/shared/context/helpers';
-import { addCssClass, removeCssClass } from 'src/shared/helpers/dom';
-import Log from '../../shared/libraries/Log';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
-import { once } from '../../shared/utils/utils';
-
+/**
+ * Modern replacement for AnimatedElement using CSS transitions and Web Animations API
+ */
 export default class AnimatedElement {
-  public selector: string;
-  public showClass: string | undefined;
-  public hideClass: string | undefined;
-  public state: string;
-  public targetTransitionEvents: string[];
-  public nestedContentSelector: string | undefined;
-  public transitionCheckTimeout: number;
-  /**
-   * Abstracts common DOM operations like hiding and showing transitionable elements into chainable promises.
-   * @param selector {string} The CSS selector of the element.
-   * @param showClass {string} The CSS class name to add to show the element.
-   * @param hideClass {string} The CSS class name to remove to hide the element.
-   * @param state {string} The current state of the element, defaults to 'shown'.
-   * @param targetTransitionEvents {string} An array of properties (e.g. ['transform', 'opacity']) to look for on transitionend of show() and hide() to know the transition is complete. As long as one matches, the transition is considered complete.
-   * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
-   */
+  public _selector: string;
+  protected _visibleClass?: string;
+  protected _activeClass?: string;
+  protected _inactiveClass?: string;
+  protected _nestedContentSelector?: string;
+
   constructor(
     selector: string,
-    showClass: string | undefined,
-    hideClass: string | undefined,
-    state = 'shown',
-    targetTransitionEvents = ['opacity', 'transform'],
+    visibleClass?: string,
+    activeClass?: string,
+    inactiveClass?: string,
     nestedContentSelector?: string,
-    transitionCheckTimeout = 500,
   ) {
-    this.selector = selector;
-    this.showClass = showClass;
-    this.hideClass = hideClass;
-    this.state = state;
-    this.targetTransitionEvents = targetTransitionEvents;
-    this.nestedContentSelector = nestedContentSelector;
-    this.transitionCheckTimeout = transitionCheckTimeout;
+    this._selector = selector;
+    this._visibleClass = visibleClass;
+    this._activeClass = activeClass;
+    this._inactiveClass = inactiveClass;
+    this._nestedContentSelector = nestedContentSelector;
   }
 
   /**
-   * Asynchronously shows an element by applying its {showClass} CSS class.
-   *
-   * Returns a promise that is resolved with this element when it has completed its transition.
+   * Show element using CSS classes and wait for animations to complete
    */
-  show(): Promise<AnimatedElement> {
-    if (!this.hidden) {
-      return Promise.resolve(this);
-    } else
-      return new Promise((resolve) => {
-        this.state = 'showing';
-        OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWING, this);
-        const element = this.element;
-        if (!element) {
-          Log._error(
-            `(show) could not find animated element with selector ${this.selector}`,
-          );
-        } else {
-          if (this.hideClass) removeCssClass(element, this.hideClass);
-          if (this.showClass) addCssClass(element, this.showClass);
-        }
-
-        if (this.targetTransitionEvents.length == 0) {
-          return resolve(this);
-        } else {
-          const timerId = setTimeout(() => {
-            Log._debug(
-              `Element did not completely show (state: ${this.state}).`,
-            );
-          }, this.transitionCheckTimeout);
-          once(
-            this.element,
-            'transitionend',
-            (event: Event, destroyListenerFn: () => void) => {
-              if (
-                event.target === this.element &&
-                containsMatch(
-                  this.targetTransitionEvents,
-                  (event as any).propertyName,
-                )
-              ) {
-                clearTimeout(timerId);
-                // Uninstall the event listener for transitionend
-                destroyListenerFn();
-                this.state = 'shown';
-                OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWN, this);
-                return resolve(this);
-              }
-            },
-            true,
-          );
-        }
-      });
-  }
-
-  /**
-   * Asynchronously hides an element by applying its {hideClass} CSS class.
-   * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
-   */
-  hide() {
-    if (!this.shown) {
-      return Promise.resolve(this);
-    } else
-      return new Promise((resolve) => {
-        this.state = 'hiding';
-        OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDING, this);
-        const element = this.element;
-        if (!element) {
-          Log._error(
-            `(hide) could not find animated element with selector ${this.selector}`,
-          );
-        } else {
-          if (this.showClass) removeCssClass(element, this.showClass);
-          if (this.hideClass) addCssClass(element, this.hideClass);
-        }
-
-        if (this.targetTransitionEvents.length == 0) {
-          return resolve(this);
-        } else {
-          once(
-            this.element,
-            'transitionend',
-            (event: Event, destroyListenerFn: () => void) => {
-              const timerId = setTimeout(() => {
-                Log._debug(
-                  `Element did not completely hide (state: ${this.state}).`,
-                );
-              }, this.transitionCheckTimeout);
-              if (
-                event.target === this.element &&
-                containsMatch(
-                  this.targetTransitionEvents,
-                  (event as any).propertyName,
-                )
-              ) {
-                clearTimeout(timerId);
-                // Uninstall the event listener for transitionend
-                destroyListenerFn();
-                this.state = 'hidden';
-                OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDDEN, this);
-                return resolve(this);
-              }
-            },
-            true,
-          );
-        }
-      });
-  }
-
-  /**
-   * Asynchronously waits for an element to finish transitioning to being shown.
-   * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
-   */
-  waitUntilShown() {
-    if (this.state === 'shown') return Promise.resolve(this);
-    else
-      return new Promise((resolve) => {
-        OneSignal.emitter.once(AnimatedElement.EVENTS.SHOWN, (event) => {
-          if (event === this) {
-            return resolve(this);
-          }
-        });
-      });
-  }
-
-  /**
-   * Asynchronously waits for an element to finish transitioning to being hidden.
-   * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
-   */
-  waitUntilHidden() {
-    if (this.state === 'hidden') return Promise.resolve(this);
-    else
-      return new Promise((resolve) => {
-        OneSignal.emitter.once(AnimatedElement.EVENTS.HIDDEN, (event) => {
-          if (event === this) {
-            return resolve(this);
-          }
-        });
-      });
-  }
-
-  static get EVENTS() {
-    return {
-      SHOWING: 'animatedElementShowing',
-      SHOWN: 'animatedElementShown',
-      HIDING: 'animatedElementHiding',
-      HIDDEN: 'animatedElementHidden',
-    };
-  }
-
-  /**
-   * Returns the native element's innerHTML property.
-   * @returns {string} Returns the native element's innerHTML property.
-   */
-  get content() {
-    if (!this.element) {
-      return '';
+  async _show(): Promise<AnimatedElement> {
+    const element = this._element;
+    if (!element || this._shown) {
+      return this;
     }
-    if (this.nestedContentSelector) {
-      const innerElement = this.element.querySelector(
-        this.nestedContentSelector,
-      );
-      return innerElement ? innerElement.innerHTML : '';
-    } else {
-      return this.element.innerHTML;
+
+    if (this._visibleClass) {
+      element.classList.add(this._visibleClass);
     }
+
+    await this._waitForAnimations();
+    return this;
   }
 
   /**
-   * Sets the native element's innerHTML property.
-   * @param value {string} The HTML to set to the element.
+   * Hide element using CSS classes and wait for animations to complete
    */
-  set content(value) {
-    if (!this.element) {
-      return;
+  async _hide(): Promise<AnimatedElement> {
+    const element = this._element;
+    if (!element || !this._shown) {
+      return this;
     }
-    if (this.nestedContentSelector) {
-      const nestedContent = this.element.querySelector(
-        this.nestedContentSelector,
-      );
-      if (nestedContent) {
-        nestedContent.textContent = value;
+
+    if (this._visibleClass) {
+      element.classList.remove(this._visibleClass);
+    }
+
+    await this._waitForAnimations();
+    return this;
+  }
+
+  /**
+   * Activate element using CSS classes
+   */
+  async _activate(): Promise<AnimatedElement> {
+    const element = this._element;
+    if (!element || this._active) {
+      return this;
+    }
+
+    if (this._inactiveClass) {
+      element.classList.remove(this._inactiveClass);
+    }
+    if (this._activeClass) {
+      element.classList.add(this._activeClass);
+    }
+
+    await this._waitForAnimations();
+    return this;
+  }
+
+  /**
+   * Inactivate element using CSS classes
+   */
+  async _inactivate(): Promise<AnimatedElement> {
+    const element = this._element;
+    if (!element || !this._active) {
+      return this;
+    }
+
+    if (this._activeClass) {
+      element.classList.remove(this._activeClass);
+    }
+    if (this._inactiveClass) {
+      element.classList.add(this._inactiveClass);
+    }
+
+    await this._waitForAnimations();
+    return this;
+  }
+
+  /**
+   * Wait for all CSS animations/transitions to complete
+   */
+  protected async _waitForAnimations(): Promise<void> {
+    const element = this._element;
+    if (!element) return;
+
+    const animations = element.getAnimations();
+    if (animations.length === 0) return;
+
+    await Promise.allSettled(animations.map((animation) => animation.finished));
+  }
+
+  /**
+   * Get or set element content
+   */
+  get _content(): string {
+    const element = this._element;
+    if (!element) return '';
+
+    if (this._nestedContentSelector) {
+      const nestedElement = element.querySelector(this._nestedContentSelector);
+      return nestedElement?.textContent ?? '';
+    }
+
+    return element.textContent ?? '';
+  }
+
+  set _content(value: string) {
+    const element = this._element;
+    if (!element) return;
+
+    if (this._nestedContentSelector) {
+      const nestedElement = element.querySelector(this._nestedContentSelector);
+      if (nestedElement) {
+        nestedElement.textContent = value;
       }
     } else {
-      this.element.textContent = value;
+      element.textContent = value;
     }
   }
 
   /**
-   * Returns the native {Element} via document.querySelector().
-   * @returns {Element | null} Returns the native {Element} via document.querySelector() or {null} if not found.
+   * Get the DOM element (lazy-loaded)
    */
-  get element() {
-    return document.querySelector(this.selector);
-  }
-
-  /* States an element can be in */
-
-  /**
-   * Synchronously returns the last known state of the element.
-   * @returns {boolean} Returns true if the element was last known to be transitioning to being shown.
-   */
-  get showing() {
-    return this.state === 'showing';
+  get _element(): HTMLElement | null {
+    return document.querySelector(this._selector);
   }
 
   /**
-   * Synchronously returns the last known state of the element.
-   * @returns {boolean} Returns true if the element was last known to be already shown.
+   * State getters
    */
-  get shown() {
-    return this.state === 'shown';
+  get _shown(): boolean {
+    const element = this._element;
+    return element?.classList.contains(this._visibleClass ?? '') ?? false;
   }
 
-  /**
-   * Synchronously returns the last known state of the element.
-   * @returns {boolean} Returns true if the element was last known to be transitioning to hiding.
-   */
-  get hiding() {
-    return this.state === 'hiding';
-  }
-
-  /**
-   * Synchronously returns the last known state of the element.
-   * @returns {boolean} Returns true if the element was last known to be already hidden.
-   */
-  get hidden() {
-    return this.state === 'hidden';
+  get _active(): boolean {
+    const element = this._element;
+    if (this._inactiveClass) {
+      return !(element?.classList.contains(this._inactiveClass) ?? false);
+    }
+    return element?.classList.contains(this._activeClass ?? '') ?? false;
   }
 }
