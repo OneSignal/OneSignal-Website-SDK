@@ -4,12 +4,12 @@ import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscript
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import MainHelper from '../shared/helpers/MainHelper';
+import { getAppId } from '../shared/helpers/main';
 
 export default class UserDirector {
   static async createUserOnServer(): Promise<void> {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    const appId = MainHelper.getAppId();
+    const appId = getAppId();
 
     const hasAnySubscription =
       OneSignal._coreDirector.subscriptionModelStore.list().length > 0;

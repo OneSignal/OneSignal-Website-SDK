@@ -3,7 +3,7 @@ import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
-import MainHelper from 'src/shared/helpers/MainHelper';
+import { getAppId } from 'src/shared/helpers/main';
 import { IDManager } from 'src/shared/managers/IDManager';
 import UserDirector from '../../onesignal/UserDirector';
 import Log from '../../shared/libraries/Log';
@@ -50,7 +50,7 @@ export default class LoginManager {
       ModelChangeTags.HYDRATE,
     );
     const newIdentityOneSignalId = identityModel.onesignalId;
-    const appId = MainHelper.getAppId();
+    const appId = getAppId();
 
     const promises: Promise<void>[] = [
       OneSignal._coreDirector.getPushSubscriptionModel().then((pushOp) => {

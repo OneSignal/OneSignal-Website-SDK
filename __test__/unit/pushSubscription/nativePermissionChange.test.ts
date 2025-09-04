@@ -14,7 +14,7 @@ import type { AppState } from 'src/shared/database/types';
 import * as PermissionUtils from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
-import MainHelper from '../../../src/shared/helpers/MainHelper';
+import * as MainHelper from '../../../src/shared/helpers/main';
 
 vi.mock('src/shared/libraries/Log');
 const triggerNotificationSpy = vi.spyOn(

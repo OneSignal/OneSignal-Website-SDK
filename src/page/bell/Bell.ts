@@ -13,7 +13,7 @@ import type {
   BellText,
 } from 'src/shared/prompts/types';
 import { wasPromptOfTypeDismissed } from '../../shared/helpers/DismissHelper';
-import MainHelper from '../../shared/helpers/MainHelper';
+import { getNotificationIcons } from '../../shared/helpers/main';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
@@ -340,7 +340,7 @@ export default class Bell {
             this.badge.hide();
           }
           if (this.dialog.notificationIcons === null) {
-            const icons = await MainHelper.getNotificationIcons();
+            const icons = await getNotificationIcons();
             this.dialog.notificationIcons = icons;
           }
         }
@@ -513,7 +513,7 @@ export default class Bell {
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
       .then(() => {
         if (isPushEnabled && this.dialog.notificationIcons === null) {
-          return MainHelper.getNotificationIcons().then((icons) => {
+          return getNotificationIcons().then((icons) => {
             this.dialog.notificationIcons = icons;
           });
         } else return nothing();

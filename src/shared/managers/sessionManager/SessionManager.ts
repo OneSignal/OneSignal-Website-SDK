@@ -17,7 +17,7 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
-import MainHelper from '../../helpers/MainHelper';
+import { getAppId } from '../../helpers/main';
 import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constants';
 
@@ -396,7 +396,7 @@ export class SessionManager {
         },
       };
 
-      const appId = MainHelper.getAppId();
+      const appId = getAppId();
       enforceAppId(appId);
       enforceAlias(aliasPair);
       try {
