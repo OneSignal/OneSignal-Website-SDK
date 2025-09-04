@@ -46,10 +46,15 @@
 
       // // uncomment to test push subscription change listener
       // OneSignalDeferred.push(function (OneSignal) {
-      //   OneSignal.User.PushSubscription.addEventListener(
-      //     'change',
-      //     pushSubscriptionChangeListener,
-      //   );
+      //   OneSignal.User.PushSubscription.addEventListener('change', (e) => {
+      //     console.log('PushSubscription.addEventListener', e);
+      //   });
+      //   OneSignal.Notifications.addEventListener('change', (e) => {
+      //     console.log('Notifications.addEventListener', e);
+      //   });
+      //   OneSignal.Notifications.addEventListener('permissionChange', (e) => {
+      //     console.log('permissionChange', e);
+      //   });
       // });
 
       // uncomment to test login
