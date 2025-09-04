@@ -22,10 +22,10 @@ export async function checkAndTriggerSubscriptionChanged() {
   const context = OneSignal._context;
   // isPushEnabled = subscribed && is not opted out
   const isPushEnabled: boolean =
-    await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
+    await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
   // isOptedIn = native permission granted && is not opted out
   const isOptedIn: boolean =
-    await OneSignal._context._subscriptionManager.isOptedIn!();
+    await OneSignal._context._subscriptionManager._isOptedIn!();
 
   const appState = await getAppState();
   const {
@@ -49,7 +49,7 @@ export async function checkAndTriggerSubscriptionChanged() {
   }
 
   // update notification_types via core module
-  await context._subscriptionManager.updateNotificationTypes!();
+  await context._subscriptionManager._updateNotificationTypes!();
 
   appState.lastKnownPushEnabled = isPushEnabled;
   appState.lastKnownPushToken = currentPushToken;

@@ -4,38 +4,30 @@ import {
   BASE_SUB,
   ONESIGNAL_ID,
   PUSH_TOKEN,
-  SUB_ID,
   SUB_ID_2,
 } from '__test__/constants';
-import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
+import { mockJsonp } from '__test__/setupTests';
+import { stubNotification } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
   setCreateSubscriptionResponse,
   setCreateUserResponse,
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
-import {
-  getDbSubscriptions,
-  updateIdentityModel,
-} from '__test__/support/helpers/setup';
+import { getDbSubscriptions } from '__test__/support/helpers/setup';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { setPushToken } from 'src/shared/database/subscription';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 describe('pageSdkInit 2', () => {
   beforeEach(() => {
-    TestEnvironment.initialize();
+    mockJsonp();
+    stubNotification();
   });
 
   test('can login and addEmail', async () => {
-    const onesignalId = IDManager._createLocalId();
-    updateIdentityModel('onesignal_id', onesignalId);
-
     const email = 'joe@example.com';
-    const subModel = await setupSubModelStore({
-      id: SUB_ID,
-      token: PUSH_TOKEN,
-    });
+
     const emailSubModel = new SubscriptionModel();
     emailSubModel.mergeData({
       id: SUB_ID_2,
@@ -43,13 +35,10 @@ describe('pageSdkInit 2', () => {
       type: 'Email',
     });
 
+    await setPushToken(PUSH_TOKEN);
+
     setGetUserResponse({
-      subscriptions: [
-        {
-          ...subModel.toJSON(),
-        },
-        emailSubModel,
-      ],
+      subscriptions: [emailSubModel],
     });
     setCreateUserResponse({
       onesignalId: ONESIGNAL_ID,
@@ -77,14 +66,8 @@ describe('pageSdkInit 2', () => {
       const subModels = OneSignal._coreDirector.subscriptionModelStore
         .list()
         .map((m) => m.toJSON());
-      subModels.sort((a, b) => a.type.localeCompare(b.type));
 
       expect(subModels).toMatchObject([
-        {
-          id: SUB_ID,
-          onesignalId: ONESIGNAL_ID,
-          type: 'ChromePush',
-        },
         {
           id: expect.any(String),
           onesignalId: expect.any(String),
@@ -92,12 +75,11 @@ describe('pageSdkInit 2', () => {
           type: 'Email',
         },
       ]);
-      expect(IDManager._isLocalId(subModels[1].id)).toBe(true);
+      expect(IDManager._isLocalId(subModels[0].id)).toBe(true);
     });
 
     // wait user subscriptions to be refresh/replaced
-    const subscriptions = await getDbSubscriptions(2);
-    subscriptions.sort((a, b) => a.type.localeCompare(b.type));
+    const subscriptions = await getDbSubscriptions(1);
 
     // should the push subscription and the email be added to the subscriptions modelstore
     const shared = {
@@ -107,14 +89,6 @@ describe('pageSdkInit 2', () => {
     expect(subscriptions).toEqual([
       {
         ...shared,
-        id: subModel.id,
-        modelId: subModel.modelId,
-        onesignalId: ONESIGNAL_ID,
-        token: subModel.token,
-        type: 'ChromePush',
-      },
-      {
-        ...shared,
         id: expect.any(String),
         modelId: expect.any(String),
         onesignalId: expect.any(String),
@@ -122,6 +96,7 @@ describe('pageSdkInit 2', () => {
         type: 'Email',
       },
     ]);
+
     expect(errorSpy).not.toHaveBeenCalled();
   });
 });

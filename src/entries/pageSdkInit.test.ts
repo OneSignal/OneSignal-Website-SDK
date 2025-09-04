@@ -1,5 +1,6 @@
 import { APP_ID } from '__test__/constants';
-import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { mockJsonp } from '__test__/setupTests';
+import { stubNotification } from '__test__/support/environment/TestEnvironmentHelpers';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Log from 'src/shared/libraries/Log';
@@ -11,7 +12,8 @@ describe('pageSdkInit', () => {
       'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
 
     server.use(http.get(cssURL, () => HttpResponse.text('')));
-    TestEnvironment.initialize();
+    mockJsonp();
+    stubNotification();
   });
 
   afterEach(async () => {
@@ -53,6 +55,9 @@ describe('pageSdkInit', () => {
       });
     });
 
-    expect(initSpy).toHaveBeenCalled();
+    await vi.waitUntil(() => initSpy.mock.calls.length > 0);
+    expect(initSpy).toHaveBeenCalledWith({
+      appId: APP_ID,
+    });
   });
 });

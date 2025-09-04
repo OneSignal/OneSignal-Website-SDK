@@ -12,7 +12,7 @@ beforeEach(() => {
   TestEnvironment.initialize();
   isSubscriptionExpiringSpy = vi.spyOn(
     OneSignal._context._subscriptionManager,
-    'isSubscriptionExpiring',
+    '_isSubscriptionExpiring',
   );
 });
 

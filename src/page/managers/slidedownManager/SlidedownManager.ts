@@ -57,7 +57,7 @@ export class SlidedownManager {
     let wasDismissed: boolean;
 
     const subscriptionInfo: PushSubscriptionState =
-      await OneSignal._context._subscriptionManager.getSubscriptionState();
+      await OneSignal._context._subscriptionManager._getSubscriptionState();
     const { subscribed, optedOut } = subscriptionInfo;
 
     const slidedownType = options.slidedownPromptOptions?.type;

@@ -78,7 +78,7 @@ export default class OutcomesHelper {
     await awaitOneSignalInitAndSupported();
 
     const isSubscribed =
-      await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
     if (!isSubscribed) {
       Log._warn('Reporting outcomes is supported only for subscribed users.');
       return false;

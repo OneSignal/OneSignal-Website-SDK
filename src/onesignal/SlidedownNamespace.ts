@@ -25,7 +25,7 @@ export default class SlidedownNamespace extends EventListenerBase {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
     const isPushEnabled =
-      await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
     await OneSignal._context._promptsManager._internalShowCategorySlidedown({
       ...options,
       isInUpdateMode: isPushEnabled,

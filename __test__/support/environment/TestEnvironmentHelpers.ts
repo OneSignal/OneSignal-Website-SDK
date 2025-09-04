@@ -16,15 +16,15 @@ import MockNotification from '../mocks/MockNotification';
 import TestContext from './TestContext';
 import { type TestEnvironmentConfig } from './TestEnvironment';
 
-declare const global: any;
+declare const global: Window & typeof globalThis;
 
 export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal = OneSignal;
   global.OneSignal.EVENTS = ONESIGNAL_EVENTS;
-  global.OneSignal.config = TestContext.getFakeMergedConfig(config);
-  global.OneSignal.context = new Context(global.OneSignal.config);
-  global.OneSignal.initialized = true;
-  global.OneSignal.emitter = new Emitter();
+  global.OneSignal._config = TestContext.getFakeMergedConfig(config);
+  global.OneSignal._context = new Context(global.OneSignal._config);
+  global.OneSignal._initialized = true;
+  global.OneSignal._emitter = new Emitter();
   const core = new CoreModule();
   global.OneSignal._coreDirector = new CoreModuleDirector(core);
 
@@ -40,9 +40,11 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   return global.OneSignal;
 }
 
-export function stubNotification(config: TestEnvironmentConfig) {
+export function stubNotification(
+  config: Pick<TestEnvironmentConfig, 'permission'> = {},
+) {
   global.Notification = MockNotification;
-  global.Notification.permission = config.permission
+  MockNotification.permission = config.permission
     ? config.permission
     : global.Notification.permission;
 }
@@ -92,10 +94,12 @@ export const setupSubModelStore = async ({
     pushModel.web_p256 = web_p256;
   }
   await setPushToken(pushModel.token);
-  OneSignal._coreDirector.subscriptionModelStore.replaceAll(
-    [pushModel],
-    ModelChangeTags.NO_PROPAGATE,
-  );
+  if (typeof window.OneSignal !== 'undefined') {
+    OneSignal._coreDirector.subscriptionModelStore.replaceAll(
+      [pushModel],
+      ModelChangeTags.NO_PROPAGATE,
+    );
+  }
 
   return pushModel;
 };

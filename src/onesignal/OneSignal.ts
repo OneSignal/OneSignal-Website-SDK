@@ -66,7 +66,6 @@ export default class OneSignal {
 
   private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await getAppConfig(options);
-
     Log._debug('OneSignal: Final web app config:', appConfig);
 
     // Workaround to temp assign config so that it can be used in context.
