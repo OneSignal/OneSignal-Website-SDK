@@ -66,22 +66,6 @@ export function once(
     );
 }
 
-/**
- * Returns the number of times the SDK has been loaded into the browser.
- * Expects a browser environment, otherwise this call will fail.
- */
-export function getSdkLoadCount() {
-  return window.__oneSignalSdkLoadCount || 0;
-}
-
-/**
- * Increments the counter describing the number of times the SDK has been loaded into the browser.
- * Expects a browser environment, otherwise this call will fail.
- */
-export function incrementSdkLoadCount() {
-  window.__oneSignalSdkLoadCount = getSdkLoadCount() + 1;
-}
-
 export function getPlatformNotificationIcon(
   notificationIcons: NotificationIcons | null,
 ): string {

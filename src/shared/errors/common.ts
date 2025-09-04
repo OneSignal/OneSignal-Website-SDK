@@ -3,18 +3,18 @@ import { InvalidChannelInputField } from './constants';
 import type { InvalidChannelInputFieldValue } from './types';
 
 export class SWRegistrationError extends Error {
-  public readonly status: number;
-  public readonly statusText: string;
+  public readonly _status: number;
+  public readonly _statusText: string;
 
   constructor(status: number, statusText: string) {
     super(`Registration of a Service Worker failed.`);
-    this.status = status;
-    this.statusText = statusText;
+    this._status = status;
+    this._statusText = statusText;
   }
 }
 
 export class ChannelCaptureError extends Error {
-  reason: InvalidChannelInputFieldValue;
+  _reason: InvalidChannelInputFieldValue;
 
   constructor(invalidChannelInput: InvalidChannelInputFieldValue) {
     let errorMessage;
@@ -30,7 +30,7 @@ export class ChannelCaptureError extends Error {
         break;
     }
     super(errorMessage);
-    this.reason = invalidChannelInput;
+    this._reason = invalidChannelInput;
   }
 }
 

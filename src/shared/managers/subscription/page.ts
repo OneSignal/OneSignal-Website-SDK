@@ -409,11 +409,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         // in some refactoring in the v16 major release. It would be useful if a
         // subscription was created so the customer knows this failed by seeing
         // subscriptions in this state on the OneSignal dashboard.
-        if (err.status === 403) {
+        if (err._status === 403) {
           await this._context._subscriptionManager.registerFailedSubscription(
             NotificationType.ServiceWorkerStatus403,
           );
-        } else if (err.status === 404) {
+        } else if (err._status === 404) {
           await this._context._subscriptionManager.registerFailedSubscription(
             NotificationType.ServiceWorkerStatus404,
           );

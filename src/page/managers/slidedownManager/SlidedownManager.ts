@@ -382,7 +382,7 @@ export class SlidedownManager {
       this.slidedown.setFailureState();
 
       if (e instanceof ChannelCaptureError) {
-        this.slidedown.setFailureStateForInvalidChannelInput(e.reason);
+        this.slidedown.setFailureStateForInvalidChannelInput(e._reason);
       }
       return;
     }

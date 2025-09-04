@@ -5,7 +5,6 @@
 import type { OneSignalDeferredLoadedCallback } from 'src/page/models/OneSignalDeferredLoadedCallback';
 import OneSignal from '../onesignal/OneSignal';
 import Log from '../shared/libraries/Log';
-import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';
 
 /**
  * Since we use Vite lib mode, this is import is removed from the bundle but it will still
@@ -27,15 +26,13 @@ async function processOneSignalDeferredArray(
 }
 
 function onesignalSdkInit() {
-  incrementSdkLoadCount();
-  if (getSdkLoadCount() > 1) {
+  if (window.OneSignal) {
     Log._warn(
       `OneSignal: The web push SDK is included more than once. For optimal performance, please include our ` +
         `SDK only once on your page.`,
     );
     Log._debug(
-      `OneSignal: Exiting from SDK initialization to prevent double-initialization errors. ` +
-        `Occurred ${getSdkLoadCount()} times.`,
+      `OneSignal: Exiting from SDK initialization to prevent double-initialization errors.`,
     );
     return;
   }
