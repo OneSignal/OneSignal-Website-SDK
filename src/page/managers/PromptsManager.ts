@@ -23,7 +23,7 @@ import {
   requiresUserInteraction,
 } from 'src/shared/useragent/detect';
 import { logMethodCall } from 'src/shared/utils/utils';
-import { DismissHelper } from '../../shared/helpers/DismissHelper';
+import { markPromptDismissedWithType } from '../../shared/helpers/DismissHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { DismissPrompt } from '../models/Dismiss';
@@ -188,7 +188,7 @@ export class PromptsManager {
     this.isNativePromptShowing = true;
     await registerForPushNotifications();
     this.isNativePromptShowing = false;
-    DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
+    markPromptDismissedWithType(DismissPrompt.Push);
   }
 
   private async internalShowSlidedownPrompt(
@@ -319,13 +319,13 @@ export class PromptsManager {
           Log._debug(
             'Setting flag to not show the slidedown to the user again.',
           );
-          DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
+          markPromptDismissedWithType(DismissPrompt.Push);
           break;
         default:
           Log._debug(
             'Setting flag to not show the slidedown to the user again.',
           );
-          DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);
+          markPromptDismissedWithType(DismissPrompt.NonPush);
           break;
       }
     });

@@ -1,6 +1,7 @@
-import OneSignalApi from 'src/shared/api/OneSignalApi';
+import * as OneSignalApi from 'src/shared/api/page';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { clearAll } from 'src/shared/database/client';
+import type { MockInstance } from 'vitest';
 import { DEFAULT_USER_AGENT } from './constants';
 import TestContext from './support/environment/TestContext';
 import { server } from './support/mocks/server';
@@ -48,11 +49,13 @@ Object.defineProperty(navigator, 'userAgent', {
   writable: true,
 });
 
+let downloadSpy: MockInstance;
 export const mockJsonp = () => {
   const serverConfig = TestContext.getFakeServerAppConfig(
     ConfigIntegrationKind.Custom,
   );
-  vi.spyOn(OneSignalApi, 'jsonpLib').mockImplementation((_, fn) => {
-    fn(null, serverConfig);
-  });
+
+  if (!downloadSpy)
+    downloadSpy = vi.spyOn(OneSignalApi, 'downloadServerAppConfig');
+  downloadSpy.mockResolvedValue(serverConfig);
 };

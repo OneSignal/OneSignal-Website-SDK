@@ -5,7 +5,7 @@ import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
+import * as OneSignalApiBase from 'src/shared/api/base';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import type { AppConfig } from 'src/shared/config/types';
 import { db, getCurrentSession } from 'src/shared/database/client';

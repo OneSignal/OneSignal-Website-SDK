@@ -2,7 +2,7 @@ import { APP_ID } from '__test__/constants';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Log from '../libraries/Log';
-import OneSignalApiShared from './OneSignalApiShared';
+import * as OneSignalApiShared from './shared';
 
 const LogErrorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
 

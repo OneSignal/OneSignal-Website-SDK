@@ -12,7 +12,7 @@ import type {
   BellSize,
   BellText,
 } from 'src/shared/prompts/types';
-import { DismissHelper } from '../../shared/helpers/DismissHelper';
+import { wasPromptOfTypeDismissed } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
@@ -493,7 +493,7 @@ export default class Bell {
 
     const isPushEnabled =
       await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
-    DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
+    wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
     // where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small

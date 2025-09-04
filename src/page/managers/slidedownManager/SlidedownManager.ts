@@ -20,7 +20,10 @@ import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
-import { DismissHelper } from '../../../shared/helpers/DismissHelper';
+import {
+  markPromptDismissedWithType,
+  wasPromptOfTypeDismissed,
+} from '../../../shared/helpers/DismissHelper';
 import Log from '../../../shared/libraries/Log';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import TagUtils from '../../../shared/utils/TagUtils';
@@ -79,7 +82,7 @@ export class SlidedownManager {
         return false;
       }
 
-      wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
+      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt.Push);
 
       if (optedOut) {
         throw new Error('User is opted out');
@@ -115,9 +118,7 @@ export class SlidedownManager {
         }
       }
 
-      wasDismissed = DismissHelper.wasPromptOfTypeDismissed(
-        DismissPrompt.NonPush,
-      );
+      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt.NonPush);
     }
 
     if (wasDismissed && !options.force && !options.isInUpdateMode) {
@@ -402,11 +403,11 @@ export class SlidedownManager {
       case DelayedPromptType.Push:
       case DelayedPromptType.Category:
         Log._debug('Setting flag to not show the slidedown to the user again.');
-        DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
+        markPromptDismissedWithType(DismissPrompt.Push);
         break;
       default:
         Log._debug('Setting flag to not show the slidedown to the user again.');
-        DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);
+        markPromptDismissedWithType(DismissPrompt.NonPush);
         break;
     }
   }

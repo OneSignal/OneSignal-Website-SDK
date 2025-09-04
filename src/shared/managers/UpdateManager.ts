@@ -5,7 +5,7 @@ import { getPageViewCount, isFirstPageView } from 'src/shared/helpers/pageview';
 import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import OneSignalApiShared from '../api/OneSignalApiShared';
+import { sendOutcome } from '../api/shared';
 import { getSubscriptionType } from '../environment/detect';
 import type { OutcomeRequestData } from '../outcomes/types';
 import { logMethodCall } from '../utils/utils';
@@ -103,7 +103,7 @@ export class UpdateManager {
       if (value !== undefined) {
         outcomeRequestData.weight = value;
       }
-      await OneSignalApiShared.sendOutcome(outcomeRequestData);
+      await sendOutcome(outcomeRequestData);
       return;
     }
     Log._warn(
@@ -138,7 +138,7 @@ export class UpdateManager {
       if (value !== undefined) {
         outcomeRequestData.weight = value;
       }
-      await OneSignalApiShared.sendOutcome(outcomeRequestData);
+      await sendOutcome(outcomeRequestData);
       return;
     }
     Log._warn(
@@ -170,7 +170,7 @@ export class UpdateManager {
       if (value !== undefined) {
         outcomeRequestData.weight = value;
       }
-      await OneSignalApiShared.sendOutcome(outcomeRequestData);
+      await sendOutcome(outcomeRequestData);
       return;
     }
     Log._warn(

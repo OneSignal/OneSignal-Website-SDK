@@ -62,6 +62,9 @@ export default defineConfig(({ mode }) => {
       target: 'es2022',
       minify: isProdEnv ? 'terser' : false,
       terserOptions: {
+        compress: {
+          passes: 2,
+        },
         mangle: {
           properties: {
             // Enable property name mangling/minification for private-style properties (starting with _)
