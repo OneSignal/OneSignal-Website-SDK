@@ -1,5 +1,8 @@
-import OneSignalApiBase from 'src/shared/api/OneSignalApiBase';
-import OneSignalApiSW from 'src/shared/api/OneSignalApiSW';
+import * as OneSignalApiBase from 'src/shared/api/base';
+import {
+  downloadSWServerAppConfig,
+  getUserIdFromSubscriptionIdentifier,
+} from 'src/shared/api/sw';
 import { getServerAppConfig } from 'src/shared/config/app';
 import type { AppConfig } from 'src/shared/config/types';
 import { containsMatch } from 'src/shared/context/helpers';
@@ -1024,7 +1027,7 @@ export class OneSignalServiceWorker {
     }
     const appConfig = await getServerAppConfig(
       { appId },
-      OneSignalApiSW._downloadServerAppConfig,
+      downloadSWServerAppConfig,
     );
     if (!appConfig) {
       // Without a valid app config (e.g. deleted app), we can't make any calls
@@ -1041,7 +1044,7 @@ export class OneSignalServiceWorker {
       deviceIdExists = !!deviceId;
       if (!deviceIdExists && event.oldSubscription) {
         // We don't have the device ID stored, but we can look it up from our old subscription
-        deviceId = await OneSignalApiSW._getUserIdFromSubscriptionIdentifier(
+        deviceId = await getUserIdFromSubscriptionIdentifier(
           appId,
           getDeviceType(),
           event.oldSubscription.endpoint,

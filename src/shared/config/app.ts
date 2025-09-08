@@ -1,4 +1,4 @@
-import OneSignalApi from '../api/OneSignalApi';
+import { downloadServerAppConfig } from '../api/page';
 import { InvalidAppIdError } from '../errors/common';
 import { getValueOrDefault } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';
@@ -26,18 +26,18 @@ const SERVER_CONFIG_DEFAULTS_SESSION = {
 export async function getAppConfig(
   userConfig: AppUserConfig,
 ): Promise<AppConfig> {
-  return getServerAppConfig(userConfig, OneSignalApi.downloadServerAppConfig);
+  return getServerAppConfig(userConfig, downloadServerAppConfig);
 }
 
 export async function getServerAppConfig(
   userConfig: AppUserConfig,
-  downloadServerAppConfig: (appId: string) => Promise<ServerAppConfig>,
+  downloadConfig: (appId: string) => Promise<ServerAppConfig>,
 ): Promise<AppConfig> {
   try {
     if (!userConfig || !userConfig.appId || !isValidUuid(userConfig.appId))
       throw InvalidAppIdError;
 
-    const serverConfig = await downloadServerAppConfig(userConfig.appId);
+    const serverConfig = await downloadConfig(userConfig.appId);
     upgradeConfigToVersionTwo(userConfig);
     const appConfig = getMergedConfig(userConfig, serverConfig);
 

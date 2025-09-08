@@ -2,7 +2,7 @@ import {
   cancelableTimeout,
   type CancelableTimeoutPromise,
 } from '../../sw/helpers/CancelableTimeout';
-import OneSignalApiSW from '../api/OneSignalApiSW';
+import { sendSessionDuration, updateUserSession } from '../api/sw';
 import { encodeHashAsUriComponent } from '../context/helpers';
 import {
   cleanupCurrentSession,
@@ -211,7 +211,7 @@ async function sendOnSessionCallIfNotPlayerCreate(
   resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
-  await OneSignalApiSW._updateUserSession(appId, onesignalId, subscriptionId);
+  await updateUserSession(appId, onesignalId, subscriptionId);
 }
 
 async function finalizeSession(
@@ -233,7 +233,7 @@ async function finalizeSession(
     );
     const attribution = await getConfigAttribution(outcomesConfig);
     Log._debug('send on_focus with attribution', attribution);
-    await OneSignalApiSW._sendSessionDuration(
+    await sendSessionDuration(
       appId,
       onesignalId,
       subscriptionId,

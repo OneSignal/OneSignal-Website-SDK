@@ -2,10 +2,7 @@ import { APP_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { getFinalAppConfig } from '__test__/support/helpers/configHelper';
-import { server } from '__test__/support/mocks/server';
-import { http, HttpResponse } from 'msw';
 import type { TagCategory } from 'src/page/tags/types';
-import OneSignalApi from 'src/shared/api/OneSignalApi';
 import { getAppConfig, getMergedConfig } from './app';
 import { ConfigIntegrationKind } from './constants';
 import {
@@ -13,6 +10,7 @@ import {
   limitCategoriesToMaxCount,
 } from './integration';
 import type { AppUserConfig } from './types';
+
 vi.useFakeTimers();
 
 const SERVICE_WORKER_PATH = 'push/onesignal/';
@@ -20,20 +18,10 @@ const SERVICE_WORKER_PATH = 'push/onesignal/';
 const serverConfig = TestContext.getFakeServerAppConfig(
   ConfigIntegrationKind.Custom,
 );
-vi.spyOn(OneSignalApi, 'jsonpLib').mockImplementation((url, fn) => {
-  fetch(url).then((res) => {
-    res.json().then((data) => {
-      fn(null, data);
-    });
-  });
-});
 
 describe('Config Helpers', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
-    server.use(
-      http.get('**/sync/*/web', () => HttpResponse.json(serverConfig)),
-    );
   });
 
   describe('promptOptions', () => {
@@ -310,6 +298,7 @@ describe('Config Helpers', () => {
       ...TestContext.getFakeAppUserConfig(),
       subdomainName: '',
     };
+
     const config = await getAppConfig(userConfig);
     const mergedConfig = getMergedConfig(userConfig, serverConfig);
 
