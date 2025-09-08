@@ -2,7 +2,7 @@ import JSONP from 'jsonp';
 import type { ServerAppConfig } from '../config/types';
 import { getOneSignalApiUrl } from '../environment/detect';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
-import { downloadServerAppConfig as downloadServerAppConfigSW } from './sw';
+import { downloadSWServerAppConfig } from './sw';
 
 export function jsonpLib(
   url: string,
@@ -30,6 +30,6 @@ export async function downloadServerAppConfig(
       );
     });
   } else {
-    return await downloadServerAppConfigSW(appId);
+    return await downloadSWServerAppConfig(appId);
   }
 }

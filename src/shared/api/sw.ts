@@ -15,7 +15,7 @@ import { NotificationType } from '../subscriptions/constants';
 import * as OneSignalApiBase from './base';
 import { sendOutcome } from './shared';
 
-export async function downloadServerAppConfig(
+export async function downloadSWServerAppConfig(
   appId: string,
 ): Promise<ServerAppConfig> {
   enforceAppId(appId);

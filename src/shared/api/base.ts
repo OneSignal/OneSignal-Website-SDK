@@ -121,7 +121,7 @@ async function executeFetch<T = unknown>(
     };
   } catch (e) {
     if (e instanceof Error && e.name === 'TypeError') {
-      // start with 30 seconds, then 20 seconds, then 10 seconds
+      // start with 10 seconds, then 20 seconds, then 30 seconds
       await delay(retry > 3 ? (6 - retry) * 1e4 : 3e4);
       Log._error(
         `OneSignal: Network timed out while calling ${url}. Retrying...`,
