@@ -13,19 +13,82 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
+
       - name: '[Setup] Install dependencies'
         run: npm ci
+
       - name: '[Build] Staging'
         run: npm run build:staging
+
       - name: '[Build] Production'
         run: npm run build:prod
+
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
       - name: '[Deploy] Upload SDK Files to GCS'
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
           path: 'build/releases'
           destination: 'sdk-builds-persistence-onesignal/web-sdk/${{ github.sha }}'
           parent: false
+
+      - name: '[Deploy] Checkout turbine repository'
+        uses: actions/checkout@v3
+        with:
+          repository: OneSignal/turbine
+          token: ${{ secrets.GH_TURBINE_TOKEN }}
+          path: turbine
+
+      - name: '[Deploy] Create turbine pr'
+        run: |
+          # Create new branch
+          BRANCH_NAME="web-sdk-${GITHUB_SHA::6}-release"
+
+          # Check if PR already exists
+          EXISTING_PR=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/OneSignal/turbine/pulls?head=OneSignal:$BRANCH_NAME&state=open" \
+            | jq length)
+
+          if [ "$EXISTING_PR" -gt 0 ]; then
+            echo "PR already exists for branch $BRANCH_NAME"
+            exit 0
+          fi
+
+          git checkout -b "$BRANCH_NAME"
+
+          # Update only USERMODEL_WEB_SDK_VERSION
+          sed -i "s/USERMODEL_WEB_SDK_VERSION: [a-f0-9]\{40\}/USERMODEL_WEB_SDK_VERSION: ${GITHUB_SHA}/" .circleci/config.yml
+
+          # Check if changes were made
+          if git diff --exit-code; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Commit changes
+          git add .circleci/config.yml
+          git commit -m "Update commit hash for ${GITHUB_SHA::6} web release" \
+                     -m "Job that successfully built the artifacts: https://github.com/OneSignal/OneSignal-Website-SDK/actions/runs/${GITHUB_RUN_ID}"
+
+          # Push to origin (you'll need to set up a fork)
+          git remote set-url origin https://x-access-token:${{ secrets.GH_TURBINE_TOKEN }}@github.com/OneSignal/turbine.git
+          git push origin "$BRANCH_NAME"
+
+          # Create pull request
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.GH_TURBINE_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"title\": \"Update commit hash for ${GITHUB_SHA::6} web release\",
+              \"body\": \"Job that successfully built the artifacts: https://github.com/OneSignal/OneSignal-Website-SDK/actions/runs/${GITHUB_RUN_ID}\",
+              \"head\": \"$BRANCH_NAME\",
+              \"base\": \"main\"
+            }" \
+            https://api.github.com/repos/OneSignal/turbine/pulls
+
+        env:
+          GH_TURBINE_TOKEN: ${{ secrets.GH_TURBINE_TOKEN }}
