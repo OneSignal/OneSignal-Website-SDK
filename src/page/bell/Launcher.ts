@@ -1,17 +1,13 @@
-import { containsMatch } from 'src/shared/context/helpers';
 import {
   addCssClass,
   hasCssClass,
   removeCssClass,
 } from 'src/shared/helpers/dom';
-import { nothing } from 'src/shared/helpers/general';
-import Log from 'src/shared/libraries/Log';
 import type { BellSize } from 'src/shared/prompts/types';
-import { once } from 'src/shared/utils/utils';
-import ActiveAnimatedElement from './ActiveAnimatedElement';
+import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
-export default class Launcher extends ActiveAnimatedElement {
+export default class Launcher extends AnimatedElement {
   public bell: Bell;
   public wasInactive: boolean;
 
@@ -20,10 +16,7 @@ export default class Launcher extends ActiveAnimatedElement {
       '.onesignal-bell-launcher',
       'onesignal-bell-launcher-active',
       undefined,
-      undefined,
       'onesignal-bell-launcher-inactive',
-      'hidden',
-      'active',
     );
 
     this.bell = bell;
@@ -62,52 +55,24 @@ export default class Launcher extends ActiveAnimatedElement {
     if (!this.shown) {
       return this;
     } else {
-      return await new Promise((resolve) => {
-        // Once the launcher has finished shrinking down
-        if (this.targetTransitionEvents.length == 0) {
-          return resolve(this);
-        } else {
-          const timerId = setTimeout(() => {
-            Log._debug(
-              `Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`,
-            );
-          }, this.transitionCheckTimeout);
-          once(
-            this.element!,
-            'transitionend',
-            (event: Event, destroyListenerFn: () => void) => {
-              if (
-                event.target === this.element &&
-                containsMatch(
-                  this.targetTransitionEvents,
-                  (event as any).propertyName,
-                )
-              ) {
-                clearTimeout(timerId);
-                // Uninstall the event listener for transitionend
-                destroyListenerFn();
-                return resolve(this);
-              }
-            },
-            true,
-          );
-        }
-      });
+      await this.waitForAnimations();
     }
   }
 
-  activateIfInactive() {
-    if (this.inactive) {
+  async activateIfInactive() {
+    if (!this.active) {
       this.wasInactive = true;
-      return this.activate();
-    } else return nothing();
+      await this.activate();
+    }
+    return this;
   }
 
-  inactivateIfWasInactive() {
+  async inactivateIfWasInactive() {
     if (this.wasInactive) {
       this.wasInactive = false;
-      return this.inactivate();
-    } else return nothing();
+      await this.inactivate();
+    }
+    return this;
   }
 
   clearIfWasInactive() {

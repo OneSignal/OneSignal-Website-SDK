@@ -1,15 +1,11 @@
-import ActiveAnimatedElement from './ActiveAnimatedElement';
 import AnimatedElement from './AnimatedElement';
 
-export default class Badge extends ActiveAnimatedElement {
+export default class Badge extends AnimatedElement {
   constructor() {
     super(
       '.onesignal-bell-launcher-badge',
       'onesignal-bell-launcher-badge-opened',
-      undefined,
       'onesignal-bell-launcher-badge-active',
-      undefined,
-      'hidden',
     );
   }
 

@@ -2,11 +2,12 @@ import { addDomElement, removeDomElement } from 'src/shared/helpers/dom';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
 import LimitStore from 'src/shared/services/LimitStore';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
-import ActiveAnimatedElement from './ActiveAnimatedElement';
+import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 import Message from './Message';
 
-export default class Button extends ActiveAnimatedElement {
+export default class Button extends AnimatedElement {
+  public _isHandlingClick: boolean = false;
   public events: any;
   public bell: Bell;
 
@@ -14,11 +15,7 @@ export default class Button extends ActiveAnimatedElement {
     super(
       '.onesignal-bell-launcher-button',
       undefined,
-      undefined,
       'onesignal-bell-launcher-button-active',
-      undefined,
-      'shown',
-      '',
     );
 
     this.bell = bell;
@@ -93,26 +90,25 @@ export default class Button extends ActiveAnimatedElement {
     this.bell.badge.inactivate();
   }
 
-  onClick() {
+  async onClick() {
+    // Prevent concurrent clicks
+    if (this._isHandlingClick) return;
+    this._isHandlingClick = true;
+
     OneSignalEvent.trigger(Bell.EVENTS.BELL_CLICK);
     OneSignalEvent.trigger(Bell.EVENTS.LAUNCHER_CLICK);
 
-    if (
-      this.bell.message.shown &&
-      this.bell.message.contentType == Message.TYPES.MESSAGE
-    ) {
-      // A message is being shown, it'll disappear soon
-      return;
-    }
+    try {
+      if (
+        this.bell.message.shown &&
+        this.bell.message.contentType == Message.TYPES.MESSAGE
+      ) {
+        // A message is being shown, it'll disappear soon
+        return;
+      }
 
-    const optedOut = LimitStore.getLast<boolean>('subscription.optedOut');
-    if (this.bell.unsubscribed) {
-      if (optedOut) {
-        // The user is manually opted out, but still "really" subscribed
-        this.bell.launcher.activateIfInactive().then(() => {
-          this.bell.showDialogProcedure();
-        });
-      } else {
+      const optedOut = LimitStore.getLast<boolean>('subscription.optedOut');
+      if (this.bell.unsubscribed && !optedOut) {
         // The user is actually subscribed, register him for notifications
         registerForPushNotifications();
         this.bell._ignoreSubscriptionState = true;
@@ -129,16 +125,27 @@ export default class Button extends ActiveAnimatedElement {
             });
         });
       }
-    } else if (this.bell.subscribed) {
-      this.bell.launcher.activateIfInactive().then(() => {
-        this.bell.showDialogProcedure();
-      });
-    } else if (this.bell.blocked) {
-      this.bell.launcher.activateIfInactive().then(() => {
-        this.bell.showDialogProcedure();
-      });
+
+      // Handle dialog toggle for all other cases
+      if (this.bell.unsubscribed || this.bell.subscribed || this.bell.blocked) {
+        await this.bell.launcher.activateIfInactive();
+        await this._toggleDialog();
+      }
+
+      await this.bell.message.hide();
+    } finally {
+      this._isHandlingClick = false;
     }
-    return this.bell.message.hide();
+  }
+
+  async _toggleDialog() {
+    if (this.bell.dialog.shown) {
+      // Close dialog if already open (toggle behavior)
+      await this.bell.dialog.hide();
+      await this.bell.launcher.inactivateIfWasInactive();
+    } else {
+      await this.bell.showDialogProcedure();
+    }
   }
 
   pulse() {

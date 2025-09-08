@@ -9,14 +9,6 @@ const SILENT_EVENTS = [
   'notifyButtonHover',
   'notifyButtonButtonClick',
   'notifyButtonLauncherClick',
-  'animatedElementHiding',
-  'animatedElementHidden',
-  'animatedElementShowing',
-  'animatedElementShown',
-  'activeAnimatedElementActivating',
-  'activeAnimatedElementActive',
-  'activeAnimatedElementInactivating',
-  'activeAnimatedElementInactive',
 ];
 
 export default class OneSignalEvent {
