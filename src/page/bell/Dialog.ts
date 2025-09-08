@@ -24,8 +24,7 @@ export default class Dialog extends AnimatedElement {
       '.onesignal-bell-launcher-dialog',
       'onesignal-bell-launcher-dialog-opened',
       undefined,
-      'hidden',
-      ['opacity', 'transform'],
+      undefined,
       '.onesignal-bell-launcher-dialog-body',
     );
 

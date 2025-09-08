@@ -345,9 +345,9 @@ export function manageNotifyButtonStateWhileSlidedownShows(): void {
   if (
     notifyButton &&
     notifyButton.options?.enable &&
-    OneSignal.notifyButton?.launcher?.state !== 'hidden'
+    OneSignal.notifyButton?.launcher?.shown
   ) {
-    OneSignal.notifyButton?.launcher?.waitUntilShown().then(() => {
+    OneSignal.notifyButton?.launcher?.show().then(() => {
       OneSignal.notifyButton?.launcher?.hide();
     });
   }

@@ -14,8 +14,7 @@ export default class Message extends AnimatedElement {
       '.onesignal-bell-launcher-message',
       'onesignal-bell-launcher-message-opened',
       undefined,
-      'hidden',
-      ['opacity', 'transform'],
+      undefined,
       '.onesignal-bell-launcher-message-body',
     );
 
