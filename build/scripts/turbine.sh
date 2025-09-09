@@ -1,9 +1,14 @@
 #!/bin/bash
+
 # For creating a pr to turbine to update the web sdk version target commit
 # Get the SDK version
 SDK_VERSION=$(node -p "require('./package.json').config.sdkVersion")
 
 cd turbine
+
+# Configure git identity
+git config user.email "github-actions[bot]@users.noreply.github.com"
+git config user.name "github-actions[bot]"
 
 # Create new branch
 BRANCH_NAME="web-sdk-${SDK_VERSION}-release"
