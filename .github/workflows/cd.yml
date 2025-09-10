@@ -3,14 +3,18 @@ name: Build SDK Files & GCS Upload
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   test_build_deploy:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
 
@@ -35,17 +39,23 @@ jobs:
           destination: 'sdk-builds-persistence-onesignal/web-sdk/${{ github.sha }}'
           parent: false
 
+      - name: '[Deploy] Get SDK Version'
+        id: get_version
+        run: echo "SDK_VERSION=$(node -p "require('./package.json').config.sdkVersion")" >> $GITHUB_OUTPUT
+
       - name: '[Deploy] Checkout turbine repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           repository: OneSignal/turbine
           token: ${{ secrets.GH_TURBINE_TOKEN }}
           path: turbine
-
       - name: '[Deploy] Create turbine pr'
-        run: ./build/scripts/turbine.sh
+        run: |
+          cp ./build/scripts/turbine.sh ./turbine/
+          cd turbine
+          ./turbine.sh
         env:
           GH_TURBINE_TOKEN: ${{ secrets.GH_TURBINE_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
+          SDK_VERSION: ${{ steps.get_version.outputs.SDK_VERSION }}
