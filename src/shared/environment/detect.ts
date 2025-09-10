@@ -8,10 +8,10 @@ import { Browser } from '../useragent/constants';
 import { getBrowserName, getBrowserVersion } from '../useragent/detect';
 import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/EnvVariables';
 
-export const isBrowser = typeof window !== 'undefined';
+export const isBrowser = () => typeof window !== 'undefined';
 
 export const hasSafariWindow = () =>
-  isBrowser && typeof window.safari !== 'undefined';
+  isBrowser() && typeof window.safari !== 'undefined';
 
 export const supportsServiceWorkers = () => {
   if (IS_SERVICE_WORKER) return true;
@@ -21,7 +21,7 @@ export const supportsServiceWorkers = () => {
 export const windowEnvString = IS_SERVICE_WORKER ? 'Service Worker' : 'Browser';
 
 export const useSafariLegacyPush = () =>
-  isBrowser && window.safari?.pushNotification != undefined;
+  isBrowser() && window.safari?.pushNotification != undefined;
 
 export const supportsVapidPush =
   typeof PushSubscriptionOptions !== 'undefined' &&
