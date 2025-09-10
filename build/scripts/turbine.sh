@@ -1,12 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+git clone "https://${GH_TURBINE_TOKEN}@github.com/OneSignal/turbine.git" turbine
+cd turbine
+
 # Configure git identity
 git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
-
-# ensure origin has auth for push (actions/checkout sets this, but we make it explicit)
-git remote set-url origin "https://x-access-token:${GH_TURBINE_TOKEN}@github.com/OneSignal/turbine.git"
 
 # Create new branch
 BRANCH_NAME="web-sdk-${SDK_VERSION}-release"
@@ -22,7 +22,7 @@ if [ "$EXISTING_PR" -gt 0 ]; then
   exit 0
 fi
 
-git checkout -b "$BRANCH_NAME"
+git checkout -B "$BRANCH_NAME"
 
 # Update only USERMODEL_WEB_SDK_VERSION
 sed -i "s/USERMODEL_WEB_SDK_VERSION: [a-f0-9]\{40\}/USERMODEL_WEB_SDK_VERSION: ${GITHUB_SHA}/" .circleci/config.yml
@@ -41,7 +41,7 @@ git add .circleci/config.yml
 git commit -m "$RELEASE_MESSAGE" -m "$JOB_MESSAGE"
 
 # Push to origin
-git push origin "$BRANCH_NAME"
+git push -u origin "$BRANCH_NAME"
 
 exit 0
 
