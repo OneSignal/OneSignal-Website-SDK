@@ -40,19 +40,17 @@ JOB_MESSAGE="Job that successfully built the artifacts: https://github.com/OneSi
 git add .circleci/config.yml
 git commit -m "$RELEASE_MESSAGE" -m "$JOB_MESSAGE"
 
-# Push to origin
-git push -u origin "$BRANCH_NAME"
+# Push to origin (override any existing branch)
+git push --force origin "$BRANCH_NAME"
 
-exit 0
-
-# Create pull request - use full owner:branch format for head
+# Create pull request
 curl -sS -X POST \
   -H "Authorization: Bearer $GH_TURBINE_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
-\"title\": \"$RELEASE_MESSAGE\",
-\"body\": \"$JOB_MESSAGE\",
-\"head\": \"OneSignal:$BRANCH_NAME\",
-\"base\": \"main\"
-}" \
+    \"title\": \"$RELEASE_MESSAGE\",
+    \"body\": \"$JOB_MESSAGE\",
+    \"head\": \"OneSignal:$BRANCH_NAME\",
+    \"base\": \"main\"
+  }" \
   https://api.github.com/repos/OneSignal/turbine/pulls
