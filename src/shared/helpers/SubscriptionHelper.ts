@@ -6,7 +6,6 @@ import type {
   SubscriptionChannelValue,
   SubscriptionTypeValue,
 } from 'src/shared/subscriptions/types';
-import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
@@ -24,22 +23,17 @@ export default class SubscriptionHelper {
     let subscription: Subscription | null = null;
 
     if (IS_SERVICE_WORKER) throw new Error('Unsupported environment');
-    try {
-      const rawSubscription = await context._subscriptionManager.subscribe(
-        SubscriptionStrategyKind.ResubscribeExisting,
-      );
-      subscription =
-        await context._subscriptionManager._registerSubscription(
-          rawSubscription,
-        );
+    const rawSubscription = await context._subscriptionManager.subscribe(
+      SubscriptionStrategyKind.ResubscribeExisting,
+    );
+    subscription =
+      await context._subscriptionManager._registerSubscription(rawSubscription);
 
-      incrementPageViewCount();
+    incrementPageViewCount();
 
-      await triggerNotificationPermissionChanged();
-      await checkAndTriggerSubscriptionChanged();
-    } catch (e) {
-      Log._error(e);
-    }
+    await triggerNotificationPermissionChanged();
+    await checkAndTriggerSubscriptionChanged();
+
     return subscription;
   }
 

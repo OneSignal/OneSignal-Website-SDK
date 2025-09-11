@@ -185,9 +185,12 @@ export class PromptsManager {
       return;
     }
 
-    this.isNativePromptShowing = true;
-    await registerForPushNotifications();
-    this.isNativePromptShowing = false;
+    try {
+      this.isNativePromptShowing = true;
+      await registerForPushNotifications();
+    } finally {
+      this.isNativePromptShowing = false;
+    }
     markPromptDismissedWithType(DismissPrompt.Push);
   }
 
