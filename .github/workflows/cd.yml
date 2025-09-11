@@ -8,24 +8,41 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
+
       - name: '[Setup] Install dependencies'
         run: npm ci
+
       - name: '[Build] Staging'
         run: npm run build:staging
+
       - name: '[Build] Production'
         run: npm run build:prod
+
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
       - name: '[Deploy] Upload SDK Files to GCS'
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
           path: 'build/releases'
           destination: 'sdk-builds-persistence-onesignal/web-sdk/${{ github.sha }}'
           parent: false
+
+      - name: '[Deploy] Get SDK Version'
+        id: get_version
+        run: echo "SDK_VERSION=$(node -p "require('./package.json').config.sdkVersion")" >> $GITHUB_OUTPUT
+
+      - name: '[Deploy] Create turbine pr'
+        run: ./build/scripts/turbine.sh
+        env:
+          GH_TURBINE_TOKEN: ${{ secrets.GH_TURBINE_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          SDK_VERSION: ${{ steps.get_version.outputs.SDK_VERSION }}

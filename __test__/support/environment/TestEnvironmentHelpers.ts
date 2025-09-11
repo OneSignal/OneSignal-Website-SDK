@@ -16,7 +16,10 @@ import MockNotification from '../mocks/MockNotification';
 import TestContext from './TestContext';
 import { type TestEnvironmentConfig } from './TestEnvironment';
 
-declare const global: any;
+declare const global: {
+  OneSignal: typeof OneSignal;
+  Notification: typeof Notification;
+};
 
 export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal = OneSignal;
@@ -42,7 +45,7 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
 
 export function stubNotification(config: TestEnvironmentConfig) {
   global.Notification = MockNotification;
-  global.Notification.permission = config.permission
+  MockNotification.permission = config.permission
     ? config.permission
     : global.Notification.permission;
 }

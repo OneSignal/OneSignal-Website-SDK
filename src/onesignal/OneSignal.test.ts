@@ -435,6 +435,7 @@ describe('OneSignal - No Consent Required', () => {
           setTransferSubscriptionResponse();
 
           await OneSignal.login(externalId); // should call set alias
+          await vi.waitUntil(() => addAliasFn.mock.calls.length === 1);
           expect(addAliasFn).toHaveBeenCalledWith({
             identity: {
               external_id: externalId,
@@ -442,6 +443,7 @@ describe('OneSignal - No Consent Required', () => {
           });
 
           await OneSignal.login(newExternalId); // should call create user
+          await vi.waitUntil(() => createUserFn.mock.calls.length === 1);
           expect(createUserFn).toHaveBeenCalledWith({
             identity: {
               external_id: newExternalId,
