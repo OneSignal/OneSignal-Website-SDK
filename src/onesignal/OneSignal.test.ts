@@ -634,7 +634,9 @@ describe('OneSignal - No Consent Required', () => {
             onesignal_id: ONESIGNAL_ID,
           });
 
-          await OneSignal.User.PushSubscription.optIn();
+          await expect(OneSignal.User.PushSubscription.optIn()).rejects.toThrow(
+            'Permission dismissed',
+          );
 
           expect(createUserFn).toHaveBeenCalledTimes(1);
           expect(createUserFn).toHaveBeenCalledWith({

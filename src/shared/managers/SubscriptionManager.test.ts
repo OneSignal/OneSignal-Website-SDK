@@ -13,7 +13,8 @@ import {
 } from '__test__/support/helpers/setup';
 import MockNotification from '__test__/support/mocks/MockNotification';
 import {
-  getSubscriptionFn,
+  mockPushManager,
+  mockPushSubscription,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
 import { setPushToken } from '../database/subscription';
@@ -78,7 +79,9 @@ describe('SubscriptionManager', () => {
         'generatePushSubscriptionModel',
       );
       const rawSubscription = getRawPushSubscription();
-      getSubscriptionFn.mockResolvedValue({
+      mockPushManager.getSubscription.mockResolvedValue({
+        ...mockPushSubscription,
+        // @ts-expect-error - using partial types
         endpoint: rawSubscription.w3cEndpoint?.toString(),
       });
       setCreateUserResponse({
