@@ -114,12 +114,12 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public async enqueueAndWait(operation: Operation): Promise<void> {
     Log._debug(`OperationRepo.enqueueAndWaitoperation: ${operation})`);
 
-    await new Promise((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       this._internalEnqueue(
         new OperationQueueItem({
           operation,
           bucket: this._enqueueIntoBucket,
-          resolver: resolve,
+          resolver: (value) => (value ? resolve() : reject()),
         }),
         true,
       );
@@ -245,10 +245,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult.FAIL_PAUSE_OPREPO:
-          Log._error(
-            `Operation execution failed with eventual retry, pausing the operation repo: ${operations}`,
-          );
+          Log._error(`Operation failed, pausing ops:${operations}`);
           this._pause();
+          ops.forEach((op) => op.resolver?.(false));
           ops.toReversed().forEach((op) => {
             removeOpFromDB(op.operation);
             this.queue.unshift(op);
