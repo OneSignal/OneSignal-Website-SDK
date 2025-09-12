@@ -508,6 +508,23 @@
         "isAsync": false,
         "args": [],
         "returnType": "string"
+      },
+      {
+        "name": "trackEvent",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "name",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "properties",
+            "type": "Record<string, unknown>",
+            "optional": true
+          }
+        ],
+        "returnType": "void"
       }
     ],
     "properties": [
