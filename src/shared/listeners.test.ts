@@ -3,7 +3,8 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { setIsPushEnabled } from '__test__/support/helpers/setup';
 import {
-  getSubscriptionFn,
+  mockPushManager,
+  mockPushSubscription,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
 import * as eventListeners from 'src/shared/listeners';
@@ -23,7 +24,9 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     OneSignal.User.PushSubscription.addEventListener('change', changeListener);
 
     // no change
-    getSubscriptionFn.mockResolvedValue({
+    mockPushManager.getSubscription.mockResolvedValue({
+      ...mockPushSubscription,
+      // @ts-expect-error - using partial types
       endpoint: undefined,
     });
     await setIsPushEnabled(false);
@@ -56,7 +59,8 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     });
 
     // token change
-    getSubscriptionFn.mockResolvedValue({
+    mockPushManager.getSubscription.mockResolvedValue({
+      ...mockPushSubscription,
       endpoint: PUSH_TOKEN,
     });
     await setIsPushEnabled(false);
@@ -92,7 +96,8 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     });
     await setPushToken(token);
     OneSignal._coreDirector.subscriptionModelStore.add(pushModel);
-    getSubscriptionFn.mockResolvedValue({
+    mockPushManager.getSubscription.mockResolvedValue({
+      ...mockPushSubscription,
       endpoint: token,
     });
 

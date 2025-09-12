@@ -1,4 +1,18 @@
+import { BASE_IDENTITY, BASE_SUB, PUSH_TOKEN } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import {
+  createUserFn,
+  setCreateUserError,
+  setCreateUserResponse,
+} from '__test__/support/helpers/requests';
+import MockNotification from '__test__/support/mocks/MockNotification';
+import {
+  mockPushManager,
+  mockPushSubscription,
+  MockServiceWorker,
+} from '__test__/support/mocks/MockServiceWorker';
+import { server } from '__test__/support/mocks/server';
+import { http, HttpResponse } from 'msw';
 import { getAppState } from 'src/shared/database/config';
 import {
   EmptyArgumentError,
@@ -8,8 +22,12 @@ import Log from 'src/shared/libraries/Log';
 import * as utils from 'src/shared/utils/utils';
 import NotificationsNamespace from './NotificationsNamespace';
 
-beforeEach(() => {
+beforeEach(async () => {
   TestEnvironment.initialize();
+});
+
+afterEach(() => {
+  OneSignal.setConsentRequired(false);
 });
 
 test('should set the default url', async () => {
@@ -63,4 +81,72 @@ describe('Consent Required', () => {
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
     expect(initAndSupportedSpy).not.toHaveBeenCalled();
   });
+});
+
+describe('requestPermission', () => {
+  beforeEach(() => {
+    server.use(http.get('**/OneSignalSDK.sw.js', () => HttpResponse.json({})));
+  });
+
+  test('can request permission', async () => {
+    setCreateUserResponse();
+
+    MockNotification.permission = 'granted';
+
+    const notifications = new NotificationsNamespace();
+    const success = await notifications.requestPermission();
+
+    expect(success).toBe(true);
+
+    await vi.waitUntil(() => createUserFn.mock.calls.length === 1);
+    expect(createUserFn).toHaveBeenCalledWith({
+      identity: {},
+      ...BASE_IDENTITY,
+      subscriptions: [
+        {
+          ...BASE_SUB,
+          token: PUSH_TOKEN,
+          type: 'ChromePush',
+        },
+      ],
+    });
+  });
+
+  test('should expose errors', async () => {
+    const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => '');
+    vi.spyOn(Log, '_error').mockImplementation(() => '');
+
+    MockNotification.permission = 'denied';
+    const notifications = new NotificationsNamespace();
+
+    // in flight error
+    notifications.requestPermission();
+    await expect(notifications.requestPermission()).resolves.toBe(false);
+    expect(debugSpy).toHaveBeenCalledWith(
+      'Already showing autoprompt. Abort showing a native prompt.',
+    );
+
+    // permission is denied
+    await expect(notifications.requestPermission()).resolves.toBe(false);
+
+    // get subscription error
+    MockNotification.permission = 'granted';
+    let error = new Error('Get subscription error');
+    mockPushManager.getSubscription.mockRejectedValueOnce(error);
+    await expect(notifications.requestPermission()).resolves.toBe(false);
+
+    error = new Error('Subscribe error');
+    mockPushManager.subscribe.mockRejectedValue(error);
+    await expect(notifications.requestPermission()).resolves.toBe(false);
+
+    // create user error
+    mockPushManager.subscribe.mockResolvedValue(mockPushSubscription);
+    setCreateUserError({ status: 400 });
+    await expect(notifications.requestPermission()).resolves.toBe(false);
+  });
+});
+
+Object.defineProperty(global.navigator, 'serviceWorker', {
+  value: new MockServiceWorker(),
+  writable: true,
 });

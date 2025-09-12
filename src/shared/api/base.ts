@@ -1,3 +1,4 @@
+import { RETRY_MS } from 'src/core/operationRepo/constants';
 import { getOneSignalApiUrl } from '../environment/detect';
 import { AppIDMissingError, RetryLimitError } from '../errors/common';
 import { delay } from '../helpers/general';
@@ -122,7 +123,7 @@ async function executeFetch<T = unknown>(
   } catch (e) {
     if (e instanceof Error && e.name === 'TypeError') {
       // start with 10 seconds, then 20 seconds, then 30 seconds
-      await delay(retry > 3 ? (6 - retry) * 1e4 : 3e4);
+      await delay(retry > 3 ? (6 - retry) * RETRY_MS : 3 * RETRY_MS);
       Log._error(
         `OneSignal: Network timed out while calling ${url}. Retrying...`,
       );
