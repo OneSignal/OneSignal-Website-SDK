@@ -16,7 +16,6 @@ import { http, HttpResponse } from 'msw';
 import { getAppState } from 'src/shared/database/config';
 import {
   EmptyArgumentError,
-  PermissionBlockedError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
 import Log from 'src/shared/libraries/Log';
@@ -95,7 +94,9 @@ describe('requestPermission', () => {
     MockNotification.permission = 'granted';
 
     const notifications = new NotificationsNamespace();
-    await notifications.requestPermission();
+    const success = await notifications.requestPermission();
+
+    expect(success).toBe(true);
 
     await vi.waitUntil(() => createUserFn.mock.calls.length === 1);
     expect(createUserFn).toHaveBeenCalledWith({
@@ -112,29 +113,36 @@ describe('requestPermission', () => {
   });
 
   test('should expose errors', async () => {
+    const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => '');
     vi.spyOn(Log, '_error').mockImplementation(() => '');
+
     MockNotification.permission = 'denied';
+    const notifications = new NotificationsNamespace();
+
+    // in flight error
+    notifications.requestPermission();
+    await expect(notifications.requestPermission()).resolves.toBe(false);
+    expect(debugSpy).toHaveBeenCalledWith(
+      'Already showing autoprompt. Abort showing a native prompt.',
+    );
 
     // permission is denied
-    const notifications = new NotificationsNamespace();
-    await expect(notifications.requestPermission()).rejects.toThrow(
-      PermissionBlockedError,
-    );
+    await expect(notifications.requestPermission()).resolves.toBe(false);
 
     // get subscription error
     MockNotification.permission = 'granted';
     let error = new Error('Get subscription error');
     mockPushManager.getSubscription.mockRejectedValueOnce(error);
-    await expect(notifications.requestPermission()).rejects.toThrow(error);
+    await expect(notifications.requestPermission()).resolves.toBe(false);
 
     error = new Error('Subscribe error');
     mockPushManager.subscribe.mockRejectedValue(error);
-    await expect(notifications.requestPermission()).rejects.toThrow(error);
+    await expect(notifications.requestPermission()).resolves.toBe(false);
 
     // create user error
     mockPushManager.subscribe.mockResolvedValue(mockPushSubscription);
     setCreateUserError({ status: 400 });
-    await expect(notifications.requestPermission()).rejects.toThrow();
+    await expect(notifications.requestPermission()).resolves.toBe(false);
   });
 });
 

@@ -177,21 +177,19 @@ export class PromptsManager {
     }
   }
 
-  public async internalShowNativePrompt(): Promise<void> {
+  public async internalShowNativePrompt(): Promise<boolean> {
     logMethodCall('internalShowNativePrompt');
 
     if (this.isNativePromptShowing) {
       Log._debug('Already showing autoprompt. Abort showing a native prompt.');
-      return;
+      return false;
     }
 
-    try {
-      this.isNativePromptShowing = true;
-      await registerForPushNotifications();
-    } finally {
-      this.isNativePromptShowing = false;
-    }
+    this.isNativePromptShowing = true;
+    const success = await registerForPushNotifications();
+    this.isNativePromptShowing = false;
     markPromptDismissedWithType(DismissPrompt.Push);
+    return success;
   }
 
   private async internalShowSlidedownPrompt(

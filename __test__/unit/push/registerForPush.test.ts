@@ -33,7 +33,7 @@ describe('Register for push', () => {
 
     expect(spy).not.toHaveBeenCalled();
     OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-    await expect(promise).rejects.toThrow('Permission dismissed');
+    await promise;
     expect(OneSignal.initialized).toBe(true);
     expect(spy).toHaveBeenCalledTimes(1);
   });
@@ -43,8 +43,8 @@ describe('Register for push', () => {
     global.OneSignal.initialized = true;
     global.OneSignal._initCalled = false;
 
-    await expect(InitHelper.registerForPushNotifications()).rejects.toThrow(
-      'Permission dismissed',
+    await expect(InitHelper.registerForPushNotifications()).resolves.toBe(
+      false,
     );
     expect(spy).toHaveBeenCalledTimes(1);
   });

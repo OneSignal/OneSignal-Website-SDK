@@ -95,8 +95,8 @@ async function sessionInit(): Promise<void> {
   await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
 }
 
-export async function registerForPushNotifications(): Promise<void> {
-  await SubscriptionHelper.registerForPush();
+export async function registerForPushNotifications(): Promise<boolean> {
+  return !!(await SubscriptionHelper.registerForPush());
 }
 
 /**

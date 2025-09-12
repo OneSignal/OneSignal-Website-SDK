@@ -42,7 +42,7 @@ vi.mock('src/core/operationRepo/constants', () => ({
   OP_REPO_POST_CREATE_DELAY: 10,
   OP_REPO_EXECUTION_INTERVAL: 10,
   OP_REPO_POST_CREATE_RETRY_UP_TO: 20,
-  RETRY_SECONDS: 10,
+  RETRY_MS: 10,
 }));
 
 Object.defineProperty(navigator, 'userAgent', {
