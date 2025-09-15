@@ -2,6 +2,8 @@ name: Create Release PR
 
 on:
   workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   bump-version:
