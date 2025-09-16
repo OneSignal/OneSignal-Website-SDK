@@ -1,12 +1,32 @@
 name: Build SDK Files & GCS Upload
 
 on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
   workflow_dispatch:
 
 jobs:
+  check_release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check if release merge or workflow dispatch
+        id: check_release
+        uses: actions/github-script@v8
+        with:
+          script: |
+            // Allow workflow_dispatch and release PR merges
+            if (context.eventName !== 'push') return;
+
+            // For push events, check if it's a release merge
+            const isReleaseMerge = /Release \d{6}/.test(context.payload.head_commit.message);
+            if (!isReleaseMerge) core.setFailed('Not a release merge - skipping workflow');
+
   test_build_deploy:
     runs-on: ubuntu-22.04
-
+    needs: check_release
     steps:
       - uses: actions/checkout@v5
       - name: Use Node.js
@@ -14,13 +34,13 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - name: '[Setup] Install dependencies'
+      - name: 'Install dependencies'
         run: npm ci
 
-      - name: '[Build] Staging'
+      - name: 'Build for Staging'
         run: npm run build:staging
 
-      - name: '[Build] Production'
+      - name: 'Build for Production'
         run: npm run build:prod
 
       - name: 'Authenticate to Google Cloud'
@@ -28,21 +48,25 @@ jobs:
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-      - name: '[Deploy] Upload SDK Files to GCS'
+      - name: 'Upload SDK Files to GCS'
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
           path: 'build/releases'
           destination: 'sdk-builds-persistence-onesignal/web-sdk/${{ github.sha }}'
           parent: false
 
-      - name: '[Deploy] Get SDK Version'
+      - name: 'Get SDK Version'
         id: get_version
         run: echo "SDK_VERSION=$(node -p "require('./package.json').config.sdkVersion")" >> $GITHUB_OUTPUT
 
-      - name: '[Deploy] Create turbine pr'
+      - name: 'Create turbine pr'
         run: ./build/scripts/turbine.sh
         env:
           GH_TURBINE_TOKEN: ${{ secrets.GH_TURBINE_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           SDK_VERSION: ${{ steps.get_version.outputs.SDK_VERSION }}
+
+  create_release:
+    needs: test_build_deploy
+    uses: ./.github/workflows/create-release-on-github.yml
