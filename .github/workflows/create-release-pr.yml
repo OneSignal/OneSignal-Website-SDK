@@ -88,6 +88,16 @@ jobs:
           git checkout -b rel/${{ steps.new_version.outputs.version }}
           git push -u origin rel/${{ steps.new_version.outputs.version }}
 
+      - name: Update package.json sdk version
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          npm pkg set config.sdkVersion="$NEW_VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "Release $NEW_VERSION"
+          git push
+
       - name: Generate release notes
         id: release_notes
         uses: actions/github-script@v8
