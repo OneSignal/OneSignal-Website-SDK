@@ -19,30 +19,18 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
+            // Allow workflow_dispatch and release PR merges
             if (context.eventName !== 'push') {
               core.setOutput('should_run', 'true');
               return;
             }
 
-            const commit = context.payload.head_commit;
-            const mergeMatch = commit.message.match(/Merge pull request #(\d+)/);
-
-            if (!mergeMatch) {
-              core.setOutput('should_run', 'false');
-              return;
-            }
-
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: parseInt(mergeMatch[1])
-            });
-
-            core.setOutput('should_run', pr.title.startsWith('Release') ? 'true' : 'false');
+            // For push events, check if it's a release merge
+            const isReleaseMerge = /Release \d{6}/.test(context.payload.head_commit.message);
+            core.setOutput('should_run', isReleaseMerge ? 'true' : 'false');
 
   test_build_deploy:
     runs-on: ubuntu-22.04
-
     needs: check_release
     if: needs.check_release.outputs.should_run == 'true'
 
@@ -86,13 +74,6 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}
           SDK_VERSION: ${{ steps.get_version.outputs.SDK_VERSION }}
 
-      - name: 'Create GiatHub Release'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'create-release-on-github.yml',
-              ref: 'main'
-            });
+  create_release:
+    needs: test_build_deploy
+    uses: ./.github/workflows/create-release-on-github.yml
