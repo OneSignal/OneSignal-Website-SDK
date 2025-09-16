@@ -1,6 +1,7 @@
 name: Create Release Notes
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   create-release-notes:
