@@ -1,0 +1,74 @@
+name: Create Release Notes
+on:
+  workflow_dispatch:
+
+jobs:
+  create-release-notes:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Use Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: 'Install dependencies'
+        run: npm ci
+
+      - name: Get version
+        id: get_version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').config.sdkVersion")
+          if git rev-parse "$CURRENT_VERSION" >/dev/null 2>&1; then
+            echo "Tag $CURRENT_VERSION already exists, nothing to do"
+            exit 0
+          else
+            echo "Tag $CURRENT_VERSION does not exist, proceeding with release creation"
+          fi
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create release notes
+        uses: actions/github-script@v8
+        id: release_notes
+        with:
+          script: |
+            const currentVersion = '${{ steps.get_version.outputs.version }}';
+
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              base: 'main',
+              per_page: 100
+            });
+
+            const releasePr = prs.find(pr =>
+              pr.title === `Release ${currentVersion}` && pr.merged_at
+            );
+            if (!releasePr) {
+              core.setFailed(`No merged release PR found for version ${currentVersion}`);
+              return;
+            }
+
+            core.setOutput('notes', releasePr.body);
+      - name: Create GitHub Release
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ steps.get_version.outputs.version }}',
+              name: 'Release ${{ steps.get_version.outputs.version }}',
+              body: '${{ steps.release_notes.outputs.notes }}',
+              draft: false,
+              prerelease: false
+            });
