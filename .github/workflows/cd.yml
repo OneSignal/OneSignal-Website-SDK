@@ -1,11 +1,50 @@
 name: Build SDK Files & GCS Upload
 
 on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
   workflow_dispatch:
 
 jobs:
+  check_release:
+    runs-on: ubuntu-22.04
+    outputs:
+      should_run: ${{ steps.check_release.outputs.should_run }}
+    steps:
+      - name: Check if release merge or workflow dispatch
+        id: check_release
+        uses: actions/github-script@v8
+        with:
+          script: |
+            if (context.eventName !== 'push') {
+              core.setOutput('should_run', 'true');
+              return;
+            }
+
+            const commit = context.payload.head_commit;
+            const mergeMatch = commit.message.match(/Merge pull request #(\d+)/);
+
+            if (!mergeMatch) {
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: parseInt(mergeMatch[1])
+            });
+
+            core.setOutput('should_run', pr.title.startsWith('Release') ? 'true' : 'false');
+
   test_build_deploy:
     runs-on: ubuntu-22.04
+
+    needs: check_release
+    if: needs.check_release.outputs.should_run == 'true'
 
     steps:
       - uses: actions/checkout@v5
@@ -14,13 +53,13 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - name: '[Setup] Install dependencies'
+      - name: 'Install dependencies'
         run: npm ci
 
-      - name: '[Build] Staging'
+      - name: 'Build for Staging'
         run: npm run build:staging
 
-      - name: '[Build] Production'
+      - name: 'Build for Production'
         run: npm run build:prod
 
       - name: 'Authenticate to Google Cloud'
@@ -28,21 +67,32 @@ jobs:
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-      - name: '[Deploy] Upload SDK Files to GCS'
+      - name: 'Upload SDK Files to GCS'
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
           path: 'build/releases'
           destination: 'sdk-builds-persistence-onesignal/web-sdk/${{ github.sha }}'
           parent: false
 
-      - name: '[Deploy] Get SDK Version'
+      - name: 'Get SDK Version'
         id: get_version
         run: echo "SDK_VERSION=$(node -p "require('./package.json').config.sdkVersion")" >> $GITHUB_OUTPUT
 
-      - name: '[Deploy] Create turbine pr'
+      - name: 'Create turbine pr'
         run: ./build/scripts/turbine.sh
         env:
           GH_TURBINE_TOKEN: ${{ secrets.GH_TURBINE_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           SDK_VERSION: ${{ steps.get_version.outputs.SDK_VERSION }}
+
+      - name: 'Create GiatHub Release'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'create-release-on-github.yml',
+              ref: 'main'
+            });
