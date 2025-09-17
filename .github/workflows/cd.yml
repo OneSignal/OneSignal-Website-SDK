@@ -19,15 +19,8 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            let shouldRun = false;
-
-            if (context.eventName === 'workflow_dispatch') {
-              shouldRun = true;
-            } else if (context.eventName === 'push') {
-              const isReleaseMerge = /Release \d{6}/.test(context.payload.head_commit.message);
-              shouldRun = isReleaseMerge;
-            }
-
+            const shouldRun = context.eventName === 'workflow_dispatch' ||
+                             /Release \d{6}/.test(context.payload.head_commit.message);
             core.setOutput('should_run', shouldRun);
 
   test_build_deploy:
