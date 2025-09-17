@@ -7,9 +7,6 @@ jobs:
   create-release-notes:
     runs-on: ubuntu-latest
 
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     steps:
       - uses: actions/checkout@v5
         with:
@@ -59,17 +56,23 @@ jobs:
               return;
             }
 
-            core.setOutput('notes', releasePr.body);
+            const releaseNotes = releasePr.body.split('<!--')[0].trim();
+            core.setOutput('notes', releaseNotes);
+
       - name: Create GitHub Release
         uses: actions/github-script@v8
+        env:
+          RELEASE_NOTES: ${{ steps.release_notes.outputs.notes }}
         with:
           script: |
+            const notes = process.env.RELEASE_NOTES;
+
             await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: '${{ steps.get_version.outputs.version }}',
               name: 'Release ${{ steps.get_version.outputs.version }}',
-              body: '${{ steps.release_notes.outputs.notes }}',
+              body: notes,
               draft: false,
               prerelease: false
             });

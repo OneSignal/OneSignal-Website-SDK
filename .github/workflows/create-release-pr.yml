@@ -103,7 +103,11 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const prs = JSON.parse('${{ steps.get_prs.outputs.prs }}');
+            // Trim whitespace from PR titles
+            const prs = JSON.parse('${{ steps.get_prs.outputs.prs }}').map(pr => ({
+              ...pr,
+              title: pr.title.trim()
+            }));
 
             // Categorize PRs
             const features = prs.filter(pr => /^feat/i.test(pr.title));
