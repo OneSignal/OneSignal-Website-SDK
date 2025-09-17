@@ -11,22 +11,22 @@ on:
 jobs:
   check_release:
     runs-on: ubuntu-22.04
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
     steps:
       - name: Check if release merge or workflow dispatch
-        id: check_release
+        id: check
         uses: actions/github-script@v8
         with:
           script: |
-            // Allow workflow_dispatch and release PR merges
-            if (context.eventName !== 'push') return;
-
-            // For push events, check if it's a release merge
-            const isReleaseMerge = /Release \d{6}/.test(context.payload.head_commit.message);
-            if (!isReleaseMerge) core.setFailed('Not a release merge - skipping workflow');
+            const shouldRun = context.eventName === 'workflow_dispatch' ||
+                             /Release \d{6}/.test(context.payload.head_commit.message);
+            core.setOutput('should_run', shouldRun);
 
   test_build_deploy:
     runs-on: ubuntu-22.04
     needs: check_release
+    if: needs.check_release.outputs.should_run == 'true'
     steps:
       - uses: actions/checkout@v5
       - name: Use Node.js
