@@ -12,54 +12,54 @@ import type { IOperationRepo } from '../types/operation';
  * the specific Operation that should be enqueued.
  */
 export abstract class ModelStoreListener<TModel extends Model> {
-  protected store: IModelStore<TModel>;
-  protected opRepo: IOperationRepo;
+  protected _store: IModelStore<TModel>;
+  protected _opRepo: IOperationRepo;
 
   constructor(store: IModelStore<TModel>, opRepo: IOperationRepo) {
-    this.store = store;
-    this.opRepo = opRepo;
-    this.store.subscribe(this);
+    this._store = store;
+    this._opRepo = opRepo;
+    this._store._subscribe(this);
   }
 
-  close(): void {
-    this.store.unsubscribe(this);
+  _close(): void {
+    this._store._unsubscribe(this);
   }
 
-  onModelAdded(model: TModel, tag: string): void {
+  _onModelAdded(model: TModel, tag: string): void {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = this.getAddOperation(model);
+    const operation = this._getAddOperation(model);
     if (operation != null) {
-      this.opRepo.enqueue(operation);
+      this._opRepo.enqueue(operation);
     }
   }
 
-  async onModelUpdated(args: ModelChangedArgs, tag: string): Promise<void> {
+  async _onModelUpdated(args: ModelChangedArgs, tag: string): Promise<void> {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = await this.getUpdateOperation(
+    const operation = await this._getUpdateOperation(
       args.model as TModel,
       args.property,
       args.oldValue,
       args.newValue,
     );
     if (operation != null) {
-      this.opRepo.enqueue(operation);
+      this._opRepo.enqueue(operation);
     }
   }
 
-  async onModelRemoved(model: TModel, tag: string): Promise<void> {
+  async _onModelRemoved(model: TModel, tag: string): Promise<void> {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = await this.getRemoveOperation(model);
+    const operation = await this._getRemoveOperation(model);
     if (operation != null) {
-      this.opRepo.enqueue(operation);
+      this._opRepo.enqueue(operation);
     }
   }
 
@@ -67,19 +67,19 @@ export abstract class ModelStoreListener<TModel extends Model> {
    * Called when a model has been added to the model store.
    * @return The operation to enqueue when a model has been added, or null if no operation should be enqueued.
    */
-  abstract getAddOperation(model: TModel): Operation | null;
+  abstract _getAddOperation(model: TModel): Operation | null;
 
   /**
    * Called when a model has been removed from the model store.
    * @return The operation to enqueue when a model has been removed, or null if no operation should be enqueued.
    */
-  abstract getRemoveOperation(model: TModel): Operation | null;
+  abstract _getRemoveOperation(model: TModel): Operation | null;
 
   /**
    * Called when a model has been updated.
    * @return The operation to enqueue when the model has been updated, or null if no operation should be enqueued.
    */
-  abstract getUpdateOperation(
+  abstract _getUpdateOperation(
     model: TModel,
     property: string,
     oldValue: unknown,

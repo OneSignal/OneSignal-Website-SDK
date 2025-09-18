@@ -62,7 +62,7 @@ export abstract class ModelStore<
   abstract create(json?: DBModel | null): TModel | null;
 
   add(model: TModel, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
-    const oldModel = this.models.find((m) => m.modelId === model.modelId);
+    const oldModel = this.models.find((m) => m._modelId === model._modelId);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag);
   }
@@ -72,7 +72,7 @@ export abstract class ModelStore<
     model: TModel,
     tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
   ): void {
-    const oldModel = this.models.find((m) => m.modelId === model.modelId);
+    const oldModel = this.models.find((m) => m._modelId === model._modelId);
     if (oldModel) this.removeItem(oldModel, tag);
     this.addItem(model, tag, index);
   }
@@ -85,19 +85,19 @@ export abstract class ModelStore<
   }
 
   get(id: string): TModel | undefined {
-    return this.models.find((m) => m.modelId === id);
+    return this.models.find((m) => m._modelId === id);
   }
 
   remove(id: string, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
-    const model = this.models.find((m) => m.modelId === id);
+    const model = this.models.find((m) => m._modelId === id);
     if (!model) return;
     this.removeItem(model, tag);
   }
 
-  onChanged(args: ModelChangedArgs, tag: string): void {
+  _onChanged(args: ModelChangedArgs, tag: string): void {
     this.persist();
     this.changeSubscription.fire((handler) =>
-      handler.onModelUpdated(args, tag),
+      handler._onModelUpdated(args, tag),
     );
   }
 
@@ -115,11 +115,11 @@ export abstract class ModelStore<
   clear(tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
     for (const item of this.models) {
       // no longer listen for changes to this model
-      item.unsubscribe(this);
+      item._unsubscribe(this);
       this.changeSubscription.fire((handler) =>
-        handler.onModelRemoved(item, tag),
+        handler._onModelRemoved(item, tag),
       );
-      db.delete(this.modelName, item.modelId);
+      db.delete(this.modelName, item._modelId);
     }
 
     this.models = [];
@@ -133,24 +133,26 @@ export abstract class ModelStore<
     }
 
     // listen for changes to this model
-    model.subscribe(this);
-    this.persist();
-
-    this.changeSubscription.fire((handler) => handler.onModelAdded(model, tag));
-  }
-
-  private async removeItem(model: TModel, tag: string): Promise<void> {
-    const index = this.models.findIndex((m) => m.modelId === model.modelId);
-    if (index !== -1) this.models.splice(index, 1);
-
-    // no longer listen for changes to this model
-    model.unsubscribe(this);
-
-    await db.delete(this.modelName, model.modelId);
+    model._subscribe(this);
     this.persist();
 
     this.changeSubscription.fire((handler) =>
-      handler.onModelRemoved(model, tag),
+      handler._onModelAdded(model, tag),
+    );
+  }
+
+  private async removeItem(model: TModel, tag: string): Promise<void> {
+    const index = this.models.findIndex((m) => m._modelId === model._modelId);
+    if (index !== -1) this.models.splice(index, 1);
+
+    // no longer listen for changes to this model
+    model._unsubscribe(this);
+
+    await db.delete(this.modelName, model._modelId);
+    this.persist();
+
+    this.changeSubscription.fire((handler) =>
+      handler._onModelRemoved(model, tag),
     );
   }
 
@@ -171,7 +173,7 @@ export abstract class ModelStore<
 
       this.models.unshift(newModel);
       // listen for changes to this model
-      newModel.subscribe(this);
+      newModel._subscribe(this);
     }
 
     this.hasLoadedFromCache = true;
@@ -192,22 +194,22 @@ export abstract class ModelStore<
 
     for (const model of this.models) {
       await db.put(this.modelName, {
-        modelId: model.modelId,
+        modelId: model._modelId,
         modelName: this.modelName, // TODO: ModelName is a legacy property, could be removed sometime after web refactor launch
         ...model.toJSON(),
       } as IndexedDBSchema[typeof this.modelName]['value']);
     }
   }
 
-  subscribe(handler: IModelStoreChangeHandler<TModel>): void {
-    this.changeSubscription.subscribe(handler);
+  _subscribe(handler: IModelStoreChangeHandler<TModel>): void {
+    this.changeSubscription._subscribe(handler);
   }
 
-  unsubscribe(handler: IModelStoreChangeHandler<TModel>): void {
-    this.changeSubscription.unsubscribe(handler);
+  _unsubscribe(handler: IModelStoreChangeHandler<TModel>): void {
+    this.changeSubscription._unsubscribe(handler);
   }
 
-  get hasSubscribers(): boolean {
-    return this.changeSubscription.hasSubscribers;
+  get _hasSubscribers(): boolean {
+    return this.changeSubscription._hasSubscribers;
   }
 }

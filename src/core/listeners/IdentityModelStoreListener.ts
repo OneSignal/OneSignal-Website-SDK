@@ -15,12 +15,12 @@ export class IdentityModelStoreListener extends SingletonModelStoreListener<Iden
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getReplaceOperation(_model: IdentityModel): Operation | null {
+  _getReplaceOperation(_model: IdentityModel): Operation | null {
     // when the identity model is replaced, nothing to do on the backend. Already handled via login process.
     return null;
   }
 
-  getUpdateOperation(
+  _getUpdateOperation(
     model: IdentityModel,
     property: string,
     _oldValue: unknown,

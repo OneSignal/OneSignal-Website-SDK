@@ -85,7 +85,7 @@ describe('OneSignal - No Consent Required', () => {
       test('can add an alias to the current user', async () => {
         OneSignal.User.addAlias('someLabel', 'someId');
         const identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBe('someId');
+        expect(identityModel._getProperty('someLabel')).toBe('someId');
 
         // should make a request to the backend
         await vi.waitUntil(() => addAliasFn.mock.calls.length === 1);
@@ -101,8 +101,8 @@ describe('OneSignal - No Consent Required', () => {
         OneSignal.User.addAlias('someLabel2', 'someId2');
 
         const identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBe('someId');
-        expect(identityModel.getProperty('someLabel2')).toBe('someId2');
+        expect(identityModel._getProperty('someLabel')).toBe('someId');
+        expect(identityModel._getProperty('someLabel2')).toBe('someId2');
 
         await vi.waitUntil(() => addAliasFn.mock.calls.length === 2);
         expect(addAliasFn).toHaveBeenCalledWith({
@@ -125,7 +125,7 @@ describe('OneSignal - No Consent Required', () => {
         OneSignal.User.removeAlias('someLabel');
 
         const identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBeUndefined();
+        expect(identityModel._getProperty('someLabel')).toBeUndefined();
 
         await vi.waitUntil(() => deleteAliasFn.mock.calls.length === 1);
       });
@@ -137,8 +137,8 @@ describe('OneSignal - No Consent Required', () => {
         OneSignal.User.addAlias('someLabel2', 'someId2');
 
         let identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBe('someId');
-        expect(identityModel.getProperty('someLabel2')).toBe('someId2');
+        expect(identityModel._getProperty('someLabel')).toBe('someId');
+        expect(identityModel._getProperty('someLabel2')).toBe('someId2');
 
         await vi.waitUntil(async () => addAliasFn.mock.calls.length === 2);
 
@@ -148,8 +148,8 @@ describe('OneSignal - No Consent Required', () => {
         await vi.waitUntil(async () => deleteAliasFn.mock.calls.length === 2);
 
         identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBeUndefined();
-        expect(identityModel.getProperty('someLabel2')).toBeUndefined();
+        expect(identityModel._getProperty('someLabel')).toBeUndefined();
+        expect(identityModel._getProperty('someLabel2')).toBeUndefined();
       });
     });
 

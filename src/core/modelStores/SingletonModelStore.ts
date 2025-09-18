@@ -20,7 +20,7 @@ export class SingletonModelStore<TModel extends Model>
 
   constructor(store: ModelStore<TModel>) {
     this.store = store;
-    store.subscribe(this);
+    store._subscribe(this);
   }
 
   get model(): TModel {
@@ -37,36 +37,36 @@ export class SingletonModelStore<TModel extends Model>
 
   replace(model: TModel, tag?: ModelChangeTagValue): void {
     const existingModel = this.model;
-    existingModel.initializeFromModel(existingModel.modelId, model);
+    existingModel._initializeFromModel(existingModel._modelId, model);
     this.store.persist();
     this.changeSubscription.fire((handler) =>
-      handler.onModelReplaced(existingModel, tag),
+      handler._onModelReplaced(existingModel, tag),
     );
   }
 
-  subscribe(handler: ISingletonModelStoreChangeHandler<TModel>): void {
-    this.changeSubscription.subscribe(handler);
+  _subscribe(handler: ISingletonModelStoreChangeHandler<TModel>): void {
+    this.changeSubscription._subscribe(handler);
   }
 
-  unsubscribe(handler: ISingletonModelStoreChangeHandler<TModel>): void {
-    this.changeSubscription.unsubscribe(handler);
+  _unsubscribe(handler: ISingletonModelStoreChangeHandler<TModel>): void {
+    this.changeSubscription._unsubscribe(handler);
   }
 
-  get hasSubscribers(): boolean {
-    return this.changeSubscription.hasSubscribers;
+  get _hasSubscribers(): boolean {
+    return this.changeSubscription._hasSubscribers;
   }
 
   /**
    * @param {TModel} model
    * @param {ModelChangeTagValue)} tag
    */
-  onModelAdded(): void {
+  _onModelAdded(): void {
     // No-op: singleton is transparently added
   }
 
-  onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): void {
+  _onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): void {
     this.changeSubscription.fire((handler) =>
-      handler.onModelUpdated(args, tag),
+      handler._onModelUpdated(args, tag),
     );
   }
 
@@ -74,7 +74,7 @@ export class SingletonModelStore<TModel extends Model>
    * @param {TModel} model
    * @param {ModelChangeTagValue} tag
    */
-  onModelRemoved(): void {
+  _onModelRemoved(): void {
     // No-op: singleton is never removed
   }
 }

@@ -37,84 +37,84 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
    * This is a legacy property, could be removed sometime after web refactor launch
    */
   get onesignalId(): string | undefined {
-    return this.getProperty('onesignalId');
+    return this._getProperty('onesignalId');
   }
   set onesignalId(value: string | undefined) {
-    this.setProperty('onesignalId', value);
+    this._setProperty('onesignalId', value);
   }
 
   /**
    * The subscription ID.
    */
   get id(): string {
-    return this.getProperty('id');
+    return this._getProperty('id');
   }
   set id(value: string) {
-    this.setProperty('id', value);
+    this._setProperty('id', value);
   }
 
   get enabled(): boolean | undefined {
-    return this.getProperty('enabled');
+    return this._getProperty('enabled');
   }
   set enabled(value: boolean) {
-    this.setProperty('enabled', value);
+    this._setProperty('enabled', value);
   }
 
   get type(): SubscriptionTypeValue {
-    return this.getProperty('type');
+    return this._getProperty('type');
   }
   set type(value: SubscriptionTypeValue) {
-    this.setProperty('type', value);
+    this._setProperty('type', value);
   }
 
   // Android SDK refers to this as address
   get token(): string {
-    return this.getProperty('token');
+    return this._getProperty('token');
   }
   set token(value: string) {
-    this.setProperty('token', value);
+    this._setProperty('token', value);
   }
 
   // Android SDK refers to this as status
   get notification_types(): NotificationTypeValue | undefined {
-    return this.getProperty('notification_types');
+    return this._getProperty('notification_types');
   }
   set notification_types(value: NotificationTypeValue | undefined) {
-    this.setProperty('notification_types', value);
+    this._setProperty('notification_types', value);
   }
 
   get sdk(): string | undefined {
-    return this.getProperty('sdk');
+    return this._getProperty('sdk');
   }
   set sdk(value: string | undefined) {
-    this.setProperty('sdk', value);
+    this._setProperty('sdk', value);
   }
 
   get device_model(): string | undefined {
-    return this.getProperty('device_model');
+    return this._getProperty('device_model');
   }
   set device_model(value: string | undefined) {
-    this.setProperty('device_model', value);
+    this._setProperty('device_model', value);
   }
 
   get device_os(): string | undefined {
-    return this.getProperty('device_os');
+    return this._getProperty('device_os');
   }
   set device_os(value: string | undefined) {
-    this.setProperty('device_os', value);
+    this._setProperty('device_os', value);
   }
 
   get web_auth(): string | undefined {
-    return this.getProperty('web_auth');
+    return this._getProperty('web_auth');
   }
   set web_auth(value: string | undefined) {
-    this.setProperty('web_auth', value);
+    this._setProperty('web_auth', value);
   }
 
   get web_p256(): string | undefined {
-    return this.getProperty('web_p256');
+    return this._getProperty('web_p256');
   }
   set web_p256(value: string | undefined) {
-    this.setProperty('web_p256', value);
+    this._setProperty('web_p256', value);
   }
 }

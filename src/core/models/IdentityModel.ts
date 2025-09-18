@@ -14,21 +14,21 @@ export class IdentityModel extends Model<IdentitySchema> {
    * successfully created on the backend or not.
    */
   get onesignalId(): string {
-    return this.getProperty(IdentityConstants.ONESIGNAL_ID);
+    return this._getProperty(IdentityConstants.ONESIGNAL_ID);
   }
 
   set onesignalId(value: string) {
-    this.setProperty(IdentityConstants.ONESIGNAL_ID, value);
+    this._setProperty(IdentityConstants.ONESIGNAL_ID, value);
   }
 
   /**
    * The (developer-managed) identifier that uniquely identifies this user.
    */
   get externalId(): string | undefined {
-    return this.getProperty(IdentityConstants.EXTERNAL_ID);
+    return this._getProperty(IdentityConstants.EXTERNAL_ID);
   }
 
   set externalId(value: string | undefined) {
-    this.setProperty(IdentityConstants.EXTERNAL_ID, value);
+    this._setProperty(IdentityConstants.EXTERNAL_ID, value);
   }
 }

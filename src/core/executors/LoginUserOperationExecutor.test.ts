@@ -86,7 +86,7 @@ describe('LoginUserOperationExecutor', () => {
   test('should return correct operations (names)', async () => {
     const executor = getExecutor();
 
-    expect(executor.operations).toEqual([OPERATION_NAME.LOGIN_USER]);
+    expect(executor._operations).toEqual([OPERATION_NAME.LOGIN_USER]);
   });
 
   test('should validate operations', async () => {
@@ -96,7 +96,7 @@ describe('LoginUserOperationExecutor', () => {
 
     // with invalid ops
     const ops = [someOp];
-    const result = executor.execute(ops);
+    const result = executor._execute(ops);
     await expect(() => result).rejects.toThrow(
       `Unrecognized operation: ${someOp.name}`,
     );
@@ -123,7 +123,7 @@ describe('LoginUserOperationExecutor', () => {
       );
       const someOp = new SomeOperation();
       const ops2 = [loginOp, transferSubOp, someOp];
-      const res2 = executor.execute(ops2);
+      const res2 = executor._execute(ops2);
       await expect(res2).rejects.toThrow(
         `Unrecognized operation: ${someOp.name}`,
       );
@@ -138,7 +138,7 @@ describe('LoginUserOperationExecutor', () => {
       );
 
       const ops = [loginOp, createSubOp];
-      const res = await executor.execute(ops);
+      const res = await executor._execute(ops);
 
       expect(res).toEqual({
         result: ExecutionResult.SUCCESS,
@@ -169,7 +169,11 @@ describe('LoginUserOperationExecutor', () => {
       await setPushToken(PUSH_TOKEN);
 
       const subscriptionModel = new SubscriptionModel();
-      subscriptionModel.setProperty('id', SUB_ID, ModelChangeTags.NO_PROPAGATE);
+      subscriptionModel._setProperty(
+        'id',
+        SUB_ID,
+        ModelChangeTags.NO_PROPAGATE,
+      );
       subscriptionModelStore.add(
         subscriptionModel,
         ModelChangeTags.NO_PROPAGATE,
@@ -179,28 +183,28 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
-      loginOp.setProperty('externalId', EXTERNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
 
       const createSubOp = new CreateSubscriptionOperation(
         mockSubscriptionOpInfo,
       );
 
       const ops = [loginOp, createSubOp];
-      const res = await executor.execute(ops);
+      const res = await executor._execute(ops);
 
       // should update model properties
       expect(
-        identityModelStore.model.getProperty(IdentityConstants.ONESIGNAL_ID),
+        identityModelStore.model._getProperty(IdentityConstants.ONESIGNAL_ID),
       ).toEqual(ONESIGNAL_ID_2);
-      expect(propertiesModelStore.model.getProperty('onesignalId')).toEqual(
+      expect(propertiesModelStore.model._getProperty('onesignalId')).toEqual(
         ONESIGNAL_ID_2,
       );
       expect(await getPushToken()).toEqual(PUSH_TOKEN);
-      expect(subscriptionModel.getProperty('id')).toEqual(SUB_ID_2);
+      expect(subscriptionModel._getProperty('id')).toEqual(SUB_ID_2);
 
       // should have a refresh user operation
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
-      refreshOp.modelId = res.operations![0].modelId;
+      refreshOp._modelId = res.operations![0]._modelId;
       expect(res).toEqual({
         result: ExecutionResult.SUCCESS,
         retryAfterSeconds: undefined,
@@ -224,7 +228,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // retryable error
       setCreateUserError({ status: 429, retryAfter: 10 });
-      const res = await executor.execute(ops);
+      const res = await executor._execute(ops);
       expect(res).toEqual({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 10,
@@ -232,7 +236,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // unauthorized error
       setCreateUserError({ status: 401, retryAfter: 15 });
-      const res2 = await executor.execute(ops);
+      const res2 = await executor._execute(ops);
       expect(res2).toEqual({
         result: ExecutionResult.FAIL_UNAUTHORIZED,
         retryAfterSeconds: 15,
@@ -240,7 +244,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // others errors - pause repo
       setCreateUserError({ status: 400, retryAfter: 20 });
-      const res3 = await executor.execute(ops);
+      const res3 = await executor._execute(ops);
       expect(res3).toEqual({
         result: ExecutionResult.FAIL_PAUSE_OPREPO,
         retryAfterSeconds: undefined,
@@ -256,20 +260,20 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
-      loginOp.setProperty('externalId', EXTERNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
 
       // different id for testing id translations
-      loginOp.setProperty('existingOnesignalId', ONESIGNAL_ID_2);
+      loginOp._setProperty('existingOnesignalId', ONESIGNAL_ID_2);
       setAddAliasResponse({ onesignalId: ONESIGNAL_ID_2 });
 
       const ops = [loginOp];
-      const res = await executor.execute(ops);
+      const res = await executor._execute(ops);
 
       // should update model properties
       expect(
-        identityModelStore.model.getProperty(IdentityConstants.ONESIGNAL_ID),
+        identityModelStore.model._getProperty(IdentityConstants.ONESIGNAL_ID),
       ).toEqual(ONESIGNAL_ID_2);
-      expect(propertiesModelStore.model.getProperty('onesignalId')).toEqual(
+      expect(propertiesModelStore.model._getProperty('onesignalId')).toEqual(
         ONESIGNAL_ID_2,
       );
 
@@ -285,8 +289,8 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
-      loginOp.setProperty('externalId', EXTERNAL_ID);
-      loginOp.setProperty('existingOnesignalId', ONESIGNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
+      loginOp._setProperty('existingOnesignalId', ONESIGNAL_ID);
 
       // Conflict error - should create user
       setAddAliasError({ status: 409 });
@@ -294,7 +298,7 @@ describe('LoginUserOperationExecutor', () => {
         onesignalId: '123',
       });
 
-      const res = await executor.execute([loginOp]);
+      const res = await executor._execute([loginOp]);
       expect(res).toMatchObject({
         result: ExecutionResult.SUCCESS,
         idTranslations: {
@@ -308,7 +312,7 @@ describe('LoginUserOperationExecutor', () => {
         onesignalId: '456',
       });
 
-      const res2 = await executor.execute([loginOp]);
+      const res2 = await executor._execute([loginOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.SUCCESS,
         idTranslations: {
@@ -319,7 +323,7 @@ describe('LoginUserOperationExecutor', () => {
       // Some other error
       setAddAliasError({ status: 401 });
 
-      const res3 = await executor.execute([loginOp]);
+      const res3 = await executor._execute([loginOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_UNAUTHORIZED,
       });
@@ -334,14 +338,14 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
-      loginOp.setProperty('externalId', EXTERNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
 
       const createSubOp = new CreateSubscriptionOperation(
         mockSubscriptionOpInfo,
       );
 
       const ops = [loginOp, createSubOp];
-      await executor.execute(ops);
+      await executor._execute(ops);
 
       expect(createUserFn).toHaveBeenCalledWith({
         identity: {
@@ -367,7 +371,7 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
-      loginOp.setProperty('externalId', EXTERNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
 
       // needs to be created first for update to do anything
       const createSubOp = new CreateSubscriptionOperation(
@@ -385,7 +389,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // with create sub op
       const ops = [loginOp, createSubOp, updateSubOp];
-      await executor.execute(ops);
+      await executor._execute(ops);
 
       expect(createUserFn).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -403,7 +407,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // with no create sub op
       createUserFn.mockClear();
-      await executor.execute([loginOp, updateSubOp]);
+      await executor._execute([loginOp, updateSubOp]);
       expect(createUserFn).toHaveBeenCalledWith(
         expect.objectContaining({
           subscriptions: [],
@@ -418,7 +422,7 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
-      loginOp.setProperty('externalId', EXTERNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
 
       // need to create subscription first to test transfer
       const createSubOp = new CreateSubscriptionOperation(
@@ -431,7 +435,7 @@ describe('LoginUserOperationExecutor', () => {
       );
 
       const ops = [loginOp, createSubOp, transferSubOp];
-      await executor.execute(ops);
+      await executor._execute(ops);
 
       // should have id in the subscription
       expect(createUserFn).toHaveBeenCalledWith(
@@ -458,7 +462,7 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
-      loginOp.setProperty('externalId', EXTERNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
 
       // need to create subscription first to test delete
       const createSubOp = new CreateSubscriptionOperation(
@@ -471,7 +475,7 @@ describe('LoginUserOperationExecutor', () => {
       );
 
       const ops = [loginOp, createSubOp, deleteSubOp];
-      await executor.execute(ops);
+      await executor._execute(ops);
 
       expect(createUserFn).toHaveBeenCalledWith(
         expect.objectContaining({ subscriptions: [] }),

@@ -75,7 +75,7 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   )._serialize();
   for (const key in serializedSubscriptionRecord) {
     const modelKey = key as keyof typeof serializedSubscriptionRecord;
-    pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
+    pushModel._setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
   }
 };
 

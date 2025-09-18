@@ -43,7 +43,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     this._newRecordState = _newRecordState;
   }
 
-  get operations(): string[] {
+  get _operations(): string[] {
     return [
       OPERATION_NAME.CREATE_SUBSCRIPTION,
       OPERATION_NAME.UPDATE_SUBSCRIPTION,
@@ -52,37 +52,37 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     ];
   }
 
-  async execute(operations: Operation[]): Promise<ExecutionResponse> {
+  async _execute(operations: Operation[]): Promise<ExecutionResponse> {
     Log._debug(`SubscriptionOperationExecutor(operations: ${operations})`);
 
     const startingOp = operations[0];
     if (startingOp instanceof CreateSubscriptionOperation)
-      return this.createSubscription(startingOp, operations);
+      return this._createSubscription(startingOp, operations);
 
     if (operations.some((op) => op instanceof DeleteSubscriptionOperation)) {
       if (operations.length > 1)
         throw new Error(
           `Only supports one operation! Attempted operations:\n${operations}`,
         );
-      return this.deleteSubscription(
+      return this._deleteSubscription(
         operations[0] as DeleteSubscriptionOperation,
       );
     }
 
     if (startingOp instanceof UpdateSubscriptionOperation)
-      return this.updateSubscription(operations);
+      return this._updateSubscription(operations);
 
     if (startingOp instanceof TransferSubscriptionOperation) {
       if (operations.length > 1)
         throw new Error(
           `TransferSubscriptionOperation only supports one operation! Attempted operations:\n${operations}`,
         );
-      return this.transferSubscription(startingOp);
+      return this._transferSubscription(startingOp);
     }
     throw new Error(`Unrecognized operation: ${startingOp}`);
   }
 
-  private async createSubscription(
+  private async _createSubscription(
     createOperation: CreateSubscriptionOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
@@ -124,12 +124,12 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
       const backendSubscriptionId = subscription?.id;
       if (backendSubscriptionId) {
-        subscriptionModel?.setProperty(
+        subscriptionModel?._setProperty(
           'id',
           backendSubscriptionId,
           ModelChangeTags.HYDRATE,
         );
-        subscriptionModel?.setProperty(
+        subscriptionModel?._setProperty(
           'onesignalId',
           createOperation.onesignalId,
           ModelChangeTags.HYDRATE,
@@ -203,7 +203,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     }
   }
 
-  private async updateSubscription(
+  private async _updateSubscription(
     operations: Operation[],
   ): Promise<ExecutionResponse> {
     const lastOp = operations[
@@ -267,7 +267,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     }
   }
 
-  private async transferSubscription(
+  private async _transferSubscription(
     op: TransferSubscriptionOperation,
   ): Promise<ExecutionResponse> {
     const response = await transferSubscriptionById(
@@ -296,7 +296,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     }
   }
 
-  private async deleteSubscription(
+  private async _deleteSubscription(
     op: DeleteSubscriptionOperation,
   ): Promise<ExecutionResponse> {
     const response = await deleteSubscriptionById(

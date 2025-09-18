@@ -35,11 +35,11 @@ export class IdentityOperationExecutor implements IOperationExecutor {
     this._newRecordState = newRecordState;
   }
 
-  get operations(): string[] {
+  get _operations(): string[] {
     return [OPERATION_NAME.SET_ALIAS, OPERATION_NAME.DELETE_ALIAS];
   }
 
-  async execute(operations: Operation[]): Promise<ExecutionResponse> {
+  async _execute(operations: Operation[]): Promise<ExecutionResponse> {
     Log._debug(
       `IdentityOperationExecutor(operations: ${JSON.stringify(operations)})`,
     );
@@ -98,7 +98,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       if (
         this._identityModelStore.model.onesignalId === lastOperation.onesignalId
       ) {
-        this._identityModelStore.model.setProperty(
+        this._identityModelStore.model._setProperty(
           lastOperation.label,
           isSetAlias ? lastOperation.value : undefined,
           ModelChangeTags.HYDRATE,

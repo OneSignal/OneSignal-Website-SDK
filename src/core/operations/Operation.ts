@@ -28,27 +28,27 @@ export abstract class Operation<
   }
 
   get name(): string {
-    return this.getProperty('name');
+    return this._getProperty('name');
   }
   private set name(value: string) {
-    this.setProperty('name', value);
+    this._setProperty('name', value);
   }
 
   /**
    * The application ID this subscription will be created under.
    */
   get appId(): string {
-    return this.getProperty('appId');
+    return this._getProperty('appId');
   }
   protected set appId(value: string) {
-    this.setProperty('appId', value);
+    this._setProperty('appId', value);
   }
 
   get onesignalId(): string {
-    return this.getProperty('onesignalId');
+    return this._getProperty('onesignalId');
   }
   protected set onesignalId(value: string) {
-    this.setProperty('onesignalId', value);
+    this._setProperty('onesignalId', value);
   }
 
   /**

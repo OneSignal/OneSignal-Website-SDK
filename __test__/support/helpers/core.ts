@@ -5,8 +5,8 @@ import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 
 export function generateNewSubscription(modelId = '0000000000') {
   const model = new SubscriptionModel();
-  model.modelId = modelId;
-  model.mergeData({
+  model._modelId = modelId;
+  model._mergeData({
     type: SubscriptionType.Email,
     id: '123', // subscription id
     token: 'myToken',

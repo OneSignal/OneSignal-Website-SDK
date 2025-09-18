@@ -38,11 +38,11 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     this._newRecordState = _newRecordState;
   }
 
-  get operations(): string[] {
+  get _operations(): string[] {
     return [OPERATION_NAME.SET_PROPERTY];
   }
 
-  private processOperations(operations: Operation[]) {
+  private _processOperations(operations: Operation[]) {
     let appId: string | null = null;
     let onesignalId: string | null = null;
     let propertiesObject = new PropertiesObject();
@@ -72,11 +72,11 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     };
   }
 
-  async execute(operations: Operation[]): Promise<ExecutionResponse> {
+  async _execute(operations: Operation[]): Promise<ExecutionResponse> {
     Log._debug(`UpdateUserOperationExecutor(operation: ${operations})`);
 
     const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
-      this.processOperations(operations);
+      this._processOperations(operations);
 
     if (!appId || !onesignalId)
       return new ExecutionResponse(ExecutionResult.SUCCESS);
@@ -110,7 +110,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
               for (const key in value) if (value[key] === '') delete value[key];
             }
 
-            this._propertiesModelStore.model.setProperty(
+            this._propertiesModelStore.model._setProperty(
               operation.property as IPropertiesModelKeys,
               value,
               ModelChangeTags.HYDRATE,

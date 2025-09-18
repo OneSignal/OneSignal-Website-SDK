@@ -6,24 +6,24 @@ import { SubscriptionType } from 'src/shared/subscriptions/constants';
 test('Set function updates data', async () => {
   const newSub = generateNewSubscription();
   expect(newSub.enabled).toBe(undefined);
-  newSub.setProperty('enabled', true);
+  newSub._setProperty('enabled', true);
   expect(newSub.enabled).toBe(true);
 });
 
 test('Set function broadcasts update event', async () => {
   const newSub = generateNewSubscription();
-  newSub.subscribe({
-    onChanged: () => {
+  newSub._subscribe({
+    _onChanged: () => {
       expect(true).toBe(true);
     },
   });
-  newSub.setProperty('enabled', true);
+  newSub._setProperty('enabled', true);
 });
 
 test('Hydrate function updates data', async () => {
   const newSub = generateNewSubscription();
   expect(newSub.type).toBe(SubscriptionType.Email);
-  newSub.setProperty('type', SubscriptionType.ChromePush);
+  newSub._setProperty('type', SubscriptionType.ChromePush);
   expect(newSub.type).toBe(SubscriptionType.ChromePush);
 });
 
@@ -39,9 +39,9 @@ test('Encode function returns encoded model', async () => {
   });
 
   const model = new SubscriptionModel();
-  model.setProperty('type', SubscriptionType.Email);
-  model.setProperty('id', '123');
-  model.setProperty('token', 'myToken');
+  model._setProperty('type', SubscriptionType.Email);
+  model._setProperty('id', '123');
+  model._setProperty('token', 'myToken');
 
   expect(model.toJSON()).toEqual({
     type: SubscriptionType.Email,

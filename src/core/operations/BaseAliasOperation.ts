@@ -24,9 +24,9 @@ export abstract class BaseAliasOperation<
   }
 
   get label(): string {
-    return this.getProperty('label');
+    return this._getProperty('label');
   }
   protected set label(value: string | undefined) {
-    this.setProperty('label', value);
+    this._setProperty('label', value);
   }
 }

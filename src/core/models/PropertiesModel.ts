@@ -21,44 +21,44 @@ export class PropertiesModel extends Model<IPropertiesModel> {
   }
 
   get onesignalId(): string {
-    return this.getProperty('onesignalId');
+    return this._getProperty('onesignalId');
   }
   set onesignalId(value: string) {
-    this.setProperty('onesignalId', value);
+    this._setProperty('onesignalId', value);
   }
 
   get ip(): string | undefined {
-    return this.getProperty('ip');
+    return this._getProperty('ip');
   }
   set ip(value: string | undefined) {
-    this.setProperty('ip', value);
+    this._setProperty('ip', value);
   }
 
   get country(): string | undefined {
-    return this.getProperty('country');
+    return this._getProperty('country');
   }
   set country(value: string | undefined) {
-    this.setProperty('country', value);
+    this._setProperty('country', value);
   }
 
   get language(): string | undefined {
-    return this.getProperty('language');
+    return this._getProperty('language');
   }
   set language(value: string | undefined) {
-    this.setProperty('language', value);
+    this._setProperty('language', value);
   }
 
   get timezone_id(): string | undefined {
-    return this.getProperty('timezone_id');
+    return this._getProperty('timezone_id');
   }
   set timezone_id(value: string | undefined) {
-    this.setProperty('timezone_id', value);
+    this._setProperty('timezone_id', value);
   }
 
   get tags(): Record<string, string> {
-    return this.getProperty('tags') ?? {};
+    return this._getProperty('tags') ?? {};
   }
   set tags(value: Record<string, string>) {
-    this.setProperty('tags', value);
+    this._setProperty('tags', value);
   }
 }

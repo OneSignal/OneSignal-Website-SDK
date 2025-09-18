@@ -36,30 +36,30 @@ export class TrackCustomEventOperation extends Operation<ITrackEventOp> {
    * The external ID for the user, if available.
    */
   get externalId(): string | undefined {
-    return this.getProperty('externalId');
+    return this._getProperty('externalId');
   }
   private set externalId(value: string | undefined) {
-    this.setProperty('externalId', value);
+    this._setProperty('externalId', value);
   }
 
   /**
    * The timestamp when the event occurred.
    */
   get timestamp(): string {
-    return this.getProperty('timestamp');
+    return this._getProperty('timestamp');
   }
   private set timestamp(value: string) {
-    this.setProperty('timestamp', value);
+    this._setProperty('timestamp', value);
   }
 
   /**
    * The custom event instance containing the event name and properties.
    */
   get event(): ICustomEvent {
-    return this.getProperty('event');
+    return this._getProperty('event');
   }
   set event(value: ICustomEvent) {
-    this.setProperty('event', value);
+    this._setProperty('event', value);
   }
 
   private get key(): string {

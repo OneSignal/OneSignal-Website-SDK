@@ -6,7 +6,7 @@ export interface ICustomEvent {
 }
 
 export interface ICustomEventController {
-  sendCustomEvent(event: ICustomEvent): void;
+  _sendCustomEvent(event: ICustomEvent): void;
 }
 
 export interface ICustomEventMetadata {

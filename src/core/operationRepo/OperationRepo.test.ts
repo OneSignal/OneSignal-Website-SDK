@@ -148,12 +148,12 @@ describe('OperationRepo', () => {
       expect(ops).toEqual([
         {
           ...op2.toJSON(),
-          modelId: op2.modelId,
+          modelId: op2._modelId,
           modelName: 'operations',
         },
         {
           ...op1.toJSON(),
-          modelId: op1.modelId,
+          modelId: op1._modelId,
           modelName: 'operations',
         },
       ]);
@@ -275,7 +275,7 @@ describe('OperationRepo', () => {
       operation: new Operation('1', GroupComparisonType.CREATE, 'def'),
       bucket: 0,
     });
-    op2.operation.setProperty('onesignalId', blockedId);
+    op2.operation._setProperty('onesignalId', blockedId);
 
     opRepo.enqueue(op2.operation);
     expect(opRepo._getGroupableOperations(op)).toEqual([op]);
@@ -528,10 +528,10 @@ class Operation extends OperationBase<{ value: string }> {
   }
 
   get value(): string {
-    return this.getProperty('value');
+    return this._getProperty('value');
   }
   set value(value: string) {
-    this.setProperty('value', value);
+    this._setProperty('value', value);
   }
 
   get groupComparisonType(): GroupComparisonValue {
@@ -570,11 +570,11 @@ const mockOperation = new Operation(
   '',
   '123',
 );
-const executeFn: Mock<IOperationExecutor['execute']> = vi.fn(async () => ({
+const executeFn: Mock<IOperationExecutor['_execute']> = vi.fn(async () => ({
   result: ExecutionResult.SUCCESS,
 }));
 
 const mockExecutor: IOperationExecutor = {
-  operations: [mockOperation.name],
-  execute: executeFn,
+  _operations: [mockOperation.name],
+  _execute: executeFn,
 };

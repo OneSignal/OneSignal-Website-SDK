@@ -21,10 +21,10 @@ export class SetAliasOperation extends BaseAliasOperation<AliasOp> {
   }
 
   get value(): string {
-    return this.getProperty('value');
+    return this._getProperty('value');
   }
   private set value(value: string) {
-    this.setProperty('value', value);
+    this._setProperty('value', value);
   }
 
   override get modifyComparisonKey(): string {

@@ -32,7 +32,7 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     // When hydrating, preserve properties from existing PUSH subscription
     for (const model of models) {
       if (SubscriptionHelper.isPushSubscriptionType(model.type)) {
-        const existingPushModel = this.get(model.modelId);
+        const existingPushModel = this.get(model._modelId);
         if (existingPushModel) {
           model.sdk = existingPushModel.sdk;
           model.device_os = existingPushModel.device_os;

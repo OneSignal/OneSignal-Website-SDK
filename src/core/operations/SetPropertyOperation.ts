@@ -41,20 +41,20 @@ export class SetPropertyOperation<
    * The property that is to be updated against the user.
    */
   get property(): string {
-    return this.getProperty('property');
+    return this._getProperty('property');
   }
   private set property(value: P) {
-    this.setProperty('property', value);
+    this._setProperty('property', value);
   }
 
   /**
    * The value of that property to update it to.
    */
   get value() {
-    return this.getProperty('value') as PropertyValue[P];
+    return this._getProperty('value') as PropertyValue[P];
   }
   private set value(_value) {
-    this.setProperty('value', _value);
+    this._setProperty('value', _value);
   }
 
   override get modifyComparisonKey(): string {

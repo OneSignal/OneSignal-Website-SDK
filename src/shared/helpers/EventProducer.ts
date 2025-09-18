@@ -3,15 +3,15 @@ import type { IEventNotifier } from 'src/core/types/models';
 export class EventProducer<THandler> implements IEventNotifier<THandler> {
   private subscribers: THandler[] = [];
 
-  get hasSubscribers(): boolean {
+  get _hasSubscribers(): boolean {
     return this.subscribers.length > 0;
   }
 
-  subscribe(handler: THandler): void {
+  _subscribe(handler: THandler): void {
     this.subscribers.push(handler);
   }
 
-  unsubscribe(handler: THandler): void {
+  _unsubscribe(handler: THandler): void {
     const index = this.subscribers.indexOf(handler);
     if (index !== -1) {
       this.subscribers.splice(index, 1);
@@ -20,7 +20,7 @@ export class EventProducer<THandler> implements IEventNotifier<THandler> {
 
   subscribeAll(from: EventProducer<THandler>): void {
     for (const handler of from.subscribers) {
-      this.subscribe(handler);
+      this._subscribe(handler);
     }
   }
 
