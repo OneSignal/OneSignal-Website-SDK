@@ -20,10 +20,10 @@ export async function internalInit() {
   Log._debug('Called internalInit()');
 
   // Always check for an updated service worker
-  await OneSignal.context._serviceWorkerManager._installWorker();
+  await OneSignal._context._serviceWorkerManager._installWorker();
 
-  const sessionManager = OneSignal.context._sessionManager;
-  OneSignal.emitter.on(
+  const sessionManager = OneSignal._context._sessionManager;
+  OneSignal._emitter.on(
     OneSignal.EVENTS.SESSION_STARTED,
     sessionManager.sendOnSessionUpdateFromPage.bind(sessionManager),
   );
@@ -74,7 +74,7 @@ async function sessionInit(): Promise<void> {
    * prevent the popup from opening.
    */
   const isOptedOut =
-    (await OneSignal.context._subscriptionManager.isOptedOut()) ?? false;
+    (await OneSignal._context._subscriptionManager.isOptedOut()) ?? false;
   // saves isOptedOut to localStorage. used for require user interaction functionality
   const subscription = await getSubscription();
   subscription.optedOut = isOptedOut;
@@ -83,12 +83,12 @@ async function sessionInit(): Promise<void> {
   await handleAutoResubscribe(isOptedOut);
 
   const isSubscribed =
-    await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
+    await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
   // saves isSubscribed to IndexedDb. used for require user interaction functionality
   await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
   if (OneSignal.config?.userConfig.promptOptions?.autoPrompt && !isOptedOut) {
-    OneSignal.context.promptsManager.spawnAutoPrompts();
+    OneSignal._context.promptsManager.spawnAutoPrompts();
   }
 
   OneSignal._sessionInitAlreadyRunning = false;
@@ -114,17 +114,17 @@ export async function onSdkInitialized() {
    * In all other cases we would send an on_session request.
    */
   const isExistingUser: boolean =
-    await OneSignal.context._subscriptionManager._isAlreadyRegisteredWithOneSignal();
+    await OneSignal._context._subscriptionManager._isAlreadyRegisteredWithOneSignal();
   if (isExistingUser) {
-    OneSignal.context._sessionManager.setupSessionEventListeners();
+    OneSignal._context._sessionManager.setupSessionEventListeners();
     if (!wasUserResubscribed) {
-      await OneSignal.context._updateManager.sendOnSessionUpdate();
+      await OneSignal._context._updateManager.sendOnSessionUpdate();
     }
   } else if (
     !OneSignal.config?.userConfig.promptOptions?.autoPrompt &&
     !OneSignal.config?.userConfig.autoResubscribe
   ) {
-    await OneSignal.context._updateManager.sendOnSessionUpdate();
+    await OneSignal._context._updateManager.sendOnSessionUpdate();
   }
 
   await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
@@ -133,10 +133,10 @@ export async function onSdkInitialized() {
 /** Helper methods */
 async function storeInitialValues() {
   const isPushEnabled =
-    await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
+    await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
   const notificationPermission =
-    await OneSignal.context._permissionManager.getPermissionStatus();
-  const isOptedOut = await OneSignal.context._subscriptionManager.isOptedOut();
+    await OneSignal._context._permissionManager.getPermissionStatus();
+  const isOptedOut = await OneSignal._context._subscriptionManager.isOptedOut();
   LimitStore.put('subscription.optedOut', isOptedOut);
   await db.put('Options', {
     key: 'isPushEnabled',
@@ -155,18 +155,18 @@ async function setWelcomeNotificationFlag(): Promise<void> {
    * automatically resubscribed.
    */
   const permission: NotificationPermission =
-    await OneSignal.context._permissionManager.getNotificationPermission(
-      OneSignal.context._appConfig.safariWebId,
+    await OneSignal._context._permissionManager.getNotificationPermission(
+      OneSignal._context._appConfig.safariWebId,
     );
   if (permission === 'granted') {
-    OneSignal.__doNotShowWelcomeNotification = true;
+    OneSignal._doNotShowWelcomeNotification = true;
   }
 }
 
 async function establishServiceWorkerChannel(): Promise<void> {
   if (navigator.serviceWorker && window.isSecureContext) {
     try {
-      await OneSignal.context._serviceWorkerManager._establishServiceWorkerChannel();
+      await OneSignal._context._serviceWorkerManager._establishServiceWorkerChannel();
     } catch (e) {
       Log._error(e);
     }
@@ -175,7 +175,7 @@ async function establishServiceWorkerChannel(): Promise<void> {
 
 /** Entry method for any environment that sets expiring subscriptions. */
 export async function processExpiringSubscriptions(): Promise<boolean> {
-  const context: ContextInterface = OneSignal.context;
+  const context: ContextInterface = OneSignal._context;
 
   Log._debug('Checking subscription expiration...');
   const isSubscriptionExpiring =
@@ -214,7 +214,7 @@ async function doInitialize(): Promise<void> {
 }
 
 async function showNotifyButton() {
-  if (!IS_SERVICE_WORKER && !OneSignal.notifyButton) {
+  if (!IS_SERVICE_WORKER && !OneSignal._notifyButton) {
     OneSignal.config!.userConfig.notifyButton =
       OneSignal.config!.userConfig.notifyButton || {};
     if (OneSignal.config!.userConfig.bell) {
@@ -232,15 +232,15 @@ async function showNotifyButton() {
     const displayPredicate =
       OneSignal.config!.userConfig.notifyButton!.displayPredicate;
     if (displayPredicate && typeof displayPredicate === 'function') {
-      OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
+      OneSignal._emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
         const predicateValue = await Promise.resolve(
           OneSignal.config!.userConfig.notifyButton!.displayPredicate?.(),
         );
         if (predicateValue !== false) {
-          OneSignal.notifyButton = new Bell(
+          OneSignal._notifyButton = new Bell(
             OneSignal.config!.userConfig.notifyButton!,
           );
-          OneSignal.notifyButton.create();
+          OneSignal._notifyButton.create();
         } else {
           Log._debug(
             'Notify button display predicate returned false so not showing the notify button.',
@@ -248,10 +248,10 @@ async function showNotifyButton() {
         }
       });
     } else {
-      OneSignal.notifyButton = new Bell(
+      OneSignal._notifyButton = new Bell(
         OneSignal.config!.userConfig.notifyButton!,
       );
-      OneSignal.notifyButton.create();
+      OneSignal._notifyButton.create();
     }
   }
 }
@@ -378,8 +378,8 @@ async function handleAutoResubscribe(isOptedOut: boolean) {
   });
   if (OneSignal.config?.userConfig.autoResubscribe && !isOptedOut) {
     const currentPermission: NotificationPermission =
-      await OneSignal.context._permissionManager.getNotificationPermission(
-        OneSignal.context._appConfig.safariWebId,
+      await OneSignal._context._permissionManager.getNotificationPermission(
+        OneSignal._context._appConfig.safariWebId,
       );
     if (currentPermission == 'granted') {
       await SubscriptionHelper.registerForPush();

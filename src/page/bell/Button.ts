@@ -112,7 +112,7 @@ export default class Button extends AnimatedElement {
         // The user is actually subscribed, register him for notifications
         registerForPushNotifications();
         this.bell._ignoreSubscriptionState = true;
-        OneSignal.emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
+        OneSignal._emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
           this.bell.message
             .display(
               Message.TYPES.MESSAGE,

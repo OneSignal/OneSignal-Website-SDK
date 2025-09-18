@@ -11,7 +11,7 @@ let isSubscriptionExpiringSpy: MockInstance;
 beforeEach(() => {
   TestEnvironment.initialize();
   isSubscriptionExpiringSpy = vi.spyOn(
-    OneSignal.context._subscriptionManager,
+    OneSignal._context._subscriptionManager,
     'isSubscriptionExpiring',
   );
 });
@@ -22,7 +22,7 @@ afterEach(() => {
 
 /** onSdkInitialized */
 test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
-  OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+  OneSignal._emitter.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
     expect(true).toBe(true);
   });
   await InitHelper.onSdkInitialized();
@@ -36,7 +36,7 @@ test('onSdkInitialized: processes expiring subscriptions', async () => {
 
 test('onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false', async () => {
   const spy = vi
-    .spyOn(OneSignal.context._updateManager, 'sendOnSessionUpdate')
+    .spyOn(OneSignal._context._updateManager, 'sendOnSessionUpdate')
     .mockResolvedValue(undefined);
 
   OneSignal.config!.userConfig.promptOptions!.autoPrompt = false;
@@ -49,7 +49,7 @@ test('onSdkInitialized: sends on session update only if both autoPrompt and auto
 
 test('onSdkInitialized: does not send on session update', async () => {
   const spy = vi
-    .spyOn(OneSignal.context._updateManager, 'sendOnSessionUpdate')
+    .spyOn(OneSignal._context._updateManager, 'sendOnSessionUpdate')
     .mockResolvedValue(undefined);
 
   OneSignal.config!.userConfig.promptOptions!.autoPrompt = true;
@@ -78,7 +78,7 @@ test('correct degree of persistNotification setting should be stored', async () 
   TestEnvironment.initialize();
 
   const appConfig = TestContext.getFakeMergedConfig();
-  OneSignal.context = new Context(appConfig);
+  OneSignal._context = new Context(appConfig);
   OneSignal.config = appConfig;
   const config: AppConfig = OneSignal.config;
 

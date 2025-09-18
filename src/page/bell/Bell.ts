@@ -198,7 +198,7 @@ export default class Bell {
 
   private installEventHooks() {
     // Install event hooks
-    OneSignal.emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
+    OneSignal._emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
       this._ignoreSubscriptionState = true;
       OneSignal.User.PushSubscription.optIn()
@@ -226,7 +226,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
+    OneSignal._emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
       this.dialog.unsubscribeButton.disabled = true;
       OneSignal.User.PushSubscription.optOut()
         .then(() => {
@@ -249,7 +249,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.HOVERING, () => {
+    OneSignal._emitter.on(Bell.EVENTS.HOVERING, () => {
       this.hovering = true;
       this.launcher.activateIfInactive();
 
@@ -293,7 +293,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.HOVERED, () => {
+    OneSignal._emitter.on(Bell.EVENTS.HOVERED, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
       if (this.message.contentType === Message.TYPES.MESSAGE) {
         return;
@@ -332,7 +332,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(
+    OneSignal._emitter.on(
       OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
       async (isSubscribed: SubscriptionChangeEvent) => {
         if (isSubscribed.current.optedIn) {
@@ -346,7 +346,7 @@ export default class Bell {
         }
 
         const permission =
-          await OneSignal.context._permissionManager.getPermissionStatus();
+          await OneSignal._context._permissionManager.getPermissionStatus();
         let bellState: BellState;
         if (isSubscribed.current.optedIn) {
           bellState = Bell.STATES.SUBSCRIBED;
@@ -359,7 +359,7 @@ export default class Bell {
       },
     );
 
-    OneSignal.emitter.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+    OneSignal._emitter.on(Bell.EVENTS.STATE_CHANGED, (state) => {
       if (!this.launcher.element) {
         // Notify button doesn't exist
         return;
@@ -371,7 +371,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(
+    OneSignal._emitter.on(
       OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
       () => {
         this.updateState();
@@ -425,7 +425,7 @@ export default class Bell {
     if (!this.options.enable) return;
 
     const sdkStylesLoadResult =
-      await OneSignal.context._dynamicResourceLoader.loadSdkStylesheet();
+      await OneSignal._context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log._debug('Not showing notify button because styles failed to load.');
       return;
@@ -492,7 +492,7 @@ export default class Bell {
     addDomElement(this.button.selector, 'beforeend', logoSvg);
 
     const isPushEnabled =
-      await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
     wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
@@ -677,8 +677,8 @@ export default class Bell {
    */
   updateState() {
     Promise.all([
-      OneSignal.context._subscriptionManager.isPushNotificationsEnabled(),
-      OneSignal.context._permissionManager.getPermissionStatus(),
+      OneSignal._context._subscriptionManager.isPushNotificationsEnabled(),
+      OneSignal._context._permissionManager.getPermissionStatus(),
     ])
       .then(([isEnabled, permission]) => {
         this.setState(

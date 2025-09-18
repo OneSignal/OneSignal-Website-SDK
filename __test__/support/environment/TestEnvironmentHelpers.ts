@@ -25,9 +25,9 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal = OneSignal;
   global.OneSignal.EVENTS = ONESIGNAL_EVENTS;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
-  global.OneSignal.context = new Context(global.OneSignal.config);
-  global.OneSignal.initialized = true;
-  global.OneSignal.emitter = new Emitter();
+  global.OneSignal._context = new Context(global.OneSignal.config);
+  global.OneSignal._initialized = true;
+  global.OneSignal._emitter = new Emitter();
   const core = new CoreModule();
   global.OneSignal._coreDirector = new CoreModuleDirector(core);
 

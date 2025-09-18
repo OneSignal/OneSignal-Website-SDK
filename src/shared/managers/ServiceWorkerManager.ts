@@ -158,7 +158,7 @@ export class ServiceWorkerManager {
       workerState === ServiceWorkerActiveState.ThirdParty
     ) {
       const permission =
-        await OneSignal.context._permissionManager.getNotificationPermission(
+        await OneSignal._context._permissionManager.getNotificationPermission(
           OneSignal.config!.safariWebId,
         );
       const notificationsEnabled = permission === 'granted';
@@ -283,7 +283,7 @@ export class ServiceWorkerManager {
       WorkerMessengerCommand.NotificationClicked,
       async (event: NotificationClickEventInternal) => {
         const clickedListenerCallbackCount =
-          OneSignal.emitter.numberOfListeners(
+          OneSignal._emitter.numberOfListeners(
             OneSignal.EVENTS.NOTIFICATION_CLICKED,
           );
 

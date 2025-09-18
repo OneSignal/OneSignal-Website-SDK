@@ -32,13 +32,13 @@ export default class OneSignalEvent {
     // Fire internal event to those listening via OneSignal.emitter.on()
     if (!IS_SERVICE_WORKER) {
       if (eventName === OneSignal.EVENTS.SDK_INITIALIZED) {
-        if (OneSignal.initialized) return;
-        else OneSignal.initialized = true;
+        if (OneSignal._initialized) return;
+        else OneSignal._initialized = true;
       }
       if (emitter) {
         await emitter.emit(eventName, data);
       } else {
-        await OneSignal.emitter.emit(eventName, data);
+        await OneSignal._emitter.emit(eventName, data);
       }
     }
   }

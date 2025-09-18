@@ -15,7 +15,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   async promptPush(options?: AutoPromptOptions): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowParticularSlidedown(
+    await OneSignal._context.promptsManager.internalShowParticularSlidedown(
       DelayedPromptType.Push,
       options,
     );
@@ -25,8 +25,8 @@ export default class SlidedownNamespace extends EventListenerBase {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
     const isPushEnabled =
-      await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
-    await OneSignal.context.promptsManager.internalShowCategorySlidedown({
+      await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
+    await OneSignal._context.promptsManager.internalShowCategorySlidedown({
       ...options,
       isInUpdateMode: isPushEnabled,
     });
@@ -35,7 +35,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   async promptSms(options?: AutoPromptOptions): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowSmsSlidedown({
+    await OneSignal._context.promptsManager.internalShowSmsSlidedown({
       ...options,
     });
   }
@@ -43,7 +43,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   async promptEmail(options?: AutoPromptOptions): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowEmailSlidedown({
+    await OneSignal._context.promptsManager.internalShowEmailSlidedown({
       ...options,
     });
   }
@@ -51,7 +51,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   async promptSmsAndEmail(options?: AutoPromptOptions): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowSmsAndEmailSlidedown({
+    await OneSignal._context.promptsManager.internalShowSmsAndEmailSlidedown({
       ...options,
     });
   }
@@ -60,13 +60,13 @@ export default class SlidedownNamespace extends EventListenerBase {
     event: 'slidedownShown',
     listener: (wasShown: boolean) => void,
   ): void {
-    OneSignal.emitter.on(event, listener);
+    OneSignal._emitter.on(event, listener);
   }
 
   removeEventListener(
     event: 'slidedownShown',
     listener: (wasShown: boolean) => void,
   ): void {
-    OneSignal.emitter.off(event, listener);
+    OneSignal._emitter.off(event, listener);
   }
 }

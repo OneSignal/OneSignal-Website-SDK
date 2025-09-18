@@ -27,7 +27,7 @@ vi.useFakeTimers();
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
-    OneSignal.emitter = new Emitter();
+    OneSignal._emitter = new Emitter();
   });
 
   afterEach(async () => {
