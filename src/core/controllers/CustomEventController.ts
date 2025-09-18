@@ -21,7 +21,7 @@ export class CustomEventController implements ICustomEventController {
     this._opRepo = opRepo;
   }
 
-  sendCustomEvent(event: ICustomEvent): void {
+  _sendCustomEvent(event: ICustomEvent): void {
     const appId = MainHelper.getAppId();
     const identityModel = this._identityModelStore.model;
 

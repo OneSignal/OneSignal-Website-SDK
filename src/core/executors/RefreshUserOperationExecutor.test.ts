@@ -74,7 +74,7 @@ describe('RefreshUserOperationExecutor', () => {
 
   test('should return correct operations (names)', async () => {
     const executor = getExecutor();
-    expect(executor.operations).toEqual([OPERATION_NAME.REFRESH_USER]);
+    expect(executor._operations).toEqual([OPERATION_NAME.REFRESH_USER]);
   });
 
   test('should validate operations', async () => {
@@ -82,7 +82,7 @@ describe('RefreshUserOperationExecutor', () => {
     const someOp = new SomeOperation();
     const ops = [someOp];
 
-    const result = executor.execute(ops);
+    const result = executor._execute(ops);
     await expect(() => result).rejects.toThrow(
       `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
         ops,
@@ -106,7 +106,7 @@ describe('RefreshUserOperationExecutor', () => {
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
 
-      const result = await executor.execute([refreshOp]);
+      const result = await executor._execute([refreshOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
       expect(propertiesModelStore.model.language).not.toBe('fr');
     });
@@ -140,14 +140,14 @@ describe('RefreshUserOperationExecutor', () => {
       const executor = getExecutor();
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID);
 
-      const result = await executor.execute([refreshOp]);
+      const result = await executor._execute([refreshOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       // Check identity model updates
-      expect(identityModelStore.model.getProperty('onesignal_id')).toBe(
+      expect(identityModelStore.model._getProperty('onesignal_id')).toBe(
         ONESIGNAL_ID,
       );
-      expect(identityModelStore.model.getProperty('external_id')).toBe(
+      expect(identityModelStore.model._getProperty('external_id')).toBe(
         'test_user',
       );
 
@@ -201,7 +201,7 @@ describe('RefreshUserOperationExecutor', () => {
         ],
       });
 
-      await executor.execute([refreshOp]);
+      await executor._execute([refreshOp]);
 
       // Check that both subscriptions exist (push is preserved)
       const subscriptions = subscriptionModelStore.list();
@@ -225,7 +225,7 @@ describe('RefreshUserOperationExecutor', () => {
         status: 429,
         retryAfter: 10,
       });
-      const res1 = await executor.execute([refreshOp]);
+      const res1 = await executor._execute([refreshOp]);
       expect(res1).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 10,
@@ -236,7 +236,7 @@ describe('RefreshUserOperationExecutor', () => {
         status: 401,
         retryAfter: 15,
       });
-      const res2 = await executor.execute([refreshOp]);
+      const res2 = await executor._execute([refreshOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_UNAUTHORIZED,
         retryAfterSeconds: 15,
@@ -249,14 +249,14 @@ describe('RefreshUserOperationExecutor', () => {
         retryAfter: 5,
       });
       getRebuildOpsSpy.mockReturnValueOnce(null);
-      const res3 = await executor.execute([refreshOp]);
+      const res3 = await executor._execute([refreshOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
         retryAfterSeconds: undefined,
       });
 
       // -- with rebuild ops
-      const res4 = await executor.execute([refreshOp]);
+      const res4 = await executor._execute([refreshOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 5,
@@ -280,7 +280,7 @@ describe('RefreshUserOperationExecutor', () => {
         status: 404,
         retryAfter: 20,
       });
-      const res6 = await executor.execute([refreshOp]);
+      const res6 = await executor._execute([refreshOp]);
       expect(res6).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 20,
@@ -290,7 +290,7 @@ describe('RefreshUserOperationExecutor', () => {
       setGetUserError({
         status: 400,
       });
-      const res7 = await executor.execute([refreshOp]);
+      const res7 = await executor._execute([refreshOp]);
       expect(res7).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
         retryAfterSeconds: undefined,

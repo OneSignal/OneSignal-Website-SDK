@@ -41,10 +41,10 @@ export class LoginUserOperation extends Operation<ILoginOp> {
    * The optional external ID of this newly logged-in user. Must be unique for the appId.
    */
   get externalId(): string | undefined {
-    return this.getProperty('externalId');
+    return this._getProperty('externalId');
   }
   private set externalId(value: string) {
-    this.setProperty('externalId', value);
+    this._setProperty('externalId', value);
   }
 
   /**
@@ -53,10 +53,10 @@ export class LoginUserOperation extends Operation<ILoginOp> {
    * and can be checked via IDManager.isLocalId to ensure correct processing.
    */
   get existingOnesignalId(): string | undefined {
-    return this.getProperty('existingOnesignalId');
+    return this._getProperty('existingOnesignalId');
   }
   private set existingOnesignalId(value: string) {
-    this.setProperty('existingOnesignalId', value);
+    this._setProperty('existingOnesignalId', value);
   }
 
   override get createComparisonKey(): string {

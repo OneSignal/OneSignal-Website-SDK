@@ -61,7 +61,7 @@ describe('UpdateUserOperationExecutor', () => {
 
   test('should return correct operations (names)', () => {
     const executor = getExecutor();
-    expect(executor.operations).toEqual([OPERATION_NAME.SET_PROPERTY]);
+    expect(executor._operations).toEqual([OPERATION_NAME.SET_PROPERTY]);
   });
 
   test('should validate operations', async () => {
@@ -69,7 +69,7 @@ describe('UpdateUserOperationExecutor', () => {
     const someOp = new SomeOperation();
     const ops = [someOp];
 
-    const result = executor.execute(ops);
+    const result = executor._execute(ops);
     await expect(() => result).rejects.toThrow(
       `Unrecognized operation: ${ops[0]}`,
     );
@@ -89,7 +89,7 @@ describe('UpdateUserOperationExecutor', () => {
         'fr',
       );
 
-      const result = await executor.execute([setPropertyOp]);
+      const result = await executor._execute([setPropertyOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
       expect(propertiesModelStore.model.language).toBe('fr');
     });
@@ -103,7 +103,7 @@ describe('UpdateUserOperationExecutor', () => {
         { tagA: 'valueA', tagB: 'valueB' },
       );
 
-      const result = await executor.execute([setPropertyOp]);
+      const result = await executor._execute([setPropertyOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
       expect(propertiesModelStore.model.tags).toEqual({
         tagA: 'valueA',
@@ -121,7 +121,7 @@ describe('UpdateUserOperationExecutor', () => {
 
       // Retryable error
       setUpdateUserError({ status: 429, retryAfter: 10 });
-      const res1 = await executor.execute([setTagOp]);
+      const res1 = await executor._execute([setTagOp]);
       expect(res1).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 10,
@@ -129,7 +129,7 @@ describe('UpdateUserOperationExecutor', () => {
 
       // Unauthorized error
       setUpdateUserError({ status: 401, retryAfter: 15 });
-      const res2 = await executor.execute([setTagOp]);
+      const res2 = await executor._execute([setTagOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_UNAUTHORIZED,
         retryAfterSeconds: 15,
@@ -138,13 +138,13 @@ describe('UpdateUserOperationExecutor', () => {
       // Missing error without rebuild ops
       setUpdateUserError({ status: 404, retryAfter: 5 });
       getRebuildOpsSpy.mockReturnValueOnce(null);
-      const res3 = await executor.execute([setTagOp]);
+      const res3 = await executor._execute([setTagOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
 
       // Missing error with rebuild ops
-      const res4 = await executor.execute([setTagOp]);
+      const res4 = await executor._execute([setTagOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 5,
@@ -165,7 +165,7 @@ describe('UpdateUserOperationExecutor', () => {
       // Missing error in retry window
       newRecordsState._add(ONESIGNAL_ID);
       setUpdateUserError({ status: 404, retryAfter: 20 });
-      const res5 = await executor.execute([setTagOp]);
+      const res5 = await executor._execute([setTagOp]);
       expect(res5).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 20,
@@ -173,7 +173,7 @@ describe('UpdateUserOperationExecutor', () => {
 
       // Other errors
       setUpdateUserError({ status: 400 });
-      const res6 = await executor.execute([setTagOp]);
+      const res6 = await executor._execute([setTagOp]);
       expect(res6).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });

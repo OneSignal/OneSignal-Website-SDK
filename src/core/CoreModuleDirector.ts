@@ -61,7 +61,7 @@ export class CoreModuleDirector {
       rawPushSubscription,
     });
     const model = new SubscriptionModel();
-    model.initializeFromJson(
+    model._initializeFromJson(
       new FuturePushSubscriptionRecord(rawPushSubscription)._serialize(),
     );
     model.id = IDManager._createLocalId();

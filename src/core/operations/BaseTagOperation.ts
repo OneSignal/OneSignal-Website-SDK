@@ -25,10 +25,10 @@ export abstract class BaseTagOperation<
    * The tag key.
    */
   get key(): string {
-    return this.getProperty('key');
+    return this._getProperty('key');
   }
   protected set key(value: string) {
-    this.setProperty('key', value);
+    this._setProperty('key', value);
   }
 
   override get modifyComparisonKey(): string {

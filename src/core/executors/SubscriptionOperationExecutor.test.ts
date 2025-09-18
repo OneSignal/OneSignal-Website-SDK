@@ -84,7 +84,7 @@ describe('SubscriptionOperationExecutor', () => {
 
   test('should return correct operations (names)', () => {
     const executor = getExecutor();
-    expect(executor.operations).toEqual([
+    expect(executor._operations).toEqual([
       OPERATION_NAME.CREATE_SUBSCRIPTION,
       OPERATION_NAME.UPDATE_SUBSCRIPTION,
       OPERATION_NAME.DELETE_SUBSCRIPTION,
@@ -97,7 +97,7 @@ describe('SubscriptionOperationExecutor', () => {
     const someOp = new SomeOperation();
     const ops = [someOp];
 
-    const res1 = executor.execute(ops);
+    const res1 = executor._execute(ops);
     await expect(() => res1).rejects.toThrow(
       `Unrecognized operation: ${ops[0]}`,
     );
@@ -115,7 +115,7 @@ describe('SubscriptionOperationExecutor', () => {
       type: SubscriptionType.ChromePush,
     });
 
-    const res2 = executor.execute([deleteOp, updateOp]);
+    const res2 = executor._execute([deleteOp, updateOp]);
     await expect(() => res2).rejects.toThrow(
       'Only supports one operation! Attempted operations:',
     );
@@ -125,7 +125,7 @@ describe('SubscriptionOperationExecutor', () => {
       ONESIGNAL_ID,
       SUB_ID,
     );
-    const res3 = executor.execute([transferOp, updateOp]);
+    const res3 = executor._execute([transferOp, updateOp]);
     await expect(() => res3).rejects.toThrow(
       'TransferSubscriptionOperation only supports one operation! Attempted operations:',
     );
@@ -157,7 +157,7 @@ describe('SubscriptionOperationExecutor', () => {
         notification_types: NotificationType.Subscribed,
       });
 
-      const result = await executor.execute([createOp]);
+      const result = await executor._execute([createOp]);
       expect(result).toMatchObject({
         result: ExecutionResult.SUCCESS,
         idTranslations: {
@@ -194,7 +194,7 @@ describe('SubscriptionOperationExecutor', () => {
         notification_types: NotificationType.UserOptedOut,
       });
 
-      const result = await executor.execute([createOp, updateOp]);
+      const result = await executor._execute([createOp, updateOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       expect(createSubscriptionFn).toHaveBeenCalledWith({
@@ -226,7 +226,7 @@ describe('SubscriptionOperationExecutor', () => {
         SUB_ID,
       );
 
-      const result = await executor.execute([createOp, deleteOp]);
+      const result = await executor._execute([createOp, deleteOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       // API should not have been called
@@ -247,7 +247,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Retryable error
       setCreateSubscriptionError({ status: 429, retryAfter: 10 });
-      const res1 = await executor.execute([createOp]);
+      const res1 = await executor._execute([createOp]);
       expect(res1).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 10,
@@ -255,21 +255,21 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Conflict error
       setCreateSubscriptionError({ status: 400, retryAfter: 10 });
-      const res2 = await executor.execute([createOp]);
+      const res2 = await executor._execute([createOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
 
       // Invalid error
       setCreateSubscriptionError({ status: 409, retryAfter: 10 });
-      const res3 = await executor.execute([createOp]);
+      const res3 = await executor._execute([createOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
 
       // Unauthorized error
       setCreateSubscriptionError({ status: 401, retryAfter: 15 });
-      const res4 = await executor.execute([createOp]);
+      const res4 = await executor._execute([createOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_UNAUTHORIZED,
         retryAfterSeconds: 15,
@@ -278,7 +278,7 @@ describe('SubscriptionOperationExecutor', () => {
       // Missing error without rebuild ops
       setCreateSubscriptionError({ status: 404, retryAfter: 5 });
       getRebuildOpsSpy.mockReturnValueOnce(null);
-      const res5 = await executor.execute([createOp]);
+      const res5 = await executor._execute([createOp]);
 
       expect(res5).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
@@ -288,7 +288,7 @@ describe('SubscriptionOperationExecutor', () => {
       subscriptionsModelStore.add(pushSubscription, ModelChangeTags.HYDRATE);
       await setPushToken(pushSubscription.token);
 
-      const res6 = await executor.execute([createOp]);
+      const res6 = await executor._execute([createOp]);
       expect(res6).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 5,
@@ -318,7 +318,7 @@ describe('SubscriptionOperationExecutor', () => {
       // Missing error in retry window
       newRecordsState._add(ONESIGNAL_ID);
       setCreateSubscriptionError({ status: 404, retryAfter: 20 });
-      const res7 = await executor.execute([createOp]);
+      const res7 = await executor._execute([createOp]);
       expect(res7).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 20,
@@ -326,7 +326,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Other errors
       setCreateSubscriptionError({ status: 400 });
-      const res8 = await executor.execute([createOp]);
+      const res8 = await executor._execute([createOp]);
       expect(res8).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
@@ -352,7 +352,7 @@ describe('SubscriptionOperationExecutor', () => {
         web_p256: 'some-web-p256',
       });
 
-      const result = await executor.execute([updateOp]);
+      const result = await executor._execute([updateOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       expect(updateSubscriptionFn).toHaveBeenCalledWith({
@@ -393,7 +393,7 @@ describe('SubscriptionOperationExecutor', () => {
         web_p256: 'some-web-p256-2',
       });
 
-      const result = await executor.execute([updateOp1, updateOp2]);
+      const result = await executor._execute([updateOp1, updateOp2]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       // Verify only the last update was used
@@ -423,7 +423,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Retryable error
       setUpdateSubscriptionError({ status: 429, retryAfter: 15 });
-      const res1 = await executor.execute([updateOp]);
+      const res1 = await executor._execute([updateOp]);
       expect(res1).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 15,
@@ -431,7 +431,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Missing error
       setUpdateSubscriptionError({ status: 404, retryAfter: 10 });
-      const res2 = await executor.execute([updateOp]);
+      const res2 = await executor._execute([updateOp]);
       const subOp = new CreateSubscriptionOperation({
         appId: APP_ID,
         enabled: true,
@@ -441,7 +441,7 @@ describe('SubscriptionOperationExecutor', () => {
         token: 'test-token',
         type: SubscriptionType.ChromePush,
       });
-      subOp.modelId = res2.operations![0].modelId;
+      subOp._modelId = res2.operations![0]._modelId;
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
         operations: [subOp],
@@ -449,7 +449,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Missing error with record in retry window
       newRecordsState._add(SUB_ID);
-      const res3 = await executor.execute([updateOp]);
+      const res3 = await executor._execute([updateOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 10,
@@ -457,7 +457,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Other errors
       setUpdateSubscriptionError({ status: 400 });
-      const res4 = await executor.execute([updateOp]);
+      const res4 = await executor._execute([updateOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
@@ -480,7 +480,7 @@ describe('SubscriptionOperationExecutor', () => {
         SUB_ID,
       );
 
-      const result = await executor.execute([deleteOp]);
+      const result = await executor._execute([deleteOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       // Verify model was removed
@@ -497,13 +497,13 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Missing error
       setDeleteSubscriptionError({ status: 404 });
-      const result = await executor.execute([deleteOp]);
+      const result = await executor._execute([deleteOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       // Missing error with record in retry window
       newRecordsState._add(SUB_ID);
       setDeleteSubscriptionError({ status: 404, retryAfter: 5 });
-      const res2 = await executor.execute([deleteOp]);
+      const res2 = await executor._execute([deleteOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 5,
@@ -515,7 +515,7 @@ describe('SubscriptionOperationExecutor', () => {
         retryAfter: 10,
         subscriptionId: SUB_ID,
       });
-      const res3 = await executor.execute([deleteOp]);
+      const res3 = await executor._execute([deleteOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 10,
@@ -526,7 +526,7 @@ describe('SubscriptionOperationExecutor', () => {
         status: 400,
         subscriptionId: SUB_ID,
       });
-      const res4 = await executor.execute([deleteOp]);
+      const res4 = await executor._execute([deleteOp]);
       expect(res4).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });
@@ -546,7 +546,7 @@ describe('SubscriptionOperationExecutor', () => {
         SUB_ID,
       );
 
-      const result = await executor.execute([transferOp]);
+      const result = await executor._execute([transferOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
 
       expect(transferSubscriptionFn).toHaveBeenCalledWith({
@@ -567,7 +567,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Retryable error
       setTransferSubscriptionError({ status: 429, retryAfter: 10 });
-      const res2 = await executor.execute([transferOp]);
+      const res2 = await executor._execute([transferOp]);
       expect(res2).toMatchObject({
         result: ExecutionResult.FAIL_RETRY,
         retryAfterSeconds: 10,
@@ -575,7 +575,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Other errors
       setTransferSubscriptionError({ status: 400 });
-      const res3 = await executor.execute([transferOp]);
+      const res3 = await executor._execute([transferOp]);
       expect(res3).toMatchObject({
         result: ExecutionResult.FAIL_NORETRY,
       });

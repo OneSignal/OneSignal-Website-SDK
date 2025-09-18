@@ -18,39 +18,39 @@ import type { ISingletonModelStore } from './types';
 export abstract class SingletonModelStoreListener<TModel extends Model>
   implements ISingletonModelStoreChangeHandler<TModel>
 {
-  protected store: ISingletonModelStore<TModel>;
-  protected opRepo: IOperationRepo;
+  protected _store: ISingletonModelStore<TModel>;
+  protected _opRepo: IOperationRepo;
 
   constructor(store: ISingletonModelStore<TModel>, opRepo: IOperationRepo) {
-    this.store = store;
-    this.opRepo = opRepo;
-    this.store.subscribe(this);
+    this._store = store;
+    this._opRepo = opRepo;
+    this._store._subscribe(this);
   }
 
-  onModelReplaced(model: TModel, tag: string): void {
+  _onModelReplaced(model: TModel, tag: string): void {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = this.getReplaceOperation(model);
+    const operation = this._getReplaceOperation(model);
     if (operation != null) {
-      this.opRepo.enqueue(operation);
+      this._opRepo.enqueue(operation);
     }
   }
 
-  onModelUpdated(args: ModelChangedArgs, tag: string): void {
+  _onModelUpdated(args: ModelChangedArgs, tag: string): void {
     if (tag !== ModelChangeTags.NORMAL) {
       return;
     }
 
-    const operation = this.getUpdateOperation(
+    const operation = this._getUpdateOperation(
       args.model as TModel,
       args.property,
       args.oldValue,
       args.newValue,
     );
     if (operation != null) {
-      this.opRepo.enqueue(operation);
+      this._opRepo.enqueue(operation);
     }
   }
 
@@ -58,13 +58,13 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
    * Called when the model has been replaced.
    * @return The operation to enqueue when the model has been replaced, or null if no operation should be enqueued.
    */
-  abstract getReplaceOperation(model: TModel): Operation | null;
+  abstract _getReplaceOperation(model: TModel): Operation | null;
 
   /**
    * Called when the model has been updated.
    * @return The operation to enqueue when the model has been updated, or null if no operation should be enqueued.
    */
-  abstract getUpdateOperation(
+  abstract _getUpdateOperation(
     model: TModel,
     property: string,
     oldValue: unknown,

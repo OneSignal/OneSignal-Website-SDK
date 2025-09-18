@@ -47,11 +47,11 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
     this._newRecordState = _newRecordState;
   }
 
-  get operations(): string[] {
+  get _operations(): string[] {
     return [OPERATION_NAME.REFRESH_USER];
   }
 
-  async execute(operations: Operation[]): Promise<ExecutionResponse> {
+  async _execute(operations: Operation[]): Promise<ExecutionResponse> {
     Log._debug(
       `RefreshUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
     );
@@ -64,10 +64,10 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       );
 
     const startingOp = operations[0];
-    return this.getUser(startingOp);
+    return this._getUser(startingOp);
   }
 
-  private async getUser(op: RefreshUserOperation): Promise<ExecutionResponse> {
+  private async _getUser(op: RefreshUserOperation): Promise<ExecutionResponse> {
     const response = await getUserByAlias(
       { appId: op.appId },
       {
@@ -84,7 +84,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
 
       const identityModel = new IdentityModel();
       for (const [key, value] of Object.entries(result.identity)) {
-        identityModel.setProperty(key, value);
+        identityModel._setProperty(key, value);
       }
 
       const propertiesModel = new PropertiesModel();
@@ -93,7 +93,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       const { properties = {}, subscriptions = [] } = result;
 
       Object.entries(properties).forEach(([key, value]) => {
-        propertiesModel.setProperty(key as IPropertiesModelKeys, value);
+        propertiesModel._setProperty(key as IPropertiesModelKeys, value);
       });
 
       const subscriptionModels: SubscriptionModel[] = [];

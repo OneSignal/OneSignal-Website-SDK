@@ -20,11 +20,11 @@ import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 // Implements logic similar to Android SDK's CustomEventOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/main/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/CustomEventOperationExecutor.kt
 export class CustomEventsOperationExecutor implements IOperationExecutor {
-  get operations(): string[] {
+  get _operations(): string[] {
     return [OPERATION_NAME.CUSTOM_EVENT];
   }
 
-  private get eventMetadata(): ICustomEventMetadata {
+  private get _eventMetadata(): ICustomEventMetadata {
     return {
       sdk: VERSION,
       device_model: getDeviceModel(),
@@ -33,7 +33,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     };
   }
 
-  async execute(operations: Operation[]): Promise<ExecutionResponse> {
+  async _execute(operations: Operation[]): Promise<ExecutionResponse> {
     Log._debug(
       `CustomEventsOperationExecutor(operations: ${JSON.stringify(
         operations,
@@ -58,7 +58,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
         timestamp: operation.timestamp,
         payload: {
           ...(operation.event.properties ?? {}),
-          os_sdk: this.eventMetadata,
+          os_sdk: this._eventMetadata,
         },
       },
     );

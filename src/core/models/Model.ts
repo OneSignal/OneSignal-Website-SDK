@@ -12,7 +12,7 @@ export interface IModelChangedHandler<T extends object = object> {
    * @param args Information related to what has changed.
    * @param tag The tag which identifies how/why the model was changed.
    */
-  onChanged(args: ModelChangedArgs<T>, tag: string): void;
+  _onChanged(args: ModelChangedArgs<T>, tag: string): void;
 }
 
 /**
@@ -76,13 +76,13 @@ export class Model<U extends object = object, T extends U & object = U & object>
   /**
    * Legacy Id used as keypath for the IndexedDB tables. A unique identifier for this model.
    */
-  public modelId: string;
+  public _modelId: string;
 
-  protected data: Map<string, unknown> = new Map();
-  private changeNotifier = new EventProducer<IModelChangedHandler>();
+  protected _data: Map<string, unknown> = new Map();
+  private _changeNotifier = new EventProducer<IModelChangedHandler>();
 
   constructor() {
-    this.modelId = Math.random().toString(36).substring(2);
+    this._modelId = Math.random().toString(36).substring(2);
   }
 
   /**
@@ -91,22 +91,22 @@ export class Model<U extends object = object, T extends U & object = U & object>
    *
    * @param object The JSON object to initialize this model from.
    */
-  initializeFromJson(
+  _initializeFromJson(
     modelData: Partial<T> & { modelId?: string; modelName?: string },
   ): void {
     // we manually pass modelName model store persist action
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { modelId, modelName: _, ...rest } = modelData;
 
-    this.data.clear();
-    this.data = new Map(Object.entries(rest));
+    this._data.clear();
+    this._data = new Map(Object.entries(rest));
 
     // TODO: ModelName is a legacy property, could be removed sometime after web refactor launch
     // model name is kept track in the model store, so we don't need to pass it to the model,
     // the model id needs to be passed to the model, so it can stay consistent since reload will generate a new id
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     if (modelId) {
-      this.modelId = modelId;
+      this._modelId = modelId;
     }
   }
 
@@ -117,40 +117,40 @@ export class Model<U extends object = object, T extends U & object = U & object>
    * @param id The id of the model to initialize to.
    * @param model The model to initialize this model from.
    */
-  initializeFromModel(id: string | null, model: Model<U, T>): void {
+  _initializeFromModel(id: string | null, model: Model<U, T>): void {
     const newData = new Map<string, unknown>();
 
-    model.data.forEach((value: unknown, key: string) => {
+    model._data.forEach((value: unknown, key: string) => {
       newData.set(key, value);
     });
 
     if (id !== null) {
-      this.modelId = id;
+      this._modelId = id;
     }
 
-    this.data.clear();
-    this.data = newData;
+    this._data.clear();
+    this._data = newData;
   }
 
-  setProperty<K extends keyof T>(
+  _setProperty<K extends keyof T>(
     name: string & K,
     value: T[K] | undefined,
     tag: string = ModelChangeTags.NORMAL,
     forceChange = false,
   ): void {
-    const oldValue = this.data.get(name);
+    const oldValue = this._data.get(name);
 
     if (oldValue === value && !forceChange) {
       return;
     }
 
     if (value !== undefined) {
-      this.data.set(name, value);
-    } else if (this.data.has(name)) {
-      this.data.delete(name);
+      this._data.set(name, value);
+    } else if (this._data.has(name)) {
+      this._data.delete(name);
     }
 
-    this.notifyChanged(name, tag, oldValue, value);
+    this._notifyChanged(name, tag, oldValue, value);
   }
 
   /**
@@ -160,16 +160,16 @@ export class Model<U extends object = object, T extends U & object = U & object>
    *
    * @return True if this model has the provided property, false otherwise.
    */
-  hasProperty(name: string): boolean {
-    return this.data.has(name);
+  _hasProperty(name: string): boolean {
+    return this._data.has(name);
   }
 
-  getProperty<K extends keyof T>(name: K, defaultValue?: T[K]): T[K] {
-    const value = this.data.get(name as string) ?? defaultValue;
+  _getProperty<K extends keyof T>(name: K, defaultValue?: T[K]): T[K] {
+    const value = this._data.get(name as string) ?? defaultValue;
     return value as T[K];
   }
 
-  private notifyChanged(
+  private _notifyChanged(
     property: string,
     tag: string,
     oldValue: unknown,
@@ -182,7 +182,7 @@ export class Model<U extends object = object, T extends U & object = U & object>
       oldValue,
       newValue,
     };
-    this.changeNotifier.fire((handler) => handler.onChanged(changeArgs, tag));
+    this._changeNotifier.fire((handler) => handler._onChanged(changeArgs, tag));
   }
 
   /**
@@ -191,25 +191,25 @@ export class Model<U extends object = object, T extends U & object = U & object>
    * @return The resulting JSON object.
    */
   toJSON(): T {
-    return Object.fromEntries(this.data.entries()) as T;
+    return Object.fromEntries(this._data.entries()) as T;
   }
 
-  subscribe(handler: IModelChangedHandler): void {
-    return this.changeNotifier.subscribe(handler);
+  _subscribe(handler: IModelChangedHandler): void {
+    return this._changeNotifier._subscribe(handler);
   }
 
-  unsubscribe(handler: IModelChangedHandler): void {
-    this.changeNotifier.unsubscribe(handler);
+  _unsubscribe(handler: IModelChangedHandler): void {
+    this._changeNotifier._unsubscribe(handler);
   }
 
-  get hasSubscribers(): boolean {
-    return this.changeNotifier.hasSubscribers;
+  get _hasSubscribers(): boolean {
+    return this._changeNotifier._hasSubscribers;
   }
 
-  mergeData(newData: Partial<T>): void {
+  _mergeData(newData: Partial<T>): void {
     // Merge new data with existing data
     for (const [key, value] of Object.entries(newData)) {
-      this.data.set(key, value);
+      this._data.set(key, value);
     }
   }
 }

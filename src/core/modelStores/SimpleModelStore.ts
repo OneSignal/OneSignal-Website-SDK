@@ -25,7 +25,7 @@ export class SimpleModelStore<TModel extends Model> extends ModelStore<TModel> {
   override create(modelData?: DatabaseModel<TModel>): TModel {
     const model = this._create();
     if (modelData != null) {
-      model.initializeFromJson(modelData);
+      model._initializeFromJson(modelData);
     }
     return model;
   }

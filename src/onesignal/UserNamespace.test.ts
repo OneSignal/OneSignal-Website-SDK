@@ -57,7 +57,7 @@ describe('Alias Management', () => {
     userNamespace.addAlias(label, id);
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    expect(identityModel.getProperty(label)).toBe(id);
+    expect(identityModel._getProperty(label)).toBe(id);
   });
 
   test('can add multiple aliases', () => {
@@ -70,8 +70,8 @@ describe('Alias Management', () => {
     userNamespace.addAliases(aliases);
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    expect(identityModel.getProperty('someLabel')).toBe(aliases.someLabel);
-    expect(identityModel.getProperty('anotherLabel')).toBe(
+    expect(identityModel._getProperty('someLabel')).toBe(aliases.someLabel);
+    expect(identityModel._getProperty('anotherLabel')).toBe(
       aliases.anotherLabel,
     );
   });
@@ -84,12 +84,12 @@ describe('Alias Management', () => {
 
     // First add the alias
     userNamespace.addAlias(label, id);
-    expect(identityModel.getProperty(label)).toBe(id);
+    expect(identityModel._getProperty(label)).toBe(id);
 
     // Then remove it
     userNamespace.removeAlias(label);
 
-    expect(identityModel.getProperty(label)).toBeUndefined();
+    expect(identityModel._getProperty(label)).toBeUndefined();
   });
 
   test('can remove multiple aliases', () => {
@@ -102,16 +102,16 @@ describe('Alias Management', () => {
 
     // First add the aliases
     userNamespace.addAliases(aliases);
-    expect(identityModel.getProperty('someLabel')).toBe(aliases.someLabel);
-    expect(identityModel.getProperty('anotherLabel')).toBe(
+    expect(identityModel._getProperty('someLabel')).toBe(aliases.someLabel);
+    expect(identityModel._getProperty('anotherLabel')).toBe(
       aliases.anotherLabel,
     );
 
     // Then remove them
     userNamespace.removeAliases(Object.keys(aliases));
 
-    expect(identityModel.getProperty('someLabel')).toBeUndefined();
-    expect(identityModel.getProperty('anotherLabel')).toBeUndefined();
+    expect(identityModel._getProperty('someLabel')).toBeUndefined();
+    expect(identityModel._getProperty('anotherLabel')).toBeUndefined();
   });
 
   test('can validate add aliases', () => {
@@ -494,7 +494,7 @@ describe('Custom Events', () => {
     errorSpy.mockClear();
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel.setProperty(
+    identityModel._setProperty(
       'onesignal_id',
       ONESIGNAL_ID,
       ModelChangeTags.NO_PROPAGATE,

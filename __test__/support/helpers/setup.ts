@@ -97,7 +97,7 @@ export const updateIdentityModel = async <
   value?: IdentitySchema[T],
 ) => {
   const identityModel = OneSignal._coreDirector._getIdentityModel();
-  identityModel.setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
+  identityModel._setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
 };
 
 /**
@@ -113,7 +113,7 @@ export const updatePropertiesModel = async <
   value?: PropertiesSchema[T],
 ) => {
   const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-  propertiesModel.setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
+  propertiesModel._setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
 };
 
 /**

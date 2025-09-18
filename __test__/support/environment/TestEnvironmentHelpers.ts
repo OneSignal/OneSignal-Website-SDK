@@ -60,7 +60,7 @@ export const createPushSub = ({
   onesignalId?: string;
 } = {}) => {
   const pushSubscription = new SubscriptionModel();
-  pushSubscription.initializeFromJson({
+  pushSubscription._initializeFromJson({
     ...BASE_SUB,
     id,
     onesignalId,

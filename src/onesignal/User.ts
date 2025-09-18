@@ -36,7 +36,7 @@ export default class User {
       const onesignalId =
         identityModel.onesignalId ?? IDManager._createLocalId();
       if (!identityModel.onesignalId) {
-        identityModel.setProperty(
+        identityModel._setProperty(
           IdentityConstants.ONESIGNAL_ID,
           onesignalId,
           ModelChangeTags.NO_PROPAGATE,
@@ -44,7 +44,7 @@ export default class User {
       }
 
       if (!propertiesModel.onesignalId) {
-        propertiesModel.setProperty(
+        propertiesModel._setProperty(
           'onesignalId',
           onesignalId,
           ModelChangeTags.NO_PROPAGATE,
@@ -96,7 +96,7 @@ export default class User {
   }): void {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     Object.keys(aliases).forEach((label) => {
-      identityModel.setProperty(label, aliases[label]);
+      identityModel._setProperty(label, aliases[label]);
     });
   }
 
@@ -181,7 +181,7 @@ export default class User {
 
     emailSubscriptions.forEach((model) => {
       if (model.token === email) {
-        OneSignal._coreDirector.removeSubscriptionModel(model.modelId);
+        OneSignal._coreDirector.removeSubscriptionModel(model._modelId);
       }
     });
   }
@@ -195,7 +195,7 @@ export default class User {
     const smsSubscriptions = OneSignal._coreDirector.getSmsSubscriptionModels();
     smsSubscriptions.forEach((model) => {
       if (model.token === smsNumber) {
-        OneSignal._coreDirector.removeSubscriptionModel(model.modelId);
+        OneSignal._coreDirector.removeSubscriptionModel(model._modelId);
       }
     });
   }
@@ -279,7 +279,7 @@ export default class User {
     }
     logMethodCall('trackEvent', { name, properties });
 
-    OneSignal._coreDirector.customEventController.sendCustomEvent({
+    OneSignal._coreDirector.customEventController._sendCustomEvent({
       name,
       properties,
     });
@@ -330,7 +330,7 @@ function addSubscriptionToModels({
   };
 
   const newSubscription = new SubscriptionModel();
-  newSubscription.mergeData(subscription);
+  newSubscription._mergeData(subscription);
   OneSignal._coreDirector.addSubscriptionModel(newSubscription);
 }
 
