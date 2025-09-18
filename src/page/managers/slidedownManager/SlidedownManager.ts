@@ -54,12 +54,12 @@ export class SlidedownManager {
     options: AutoPromptOptions,
   ): Promise<boolean> {
     const permissionDenied =
-      (await OneSignal.context._permissionManager.getPermissionStatus()) ===
+      (await OneSignal._context._permissionManager.getPermissionStatus()) ===
       'denied';
     let wasDismissed: boolean;
 
     const subscriptionInfo: PushSubscriptionState =
-      await OneSignal.context._subscriptionManager.getSubscriptionState();
+      await OneSignal._context._subscriptionManager.getSubscriptionState();
     const { subscribed, optedOut } = subscriptionInfo;
 
     const slidedownType = options.slidedownPromptOptions?.type;

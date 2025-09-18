@@ -25,7 +25,7 @@ export class CustomLinkManager {
 
     Log._info('OneSignal: initializing customlink');
     const isPushEnabled =
-      await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
     if (!this.config?.unsubscribeEnabled && isPushEnabled) {
       this.hideCustomLinkContainers();
       return;
@@ -63,7 +63,7 @@ export class CustomLinkManager {
       }
 
       if (
-        await OneSignal.context._subscriptionManager.isPushNotificationsEnabled()
+        await OneSignal._context._subscriptionManager.isPushNotificationsEnabled()
       ) {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
@@ -96,7 +96,7 @@ export class CustomLinkManager {
       }
 
       if (
-        await OneSignal.context._subscriptionManager.isPushNotificationsEnabled()
+        await OneSignal._context._subscriptionManager.isPushNotificationsEnabled()
       ) {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
@@ -124,7 +124,7 @@ export class CustomLinkManager {
 
   private async loadSdkStyles(): Promise<boolean> {
     const sdkStylesLoadResult =
-      await OneSignal.context._dynamicResourceLoader.loadSdkStylesheet();
+      await OneSignal._context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log._debug(
         'Not initializing custom link button because styles failed to load.',
@@ -165,7 +165,7 @@ export class CustomLinkManager {
   private async setTextFromPushStatus(element: HTMLElement): Promise<void> {
     if (this.config?.text?.subscribe) {
       if (
-        !(await OneSignal.context._subscriptionManager.isPushNotificationsEnabled())
+        !(await OneSignal._context._subscriptionManager.isPushNotificationsEnabled())
       ) {
         element.textContent = this.config.text.subscribe;
       }
@@ -173,7 +173,7 @@ export class CustomLinkManager {
 
     if (this.config?.text?.unsubscribe) {
       if (
-        await OneSignal.context._subscriptionManager.isPushNotificationsEnabled()
+        await OneSignal._context._subscriptionManager.isPushNotificationsEnabled()
       ) {
         element.textContent = this.config.text.unsubscribe;
       }

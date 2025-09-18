@@ -61,7 +61,7 @@ export default class Dialog extends AnimatedElement {
   }
 
   updateBellLauncherDialogBody() {
-    return OneSignal.context._subscriptionManager
+    return OneSignal._context._subscriptionManager
       .isPushNotificationsEnabled()
       .then((currentSetSubscription: boolean) => {
         if (this.nestedContentSelector) {
@@ -137,7 +137,7 @@ export default class Dialog extends AnimatedElement {
               set to true to prevent showing a notification, but we actually want
               a notification shown in this resubscription case.
             */
-            OneSignal.__doNotShowWelcomeNotification = false;
+            OneSignal._doNotShowWelcomeNotification = false;
             OneSignalEvent.trigger(Bell.EVENTS.SUBSCRIBE_CLICK);
           });
         }

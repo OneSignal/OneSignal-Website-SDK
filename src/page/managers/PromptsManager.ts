@@ -295,20 +295,20 @@ export class PromptsManager {
   public installEventHooksForSlidedown(): void {
     this.eventHooksInstalled = true;
 
-    OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
+    OneSignal._emitter.on(Slidedown.EVENTS.SHOWN, () => {
       this.context._slidedownManager.setIsSlidedownShowing(true);
     });
-    OneSignal.emitter.on(Slidedown.EVENTS.CLOSED, () => {
+    OneSignal._emitter.on(Slidedown.EVENTS.CLOSED, () => {
       this.context._slidedownManager.setIsSlidedownShowing(false);
       this.context._slidedownManager.showQueued();
     });
-    OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+    OneSignal._emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       await this.context._slidedownManager.handleAllowClick();
       OneSignalEvent.trigger(
         OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
       );
     });
-    OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
+    OneSignal._emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
       if (!this.context._slidedownManager.slidedown) {
         return;
       }

@@ -26,7 +26,7 @@ describe('Register for push', () => {
   });
 
   test('registerForPushNotifications: before OneSignal.initialized', async () => {
-    global.OneSignal.initialized = false;
+    global.OneSignal._initialized = false;
     global.OneSignal._initCalled = false;
 
     const promise = OneSignal.User.PushSubscription.optIn();
@@ -34,13 +34,13 @@ describe('Register for push', () => {
     expect(spy).not.toHaveBeenCalled();
     OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
     await promise;
-    expect(OneSignal.initialized).toBe(true);
+    expect(OneSignal._initialized).toBe(true);
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
   // Revisit with Vitest change
   test('registerForPushNotifications: after OneSignal.initialized', async () => {
-    global.OneSignal.initialized = true;
+    global.OneSignal._initialized = true;
     global.OneSignal._initCalled = false;
 
     await expect(InitHelper.registerForPushNotifications()).resolves.toBe(

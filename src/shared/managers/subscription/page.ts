@@ -112,7 +112,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const permission =
-      await OneSignal.context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager.getPermissionStatus();
     if (permission === 'granted') {
       return NotificationType.Subscribed;
     }
@@ -129,7 +129,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   async isOptedIn(): Promise<boolean> {
     const subscriptionState = await this.getSubscriptionState();
     const permission =
-      await OneSignal.context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager.getPermissionStatus();
     return permission === 'granted' && !subscriptionState.optedOut;
   }
 
@@ -251,7 +251,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         here.
       */
     if (
-      (await OneSignal.context._permissionManager.getPermissionStatus()) ===
+      (await OneSignal._context._permissionManager.getPermissionStatus()) ===
       'denied'
     )
       throw PermissionBlockedError;

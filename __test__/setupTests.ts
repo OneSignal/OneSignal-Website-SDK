@@ -20,7 +20,7 @@ afterEach(() => {
   server.resetHandlers();
   if (typeof OneSignal !== 'undefined') {
     OneSignal._coreDirector?.operationRepo._clear();
-    OneSignal.emitter?.removeAllListeners();
+    OneSignal._emitter?.removeAllListeners();
   }
 });
 
