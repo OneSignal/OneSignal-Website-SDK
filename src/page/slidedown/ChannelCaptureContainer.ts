@@ -30,6 +30,19 @@ interface TypeSpecificVariablePayload {
   tabIndex: number;
 }
 
+export function getCountryCodeFromLocale(
+  callback: (countryCode: string) => void,
+): void {
+  try {
+    const locale = navigator.language || 'en-US';
+    const parts = locale.split('-');
+    const countryCode = parts[parts.length - 1]?.toLowerCase(); // handle things like en-US / zh-Hans-CN
+    callback(countryCode || 'us');
+  } catch (error) {
+    callback('us');
+  }
+}
+
 export default class ChannelCaptureContainer {
   public smsInputFieldIsValid = true;
   public emailInputFieldIsValid = true;
@@ -194,6 +207,8 @@ export default class ChannelCaptureContainer {
         {
           autoPlaceholder: 'off',
           separateDialCode: true,
+          initialCountry: 'auto',
+          geoIpLookup: getCountryCodeFromLocale,
         },
       );
     } else {
