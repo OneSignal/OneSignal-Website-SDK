@@ -112,7 +112,7 @@ describe('Notification Types are set correctly on subscription change', () => {
         lastKnownPushToken: PUSH_TOKEN,
         lastKnownPushId: SUB_ID,
       });
-      OneSignal._coreDirector.addSubscriptionModel(pushModel);
+      OneSignal._coreDirector._addSubscriptionModel(pushModel);
 
       await checkAndTriggerSubscriptionChanged();
       expect(changeListener).not.toHaveBeenCalled();
@@ -130,7 +130,7 @@ describe('Notification Types are set correctly on subscription change', () => {
         lastKnownPushToken: PUSH_TOKEN_2,
         lastKnownPushId: SUB_ID_3,
       });
-      OneSignal._coreDirector.subscriptionModelStore.add(pushModel);
+      OneSignal._coreDirector._subscriptionModelStore.add(pushModel);
 
       await checkAndTriggerSubscriptionChanged();
       expect(changeListener).toHaveBeenCalledWith({

@@ -96,10 +96,10 @@ export class SlidedownManager {
       if (!options.force) {
         const smsSubscribed = await (
           OneSignal._coreDirector as CoreModuleDirector
-        ).hasSms();
+        )._hasSms();
         const emailSubscribed = await (
           OneSignal._coreDirector as CoreModuleDirector
-        ).hasEmail();
+        )._hasEmail();
         const bothSubscribed = smsSubscribed && emailSubscribed;
 
         if (smsSubscribed && slidedownType === DelayedPromptType.Sms) {

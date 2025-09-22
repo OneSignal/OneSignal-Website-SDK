@@ -60,9 +60,9 @@ describe('LoginUserOperationExecutor', () => {
   });
 
   beforeEach(() => {
-    identityModelStore = OneSignal._coreDirector.identityModelStore;
-    propertiesModelStore = OneSignal._coreDirector.propertiesModelStore;
-    subscriptionModelStore = OneSignal._coreDirector.subscriptionModelStore;
+    identityModelStore = OneSignal._coreDirector._identityModelStore;
+    propertiesModelStore = OneSignal._coreDirector._propertiesModelStore;
+    subscriptionModelStore = OneSignal._coreDirector._subscriptionModelStore;
     rebuildUserService = new RebuildUserService(
       identityModelStore,
       propertiesModelStore,

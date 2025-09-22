@@ -49,10 +49,10 @@ describe('IdentityOperationExecutor', () => {
     setAddAliasResponse();
     setDeleteAliasResponse();
 
-    identityModelStore = OneSignal._coreDirector.identityModelStore;
-    newRecordsState = OneSignal._coreDirector.newRecordsState;
-    propertiesModelStore = OneSignal._coreDirector.propertiesModelStore;
-    subscriptionModelStore = OneSignal._coreDirector.subscriptionModelStore;
+    identityModelStore = OneSignal._coreDirector._identityModelStore;
+    newRecordsState = OneSignal._coreDirector._newRecordsState;
+    propertiesModelStore = OneSignal._coreDirector._propertiesModelStore;
+    subscriptionModelStore = OneSignal._coreDirector._subscriptionModelStore;
 
     rebuildUserService = new RebuildUserService(
       identityModelStore,

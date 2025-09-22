@@ -36,7 +36,7 @@ export async function checkAndTriggerSubscriptionChanged() {
   } = appState;
   const currentPushToken = await MainHelper.getCurrentPushToken();
 
-  const pushModel = await OneSignal._coreDirector.getPushSubscriptionModel();
+  const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
   const pushSubscriptionId = pushModel?.id;
 
   const didStateChange =

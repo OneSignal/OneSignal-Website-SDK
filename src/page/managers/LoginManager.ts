@@ -50,9 +50,9 @@ export default class LoginManager {
     const appId = MainHelper.getAppId();
 
     const promises: Promise<void>[] = [
-      OneSignal._coreDirector.getPushSubscriptionModel().then((pushOp) => {
+      OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
-          OneSignal._coreDirector.operationRepo.enqueue(
+          OneSignal._coreDirector._operationRepo.enqueue(
             new TransferSubscriptionOperation(
               appId,
               newIdentityOneSignalId,
@@ -61,7 +61,7 @@ export default class LoginManager {
           );
         }
       }),
-      OneSignal._coreDirector.operationRepo.enqueueAndWait(
+      OneSignal._coreDirector._operationRepo.enqueueAndWait(
         new LoginUserOperation(
           appId,
           newIdentityOneSignalId,

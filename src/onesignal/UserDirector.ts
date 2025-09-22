@@ -12,7 +12,7 @@ export default class UserDirector {
     const appId = MainHelper.getAppId();
 
     const hasAnySubscription =
-      OneSignal._coreDirector.subscriptionModelStore.list().length > 0;
+      OneSignal._coreDirector._subscriptionModelStore.list().length > 0;
 
     const hasExternalId = !!identityModel.externalId;
 
@@ -23,18 +23,18 @@ export default class UserDirector {
       return;
     }
 
-    const pushOp = await OneSignal._coreDirector.getPushSubscriptionModel();
+    const pushOp = await OneSignal._coreDirector._getPushSubscriptionModel();
     if (pushOp) {
       const subData = pushOp.toJSON();
 
-      OneSignal._coreDirector.operationRepo.enqueue(
+      OneSignal._coreDirector._operationRepo.enqueue(
         new LoginUserOperation(
           appId,
           identityModel.onesignalId,
           identityModel.externalId,
         ),
       );
-      await OneSignal._coreDirector.operationRepo.enqueueAndWait(
+      await OneSignal._coreDirector._operationRepo.enqueueAndWait(
         new CreateSubscriptionOperation({
           ...subData,
           appId,
@@ -43,7 +43,7 @@ export default class UserDirector {
         }),
       );
     } else {
-      OneSignal._coreDirector.operationRepo.enqueue(
+      OneSignal._coreDirector._operationRepo.enqueue(
         new LoginUserOperation(
           appId,
           identityModel.onesignalId,
@@ -64,7 +64,7 @@ export default class UserDirector {
     newIdentityModel.onesignalId = sdkId;
     newPropertiesModel.onesignalId = sdkId;
 
-    OneSignal._coreDirector.identityModelStore.replace(newIdentityModel);
-    OneSignal._coreDirector.propertiesModelStore.replace(newPropertiesModel);
+    OneSignal._coreDirector._identityModelStore.replace(newIdentityModel);
+    OneSignal._coreDirector._propertiesModelStore.replace(newPropertiesModel);
   }
 }

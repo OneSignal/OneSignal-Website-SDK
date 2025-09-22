@@ -177,11 +177,11 @@ export default class User {
     this.validateStringLabel(email, 'email');
 
     const emailSubscriptions =
-      OneSignal._coreDirector.getEmailSubscriptionModels();
+      OneSignal._coreDirector._getEmailSubscriptionModels();
 
     emailSubscriptions.forEach((model) => {
       if (model.token === email) {
-        OneSignal._coreDirector.removeSubscriptionModel(model._modelId);
+        OneSignal._coreDirector._removeSubscriptionModel(model._modelId);
       }
     });
   }
@@ -192,10 +192,11 @@ export default class User {
 
     this.validateStringLabel(smsNumber, 'smsNumber');
 
-    const smsSubscriptions = OneSignal._coreDirector.getSmsSubscriptionModels();
+    const smsSubscriptions =
+      OneSignal._coreDirector._getSmsSubscriptionModels();
     smsSubscriptions.forEach((model) => {
       if (model.token === smsNumber) {
-        OneSignal._coreDirector.removeSubscriptionModel(model._modelId);
+        OneSignal._coreDirector._removeSubscriptionModel(model._modelId);
       }
     });
   }
@@ -279,7 +280,7 @@ export default class User {
     }
     logMethodCall('trackEvent', { name, properties });
 
-    OneSignal._coreDirector.customEventController._sendCustomEvent({
+    OneSignal._coreDirector._customEventController._sendCustomEvent({
       name,
       properties,
     });
@@ -287,7 +288,7 @@ export default class User {
 }
 
 function hasLoginOp(onesignalId: string) {
-  return OneSignal._coreDirector.operationRepo.queue.find(
+  return OneSignal._coreDirector._operationRepo.queue.find(
     (op) =>
       op.operation instanceof LoginUserOperation &&
       op.operation.onesignalId === onesignalId,
@@ -301,7 +302,7 @@ function addSubscriptionToModels({
   type: SubscriptionTypeValue;
   token: string;
 }): void {
-  const hasSubscription = OneSignal._coreDirector.subscriptionModelStore
+  const hasSubscription = OneSignal._coreDirector._subscriptionModelStore
     .list()
     .find((model) => model.token === token && model.type === type);
   if (hasSubscription) return;
@@ -314,7 +315,7 @@ function addSubscriptionToModels({
     const appId = MainHelper.getAppId();
 
     if (!hasLoginOp(onesignalId)) {
-      OneSignal._coreDirector.operationRepo.enqueue(
+      OneSignal._coreDirector._operationRepo.enqueue(
         new LoginUserOperation(appId, onesignalId, identityModel.externalId),
       );
     }
@@ -331,7 +332,7 @@ function addSubscriptionToModels({
 
   const newSubscription = new SubscriptionModel();
   newSubscription._mergeData(subscription);
-  OneSignal._coreDirector.addSubscriptionModel(newSubscription);
+  OneSignal._coreDirector._addSubscriptionModel(newSubscription);
 }
 
 /**

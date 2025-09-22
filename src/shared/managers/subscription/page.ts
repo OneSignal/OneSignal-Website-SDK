@@ -55,11 +55,11 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   // otherwise there would be two login ops in the same bucket for LoginOperationExecutor which would error
   await LoginManager.switchingUsersPromise;
 
-  let pushModel = await OneSignal._coreDirector.getPushSubscriptionModel();
+  let pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
   // for new users, we need to create a new push subscription model and also save its push id to IndexedDB
   if (!pushModel) {
     pushModel =
-      OneSignal._coreDirector.generatePushSubscriptionModel(
+      OneSignal._coreDirector._generatePushSubscriptionModel(
         rawPushSubscription,
       );
     return UserDirector.createUserOnServer();
@@ -95,7 +95,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   async updatePushSubscriptionNotificationTypes(
     notificationTypes: NotificationTypeValue,
   ): Promise<void> {
-    const pushModel = await OneSignal._coreDirector.getPushSubscriptionModel();
+    const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
     if (!pushModel) {
       Log._info('No Push Subscription yet to update notification_types.');
       return;
@@ -169,7 +169,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     const { optedOut, subscriptionToken } = await getSubscription();
 
     const pushSubscriptionModel =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
     const isValidPushSubscription = isCompleteSubscriptionObject(
       pushSubscriptionModel,
     );

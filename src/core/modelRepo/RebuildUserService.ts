@@ -57,7 +57,7 @@ export class RebuildUserService implements IRebuildUserService {
     );
 
     const pushSubscription =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
     if (pushSubscription) {
       operations.push(
         new CreateSubscriptionOperation({

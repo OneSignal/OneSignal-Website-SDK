@@ -12,7 +12,7 @@ describe('CoreModuleDirector tests', () => {
 
   describe('getPushSubscriptionModel', () => {
     async function getPushSubscriptionModel() {
-      return (await getCoreModuleDirector()).getPushSubscriptionModel();
+      return (await getCoreModuleDirector())._getPushSubscriptionModel();
     }
 
     test('returns undefined when it find no push records', async () => {

@@ -32,10 +32,10 @@ describe('UpdateUserOperationExecutor', () => {
   });
 
   beforeEach(() => {
-    identityModelStore = OneSignal._coreDirector.identityModelStore;
-    propertiesModelStore = OneSignal._coreDirector.propertiesModelStore;
-    newRecordsState = OneSignal._coreDirector.newRecordsState;
-    subscriptionsModelStore = OneSignal._coreDirector.subscriptionModelStore;
+    identityModelStore = OneSignal._coreDirector._identityModelStore;
+    propertiesModelStore = OneSignal._coreDirector._propertiesModelStore;
+    newRecordsState = OneSignal._coreDirector._newRecordsState;
+    subscriptionsModelStore = OneSignal._coreDirector._subscriptionModelStore;
     buildUserService = new RebuildUserService(
       identityModelStore,
       propertiesModelStore,

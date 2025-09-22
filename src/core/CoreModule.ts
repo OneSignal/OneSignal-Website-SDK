@@ -7,13 +7,10 @@ import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationEx
 import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
 import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
 import { IdentityModelStoreListener } from './listeners/IdentityModelStoreListener';
-import { ModelStoreListener } from './listeners/ModelStoreListener';
 import { PropertiesModelStoreListener } from './listeners/PropertiesModelStoreListener';
-import { type SingletonModelStoreListener } from './listeners/SingletonModelStoreListener';
 import { SubscriptionModelStoreListener } from './listeners/SubscriptionModelStoreListener';
 import { OperationModelStore } from './modelRepo/OperationModelStore';
 import { RebuildUserService } from './modelRepo/RebuildUserService';
-import { type Model } from './models/Model';
 import { IdentityModelStore } from './modelStores/IdentityModelStore';
 import { PropertiesModelStore } from './modelStores/PropertiesModelStore';
 import { SubscriptionModelStore } from './modelStores/SubscriptionModelStore';
@@ -22,105 +19,99 @@ import { OperationRepo } from './operationRepo/OperationRepo';
 import type { IOperationExecutor } from './types/operation';
 
 export default class CoreModule {
-  public operationModelStore: OperationModelStore;
-  public operationRepo: OperationRepo;
-  public newRecordsState: NewRecordsState;
-  public subscriptionModelStore: SubscriptionModelStore;
-  public identityModelStore: IdentityModelStore;
-  public propertiesModelStore: PropertiesModelStore;
-  public customEventController: CustomEventController;
+  public _operationModelStore: OperationModelStore;
+  public _operationRepo: OperationRepo;
+  public _newRecordsState: NewRecordsState;
+  public _subscriptionModelStore: SubscriptionModelStore;
+  public _identityModelStore: IdentityModelStore;
+  public _propertiesModelStore: PropertiesModelStore;
+  public _customEventController: CustomEventController;
 
-  private initPromise: Promise<void>;
+  private _initPromise: Promise<void>;
 
-  private rebuildUserService: RebuildUserService;
-  private executors?: IOperationExecutor[];
-
-  // @ts-expect-error - not exposed but keeps track of listeners
-  private listeners?: (
-    | SingletonModelStoreListener<Model>
-    | ModelStoreListener<Model>
-  )[];
+  private _rebuildUserService: RebuildUserService;
+  private _executors?: IOperationExecutor[];
 
   constructor() {
-    this.newRecordsState = new NewRecordsState();
-    this.operationModelStore = new OperationModelStore();
-    this.identityModelStore = new IdentityModelStore();
-    this.propertiesModelStore = new PropertiesModelStore();
-    this.subscriptionModelStore = new SubscriptionModelStore();
-    this.rebuildUserService = new RebuildUserService(
-      this.identityModelStore,
-      this.propertiesModelStore,
-      this.subscriptionModelStore,
+    this._newRecordsState = new NewRecordsState();
+    this._operationModelStore = new OperationModelStore();
+    this._identityModelStore = new IdentityModelStore();
+    this._propertiesModelStore = new PropertiesModelStore();
+    this._subscriptionModelStore = new SubscriptionModelStore();
+    this._rebuildUserService = new RebuildUserService(
+      this._identityModelStore,
+      this._propertiesModelStore,
+      this._subscriptionModelStore,
     );
 
-    this.executors = this.initializeExecutors();
-    this.operationRepo = new OperationRepo(
-      this.executors,
-      this.operationModelStore,
-      this.newRecordsState,
+    this._executors = this._initializeExecutors();
+    this._operationRepo = new OperationRepo(
+      this._executors,
+      this._operationModelStore,
+      this._newRecordsState,
     );
-    this.customEventController = new CustomEventController(
-      this.identityModelStore,
-      this.operationRepo,
+    this._customEventController = new CustomEventController(
+      this._identityModelStore,
+      this._operationRepo,
     );
 
-    this.listeners = this.initializeListeners();
-    this.initPromise = this.operationRepo._start();
+    this._initializeListeners();
+    this._initPromise = this._operationRepo._start();
   }
 
-  public async init() {
+  public async _init() {
     logMethodCall('CoreModule.init');
-    return this.initPromise;
+    return this._initPromise;
   }
 
-  private initializeListeners() {
-    if (!this.operationRepo) return [];
+  private _initializeListeners() {
+    if (!this._operationRepo) return [];
     return [
       new IdentityModelStoreListener(
-        this.identityModelStore,
-        this.operationRepo,
+        this._identityModelStore,
+        this._operationRepo,
       ),
       new PropertiesModelStoreListener(
-        this.propertiesModelStore,
-        this.operationRepo,
+        this._propertiesModelStore,
+        this._operationRepo,
       ),
       new SubscriptionModelStoreListener(
-        this.subscriptionModelStore,
-        this.operationRepo,
-        this.identityModelStore,
+        this._subscriptionModelStore,
+        this._operationRepo,
+        this._identityModelStore,
       ),
     ];
   }
 
-  private initializeExecutors() {
+  private _initializeExecutors() {
     const identityOpExecutor = new IdentityOperationExecutor(
-      this.identityModelStore,
-      this.rebuildUserService,
-      this.newRecordsState,
+      this._identityModelStore,
+      this._rebuildUserService,
+      this._newRecordsState,
     );
     const loginOpExecutor = new LoginUserOperationExecutor(
       identityOpExecutor,
-      this.identityModelStore,
-      this.propertiesModelStore,
-      this.subscriptionModelStore,
+      this._identityModelStore,
+      this._propertiesModelStore,
+      this._subscriptionModelStore,
     );
     const refreshOpExecutor = new RefreshUserOperationExecutor(
-      this.identityModelStore,
-      this.propertiesModelStore,
-      this.subscriptionModelStore,
-      this.rebuildUserService,
-      this.newRecordsState,
+      this._identityModelStore,
+      this._propertiesModelStore,
+      this._subscriptionModelStore,
+      this._rebuildUserService,
+      this._newRecordsState,
     );
     const subscriptionOpExecutor = new SubscriptionOperationExecutor(
-      this.subscriptionModelStore,
-      this.rebuildUserService,
-      this.newRecordsState,
+      this._subscriptionModelStore,
+      this._rebuildUserService,
+      this._newRecordsState,
     );
     const updateSubOpExecutor = new UpdateUserOperationExecutor(
-      this.identityModelStore,
-      this.propertiesModelStore,
-      this.rebuildUserService,
-      this.newRecordsState,
+      this._identityModelStore,
+      this._propertiesModelStore,
+      this._rebuildUserService,
+      this._newRecordsState,
     );
     const customEventOpExecutor = new CustomEventsOperationExecutor();
 

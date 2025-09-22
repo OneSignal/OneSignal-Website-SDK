@@ -18,6 +18,6 @@ export function generateNewSubscription(modelId = '0000000000') {
 // Requirement: Test must also call TestEnvironment.initialize();
 export async function getCoreModuleDirector(): Promise<CoreModuleDirector> {
   const coreModule = new CoreModule();
-  await coreModule.init();
+  await coreModule._init();
   return new CoreModuleDirector(coreModule);
 }

@@ -35,7 +35,7 @@ describe('SubscriptionManager', () => {
       const rawSubscription = getRawPushSubscription();
 
       let subModels =
-        await OneSignal._coreDirector.subscriptionModelStore.list();
+        await OneSignal._coreDirector._subscriptionModelStore.list();
       expect(subModels.length).toBe(0);
 
       // mimicing the event helper checkAndTriggerSubscriptionChanged
@@ -43,7 +43,7 @@ describe('SubscriptionManager', () => {
 
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
-      subModels = await OneSignal._coreDirector.subscriptionModelStore.list();
+      subModels = await OneSignal._coreDirector._subscriptionModelStore.list();
       expect(subModels.length).toBe(1);
 
       const id = subModels[0].id;
@@ -76,7 +76,7 @@ describe('SubscriptionManager', () => {
     test('should create user if push subscription model has a local id', async () => {
       const generatePushSubscriptionModelSpy = vi.spyOn(
         OneSignal._coreDirector,
-        'generatePushSubscriptionModel',
+        '_generatePushSubscriptionModel',
       );
       const rawSubscription = getRawPushSubscription();
       mockPushManager.getSubscription.mockResolvedValue({
@@ -136,7 +136,7 @@ describe('SubscriptionManager', () => {
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
       const updatedPushModel =
-        (await OneSignal._coreDirector.getPushSubscriptionModel())!;
+        (await OneSignal._coreDirector._getPushSubscriptionModel())!;
       expect(updatedPushModel.token).toBe(
         rawSubscription.w3cEndpoint?.toString(),
       );

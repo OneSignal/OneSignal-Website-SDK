@@ -55,13 +55,13 @@ describe('SubscriptionOperationExecutor', () => {
   });
 
   beforeEach(() => {
-    subscriptionModelStore = OneSignal._coreDirector.subscriptionModelStore;
-    newRecordsState = OneSignal._coreDirector.newRecordsState;
+    subscriptionModelStore = OneSignal._coreDirector._subscriptionModelStore;
+    newRecordsState = OneSignal._coreDirector._newRecordsState;
     newRecordsState._records.clear();
 
-    identityModelStore = OneSignal._coreDirector.identityModelStore;
-    propertiesModelStore = OneSignal._coreDirector.propertiesModelStore;
-    subscriptionsModelStore = OneSignal._coreDirector.subscriptionModelStore;
+    identityModelStore = OneSignal._coreDirector._identityModelStore;
+    propertiesModelStore = OneSignal._coreDirector._propertiesModelStore;
+    subscriptionsModelStore = OneSignal._coreDirector._subscriptionModelStore;
 
     buildUserService = new RebuildUserService(
       identityModelStore,

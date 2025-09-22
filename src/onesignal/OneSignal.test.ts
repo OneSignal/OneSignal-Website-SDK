@@ -63,7 +63,7 @@ const setupEnv = (consentRequired: boolean) => {
       requiresUserPrivacyConsent: consentRequired,
     },
   });
-  OneSignal._coreDirector.subscriptionModelStore.replaceAll(
+  OneSignal._coreDirector._subscriptionModelStore.replaceAll(
     [],
     ModelChangeTags.NO_PROPAGATE,
   );
@@ -612,7 +612,7 @@ describe('OneSignal - No Consent Required', () => {
           const localId = IDManager._createLocalId();
           setupIdentityModel(localId);
 
-          OneSignal._coreDirector.subscriptionModelStore.replaceAll(
+          OneSignal._coreDirector._subscriptionModelStore.replaceAll(
             [],
             ModelChangeTags.NO_PROPAGATE,
           );
@@ -690,7 +690,7 @@ describe('OneSignal - No Consent Required', () => {
             ],
           });
 
-          OneSignal._coreDirector.subscriptionModelStore.replaceAll(
+          OneSignal._coreDirector._subscriptionModelStore.replaceAll(
             [],
             ModelChangeTags.NO_PROPAGATE,
           );
@@ -858,7 +858,7 @@ describe('OneSignal - No Consent Required', () => {
     const getQueue = async (length: number) => {
       const queue = await vi.waitUntil(
         () => {
-          const _queue = OneSignal._coreDirector.operationRepo.queue;
+          const _queue = OneSignal._coreDirector._operationRepo.queue;
           return _queue.length === length ? _queue : null;
         },
         { interval: 0 },
@@ -1117,7 +1117,7 @@ describe('OneSignal - No Consent Required', () => {
     let queue: OperationQueueItem[] = [];
     await vi.waitUntil(
       () => {
-        queue = OneSignal._coreDirector.operationRepo.queue;
+        queue = OneSignal._coreDirector._operationRepo.queue;
         return queue.length === 3;
       },
       { interval: 1 },

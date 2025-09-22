@@ -192,7 +192,7 @@ describe('Email Management', () => {
   const userNamespace = new UserNamespace(true);
   const getEmailSubscription = (email: string) => {
     const subscriptionModels =
-      OneSignal._coreDirector.getEmailSubscriptionModels();
+      OneSignal._coreDirector._getEmailSubscriptionModels();
     return subscriptionModels.find((model) => model.token === email);
   };
 
@@ -203,7 +203,7 @@ describe('Email Management', () => {
     const email = 'test@example.com';
     const addSubscriptionSpy = vi.spyOn(
       OneSignal._coreDirector,
-      'addSubscriptionModel',
+      '_addSubscriptionModel',
     );
 
     await userNamespace.addEmail(email);
@@ -228,7 +228,7 @@ describe('Email Management', () => {
     // Then remove it
     const removeSubscriptionSpy = vi.spyOn(
       OneSignal._coreDirector,
-      'removeSubscriptionModel',
+      '_removeSubscriptionModel',
     );
     userNamespace.removeEmail(email);
 
@@ -241,7 +241,7 @@ describe('Email Management', () => {
 describe('SMS Management', () => {
   const getSmsSubscription = (smsNumber: string) => {
     const subscriptionModels =
-      OneSignal._coreDirector.getSmsSubscriptionModels();
+      OneSignal._coreDirector._getSmsSubscriptionModels();
     return subscriptionModels.find((model) => model.token === smsNumber);
   };
 
@@ -253,7 +253,7 @@ describe('SMS Management', () => {
     const smsNumber = '+15551234567';
     const addSubscriptionSpy = vi.spyOn(
       OneSignal._coreDirector,
-      'addSubscriptionModel',
+      '_addSubscriptionModel',
     );
 
     await userNamespace.addSms(smsNumber);
@@ -279,7 +279,7 @@ describe('SMS Management', () => {
     // Then remove it
     const removeSubscriptionSpy = vi.spyOn(
       OneSignal._coreDirector,
-      'removeSubscriptionModel',
+      '_removeSubscriptionModel',
     );
     userNamespace.removeSms(smsNumber);
 

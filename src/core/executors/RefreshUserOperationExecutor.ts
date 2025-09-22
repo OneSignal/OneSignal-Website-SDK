@@ -120,7 +120,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       }
 
       const pushModel =
-        await OneSignal._coreDirector.getPushSubscriptionModel();
+        await OneSignal._coreDirector._getPushSubscriptionModel();
       if (pushModel) {
         pushModel.onesignalId = op.onesignalId;
         subscriptionModels.push(pushModel);
