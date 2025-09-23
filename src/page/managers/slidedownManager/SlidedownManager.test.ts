@@ -193,7 +193,7 @@ describe('Consent Required', () => {
 
   test('should not show slidedown if consent is required but not given', async () => {
     const slidedownManager = new SlidedownManager(OneSignal._context);
-    await slidedownManager.createSlidedown({});
+    await slidedownManager._createSlidedown({});
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
   });
 });

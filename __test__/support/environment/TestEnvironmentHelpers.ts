@@ -32,7 +32,7 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal._coreDirector = new CoreModuleDirector(core);
 
   // Clear the User singleton before creating new instance
-  User.singletonInstance = undefined;
+  User._singletonInstance = undefined;
 
   const userNamespace = new UserNamespace(!!config.initUserAndPushSubscription); // TO DO: pass in subscription, and permission
   global.OneSignal.User = userNamespace;

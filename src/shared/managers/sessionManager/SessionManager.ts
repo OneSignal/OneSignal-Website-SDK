@@ -114,7 +114,7 @@ export class SessionManager implements ISessionManager {
   async handleVisibilityChange(): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (!User.singletonInstance?.onesignalId) {
+    if (!User._singletonInstance?.onesignalId) {
       return;
     }
 
@@ -182,7 +182,7 @@ export class SessionManager implements ISessionManager {
   async handleOnBeforeUnload(): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (!User.singletonInstance?.onesignalId) {
+    if (!User._singletonInstance?.onesignalId) {
       return;
     }
 
@@ -216,7 +216,7 @@ export class SessionManager implements ISessionManager {
     await LoginManager.switchingUsersPromise;
 
     Log._debug('handleOnFocus', e);
-    if (!User.singletonInstance?.onesignalId) {
+    if (!User._singletonInstance?.onesignalId) {
       return;
     }
 
@@ -246,7 +246,7 @@ export class SessionManager implements ISessionManager {
     await LoginManager.switchingUsersPromise;
 
     Log._debug('handleOnBlur', e);
-    if (!User.singletonInstance?.onesignalId) {
+    if (!User._singletonInstance?.onesignalId) {
       return;
     }
 
@@ -275,7 +275,7 @@ export class SessionManager implements ISessionManager {
   async upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (User.singletonInstance?.onesignalId) {
+    if (User._singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
       await this.notifySWToUpsertSession(

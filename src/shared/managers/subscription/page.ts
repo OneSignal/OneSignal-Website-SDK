@@ -62,11 +62,11 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
       OneSignal._coreDirector._generatePushSubscriptionModel(
         rawPushSubscription,
       );
-    return UserDirector.createUserOnServer();
+    return UserDirector._createUserOnServer();
   }
   // for users with data failed to create a user or user + subscription on the server
   if (IDManager._isLocalId(pushModel.id)) {
-    return UserDirector.createUserOnServer();
+    return UserDirector._createUserOnServer();
   }
 
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys

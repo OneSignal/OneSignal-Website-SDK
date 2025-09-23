@@ -21,15 +21,15 @@ import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 
 export default class User {
-  static singletonInstance?: User;
+  static _singletonInstance?: User;
 
   /**
    * Creates a user singleton
    * @returns - User singleton
    */
-  static createOrGetInstance(): User {
-    if (!User.singletonInstance) {
-      User.singletonInstance = new User();
+  static _createOrGetInstance(): User {
+    if (!User._singletonInstance) {
+      User._singletonInstance = new User();
       const identityModel = OneSignal._coreDirector._getIdentityModel();
       const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
 
@@ -52,46 +52,10 @@ export default class User {
       }
     }
 
-    return User.singletonInstance;
+    return User._singletonInstance;
   }
 
-  get onesignalId(): string | undefined {
-    const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
-    return IDManager._isLocalId(onesignalId) ? undefined : onesignalId;
-  }
-
-  private validateStringLabel(label: string, labelName: string): void {
-    if (typeof label !== 'string') throw WrongTypeArgumentError(labelName);
-
-    if (!label) throw EmptyArgumentError(labelName);
-  }
-
-  private validateArray(array: string[], arrayName: string): void {
-    if (!Array.isArray(array)) throw WrongTypeArgumentError(arrayName);
-
-    if (array.length === 0) throw EmptyArgumentError(arrayName);
-
-    for (const label of array) {
-      this.validateLabel(label, 'label');
-    }
-  }
-
-  private validateObject(object: unknown, objectName: string): void {
-    if (!isObject(object)) throw WrongTypeArgumentError(objectName);
-
-    if (!object || Object.keys(object).length === 0)
-      throw EmptyArgumentError(objectName);
-  }
-
-  private validateLabel(label: string, labelName: string): void {
-    this.validateStringLabel(label, labelName);
-
-    if (label === 'external_id' || label === 'onesignal_id') {
-      throw ReservedArgumentError(label);
-    }
-  }
-
-  private updateIdentityModel(aliases: {
+  private _updateIdentityModel(aliases: {
     [key: string]: string | undefined;
   }): void {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
@@ -101,12 +65,17 @@ export default class User {
   }
 
   /* PUBLIC API METHODS */
+  get onesignalId(): string | undefined {
+    const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
+    return IDManager._isLocalId(onesignalId) ? undefined : onesignalId;
+  }
+
   public addAlias(label: string, id: string): void {
     logMethodCall('addAlias', { label, id });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateStringLabel(label, 'label');
-    this.validateStringLabel(id, 'id');
+    validateStringLabel(label, 'label');
+    validateStringLabel(id, 'id');
 
     this.addAliases({ [label]: id });
   }
@@ -115,14 +84,14 @@ export default class User {
     logMethodCall('addAliases', { aliases });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateObject(aliases, 'aliases');
+    validateObject(aliases, 'aliases');
 
     for (const label of Object.keys(aliases)) {
-      this.validateStringLabel(aliases[label], `key: ${label}`);
-      this.validateLabel(label, `key: ${label}`);
+      validateStringLabel(aliases[label], `key: ${label}`);
+      validateLabel(label, `key: ${label}`);
     }
 
-    this.updateIdentityModel(aliases);
+    this._updateIdentityModel(aliases);
   }
 
   public removeAlias(label: string): void {
@@ -136,19 +105,19 @@ export default class User {
     logMethodCall('removeAliases', { aliases });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateArray(aliases, 'aliases');
+    validateArray(aliases, 'aliases');
 
     const newAliases = Object.fromEntries(
       aliases.map((key) => [key, undefined]),
     );
-    this.updateIdentityModel(newAliases);
+    this._updateIdentityModel(newAliases);
   }
 
   public addEmail(email: string): void {
     logMethodCall('addEmail', { email });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateStringLabel(email, 'email');
+    validateStringLabel(email, 'email');
 
     if (!isValidEmail(email)) throw MalformedArgumentError('email');
 
@@ -162,7 +131,7 @@ export default class User {
     logMethodCall('addSms', { sms });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateStringLabel(sms, 'sms');
+    validateStringLabel(sms, 'sms');
 
     addSubscriptionToModels({
       type: SubscriptionType.SMS,
@@ -174,7 +143,7 @@ export default class User {
     logMethodCall('removeEmail', { email });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateStringLabel(email, 'email');
+    validateStringLabel(email, 'email');
 
     const emailSubscriptions =
       OneSignal._coreDirector._getEmailSubscriptionModels();
@@ -190,7 +159,7 @@ export default class User {
     logMethodCall('removeSms', { smsNumber });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateStringLabel(smsNumber, 'smsNumber');
+    validateStringLabel(smsNumber, 'smsNumber');
 
     const smsSubscriptions =
       OneSignal._coreDirector._getSmsSubscriptionModels();
@@ -205,8 +174,8 @@ export default class User {
     logMethodCall('addTag', { key, value });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateStringLabel(key, 'key');
-    this.validateStringLabel(value, 'value');
+    validateStringLabel(key, 'key');
+    validateStringLabel(value, 'value');
 
     this.addTags({ [key]: value });
   }
@@ -223,7 +192,7 @@ export default class User {
     logMethodCall('removeTag', { tagKey });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateStringLabel(tagKey, 'tagKey');
+    validateStringLabel(tagKey, 'tagKey');
 
     this.removeTags([tagKey]);
   }
@@ -232,7 +201,7 @@ export default class User {
     logMethodCall('removeTags', { tagKeys });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateArray(tagKeys, 'tagKeys');
+    validateArray(tagKeys, 'tagKeys');
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     const newTags = { ...propertiesModel.tags };
@@ -253,7 +222,7 @@ export default class User {
     logMethodCall('setLanguage', { language });
     if (isConsentRequiredButNotGiven()) return;
 
-    this.validateStringLabel(language, 'language');
+    validateStringLabel(language, 'language');
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     propertiesModel.language = language;
@@ -345,5 +314,36 @@ function isObjectSerializable(value: unknown): boolean {
     return true;
   } catch (e) {
     return false;
+  }
+}
+
+function validateStringLabel(label: string, labelName: string): void {
+  if (typeof label !== 'string') throw WrongTypeArgumentError(labelName);
+
+  if (!label) throw EmptyArgumentError(labelName);
+}
+
+function validateArray(array: string[], arrayName: string): void {
+  if (!Array.isArray(array)) throw WrongTypeArgumentError(arrayName);
+
+  if (array.length === 0) throw EmptyArgumentError(arrayName);
+
+  for (const label of array) {
+    validateLabel(label, 'label');
+  }
+}
+
+function validateObject(object: unknown, objectName: string): void {
+  if (!isObject(object)) throw WrongTypeArgumentError(objectName);
+
+  if (!object || Object.keys(object).length === 0)
+    throw EmptyArgumentError(objectName);
+}
+
+function validateLabel(label: string, labelName: string): void {
+  validateStringLabel(label, labelName);
+
+  if (label === 'external_id' || label === 'onesignal_id') {
+    throw ReservedArgumentError(label);
   }
 }

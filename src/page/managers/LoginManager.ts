@@ -36,7 +36,7 @@ export default class LoginManager {
       return;
     }
 
-    UserDirector.resetUserModels();
+    UserDirector._resetUserModels();
     identityModel = OneSignal._coreDirector._getIdentityModel();
 
     // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
@@ -85,9 +85,9 @@ export default class LoginManager {
     if (!identityModel.externalId)
       return Log._debug('Logout: User is not logged in, skipping logout');
 
-    UserDirector.resetUserModels();
+    UserDirector._resetUserModels();
 
     // create a new anonymous user
-    return UserDirector.createUserOnServer();
+    return UserDirector._createUserOnServer();
   }
 }

@@ -7,7 +7,7 @@ import { IDManager } from 'src/shared/managers/IDManager';
 import MainHelper from '../shared/helpers/MainHelper';
 
 export default class UserDirector {
-  static async createUserOnServer(): Promise<void> {
+  static async _createUserOnServer(): Promise<void> {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     const appId = MainHelper.getAppId();
 
@@ -55,7 +55,7 @@ export default class UserDirector {
 
   // Resets models similar to Android SDK
   // https://github.com/OneSignal/OneSignal-Android-SDK/blob/ed2e87618ea3af81b75f97b0a4cbb8f658c7fc80/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/internal/OneSignalImp.kt#L448
-  static resetUserModels() {
+  static _resetUserModels() {
     // replace models
     const newIdentityModel = new IdentityModel();
     const newPropertiesModel = new PropertiesModel();

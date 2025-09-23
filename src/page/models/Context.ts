@@ -13,7 +13,6 @@ import { SubscriptionManagerPage } from '../../shared/managers/subscription/page
 import { UpdateManager } from '../../shared/managers/UpdateManager';
 import { PromptsManager } from '../managers/PromptsManager';
 import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
-import type { ISlidedownManager } from '../managers/slidedownManager/types';
 import TagManager from '../managers/tagManager/TagManager';
 import type { ITagManager } from '../managers/tagManager/types';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
@@ -29,7 +28,7 @@ export default class Context implements ContextInterface {
   public promptsManager: PromptsManager;
   public _sessionManager: ISessionManager;
   public _tagManager: ITagManager;
-  public _slidedownManager: ISlidedownManager;
+  public _slidedownManager: SlidedownManager;
 
   constructor(appConfig: AppConfig) {
     this._appConfig = appConfig;

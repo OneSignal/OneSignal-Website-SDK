@@ -8,7 +8,7 @@ describe('User tests', () => {
   test('getTags called with unset tags should return empty tags', () => {
     TestEnvironment.initialize();
 
-    const user = User.createOrGetInstance();
+    const user = User._createOrGetInstance();
     const tags = user.getTags();
 
     expect(tags).toStrictEqual({});
@@ -17,7 +17,7 @@ describe('User tests', () => {
   test('getTags called with empty tags in properties model should return empty tags', () => {
     TestEnvironment.initialize();
 
-    const user = User.createOrGetInstance();
+    const user = User._createOrGetInstance();
     const tags = user.getTags();
 
     expect(tags).toStrictEqual({});
@@ -30,7 +30,7 @@ describe('User tests', () => {
     const propModel = OneSignal._coreDirector._getPropertiesModel();
     propModel.tags = tagsSample;
 
-    const user = User.createOrGetInstance();
+    const user = User._createOrGetInstance();
     const tags = user.getTags();
 
     expect(tags).toBe(tagsSample);
@@ -44,7 +44,7 @@ describe('User tests', () => {
     const propModel = OneSignal._coreDirector._getPropertiesModel();
     propModel.language = languageSample;
 
-    const user = User.createOrGetInstance();
+    const user = User._createOrGetInstance();
     const language = user.getLanguage();
 
     expect(language).toBe(languageSample);
@@ -55,7 +55,7 @@ describe('User tests', () => {
 
     const languageSample = 'fr';
 
-    const user = User.createOrGetInstance();
+    const user = User._createOrGetInstance();
     user.setLanguage(languageSample);
 
     const propModel = OneSignal._coreDirector._getPropertiesModel();

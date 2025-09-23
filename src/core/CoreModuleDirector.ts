@@ -113,7 +113,7 @@ export class CoreModuleDirector {
     );
   }
 
-  private async _getPushSubscriptionModelByCurrentToken(): Promise<
+  async _getPushSubscriptionModelByCurrentToken(): Promise<
     SubscriptionModel | undefined
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
@@ -129,7 +129,7 @@ export class CoreModuleDirector {
 
   // Browser may return a different PushToken value, use the last-known value as a fallback.
   //   - This happens if you disable notification permissions then re-enable them.
-  private async _getPushSubscriptionModelByLastKnownToken(): Promise<
+  async _getPushSubscriptionModelByLastKnownToken(): Promise<
     SubscriptionModel | undefined
   > {
     logMethodCall(

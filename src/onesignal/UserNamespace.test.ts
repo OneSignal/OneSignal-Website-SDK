@@ -16,7 +16,7 @@ vi.useFakeTimers();
 
 const setup = () => {
   TestEnvironment.initialize({});
-  delete User.singletonInstance;
+  delete User._singletonInstance;
 };
 
 setup();
