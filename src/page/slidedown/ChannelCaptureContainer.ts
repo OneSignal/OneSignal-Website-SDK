@@ -15,6 +15,7 @@ import {
   DANGER_ICON,
   SLIDEDOWN_CSS_IDS,
 } from '../../shared/slidedown/constants';
+import { getItem, setItem } from '../modules/timedStorage';
 import {
   ItiScriptURLHashes,
   ItiScriptURLs,
@@ -28,6 +29,37 @@ interface TypeSpecificVariablePayload {
   inputClass: string;
   wrappingDivId: string;
   tabIndex: number;
+}
+
+const COUNTRYCODE_TIME_TO_LIVE = 30;
+
+export async function getCountryCode(
+  callback: (countryCode: string) => void,
+): Promise<void> {
+  if (getItem('countryCode')) {
+    callback(getItem('countryCode'));
+    return;
+  }
+
+  const urls = [
+    ['https://api.country.is/', 'country'], // 600 req / min
+    ['https://free.freeipapi.com/api/json/', 'countryCode'], // 60 req / min
+    ['https://ipapi.co/json', 'country_code'], // 45 req / min
+  ];
+
+  for (const [url, field] of urls) {
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      const countryCode = data[field]?.toLowerCase() || 'us';
+      setItem('countryCode', countryCode, COUNTRYCODE_TIME_TO_LIVE);
+      callback(countryCode);
+      return; // Success - exit function
+    } catch {
+      continue; // Try next API
+    }
+  }
+  callback('us');
 }
 
 export default class ChannelCaptureContainer {
@@ -194,6 +226,8 @@ export default class ChannelCaptureContainer {
         {
           autoPlaceholder: 'off',
           separateDialCode: true,
+          initialCountry: 'auto',
+          geoIpLookup: getCountryCode,
         },
       );
     } else {
