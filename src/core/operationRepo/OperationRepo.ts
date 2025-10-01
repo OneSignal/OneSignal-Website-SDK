@@ -234,7 +234,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult.FAIL_RETRY:
           Log._error(`Operation execution failed, retrying: ${operations}`);
           // Add back all operations to front of queue
-          ops.toReversed().forEach((op) => {
+          [...ops].reverse().forEach((op) => {
             removeOpFromDB(op.operation);
             op.retries++;
             if (op.retries > highestRetries) {
@@ -248,7 +248,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           Log._error(`Operation failed, pausing ops:${operations}`);
           this._pause();
           ops.forEach((op) => op.resolver?.(false));
-          ops.toReversed().forEach((op) => {
+          [...ops].reverse().forEach((op) => {
             removeOpFromDB(op.operation);
             this.queue.unshift(op);
           });
@@ -257,7 +257,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       // Handle additional operations from the response
       if (response.operations) {
-        for (const op of response.operations.toReversed()) {
+        for (const op of [...response.operations].reverse()) {
           const queueItem = new OperationQueueItem({
             operation: op,
             bucket: 0,
@@ -360,7 +360,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public async _loadSavedOperations(): Promise<void> {
     await this._operationModelStore.loadOperations();
-    const operations = this._operationModelStore.list().toReversed();
+    const operations = [...this._operationModelStore.list()].reverse();
 
     for (const operation of operations) {
       this._internalEnqueue(
