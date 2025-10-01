@@ -89,8 +89,8 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     if (operations.some((op) => op instanceof DeleteSubscriptionOperation))
       return new ExecutionResponse(ExecutionResult.SUCCESS);
 
-    const lastUpdateOperation = operations
-      .toReversed()
+    const lastUpdateOperation = [...operations]
+      .reverse()
       .find((op) => op instanceof UpdateSubscriptionOperation);
     const enabled = lastUpdateOperation?.enabled ?? createOperation.enabled;
     const token = lastUpdateOperation?.token ?? createOperation.token;
