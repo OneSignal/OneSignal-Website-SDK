@@ -34,7 +34,7 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
 
     const operation = this._getReplaceOperation(model);
     if (operation != null) {
-      this._opRepo.enqueue(operation);
+      this._opRepo._enqueue(operation);
     }
   }
 
@@ -50,7 +50,7 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
       args.newValue,
     );
     if (operation != null) {
-      this._opRepo.enqueue(operation);
+      this._opRepo._enqueue(operation);
     }
   }
 

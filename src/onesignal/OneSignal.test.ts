@@ -42,7 +42,7 @@ import {
   updateIdentityModel,
 } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
-import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
+import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
@@ -858,7 +858,7 @@ describe('OneSignal - No Consent Required', () => {
     const getQueue = async (length: number) => {
       const queue = await vi.waitUntil(
         () => {
-          const _queue = OneSignal._coreDirector._operationRepo.queue;
+          const _queue = OneSignal._coreDirector._operationRepo._queue;
           return _queue.length === length ? _queue : null;
         },
         { interval: 0 },
@@ -905,8 +905,8 @@ describe('OneSignal - No Consent Required', () => {
       const queue = await getQueue(2);
 
       // login and custom event should have matching id (via UserDirector reset user models)
-      const newLocalId = queue[0].operation.onesignalId;
-      expect(queue[1].operation.onesignalId).toBe(newLocalId);
+      const newLocalId = queue[0]._operation.onesignalId;
+      expect(queue[1]._operation.onesignalId).toBe(newLocalId);
 
       // should translate ids for the custom event
       await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
@@ -945,9 +945,9 @@ describe('OneSignal - No Consent Required', () => {
 
       const queue = await getQueue(3);
 
-      expect(queue[0].operation.onesignalId).toBe(ONESIGNAL_ID);
-      const localID = queue[1].operation.onesignalId;
-      expect(queue[2].operation.onesignalId).toBe(localID);
+      expect(queue[0]._operation.onesignalId).toBe(ONESIGNAL_ID);
+      const localID = queue[1]._operation.onesignalId;
+      expect(queue[2]._operation.onesignalId).toBe(localID);
 
       // first event should have been sent
       await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
@@ -1015,9 +1015,9 @@ describe('OneSignal - No Consent Required', () => {
       });
 
       const queue = await getQueue(3);
-      expect(queue[0].operation.onesignalId).toBe(ONESIGNAL_ID);
-      const localID = queue[1].operation.onesignalId;
-      expect(queue[2].operation.onesignalId).toBe(localID);
+      expect(queue[0]._operation.onesignalId).toBe(ONESIGNAL_ID);
+      const localID = queue[1]._operation.onesignalId;
+      expect(queue[2]._operation.onesignalId).toBe(localID);
 
       // first event should have been sent
       await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
@@ -1117,7 +1117,7 @@ describe('OneSignal - No Consent Required', () => {
     let queue: OperationQueueItem[] = [];
     await vi.waitUntil(
       () => {
-        queue = OneSignal._coreDirector._operationRepo.queue;
+        queue = OneSignal._coreDirector._operationRepo._queue;
         return queue.length === 3;
       },
       { interval: 1 },
@@ -1125,13 +1125,13 @@ describe('OneSignal - No Consent Required', () => {
 
     // its fine if login op is last since its the only one that can be executed
     const loginOp = queue[0];
-    expect(loginOp.operation.name).toBe('login-user');
+    expect(loginOp._operation.name).toBe('login-user');
 
     const setPropertyOp = queue[1];
-    expect(setPropertyOp.operation.name).toBe('set-property');
+    expect(setPropertyOp._operation.name).toBe('set-property');
 
     const transferOp = queue[2];
-    expect(transferOp.operation.name).toBe('transfer-subscription');
+    expect(transferOp._operation.name).toBe('transfer-subscription');
 
     // tags should still be sync
     expect(tags).toEqual({

@@ -257,10 +257,10 @@ export default class User {
 }
 
 function hasLoginOp(onesignalId: string) {
-  return OneSignal._coreDirector._operationRepo.queue.find(
+  return OneSignal._coreDirector._operationRepo._queue.find(
     (op) =>
-      op.operation instanceof LoginUserOperation &&
-      op.operation.onesignalId === onesignalId,
+      op._operation instanceof LoginUserOperation &&
+      op._operation.onesignalId === onesignalId,
   );
 }
 
@@ -284,7 +284,7 @@ function addSubscriptionToModels({
     const appId = MainHelper.getAppId();
 
     if (!hasLoginOp(onesignalId)) {
-      OneSignal._coreDirector._operationRepo.enqueue(
+      OneSignal._coreDirector._operationRepo._enqueue(
         new LoginUserOperation(appId, onesignalId, identityModel.externalId),
       );
     }

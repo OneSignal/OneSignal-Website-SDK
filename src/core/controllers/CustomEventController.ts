@@ -33,6 +33,6 @@ export class CustomEventController implements ICustomEventController {
       event,
     });
 
-    this._opRepo.enqueue(op);
+    this._opRepo._enqueue(op);
   }
 }
