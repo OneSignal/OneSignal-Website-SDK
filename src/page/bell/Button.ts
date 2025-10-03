@@ -8,8 +8,8 @@ import Message from './Message';
 
 export default class Button extends AnimatedElement {
   public _isHandlingClick: boolean = false;
-  public events: any;
-  public bell: Bell;
+  public _events: any;
+  public _bell: Bell;
 
   constructor(bell: Bell) {
     super(
@@ -18,79 +18,79 @@ export default class Button extends AnimatedElement {
       'onesignal-bell-launcher-button-active',
     );
 
-    this.bell = bell;
-    this.events = {
+    this._bell = bell;
+    this._events = {
       mouse: 'bell.launcher.button.mouse',
     };
 
-    const element = this.element;
+    const element = this._element;
     if (element) {
       element.addEventListener(
         'touchstart',
         () => {
-          this.onHovering();
-          this.onTap();
+          this._onHovering();
+          this._onTap();
         },
         { passive: true },
       );
 
       element.addEventListener('mouseenter', () => {
-        this.onHovering();
+        this._onHovering();
       });
 
       element.addEventListener('mouseleave', () => {
-        this.onHovered();
+        this._onHovered();
       });
       element.addEventListener(
         'touchmove',
         () => {
-          this.onHovered();
+          this._onHovered();
         },
         { passive: true },
       );
 
       element.addEventListener('mousedown', () => {
-        this.onTap();
+        this._onTap();
       });
 
       element.addEventListener('mouseup', () => {
-        this.onEndTap();
+        this._onEndTap();
       });
 
       element.addEventListener('click', () => {
-        this.onHovered();
-        this.onClick();
+        this._onHovered();
+        this._onClick();
       });
     }
   }
 
-  onHovering() {
+  _onHovering() {
     if (
-      LimitStore.isEmpty(this.events.mouse) ||
-      LimitStore.getLast(this.events.mouse) === 'out'
+      LimitStore.isEmpty(this._events.mouse) ||
+      LimitStore.getLast(this._events.mouse) === 'out'
     ) {
       OneSignalEvent.trigger(Bell.EVENTS.HOVERING);
     }
-    LimitStore.put(this.events.mouse, 'over');
+    LimitStore.put(this._events.mouse, 'over');
   }
 
-  onHovered() {
-    LimitStore.put(this.events.mouse, 'out');
+  _onHovered() {
+    LimitStore.put(this._events.mouse, 'out');
     OneSignalEvent.trigger(Bell.EVENTS.HOVERED);
   }
 
-  onTap() {
-    this.pulse();
-    this.activate();
-    this.bell.badge.activate();
+  _onTap() {
+    this._pulse();
+    this._activate();
+    this._bell._badge.activate();
   }
 
-  onEndTap() {
-    this.inactivate();
-    this.bell.badge.inactivate();
+  _onEndTap() {
+    this._inactivate();
+    this._bell._badge.inactivate();
   }
 
-  async onClick() {
+  async _onClick() {
     // Prevent concurrent clicks
     if (this._isHandlingClick) return;
     this._isHandlingClick = true;
@@ -100,63 +100,67 @@ export default class Button extends AnimatedElement {
 
     try {
       if (
-        this.bell.message.shown &&
-        this.bell.message.contentType == Message.TYPES.MESSAGE
+        this._bell._message.shown &&
+        this._bell._message.contentType == Message.TYPES.MESSAGE
       ) {
         // A message is being shown, it'll disappear soon
         return;
       }
 
       const optedOut = LimitStore.getLast<boolean>('subscription.optedOut');
-      if (this.bell.unsubscribed && !optedOut) {
+      if (this._bell._unsubscribed && !optedOut) {
         // The user is actually subscribed, register him for notifications
         registerForPushNotifications();
-        this.bell._ignoreSubscriptionState = true;
+        this._bell._ignoreSubscriptionState = true;
         OneSignal._emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
-          this.bell.message
+          this._bell._message
             .display(
               Message.TYPES.MESSAGE,
-              this.bell.options.text['message.action.subscribed'],
+              this._bell._options.text['message.action.subscribed'],
               Message.TIMEOUT,
             )
             .then(() => {
-              this.bell._ignoreSubscriptionState = false;
-              this.bell.launcher.inactivate();
+              this._bell._ignoreSubscriptionState = false;
+              this._bell._launcher._inactivate();
             });
         });
       }
 
       // Handle dialog toggle for all other cases
-      if (this.bell.unsubscribed || this.bell.subscribed || this.bell.blocked) {
-        await this.bell.launcher.activateIfInactive();
+      if (
+        this._bell._unsubscribed ||
+        this._bell._subscribed ||
+        this._bell._blocked
+      ) {
+        await this._bell._launcher._activateIfInactive();
         await this._toggleDialog();
       }
 
-      await this.bell.message.hide();
+      await this._bell._message.hide();
     } finally {
       this._isHandlingClick = false;
     }
   }
 
   async _toggleDialog() {
-    if (this.bell.dialog.shown) {
+    if (this._bell._dialog.shown) {
       // Close dialog if already open (toggle behavior)
-      await this.bell.dialog.hide();
-      await this.bell.launcher.inactivateIfWasInactive();
+      await this._bell._dialog.hide();
+      await this._bell._launcher._inactivateIfWasInactive();
     } else {
-      await this.bell.showDialogProcedure();
+      await this._bell._showDialogProcedure();
     }
   }
 
-  pulse() {
+  _pulse() {
     removeDomElement('.pulse-ring');
-    if (this.element) {
+    if (this._element) {
       addDomElement(
-        this.element,
+        this._element,
         'beforeend',
         '<div class="pulse-ring"></div>',
       );
     }
-    this.bell.setCustomColorsIfSpecified();
+    this._bell._setCustomColorsIfSpecified();
   }
 }

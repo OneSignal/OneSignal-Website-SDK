@@ -313,7 +313,7 @@ export class PromptsManager {
         return;
       }
 
-      const type = this._context._slidedownManager._slidedown?.options.type;
+      const type = this._context._slidedownManager._slidedown?._options.type;
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:

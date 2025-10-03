@@ -240,7 +240,7 @@ async function showNotifyButton() {
           OneSignal._notifyButton = new Bell(
             OneSignal.config!.userConfig.notifyButton!,
           );
-          OneSignal._notifyButton.create();
+          OneSignal._notifyButton._create();
         } else {
           Log._debug(
             'Notify button display predicate returned false so not showing the notify button.',
@@ -251,7 +251,7 @@ async function showNotifyButton() {
       OneSignal._notifyButton = new Bell(
         OneSignal.config!.userConfig.notifyButton!,
       );
-      OneSignal._notifyButton.create();
+      OneSignal._notifyButton._create();
     }
   }
 }
