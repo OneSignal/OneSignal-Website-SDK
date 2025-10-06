@@ -92,7 +92,7 @@ export class SessionManager implements ISessionManager {
   }> {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     const pushSubscriptionModel =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
 
     if (!identityModel || !identityModel.onesignalId) {
       throw new Error('No identity');
@@ -114,7 +114,7 @@ export class SessionManager implements ISessionManager {
   async handleVisibilityChange(): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (!User.singletonInstance?.onesignalId) {
+    if (!User._singletonInstance?.onesignalId) {
       return;
     }
 
@@ -144,17 +144,24 @@ export class SessionManager implements ISessionManager {
 
       if (visibilityState === 'hidden') {
         Log._debug('handleVisibilityChange', 'hidden');
-        if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
+        if (
+          OneSignal._cache.focusHandler &&
+          OneSignal._cache.isFocusEventSetup
+        ) {
           window.removeEventListener(
             'focus',
-            OneSignal.cache.focusHandler,
+            OneSignal._cache.focusHandler,
             true,
           );
-          OneSignal.cache.isFocusEventSetup = false;
+          OneSignal._cache.isFocusEventSetup = false;
         }
-        if (OneSignal.cache.blurHandler && OneSignal.cache.isBlurEventSetup) {
-          window.removeEventListener('blur', OneSignal.cache.blurHandler, true);
-          OneSignal.cache.isBlurEventSetup = false;
+        if (OneSignal._cache.blurHandler && OneSignal._cache.isBlurEventSetup) {
+          window.removeEventListener(
+            'blur',
+            OneSignal._cache.blurHandler,
+            true,
+          );
+          OneSignal._cache.isBlurEventSetup = false;
         }
 
         await this.notifySWToDeactivateSession(
@@ -175,7 +182,7 @@ export class SessionManager implements ISessionManager {
   async handleOnBeforeUnload(): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (!User.singletonInstance?.onesignalId) {
+    if (!User._singletonInstance?.onesignalId) {
       return;
     }
 
@@ -209,7 +216,7 @@ export class SessionManager implements ISessionManager {
     await LoginManager.switchingUsersPromise;
 
     Log._debug('handleOnFocus', e);
-    if (!User.singletonInstance?.onesignalId) {
+    if (!User._singletonInstance?.onesignalId) {
       return;
     }
 
@@ -239,7 +246,7 @@ export class SessionManager implements ISessionManager {
     await LoginManager.switchingUsersPromise;
 
     Log._debug('handleOnBlur', e);
-    if (!User.singletonInstance?.onesignalId) {
+    if (!User._singletonInstance?.onesignalId) {
       return;
     }
 
@@ -268,7 +275,7 @@ export class SessionManager implements ISessionManager {
   async upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
-    if (User.singletonInstance?.onesignalId) {
+    if (User._singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
       await this.notifySWToUpsertSession(
@@ -282,7 +289,7 @@ export class SessionManager implements ISessionManager {
       this.setupSessionEventListeners();
     } else {
       this.onSessionSent = sessionOrigin === SessionOrigin.UserCreate;
-      OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+      OneSignal._emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
     }
   }
 
@@ -300,17 +307,17 @@ export class SessionManager implements ISessionManager {
     this.setupOnFocusAndOnBlurForSession();
 
     // To make sure we add these event listeners only once.
-    if (!OneSignal.cache.isVisibilityChangeEventSetup) {
+    if (!OneSignal._cache.isVisibilityChangeEventSetup) {
       // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
       document.addEventListener(
         'visibilitychange',
         this.handleVisibilityChange.bind(this),
         true,
       );
-      OneSignal.cache.isVisibilityChangeEventSetup = true;
+      OneSignal._cache.isVisibilityChangeEventSetup = true;
     }
 
-    if (!OneSignal.cache.isBeforeUnloadEventSetup) {
+    if (!OneSignal._cache.isBeforeUnloadEventSetup) {
       // tracks closing of a tab / reloading / navigating away
       window.addEventListener(
         'beforeunload',
@@ -321,27 +328,27 @@ export class SessionManager implements ISessionManager {
         },
         true,
       );
-      OneSignal.cache.isBeforeUnloadEventSetup = true;
+      OneSignal._cache.isBeforeUnloadEventSetup = true;
     }
   }
 
   setupOnFocusAndOnBlurForSession(): void {
     Log._debug('setupOnFocusAndOnBlurForSession');
 
-    if (!OneSignal.cache.focusHandler) {
-      OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
+    if (!OneSignal._cache.focusHandler) {
+      OneSignal._cache.focusHandler = this.handleOnFocus.bind(this);
     }
-    if (!OneSignal.cache.isFocusEventSetup) {
-      window.addEventListener('focus', OneSignal.cache.focusHandler, true);
-      OneSignal.cache.isFocusEventSetup = true;
+    if (!OneSignal._cache.isFocusEventSetup) {
+      window.addEventListener('focus', OneSignal._cache.focusHandler, true);
+      OneSignal._cache.isFocusEventSetup = true;
     }
 
-    if (!OneSignal.cache.blurHandler) {
-      OneSignal.cache.blurHandler = this.handleOnBlur.bind(this);
+    if (!OneSignal._cache.blurHandler) {
+      OneSignal._cache.blurHandler = this.handleOnBlur.bind(this);
     }
-    if (!OneSignal.cache.isBlurEventSetup) {
-      window.addEventListener('blur', OneSignal.cache.blurHandler, true);
-      OneSignal.cache.isBlurEventSetup = true;
+    if (!OneSignal._cache.isBlurEventSetup) {
+      window.addEventListener('blur', OneSignal._cache.blurHandler, true);
+      OneSignal._cache.isBlurEventSetup = true;
     }
   }
 
@@ -364,7 +371,7 @@ export class SessionManager implements ISessionManager {
     }
 
     const pushSubscription =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
     if (
       pushSubscription?.notification_types !== NotificationType.Subscribed &&
       OneSignal.config?.enableOnSession !== true

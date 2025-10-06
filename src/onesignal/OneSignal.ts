@@ -55,11 +55,11 @@ export default class OneSignal {
 
   private static async _initializeCoreModuleAndOSNamespaces() {
     const core = new CoreModule();
-    await core.init();
+    await core._init();
     OneSignal._coreDirector = new CoreModuleDirector(core);
     const subscription = await getSubscription();
     const permission =
-      await OneSignal.context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager.getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);
     this.Notifications = new NotificationsNamespace(permission);
   }
@@ -71,8 +71,8 @@ export default class OneSignal {
 
     // Workaround to temp assign config so that it can be used in context.
     OneSignal.config = appConfig;
-    OneSignal.context = new Context(appConfig);
-    OneSignal.config = OneSignal.context._appConfig;
+    OneSignal._context = new Context(appConfig);
+    OneSignal.config = OneSignal._context._appConfig;
   }
 
   /**
@@ -157,7 +157,7 @@ export default class OneSignal {
     OneSignal._consentGiven = await getConsentGiven();
     if (getConsentRequired()) {
       if (!OneSignal._consentGiven) {
-        OneSignal.pendingInit = true;
+        OneSignal._pendingInit = true;
         return;
       }
     }
@@ -166,24 +166,24 @@ export default class OneSignal {
   }
 
   private static async _delayedInit(): Promise<void> {
-    OneSignal.pendingInit = false;
+    OneSignal._pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
-    OneSignal.context._workerMessenger.listen();
+    OneSignal._context._workerMessenger.listen();
 
     async function __init() {
       if (OneSignal._initAlreadyCalled) return;
 
       OneSignal._initAlreadyCalled = true;
 
-      OneSignal.emitter.on(
+      OneSignal._emitter.on(
         OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
         checkAndTriggerSubscriptionChanged,
       );
-      OneSignal.emitter.on(
+      OneSignal._emitter.on(
         OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
         _onSubscriptionChanged,
       );
-      OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
+      OneSignal._emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
 
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,
@@ -238,7 +238,7 @@ export default class OneSignal {
     OneSignal._consentGiven = consent;
     await db.put('Options', { key: 'userConsent', value: consent });
 
-    if (consent && OneSignal.pendingInit) await OneSignal._delayedInit();
+    if (consent && OneSignal._pendingInit) await OneSignal._delayedInit();
   }
 
   static async setConsentRequired(requiresConsent: boolean): Promise<void> {
@@ -267,22 +267,20 @@ export default class OneSignal {
     return processItem(OneSignal, item);
   }
 
-  static __doNotShowWelcomeNotification: boolean;
-  static VERSION = VERSION;
+  static _doNotShowWelcomeNotification: boolean;
   static config: AppConfig | null = null;
   static _sessionInitAlreadyRunning = false;
   static _isNewVisitor = false;
-  static initialized = false;
+  static _initialized = false;
   static _didLoadITILibrary = false;
-  static notifyButton: Bell | null = null;
-  static database = db;
-  private static pendingInit = true;
+  static _notifyButton: Bell | null = null;
+  private static _pendingInit = true;
 
-  static emitter: Emitter = new Emitter();
-  static cache: any = {};
+  static _emitter: Emitter = new Emitter();
+  static _cache: any = {};
   static _initCalled = false;
   static _initAlreadyCalled = false;
-  static context: Context;
+  static _context: Context;
 
   /* NEW USER MODEL CHANGES */
   static _coreDirector: CoreModuleDirector;

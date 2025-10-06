@@ -25,14 +25,14 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal = OneSignal;
   global.OneSignal.EVENTS = ONESIGNAL_EVENTS;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
-  global.OneSignal.context = new Context(global.OneSignal.config);
-  global.OneSignal.initialized = true;
-  global.OneSignal.emitter = new Emitter();
+  global.OneSignal._context = new Context(global.OneSignal.config);
+  global.OneSignal._initialized = true;
+  global.OneSignal._emitter = new Emitter();
   const core = new CoreModule();
   global.OneSignal._coreDirector = new CoreModuleDirector(core);
 
   // Clear the User singleton before creating new instance
-  User.singletonInstance = undefined;
+  User._singletonInstance = undefined;
 
   const userNamespace = new UserNamespace(!!config.initUserAndPushSubscription); // TO DO: pass in subscription, and permission
   global.OneSignal.User = userNamespace;
@@ -60,7 +60,7 @@ export const createPushSub = ({
   onesignalId?: string;
 } = {}) => {
   const pushSubscription = new SubscriptionModel();
-  pushSubscription.initializeFromJson({
+  pushSubscription._initializeFromJson({
     ...BASE_SUB,
     id,
     onesignalId,
@@ -95,7 +95,7 @@ export const setupSubModelStore = async ({
     pushModel.web_p256 = web_p256;
   }
   await setPushToken(pushModel.token);
-  OneSignal._coreDirector.subscriptionModelStore.replaceAll(
+  OneSignal._coreDirector._subscriptionModelStore.replaceAll(
     [pushModel],
     ModelChangeTags.NO_PROPAGATE,
   );

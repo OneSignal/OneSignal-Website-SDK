@@ -20,7 +20,7 @@ export class UpdateManager {
   }
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
-    if (!User.singletonInstance?.onesignalId) {
+    if (!User._singletonInstance?.onesignalId) {
       Log._debug(
         'Not sending the update because user is not registered with OneSignal (no onesignal_id)',
       );
@@ -52,7 +52,7 @@ export class UpdateManager {
     }
 
     const subscriptionModel =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
 
     if (
       subscriptionModel?.notification_types !== NotificationType.Subscribed &&
@@ -84,7 +84,7 @@ export class UpdateManager {
   ) {
     logMethodCall('sendOutcomeDirect');
     const pushSubscriptionModel =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
 
     if (
       pushSubscriptionModel &&
@@ -119,7 +119,7 @@ export class UpdateManager {
   ) {
     logMethodCall('sendOutcomeInfluenced');
     const pushSubscriptionModel =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
 
     if (
       pushSubscriptionModel &&
@@ -153,7 +153,7 @@ export class UpdateManager {
   ) {
     logMethodCall('sendOutcomeUnattributed');
     const pushSubscriptionModel =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
 
     if (
       pushSubscriptionModel &&

@@ -32,15 +32,18 @@ export class RebuildUserService implements IRebuildUserService {
     onesignalId: string,
   ): Promise<Operation[] | null> {
     const identityModel = new IdentityModel();
-    identityModel.initializeFromModel(null, this._identityModelStore.model);
+    identityModel._initializeFromModel(null, this._identityModelStore.model);
 
     const propertiesModel = new PropertiesModel();
-    propertiesModel.initializeFromModel(null, this._propertiesModelStore.model);
+    propertiesModel._initializeFromModel(
+      null,
+      this._propertiesModelStore.model,
+    );
 
     const subscriptionModels: SubscriptionModel[] = [];
     for (const activeSubscription of this._subscriptionsModelStore.list()) {
       const subscriptionModel = new SubscriptionModel();
-      subscriptionModel.initializeFromModel(null, activeSubscription);
+      subscriptionModel._initializeFromModel(null, activeSubscription);
       subscriptionModels.push(subscriptionModel);
     }
 
@@ -54,7 +57,7 @@ export class RebuildUserService implements IRebuildUserService {
     );
 
     const pushSubscription =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
     if (pushSubscription) {
       operations.push(
         new CreateSubscriptionOperation({

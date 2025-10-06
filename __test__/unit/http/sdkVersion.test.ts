@@ -97,7 +97,7 @@ describe('Sdk Version Header Tests', () => {
       },
       {
         // @ts-expect-error - partial identity object
-        subscription: generateNewSubscription().data,
+        subscription: generateNewSubscription()._data,
       },
     );
     expectHeaderToBeSent();

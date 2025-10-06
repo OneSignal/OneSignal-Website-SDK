@@ -55,18 +55,18 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   // otherwise there would be two login ops in the same bucket for LoginOperationExecutor which would error
   await LoginManager.switchingUsersPromise;
 
-  let pushModel = await OneSignal._coreDirector.getPushSubscriptionModel();
+  let pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
   // for new users, we need to create a new push subscription model and also save its push id to IndexedDB
   if (!pushModel) {
     pushModel =
-      OneSignal._coreDirector.generatePushSubscriptionModel(
+      OneSignal._coreDirector._generatePushSubscriptionModel(
         rawPushSubscription,
       );
-    return UserDirector.createUserOnServer();
+    return UserDirector._createUserOnServer();
   }
   // for users with data failed to create a user or user + subscription on the server
   if (IDManager._isLocalId(pushModel.id)) {
-    return UserDirector.createUserOnServer();
+    return UserDirector._createUserOnServer();
   }
 
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
@@ -75,7 +75,7 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   )._serialize();
   for (const key in serializedSubscriptionRecord) {
     const modelKey = key as keyof typeof serializedSubscriptionRecord;
-    pushModel.setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
+    pushModel._setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
   }
 };
 
@@ -95,7 +95,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   async updatePushSubscriptionNotificationTypes(
     notificationTypes: NotificationTypeValue,
   ): Promise<void> {
-    const pushModel = await OneSignal._coreDirector.getPushSubscriptionModel();
+    const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
     if (!pushModel) {
       Log._info('No Push Subscription yet to update notification_types.');
       return;
@@ -112,7 +112,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const permission =
-      await OneSignal.context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager.getPermissionStatus();
     if (permission === 'granted') {
       return NotificationType.Subscribed;
     }
@@ -129,7 +129,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   async isOptedIn(): Promise<boolean> {
     const subscriptionState = await this.getSubscriptionState();
     const permission =
-      await OneSignal.context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager.getPermissionStatus();
     return permission === 'granted' && !subscriptionState.optedOut;
   }
 
@@ -169,7 +169,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     const { optedOut, subscriptionToken } = await getSubscription();
 
     const pushSubscriptionModel =
-      await OneSignal._coreDirector.getPushSubscriptionModel();
+      await OneSignal._coreDirector._getPushSubscriptionModel();
     const isValidPushSubscription = isCompleteSubscriptionObject(
       pushSubscriptionModel,
     );
@@ -251,7 +251,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         here.
       */
     if (
-      (await OneSignal.context._permissionManager.getPermissionStatus()) ===
+      (await OneSignal._context._permissionManager.getPermissionStatus()) ===
       'denied'
     )
       throw PermissionBlockedError;

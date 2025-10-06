@@ -48,8 +48,8 @@ export type ExecutionResultValue =
 
 // Interfaces
 export interface IOperationExecutor {
-  operations: string[];
-  execute(operations: Operation[]): Promise<ExecutionResponse>;
+  _operations: string[];
+  _execute(operations: Operation[]): Promise<ExecutionResponse>;
 }
 
 export interface IOperationRepo {

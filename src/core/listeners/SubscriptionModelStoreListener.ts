@@ -25,9 +25,9 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     this._identityModelStore = identityModelStore;
   }
 
-  getAddOperation(model: SubscriptionModel): Operation {
+  _getAddOperation(model: SubscriptionModel): Operation {
     const { enabled, notification_types } =
-      SubscriptionModelStoreListener.getSubscriptionEnabledAndStatus(model);
+      SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(model);
 
     const appId = MainHelper.getAppId();
     return new CreateSubscriptionOperation({
@@ -41,7 +41,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     });
   }
 
-  getRemoveOperation(model: SubscriptionModel): Operation {
+  _getRemoveOperation(model: SubscriptionModel): Operation {
     const appId = MainHelper.getAppId();
     return new DeleteSubscriptionOperation(
       appId,
@@ -50,9 +50,9 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     );
   }
 
-  getUpdateOperation(model: SubscriptionModel): Operation {
+  _getUpdateOperation(model: SubscriptionModel): Operation {
     const { enabled, notification_types } =
-      SubscriptionModelStoreListener.getSubscriptionEnabledAndStatus(model);
+      SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(model);
     const appId = MainHelper.getAppId();
 
     return new UpdateSubscriptionOperation({
@@ -68,7 +68,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     });
   }
 
-  private static getSubscriptionEnabledAndStatus(model: SubscriptionModel): {
+  private static _getSubscriptionEnabledAndStatus(model: SubscriptionModel): {
     enabled: boolean;
     notification_types: NotificationTypeValue | undefined;
   } {

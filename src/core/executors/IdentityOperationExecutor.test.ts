@@ -49,10 +49,10 @@ describe('IdentityOperationExecutor', () => {
     setAddAliasResponse();
     setDeleteAliasResponse();
 
-    identityModelStore = OneSignal._coreDirector.identityModelStore;
-    newRecordsState = OneSignal._coreDirector.newRecordsState;
-    propertiesModelStore = OneSignal._coreDirector.propertiesModelStore;
-    subscriptionModelStore = OneSignal._coreDirector.subscriptionModelStore;
+    identityModelStore = OneSignal._coreDirector._identityModelStore;
+    newRecordsState = OneSignal._coreDirector._newRecordsState;
+    propertiesModelStore = OneSignal._coreDirector._propertiesModelStore;
+    subscriptionModelStore = OneSignal._coreDirector._subscriptionModelStore;
 
     rebuildUserService = new RebuildUserService(
       identityModelStore,
@@ -68,7 +68,7 @@ describe('IdentityOperationExecutor', () => {
   test('should return correct operations (names)', async () => {
     const executor = getExecutor();
 
-    expect(executor.operations).toEqual([
+    expect(executor._operations).toEqual([
       OPERATION_NAME.SET_ALIAS,
       OPERATION_NAME.DELETE_ALIAS,
     ]);
@@ -81,7 +81,7 @@ describe('IdentityOperationExecutor', () => {
 
     // with invalid ops
     const ops = [setAliasOp, deleteAliasOp, someOp];
-    const result = executor.execute(ops);
+    const result = executor._execute(ops);
     await expect(() => result).rejects.toThrow(
       `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
         ops,
@@ -90,7 +90,7 @@ describe('IdentityOperationExecutor', () => {
 
     // with both set and delete alias ops
     const ops2 = [setAliasOp, deleteAliasOp];
-    const result2 = executor.execute(ops2);
+    const result2 = executor._execute(ops2);
     await expect(() => result2).rejects.toThrow(
       `Can't process SetAliasOperation and DeleteAliasOperation at the same time.`,
     );
@@ -100,10 +100,10 @@ describe('IdentityOperationExecutor', () => {
     updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     const executor = getExecutor();
     const ops = [setAliasOp];
-    await executor.execute(ops);
+    await executor._execute(ops);
 
     // should set property for matching onesignalId
-    expect(identityModelStore.model.getProperty(label)).toBe(value);
+    expect(identityModelStore.model._getProperty(label)).toBe(value);
   });
 
   test('can execute delete alias op', async () => {
@@ -113,10 +113,10 @@ describe('IdentityOperationExecutor', () => {
     const executor = getExecutor();
 
     const ops = [deleteAliasOp];
-    await executor.execute(ops);
+    await executor._execute(ops);
 
     // should delete property for matching onesignalId
-    expect(identityModelStore.model.getProperty(label)).toBeUndefined();
+    expect(identityModelStore.model._getProperty(label)).toBeUndefined();
   });
 
   describe('Errors', () => {
@@ -126,31 +126,31 @@ describe('IdentityOperationExecutor', () => {
 
       // Retryable
       setAddAliasError({ status: 429, retryAfter: 10 });
-      const res = await executor.execute(ops);
+      const res = await executor._execute(ops);
       expect(res.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res.retryAfterSeconds).toBe(10);
 
       // Invalid
       setAddAliasError({ status: 400 });
-      const res2 = await executor.execute(ops);
+      const res2 = await executor._execute(ops);
       expect(res2.result).toBe(ExecutionResult.FAIL_NORETRY);
 
       // Conflict
       setAddAliasError({ status: 409, retryAfter: 5 });
-      const res3 = await executor.execute(ops);
+      const res3 = await executor._execute(ops);
       expect(res3.result).toBe(ExecutionResult.FAIL_CONFLICT);
       expect(res3.retryAfterSeconds).toBe(5);
 
       // Unauthorized
       setAddAliasError({ status: 401, retryAfter: 15 });
-      const res4 = await executor.execute(ops);
+      const res4 = await executor._execute(ops);
       expect(res4.result).toBe(ExecutionResult.FAIL_UNAUTHORIZED);
       expect(res4.retryAfterSeconds).toBe(15);
 
       // Missing
       setAddAliasError({ status: 410 });
       getRebuildOpsSpy.mockReturnValueOnce(null);
-      const res5 = await executor.execute(ops);
+      const res5 = await executor._execute(ops);
 
       // no rebuild ops
       updateIdentityModel('onesignal_id', undefined);
@@ -159,7 +159,7 @@ describe('IdentityOperationExecutor', () => {
 
       // with rebuild ops
       identityModelStore.model.onesignalId = ONESIGNAL_ID;
-      const res7 = await executor.execute(ops);
+      const res7 = await executor._execute(ops);
       expect(res7.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res7.retryAfterSeconds).toBeUndefined();
       expect(res7.operations).toMatchObject([
@@ -178,7 +178,7 @@ describe('IdentityOperationExecutor', () => {
       // in missing retry window
       newRecordsState._add(ONESIGNAL_ID);
       setAddAliasError({ status: 404, retryAfter: 20 });
-      const res6 = await executor.execute(ops);
+      const res6 = await executor._execute(ops);
       expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res6.retryAfterSeconds).toBe(20);
     });
@@ -189,35 +189,35 @@ describe('IdentityOperationExecutor', () => {
 
       // Retryable
       setDeleteAliasError({ status: 429, retryAfter: 10 });
-      const res = await executor.execute(ops);
+      const res = await executor._execute(ops);
       expect(res.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res.retryAfterSeconds).toBe(10);
 
       // Invalid
       setDeleteAliasError({ status: 400 });
-      const res2 = await executor.execute(ops);
+      const res2 = await executor._execute(ops);
       expect(res2.result).toBe(ExecutionResult.FAIL_NORETRY);
 
       // Conflict
       setDeleteAliasError({ status: 409, retryAfter: 5 });
-      const res3 = await executor.execute(ops);
+      const res3 = await executor._execute(ops);
       expect(res3.result).toBe(ExecutionResult.SUCCESS);
 
       // Unauthorized
       setDeleteAliasError({ status: 401, retryAfter: 15 });
-      const res4 = await executor.execute(ops);
+      const res4 = await executor._execute(ops);
       expect(res4.result).toBe(ExecutionResult.FAIL_UNAUTHORIZED);
       expect(res4.retryAfterSeconds).toBe(15);
 
       // Missing
       setDeleteAliasError({ status: 410 });
-      const res5 = await executor.execute(ops);
+      const res5 = await executor._execute(ops);
       expect(res5.result).toBe(ExecutionResult.SUCCESS);
 
       // in missing retry window
       newRecordsState._add(ONESIGNAL_ID);
       setDeleteAliasError({ status: 404, retryAfter: 20 });
-      const res6 = await executor.execute(ops);
+      const res6 = await executor._execute(ops);
       expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res6.retryAfterSeconds).toBe(20);
     });

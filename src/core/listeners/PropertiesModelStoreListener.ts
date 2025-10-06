@@ -17,12 +17,12 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getReplaceOperation(_model: PropertiesModel): Operation | null {
+  _getReplaceOperation(_model: PropertiesModel): Operation | null {
     // when the property model is replaced, nothing to do on the backend. Already handled via login process.
     return null;
   }
 
-  getUpdateOperation(
+  _getUpdateOperation(
     model: PropertiesModel,
     property: string,
     _oldValue: unknown,

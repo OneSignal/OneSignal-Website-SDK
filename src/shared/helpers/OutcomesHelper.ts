@@ -78,7 +78,7 @@ export default class OutcomesHelper {
     await awaitOneSignalInitAndSupported();
 
     const isSubscribed =
-      await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
     if (!isSubscribed) {
       Log._warn('Reporting outcomes is supported only for subscribed users.');
       return false;
@@ -168,7 +168,7 @@ export default class OutcomesHelper {
         if (this.isUnique) {
           await this.saveSentUniqueOutcome(notificationIds);
         }
-        await OneSignal.context._updateManager.sendOutcomeDirect(
+        await OneSignal._context._updateManager.sendOutcomeDirect(
           this.appId,
           notificationIds,
           this.outcomeName,
@@ -179,7 +179,7 @@ export default class OutcomesHelper {
         if (this.isUnique) {
           await this.saveSentUniqueOutcome(notificationIds);
         }
-        await OneSignal.context._updateManager.sendOutcomeInfluenced(
+        await OneSignal._context._updateManager.sendOutcomeInfluenced(
           this.appId,
           notificationIds,
           this.outcomeName,
@@ -196,7 +196,7 @@ export default class OutcomesHelper {
           }
           await this.saveSentUniqueOutcome([]);
         }
-        await OneSignal.context._updateManager.sendOutcomeUnattributed(
+        await OneSignal._context._updateManager.sendOutcomeUnattributed(
           this.appId,
           this.outcomeName,
           weight,

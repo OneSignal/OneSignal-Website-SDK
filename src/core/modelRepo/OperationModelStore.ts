@@ -75,7 +75,7 @@ export class OperationModelStore extends ModelStore<Operation> {
     }
 
     // populate the operation with the data
-    operation.initializeFromJson(jsonObject);
+    operation._initializeFromJson(jsonObject);
 
     return operation;
   }

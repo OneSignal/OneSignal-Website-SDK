@@ -19,13 +19,13 @@ import { logMethodCall } from './utils/utils';
 
 export async function checkAndTriggerSubscriptionChanged() {
   logMethodCall('checkAndTriggerSubscriptionChanged');
-  const context = OneSignal.context;
+  const context = OneSignal._context;
   // isPushEnabled = subscribed && is not opted out
   const isPushEnabled: boolean =
-    await OneSignal.context._subscriptionManager.isPushNotificationsEnabled();
+    await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
   // isOptedIn = native permission granted && is not opted out
   const isOptedIn: boolean =
-    await OneSignal.context._subscriptionManager.isOptedIn!();
+    await OneSignal._context._subscriptionManager.isOptedIn!();
 
   const appState = await getAppState();
   const {
@@ -36,7 +36,7 @@ export async function checkAndTriggerSubscriptionChanged() {
   } = appState;
   const currentPushToken = await MainHelper.getCurrentPushToken();
 
-  const pushModel = await OneSignal._coreDirector.getPushSubscriptionModel();
+  const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
   const pushSubscriptionId = pushModel?.id;
 
   const didStateChange =
@@ -163,19 +163,19 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   if (
     displayPredicate &&
     typeof displayPredicate === 'function' &&
-    OneSignal.notifyButton
+    OneSignal._notifyButton
   ) {
     const predicateResult = await displayPredicate();
     if (predicateResult !== false) {
       Log._debug(
         'Showing notify button because display predicate returned true.',
       );
-      OneSignal.notifyButton.launcher.show();
+      OneSignal._notifyButton.launcher.show();
     } else {
       Log._debug(
         'Hiding notify button because display predicate returned false.',
       );
-      OneSignal.notifyButton.launcher.hide();
+      OneSignal._notifyButton.launcher.hide();
     }
   }
 }
@@ -196,7 +196,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   isSubscribed: boolean | undefined,
   pushSubscriptionId: string | undefined | null,
 ) {
-  if (OneSignal.__doNotShowWelcomeNotification) {
+  if (OneSignal._doNotShowWelcomeNotification) {
     Log._debug(
       'Not showing welcome notification because user has previously subscribed.',
     );
@@ -266,9 +266,9 @@ async function onSubscriptionChanged_sendCategorySlidedownTags(
   if (isSubscribed !== true) return;
 
   const prompts =
-    OneSignal.context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
+    OneSignal._context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
   if (isCategorySlidedownConfigured(prompts)) {
-    await OneSignal.context._tagManager.sendTags();
+    await OneSignal._context._tagManager.sendTags();
   }
 }
 

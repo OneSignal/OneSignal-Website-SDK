@@ -70,7 +70,7 @@ export default class MainHelper {
         : undefined,
     };
 
-    OneSignal.context._serviceWorkerManager
+    OneSignal._context._serviceWorkerManager
       ._getRegistration()
       .then(async (registration?: ServiceWorkerRegistration | null) => {
         if (!registration) {
@@ -96,7 +96,7 @@ export default class MainHelper {
     );
 
     const currentPermission =
-      await OneSignal.context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager.getPermissionStatus();
 
     if (previousPermission !== currentPermission) {
       await triggerNotificationPermissionChanged();
@@ -231,7 +231,7 @@ export default class MainHelper {
     }
 
     const registration =
-      await OneSignal.context._serviceWorkerManager._getRegistration();
+      await OneSignal._context._serviceWorkerManager._getRegistration();
     if (!registration) {
       return undefined;
     }

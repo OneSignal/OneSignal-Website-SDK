@@ -64,7 +64,7 @@ export const setupIdentityModel = async (
 ) => {
   const newIdentityModel = new IdentityModel();
   newIdentityModel.onesignalId = onesignalID;
-  OneSignal._coreDirector.identityModelStore.replace(
+  OneSignal._coreDirector._identityModelStore.replace(
     newIdentityModel,
     ModelChangeTags.NO_PROPAGATE,
   );
@@ -78,7 +78,7 @@ export const setupPropertiesModel = async (
 ) => {
   const newPropertiesModel = new PropertiesModel();
   newPropertiesModel.onesignalId = onesignalID;
-  OneSignal._coreDirector.propertiesModelStore.replace(
+  OneSignal._coreDirector._propertiesModelStore.replace(
     newPropertiesModel,
     ModelChangeTags.NO_PROPAGATE,
   );
@@ -97,7 +97,7 @@ export const updateIdentityModel = async <
   value?: IdentitySchema[T],
 ) => {
   const identityModel = OneSignal._coreDirector._getIdentityModel();
-  identityModel.setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
+  identityModel._setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
 };
 
 /**
@@ -113,7 +113,7 @@ export const updatePropertiesModel = async <
   value?: PropertiesSchema[T],
 ) => {
   const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-  propertiesModel.setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
+  propertiesModel._setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
 };
 
 /**
@@ -126,7 +126,7 @@ export const setupSubscriptionModel = async (
   const subscriptionModel = new SubscriptionModel();
   subscriptionModel.id = id || '';
   subscriptionModel.token = token || '';
-  OneSignal._coreDirector.subscriptionModelStore.replaceAll(
+  OneSignal._coreDirector._subscriptionModelStore.replaceAll(
     [subscriptionModel],
     ModelChangeTags.NO_PROPAGATE,
   );
@@ -137,7 +137,7 @@ export const setupSubscriptionModel = async (
  */
 export const setupLoadStylesheet = async () => {
   vi.spyOn(
-    OneSignal.context._dynamicResourceLoader,
+    OneSignal._context._dynamicResourceLoader,
     'loadSdkStylesheet',
   ).mockResolvedValue(ResourceLoadState.Loaded);
 };

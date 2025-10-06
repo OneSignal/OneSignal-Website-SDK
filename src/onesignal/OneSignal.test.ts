@@ -63,7 +63,7 @@ const setupEnv = (consentRequired: boolean) => {
       requiresUserPrivacyConsent: consentRequired,
     },
   });
-  OneSignal._coreDirector.subscriptionModelStore.replaceAll(
+  OneSignal._coreDirector._subscriptionModelStore.replaceAll(
     [],
     ModelChangeTags.NO_PROPAGATE,
   );
@@ -85,7 +85,7 @@ describe('OneSignal - No Consent Required', () => {
       test('can add an alias to the current user', async () => {
         OneSignal.User.addAlias('someLabel', 'someId');
         const identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBe('someId');
+        expect(identityModel._getProperty('someLabel')).toBe('someId');
 
         // should make a request to the backend
         await vi.waitUntil(() => addAliasFn.mock.calls.length === 1);
@@ -101,8 +101,8 @@ describe('OneSignal - No Consent Required', () => {
         OneSignal.User.addAlias('someLabel2', 'someId2');
 
         const identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBe('someId');
-        expect(identityModel.getProperty('someLabel2')).toBe('someId2');
+        expect(identityModel._getProperty('someLabel')).toBe('someId');
+        expect(identityModel._getProperty('someLabel2')).toBe('someId2');
 
         await vi.waitUntil(() => addAliasFn.mock.calls.length === 2);
         expect(addAliasFn).toHaveBeenCalledWith({
@@ -125,7 +125,7 @@ describe('OneSignal - No Consent Required', () => {
         OneSignal.User.removeAlias('someLabel');
 
         const identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBeUndefined();
+        expect(identityModel._getProperty('someLabel')).toBeUndefined();
 
         await vi.waitUntil(() => deleteAliasFn.mock.calls.length === 1);
       });
@@ -137,8 +137,8 @@ describe('OneSignal - No Consent Required', () => {
         OneSignal.User.addAlias('someLabel2', 'someId2');
 
         let identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBe('someId');
-        expect(identityModel.getProperty('someLabel2')).toBe('someId2');
+        expect(identityModel._getProperty('someLabel')).toBe('someId');
+        expect(identityModel._getProperty('someLabel2')).toBe('someId2');
 
         await vi.waitUntil(async () => addAliasFn.mock.calls.length === 2);
 
@@ -148,8 +148,8 @@ describe('OneSignal - No Consent Required', () => {
         await vi.waitUntil(async () => deleteAliasFn.mock.calls.length === 2);
 
         identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.getProperty('someLabel')).toBeUndefined();
-        expect(identityModel.getProperty('someLabel2')).toBeUndefined();
+        expect(identityModel._getProperty('someLabel')).toBeUndefined();
+        expect(identityModel._getProperty('someLabel2')).toBeUndefined();
       });
     });
 
@@ -612,7 +612,7 @@ describe('OneSignal - No Consent Required', () => {
           const localId = IDManager._createLocalId();
           setupIdentityModel(localId);
 
-          OneSignal._coreDirector.subscriptionModelStore.replaceAll(
+          OneSignal._coreDirector._subscriptionModelStore.replaceAll(
             [],
             ModelChangeTags.NO_PROPAGATE,
           );
@@ -678,7 +678,7 @@ describe('OneSignal - No Consent Required', () => {
 
         test('login then accept web push permissions - it should make two user calls', async () => {
           const { promise, resolve } = Promise.withResolvers();
-          OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, resolve);
+          OneSignal._emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, resolve);
           setGetUserResponse();
           setCreateUserResponse({
             onesignalId: ONESIGNAL_ID,
@@ -690,7 +690,7 @@ describe('OneSignal - No Consent Required', () => {
             ],
           });
 
-          OneSignal._coreDirector.subscriptionModelStore.replaceAll(
+          OneSignal._coreDirector._subscriptionModelStore.replaceAll(
             [],
             ModelChangeTags.NO_PROPAGATE,
           );
@@ -858,7 +858,7 @@ describe('OneSignal - No Consent Required', () => {
     const getQueue = async (length: number) => {
       const queue = await vi.waitUntil(
         () => {
-          const _queue = OneSignal._coreDirector.operationRepo.queue;
+          const _queue = OneSignal._coreDirector._operationRepo.queue;
           return _queue.length === length ? _queue : null;
         },
         { interval: 0 },
@@ -1117,7 +1117,7 @@ describe('OneSignal - No Consent Required', () => {
     let queue: OperationQueueItem[] = [];
     await vi.waitUntil(
       () => {
-        queue = OneSignal._coreDirector.operationRepo.queue;
+        queue = OneSignal._coreDirector._operationRepo.queue;
         return queue.length === 3;
       },
       { interval: 1 },

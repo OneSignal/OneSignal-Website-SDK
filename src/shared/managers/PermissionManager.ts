@@ -15,11 +15,11 @@ export default class PermissionManager {
    *    'default', 'granted', or 'denied'.
    */
   async getPermissionStatus(): Promise<NotificationPermission> {
-    if (!OneSignal.context) {
+    if (!OneSignal._context) {
       throw new Error(`OneSignal.context is undefined. Call init first`);
     }
 
-    return await OneSignal.context._permissionManager.getNotificationPermission(
+    return await OneSignal._context._permissionManager.getNotificationPermission(
       OneSignal.config!.safariWebId,
     );
   }

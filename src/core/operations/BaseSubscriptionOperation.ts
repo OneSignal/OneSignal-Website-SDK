@@ -27,10 +27,10 @@ export abstract class BaseSubscriptionOperation<
    * and can be checked via IDManager.isLocalId to ensure correct processing.
    */
   get subscriptionId(): string {
-    return this.getProperty('subscriptionId');
+    return this._getProperty('subscriptionId');
   }
   protected set subscriptionId(value: string) {
-    this.setProperty('subscriptionId', value);
+    this._setProperty('subscriptionId', value);
   }
 
   override get createComparisonKey(): string {

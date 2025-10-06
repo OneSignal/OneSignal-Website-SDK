@@ -214,7 +214,7 @@ export class PromptsManager {
       this.installEventHooksForSlidedown();
     }
 
-    await this.context._slidedownManager.createSlidedown(options);
+    await this.context._slidedownManager._createSlidedown(options);
   }
 
   public async internalShowCategorySlidedown(
@@ -295,25 +295,25 @@ export class PromptsManager {
   public installEventHooksForSlidedown(): void {
     this.eventHooksInstalled = true;
 
-    OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
-      this.context._slidedownManager.setIsSlidedownShowing(true);
+    OneSignal._emitter.on(Slidedown.EVENTS.SHOWN, () => {
+      this.context._slidedownManager._setIsSlidedownShowing(true);
     });
-    OneSignal.emitter.on(Slidedown.EVENTS.CLOSED, () => {
-      this.context._slidedownManager.setIsSlidedownShowing(false);
-      this.context._slidedownManager.showQueued();
+    OneSignal._emitter.on(Slidedown.EVENTS.CLOSED, () => {
+      this.context._slidedownManager._setIsSlidedownShowing(false);
+      this.context._slidedownManager._showQueued();
     });
-    OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
-      await this.context._slidedownManager.handleAllowClick();
+    OneSignal._emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+      await this.context._slidedownManager._handleAllowClick();
       OneSignalEvent.trigger(
         OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
       );
     });
-    OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
-      if (!this.context._slidedownManager.slidedown) {
+    OneSignal._emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
+      if (!this.context._slidedownManager._slidedown) {
         return;
       }
 
-      const type = this.context._slidedownManager.slidedown?.options.type;
+      const type = this.context._slidedownManager._slidedown?.options.type;
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:

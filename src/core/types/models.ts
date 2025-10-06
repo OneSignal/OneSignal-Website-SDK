@@ -30,7 +30,7 @@ export interface IModelStoreChangeHandler<TModel extends Model> {
    * @param model The model that has been added.
    * @param tag The tag which identifies how/why the model was added.
    */
-  onModelAdded(model: TModel, tag: string): void;
+  _onModelAdded(model: TModel, tag: string): void;
 
   /**
    * Called when a model has been updated.
@@ -38,7 +38,7 @@ export interface IModelStoreChangeHandler<TModel extends Model> {
    * @param args The model changed arguments.
    * @param tag The tag which identifies how/why the model was updated.
    */
-  onModelUpdated(args: ModelChangedArgs, tag: string): void;
+  _onModelUpdated(args: ModelChangedArgs, tag: string): void;
 
   /**
    * Called when a model has been removed from the model store.
@@ -46,7 +46,7 @@ export interface IModelStoreChangeHandler<TModel extends Model> {
    * @param model The model that has been removed.
    * @param tag The tag which identifies how/why the model was removed.
    */
-  onModelRemoved(model: TModel, tag: string): void;
+  _onModelRemoved(model: TModel, tag: string): void;
 }
 
 export type DatabaseModel<TModel extends Model> = ReturnType<
@@ -109,7 +109,7 @@ export interface ISingletonModelStoreChangeHandler<TModel extends Model> {
    * @param model - The new model.
    * @param tag - The tag which identifies how/why the model was replaced.
    */
-  onModelReplaced(model: TModel, tag?: string): void;
+  _onModelReplaced(model: TModel, tag?: string): void;
 
   /**
    * Called when a property within the model has been updated.
@@ -118,7 +118,7 @@ export interface ISingletonModelStoreChangeHandler<TModel extends Model> {
    * @param args - The model change arguments.
    * @param tag - The tag which identifies how/why the model was updated.
    */
-  onModelUpdated(args: ModelChangedArgs, tag?: string): void;
+  _onModelUpdated(args: ModelChangedArgs, tag?: string): void;
 }
 
 export interface ISingletonModelStore<TModel extends Model>
@@ -152,19 +152,19 @@ export interface IEventNotifier<THandler> {
   /**
    * Whether there are currently any subscribers.
    */
-  hasSubscribers: boolean;
+  _hasSubscribers: boolean;
 
   /**
    * Subscribe to listen for events.
    *
    * @param handler The handler that will be called when the event(s) occur.
    */
-  subscribe(handler: THandler): void;
+  _subscribe(handler: THandler): void;
 
   /**
    * Unsubscribe to no longer listen for events.
    *
    * @param handler The handler that was previous registered via subscribe.
    */
-  unsubscribe(handler: THandler): void;
+  _unsubscribe(handler: THandler): void;
 }

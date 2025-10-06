@@ -36,12 +36,12 @@ export default class LoginManager {
       return;
     }
 
-    UserDirector.resetUserModels();
+    UserDirector._resetUserModels();
     identityModel = OneSignal._coreDirector._getIdentityModel();
 
     // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
     // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
-    identityModel.setProperty(
+    identityModel._setProperty(
       IdentityConstants.EXTERNAL_ID,
       externalId,
       ModelChangeTags.HYDRATE,
@@ -50,9 +50,9 @@ export default class LoginManager {
     const appId = MainHelper.getAppId();
 
     const promises: Promise<void>[] = [
-      OneSignal._coreDirector.getPushSubscriptionModel().then((pushOp) => {
+      OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
-          OneSignal._coreDirector.operationRepo.enqueue(
+          OneSignal._coreDirector._operationRepo.enqueue(
             new TransferSubscriptionOperation(
               appId,
               newIdentityOneSignalId,
@@ -61,7 +61,7 @@ export default class LoginManager {
           );
         }
       }),
-      OneSignal._coreDirector.operationRepo.enqueueAndWait(
+      OneSignal._coreDirector._operationRepo.enqueueAndWait(
         new LoginUserOperation(
           appId,
           newIdentityOneSignalId,
@@ -85,9 +85,9 @@ export default class LoginManager {
     if (!identityModel.externalId)
       return Log._debug('Logout: User is not logged in, skipping logout');
 
-    UserDirector.resetUserModels();
+    UserDirector._resetUserModels();
 
     // create a new anonymous user
-    return UserDirector.createUserOnServer();
+    return UserDirector._createUserOnServer();
   }
 }

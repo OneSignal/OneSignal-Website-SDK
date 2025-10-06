@@ -57,23 +57,23 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     this._subscriptionsModelStore = _subscriptionsModelStore;
   }
 
-  get operations(): string[] {
+  get _operations(): string[] {
     return [OPERATION_NAME.LOGIN_USER];
   }
 
-  async execute(operations: Operation[]): Promise<ExecutionResponse> {
+  async _execute(operations: Operation[]): Promise<ExecutionResponse> {
     Log._debug(
       `LoginUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
     );
     const startingOp = operations[0];
 
     if (startingOp instanceof LoginUserOperation)
-      return this.loginUser(startingOp, operations.slice(1));
+      return this._loginUser(startingOp, operations.slice(1));
 
     throw new Error(`Unrecognized operation: ${startingOp.name}`);
   }
 
-  private async loginUser(
+  private async _loginUser(
     loginUserOp: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
@@ -81,10 +81,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.
     if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId) {
-      return this.createUser(loginUserOp, operations);
+      return this._createUser(loginUserOp, operations);
     }
 
-    const result = await this._identityOperationExecutor.execute([
+    const result = await this._identityOperationExecutor._execute([
       new SetAliasOperation(
         loginUserOp.appId,
         loginUserOp.existingOnesignalId,
@@ -99,7 +99,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         const opOneSignalId = loginUserOp.onesignalId;
 
         if (this._identityModelStore.model.onesignalId === opOneSignalId) {
-          this._identityModelStore.model.setProperty(
+          this._identityModelStore.model._setProperty(
             IdentityConstants.ONESIGNAL_ID,
             backendOneSignalId,
             ModelChangeTags.HYDRATE,
@@ -107,7 +107,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         }
 
         if (this._propertiesModelStore.model.onesignalId === opOneSignalId) {
-          this._propertiesModelStore.model.setProperty(
+          this._propertiesModelStore.model._setProperty(
             'onesignalId',
             backendOneSignalId,
             ModelChangeTags.HYDRATE,
@@ -125,20 +125,20 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       case ExecutionResult.FAIL_CONFLICT:
         Log._debug(`Handling 409 for externalId: ${loginUserOp.externalId}`);
-        return this.createUser(loginUserOp, operations);
+        return this._createUser(loginUserOp, operations);
 
       case ExecutionResult.FAIL_NORETRY:
         Log._error(
           `Recovering from SetAlias failure for externalId: ${loginUserOp.externalId}`,
         );
-        return this.createUser(loginUserOp, operations);
+        return this._createUser(loginUserOp, operations);
 
       default:
         return new ExecutionResponse(result.result);
     }
   }
 
-  private async createUser(
+  private async _createUser(
     createUserOperation: LoginUserOperation,
     operations: Operation[],
   ): Promise<ExecutionResponse> {
@@ -160,7 +160,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         operation instanceof UpdateSubscriptionOperation ||
         operation instanceof DeleteSubscriptionOperation
       ) {
-        subscriptions = this.createSubscriptionsFromOperation(
+        subscriptions = this._createSubscriptionsFromOperation(
           operation,
           subscriptions,
         );
@@ -188,7 +188,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       };
 
       if (this._identityModelStore.model.onesignalId === opOneSignalId) {
-        this._identityModelStore.model.setProperty(
+        this._identityModelStore.model._setProperty(
           IdentityConstants.ONESIGNAL_ID,
           backendOneSignalId,
           ModelChangeTags.HYDRATE,
@@ -196,7 +196,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       if (this._propertiesModelStore.model.onesignalId === opOneSignalId) {
-        this._propertiesModelStore.model.setProperty(
+        this._propertiesModelStore.model._setProperty(
           'onesignalId',
           backendOneSignalId,
           ModelChangeTags.HYDRATE,
@@ -207,7 +207,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       const resultProperties = response.result.properties;
       if (resultProperties) {
         for (const [key, value] of Object.entries(resultProperties)) {
-          this._propertiesModelStore.model.setProperty(
+          this._propertiesModelStore.model._setProperty(
             key as IPropertiesModelKeys,
             value,
             ModelChangeTags.HYDRATE,
@@ -224,8 +224,8 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
         const model =
           this._subscriptionsModelStore.getBySubscriptionId(localId);
-        model?.setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
-        model?.setProperty(
+        model?._setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
+        model?._setProperty(
           'onesignalId',
           backendOneSignalId,
           ModelChangeTags.HYDRATE,
@@ -271,7 +271,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     }
   }
 
-  private createSubscriptionsFromOperation(
+  private _createSubscriptionsFromOperation(
     operation:
       | CreateSubscriptionOperation
       | DeleteSubscriptionOperation

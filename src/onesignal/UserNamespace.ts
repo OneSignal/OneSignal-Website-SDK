@@ -19,7 +19,7 @@ export default class UserNamespace extends EventListenerBase {
   ) {
     super();
     if (initialize) {
-      this._currentUser = User.createOrGetInstance();
+      this._currentUser = User._createOrGetInstance();
       this.PushSubscription = new PushSubscriptionNamespace(
         true,
         subscription,

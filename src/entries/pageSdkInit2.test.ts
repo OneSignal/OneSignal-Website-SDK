@@ -37,7 +37,7 @@ describe('pageSdkInit 2', () => {
       token: PUSH_TOKEN,
     });
     const emailSubModel = new SubscriptionModel();
-    emailSubModel.mergeData({
+    emailSubModel._mergeData({
       id: SUB_ID_2,
       token: email,
       type: 'Email',
@@ -74,7 +74,7 @@ describe('pageSdkInit 2', () => {
       OneSignal.User.addEmail(email);
 
       // waiting for indexedb to update, addEmail should add a new subscription item with temporary id
-      const subModels = OneSignal._coreDirector.subscriptionModelStore
+      const subModels = OneSignal._coreDirector._subscriptionModelStore
         .list()
         .map((m) => m.toJSON());
       subModels.sort((a, b) => a.type.localeCompare(b.type));
@@ -108,7 +108,7 @@ describe('pageSdkInit 2', () => {
       {
         ...shared,
         id: subModel.id,
-        modelId: subModel.modelId,
+        modelId: subModel._modelId,
         onesignalId: ONESIGNAL_ID,
         token: subModel.token,
         type: 'ChromePush',

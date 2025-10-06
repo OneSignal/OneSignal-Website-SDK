@@ -25,101 +25,101 @@ import { ModelChangeTags } from './types/models';
 /* Contains OneSignal User-Model-specific logic*/
 
 export class CoreModuleDirector {
-  private core: CoreModule;
+  private _core: CoreModule;
   constructor(core: CoreModule) {
-    this.core = core;
+    this._core = core;
   }
 
-  get operationRepo(): OperationRepo {
-    return this.core.operationRepo;
+  get _operationRepo(): OperationRepo {
+    return this._core._operationRepo;
   }
 
-  get identityModelStore(): IdentityModelStore {
-    return this.core.identityModelStore;
+  get _identityModelStore(): IdentityModelStore {
+    return this._core._identityModelStore;
   }
 
-  get propertiesModelStore(): PropertiesModelStore {
-    return this.core.propertiesModelStore;
+  get _propertiesModelStore(): PropertiesModelStore {
+    return this._core._propertiesModelStore;
   }
 
-  get subscriptionModelStore(): SubscriptionModelStore {
-    return this.core.subscriptionModelStore;
+  get _subscriptionModelStore(): SubscriptionModelStore {
+    return this._core._subscriptionModelStore;
   }
 
-  get newRecordsState(): NewRecordsState {
-    return this.core.newRecordsState;
+  get _newRecordsState(): NewRecordsState {
+    return this._core._newRecordsState;
   }
 
-  get customEventController(): ICustomEventController {
-    return this.core.customEventController;
+  get _customEventController(): ICustomEventController {
+    return this._core._customEventController;
   }
 
-  public generatePushSubscriptionModel(
+  public _generatePushSubscriptionModel(
     rawPushSubscription: RawPushSubscription,
   ): SubscriptionModel {
     logMethodCall('CoreModuleDirector.generatePushSubscriptionModel', {
       rawPushSubscription,
     });
     const model = new SubscriptionModel();
-    model.initializeFromJson(
+    model._initializeFromJson(
       new FuturePushSubscriptionRecord(rawPushSubscription)._serialize(),
     );
     model.id = IDManager._createLocalId();
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
-    this.core.subscriptionModelStore.add(model, ModelChangeTags.HYDRATE);
+    this._core._subscriptionModelStore.add(model, ModelChangeTags.HYDRATE);
     return model;
   }
 
-  public addSubscriptionModel(model: SubscriptionModel): void {
-    this.core.subscriptionModelStore.add(model);
+  public _addSubscriptionModel(model: SubscriptionModel): void {
+    this._core._subscriptionModelStore.add(model);
   }
 
-  public removeSubscriptionModel(modelId: string): void {
-    this.core.subscriptionModelStore.remove(modelId);
+  public _removeSubscriptionModel(modelId: string): void {
+    this._core._subscriptionModelStore.remove(modelId);
   }
 
   /* G E T T E R S */
-  public getEmailSubscriptionModels(): SubscriptionModel[] {
+  public _getEmailSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getEmailSubscriptionModels');
-    const subscriptions = this.core.subscriptionModelStore.list();
+    const subscriptions = this._core._subscriptionModelStore.list();
     return subscriptions.filter((s) => s.type === SubscriptionType.Email);
   }
 
-  public async hasEmail(): Promise<boolean> {
-    const emails = this.getEmailSubscriptionModels();
+  public async _hasEmail(): Promise<boolean> {
+    const emails = this._getEmailSubscriptionModels();
     return Object.keys(emails).length > 0;
   }
 
-  public getSmsSubscriptionModels(): SubscriptionModel[] {
+  public _getSmsSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getSmsSubscriptionModels');
-    const subscriptions = this.core.subscriptionModelStore.list();
+    const subscriptions = this._core._subscriptionModelStore.list();
     return subscriptions.filter((s) => s.type === SubscriptionType.SMS);
   }
 
-  public async hasSms(): Promise<boolean> {
-    const smsModels = this.getSmsSubscriptionModels();
+  public async _hasSms(): Promise<boolean> {
+    const smsModels = this._getSmsSubscriptionModels();
     return Object.keys(smsModels).length > 0;
   }
 
   /**
    * Returns all push subscription models, including push subscriptions from other browsers.
    */
-  public getAllPushSubscriptionModels(): SubscriptionModel[] {
+  public _getAllPushSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getAllPushSubscriptionModels');
-    const subscriptions = this.core.subscriptionModelStore.list();
+    const subscriptions = this._core._subscriptionModelStore.list();
     return subscriptions.filter((s) =>
       SubscriptionHelper.isPushSubscriptionType(s.type),
     );
   }
 
-  private async getPushSubscriptionModelByCurrentToken(): Promise<
+  async _getPushSubscriptionModelByCurrentToken(): Promise<
     SubscriptionModel | undefined
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
     const pushToken = await MainHelper.getCurrentPushToken();
     if (pushToken) {
-      return this.getSubscriptionOfTypeWithToken(
+      return this._getSubscriptionOfTypeWithToken(
         SubscriptionChannel.Push,
         pushToken,
       );
@@ -129,7 +129,7 @@ export class CoreModuleDirector {
 
   // Browser may return a different PushToken value, use the last-known value as a fallback.
   //   - This happens if you disable notification permissions then re-enable them.
-  private async getPushSubscriptionModelByLastKnownToken(): Promise<
+  async _getPushSubscriptionModelByLastKnownToken(): Promise<
     SubscriptionModel | undefined
   > {
     logMethodCall(
@@ -137,7 +137,7 @@ export class CoreModuleDirector {
     );
     const lastKnownPushToken = await getPushToken();
     if (lastKnownPushToken) {
-      return this.getSubscriptionOfTypeWithToken(
+      return this._getSubscriptionOfTypeWithToken(
         SubscriptionChannel.Push,
         lastKnownPushToken,
       );
@@ -149,31 +149,31 @@ export class CoreModuleDirector {
    * Gets the current push subscription model for the current browser.
    * @returns The push subscription model for the current browser, or undefined if no push subscription exists.
    */
-  public async getPushSubscriptionModel(): Promise<
+  public async _getPushSubscriptionModel(): Promise<
     SubscriptionModel | undefined
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModel');
     return (
-      (await this.getPushSubscriptionModelByCurrentToken()) ||
-      (await this.getPushSubscriptionModelByLastKnownToken())
+      (await this._getPushSubscriptionModelByCurrentToken()) ||
+      (await this._getPushSubscriptionModelByLastKnownToken())
     );
   }
 
   public _getIdentityModel(): IdentityModel {
     logMethodCall('CoreModuleDirector.getIdentityModel');
-    return this.core.identityModelStore.model;
+    return this._core._identityModelStore.model;
   }
 
   public _getPropertiesModel(): PropertiesModel {
     logMethodCall('CoreModuleDirector.getPropertiesModel');
-    return this.core.propertiesModelStore.model;
+    return this._core._propertiesModelStore.model;
   }
 
-  public async getAllSubscriptionsModels(): Promise<SubscriptionModel[]> {
+  public async _getAllSubscriptionsModels(): Promise<SubscriptionModel[]> {
     logMethodCall('CoreModuleDirector.getAllSubscriptionsModels');
-    const emailSubscriptions = this.getEmailSubscriptionModels();
-    const smsSubscriptions = this.getSmsSubscriptionModels();
-    const pushSubscription = await this.getPushSubscriptionModel();
+    const emailSubscriptions = this._getEmailSubscriptionModels();
+    const smsSubscriptions = this._getSmsSubscriptionModels();
+    const pushSubscription = await this._getPushSubscriptionModel();
 
     return [
       ...emailSubscriptions,
@@ -182,7 +182,7 @@ export class CoreModuleDirector {
     ];
   }
 
-  public getSubscriptionOfTypeWithToken(
+  public _getSubscriptionOfTypeWithToken(
     type: SubscriptionChannelValue | undefined,
     token: string,
   ): SubscriptionModel | undefined {
@@ -195,13 +195,13 @@ export class CoreModuleDirector {
 
     switch (type) {
       case SubscriptionChannel.Email:
-        subscriptions = this.getEmailSubscriptionModels();
+        subscriptions = this._getEmailSubscriptionModels();
         break;
       case SubscriptionChannel.SMS:
-        subscriptions = this.getSmsSubscriptionModels();
+        subscriptions = this._getSmsSubscriptionModels();
         break;
       case SubscriptionChannel.Push:
-        subscriptions = this.getAllPushSubscriptionModels();
+        subscriptions = this._getAllPushSubscriptionModels();
         break;
       default:
         return undefined;

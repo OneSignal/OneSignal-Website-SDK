@@ -12,7 +12,7 @@ describe('CoreModuleDirector tests', () => {
 
   describe('getPushSubscriptionModel', () => {
     async function getPushSubscriptionModel() {
-      return (await getCoreModuleDirector()).getPushSubscriptionModel();
+      return (await getCoreModuleDirector())._getPushSubscriptionModel();
     }
 
     test('returns undefined when it find no push records', async () => {
@@ -23,9 +23,7 @@ describe('CoreModuleDirector tests', () => {
       const pushModelCurrent = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
-        // @ts-expect-error - private method
-        'getPushSubscriptionModelByCurrentToken',
-        // @ts-expect-error - private method
+        '_getPushSubscriptionModelByCurrentToken',
       ).mockResolvedValue(pushModelCurrent);
       expect(await getPushSubscriptionModel()).toBe(pushModelCurrent);
     });
@@ -34,9 +32,7 @@ describe('CoreModuleDirector tests', () => {
       const pushModelLastKnown = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
-        // @ts-expect-error - private method
-        'getPushSubscriptionModelByLastKnownToken',
-        // @ts-expect-error - private method
+        '_getPushSubscriptionModelByLastKnownToken',
       ).mockResolvedValue(pushModelLastKnown);
       expect(await getPushSubscriptionModel()).toEqual(pushModelLastKnown);
     });
@@ -45,17 +41,13 @@ describe('CoreModuleDirector tests', () => {
       const pushModelCurrent = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
-        // @ts-expect-error - private method
-        'getPushSubscriptionModelByCurrentToken',
-        // @ts-expect-error - private method
+        '_getPushSubscriptionModelByCurrentToken',
       ).mockResolvedValue(pushModelCurrent);
 
       const pushModelLastKnown = generateNewSubscription();
       vi.spyOn(
         CoreModuleDirector.prototype,
-        // @ts-expect-error - private method
-        'getPushSubscriptionModelByLastKnownToken',
-        // @ts-expect-error - private method
+        '_getPushSubscriptionModelByLastKnownToken',
       ).mockResolvedValue(pushModelLastKnown);
 
       expect(await getPushSubscriptionModel()).toBe(pushModelCurrent);
