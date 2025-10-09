@@ -79,31 +79,23 @@ export default class Launcher extends AnimatedElement {
     this.wasInactive = false;
   }
 
-  inactivate() {
-    return this.bell.message.hide().then(() => {
-      if (this.bell.badge.content.length > 0) {
-        return this.bell.badge
-          .hide()
-          .then(() => Promise.all([super.inactivate(), this.resize('small')]))
-          .then(() => this.bell.badge.show());
-      } else {
-        return Promise.all([super.inactivate(), this.resize('small')]);
-      }
-    });
+  async inactivate() {
+    await this.bell.message.hide();
+    if (this.bell.badge.content.length > 0) {
+      await this.bell.badge.hide();
+      await Promise.all([super.inactivate(), this.resize('small')]);
+      return this.bell.badge.show();
+    } else {
+      await Promise.all([super.inactivate(), this.resize('small')]);
+      return this;
+    }
   }
 
-  activate() {
+  async activate() {
     if (this.bell.badge.content.length > 0) {
-      return this.bell.badge
-        .hide()
-        .then(() =>
-          Promise.all([super.activate(), this.resize(this.bell.options.size!)]),
-        );
-    } else {
-      return Promise.all([
-        super.activate(),
-        this.resize(this.bell.options.size!),
-      ]);
+      await this.bell.badge.hide();
     }
+    await Promise.all([super.activate(), this.resize(this.bell.options.size!)]);
+    return this;
   }
 }

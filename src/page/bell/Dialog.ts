@@ -50,13 +50,17 @@ export default class Dialog extends AnimatedElement {
 
   get subscribeButton() {
     return this.element
-      ? this.element.querySelector('#' + this.subscribeButtonSelectorId)
+      ? this.element.querySelector<HTMLButtonElement>(
+          '#' + this.subscribeButtonSelectorId,
+        )
       : null;
   }
 
   get unsubscribeButton() {
     return this.element
-      ? this.element.querySelector('#' + this.unsubscribeButtonSelectorId)
+      ? this.element.querySelector<HTMLButtonElement>(
+          '#' + this.unsubscribeButtonSelectorId,
+        )
       : null;
   }
 

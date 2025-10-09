@@ -9,28 +9,25 @@ export default class Badge extends AnimatedElement {
     );
   }
 
-  increment(): void {
-    // If it IS a number (is not not a number)
-    if (!isNaN(this.content as any)) {
-      let badgeNumber = +this.content; // Coerce to int
-      badgeNumber += 1;
-      this.content = badgeNumber.toString();
+  _updateCount(delta: number): void {
+    const num = Number(this.content);
+    if (!Number.isNaN(num)) {
+      const newNum = num + delta;
+      this.content = newNum > 0 ? newNum.toString() : '';
     }
+  }
+
+  increment(): void {
+    this._updateCount(1);
+  }
+
+  decrement(): void {
+    this._updateCount(-1);
   }
 
   show(): Promise<AnimatedElement> {
     const promise = super.show();
     OneSignal._notifyButton?.setCustomColorsIfSpecified();
     return promise;
-  }
-
-  decrement() {
-    // If it IS a number (is not not a number)
-    if (!isNaN(this.content as any)) {
-      let badgeNumber = +this.content; // Coerce to int
-      badgeNumber -= 1;
-      if (badgeNumber > 0) this.content = badgeNumber.toString();
-      else this.content = '';
-    }
   }
 }

@@ -37,10 +37,10 @@ export default class Bell {
   public hovering = false;
   public initialized = false;
   public _launcher: Launcher | undefined;
-  public _button: any;
-  public _badge: any;
-  public _message: any;
-  public _dialog: any;
+  public _button: Button | undefined;
+  public _badge: Badge | undefined;
+  public _message: Message | undefined;
+  public _dialog: Dialog | undefined;
 
   private DEFAULT_SIZE: BellSize = 'medium';
   private DEFAULT_POSITION: BellPosition = 'bottom-right';
@@ -114,7 +114,9 @@ export default class Bell {
           document,
           'click',
           (e: Event, destroyEventListener: () => void) => {
-            const wasDialogClicked = this.dialog.element.contains(e.target);
+            const wasDialogClicked = this.dialog.element?.contains(
+              e.target as Node,
+            );
             if (wasDialogClicked) {
               return;
             }
@@ -199,11 +201,16 @@ export default class Bell {
   private installEventHooks() {
     // Install event hooks
     OneSignal._emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
-      this.dialog.subscribeButton.disabled = true;
+      const subscribeButton = this.dialog.subscribeButton;
+      if (subscribeButton) {
+        subscribeButton.disabled = true;
+      }
       this._ignoreSubscriptionState = true;
       OneSignal.User.PushSubscription.optIn()
         .then(() => {
-          this.dialog.subscribeButton.disabled = false;
+          if (subscribeButton) {
+            subscribeButton.disabled = false;
+          }
           return this.dialog.hide();
         })
         .then(() => {
@@ -227,10 +234,15 @@ export default class Bell {
     });
 
     OneSignal._emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
-      this.dialog.unsubscribeButton.disabled = true;
+      const unsubscribeButton = this.dialog.unsubscribeButton;
+      if (unsubscribeButton) {
+        unsubscribeButton.disabled = true;
+      }
       OneSignal.User.PushSubscription.optOut()
         .then(() => {
-          this.dialog.unsubscribeButton.disabled = false;
+          if (unsubscribeButton) {
+            unsubscribeButton.disabled = false;
+          }
           return this.dialog.hide();
         })
         .then(() => {
@@ -299,7 +311,7 @@ export default class Bell {
         return;
       }
 
-      if (!this.dialog.hidden) {
+      if (this.dialog.shown) {
         // If the dialog is being brought up when clicking button, don't shrink
         return;
       }
@@ -311,11 +323,11 @@ export default class Bell {
         // immediately after because of the way mobile click events work. Basically only happens if HOVERING and HOVERED
         // fire within a few milliseconds of each other
         this.message
-          .waitUntilShown()
+          .show()
           .then(() => delay(Message.TIMEOUT))
           .then(() => this.message.hide())
           .then(() => {
-            if (this.launcher.wasInactive && this.dialog.hidden) {
+            if (this.launcher.wasInactive && !this.dialog.shown) {
               this.launcher.inactivate();
               this.launcher.wasInactive = false;
             }
@@ -324,7 +336,7 @@ export default class Bell {
 
       if (this.message.shown) {
         this.message.hide().then(() => {
-          if (this.launcher.wasInactive && this.dialog.hidden) {
+          if (this.launcher.wasInactive && !this.dialog.shown) {
             this.launcher.inactivate();
             this.launcher.wasInactive = false;
           }
@@ -543,15 +555,15 @@ export default class Bell {
     const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
     const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
     const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
-    this.graphic.setAttribute(
+    this.graphic?.setAttribute(
       'style',
       `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`,
     );
-    this.badge.element.setAttribute(
+    this.badge?.element?.setAttribute(
       'style',
       `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`,
     );
-    this.dialog.element.setAttribute(
+    this.dialog?.element?.setAttribute(
       'style',
       `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
     );
@@ -587,19 +599,39 @@ export default class Bell {
 
   setCustomColorsIfSpecified() {
     // Some common vars first
-    const dialogButton = this.dialog.element.querySelector('button.action');
-    const pulseRing = this.button.element.querySelector('.pulse-ring');
+    const dialogElement = this.dialog.element;
+    const dialogButton =
+      dialogElement?.querySelector<HTMLButtonElement>('button.action');
+    const buttonElement = this.button.element;
+    const pulseRing = buttonElement?.querySelector<HTMLElement>('.pulse-ring');
+    const graphic = this.graphic;
+
     // Reset added styles first
-    this.graphic.querySelector('.background').style.cssText = '';
-    const foregroundElements = this.graphic.querySelectorAll('.foreground');
-    for (let i = 0; i < foregroundElements.length; i++) {
-      const element = foregroundElements[i];
-      element.style.cssText = '';
+    if (graphic) {
+      const background = graphic.querySelector<HTMLElement>('.background');
+      if (background) {
+        background.style.cssText = '';
+      }
+      const foregroundElements =
+        graphic.querySelectorAll<HTMLElement>('.foreground');
+      for (let i = 0; i < foregroundElements.length; i++) {
+        const element = foregroundElements[i];
+        if (element) {
+          element.style.cssText = '';
+        }
+      }
+      const stroke = graphic.querySelector<HTMLElement>('.stroke');
+      if (stroke) {
+        stroke.style.cssText = '';
+      }
     }
-    this.graphic.querySelector('.stroke').style.cssText = '';
-    this.badge.element.style.cssText = '';
+
+    const badgeElement = this.badge.element;
+    if (badgeElement) {
+      badgeElement.style.cssText = '';
+    }
+
     if (dialogButton) {
-      dialogButton.style.cssText = '';
       dialogButton.style.cssText = '';
     }
     if (pulseRing) {
@@ -610,35 +642,48 @@ export default class Bell {
     if (this.options.colors) {
       const colors = this.options.colors;
       if (colors['circle.background']) {
-        this.graphic.querySelector('.background').style.cssText +=
-          `fill: ${colors['circle.background']}`;
+        const background = graphic?.querySelector<HTMLElement>('.background');
+        if (background) {
+          background.style.cssText += `fill: ${colors['circle.background']}`;
+        }
       }
       if (colors['circle.foreground']) {
-        const foregroundElements = this.graphic.querySelectorAll('.foreground');
+        const foregroundElements =
+          graphic?.querySelectorAll<HTMLElement>('.foreground') ?? [];
         for (let i = 0; i < foregroundElements.length; i++) {
           const element = foregroundElements[i];
-          element.style.cssText += `fill: ${colors['circle.foreground']}`;
+          if (element) {
+            element.style.cssText += `fill: ${colors['circle.foreground']}`;
+          }
         }
-        this.graphic.querySelector('.stroke').style.cssText +=
-          `stroke: ${colors['circle.foreground']}`;
+        const stroke = graphic?.querySelector<HTMLElement>('.stroke');
+        if (stroke) {
+          stroke.style.cssText += `stroke: ${colors['circle.foreground']}`;
+        }
       }
-      if (colors['badge.background']) {
-        this.badge.element.style.cssText += `background: ${colors['badge.background']}`;
+      if (colors['badge.background'] && badgeElement) {
+        badgeElement.style.cssText += `background: ${colors['badge.background']}`;
       }
-      if (colors['badge.bordercolor']) {
-        this.badge.element.style.cssText += `border-color: ${colors['badge.bordercolor']}`;
+      if (colors['badge.bordercolor'] && badgeElement) {
+        badgeElement.style.cssText += `border-color: ${colors['badge.bordercolor']}`;
       }
-      if (colors['badge.foreground']) {
-        this.badge.element.style.cssText += `color: ${colors['badge.foreground']}`;
+      if (colors['badge.foreground'] && badgeElement) {
+        badgeElement.style.cssText += `color: ${colors['badge.foreground']}`;
       }
-      if (dialogButton) {
+      if (dialogButton && dialogElement) {
         if (colors['dialog.button.background']) {
-          this.dialog.element.querySelector('button.action').style.cssText +=
-            `background: ${colors['dialog.button.background']}`;
+          const actionButton =
+            dialogElement.querySelector<HTMLButtonElement>('button.action');
+          if (actionButton) {
+            actionButton.style.cssText += `background: ${colors['dialog.button.background']}`;
+          }
         }
         if (colors['dialog.button.foreground']) {
-          this.dialog.element.querySelector('button.action').style.cssText +=
-            `color: ${colors['dialog.button.foreground']}`;
+          const actionButton =
+            dialogElement.querySelector<HTMLButtonElement>('button.action');
+          if (actionButton) {
+            actionButton.style.cssText += `color: ${colors['dialog.button.foreground']}`;
+          }
         }
         if (colors['dialog.button.background.hovering']) {
           this.addCssToHead(
@@ -653,10 +698,11 @@ export default class Bell {
           );
         }
       }
-      if (pulseRing) {
-        if (colors['pulse.color']) {
-          this.button.element.querySelector('.pulse-ring').style.cssText =
-            `border-color: ${colors['pulse.color']}`;
+      if (colors['pulse.color']) {
+        const pulseRingElement =
+          buttonElement?.querySelector<HTMLElement>('.pulse-ring');
+        if (pulseRingElement) {
+          pulseRingElement.style.cssText = `border-color: ${colors['pulse.color']}`;
         }
       }
     }
@@ -716,7 +762,7 @@ export default class Bell {
   }
 
   get graphic() {
-    return this.button.element.querySelector('svg');
+    return this.button.element?.querySelector('svg');
   }
 
   get launcher() {

@@ -8,7 +8,7 @@ import Message from './Message';
 
 export default class Button extends AnimatedElement {
   public _isHandlingClick: boolean = false;
-  public events: any;
+  public events: Record<string, string>;
   public bell: Bell;
 
   constructor(bell: Bell) {
