@@ -26,21 +26,21 @@ export default class Message extends AnimatedElement {
 
   display(type: string, content: string, duration = 0) {
     Log._debug(`Calling display(${type}, ${content}, ${duration}).`);
-    return (this.shown ? this.hide() : nothing())
+    return (this._shown ? this._hide() : nothing())
       .then(() => {
-        this.content = decodeHtmlEntities(content);
+        this._content = decodeHtmlEntities(content);
         this.contentType = type;
       })
       .then(() => {
-        return this.show();
+        return this._show();
       })
       .then(() => delay(duration))
       .then(() => {
-        return this.hide();
+        return this._hide();
       })
       .then(() => {
         // Reset back to normal content type so stuff can show a gain
-        this.content = this.getTipForState();
+        this._content = this.getTipForState();
         this.contentType = 'tip';
       });
   }
@@ -58,15 +58,15 @@ export default class Message extends AnimatedElement {
   enqueue(message: string) {
     this.queued.push(decodeHtmlEntities(message));
     return new Promise((resolve) => {
-      if (this.bell.badge.shown) {
+      if (this.bell.badge._shown) {
         this.bell.badge
-          .hide()
-          .then(() => this.bell.badge.increment())
-          .then(() => this.bell.badge.show())
+          ._hide()
+          .then(() => this.bell.badge._increment())
+          .then(() => this.bell.badge._show())
           .then(resolve);
       } else {
-        this.bell.badge.increment();
-        if (this.bell.initialized) this.bell.badge.show().then(resolve);
+        this.bell.badge._increment();
+        if (this.bell.initialized) this.bell.badge._show().then(resolve);
         else resolve(undefined);
       }
     });
@@ -75,19 +75,19 @@ export default class Message extends AnimatedElement {
   dequeue() {
     const dequeuedMessage = this.queued.pop();
     return new Promise((resolve) => {
-      if (this.bell.badge.shown) {
+      if (this.bell.badge._shown) {
         this.bell.badge
-          .hide()
+          ._hide()
           .then(() => {
-            this.bell.badge.decrement();
-            if (this.bell.badge.content.length > 0) {
-              return this.bell.badge.show();
+            this.bell.badge._decrement();
+            if (this.bell.badge._content.length > 0) {
+              return this.bell.badge._show();
             }
             return Promise.resolve();
           })
           .then(() => resolve(dequeuedMessage));
       } else {
-        this.bell.badge.decrement();
+        this.bell.badge._decrement();
         resolve(dequeuedMessage);
       }
     });

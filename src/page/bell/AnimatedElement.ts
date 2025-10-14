@@ -2,11 +2,11 @@
  * Modern replacement for AnimatedElement using CSS transitions and Web Animations API
  */
 export default class AnimatedElement {
-  public selector: string;
-  protected showClass?: string;
-  protected activeClass?: string;
-  protected inactiveClass?: string;
-  protected nestedContentSelector?: string;
+  public _selector: string;
+  protected _showClass?: string;
+  protected _activeClass?: string;
+  protected _inactiveClass?: string;
+  protected _nestedContentSelector?: string;
 
   constructor(
     selector: string,
@@ -15,24 +15,24 @@ export default class AnimatedElement {
     inactiveClass?: string,
     nestedContentSelector?: string,
   ) {
-    this.selector = selector;
-    this.showClass = showClass;
-    this.activeClass = activeClass;
-    this.inactiveClass = inactiveClass;
-    this.nestedContentSelector = nestedContentSelector;
+    this._selector = selector;
+    this._showClass = showClass;
+    this._activeClass = activeClass;
+    this._inactiveClass = inactiveClass;
+    this._nestedContentSelector = nestedContentSelector;
   }
 
   /**
    * Show element using CSS classes and wait for animations to complete
    */
-  async show(): Promise<void> {
+  async _show(): Promise<void> {
     const element = this.element;
     if (!element || this.shown) {
       return;
     }
 
-    if (this.showClass) {
-      element.classList.add(this.showClass);
+    if (this._showClass) {
+      element.classList.add(this._showClass);
     }
 
     await this.waitForAnimations();
@@ -47,8 +47,8 @@ export default class AnimatedElement {
       return;
     }
 
-    if (this.showClass) {
-      element.classList.remove(this.showClass);
+    if (this._showClass) {
+      element.classList.remove(this._showClass);
     }
 
     await this.waitForAnimations();
@@ -57,17 +57,17 @@ export default class AnimatedElement {
   /**
    * Activate element using CSS classes
    */
-  async activate(): Promise<void> {
+  async _activate(): Promise<void> {
     const element = this.element;
     if (!element || this.active) {
       return;
     }
 
-    if (this.inactiveClass) {
-      element.classList.remove(this.inactiveClass);
+    if (this._inactiveClass) {
+      element.classList.remove(this._inactiveClass);
     }
-    if (this.activeClass) {
-      element.classList.add(this.activeClass);
+    if (this._activeClass) {
+      element.classList.add(this._activeClass);
     }
 
     await this.waitForAnimations();
@@ -76,17 +76,17 @@ export default class AnimatedElement {
   /**
    * Inactivate element using CSS classes
    */
-  async inactivate(): Promise<void> {
+  async _inactivate(): Promise<void> {
     const element = this.element;
     if (!element || !this.active) {
       return;
     }
 
-    if (this.activeClass) {
-      element.classList.remove(this.activeClass);
+    if (this._activeClass) {
+      element.classList.remove(this._activeClass);
     }
-    if (this.inactiveClass) {
-      element.classList.add(this.inactiveClass);
+    if (this._inactiveClass) {
+      element.classList.add(this._inactiveClass);
     }
 
     await this.waitForAnimations();
@@ -95,8 +95,8 @@ export default class AnimatedElement {
   /**
    * Wait for all CSS animations/transitions to complete
    */
-  protected async waitForAnimations(): Promise<void> {
-    const element = this.element;
+  protected async _waitForAnimations(): Promise<void> {
+    const element = this._element;
     if (!element) return;
 
     const animations = element.getAnimations();
@@ -108,24 +108,24 @@ export default class AnimatedElement {
   /**
    * Get or set element content
    */
-  get content(): string {
-    const element = this.element;
+  get _content(): string {
+    const element = this._element;
     if (!element) return '';
 
-    if (this.nestedContentSelector) {
-      const nestedElement = element.querySelector(this.nestedContentSelector);
+    if (this._nestedContentSelector) {
+      const nestedElement = element.querySelector(this._nestedContentSelector);
       return nestedElement?.textContent ?? '';
     }
 
     return element.textContent ?? '';
   }
 
-  set content(value: string) {
-    const element = this.element;
+  set _content(value: string) {
+    const element = this._element;
     if (!element) return;
 
-    if (this.nestedContentSelector) {
-      const nestedElement = element.querySelector(this.nestedContentSelector);
+    if (this._nestedContentSelector) {
+      const nestedElement = element.querySelector(this._nestedContentSelector);
       if (nestedElement) {
         nestedElement.textContent = value;
       }
@@ -137,23 +137,23 @@ export default class AnimatedElement {
   /**
    * Get the DOM element (lazy-loaded)
    */
-  get element(): HTMLElement | null {
-    return document.querySelector(this.selector);
+  get _element(): HTMLElement | null {
+    return document.querySelector(this._selector);
   }
 
   /**
    * State getters
    */
-  get shown(): boolean {
-    const element = this.element;
-    return element?.classList.contains(this.showClass ?? '') ?? false;
+  get _shown(): boolean {
+    const element = this._element;
+    return element?.classList.contains(this._showClass ?? '') ?? false;
   }
 
-  get active(): boolean {
-    const element = this.element;
-    if (this.inactiveClass) {
-      return !(element?.classList.contains(this.inactiveClass) ?? false);
+  get _active(): boolean {
+    const element = this._element;
+    if (this._inactiveClass) {
+      return !(element?.classList.contains(this._inactiveClass) ?? false);
     }
-    return element?.classList.contains(this.activeClass ?? '') ?? false;
+    return element?.classList.contains(this._activeClass ?? '') ?? false;
   }
 }

@@ -345,15 +345,15 @@ export function manageNotifyButtonStateWhileSlidedownShows(): void {
   if (
     notifyButton &&
     notifyButton.options?.enable &&
-    OneSignal._notifyButton?.launcher?.shown
+    OneSignal._notifyButton?.launcher?._shown
   ) {
-    OneSignal._notifyButton?.launcher?.show().then(() => {
-      OneSignal._notifyButton?.launcher?.hide();
+    OneSignal._notifyButton?.launcher?._show().then(() => {
+      OneSignal._notifyButton?.launcher?._hide();
     });
   }
   OneSignal._emitter.once(Slidedown.EVENTS.CLOSED, () => {
     if (OneSignal._notifyButton && OneSignal._notifyButton.options.enable) {
-      OneSignal._notifyButton.launcher.show();
+      OneSignal._notifyButton.launcher._show();
     }
   });
 }
