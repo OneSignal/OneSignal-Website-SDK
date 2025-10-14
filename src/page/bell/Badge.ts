@@ -27,7 +27,7 @@ export default class Badge extends AnimatedElement {
 
   _show(): Promise<AnimatedElement> {
     const promise = super._show();
-    OneSignal._notifyButton?.setCustomColorsIfSpecified();
+    OneSignal._notifyButton?._setCustomColorsIfSpecified();
     return promise;
   }
 }

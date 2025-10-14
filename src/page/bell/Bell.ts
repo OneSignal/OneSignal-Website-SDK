@@ -42,26 +42,26 @@ const DEFAULT_POSITION: BellPosition = 'bottom-right';
 const DEFAULT_THEME = 'default';
 
 export default class Bell {
-  public options: AppUserConfigNotifyButton;
-  public state: BellStateType = BellState._Uninitialized;
+  public _options: AppUserConfigNotifyButton;
+  public _state: BellStateType = BellState._Uninitialized;
   public _ignoreSubscriptionState = false;
-  public hovering = false;
-  public initialized = false;
-  public _launcher: Launcher | undefined;
-  public _button: Button | undefined;
-  public _badge: Badge | undefined;
-  public _message: Message | undefined;
-  public _dialog: Dialog | undefined;
+  public _hovering = false;
+  public _initialized = false;
+  public _launcherEl: Launcher | undefined;
+  public _buttonEl: Button | undefined;
+  public _badgeEl: Badge | undefined;
+  public _messageEl: Message | undefined;
+  public _dialogEl: Dialog | undefined;
 
   constructor(config: Partial<AppUserConfigNotifyButton>, launcher?: Launcher) {
-    this.options = {
+    this._options = {
       enable: config.enable || false,
       size: config.size || DEFAULT_SIZE,
       position: config.position || DEFAULT_POSITION,
       theme: config.theme || DEFAULT_THEME,
       showLauncherAfter: config.showLauncherAfter || 10,
       showBadgeAfter: config.showBadgeAfter || 300,
-      text: this.setDefaultTextOptions(config.text || {}),
+      text: this._setDefaultTextOptions(config.text || {}),
       prenotify: config.prenotify,
       showCredit: config.showCredit,
       colors: config.colors,
@@ -69,36 +69,36 @@ export default class Bell {
     };
 
     if (launcher) {
-      this._launcher = launcher;
+      this._launcherEl = launcher;
     }
 
-    if (!this.options.enable) return;
+    if (!this._options.enable) return;
 
-    this.validateOptions(this.options);
-    this.state = BellState._Uninitialized;
+    this._validateOptions(this._options);
+    this._state = BellState._Uninitialized;
     this._ignoreSubscriptionState = false;
 
-    this.installEventHooks();
-    this.updateState();
+    this._installEventHooks();
+    this._updateState();
   }
 
-  showDialogProcedure() {
-    if (!this.dialog._shown) {
-      this.dialog._show().then(() => {
+  _showDialogProcedure() {
+    if (!this._dialog._shown) {
+      this._dialog._show().then(() => {
         once(
           document,
           'click',
           (e: Event, destroyEventListener: () => void) => {
-            const wasDialogClicked = this.dialog._element?.contains(
+            const wasDialogClicked = this._dialog._element?.contains(
               e.target as Node,
             );
             if (wasDialogClicked) {
               return;
             }
             destroyEventListener();
-            if (this.dialog._shown) {
-              this.dialog._hide().then(() => {
-                this.launcher.inactivateIfWasInactive();
+            if (this._dialog._shown) {
+              this._dialog._hide().then(() => {
+                this._launcher._inactivateIfWasInactive();
               });
             }
           },
@@ -108,7 +108,7 @@ export default class Bell {
     }
   }
 
-  private validateOptions(options: AppUserConfigNotifyButton) {
+  private _validateOptions(options: AppUserConfigNotifyButton) {
     if (
       !options.size ||
       !containsMatch(['small', 'medium', 'large'], options.size)
@@ -129,15 +129,15 @@ export default class Bell {
       );
     if (!options.showLauncherAfter || options.showLauncherAfter < 0)
       throw new Error(
-        `Invalid delay duration of ${this.options.showLauncherAfter} for showing the notify button. Choose a value above 0.`,
+        `Invalid delay duration of ${this._options.showLauncherAfter} for showing the notify button. Choose a value above 0.`,
       );
     if (!options.showBadgeAfter || options.showBadgeAfter < 0)
       throw new Error(
-        `Invalid delay duration of ${this.options.showBadgeAfter} for showing the notify button's badge. Choose a value above 0.`,
+        `Invalid delay duration of ${this._options.showBadgeAfter} for showing the notify button's badge. Choose a value above 0.`,
       );
   }
 
-  private setDefaultTextOptions(text: Partial<BellText>): BellText {
+  private _setDefaultTextOptions(text: Partial<BellText>): BellText {
     const finalText: BellText = {
       'tip.state.unsubscribed':
         text['tip.state.unsubscribed'] || 'Subscribe to notifications',
@@ -173,10 +173,10 @@ export default class Bell {
     return finalText;
   }
 
-  private installEventHooks() {
+  private _installEventHooks() {
     // Install event hooks
     OneSignal._emitter.on(BellEvent._SubscribeClick, () => {
-      const subscribeButton = this.dialog.subscribeButton;
+      const subscribeButton = this._dialog._subscribeButton;
       if (subscribeButton) {
         subscribeButton.disabled = true;
       }
@@ -186,22 +186,22 @@ export default class Bell {
           if (subscribeButton) {
             subscribeButton.disabled = false;
           }
-          return this.dialog._hide();
+          return this._dialog._hide();
         })
         .then(() => {
-          return this.message.display(
+          return this._message._display(
             MesageType._Message,
-            this.options.text['message.action.resubscribed'],
+            this._options.text['message.action.resubscribed'],
             MESSAGE_TIMEOUT,
           );
         })
         .then(() => {
           this._ignoreSubscriptionState = false;
-          this.launcher.clearIfWasInactive();
-          return this.launcher._inactivate();
+          this._launcher._clearIfWasInactive();
+          return this._launcher._inactivate();
         })
         .then(() => {
-          return this.updateState();
+          return this._updateState();
         })
         .catch((e) => {
           throw e;
@@ -209,7 +209,7 @@ export default class Bell {
     });
 
     OneSignal._emitter.on(BellEvent._UnsubscribeClick, () => {
-      const unsubscribeButton = this.dialog.unsubscribeButton;
+      const unsubscribeButton = this._dialog._unsubscribeButton;
       if (unsubscribeButton) {
         unsubscribeButton.disabled = true;
       }
@@ -218,62 +218,62 @@ export default class Bell {
           if (unsubscribeButton) {
             unsubscribeButton.disabled = false;
           }
-          return this.dialog._hide();
+          return this._dialog._hide();
         })
         .then(() => {
-          this.launcher.clearIfWasInactive();
-          return this.launcher._activate();
+          this._launcher._clearIfWasInactive();
+          return this._launcher._activate();
         })
         .then(() => {
-          return this.message.display(
+          return this._message._display(
             MesageType._Message,
-            this.options.text['message.action.unsubscribed'],
+            this._options.text['message.action.unsubscribed'],
             MESSAGE_TIMEOUT,
           );
         })
         .then(() => {
-          return this.updateState();
+          return this._updateState();
         });
     });
 
     OneSignal._emitter.on(BellEvent._Hovering, () => {
-      this.hovering = true;
-      this.launcher.activateIfInactive();
+      this._hovering = true;
+      this._launcher._activateIfInactive();
 
       // If there's already a message being force shown, do not override
-      if (this.message._shown || this.dialog._shown) {
-        this.hovering = false;
+      if (this._message._shown || this._dialog._shown) {
+        this._hovering = false;
         return;
       }
 
       // If the message is a message and not a tip, don't show it (only show tips)
       // Messages will go away on their own
-      if (this.message.contentType === MesageType._Message) {
-        this.hovering = false;
+      if (this._message._contentType === MesageType._Message) {
+        this._hovering = false;
         return;
       }
 
       new Promise<void>((resolve) => {
         // If a message is being shown
-        if (this.message.queued.length > 0) {
-          return this.message.dequeue().then((msg: any) => {
-            this.message._content = msg;
-            this.message.contentType = MesageType._Queued;
+        if (this._message._queued.length > 0) {
+          return this._message._dequeue().then((msg: any) => {
+            this._message._content = msg;
+            this._message._contentType = MesageType._Queued;
             resolve();
           });
         } else {
-          this.message._content = decodeHtmlEntities(
-            this.message.getTipForState(),
+          this._message._content = decodeHtmlEntities(
+            this._message._getTipForState(),
           );
-          this.message.contentType = MesageType._Tip;
+          this._message._contentType = MesageType._Tip;
           resolve();
         }
       })
         .then(() => {
-          return this.message._show();
+          return this._message._show();
         })
         .then(() => {
-          this.hovering = false;
+          this._hovering = false;
         })
         .catch((err) => {
           Log._error(err);
@@ -282,38 +282,38 @@ export default class Bell {
 
     OneSignal._emitter.on(BellEvent._Hovered, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
-      if (this.message.contentType === MesageType._Message) {
+      if (this._message._contentType === MesageType._Message) {
         return;
       }
 
-      if (this.dialog._shown) {
+      if (this._dialog._shown) {
         // If the dialog is being brought up when clicking button, don't shrink
         return;
       }
 
-      if (this.hovering) {
-        this.hovering = false;
+      if (this._hovering) {
+        this._hovering = false;
         // Hovering still being true here happens on mobile where the message could still be showing (i.e. animating)
         // when a HOVERED event fires. In other words, you tap on mobile, HOVERING fires, and then HOVERED fires
         // immediately after because of the way mobile click events work. Basically only happens if HOVERING and HOVERED
         // fire within a few milliseconds of each other
-        this.message
+        this._message
           ._show()
           .then(() => delay(MESSAGE_TIMEOUT))
-          .then(() => this.message._hide())
+          .then(() => this._message._hide())
           .then(() => {
-            if (this.launcher.wasInactive && !this.dialog._shown) {
-              this.launcher._inactivate();
-              this.launcher.wasInactive = false;
+            if (this._launcher._wasInactive && !this._dialog._shown) {
+              this._launcher._inactivate();
+              this._launcher._wasInactive = false;
             }
           });
       }
 
-      if (this.message._shown) {
-        this.message._hide().then(() => {
-          if (this.launcher.wasInactive && !this.dialog._shown) {
-            this.launcher._inactivate();
-            this.launcher.wasInactive = false;
+      if (this._message._shown) {
+        this._message._hide().then(() => {
+          if (this._launcher._wasInactive && !this._dialog._shown) {
+            this._launcher._inactivate();
+            this._launcher._wasInactive = false;
           }
         });
       }
@@ -323,12 +323,12 @@ export default class Bell {
       OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
       async (isSubscribed: SubscriptionChangeEvent) => {
         if (isSubscribed.current.optedIn) {
-          if (this.badge._shown && this.options.prenotify) {
-            this.badge._hide();
+          if (this._badge._shown && this._options.prenotify) {
+            this._badge._hide();
           }
-          if (this.dialog.notificationIcons === null) {
+          if (this._dialog._notificationIcons === null) {
             const icons = await MainHelper.getNotificationIcons();
-            this.dialog.notificationIcons = icons;
+            this._dialog._notificationIcons = icons;
           }
         }
 
@@ -342,74 +342,74 @@ export default class Bell {
         } else {
           bellState = BellState._Unsubscribed;
         }
-        this.setState(bellState, this._ignoreSubscriptionState);
+        this._setState(bellState, this._ignoreSubscriptionState);
       },
     );
 
     OneSignal._emitter.on(BellEvent._StateChanged, (state) => {
-      if (!this.launcher._element) {
+      if (!this._launcher._element) {
         // Notify button doesn't exist
         return;
       }
       if (state.to === BellState._Subscribed) {
-        this.launcher._inactivate();
+        this._launcher._inactivate();
       } else if (state.to === BellState._Unsubscribed || BellState._Blocked) {
-        this.launcher._activate();
+        this._launcher._activate();
       }
     });
 
     OneSignal._emitter.on(
       OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
       () => {
-        this.updateState();
+        this._updateState();
       },
     );
   }
 
-  private addDefaultClasses() {
+  private _addDefaultClasses() {
     // Add default classes
-    const container = this.container;
-    if (this.options.position === 'bottom-left') {
+    const container = this._container;
+    if (this._options.position === 'bottom-left') {
       if (container) {
         addCssClass(container, 'onesignal-bell-container-bottom-left');
       }
       addCssClass(
-        this.launcher._selector,
+        this._launcher._selector,
         'onesignal-bell-launcher-bottom-left',
       );
-    } else if (this.options.position === 'bottom-right') {
+    } else if (this._options.position === 'bottom-right') {
       if (container) {
         addCssClass(container, 'onesignal-bell-container-bottom-right');
       }
       addCssClass(
-        this.launcher._selector,
+        this._launcher._selector,
         'onesignal-bell-launcher-bottom-right',
       );
     } else {
       throw new Error(
-        `Invalid OneSignal notify button position ${this.options.position}`,
+        `Invalid OneSignal notify button position ${this._options.position}`,
       );
     }
 
-    if (this.options.theme === 'default') {
+    if (this._options.theme === 'default') {
       addCssClass(
-        this.launcher._selector,
+        this._launcher._selector,
         'onesignal-bell-launcher-theme-default',
       );
-    } else if (this.options.theme === 'inverse') {
+    } else if (this._options.theme === 'inverse') {
       addCssClass(
-        this.launcher._selector,
+        this._launcher._selector,
         'onesignal-bell-launcher-theme-inverse',
       );
     } else {
       throw new Error(
-        `Invalid OneSignal notify button theme ${this.options.theme}`,
+        `Invalid OneSignal notify button theme ${this._options.theme}`,
       );
     }
   }
 
-  async create() {
-    if (!this.options.enable) return;
+  async _create() {
+    if (!this._options.enable) return;
 
     const sdkStylesLoadResult =
       await OneSignal._context._dynamicResourceLoader.loadSdkStylesheet();
@@ -419,7 +419,7 @@ export default class Bell {
     }
 
     // Remove any existing bell
-    if (this.container) {
+    if (this._container) {
       removeDomElement('#onesignal-bell-container');
     }
 
@@ -429,10 +429,10 @@ export default class Bell {
       'beforeend',
       '<div id="onesignal-bell-container" class="onesignal-bell-container onesignal-reset"></div>',
     );
-    if (this.container) {
+    if (this._container) {
       // Insert the bell launcher
       addDomElement(
-        this.container,
+        this._container,
         'beforeend',
         '<div id="onesignal-bell-launcher" class="onesignal-bell-launcher"></div>',
       );
@@ -440,35 +440,35 @@ export default class Bell {
 
     // Insert the bell launcher button
     addDomElement(
-      this.launcher._selector,
+      this._launcher._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-button"></div>',
     );
     // Insert the bell launcher badge
     addDomElement(
-      this.launcher._selector,
+      this._launcher._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-badge"></div>',
     );
     // Insert the bell launcher message
     addDomElement(
-      this.launcher._selector,
+      this._launcher._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-message"></div>',
     );
     addDomElement(
-      this.message._selector,
+      this._message._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-message-body"></div>',
     );
     // Insert the bell launcher dialog
     addDomElement(
-      this.launcher._selector,
+      this._launcher._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-dialog"></div>',
     );
     addDomElement(
-      this.dialog._selector,
+      this._dialog._selector,
       'beforeend',
       '<div class="onesignal-bell-launcher-dialog-body"></div>',
     );
@@ -476,7 +476,7 @@ export default class Bell {
     // Install events
 
     // Add visual elements
-    addDomElement(this.button._selector, 'beforeend', logoSvg);
+    addDomElement(this._button._selector, 'beforeend', logoSvg);
 
     const isPushEnabled =
       await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
@@ -486,68 +486,68 @@ export default class Bell {
     // where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
     const resizeTo = isPushEnabled
       ? 'small'
-      : this.options.size || DEFAULT_SIZE;
-    await this.launcher.resize(resizeTo);
+      : this._options.size || DEFAULT_SIZE;
+    await this._launcher._resize(resizeTo);
 
-    this.addDefaultClasses();
+    this._addDefaultClasses();
 
-    this.applyOffsetIfSpecified();
-    this.setCustomColorsIfSpecified();
-    this.addBadgeShadow();
+    this._applyOffsetIfSpecified();
+    this._setCustomColorsIfSpecified();
+    this._addBadgeShadow();
 
     Log._info('Showing the notify button.');
 
-    await (isPushEnabled ? this.launcher._inactivate() : nothing())
+    await (isPushEnabled ? this._launcher._inactivate() : nothing())
       .then(() => {
-        if (isPushEnabled && this.dialog.notificationIcons === null) {
+        if (isPushEnabled && this._dialog._notificationIcons === null) {
           return MainHelper.getNotificationIcons().then((icons) => {
-            this.dialog.notificationIcons = icons;
+            this._dialog._notificationIcons = icons;
           });
         } else return nothing();
       })
-      .then(() => delay(this.options.showLauncherAfter || 0))
+      .then(() => delay(this._options.showLauncherAfter || 0))
       .then(() => {
-        return this.launcher._show();
+        return this._launcher._show();
       })
       .then(() => {
-        return delay(this.options.showBadgeAfter || 0);
+        return delay(this._options.showBadgeAfter || 0);
       })
       .then(() => {
         if (
-          this.options.prenotify &&
+          this._options.prenotify &&
           !isPushEnabled &&
           OneSignal._isNewVisitor
         ) {
-          return this.message
-            .enqueue(this.options.text['message.prenotify'])
-            .then(() => this.badge._show());
+          return this._message
+            ._enqueue(this._options.text['message.prenotify'])
+            .then(() => this._badge._show());
         } else return nothing();
       })
-      .then(() => (this.initialized = true));
+      .then(() => (this._initialized = true));
   }
 
-  addBadgeShadow() {
+  _addBadgeShadow() {
     const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
     const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
     const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
-    this.graphic?.setAttribute(
+    this._graphic?.setAttribute(
       'style',
       `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`,
     );
-    this.badge?._element?.setAttribute(
+    this._badge?._element?.setAttribute(
       'style',
       `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`,
     );
-    this.dialog?._element?.setAttribute(
+    this._dialog?._element?.setAttribute(
       'style',
       `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
     );
   }
 
-  applyOffsetIfSpecified() {
-    const offset = this.options.offset;
+  _applyOffsetIfSpecified() {
+    const offset = this._options.offset;
     if (offset) {
-      const element = this.launcher._element as HTMLElement;
+      const element = this._launcher._element as HTMLElement;
 
       if (!element) {
         Log._error('Could not find bell dom element');
@@ -560,11 +560,11 @@ export default class Bell {
         element.style.cssText += `bottom: ${offset.bottom};`;
       }
 
-      if (this.options.position === 'bottom-right') {
+      if (this._options.position === 'bottom-right') {
         if (offset.right) {
           element.style.cssText += `right: ${offset.right};`;
         }
-      } else if (this.options.position === 'bottom-left') {
+      } else if (this._options.position === 'bottom-left') {
         if (offset.left) {
           element.style.cssText += `left: ${offset.left};`;
         }
@@ -572,14 +572,14 @@ export default class Bell {
     }
   }
 
-  setCustomColorsIfSpecified() {
+  _setCustomColorsIfSpecified() {
     // Some common vars first
-    const dialogElement = this.dialog._element;
+    const dialogElement = this._dialog._element;
     const dialogButton =
       dialogElement?.querySelector<HTMLButtonElement>('button.action');
-    const buttonElement = this.button._element;
+    const buttonElement = this._button._element;
     const pulseRing = buttonElement?.querySelector<HTMLElement>('.pulse-ring');
-    const graphic = this.graphic;
+    const graphic = this._graphic;
 
     // Reset added styles first
     if (graphic) {
@@ -601,7 +601,7 @@ export default class Bell {
       }
     }
 
-    const badgeElement = this.badge._element;
+    const badgeElement = this._badge._element;
     if (badgeElement) {
       badgeElement.style.cssText = '';
     }
@@ -614,8 +614,8 @@ export default class Bell {
     }
 
     // Set new styles
-    if (this.options.colors) {
-      const colors = this.options.colors;
+    if (this._options.colors) {
+      const colors = this._options.colors;
       if (colors['circle.background']) {
         const background = graphic?.querySelector<HTMLElement>('.background');
         if (background) {
@@ -661,13 +661,13 @@ export default class Bell {
           }
         }
         if (colors['dialog.button.background.hovering']) {
-          this.addCssToHead(
+          this._addCssToHead(
             'onesignal-background-hover-style',
             `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:hover { background: ${colors['dialog.button.background.hovering']} !important; }`,
           );
         }
         if (colors['dialog.button.background.active']) {
-          this.addCssToHead(
+          this._addCssToHead(
             'onesignal-background-active-style',
             `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:active { background: ${colors['dialog.button.background.active']} !important; }`,
           );
@@ -683,7 +683,7 @@ export default class Bell {
     }
   }
 
-  addCssToHead(id: string, css: string) {
+  _addCssToHead(id: string, css: string) {
     const existingStyleDom = document.getElementById(id);
     if (existingStyleDom) return;
     const styleDom = document.createElement('style');
@@ -696,17 +696,17 @@ export default class Bell {
   /**
    * Updates the current state to the correct new current state. Returns a promise.
    */
-  updateState() {
+  _updateState() {
     Promise.all([
       OneSignal._context._subscriptionManager.isPushNotificationsEnabled(),
       OneSignal._context._permissionManager.getPermissionStatus(),
     ])
       .then(([isEnabled, permission]) => {
-        this.setState(
+        this._setState(
           isEnabled ? BellState._Subscribed : BellState._Unsubscribed,
         );
         if (permission === 'denied') {
-          this.setState(BellState._Blocked);
+          this._setState(BellState._Blocked);
         }
       })
       .catch((e) => {
@@ -718,9 +718,9 @@ export default class Bell {
    * Updates the current state to the specified new state.
    * @param newState One of ['subscribed', 'unsubscribed'].
    */
-  setState(newState: BellStateType, silent = false) {
-    const lastState = this.state;
-    this.state = newState;
+  _setState(newState: BellStateType, silent = false) {
+    const lastState = this._state;
+    this._state = newState;
     if (lastState !== newState && !silent) {
       OneSignalEvent.trigger(BellEvent._StateChanged, {
         from: lastState,
@@ -732,48 +732,48 @@ export default class Bell {
     // Update anything that should be reset to the same state
   }
 
-  get container() {
+  get _container() {
     return document.querySelector('#onesignal-bell-container');
   }
 
-  get graphic() {
-    return this.button._element?.querySelector('svg');
+  get _graphic() {
+    return this._button._element?.querySelector('svg');
   }
 
-  get launcher() {
-    if (!this._launcher) this._launcher = new Launcher(this);
-    return this._launcher;
+  get _launcher() {
+    if (!this._launcherEl) this._launcherEl = new Launcher(this);
+    return this._launcherEl;
   }
 
-  get button() {
-    if (!this._button) this._button = new Button(this);
-    return this._button;
+  get _button() {
+    if (!this._buttonEl) this._buttonEl = new Button(this);
+    return this._buttonEl;
   }
 
-  get badge() {
-    if (!this._badge) this._badge = new Badge();
-    return this._badge;
+  get _badge() {
+    if (!this._badgeEl) this._badgeEl = new Badge();
+    return this._badgeEl;
   }
 
-  get message() {
-    if (!this._message) this._message = new Message(this);
-    return this._message;
+  get _message() {
+    if (!this._messageEl) this._messageEl = new Message(this);
+    return this._messageEl;
   }
 
-  get dialog() {
-    if (!this._dialog) this._dialog = new Dialog(this);
-    return this._dialog;
+  get _dialog() {
+    if (!this._dialogEl) this._dialogEl = new Dialog(this);
+    return this._dialogEl;
   }
 
-  get subscribed() {
-    return this.state === BellState._Subscribed;
+  get _subscribed() {
+    return this._state === BellState._Subscribed;
   }
 
-  get unsubscribed() {
-    return this.state === BellState._Unsubscribed;
+  get _unsubscribed() {
+    return this._state === BellState._Unsubscribed;
   }
 
-  get blocked() {
-    return this.state === BellState._Blocked;
+  get _blocked() {
+    return this._state === BellState._Blocked;
   }
 }
