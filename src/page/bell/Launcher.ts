@@ -8,8 +8,8 @@ import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
 
 export default class Launcher extends AnimatedElement {
-  public bell: Bell;
-  public wasInactive: boolean;
+  public _bell: Bell;
+  public _wasInactive: boolean;
 
   constructor(bell: Bell) {
     super(
@@ -19,11 +19,11 @@ export default class Launcher extends AnimatedElement {
       'onesignal-bell-launcher-inactive',
     );
 
-    this.bell = bell;
-    this.wasInactive = false;
+    this._bell = bell;
+    this._wasInactive = false;
   }
 
-  async resize(size: BellSize) {
+  async _resize(size: BellSize) {
     if (!this._element) {
       // Notify button doesn't exist
       throw new Error('Missing DOM element');
@@ -59,22 +59,22 @@ export default class Launcher extends AnimatedElement {
     }
   }
 
-  async activateIfInactive() {
+  async _activateIfInactive() {
     if (!this._active) {
-      this.wasInactive = true;
+      this._wasInactive = true;
       await this._activate();
     }
   }
 
-  async inactivateIfWasInactive() {
-    if (this.wasInactive) {
-      this.wasInactive = false;
+  async _inactivateIfWasInactive() {
+    if (this._wasInactive) {
+      this._wasInactive = false;
       await this._inactivate();
     }
   }
 
-  clearIfWasInactive() {
-    this.wasInactive = false;
+  _clearIfWasInactive() {
+    this._wasInactive = false;
   }
 
   async _inactivate() {
@@ -86,8 +86,8 @@ export default class Launcher extends AnimatedElement {
   }
 
   async _activate() {
-    if (this.bell.badge._content.length > 0) {
-      await this.bell.badge._hide();
+    if (this._bell._badge._content.length > 0) {
+      await this._bell._badge._hide();
     }
     await Promise.all([super.activate(), this.resize(this.bell.options.size!)]);
   }
