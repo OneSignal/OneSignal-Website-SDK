@@ -6,7 +6,7 @@ describe('Prompt Helpers', () => {
   test('should return true if the category slidedown is configured', () => {
     const prompts: SlidedownPromptOptions[] = [
       {
-        type: DelayedPromptType.Category,
+        type: DelayedPromptType._Category,
         text: {
           acceptButton: 'Accept',
           cancelButton: 'Cancel',
@@ -16,7 +16,7 @@ describe('Prompt Helpers', () => {
         categories: [{ tag: 'Tag', label: 'Label' }],
       },
       {
-        type: DelayedPromptType.Push,
+        type: DelayedPromptType._Push,
         text: {
           acceptButton: 'Accept',
           cancelButton: 'Cancel',
@@ -29,14 +29,14 @@ describe('Prompt Helpers', () => {
     // should return matching prompt
     const result = getFirstSlidedownPromptOptionsWithType(
       prompts,
-      DelayedPromptType.Push,
+      DelayedPromptType._Push,
     );
     expect(result).toBe(prompts[1]);
 
     // if no prompts are provided, it should return undefined
     const result2 = getFirstSlidedownPromptOptionsWithType(
       undefined,
-      DelayedPromptType.Category,
+      DelayedPromptType._Category,
     );
     expect(result2).toBe(undefined);
   });

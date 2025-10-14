@@ -351,10 +351,10 @@ function injectDefaultsIntoPromptOptions(
       promptOptionsConfig.slidedown?.prompts?.map((promptOption) => {
         promptOption.type = getValueOrDefault(
           promptOption.type,
-          DelayedPromptType.Push,
+          DelayedPromptType._Push,
         );
 
-        if (promptOption.type === DelayedPromptType.Category) {
+        if (promptOption.type === DelayedPromptType._Category) {
           promptOption.text = {
             ...promptOption.text,
             positiveUpdateButton: getValueOrDefault(

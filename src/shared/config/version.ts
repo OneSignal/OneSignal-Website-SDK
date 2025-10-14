@@ -166,8 +166,8 @@ function convertConfigToVersionTwo(
 ): SlidedownOptions {
   const isCategory = isCategorySlidedownConfiguredVersion1(slidedownConfig);
   const promptType = isCategory
-    ? DelayedPromptType.Category
-    : DelayedPromptType.Push;
+    ? DelayedPromptType._Category
+    : DelayedPromptType._Push;
 
   const { categories, prompts = [] } = slidedownConfig;
 
