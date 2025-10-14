@@ -37,8 +37,8 @@ export default class Dialog extends AnimatedElement {
     this.notificationIcons = null;
   }
 
-  show() {
-    return this.updateBellLauncherDialogBody().then(() => super.show());
+  _show() {
+    return this.updateBellLauncherDialogBody().then(() => super._show());
   }
 
   get subscribeButtonSelectorId() {
@@ -50,16 +50,16 @@ export default class Dialog extends AnimatedElement {
   }
 
   get subscribeButton() {
-    return this.element
-      ? this.element.querySelector<HTMLButtonElement>(
+    return this._element
+      ? this._element.querySelector<HTMLButtonElement>(
           '#' + this.subscribeButtonSelectorId,
         )
       : null;
   }
 
   get unsubscribeButton() {
-    return this.element
-      ? this.element.querySelector<HTMLButtonElement>(
+    return this._element
+      ? this._element.querySelector<HTMLButtonElement>(
           '#' + this.unsubscribeButtonSelectorId,
         )
       : null;
@@ -69,8 +69,8 @@ export default class Dialog extends AnimatedElement {
     return OneSignal._context._subscriptionManager
       .isPushNotificationsEnabled()
       .then((currentSetSubscription: boolean) => {
-        if (this.nestedContentSelector) {
-          clearDomElementChildren(this.nestedContentSelector);
+        if (this._nestedContentSelector) {
+          clearDomElementChildren(this._nestedContentSelector);
         }
         let contents = 'Nothing to show.';
 
@@ -128,8 +128,8 @@ export default class Dialog extends AnimatedElement {
           }
           contents = `<h1>${this.bell.options.text['dialog.blocked.title']}</h1><div class="divider"></div><div class="instructions"><p>${this.bell.options.text['dialog.blocked.message']}</p>${instructionsHtml}</div>${footer}`;
         }
-        if (this.nestedContentSelector) {
-          addDomElement(this.nestedContentSelector, 'beforeend', contents);
+        if (this._nestedContentSelector) {
+          addDomElement(this._nestedContentSelector, 'beforeend', contents);
         }
         if (this.subscribeButton) {
           this.subscribeButton.addEventListener('click', () => {

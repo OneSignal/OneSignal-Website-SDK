@@ -23,7 +23,7 @@ export default class Button extends AnimatedElement {
       mouse: 'bell.launcher.button.mouse',
     };
 
-    const element = this.element;
+    const element = this._element;
     if (element) {
       element.addEventListener(
         'touchstart',
@@ -81,13 +81,13 @@ export default class Button extends AnimatedElement {
 
   onTap() {
     this.pulse();
-    this.activate();
-    this.bell.badge.activate();
+    this._activate();
+    this.bell.badge._activate();
   }
 
   onEndTap() {
-    this.inactivate();
-    this.bell.badge.inactivate();
+    this._inactivate();
+    this.bell.badge._inactivate();
   }
 
   async onClick() {
@@ -100,7 +100,7 @@ export default class Button extends AnimatedElement {
 
     try {
       if (
-        this.bell.message.shown &&
+        this.bell.message._shown &&
         this.bell.message.contentType == MesageType._Message
       ) {
         // A message is being shown, it'll disappear soon
@@ -121,7 +121,7 @@ export default class Button extends AnimatedElement {
             )
             .then(() => {
               this.bell._ignoreSubscriptionState = false;
-              this.bell.launcher.inactivate();
+              this.bell.launcher._inactivate();
             });
         });
       }
@@ -132,16 +132,16 @@ export default class Button extends AnimatedElement {
         await this._toggleDialog();
       }
 
-      await this.bell.message.hide();
+      await this.bell.message._hide();
     } finally {
       this._isHandlingClick = false;
     }
   }
 
   async _toggleDialog() {
-    if (this.bell.dialog.shown) {
+    if (this.bell.dialog._shown) {
       // Close dialog if already open (toggle behavior)
-      await this.bell.dialog.hide();
+      await this.bell.dialog._hide();
       await this.bell.launcher.inactivateIfWasInactive();
     } else {
       await this.bell.showDialogProcedure();
@@ -150,9 +150,9 @@ export default class Button extends AnimatedElement {
 
   pulse() {
     removeDomElement('.pulse-ring');
-    if (this.element) {
+    if (this._element) {
       addDomElement(
-        this.element,
+        this._element,
         'beforeend',
         '<div class="pulse-ring"></div>',
       );
