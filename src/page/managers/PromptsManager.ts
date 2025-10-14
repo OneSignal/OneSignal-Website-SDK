@@ -48,7 +48,7 @@ export class PromptsManager {
     this.eventHooksInstalled = false;
   }
 
-  private shouldForceSlidedownOverNative(): boolean {
+  private _shouldForceSlidedownOverNative(): boolean {
     const browserVersion = getBrowserVersion();
     return (
       (getBrowserName() === Browser.Chrome &&
@@ -58,7 +58,7 @@ export class PromptsManager {
     );
   }
 
-  public async spawnAutoPrompts() {
+  public async _spawnAutoPrompts() {
     // user config prompt options
     const userPromptOptions = OneSignal.config?.userConfig.promptOptions;
 
@@ -69,22 +69,22 @@ export class PromptsManager {
      * Same for Safari 12.1+ & Firefox 72+. It requires user interaction to request notification permissions.
      * It simply wouldn't work to try to show native prompt from script.
      */
-    const forceSlidedownOverNative = this.shouldForceSlidedownOverNative();
+    const forceSlidedownOverNative = this._shouldForceSlidedownOverNative();
 
     // show native prompt
-    const nativePromptOptions = this.getDelayedPromptOptions(
+    const nativePromptOptions = this._getDelayedPromptOptions(
       userPromptOptions,
       DelayedPromptType._Native,
     );
     const isPageViewConditionMetForNative: boolean =
-      this.isPageViewConditionMet(nativePromptOptions);
+      this._isPageViewConditionMet(nativePromptOptions);
     const conditionMetWithNativeOptions =
       nativePromptOptions.enabled && isPageViewConditionMetForNative;
     const forceSlidedownWithNativeOptions =
       forceSlidedownOverNative && conditionMetWithNativeOptions;
 
     if (conditionMetWithNativeOptions && !forceSlidedownWithNativeOptions) {
-      this.internalShowDelayedPrompt(
+      this._internalShowDelayedPrompt(
         DelayedPromptType._Native,
         nativePromptOptions.timeDelay || 0,
       );
@@ -98,7 +98,7 @@ export class PromptsManager {
     );
 
     if (forceSlidedownWithNativeOptions && !isPushSlidedownConfigured) {
-      this.internalShowDelayedPrompt(
+      this._internalShowDelayedPrompt(
         DelayedPromptType._Push,
         nativePromptOptions.timeDelay || 0,
       );
@@ -110,12 +110,12 @@ export class PromptsManager {
       for (let i = 0; i < prompts.length; i++) {
         const promptOptions = prompts[i];
 
-        const slidedownPromptOptions = this.getDelayedPromptOptions(
+        const slidedownPromptOptions = this._getDelayedPromptOptions(
           userPromptOptions,
           promptOptions.type,
         );
         const isPageViewConditionMetForSlidedown: boolean =
-          this.isPageViewConditionMet(slidedownPromptOptions);
+          this._isPageViewConditionMet(slidedownPromptOptions);
         const conditionMetWithSlidedownOptions =
           slidedownPromptOptions.enabled && isPageViewConditionMetForSlidedown;
 
@@ -124,7 +124,7 @@ export class PromptsManager {
         };
 
         if (conditionMetWithSlidedownOptions) {
-          this.internalShowDelayedPrompt(
+          this._internalShowDelayedPrompt(
             promptOptions.type,
             slidedownPromptOptions.timeDelay || 0,
             options,
@@ -134,7 +134,7 @@ export class PromptsManager {
     }
   }
 
-  public async internalShowDelayedPrompt(
+  public async _internalShowDelayedPrompt(
     type: DelayedPromptTypeValue,
     timeDelaySeconds: number,
     options?: AutoPromptOptions,
@@ -155,29 +155,29 @@ export class PromptsManager {
 
     switch (type) {
       case DelayedPromptType._Native:
-        await this.internalShowNativePrompt();
+        await this._internalShowNativePrompt();
         break;
       case DelayedPromptType._Push:
-        await this.internalShowSlidedownPrompt(options);
+        await this._internalShowSlidedownPrompt(options);
         break;
       case DelayedPromptType._Category:
-        await this.internalShowCategorySlidedown(options);
+        await this._internalShowCategorySlidedown(options);
         break;
       case DelayedPromptType._Sms:
-        await this.internalShowSmsSlidedown(options);
+        await this._internalShowSmsSlidedown(options);
         break;
       case DelayedPromptType._Email:
-        await this.internalShowEmailSlidedown(options);
+        await this._internalShowEmailSlidedown(options);
         break;
       case DelayedPromptType._SmsAndEmail:
-        await this.internalShowSmsAndEmailSlidedown(options);
+        await this._internalShowSmsAndEmailSlidedown(options);
         break;
       default:
         Log._error('Invalid Delayed Prompt type');
     }
   }
 
-  public async internalShowNativePrompt(): Promise<boolean> {
+  public async _internalShowNativePrompt(): Promise<boolean> {
     logMethodCall('internalShowNativePrompt');
 
     if (this.isNativePromptShowing) {
@@ -192,7 +192,7 @@ export class PromptsManager {
     return success;
   }
 
-  private async internalShowSlidedownPrompt(
+  private async _internalShowSlidedownPrompt(
     options: AutoPromptOptions = { force: false },
   ): Promise<void> {
     logMethodCall('internalShowSlidedownPrompt');
@@ -211,44 +211,47 @@ export class PromptsManager {
     }
 
     if (!this.eventHooksInstalled) {
-      this.installEventHooksForSlidedown();
+      this._installEventHooksForSlidedown();
     }
 
     await this.context._slidedownManager._createSlidedown(options);
   }
 
-  public async internalShowCategorySlidedown(
+  public async _internalShowCategorySlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowCategorySlidedown');
-    await this.internalShowParticularSlidedown(
+    await this._internalShowParticularSlidedown(
       DelayedPromptType._Category,
       options,
     );
   }
 
-  public async internalShowSmsSlidedown(
+  public async _internalShowSmsSlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowSmsSlidedown');
-    await this.internalShowParticularSlidedown(DelayedPromptType._Sms, options);
+    await this._internalShowParticularSlidedown(
+      DelayedPromptType._Sms,
+      options,
+    );
   }
 
-  public async internalShowEmailSlidedown(
+  public async _internalShowEmailSlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowEmailSlidedown');
-    await this.internalShowParticularSlidedown(
+    await this._internalShowParticularSlidedown(
       DelayedPromptType._Email,
       options,
     );
   }
 
-  public async internalShowSmsAndEmailSlidedown(
+  public async _internalShowSmsAndEmailSlidedown(
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowSmsAndEmailSlidedown');
-    await this.internalShowParticularSlidedown(
+    await this._internalShowParticularSlidedown(
       DelayedPromptType._SmsAndEmail,
       options,
     );
@@ -261,7 +264,7 @@ export class PromptsManager {
    *
    * If present, `options.slidedownPromptOptions` overrides `typeToPullFromConfig`
    */
-  public async internalShowParticularSlidedown(
+  public async _internalShowParticularSlidedown(
     typeToPullFromConfig: DelayedPromptTypeValue,
     options?: AutoPromptOptions,
   ): Promise<void> {
@@ -286,13 +289,13 @@ export class PromptsManager {
       }
     }
 
-    await this.internalShowSlidedownPrompt({
+    await this._internalShowSlidedownPrompt({
       ...options,
       slidedownPromptOptions,
     });
   }
 
-  public installEventHooksForSlidedown(): void {
+  public _installEventHooksForSlidedown(): void {
     this.eventHooksInstalled = true;
 
     OneSignal._emitter.on(Slidedown.EVENTS.SHOWN, () => {
@@ -332,7 +335,7 @@ export class PromptsManager {
     });
   }
 
-  private isPageViewConditionMet(options?: DelayedPromptOptions): boolean {
+  private _isPageViewConditionMet(options?: DelayedPromptOptions): boolean {
     if (!options || typeof options.pageViews === 'undefined') {
       return false;
     }
@@ -345,7 +348,7 @@ export class PromptsManager {
     return localPageViews >= options.pageViews;
   }
 
-  private getDelayedPromptOptions(
+  private _getDelayedPromptOptions(
     promptOptions: AppUserConfigPromptOptions | undefined,
     type: DelayedPromptTypeValue,
   ): DelayedPromptOptions {

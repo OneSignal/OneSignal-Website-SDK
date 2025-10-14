@@ -268,14 +268,14 @@ export default class Slidedown {
   ): void {
     switch (invalidChannelInput) {
       case InvalidChannelInputField.InvalidSms:
-        ChannelCaptureContainer.showSmsInputError(true);
+        ChannelCaptureContainer._showSmsInputError(true);
         break;
       case InvalidChannelInputField.InvalidEmail:
-        ChannelCaptureContainer.showEmailInputError(true);
+        ChannelCaptureContainer._showEmailInputError(true);
         break;
       case InvalidChannelInputField.InvalidEmailAndSms:
-        ChannelCaptureContainer.showSmsInputError(true);
-        ChannelCaptureContainer.showEmailInputError(true);
+        ChannelCaptureContainer._showSmsInputError(true);
+        ChannelCaptureContainer._showEmailInputError(true);
         break;
       default:
         break;
@@ -287,7 +287,7 @@ export default class Slidedown {
     removeCssClass(this._allowButton, 'onesignal-error-state-button');
 
     if (!isSlidedownPushDependent(this._options.type)) {
-      ChannelCaptureContainer.resetInputErrorStates(this._options.type);
+      ChannelCaptureContainer._resetInputErrorStates(this._options.type);
     }
 
     this._isShowingFailureState = false;

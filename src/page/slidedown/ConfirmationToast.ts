@@ -14,17 +14,17 @@ import { isMobileBrowser } from 'src/shared/useragent/detect';
 import { once } from 'src/shared/utils/utils';
 
 export default class ConfirmationToast {
-  private message: string;
+  private _message: string;
 
   constructor(message: string) {
-    this.message = message;
+    this._message = message;
   }
 
-  async show(): Promise<void> {
+  async _show(): Promise<void> {
     const toastElement = document.createElement('div');
     const toastText = document.createElement('p');
 
-    toastText.innerText = this.message;
+    toastText.innerText = this._message;
     toastElement.appendChild(toastText);
 
     const slidedownContainer = document.createElement('div');
@@ -42,31 +42,31 @@ export default class ConfirmationToast {
     dialogContainer.id = SLIDEDOWN_CSS_IDS.dialog;
     addCssClass(dialogContainer, SLIDEDOWN_CSS_CLASSES.dialog);
     dialogContainer.appendChild(toastElement);
-    this.container.appendChild(dialogContainer);
+    this._container.appendChild(dialogContainer);
 
     // Animate it in depending on environment
     addCssClass(
-      this.container,
+      this._container,
       isMobileBrowser()
         ? SLIDEDOWN_CSS_CLASSES.slideUp
         : SLIDEDOWN_CSS_CLASSES.slideDown,
     );
 
-    ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.SHOWN);
+    ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.SHOWN);
   }
 
-  static async triggerSlidedownEvent(eventName: string): Promise<void> {
+  static async _triggerSlidedownEvent(eventName: string): Promise<void> {
     await OneSignalEvent.trigger(eventName);
   }
 
-  close(): void {
-    addCssClass(this.container, SLIDEDOWN_CSS_CLASSES.closeSlidedown);
+  _close(): void {
+    addCssClass(this._container, SLIDEDOWN_CSS_CLASSES.closeSlidedown);
     once(
-      this.dialog,
+      this._dialog,
       'animationend',
       (event: any, destroyListenerFn: () => void) => {
         if (
-          event.target === this.dialog &&
+          event.target === this._dialog &&
           (event.animationName === 'slideDownExit' ||
             event.animationName === 'slideUpExit')
         ) {
@@ -79,11 +79,11 @@ export default class ConfirmationToast {
     );
   }
 
-  get container() {
+  get _container() {
     return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.container}`);
   }
 
-  get dialog() {
+  get _dialog() {
     return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.dialog}`);
   }
 

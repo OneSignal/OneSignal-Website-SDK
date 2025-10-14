@@ -12,6 +12,7 @@ export default class LoginManager {
   // Other internal classes should await on this if they access users
   static switchingUsersPromise: Promise<void> = Promise.resolve();
 
+  // public api
   static async login(externalId: string, token?: string): Promise<void> {
     await (this.switchingUsersPromise = LoginManager._login(externalId, token));
   }
@@ -74,6 +75,7 @@ export default class LoginManager {
     await Promise.all(promises);
   }
 
+  // public api
   static async logout(): Promise<void> {
     await (this.switchingUsersPromise = LoginManager._logout());
   }

@@ -131,5 +131,5 @@ Object.defineProperty(global.navigator, 'serviceWorker', {
 // dont want to make a call to update notification types
 vi.spyOn(
   SubscriptionManagerPage.prototype,
-  'updateNotificationTypes',
+  '_updateNotificationTypes',
 ).mockResolvedValue();

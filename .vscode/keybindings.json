@@ -1,6 +1,9 @@
 [
+  // wont automatically be applied
+  // example keybinding, copy to your own keybindings.json
   {
-    "key": "shift+cmd+y",
-    "command": "macros.rename_"
+    "key": "shift+cmd+/",
+    "command": "macros.rename_",
+    "when": "editorTextFocus"
   }
 ]

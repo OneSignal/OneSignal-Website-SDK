@@ -14,6 +14,7 @@ ngrok.log
 !.vscode/launch.json
 !.vscode/settings.json
 !.vscode/keybindings.json
+!.vscode/extensions.json
 .cursor/
 
 coverage
