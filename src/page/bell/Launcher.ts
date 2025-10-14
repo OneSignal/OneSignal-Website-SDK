@@ -5,7 +5,7 @@ import {
 } from 'src/shared/helpers/dom';
 import type { BellSize } from 'src/shared/prompts/types';
 import AnimatedElement from './AnimatedElement';
-import Bell from './Bell';
+import type Bell from './Bell';
 
 export default class Launcher extends AnimatedElement {
   public bell: Bell;

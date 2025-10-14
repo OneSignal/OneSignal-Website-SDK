@@ -25,14 +25,25 @@ import Button from './Button';
 import Dialog from './Dialog';
 import Launcher from './Launcher';
 import Message from './Message';
+import {
+  BellEvent,
+  BellState,
+  type BellStateType,
+  MESSAGE_TIMEOUT,
+  MesageType,
+} from './constants';
 
 const logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
 type BellState = 'uninitialized' | 'subscribed' | 'unsubscribed' | 'blocked';
 
+const DEFAULT_SIZE: BellSize = 'medium';
+const DEFAULT_POSITION: BellPosition = 'bottom-right';
+const DEFAULT_THEME = 'default';
+
 export default class Bell {
   public options: AppUserConfigNotifyButton;
-  public state: BellState = Bell.STATES.UNINITIALIZED;
+  public state: BellStateType = BellState._Uninitialized;
   public _ignoreSubscriptionState = false;
   public hovering = false;
   public initialized = false;
@@ -42,48 +53,12 @@ export default class Bell {
   public _message: Message | undefined;
   public _dialog: Dialog | undefined;
 
-  private DEFAULT_SIZE: BellSize = 'medium';
-  private DEFAULT_POSITION: BellPosition = 'bottom-right';
-  private DEFAULT_THEME = 'default';
-
-  static get EVENTS() {
-    return {
-      STATE_CHANGED: 'notifyButtonStateChange',
-      LAUNCHER_CLICK: 'notifyButtonLauncherClick',
-      BELL_CLICK: 'notifyButtonButtonClick',
-      SUBSCRIBE_CLICK: 'notifyButtonSubscribeClick',
-      UNSUBSCRIBE_CLICK: 'notifyButtonUnsubscribeClick',
-      HOVERING: 'notifyButtonHovering',
-      HOVERED: 'notifyButtonHover',
-    };
-  }
-
-  static get STATES() {
-    return {
-      UNINITIALIZED: 'uninitialized' as BellState,
-      SUBSCRIBED: 'subscribed' as BellState,
-      UNSUBSCRIBED: 'unsubscribed' as BellState,
-      BLOCKED: 'blocked' as BellState,
-    };
-  }
-
-  static get TEXT_SUBS() {
-    return {
-      'prompt.native.grant': {
-        default: 'Allow',
-        chrome: 'Allow',
-        firefox: 'Always Receive Notifications',
-        safari: 'Allow',
-      },
-    };
-  }
-
   constructor(config: Partial<AppUserConfigNotifyButton>, launcher?: Launcher) {
     this.options = {
       enable: config.enable || false,
-      size: config.size || this.DEFAULT_SIZE,
-      position: config.position || this.DEFAULT_POSITION,
-      theme: config.theme || this.DEFAULT_THEME,
+      size: config.size || DEFAULT_SIZE,
+      position: config.position || DEFAULT_POSITION,
+      theme: config.theme || DEFAULT_THEME,
       showLauncherAfter: config.showLauncherAfter || 10,
       showBadgeAfter: config.showBadgeAfter || 300,
       text: this.setDefaultTextOptions(config.text || {}),
@@ -100,7 +75,7 @@ export default class Bell {
     if (!this.options.enable) return;
 
     this.validateOptions(this.options);
-    this.state = Bell.STATES.UNINITIALIZED;
+    this.state = BellState._Uninitialized;
     this._ignoreSubscriptionState = false;
 
     this.installEventHooks();
@@ -200,7 +175,7 @@ export default class Bell {
 
   private installEventHooks() {
     // Install event hooks
-    OneSignal._emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
+    OneSignal._emitter.on(BellEvent._SubscribeClick, () => {
       const subscribeButton = this.dialog.subscribeButton;
       if (subscribeButton) {
         subscribeButton.disabled = true;
@@ -215,9 +190,9 @@ export default class Bell {
         })
         .then(() => {
           return this.message.display(
-            Message.TYPES.MESSAGE,
+            MesageType._Message,
             this.options.text['message.action.resubscribed'],
-            Message.TIMEOUT,
+            MESSAGE_TIMEOUT,
           );
         })
         .then(() => {
@@ -233,7 +208,7 @@ export default class Bell {
         });
     });
 
-    OneSignal._emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
+    OneSignal._emitter.on(BellEvent._UnsubscribeClick, () => {
       const unsubscribeButton = this.dialog.unsubscribeButton;
       if (unsubscribeButton) {
         unsubscribeButton.disabled = true;
@@ -251,9 +226,9 @@ export default class Bell {
         })
         .then(() => {
           return this.message.display(
-            Message.TYPES.MESSAGE,
+            MesageType._Message,
             this.options.text['message.action.unsubscribed'],
-            Message.TIMEOUT,
+            MESSAGE_TIMEOUT,
           );
         })
         .then(() => {
@@ -261,7 +236,7 @@ export default class Bell {
         });
     });
 
-    OneSignal._emitter.on(Bell.EVENTS.HOVERING, () => {
+    OneSignal._emitter.on(BellEvent._Hovering, () => {
       this.hovering = true;
       this.launcher.activateIfInactive();
 
@@ -273,7 +248,7 @@ export default class Bell {
 
       // If the message is a message and not a tip, don't show it (only show tips)
       // Messages will go away on their own
-      if (this.message.contentType === Message.TYPES.MESSAGE) {
+      if (this.message.contentType === MesageType._Message) {
         this.hovering = false;
         return;
       }
@@ -283,14 +258,14 @@ export default class Bell {
         if (this.message.queued.length > 0) {
           return this.message.dequeue().then((msg: any) => {
             this.message.content = msg;
-            this.message.contentType = Message.TYPES.QUEUED;
+            this.message.contentType = MesageType._Queued;
             resolve();
           });
         } else {
           this.message.content = decodeHtmlEntities(
             this.message.getTipForState(),
           );
-          this.message.contentType = Message.TYPES.TIP;
+          this.message.contentType = MesageType._Tip;
           resolve();
         }
       })
@@ -305,9 +280,9 @@ export default class Bell {
         });
     });
 
-    OneSignal._emitter.on(Bell.EVENTS.HOVERED, () => {
+    OneSignal._emitter.on(BellEvent._Hovered, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
-      if (this.message.contentType === Message.TYPES.MESSAGE) {
+      if (this.message.contentType === MesageType._Message) {
         return;
       }
 
@@ -324,7 +299,7 @@ export default class Bell {
         // fire within a few milliseconds of each other
         this.message
           .show()
-          .then(() => delay(Message.TIMEOUT))
+          .then(() => delay(MESSAGE_TIMEOUT))
           .then(() => this.message.hide())
           .then(() => {
             if (this.launcher.wasInactive && !this.dialog.shown) {
@@ -359,26 +334,26 @@ export default class Bell {
 
         const permission =
           await OneSignal._context._permissionManager.getPermissionStatus();
-        let bellState: BellState;
+        let bellState: BellStateType;
         if (isSubscribed.current.optedIn) {
-          bellState = Bell.STATES.SUBSCRIBED;
+          bellState = BellState._Subscribed;
         } else if (permission === 'denied') {
-          bellState = Bell.STATES.BLOCKED;
+          bellState = BellState._Blocked;
         } else {
-          bellState = Bell.STATES.UNSUBSCRIBED;
+          bellState = BellState._Unsubscribed;
         }
         this.setState(bellState, this._ignoreSubscriptionState);
       },
     );
 
-    OneSignal._emitter.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+    OneSignal._emitter.on(BellEvent._StateChanged, (state) => {
       if (!this.launcher.element) {
         // Notify button doesn't exist
         return;
       }
-      if (state.to === Bell.STATES.SUBSCRIBED) {
+      if (state.to === BellState._Subscribed) {
         this.launcher.inactivate();
-      } else if (state.to === Bell.STATES.UNSUBSCRIBED || Bell.STATES.BLOCKED) {
+      } else if (state.to === BellState._Unsubscribed || BellState._Blocked) {
         this.launcher.activate();
       }
     });
@@ -511,7 +486,7 @@ export default class Bell {
     // where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
     const resizeTo = isPushEnabled
       ? 'small'
-      : this.options.size || this.DEFAULT_SIZE;
+      : this.options.size || DEFAULT_SIZE;
     await this.launcher.resize(resizeTo);
 
     this.addDefaultClasses();
@@ -728,10 +703,10 @@ export default class Bell {
     ])
       .then(([isEnabled, permission]) => {
         this.setState(
-          isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED,
+          isEnabled ? BellState._Subscribed : BellState._Unsubscribed,
         );
         if (permission === 'denied') {
-          this.setState(Bell.STATES.BLOCKED);
+          this.setState(BellState._Blocked);
         }
       })
       .catch((e) => {
@@ -743,11 +718,11 @@ export default class Bell {
    * Updates the current state to the specified new state.
    * @param newState One of ['subscribed', 'unsubscribed'].
    */
-  setState(newState: BellState, silent = false) {
+  setState(newState: BellStateType, silent = false) {
     const lastState = this.state;
     this.state = newState;
     if (lastState !== newState && !silent) {
-      OneSignalEvent.trigger(Bell.EVENTS.STATE_CHANGED, {
+      OneSignalEvent.trigger(BellEvent._StateChanged, {
         from: lastState,
         to: newState,
       });
@@ -791,14 +766,14 @@ export default class Bell {
   }
 
   get subscribed() {
-    return this.state === Bell.STATES.SUBSCRIBED;
+    return this.state === BellState._Subscribed;
   }
 
   get unsubscribed() {
-    return this.state === Bell.STATES.UNSUBSCRIBED;
+    return this.state === BellState._Unsubscribed;
   }
 
   get blocked() {
-    return this.state === Bell.STATES.BLOCKED;
+    return this.state === BellState._Blocked;
   }
 }

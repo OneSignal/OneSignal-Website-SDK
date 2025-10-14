@@ -9,7 +9,8 @@ import {
 import { getPlatformNotificationIcon } from 'src/shared/utils/utils';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
-import Bell from './Bell';
+import type Bell from './Bell';
+import { BellEvent, BellState } from './constants';
 
 const STATIC_RESOURCES_URL = new URL('https://media.onesignal.com/web-sdk');
 
@@ -79,9 +80,9 @@ export default class Dialog extends AnimatedElement {
         }
 
         if (
-          (this.bell.state === Bell.STATES.SUBSCRIBED &&
+          (this.bell.state === BellState._Subscribed &&
             currentSetSubscription === true) ||
-          (this.bell.state === Bell.STATES.UNSUBSCRIBED &&
+          (this.bell.state === BellState._Unsubscribed &&
             currentSetSubscription === false)
         ) {
           let notificationIconHtml = '';
@@ -93,13 +94,13 @@ export default class Dialog extends AnimatedElement {
           }
 
           let buttonHtml = '';
-          if (this.bell.state !== Bell.STATES.SUBSCRIBED)
+          if (this.bell.state !== BellState._Subscribed)
             buttonHtml = `<button type="button" class="action" id="${this.subscribeButtonSelectorId}">${this.bell.options.text['dialog.main.button.subscribe']}</button>`;
           else
             buttonHtml = `<button type="button" class="action" id="${this.unsubscribeButtonSelectorId}">${this.bell.options.text['dialog.main.button.unsubscribe']}</button>`;
 
           contents = `<h1>${this.bell.options.text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${notificationIconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container">${buttonHtml}</div>${footer}`;
-        } else if (this.bell.state === Bell.STATES.BLOCKED) {
+        } else if (this.bell.state === BellState._Blocked) {
           let imageUrl = null;
 
           const browserName = getBrowserName();
@@ -142,12 +143,12 @@ export default class Dialog extends AnimatedElement {
               a notification shown in this resubscription case.
             */
             OneSignal._doNotShowWelcomeNotification = false;
-            OneSignalEvent.trigger(Bell.EVENTS.SUBSCRIBE_CLICK);
+            OneSignalEvent.trigger(BellEvent._SubscribeClick);
           });
         }
         if (this.unsubscribeButton) {
           this.unsubscribeButton.addEventListener('click', () =>
-            OneSignalEvent.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK),
+            OneSignalEvent.trigger(BellEvent._UnsubscribeClick),
           );
         }
         this.bell.setCustomColorsIfSpecified();
