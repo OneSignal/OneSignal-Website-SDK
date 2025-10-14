@@ -1,0 +1,6 @@
+[
+  {
+    "key": "shift+cmd+y",
+    "command": "macros.rename_"
+  }
+]

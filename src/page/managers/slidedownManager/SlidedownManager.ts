@@ -101,18 +101,21 @@ export class SlidedownManager {
         )._hasEmail();
         const bothSubscribed = smsSubscribed && emailSubscribed;
 
-        if (smsSubscribed && slidedownType === DelayedPromptType.Sms) {
-          Log._info(ExistingChannelError(DelayedPromptType.Sms));
+        if (smsSubscribed && slidedownType === DelayedPromptType._Sms) {
+          Log._info(ExistingChannelError(DelayedPromptType._Sms));
           return false;
         }
 
-        if (emailSubscribed && slidedownType === DelayedPromptType.Email) {
-          Log._info(ExistingChannelError(DelayedPromptType.Email));
+        if (emailSubscribed && slidedownType === DelayedPromptType._Email) {
+          Log._info(ExistingChannelError(DelayedPromptType._Email));
           return false;
         }
 
-        if (bothSubscribed && slidedownType === DelayedPromptType.SmsAndEmail) {
-          Log._info(ExistingChannelError(DelayedPromptType.SmsAndEmail));
+        if (
+          bothSubscribed &&
+          slidedownType === DelayedPromptType._SmsAndEmail
+        ) {
+          Log._info(ExistingChannelError(DelayedPromptType._SmsAndEmail));
           return false;
         }
       }
@@ -148,16 +151,16 @@ export class SlidedownManager {
     }
 
     const emailInputFieldIsValid =
-      this._slidedown.channelCaptureContainer?.emailInputFieldIsValid;
+      this._slidedown._channelCaptureContainer?.emailInputFieldIsValid;
     const isEmailEmpty =
-      this._slidedown.channelCaptureContainer?.isEmailInputFieldEmpty();
+      this._slidedown._channelCaptureContainer?.isEmailInputFieldEmpty();
 
     if (!emailInputFieldIsValid || isEmailEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
     }
 
     const email =
-      this._slidedown.channelCaptureContainer?.getValueFromEmailInput();
+      this._slidedown._channelCaptureContainer?.getValueFromEmailInput();
     this._updateEmail(email);
   }
 
@@ -167,15 +170,16 @@ export class SlidedownManager {
     }
 
     const smsInputFieldIsValid =
-      this._slidedown.channelCaptureContainer?.smsInputFieldIsValid;
+      this._slidedown._channelCaptureContainer?.smsInputFieldIsValid;
     const isSmsEmpty =
-      this._slidedown.channelCaptureContainer?.isSmsInputFieldEmpty();
+      this._slidedown._channelCaptureContainer?.isSmsInputFieldEmpty();
 
     if (!smsInputFieldIsValid || isSmsEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
     }
 
-    const sms = this._slidedown.channelCaptureContainer?.getValueFromSmsInput();
+    const sms =
+      this._slidedown._channelCaptureContainer?.getValueFromSmsInput();
     this._updateSMS(sms);
   }
 
@@ -185,9 +189,9 @@ export class SlidedownManager {
     }
 
     const smsInputFieldIsValid =
-      this._slidedown.channelCaptureContainer?.smsInputFieldIsValid;
+      this._slidedown._channelCaptureContainer?.smsInputFieldIsValid;
     const emailInputFieldIsValid =
-      this._slidedown.channelCaptureContainer?.emailInputFieldIsValid;
+      this._slidedown._channelCaptureContainer?.emailInputFieldIsValid;
     /**
      * empty input fields are considered valid since in the case of two input field types present,
      * we can accept one of the two being left as an empty string.
@@ -195,9 +199,9 @@ export class SlidedownManager {
      * thus, we need separate checks for the emptiness properties
      */
     const isEmailEmpty =
-      this._slidedown.channelCaptureContainer?.isEmailInputFieldEmpty();
+      this._slidedown._channelCaptureContainer?.isEmailInputFieldEmpty();
     const isSmsEmpty =
-      this._slidedown.channelCaptureContainer?.isSmsInputFieldEmpty();
+      this._slidedown._channelCaptureContainer?.isSmsInputFieldEmpty();
 
     const bothFieldsEmpty = isEmailEmpty && isSmsEmpty;
     const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
@@ -209,8 +213,9 @@ export class SlidedownManager {
     }
 
     const email =
-      this._slidedown.channelCaptureContainer?.getValueFromEmailInput();
-    const sms = this._slidedown.channelCaptureContainer?.getValueFromSmsInput();
+      this._slidedown._channelCaptureContainer?.getValueFromEmailInput();
+    const sms =
+      this._slidedown._channelCaptureContainer?.getValueFromSmsInput();
 
     /**
      * empty is ok (we can accept only one of two input fields), but invalid is not
@@ -252,7 +257,7 @@ export class SlidedownManager {
       throw SlidedownMissingError;
     }
 
-    const confirmMessage = this._slidedown.options.text.confirmMessage;
+    const confirmMessage = this._slidedown._options.text.confirmMessage;
     if (!confirmMessage) {
       return;
     }
@@ -268,12 +273,12 @@ export class SlidedownManager {
     options: AutoPromptOptions,
   ): Promise<void> {
     switch (options.slidedownPromptOptions?.type) {
-      case DelayedPromptType.Category:
+      case DelayedPromptType._Category:
         this._mountTaggingContainer(options);
         break;
-      case DelayedPromptType.Email:
-      case DelayedPromptType.Sms:
-      case DelayedPromptType.SmsAndEmail:
+      case DelayedPromptType._Email:
+      case DelayedPromptType._Sms:
+      case DelayedPromptType._SmsAndEmail:
         await this._mountChannelCaptureContainer(options);
         break;
       default:
@@ -331,7 +336,7 @@ export class SlidedownManager {
         channelCaptureContainer.mount();
 
         if (this._slidedown) {
-          this._slidedown.channelCaptureContainer = channelCaptureContainer;
+          this._slidedown._channelCaptureContainer = channelCaptureContainer;
         }
       }
     } catch (e) {
@@ -346,27 +351,27 @@ export class SlidedownManager {
     if (!this._slidedown) {
       throw SlidedownMissingError;
     }
-    const slidedownType: DelayedPromptTypeValue = this._slidedown.options.type;
+    const slidedownType: DelayedPromptTypeValue = this._slidedown._options.type;
 
-    if (this._slidedown.isShowingFailureState) {
-      this._slidedown.removeFailureState();
+    if (this._slidedown._isShowingFailureState) {
+      this._slidedown._removeFailureState();
     }
 
     try {
       switch (slidedownType) {
-        case DelayedPromptType.Push:
+        case DelayedPromptType._Push:
           registerForPushNotifications();
           break;
-        case DelayedPromptType.Category:
+        case DelayedPromptType._Category:
           await this._handleAllowForCategoryType();
           break;
-        case DelayedPromptType.Email:
+        case DelayedPromptType._Email:
           await this._handleAllowForEmailType();
           break;
-        case DelayedPromptType.Sms:
+        case DelayedPromptType._Sms:
           await this._handleAllowForSmsType();
           break;
-        case DelayedPromptType.SmsAndEmail:
+        case DelayedPromptType._SmsAndEmail:
           await this._handleAllowForSmsAndEmailType();
           break;
         default:
@@ -375,17 +380,17 @@ export class SlidedownManager {
     } catch (e) {
       Log._warn('OneSignal Slidedown failed to update:', e);
       // Display update error
-      this._slidedown.removeSaveState();
-      this._slidedown.setFailureState();
+      this._slidedown._removeSaveState();
+      this._slidedown._setFailureState();
 
       if (e instanceof ChannelCaptureError) {
-        this._slidedown.setFailureStateForInvalidChannelInput(e.reason);
+        this._slidedown._setFailureStateForInvalidChannelInput(e.reason);
       }
       return;
     }
 
     if (this._slidedown) {
-      this._slidedown.close();
+      this._slidedown._close();
 
       if (!isSlidedownPushDependent(slidedownType)) {
         await this._showConfirmationToast();
@@ -393,12 +398,12 @@ export class SlidedownManager {
       // timeout to allow slidedown close animation to finish in case another slidedown is queued
       await delay(1000);
 
-      Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+      Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
     }
 
     switch (slidedownType) {
-      case DelayedPromptType.Push:
-      case DelayedPromptType.Category:
+      case DelayedPromptType._Push:
+      case DelayedPromptType._Category:
         Log._debug('Setting flag to not show the slidedown to the user again.');
         markPromptDismissedWithType(DismissPrompt.Push);
         break;
@@ -425,7 +430,7 @@ export class SlidedownManager {
 
   public _enqueue(options: AutoPromptOptions): void {
     this._slidedownQueue.push(options);
-    Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.QUEUED);
+    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.QUEUED);
   }
 
   public _dequeue(): AutoPromptOptions | undefined {
@@ -458,14 +463,14 @@ export class SlidedownManager {
       const slidedownPromptOptions =
         options.slidedownPromptOptions || CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
       this._slidedown = new Slidedown(slidedownPromptOptions);
-      await this._slidedown.create(options.isInUpdateMode);
+      await this._slidedown._create(options.isInUpdateMode);
       await this._mountAuxiliaryContainers(options);
       Log._debug('Showing OneSignal Slidedown');
-      Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
+      Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
     } catch (e) {
       Log._error('There was an error showing the OneSignal Slidedown:', e);
       this._setIsSlidedownShowing(false);
-      this._slidedown?.close();
+      this._slidedown?._close();
     }
   }
 }

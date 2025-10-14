@@ -16,7 +16,7 @@ export default class SlidedownNamespace extends EventListenerBase {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
     await OneSignal._context.promptsManager.internalShowParticularSlidedown(
-      DelayedPromptType.Push,
+      DelayedPromptType._Push,
       options,
     );
   }

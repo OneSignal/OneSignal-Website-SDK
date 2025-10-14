@@ -2,5 +2,33 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "always"
+  },
+  // a macro to rename a variable to _variable
+  "macros": {
+    "rename_": [
+      {
+        "javascript": [
+          "const ed = vscode.window.activeTextEditor;",
+          "if (!ed) return;",
+          "const pos = ed.selection.active;",
+          "const rng = ed.document.getWordRangeAtPosition(pos);",
+          "if (!rng) return;",
+          "const oldName = ed.document.getText(rng);",
+          "// if it already starts with '_', do nothing (remove this guard if you always want to re-run)",
+          "if (oldName.startsWith('_')) return;",
+          "const newName = '_' + oldName;",
+          "// Ask VS Code for a rename edit at this position",
+          "const edit = await vscode.commands.executeCommand(",
+          "  'vscode.executeDocumentRenameProvider',",
+          "  ed.document.uri,",
+          "  pos,",
+          "  newName",
+          ");",
+          "if (edit) {",
+          "  await vscode.workspace.applyEdit(edit);",
+          "}"
+        ]
+      }
+    ]
   }
 }

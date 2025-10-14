@@ -244,7 +244,7 @@ const config = {
             cancelButton: 'No Thanks',
             actionMessage: message,
           },
-          type: DelayedPromptType.Category,
+          type: DelayedPromptType._Category,
         },
         {
           autoPrompt: true,
@@ -254,7 +254,7 @@ const config = {
             actionMessage: message,
             emailLabel: 'Email',
           },
-          type: DelayedPromptType.Email,
+          type: DelayedPromptType._Email,
         },
         {
           autoPrompt: true,
@@ -264,7 +264,7 @@ const config = {
             actionMessage: message,
             smsLabel: 'Phone Number',
           },
-          type: DelayedPromptType.Sms,
+          type: DelayedPromptType._Sms,
         },
         {
           autoPrompt: true,
@@ -275,7 +275,7 @@ const config = {
             emailLabel: 'Email',
             smsLabel: 'Phone Number',
           },
-          type: DelayedPromptType.SmsAndEmail,
+          type: DelayedPromptType._SmsAndEmail,
         },
       ],
     },
