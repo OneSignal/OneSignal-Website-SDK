@@ -58,7 +58,7 @@ export class SlidedownManager {
     let wasDismissed: boolean;
 
     const subscriptionInfo: PushSubscriptionState =
-      await OneSignal._context._subscriptionManager.getSubscriptionState();
+      await OneSignal._context._subscriptionManager._getSubscriptionState();
     const { subscribed, optedOut } = subscriptionInfo;
 
     const slidedownType = options.slidedownPromptOptions?.type;
@@ -138,11 +138,11 @@ export class SlidedownManager {
       throw SlidedownMissingError;
     }
 
-    const tags = TaggingContainer.getValuesFromTaggingContainer();
-    this._context._tagManager.storeTagValuesToUpdate(tags);
+    const tags = TaggingContainer._getValuesFromTaggingContainer();
+    this._context._tagManager._storeTagValuesToUpdate(tags);
 
     registerForPushNotifications();
-    await this._context._tagManager.sendTags(true);
+    await this._context._tagManager._sendTags(true);
   }
 
   private async _handleAllowForEmailType(): Promise<void> {
@@ -151,16 +151,16 @@ export class SlidedownManager {
     }
 
     const emailInputFieldIsValid =
-      this._slidedown._channelCaptureContainer?.emailInputFieldIsValid;
+      this._slidedown._channelCaptureContainer?._emailInputFieldIsValid;
     const isEmailEmpty =
-      this._slidedown._channelCaptureContainer?.isEmailInputFieldEmpty();
+      this._slidedown._channelCaptureContainer?._isEmailInputFieldEmpty();
 
     if (!emailInputFieldIsValid || isEmailEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
     }
 
     const email =
-      this._slidedown._channelCaptureContainer?.getValueFromEmailInput();
+      this._slidedown._channelCaptureContainer?._getValueFromEmailInput();
     this._updateEmail(email);
   }
 
@@ -170,16 +170,16 @@ export class SlidedownManager {
     }
 
     const smsInputFieldIsValid =
-      this._slidedown._channelCaptureContainer?.smsInputFieldIsValid;
+      this._slidedown._channelCaptureContainer?._smsInputFieldIsValid;
     const isSmsEmpty =
-      this._slidedown._channelCaptureContainer?.isSmsInputFieldEmpty();
+      this._slidedown._channelCaptureContainer?._isSmsInputFieldEmpty();
 
     if (!smsInputFieldIsValid || isSmsEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
     }
 
     const sms =
-      this._slidedown._channelCaptureContainer?.getValueFromSmsInput();
+      this._slidedown._channelCaptureContainer?._getValueFromSmsInput();
     this._updateSMS(sms);
   }
 
@@ -189,9 +189,9 @@ export class SlidedownManager {
     }
 
     const smsInputFieldIsValid =
-      this._slidedown._channelCaptureContainer?.smsInputFieldIsValid;
+      this._slidedown._channelCaptureContainer?._smsInputFieldIsValid;
     const emailInputFieldIsValid =
-      this._slidedown._channelCaptureContainer?.emailInputFieldIsValid;
+      this._slidedown._channelCaptureContainer?._emailInputFieldIsValid;
     /**
      * empty input fields are considered valid since in the case of two input field types present,
      * we can accept one of the two being left as an empty string.
@@ -199,9 +199,9 @@ export class SlidedownManager {
      * thus, we need separate checks for the emptiness properties
      */
     const isEmailEmpty =
-      this._slidedown._channelCaptureContainer?.isEmailInputFieldEmpty();
+      this._slidedown._channelCaptureContainer?._isEmailInputFieldEmpty();
     const isSmsEmpty =
-      this._slidedown._channelCaptureContainer?.isSmsInputFieldEmpty();
+      this._slidedown._channelCaptureContainer?._isSmsInputFieldEmpty();
 
     const bothFieldsEmpty = isEmailEmpty && isSmsEmpty;
     const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
@@ -213,9 +213,9 @@ export class SlidedownManager {
     }
 
     const email =
-      this._slidedown._channelCaptureContainer?.getValueFromEmailInput();
+      this._slidedown._channelCaptureContainer?._getValueFromEmailInput();
     const sms =
-      this._slidedown._channelCaptureContainer?.getValueFromSmsInput();
+      this._slidedown._channelCaptureContainer?._getValueFromSmsInput();
 
     /**
      * empty is ok (we can accept only one of two input fields), but invalid is not
@@ -263,10 +263,10 @@ export class SlidedownManager {
     }
     await delay(1000);
     const confirmationToast = new ConfirmationToast(confirmMessage);
-    await confirmationToast.show();
+    await confirmationToast._show();
     await delay(5000);
-    confirmationToast.close();
-    ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
+    confirmationToast._close();
+    ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
   }
 
   private async _mountAuxiliaryContainers(
@@ -304,7 +304,7 @@ export class SlidedownManager {
       const existingTags = propertiesModel.tags;
 
       if (options.isInUpdateMode && existingTags) {
-        this._context._tagManager.storeRemotePlayerTags(
+        this._context._tagManager._storeRemotePlayerTags(
           existingTags as TagsObjectForApi,
         );
         tagsForComponent = TagUtils.convertTagsApiToBooleans(
@@ -315,7 +315,7 @@ export class SlidedownManager {
         TagUtils.markAllTagsAsSpecified(categories, true);
       }
 
-      taggingContainer.mount(categories, tagsForComponent);
+      taggingContainer._mount(categories, tagsForComponent);
     } catch (e) {
       Log._error(
         'OneSignal: Attempted to create tagging container with error',
@@ -333,7 +333,7 @@ export class SlidedownManager {
         const channelCaptureContainer = new ChannelCaptureContainer(
           options.slidedownPromptOptions,
         );
-        channelCaptureContainer.mount();
+        channelCaptureContainer._mount();
 
         if (this._slidedown) {
           this._slidedown._channelCaptureContainer = channelCaptureContainer;

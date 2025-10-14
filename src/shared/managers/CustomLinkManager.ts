@@ -25,7 +25,7 @@ export class CustomLinkManager {
 
     Log._info('OneSignal: initializing customlink');
     const isPushEnabled =
-      await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
     if (!this.config?.unsubscribeEnabled && isPushEnabled) {
       this.hideCustomLinkContainers();
       return;
@@ -63,7 +63,7 @@ export class CustomLinkManager {
       }
 
       if (
-        await OneSignal._context._subscriptionManager.isPushNotificationsEnabled()
+        await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()
       ) {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
@@ -96,7 +96,7 @@ export class CustomLinkManager {
       }
 
       if (
-        await OneSignal._context._subscriptionManager.isPushNotificationsEnabled()
+        await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()
       ) {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
@@ -165,7 +165,7 @@ export class CustomLinkManager {
   private async setTextFromPushStatus(element: HTMLElement): Promise<void> {
     if (this.config?.text?.subscribe) {
       if (
-        !(await OneSignal._context._subscriptionManager.isPushNotificationsEnabled())
+        !(await OneSignal._context._subscriptionManager._isPushNotificationsEnabled())
       ) {
         element.textContent = this.config.text.subscribe;
       }
@@ -173,7 +173,7 @@ export class CustomLinkManager {
 
     if (this.config?.text?.unsubscribe) {
       if (
-        await OneSignal._context._subscriptionManager.isPushNotificationsEnabled()
+        await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()
       ) {
         element.textContent = this.config.text.unsubscribe;
       }

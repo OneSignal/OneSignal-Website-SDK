@@ -151,21 +151,21 @@ describe('SubscriptionManager', () => {
 describe('SubscriptionManagerPage', () => {
   test('default', async () => {
     MockNotification.permission = 'default';
-    expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
+    expect(await SubscriptionManagerPage._requestNotificationPermission()).toBe(
       'default',
     );
   });
 
   test('denied', async () => {
     MockNotification.permission = 'denied';
-    expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
+    expect(await SubscriptionManagerPage._requestNotificationPermission()).toBe(
       'denied',
     );
   });
 
   test('granted', async () => {
     MockNotification.permission = 'granted';
-    expect(await SubscriptionManagerPage.requestNotificationPermission()).toBe(
+    expect(await SubscriptionManagerPage._requestNotificationPermission()).toBe(
       'granted',
     );
   });

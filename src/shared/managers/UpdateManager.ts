@@ -11,15 +11,15 @@ import type { OutcomeRequestData } from '../outcomes/types';
 import { logMethodCall } from '../utils/utils';
 
 export class UpdateManager {
-  protected context: ContextInterface;
-  private onSessionSent: boolean;
+  protected _context: ContextInterface;
+  private _onSessionSent: boolean;
 
   constructor(context: ContextInterface) {
-    this.context = context;
-    this.onSessionSent = getPageViewCount() > 1;
+    this._context = context;
+    this._onSessionSent = getPageViewCount() > 1;
   }
 
-  public async sendPushDeviceRecordUpdate(): Promise<void> {
+  public async _sendPushDeviceRecordUpdate(): Promise<void> {
     if (!User._singletonInstance?.onesignalId) {
       Log._debug(
         'Not sending the update because user is not registered with OneSignal (no onesignal_id)',
@@ -27,14 +27,14 @@ export class UpdateManager {
       return;
     }
 
-    if (!this.onSessionSent) {
-      await this.sendOnSessionUpdate();
+    if (!this._onSessionSent) {
+      await this._sendOnSessionUpdate();
     }
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
-  public async sendOnSessionUpdate(): Promise<void> {
-    if (this.onSessionSent) {
+  public async _sendOnSessionUpdate(): Promise<void> {
+    if (this._onSessionSent) {
       return;
     }
 
@@ -43,7 +43,7 @@ export class UpdateManager {
     }
 
     const existingUser =
-      await this.context._subscriptionManager._isAlreadyRegisteredWithOneSignal();
+      await this._context._subscriptionManager._isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
       Log._debug(
         'Not sending the on session because user is not registered with OneSignal (no device id)',
@@ -65,8 +65,10 @@ export class UpdateManager {
       // Not sending on_session here but from SW instead.
 
       // Not awaiting here on purpose
-      this.context._sessionManager.upsertSession(SessionOrigin.UserNewSession);
-      this.onSessionSent = true;
+      this._context._sessionManager._upsertSession(
+        SessionOrigin.UserNewSession,
+      );
+      this._onSessionSent = true;
     } catch (e) {
       if (e instanceof Error) {
         Log._error(
@@ -76,7 +78,7 @@ export class UpdateManager {
     }
   }
 
-  public async sendOutcomeDirect(
+  public async _sendOutcomeDirect(
     appId: string,
     notificationIds: string[],
     outcomeName: string,
@@ -111,7 +113,7 @@ export class UpdateManager {
     );
   }
 
-  public async sendOutcomeInfluenced(
+  public async _sendOutcomeInfluenced(
     appId: string,
     notificationIds: string[],
     outcomeName: string,
@@ -146,7 +148,7 @@ export class UpdateManager {
     );
   }
 
-  public async sendOutcomeUnattributed(
+  public async _sendOutcomeUnattributed(
     appId: string,
     outcomeName: string,
     value?: number,

@@ -480,7 +480,7 @@ export default class Bell {
     addDomElement(this._button._selector, 'beforeend', logoSvg);
 
     const isPushEnabled =
-      await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
     wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
@@ -697,7 +697,7 @@ export default class Bell {
    */
   _updateState() {
     Promise.all([
-      OneSignal._context._subscriptionManager.isPushNotificationsEnabled(),
+      OneSignal._context._subscriptionManager._isPushNotificationsEnabled(),
       OneSignal._context._permissionManager.getPermissionStatus(),
     ])
       .then(([isEnabled, permission]) => {

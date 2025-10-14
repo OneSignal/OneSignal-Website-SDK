@@ -300,8 +300,8 @@ Object.defineProperty(global.navigator, 'serviceWorker', {
 export const mockPhoneLibraryLoading = () => {
   vi.spyOn(
     ChannelCaptureContainer.prototype,
-    'loadPhoneLibraryScripts',
-  ).mockImplementation(async () => {
+    '_loadPhoneLibraryScripts',
+  ).mockImplementation(() => {
     OneSignal._didLoadITILibrary = true;
 
     // @ts-expect-error - mock intl-tel-input
@@ -317,7 +317,6 @@ export const mockPhoneLibraryLoading = () => {
       // @ts-expect-error - mock intl-tel-input
       numberFormat: { E164: 0 },
     };
-
     return Promise.resolve();
   });
 };
