@@ -8,7 +8,7 @@ import {
 } from 'src/shared/subscriptions/constants';
 import type { SubscriptionChannelValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
-import MainHelper from '../shared/helpers/MainHelper';
+import { getCurrentPushToken } from '../shared/helpers/main';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import CoreModule from './CoreModule';
 import { IdentityModel } from './models/IdentityModel';
@@ -115,7 +115,7 @@ export class CoreModuleDirector {
     SubscriptionModel | undefined
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
-    const pushToken = await MainHelper._getCurrentPushToken();
+    const pushToken = await getCurrentPushToken();
     if (pushToken) {
       return this._getSubscriptionOfTypeWithToken(
         SubscriptionChannel.Push,

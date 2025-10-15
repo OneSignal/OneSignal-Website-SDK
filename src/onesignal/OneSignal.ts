@@ -25,6 +25,7 @@ import {
   removeLegacySubscriptionOptions,
   setConsentRequired as setStorageConsentRequired,
 } from 'src/shared/helpers/localStorage';
+import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
 import {
   _onSubscriptionChanged,
   checkAndTriggerSubscriptionChanged,
@@ -38,7 +39,6 @@ import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
-import MainHelper from '../shared/helpers/MainHelper';
 import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
 import DebugNamespace from './DebugNamesapce';
@@ -188,7 +188,7 @@ export default class OneSignal {
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,
         //     since a user has to click out of and back on the page to check permissions
-        MainHelper._checkAndTriggerNotificationPermissionChanged();
+        checkAndTriggerNotificationPermissionChanged();
       });
 
       await initSaveState();

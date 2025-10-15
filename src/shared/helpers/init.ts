@@ -11,7 +11,7 @@ import { limitStorePut } from '../services/limitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once } from '../utils/utils';
-import MainHelper from './MainHelper';
+import { getAppId } from './main';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 import { registerForPush } from './subscription';
@@ -363,7 +363,7 @@ export async function saveInitOptions() {
 }
 
 export async function initSaveState(overridingPageTitle?: string) {
-  const appId = MainHelper._getAppId();
+  const appId = getAppId();
   const config: AppConfig = OneSignal.config!;
   await db.put('Ids', { type: 'appId', id: appId });
   const pageTitle: string =

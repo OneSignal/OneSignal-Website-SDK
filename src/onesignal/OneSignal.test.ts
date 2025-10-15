@@ -49,7 +49,7 @@ import { db } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
 import type { SubscriptionSchema } from 'src/shared/database/types';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
-import MainHelper from 'src/shared/helpers/MainHelper';
+import * as MainHelper from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
@@ -1202,5 +1202,5 @@ const subscribeFcmFromPageSpy = vi.spyOn(
   '_subscribeFcmFromPage',
 );
 
-const showLocalNotificationSpy = vi.spyOn(MainHelper, '_showLocalNotification');
+const showLocalNotificationSpy = vi.spyOn(MainHelper, 'showLocalNotification');
 showLocalNotificationSpy.mockImplementation(async () => {});
