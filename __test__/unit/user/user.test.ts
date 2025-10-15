@@ -28,7 +28,7 @@ describe('User tests', () => {
 
     const tagsSample = { key1: 'value1' };
     const propModel = OneSignal._coreDirector._getPropertiesModel();
-    propModel.tags = tagsSample;
+    propModel._tags = tagsSample;
 
     const user = User._createOrGetInstance();
     const tags = user.getTags();
@@ -42,7 +42,7 @@ describe('User tests', () => {
     const languageSample = 'fr';
 
     const propModel = OneSignal._coreDirector._getPropertiesModel();
-    propModel.language = languageSample;
+    propModel._language = languageSample;
 
     const user = User._createOrGetInstance();
     const language = user.getLanguage();
@@ -59,6 +59,6 @@ describe('User tests', () => {
     user.setLanguage(languageSample);
 
     const propModel = OneSignal._coreDirector._getPropertiesModel();
-    expect(propModel.language).toBe(languageSample);
+    expect(propModel._language).toBe(languageSample);
   });
 });

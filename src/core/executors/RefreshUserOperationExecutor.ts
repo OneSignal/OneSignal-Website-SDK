@@ -88,7 +88,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       }
 
       const propertiesModel = new PropertiesModel();
-      propertiesModel.onesignalId = op._onesignalId;
+      propertiesModel._onesignalId = op._onesignalId;
 
       const { properties = {}, subscriptions = [] } = result;
 
@@ -102,15 +102,15 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         model.id = sub.id!;
         model.token = sub.token ?? '';
-        model.notification_types =
+        model._notification_types =
           sub.notification_types ?? NotificationType.Subscribed;
         model.type = sub.type;
         model.enabled =
-          model.notification_types !== NotificationType.UserOptedOut;
+          model._notification_types !== NotificationType.UserOptedOut;
         model.sdk = sub.sdk;
         model.device_os = sub.device_os;
         model.device_model = sub.device_model;
-        model.onesignalId = op._onesignalId;
+        model._onesignalId = op._onesignalId;
 
         // We only add a non-push subscriptions. For push, the device is the source of truth
         // so we don't want to cache these subscriptions from the backend.
@@ -122,7 +122,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       const pushModel =
         await OneSignal._coreDirector._getPushSubscriptionModel();
       if (pushModel) {
-        pushModel.onesignalId = op._onesignalId;
+        pushModel._onesignalId = op._onesignalId;
         subscriptionModels.push(pushModel);
       }
 

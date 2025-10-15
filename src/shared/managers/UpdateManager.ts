@@ -55,7 +55,7 @@ export class UpdateManager {
       await OneSignal._coreDirector._getPushSubscriptionModel();
 
     if (
-      subscriptionModel?.notification_types !== NotificationType.Subscribed &&
+      subscriptionModel?._notification_types !== NotificationType.Subscribed &&
       OneSignal.config?.enableOnSession !== true
     ) {
       return;

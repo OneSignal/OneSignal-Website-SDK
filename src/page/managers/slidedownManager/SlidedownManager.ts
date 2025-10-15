@@ -301,7 +301,7 @@ export class SlidedownManager {
       }
 
       const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-      const existingTags = propertiesModel.tags;
+      const existingTags = propertiesModel._tags;
 
       if (options.isInUpdateMode && existingTags) {
         this._context._tagManager._storeRemotePlayerTags(

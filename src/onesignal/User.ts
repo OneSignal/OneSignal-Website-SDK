@@ -43,7 +43,7 @@ export default class User {
         );
       }
 
-      if (!propertiesModel.onesignalId) {
+      if (!propertiesModel._onesignalId) {
         propertiesModel._setProperty(
           'onesignalId',
           onesignalId,
@@ -185,8 +185,8 @@ export default class User {
     if (isConsentRequiredButNotGiven()) return;
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    const newTags = { ...propertiesModel.tags, ...tags };
-    propertiesModel.tags = newTags;
+    const newTags = { ...propertiesModel._tags, ...tags };
+    propertiesModel._tags = newTags;
   }
 
   public removeTag(tagKey: string): void {
@@ -205,18 +205,18 @@ export default class User {
     validateArray(tagKeys, 'tagKeys');
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    const newTags = { ...propertiesModel.tags };
+    const newTags = { ...propertiesModel._tags };
 
     // need to set the tag to an empty string to remove it
     tagKeys.forEach((tagKey) => {
       newTags[tagKey] = '';
     });
-    propertiesModel.tags = newTags;
+    propertiesModel._tags = newTags;
   }
 
   public getTags(): { [key: string]: string } {
     logMethodCall('getTags');
-    return OneSignal._coreDirector._getPropertiesModel().tags;
+    return OneSignal._coreDirector._getPropertiesModel()._tags;
   }
 
   public setLanguage(language: string): void {
@@ -226,12 +226,12 @@ export default class User {
     validateStringLabel(language, 'language');
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    propertiesModel.language = language;
+    propertiesModel._language = language;
   }
 
   public getLanguage(): string | undefined {
     logMethodCall('getLanguage');
-    return OneSignal._coreDirector._getPropertiesModel().language;
+    return OneSignal._coreDirector._getPropertiesModel()._language;
   }
 
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {

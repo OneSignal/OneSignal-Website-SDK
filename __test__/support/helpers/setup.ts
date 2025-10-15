@@ -77,7 +77,7 @@ export const setupPropertiesModel = async (
   onesignalID: string = ONESIGNAL_ID,
 ) => {
   const newPropertiesModel = new PropertiesModel();
-  newPropertiesModel.onesignalId = onesignalID;
+  newPropertiesModel._onesignalId = onesignalID;
   OneSignal._coreDirector._propertiesModelStore.replace(
     newPropertiesModel,
     ModelChangeTags.NO_PROPAGATE,

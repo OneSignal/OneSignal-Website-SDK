@@ -106,7 +106,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           );
         }
 
-        if (this._propertiesModelStore.model.onesignalId === opOneSignalId) {
+        if (this._propertiesModelStore.model._onesignalId === opOneSignalId) {
           this._propertiesModelStore.model._setProperty(
             'onesignalId',
             backendOneSignalId,
@@ -195,7 +195,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         );
       }
 
-      if (this._propertiesModelStore.model.onesignalId === opOneSignalId) {
+      if (this._propertiesModelStore.model._onesignalId === opOneSignalId) {
         this._propertiesModelStore.model._setProperty(
           'onesignalId',
           backendOneSignalId,

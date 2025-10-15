@@ -373,7 +373,7 @@ export class SessionManager implements ISessionManager {
     const pushSubscription =
       await OneSignal._coreDirector._getPushSubscriptionModel();
     if (
-      pushSubscription?.notification_types !== NotificationType.Subscribed &&
+      pushSubscription?._notification_types !== NotificationType.Subscribed &&
       OneSignal.config?.enableOnSession !== true
     ) {
       return;
