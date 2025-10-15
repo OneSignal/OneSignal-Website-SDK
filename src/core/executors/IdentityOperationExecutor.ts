@@ -102,7 +102,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         this._identityModelStore.model._setProperty(
           lastOperation.label,
           isSetAlias ? lastOperation.value : undefined,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
       }
       return new ExecutionResponse(ExecutionResult.SUCCESS);

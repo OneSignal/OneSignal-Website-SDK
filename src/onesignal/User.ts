@@ -39,7 +39,7 @@ export default class User {
         identityModel._setProperty(
           IdentityConstants._OneSignalID,
           onesignalId,
-          ModelChangeTags.NO_PROPAGATE,
+          ModelChangeTags._NoPropogate,
         );
       }
 
@@ -47,7 +47,7 @@ export default class User {
         propertiesModel._setProperty(
           'onesignalId',
           onesignalId,
-          ModelChangeTags.NO_PROPAGATE,
+          ModelChangeTags._NoPropogate,
         );
       }
     }

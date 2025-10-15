@@ -498,7 +498,7 @@ describe('Custom Events', () => {
     identityModel._setProperty(
       'onesignal_id',
       ONESIGNAL_ID,
-      ModelChangeTags.NO_PROPAGATE,
+      ModelChangeTags._NoPropogate,
     );
 
     // should validate properties

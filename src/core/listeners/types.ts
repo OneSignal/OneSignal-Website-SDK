@@ -2,6 +2,7 @@ import type { Model } from '../models/Model';
 import type {
   IEventNotifier,
   ISingletonModelStoreChangeHandler,
+  ModelChangeTagValue,
 } from '../types/models';
 
 export interface ISingletonModelStore<TModel extends Model>
@@ -17,5 +18,5 @@ export interface ISingletonModelStore<TModel extends Model>
    * @param model A model that contains all the data for the new effective model.
    * @param tag The tag which identifies how/why the model is being replaced.
    */
-  replace(model: TModel, tag?: string): void;
+  replace(model: TModel, tag?: ModelChangeTagValue): void;
 }

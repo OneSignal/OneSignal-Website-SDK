@@ -126,14 +126,14 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         subscriptionModels.push(pushModel);
       }
 
-      this._identityModelStore.replace(identityModel, ModelChangeTags.HYDRATE);
+      this._identityModelStore.replace(identityModel, ModelChangeTags._Hydrate);
       this._propertiesModelStore.replace(
         propertiesModel,
-        ModelChangeTags.HYDRATE,
+        ModelChangeTags._Hydrate,
       );
       this._subscriptionsModelStore._replaceAll(
         subscriptionModels,
-        ModelChangeTags.HYDRATE,
+        ModelChangeTags._Hydrate,
       );
 
       return new ExecutionResponse(ExecutionResult.SUCCESS);

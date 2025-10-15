@@ -102,7 +102,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           this._identityModelStore.model._setProperty(
             IdentityConstants._OneSignalID,
             backendOneSignalId,
-            ModelChangeTags.HYDRATE,
+            ModelChangeTags._Hydrate,
           );
         }
 
@@ -110,7 +110,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           this._propertiesModelStore.model._setProperty(
             'onesignalId',
             backendOneSignalId,
-            ModelChangeTags.HYDRATE,
+            ModelChangeTags._Hydrate,
           );
         }
         return new ExecutionResponse(
@@ -191,7 +191,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         this._identityModelStore.model._setProperty(
           IdentityConstants._OneSignalID,
           backendOneSignalId,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
       }
 
@@ -199,7 +199,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         this._propertiesModelStore.model._setProperty(
           'onesignalId',
           backendOneSignalId,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
       }
 
@@ -210,7 +210,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           this._propertiesModelStore.model._setProperty(
             key as IPropertiesModelKeys,
             value,
-            ModelChangeTags.HYDRATE,
+            ModelChangeTags._Hydrate,
           );
         }
       }
@@ -224,11 +224,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
         const model =
           this._subscriptionsModelStore.getBySubscriptionId(localId);
-        model?._setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
+        model?._setProperty('id', backendSub.id, ModelChangeTags._Hydrate);
         model?._setProperty(
           'onesignalId',
           backendOneSignalId,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
       }
 

@@ -127,12 +127,12 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         subscriptionModel?._setProperty(
           'id',
           backendSubscriptionId,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
         subscriptionModel?._setProperty(
           'onesignalId',
           createOperation._onesignalId,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
       }
 
@@ -307,7 +307,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     if (response.ok) {
       this._subscriptionModelStore.remove(
         op.subscriptionId,
-        ModelChangeTags.HYDRATE,
+        ModelChangeTags._Hydrate,
       );
       return new ExecutionResponse(ExecutionResult.SUCCESS);
     }

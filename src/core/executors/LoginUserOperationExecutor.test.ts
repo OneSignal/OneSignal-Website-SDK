@@ -172,11 +172,11 @@ describe('LoginUserOperationExecutor', () => {
       subscriptionModel._setProperty(
         'id',
         SUB_ID,
-        ModelChangeTags.NO_PROPAGATE,
+        ModelChangeTags._NoPropogate,
       );
       subscriptionModelStore.add(
         subscriptionModel,
-        ModelChangeTags.NO_PROPAGATE,
+        ModelChangeTags._NoPropogate,
       );
 
       // perform operations with old onesignal id

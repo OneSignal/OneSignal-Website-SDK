@@ -111,7 +111,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
             this._propertiesModelStore.model._setProperty(
               operation.property as IPropertiesModelKeys,
               value,
-              ModelChangeTags.HYDRATE,
+              ModelChangeTags._Hydrate,
             );
           }
         }

@@ -51,7 +51,7 @@ export default class LoginManager {
     identityModel._setProperty(
       IdentityConstants._ExternalID,
       externalId,
-      ModelChangeTags.HYDRATE,
+      ModelChangeTags._Hydrate,
     );
     const newIdentityOneSignalId = identityModel._onesignalId;
     const appId = getAppId();

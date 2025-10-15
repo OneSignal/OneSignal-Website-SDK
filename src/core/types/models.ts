@@ -4,17 +4,17 @@ export const ModelChangeTags = {
   /**
    * A change was performed through normal means.
    */
-  NORMAL: 'NORMAL',
+  _Normal: 0,
 
   /**
    * A change was performed that should *not* be propogated to the backend.
    */
-  NO_PROPAGATE: 'NO_PROPAGATE',
+  _NoPropogate: 1,
 
   /**
    * A change was performed through the backend hydrating the model.
    */
-  HYDRATE: 'HYDRATE',
+  _Hydrate: 2,
 } as const;
 
 export type ModelChangeTagValue =
@@ -30,7 +30,7 @@ export interface IModelStoreChangeHandler<TModel extends Model> {
    * @param model The model that has been added.
    * @param tag The tag which identifies how/why the model was added.
    */
-  _onModelAdded(model: TModel, tag: string): void;
+  _onModelAdded(model: TModel, tag: ModelChangeTagValue): void;
 
   /**
    * Called when a model has been updated.
@@ -38,7 +38,7 @@ export interface IModelStoreChangeHandler<TModel extends Model> {
    * @param args The model changed arguments.
    * @param tag The tag which identifies how/why the model was updated.
    */
-  _onModelUpdated(args: ModelChangedArgs, tag: string): void;
+  _onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): void;
 
   /**
    * Called when a model has been removed from the model store.
@@ -46,7 +46,7 @@ export interface IModelStoreChangeHandler<TModel extends Model> {
    * @param model The model that has been removed.
    * @param tag The tag which identifies how/why the model was removed.
    */
-  _onModelRemoved(model: TModel, tag: string): void;
+  _onModelRemoved(model: TModel, tag: ModelChangeTagValue): void;
 }
 
 export type DatabaseModel<TModel extends Model> = ReturnType<
@@ -73,8 +73,8 @@ export interface IModelStore<
   /**
    * Add a model to the store.
    */
-  add(model: TModel, tag?: string): void;
-  addAt(index: number, model: TModel, tag?: string): void;
+  add(model: TModel, tag?: ModelChangeTagValue): void;
+  addAt(index: number, model: TModel, tag?: ModelChangeTagValue): void;
 
   /**
    * Get a model by id.
@@ -84,17 +84,17 @@ export interface IModelStore<
   /**
    * Remove a model by id.
    */
-  remove(id: string, tag?: string): void;
+  remove(id: string, tag?: ModelChangeTagValue): void;
 
   /**
    * Clear all models.
    */
-  _clear(tag?: string): void;
+  _clear(tag?: ModelChangeTagValue): void;
 
   /**
    * Replace all models in the store.
    */
-  _replaceAll(models: TModel[], tag?: string): void;
+  _replaceAll(models: TModel[], tag?: ModelChangeTagValue): void;
 }
 
 // SINGLETON MODEL STORE
@@ -109,7 +109,7 @@ export interface ISingletonModelStoreChangeHandler<TModel extends Model> {
    * @param model - The new model.
    * @param tag - The tag which identifies how/why the model was replaced.
    */
-  _onModelReplaced(model: TModel, tag?: string): void;
+  _onModelReplaced(model: TModel, tag?: ModelChangeTagValue): void;
 
   /**
    * Called when a property within the model has been updated.
@@ -118,7 +118,7 @@ export interface ISingletonModelStoreChangeHandler<TModel extends Model> {
    * @param args - The model change arguments.
    * @param tag - The tag which identifies how/why the model was updated.
    */
-  _onModelUpdated(args: ModelChangedArgs, tag?: string): void;
+  _onModelUpdated(args: ModelChangedArgs, tag?: ModelChangeTagValue): void;
 }
 
 export interface ISingletonModelStore<TModel extends Model>
@@ -134,7 +134,7 @@ export interface ISingletonModelStore<TModel extends Model>
    * @param model - A model that contains all the data for the new effective model.
    * @param tag - A tag identifying how/why the model is being replaced.
    */
-  replace(model: TModel, tag?: string): void;
+  replace(model: TModel, tag?: ModelChangeTagValue): void;
 }
 
 /**

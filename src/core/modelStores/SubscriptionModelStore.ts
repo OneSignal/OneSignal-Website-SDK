@@ -25,7 +25,7 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     models: SubscriptionModel[],
     tag?: ModelChangeTagValue,
   ): void {
-    if (tag !== ModelChangeTags.HYDRATE) {
+    if (tag !== ModelChangeTags._Hydrate) {
       return super._replaceAll(models, tag);
     }
 

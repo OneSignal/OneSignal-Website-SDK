@@ -285,7 +285,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Missing error with rebuild ops
-      subscriptionsModelStore.add(pushSubscription, ModelChangeTags.HYDRATE);
+      subscriptionsModelStore.add(pushSubscription, ModelChangeTags._Hydrate);
       await setPushToken(pushSubscription.token);
 
       const res6 = await executor._execute([createOp]);

@@ -67,7 +67,7 @@ export class CoreModuleDirector {
     model.id = IDManager._createLocalId();
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
-    this._core._subscriptionModelStore.add(model, ModelChangeTags.HYDRATE);
+    this._core._subscriptionModelStore.add(model, ModelChangeTags._Hydrate);
     return model;
   }
 

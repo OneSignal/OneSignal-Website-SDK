@@ -61,7 +61,7 @@ export abstract class ModelStore<
    */
   abstract _create(json?: DBModel | null): TModel | null;
 
-  add(model: TModel, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
+  add(model: TModel, tag: ModelChangeTagValue = ModelChangeTags._Normal): void {
     const oldModel = this._models.find((m) => m._modelId === model._modelId);
     if (oldModel) this._removeItem(oldModel, tag);
     this._addItem(model, tag);
@@ -70,7 +70,7 @@ export abstract class ModelStore<
   addAt(
     index: number,
     model: TModel,
-    tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
+    tag: ModelChangeTagValue = ModelChangeTags._Normal,
   ): void {
     const oldModel = this._models.find((m) => m._modelId === model._modelId);
     if (oldModel) this._removeItem(oldModel, tag);
@@ -88,13 +88,13 @@ export abstract class ModelStore<
     return this._models.find((m) => m._modelId === id);
   }
 
-  remove(id: string, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
+  remove(id: string, tag: ModelChangeTagValue = ModelChangeTags._Normal): void {
     const model = this._models.find((m) => m._modelId === id);
     if (!model) return;
     this._removeItem(model, tag);
   }
 
-  _onChanged(args: ModelChangedArgs, tag: string): void {
+  _onChanged(args: ModelChangedArgs, tag: ModelChangeTagValue): void {
     this._persist();
     this._changeSubscription._fire((handler) =>
       handler._onModelUpdated(args, tag),
@@ -103,7 +103,7 @@ export abstract class ModelStore<
 
   _replaceAll(
     newModels: TModel[],
-    tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
+    tag: ModelChangeTagValue = ModelChangeTags._Normal,
   ) {
     this._clear(tag);
 
@@ -112,7 +112,7 @@ export abstract class ModelStore<
     }
   }
 
-  _clear(tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
+  _clear(tag: ModelChangeTagValue = ModelChangeTags._Normal): void {
     for (const item of this._models) {
       // no longer listen for changes to this model
       item._unsubscribe(this);
@@ -125,7 +125,11 @@ export abstract class ModelStore<
     this._models = [];
   }
 
-  private _addItem(model: TModel, tag: string, index?: number): void {
+  private _addItem(
+    model: TModel,
+    tag: ModelChangeTagValue,
+    index?: number,
+  ): void {
     if (index !== undefined) {
       this._models.splice(index, 0, model);
     } else {
@@ -141,7 +145,10 @@ export abstract class ModelStore<
     );
   }
 
-  private async _removeItem(model: TModel, tag: string): Promise<void> {
+  private async _removeItem(
+    model: TModel,
+    tag: ModelChangeTagValue,
+  ): Promise<void> {
     const index = this._models.findIndex((m) => m._modelId === model._modelId);
     if (index !== -1) this._models.splice(index, 1);
 
