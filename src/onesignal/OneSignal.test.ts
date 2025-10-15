@@ -42,7 +42,7 @@ import {
   updateIdentityModel,
 } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
-import { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
+import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';

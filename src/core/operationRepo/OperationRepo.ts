@@ -22,27 +22,11 @@ const removeOpFromDB = (op: Operation) => {
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationRepo.kt
-export class OperationQueueItem {
-  public operation: Operation;
-  public bucket: number;
-  public retries: number;
-  public resolver?: (value: boolean) => void;
-
-  constructor(props: {
-    operation: Operation;
-    bucket: number;
-    retries?: number;
-    resolver?: (value: boolean) => void;
-  }) {
-    this.operation = props.operation;
-    this.bucket = props.bucket;
-    this.retries = props.retries ?? 0;
-    this.resolver = props.resolver;
-  }
-
-  toString(): string {
-    return `bucket:${this.bucket}, retries:${this.retries}, operation:${this.operation}\n`;
-  }
+export interface OperationQueueItem {
+  operation: Operation;
+  bucket: number;
+  retries: number;
+  resolver?: (value: boolean) => void;
 }
 
 // OperationRepo Class
@@ -103,10 +87,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     Log._debug(`OperationRepo.enqueue(operation: ${operation})`);
 
     this._internalEnqueue(
-      new OperationQueueItem({
+      {
         operation,
         bucket: this._enqueueIntoBucket,
-      }),
+        retries: 0,
+      },
       true,
     );
   }
@@ -116,11 +101,12 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     await new Promise<void>((resolve, reject) => {
       this._internalEnqueue(
-        new OperationQueueItem({
+        {
           operation,
           bucket: this._enqueueIntoBucket,
+          retries: 0,
           resolver: (value) => (value ? resolve() : reject()),
-        }),
+        },
         true,
       );
     });
@@ -258,10 +244,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       // Handle additional operations from the response
       if (response.operations) {
         for (const op of [...response.operations].reverse()) {
-          const queueItem = new OperationQueueItem({
+          const queueItem = {
             operation: op,
             bucket: 0,
-          });
+            retries: 0,
+          };
           this._queue.unshift(queueItem);
           this._operationModelStore.addAt(0, queueItem.operation);
         }
@@ -364,10 +351,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     for (const operation of operations) {
       this._internalEnqueue(
-        new OperationQueueItem({
+        {
           operation,
           bucket: this._enqueueIntoBucket,
-        }),
+          retries: 0,
+        },
         false,
         0,
       );
