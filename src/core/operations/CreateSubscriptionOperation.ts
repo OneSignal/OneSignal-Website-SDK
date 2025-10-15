@@ -19,17 +19,17 @@ export class CreateSubscriptionOperation extends BaseFullSubscriptionOperation {
     );
   }
 
-  override get canStartExecute(): boolean {
-    return !IDManager._isLocalId(this.onesignalId);
+  override get _canStartExecute(): boolean {
+    return !IDManager._isLocalId(this._onesignalId);
   }
 
-  override get applyToRecordId(): string {
-    return this.onesignalId;
+  override get _applyToRecordId(): string {
+    return this._onesignalId;
   }
 
-  override translateIds(map: Record<string, string>): void {
-    if (map[this.onesignalId]) {
-      this.onesignalId = map[this.onesignalId];
+  override _translateIds(map: Record<string, string>): void {
+    if (map[this._onesignalId]) {
+      this._onesignalId = map[this._onesignalId];
     }
   }
 }

@@ -51,8 +51,8 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     for (const operation of operations) {
       if (operation instanceof SetPropertyOperation) {
         if (!appId) {
-          appId = operation.appId;
-          onesignalId = operation.onesignalId;
+          appId = operation._appId;
+          onesignalId = operation._onesignalId;
         }
         propertiesObject =
           PropertyOperationHelper.createPropertiesFromOperation(

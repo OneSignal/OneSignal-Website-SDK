@@ -107,10 +107,10 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     };
 
     const response = await createSubscriptionByAlias(
-      { appId: createOperation.appId },
+      { appId: createOperation._appId },
       {
         label: IdentityConstants.ONESIGNAL_ID,
-        id: createOperation.onesignalId,
+        id: createOperation._onesignalId,
       },
       { subscription },
     );
@@ -131,7 +131,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         );
         subscriptionModel?._setProperty(
           'onesignalId',
-          createOperation.onesignalId,
+          createOperation._onesignalId,
           ModelChangeTags.HYDRATE,
         );
       }
@@ -142,8 +142,8 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         !backendSubscriptionId
           ? [
               new RefreshUserOperation(
-                createOperation.appId,
-                createOperation.onesignalId,
+                createOperation._appId,
+                createOperation._onesignalId,
               ),
             ]
           : undefined,
@@ -178,7 +178,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         if (
           status === 404 &&
           this._newRecordState._isInMissingRetryWindow(
-            createOperation.onesignalId,
+            createOperation._onesignalId,
           )
         ) {
           return new ExecutionResponse(
@@ -189,8 +189,8 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
         const rebuildOps =
           await this._buildUserService.getRebuildOperationsIfCurrentUser(
-            createOperation.appId,
-            createOperation.onesignalId,
+            createOperation._appId,
+            createOperation._onesignalId,
           );
         if (!rebuildOps)
           return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
@@ -220,7 +220,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     };
 
     const response = await updateSubscriptionById(
-      { appId: lastOp.appId },
+      { appId: lastOp._appId },
       lastOp.subscriptionId,
       subscription,
     );
@@ -241,7 +241,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       case ResponseStatusType.MISSING:
         if (
           status === 404 &&
-          [lastOp.onesignalId, lastOp.subscriptionId].some((id) =>
+          [lastOp._onesignalId, lastOp.subscriptionId].some((id) =>
             this._newRecordState._isInMissingRetryWindow(id),
           )
         ) {
@@ -253,10 +253,10 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
         return new ExecutionResponse(ExecutionResult.FAIL_NORETRY, undefined, [
           new CreateSubscriptionOperation({
-            appId: lastOp.appId,
+            appId: lastOp._appId,
             enabled: lastOp.enabled,
             notification_types: lastOp.notification_types,
-            onesignalId: lastOp.onesignalId,
+            onesignalId: lastOp._onesignalId,
             subscriptionId: lastOp.subscriptionId,
             token: lastOp.token,
             type: lastOp.type,
@@ -271,9 +271,9 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     op: TransferSubscriptionOperation,
   ): Promise<ExecutionResponse> {
     const response = await transferSubscriptionById(
-      { appId: op.appId },
+      { appId: op._appId },
       op.subscriptionId,
-      { onesignal_id: op.onesignalId },
+      { onesignal_id: op._onesignalId },
       false,
     );
 
@@ -300,7 +300,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     op: DeleteSubscriptionOperation,
   ): Promise<ExecutionResponse> {
     const response = await deleteSubscriptionById(
-      { appId: op.appId },
+      { appId: op._appId },
       op.subscriptionId,
     );
 
@@ -318,7 +318,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     switch (type) {
       case ResponseStatusType.MISSING:
         if (
-          [op.onesignalId, op.subscriptionId].some((id) =>
+          [op._onesignalId, op.subscriptionId].some((id) =>
             this._newRecordState._isInMissingRetryWindow(id),
           )
         ) {

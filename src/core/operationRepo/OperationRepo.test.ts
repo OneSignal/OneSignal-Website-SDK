@@ -453,7 +453,7 @@ describe('OperationRepo', () => {
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const newOp = new Operation('2', GroupComparisonType.NONE);
-      const opTranslateIdsSpy = vi.spyOn(newOp, 'translateIds');
+      const opTranslateIdsSpy = vi.spyOn(newOp, '_translateIds');
 
       opRepo._enqueue(mockOperation);
       opRepo._enqueue(newOp);
@@ -511,11 +511,11 @@ describe('OperationRepo', () => {
 
 const translateIdsFn = vi.fn();
 class Operation extends OperationBase<{ value: string }> {
-  private _groupComparisonTypeValue: GroupComparisonValue;
-  private _createComparisonKey: string;
-  private _modifyComparisonKey: string;
-  private _applyToRecordId: string;
-  private _canStartExecute: boolean;
+  private __groupComparisonTypeValue: GroupComparisonValue;
+  private __createComparisonKey: string;
+  private __modifyComparisonKey: string;
+  private __applyToRecordId: string;
+  private __canStartExecute: boolean;
 
   constructor(
     value: string,
@@ -527,11 +527,11 @@ class Operation extends OperationBase<{ value: string }> {
   ) {
     super('mock-op', APP_ID, ONESIGNAL_ID);
     this.value = value;
-    this._groupComparisonTypeValue = groupComparisonTypeValue;
-    this._createComparisonKey = createComparisonKey;
-    this._modifyComparisonKey = modifyComparisonKey;
-    this._applyToRecordId = applyToRecordId;
-    this._canStartExecute = canStartExecute;
+    this.__groupComparisonTypeValue = groupComparisonTypeValue;
+    this.__createComparisonKey = createComparisonKey;
+    this.__modifyComparisonKey = modifyComparisonKey;
+    this.__applyToRecordId = applyToRecordId;
+    this.__canStartExecute = canStartExecute;
   }
 
   get value(): string {
@@ -541,31 +541,31 @@ class Operation extends OperationBase<{ value: string }> {
     this._setProperty('value', value);
   }
 
-  get groupComparisonType(): GroupComparisonValue {
-    return this._groupComparisonTypeValue;
+  get _groupComparisonType(): GroupComparisonValue {
+    return this.__groupComparisonTypeValue;
   }
 
-  get createComparisonKey(): string {
-    return this._createComparisonKey;
+  get _createComparisonKey(): string {
+    return this.__createComparisonKey;
   }
 
-  get modifyComparisonKey(): string {
-    return this._modifyComparisonKey;
+  get _modifyComparisonKey(): string {
+    return this.__modifyComparisonKey;
   }
 
-  get applyToRecordId(): string {
-    return this._applyToRecordId;
+  get _applyToRecordId(): string {
+    return this.__applyToRecordId;
   }
 
-  set applyToRecordId(value: string) {
-    this._applyToRecordId = value;
+  set _applyToRecordId(value: string) {
+    this.__applyToRecordId = value;
   }
 
-  get canStartExecute(): boolean {
-    return this._canStartExecute;
+  get _canStartExecute(): boolean {
+    return this.__canStartExecute;
   }
 
-  translateIds() {
+  _translateIds() {
     translateIdsFn();
   }
 }
@@ -582,6 +582,6 @@ const executeFn: Mock<IOperationExecutor['_execute']> = vi.fn(async () => ({
 }));
 
 const mockExecutor: IOperationExecutor = {
-  _operations: [mockOperation.name],
+  _operations: [mockOperation._name],
   _execute: executeFn,
 };

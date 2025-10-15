@@ -69,16 +69,16 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
 
   private async _getUser(op: RefreshUserOperation): Promise<ExecutionResponse> {
     const response = await getUserByAlias(
-      { appId: op.appId },
+      { appId: op._appId },
       {
         label: IdentityConstants.ONESIGNAL_ID,
-        id: op.onesignalId,
+        id: op._onesignalId,
       },
     );
 
     const { ok, result, retryAfterSeconds, status } = response;
     if (ok) {
-      if (op.onesignalId !== this._identityModelStore.model.onesignalId) {
+      if (op._onesignalId !== this._identityModelStore.model.onesignalId) {
         return new ExecutionResponse(ExecutionResult.SUCCESS);
       }
 
@@ -88,7 +88,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       }
 
       const propertiesModel = new PropertiesModel();
-      propertiesModel.onesignalId = op.onesignalId;
+      propertiesModel.onesignalId = op._onesignalId;
 
       const { properties = {}, subscriptions = [] } = result;
 
@@ -110,7 +110,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         model.sdk = sub.sdk;
         model.device_os = sub.device_os;
         model.device_model = sub.device_model;
-        model.onesignalId = op.onesignalId;
+        model.onesignalId = op._onesignalId;
 
         // We only add a non-push subscriptions. For push, the device is the source of truth
         // so we don't want to cache these subscriptions from the backend.
@@ -122,7 +122,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       const pushModel =
         await OneSignal._coreDirector._getPushSubscriptionModel();
       if (pushModel) {
-        pushModel.onesignalId = op.onesignalId;
+        pushModel.onesignalId = op._onesignalId;
         subscriptionModels.push(pushModel);
       }
 
@@ -154,7 +154,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       case ResponseStatusType.MISSING: {
         if (
           status === 404 &&
-          this._newRecordState._isInMissingRetryWindow(op.onesignalId)
+          this._newRecordState._isInMissingRetryWindow(op._onesignalId)
         )
           return new ExecutionResponse(
             ExecutionResult.FAIL_RETRY,
@@ -163,8 +163,8 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
 
         const rebuildOps =
           await this._buildUserService.getRebuildOperationsIfCurrentUser(
-            op.appId,
-            op.onesignalId,
+            op._appId,
+            op._onesignalId,
           );
         return rebuildOps
           ? new ExecutionResponse(

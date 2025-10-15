@@ -98,7 +98,7 @@ describe('LoginUserOperationExecutor', () => {
     const ops = [someOp];
     const result = executor._execute(ops);
     await expect(() => result).rejects.toThrow(
-      `Unrecognized operation: ${someOp.name}`,
+      `Unrecognized operation: ${someOp._name}`,
     );
   });
 
@@ -125,7 +125,7 @@ describe('LoginUserOperationExecutor', () => {
       const ops2 = [loginOp, transferSubOp, someOp];
       const res2 = executor._execute(ops2);
       await expect(res2).rejects.toThrow(
-        `Unrecognized operation: ${someOp.name}`,
+        `Unrecognized operation: ${someOp._name}`,
       );
     });
 

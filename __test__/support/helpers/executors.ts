@@ -5,23 +5,23 @@ export class SomeOperation extends Operation {
     super('some-operation');
   }
 
-  get applyToRecordId() {
+  get _applyToRecordId() {
     return '';
   }
 
-  get createComparisonKey() {
+  get _createComparisonKey() {
     return '';
   }
 
-  get modifyComparisonKey() {
+  get _modifyComparisonKey() {
     return '';
   }
 
-  get groupComparisonType() {
+  get _groupComparisonType() {
     return GroupComparisonType.CREATE;
   }
 
-  get canStartExecute() {
+  get _canStartExecute() {
     return true;
   }
 }

@@ -11,11 +11,11 @@ export class DeleteAliasOperation extends BaseAliasOperation {
     super(OPERATION_NAME.DELETE_ALIAS, appId, onesignalId, label);
   }
 
-  override get modifyComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}.Alias.${this.label}`;
+  override get _modifyComparisonKey(): string {
+    return `${this._appId}.User.${this._onesignalId}.Alias.${this.label}`;
   }
 
-  override get groupComparisonType(): GroupComparisonValue {
+  override get _groupComparisonType(): GroupComparisonValue {
     return GroupComparisonType.NONE;
   }
 }

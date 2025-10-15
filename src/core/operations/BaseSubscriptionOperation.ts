@@ -33,27 +33,27 @@ export abstract class BaseSubscriptionOperation<
     this._setProperty('subscriptionId', value);
   }
 
-  override get createComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}`;
+  override get _createComparisonKey(): string {
+    return `${this._appId}.User.${this._onesignalId}`;
   }
 
-  override get modifyComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}.Subscription.${this.subscriptionId}`;
+  override get _modifyComparisonKey(): string {
+    return `${this._appId}.User.${this._onesignalId}.Subscription.${this.subscriptionId}`;
   }
 
-  override get canStartExecute(): boolean {
+  override get _canStartExecute(): boolean {
     return (
-      !IDManager._isLocalId(this.onesignalId) &&
+      !IDManager._isLocalId(this._onesignalId) &&
       !IDManager._isLocalId(this.subscriptionId)
     );
   }
 
-  override get applyToRecordId(): string {
+  override get _applyToRecordId(): string {
     return this.subscriptionId;
   }
 
-  override translateIds(map: Record<string, string>): void {
-    super.translateIds(map);
+  override _translateIds(map: Record<string, string>): void {
+    super._translateIds(map);
     if (map[this.subscriptionId]) {
       this.subscriptionId = map[this.subscriptionId];
     }

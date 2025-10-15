@@ -13,7 +13,7 @@ export class DeleteSubscriptionOperation extends BaseSubscriptionOperation {
     if (subscriptionId) this.subscriptionId = subscriptionId;
   }
 
-  override get groupComparisonType(): GroupComparisonValue {
+  override get _groupComparisonType(): GroupComparisonValue {
     return GroupComparisonType.NONE;
   }
 }
