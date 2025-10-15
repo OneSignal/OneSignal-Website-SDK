@@ -188,7 +188,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       let highestRetries = 0;
       switch (response.result) {
-        case ExecutionResult.SUCCESS:
+        case ExecutionResult._Success:
           // Remove operations from store
           ops.forEach((op) => {
             this._operationModelStore.remove(op.operation._modelId);
@@ -196,9 +196,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ops.forEach((op) => op.resolver?.(true));
           break;
 
-        case ExecutionResult.FAIL_UNAUTHORIZED:
-        case ExecutionResult.FAIL_NORETRY:
-        case ExecutionResult.FAIL_CONFLICT:
+        case ExecutionResult._FailUnauthorized:
+        case ExecutionResult._FailNoretry:
+        case ExecutionResult._FailConflict:
           Log._error(`Operation execution failed without retry: ${operations}`);
           ops.forEach((op) => {
             this._operationModelStore.remove(op.operation._modelId);
@@ -206,7 +206,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ops.forEach((op) => op.resolver?.(false));
           break;
 
-        case ExecutionResult.SUCCESS_STARTING_ONLY:
+        case ExecutionResult._SuccessStartingOnly:
           // Remove starting operation and re-add others to the queue
           this._operationModelStore.remove(startingOp.operation._modelId);
 
@@ -217,7 +217,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
             .forEach((op) => this._queue.unshift(op));
           break;
 
-        case ExecutionResult.FAIL_RETRY:
+        case ExecutionResult._FailRetry:
           Log._error(`Operation execution failed, retrying: ${operations}`);
           // Add back all operations to front of queue
           [...ops].reverse().forEach((op) => {
@@ -230,7 +230,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           });
           break;
 
-        case ExecutionResult.FAIL_PAUSE_OPREPO:
+        case ExecutionResult._FailPauseOpRepo:
           Log._error(`Operation failed, pausing ops:${operations}`);
           this._pause();
           ops.forEach((op) => op.resolver?.(false));

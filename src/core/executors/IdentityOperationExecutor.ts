@@ -105,31 +105,31 @@ export class IdentityOperationExecutor implements IOperationExecutor {
           ModelChangeTags._Hydrate,
         );
       }
-      return new ExecutionResponse(ExecutionResult.SUCCESS);
+      return new ExecutionResponse(ExecutionResult._Success);
     }
 
     const responseType = getResponseStatusType(status);
     switch (responseType) {
       case ResponseStatusType.RETRYABLE:
         return new ExecutionResponse(
-          ExecutionResult.FAIL_RETRY,
+          ExecutionResult._FailRetry,
           retryAfterSeconds,
         );
       case ResponseStatusType.INVALID:
-        return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+        return new ExecutionResponse(ExecutionResult._FailNoretry);
 
       case ResponseStatusType.CONFLICT: {
         if (isSetAlias)
           return new ExecutionResponse(
-            ExecutionResult.FAIL_CONFLICT,
+            ExecutionResult._FailConflict,
             retryAfterSeconds,
           );
-        return new ExecutionResponse(ExecutionResult.SUCCESS); // alias doesn't exist = good
+        return new ExecutionResponse(ExecutionResult._Success); // alias doesn't exist = good
       }
 
       case ResponseStatusType.UNAUTHORIZED:
         return new ExecutionResponse(
-          ExecutionResult.FAIL_UNAUTHORIZED,
+          ExecutionResult._FailUnauthorized,
           retryAfterSeconds,
         );
 
@@ -141,7 +141,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
           )
         )
           return new ExecutionResponse(
-            ExecutionResult.FAIL_RETRY,
+            ExecutionResult._FailRetry,
             retryAfterSeconds,
           );
 
@@ -153,10 +153,10 @@ export class IdentityOperationExecutor implements IOperationExecutor {
             );
 
           if (rebuildOps == null)
-            return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+            return new ExecutionResponse(ExecutionResult._FailNoretry);
 
           return new ExecutionResponse(
-            ExecutionResult.FAIL_RETRY,
+            ExecutionResult._FailRetry,
             retryAfterSeconds,
             rebuildOps,
           );
@@ -165,7 +165,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         // This means either the User or the Alias was already
         // deleted, either way the end state is the same, the
         // alias no longer exists on that User.
-        return new ExecutionResponse(ExecutionResult.SUCCESS);
+        return new ExecutionResponse(ExecutionResult._Success);
       }
     }
   }

@@ -94,7 +94,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     ]);
 
     switch (result.result) {
-      case ExecutionResult.SUCCESS: {
+      case ExecutionResult._Success: {
         const backendOneSignalId = loginUserOp.existingOnesignalId;
         const opOneSignalId = loginUserOp._onesignalId;
 
@@ -114,7 +114,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           );
         }
         return new ExecutionResponse(
-          ExecutionResult.SUCCESS_STARTING_ONLY,
+          ExecutionResult._SuccessStartingOnly,
           undefined,
           undefined,
           {
@@ -123,11 +123,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         );
       }
 
-      case ExecutionResult.FAIL_CONFLICT:
+      case ExecutionResult._FailConflict:
         Log._debug(`Handling 409 for externalId: ${loginUserOp.externalId}`);
         return this._createUser(loginUserOp, operations);
 
-      case ExecutionResult.FAIL_NORETRY:
+      case ExecutionResult._FailNoretry:
         Log._error(
           `Recovering from SetAlias failure for externalId: ${loginUserOp.externalId}`,
         );
@@ -245,7 +245,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           : undefined;
 
       return new ExecutionResponse(
-        ExecutionResult.SUCCESS,
+        ExecutionResult._Success,
         undefined,
         followUp,
         idTranslations,
@@ -258,16 +258,16 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     switch (responseType) {
       case ResponseStatusType.RETRYABLE:
         return new ExecutionResponse(
-          ExecutionResult.FAIL_RETRY,
+          ExecutionResult._FailRetry,
           retryAfterSeconds,
         );
       case ResponseStatusType.UNAUTHORIZED:
         return new ExecutionResponse(
-          ExecutionResult.FAIL_UNAUTHORIZED,
+          ExecutionResult._FailUnauthorized,
           retryAfterSeconds,
         );
       default:
-        return new ExecutionResponse(ExecutionResult.FAIL_PAUSE_OPREPO);
+        return new ExecutionResponse(ExecutionResult._FailPauseOpRepo);
     }
   }
 

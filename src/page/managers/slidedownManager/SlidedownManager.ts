@@ -84,7 +84,7 @@ export class SlidedownManager {
         return false;
       }
 
-      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt.Push);
+      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt._Push);
 
       if (optedOut) {
         throw new Error('User is opted out');
@@ -123,7 +123,7 @@ export class SlidedownManager {
         }
       }
 
-      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt.NonPush);
+      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt._NonPush);
     }
 
     if (wasDismissed && !options.force && !options.isInUpdateMode) {
@@ -408,11 +408,11 @@ export class SlidedownManager {
       case DelayedPromptType._Push:
       case DelayedPromptType._Category:
         Log._debug('Setting flag to not show the slidedown to the user again.');
-        markPromptDismissedWithType(DismissPrompt.Push);
+        markPromptDismissedWithType(DismissPrompt._Push);
         break;
       default:
         Log._debug('Setting flag to not show the slidedown to the user again.');
-        markPromptDismissedWithType(DismissPrompt.NonPush);
+        markPromptDismissedWithType(DismissPrompt._NonPush);
         break;
     }
   }

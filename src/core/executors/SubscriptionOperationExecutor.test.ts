@@ -159,7 +159,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       const result = await executor._execute([createOp]);
       expect(result).toMatchObject({
-        result: ExecutionResult.SUCCESS,
+        result: ExecutionResult._Success,
         idTranslations: {
           [SUB_ID]: BACKEND_SUBSCRIPTION_ID,
         },
@@ -195,7 +195,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       const result = await executor._execute([createOp, updateOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
 
       expect(createSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
@@ -227,7 +227,7 @@ describe('SubscriptionOperationExecutor', () => {
       );
 
       const result = await executor._execute([createOp, deleteOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
 
       // API should not have been called
       expect(createSubscriptionFn).not.toHaveBeenCalled();
@@ -249,7 +249,7 @@ describe('SubscriptionOperationExecutor', () => {
       setCreateSubscriptionError({ status: 429, retryAfter: 10 });
       const res1 = await executor._execute([createOp]);
       expect(res1).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 10,
       });
 
@@ -257,21 +257,21 @@ describe('SubscriptionOperationExecutor', () => {
       setCreateSubscriptionError({ status: 400, retryAfter: 10 });
       const res2 = await executor._execute([createOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
       });
 
       // Invalid error
       setCreateSubscriptionError({ status: 409, retryAfter: 10 });
       const res3 = await executor._execute([createOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
       });
 
       // Unauthorized error
       setCreateSubscriptionError({ status: 401, retryAfter: 15 });
       const res4 = await executor._execute([createOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
+        result: ExecutionResult._FailUnauthorized,
         retryAfterSeconds: 15,
       });
 
@@ -281,7 +281,7 @@ describe('SubscriptionOperationExecutor', () => {
       const res5 = await executor._execute([createOp]);
 
       expect(res5).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
       });
 
       // Missing error with rebuild ops
@@ -290,7 +290,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       const res6 = await executor._execute([createOp]);
       expect(res6).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 5,
         operations: [
           {
@@ -320,7 +320,7 @@ describe('SubscriptionOperationExecutor', () => {
       setCreateSubscriptionError({ status: 404, retryAfter: 20 });
       const res7 = await executor._execute([createOp]);
       expect(res7).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 20,
       });
 
@@ -328,7 +328,7 @@ describe('SubscriptionOperationExecutor', () => {
       setCreateSubscriptionError({ status: 400 });
       const res8 = await executor._execute([createOp]);
       expect(res8).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
       });
     });
   });
@@ -353,7 +353,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       const result = await executor._execute([updateOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
 
       expect(updateSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
@@ -394,7 +394,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       const result = await executor._execute([updateOp1, updateOp2]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
 
       // Verify only the last update was used
       expect(updateSubscriptionFn).toHaveBeenCalledWith({
@@ -425,7 +425,7 @@ describe('SubscriptionOperationExecutor', () => {
       setUpdateSubscriptionError({ status: 429, retryAfter: 15 });
       const res1 = await executor._execute([updateOp]);
       expect(res1).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 15,
       });
 
@@ -443,7 +443,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
       subOp._modelId = res2.operations![0]._modelId;
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
         operations: [subOp],
       });
 
@@ -451,7 +451,7 @@ describe('SubscriptionOperationExecutor', () => {
       newRecordsState._add(SUB_ID);
       const res3 = await executor._execute([updateOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 10,
       });
 
@@ -459,7 +459,7 @@ describe('SubscriptionOperationExecutor', () => {
       setUpdateSubscriptionError({ status: 400 });
       const res4 = await executor._execute([updateOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
       });
     });
   });
@@ -481,7 +481,7 @@ describe('SubscriptionOperationExecutor', () => {
       );
 
       const result = await executor._execute([deleteOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
 
       // Verify model was removed
       expect(subscriptionModelStore.get(SUB_ID)).toBeUndefined();
@@ -498,14 +498,14 @@ describe('SubscriptionOperationExecutor', () => {
       // Missing error
       setDeleteSubscriptionError({ status: 404 });
       const result = await executor._execute([deleteOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
 
       // Missing error with record in retry window
       newRecordsState._add(SUB_ID);
       setDeleteSubscriptionError({ status: 404, retryAfter: 5 });
       const res2 = await executor._execute([deleteOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 5,
       });
 
@@ -517,7 +517,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
       const res3 = await executor._execute([deleteOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 10,
       });
 
@@ -528,7 +528,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
       const res4 = await executor._execute([deleteOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
       });
     });
   });
@@ -547,7 +547,7 @@ describe('SubscriptionOperationExecutor', () => {
       );
 
       const result = await executor._execute([transferOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
 
       expect(transferSubscriptionFn).toHaveBeenCalledWith({
         identity: {
@@ -569,7 +569,7 @@ describe('SubscriptionOperationExecutor', () => {
       setTransferSubscriptionError({ status: 429, retryAfter: 10 });
       const res2 = await executor._execute([transferOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 10,
       });
 
@@ -577,7 +577,7 @@ describe('SubscriptionOperationExecutor', () => {
       setTransferSubscriptionError({ status: 400 });
       const res3 = await executor._execute([transferOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
       });
     });
   });

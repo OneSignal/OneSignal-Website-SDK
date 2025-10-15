@@ -141,7 +141,7 @@ describe('LoginUserOperationExecutor', () => {
       const res = await executor._execute(ops);
 
       expect(res).toEqual({
-        result: ExecutionResult.SUCCESS,
+        result: ExecutionResult._Success,
         retryAfterSeconds: undefined,
         operations: undefined,
         idTranslations: {
@@ -206,7 +206,7 @@ describe('LoginUserOperationExecutor', () => {
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
       refreshOp._modelId = res.operations![0]._modelId;
       expect(res).toEqual({
-        result: ExecutionResult.SUCCESS,
+        result: ExecutionResult._Success,
         retryAfterSeconds: undefined,
         operations: [refreshOp],
         idTranslations: {
@@ -230,7 +230,7 @@ describe('LoginUserOperationExecutor', () => {
       setCreateUserError({ status: 429, retryAfter: 10 });
       const res = await executor._execute(ops);
       expect(res).toEqual({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 10,
       });
 
@@ -238,7 +238,7 @@ describe('LoginUserOperationExecutor', () => {
       setCreateUserError({ status: 401, retryAfter: 15 });
       const res2 = await executor._execute(ops);
       expect(res2).toEqual({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
+        result: ExecutionResult._FailUnauthorized,
         retryAfterSeconds: 15,
       });
 
@@ -246,7 +246,7 @@ describe('LoginUserOperationExecutor', () => {
       setCreateUserError({ status: 400, retryAfter: 20 });
       const res3 = await executor._execute(ops);
       expect(res3).toEqual({
-        result: ExecutionResult.FAIL_PAUSE_OPREPO,
+        result: ExecutionResult._FailPauseOpRepo,
         retryAfterSeconds: undefined,
       });
     });
@@ -278,7 +278,7 @@ describe('LoginUserOperationExecutor', () => {
       );
 
       expect(res).toEqual({
-        result: ExecutionResult.SUCCESS_STARTING_ONLY,
+        result: ExecutionResult._SuccessStartingOnly,
         idTranslations: {
           [ONESIGNAL_ID]: ONESIGNAL_ID_2,
         },
@@ -300,7 +300,7 @@ describe('LoginUserOperationExecutor', () => {
 
       const res = await executor._execute([loginOp]);
       expect(res).toMatchObject({
-        result: ExecutionResult.SUCCESS,
+        result: ExecutionResult._Success,
         idTranslations: {
           [ONESIGNAL_ID]: '123',
         },
@@ -314,7 +314,7 @@ describe('LoginUserOperationExecutor', () => {
 
       const res2 = await executor._execute([loginOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.SUCCESS,
+        result: ExecutionResult._Success,
         idTranslations: {
           [ONESIGNAL_ID]: '456',
         },
@@ -325,7 +325,7 @@ describe('LoginUserOperationExecutor', () => {
 
       const res3 = await executor._execute([loginOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
+        result: ExecutionResult._FailUnauthorized,
       });
     });
   });

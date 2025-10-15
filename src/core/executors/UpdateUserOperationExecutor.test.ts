@@ -90,7 +90,7 @@ describe('UpdateUserOperationExecutor', () => {
       );
 
       const result = await executor._execute([setPropertyOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
       expect(propertiesModelStore.model._language).toBe('fr');
     });
 
@@ -104,7 +104,7 @@ describe('UpdateUserOperationExecutor', () => {
       );
 
       const result = await executor._execute([setPropertyOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
       expect(propertiesModelStore.model._tags).toEqual({
         tagA: 'valueA',
         tagB: 'valueB',
@@ -123,7 +123,7 @@ describe('UpdateUserOperationExecutor', () => {
       setUpdateUserError({ status: 429, retryAfter: 10 });
       const res1 = await executor._execute([setTagOp]);
       expect(res1).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 10,
       });
 
@@ -131,7 +131,7 @@ describe('UpdateUserOperationExecutor', () => {
       setUpdateUserError({ status: 401, retryAfter: 15 });
       const res2 = await executor._execute([setTagOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
+        result: ExecutionResult._FailUnauthorized,
         retryAfterSeconds: 15,
       });
 
@@ -140,13 +140,13 @@ describe('UpdateUserOperationExecutor', () => {
       getRebuildOpsSpy.mockReturnValueOnce(null);
       const res3 = await executor._execute([setTagOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
       });
 
       // Missing error with rebuild ops
       const res4 = await executor._execute([setTagOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 5,
         operations: [
           {
@@ -167,7 +167,7 @@ describe('UpdateUserOperationExecutor', () => {
       setUpdateUserError({ status: 404, retryAfter: 20 });
       const res5 = await executor._execute([setTagOp]);
       expect(res5).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 20,
       });
 
@@ -175,7 +175,7 @@ describe('UpdateUserOperationExecutor', () => {
       setUpdateUserError({ status: 400 });
       const res6 = await executor._execute([setTagOp]);
       expect(res6).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
       });
     });
   });

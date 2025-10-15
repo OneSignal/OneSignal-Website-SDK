@@ -296,7 +296,7 @@ describe('OperationRepo', () => {
       ];
 
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.SUCCESS,
+        result: ExecutionResult._Success,
         operations: additionalOps,
       });
 
@@ -327,9 +327,9 @@ describe('OperationRepo', () => {
     });
 
     test.each([
-      ['FailUnauthorized', ExecutionResult.FAIL_UNAUTHORIZED],
-      ['FailNoRetry', ExecutionResult.FAIL_NORETRY],
-      ['FailConflict', ExecutionResult.FAIL_CONFLICT],
+      ['FailUnauthorized', ExecutionResult._FailUnauthorized],
+      ['FailNoRetry', ExecutionResult._FailNoretry],
+      ['FailConflict', ExecutionResult._FailConflict],
     ])('can handle failed operation: %s', async (_, failResult) => {
       executeFn.mockResolvedValueOnce({
         result: failResult,
@@ -347,7 +347,7 @@ describe('OperationRepo', () => {
 
     test('can handle success starting only operation', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.SUCCESS_STARTING_ONLY,
+        result: ExecutionResult._SuccessStartingOnly,
       });
 
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
@@ -379,7 +379,7 @@ describe('OperationRepo', () => {
 
     test('can handle fail retry operation and delay next execution', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 30,
       });
 
@@ -415,7 +415,7 @@ describe('OperationRepo', () => {
 
     test('can handle fail pause op repo operation', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.FAIL_PAUSE_OPREPO,
+        result: ExecutionResult._FailPauseOpRepo,
       });
 
       const groupedOps = getGroupedOp();
@@ -446,7 +446,7 @@ describe('OperationRepo', () => {
         '1': '2',
       };
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.SUCCESS,
+        result: ExecutionResult._Success,
         idTranslations,
       });
 
@@ -578,7 +578,7 @@ const mockOperation = new Operation(
   '123',
 );
 const executeFn: Mock<IOperationExecutor['_execute']> = vi.fn(async () => ({
-  result: ExecutionResult.SUCCESS,
+  result: ExecutionResult._Success,
 }));
 
 const mockExecutor: IOperationExecutor = {

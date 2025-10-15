@@ -66,13 +66,13 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     const { ok, status } = response;
     const responseType = getResponseStatusType(status);
 
-    if (ok) return new ExecutionResponse(ExecutionResult.SUCCESS);
+    if (ok) return new ExecutionResponse(ExecutionResult._Success);
 
     switch (responseType) {
       case ResponseStatusType.RETRYABLE:
-        return new ExecutionResponse(ExecutionResult.FAIL_RETRY);
+        return new ExecutionResponse(ExecutionResult._FailRetry);
       default:
-        return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+        return new ExecutionResponse(ExecutionResult._FailNoretry);
     }
   }
 }

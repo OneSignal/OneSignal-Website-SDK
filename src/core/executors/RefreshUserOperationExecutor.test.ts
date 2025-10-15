@@ -107,7 +107,7 @@ describe('RefreshUserOperationExecutor', () => {
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
 
       const result = await executor._execute([refreshOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
       expect(propertiesModelStore.model._language).not.toBe('fr');
     });
 
@@ -141,7 +141,7 @@ describe('RefreshUserOperationExecutor', () => {
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID);
 
       const result = await executor._execute([refreshOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result.result).toBe(ExecutionResult._Success);
 
       // Check identity model updates
       expect(identityModelStore.model._getProperty('onesignal_id')).toBe(
@@ -227,7 +227,7 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res1 = await executor._execute([refreshOp]);
       expect(res1).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 10,
       });
 
@@ -238,7 +238,7 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res2 = await executor._execute([refreshOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
+        result: ExecutionResult._FailUnauthorized,
         retryAfterSeconds: 15,
       });
 
@@ -251,14 +251,14 @@ describe('RefreshUserOperationExecutor', () => {
       getRebuildOpsSpy.mockReturnValueOnce(null);
       const res3 = await executor._execute([refreshOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
         retryAfterSeconds: undefined,
       });
 
       // -- with rebuild ops
       const res4 = await executor._execute([refreshOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 5,
         operations: [
           {
@@ -282,7 +282,7 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res6 = await executor._execute([refreshOp]);
       expect(res6).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
+        result: ExecutionResult._FailRetry,
         retryAfterSeconds: 20,
       });
 
@@ -292,7 +292,7 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res7 = await executor._execute([refreshOp]);
       expect(res7).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        result: ExecutionResult._FailNoretry,
         retryAfterSeconds: undefined,
       });
     });

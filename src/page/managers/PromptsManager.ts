@@ -188,7 +188,7 @@ export class PromptsManager {
     this._isNativePromptShowing = true;
     const success = await registerForPushNotifications();
     this._isNativePromptShowing = false;
-    markPromptDismissedWithType(DismissPrompt.Push);
+    markPromptDismissedWithType(DismissPrompt._Push);
     return success;
   }
 
@@ -323,13 +323,13 @@ export class PromptsManager {
           Log._debug(
             'Setting flag to not show the slidedown to the user again.',
           );
-          markPromptDismissedWithType(DismissPrompt.Push);
+          markPromptDismissedWithType(DismissPrompt._Push);
           break;
         default:
           Log._debug(
             'Setting flag to not show the slidedown to the user again.',
           );
-          markPromptDismissedWithType(DismissPrompt.NonPush);
+          markPromptDismissedWithType(DismissPrompt._NonPush);
           break;
       }
     });

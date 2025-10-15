@@ -127,24 +127,24 @@ describe('IdentityOperationExecutor', () => {
       // Retryable
       setAddAliasError({ status: 429, retryAfter: 10 });
       const res = await executor._execute(ops);
-      expect(res.result).toBe(ExecutionResult.FAIL_RETRY);
+      expect(res.result).toBe(ExecutionResult._FailRetry);
       expect(res.retryAfterSeconds).toBe(10);
 
       // Invalid
       setAddAliasError({ status: 400 });
       const res2 = await executor._execute(ops);
-      expect(res2.result).toBe(ExecutionResult.FAIL_NORETRY);
+      expect(res2.result).toBe(ExecutionResult._FailNoretry);
 
       // Conflict
       setAddAliasError({ status: 409, retryAfter: 5 });
       const res3 = await executor._execute(ops);
-      expect(res3.result).toBe(ExecutionResult.FAIL_CONFLICT);
+      expect(res3.result).toBe(ExecutionResult._FailConflict);
       expect(res3.retryAfterSeconds).toBe(5);
 
       // Unauthorized
       setAddAliasError({ status: 401, retryAfter: 15 });
       const res4 = await executor._execute(ops);
-      expect(res4.result).toBe(ExecutionResult.FAIL_UNAUTHORIZED);
+      expect(res4.result).toBe(ExecutionResult._FailUnauthorized);
       expect(res4.retryAfterSeconds).toBe(15);
 
       // Missing
@@ -154,13 +154,13 @@ describe('IdentityOperationExecutor', () => {
 
       // no rebuild ops
       updateIdentityModel('onesignal_id', undefined);
-      expect(res5.result).toBe(ExecutionResult.FAIL_NORETRY);
+      expect(res5.result).toBe(ExecutionResult._FailNoretry);
       expect(res5.retryAfterSeconds).toBeUndefined();
 
       // with rebuild ops
       identityModelStore.model._onesignalId = ONESIGNAL_ID;
       const res7 = await executor._execute(ops);
-      expect(res7.result).toBe(ExecutionResult.FAIL_RETRY);
+      expect(res7.result).toBe(ExecutionResult._FailRetry);
       expect(res7.retryAfterSeconds).toBeUndefined();
       expect(res7.operations).toMatchObject([
         {
@@ -179,7 +179,7 @@ describe('IdentityOperationExecutor', () => {
       newRecordsState._add(ONESIGNAL_ID);
       setAddAliasError({ status: 404, retryAfter: 20 });
       const res6 = await executor._execute(ops);
-      expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);
+      expect(res6.result).toBe(ExecutionResult._FailRetry);
       expect(res6.retryAfterSeconds).toBe(20);
     });
 
@@ -190,35 +190,35 @@ describe('IdentityOperationExecutor', () => {
       // Retryable
       setDeleteAliasError({ status: 429, retryAfter: 10 });
       const res = await executor._execute(ops);
-      expect(res.result).toBe(ExecutionResult.FAIL_RETRY);
+      expect(res.result).toBe(ExecutionResult._FailRetry);
       expect(res.retryAfterSeconds).toBe(10);
 
       // Invalid
       setDeleteAliasError({ status: 400 });
       const res2 = await executor._execute(ops);
-      expect(res2.result).toBe(ExecutionResult.FAIL_NORETRY);
+      expect(res2.result).toBe(ExecutionResult._FailNoretry);
 
       // Conflict
       setDeleteAliasError({ status: 409, retryAfter: 5 });
       const res3 = await executor._execute(ops);
-      expect(res3.result).toBe(ExecutionResult.SUCCESS);
+      expect(res3.result).toBe(ExecutionResult._Success);
 
       // Unauthorized
       setDeleteAliasError({ status: 401, retryAfter: 15 });
       const res4 = await executor._execute(ops);
-      expect(res4.result).toBe(ExecutionResult.FAIL_UNAUTHORIZED);
+      expect(res4.result).toBe(ExecutionResult._FailUnauthorized);
       expect(res4.retryAfterSeconds).toBe(15);
 
       // Missing
       setDeleteAliasError({ status: 410 });
       const res5 = await executor._execute(ops);
-      expect(res5.result).toBe(ExecutionResult.SUCCESS);
+      expect(res5.result).toBe(ExecutionResult._Success);
 
       // in missing retry window
       newRecordsState._add(ONESIGNAL_ID);
       setDeleteAliasError({ status: 404, retryAfter: 20 });
       const res6 = await executor._execute(ops);
-      expect(res6.result).toBe(ExecutionResult.FAIL_RETRY);
+      expect(res6.result).toBe(ExecutionResult._FailRetry);
       expect(res6.retryAfterSeconds).toBe(20);
     });
   });

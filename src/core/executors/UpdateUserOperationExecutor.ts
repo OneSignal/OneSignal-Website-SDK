@@ -77,7 +77,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
       this._processOperations(operations);
 
     if (!appId || !onesignalId)
-      return new ExecutionResponse(ExecutionResult.SUCCESS);
+      return new ExecutionResponse(ExecutionResult._Success);
 
     const response = await updateUserByAlias(
       { appId },
@@ -116,20 +116,20 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           }
         }
       }
-      return new ExecutionResponse(ExecutionResult.SUCCESS);
+      return new ExecutionResponse(ExecutionResult._Success);
     }
 
     const responseType = getResponseStatusType(status);
     switch (responseType) {
       case ResponseStatusType.RETRYABLE:
         return new ExecutionResponse(
-          ExecutionResult.FAIL_RETRY,
+          ExecutionResult._FailRetry,
           retryAfterSeconds,
         );
 
       case ResponseStatusType.UNAUTHORIZED:
         return new ExecutionResponse(
-          ExecutionResult.FAIL_UNAUTHORIZED,
+          ExecutionResult._FailUnauthorized,
           retryAfterSeconds,
         );
 
@@ -139,7 +139,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           this._newRecordState._isInMissingRetryWindow(onesignalId)
         ) {
           return new ExecutionResponse(
-            ExecutionResult.FAIL_RETRY,
+            ExecutionResult._FailRetry,
             retryAfterSeconds,
           );
         }
@@ -150,17 +150,17 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           );
 
         if (!rebuildOps)
-          return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+          return new ExecutionResponse(ExecutionResult._FailNoretry);
 
         return new ExecutionResponse(
-          ExecutionResult.FAIL_RETRY,
+          ExecutionResult._FailRetry,
           retryAfterSeconds,
           rebuildOps,
         );
       }
 
       default:
-        return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+        return new ExecutionResponse(ExecutionResult._FailNoretry);
     }
   }
 }
