@@ -47,7 +47,7 @@ export class SessionManager implements ISessionManager {
     };
     if (supportsServiceWorkers()) {
       Log._debug('Notify SW to upsert session');
-      await this._context._workerMessenger.unicast(
+      await this._context._workerMessenger._unicast(
         WorkerMessengerCommand.SessionUpsert,
         payload,
       );
@@ -75,7 +75,7 @@ export class SessionManager implements ISessionManager {
     };
     if (supportsServiceWorkers()) {
       Log._debug('Notify SW to deactivate session');
-      await this._context._workerMessenger.unicast(
+      await this._context._workerMessenger._unicast(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );
@@ -203,7 +203,7 @@ export class SessionManager implements ISessionManager {
       };
 
       Log._debug('Notify SW to deactivate session (beforeunload)');
-      this._context._workerMessenger.directPostMessageToSW(
+      this._context._workerMessenger._directPostMessageToSW(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );

@@ -168,7 +168,7 @@ export default class OneSignal {
   private static async _delayedInit(): Promise<void> {
     OneSignal._pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
-    OneSignal._context._workerMessenger.listen();
+    OneSignal._context._workerMessenger._listen();
 
     async function __init() {
       if (OneSignal._initAlreadyCalled) return;

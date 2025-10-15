@@ -133,7 +133,7 @@ export class ServiceWorkerManager {
           resolve(workerVersion);
         },
       );
-      await this._context._workerMessenger.unicast(
+      await this._context._workerMessenger._unicast(
         WorkerMessengerCommand.WorkerVersion,
       );
     });
@@ -336,7 +336,7 @@ export class ServiceWorkerManager {
             timestamp: incomingPayload.timestamp,
             focused: document.hasFocus(),
           };
-          await workerMessenger.directPostMessageToSW(
+          await workerMessenger._directPostMessageToSW(
             WorkerMessengerCommand.AreYouVisibleResponse,
             payload,
           );

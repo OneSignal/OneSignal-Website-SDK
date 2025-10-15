@@ -413,7 +413,7 @@ export default class Bell {
     if (!this._options.enable) return;
 
     const sdkStylesLoadResult =
-      await OneSignal._context._dynamicResourceLoader.loadSdkStylesheet();
+      await OneSignal._context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log._debug('Not showing notify button because styles failed to load.');
       return;
