@@ -14,7 +14,7 @@ import { once } from '../utils/utils';
 import MainHelper from './MainHelper';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
-import SubscriptionHelper from './SubscriptionHelper';
+import { registerForPush } from './subscription';
 
 export async function internalInit() {
   Log._debug('Called internalInit()');
@@ -96,7 +96,7 @@ async function sessionInit(): Promise<void> {
 }
 
 export async function registerForPushNotifications(): Promise<boolean> {
-  return !!(await SubscriptionHelper.registerForPush());
+  return !!(await registerForPush());
 }
 
 /**
@@ -383,7 +383,7 @@ async function handleAutoResubscribe(isOptedOut: boolean) {
         OneSignal._context._appConfig.safariWebId,
       );
     if (currentPermission == 'granted') {
-      await SubscriptionHelper.registerForPush();
+      await registerForPush();
     }
   }
 }

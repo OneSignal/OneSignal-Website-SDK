@@ -1,5 +1,6 @@
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import { getPushToken } from 'src/shared/database/subscription';
+import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   SubscriptionChannel,
@@ -7,7 +8,6 @@ import {
 } from 'src/shared/subscriptions/constants';
 import type { SubscriptionChannelValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
-import SubscriptionHelper from '../../src/shared/helpers/SubscriptionHelper';
 import MainHelper from '../shared/helpers/MainHelper';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import CoreModule from './CoreModule';
@@ -108,9 +108,7 @@ export class CoreModuleDirector {
   public _getAllPushSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getAllPushSubscriptionModels');
     const subscriptions = this._core._subscriptionModelStore.list();
-    return subscriptions.filter((s) =>
-      SubscriptionHelper.isPushSubscriptionType(s.type),
-    );
+    return subscriptions.filter((s) => isPushSubscriptionType(s.type));
   }
 
   async _getPushSubscriptionModelByCurrentToken(): Promise<
