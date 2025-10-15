@@ -36,10 +36,10 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
   /**
    * This is a legacy property, could be removed sometime after web refactor launch
    */
-  get onesignalId(): string | undefined {
+  get _onesignalId(): string | undefined {
     return this._getProperty('onesignalId');
   }
-  set onesignalId(value: string | undefined) {
+  set _onesignalId(value: string | undefined) {
     this._setProperty('onesignalId', value);
   }
 
@@ -76,10 +76,10 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
   }
 
   // Android SDK refers to this as status
-  get notification_types(): NotificationTypeValue | undefined {
+  get _notification_types(): NotificationTypeValue | undefined {
     return this._getProperty('notification_types');
   }
-  set notification_types(value: NotificationTypeValue | undefined) {
+  set _notification_types(value: NotificationTypeValue | undefined) {
     this._setProperty('notification_types', value);
   }
 

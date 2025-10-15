@@ -77,7 +77,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
 
     if (
       model.enabled &&
-      model.notification_types === NotificationType.Subscribed &&
+      model._notification_types === NotificationType.Subscribed &&
       model.token
     ) {
       enabled = true;
@@ -86,7 +86,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
       enabled = false;
       notification_types = !model.enabled
         ? NotificationType.UserOptedOut
-        : model.notification_types;
+        : model._notification_types;
     }
 
     return { enabled, notification_types };

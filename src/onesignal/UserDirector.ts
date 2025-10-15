@@ -62,7 +62,7 @@ export default class UserDirector {
 
     const sdkId = IDManager._createLocalId();
     newIdentityModel._onesignalId = sdkId;
-    newPropertiesModel.onesignalId = sdkId;
+    newPropertiesModel._onesignalId = sdkId;
 
     OneSignal._coreDirector._identityModelStore.replace(newIdentityModel);
     OneSignal._coreDirector._propertiesModelStore.replace(newPropertiesModel);

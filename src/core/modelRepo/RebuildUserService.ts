@@ -67,7 +67,7 @@ export class RebuildUserService implements IRebuildUserService {
           type: pushSubscription.type,
           enabled: pushSubscription.enabled,
           token: pushSubscription.token,
-          notification_types: pushSubscription.notification_types,
+          notification_types: pushSubscription._notification_types,
         }),
       );
     }

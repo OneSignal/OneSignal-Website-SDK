@@ -32,7 +32,7 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
 
     return new SetPropertyOperation(
       appId,
-      model.onesignalId,
+      model._onesignalId,
       property,
       newValue as PropertyValue[string],
     );

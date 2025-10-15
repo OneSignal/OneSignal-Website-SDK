@@ -374,7 +374,7 @@ describe('Language Management', () => {
     const userNamespace = new UserNamespace(true);
     const language = 'es';
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    propertiesModel.language = language;
+    propertiesModel._language = language;
 
     expect(userNamespace.getLanguage()).toBe(language);
   });
@@ -382,7 +382,7 @@ describe('Language Management', () => {
   test('should return empty string if language is not set', () => {
     const userNamespace = new UserNamespace(true);
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    propertiesModel.language = undefined;
+    propertiesModel._language = undefined;
 
     expect(userNamespace.getLanguage()).toBe('');
   });
@@ -461,7 +461,7 @@ describe('Initialization', () => {
     const onesignalId = user.onesignalId;
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    expect(propertiesModel.onesignalId).toBe(onesignalId);
+    expect(propertiesModel._onesignalId).toBe(onesignalId);
   });
 
   test('properties model should have onesignalId for new user', () => {
@@ -476,7 +476,7 @@ describe('Initialization', () => {
 
     // identity and properties models should have the same onesignalId
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    expect(propertiesModel.onesignalId).toBe(onesignalId);
+    expect(propertiesModel._onesignalId).toBe(onesignalId);
   });
 });
 

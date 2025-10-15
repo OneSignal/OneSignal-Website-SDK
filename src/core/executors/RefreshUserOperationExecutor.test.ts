@@ -108,7 +108,7 @@ describe('RefreshUserOperationExecutor', () => {
 
       const result = await executor._execute([refreshOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
-      expect(propertiesModelStore.model.language).not.toBe('fr');
+      expect(propertiesModelStore.model._language).not.toBe('fr');
     });
 
     test('should handle successful user retrieval and update models', async () => {
@@ -152,13 +152,13 @@ describe('RefreshUserOperationExecutor', () => {
       );
 
       // Check properties model updates
-      expect(propertiesModelStore.model.country).toBe('US');
-      expect(propertiesModelStore.model.language).toBe('en');
-      expect(propertiesModelStore.model.tags).toEqual({
+      expect(propertiesModelStore.model._country).toBe('US');
+      expect(propertiesModelStore.model._language).toBe('en');
+      expect(propertiesModelStore.model._tags).toEqual({
         test_tag: 'test_value',
         test_tag_2: 'test_value_2',
       });
-      expect(propertiesModelStore.model.timezone_id).toBe('America/New_York');
+      expect(propertiesModelStore.model._timezone_id).toBe('America/New_York');
 
       // Check subscription model updates
       const subscriptions = subscriptionModelStore.list();
@@ -181,7 +181,7 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.id = SUB_ID_2;
       pushSubModel.type = SubscriptionType.ChromePush;
       pushSubModel.token = PUSH_TOKEN;
-      pushSubModel.notification_types = NotificationType.Subscribed;
+      pushSubModel._notification_types = NotificationType.Subscribed;
 
       subscriptionModelStore.add(pushSubModel, ModelChangeTags.NO_PROPAGATE);
       await setPushToken(PUSH_TOKEN);
