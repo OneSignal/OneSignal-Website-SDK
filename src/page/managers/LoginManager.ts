@@ -49,7 +49,7 @@ export default class LoginManager {
     // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
     // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
     identityModel._setProperty(
-      IdentityConstants.EXTERNAL_ID,
+      IdentityConstants._ExternalID,
       externalId,
       ModelChangeTags.HYDRATE,
     );

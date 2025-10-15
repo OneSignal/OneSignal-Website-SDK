@@ -38,7 +38,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   }
 
   get _operations(): string[] {
-    return [OPERATION_NAME.SET_PROPERTY];
+    return [OPERATION_NAME._SetProperty];
   }
 
   private _processOperations(operations: Operation[]) {
@@ -82,7 +82,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     const response = await updateUserByAlias(
       { appId },
       {
-        label: IdentityConstants.ONESIGNAL_ID,
+        label: IdentityConstants._OneSignalID,
         id: onesignalId,
       },
       {

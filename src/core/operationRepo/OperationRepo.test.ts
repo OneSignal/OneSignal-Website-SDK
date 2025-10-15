@@ -52,8 +52,8 @@ describe('OperationRepo', () => {
   let opRepo: OperationRepo;
 
   const getGroupedOp = () => [
-    new Operation('1', GroupComparisonType.CREATE, 'abc'),
-    new Operation('2', GroupComparisonType.CREATE, 'abc'),
+    new Operation('1', GroupComparisonType._Create, 'abc'),
+    new Operation('2', GroupComparisonType._Create, 'abc'),
   ];
 
   beforeEach(async () => {
@@ -221,7 +221,7 @@ describe('OperationRepo', () => {
   });
 
   test('can get grouped operations', () => {
-    const singleOp = new Operation('1', GroupComparisonType.NONE);
+    const singleOp = new Operation('1', GroupComparisonType._None);
     const groupedOps = getGroupedOp();
 
     let op = {
@@ -249,12 +249,12 @@ describe('OperationRepo', () => {
 
     // can group operations by same modify comparison key
     op = {
-      operation: new Operation('1', GroupComparisonType.ALTER, '', 'abc'),
+      operation: new Operation('1', GroupComparisonType._Alter, '', 'abc'),
       bucket: 0,
       retries: 0,
     };
     op2 = {
-      operation: new Operation('2', GroupComparisonType.ALTER, '', 'abc'),
+      operation: new Operation('2', GroupComparisonType._Alter, '', 'abc'),
       bucket: 0,
       retries: 0,
     };
@@ -263,7 +263,7 @@ describe('OperationRepo', () => {
 
     // throws for no comparison keys
     op = {
-      operation: new Operation('1', GroupComparisonType.CREATE),
+      operation: new Operation('1', GroupComparisonType._Create),
       bucket: 0,
       retries: 0,
     };
@@ -278,7 +278,7 @@ describe('OperationRepo', () => {
     records.set(blockedId, Date.now());
 
     op = {
-      operation: new Operation('1', GroupComparisonType.CREATE, 'def'),
+      operation: new Operation('1', GroupComparisonType._Create, 'def'),
       bucket: 0,
       retries: 0,
     };
@@ -291,8 +291,8 @@ describe('OperationRepo', () => {
   describe('Executor Operations', () => {
     test('can handle success operation and process additional operations', async () => {
       const additionalOps = [
-        new Operation('3', GroupComparisonType.NONE),
-        new Operation('4', GroupComparisonType.NONE),
+        new Operation('3', GroupComparisonType._None),
+        new Operation('4', GroupComparisonType._None),
       ];
 
       executeFn.mockResolvedValueOnce({
@@ -452,7 +452,7 @@ describe('OperationRepo', () => {
 
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
-      const newOp = new Operation('2', GroupComparisonType.NONE);
+      const newOp = new Operation('2', GroupComparisonType._None);
       const opTranslateIdsSpy = vi.spyOn(newOp, '_translateIds');
 
       opRepo._enqueue(mockOperation);
@@ -474,7 +474,7 @@ describe('OperationRepo', () => {
     test('should process non-groupable operations separately', async () => {
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
-      const newOp = new Operation('2', GroupComparisonType.NONE);
+      const newOp = new Operation('2', GroupComparisonType._None);
       opRepo._enqueue(mockOperation);
       opRepo._enqueue(newOp);
       await executeOps(opRepo);
@@ -519,7 +519,7 @@ class Operation extends OperationBase<{ value: string }> {
 
   constructor(
     value: string,
-    groupComparisonTypeValue: GroupComparisonValue = GroupComparisonType.NONE,
+    groupComparisonTypeValue: GroupComparisonValue = GroupComparisonType._None,
     createComparisonKey = '',
     modifyComparisonKey = '',
     applyToRecordId = '',
@@ -572,7 +572,7 @@ class Operation extends OperationBase<{ value: string }> {
 
 const mockOperation = new Operation(
   '1',
-  GroupComparisonType.CREATE,
+  GroupComparisonType._Create,
   'abc',
   '',
   '123',

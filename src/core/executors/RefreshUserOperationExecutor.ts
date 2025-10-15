@@ -48,7 +48,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   get _operations(): string[] {
-    return [OPERATION_NAME.REFRESH_USER];
+    return [OPERATION_NAME._RefreshUser];
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
@@ -71,7 +71,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
     const response = await getUserByAlias(
       { appId: op._appId },
       {
-        label: IdentityConstants.ONESIGNAL_ID,
+        label: IdentityConstants._OneSignalID,
         id: op._onesignalId,
       },
     );

@@ -28,7 +28,7 @@ import type {
   PageVisibilityRequest,
   PageVisibilityResponse,
 } from '../session/types';
-import { VERSION } from '../utils/EnvVariables';
+import { VERSION } from '../utils/env';
 
 export class ServiceWorkerManager {
   private _context: ContextInterface;

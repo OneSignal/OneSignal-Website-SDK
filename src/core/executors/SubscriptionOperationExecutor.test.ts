@@ -85,10 +85,10 @@ describe('SubscriptionOperationExecutor', () => {
   test('should return correct operations (names)', () => {
     const executor = getExecutor();
     expect(executor._operations).toEqual([
-      OPERATION_NAME.CREATE_SUBSCRIPTION,
-      OPERATION_NAME.UPDATE_SUBSCRIPTION,
-      OPERATION_NAME.DELETE_SUBSCRIPTION,
-      OPERATION_NAME.TRANSFER_SUBSCRIPTION,
+      OPERATION_NAME._CreateSubscription,
+      OPERATION_NAME._UpdateSubscription,
+      OPERATION_NAME._DeleteSubscription,
+      OPERATION_NAME._TransferSubscription,
     ]);
   });
 

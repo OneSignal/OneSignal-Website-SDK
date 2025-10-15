@@ -386,7 +386,7 @@ export class SessionManager implements ISessionManager {
 
     try {
       const aliasPair = {
-        label: IdentityConstants.ONESIGNAL_ID,
+        label: IdentityConstants._OneSignalID,
         id: onesignalId,
       };
       // TO DO: in future, we should aggregate session count in case network call fails

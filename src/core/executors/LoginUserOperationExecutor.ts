@@ -58,7 +58,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   }
 
   get _operations(): string[] {
-    return [OPERATION_NAME.LOGIN_USER];
+    return [OPERATION_NAME._LoginUser];
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
@@ -88,7 +88,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       new SetAliasOperation(
         loginUserOp._appId,
         loginUserOp.existingOnesignalId,
-        IdentityConstants.EXTERNAL_ID,
+        IdentityConstants._ExternalID,
         loginUserOp.externalId,
       ),
     ]);
@@ -100,7 +100,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
         if (this._identityModelStore.model._onesignalId === opOneSignalId) {
           this._identityModelStore.model._setProperty(
-            IdentityConstants.ONESIGNAL_ID,
+            IdentityConstants._OneSignalID,
             backendOneSignalId,
             ModelChangeTags.HYDRATE,
           );
@@ -150,7 +150,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     };
 
     if (createUserOperation.externalId) {
-      identity[IdentityConstants.EXTERNAL_ID] = createUserOperation.externalId;
+      identity[IdentityConstants._ExternalID] = createUserOperation.externalId;
     }
 
     for (const operation of operations) {
@@ -189,7 +189,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       if (this._identityModelStore.model._onesignalId === opOneSignalId) {
         this._identityModelStore.model._setProperty(
-          IdentityConstants.ONESIGNAL_ID,
+          IdentityConstants._OneSignalID,
           backendOneSignalId,
           ModelChangeTags.HYDRATE,
         );

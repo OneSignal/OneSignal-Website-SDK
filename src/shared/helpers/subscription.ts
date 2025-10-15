@@ -4,7 +4,7 @@ import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER } from '../utils/env';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 

@@ -9,7 +9,7 @@ import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { limitStorePut } from '../services/limitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
-import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER } from '../utils/env';
 import { once } from '../utils/utils';
 import { getAppId } from './main';
 import { incrementPageViewCount } from './pageview';

@@ -32,7 +32,7 @@ export class LoginUserOperation extends Operation<ILoginOp> {
     externalId?: string,
     existingOneSignalId?: string,
   ) {
-    super(OPERATION_NAME.LOGIN_USER, appId, onesignalId);
+    super(OPERATION_NAME._LoginUser, appId, onesignalId);
     if (externalId) this.externalId = externalId;
     if (existingOneSignalId) this.existingOnesignalId = existingOneSignalId;
   }
@@ -68,7 +68,7 @@ export class LoginUserOperation extends Operation<ILoginOp> {
   }
 
   override get _groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.CREATE;
+    return GroupComparisonType._Create;
   }
 
   override get _canStartExecute(): boolean {

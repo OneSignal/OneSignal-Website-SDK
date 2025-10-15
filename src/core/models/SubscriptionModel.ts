@@ -3,7 +3,7 @@ import type {
   NotificationTypeValue,
   SubscriptionTypeValue,
 } from 'src/shared/subscriptions/types';
-import { VERSION } from 'src/shared/utils/EnvVariables';
+import { VERSION } from 'src/shared/utils/env';
 import type { ISubscription } from '../types/api';
 import { Model } from './Model';
 

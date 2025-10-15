@@ -36,7 +36,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   get _operations(): string[] {
-    return [OPERATION_NAME.SET_ALIAS, OPERATION_NAME.DELETE_ALIAS];
+    return [OPERATION_NAME._SetAlias, OPERATION_NAME._DeleteAlias];
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
@@ -79,7 +79,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       ? addAlias(
           { appId: lastOperation._appId },
           {
-            label: IdentityConstants.ONESIGNAL_ID,
+            label: IdentityConstants._OneSignalID,
             id: lastOperation._onesignalId,
           },
           { [lastOperation.label]: lastOperation.value },
@@ -87,7 +87,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       : deleteAlias(
           { appId: lastOperation._appId },
           {
-            label: IdentityConstants.ONESIGNAL_ID,
+            label: IdentityConstants._OneSignalID,
             id: lastOperation._onesignalId,
           },
           lastOperation.label,

@@ -8,7 +8,7 @@ import {
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
 import Log from 'src/shared/libraries/Log';
-import { VERSION } from 'src/shared/utils/EnvVariables';
+import { VERSION } from 'src/shared/utils/env';
 import { OPERATION_NAME } from '../constants';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
@@ -21,7 +21,7 @@ import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/main/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/CustomEventOperationExecutor.kt
 export class CustomEventsOperationExecutor implements IOperationExecutor {
   get _operations(): string[] {
-    return [OPERATION_NAME.CUSTOM_EVENT];
+    return [OPERATION_NAME._CustomEvent];
   }
 
   private get _eventMetadata(): ICustomEventMetadata {

@@ -16,7 +16,7 @@ export class SetAliasOperation extends BaseAliasOperation<AliasOp> {
     label?: string,
     value?: string,
   ) {
-    super(OPERATION_NAME.SET_ALIAS, appId, onesignalId, label);
+    super(OPERATION_NAME._SetAlias, appId, onesignalId, label);
     if (value) this.value = value;
   }
 

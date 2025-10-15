@@ -12,7 +12,7 @@ import {
 export class CreateSubscriptionOperation extends BaseFullSubscriptionOperation {
   constructor(subscription?: SubscriptionWithAppId) {
     super(
-      OPERATION_NAME.CREATE_SUBSCRIPTION,
+      OPERATION_NAME._CreateSubscription,
       subscription?.appId,
       subscription?.onesignalId,
       subscription,

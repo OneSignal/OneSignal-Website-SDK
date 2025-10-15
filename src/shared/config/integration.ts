@@ -21,7 +21,7 @@ import type {
   AppUserConfigPromptOptions,
   ServerAppPromptConfig,
 } from '../prompts/types';
-import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER } from '../utils/env';
 import { ConfigIntegrationKind } from './constants';
 import {
   getPromptOptionsForDashboardConfiguration,

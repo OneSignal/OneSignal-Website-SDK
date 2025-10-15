@@ -26,7 +26,7 @@ type ITrackEventOp = Pick<OperationProps, 'externalId' | 'timestamp' | 'event'>;
 export class TrackCustomEventOperation extends Operation<ITrackEventOp> {
   constructor(props?: OperationProps);
   constructor(props: OperationProps) {
-    super(OPERATION_NAME.CUSTOM_EVENT, props?.appId, props?.onesignalId);
+    super(OPERATION_NAME._CustomEvent, props?.appId, props?.onesignalId);
     if (props?.externalId) this.externalId = props.externalId;
     if (props?.timestamp) this.timestamp = props.timestamp;
     if (props?.event) this.event = props.event;
@@ -75,7 +75,7 @@ export class TrackCustomEventOperation extends Operation<ITrackEventOp> {
 
   // TODO: no batching of custom events until finalized
   override get _groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.NONE;
+    return GroupComparisonType._None;
   }
   override get _canStartExecute(): boolean {
     return !IDManager._isLocalId(this._onesignalId);

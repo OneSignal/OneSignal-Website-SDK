@@ -69,8 +69,8 @@ describe('IdentityOperationExecutor', () => {
     const executor = getExecutor();
 
     expect(executor._operations).toEqual([
-      OPERATION_NAME.SET_ALIAS,
-      OPERATION_NAME.DELETE_ALIAS,
+      OPERATION_NAME._SetAlias,
+      OPERATION_NAME._DeleteAlias,
     ]);
   });
 

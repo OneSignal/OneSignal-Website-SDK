@@ -310,11 +310,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   ): OperationQueueItem[] {
     const ops = [startingOp];
 
-    if (startingOp.operation._groupComparisonType === GroupComparisonType.NONE)
+    if (startingOp.operation._groupComparisonType === GroupComparisonType._None)
       return ops;
 
     const startingKey =
-      startingOp.operation._groupComparisonType === GroupComparisonType.CREATE
+      startingOp.operation._groupComparisonType === GroupComparisonType._Create
         ? startingOp.operation._createComparisonKey
         : startingOp.operation._modifyComparisonKey;
 
@@ -323,7 +323,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     for (const item of queueCopy) {
       const itemKey =
-        startingOp.operation._groupComparisonType === GroupComparisonType.CREATE
+        startingOp.operation._groupComparisonType ===
+        GroupComparisonType._Create
           ? item.operation._createComparisonKey
           : item.operation._modifyComparisonKey;
 

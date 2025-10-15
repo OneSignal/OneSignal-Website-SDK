@@ -4,7 +4,7 @@ import {
   IS_HTTPS,
   NO_DEV_PORT,
   VERSION,
-} from 'src/shared/utils/EnvVariables';
+} from 'src/shared/utils/env';
 import {
   isIosSafari,
   isPushNotificationsSupported,

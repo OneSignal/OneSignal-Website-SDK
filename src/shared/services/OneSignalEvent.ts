@@ -2,7 +2,7 @@ import { containsMatch } from '../context/helpers';
 import { windowEnvString } from '../environment/detect';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
-import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER } from '../utils/env';
 
 const SILENT_EVENTS = [
   'notifyButtonHovering',

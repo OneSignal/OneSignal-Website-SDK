@@ -61,7 +61,7 @@ describe('UpdateUserOperationExecutor', () => {
 
   test('should return correct operations (names)', () => {
     const executor = getExecutor();
-    expect(executor._operations).toEqual([OPERATION_NAME.SET_PROPERTY]);
+    expect(executor._operations).toEqual([OPERATION_NAME._SetProperty]);
   });
 
   test('should validate operations', async () => {

@@ -3,7 +3,7 @@ import type {
   NotificationTypeValue,
   SubscriptionTypeValue,
 } from 'src/shared/subscriptions/types';
-import { VERSION } from 'src/shared/utils/EnvVariables';
+import { VERSION } from 'src/shared/utils/env';
 import type { ICreateUserSubscription } from '../types/api';
 import { BaseSubscriptionOperation } from './BaseSubscriptionOperation';
 

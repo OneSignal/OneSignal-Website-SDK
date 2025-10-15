@@ -466,7 +466,7 @@ describe('Initialization', () => {
 
   test('properties model should have onesignalId for new user', () => {
     // without an existing onesignalId
-    updateIdentityModel(IdentityConstants.ONESIGNAL_ID, undefined);
+    updateIdentityModel(IdentityConstants._OneSignalID, undefined);
 
     const user = new UserNamespace(true);
     expect(user.onesignalId).toBe(undefined); // since its local

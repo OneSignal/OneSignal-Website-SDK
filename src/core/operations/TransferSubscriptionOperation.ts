@@ -9,12 +9,12 @@ export class TransferSubscriptionOperation extends BaseSubscriptionOperation {
   constructor();
   constructor(appId: string, onesignalId: string, subscriptionId: string);
   constructor(appId?: string, onesignalId?: string, subscriptionId?: string) {
-    super(OPERATION_NAME.TRANSFER_SUBSCRIPTION, appId, onesignalId);
+    super(OPERATION_NAME._TransferSubscription, appId, onesignalId);
     if (subscriptionId) this.subscriptionId = subscriptionId;
   }
 
   override get _groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.NONE;
+    return GroupComparisonType._None;
   }
 
   override get _modifyComparisonKey(): string {

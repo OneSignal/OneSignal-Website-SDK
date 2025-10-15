@@ -86,7 +86,7 @@ describe('LoginUserOperationExecutor', () => {
   test('should return correct operations (names)', async () => {
     const executor = getExecutor();
 
-    expect(executor._operations).toEqual([OPERATION_NAME.LOGIN_USER]);
+    expect(executor._operations).toEqual([OPERATION_NAME._LoginUser]);
   });
 
   test('should validate operations', async () => {
@@ -194,7 +194,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // should update model properties
       expect(
-        identityModelStore.model._getProperty(IdentityConstants.ONESIGNAL_ID),
+        identityModelStore.model._getProperty(IdentityConstants._OneSignalID),
       ).toEqual(ONESIGNAL_ID_2);
       expect(propertiesModelStore.model._getProperty('onesignalId')).toEqual(
         ONESIGNAL_ID_2,
@@ -271,7 +271,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // should update model properties
       expect(
-        identityModelStore.model._getProperty(IdentityConstants.ONESIGNAL_ID),
+        identityModelStore.model._getProperty(IdentityConstants._OneSignalID),
       ).toEqual(ONESIGNAL_ID_2);
       expect(propertiesModelStore.model._getProperty('onesignalId')).toEqual(
         ONESIGNAL_ID_2,

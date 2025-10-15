@@ -30,7 +30,7 @@ export class SetPropertyOperation<
     property?: P,
     value?: PropertyValue[P],
   ) {
-    super(OPERATION_NAME.SET_PROPERTY, appId, onesignalId);
+    super(OPERATION_NAME._SetProperty, appId, onesignalId);
     if (property && value) {
       this.property = property;
       this.value = value;

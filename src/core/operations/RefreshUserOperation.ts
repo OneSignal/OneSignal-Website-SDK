@@ -14,7 +14,7 @@ export class RefreshUserOperation extends Operation {
   constructor();
   constructor(appId: string, onesignalId: string);
   constructor(appId?: string, onesignalId?: string) {
-    super(OPERATION_NAME.REFRESH_USER, appId, onesignalId);
+    super(OPERATION_NAME._RefreshUser, appId, onesignalId);
   }
 
   override get _createComparisonKey(): string {
@@ -26,6 +26,6 @@ export class RefreshUserOperation extends Operation {
   }
 
   override get _groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.CREATE;
+    return GroupComparisonType._Create;
   }
 }

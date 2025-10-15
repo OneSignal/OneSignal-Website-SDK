@@ -37,7 +37,7 @@ export default class User {
         identityModel._onesignalId ?? IDManager._createLocalId();
       if (!identityModel._onesignalId) {
         identityModel._setProperty(
-          IdentityConstants.ONESIGNAL_ID,
+          IdentityConstants._OneSignalID,
           onesignalId,
           ModelChangeTags.NO_PROPAGATE,
         );

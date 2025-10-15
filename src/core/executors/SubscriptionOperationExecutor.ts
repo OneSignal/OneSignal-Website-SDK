@@ -45,10 +45,10 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
   get _operations(): string[] {
     return [
-      OPERATION_NAME.CREATE_SUBSCRIPTION,
-      OPERATION_NAME.UPDATE_SUBSCRIPTION,
-      OPERATION_NAME.DELETE_SUBSCRIPTION,
-      OPERATION_NAME.TRANSFER_SUBSCRIPTION,
+      OPERATION_NAME._CreateSubscription,
+      OPERATION_NAME._UpdateSubscription,
+      OPERATION_NAME._DeleteSubscription,
+      OPERATION_NAME._TransferSubscription,
     ];
   }
 
@@ -109,7 +109,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     const response = await createSubscriptionByAlias(
       { appId: createOperation._appId },
       {
-        label: IdentityConstants.ONESIGNAL_ID,
+        label: IdentityConstants._OneSignalID,
         id: createOperation._onesignalId,
       },
       { subscription },

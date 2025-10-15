@@ -74,7 +74,7 @@ describe('RefreshUserOperationExecutor', () => {
 
   test('should return correct operations (names)', async () => {
     const executor = getExecutor();
-    expect(executor._operations).toEqual([OPERATION_NAME.REFRESH_USER]);
+    expect(executor._operations).toEqual([OPERATION_NAME._RefreshUser]);
   });
 
   test('should validate operations', async () => {

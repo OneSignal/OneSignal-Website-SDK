@@ -10,7 +10,7 @@ import {
 export class UpdateSubscriptionOperation extends BaseFullSubscriptionOperation {
   constructor(subscription?: SubscriptionWithAppId) {
     super(
-      OPERATION_NAME.UPDATE_SUBSCRIPTION,
+      OPERATION_NAME._UpdateSubscription,
       subscription?.appId,
       subscription?.onesignalId,
       subscription,

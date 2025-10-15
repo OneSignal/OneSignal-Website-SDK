@@ -66,7 +66,7 @@ export async function updateUserSession(
   subscriptionId: string,
 ): Promise<void> {
   const aliasPair = {
-    label: IdentityConstants.ONESIGNAL_ID,
+    label: IdentityConstants._OneSignalID,
     id: onesignalId,
   };
   // TO DO: in future, we should aggregate session count in case network call fails
@@ -105,7 +105,7 @@ export async function sendSessionDuration(
   };
 
   const aliasPair = {
-    label: IdentityConstants.ONESIGNAL_ID,
+    label: IdentityConstants._OneSignalID,
     id: onesignalId,
   };
 

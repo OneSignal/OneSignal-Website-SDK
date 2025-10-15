@@ -32,7 +32,7 @@ import {
 } from 'src/shared/listeners';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
-import { VERSION } from 'src/shared/utils/EnvVariables';
+import { VERSION } from 'src/shared/utils/env';
 import { logMethodCall } from 'src/shared/utils/utils';
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';

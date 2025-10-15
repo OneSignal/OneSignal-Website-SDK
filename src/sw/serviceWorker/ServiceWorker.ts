@@ -50,7 +50,7 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
-import { VERSION } from 'src/shared/utils/EnvVariables';
+import { VERSION } from 'src/shared/utils/env';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import {
   isValidPayload,
