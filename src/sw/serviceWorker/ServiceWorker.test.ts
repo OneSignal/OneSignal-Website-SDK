@@ -31,12 +31,20 @@ import type {
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+import { getAppId } from './ServiceWorker';
+
+// Mock webhook notification events
+vi.mock('../webhooks/notifications/webhookNotificationEvent', () => ({
+  notificationClick: vi.fn(),
+  notificationDismissed: vi.fn(),
+  notificationWillDisplay: vi.fn(),
+}));
+
 import {
   notificationClick,
   notificationDismissed,
   notificationWillDisplay,
 } from '../webhooks/notifications/webhookNotificationEvent';
-import { OneSignalServiceWorker } from './ServiceWorker';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -114,7 +122,7 @@ describe('ServiceWorker', () => {
       // @ts-expect-error - search is readonly but we need to set it for testing
       self.location.search = '?appId=some-app-id';
 
-      const appId = await OneSignalServiceWorker._getAppId();
+      const appId = await getAppId();
       expect(appId).toBe('some-app-id');
     });
   });
