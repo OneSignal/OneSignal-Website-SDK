@@ -53,7 +53,7 @@ export class SlidedownManager {
     options: AutoPromptOptions,
   ): Promise<boolean> {
     const permissionDenied =
-      (await OneSignal._context._permissionManager.getPermissionStatus()) ===
+      (await OneSignal._context._permissionManager._getPermissionStatus()) ===
       'denied';
     let wasDismissed: boolean;
 

@@ -84,8 +84,8 @@ describe('OperationRepo', () => {
       mockOperationModelStore.add(cachedOperations[0]);
       mockOperationModelStore.add(cachedOperations[1]);
 
-      opRepo.enqueue(mockOperation);
-      expect(opRepo.queue).toEqual([
+      opRepo._enqueue(mockOperation);
+      expect(opRepo._queue).toEqual([
         {
           operation: mockOperation,
           bucket: 0,
@@ -95,7 +95,7 @@ describe('OperationRepo', () => {
 
       // cached operations are added to the front of the queue and should maintain order
       await opRepo._start();
-      expect(opRepo.queue).toEqual([
+      expect(opRepo._queue).toEqual([
         {
           operation: cachedOperations[0],
           bucket: 0,
@@ -123,7 +123,7 @@ describe('OperationRepo', () => {
         'some-label',
         'some-value',
       );
-      opRepo.enqueue(op1);
+      opRepo._enqueue(op1);
 
       const op2 = new CreateSubscriptionOperation({
         appId: APP_ID,
@@ -132,7 +132,7 @@ describe('OperationRepo', () => {
         type: SubscriptionType.ChromePush,
         subscriptionId: SUB_ID,
       });
-      opRepo.enqueue(op2);
+      opRepo._enqueue(op2);
       expect(mockOperationModelStore.list()).toEqual([op1, op2]);
 
       // persist happens in the background, so we need to wait for it to complete
@@ -200,7 +200,7 @@ describe('OperationRepo', () => {
 
     class MyOperation2 extends MyOperation {}
 
-    opRepo.enqueue(new MyOperation());
+    opRepo._enqueue(new MyOperation());
 
     expect(opRepo._containsInstanceOf(MyOperation)).toBe(true);
     expect(opRepo._containsInstanceOf(MyOperation2)).toBe(false);
@@ -209,15 +209,15 @@ describe('OperationRepo', () => {
   test('operations should be processed after start call', async () => {
     const getNextOpsSpy = vi.spyOn(opRepo, '_getNextOps');
     await opRepo._start();
-    opRepo.enqueue(mockOperation);
+    opRepo._enqueue(mockOperation);
 
-    expect(opRepo.queue.length).toBe(1);
+    expect(opRepo._queue.length).toBe(1);
 
     // index will be 1 if enqueue is after start
     await vi.waitUntil(() => getNextOpsSpy.mock.calls.length > 0);
 
     expect(getNextOpsSpy).toHaveBeenCalledWith(0);
-    expect(opRepo.queue.length).toBe(0);
+    expect(opRepo._queue.length).toBe(0);
   });
 
   test('can get grouped operations', () => {
@@ -241,7 +241,7 @@ describe('OperationRepo', () => {
       operation: groupedOps[1],
       bucket: 0,
     });
-    opRepo.enqueue(op2.operation);
+    opRepo._enqueue(op2.operation);
     expect(opRepo._getGroupableOperations(op)).toEqual([op, op2]);
 
     // can group operations by same modify comparison key
@@ -253,7 +253,7 @@ describe('OperationRepo', () => {
       operation: new Operation('2', GroupComparisonType.ALTER, '', 'abc'),
       bucket: 0,
     });
-    opRepo.enqueue(op2.operation);
+    opRepo._enqueue(op2.operation);
     expect(opRepo._getGroupableOperations(op)).toEqual([op, op2]);
 
     // throws for no comparison keys
@@ -261,7 +261,7 @@ describe('OperationRepo', () => {
       operation: new Operation('1', GroupComparisonType.CREATE),
       bucket: 0,
     });
-    opRepo.enqueue(op2.operation);
+    opRepo._enqueue(op2.operation);
     expect(() => opRepo._getGroupableOperations(op)).toThrow(
       'Both comparison keys cannot be blank!',
     );
@@ -277,7 +277,7 @@ describe('OperationRepo', () => {
     });
     op2.operation._setProperty('onesignalId', blockedId);
 
-    opRepo.enqueue(op2.operation);
+    opRepo._enqueue(op2.operation);
     expect(opRepo._getGroupableOperations(op)).toEqual([op]);
   });
 
@@ -293,7 +293,7 @@ describe('OperationRepo', () => {
         operations: additionalOps,
       });
 
-      opRepo.enqueue(mockOperation);
+      opRepo._enqueue(mockOperation);
       expect(mockOperationModelStore.list()).toEqual([mockOperation]);
 
       // execute the operation
@@ -305,7 +305,7 @@ describe('OperationRepo', () => {
         additionalOps[0],
         additionalOps[1],
       ]);
-      expect(opRepo.queue).toEqual([
+      expect(opRepo._queue).toEqual([
         {
           operation: additionalOps[0],
           bucket: 0,
@@ -328,7 +328,7 @@ describe('OperationRepo', () => {
         result: failResult,
       });
 
-      opRepo.enqueue(mockOperation);
+      opRepo._enqueue(mockOperation);
       expect(mockOperationModelStore.list()).toEqual([mockOperation]);
 
       // execute the operation
@@ -346,8 +346,8 @@ describe('OperationRepo', () => {
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const groupedOps = getGroupedOp();
-      opRepo.enqueue(groupedOps[0]);
-      opRepo.enqueue(groupedOps[1]);
+      opRepo._enqueue(groupedOps[0]);
+      opRepo._enqueue(groupedOps[1]);
 
       expect(mockOperationModelStore.list()).toEqual([
         groupedOps[0],
@@ -361,7 +361,7 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore.list()).toEqual([groupedOps[1]]);
 
       // group operations will be added to the queue except for the first/starting item
-      expect(opRepo.queue).toEqual([
+      expect(opRepo._queue).toEqual([
         {
           operation: groupedOps[1],
           bucket: 0,
@@ -379,13 +379,13 @@ describe('OperationRepo', () => {
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const groupedOps = getGroupedOp();
-      opRepo.enqueue(groupedOps[0]);
-      opRepo.enqueue(groupedOps[1]);
+      opRepo._enqueue(groupedOps[0]);
+      opRepo._enqueue(groupedOps[1]);
       await executeOps(opRepo);
 
       // operations will be added back to the front of the queue
       expect(executeOperationsSpy).toHaveBeenCalledOnce();
-      expect(opRepo.queue).toEqual([
+      expect(opRepo._queue).toEqual([
         {
           operation: groupedOps[0],
           bucket: 0,
@@ -412,12 +412,12 @@ describe('OperationRepo', () => {
       });
 
       const groupedOps = getGroupedOp();
-      opRepo.enqueue(groupedOps[0]);
-      opRepo.enqueue(groupedOps[1]);
+      opRepo._enqueue(groupedOps[0]);
+      opRepo._enqueue(groupedOps[1]);
       await executeOps(opRepo);
 
       // operations will be added back to the front of the queue
-      expect(opRepo.queue).toEqual([
+      expect(opRepo._queue).toEqual([
         {
           operation: groupedOps[0],
           bucket: 0,
@@ -448,8 +448,8 @@ describe('OperationRepo', () => {
       const newOp = new Operation('2', GroupComparisonType.NONE);
       const opTranslateIdsSpy = vi.spyOn(newOp, 'translateIds');
 
-      opRepo.enqueue(mockOperation);
-      opRepo.enqueue(newOp);
+      opRepo._enqueue(mockOperation);
+      opRepo._enqueue(newOp);
       await executeOps(opRepo);
 
       expect(opTranslateIdsSpy).toHaveBeenCalledWith(idTranslations);
@@ -468,8 +468,8 @@ describe('OperationRepo', () => {
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
       const newOp = new Operation('2', GroupComparisonType.NONE);
-      opRepo.enqueue(mockOperation);
-      opRepo.enqueue(newOp);
+      opRepo._enqueue(mockOperation);
+      opRepo._enqueue(newOp);
       await executeOps(opRepo);
 
       // first operation should be processed
@@ -480,7 +480,7 @@ describe('OperationRepo', () => {
           retries: 0,
         },
       ]);
-      expect(opRepo.queue).toEqual([
+      expect(opRepo._queue).toEqual([
         { operation: newOp, bucket: 0, retries: 0 },
       ]);
 
@@ -493,7 +493,7 @@ describe('OperationRepo', () => {
           retries: 0,
         },
       ]);
-      expect(opRepo.queue).toEqual([]);
+      expect(opRepo._queue).toEqual([]);
 
       // queue is clear so no more operations should be processed
       await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);

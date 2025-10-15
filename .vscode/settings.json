@@ -26,6 +26,7 @@
           "  newName",
           ");",
           "if (edit) await vscode.workspace.applyEdit(edit);",
+          "await new Promise(resolve => setTimeout(resolve, 100));",
           "await vscode.commands.executeCommand('workbench.action.files.saveAll');"
         ]
       }

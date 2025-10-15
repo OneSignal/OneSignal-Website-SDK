@@ -26,7 +26,7 @@ export class IdentityModelStoreListener extends SingletonModelStoreListener<Iden
     _oldValue: unknown,
     newValue: unknown,
   ): Operation {
-    const appId = MainHelper.getAppId();
+    const appId = MainHelper._getAppId();
     if (newValue != null && typeof newValue === 'string') {
       return new SetAliasOperation(
         appId,

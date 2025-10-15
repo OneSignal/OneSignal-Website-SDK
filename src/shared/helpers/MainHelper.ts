@@ -15,7 +15,7 @@ import { triggerNotificationPermissionChanged } from './permissions';
 import { isValidUrl } from './validators';
 
 export default class MainHelper {
-  static async showLocalNotification(
+  static async _showLocalNotification(
     title: string,
     message: string,
     url: string,
@@ -43,7 +43,7 @@ export default class MainHelper {
       throw MalformedArgumentError('icon');
     if (!icon) {
       // get default icon
-      const icons = await MainHelper.getNotificationIcons();
+      const icons = await MainHelper._getNotificationIcons();
       icon = getPlatformNotificationIcon(icons);
     }
 
@@ -90,13 +90,13 @@ export default class MainHelper {
       });
   }
 
-  static async checkAndTriggerNotificationPermissionChanged() {
+  static async _checkAndTriggerNotificationPermissionChanged() {
     const previousPermission = await getOptionsValue<string>(
       'notificationPermission',
     );
 
     const currentPermission =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager._getPermissionStatus();
 
     if (previousPermission !== currentPermission) {
       await triggerNotificationPermissionChanged();
@@ -107,8 +107,8 @@ export default class MainHelper {
     }
   }
 
-  static async getNotificationIcons() {
-    const appId = MainHelper.getAppId();
+  static async _getNotificationIcons() {
+    const appId = MainHelper._getAppId();
     if (!appId) {
       throw AppIDMissingError;
     }
@@ -122,13 +122,13 @@ export default class MainHelper {
     return data as NotificationIcons;
   }
 
-  public static getSlidedownOptions(
+  public static _getSlidedownOptions(
     promptOptions: AppUserConfigPromptOptions,
   ): SlidedownOptions {
     return getValueOrDefault(promptOptions.slidedown, { prompts: [] });
   }
 
-  static getFullscreenPermissionMessageOptions(
+  static _getFullscreenPermissionMessageOptions(
     promptOptions: AppUserConfigPromptOptions | undefined,
   ): AppUserConfigPromptOptions | null {
     if (!promptOptions) {
@@ -151,13 +151,13 @@ export default class MainHelper {
     };
   }
 
-  static getPromptOptionsQueryString() {
-    const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(
+  static _getPromptOptionsQueryString() {
+    const promptOptions = MainHelper._getFullscreenPermissionMessageOptions(
       OneSignal.config?.userConfig.promptOptions,
     );
     let promptOptionsStr = '';
     if (promptOptions) {
-      const hash = MainHelper.getPromptOptionsPostHash();
+      const hash = MainHelper._getPromptOptionsPostHash();
       for (const key of Object.keys(hash)) {
         const value = hash[key as keyof typeof hash];
         promptOptionsStr += '&' + key + '=' + value;
@@ -166,8 +166,8 @@ export default class MainHelper {
     return promptOptionsStr;
   }
 
-  static getPromptOptionsPostHash() {
-    const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(
+  static _getPromptOptionsPostHash() {
+    const promptOptions = MainHelper._getFullscreenPermissionMessageOptions(
       OneSignal.config?.userConfig.promptOptions,
     );
     const hash: Record<string, string> = {};
@@ -212,17 +212,17 @@ export default class MainHelper {
     return hash;
   }
 
-  static getAppId(): string {
+  static _getAppId(): string {
     return OneSignal.config?.appId || '';
   }
 
-  static async getDeviceId(): Promise<string | undefined> {
+  static async _getDeviceId(): Promise<string | undefined> {
     const subscription = await getSubscription();
     return subscription.deviceId || undefined;
   }
 
   // TO DO: unit test
-  static async getCurrentPushToken(): Promise<string | undefined> {
+  static async _getCurrentPushToken(): Promise<string | undefined> {
     if (useSafariLegacyPush()) {
       const safariToken = window.safari?.pushNotification?.permission(
         OneSignal.config?.safariWebId,

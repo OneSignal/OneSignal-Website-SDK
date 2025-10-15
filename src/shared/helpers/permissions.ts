@@ -23,7 +23,7 @@ export const triggerNotificationPermissionChanged = async (force = false) => {
 
 const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
   const newPermission: NotificationPermission =
-    await OneSignal._context._permissionManager.getPermissionStatus();
+    await OneSignal._context._permissionManager._getPermissionStatus();
   const previousPermission = await getOptionsValue<NotificationPermission>(
     'notificationPermission',
   );
@@ -38,7 +38,7 @@ const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
     value: newPermission,
   });
 
-  await OneSignalEvent.trigger(
+  await OneSignalEvent._trigger(
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
     newPermission,
   );
@@ -55,7 +55,7 @@ const triggerBooleanPermissionChangeEvent = (
   const triggerEvent = newPermission !== previousPermission || force;
   if (!triggerEvent) return;
 
-  OneSignalEvent.trigger(
+  OneSignalEvent._trigger(
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN,
     newPermissionBoolean,
   );

@@ -48,7 +48,7 @@ export class OperationQueueItem {
 // OperationRepo Class
 export class OperationRepo implements IOperationRepo, IStartableService {
   private _executorsMap: Map<string, IOperationExecutor>;
-  public queue: OperationQueueItem[] = [];
+  public _queue: OperationQueueItem[] = [];
   public _timerID: NodeJS.Timeout | undefined = undefined;
   private _enqueueIntoBucket = 0;
   private _operationModelStore: OperationModelStore;
@@ -71,7 +71,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public _clear(): void {
-    this.queue = [];
+    this._queue = [];
   }
 
   public get _records(): Map<string, number> {
@@ -85,7 +85,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public _containsInstanceOf<T extends Operation>(
     type: new (...args: any[]) => T,
   ): boolean {
-    return this.queue.some((item) => item.operation instanceof type);
+    return this._queue.some((item) => item.operation instanceof type);
   }
 
   public async _start(): Promise<void> {
@@ -99,7 +99,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     Log._debug('OperationRepo: Paused');
   }
 
-  public enqueue(operation: Operation): void {
+  public _enqueue(operation: Operation): void {
     Log._debug(`OperationRepo.enqueue(operation: ${operation})`);
 
     this._internalEnqueue(
@@ -111,7 +111,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     );
   }
 
-  public async enqueueAndWait(operation: Operation): Promise<void> {
+  public async _enqueueAndWait(operation: Operation): Promise<void> {
     Log._debug(`OperationRepo.enqueueAndWaitoperation: ${operation})`);
 
     await new Promise<void>((resolve, reject) => {
@@ -131,7 +131,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     addToStore: boolean,
     index?: number,
   ): void {
-    const hasExisting = this.queue.some(
+    const hasExisting = this._queue.some(
       (item) => item.operation._modelId === queueItem.operation._modelId,
     );
     if (hasExisting) {
@@ -142,9 +142,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
 
     if (index !== undefined) {
-      this.queue.splice(index, 0, queueItem);
+      this._queue.splice(index, 0, queueItem);
     } else {
-      this.queue.push(queueItem);
+      this._queue.push(queueItem);
     }
 
     if (addToStore) {
@@ -191,7 +191,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       // Handle ID translations
       if (idTranslations) {
         ops.forEach((op) => op.operation.translateIds(idTranslations));
-        this.queue.forEach((item) =>
+        this._queue.forEach((item) =>
           item.operation.translateIds(idTranslations),
         );
 
@@ -228,7 +228,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ops
             .filter((op) => op !== startingOp)
             .reverse()
-            .forEach((op) => this.queue.unshift(op));
+            .forEach((op) => this._queue.unshift(op));
           break;
 
         case ExecutionResult.FAIL_RETRY:
@@ -240,7 +240,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
             if (op.retries > highestRetries) {
               highestRetries = op.retries;
             }
-            this.queue.unshift(op);
+            this._queue.unshift(op);
           });
           break;
 
@@ -250,7 +250,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ops.forEach((op) => op.resolver?.(false));
           [...ops].reverse().forEach((op) => {
             removeOpFromDB(op.operation);
-            this.queue.unshift(op);
+            this._queue.unshift(op);
           });
           break;
       }
@@ -262,7 +262,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
             operation: op,
             bucket: 0,
           });
-          this.queue.unshift(queueItem);
+          this._queue.unshift(queueItem);
           this._operationModelStore.addAt(0, queueItem.operation);
         }
       }
@@ -302,7 +302,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
-    const startingOpIndex = this.queue.findIndex(
+    const startingOpIndex = this._queue.findIndex(
       (item) =>
         item.operation.canStartExecute &&
         this._newRecordState._canAccess(item.operation.applyToRecordId) &&
@@ -310,8 +310,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     );
 
     if (startingOpIndex !== -1) {
-      const startingOp = this.queue[startingOpIndex];
-      this.queue.splice(startingOpIndex, 1);
+      const startingOp = this._queue[startingOpIndex];
+      this._queue.splice(startingOpIndex, 1);
       return this._getGroupableOperations(startingOp);
     }
 
@@ -332,7 +332,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         : startingOp.operation.modifyComparisonKey;
 
     // Create a copy of queue to avoid modification during iteration
-    const queueCopy = [...this.queue];
+    const queueCopy = [...this._queue];
 
     for (const item of queueCopy) {
       const itemKey =
@@ -347,9 +347,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         continue;
 
       if (itemKey === startingKey) {
-        const index = this.queue.indexOf(item);
+        const index = this._queue.indexOf(item);
         if (index !== -1) {
-          this.queue.splice(index, 1);
+          this._queue.splice(index, 1);
           ops.push(item);
         }
       }

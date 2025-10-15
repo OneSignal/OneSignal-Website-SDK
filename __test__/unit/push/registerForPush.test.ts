@@ -32,7 +32,7 @@ describe('Register for push', () => {
     const promise = OneSignal.User.PushSubscription.optIn();
 
     expect(spy).not.toHaveBeenCalled();
-    OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+    OneSignalEvent._trigger(OneSignal.EVENTS.SDK_INITIALIZED);
     await promise;
     expect(OneSignal._initialized).toBe(true);
     expect(spy).toHaveBeenCalledTimes(1);
