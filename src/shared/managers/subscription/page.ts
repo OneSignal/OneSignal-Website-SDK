@@ -1,5 +1,5 @@
 import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
-import UserDirector from 'src/onesignal/UserDirector';
+import { createUserOnServer } from 'src/onesignal/userDirector2';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
@@ -62,11 +62,11 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
       OneSignal._coreDirector._generatePushSubscriptionModel(
         rawPushSubscription,
       );
-    return UserDirector._createUserOnServer();
+    return createUserOnServer();
   }
   // for users with data failed to create a user or user + subscription on the server
   if (IDManager._isLocalId(pushModel.id)) {
-    return UserDirector._createUserOnServer();
+    return createUserOnServer();
   }
 
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys

@@ -5,7 +5,10 @@ import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
 import { getAppId } from 'src/shared/helpers/main';
 import { IDManager } from 'src/shared/managers/IDManager';
-import UserDirector from '../../onesignal/UserDirector';
+import {
+  createUserOnServer,
+  resetUserModels,
+} from '../../onesignal/userDirector2';
 import Log from '../../shared/libraries/Log';
 
 export default class LoginManager {
@@ -40,7 +43,7 @@ export default class LoginManager {
       return;
     }
 
-    UserDirector._resetUserModels();
+    resetUserModels();
     identityModel = OneSignal._coreDirector._getIdentityModel();
 
     // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
@@ -90,9 +93,9 @@ export default class LoginManager {
     if (!identityModel._externalId)
       return Log._debug('Logout: User is not logged in, skipping logout');
 
-    UserDirector._resetUserModels();
+    resetUserModels();
 
     // create a new anonymous user
-    return UserDirector._createUserOnServer();
+    return createUserOnServer();
   }
 }
