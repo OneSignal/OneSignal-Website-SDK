@@ -1,4 +1,3 @@
-import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
 import { createUserOnServer } from 'src/onesignal/userDirector';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
@@ -20,6 +19,7 @@ import {
 import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
 import { ServiceWorkerActiveState } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
+import { isCompleteSubscriptionObject } from 'src/shared/managers/utils';
 import type { PushSubscriptionState } from 'src/shared/models/PushSubscriptionState';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';

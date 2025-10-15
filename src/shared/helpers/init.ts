@@ -88,7 +88,7 @@ async function sessionInit(): Promise<void> {
   await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
   if (OneSignal.config?.userConfig.promptOptions?.autoPrompt && !isOptedOut) {
-    OneSignal._context.promptsManager._spawnAutoPrompts();
+    OneSignal._context._promptsManager._spawnAutoPrompts();
   }
 
   OneSignal._sessionInitAlreadyRunning = false;

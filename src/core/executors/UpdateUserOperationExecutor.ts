@@ -1,7 +1,7 @@
 import {
   getResponseStatusType,
   ResponseStatusType,
-} from 'src/shared/helpers/NetworkUtils';
+} from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
@@ -101,7 +101,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
 
     const isTagProperty = (
       op: SetPropertyOperation,
-    ): op is SetPropertyOperation<'tags'> => op.property === 'tags';
+    ): op is SetPropertyOperation<'tags'> => op._property === 'tags';
 
     if (ok) {
       if (this._identityModelStore._model._onesignalId === onesignalId) {
@@ -115,7 +115,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
             }
 
             this._propertiesModelStore._model._setProperty(
-              operation.property as IPropertiesModelKeys,
+              operation._property as IPropertiesModelKeys,
               value,
               ModelChangeTags._Hydrate,
             );
@@ -175,7 +175,7 @@ function createPropertiesFromOperation(
   properties: PropertiesObject,
 ): PropertiesObject {
   if (operation instanceof SetPropertyOperation) {
-    const propertyKey = operation.property;
+    const propertyKey = operation._property;
     const allowedKeys: IPropertiesModelKeys[] = [
       'ip',
       'tags',

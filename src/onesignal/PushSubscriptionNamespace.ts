@@ -12,10 +12,10 @@ import {
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
-import { isCompleteSubscriptionObject } from '../core/utils/typePredicates';
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
+import { isCompleteSubscriptionObject } from '../shared/managers/utils';
 import { Subscription } from '../shared/models/Subscription';
 import {
   awaitOneSignalInitAndSupported,

@@ -14,12 +14,12 @@ import type {
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
 import { getAppId } from '../../helpers/main';
 import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constants';
+import { isCompleteSubscriptionObject } from '../utils';
 import type { ISessionManager } from './types';
 
 export class SessionManager implements ISessionManager {

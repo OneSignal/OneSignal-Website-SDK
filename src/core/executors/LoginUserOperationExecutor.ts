@@ -7,7 +7,7 @@ import { getTimeZoneId } from 'src/shared/helpers/general';
 import {
   getResponseStatusType,
   ResponseStatusType,
-} from 'src/shared/helpers/NetworkUtils';
+} from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
@@ -80,22 +80,22 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.
-    if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId) {
+    if (!loginUserOp._existingOnesignalId || !loginUserOp._externalId) {
       return this._createUser(loginUserOp, operations);
     }
 
     const result = await this._identityOperationExecutor._execute([
       new SetAliasOperation(
         loginUserOp._appId,
-        loginUserOp.existingOnesignalId,
+        loginUserOp._existingOnesignalId,
         IdentityConstants._ExternalID,
-        loginUserOp.externalId,
+        loginUserOp._externalId,
       ),
     ]);
 
     switch (result._result) {
       case ExecutionResult._Success: {
-        const backendOneSignalId = loginUserOp.existingOnesignalId;
+        const backendOneSignalId = loginUserOp._existingOnesignalId;
         const opOneSignalId = loginUserOp._onesignalId;
 
         if (this._identityModelStore._model._onesignalId === opOneSignalId) {
@@ -122,12 +122,12 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case ExecutionResult._FailConflict:
-        Log._debug(`Handling 409 for externalId: ${loginUserOp.externalId}`);
+        Log._debug(`Handling 409 for externalId: ${loginUserOp._externalId}`);
         return this._createUser(loginUserOp, operations);
 
       case ExecutionResult._FailNoretry:
         Log._error(
-          `Recovering from SetAlias failure for externalId: ${loginUserOp.externalId}`,
+          `Recovering from SetAlias failure for externalId: ${loginUserOp._externalId}`,
         );
         return this._createUser(loginUserOp, operations);
 
@@ -147,8 +147,8 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       language: getLanguage(),
     };
 
-    if (createUserOperation.externalId) {
-      identity[IdentityConstants._ExternalID] = createUserOperation.externalId;
+    if (createUserOperation._externalId) {
+      identity[IdentityConstants._ExternalID] = createUserOperation._externalId;
     }
 
     for (const operation of operations) {

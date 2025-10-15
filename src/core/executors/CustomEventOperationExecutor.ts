@@ -6,7 +6,7 @@ import {
 import {
   getResponseStatusType,
   ResponseStatusType,
-} from 'src/shared/helpers/NetworkUtils';
+} from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { VERSION } from 'src/shared/utils/env';
 import { OPERATION_NAME } from '../constants';
@@ -52,12 +52,12 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     const response = await sendCustomEvent(
       { appId: operation._appId },
       {
-        name: operation.event.name,
+        name: operation._event.name,
         onesignal_id: operation._onesignalId,
-        external_id: operation.externalId,
-        timestamp: operation.timestamp,
+        external_id: operation._externalId,
+        timestamp: operation._timestamp,
         payload: {
-          ...(operation.event.properties ?? {}),
+          ...(operation._event.properties ?? {}),
           os_sdk: this._eventMetadata,
         },
       },

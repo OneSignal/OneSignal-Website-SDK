@@ -26,9 +26,8 @@ import { isMobileBrowser } from 'src/shared/useragent/detect';
 import { getPlatformNotificationIcon, once } from 'src/shared/utils/utils';
 import type { TagCategory } from '../tags/types';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
-import { getLoadingIndicatorWithColor } from './LoadingIndicator';
-import { getRetryIndicator } from './RetryIndicator';
-import { getSlidedownElement } from './SlidedownElement';
+import { getSlidedownElement } from './element';
+import { getLoadingIndicatorWithColor, getRetryIndicator } from './loading';
 
 export default class Slidedown {
   public _options: SlidedownPromptOptions;

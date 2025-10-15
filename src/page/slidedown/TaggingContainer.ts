@@ -16,7 +16,7 @@ import {
   TAGGING_CONTAINER_STRINGS,
 } from '../../shared/slidedown/constants';
 import type { TagsObjectWithBoolean } from '../tags/types';
-import { getLoadingIndicatorWithColor } from './LoadingIndicator';
+import { getLoadingIndicatorWithColor } from './loading';
 
 export default class TaggingContainer {
   public _mount(

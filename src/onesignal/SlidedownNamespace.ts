@@ -15,7 +15,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   async promptPush(options?: AutoPromptOptions): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal._context.promptsManager._internalShowParticularSlidedown(
+    await OneSignal._context._promptsManager._internalShowParticularSlidedown(
       DelayedPromptType._Push,
       options,
     );
@@ -26,7 +26,7 @@ export default class SlidedownNamespace extends EventListenerBase {
     await awaitOneSignalInitAndSupported();
     const isPushEnabled =
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
-    await OneSignal._context.promptsManager._internalShowCategorySlidedown({
+    await OneSignal._context._promptsManager._internalShowCategorySlidedown({
       ...options,
       isInUpdateMode: isPushEnabled,
     });
@@ -35,7 +35,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   async promptSms(options?: AutoPromptOptions): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal._context.promptsManager._internalShowSmsSlidedown({
+    await OneSignal._context._promptsManager._internalShowSmsSlidedown({
       ...options,
     });
   }
@@ -43,7 +43,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   async promptEmail(options?: AutoPromptOptions): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal._context.promptsManager._internalShowEmailSlidedown({
+    await OneSignal._context._promptsManager._internalShowEmailSlidedown({
       ...options,
     });
   }
@@ -51,7 +51,7 @@ export default class SlidedownNamespace extends EventListenerBase {
   async promptSmsAndEmail(options?: AutoPromptOptions): Promise<void> {
     if (isConsentRequiredButNotGiven()) return;
     await awaitOneSignalInitAndSupported();
-    await OneSignal._context.promptsManager._internalShowSmsAndEmailSlidedown({
+    await OneSignal._context._promptsManager._internalShowSmsAndEmailSlidedown({
       ...options,
     });
   }

@@ -15,10 +15,7 @@ import {
   DANGER_ICON,
   SLIDEDOWN_CSS_IDS,
 } from '../../shared/slidedown/constants';
-import {
-  ItiScriptURLHashes,
-  ItiScriptURLs,
-} from './InternationalTelephoneInput';
+import { ItiScriptURLHashes, ItiScriptURLs } from './constants';
 
 interface TypeSpecificVariablePayload {
   message: string;

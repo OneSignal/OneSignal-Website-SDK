@@ -27,43 +27,43 @@ export class TrackCustomEventOperation extends Operation<ITrackEventOp> {
   constructor(props?: OperationProps);
   constructor(props: OperationProps) {
     super(OPERATION_NAME._CustomEvent, props?.appId, props?.onesignalId);
-    if (props?.externalId) this.externalId = props.externalId;
-    if (props?.timestamp) this.timestamp = props.timestamp;
-    if (props?.event) this.event = props.event;
+    if (props?.externalId) this._externalId = props.externalId;
+    if (props?.timestamp) this._timestamp = props.timestamp;
+    if (props?.event) this._event = props.event;
   }
 
   /**
    * The external ID for the user, if available.
    */
-  get externalId(): string | undefined {
+  get _externalId(): string | undefined {
     return this._getProperty('externalId');
   }
-  private set externalId(value: string | undefined) {
+  private set _externalId(value: string | undefined) {
     this._setProperty('externalId', value);
   }
 
   /**
    * The timestamp when the event occurred.
    */
-  get timestamp(): string {
+  get _timestamp(): string {
     return this._getProperty('timestamp');
   }
-  private set timestamp(value: string) {
+  private set _timestamp(value: string) {
     this._setProperty('timestamp', value);
   }
 
   /**
    * The custom event instance containing the event name and properties.
    */
-  get event(): ICustomEvent {
+  get _event(): ICustomEvent {
     return this._getProperty('event');
   }
-  set event(value: ICustomEvent) {
+  set _event(value: ICustomEvent) {
     this._setProperty('event', value);
   }
 
   private get key(): string {
-    return `${this._appId}.User.${this._onesignalId}.CustomEvent.${this.event.name}`;
+    return `${this._appId}.User.${this._onesignalId}.CustomEvent.${this._event.name}`;
   }
 
   override get _createComparisonKey(): string {

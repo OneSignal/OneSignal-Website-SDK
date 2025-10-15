@@ -25,7 +25,7 @@ export default class Context implements ContextInterface {
   public _workerMessenger: WorkerMessengerPage;
   public _permissionManager: PermissionManager;
   public _updateManager: UpdateManager;
-  public promptsManager: PromptsManager;
+  public _promptsManager: PromptsManager;
   public _sessionManager: ISessionManager;
   public _tagManager: ITagManager;
   public _slidedownManager: SlidedownManager;
@@ -40,7 +40,7 @@ export default class Context implements ContextInterface {
     this._sessionManager = new SessionManager(this);
     this._tagManager = new TagManager(this);
     this._slidedownManager = new SlidedownManager(this);
-    this.promptsManager = new PromptsManager(this);
+    this._promptsManager = new PromptsManager(this);
     this._dynamicResourceLoader = new DynamicResourceLoader();
   }
 }
