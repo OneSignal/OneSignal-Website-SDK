@@ -188,7 +188,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         }
 
         const rebuildOps =
-          await this._buildUserService.getRebuildOperationsIfCurrentUser(
+          await this._buildUserService._getRebuildOperationsIfCurrentUser(
             createOperation._appId,
             createOperation._onesignalId,
           );

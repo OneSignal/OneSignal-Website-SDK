@@ -14,7 +14,7 @@ export default class UserDirector {
     const hasAnySubscription =
       OneSignal._coreDirector._subscriptionModelStore.list().length > 0;
 
-    const hasExternalId = !!identityModel.externalId;
+    const hasExternalId = !!identityModel._externalId;
 
     if (!hasAnySubscription && !hasExternalId) {
       Log._error(
@@ -30,15 +30,15 @@ export default class UserDirector {
       OneSignal._coreDirector._operationRepo._enqueue(
         new LoginUserOperation(
           appId,
-          identityModel.onesignalId,
-          identityModel.externalId,
+          identityModel._onesignalId,
+          identityModel._externalId,
         ),
       );
       await OneSignal._coreDirector._operationRepo._enqueueAndWait(
         new CreateSubscriptionOperation({
           ...subData,
           appId,
-          onesignalId: identityModel.onesignalId,
+          onesignalId: identityModel._onesignalId,
           subscriptionId: pushOp.id!,
         }),
       );
@@ -46,8 +46,8 @@ export default class UserDirector {
       OneSignal._coreDirector._operationRepo._enqueue(
         new LoginUserOperation(
           appId,
-          identityModel.onesignalId,
-          identityModel.externalId,
+          identityModel._onesignalId,
+          identityModel._externalId,
         ),
       );
     }
@@ -61,7 +61,7 @@ export default class UserDirector {
     const newPropertiesModel = new PropertiesModel();
 
     const sdkId = IDManager._createLocalId();
-    newIdentityModel.onesignalId = sdkId;
+    newIdentityModel._onesignalId = sdkId;
     newPropertiesModel.onesignalId = sdkId;
 
     OneSignal._coreDirector._identityModelStore.replace(newIdentityModel);

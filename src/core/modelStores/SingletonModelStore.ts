@@ -27,7 +27,7 @@ export class SingletonModelStore<TModel extends Model>
     const model = this.store.list()[0];
     if (model) return model;
 
-    const createdModel = this.store.create();
+    const createdModel = this.store._create();
     if (!createdModel)
       throw new Error(`Unable to initialize model from store ${this.store}`);
 
@@ -38,7 +38,7 @@ export class SingletonModelStore<TModel extends Model>
   replace(model: TModel, tag?: ModelChangeTagValue): void {
     const existingModel = this.model;
     existingModel._initializeFromModel(existingModel._modelId, model);
-    this.store.persist();
+    this.store._persist();
     this.changeSubscription.fire((handler) =>
       handler._onModelReplaced(existingModel, tag),
     );

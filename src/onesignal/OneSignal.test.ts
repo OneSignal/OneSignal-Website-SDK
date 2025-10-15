@@ -63,7 +63,7 @@ const setupEnv = (consentRequired: boolean) => {
       requiresUserPrivacyConsent: consentRequired,
     },
   });
-  OneSignal._coreDirector._subscriptionModelStore.replaceAll(
+  OneSignal._coreDirector._subscriptionModelStore._replaceAll(
     [],
     ModelChangeTags.NO_PROPAGATE,
   );
@@ -403,7 +403,7 @@ describe('OneSignal - No Consent Required', () => {
           });
 
           const identityModel = OneSignal._coreDirector._getIdentityModel();
-          expect(identityModel.externalId).toBe(externalId);
+          expect(identityModel._externalId).toBe(externalId);
 
           await vi.waitUntil(
             () => transferSubscriptionFn.mock.calls.length === 1,
@@ -467,7 +467,7 @@ describe('OneSignal - No Consent Required', () => {
           });
 
           const identityModel = OneSignal._coreDirector._getIdentityModel();
-          expect(identityModel.externalId).toBe(newExternalId);
+          expect(identityModel._externalId).toBe(newExternalId);
         });
 
         test('login conflict should keep old subscriptions', async () => {
@@ -612,7 +612,7 @@ describe('OneSignal - No Consent Required', () => {
           const localId = IDManager._createLocalId();
           setupIdentityModel(localId);
 
-          OneSignal._coreDirector._subscriptionModelStore.replaceAll(
+          OneSignal._coreDirector._subscriptionModelStore._replaceAll(
             [],
             ModelChangeTags.NO_PROPAGATE,
           );
@@ -690,7 +690,7 @@ describe('OneSignal - No Consent Required', () => {
             ],
           });
 
-          OneSignal._coreDirector._subscriptionModelStore.replaceAll(
+          OneSignal._coreDirector._subscriptionModelStore._replaceAll(
             [],
             ModelChangeTags.NO_PROPAGATE,
           );
@@ -755,7 +755,7 @@ describe('OneSignal - No Consent Required', () => {
     describe('logout', () => {
       test('should not do anything if user has no external id', async () => {
         const identityModel = OneSignal._coreDirector._getIdentityModel();
-        expect(identityModel.externalId).toBeUndefined();
+        expect(identityModel._externalId).toBeUndefined();
 
         OneSignal.logout();
         expect(debugSpy).toHaveBeenCalledWith(
@@ -779,7 +779,7 @@ describe('OneSignal - No Consent Required', () => {
 
         // identity model should be reset
         identityModel = OneSignal._coreDirector._getIdentityModel();
-        const onesignalId = identityModel.onesignalId;
+        const onesignalId = identityModel._onesignalId;
         expect(identityModel.toJSON()).toEqual({
           onesignal_id: expect.any(String),
         });

@@ -346,7 +346,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async _loadSavedOperations(): Promise<void> {
-    await this._operationModelStore.loadOperations();
+    await this._operationModelStore._loadOperations();
     const operations = [...this._operationModelStore.list()].reverse();
 
     for (const operation of operations) {

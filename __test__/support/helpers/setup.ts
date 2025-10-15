@@ -63,7 +63,7 @@ export const setupIdentityModel = async (
   onesignalID: string = ONESIGNAL_ID,
 ) => {
   const newIdentityModel = new IdentityModel();
-  newIdentityModel.onesignalId = onesignalID;
+  newIdentityModel._onesignalId = onesignalID;
   OneSignal._coreDirector._identityModelStore.replace(
     newIdentityModel,
     ModelChangeTags.NO_PROPAGATE,
@@ -126,7 +126,7 @@ export const setupSubscriptionModel = async (
   const subscriptionModel = new SubscriptionModel();
   subscriptionModel.id = id || '';
   subscriptionModel.token = token || '';
-  OneSignal._coreDirector._subscriptionModelStore.replaceAll(
+  OneSignal._coreDirector._subscriptionModelStore._replaceAll(
     [subscriptionModel],
     ModelChangeTags.NO_PROPAGATE,
   );

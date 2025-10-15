@@ -98,7 +98,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         const backendOneSignalId = loginUserOp.existingOnesignalId;
         const opOneSignalId = loginUserOp._onesignalId;
 
-        if (this._identityModelStore.model.onesignalId === opOneSignalId) {
+        if (this._identityModelStore.model._onesignalId === opOneSignalId) {
           this._identityModelStore.model._setProperty(
             IdentityConstants.ONESIGNAL_ID,
             backendOneSignalId,
@@ -187,7 +187,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         [createUserOperation._onesignalId]: backendOneSignalId,
       };
 
-      if (this._identityModelStore.model.onesignalId === opOneSignalId) {
+      if (this._identityModelStore.model._onesignalId === opOneSignalId) {
         this._identityModelStore.model._setProperty(
           IdentityConstants.ONESIGNAL_ID,
           backendOneSignalId,

@@ -63,7 +63,7 @@ export interface IModelStore<
   /**
    * Create a new instance of the model, optionally from a JSON object.
    */
-  create(jsonObject?: DBModel | null): TModel | null;
+  _create(jsonObject?: DBModel | null): TModel | null;
 
   /**
    * List the models that are owned by this model store.
@@ -89,12 +89,12 @@ export interface IModelStore<
   /**
    * Clear all models.
    */
-  clear(tag?: string): void;
+  _clear(tag?: string): void;
 
   /**
    * Replace all models in the store.
    */
-  replaceAll(models: TModel[], tag?: string): void;
+  _replaceAll(models: TModel[], tag?: string): void;
 }
 
 // SINGLETON MODEL STORE

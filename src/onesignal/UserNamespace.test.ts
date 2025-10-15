@@ -198,7 +198,7 @@ describe('Email Management', () => {
 
   test('can add an email subscription', async () => {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel.onesignalId = IDManager._createLocalId();
+    identityModel._onesignalId = IDManager._createLocalId();
 
     const email = 'test@example.com';
     const addSubscriptionSpy = vi.spyOn(
@@ -216,7 +216,7 @@ describe('Email Management', () => {
 
   test('should remove an email subscription', async () => {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel.onesignalId = IDManager._createLocalId();
+    identityModel._onesignalId = IDManager._createLocalId();
 
     const email = 'test@example.com';
 
@@ -248,7 +248,7 @@ describe('SMS Management', () => {
   test('should add an SMS subscription', async () => {
     const userNamespace = new UserNamespace(true);
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel.onesignalId = IDManager._createLocalId();
+    identityModel._onesignalId = IDManager._createLocalId();
 
     const smsNumber = '+15551234567';
     const addSubscriptionSpy = vi.spyOn(
@@ -269,7 +269,7 @@ describe('SMS Management', () => {
     const smsNumber = '+15551234567';
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel.onesignalId = IDManager._createLocalId();
+    identityModel._onesignalId = IDManager._createLocalId();
 
     // First add the SMS
     await userNamespace.addSms(smsNumber);
@@ -470,7 +470,8 @@ describe('Initialization', () => {
 
     const user = new UserNamespace(true);
     expect(user.onesignalId).toBe(undefined); // since its local
-    const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
+    const onesignalId =
+      OneSignal._coreDirector._getIdentityModel()._onesignalId;
     expect(IDManager._isLocalId(onesignalId)).toBe(true);
 
     // identity and properties models should have the same onesignalId

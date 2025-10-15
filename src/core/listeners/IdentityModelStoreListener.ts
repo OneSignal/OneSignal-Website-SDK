@@ -30,12 +30,12 @@ export class IdentityModelStoreListener extends SingletonModelStoreListener<Iden
     if (newValue != null && typeof newValue === 'string') {
       return new SetAliasOperation(
         appId,
-        model.onesignalId,
+        model._onesignalId,
         property,
         newValue,
       );
     } else {
-      return new DeleteAliasOperation(appId, model.onesignalId, property);
+      return new DeleteAliasOperation(appId, model._onesignalId, property);
     }
   }
 }

@@ -43,28 +43,28 @@ export abstract class ModelStore<
     IModelStore<TModel>,
     IModelChangedHandler
 {
-  public readonly modelName: IDBStoreName;
-  private changeSubscription: EventProducer<IModelStoreChangeHandler<TModel>> =
+  public readonly _modelName: IDBStoreName;
+  private _changeSubscription: EventProducer<IModelStoreChangeHandler<TModel>> =
     new EventProducer();
-  private models: TModel[] = [];
-  private hasLoadedFromCache = false;
+  private _models: TModel[] = [];
+  private _hasLoadedFromCache = false;
 
   /**
    * @param modelName The persistable name of the model store. If not specified no persisting will occur.
    */
   constructor(modelName: IDBStoreName) {
-    this.modelName = modelName;
+    this._modelName = modelName;
   }
 
   /**
    * Create a model from JSON data
    */
-  abstract create(json?: DBModel | null): TModel | null;
+  abstract _create(json?: DBModel | null): TModel | null;
 
   add(model: TModel, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
-    const oldModel = this.models.find((m) => m._modelId === model._modelId);
-    if (oldModel) this.removeItem(oldModel, tag);
-    this.addItem(model, tag);
+    const oldModel = this._models.find((m) => m._modelId === model._modelId);
+    if (oldModel) this._removeItem(oldModel, tag);
+    this._addItem(model, tag);
   }
 
   addAt(
@@ -72,86 +72,86 @@ export abstract class ModelStore<
     model: TModel,
     tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
   ): void {
-    const oldModel = this.models.find((m) => m._modelId === model._modelId);
-    if (oldModel) this.removeItem(oldModel, tag);
-    this.addItem(model, tag, index);
+    const oldModel = this._models.find((m) => m._modelId === model._modelId);
+    if (oldModel) this._removeItem(oldModel, tag);
+    this._addItem(model, tag, index);
   }
 
   /**
    * @returns list of read-only models, cloned for thread safety
    */
   list(): TModel[] {
-    return this.models;
+    return this._models;
   }
 
   get(id: string): TModel | undefined {
-    return this.models.find((m) => m._modelId === id);
+    return this._models.find((m) => m._modelId === id);
   }
 
   remove(id: string, tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
-    const model = this.models.find((m) => m._modelId === id);
+    const model = this._models.find((m) => m._modelId === id);
     if (!model) return;
-    this.removeItem(model, tag);
+    this._removeItem(model, tag);
   }
 
   _onChanged(args: ModelChangedArgs, tag: string): void {
-    this.persist();
-    this.changeSubscription.fire((handler) =>
+    this._persist();
+    this._changeSubscription.fire((handler) =>
       handler._onModelUpdated(args, tag),
     );
   }
 
-  replaceAll(
+  _replaceAll(
     newModels: TModel[],
     tag: ModelChangeTagValue = ModelChangeTags.NORMAL,
   ) {
-    this.clear(tag);
+    this._clear(tag);
 
     for (const model of newModels) {
       this.add(model, tag);
     }
   }
 
-  clear(tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
-    for (const item of this.models) {
+  _clear(tag: ModelChangeTagValue = ModelChangeTags.NORMAL): void {
+    for (const item of this._models) {
       // no longer listen for changes to this model
       item._unsubscribe(this);
-      this.changeSubscription.fire((handler) =>
+      this._changeSubscription.fire((handler) =>
         handler._onModelRemoved(item, tag),
       );
-      db.delete(this.modelName, item._modelId);
+      db.delete(this._modelName, item._modelId);
     }
 
-    this.models = [];
+    this._models = [];
   }
 
-  private addItem(model: TModel, tag: string, index?: number): void {
+  private _addItem(model: TModel, tag: string, index?: number): void {
     if (index !== undefined) {
-      this.models.splice(index, 0, model);
+      this._models.splice(index, 0, model);
     } else {
-      this.models.push(model);
+      this._models.push(model);
     }
 
     // listen for changes to this model
     model._subscribe(this);
-    this.persist();
+    this._persist();
 
-    this.changeSubscription.fire((handler) =>
+    this._changeSubscription.fire((handler) =>
       handler._onModelAdded(model, tag),
     );
   }
 
-  private async removeItem(model: TModel, tag: string): Promise<void> {
-    const index = this.models.findIndex((m) => m._modelId === model._modelId);
-    if (index !== -1) this.models.splice(index, 1);
+  private async _removeItem(model: TModel, tag: string): Promise<void> {
+    const index = this._models.findIndex((m) => m._modelId === model._modelId);
+    if (index !== -1) this._models.splice(index, 1);
 
     // no longer listen for changes to this model
     model._unsubscribe(this);
 
-    await db.delete(this.modelName, model._modelId);
-    this.persist();
+    await db.delete(this._modelName, model._modelId);
+    this._persist();
 
-    this.changeSubscription.fire((handler) =>
+    this._changeSubscription.fire((handler) =>
       handler._onModelRemoved(model, tag),
     );
   }
@@ -160,27 +160,29 @@ export abstract class ModelStore<
    * When models are loaded from the cache, they are added to the front of existing models.
    * This is primarily to address operations which can enqueue before this method is called.
    */
-  protected async load(): Promise<void> {
-    if (!this.modelName) return;
+  protected async _load(): Promise<void> {
+    if (!this._modelName) return;
 
-    const jsonArray = (await db.getAll(this.modelName)) as unknown as DBModel[];
+    const jsonArray = (await db.getAll(
+      this._modelName,
+    )) as unknown as DBModel[];
 
-    const shouldRePersist = this.models.length > 0;
+    const shouldRePersist = this._models.length > 0;
 
     for (let index = jsonArray.length - 1; index >= 0; index--) {
-      const newModel = this.create(jsonArray[index]);
+      const newModel = this._create(jsonArray[index]);
       if (!newModel) continue;
 
-      this.models.unshift(newModel);
+      this._models.unshift(newModel);
       // listen for changes to this model
       newModel._subscribe(this);
     }
 
-    this.hasLoadedFromCache = true;
+    this._hasLoadedFromCache = true;
 
     // optimization only: to avoid unnecessary writes
     if (shouldRePersist) {
-      this.persist();
+      this._persist();
     }
   }
 
@@ -189,27 +191,27 @@ export abstract class ModelStore<
    * The time between any changes and loading from cache should be minuscule so lack of persistence is safe.
    * This is primarily to address operations which can enqueue before load() is called.
    */
-  async persist(): Promise<void> {
-    if (!this.modelName || !this.hasLoadedFromCache) return;
+  async _persist(): Promise<void> {
+    if (!this._modelName || !this._hasLoadedFromCache) return;
 
-    for (const model of this.models) {
-      await db.put(this.modelName, {
+    for (const model of this._models) {
+      await db.put(this._modelName, {
         modelId: model._modelId,
-        modelName: this.modelName, // TODO: ModelName is a legacy property, could be removed sometime after web refactor launch
+        modelName: this._modelName, // TODO: ModelName is a legacy property, could be removed sometime after web refactor launch
         ...model.toJSON(),
-      } as IndexedDBSchema[typeof this.modelName]['value']);
+      } as IndexedDBSchema[typeof this._modelName]['value']);
     }
   }
 
   _subscribe(handler: IModelStoreChangeHandler<TModel>): void {
-    this.changeSubscription._subscribe(handler);
+    this._changeSubscription._subscribe(handler);
   }
 
   _unsubscribe(handler: IModelStoreChangeHandler<TModel>): void {
-    this.changeSubscription._unsubscribe(handler);
+    this._changeSubscription._unsubscribe(handler);
   }
 
   get _hasSubscribers(): boolean {
-    return this.changeSubscription._hasSubscribers;
+    return this._changeSubscription._hasSubscribers;
   }
 }

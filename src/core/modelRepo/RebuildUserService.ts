@@ -27,7 +27,7 @@ export class RebuildUserService implements IRebuildUserService {
     this._subscriptionsModelStore = _subscriptionsModelStore;
   }
 
-  async getRebuildOperationsIfCurrentUser(
+  async _getRebuildOperationsIfCurrentUser(
     appId: string,
     onesignalId: string,
   ): Promise<Operation[] | null> {
@@ -47,13 +47,13 @@ export class RebuildUserService implements IRebuildUserService {
       subscriptionModels.push(subscriptionModel);
     }
 
-    if (identityModel.onesignalId !== onesignalId) {
+    if (identityModel._onesignalId !== onesignalId) {
       return null;
     }
 
     const operations: Operation[] = [];
     operations.push(
-      new LoginUserOperation(appId, onesignalId, identityModel.externalId),
+      new LoginUserOperation(appId, onesignalId, identityModel._externalId),
     );
 
     const pushSubscription =

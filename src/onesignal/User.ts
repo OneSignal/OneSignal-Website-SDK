@@ -34,8 +34,8 @@ export default class User {
       const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
 
       const onesignalId =
-        identityModel.onesignalId ?? IDManager._createLocalId();
-      if (!identityModel.onesignalId) {
+        identityModel._onesignalId ?? IDManager._createLocalId();
+      if (!identityModel._onesignalId) {
         identityModel._setProperty(
           IdentityConstants.ONESIGNAL_ID,
           onesignalId,
@@ -66,7 +66,8 @@ export default class User {
 
   /* PUBLIC API METHODS */
   get onesignalId(): string | undefined {
-    const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
+    const onesignalId =
+      OneSignal._coreDirector._getIdentityModel()._onesignalId;
     return IDManager._isLocalId(onesignalId) ? undefined : onesignalId;
   }
 
@@ -237,7 +238,8 @@ export default class User {
     if (isConsentRequiredButNotGiven()) return;
 
     // login operation / non-local onesignalId is needed to send custom events
-    const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
+    const onesignalId =
+      OneSignal._coreDirector._getIdentityModel()._onesignalId;
     if (IDManager._isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
       Log._error('User must be logged in first.');
       return;
@@ -277,7 +279,7 @@ function addSubscriptionToModels({
   if (hasSubscription) return;
 
   const identityModel = OneSignal._coreDirector._getIdentityModel();
-  const onesignalId = identityModel.onesignalId;
+  const onesignalId = identityModel._onesignalId;
 
   // Check if we need to enqueue a login operation for local IDs
   if (IDManager._isLocalId(onesignalId)) {
@@ -285,7 +287,7 @@ function addSubscriptionToModels({
 
     if (!hasLoginOp(onesignalId)) {
       OneSignal._coreDirector._operationRepo._enqueue(
-        new LoginUserOperation(appId, onesignalId, identityModel.externalId),
+        new LoginUserOperation(appId, onesignalId, identityModel._externalId),
       );
     }
   }

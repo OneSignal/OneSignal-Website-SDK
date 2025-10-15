@@ -19,10 +19,10 @@ export class SimpleModelStore<TModel extends Model> extends ModelStore<TModel> {
   constructor(createFn: () => TModel, modelName: IDBStoreName) {
     super(modelName);
     this._createFn = createFn;
-    this.load(); // Automatically load on construction
+    this._load(); // Automatically load on construction
   }
 
-  override create(modelData?: DatabaseModel<TModel>): TModel {
+  override _create(modelData?: DatabaseModel<TModel>): TModel {
     const model = this._createFn();
     if (modelData != null) {
       model._initializeFromJson(modelData);

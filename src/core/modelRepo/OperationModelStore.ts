@@ -21,17 +21,17 @@ export class OperationModelStore extends ModelStore<Operation> {
     super('operations' satisfies IDBStoreName);
   }
 
-  async loadOperations(): Promise<void> {
-    return this.load();
+  async _loadOperations(): Promise<void> {
+    return this._load();
   }
 
-  create(jsonObject?: { name?: string } | null): Operation | null {
+  _create(jsonObject?: { name?: string } | null): Operation | null {
     if (jsonObject === null) {
       Log._error('null jsonObject sent to OperationModelStore.create');
       return null;
     }
 
-    if (!this.isValidOperation(jsonObject)) {
+    if (!this._isValidOperation(jsonObject)) {
       return null;
     }
 
@@ -87,7 +87,7 @@ export class OperationModelStore extends ModelStore<Operation> {
    *
    * @param object The JSON object that represents an Operation
    */
-  private isValidOperation(object?: {
+  private _isValidOperation(object?: {
     name?: string;
     onesignalId?: string;
   }): object is {
