@@ -8,8 +8,8 @@ import {
 } from 'src/shared/utils/env';
 
 export const ResourceType = {
-  Stylesheet: 0,
-  Script: 1,
+  _Stylesheet: 0,
+  _Script: 1,
 } as const;
 
 export type ResourceTypeValue =
@@ -19,11 +19,11 @@ export const ResourceLoadState = {
   /**
    * The remote resource was fetched and loaded successfully.
    */
-  Loaded: 0,
+  _Loaded: 0,
   /**
    * The remote resource failed to be loaded (e.g. not found or network offline).
    */
-  Failed: 1,
+  _Failed: 1,
 } as const;
 
 export type ResourceLoadStateValue =
@@ -83,7 +83,7 @@ export class DynamicResourceLoader {
     const pathForEnv = getOneSignalResourceUrlPath();
     const cssFileForEnv = getOneSignalCssFileName();
     return this._loadIfNew(
-      ResourceType.Stylesheet,
+      ResourceType._Stylesheet,
       new URL(`${pathForEnv}/${cssFileForEnv}?v=${VERSION}`),
     );
   }
@@ -117,13 +117,13 @@ export class DynamicResourceLoader {
       let domElement: HTMLElement;
       await new Promise((resolve, reject) => {
         switch (type) {
-          case ResourceType.Script:
+          case ResourceType._Script:
             domElement = document.createElement('script');
             domElement.setAttribute('type', 'text/javascript');
             domElement.setAttribute('async', 'async');
             domElement.setAttribute('src', url.toString());
             break;
-          case ResourceType.Stylesheet:
+          case ResourceType._Stylesheet:
             domElement = document.createElement('link');
             domElement.setAttribute('rel', 'stylesheet');
             domElement.setAttribute('href', url.toString());
@@ -133,9 +133,9 @@ export class DynamicResourceLoader {
         domElement.onload = resolve;
         document.querySelector('head')?.appendChild(domElement);
       });
-      return ResourceLoadState.Loaded;
+      return ResourceLoadState._Loaded;
     } catch (e) {
-      return ResourceLoadState.Failed;
+      return ResourceLoadState._Failed;
     }
   }
 }

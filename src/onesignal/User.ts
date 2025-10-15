@@ -123,7 +123,7 @@ export default class User {
     if (!isValidEmail(email)) throw MalformedArgumentError('email');
 
     addSubscriptionToModels({
-      type: SubscriptionType.Email,
+      type: SubscriptionType._Email,
       token: email,
     });
   }
@@ -135,7 +135,7 @@ export default class User {
     validateStringLabel(sms, 'sms');
 
     addSubscriptionToModels({
-      type: SubscriptionType.SMS,
+      type: SubscriptionType._SMS,
       token: sms,
     });
   }
@@ -295,7 +295,7 @@ function addSubscriptionToModels({
   const subscription = {
     id: IDManager._createLocalId(),
     enabled: true,
-    notification_types: NotificationType.Subscribed,
+    notification_types: NotificationType._Subscribed,
     onesignalId,
     token,
     type,

@@ -112,15 +112,15 @@ export function isMobileBrowser(userAgent = navigator.userAgent): boolean {
 }
 
 const BROWSER_MAP: Record<string, BrowserValue> = {
-  Chrome: Browser.Chrome,
-  Chromium: Browser.Chrome,
-  Firefox: Browser.Firefox,
-  'Microsoft Edge': Browser.Edge,
-  Safari: Browser.Safari,
+  Chrome: Browser._Chrome,
+  Chromium: Browser._Chrome,
+  Firefox: Browser._Firefox,
+  'Microsoft Edge': Browser._Edge,
+  Safari: Browser._Safari,
 };
 
 export function getBrowserName(): BrowserValue {
-  return BROWSER_MAP[getBrowser(navigator.userAgent).name] || Browser.Other;
+  return BROWSER_MAP[getBrowser(navigator.userAgent).name] || Browser._Other;
 }
 
 export const getBrowserVersion = (): number => {
@@ -134,7 +134,7 @@ export function requiresUserInteraction(): boolean {
   const browserName = getBrowserName();
   const version = getBrowserVersion();
   return (
-    (browserName === Browser.Firefox && version >= 72) ||
-    (browserName === Browser.Safari && version >= 12.1)
+    (browserName === Browser._Firefox && version >= 72) ||
+    (browserName === Browser._Safari && version >= 12.1)
   );
 }

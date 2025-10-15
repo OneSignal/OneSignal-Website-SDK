@@ -127,9 +127,9 @@ describe('RefreshUserOperationExecutor', () => {
           {
             app_id: APP_ID,
             id: SUB_ID,
-            type: SubscriptionType.Email,
+            type: SubscriptionType._Email,
             token: 'test@example.com',
-            notification_types: NotificationType.UserOptedOut,
+            notification_types: NotificationType._UserOptedOut,
             device_os: DEVICE_OS,
             device_model: '',
             sdk: __VERSION__,
@@ -165,10 +165,10 @@ describe('RefreshUserOperationExecutor', () => {
       expect(subscriptions.length).toBe(1);
       expect(subscriptions[0].toJSON()).toMatchObject({
         id: SUB_ID,
-        notification_types: NotificationType.UserOptedOut,
+        notification_types: NotificationType._UserOptedOut,
         enabled: false,
         token: 'test@example.com',
-        type: SubscriptionType.Email,
+        type: SubscriptionType._Email,
         device_os: DEVICE_OS,
         device_model: '',
         sdk: __VERSION__,
@@ -179,9 +179,9 @@ describe('RefreshUserOperationExecutor', () => {
       // Set up a push subscription in the store
       const pushSubModel = new SubscriptionModel();
       pushSubModel.id = SUB_ID_2;
-      pushSubModel.type = SubscriptionType.ChromePush;
+      pushSubModel.type = SubscriptionType._ChromePush;
       pushSubModel.token = PUSH_TOKEN;
-      pushSubModel._notification_types = NotificationType.Subscribed;
+      pushSubModel._notification_types = NotificationType._Subscribed;
 
       subscriptionModelStore.add(pushSubModel, ModelChangeTags._NoPropogate);
       await setPushToken(PUSH_TOKEN);
@@ -195,7 +195,7 @@ describe('RefreshUserOperationExecutor', () => {
         subscriptions: [
           {
             id: 'email-sub-id',
-            type: SubscriptionType.Email,
+            type: SubscriptionType._Email,
             token: 'test@example.com',
           },
         ],
@@ -209,7 +209,7 @@ describe('RefreshUserOperationExecutor', () => {
 
       // Find the push subscription
       const pushSub = subscriptions.find(
-        (sub: SubscriptionModel) => sub.type === SubscriptionType.ChromePush,
+        (sub: SubscriptionModel) => sub.type === SubscriptionType._ChromePush,
       );
       expect(pushSub).toBeDefined();
       expect(pushSub?.id).toBe(SUB_ID_2);

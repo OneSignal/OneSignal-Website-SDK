@@ -188,7 +188,7 @@ export async function processExpiringSubscriptions(): Promise<boolean> {
 
   Log._debug('Subscription is considered expiring.');
   const rawPushSubscription = await context._subscriptionManager._subscribe(
-    SubscriptionStrategyKind.SubscribeNew,
+    SubscriptionStrategyKind._SubscribeNew,
   );
   await context._subscriptionManager._registerSubscription(rawPushSubscription);
   return true;

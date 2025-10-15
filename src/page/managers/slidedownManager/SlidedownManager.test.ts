@@ -61,7 +61,7 @@ describe('Slidedown Types', () => {
         {
           ...BASE_SUB,
           token: 'test@test.com',
-          type: SubscriptionType.Email,
+          type: SubscriptionType._Email,
         },
       ],
     });
@@ -93,7 +93,7 @@ describe('Slidedown Types', () => {
         {
           ...BASE_SUB,
           token: '+1234567890',
-          type: SubscriptionType.SMS,
+          type: SubscriptionType._SMS,
         },
       ],
     });
@@ -124,12 +124,12 @@ describe('Slidedown Types', () => {
         {
           ...BASE_SUB,
           token: 'test@test.com',
-          type: SubscriptionType.Email,
+          type: SubscriptionType._Email,
         },
         {
           ...BASE_SUB,
           token: '+1234567890',
-          type: SubscriptionType.SMS,
+          type: SubscriptionType._SMS,
         },
       ],
     });
@@ -164,7 +164,7 @@ describe('Slidedown Types', () => {
         {
           ...BASE_SUB,
           token: PUSH_TOKEN,
-          type: SubscriptionType.ChromePush,
+          type: SubscriptionType._ChromePush,
           web_auth: 'w3cAuth',
           web_p256: 'w3cP256dh',
         },

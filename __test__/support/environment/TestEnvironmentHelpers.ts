@@ -65,7 +65,7 @@ export const createPushSub = ({
     id,
     onesignalId,
     token,
-    type: SubscriptionType.ChromePush,
+    type: SubscriptionType._ChromePush,
   });
   return pushSubscription;
 };

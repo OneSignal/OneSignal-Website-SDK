@@ -256,12 +256,12 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     const responseType = getResponseStatusType(status);
 
     switch (responseType) {
-      case ResponseStatusType.RETRYABLE:
+      case ResponseStatusType._Retryable:
         return new ExecutionResponse(
           ExecutionResult._FailRetry,
           retryAfterSeconds,
         );
-      case ResponseStatusType.UNAUTHORIZED:
+      case ResponseStatusType._Unauthorized:
         return new ExecutionResponse(
           ExecutionResult._FailUnauthorized,
           retryAfterSeconds,

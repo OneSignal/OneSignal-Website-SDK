@@ -129,7 +129,7 @@ describe('OperationRepo', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         token: 'some-token',
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         subscriptionId: SUB_ID,
       });
       opRepo._enqueue(op2);

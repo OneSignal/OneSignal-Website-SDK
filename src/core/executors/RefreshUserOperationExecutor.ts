@@ -103,10 +103,10 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         model.id = sub.id!;
         model.token = sub.token ?? '';
         model._notification_types =
-          sub.notification_types ?? NotificationType.Subscribed;
+          sub.notification_types ?? NotificationType._Subscribed;
         model.type = sub.type;
         model.enabled =
-          model._notification_types !== NotificationType.UserOptedOut;
+          model._notification_types !== NotificationType._UserOptedOut;
         model.sdk = sub.sdk;
         model.device_os = sub.device_os;
         model.device_model = sub.device_model;
@@ -141,17 +141,17 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
 
     const responseType = getResponseStatusType(status);
     switch (responseType) {
-      case ResponseStatusType.RETRYABLE:
+      case ResponseStatusType._Retryable:
         return new ExecutionResponse(
           ExecutionResult._FailRetry,
           retryAfterSeconds,
         );
-      case ResponseStatusType.UNAUTHORIZED:
+      case ResponseStatusType._Unauthorized:
         return new ExecutionResponse(
           ExecutionResult._FailUnauthorized,
           retryAfterSeconds,
         );
-      case ResponseStatusType.MISSING: {
+      case ResponseStatusType._Missing: {
         if (
           status === 404 &&
           this._newRecordState._isInMissingRetryWindow(op._onesignalId)

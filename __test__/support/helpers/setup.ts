@@ -139,7 +139,7 @@ export const setupLoadStylesheet = async () => {
   vi.spyOn(
     OneSignal._context._dynamicResourceLoader,
     '_loadSdkStylesheet',
-  ).mockResolvedValue(ResourceLoadState.Loaded);
+  ).mockResolvedValue(ResourceLoadState._Loaded);
 };
 
 export const getRawPushSubscription = () => {

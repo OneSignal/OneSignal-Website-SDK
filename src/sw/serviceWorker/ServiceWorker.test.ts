@@ -79,7 +79,7 @@ const dispatchEvent = async (event: Event) => {
 };
 
 const serverConfig = TestContext.getFakeServerAppConfig(
-  ConfigIntegrationKind.Custom,
+  ConfigIntegrationKind._Custom,
   {
     features: {
       restrict_origin: {
@@ -222,7 +222,7 @@ describe('ServiceWorker', () => {
         `notifications/${payload.custom.i}/report_received`,
         {
           app_id: appId,
-          device_type: DeliveryPlatformKind.ChromeLike,
+          device_type: DeliveryPlatformKind._ChromeLike,
           player_id: pushSubscriptionId,
         },
       );
@@ -281,7 +281,7 @@ describe('ServiceWorker', () => {
         `notifications/${notificationId}`,
         {
           app_id: appId,
-          device_type: DeliveryPlatformKind.ChromeLike,
+          device_type: DeliveryPlatformKind._ChromeLike,
           opened: true,
           player_id: pushSubscriptionId,
         },
@@ -369,11 +369,11 @@ describe('ServiceWorker', () => {
       await dispatchEvent(event);
 
       expect(subscribeCall).toHaveBeenCalledWith(
-        SubscriptionStrategyKind.SubscribeNew,
+        SubscriptionStrategyKind._SubscribeNew,
       );
       expect(registerSubscriptionCall).toHaveBeenCalledWith(
         undefined,
-        NotificationType.PushSubscriptionRevoked,
+        NotificationType._PushSubscriptionRevoked,
       );
 
       // the device id will be reset regardless of the old subscription state
@@ -400,7 +400,7 @@ describe('ServiceWorker', () => {
       expect(rawSubscription).toBeInstanceOf(RawPushSubscription);
       expect(rawSubscription?.w3cEndpoint?.href).toBe('https://example.com/');
       expect(rawSubscription?.safariDeviceToken).toBeUndefined();
-      expect(subscriptionState).toBe(NotificationType.PermissionRevoked);
+      expect(subscriptionState).toBe(NotificationType._PermissionRevoked);
     });
   });
 
@@ -423,7 +423,7 @@ describe('ServiceWorker', () => {
           enabled: true,
         },
       },
-      sessionOrigin: SessionOrigin.UserCreate,
+      sessionOrigin: SessionOrigin._UserCreate,
       sessionThreshold: 10,
       subscriptionId: SUB_ID,
     };
@@ -436,7 +436,7 @@ describe('ServiceWorker', () => {
       notificationId: null,
       sessionKey: ONESIGNAL_SESSION_KEY,
       startTimestamp: Date.now(),
-      status: SessionStatus.Active,
+      status: SessionStatus._Active,
     };
 
     const clickOutcome = {
@@ -463,7 +463,7 @@ describe('ServiceWorker', () => {
         await db.put('Sessions', session);
 
         const event = new ExtendableMessageEvent('message', {
-          command: WorkerMessengerCommand.SessionUpsert,
+          command: WorkerMessengerCommand._SessionUpsert,
           payload:
             baseMessagePayload satisfies UpsertOrDeactivateSessionPayload,
         });
@@ -474,13 +474,13 @@ describe('ServiceWorker', () => {
 
         // sends a worker message
         expect(postMessageFn).toHaveBeenCalledWith({
-          command: WorkerMessengerCommand.AreYouVisible,
+          command: WorkerMessengerCommand._AreYouVisible,
           payload: { timestamp: expect.any(Number) },
         });
 
         // should de-active session since can't determine focused window for Safari
         const updatedSession = (await getCurrentSession())!;
-        expect(updatedSession.status).toBe(SessionStatus.Inactive);
+        expect(updatedSession.status).toBe(SessionStatus._Inactive);
         expect(updatedSession.lastDeactivatedTimestamp).not.toBeNull();
         expect(updatedSession.accumulatedDuration).not.toBe(0);
       });
@@ -489,7 +489,7 @@ describe('ServiceWorker', () => {
         await putNotificationClickedForOutcomes(appId, clickOutcome);
 
         const event = new ExtendableMessageEvent('message', {
-          command: WorkerMessengerCommand.SessionUpsert,
+          command: WorkerMessengerCommand._SessionUpsert,
           payload: {
             ...baseMessagePayload,
             isSafari: false,
@@ -508,7 +508,7 @@ describe('ServiceWorker', () => {
             notificationId,
             sessionKey: ONESIGNAL_SESSION_KEY,
             startTimestamp: expect.any(Number),
-            status: SessionStatus.Active,
+            status: SessionStatus._Active,
           }),
         );
       });
@@ -519,7 +519,7 @@ describe('ServiceWorker', () => {
         matchAllFn.mockResolvedValueOnce([unfocusedClient]);
 
         const event = new ExtendableMessageEvent('message', {
-          command: WorkerMessengerCommand.SessionDeactivate,
+          command: WorkerMessengerCommand._SessionDeactivate,
           payload: {
             ...baseMessagePayload,
             isSafari: false,
@@ -543,12 +543,12 @@ describe('ServiceWorker', () => {
         matchAllFn.mockResolvedValueOnce([unfocusedClient]);
         await db.put('Sessions', {
           ...session,
-          status: SessionStatus.Inactive,
+          status: SessionStatus._Inactive,
         });
         await putNotificationClickedForOutcomes(appId, clickOutcome);
 
         const event = new ExtendableMessageEvent('message', {
-          command: WorkerMessengerCommand.SessionDeactivate,
+          command: WorkerMessengerCommand._SessionDeactivate,
           payload: {
             ...baseMessagePayload,
             isSafari: false,
@@ -594,40 +594,40 @@ describe('ServiceWorker', () => {
 
     test('should send worker version message', async () => {
       const event = new ExtendableMessageEvent('message', {
-        command: WorkerMessengerCommand.WorkerVersion,
+        command: WorkerMessengerCommand._WorkerVersion,
       });
       await dispatchEvent(event);
 
       // should send a message to all clients
       expect(postMessageFn).toHaveBeenCalledWith({
-        command: WorkerMessengerCommand.WorkerVersion,
+        command: WorkerMessengerCommand._WorkerVersion,
         payload: version,
       });
     });
 
     test('should send subscribe message', async () => {
       const event = new ExtendableMessageEvent('message', {
-        command: WorkerMessengerCommand.Subscribe,
+        command: WorkerMessengerCommand._Subscribe,
         payload: appConfig,
       });
       await dispatchEvent(event);
 
       expect(postMessageFn).toHaveBeenCalledWith({
-        command: WorkerMessengerCommand.Subscribe,
+        command: WorkerMessengerCommand._Subscribe,
         payload: serializedSubscription,
       });
     });
 
     test('should send subscribe new message', async () => {
       const event = new ExtendableMessageEvent('message', {
-        command: WorkerMessengerCommand.SubscribeNew,
+        command: WorkerMessengerCommand._SubscribeNew,
         payload: appConfig,
       });
 
       await dispatchEvent(event);
 
       expect(postMessageFn).toHaveBeenCalledWith({
-        command: WorkerMessengerCommand.SubscribeNew,
+        command: WorkerMessengerCommand._SubscribeNew,
         payload: serializedSubscription,
       });
     });
@@ -635,7 +635,7 @@ describe('ServiceWorker', () => {
     describe('are you visible response', () => {
       test('with no clients status', async () => {
         const event = new ExtendableMessageEvent('message', {
-          command: WorkerMessengerCommand.AreYouVisibleResponse,
+          command: WorkerMessengerCommand._AreYouVisibleResponse,
           payload: { focused: false, timestamp: Date.now() },
         });
         await dispatchEvent(event);
@@ -653,7 +653,7 @@ describe('ServiceWorker', () => {
         };
 
         const event = new ExtendableMessageEvent('message', {
-          command: WorkerMessengerCommand.AreYouVisibleResponse,
+          command: WorkerMessengerCommand._AreYouVisibleResponse,
           payload: { focused: true, timestamp },
         });
         await dispatchEvent(event);
@@ -667,14 +667,14 @@ describe('ServiceWorker', () => {
 
     test('should set logging', async () => {
       let event = new ExtendableMessageEvent('message', {
-        command: WorkerMessengerCommand.SetLogging,
+        command: WorkerMessengerCommand._SetLogging,
         payload: { shouldLog: true },
       });
       await dispatchEvent(event);
       expect(self.shouldLog).toBe(true);
 
       event = new ExtendableMessageEvent('message', {
-        command: WorkerMessengerCommand.SetLogging,
+        command: WorkerMessengerCommand._SetLogging,
         payload: { shouldLog: false },
       });
       await dispatchEvent(event);

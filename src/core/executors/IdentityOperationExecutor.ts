@@ -110,15 +110,15 @@ export class IdentityOperationExecutor implements IOperationExecutor {
 
     const responseType = getResponseStatusType(status);
     switch (responseType) {
-      case ResponseStatusType.RETRYABLE:
+      case ResponseStatusType._Retryable:
         return new ExecutionResponse(
           ExecutionResult._FailRetry,
           retryAfterSeconds,
         );
-      case ResponseStatusType.INVALID:
+      case ResponseStatusType._Invalid:
         return new ExecutionResponse(ExecutionResult._FailNoretry);
 
-      case ResponseStatusType.CONFLICT: {
+      case ResponseStatusType._Conflict: {
         if (isSetAlias)
           return new ExecutionResponse(
             ExecutionResult._FailConflict,
@@ -127,13 +127,13 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         return new ExecutionResponse(ExecutionResult._Success); // alias doesn't exist = good
       }
 
-      case ResponseStatusType.UNAUTHORIZED:
+      case ResponseStatusType._Unauthorized:
         return new ExecutionResponse(
           ExecutionResult._FailUnauthorized,
           retryAfterSeconds,
         );
 
-      case ResponseStatusType.MISSING: {
+      case ResponseStatusType._Missing: {
         if (
           status === 404 &&
           this._newRecordState._isInMissingRetryWindow(

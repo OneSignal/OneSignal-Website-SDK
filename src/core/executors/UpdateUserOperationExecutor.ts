@@ -121,19 +121,19 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
 
     const responseType = getResponseStatusType(status);
     switch (responseType) {
-      case ResponseStatusType.RETRYABLE:
+      case ResponseStatusType._Retryable:
         return new ExecutionResponse(
           ExecutionResult._FailRetry,
           retryAfterSeconds,
         );
 
-      case ResponseStatusType.UNAUTHORIZED:
+      case ResponseStatusType._Unauthorized:
         return new ExecutionResponse(
           ExecutionResult._FailUnauthorized,
           retryAfterSeconds,
         );
 
-      case ResponseStatusType.MISSING: {
+      case ResponseStatusType._Missing: {
         if (
           status === 404 &&
           this._newRecordState._isInMissingRetryWindow(onesignalId)

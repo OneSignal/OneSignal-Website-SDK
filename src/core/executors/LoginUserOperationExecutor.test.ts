@@ -154,7 +154,7 @@ describe('LoginUserOperationExecutor', () => {
       const someSubscription = {
         app_id: APP_ID,
         id: SUB_ID_2,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: PUSH_TOKEN,
       };
       setCreateUserResponse({
@@ -379,7 +379,7 @@ describe('LoginUserOperationExecutor', () => {
       );
       const updates = {
         enabled: false,
-        notification_types: NotificationType.NotSubscribed,
+        notification_types: NotificationType._NotSubscribed,
         token: PUSH_TOKEN_2,
       };
       const updateSubOp = new UpdateSubscriptionOperation({
@@ -489,5 +489,5 @@ const mockSubscriptionOpInfo = {
   onesignalId: ONESIGNAL_ID,
   subscriptionId: SUB_ID,
   token: PUSH_TOKEN,
-  type: SubscriptionType.ChromePush,
+  type: SubscriptionType._ChromePush,
 } satisfies SubscriptionWithAppId;

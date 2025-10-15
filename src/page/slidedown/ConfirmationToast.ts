@@ -31,16 +31,16 @@ export default class ConfirmationToast {
     const dialogContainer = document.createElement('div');
 
     // Insert the container
-    slidedownContainer.id = SLIDEDOWN_CSS_IDS.container;
-    toastElement.id = TOAST_IDS.toastText;
-    addCssClass(toastElement, TOAST_CLASSES.toastText);
-    addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES.container);
-    addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES.reset);
+    slidedownContainer.id = SLIDEDOWN_CSS_IDS._Container;
+    toastElement.id = TOAST_IDS._ToastText;
+    addCssClass(toastElement, TOAST_CLASSES._ToastText);
+    addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES._Container);
+    addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES._Reset);
     getDomElementOrStub('body').appendChild(slidedownContainer);
 
     // Insert the dialog
-    dialogContainer.id = SLIDEDOWN_CSS_IDS.dialog;
-    addCssClass(dialogContainer, SLIDEDOWN_CSS_CLASSES.dialog);
+    dialogContainer.id = SLIDEDOWN_CSS_IDS._Dialog;
+    addCssClass(dialogContainer, SLIDEDOWN_CSS_CLASSES._Dialog);
     dialogContainer.appendChild(toastElement);
     this._container.appendChild(dialogContainer);
 
@@ -48,8 +48,8 @@ export default class ConfirmationToast {
     addCssClass(
       this._container,
       isMobileBrowser()
-        ? SLIDEDOWN_CSS_CLASSES.slideUp
-        : SLIDEDOWN_CSS_CLASSES.slideDown,
+        ? SLIDEDOWN_CSS_CLASSES._SlideUp
+        : SLIDEDOWN_CSS_CLASSES._SlideDown,
     );
 
     ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.SHOWN);
@@ -60,7 +60,7 @@ export default class ConfirmationToast {
   }
 
   _close(): void {
-    addCssClass(this._container, SLIDEDOWN_CSS_CLASSES.closeSlidedown);
+    addCssClass(this._container, SLIDEDOWN_CSS_CLASSES._CloseSlidedown);
     once(
       this._dialog,
       'animationend',
@@ -71,7 +71,7 @@ export default class ConfirmationToast {
             event.animationName === 'slideUpExit')
         ) {
           // Uninstall the event listener for animationend
-          removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
+          removeDomElement(`#${SLIDEDOWN_CSS_IDS._Container}`);
           destroyListenerFn();
         }
       },
@@ -80,11 +80,11 @@ export default class ConfirmationToast {
   }
 
   get _container() {
-    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.container}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Container}`);
   }
 
   get _dialog() {
-    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.dialog}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Dialog}`);
   }
 
   static get EVENTS() {

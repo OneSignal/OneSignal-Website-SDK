@@ -202,21 +202,21 @@ describe('migrations', () => {
         modelId: '1',
         modelName: 'emailSubscriptions',
         onesignalId: ONESIGNAL_ID,
-        type: SubscriptionType.Email,
+        type: SubscriptionType._Email,
         token: 'email-token',
       });
       await db.put('pushSubscriptions', {
         modelId: '2',
         modelName: 'pushSubscriptions',
         onesignalId: ONESIGNAL_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'push-token',
       });
       await db.put('smsSubscriptions', {
         modelId: '3',
         modelName: 'smsSubscriptions',
         onesignalId: ONESIGNAL_ID,
-        type: SubscriptionType.SMS,
+        type: SubscriptionType._SMS,
         token: 'sms-token',
       });
     };
@@ -227,7 +227,7 @@ describe('migrations', () => {
         modelName: 'subscriptions',
         externalId: undefined,
         onesignalId: ONESIGNAL_ID,
-        type: SubscriptionType.Email,
+        type: SubscriptionType._Email,
         token: 'email-token',
       },
       push: {
@@ -235,7 +235,7 @@ describe('migrations', () => {
         modelName: 'subscriptions',
         externalId: undefined,
         onesignalId: ONESIGNAL_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'push-token',
       },
       sms: {
@@ -243,7 +243,7 @@ describe('migrations', () => {
         modelName: 'subscriptions',
         externalId: undefined,
         onesignalId: ONESIGNAL_ID,
-        type: SubscriptionType.SMS,
+        type: SubscriptionType._SMS,
         token: 'sms-token',
       },
     };

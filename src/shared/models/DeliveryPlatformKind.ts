@@ -1,9 +1,9 @@
 export const DeliveryPlatformKind = {
-  ChromeLike: 5,
-  SafariLegacy: 7,
-  Firefox: 8,
-  Email: 11,
-  SafariVapid: 17,
+  _ChromeLike: 5,
+  _SafariLegacy: 7,
+  _Firefox: 8,
+  _Email: 11,
+  _SafariVapid: 17,
 } as const;
 
 export type DeliveryPlatformKindValue =

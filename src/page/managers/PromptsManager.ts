@@ -51,7 +51,7 @@ export class PromptsManager {
   private _shouldForceSlidedownOverNative(): boolean {
     const browserVersion = getBrowserVersion();
     return (
-      (getBrowserName() === Browser.Chrome &&
+      (getBrowserName() === Browser._Chrome &&
         browserVersion >= 63 &&
         (isTabletBrowser() || isMobileBrowser())) ||
       requiresUserInteraction()
@@ -203,7 +203,7 @@ export class PromptsManager {
 
     const sdkStylesLoadResult =
       await this._context._dynamicResourceLoader._loadSdkStylesheet();
-    if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
+    if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
       Log._debug(
         'Not showing slidedown permission message because styles failed to load.',
       );

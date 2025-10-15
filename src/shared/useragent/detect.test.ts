@@ -199,107 +199,107 @@ describe('getBrowserName()', () => {
     // chrome
     {
       userAgent: USER_AGENTS.CHROME_WINDOWS,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_MAC,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_LINUX,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_ANDROID,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_IOS_IPHONE,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_IOS_IPAD,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
 
     // firefox
     {
       userAgent: USER_AGENTS.FIREFOX_WINDOWS,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
     {
       userAgent: USER_AGENTS.FIREFOX_MAC,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
     {
       userAgent: USER_AGENTS.FIREFOX_LINUX,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
     {
       userAgent: USER_AGENTS.FIREFOX_ANDROID,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
     {
       userAgent: USER_AGENTS.FIREFOX_IOS,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
 
     // edge
     {
       userAgent: USER_AGENTS.EDGE_WINDOWS,
-      expected: Browser.Edge,
+      expected: Browser._Edge,
     },
     {
       userAgent: USER_AGENTS.EDGE_MAC,
-      expected: Browser.Edge,
+      expected: Browser._Edge,
     },
     {
       userAgent: USER_AGENTS.EDGE_IOS,
-      expected: Browser.Edge,
+      expected: Browser._Edge,
     },
     {
       userAgent: USER_AGENTS.EDGE_ANDROID,
-      expected: Browser.Edge,
+      expected: Browser._Edge,
     },
 
     // safari
     {
       userAgent: USER_AGENTS.SAFARI_MAC,
-      expected: Browser.Safari,
+      expected: Browser._Safari,
     },
     {
       userAgent: USER_AGENTS.SAFARI_IPHONE,
-      expected: Browser.Safari,
+      expected: Browser._Safari,
     },
     {
       userAgent: USER_AGENTS.SAFARI_IPAD,
-      expected: Browser.Safari,
+      expected: Browser._Safari,
     },
     {
       userAgent: USER_AGENTS.SAFARI_IPOD,
-      expected: Browser.Safari,
+      expected: Browser._Safari,
     },
 
     // other
     {
       userAgent: USER_AGENTS.OPERA_WINDOWS,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
     {
       userAgent: USER_AGENTS.YANDEX_WINDOWS,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
     {
       userAgent: USER_AGENTS.VIVALDI_WINDOWS,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
     {
       userAgent: USER_AGENTS.FACEBOOK_APP_ANDROID,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
     {
       userAgent: USER_AGENTS.FACEBOOK_APP_IOS,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
   ].forEach(({ userAgent, expected }) => {
     test(`"${userAgent}" should be ${expected}`, () => {

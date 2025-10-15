@@ -99,8 +99,10 @@ export default class Slidedown {
       this._notificationIcons = icons;
 
       // Remove any existing container
-      if (this._container.className.includes(SLIDEDOWN_CSS_CLASSES.container)) {
-        removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
+      if (
+        this._container.className.includes(SLIDEDOWN_CSS_CLASSES._Container)
+      ) {
+        removeDomElement(`#${SLIDEDOWN_CSS_IDS._Container}`);
       }
       const positiveButtonText =
         isInUpdateMode && !!this._tagCategories
@@ -128,14 +130,14 @@ export default class Slidedown {
       const dialogContainer = document.createElement('div');
 
       // Insert the container
-      slidedownContainer.id = SLIDEDOWN_CSS_IDS.container;
-      addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES.container);
-      addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES.reset);
+      slidedownContainer.id = SLIDEDOWN_CSS_IDS._Container;
+      addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES._Container);
+      addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES._Reset);
       getDomElementOrStub('body').appendChild(slidedownContainer);
 
       // Insert the dialog
-      dialogContainer.id = SLIDEDOWN_CSS_IDS.dialog;
-      addCssClass(dialogContainer, SLIDEDOWN_CSS_CLASSES.dialog);
+      dialogContainer.id = SLIDEDOWN_CSS_IDS._Dialog;
+      addCssClass(dialogContainer, SLIDEDOWN_CSS_CLASSES._Dialog);
       dialogContainer.appendChild(slidedownElement);
       this._container.appendChild(dialogContainer);
 
@@ -143,8 +145,8 @@ export default class Slidedown {
       addCssClass(
         this._container,
         isMobileBrowser()
-          ? SLIDEDOWN_CSS_CLASSES.slideUp
-          : SLIDEDOWN_CSS_CLASSES.slideDown,
+          ? SLIDEDOWN_CSS_CLASSES._SlideUp
+          : SLIDEDOWN_CSS_CLASSES._SlideDown,
       );
 
       // Add click event handlers
@@ -174,7 +176,7 @@ export default class Slidedown {
   }
 
   _close(): void {
-    addCssClass(this._container, SLIDEDOWN_CSS_CLASSES.closeSlidedown);
+    addCssClass(this._container, SLIDEDOWN_CSS_CLASSES._CloseSlidedown);
     once(
       this._dialog,
       'animationend',
@@ -185,7 +187,7 @@ export default class Slidedown {
             event.animationName === 'slideUpExit')
         ) {
           // Uninstall the event listener for animationend
-          removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
+          removeDomElement(`#${SLIDEDOWN_CSS_IDS._Container}`);
           destroyListenerFn();
 
           /**
@@ -218,10 +220,10 @@ export default class Slidedown {
     addDomElement(
       this._buttonIndicatorHolder,
       'beforeend',
-      getLoadingIndicatorWithColor(COLORS.whiteLoadingIndicator),
+      getLoadingIndicatorWithColor(COLORS._WhiteLoadingIndicator),
     );
     addCssClass(this._allowButton, 'disabled');
-    addCssClass(this._allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
+    addCssClass(this._allowButton, SLIDEDOWN_CSS_CLASSES._SavingStateButton);
   }
 
   /**
@@ -229,10 +231,10 @@ export default class Slidedown {
    */
   _removeSaveState(): void {
     this._allowButton.textContent = this._positiveUpdateButton ?? '';
-    removeDomElement(`#${SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder}`);
+    removeDomElement(`#${SLIDEDOWN_CSS_CLASSES._ButtonIndicatorHolder}`);
     this._allowButton.disabled = false;
     removeCssClass(this._allowButton, 'disabled');
-    removeCssClass(this._allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
+    removeCssClass(this._allowButton, SLIDEDOWN_CSS_CLASSES._SavingStateButton);
   }
 
   /**
@@ -267,13 +269,13 @@ export default class Slidedown {
     invalidChannelInput: InvalidChannelInputFieldValue,
   ): void {
     switch (invalidChannelInput) {
-      case InvalidChannelInputField.InvalidSms:
+      case InvalidChannelInputField._InvalidSms:
         ChannelCaptureContainer._showSmsInputError(true);
         break;
-      case InvalidChannelInputField.InvalidEmail:
+      case InvalidChannelInputField._InvalidEmail:
         ChannelCaptureContainer._showEmailInputError(true);
         break;
-      case InvalidChannelInputField.InvalidEmailAndSms:
+      case InvalidChannelInputField._InvalidEmailAndSms:
         ChannelCaptureContainer._showSmsInputError(true);
         ChannelCaptureContainer._showEmailInputError(true);
         break;
@@ -299,8 +301,8 @@ export default class Slidedown {
 
   _getIndicatorHolder(): Element {
     const indicatorHolder = document.createElement('div');
-    indicatorHolder.id = SLIDEDOWN_CSS_IDS.buttonIndicatorHolder;
-    addCssClass(indicatorHolder, SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder);
+    indicatorHolder.id = SLIDEDOWN_CSS_IDS._ButtonIndicatorHolder;
+    addCssClass(indicatorHolder, SLIDEDOWN_CSS_CLASSES._ButtonIndicatorHolder);
     return indicatorHolder;
   }
 
@@ -311,31 +313,31 @@ export default class Slidedown {
   }
 
   get _container() {
-    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.container}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Container}`);
   }
 
   get _dialog() {
-    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.dialog}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Dialog}`);
   }
 
   get _allowButton() {
     return getDomElementOrStub(
-      `#${SLIDEDOWN_CSS_IDS.allowButton}`,
+      `#${SLIDEDOWN_CSS_IDS._AllowButton}`,
     ) as HTMLButtonElement;
   }
 
   get _cancelButton() {
     return getDomElementOrStub(
-      `#${SLIDEDOWN_CSS_IDS.cancelButton}`,
+      `#${SLIDEDOWN_CSS_IDS._CancelButton}`,
     ) as HTMLButtonElement;
   }
 
   get _buttonIndicatorHolder() {
-    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.buttonIndicatorHolder}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._ButtonIndicatorHolder}`);
   }
 
   get _slidedownFooter() {
-    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.footer}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Footer}`);
   }
 
   static get EVENTS() {

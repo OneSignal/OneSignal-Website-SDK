@@ -112,7 +112,7 @@ describe('SubscriptionOperationExecutor', () => {
       onesignalId: ONESIGNAL_ID,
       subscriptionId: SUB_ID,
       token: 'test',
-      type: SubscriptionType.ChromePush,
+      type: SubscriptionType._ChromePush,
     });
 
     const res2 = executor._execute([deleteOp, updateOp]);
@@ -151,10 +151,10 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       const result = await executor._execute([createOp]);
@@ -178,20 +178,20 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'old-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       const updateOp = new UpdateSubscriptionOperation({
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.Email,
+        type: SubscriptionType._Email,
         token: 'new-token',
         enabled: false,
-        notification_types: NotificationType.UserOptedOut,
+        notification_types: NotificationType._UserOptedOut,
       });
 
       const result = await executor._execute([createOp, updateOp]);
@@ -200,10 +200,10 @@ describe('SubscriptionOperationExecutor', () => {
       expect(createSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
           enabled: false,
-          notification_types: NotificationType.UserOptedOut,
+          notification_types: NotificationType._UserOptedOut,
           token: 'new-token',
           sdk: __VERSION__,
-          type: SubscriptionType.ChromePush,
+          type: SubscriptionType._ChromePush,
         },
       });
     });
@@ -214,10 +214,10 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       const deleteOp = new DeleteSubscriptionOperation(
@@ -239,10 +239,10 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       // Retryable error
@@ -344,10 +344,10 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'updated-token',
         enabled: false,
-        notification_types: NotificationType.UserOptedOut,
+        notification_types: NotificationType._UserOptedOut,
         web_auth: 'some-web-auth',
         web_p256: 'some-web-p256',
       });
@@ -357,10 +357,10 @@ describe('SubscriptionOperationExecutor', () => {
 
       expect(updateSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
-          type: SubscriptionType.ChromePush,
+          type: SubscriptionType._ChromePush,
           enabled: false,
           token: 'updated-token',
-          notification_types: NotificationType.UserOptedOut,
+          notification_types: NotificationType._UserOptedOut,
           web_auth: 'some-web-auth',
           web_p256: 'some-web-p256',
         },
@@ -373,10 +373,10 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.Email,
+        type: SubscriptionType._Email,
         token: 'first-update',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
         web_auth: 'some-web-auth',
         web_p256: 'some-web-p256',
       });
@@ -385,10 +385,10 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'second-update',
         enabled: false,
-        notification_types: NotificationType.UserOptedOut,
+        notification_types: NotificationType._UserOptedOut,
         web_auth: 'some-web-auth-2',
         web_p256: 'some-web-p256-2',
       });
@@ -399,10 +399,10 @@ describe('SubscriptionOperationExecutor', () => {
       // Verify only the last update was used
       expect(updateSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
-          type: SubscriptionType.ChromePush,
+          type: SubscriptionType._ChromePush,
           enabled: false,
           token: 'second-update',
-          notification_types: NotificationType.UserOptedOut,
+          notification_types: NotificationType._UserOptedOut,
           web_auth: 'some-web-auth-2',
           web_p256: 'some-web-p256-2',
         },
@@ -415,10 +415,10 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       // Retryable error
@@ -435,11 +435,11 @@ describe('SubscriptionOperationExecutor', () => {
       const subOp = new CreateSubscriptionOperation({
         appId: APP_ID,
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
         token: 'test-token',
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
       });
       subOp._modelId = res2.operations![0]._modelId;
       expect(res2).toMatchObject({

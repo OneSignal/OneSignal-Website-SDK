@@ -1,8 +1,8 @@
 export const OutcomeAttributionType = {
-  Direct: 1,
-  Indirect: 2,
-  Unattributed: 3,
-  NotSupported: 4,
+  _Direct: 1,
+  _Indirect: 2,
+  _Unattributed: 3,
+  _NotSupported: 4,
 } as const;
 
 export type OutcomeAttributionTypeValue =

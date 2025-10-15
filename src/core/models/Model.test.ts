@@ -22,15 +22,15 @@ test('Set function broadcasts update event', async () => {
 
 test('Hydrate function updates data', async () => {
   const newSub = generateNewSubscription();
-  expect(newSub.type).toBe(SubscriptionType.Email);
-  newSub._setProperty('type', SubscriptionType.ChromePush);
-  expect(newSub.type).toBe(SubscriptionType.ChromePush);
+  expect(newSub.type).toBe(SubscriptionType._Email);
+  newSub._setProperty('type', SubscriptionType._ChromePush);
+  expect(newSub.type).toBe(SubscriptionType._ChromePush);
 });
 
 test('Encode function returns encoded model', async () => {
   const newSub = generateNewSubscription();
   expect(newSub.toJSON()).toEqual({
-    type: SubscriptionType.Email,
+    type: SubscriptionType._Email,
     id: '123',
     token: 'myToken',
     device_os: DEVICE_OS,
@@ -39,12 +39,12 @@ test('Encode function returns encoded model', async () => {
   });
 
   const model = new SubscriptionModel();
-  model._setProperty('type', SubscriptionType.Email);
+  model._setProperty('type', SubscriptionType._Email);
   model._setProperty('id', '123');
   model._setProperty('token', 'myToken');
 
   expect(model.toJSON()).toEqual({
-    type: SubscriptionType.Email,
+    type: SubscriptionType._Email,
     id: '123',
     token: 'myToken',
     device_os: DEVICE_OS,

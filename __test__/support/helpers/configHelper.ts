@@ -14,7 +14,7 @@ export async function getFinalAppConfig(
   fakeUserConfig: any,
 ): Promise<AppConfig> {
   const fakeServerConfig = TestContext.getFakeServerAppConfig(
-    ConfigIntegrationKind.Custom,
+    ConfigIntegrationKind._Custom,
   );
   fakeUserConfig.appId = fakeServerConfig.app_id;
   const getFakeServerConfig = () =>

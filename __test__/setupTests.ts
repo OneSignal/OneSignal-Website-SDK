@@ -53,7 +53,7 @@ Object.defineProperty(navigator, 'userAgent', {
 let downloadSpy: MockInstance;
 export const mockJsonp = () => {
   const serverConfig = TestContext.getFakeServerAppConfig(
-    ConfigIntegrationKind.Custom,
+    ConfigIntegrationKind._Custom,
   );
 
   if (!downloadSpy)

@@ -158,23 +158,23 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     const { retryAfterSeconds, status } = response;
     const type = getResponseStatusType(status);
     switch (type) {
-      case ResponseStatusType.RETRYABLE:
+      case ResponseStatusType._Retryable:
         return new ExecutionResponse(
           ExecutionResult._FailRetry,
           retryAfterSeconds,
         );
 
-      case ResponseStatusType.UNAUTHORIZED:
+      case ResponseStatusType._Unauthorized:
         return new ExecutionResponse(
           ExecutionResult._FailUnauthorized,
           retryAfterSeconds,
         );
 
-      case ResponseStatusType.CONFLICT:
-      case ResponseStatusType.INVALID:
+      case ResponseStatusType._Conflict:
+      case ResponseStatusType._Invalid:
         return new ExecutionResponse(ExecutionResult._FailNoretry);
 
-      case ResponseStatusType.MISSING: {
+      case ResponseStatusType._Missing: {
         if (
           status === 404 &&
           this._newRecordState._isInMissingRetryWindow(
@@ -233,12 +233,12 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     const type = getResponseStatusType(status);
 
     switch (type) {
-      case ResponseStatusType.RETRYABLE:
+      case ResponseStatusType._Retryable:
         return new ExecutionResponse(
           ExecutionResult._FailRetry,
           retryAfterSeconds,
         );
-      case ResponseStatusType.MISSING:
+      case ResponseStatusType._Missing:
         if (
           status === 404 &&
           [lastOp._onesignalId, lastOp.subscriptionId].some((id) =>
@@ -285,7 +285,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     const type = getResponseStatusType(status);
 
     switch (type) {
-      case ResponseStatusType.RETRYABLE:
+      case ResponseStatusType._Retryable:
         return new ExecutionResponse(
           ExecutionResult._FailRetry,
           retryAfterSeconds,
@@ -316,7 +316,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     const type = getResponseStatusType(status);
 
     switch (type) {
-      case ResponseStatusType.MISSING:
+      case ResponseStatusType._Missing:
         if (
           [op._onesignalId, op.subscriptionId].some((id) =>
             this._newRecordState._isInMissingRetryWindow(id),
@@ -329,7 +329,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         }
         return new ExecutionResponse(ExecutionResult._Success);
 
-      case ResponseStatusType.RETRYABLE:
+      case ResponseStatusType._Retryable:
         return new ExecutionResponse(
           ExecutionResult._FailRetry,
           retryAfterSeconds,

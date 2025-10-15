@@ -28,6 +28,6 @@ export const BASE_SUB = {
   device_model: '',
   device_os: '56',
   enabled: true,
-  notification_types: NotificationType.Subscribed,
+  notification_types: NotificationType._Subscribed,
   sdk: __VERSION__,
 };

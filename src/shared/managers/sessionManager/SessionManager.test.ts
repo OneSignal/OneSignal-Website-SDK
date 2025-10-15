@@ -119,7 +119,7 @@ describe('SessionManager', () => {
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager._upsertSession(SessionOrigin.UserCreate);
+        await sessionManager._upsertSession(SessionOrigin._UserCreate);
         return 'session';
       })();
 

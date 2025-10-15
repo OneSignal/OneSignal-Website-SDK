@@ -48,7 +48,7 @@ export class SessionManager implements ISessionManager {
     if (supportsServiceWorkers()) {
       Log._debug('Notify SW to upsert session');
       await this._context._workerMessenger._unicast(
-        WorkerMessengerCommand.SessionUpsert,
+        WorkerMessengerCommand._SessionUpsert,
         payload,
       );
     } else {
@@ -76,7 +76,7 @@ export class SessionManager implements ISessionManager {
     if (supportsServiceWorkers()) {
       Log._debug('Notify SW to deactivate session');
       await this._context._workerMessenger._unicast(
-        WorkerMessengerCommand.SessionDeactivate,
+        WorkerMessengerCommand._SessionDeactivate,
         payload,
       );
     } else {
@@ -136,7 +136,7 @@ export class SessionManager implements ISessionManager {
           await this._notifySWToUpsertSession(
             onesignalId,
             subscriptionId,
-            SessionOrigin.VisibilityVisible,
+            SessionOrigin._VisibilityVisible,
           );
         }
         return;
@@ -167,7 +167,7 @@ export class SessionManager implements ISessionManager {
         await this._notifySWToDeactivateSession(
           onesignalId,
           subscriptionId,
-          SessionOrigin.VisibilityHidden,
+          SessionOrigin._VisibilityHidden,
         );
         return;
       }
@@ -197,14 +197,14 @@ export class SessionManager implements ISessionManager {
         subscriptionId,
         sessionThreshold: this._context._appConfig.sessionThreshold!,
         enableSessionDuration: this._context._appConfig.enableSessionDuration!,
-        sessionOrigin: SessionOrigin.BeforeUnload,
+        sessionOrigin: SessionOrigin._BeforeUnload,
         isSafari: hasSafariWindow(),
         outcomesConfig: this._context._appConfig.userConfig.outcomes!,
       };
 
       Log._debug('Notify SW to deactivate session (beforeunload)');
       this._context._workerMessenger._directPostMessageToSW(
-        WorkerMessengerCommand.SessionDeactivate,
+        WorkerMessengerCommand._SessionDeactivate,
         payload,
       );
     } catch (e) {
@@ -235,7 +235,7 @@ export class SessionManager implements ISessionManager {
       await this._notifySWToUpsertSession(
         onesignalId,
         subscriptionId,
-        SessionOrigin.Focus,
+        SessionOrigin._Focus,
       );
     } catch (e) {
       Log._error('Error handling focus:', e);
@@ -265,7 +265,7 @@ export class SessionManager implements ISessionManager {
       await this._notifySWToDeactivateSession(
         onesignalId,
         subscriptionId,
-        SessionOrigin.Blur,
+        SessionOrigin._Blur,
       );
     } catch (e) {
       Log._error('Error handling blur:', e);
@@ -288,7 +288,7 @@ export class SessionManager implements ISessionManager {
     if (supportsServiceWorkers()) {
       this._setupSessionEventListeners();
     } else {
-      this._onSessionSent = sessionOrigin === SessionOrigin.UserCreate;
+      this._onSessionSent = sessionOrigin === SessionOrigin._UserCreate;
       OneSignal._emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
     }
   }
@@ -373,7 +373,7 @@ export class SessionManager implements ISessionManager {
     const pushSubscription =
       await OneSignal._coreDirector._getPushSubscriptionModel();
     if (
-      pushSubscription?._notification_types !== NotificationType.Subscribed &&
+      pushSubscription?._notification_types !== NotificationType._Subscribed &&
       OneSignal.config?.enableOnSession !== true
     ) {
       return;

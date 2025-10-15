@@ -45,10 +45,10 @@ export default class ChannelCaptureContainer {
     const captureContainer = document.createElement('div');
     addCssClass(
       captureContainer,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.channelCaptureContainer,
+      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._ChannelCaptureContainer,
     );
     captureContainer.id =
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.channelCaptureContainer;
+      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._ChannelCaptureContainer;
     let label, smsInputElement, emailInputElement;
 
     switch (this._promptOptions.type) {
@@ -122,11 +122,11 @@ export default class ChannelCaptureContainer {
 
     addCssClass(
       validationElement,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden,
+      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
     );
     addCssClass(
       validationElement,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElement,
+      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElement,
     );
     validationElement.id = varPayload.validationElementId;
 
@@ -141,7 +141,7 @@ export default class ChannelCaptureContainer {
     addCssClass(inputElement, varPayload.inputClass);
     addCssClass(
       wrappingDiv,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.inputWithValidationElement,
+      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._InputWithValidationElement,
     );
     wrappingDiv.id = varPayload.wrappingDivId;
 
@@ -162,11 +162,11 @@ export default class ChannelCaptureContainer {
         message: 'Please enter a valid email',
         domElementType: 'email',
         validationElementId:
-          CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailValidationElement,
-        inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput,
-        inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalEmailInput,
+          CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalEmailValidationElement,
+        inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalEmailInput,
+        inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalEmailInput,
         wrappingDivId:
-          CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement,
+          CHANNEL_CAPTURE_CONTAINER_CSS_IDS._EmailInputWithValidationElement,
         tabIndex: 1,
       };
     } else if (type === DelayedPromptType._Sms) {
@@ -174,11 +174,11 @@ export default class ChannelCaptureContainer {
         message: 'Please enter a valid phone number',
         domElementType: 'tel',
         validationElementId:
-          CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsValidationElement,
-        inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput,
-        inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalSmsInput,
+          CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsValidationElement,
+        inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsInput,
+        inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalSmsInput,
         wrappingDivId:
-          CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement,
+          CHANNEL_CAPTURE_CONTAINER_CSS_IDS._SmsInputWithValidationElement,
         tabIndex: 2,
       };
     } else throw new Error('invalid channel type for input validation');
@@ -186,7 +186,7 @@ export default class ChannelCaptureContainer {
 
   private _initializePhoneInputLibrary(): void {
     const onesignalSmsInput = getDomElementOrStub(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsInput}`,
     );
     if (onesignalSmsInput && !!window.intlTelInput) {
       this._itiOneSignal = window.intlTelInput(
@@ -205,7 +205,7 @@ export default class ChannelCaptureContainer {
 
   private _addSmsInputEventListeners(): void {
     const smsInput = getDomElementOrStub(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsInput}`,
     );
 
     smsInput.addEventListener('keyup', (event) => {
@@ -216,7 +216,7 @@ export default class ChannelCaptureContainer {
       // @ts-expect-error - TODO: improve type
       if (event.key === 'Enter') {
         // Trigger the button element with a click
-        document.getElementById(SLIDEDOWN_CSS_IDS.allowButton)?.click();
+        document.getElementById(SLIDEDOWN_CSS_IDS._AllowButton)?.click();
       }
 
       this._updateValidationOnSmsInputChange();
@@ -234,7 +234,7 @@ export default class ChannelCaptureContainer {
 
   private _addEmailInputEventListeners(): void {
     const emailInput = getDomElementOrStub(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalEmailInput}`,
     );
 
     emailInput.addEventListener('keyup', (event) => {
@@ -245,7 +245,7 @@ export default class ChannelCaptureContainer {
       // @ts-expect-error - TODO: improve type
       if (event.key === 'Enter') {
         // Trigger the button element with a click
-        document.getElementById(SLIDEDOWN_CSS_IDS.allowButton)?.click();
+        document.getElementById(SLIDEDOWN_CSS_IDS._AllowButton)?.click();
       }
 
       this._updateValidationOnEmailInputChange();
@@ -254,35 +254,35 @@ export default class ChannelCaptureContainer {
 
   private _updateValidationOnSmsInputChange(): void {
     const smsInputWithValidation = getDomElementOrStub(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._SmsInputWithValidationElement}`,
     );
     const smsValidationElement = getDomElementOrStub(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsValidationElement}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsValidationElement}`,
     );
     removeCssClass(
       smsInputWithValidation,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput,
+      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
     );
     addCssClass(
       smsValidationElement,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden,
+      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
     );
   }
 
   private _updateValidationOnEmailInputChange(): void {
     const emailInputWithValidation = getDomElementOrStub(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._EmailInputWithValidationElement}`,
     );
     const emailValidationElement = getDomElementOrStub(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailValidationElement}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalEmailValidationElement}`,
     );
     removeCssClass(
       emailInputWithValidation,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput,
+      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
     );
     addCssClass(
       emailValidationElement,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden,
+      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
     );
   }
 
@@ -295,14 +295,14 @@ export default class ChannelCaptureContainer {
     const script2 = document.createElement('script');
     const link = document.createElement('link');
 
-    script1.src = ItiScriptURLs.Main;
-    script2.src = ItiScriptURLs.Utils;
-    link.href = ItiScriptURLs.Stylesheet;
+    script1.src = ItiScriptURLs._Main;
+    script2.src = ItiScriptURLs._Utils;
+    link.href = ItiScriptURLs._Stylesheet;
     link.rel = 'stylesheet';
 
-    script1.integrity = ItiScriptURLHashes.Main;
-    script2.integrity = ItiScriptURLHashes.Utils;
-    link.integrity = ItiScriptURLHashes.Stylesheet;
+    script1.integrity = ItiScriptURLHashes._Main;
+    script2.integrity = ItiScriptURLHashes._Utils;
+    link.integrity = ItiScriptURLHashes._Stylesheet;
 
     script1.crossOrigin = 'anonymous';
     script2.crossOrigin = 'anonymous';
@@ -342,7 +342,7 @@ export default class ChannelCaptureContainer {
     }
 
     const captureContainer = this._generateHtml();
-    const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.body}`);
+    const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Body}`);
     body.appendChild(captureContainer);
 
     if (isUsingSms) {
@@ -365,7 +365,7 @@ export default class ChannelCaptureContainer {
 
   _getValueFromEmailInput(): string {
     const inputNode = getDomElementOrStub(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalEmailInput}`,
     );
     return (inputNode as HTMLInputElement)?.value || '';
   }
@@ -381,10 +381,10 @@ export default class ChannelCaptureContainer {
   /* S T A T I C */
   static _showSmsInputError(state: boolean): void {
     const validationElement = document.querySelector(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsValidationElement}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsValidationElement}`,
     );
     const inputElement = document.querySelector(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._SmsInputWithValidationElement}`,
     );
 
     if (!validationElement || !inputElement) {
@@ -394,27 +394,27 @@ export default class ChannelCaptureContainer {
 
     if (state) {
       validationElement.classList.remove(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden,
+        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
       );
       inputElement.classList.add(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput,
+        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
       );
     } else {
       validationElement.classList.add(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden,
+        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
       );
       inputElement.classList.remove(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput,
+        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
       );
     }
   }
 
   static _showEmailInputError(state: boolean): void {
     const validationElement = document.querySelector(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailValidationElement}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalEmailValidationElement}`,
     );
     const inputElement = document.querySelector(
-      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement}`,
+      `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._EmailInputWithValidationElement}`,
     );
 
     if (!validationElement || !inputElement) {
@@ -425,17 +425,17 @@ export default class ChannelCaptureContainer {
     if (state) {
       // show error
       validationElement.classList.remove(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden,
+        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
       );
       inputElement.classList.add(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput,
+        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
       );
     } else {
       validationElement.classList.add(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden,
+        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
       );
       inputElement.classList.remove(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput,
+        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
       );
     }
   }

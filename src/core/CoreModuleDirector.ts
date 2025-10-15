@@ -83,7 +83,7 @@ export class CoreModuleDirector {
   public _getEmailSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getEmailSubscriptionModels');
     const subscriptions = this._core._subscriptionModelStore.list();
-    return subscriptions.filter((s) => s.type === SubscriptionType.Email);
+    return subscriptions.filter((s) => s.type === SubscriptionType._Email);
   }
 
   public async _hasEmail(): Promise<boolean> {
@@ -94,7 +94,7 @@ export class CoreModuleDirector {
   public _getSmsSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getSmsSubscriptionModels');
     const subscriptions = this._core._subscriptionModelStore.list();
-    return subscriptions.filter((s) => s.type === SubscriptionType.SMS);
+    return subscriptions.filter((s) => s.type === SubscriptionType._SMS);
   }
 
   public async _hasSms(): Promise<boolean> {
@@ -118,7 +118,7 @@ export class CoreModuleDirector {
     const pushToken = await getCurrentPushToken();
     if (pushToken) {
       return this._getSubscriptionOfTypeWithToken(
-        SubscriptionChannel.Push,
+        SubscriptionChannel._Push,
         pushToken,
       );
     }
@@ -136,7 +136,7 @@ export class CoreModuleDirector {
     const lastKnownPushToken = await getPushToken();
     if (lastKnownPushToken) {
       return this._getSubscriptionOfTypeWithToken(
-        SubscriptionChannel.Push,
+        SubscriptionChannel._Push,
         lastKnownPushToken,
       );
     }
@@ -192,13 +192,13 @@ export class CoreModuleDirector {
     let subscriptions: SubscriptionModel[];
 
     switch (type) {
-      case SubscriptionChannel.Email:
+      case SubscriptionChannel._Email:
         subscriptions = this._getEmailSubscriptionModels();
         break;
-      case SubscriptionChannel.SMS:
+      case SubscriptionChannel._SMS:
         subscriptions = this._getSmsSubscriptionModels();
         break;
-      case SubscriptionChannel.Push:
+      case SubscriptionChannel._Push:
         subscriptions = this._getAllPushSubscriptionModels();
         break;
       default:

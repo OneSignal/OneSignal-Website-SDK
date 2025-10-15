@@ -159,7 +159,7 @@ export class SlidedownManager {
       this._slidedown._channelCaptureContainer?._isEmailInputFieldEmpty();
 
     if (!emailInputFieldIsValid || isEmailEmpty) {
-      throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+      throw new ChannelCaptureError(InvalidChannelInputField._InvalidEmail);
     }
 
     const email =
@@ -178,7 +178,7 @@ export class SlidedownManager {
       this._slidedown._channelCaptureContainer?._isSmsInputFieldEmpty();
 
     if (!smsInputFieldIsValid || isSmsEmpty) {
-      throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+      throw new ChannelCaptureError(InvalidChannelInputField._InvalidSms);
     }
 
     const sms =
@@ -211,7 +211,7 @@ export class SlidedownManager {
 
     if (bothFieldsInvalid || bothFieldsEmpty) {
       throw new ChannelCaptureError(
-        InvalidChannelInputField.InvalidEmailAndSms,
+        InvalidChannelInputField._InvalidEmailAndSms,
       );
     }
 
@@ -229,7 +229,7 @@ export class SlidedownManager {
         this._updateEmail(email);
       }
     } else {
-      throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+      throw new ChannelCaptureError(InvalidChannelInputField._InvalidEmail);
     }
 
     if (smsInputFieldIsValid) {
@@ -237,7 +237,7 @@ export class SlidedownManager {
         this._updateSMS(sms);
       }
     } else {
-      throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+      throw new ChannelCaptureError(InvalidChannelInputField._InvalidSms);
     }
   }
 

@@ -69,7 +69,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     if (ok) return new ExecutionResponse(ExecutionResult._Success);
 
     switch (responseType) {
-      case ResponseStatusType.RETRYABLE:
+      case ResponseStatusType._Retryable:
         return new ExecutionResponse(ExecutionResult._FailRetry);
       default:
         return new ExecutionResponse(ExecutionResult._FailNoretry);

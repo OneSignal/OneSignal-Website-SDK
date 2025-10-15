@@ -142,7 +142,7 @@ export default class OneSignal {
       throw new Error('OneSignal config not initialized!');
     }
 
-    if (getBrowserName() === Browser.Safari && !OneSignal.config.safariWebId) {
+    if (getBrowserName() === Browser._Safari && !OneSignal.config.safariWebId) {
       /**
        * Don't throw an error for missing Safari config; many users set up
        * support on Chrome/Firefox and don't intend to support Safari but don't

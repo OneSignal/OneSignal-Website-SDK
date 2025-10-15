@@ -34,11 +34,11 @@ const IntegrationConfigurationKind = {
   /**
    * Configuration comes from the dashboard only.
    */
-  Dashboard: 0,
+  _Dashboard: 0,
   /**
    * Configuration comes from user-provided JavaScript code only.
    */
-  JavaScript: 1,
+  _JavaScript: 1,
 } as const;
 
 type IntegrationConfigurationKindValue =
@@ -51,7 +51,7 @@ interface IntegrationCapabilities {
 export function getConfigIntegrationKind(
   serverConfig: ServerAppConfig,
 ): ConfigIntegrationKindValue {
-  return serverConfig.config.integration?.kind ?? ConfigIntegrationKind.Custom;
+  return serverConfig.config.integration?.kind ?? ConfigIntegrationKind._Custom;
 }
 
 /**
@@ -67,9 +67,9 @@ export function hasUnsupportedSubdomainForConfigIntegrationKind(
   );
 
   switch (integrationCapabilities.configuration) {
-    case IntegrationConfigurationKind.Dashboard:
+    case IntegrationConfigurationKind._Dashboard:
       return serverConfig.config.siteInfo.proxyOriginEnabled;
-    case IntegrationConfigurationKind.JavaScript:
+    case IntegrationConfigurationKind._JavaScript:
       return !!userConfig.subdomainName;
   }
 }
@@ -78,11 +78,11 @@ export function getIntegrationCapabilities(
   integration: ConfigIntegrationKindValue,
 ): IntegrationCapabilities {
   switch (integration) {
-    case ConfigIntegrationKind.Custom:
-    case ConfigIntegrationKind.WordPress:
-      return { configuration: IntegrationConfigurationKind.JavaScript };
+    case ConfigIntegrationKind._Custom:
+    case ConfigIntegrationKind._WordPress:
+      return { configuration: IntegrationConfigurationKind._JavaScript };
     default:
-      return { configuration: IntegrationConfigurationKind.Dashboard };
+      return { configuration: IntegrationConfigurationKind._Dashboard };
   }
 }
 
@@ -95,7 +95,7 @@ export function getUserConfigForConfigIntegrationKind(
     configIntegrationKind,
   );
   switch (integrationCapabilities.configuration) {
-    case IntegrationConfigurationKind.Dashboard: {
+    case IntegrationConfigurationKind._Dashboard: {
       /*
            Ignores code-based initialization configuration and uses dashboard configuration only.
           */
@@ -213,7 +213,7 @@ export function getUserConfigForConfigIntegrationKind(
         },
       };
     }
-    case IntegrationConfigurationKind.JavaScript: {
+    case IntegrationConfigurationKind._JavaScript: {
       /*
             Ignores dashboard configuration and uses code-based configuration only.
             Except injecting some default values for prompts.

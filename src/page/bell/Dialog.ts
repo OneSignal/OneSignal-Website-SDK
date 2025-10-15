@@ -93,14 +93,14 @@ export default class Dialog extends AnimatedElement {
           let imageUrl = null;
 
           const browserName = getBrowserName();
-          if (browserName === Browser.Chrome) {
+          if (browserName === Browser._Chrome) {
             if (!isMobileBrowser() && !isTabletBrowser())
               imageUrl = '/bell/chrome-unblock.jpg';
-          } else if (browserName === Browser.Firefox)
+          } else if (browserName === Browser._Firefox)
             imageUrl = '/bell/firefox-unblock.jpg';
-          else if (browserName === Browser.Safari)
+          else if (browserName === Browser._Safari)
             imageUrl = '/bell/safari-unblock.jpg';
-          else if (browserName === Browser.Edge)
+          else if (browserName === Browser._Edge)
             imageUrl = '/bell/edge-unblock.png';
 
           let instructionsHtml = '';
@@ -111,7 +111,7 @@ export default class Dialog extends AnimatedElement {
 
           if (
             (isMobileBrowser() || isTabletBrowser()) &&
-            browserName === Browser.Chrome
+            browserName === Browser._Chrome
           ) {
             instructionsHtml = `<ol><li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li><li>Click <strong>Site settings</strong> under Advanced.</li><li>Click <strong>Notifications</strong>.</li><li>Find and click this entry for this website.</li><li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li></ol>`;
           }

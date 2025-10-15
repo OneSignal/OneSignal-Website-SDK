@@ -29,7 +29,7 @@ export const supportsVapidPush =
   PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey');
 
 export const useSafariVapidPush = () =>
-  getBrowserName() === Browser.Safari &&
+  getBrowserName() === Browser._Safari &&
   supportsVapidPush &&
   !useSafariLegacyPush();
 
@@ -73,18 +73,18 @@ const isTurbineEndpoint = (action?: string): boolean => {
 };
 
 export const getSubscriptionType = (): SubscriptionTypeValue => {
-  const isFirefox = getBrowserName() === Browser.Firefox;
+  const isFirefox = getBrowserName() === Browser._Firefox;
   if (isFirefox) {
-    return SubscriptionType.FirefoxPush;
+    return SubscriptionType._FirefoxPush;
   }
   if (useSafariVapidPush()) {
-    return SubscriptionType.SafariPush;
+    return SubscriptionType._SafariPush;
   }
   if (useSafariLegacyPush()) {
-    return SubscriptionType.SafariLegacyPush;
+    return SubscriptionType._SafariLegacyPush;
   }
   // Other browsers, like Edge, are Chromium based so we consider them "Chrome".
-  return SubscriptionType.ChromePush;
+  return SubscriptionType._ChromePush;
 };
 
 /**
@@ -93,14 +93,14 @@ export const getSubscriptionType = (): SubscriptionTypeValue => {
  */
 export function getDeviceType(): DeliveryPlatformKindValue {
   switch (getSubscriptionType()) {
-    case SubscriptionType.FirefoxPush:
-      return DeliveryPlatformKind.Firefox;
-    case SubscriptionType.SafariLegacyPush:
-      return DeliveryPlatformKind.SafariLegacy;
-    case SubscriptionType.SafariPush:
-      return DeliveryPlatformKind.SafariVapid;
+    case SubscriptionType._FirefoxPush:
+      return DeliveryPlatformKind._Firefox;
+    case SubscriptionType._SafariLegacyPush:
+      return DeliveryPlatformKind._SafariLegacy;
+    case SubscriptionType._SafariPush:
+      return DeliveryPlatformKind._SafariVapid;
   }
-  return DeliveryPlatformKind.ChromeLike;
+  return DeliveryPlatformKind._ChromeLike;
 }
 
 export function getDeviceOS(): string {
