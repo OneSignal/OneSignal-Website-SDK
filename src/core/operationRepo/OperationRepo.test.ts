@@ -19,7 +19,7 @@ import {
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { NewRecordsState } from './NewRecordsState';
-import { OperationQueueItem, OperationRepo } from './OperationRepo';
+import { OperationRepo } from './OperationRepo';
 
 vi.spyOn(Log, '_error').mockImplementation((msg) => {
   if (typeof msg === 'string' && msg.includes('Operation execution failed'))
@@ -224,43 +224,49 @@ describe('OperationRepo', () => {
     const singleOp = new Operation('1', GroupComparisonType.NONE);
     const groupedOps = getGroupedOp();
 
-    let op = new OperationQueueItem({
+    let op = {
       operation: singleOp,
       bucket: 0,
-    });
+      retries: 0,
+    };
 
     // single operation should be returned as is
     expect(opRepo._getGroupableOperations(op)).toEqual([op]);
 
     // can group operations by same create comparison key
-    op = new OperationQueueItem({
+    op = {
       operation: groupedOps[0],
       bucket: 0,
-    });
-    let op2 = new OperationQueueItem({
+      retries: 0,
+    };
+    let op2 = {
       operation: groupedOps[1],
       bucket: 0,
-    });
+      retries: 0,
+    };
     opRepo._enqueue(op2.operation);
     expect(opRepo._getGroupableOperations(op)).toEqual([op, op2]);
 
     // can group operations by same modify comparison key
-    op = new OperationQueueItem({
+    op = {
       operation: new Operation('1', GroupComparisonType.ALTER, '', 'abc'),
       bucket: 0,
-    });
-    op2 = new OperationQueueItem({
+      retries: 0,
+    };
+    op2 = {
       operation: new Operation('2', GroupComparisonType.ALTER, '', 'abc'),
       bucket: 0,
-    });
+      retries: 0,
+    };
     opRepo._enqueue(op2.operation);
     expect(opRepo._getGroupableOperations(op)).toEqual([op, op2]);
 
     // throws for no comparison keys
-    op = new OperationQueueItem({
+    op = {
       operation: new Operation('1', GroupComparisonType.CREATE),
       bucket: 0,
-    });
+      retries: 0,
+    };
     opRepo._enqueue(op2.operation);
     expect(() => opRepo._getGroupableOperations(op)).toThrow(
       'Both comparison keys cannot be blank!',
@@ -271,10 +277,11 @@ describe('OperationRepo', () => {
     const records = opRepo._records;
     records.set(blockedId, Date.now());
 
-    op = new OperationQueueItem({
+    op = {
       operation: new Operation('1', GroupComparisonType.CREATE, 'def'),
       bucket: 0,
-    });
+      retries: 0,
+    };
     op2.operation._setProperty('onesignalId', blockedId);
 
     opRepo._enqueue(op2.operation);
