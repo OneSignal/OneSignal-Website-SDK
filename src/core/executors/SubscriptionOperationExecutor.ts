@@ -119,7 +119,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       const { subscription } = response.result;
       const subscriptionModel =
         this._subscriptionModelStore._getBySubscriptionId(
-          createOperation.subscriptionId,
+          createOperation._subscriptionId,
         );
 
       const backendSubscriptionId = subscription?.id;
@@ -149,7 +149,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           : undefined,
         backendSubscriptionId
           ? {
-              [createOperation.subscriptionId]: backendSubscriptionId,
+              [createOperation._subscriptionId]: backendSubscriptionId,
             }
           : undefined,
       );
@@ -221,7 +221,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
     const response = await updateSubscriptionById(
       { appId: lastOp._appId },
-      lastOp.subscriptionId,
+      lastOp._subscriptionId,
       subscription,
     );
 
@@ -241,7 +241,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       case ResponseStatusType._Missing:
         if (
           status === 404 &&
-          [lastOp._onesignalId, lastOp.subscriptionId].some((id) =>
+          [lastOp._onesignalId, lastOp._subscriptionId].some((id) =>
             this._newRecordState._isInMissingRetryWindow(id),
           )
         ) {
@@ -257,7 +257,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
             enabled: lastOp.enabled,
             notification_types: lastOp.notification_types,
             onesignalId: lastOp._onesignalId,
-            subscriptionId: lastOp.subscriptionId,
+            subscriptionId: lastOp._subscriptionId,
             token: lastOp.token,
             type: lastOp.type,
           }),
@@ -272,7 +272,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   ): Promise<ExecutionResponse> {
     const response = await transferSubscriptionById(
       { appId: op._appId },
-      op.subscriptionId,
+      op._subscriptionId,
       { onesignal_id: op._onesignalId },
       false,
     );
@@ -301,12 +301,12 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   ): Promise<ExecutionResponse> {
     const response = await deleteSubscriptionById(
       { appId: op._appId },
-      op.subscriptionId,
+      op._subscriptionId,
     );
 
     if (response.ok) {
       this._subscriptionModelStore._remove(
-        op.subscriptionId,
+        op._subscriptionId,
         ModelChangeTags._Hydrate,
       );
       return new ExecutionResponse(ExecutionResult._Success);
@@ -318,7 +318,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     switch (type) {
       case ResponseStatusType._Missing:
         if (
-          [op._onesignalId, op.subscriptionId].some((id) =>
+          [op._onesignalId, op._subscriptionId].some((id) =>
             this._newRecordState._isInMissingRetryWindow(id),
           )
         ) {

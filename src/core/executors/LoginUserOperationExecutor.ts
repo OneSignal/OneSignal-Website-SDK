@@ -281,7 +281,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   ): SubscriptionMap {
     switch (true) {
       case operation instanceof CreateSubscriptionOperation: {
-        const subscriptionId = operation.subscriptionId;
+        const subscriptionId = operation._subscriptionId;
         return {
           ...currentSubs,
           [subscriptionId]: {
@@ -299,7 +299,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case operation instanceof UpdateSubscriptionOperation: {
-        const subscriptionId = operation.subscriptionId;
+        const subscriptionId = operation._subscriptionId;
 
         if (currentSubs[subscriptionId]) {
           return {
@@ -316,7 +316,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case operation instanceof TransferSubscriptionOperation: {
-        const subscriptionId = operation.subscriptionId;
+        const subscriptionId = operation._subscriptionId;
 
         return {
           ...currentSubs,
@@ -329,7 +329,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       case operation instanceof DeleteSubscriptionOperation: {
         const subs = { ...currentSubs };
-        delete subs[operation.subscriptionId];
+        delete subs[operation._subscriptionId];
         return subs;
       }
 

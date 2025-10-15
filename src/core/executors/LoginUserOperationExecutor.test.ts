@@ -431,7 +431,7 @@ describe('LoginUserOperationExecutor', () => {
       const transferSubOp = new TransferSubscriptionOperation(
         APP_ID,
         ONESIGNAL_ID,
-        createSubOp.subscriptionId,
+        createSubOp._subscriptionId,
       );
 
       const ops = [loginOp, createSubOp, transferSubOp];
@@ -471,7 +471,7 @@ describe('LoginUserOperationExecutor', () => {
       const deleteSubOp = new DeleteSubscriptionOperation(
         APP_ID,
         ONESIGNAL_ID,
-        createSubOp.subscriptionId,
+        createSubOp._subscriptionId,
       );
 
       const ops = [loginOp, createSubOp, deleteSubOp];
