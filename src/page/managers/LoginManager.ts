@@ -8,7 +8,7 @@ import { IDManager } from 'src/shared/managers/IDManager';
 import {
   createUserOnServer,
   resetUserModels,
-} from '../../onesignal/userDirector2';
+} from '../../onesignal/userDirector';
 import Log from '../../shared/libraries/Log';
 
 export default class LoginManager {

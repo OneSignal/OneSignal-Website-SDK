@@ -1,5 +1,5 @@
 import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
-import { createUserOnServer } from 'src/onesignal/userDirector2';
+import { createUserOnServer } from 'src/onesignal/userDirector';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
