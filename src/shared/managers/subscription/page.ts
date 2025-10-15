@@ -53,7 +53,7 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
 ) => {
   // incase a login op was called before user accepts the notifcations permissions, we need to wait for it to finish
   // otherwise there would be two login ops in the same bucket for LoginOperationExecutor which would error
-  await LoginManager.switchingUsersPromise;
+  await LoginManager._switchingUsersPromise;
 
   let pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
   // for new users, we need to create a new push subscription model and also save its push id to IndexedDB

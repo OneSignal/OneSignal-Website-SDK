@@ -112,7 +112,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handleVisibilityChange(): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     if (!User._singletonInstance?.onesignalId) {
       return;
@@ -180,7 +180,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handleOnBeforeUnload(): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     if (!User._singletonInstance?.onesignalId) {
       return;
@@ -213,7 +213,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handleOnFocus(e: Event): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     Log._debug('handleOnFocus', e);
     if (!User._singletonInstance?.onesignalId) {
@@ -243,7 +243,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handleOnBlur(e: Event): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     Log._debug('handleOnBlur', e);
     if (!User._singletonInstance?.onesignalId) {
@@ -273,7 +273,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     if (User._singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } =

@@ -4,7 +4,7 @@ import {
   limitGetLast,
   limitIsEmpty,
   limitStorePut,
-} from 'src/shared/services/limitStore2';
+} from 'src/shared/services/limitStore';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';

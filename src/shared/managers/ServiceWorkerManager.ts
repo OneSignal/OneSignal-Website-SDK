@@ -87,7 +87,7 @@ export class ServiceWorkerManager {
     }
 
     const workerScriptPath = new URL(serviceWorker.scriptURL).pathname;
-    const swFileName = new Path(workerScriptPath).getFileName();
+    const swFileName = new Path(workerScriptPath)._getFileName();
 
     // If the current service worker is Akamai's
     if (swFileName == 'akam-sw.js') {
@@ -101,7 +101,7 @@ export class ServiceWorkerManager {
           "Found a ServiceWorker under Akamai's akam-sw.js?othersw=",
           importedSw,
         );
-        return new Path(new URL(importedSw).pathname).getFileName();
+        return new Path(new URL(importedSw).pathname)._getFileName();
       }
     }
     return swFileName;
@@ -115,7 +115,7 @@ export class ServiceWorkerManager {
       return ServiceWorkerActiveState.None;
     }
     const isValidOSWorker =
-      fileName == this._config.workerPath.getFileName() ||
+      fileName == this._config.workerPath._getFileName() ||
       fileName == 'OneSignalSDK.sw.js'; // For backwards compatibility with temporary v16 user model beta filename (remove after 5/5/24 deprecation)
 
     if (isValidOSWorker) {

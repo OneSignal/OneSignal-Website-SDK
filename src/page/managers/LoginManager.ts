@@ -10,11 +10,14 @@ import Log from '../../shared/libraries/Log';
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users
-  static switchingUsersPromise: Promise<void> = Promise.resolve();
+  static _switchingUsersPromise: Promise<void> = Promise.resolve();
 
   // public api
   static async login(externalId: string, token?: string): Promise<void> {
-    await (this.switchingUsersPromise = LoginManager._login(externalId, token));
+    await (this._switchingUsersPromise = LoginManager._login(
+      externalId,
+      token,
+    ));
   }
 
   private static async _login(
@@ -77,7 +80,7 @@ export default class LoginManager {
 
   // public api
   static async logout(): Promise<void> {
-    await (this.switchingUsersPromise = LoginManager._logout());
+    await (this._switchingUsersPromise = LoginManager._logout());
   }
 
   private static async _logout(): Promise<void> {
