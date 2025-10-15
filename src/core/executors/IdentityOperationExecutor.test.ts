@@ -61,7 +61,7 @@ describe('IdentityOperationExecutor', () => {
     );
     getRebuildOpsSpy = vi.spyOn(
       rebuildUserService,
-      'getRebuildOperationsIfCurrentUser',
+      '_getRebuildOperationsIfCurrentUser',
     );
   });
 
@@ -158,7 +158,7 @@ describe('IdentityOperationExecutor', () => {
       expect(res5.retryAfterSeconds).toBeUndefined();
 
       // with rebuild ops
-      identityModelStore.model.onesignalId = ONESIGNAL_ID;
+      identityModelStore.model._onesignalId = ONESIGNAL_ID;
       const res7 = await executor._execute(ops);
       expect(res7.result).toBe(ExecutionResult.FAIL_RETRY);
       expect(res7.retryAfterSeconds).toBeUndefined();

@@ -78,7 +78,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
 
     const { ok, result, retryAfterSeconds, status } = response;
     if (ok) {
-      if (op._onesignalId !== this._identityModelStore.model.onesignalId) {
+      if (op._onesignalId !== this._identityModelStore.model._onesignalId) {
         return new ExecutionResponse(ExecutionResult.SUCCESS);
       }
 
@@ -131,7 +131,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         propertiesModel,
         ModelChangeTags.HYDRATE,
       );
-      this._subscriptionsModelStore.replaceAll(
+      this._subscriptionsModelStore._replaceAll(
         subscriptionModels,
         ModelChangeTags.HYDRATE,
       );
@@ -162,7 +162,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
           );
 
         const rebuildOps =
-          await this._buildUserService.getRebuildOperationsIfCurrentUser(
+          await this._buildUserService._getRebuildOperationsIfCurrentUser(
             op._appId,
             op._onesignalId,
           );

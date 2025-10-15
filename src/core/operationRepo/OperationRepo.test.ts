@@ -30,7 +30,7 @@ vi.spyOn(Log, '_error').mockImplementation((msg) => {
 vi.useFakeTimers();
 
 // for the sake of testing, we want to use a simple mock operation and execturo
-vi.spyOn(OperationModelStore.prototype, 'create').mockImplementation(() => {
+vi.spyOn(OperationModelStore.prototype, '_create').mockImplementation(() => {
   return null;
 });
 

@@ -100,7 +100,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     ): op is SetPropertyOperation<'tags'> => op.property === 'tags';
 
     if (ok) {
-      if (this._identityModelStore.model.onesignalId === onesignalId) {
+      if (this._identityModelStore.model._onesignalId === onesignalId) {
         for (const operation of operations) {
           if (operation instanceof SetPropertyOperation) {
             // removing empty string tags from operation.value to save space in IndexedDB and local memory.
@@ -146,7 +146,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           );
         }
         const rebuildOps =
-          await this._buildUserService.getRebuildOperationsIfCurrentUser(
+          await this._buildUserService._getRebuildOperationsIfCurrentUser(
             appId,
             onesignalId,
           );

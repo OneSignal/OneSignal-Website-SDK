@@ -26,10 +26,10 @@ export default class LoginManager {
     }
 
     let identityModel = OneSignal._coreDirector._getIdentityModel();
-    const currentOneSignalId = !IDManager._isLocalId(identityModel.onesignalId)
-      ? identityModel.onesignalId
+    const currentOneSignalId = !IDManager._isLocalId(identityModel._onesignalId)
+      ? identityModel._onesignalId
       : undefined;
-    const currentExternalId = identityModel.externalId;
+    const currentExternalId = identityModel._externalId;
 
     // if the current externalId is the same as the one we're trying to set, do nothing
     if (currentExternalId === externalId) {
@@ -47,7 +47,7 @@ export default class LoginManager {
       externalId,
       ModelChangeTags.HYDRATE,
     );
-    const newIdentityOneSignalId = identityModel.onesignalId;
+    const newIdentityOneSignalId = identityModel._onesignalId;
     const appId = MainHelper._getAppId();
 
     const promises: Promise<void>[] = [
@@ -84,7 +84,7 @@ export default class LoginManager {
     // check if user is already logged out
     const identityModel = OneSignal._coreDirector._getIdentityModel();
 
-    if (!identityModel.externalId)
+    if (!identityModel._externalId)
       return Log._debug('Logout: User is not logged in, skipping logout');
 
     UserDirector._resetUserModels();

@@ -96,7 +96,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
     const { ok, status, retryAfterSeconds } = await request;
     if (ok) {
       if (
-        this._identityModelStore.model.onesignalId ===
+        this._identityModelStore.model._onesignalId ===
         lastOperation._onesignalId
       ) {
         this._identityModelStore.model._setProperty(
@@ -147,7 +147,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
 
         if (isSetAlias) {
           const rebuildOps =
-            await this._buildUserService.getRebuildOperationsIfCurrentUser(
+            await this._buildUserService._getRebuildOperationsIfCurrentUser(
               lastOperation._appId,
               lastOperation._onesignalId,
             );

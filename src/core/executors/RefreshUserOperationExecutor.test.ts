@@ -58,7 +58,7 @@ describe('RefreshUserOperationExecutor', () => {
     );
     getRebuildOpsSpy = vi.spyOn(
       buildUserService,
-      'getRebuildOperationsIfCurrentUser',
+      '_getRebuildOperationsIfCurrentUser',
     );
   });
 

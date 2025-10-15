@@ -43,7 +43,7 @@ describe('UpdateUserOperationExecutor', () => {
     );
     getRebuildOpsSpy = vi.spyOn(
       buildUserService,
-      'getRebuildOperationsIfCurrentUser',
+      '_getRebuildOperationsIfCurrentUser',
     );
 
     // Set up initial model state

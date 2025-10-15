@@ -12,7 +12,7 @@ export interface IRebuildUserService {
    * @param onesignalId - The ID of the user to retrieve operations for.
    * @returns A list of operations if the ID is for the current user, or null otherwise.
    */
-  getRebuildOperationsIfCurrentUser(
+  _getRebuildOperationsIfCurrentUser(
     appId: string,
     onesignalId: string,
   ): Promise<Operation[] | null>;

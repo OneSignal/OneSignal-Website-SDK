@@ -21,12 +21,12 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     return super.list().find((m) => m.id === subscriptionId);
   }
 
-  override replaceAll(
+  override _replaceAll(
     models: SubscriptionModel[],
     tag?: ModelChangeTagValue,
   ): void {
     if (tag !== ModelChangeTags.HYDRATE) {
-      return super.replaceAll(models, tag);
+      return super._replaceAll(models, tag);
     }
 
     // When hydrating, preserve properties from existing PUSH subscription
@@ -41,6 +41,6 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
       }
     }
 
-    super.replaceAll(models, tag);
+    super._replaceAll(models, tag);
   }
 }
