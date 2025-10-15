@@ -10,12 +10,12 @@ export default class PermissionManager {
    * Returns a promise that resolves to the browser's current notification permission as
    *    'default', 'granted', or 'denied'.
    */
-  async getPermissionStatus(): Promise<NotificationPermission> {
+  async _getPermissionStatus(): Promise<NotificationPermission> {
     if (!OneSignal._context) {
       throw new Error(`OneSignal.context is undefined. Call init first`);
     }
 
-    return await OneSignal._context._permissionManager.getNotificationPermission(
+    return await OneSignal._context._permissionManager._getNotificationPermission(
       OneSignal.config!.safariWebId,
     );
   }
@@ -26,15 +26,15 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission
    * state on Legacy Safari on macOS.
    */
-  public async getNotificationPermission(
+  public async _getNotificationPermission(
     safariWebId?: string,
   ): Promise<NotificationPermission> {
     if (useSafariLegacyPush()) {
-      return PermissionManager.getLegacySafariNotificationPermission(
+      return PermissionManager._getLegacySafariNotificationPermission(
         safariWebId,
       );
     }
-    return this.getW3cNotificationPermission();
+    return this._getW3cNotificationPermission();
   }
 
   /**
@@ -42,7 +42,7 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary for Legacy Safari on macOS.
    */
-  private static getLegacySafariNotificationPermission(
+  private static _getLegacySafariNotificationPermission(
     safariWebId?: string,
   ): NotificationPermission {
     if (safariWebId)
@@ -55,7 +55,7 @@ export default class PermissionManager {
    * Returns the notification permission as reported by the browser.
    *   - Expect for legacy Safari on macOS.
    */
-  private getW3cNotificationPermission(): NotificationPermission {
+  private _getW3cNotificationPermission(): NotificationPermission {
     return Notification.permission as NotificationPermission;
   }
 }

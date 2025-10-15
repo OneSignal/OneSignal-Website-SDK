@@ -397,7 +397,7 @@ export class SessionManager implements ISessionManager {
         },
       };
 
-      const appId = MainHelper.getAppId();
+      const appId = MainHelper._getAppId();
       enforceAppId(appId);
       enforceAlias(aliasPair);
       try {

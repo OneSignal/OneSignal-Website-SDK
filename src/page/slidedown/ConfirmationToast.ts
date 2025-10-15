@@ -56,7 +56,7 @@ export default class ConfirmationToast {
   }
 
   static async _triggerSlidedownEvent(eventName: string): Promise<void> {
-    await OneSignalEvent.trigger(eventName);
+    await OneSignalEvent._trigger(eventName);
   }
 
   _close(): void {

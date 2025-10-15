@@ -59,7 +59,7 @@ export default class OneSignal {
     OneSignal._coreDirector = new CoreModuleDirector(core);
     const subscription = await getSubscription();
     const permission =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager._getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);
     this.Notifications = new NotificationsNamespace(permission);
   }
@@ -188,7 +188,7 @@ export default class OneSignal {
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,
         //     since a user has to click out of and back on the page to check permissions
-        MainHelper.checkAndTriggerNotificationPermissionChanged();
+        MainHelper._checkAndTriggerNotificationPermissionChanged();
       });
 
       await initSaveState();

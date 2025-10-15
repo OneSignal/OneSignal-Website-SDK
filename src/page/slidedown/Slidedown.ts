@@ -94,7 +94,7 @@ export default class Slidedown {
   async _create(isInUpdateMode?: boolean): Promise<void> {
     // TODO: dynamically change btns depending on if its first or repeat display of slidedown (subscribe vs update)
     if (this._notificationIcons === null) {
-      const icons = await MainHelper.getNotificationIcons();
+      const icons = await MainHelper._getNotificationIcons();
 
       this._notificationIcons = icons;
 
@@ -160,7 +160,7 @@ export default class Slidedown {
   }
 
   static async _triggerSlidedownEvent(eventName: string): Promise<void> {
-    await OneSignalEvent.trigger(eventName);
+    await OneSignalEvent._trigger(eventName);
   }
 
   async _onSlidedownAllowed(_: any): Promise<void> {

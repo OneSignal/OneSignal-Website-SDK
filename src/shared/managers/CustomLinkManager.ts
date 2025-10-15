@@ -8,58 +8,58 @@ import {
 } from '../slidedown/constants';
 
 export class CustomLinkManager {
-  private config: AppUserConfigCustomLinkOptions | undefined;
+  private _config: AppUserConfigCustomLinkOptions | undefined;
 
   constructor(config?: AppUserConfigCustomLinkOptions) {
-    this.config = config;
+    this._config = config;
   }
 
-  async initialize(): Promise<void> {
-    if (!this.config?.enabled) {
+  async _initialize(): Promise<void> {
+    if (!this._config?.enabled) {
       return;
     }
 
-    if (!(await this.loadSdkStyles())) {
+    if (!(await this._loadSdkStyles())) {
       return;
     }
 
     Log._info('OneSignal: initializing customlink');
     const isPushEnabled =
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
-    if (!this.config?.unsubscribeEnabled && isPushEnabled) {
-      this.hideCustomLinkContainers();
+    if (!this._config?.unsubscribeEnabled && isPushEnabled) {
+      this._hideCustomLinkContainers();
       return;
     }
     // traditional for-loop required here to avoid layout shift
-    for (let i = 0; i < this.customlinkContainerElements.length; i++) {
-      await this.injectMarkup(this.customlinkContainerElements[i]);
+    for (let i = 0; i < this._customlinkContainerElements.length; i++) {
+      await this._injectMarkup(this._customlinkContainerElements[i]);
     }
   }
 
-  private async injectMarkup(element: HTMLElement): Promise<void> {
+  private async _injectMarkup(element: HTMLElement): Promise<void> {
     // clear contents
     element.innerHTML = '';
 
-    await this.mountExplanationNode(element);
-    await this.mountSubscriptionNode(element);
+    await this._mountExplanationNode(element);
+    await this._mountSubscriptionNode(element);
   }
 
-  private async mountExplanationNode(element: HTMLElement): Promise<void> {
-    if (!this.config?.text) {
+  private async _mountExplanationNode(element: HTMLElement): Promise<void> {
+    if (!this._config?.text) {
       Log._error(
         "CustomLink: required property 'text' is missing in the config",
       );
       return;
     }
 
-    if (this.config.text.explanation) {
+    if (this._config.text.explanation) {
       const explanation = document.createElement('p');
-      explanation.textContent = this.config.text.explanation;
+      explanation.textContent = this._config.text.explanation;
       addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.resetClass);
       addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.explanationClass);
 
-      if (this.config.size) {
-        addCssClass(explanation, this.config.size);
+      if (this._config.size) {
+        addCssClass(explanation, this._config.size);
       }
 
       if (
@@ -74,25 +74,25 @@ export class CustomLinkManager {
     }
   }
 
-  private async mountSubscriptionNode(element: HTMLElement): Promise<void> {
-    if (!this.config?.text) {
+  private async _mountSubscriptionNode(element: HTMLElement): Promise<void> {
+    if (!this._config?.text) {
       Log._error(
         "CustomLink: required property 'text' is missing in the config",
       );
       return;
     }
 
-    if (this.config.text.subscribe) {
+    if (this._config.text.subscribe) {
       const subscribeButton = document.createElement('button');
       addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.resetClass);
       addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.subscribeClass);
 
-      if (this.config.size) {
-        addCssClass(subscribeButton, this.config.size);
+      if (this._config.size) {
+        addCssClass(subscribeButton, this._config.size);
       }
 
-      if (this.config.style) {
-        addCssClass(subscribeButton, this.config.style);
+      if (this._config.style) {
+        addCssClass(subscribeButton, this._config.style);
       }
 
       if (
@@ -106,12 +106,12 @@ export class CustomLinkManager {
         );
       }
 
-      this.setCustomColors(subscribeButton);
-      await this.setTextFromPushStatus(subscribeButton);
+      this._setCustomColors(subscribeButton);
+      await this._setTextFromPushStatus(subscribeButton);
 
       subscribeButton.addEventListener('click', async () => {
         Log._info('CustomLink: subscribe clicked');
-        await this.handleClick(subscribeButton);
+        await this._handleClick(subscribeButton);
       });
 
       // Adds type="button" to the Custom Link Button.
@@ -122,7 +122,7 @@ export class CustomLinkManager {
     }
   }
 
-  private async loadSdkStyles(): Promise<boolean> {
+  private async _loadSdkStyles(): Promise<boolean> {
     const sdkStylesLoadResult =
       await OneSignal._context._dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
@@ -134,7 +134,7 @@ export class CustomLinkManager {
     return true;
   }
 
-  private hideElement(element: HTMLElement): void {
+  private _hideElement(element: HTMLElement): void {
     addCssClass(element, CUSTOM_LINK_CSS_CLASSES.hide);
   }
 
@@ -142,58 +142,58 @@ export class CustomLinkManager {
    * Used for hiding elements if "Allow unsubscribe" is on
    * @returns void
    */
-  private hideCustomLinkContainers(): void {
-    this.customlinkContainerElements.forEach((element) => {
-      this.hideElement(element);
+  private _hideCustomLinkContainers(): void {
+    this._customlinkContainerElements.forEach((element) => {
+      this._hideElement(element);
     });
   }
 
-  private async handleClick(element: HTMLElement): Promise<void> {
+  private async _handleClick(element: HTMLElement): Promise<void> {
     if (OneSignal.User.PushSubscription.optedIn) {
       await OneSignal.User.PushSubscription.optOut();
-      await this.setTextFromPushStatus(element);
+      await this._setTextFromPushStatus(element);
     } else {
       await OneSignal.User.PushSubscription.optIn();
       // once subscribed, prevent unsubscribe by hiding customlinks
-      if (!this.config?.unsubscribeEnabled) {
-        this.hideCustomLinkContainers();
+      if (!this._config?.unsubscribeEnabled) {
+        this._hideCustomLinkContainers();
       }
       return;
     }
   }
 
-  private async setTextFromPushStatus(element: HTMLElement): Promise<void> {
-    if (this.config?.text?.subscribe) {
+  private async _setTextFromPushStatus(element: HTMLElement): Promise<void> {
+    if (this._config?.text?.subscribe) {
       if (
         !(await OneSignal._context._subscriptionManager._isPushNotificationsEnabled())
       ) {
-        element.textContent = this.config.text.subscribe;
+        element.textContent = this._config.text.subscribe;
       }
     }
 
-    if (this.config?.text?.unsubscribe) {
+    if (this._config?.text?.unsubscribe) {
       if (
         await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()
       ) {
-        element.textContent = this.config.text.unsubscribe;
+        element.textContent = this._config.text.unsubscribe;
       }
     }
   }
 
-  private setCustomColors(element: HTMLElement): void {
-    if (!this.config?.color || !this.config.color.text) {
+  private _setCustomColors(element: HTMLElement): void {
+    if (!this._config?.color || !this._config.color.text) {
       return;
     }
 
-    if (this.config?.style === 'button' && this.config?.color.button) {
-      element.style.backgroundColor = this.config?.color.button;
-      element.style.color = this.config?.color.text;
-    } else if (this.config?.style === 'link') {
-      element.style.color = this.config?.color.text;
+    if (this._config?.style === 'button' && this._config?.color.button) {
+      element.style.backgroundColor = this._config?.color.button;
+      element.style.color = this._config?.color.text;
+    } else if (this._config?.style === 'link') {
+      element.style.color = this._config?.color.text;
     }
   }
 
-  get customlinkContainerElements(): HTMLElement[] {
+  get _customlinkContainerElements(): HTMLElement[] {
     const containers = document.querySelectorAll<HTMLElement>(
       CUSTOM_LINK_CSS_SELECTORS.containerSelector,
     );

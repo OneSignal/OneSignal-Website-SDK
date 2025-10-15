@@ -28,7 +28,7 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
     _oldValue: unknown,
     newValue: unknown,
   ): Operation | null {
-    const appId = MainHelper.getAppId();
+    const appId = MainHelper._getAppId();
 
     return new SetPropertyOperation(
       appId,

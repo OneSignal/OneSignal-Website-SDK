@@ -307,7 +307,7 @@ export class PromptsManager {
     });
     OneSignal._emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       await this.context._slidedownManager._handleAllowClick();
-      OneSignalEvent.trigger(
+      OneSignalEvent._trigger(
         OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
       );
     });

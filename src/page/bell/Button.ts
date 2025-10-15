@@ -69,14 +69,14 @@ export default class Button extends AnimatedElement {
       LimitStore.isEmpty(this._events.mouse) ||
       LimitStore.getLast(this._events.mouse) === 'out'
     ) {
-      OneSignalEvent.trigger(BellEvent._Hovering);
+      OneSignalEvent._trigger(BellEvent._Hovering);
     }
     LimitStore.put(this._events.mouse, 'over');
   }
 
   _onHovered() {
     LimitStore.put(this._events.mouse, 'out');
-    OneSignalEvent.trigger(BellEvent._Hovered);
+    OneSignalEvent._trigger(BellEvent._Hovered);
   }
 
   _onTap() {
@@ -95,8 +95,8 @@ export default class Button extends AnimatedElement {
     if (this._isHandlingClick) return;
     this._isHandlingClick = true;
 
-    OneSignalEvent.trigger(BellEvent._BellClick);
-    OneSignalEvent.trigger(BellEvent._LauncherClick);
+    OneSignalEvent._trigger(BellEvent._BellClick);
+    OneSignalEvent._trigger(BellEvent._LauncherClick);
 
     try {
       if (

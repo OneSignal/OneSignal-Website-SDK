@@ -112,7 +112,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const permission =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager._getPermissionStatus();
     if (permission === 'granted') {
       return NotificationType.Subscribed;
     }
@@ -129,7 +129,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   async _isOptedIn(): Promise<boolean> {
     const subscriptionState = await this._getSubscriptionState();
     const permission =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager._getPermissionStatus();
     return permission === 'granted' && !subscriptionState.optedOut;
   }
 
@@ -194,7 +194,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     const workerRegistration =
       await this._context._serviceWorkerManager._getOneSignalRegistration();
     const notificationPermission =
-      await this._context._permissionManager.getNotificationPermission(
+      await this._context._permissionManager._getNotificationPermission(
         this._context._appConfig.safariWebId,
       );
     if (!workerRegistration) {
@@ -251,7 +251,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         here.
       */
     if (
-      (await OneSignal._context._permissionManager.getPermissionStatus()) ===
+      (await OneSignal._context._permissionManager._getPermissionStatus()) ===
       'denied'
     )
       throw PermissionBlockedError;
@@ -307,7 +307,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       We'll show the permissionPromptDisplay event if the Safari user isn't already subscribed,
       otherwise an already subscribed Safari user would not see the permission request again.
     */
-    OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+    OneSignalEvent._trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     const deviceToken = await this._subscribeSafariPromptPermission();
     triggerNotificationPermissionChanged();
     if (deviceToken) {
@@ -367,7 +367,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (Notification.permission === 'default') {
-      await OneSignalEvent.trigger(
+      await OneSignalEvent._trigger(
         OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED,
       );
       const permission =

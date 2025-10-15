@@ -92,7 +92,7 @@ async function sessionInit(): Promise<void> {
   }
 
   OneSignal._sessionInitAlreadyRunning = false;
-  await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  await OneSignalEvent._trigger(OneSignal.EVENTS.SDK_INITIALIZED);
 }
 
 export async function registerForPushNotifications(): Promise<boolean> {
@@ -127,7 +127,7 @@ export async function onSdkInitialized() {
     await OneSignal._context._updateManager._sendOnSessionUpdate();
   }
 
-  await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
+  await OneSignalEvent._trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
 }
 
 /** Helper methods */
@@ -135,7 +135,7 @@ async function storeInitialValues() {
   const isPushEnabled =
     await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
   const notificationPermission =
-    await OneSignal._context._permissionManager.getPermissionStatus();
+    await OneSignal._context._permissionManager._getPermissionStatus();
   const isOptedOut =
     await OneSignal._context._subscriptionManager._isOptedOut();
   LimitStore.put('subscription.optedOut', isOptedOut);
@@ -156,7 +156,7 @@ async function setWelcomeNotificationFlag(): Promise<void> {
    * automatically resubscribed.
    */
   const permission: NotificationPermission =
-    await OneSignal._context._permissionManager.getNotificationPermission(
+    await OneSignal._context._permissionManager._getNotificationPermission(
       OneSignal._context._appConfig.safariWebId,
     );
   if (permission === 'granted') {
@@ -262,7 +262,7 @@ async function showPromptsFromWebConfigEditor() {
   if (config.userConfig.promptOptions) {
     await new CustomLinkManager(
       config.userConfig.promptOptions.customlink,
-    ).initialize();
+    )._initialize();
   }
 }
 
@@ -363,7 +363,7 @@ export async function saveInitOptions() {
 }
 
 export async function initSaveState(overridingPageTitle?: string) {
-  const appId = MainHelper.getAppId();
+  const appId = MainHelper._getAppId();
   const config: AppConfig = OneSignal.config!;
   await db.put('Ids', { type: 'appId', id: appId });
   const pageTitle: string =
@@ -379,7 +379,7 @@ async function handleAutoResubscribe(isOptedOut: boolean) {
   });
   if (OneSignal.config?.userConfig.autoResubscribe && !isOptedOut) {
     const currentPermission: NotificationPermission =
-      await OneSignal._context._permissionManager.getNotificationPermission(
+      await OneSignal._context._permissionManager._getNotificationPermission(
         OneSignal._context._appConfig.safariWebId,
       );
     if (currentPermission == 'granted') {
