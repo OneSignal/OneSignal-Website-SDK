@@ -75,7 +75,7 @@ describe('pageSdkInit 2', () => {
 
       // waiting for indexedb to update, addEmail should add a new subscription item with temporary id
       const subModels = OneSignal._coreDirector._subscriptionModelStore
-        .list()
+        ._list()
         .map((m) => m.toJSON());
       subModels.sort((a, b) => a.type.localeCompare(b.type));
 

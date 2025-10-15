@@ -98,16 +98,16 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         const backendOneSignalId = loginUserOp.existingOnesignalId;
         const opOneSignalId = loginUserOp._onesignalId;
 
-        if (this._identityModelStore.model._onesignalId === opOneSignalId) {
-          this._identityModelStore.model._setProperty(
+        if (this._identityModelStore._model._onesignalId === opOneSignalId) {
+          this._identityModelStore._model._setProperty(
             IdentityConstants._OneSignalID,
             backendOneSignalId,
             ModelChangeTags._Hydrate,
           );
         }
 
-        if (this._propertiesModelStore.model._onesignalId === opOneSignalId) {
-          this._propertiesModelStore.model._setProperty(
+        if (this._propertiesModelStore._model._onesignalId === opOneSignalId) {
+          this._propertiesModelStore._model._setProperty(
             'onesignalId',
             backendOneSignalId,
             ModelChangeTags._Hydrate,
@@ -187,16 +187,16 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         [createUserOperation._onesignalId]: backendOneSignalId,
       };
 
-      if (this._identityModelStore.model._onesignalId === opOneSignalId) {
-        this._identityModelStore.model._setProperty(
+      if (this._identityModelStore._model._onesignalId === opOneSignalId) {
+        this._identityModelStore._model._setProperty(
           IdentityConstants._OneSignalID,
           backendOneSignalId,
           ModelChangeTags._Hydrate,
         );
       }
 
-      if (this._propertiesModelStore.model._onesignalId === opOneSignalId) {
-        this._propertiesModelStore.model._setProperty(
+      if (this._propertiesModelStore._model._onesignalId === opOneSignalId) {
+        this._propertiesModelStore._model._setProperty(
           'onesignalId',
           backendOneSignalId,
           ModelChangeTags._Hydrate,
@@ -207,7 +207,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       const resultProperties = response.result.properties;
       if (resultProperties) {
         for (const [key, value] of Object.entries(resultProperties)) {
-          this._propertiesModelStore.model._setProperty(
+          this._propertiesModelStore._model._setProperty(
             key as IPropertiesModelKeys,
             value,
             ModelChangeTags._Hydrate,
@@ -223,7 +223,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         idTranslations[localId] = backendSub.id;
 
         const model =
-          this._subscriptionsModelStore.getBySubscriptionId(localId);
+          this._subscriptionsModelStore._getBySubscriptionId(localId);
         model?._setProperty('id', backendSub.id, ModelChangeTags._Hydrate);
         model?._setProperty(
           'onesignalId',

@@ -81,8 +81,8 @@ describe('OperationRepo', () => {
   describe('Enqueue/Load Operations', () => {
     test('can enqueue and load cached operations', async () => {
       const cachedOperations = [new Operation('2'), new Operation('3')];
-      mockOperationModelStore.add(cachedOperations[0]);
-      mockOperationModelStore.add(cachedOperations[1]);
+      mockOperationModelStore._add(cachedOperations[0]);
+      mockOperationModelStore._add(cachedOperations[1]);
 
       opRepo._enqueue(mockOperation);
       expect(opRepo._queue).toEqual([
@@ -133,7 +133,7 @@ describe('OperationRepo', () => {
         subscriptionId: SUB_ID,
       });
       opRepo._enqueue(op2);
-      expect(mockOperationModelStore.list()).toEqual([op1, op2]);
+      expect(mockOperationModelStore._list()).toEqual([op1, op2]);
 
       // persist happens in the background, so we need to wait for it to complete
       let ops: IndexedDBSchema['operations']['value'][] = [];
@@ -301,14 +301,14 @@ describe('OperationRepo', () => {
       });
 
       opRepo._enqueue(mockOperation);
-      expect(mockOperationModelStore.list()).toEqual([mockOperation]);
+      expect(mockOperationModelStore._list()).toEqual([mockOperation]);
 
       // execute the operation
       await executeOps(opRepo);
 
       // operation should be removed from the model store
       // additional operations should be added to the model store
-      expect(mockOperationModelStore.list()).toEqual([
+      expect(mockOperationModelStore._list()).toEqual([
         additionalOps[0],
         additionalOps[1],
       ]);
@@ -336,13 +336,13 @@ describe('OperationRepo', () => {
       });
 
       opRepo._enqueue(mockOperation);
-      expect(mockOperationModelStore.list()).toEqual([mockOperation]);
+      expect(mockOperationModelStore._list()).toEqual([mockOperation]);
 
       // execute the operation
       await executeOps(opRepo);
 
       // operation should be removed from the model store
-      expect(mockOperationModelStore.list()).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
     });
 
     test('can handle success starting only operation', async () => {
@@ -356,7 +356,7 @@ describe('OperationRepo', () => {
       opRepo._enqueue(groupedOps[0]);
       opRepo._enqueue(groupedOps[1]);
 
-      expect(mockOperationModelStore.list()).toEqual([
+      expect(mockOperationModelStore._list()).toEqual([
         groupedOps[0],
         groupedOps[1],
       ]);
@@ -365,7 +365,7 @@ describe('OperationRepo', () => {
       expect(executeOperationsSpy).toHaveBeenCalledOnce();
 
       // operation should be removed from the model store
-      expect(mockOperationModelStore.list()).toEqual([groupedOps[1]]);
+      expect(mockOperationModelStore._list()).toEqual([groupedOps[1]]);
 
       // group operations will be added to the queue except for the first/starting item
       expect(opRepo._queue).toEqual([

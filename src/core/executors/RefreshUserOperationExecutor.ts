@@ -78,7 +78,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
 
     const { ok, result, retryAfterSeconds, status } = response;
     if (ok) {
-      if (op._onesignalId !== this._identityModelStore.model._onesignalId) {
+      if (op._onesignalId !== this._identityModelStore._model._onesignalId) {
         return new ExecutionResponse(ExecutionResult._Success);
       }
 
@@ -126,8 +126,11 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         subscriptionModels.push(pushModel);
       }
 
-      this._identityModelStore.replace(identityModel, ModelChangeTags._Hydrate);
-      this._propertiesModelStore.replace(
+      this._identityModelStore._replace(
+        identityModel,
+        ModelChangeTags._Hydrate,
+      );
+      this._propertiesModelStore._replace(
         propertiesModel,
         ModelChangeTags._Hydrate,
       );

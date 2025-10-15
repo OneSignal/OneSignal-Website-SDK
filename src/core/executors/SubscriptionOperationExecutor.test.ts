@@ -166,7 +166,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Verify models were updated
-      const subscriptionModel = subscriptionModelStore.getBySubscriptionId(
+      const subscriptionModel = subscriptionModelStore._getBySubscriptionId(
         BACKEND_SUBSCRIPTION_ID,
       );
       expect(subscriptionModel).toBeDefined();
@@ -285,7 +285,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Missing error with rebuild ops
-      subscriptionsModelStore.add(pushSubscription, ModelChangeTags._Hydrate);
+      subscriptionsModelStore._add(pushSubscription, ModelChangeTags._Hydrate);
       await setPushToken(pushSubscription.token);
 
       const res6 = await executor._execute([createOp]);
@@ -484,7 +484,7 @@ describe('SubscriptionOperationExecutor', () => {
       expect(result.result).toBe(ExecutionResult._Success);
 
       // Verify model was removed
-      expect(subscriptionModelStore.get(SUB_ID)).toBeUndefined();
+      expect(subscriptionModelStore._get(SUB_ID)).toBeUndefined();
     });
 
     test('should handle network errors', async () => {

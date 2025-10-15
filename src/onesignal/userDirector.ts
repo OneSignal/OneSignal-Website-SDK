@@ -11,7 +11,7 @@ export async function createUserOnServer(): Promise<void> {
   const appId = getAppId();
 
   const hasAnySubscription =
-    OneSignal._coreDirector._subscriptionModelStore.list().length > 0;
+    OneSignal._coreDirector._subscriptionModelStore._list().length > 0;
 
   const hasExternalId = !!identityModel._externalId;
 
@@ -61,6 +61,6 @@ export function resetUserModels() {
   newIdentityModel._onesignalId = sdkId;
   newPropertiesModel._onesignalId = sdkId;
 
-  OneSignal._coreDirector._identityModelStore.replace(newIdentityModel);
-  OneSignal._coreDirector._propertiesModelStore.replace(newPropertiesModel);
+  OneSignal._coreDirector._identityModelStore._replace(newIdentityModel);
+  OneSignal._coreDirector._propertiesModelStore._replace(newPropertiesModel);
 }

@@ -23,20 +23,20 @@ export class SingletonModelStore<TModel extends Model>
     store._subscribe(this);
   }
 
-  get model(): TModel {
-    const model = this.store.list()[0];
+  get _model(): TModel {
+    const model = this.store._list()[0];
     if (model) return model;
 
     const createdModel = this.store._create();
     if (!createdModel)
       throw new Error(`Unable to initialize model from store ${this.store}`);
 
-    this.store.add(createdModel);
+    this.store._add(createdModel);
     return createdModel;
   }
 
-  replace(model: TModel, tag?: ModelChangeTagValue): void {
-    const existingModel = this.model;
+  _replace(model: TModel, tag?: ModelChangeTagValue): void {
+    const existingModel = this._model;
     existingModel._initializeFromModel(existingModel._modelId, model);
     this.store._persist();
     this.changeSubscription._fire((handler) =>

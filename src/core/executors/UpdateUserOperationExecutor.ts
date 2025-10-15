@@ -98,7 +98,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     ): op is SetPropertyOperation<'tags'> => op.property === 'tags';
 
     if (ok) {
-      if (this._identityModelStore.model._onesignalId === onesignalId) {
+      if (this._identityModelStore._model._onesignalId === onesignalId) {
         for (const operation of operations) {
           if (operation instanceof SetPropertyOperation) {
             // removing empty string tags from operation.value to save space in IndexedDB and local memory.
@@ -108,7 +108,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
               for (const key in value) if (value[key] === '') delete value[key];
             }
 
-            this._propertiesModelStore.model._setProperty(
+            this._propertiesModelStore._model._setProperty(
               operation.property as IPropertiesModelKeys,
               value,
               ModelChangeTags._Hydrate,

@@ -64,7 +64,7 @@ export const setupIdentityModel = async (
 ) => {
   const newIdentityModel = new IdentityModel();
   newIdentityModel._onesignalId = onesignalID;
-  OneSignal._coreDirector._identityModelStore.replace(
+  OneSignal._coreDirector._identityModelStore._replace(
     newIdentityModel,
     ModelChangeTags._NoPropogate,
   );
@@ -78,7 +78,7 @@ export const setupPropertiesModel = async (
 ) => {
   const newPropertiesModel = new PropertiesModel();
   newPropertiesModel._onesignalId = onesignalID;
-  OneSignal._coreDirector._propertiesModelStore.replace(
+  OneSignal._coreDirector._propertiesModelStore._replace(
     newPropertiesModel,
     ModelChangeTags._NoPropogate,
   );

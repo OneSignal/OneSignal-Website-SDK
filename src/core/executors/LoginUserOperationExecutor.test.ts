@@ -174,7 +174,7 @@ describe('LoginUserOperationExecutor', () => {
         SUB_ID,
         ModelChangeTags._NoPropogate,
       );
-      subscriptionModelStore.add(
+      subscriptionModelStore._add(
         subscriptionModel,
         ModelChangeTags._NoPropogate,
       );
@@ -194,9 +194,9 @@ describe('LoginUserOperationExecutor', () => {
 
       // should update model properties
       expect(
-        identityModelStore.model._getProperty(IdentityConstants._OneSignalID),
+        identityModelStore._model._getProperty(IdentityConstants._OneSignalID),
       ).toEqual(ONESIGNAL_ID_2);
-      expect(propertiesModelStore.model._getProperty('onesignalId')).toEqual(
+      expect(propertiesModelStore._model._getProperty('onesignalId')).toEqual(
         ONESIGNAL_ID_2,
       );
       expect(await getPushToken()).toEqual(PUSH_TOKEN);
@@ -271,9 +271,9 @@ describe('LoginUserOperationExecutor', () => {
 
       // should update model properties
       expect(
-        identityModelStore.model._getProperty(IdentityConstants._OneSignalID),
+        identityModelStore._model._getProperty(IdentityConstants._OneSignalID),
       ).toEqual(ONESIGNAL_ID_2);
-      expect(propertiesModelStore.model._getProperty('onesignalId')).toEqual(
+      expect(propertiesModelStore._model._getProperty('onesignalId')).toEqual(
         ONESIGNAL_ID_2,
       );
 

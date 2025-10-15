@@ -96,10 +96,10 @@ export class IdentityOperationExecutor implements IOperationExecutor {
     const { ok, status, retryAfterSeconds } = await request;
     if (ok) {
       if (
-        this._identityModelStore.model._onesignalId ===
+        this._identityModelStore._model._onesignalId ===
         lastOperation._onesignalId
       ) {
-        this._identityModelStore.model._setProperty(
+        this._identityModelStore._model._setProperty(
           lastOperation.label,
           isSetAlias ? lastOperation.value : undefined,
           ModelChangeTags._Hydrate,

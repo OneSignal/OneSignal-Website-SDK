@@ -108,7 +108,7 @@ describe('RefreshUserOperationExecutor', () => {
 
       const result = await executor._execute([refreshOp]);
       expect(result.result).toBe(ExecutionResult._Success);
-      expect(propertiesModelStore.model._language).not.toBe('fr');
+      expect(propertiesModelStore._model._language).not.toBe('fr');
     });
 
     test('should handle successful user retrieval and update models', async () => {
@@ -144,24 +144,24 @@ describe('RefreshUserOperationExecutor', () => {
       expect(result.result).toBe(ExecutionResult._Success);
 
       // Check identity model updates
-      expect(identityModelStore.model._getProperty('onesignal_id')).toBe(
+      expect(identityModelStore._model._getProperty('onesignal_id')).toBe(
         ONESIGNAL_ID,
       );
-      expect(identityModelStore.model._getProperty('external_id')).toBe(
+      expect(identityModelStore._model._getProperty('external_id')).toBe(
         'test_user',
       );
 
       // Check properties model updates
-      expect(propertiesModelStore.model._country).toBe('US');
-      expect(propertiesModelStore.model._language).toBe('en');
-      expect(propertiesModelStore.model._tags).toEqual({
+      expect(propertiesModelStore._model._country).toBe('US');
+      expect(propertiesModelStore._model._language).toBe('en');
+      expect(propertiesModelStore._model._tags).toEqual({
         test_tag: 'test_value',
         test_tag_2: 'test_value_2',
       });
-      expect(propertiesModelStore.model._timezone_id).toBe('America/New_York');
+      expect(propertiesModelStore._model._timezone_id).toBe('America/New_York');
 
       // Check subscription model updates
-      const subscriptions = subscriptionModelStore.list();
+      const subscriptions = subscriptionModelStore._list();
       expect(subscriptions.length).toBe(1);
       expect(subscriptions[0].toJSON()).toMatchObject({
         id: SUB_ID,
@@ -183,7 +183,7 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.token = PUSH_TOKEN;
       pushSubModel._notification_types = NotificationType._Subscribed;
 
-      subscriptionModelStore.add(pushSubModel, ModelChangeTags._NoPropogate);
+      subscriptionModelStore._add(pushSubModel, ModelChangeTags._NoPropogate);
       await setPushToken(PUSH_TOKEN);
 
       const executor = getExecutor();
@@ -204,7 +204,7 @@ describe('RefreshUserOperationExecutor', () => {
       await executor._execute([refreshOp]);
 
       // Check that both subscriptions exist (push is preserved)
-      const subscriptions = subscriptionModelStore.list();
+      const subscriptions = subscriptionModelStore._list();
       expect(subscriptions.length).toBe(2);
 
       // Find the push subscription

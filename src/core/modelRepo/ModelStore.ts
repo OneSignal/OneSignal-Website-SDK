@@ -61,13 +61,16 @@ export abstract class ModelStore<
    */
   abstract _create(json?: DBModel | null): TModel | null;
 
-  add(model: TModel, tag: ModelChangeTagValue = ModelChangeTags._Normal): void {
+  _add(
+    model: TModel,
+    tag: ModelChangeTagValue = ModelChangeTags._Normal,
+  ): void {
     const oldModel = this._models.find((m) => m._modelId === model._modelId);
     if (oldModel) this._removeItem(oldModel, tag);
     this._addItem(model, tag);
   }
 
-  addAt(
+  _addAt(
     index: number,
     model: TModel,
     tag: ModelChangeTagValue = ModelChangeTags._Normal,
@@ -80,15 +83,18 @@ export abstract class ModelStore<
   /**
    * @returns list of read-only models, cloned for thread safety
    */
-  list(): TModel[] {
+  _list(): TModel[] {
     return this._models;
   }
 
-  get(id: string): TModel | undefined {
+  _get(id: string): TModel | undefined {
     return this._models.find((m) => m._modelId === id);
   }
 
-  remove(id: string, tag: ModelChangeTagValue = ModelChangeTags._Normal): void {
+  _remove(
+    id: string,
+    tag: ModelChangeTagValue = ModelChangeTags._Normal,
+  ): void {
     const model = this._models.find((m) => m._modelId === id);
     if (!model) return;
     this._removeItem(model, tag);
@@ -108,7 +114,7 @@ export abstract class ModelStore<
     this._clear(tag);
 
     for (const model of newModels) {
-      this.add(model, tag);
+      this._add(model, tag);
     }
   }
 

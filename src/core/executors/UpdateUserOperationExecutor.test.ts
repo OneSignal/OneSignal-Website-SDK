@@ -91,7 +91,7 @@ describe('UpdateUserOperationExecutor', () => {
 
       const result = await executor._execute([setPropertyOp]);
       expect(result.result).toBe(ExecutionResult._Success);
-      expect(propertiesModelStore.model._language).toBe('fr');
+      expect(propertiesModelStore._model._language).toBe('fr');
     });
 
     test('can set tags', async () => {
@@ -105,7 +105,7 @@ describe('UpdateUserOperationExecutor', () => {
 
       const result = await executor._execute([setPropertyOp]);
       expect(result.result).toBe(ExecutionResult._Success);
-      expect(propertiesModelStore.model._tags).toEqual({
+      expect(propertiesModelStore._model._tags).toEqual({
         tagA: 'valueA',
         tagB: 'valueB',
       });

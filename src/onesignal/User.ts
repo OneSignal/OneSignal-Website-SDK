@@ -274,7 +274,7 @@ function addSubscriptionToModels({
   token: string;
 }): void {
   const hasSubscription = OneSignal._coreDirector._subscriptionModelStore
-    .list()
+    ._list()
     .find((model) => model.token === token && model.type === type);
   if (hasSubscription) return;
 

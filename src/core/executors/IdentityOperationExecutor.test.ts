@@ -103,7 +103,7 @@ describe('IdentityOperationExecutor', () => {
     await executor._execute(ops);
 
     // should set property for matching onesignalId
-    expect(identityModelStore.model._getProperty(label)).toBe(value);
+    expect(identityModelStore._model._getProperty(label)).toBe(value);
   });
 
   test('can execute delete alias op', async () => {
@@ -116,7 +116,7 @@ describe('IdentityOperationExecutor', () => {
     await executor._execute(ops);
 
     // should delete property for matching onesignalId
-    expect(identityModelStore.model._getProperty(label)).toBeUndefined();
+    expect(identityModelStore._model._getProperty(label)).toBeUndefined();
   });
 
   describe('Errors', () => {
@@ -158,7 +158,7 @@ describe('IdentityOperationExecutor', () => {
       expect(res5.retryAfterSeconds).toBeUndefined();
 
       // with rebuild ops
-      identityModelStore.model._onesignalId = ONESIGNAL_ID;
+      identityModelStore._model._onesignalId = ONESIGNAL_ID;
       const res7 = await executor._execute(ops);
       expect(res7.result).toBe(ExecutionResult._FailRetry);
       expect(res7.retryAfterSeconds).toBeUndefined();

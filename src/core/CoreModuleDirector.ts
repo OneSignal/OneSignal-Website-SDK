@@ -67,22 +67,22 @@ export class CoreModuleDirector {
     model.id = IDManager._createLocalId();
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
-    this._core._subscriptionModelStore.add(model, ModelChangeTags._Hydrate);
+    this._core._subscriptionModelStore._add(model, ModelChangeTags._Hydrate);
     return model;
   }
 
   public _addSubscriptionModel(model: SubscriptionModel): void {
-    this._core._subscriptionModelStore.add(model);
+    this._core._subscriptionModelStore._add(model);
   }
 
   public _removeSubscriptionModel(modelId: string): void {
-    this._core._subscriptionModelStore.remove(modelId);
+    this._core._subscriptionModelStore._remove(modelId);
   }
 
   /* G E T T E R S */
   public _getEmailSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getEmailSubscriptionModels');
-    const subscriptions = this._core._subscriptionModelStore.list();
+    const subscriptions = this._core._subscriptionModelStore._list();
     return subscriptions.filter((s) => s.type === SubscriptionType._Email);
   }
 
@@ -93,7 +93,7 @@ export class CoreModuleDirector {
 
   public _getSmsSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getSmsSubscriptionModels');
-    const subscriptions = this._core._subscriptionModelStore.list();
+    const subscriptions = this._core._subscriptionModelStore._list();
     return subscriptions.filter((s) => s.type === SubscriptionType._SMS);
   }
 
@@ -107,7 +107,7 @@ export class CoreModuleDirector {
    */
   public _getAllPushSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getAllPushSubscriptionModels');
-    const subscriptions = this._core._subscriptionModelStore.list();
+    const subscriptions = this._core._subscriptionModelStore._list();
     return subscriptions.filter((s) => isPushSubscriptionType(s.type));
   }
 
@@ -159,12 +159,12 @@ export class CoreModuleDirector {
 
   public _getIdentityModel(): IdentityModel {
     logMethodCall('CoreModuleDirector.getIdentityModel');
-    return this._core._identityModelStore.model;
+    return this._core._identityModelStore._model;
   }
 
   public _getPropertiesModel(): PropertiesModel {
     logMethodCall('CoreModuleDirector.getPropertiesModel');
-    return this._core._propertiesModelStore.model;
+    return this._core._propertiesModelStore._model;
   }
 
   public async _getAllSubscriptionsModels(): Promise<SubscriptionModel[]> {

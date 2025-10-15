@@ -118,7 +118,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     if (response.ok) {
       const { subscription } = response.result;
       const subscriptionModel =
-        this._subscriptionModelStore.getBySubscriptionId(
+        this._subscriptionModelStore._getBySubscriptionId(
           createOperation.subscriptionId,
         );
 
@@ -305,7 +305,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     );
 
     if (response.ok) {
-      this._subscriptionModelStore.remove(
+      this._subscriptionModelStore._remove(
         op.subscriptionId,
         ModelChangeTags._Hydrate,
       );
