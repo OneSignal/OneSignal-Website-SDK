@@ -7,7 +7,7 @@ import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { limitStorePut } from '../services/limitStore2';
+import { limitStorePut } from '../services/limitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once } from '../utils/utils';

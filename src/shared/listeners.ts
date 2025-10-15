@@ -13,7 +13,7 @@ import type {
   NotificationClickEventInternal,
 } from './notifications/types';
 import { isCategorySlidedownConfigured } from './prompts/helpers';
-import { limitStorePut } from './services/limitStore2';
+import { limitStorePut } from './services/limitStore';
 import OneSignalEvent from './services/OneSignalEvent';
 import { logMethodCall } from './utils/utils';
 
