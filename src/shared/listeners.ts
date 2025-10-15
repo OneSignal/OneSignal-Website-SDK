@@ -13,7 +13,7 @@ import type {
   NotificationClickEventInternal,
 } from './notifications/types';
 import { isCategorySlidedownConfigured } from './prompts/helpers';
-import LimitStore from './services/LimitStore';
+import { limitStorePut } from './services/limitStore2';
 import OneSignalEvent from './services/OneSignalEvent';
 import { logMethodCall } from './utils/utils';
 
@@ -189,7 +189,7 @@ function onSubscriptionChanged_updateCustomLink() {
 }
 
 export async function onInternalSubscriptionSet(optedOut: boolean) {
-  LimitStore.put('subscription.optedOut', optedOut);
+  limitStorePut('subscription.optedOut', optedOut);
 }
 
 async function onSubscriptionChanged_showWelcomeNotification(

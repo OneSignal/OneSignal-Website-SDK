@@ -7,7 +7,7 @@ import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import LimitStore from '../services/LimitStore';
+import { limitStorePut } from '../services/limitStore2';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once } from '../utils/utils';
@@ -138,7 +138,7 @@ async function storeInitialValues() {
     await OneSignal._context._permissionManager._getPermissionStatus();
   const isOptedOut =
     await OneSignal._context._subscriptionManager._isOptedOut();
-  LimitStore.put('subscription.optedOut', isOptedOut);
+  limitStorePut('subscription.optedOut', isOptedOut);
   await db.put('Options', {
     key: 'isPushEnabled',
     value: isPushEnabled,
