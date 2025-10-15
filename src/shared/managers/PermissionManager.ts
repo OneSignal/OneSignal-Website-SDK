@@ -6,10 +6,6 @@ import { EmptyArgumentError } from '../errors/common';
  * across Safari, Chrome, and Firefox.
  */
 export default class PermissionManager {
-  static get STORED_PERMISSION_KEY() {
-    return 'storedNotificationPermission';
-  }
-
   /**
    * Returns a promise that resolves to the browser's current notification permission as
    *    'default', 'granted', or 'denied'.
