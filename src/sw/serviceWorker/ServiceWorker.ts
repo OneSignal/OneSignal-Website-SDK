@@ -57,7 +57,11 @@ import {
   toNativeNotificationAction,
   toOSNotification,
 } from '../helpers/notifications';
-import { OSWebhookNotificationEventSender } from '../webhooks/notifications/OSWebhookNotificationEventSender';
+import {
+  notificationClick,
+  notificationDismissed,
+  notificationWillDisplay,
+} from '../webhooks/notifications/webhookNotificationEvent';
 import { getPushSubscriptionIdByToken } from './helpers';
 import type {
   OSMinifiedNotificationPayload,
@@ -75,10 +79,6 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
  * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
  */
 export class OneSignalServiceWorker {
-  static get _webhookNotificationEventSender() {
-    return new OSWebhookNotificationEventSender();
-  }
-
   static async _getPushSubscriptionId(): Promise<string | undefined> {
     const pushSubscription =
       await self.registration.pushManager.getSubscription();
@@ -312,10 +312,7 @@ export class OneSignalServiceWorker {
                   const pushSubscriptionId =
                     await OneSignalServiceWorker._getPushSubscriptionId();
 
-                  OneSignalServiceWorker._webhookNotificationEventSender.willDisplay(
-                    notif,
-                    pushSubscriptionId,
-                  );
+                  notificationWillDisplay(notif, pushSubscriptionId);
 
                   return OneSignalServiceWorker._displayNotification(notif)
                     .then(() =>
@@ -735,10 +732,7 @@ export class OneSignalServiceWorker {
     const pushSubscriptionId =
       await OneSignalServiceWorker._getPushSubscriptionId();
 
-    OneSignalServiceWorker._webhookNotificationEventSender.dismiss(
-      notification,
-      pushSubscriptionId,
-    );
+    notificationDismissed(notification, pushSubscriptionId);
   }
 
   /**
@@ -984,10 +978,7 @@ export class OneSignalServiceWorker {
       );
     }
 
-    await OneSignalServiceWorker._webhookNotificationEventSender.click(
-      notificationClickEvent,
-      pushSubscriptionId,
-    );
+    await notificationClick(notificationClickEvent, pushSubscriptionId);
     if (onesignalRestPromise) await onesignalRestPromise;
   }
 

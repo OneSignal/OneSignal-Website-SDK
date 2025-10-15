@@ -31,6 +31,11 @@ import type {
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+import {
+  notificationClick,
+  notificationDismissed,
+  notificationWillDisplay,
+} from '../webhooks/notifications/webhookNotificationEvent';
 import { OneSignalServiceWorker } from './ServiceWorker';
 
 declare const self: ServiceWorkerGlobalScope;
@@ -178,9 +183,7 @@ describe('ServiceWorker', () => {
         notificationId,
         title: payload.title,
       };
-      expect(
-        OneSignalServiceWorker._webhookNotificationEventSender.willDisplay,
-      ).toHaveBeenCalledWith(
+      expect(notificationWillDisplay).toHaveBeenCalledWith(
         expect.objectContaining(notificationInfo),
         pushSubscriptionId,
       );
@@ -227,9 +230,7 @@ describe('ServiceWorker', () => {
       });
       await dispatchEvent(event);
 
-      expect(
-        OneSignalServiceWorker._webhookNotificationEventSender.dismiss,
-      ).toHaveBeenCalledWith(
+      expect(notificationDismissed).toHaveBeenCalledWith(
         {
           notificationId,
         },
@@ -279,9 +280,7 @@ describe('ServiceWorker', () => {
       );
 
       // should emit clicked event
-      expect(
-        OneSignalServiceWorker._webhookNotificationEventSender.click,
-      ).toHaveBeenCalledWith(
+      expect(notificationClick).toHaveBeenCalledWith(
         {
           notification: {
             launchURL,
