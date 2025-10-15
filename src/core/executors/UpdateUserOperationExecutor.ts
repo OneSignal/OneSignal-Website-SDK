@@ -8,11 +8,11 @@ import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
-import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { updateUserByAlias } from '../requests/api';
 import { ModelChangeTags } from '../types/models';
+import type { ExecutionResponse } from '../types/operation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';
 
@@ -83,8 +83,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
       this._processOperations(operations);
 
-    if (!appId || !onesignalId)
-      return new ExecutionResponse(ExecutionResult._Success);
+    if (!appId || !onesignalId) return { _result: ExecutionResult._Success };
 
     const response = await updateUserByAlias(
       { appId },
@@ -123,32 +122,32 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           }
         }
       }
-      return new ExecutionResponse(ExecutionResult._Success);
+      return { _result: ExecutionResult._Success };
     }
 
     const responseType = getResponseStatusType(status);
     switch (responseType) {
       case ResponseStatusType._Retryable:
-        return new ExecutionResponse(
-          ExecutionResult._FailRetry,
-          retryAfterSeconds,
-        );
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
 
       case ResponseStatusType._Unauthorized:
-        return new ExecutionResponse(
-          ExecutionResult._FailUnauthorized,
-          retryAfterSeconds,
-        );
+        return {
+          _result: ExecutionResult._FailUnauthorized,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
 
       case ResponseStatusType._Missing: {
         if (
           status === 404 &&
           this._newRecordState._isInMissingRetryWindow(onesignalId)
         ) {
-          return new ExecutionResponse(
-            ExecutionResult._FailRetry,
-            retryAfterSeconds,
-          );
+          return {
+            _result: ExecutionResult._FailRetry,
+            _retryAfterSeconds: retryAfterSeconds,
+          };
         }
         const rebuildOps =
           await this._buildUserService._getRebuildOperationsIfCurrentUser(
@@ -156,18 +155,17 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
             onesignalId,
           );
 
-        if (!rebuildOps)
-          return new ExecutionResponse(ExecutionResult._FailNoretry);
+        if (!rebuildOps) return { _result: ExecutionResult._FailNoretry };
 
-        return new ExecutionResponse(
-          ExecutionResult._FailRetry,
-          retryAfterSeconds,
-          rebuildOps,
-        );
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+          _operations: rebuildOps,
+        };
       }
 
       default:
-        return new ExecutionResponse(ExecutionResult._FailNoretry);
+        return { _result: ExecutionResult._FailNoretry };
     }
   }
 }

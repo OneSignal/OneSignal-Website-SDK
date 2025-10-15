@@ -195,7 +195,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       const result = await executor._execute([createOp, updateOp]);
-      expect(result.result).toBe(ExecutionResult._Success);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       expect(createSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
@@ -227,7 +227,7 @@ describe('SubscriptionOperationExecutor', () => {
       );
 
       const result = await executor._execute([createOp, deleteOp]);
-      expect(result.result).toBe(ExecutionResult._Success);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // API should not have been called
       expect(createSubscriptionFn).not.toHaveBeenCalled();
@@ -353,7 +353,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       const result = await executor._execute([updateOp]);
-      expect(result.result).toBe(ExecutionResult._Success);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       expect(updateSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
@@ -394,7 +394,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       const result = await executor._execute([updateOp1, updateOp2]);
-      expect(result.result).toBe(ExecutionResult._Success);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // Verify only the last update was used
       expect(updateSubscriptionFn).toHaveBeenCalledWith({
@@ -441,7 +441,7 @@ describe('SubscriptionOperationExecutor', () => {
         token: 'test-token',
         type: SubscriptionType._ChromePush,
       });
-      subOp._modelId = res2.operations![0]._modelId;
+      subOp._modelId = res2._operations![0]._modelId;
       expect(res2).toMatchObject({
         result: ExecutionResult._FailNoretry,
         operations: [subOp],
@@ -481,7 +481,7 @@ describe('SubscriptionOperationExecutor', () => {
       );
 
       const result = await executor._execute([deleteOp]);
-      expect(result.result).toBe(ExecutionResult._Success);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // Verify model was removed
       expect(subscriptionModelStore._get(SUB_ID)).toBeUndefined();
@@ -498,7 +498,7 @@ describe('SubscriptionOperationExecutor', () => {
       // Missing error
       setDeleteSubscriptionError({ status: 404 });
       const result = await executor._execute([deleteOp]);
-      expect(result.result).toBe(ExecutionResult._Success);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // Missing error with record in retry window
       newRecordsState._add(SUB_ID);
@@ -547,7 +547,7 @@ describe('SubscriptionOperationExecutor', () => {
       );
 
       const result = await executor._execute([transferOp]);
-      expect(result.result).toBe(ExecutionResult._Success);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       expect(transferSubscriptionFn).toHaveBeenCalledWith({
         identity: {

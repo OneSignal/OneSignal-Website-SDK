@@ -204,7 +204,7 @@ describe('LoginUserOperationExecutor', () => {
 
       // should have a refresh user operation
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
-      refreshOp._modelId = res.operations![0]._modelId;
+      refreshOp._modelId = res._operations![0]._modelId;
       expect(res).toEqual({
         result: ExecutionResult._Success,
         retryAfterSeconds: undefined,

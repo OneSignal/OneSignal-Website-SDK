@@ -296,8 +296,8 @@ describe('OperationRepo', () => {
       ];
 
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult._Success,
-        operations: additionalOps,
+        _result: ExecutionResult._Success,
+        _operations: additionalOps,
       });
 
       opRepo._enqueue(mockOperation);
@@ -332,7 +332,7 @@ describe('OperationRepo', () => {
       ['FailConflict', ExecutionResult._FailConflict],
     ])('can handle failed operation: %s', async (_, failResult) => {
       executeFn.mockResolvedValueOnce({
-        result: failResult,
+        _result: failResult,
       });
 
       opRepo._enqueue(mockOperation);
@@ -347,7 +347,7 @@ describe('OperationRepo', () => {
 
     test('can handle success starting only operation', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult._SuccessStartingOnly,
+        _result: ExecutionResult._SuccessStartingOnly,
       });
 
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
@@ -379,8 +379,8 @@ describe('OperationRepo', () => {
 
     test('can handle fail retry operation and delay next execution', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult._FailRetry,
-        retryAfterSeconds: 30,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 30,
       });
 
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
@@ -415,7 +415,7 @@ describe('OperationRepo', () => {
 
     test('can handle fail pause op repo operation', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult._FailPauseOpRepo,
+        _result: ExecutionResult._FailPauseOpRepo,
       });
 
       const groupedOps = getGroupedOp();
@@ -446,8 +446,8 @@ describe('OperationRepo', () => {
         '1': '2',
       };
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult._Success,
-        idTranslations,
+        _result: ExecutionResult._Success,
+        _idTranslations: idTranslations,
       });
 
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
@@ -578,7 +578,7 @@ const mockOperation = new Operation(
   '123',
 );
 const executeFn: Mock<IOperationExecutor['_execute']> = vi.fn(async () => ({
-  result: ExecutionResult._Success,
+  _result: ExecutionResult._Success,
 }));
 
 const mockExecutor: IOperationExecutor = {

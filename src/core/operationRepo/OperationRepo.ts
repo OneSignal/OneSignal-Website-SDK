@@ -170,9 +170,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       const operations = ops.map((op) => op.operation);
       const response = await executor._execute(operations);
-      const idTranslations = response.idTranslations;
+      const idTranslations = response._idTranslations;
 
-      Log._debug(`OperationRepo: execute response = ${response.result}`);
+      Log._debug(`OperationRepo: execute response = ${response._result}`);
 
       // Handle ID translations
       if (idTranslations) {
@@ -187,7 +187,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
 
       let highestRetries = 0;
-      switch (response.result) {
+      switch (response._result) {
         case ExecutionResult._Success:
           // Remove operations from store
           ops.forEach((op) => {
@@ -242,8 +242,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
 
       // Handle additional operations from the response
-      if (response.operations) {
-        for (const op of [...response.operations].reverse()) {
+      if (response._operations) {
+        for (const op of [...response._operations].reverse()) {
           const queueItem = {
             operation: op,
             bucket: 0,
@@ -257,9 +257,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       // Wait before next execution
       await this._delayBeforeNextExecution(
         highestRetries,
-        response.retryAfterSeconds,
+        response._retryAfterSeconds,
       );
-      if (response.idTranslations) {
+      if (response._idTranslations) {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {

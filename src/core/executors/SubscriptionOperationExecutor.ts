@@ -13,7 +13,6 @@ import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelSto
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
-import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
@@ -25,6 +24,7 @@ import {
   updateSubscriptionById,
 } from '../requests/api';
 import { ModelChangeTags } from '../types/models';
+import type { ExecutionResponse } from '../types/operation';
 
 // Implements logic similar to Android SDK's SubscriptionOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/SubscriptionOperationExecutor.kt
@@ -87,7 +87,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     operations: Operation[],
   ): Promise<ExecutionResponse> {
     if (operations.some((op) => op instanceof DeleteSubscriptionOperation))
-      return new ExecutionResponse(ExecutionResult._Success);
+      return { _result: ExecutionResult._Success };
 
     const lastUpdateOperation = [...operations]
       .reverse()
@@ -136,10 +136,9 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         );
       }
 
-      return new ExecutionResponse(
-        ExecutionResult._Success,
-        undefined,
-        !backendSubscriptionId
+      return {
+        _result: ExecutionResult._Success,
+        _operations: !backendSubscriptionId
           ? [
               new RefreshUserOperation(
                 createOperation._appId,
@@ -147,32 +146,32 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
               ),
             ]
           : undefined,
-        backendSubscriptionId
+        _idTranslations: backendSubscriptionId
           ? {
               [createOperation._subscriptionId]: backendSubscriptionId,
             }
           : undefined,
-      );
+      };
     }
 
     const { retryAfterSeconds, status } = response;
     const type = getResponseStatusType(status);
     switch (type) {
       case ResponseStatusType._Retryable:
-        return new ExecutionResponse(
-          ExecutionResult._FailRetry,
-          retryAfterSeconds,
-        );
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
 
       case ResponseStatusType._Unauthorized:
-        return new ExecutionResponse(
-          ExecutionResult._FailUnauthorized,
-          retryAfterSeconds,
-        );
+        return {
+          _result: ExecutionResult._FailUnauthorized,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
 
       case ResponseStatusType._Conflict:
       case ResponseStatusType._Invalid:
-        return new ExecutionResponse(ExecutionResult._FailNoretry);
+        return { _result: ExecutionResult._FailNoretry };
 
       case ResponseStatusType._Missing: {
         if (
@@ -181,10 +180,10 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
             createOperation._onesignalId,
           )
         ) {
-          return new ExecutionResponse(
-            ExecutionResult._FailRetry,
-            retryAfterSeconds,
-          );
+          return {
+            _result: ExecutionResult._FailRetry,
+            _retryAfterSeconds: retryAfterSeconds,
+          };
         }
 
         const rebuildOps =
@@ -192,13 +191,12 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
             createOperation._appId,
             createOperation._onesignalId,
           );
-        if (!rebuildOps)
-          return new ExecutionResponse(ExecutionResult._FailNoretry);
-        return new ExecutionResponse(
-          ExecutionResult._FailRetry,
-          retryAfterSeconds,
-          rebuildOps,
-        );
+        if (!rebuildOps) return { _result: ExecutionResult._FailNoretry };
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+          _operations: rebuildOps,
+        };
       }
     }
   }
@@ -226,7 +224,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     );
 
     if (response.ok) {
-      return new ExecutionResponse(ExecutionResult._Success);
+      return { _result: ExecutionResult._Success };
     }
 
     const { retryAfterSeconds, status } = response;
@@ -234,10 +232,10 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
     switch (type) {
       case ResponseStatusType._Retryable:
-        return new ExecutionResponse(
-          ExecutionResult._FailRetry,
-          retryAfterSeconds,
-        );
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
       case ResponseStatusType._Missing:
         if (
           status === 404 &&
@@ -245,25 +243,28 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
             this._newRecordState._isInMissingRetryWindow(id),
           )
         ) {
-          return new ExecutionResponse(
-            ExecutionResult._FailRetry,
-            retryAfterSeconds,
-          );
+          return {
+            _result: ExecutionResult._FailRetry,
+            _retryAfterSeconds: retryAfterSeconds,
+          };
         }
 
-        return new ExecutionResponse(ExecutionResult._FailNoretry, undefined, [
-          new CreateSubscriptionOperation({
-            appId: lastOp._appId,
-            enabled: lastOp.enabled,
-            notification_types: lastOp.notification_types,
-            onesignalId: lastOp._onesignalId,
-            subscriptionId: lastOp._subscriptionId,
-            token: lastOp.token,
-            type: lastOp.type,
-          }),
-        ]);
+        return {
+          _result: ExecutionResult._FailNoretry,
+          _operations: [
+            new CreateSubscriptionOperation({
+              appId: lastOp._appId,
+              enabled: lastOp.enabled,
+              notification_types: lastOp.notification_types,
+              onesignalId: lastOp._onesignalId,
+              subscriptionId: lastOp._subscriptionId,
+              token: lastOp.token,
+              type: lastOp.type,
+            }),
+          ],
+        };
       default:
-        return new ExecutionResponse(ExecutionResult._FailNoretry);
+        return { _result: ExecutionResult._FailNoretry };
     }
   }
 
@@ -278,7 +279,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     );
 
     if (response.ok) {
-      return new ExecutionResponse(ExecutionResult._Success);
+      return { _result: ExecutionResult._Success };
     }
 
     const { retryAfterSeconds, status } = response;
@@ -286,13 +287,13 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
     switch (type) {
       case ResponseStatusType._Retryable:
-        return new ExecutionResponse(
-          ExecutionResult._FailRetry,
-          retryAfterSeconds,
-        );
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
 
       default:
-        return new ExecutionResponse(ExecutionResult._FailNoretry);
+        return { _result: ExecutionResult._FailNoretry };
     }
   }
 
@@ -309,7 +310,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         op._subscriptionId,
         ModelChangeTags._Hydrate,
       );
-      return new ExecutionResponse(ExecutionResult._Success);
+      return { _result: ExecutionResult._Success };
     }
 
     const { retryAfterSeconds, status } = response;
@@ -322,21 +323,21 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
             this._newRecordState._isInMissingRetryWindow(id),
           )
         ) {
-          return new ExecutionResponse(
-            ExecutionResult._FailRetry,
-            retryAfterSeconds,
-          );
+          return {
+            _result: ExecutionResult._FailRetry,
+            _retryAfterSeconds: retryAfterSeconds,
+          };
         }
-        return new ExecutionResponse(ExecutionResult._Success);
+        return { _result: ExecutionResult._Success };
 
       case ResponseStatusType._Retryable:
-        return new ExecutionResponse(
-          ExecutionResult._FailRetry,
-          retryAfterSeconds,
-        );
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
 
       default:
-        return new ExecutionResponse(ExecutionResult._FailNoretry);
+        return { _result: ExecutionResult._FailNoretry };
     }
   }
 }

@@ -1,5 +1,12 @@
-import { type ExecutionResponse } from 'src/core/operations/ExecutionResponse';
 import { type Operation } from 'src/core/operations/Operation';
+
+// Types
+export type ExecutionResponse = {
+  _result: ExecutionResultValue;
+  _retryAfterSeconds?: number;
+  _operations?: Operation[];
+  _idTranslations?: Record<string, string>;
+};
 
 // Enums
 export const ExecutionResult = {

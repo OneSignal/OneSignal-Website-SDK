@@ -17,7 +17,6 @@ import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
-import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { type Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
@@ -30,6 +29,7 @@ import type {
   ICreateUserSubscription,
   IUserProperties,
 } from '../types/api';
+import type { ExecutionResponse } from '../types/operation';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
 
 type SubscriptionMap = Record<
@@ -93,7 +93,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       ),
     ]);
 
-    switch (result.result) {
+    switch (result._result) {
       case ExecutionResult._Success: {
         const backendOneSignalId = loginUserOp.existingOnesignalId;
         const opOneSignalId = loginUserOp._onesignalId;
@@ -113,14 +113,12 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
             ModelChangeTags._Hydrate,
           );
         }
-        return new ExecutionResponse(
-          ExecutionResult._SuccessStartingOnly,
-          undefined,
-          undefined,
-          {
+        return {
+          _result: ExecutionResult._SuccessStartingOnly,
+          _idTranslations: {
             [loginUserOp._onesignalId]: backendOneSignalId,
           },
-        );
+        };
       }
 
       case ExecutionResult._FailConflict:
@@ -134,7 +132,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         return this._createUser(loginUserOp, operations);
 
       default:
-        return new ExecutionResponse(result.result);
+        return { _result: result._result };
     }
   }
 
@@ -244,12 +242,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
             ]
           : undefined;
 
-      return new ExecutionResponse(
-        ExecutionResult._Success,
-        undefined,
-        followUp,
-        idTranslations,
-      );
+      return {
+        _result: ExecutionResult._Success,
+        _operations: followUp,
+        _idTranslations: idTranslations,
+      };
     }
 
     const { status, retryAfterSeconds } = response;
@@ -257,17 +254,17 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
     switch (responseType) {
       case ResponseStatusType._Retryable:
-        return new ExecutionResponse(
-          ExecutionResult._FailRetry,
-          retryAfterSeconds,
-        );
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
       case ResponseStatusType._Unauthorized:
-        return new ExecutionResponse(
-          ExecutionResult._FailUnauthorized,
-          retryAfterSeconds,
-        );
+        return {
+          _result: ExecutionResult._FailUnauthorized,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
       default:
-        return new ExecutionResponse(ExecutionResult._FailPauseOpRepo);
+        return { _result: ExecutionResult._FailPauseOpRepo };
     }
   }
 

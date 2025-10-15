@@ -10,11 +10,11 @@ import {
 import Log from 'src/shared/libraries/Log';
 import { VERSION } from 'src/shared/utils/env';
 import { OPERATION_NAME } from '../constants';
-import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
 import { sendCustomEvent } from '../requests/api';
 import type { ICustomEventMetadata } from '../types/customEvents';
+import type { ExecutionResponse } from '../types/operation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 
 // Implements logic similar to Android SDK's CustomEventOperationExecutor
@@ -66,13 +66,13 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     const { ok, status } = response;
     const responseType = getResponseStatusType(status);
 
-    if (ok) return new ExecutionResponse(ExecutionResult._Success);
+    if (ok) return { _result: ExecutionResult._Success };
 
     switch (responseType) {
       case ResponseStatusType._Retryable:
-        return new ExecutionResponse(ExecutionResult._FailRetry);
+        return { _result: ExecutionResult._FailRetry };
       default:
-        return new ExecutionResponse(ExecutionResult._FailNoretry);
+        return { _result: ExecutionResult._FailNoretry };
     }
   }
 }

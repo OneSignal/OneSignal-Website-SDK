@@ -107,7 +107,7 @@ describe('RefreshUserOperationExecutor', () => {
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
 
       const result = await executor._execute([refreshOp]);
-      expect(result.result).toBe(ExecutionResult._Success);
+      expect(result._result).toBe(ExecutionResult._Success);
       expect(propertiesModelStore._model._language).not.toBe('fr');
     });
 
@@ -141,7 +141,7 @@ describe('RefreshUserOperationExecutor', () => {
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID);
 
       const result = await executor._execute([refreshOp]);
-      expect(result.result).toBe(ExecutionResult._Success);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // Check identity model updates
       expect(identityModelStore._model._getProperty('onesignal_id')).toBe(
