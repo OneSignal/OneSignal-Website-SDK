@@ -7,7 +7,6 @@ import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
-import { PropertiesObject } from '../objects/PropertiesObject';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
@@ -16,6 +15,14 @@ import { updateUserByAlias } from '../requests/api';
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';
+
+type PropertiesObject = {
+  ip?: string;
+  tags?: Record<string, string>;
+  language?: string;
+  timezone_id?: string;
+  country?: string;
+};
 
 // Implements logic similar to Android's SDK's UpdateUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/UpdateUserOperationExecutor.kt
@@ -44,7 +51,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   private _processOperations(operations: Operation[]) {
     let appId: string | null = null;
     let onesignalId: string | null = null;
-    let propertiesObject = new PropertiesObject();
+    let propertiesObject: PropertiesObject = {};
     const refreshDeviceMetadata = false;
 
     for (const operation of operations) {
@@ -171,14 +178,20 @@ function createPropertiesFromOperation(
 ): PropertiesObject {
   if (operation instanceof SetPropertyOperation) {
     const propertyKey = operation.property;
-    const allowedKeys = Object.keys(properties);
-    if (allowedKeys.includes(propertyKey)) {
-      return new PropertiesObject({
+    const allowedKeys: IPropertiesModelKeys[] = [
+      'ip',
+      'tags',
+      'language',
+      'timezone_id',
+      'country',
+    ];
+    if (allowedKeys.includes(propertyKey as IPropertiesModelKeys)) {
+      return {
         ...properties,
         [propertyKey]: operation.value,
-      });
+      };
     }
-    return new PropertiesObject({ ...properties });
+    return { ...properties };
   }
 
   throw new Error(`Unsupported operation type: ${operation._name}`);
