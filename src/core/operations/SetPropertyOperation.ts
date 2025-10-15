@@ -57,7 +57,7 @@ export class SetPropertyOperation<
     this._setProperty('value', _value);
   }
 
-  override get modifyComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}`;
+  override get _modifyComparisonKey(): string {
+    return `${this._appId}.User.${this._onesignalId}`;
   }
 }

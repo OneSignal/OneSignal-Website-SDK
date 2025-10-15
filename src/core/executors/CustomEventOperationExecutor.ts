@@ -50,10 +50,10 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     }
 
     const response = await sendCustomEvent(
-      { appId: operation.appId },
+      { appId: operation._appId },
       {
         name: operation.event.name,
-        onesignal_id: operation.onesignalId,
+        onesignal_id: operation._onesignalId,
         external_id: operation.externalId,
         timestamp: operation.timestamp,
         payload: {

@@ -31,7 +31,7 @@ export abstract class BaseTagOperation<
     this._setProperty('key', value);
   }
 
-  override get modifyComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}`;
+  override get _modifyComparisonKey(): string {
+    return `${this._appId}.User.${this._onesignalId}`;
   }
 }

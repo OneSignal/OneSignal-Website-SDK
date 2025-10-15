@@ -260,7 +260,7 @@ function hasLoginOp(onesignalId: string) {
   return OneSignal._coreDirector._operationRepo._queue.find(
     (op) =>
       op.operation instanceof LoginUserOperation &&
-      op.operation.onesignalId === onesignalId,
+      op.operation._onesignalId === onesignalId,
   );
 }
 

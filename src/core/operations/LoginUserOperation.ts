@@ -59,30 +59,30 @@ export class LoginUserOperation extends Operation<ILoginOp> {
     this._setProperty('existingOnesignalId', value);
   }
 
-  override get createComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}`;
+  override get _createComparisonKey(): string {
+    return `${this._appId}.User.${this._onesignalId}`;
   }
 
-  override get modifyComparisonKey(): string {
+  override get _modifyComparisonKey(): string {
     return '';
   }
 
-  override get groupComparisonType(): GroupComparisonValue {
+  override get _groupComparisonType(): GroupComparisonValue {
     return GroupComparisonType.CREATE;
   }
 
-  override get canStartExecute(): boolean {
+  override get _canStartExecute(): boolean {
     return (
       !this.existingOnesignalId ||
       !IDManager._isLocalId(this.existingOnesignalId)
     );
   }
 
-  override get applyToRecordId(): string {
-    return this.existingOnesignalId ?? this.onesignalId;
+  override get _applyToRecordId(): string {
+    return this.existingOnesignalId ?? this._onesignalId;
   }
 
-  override translateIds(map: Record<string, string>): void {
+  override _translateIds(map: Record<string, string>): void {
     if (this.existingOnesignalId && map[this.existingOnesignalId]) {
       this.existingOnesignalId = map[this.existingOnesignalId];
     }

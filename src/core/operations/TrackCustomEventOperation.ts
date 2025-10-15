@@ -63,30 +63,30 @@ export class TrackCustomEventOperation extends Operation<ITrackEventOp> {
   }
 
   private get key(): string {
-    return `${this.appId}.User.${this.onesignalId}.CustomEvent.${this.event.name}`;
+    return `${this._appId}.User.${this._onesignalId}.CustomEvent.${this.event.name}`;
   }
 
-  override get createComparisonKey(): string {
+  override get _createComparisonKey(): string {
     return this.key;
   }
-  override get modifyComparisonKey(): string {
+  override get _modifyComparisonKey(): string {
     return this.key;
   }
 
   // TODO: no batching of custom events until finalized
-  override get groupComparisonType(): GroupComparisonValue {
+  override get _groupComparisonType(): GroupComparisonValue {
     return GroupComparisonType.NONE;
   }
-  override get canStartExecute(): boolean {
-    return !IDManager._isLocalId(this.onesignalId);
+  override get _canStartExecute(): boolean {
+    return !IDManager._isLocalId(this._onesignalId);
   }
-  override get applyToRecordId(): string {
-    return this.onesignalId;
+  override get _applyToRecordId(): string {
+    return this._onesignalId;
   }
 
-  override translateIds(map: Record<string, string>): void {
-    if (map[this.onesignalId]) {
-      this.onesignalId = map[this.onesignalId];
+  override _translateIds(map: Record<string, string>): void {
+    if (map[this._onesignalId]) {
+      this._onesignalId = map[this._onesignalId];
     }
   }
 }

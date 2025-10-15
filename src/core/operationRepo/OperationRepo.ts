@@ -160,11 +160,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public async _executeOperations(ops: OperationQueueItem[]): Promise<void> {
     try {
       const startingOp = ops[0];
-      const executor = this._executorsMap.get(startingOp.operation.name);
+      const executor = this._executorsMap.get(startingOp.operation._name);
 
       if (!executor) {
         throw new Error(
-          `Could not find executor for operation ${startingOp.operation.name}`,
+          `Could not find executor for operation ${startingOp.operation._name}`,
         );
       }
 
@@ -176,9 +176,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       // Handle ID translations
       if (idTranslations) {
-        ops.forEach((op) => op.operation.translateIds(idTranslations));
+        ops.forEach((op) => op.operation._translateIds(idTranslations));
         this._queue.forEach((item) =>
-          item.operation.translateIds(idTranslations),
+          item.operation._translateIds(idTranslations),
         );
 
         Object.values(idTranslations).forEach((id) =>
@@ -291,8 +291,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
     const startingOpIndex = this._queue.findIndex(
       (item) =>
-        item.operation.canStartExecute &&
-        this._newRecordState._canAccess(item.operation.applyToRecordId) &&
+        item.operation._canStartExecute &&
+        this._newRecordState._canAccess(item.operation._applyToRecordId) &&
         item.bucket <= bucketFilter,
     );
 
@@ -310,27 +310,27 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   ): OperationQueueItem[] {
     const ops = [startingOp];
 
-    if (startingOp.operation.groupComparisonType === GroupComparisonType.NONE)
+    if (startingOp.operation._groupComparisonType === GroupComparisonType.NONE)
       return ops;
 
     const startingKey =
-      startingOp.operation.groupComparisonType === GroupComparisonType.CREATE
-        ? startingOp.operation.createComparisonKey
-        : startingOp.operation.modifyComparisonKey;
+      startingOp.operation._groupComparisonType === GroupComparisonType.CREATE
+        ? startingOp.operation._createComparisonKey
+        : startingOp.operation._modifyComparisonKey;
 
     // Create a copy of queue to avoid modification during iteration
     const queueCopy = [...this._queue];
 
     for (const item of queueCopy) {
       const itemKey =
-        startingOp.operation.groupComparisonType === GroupComparisonType.CREATE
-          ? item.operation.createComparisonKey
-          : item.operation.modifyComparisonKey;
+        startingOp.operation._groupComparisonType === GroupComparisonType.CREATE
+          ? item.operation._createComparisonKey
+          : item.operation._modifyComparisonKey;
 
       if (itemKey === '' && startingKey === '')
         throw new Error('Both comparison keys cannot be blank!');
 
-      if (!this._newRecordState._canAccess(item.operation.applyToRecordId))
+      if (!this._newRecordState._canAccess(item.operation._applyToRecordId))
         continue;
 
       if (itemKey === startingKey) {

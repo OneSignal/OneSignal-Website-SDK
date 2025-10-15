@@ -17,15 +17,15 @@ export class RefreshUserOperation extends Operation {
     super(OPERATION_NAME.REFRESH_USER, appId, onesignalId);
   }
 
-  override get createComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}.Refresh`;
+  override get _createComparisonKey(): string {
+    return `${this._appId}.User.${this._onesignalId}.Refresh`;
   }
 
-  override get modifyComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}.Refresh`;
+  override get _modifyComparisonKey(): string {
+    return `${this._appId}.User.${this._onesignalId}.Refresh`;
   }
 
-  override get groupComparisonType(): GroupComparisonValue {
+  override get _groupComparisonType(): GroupComparisonValue {
     return GroupComparisonType.CREATE;
   }
 }

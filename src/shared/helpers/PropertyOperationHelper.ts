@@ -19,6 +19,6 @@ export class PropertyOperationHelper {
       return new PropertiesObject({ ...properties });
     }
 
-    throw new Error(`Unsupported operation type: ${operation.name}`);
+    throw new Error(`Unsupported operation type: ${operation._name}`);
   }
 }

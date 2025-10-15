@@ -27,7 +27,7 @@ export class SetAliasOperation extends BaseAliasOperation<AliasOp> {
     this._setProperty('value', value);
   }
 
-  override get modifyComparisonKey(): string {
-    return `${this.appId}.User.${this.onesignalId}.Identity.${this.label}`;
+  override get _modifyComparisonKey(): string {
+    return `${this._appId}.User.${this._onesignalId}.Identity.${this.label}`;
   }
 }
