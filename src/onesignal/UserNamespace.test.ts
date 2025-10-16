@@ -3,15 +3,15 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { IdentityConstants } from 'src/core/constants';
 import { ModelChangeTags } from 'src/core/types/models';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { Subscription } from '../shared/models/Subscription';
 import User from './User';
 import UserNamespace from './UserNamespace';
 
-const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
-const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => '');
+const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+const warnSpy = vi.spyOn(Log, 'warn').mockImplementation(() => '');
 vi.useFakeTimers();
 
 const setup = () => {

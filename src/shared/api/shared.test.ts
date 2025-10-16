@@ -1,10 +1,10 @@
 import { APP_ID } from '__test__/constants';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import Log from '../libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import * as OneSignalApiShared from './shared';
 
-const LogErrorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
+const LogErrorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 
 describe('OneSignalApiShared', () => {
   test('can send outcome  ', async () => {

@@ -8,7 +8,7 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/network';
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -40,7 +40,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(
+    debug(
       `IdentityOperationExecutor(operations: ${JSON.stringify(operations)})`,
     );
 

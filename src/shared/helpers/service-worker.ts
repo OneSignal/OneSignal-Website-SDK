@@ -11,7 +11,6 @@ import {
   getCurrentSession,
 } from '../database/client';
 import { getAllNotificationClickedForOutcomes } from '../database/notifications';
-import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import type { OutcomesConfig } from '../outcomes/types';
@@ -20,6 +19,7 @@ import { initializeNewSession } from '../session/helpers';
 import type { Session, SessionOriginValue } from '../session/types';
 import { getConfigAttribution } from './OutcomesHelper';
 import { getBaseUrl } from './general';
+import { debug, error, warn } from 'src/shared/libraries/log';
 
 export function getServiceWorkerHref(
   config: ServiceWorkerManagerConfig,
@@ -79,12 +79,12 @@ export async function upsertSession(
   }
 
   if (existingSession.status === SessionStatus._Active) {
-    Log._debug('Session already active', existingSession);
+    debug('Session already active', existingSession);
     return;
   }
 
   if (!existingSession.lastDeactivatedTimestamp) {
-    Log._debug('Session is in invalid state', existingSession);
+    debug('Session is in invalid state', existingSession);
     // TODO: possibly recover by re-starting session if deviceId is present?
     return;
   }
@@ -137,7 +137,7 @@ export async function deactivateSession(
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
-    Log._debug('No active session found. Cannot deactivate.');
+    debug('No active session found. Cannot deactivate.');
     return undefined;
   }
 
@@ -165,7 +165,7 @@ export async function deactivateSession(
    * For anything but active, logging a warning and doing early return.
    */
   if (existingSession.status !== SessionStatus._Active) {
-    Log._warn(
+    warn(
       `Session in invalid state ${existingSession.status}. Cannot deactivate.`,
     );
     return undefined;
@@ -222,17 +222,17 @@ async function finalizeSession(
   sendOnFocusEnabled: boolean,
   outcomesConfig: OutcomesConfig,
 ): Promise<void> {
-  Log._debug(
+  debug(
     'Finalize session',
     `started: ${new Date(session.startTimestamp)}`,
     `duration: ${session.accumulatedDuration}s`,
   );
   if (sendOnFocusEnabled) {
-    Log._debug(
+    debug(
       `send on_focus reporting session duration -> ${session.accumulatedDuration}s`,
     );
     const attribution = await getConfigAttribution(outcomesConfig);
-    Log._debug('send on_focus with attribution', attribution);
+    debug('send on_focus with attribution', attribution);
     await sendSessionDuration(
       appId,
       onesignalId,
@@ -246,7 +246,7 @@ async function finalizeSession(
     cleanupCurrentSession(),
     clearStore('Outcomes.NotificationClicked'),
   ]);
-  Log._debug(
+  debug(
     'Finalize session finished',
     `started: ${new Date(session.startTimestamp)}`,
   );
@@ -268,7 +268,7 @@ const getLastNotificationClickedForOutcomes = async (
   try {
     allClickedNotifications = await getAllNotificationClickedForOutcomes();
   } catch (e) {
-    Log._error('Database.getLastNotificationClickedForOutcomes', e);
+    error('Database.getLastNotificationClickedForOutcomes', e);
   }
   const predicate = (notification: OutcomesNotificationClicked) =>
     notification.appId === appId;

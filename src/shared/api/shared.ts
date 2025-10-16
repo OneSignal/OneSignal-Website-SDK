@@ -1,12 +1,12 @@
-import Log from '../libraries/Log';
 import type { OutcomeRequestData } from '../outcomes/types';
 import * as OneSignalApiBase from './base';
+import { error, info } from 'src/shared/libraries/log';
 
 export async function sendOutcome(data: OutcomeRequestData): Promise<void> {
-  Log._info('Outcome payload:', data);
+  info('Outcome payload:', data);
   try {
     await OneSignalApiBase.post('outcomes/measure', data);
   } catch (e) {
-    Log._error('sendOutcome', e);
+    error('sendOutcome', e);
   }
 }

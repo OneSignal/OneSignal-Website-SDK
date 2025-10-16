@@ -19,7 +19,7 @@ import {
   updateIdentityModel,
 } from '__test__/support/helpers/setup';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 describe('pageSdkInit 2', () => {
@@ -58,7 +58,7 @@ describe('pageSdkInit 2', () => {
       response: emailSubModel,
     });
 
-    const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
+    const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
 
     // wait for init so it can initialize user namespace otherwise it won't be available for addEmail
     window.OneSignalDeferred = [];

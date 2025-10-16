@@ -3,7 +3,7 @@ import {
   ResponseStatusType,
 } from 'src/shared/helpers/network';
 import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
@@ -52,7 +52,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(
+    debug(
       `RefreshUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
     );
 

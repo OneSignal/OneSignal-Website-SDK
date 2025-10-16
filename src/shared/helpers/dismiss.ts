@@ -7,7 +7,7 @@ import {
   DismissTimeKey,
 } from '../../page/models/Dismiss';
 import { windowEnvString } from '../environment/detect';
-import Log from '../libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt._Push]: DismissCountKey._PromptDismissCount,
@@ -38,7 +38,7 @@ export async function markPromptDismissedWithType(type: DismissPromptValue) {
   } else if (dismissCount > 2) {
     dismissDays = 30;
   }
-  Log._debug(
+  debug(
     `(${windowEnvString} environment) OneSignal: User dismissed the ${type} ` +
       `notification prompt; reprompt after ${dismissDays} days.`,
   );

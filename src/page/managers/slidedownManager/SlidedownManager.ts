@@ -12,6 +12,7 @@ import {
 import { InvalidChannelInputField } from 'src/shared/errors/constants';
 import { delay } from 'src/shared/helpers/general';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
+import { debug, error, info, warn } from 'src/shared/libraries/log';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -28,7 +29,6 @@ import {
   markPromptDismissedWithType,
   wasPromptOfTypeDismissed,
 } from '../../../shared/helpers/dismiss';
-import Log from '../../../shared/libraries/Log';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import { DismissPrompt } from '../../models/Dismiss';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
@@ -80,7 +80,7 @@ export class SlidedownManager {
           return true;
         }
 
-        Log._info(new Error('User is already subscribed'));
+        info(new Error('User is already subscribed'));
         return false;
       }
 
@@ -91,7 +91,7 @@ export class SlidedownManager {
       }
 
       if (permissionDenied) {
-        Log._info(PermissionBlockedError);
+        info(PermissionBlockedError);
         return false;
       }
     } else {
@@ -105,12 +105,12 @@ export class SlidedownManager {
         const bothSubscribed = smsSubscribed && emailSubscribed;
 
         if (smsSubscribed && slidedownType === DelayedPromptType._Sms) {
-          Log._info(ExistingChannelError(DelayedPromptType._Sms));
+          info(ExistingChannelError(DelayedPromptType._Sms));
           return false;
         }
 
         if (emailSubscribed && slidedownType === DelayedPromptType._Email) {
-          Log._info(ExistingChannelError(DelayedPromptType._Email));
+          info(ExistingChannelError(DelayedPromptType._Email));
           return false;
         }
 
@@ -118,7 +118,7 @@ export class SlidedownManager {
           bothSubscribed &&
           slidedownType === DelayedPromptType._SmsAndEmail
         ) {
-          Log._info(ExistingChannelError(DelayedPromptType._SmsAndEmail));
+          info(ExistingChannelError(DelayedPromptType._SmsAndEmail));
           return false;
         }
       }
@@ -127,9 +127,7 @@ export class SlidedownManager {
     }
 
     if (wasDismissed && !options.force && !options.isInUpdateMode) {
-      Log._info(
-        new Error(`${slidedownType || 'unknown'} was previously dismissed`),
-      );
+      info(new Error(`${slidedownType || 'unknown'} was previously dismissed`));
       return false;
     }
 
@@ -320,10 +318,7 @@ export class SlidedownManager {
 
       taggingContainer._mount(categories, tagsForComponent);
     } catch (e) {
-      Log._error(
-        'OneSignal: Attempted to create tagging container with error',
-        e,
-      );
+      error('OneSignal: Attempted to create tagging container with error', e);
     }
   }
 
@@ -343,7 +338,7 @@ export class SlidedownManager {
         }
       }
     } catch (e) {
-      Log._error(
+      error(
         'OneSignal: Attempted to create channel capture container with error',
         e,
       );
@@ -381,7 +376,7 @@ export class SlidedownManager {
           break;
       }
     } catch (e) {
-      Log._warn('OneSignal Slidedown failed to update:', e);
+      warn('OneSignal Slidedown failed to update:', e);
       // Display update error
       this._slidedown._removeSaveState();
       this._slidedown._setFailureState();
@@ -407,11 +402,11 @@ export class SlidedownManager {
     switch (slidedownType) {
       case DelayedPromptType._Push:
       case DelayedPromptType._Category:
-        Log._debug('Setting flag to not show the slidedown to the user again.');
+        debug('Setting flag to not show the slidedown to the user again.');
         markPromptDismissedWithType(DismissPrompt._Push);
         break;
       default:
-        Log._debug('Setting flag to not show the slidedown to the user again.');
+        debug('Setting flag to not show the slidedown to the user again.');
         markPromptDismissedWithType(DismissPrompt._NonPush);
         break;
     }
@@ -449,7 +444,7 @@ export class SlidedownManager {
         return;
       }
     } catch (e) {
-      Log._warn('checkIfSlidedownShouldBeShown returned an error', e);
+      warn('checkIfSlidedownShouldBeShown returned an error', e);
       return;
     }
 
@@ -468,10 +463,10 @@ export class SlidedownManager {
       this._slidedown = new Slidedown(slidedownPromptOptions);
       await this._slidedown._create(options.isInUpdateMode);
       await this._mountAuxiliaryContainers(options);
-      Log._debug('Showing OneSignal Slidedown');
+      debug('Showing OneSignal Slidedown');
       Slidedown._triggerSlidedownEvent('slidedownShown');
     } catch (e) {
-      Log._error('There was an error showing the OneSignal Slidedown:', e);
+      error('There was an error showing the OneSignal Slidedown:', e);
       this._setIsSlidedownShowing(false);
       this._slidedown?._close();
     }

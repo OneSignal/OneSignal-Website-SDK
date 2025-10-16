@@ -18,7 +18,7 @@ import {
   EmptyArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import * as utils from 'src/shared/utils/utils';
 import NotificationsNamespace from './NotificationsNamespace';
 
@@ -64,7 +64,7 @@ test('should set the default title', async () => {
   );
 });
 
-const warnSpy = vi.spyOn(Log, '_warn');
+const warnSpy = vi.spyOn(Log, 'warn');
 describe('Consent Required', () => {
   beforeEach(() => {
     OneSignal.setConsentRequired(true);
@@ -113,8 +113,8 @@ describe('requestPermission', () => {
   });
 
   test('should expose errors', async () => {
-    const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => '');
-    vi.spyOn(Log, '_error').mockImplementation(() => '');
+    const debugSpy = vi.spyOn(Log, 'debug').mockImplementation(() => '');
+    vi.spyOn(Log, 'error').mockImplementation(() => '');
 
     MockNotification.permission = 'denied';
     const notifications = new NotificationsNamespace();

@@ -1,7 +1,7 @@
 import { getConsentRequired } from '../helpers/localStorage';
-import Log from '../libraries/Log';
 import { db, getIdsValue, getOptionsValue } from './client';
 import type { AppState } from './types';
+import { warn } from 'src/shared/libraries/log';
 
 export const getDBAppConfig = async () => {
   const config: any = {};
@@ -85,7 +85,7 @@ export const isConsentRequiredButNotGiven = () => {
   const consentGiven = OneSignal._consentGiven;
 
   const requiredButNotGiven = consentRequired && !consentGiven;
-  if (requiredButNotGiven) Log._warn('Consent required but not given');
+  if (requiredButNotGiven) warn('Consent required but not given');
 
   return requiredButNotGiven;
 };

@@ -4,7 +4,6 @@
  */
 import type { OneSignalDeferredLoadedCallback } from 'src/page/models/OneSignalDeferredLoadedCallback';
 import OneSignal from '../onesignal/OneSignal';
-import Log from '../shared/libraries/Log';
 import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';
 
 /**
@@ -12,6 +11,7 @@ import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';
  * generate a separate CSS file.
  */
 import './stylesheet.scss';
+import { debug, error, warn } from 'src/shared/libraries/log';
 
 async function processOneSignalDeferredArray(
   onesignalDeferred: OneSignalDeferredLoadedCallback[],
@@ -21,7 +21,7 @@ async function processOneSignalDeferredArray(
       await OneSignal.push(item);
     } catch (e) {
       // Catch and log error here so other elements still run
-      Log._error(e);
+      error(e);
     }
   }
 }
@@ -29,11 +29,11 @@ async function processOneSignalDeferredArray(
 function onesignalSdkInit() {
   incrementSdkLoadCount();
   if (getSdkLoadCount() > 1) {
-    Log._warn(
+    warn(
       `OneSignal: The web push SDK is included more than once. For optimal performance, please include our ` +
         `SDK only once on your page.`,
     );
-    Log._debug(
+    debug(
       `OneSignal: Exiting from SDK initialization to prevent double-initialization errors. ` +
         `Occurred ${getSdkLoadCount()} times.`,
     );

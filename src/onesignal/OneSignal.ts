@@ -40,12 +40,12 @@ import LoginManager from '../page/managers/LoginManager';
 import Context from '../page/models/Context';
 import type { OneSignalDeferredLoadedCallback } from '../page/models/OneSignalDeferredLoadedCallback';
 import Emitter from '../shared/libraries/Emitter';
-import Log from '../shared/libraries/Log';
 import DebugNamespace from './DebugNamesapce';
 import NotificationsNamespace from './NotificationsNamespace';
 import { SessionNamespace } from './SessionNamespace';
 import SlidedownNamespace from './SlidedownNamespace';
 import UserNamespace from './UserNamespace';
+import { debug, info, warn } from 'src/shared/libraries/log';
 
 export default class OneSignal {
   static _consentGiven = false;
@@ -64,7 +64,7 @@ export default class OneSignal {
   private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await getAppConfig(options);
 
-    Log._debug('OneSignal: Final web app config:', appConfig);
+    debug('OneSignal: Final web app config:', appConfig);
 
     // Workaround to temp assign config so that it can be used in context.
     OneSignal.config = appConfig;
@@ -127,7 +127,7 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
-    Log._debug(
+    debug(
       `Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`,
     );
 
@@ -145,7 +145,7 @@ export default class OneSignal {
        * support on Chrome/Firefox and don't intend to support Safari but don't
        * place conditional initialization checks.
        */
-      Log._warn(MissingSafariWebIdError);
+      warn(MissingSafariWebIdError);
       return;
     }
 
@@ -196,7 +196,7 @@ export default class OneSignal {
     )
       await __init();
     else {
-      Log._debug(
+      debug(
         'OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
           ' initialization...',
       );
@@ -297,11 +297,11 @@ function processItem(
   }
 }
 
-Log._info(
+info(
   `OneSignal Web SDK loaded (version ${VERSION},
   ${windowEnvString} environment).`,
 );
-Log._debug(
+debug(
   `Current Page URL: ${
     typeof location === 'undefined' ? 'NodeJS' : location.href
   }`,

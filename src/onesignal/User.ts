@@ -11,7 +11,7 @@ import {
 } from 'src/shared/errors/common';
 import { getAppId } from 'src/shared/helpers/main';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
-import Log from 'src/shared/libraries/Log';
+import { error } from 'src/shared/libraries/log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   NotificationType,
@@ -241,12 +241,12 @@ export default class User {
     const onesignalId =
       OneSignal._coreDirector._getIdentityModel()._onesignalId;
     if (IDManager._isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
-      Log._error('User must be logged in first.');
+      error('User must be logged in first.');
       return;
     }
 
     if (!isObjectSerializable(properties)) {
-      Log._error('Properties must be JSON-serializable');
+      error('Properties must be JSON-serializable');
       return;
     }
     logMethodCall('trackEvent', { name, properties });

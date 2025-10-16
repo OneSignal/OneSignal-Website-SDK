@@ -7,7 +7,7 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/network';
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import { VERSION } from 'src/shared/utils/env';
 import { OPERATION_NAME } from '../constants';
 import { Operation } from '../operations/Operation';
@@ -34,7 +34,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(
+    debug(
       `CustomEventsOperationExecutor(operations: ${JSON.stringify(
         operations,
       )})`,

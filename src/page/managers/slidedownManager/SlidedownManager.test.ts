@@ -14,12 +14,12 @@ import {
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { SlidedownManager } from 'src/page/managers/slidedownManager/SlidedownManager';
 import ChannelCaptureContainer from 'src/page/slidedown/ChannelCaptureContainer';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 
-vi.spyOn(Log, '_error').mockImplementation(() => '');
+vi.spyOn(Log, 'error').mockImplementation(() => '');
 
 describe('Slidedown Types', () => {
   beforeEach(() => {
@@ -184,7 +184,7 @@ describe('Slidedown Types', () => {
   });
 });
 
-const warnSpy = vi.spyOn(Log, '_warn');
+const warnSpy = vi.spyOn(Log, 'warn');
 describe('Consent Required', () => {
   beforeEach(() => {
     TestEnvironment.initialize();

@@ -1,6 +1,6 @@
 import { EmptyArgumentError } from 'src/shared/errors/common';
+import { debug } from 'src/shared/libraries/log';
 import type ContextSW from 'src/shared/models/ContextSW';
-import Log from '../Log';
 import { WorkerMessengerBase } from './base';
 import type {
   WorkerMessengerCommandValue,
@@ -21,9 +21,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       'message',
       this._onWorkerMessageReceivedFromPage.bind(this),
     );
-    Log._debug(
-      '[Worker Messenger] Service worker is now listening for messages.',
-    );
+    debug('[Worker Messenger] Service worker is now listening for messages.');
   }
 
   _onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
@@ -42,10 +40,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    Log._debug(
-      `[Worker Messenger] Service worker received message:`,
-      event.data,
-    );
+    debug(`[Worker Messenger] Service worker received message:`, event.data);
 
     for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {
@@ -74,7 +69,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       includeUncontrolled: true,
     });
     for (const client of clients) {
-      Log._debug(
+      debug(
         `[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${
           client.url
         }.`,
@@ -98,7 +93,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       throw EmptyArgumentError('windowClient');
     }
 
-    Log._debug(
+    debug(
       `[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${
         windowClient.url
       }.`,

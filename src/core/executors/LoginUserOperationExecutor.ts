@@ -8,7 +8,7 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/network';
-import Log from 'src/shared/libraries/Log';
+import { debug, error } from 'src/shared/libraries/log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
@@ -62,7 +62,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(
+    debug(
       `LoginUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
     );
     const startingOp = operations[0];
@@ -122,11 +122,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case ExecutionResult._FailConflict:
-        Log._debug(`Handling 409 for externalId: ${loginUserOp._externalId}`);
+        debug(`Handling 409 for externalId: ${loginUserOp._externalId}`);
         return this._createUser(loginUserOp, operations);
 
       case ExecutionResult._FailNoretry:
-        Log._error(
+        error(
           `Recovering from SetAlias failure for externalId: ${loginUserOp._externalId}`,
         );
         return this._createUser(loginUserOp, operations);

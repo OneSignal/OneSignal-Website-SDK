@@ -1,6 +1,6 @@
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
-import Log from '../libraries/Log';
+import { error } from '../libraries/log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
@@ -25,7 +25,7 @@ export async function registerForPush(): Promise<Subscription | null> {
     await triggerNotificationPermissionChanged();
     await checkAndTriggerSubscriptionChanged();
   } catch (e) {
-    Log._error(e);
+    error(e);
   }
   return subscription;
 }

@@ -1,6 +1,6 @@
+import { debug, error, info } from 'src/shared/libraries/log';
 import { ResourceLoadState } from '../../page/services/DynamicResourceLoader';
 import { addCssClass } from '../helpers/dom';
-import Log from '../libraries/Log';
 import type { AppUserConfigCustomLinkOptions } from '../prompts/types';
 import {
   CUSTOM_LINK_CSS_CLASSES,
@@ -23,7 +23,7 @@ export class CustomLinkManager {
       return;
     }
 
-    Log._info('OneSignal: initializing customlink');
+    info('OneSignal: initializing customlink');
     const isPushEnabled =
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
     if (!this._config?.unsubscribeEnabled && isPushEnabled) {
@@ -46,9 +46,7 @@ export class CustomLinkManager {
 
   private async _mountExplanationNode(element: HTMLElement): Promise<void> {
     if (!this._config?.text) {
-      Log._error(
-        "CustomLink: required property 'text' is missing in the config",
-      );
+      error("CustomLink: required property 'text' is missing in the config");
       return;
     }
 
@@ -76,9 +74,7 @@ export class CustomLinkManager {
 
   private async _mountSubscriptionNode(element: HTMLElement): Promise<void> {
     if (!this._config?.text) {
-      Log._error(
-        "CustomLink: required property 'text' is missing in the config",
-      );
+      error("CustomLink: required property 'text' is missing in the config");
       return;
     }
 
@@ -113,7 +109,7 @@ export class CustomLinkManager {
       await this._setTextFromPushStatus(subscribeButton);
 
       subscribeButton.addEventListener('click', async () => {
-        Log._info('CustomLink: subscribe clicked');
+        info('CustomLink: subscribe clicked');
         await this._handleClick(subscribeButton);
       });
 
@@ -129,7 +125,7 @@ export class CustomLinkManager {
     const sdkStylesLoadResult =
       await OneSignal._context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
-      Log._debug(
+      debug(
         'Not initializing custom link button because styles failed to load.',
       );
       return false;

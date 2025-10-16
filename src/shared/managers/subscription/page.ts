@@ -18,7 +18,7 @@ import {
 } from 'src/shared/helpers/pageview';
 import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
 import { ServiceWorkerActiveState } from 'src/shared/helpers/service-worker';
-import Log from 'src/shared/libraries/Log';
+import { debug, error, info } from 'src/shared/libraries/log';
 import { isCompleteSubscriptionObject } from 'src/shared/managers/utils';
 import type { PushSubscriptionState } from 'src/shared/models/PushSubscriptionState';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
@@ -97,7 +97,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   ): Promise<void> {
     const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
     if (!pushModel) {
-      Log._info('No Push Subscription yet to update notification_types.');
+      info('No Push Subscription yet to update notification_types.');
       return;
     }
 
@@ -260,12 +260,12 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       rawPushSubscription = await this._subscribeSafari();
       await updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
       /* Now that permissions have been granted, install the service worker */
-      Log._info('Installing SW on Safari');
+      info('Installing SW on Safari');
       try {
         await this._context._serviceWorkerManager._installWorker();
-        Log._info('SW on Safari successfully installed');
+        info('SW on Safari successfully installed');
       } catch (e) {
-        Log._error('SW on Safari failed to install.');
+        error('SW on Safari failed to install.');
       }
     } else {
       rawPushSubscription =
@@ -382,13 +382,13 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
         case 'default':
-          Log._debug(
+          debug(
             'Exiting subscription and not registering worker because the permission was dismissed.',
           );
           OneSignal._sessionInitAlreadyRunning = false;
           throw new Error('Permission dismissed');
         case 'denied':
-          Log._debug(
+          debug(
             'Exiting subscription and not registering worker because the permission was blocked.',
           );
           OneSignal._sessionInitAlreadyRunning = false;
@@ -423,7 +423,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     if (!workerRegistration) {
       throw new Error('OneSignal service worker not found!');
     }
-    Log._debug(
+    debug(
       '[Subscription Manager] Service worker is ready to continue subscribing.',
     );
 

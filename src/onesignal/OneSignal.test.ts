@@ -50,7 +50,7 @@ import { setPushToken } from 'src/shared/database/subscription';
 import type { SubscriptionSchema } from 'src/shared/database/types';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
 import * as MainHelper from 'src/shared/helpers/main';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
 
@@ -1191,9 +1191,9 @@ Object.defineProperty(global.navigator, 'serviceWorker', {
   writable: true,
 });
 
-vi.spyOn(Log, '_error').mockImplementation(() => '');
-const debugSpy = vi.spyOn(Log, '_debug');
-const warnSpy = vi.spyOn(Log, '_warn');
+vi.spyOn(Log, 'error').mockImplementation(() => '');
+const debugSpy = vi.spyOn(Log, 'debug');
+const warnSpy = vi.spyOn(Log, 'warn');
 
 const getPropertiesItem = async () => (await db.getAll('properties'))[0];
 

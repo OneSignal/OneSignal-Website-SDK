@@ -2,7 +2,7 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/network';
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -78,7 +78,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(`UpdateUserOperationExecutor(operation: ${operations})`);
+    debug(`UpdateUserOperationExecutor(operation: ${operations})`);
 
     const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
       this._processOperations(operations);

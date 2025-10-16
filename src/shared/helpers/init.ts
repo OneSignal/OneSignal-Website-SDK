@@ -1,10 +1,10 @@
+import { debug, error, info, warn } from 'src/shared/libraries/log';
 import Bell from '../../page/bell/Bell';
 import type { AppConfig } from '../config/types';
 import type { ContextInterface } from '../context/types';
 import { db } from '../database/client';
 import { getSubscription, setSubscription } from '../database/subscription';
 import type { OptionKey } from '../database/types';
-import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { limitStorePut } from '../services/limitStore';
@@ -17,7 +17,7 @@ import { triggerNotificationPermissionChanged } from './permissions';
 import { registerForPush } from './subscription';
 
 export async function internalInit() {
-  Log._debug('Called internalInit()');
+  debug('Called internalInit()');
 
   // Always check for an updated service worker
   await OneSignal._context._serviceWorkerManager._installWorker();
@@ -52,12 +52,10 @@ function postponeSessionInitUntilPageIsInFocus(): void {
 }
 
 async function sessionInit(): Promise<void> {
-  Log._debug(`Called sessionInit()`);
+  debug(`Called sessionInit()`);
 
   if (OneSignal._sessionInitAlreadyRunning) {
-    Log._debug(
-      'Returning from sessionInit because it has already been called.',
-    );
+    debug('Returning from sessionInit because it has already been called.');
     return;
   }
   OneSignal._sessionInitAlreadyRunning = true;
@@ -169,7 +167,7 @@ async function establishServiceWorkerChannel(): Promise<void> {
     try {
       await OneSignal._context._serviceWorkerManager._establishServiceWorkerChannel();
     } catch (e) {
-      Log._error(e);
+      error(e);
     }
   }
 }
@@ -178,15 +176,15 @@ async function establishServiceWorkerChannel(): Promise<void> {
 export async function processExpiringSubscriptions(): Promise<boolean> {
   const context: ContextInterface = OneSignal._context;
 
-  Log._debug('Checking subscription expiration...');
+  debug('Checking subscription expiration...');
   const isSubscriptionExpiring =
     await context._subscriptionManager._isSubscriptionExpiring();
   if (!isSubscriptionExpiring) {
-    Log._debug('Subscription is not considered expired.');
+    debug('Subscription is not considered expired.');
     return false;
   }
 
-  Log._debug('Subscription is considered expiring.');
+  debug('Subscription is considered expiring.');
   const rawPushSubscription = await context._subscriptionManager._subscribe(
     SubscriptionStrategyKind._SubscribeNew,
   );
@@ -209,7 +207,7 @@ async function doInitialize(): Promise<void> {
   try {
     await Promise.all(promises);
   } catch (e) {
-    Log._error(e);
+    error(e);
     throw new Error('Unknown init error');
   }
 }
@@ -243,7 +241,7 @@ async function showNotifyButton() {
           );
           OneSignal._notifyButton._create();
         } else {
-          Log._debug(
+          debug(
             'Notify button display predicate returned false so not showing the notify button.',
           );
         }
@@ -280,7 +278,7 @@ async function installNativePromptPermissionChangedHook() {
   } catch (e) {
     // Some browsers (Safari 16.3 and older) have the API navigator.permissions.query, but don't support the
     // { name: 'notifications' } param and throws.
-    Log._warn(
+    warn(
       `Could not install native notification permission change hook w/ error: ${e}`,
     );
   }
@@ -369,11 +367,11 @@ export async function initSaveState(overridingPageTitle?: string) {
   const pageTitle: string =
     overridingPageTitle || config.siteName || document.title || 'Notification';
   await db.put('Options', { key: 'pageTitle', value: pageTitle });
-  Log._info(`OneSignal: Set pageTitle to be '${pageTitle}'.`);
+  info(`OneSignal: Set pageTitle to be '${pageTitle}'.`);
 }
 
 async function handleAutoResubscribe(isOptedOut: boolean) {
-  Log._info('handleAutoResubscribe', {
+  info('handleAutoResubscribe', {
     autoResubscribe: OneSignal.config?.userConfig.autoResubscribe,
     isOptedOut,
   });

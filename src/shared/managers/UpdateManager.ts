@@ -1,7 +1,7 @@
 import User from 'src/onesignal/User';
 import type { ContextInterface } from 'src/shared/context/types';
 import { getPageViewCount, isFirstPageView } from 'src/shared/helpers/pageview';
-import Log from 'src/shared/libraries/Log';
+import { debug, error, warn } from 'src/shared/libraries/log';
 import { isCompleteSubscriptionObject } from 'src/shared/managers/utils';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { NotificationType } from 'src/shared/subscriptions/constants';
@@ -21,7 +21,7 @@ export class UpdateManager {
 
   public async _sendPushDeviceRecordUpdate(): Promise<void> {
     if (!User._singletonInstance?.onesignalId) {
-      Log._debug(
+      debug(
         'Not sending the update because user is not registered with OneSignal (no onesignal_id)',
       );
       return;
@@ -45,7 +45,7 @@ export class UpdateManager {
     const existingUser =
       await this._context._subscriptionManager._isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
-      Log._debug(
+      debug(
         'Not sending the on session because user is not registered with OneSignal (no device id)',
       );
       return;
@@ -71,9 +71,7 @@ export class UpdateManager {
       this._onSessionSent = true;
     } catch (e) {
       if (e instanceof Error) {
-        Log._error(
-          `Failed to update user session. Error "${e.message}" ${e.stack}`,
-        );
+        error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
       }
     }
   }
@@ -108,7 +106,7 @@ export class UpdateManager {
       await sendOutcome(outcomeRequestData);
       return;
     }
-    Log._warn(
+    warn(
       `Send outcome aborted because pushSubscriptionModel is not available.`,
     );
   }
@@ -143,7 +141,7 @@ export class UpdateManager {
       await sendOutcome(outcomeRequestData);
       return;
     }
-    Log._warn(
+    warn(
       `Send outcome aborted because pushSubscriptionModel is not available.`,
     );
   }
@@ -175,7 +173,7 @@ export class UpdateManager {
       await sendOutcome(outcomeRequestData);
       return;
     }
-    Log._warn(
+    warn(
       `Send outcome aborted because pushSubscriptionModel is not available.`,
     );
   }

@@ -7,7 +7,7 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/network';
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -53,7 +53,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(`SubscriptionOperationExecutor(operations: ${operations})`);
+    debug(`SubscriptionOperationExecutor(operations: ${operations})`);
 
     const startingOp = operations[0];
     if (startingOp instanceof CreateSubscriptionOperation)

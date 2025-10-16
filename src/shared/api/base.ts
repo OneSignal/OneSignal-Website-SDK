@@ -3,7 +3,7 @@ import { getOneSignalApiUrl } from '../environment/detect';
 import { AppIDMissingError, RetryLimitError } from '../errors/common';
 import { delay } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';
-import Log from '../libraries/Log';
+import { error } from '../libraries/log';
 import type { APIHeaders } from '../models/APIHeaders';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/env';
 
@@ -124,9 +124,7 @@ async function executeFetch<T = unknown>(
     if (e instanceof Error && e.name === 'TypeError') {
       // start with 10 seconds, then 20 seconds, then 30 seconds
       await delay(retry > 3 ? (6 - retry) * RETRY_MS : 3 * RETRY_MS);
-      Log._error(
-        `OneSignal: Network timed out while calling ${url}. Retrying...`,
-      );
+      error(`OneSignal: Network timed out while calling ${url}. Retrying...`);
       return executeFetch(url, contents, retry - 1);
     }
     throw new Error(`Failed to execute HTTP call: ${e}`);

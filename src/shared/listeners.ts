@@ -5,7 +5,6 @@ import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
 import { getCurrentPushToken, showLocalNotification } from './helpers/main';
-import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
 import { UserState } from './models/UserState';
 import type {
@@ -16,6 +15,7 @@ import { isCategorySlidedownConfigured } from './prompts/helpers';
 import { limitStorePut } from './services/limitStore';
 import OneSignalEvent from './services/OneSignalEvent';
 import { logMethodCall } from './utils/utils';
+import { debug, info } from 'src/shared/libraries/log';
 
 export async function checkAndTriggerSubscriptionChanged() {
   logMethodCall('checkAndTriggerSubscriptionChanged');
@@ -70,7 +70,7 @@ export async function checkAndTriggerSubscriptionChanged() {
       optedIn: isOptedIn,
     },
   };
-  Log._info('Push Subscription state changed: ', change);
+  info('Push Subscription state changed: ', change);
   triggerSubscriptionChanged(change);
 }
 
@@ -140,7 +140,7 @@ export async function checkAndTriggerUserChanged() {
       externalId: currentExternalId,
     },
   };
-  Log._info('User state changed: ', change);
+  info('User state changed: ', change);
   triggerUserChanged(change);
 }
 
@@ -160,12 +160,12 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   ) {
     const predicateResult = await displayPredicate();
     if (predicateResult !== false) {
-      Log._debug(
+      debug(
         'Showing notify button because display predicate returned true.',
       );
       OneSignal._notifyButton._launcher._show();
     } else {
-      Log._debug(
+      debug(
         'Hiding notify button because display predicate returned false.',
       );
       OneSignal._notifyButton._launcher._hide();
@@ -190,7 +190,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   pushSubscriptionId: string | undefined | null,
 ) {
   if (OneSignal._doNotShowWelcomeNotification) {
-    Log._debug(
+    debug(
       'Not showing welcome notification because user has previously subscribed.',
     );
     return;
@@ -237,7 +237,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   title = decodeHtmlEntities(title);
   message = decodeHtmlEntities(message);
 
-  Log._debug('Sending welcome notification.');
+  debug('Sending welcome notification.');
   showLocalNotification(
     title,
     message,

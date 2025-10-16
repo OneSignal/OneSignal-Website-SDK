@@ -5,7 +5,6 @@ import {
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
-import Log from '../../libraries/Log';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
 import type { Subscription } from '../../models/Subscription';
 import {
@@ -19,6 +18,7 @@ import { getBrowserName } from '../../useragent/detect';
 import { base64ToUint8Array } from '../../utils/encode';
 import { IS_SERVICE_WORKER } from '../../utils/env';
 import { DEFAULT_DEVICE_ID } from './constants';
+import { debug, warn } from 'src/shared/libraries/log';
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -147,11 +147,11 @@ export class SubscriptionManagerBase<
         if (!existingPushSubscription) break;
 
         if (existingPushSubscription.options) {
-          Log._debug(
+          debug(
             "[Subscription Manager] An existing push subscription exists and it's options is not null.",
           );
         } else {
-          Log._debug(
+          debug(
             '[Subscription Manager] An existing push subscription exists and options is null. ' +
               'Unsubscribing from push first now.',
           );
@@ -266,7 +266,7 @@ export class SubscriptionManagerBase<
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey,
     };
-    Log._debug(
+    debug(
       '[Subscription Manager] Subscribing to web push with these options:',
       subscriptionOptions,
     );
@@ -283,7 +283,7 @@ export class SubscriptionManagerBase<
         // In Chrome, e.message contains will be the following in this case for reference;
         // Registration failed - A subscription with a different applicationServerKey (or gcm_sender_id) already exists;
         //    to change the applicationServerKey, unsubscribe then resubscribe.
-        Log._warn(
+        warn(
           "[Subscription Manager] Couldn't re-subscribe due to applicationServerKey changing, " +
             'unsubscribe and attempting to subscribe with new key.',
           e,
@@ -300,11 +300,11 @@ export class SubscriptionManagerBase<
   private static async _doPushUnsubscribe(
     pushSubscription: PushSubscription,
   ): Promise<boolean> {
-    Log._debug(
+    debug(
       '[Subscription Manager] Unsubscribing existing push subscription.',
     );
     const result = await pushSubscription.unsubscribe();
-    Log._debug(
+    debug(
       `[Subscription Manager] Unsubscribing existing push subscription result: ${result}`,
     );
     return result;

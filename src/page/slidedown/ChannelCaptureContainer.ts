@@ -3,12 +3,12 @@ import {
   getDomElementOrStub,
   removeCssClass,
 } from 'src/shared/helpers/dom';
+import { error } from 'src/shared/libraries/log';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
 import type {
   DelayedPromptTypeValue,
   SlidedownPromptOptions,
 } from 'src/shared/prompts/types';
-import Log from '../../shared/libraries/Log';
 import {
   CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES,
   CHANNEL_CAPTURE_CONTAINER_CSS_IDS,
@@ -194,7 +194,7 @@ export default class ChannelCaptureContainer {
         },
       );
     } else {
-      Log._error(
+      error(
         'OneSignal: there was a problem initializing International Telephone Input',
       );
     }
@@ -385,7 +385,7 @@ export default class ChannelCaptureContainer {
     );
 
     if (!validationElement || !inputElement) {
-      Log._error("OneSignal: couldn't find slidedown validation element");
+      error("OneSignal: couldn't find slidedown validation element");
       return;
     }
 
@@ -415,7 +415,7 @@ export default class ChannelCaptureContainer {
     );
 
     if (!validationElement || !inputElement) {
-      Log._error("OneSignal: couldn't find slidedown validation element");
+      error("OneSignal: couldn't find slidedown validation element");
       return;
     }
 
