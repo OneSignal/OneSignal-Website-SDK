@@ -283,7 +283,7 @@ export class ServiceWorkerManager {
       WorkerMessengerCommand._NotificationClicked,
       async (event: NotificationClickEventInternal) => {
         const clickedListenerCallbackCount =
-          OneSignal._emitter.numberOfListeners(
+          OneSignal._emitter._numberOfListeners(
             OneSignal.EVENTS.NOTIFICATION_CLICKED,
           );
 

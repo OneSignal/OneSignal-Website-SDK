@@ -123,16 +123,16 @@ describe('UpdateUserOperationExecutor', () => {
       setUpdateUserError({ status: 429, retryAfter: 10 });
       const res1 = await executor._execute([setTagOp]);
       expect(res1).toMatchObject({
-        result: ExecutionResult._FailRetry,
-        retryAfterSeconds: 10,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 10,
       });
 
       // Unauthorized error
       setUpdateUserError({ status: 401, retryAfter: 15 });
       const res2 = await executor._execute([setTagOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult._FailUnauthorized,
-        retryAfterSeconds: 15,
+        _result: ExecutionResult._FailUnauthorized,
+        _retryAfterSeconds: 15,
       });
 
       // Missing error without rebuild ops
@@ -140,15 +140,15 @@ describe('UpdateUserOperationExecutor', () => {
       getRebuildOpsSpy.mockReturnValueOnce(null);
       const res3 = await executor._execute([setTagOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult._FailNoretry,
+        _result: ExecutionResult._FailNoretry,
       });
 
       // Missing error with rebuild ops
       const res4 = await executor._execute([setTagOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult._FailRetry,
-        retryAfterSeconds: 5,
-        operations: [
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 5,
+        _operations: [
           {
             _name: 'login-user',
             _appId: APP_ID,
@@ -167,15 +167,15 @@ describe('UpdateUserOperationExecutor', () => {
       setUpdateUserError({ status: 404, retryAfter: 20 });
       const res5 = await executor._execute([setTagOp]);
       expect(res5).toMatchObject({
-        result: ExecutionResult._FailRetry,
-        retryAfterSeconds: 20,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 20,
       });
 
       // Other errors
       setUpdateUserError({ status: 400 });
       const res6 = await executor._execute([setTagOp]);
       expect(res6).toMatchObject({
-        result: ExecutionResult._FailNoretry,
+        _result: ExecutionResult._FailNoretry,
       });
     });
   });

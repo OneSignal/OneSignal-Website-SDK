@@ -227,8 +227,8 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res1 = await executor._execute([refreshOp]);
       expect(res1).toMatchObject({
-        result: ExecutionResult._FailRetry,
-        retryAfterSeconds: 10,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 10,
       });
 
       // unauthorized error
@@ -238,8 +238,8 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res2 = await executor._execute([refreshOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult._FailUnauthorized,
-        retryAfterSeconds: 15,
+        _result: ExecutionResult._FailUnauthorized,
+        _retryAfterSeconds: 15,
       });
 
       // missing error
@@ -251,16 +251,15 @@ describe('RefreshUserOperationExecutor', () => {
       getRebuildOpsSpy.mockReturnValueOnce(null);
       const res3 = await executor._execute([refreshOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult._FailNoretry,
-        retryAfterSeconds: undefined,
+        _result: ExecutionResult._FailNoretry,
       });
 
       // -- with rebuild ops
       const res4 = await executor._execute([refreshOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult._FailRetry,
-        retryAfterSeconds: 5,
-        operations: [
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 5,
+        _operations: [
           {
             _name: 'login-user',
             _appId: APP_ID,
@@ -282,8 +281,8 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res6 = await executor._execute([refreshOp]);
       expect(res6).toMatchObject({
-        result: ExecutionResult._FailRetry,
-        retryAfterSeconds: 20,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 20,
       });
 
       // other errors
@@ -292,8 +291,7 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res7 = await executor._execute([refreshOp]);
       expect(res7).toMatchObject({
-        result: ExecutionResult._FailNoretry,
-        retryAfterSeconds: undefined,
+        _result: ExecutionResult._FailNoretry,
       });
     });
   });

@@ -71,7 +71,7 @@ export default class Emitter {
         }
       }
 
-      if (listeners.length === 0) this.removeAllListeners(event);
+      if (listeners.length === 0) this._removeAllListeners(event);
     }
 
     return this;
@@ -80,7 +80,7 @@ export default class Emitter {
   /**
    * Removes all listeners from the collection for a specified event.
    */
-  public removeAllListeners(event?: string): Emitter {
+  public _removeAllListeners(event?: string): Emitter {
     if (event) delete this._events[event];
     else this._events = {};
 
@@ -97,7 +97,7 @@ export default class Emitter {
    * @example
    * me.listeners('ready');
    */
-  public listeners(
+  public _listeners(
     event: string,
   ): (EventHandler | OnceEventHandler)[] | undefined {
     try {
@@ -117,8 +117,8 @@ export default class Emitter {
    * @example
    * me.numberOfListeners('ready');
    */
-  public numberOfListeners(event: string): number {
-    const listeners = this.listeners(event);
+  public _numberOfListeners(event: string): number {
+    const listeners = this._listeners(event);
     if (listeners) return listeners.length;
     return 0;
   }
@@ -128,7 +128,7 @@ export default class Emitter {
    * @param event - String of the event name
    * @param args - Variable number of args to pass to the functions subscribe to the event
    */
-  public async emit(...args: any[]): Promise<Emitter> {
+  public async _emit(...args: any[]): Promise<Emitter> {
     const event = args.shift();
     let listeners = this._events[event];
 
