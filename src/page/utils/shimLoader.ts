@@ -1,14 +1,14 @@
 import {
+  isIosSafari,
+  isPushNotificationsSupported,
+} from 'src/shared/useragent/detect';
+import {
   BUILD_ORIGIN,
   BUILD_TYPE,
   IS_HTTPS,
   NO_DEV_PORT,
   VERSION,
 } from 'src/shared/utils/env';
-import {
-  isIosSafari,
-  isPushNotificationsSupported,
-} from './BrowserSupportsPush';
 // NOTE: Careful if adding imports, ES5 targets can't clean up functions never called.
 
 // See sdk.ts for what entry points this handles

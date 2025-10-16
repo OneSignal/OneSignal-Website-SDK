@@ -23,7 +23,7 @@ import {
   requiresUserInteraction,
 } from 'src/shared/useragent/detect';
 import { logMethodCall } from 'src/shared/utils/utils';
-import { markPromptDismissedWithType } from '../../shared/helpers/DismissHelper';
+import { markPromptDismissedWithType } from '../../shared/helpers/dismiss';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { DismissPrompt } from '../models/Dismiss';

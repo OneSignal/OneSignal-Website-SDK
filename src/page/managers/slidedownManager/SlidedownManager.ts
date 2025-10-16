@@ -27,7 +27,7 @@ import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import {
   markPromptDismissedWithType,
   wasPromptOfTypeDismissed,
-} from '../../../shared/helpers/DismissHelper';
+} from '../../../shared/helpers/dismiss';
 import Log from '../../../shared/libraries/Log';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import { DismissPrompt } from '../../models/Dismiss';
