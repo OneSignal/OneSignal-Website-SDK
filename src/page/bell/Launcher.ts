@@ -38,7 +38,7 @@ export default class Launcher extends AnimatedElement {
       (size === 'large' &&
         hasCssClass(this.element, 'onesignal-bell-launcher-lg'))
     ) {
-      return Promise.resolve(this);
+      return;
     }
     removeCssClass(this.element, 'onesignal-bell-launcher-sm');
     removeCssClass(this.element, 'onesignal-bell-launcher-md');
@@ -53,7 +53,7 @@ export default class Launcher extends AnimatedElement {
       throw new Error('Invalid OneSignal bell size ' + size);
     }
     if (!this.shown) {
-      return this;
+      return;
     } else {
       await this.waitForAnimations();
     }
@@ -64,7 +64,6 @@ export default class Launcher extends AnimatedElement {
       this.wasInactive = true;
       await this.activate();
     }
-    return this;
   }
 
   async inactivateIfWasInactive() {
@@ -72,7 +71,6 @@ export default class Launcher extends AnimatedElement {
       this.wasInactive = false;
       await this.inactivate();
     }
-    return this;
   }
 
   clearIfWasInactive() {
@@ -81,14 +79,10 @@ export default class Launcher extends AnimatedElement {
 
   async inactivate() {
     await this.bell.message.hide();
-    if (this.bell.badge.content.length > 0) {
-      await this.bell.badge.hide();
-      await Promise.all([super.inactivate(), this.resize('small')]);
-      return this.bell.badge.show();
-    } else {
-      await Promise.all([super.inactivate(), this.resize('small')]);
-      return this;
-    }
+    const hasContent = this.bell.badge.content.length > 0;
+    if (hasContent) await this.bell.badge.hide();
+    await Promise.all([super.inactivate(), this.resize('small')]);
+    if (hasContent) await this.bell.badge.show();
   }
 
   async activate() {
@@ -96,6 +90,5 @@ export default class Launcher extends AnimatedElement {
       await this.bell.badge.hide();
     }
     await Promise.all([super.activate(), this.resize(this.bell.options.size!)]);
-    return this;
   }
 }

@@ -83,7 +83,7 @@ export default class Message extends AnimatedElement {
             if (this.bell.badge.content.length > 0) {
               return this.bell.badge.show();
             }
-            return Promise.resolve(this);
+            return Promise.resolve();
           })
           .then(() => resolve(dequeuedMessage));
       } else {

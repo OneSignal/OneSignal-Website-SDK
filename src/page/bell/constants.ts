@@ -15,7 +15,7 @@ export const BellEvent = {
   _Hovered: 'notifyButtonHover',
 } as const;
 
-export const MesageType = {
+export const MessageType = {
   _Tip: 'tip', // Appears on button hover, disappears on button endhover
   _Message: 'message', // Appears manually for a specified duration, site visitor cannot control its display. Messages override tips
   _Queued: 'queued', // This message was a user-queued message
@@ -23,4 +23,4 @@ export const MesageType = {
 
 export const MESSAGE_TIMEOUT = 2500;
 
-export type BellStateType = (typeof BellState)[keyof typeof BellState];
+export type BellStateValue = (typeof BellState)[keyof typeof BellState];

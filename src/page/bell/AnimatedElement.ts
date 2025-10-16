@@ -25,10 +25,10 @@ export default class AnimatedElement {
   /**
    * Show element using CSS classes and wait for animations to complete
    */
-  async show(): Promise<AnimatedElement> {
+  async show(): Promise<void> {
     const element = this.element;
     if (!element || this.shown) {
-      return this;
+      return;
     }
 
     if (this.showClass) {
@@ -36,16 +36,15 @@ export default class AnimatedElement {
     }
 
     await this.waitForAnimations();
-    return this;
   }
 
   /**
    * Hide element using CSS classes and wait for animations to complete
    */
-  async hide(): Promise<AnimatedElement> {
+  async hide(): Promise<void> {
     const element = this.element;
     if (!element || !this.shown) {
-      return this;
+      return;
     }
 
     if (this.showClass) {
@@ -53,16 +52,15 @@ export default class AnimatedElement {
     }
 
     await this.waitForAnimations();
-    return this;
   }
 
   /**
    * Activate element using CSS classes
    */
-  async activate(): Promise<AnimatedElement> {
+  async activate(): Promise<void> {
     const element = this.element;
     if (!element || this.active) {
-      return this;
+      return;
     }
 
     if (this.inactiveClass) {
@@ -73,16 +71,15 @@ export default class AnimatedElement {
     }
 
     await this.waitForAnimations();
-    return this;
   }
 
   /**
    * Inactivate element using CSS classes
    */
-  async inactivate(): Promise<AnimatedElement> {
+  async inactivate(): Promise<void> {
     const element = this.element;
     if (!element || !this.active) {
-      return this;
+      return;
     }
 
     if (this.activeClass) {
@@ -93,7 +90,6 @@ export default class AnimatedElement {
     }
 
     await this.waitForAnimations();
-    return this;
   }
 
   /**

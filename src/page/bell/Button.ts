@@ -4,7 +4,7 @@ import LimitStore from 'src/shared/services/LimitStore';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
-import { BellEvent, MESSAGE_TIMEOUT, MesageType } from './constants';
+import { BellEvent, MESSAGE_TIMEOUT, MessageType } from './constants';
 
 export default class Button extends AnimatedElement {
   public _isHandlingClick: boolean = false;
@@ -101,7 +101,7 @@ export default class Button extends AnimatedElement {
     try {
       if (
         this.bell.message.shown &&
-        this.bell.message.contentType == MesageType._Message
+        this.bell.message.contentType == MessageType._Message
       ) {
         // A message is being shown, it'll disappear soon
         return;
@@ -115,7 +115,7 @@ export default class Button extends AnimatedElement {
         OneSignal._emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
           this.bell.message
             .display(
-              MesageType._Message,
+              MessageType._Message,
               this.bell.options.text['message.action.subscribed'],
               MESSAGE_TIMEOUT,
             )

@@ -28,14 +28,12 @@ import Message from './Message';
 import {
   BellEvent,
   BellState,
-  type BellStateType,
+  type BellStateValue,
   MESSAGE_TIMEOUT,
-  MesageType,
+  MessageType,
 } from './constants';
 
 const logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
-
-type BellState = 'uninitialized' | 'subscribed' | 'unsubscribed' | 'blocked';
 
 const DEFAULT_SIZE: BellSize = 'medium';
 const DEFAULT_POSITION: BellPosition = 'bottom-right';
@@ -43,7 +41,7 @@ const DEFAULT_THEME = 'default';
 
 export default class Bell {
   public options: AppUserConfigNotifyButton;
-  public state: BellStateType = BellState._Uninitialized;
+  public state: BellStateValue = BellState._Uninitialized;
   public _ignoreSubscriptionState = false;
   public hovering = false;
   public initialized = false;
@@ -190,7 +188,7 @@ export default class Bell {
         })
         .then(() => {
           return this.message.display(
-            MesageType._Message,
+            MessageType._Message,
             this.options.text['message.action.resubscribed'],
             MESSAGE_TIMEOUT,
           );
@@ -226,7 +224,7 @@ export default class Bell {
         })
         .then(() => {
           return this.message.display(
-            MesageType._Message,
+            MessageType._Message,
             this.options.text['message.action.unsubscribed'],
             MESSAGE_TIMEOUT,
           );
@@ -248,7 +246,7 @@ export default class Bell {
 
       // If the message is a message and not a tip, don't show it (only show tips)
       // Messages will go away on their own
-      if (this.message.contentType === MesageType._Message) {
+      if (this.message.contentType === MessageType._Message) {
         this.hovering = false;
         return;
       }
@@ -258,14 +256,14 @@ export default class Bell {
         if (this.message.queued.length > 0) {
           return this.message.dequeue().then((msg: any) => {
             this.message.content = msg;
-            this.message.contentType = MesageType._Queued;
+            this.message.contentType = MessageType._Queued;
             resolve();
           });
         } else {
           this.message.content = decodeHtmlEntities(
             this.message.getTipForState(),
           );
-          this.message.contentType = MesageType._Tip;
+          this.message.contentType = MessageType._Tip;
           resolve();
         }
       })
@@ -282,7 +280,7 @@ export default class Bell {
 
     OneSignal._emitter.on(BellEvent._Hovered, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
-      if (this.message.contentType === MesageType._Message) {
+      if (this.message.contentType === MessageType._Message) {
         return;
       }
 
@@ -334,7 +332,7 @@ export default class Bell {
 
         const permission =
           await OneSignal._context._permissionManager.getPermissionStatus();
-        let bellState: BellStateType;
+        let bellState: BellStateValue;
         if (isSubscribed.current.optedIn) {
           bellState = BellState._Subscribed;
         } else if (permission === 'denied') {
@@ -353,7 +351,10 @@ export default class Bell {
       }
       if (state.to === BellState._Subscribed) {
         this.launcher.inactivate();
-      } else if (state.to === BellState._Unsubscribed || BellState._Blocked) {
+      } else if (
+        state.to === BellState._Unsubscribed ||
+        state.to === BellState._Blocked
+      ) {
         this.launcher.activate();
       }
     });
@@ -579,26 +580,23 @@ export default class Bell {
       dialogElement?.querySelector<HTMLButtonElement>('button.action');
     const buttonElement = this.button.element;
     const pulseRing = buttonElement?.querySelector<HTMLElement>('.pulse-ring');
-    const graphic = this.graphic;
 
     // Reset added styles first
-    if (graphic) {
-      const background = graphic.querySelector<HTMLElement>('.background');
-      if (background) {
-        background.style.cssText = '';
+    const background = this.graphic?.querySelector<HTMLElement>('.background');
+    if (background) {
+      background.style.cssText = '';
+    }
+    const foregroundElements =
+      this.graphic?.querySelectorAll<HTMLElement>('.foreground') ?? [];
+    for (let i = 0; i < foregroundElements.length; i++) {
+      const element = foregroundElements[i];
+      if (element) {
+        element.style.cssText = '';
       }
-      const foregroundElements =
-        graphic.querySelectorAll<HTMLElement>('.foreground');
-      for (let i = 0; i < foregroundElements.length; i++) {
-        const element = foregroundElements[i];
-        if (element) {
-          element.style.cssText = '';
-        }
-      }
-      const stroke = graphic.querySelector<HTMLElement>('.stroke');
-      if (stroke) {
-        stroke.style.cssText = '';
-      }
+    }
+    const stroke = this.graphic?.querySelector<HTMLElement>('.stroke');
+    if (stroke) {
+      stroke.style.cssText = '';
     }
 
     const badgeElement = this.badge.element;
@@ -617,21 +615,22 @@ export default class Bell {
     if (this.options.colors) {
       const colors = this.options.colors;
       if (colors['circle.background']) {
-        const background = graphic?.querySelector<HTMLElement>('.background');
+        const background =
+          this.graphic?.querySelector<HTMLElement>('.background');
         if (background) {
           background.style.cssText += `fill: ${colors['circle.background']}`;
         }
       }
       if (colors['circle.foreground']) {
         const foregroundElements =
-          graphic?.querySelectorAll<HTMLElement>('.foreground') ?? [];
+          this.graphic?.querySelectorAll<HTMLElement>('.foreground') ?? [];
         for (let i = 0; i < foregroundElements.length; i++) {
           const element = foregroundElements[i];
           if (element) {
             element.style.cssText += `fill: ${colors['circle.foreground']}`;
           }
         }
-        const stroke = graphic?.querySelector<HTMLElement>('.stroke');
+        const stroke = this.graphic?.querySelector<HTMLElement>('.stroke');
         if (stroke) {
           stroke.style.cssText += `stroke: ${colors['circle.foreground']}`;
         }
@@ -718,7 +717,7 @@ export default class Bell {
    * Updates the current state to the specified new state.
    * @param newState One of ['subscribed', 'unsubscribed'].
    */
-  setState(newState: BellStateType, silent = false) {
+  setState(newState: BellStateValue, silent = false) {
     const lastState = this.state;
     this.state = newState;
     if (lastState !== newState && !silent) {
