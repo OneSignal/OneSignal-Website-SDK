@@ -17,12 +17,12 @@ import {
   mockPushSubscription,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
-import { setPushToken } from '../database/subscription';
-import { IDManager } from './IDManager';
+import { setPushToken } from '../../database/subscription';
+import { IDManager } from '../IDManager';
 import {
   SubscriptionManagerPage,
   updatePushSubscriptionModelWithRawSubscription,
-} from './subscription/page';
+} from './page';
 
 describe('SubscriptionManager', () => {
   beforeEach(() => {

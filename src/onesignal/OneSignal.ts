@@ -22,10 +22,10 @@ import {
 } from 'src/shared/helpers/init';
 import {
   getConsentRequired,
-  removeLegacySubscriptionOptions,
   setConsentRequired as setStorageConsentRequired,
 } from 'src/shared/helpers/localStorage';
 import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
+import { debug, info, warn } from 'src/shared/libraries/log';
 import {
   _onSubscriptionChanged,
   checkAndTriggerSubscriptionChanged,
@@ -45,7 +45,6 @@ import NotificationsNamespace from './NotificationsNamespace';
 import { SessionNamespace } from './SessionNamespace';
 import SlidedownNamespace from './SlidedownNamespace';
 import UserNamespace from './UserNamespace';
-import { debug, info, warn } from 'src/shared/libraries/log';
 
 export default class OneSignal {
   static _consentGiven = false;
@@ -127,11 +126,7 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
-    debug(
-      `Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`,
-    );
-
-    removeLegacySubscriptionOptions();
+    debug(`Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`);
 
     errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);

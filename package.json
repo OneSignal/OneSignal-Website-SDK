@@ -55,7 +55,7 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
-    "@vitest/coverage-v8": "4.0.0-beta.10",
+    "@vitest/coverage-v8": "4.0.2",
     "concurrently": "^9.2.0",
     "deepmerge": "^4.2.2",
     "eslint": "^8.23.0",
@@ -70,11 +70,11 @@
     "terser": "^5.43.1",
     "type-fest": "^4.41.0",
     "typescript": "^5.9.3",
-    "vite": "^7.1.10",
+    "vite": "^7.1.12",
     "vite-bundle-analyzer": "^1.2.3",
     "vite-plugin-mkcert": "^1.17.9",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "4.0.0-beta.10"
+    "vitest": "4.0.2"
   },
   "size-limit": [
     {
@@ -84,7 +84,7 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "45.51 kB",
+      "limit": "45.485 kB",
       "gzip": true
     },
     {

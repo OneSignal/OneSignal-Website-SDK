@@ -1,10 +1,10 @@
 import { RETRY_MS } from 'src/core/operationRepo/constants';
+import type { APIHeaders } from 'src/core/types/api';
 import { getOneSignalApiUrl } from '../environment/detect';
 import { AppIDMissingError, RetryLimitError } from '../errors/common';
 import { delay } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';
 import { error } from '../libraries/log';
-import type { APIHeaders } from '../models/APIHeaders';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/env';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';

@@ -1,7 +1,8 @@
+import { debug, error, warn } from 'src/shared/libraries/log';
 import {
   cancelableTimeout,
   type CancelableTimeoutPromise,
-} from '../../sw/helpers/CancelableTimeout';
+} from '../../sw/helpers/timeout';
 import { sendSessionDuration, updateUserSession } from '../api/sw';
 import { encodeHashAsUriComponent } from '../context/helpers';
 import {
@@ -19,7 +20,6 @@ import { initializeNewSession } from '../session/helpers';
 import type { Session, SessionOriginValue } from '../session/types';
 import { getConfigAttribution } from './OutcomesHelper';
 import { getBaseUrl } from './general';
-import { debug, error, warn } from 'src/shared/libraries/log';
 
 export function getServiceWorkerHref(
   config: ServiceWorkerManagerConfig,

@@ -21,6 +21,7 @@ import {
   setSubscription,
 } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
+import type { DeliveryPlatformKindValue } from 'src/shared/environment/types';
 import { delay } from 'src/shared/helpers/general';
 import {
   deactivateSession,
@@ -31,7 +32,6 @@ import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/con
 import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
 import type { WorkerMessengerMessage } from 'src/shared/libraries/workerMessenger/types';
 import ContextSW from 'src/shared/models/ContextSW';
-import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import type {
@@ -51,12 +51,12 @@ import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
-import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import {
   isValidPayload,
   toNativeNotificationAction,
   toOSNotification,
 } from '../helpers/notifications';
+import { cancelableTimeout } from '../helpers/timeout';
 import {
   notificationClick,
   notificationDismissed,

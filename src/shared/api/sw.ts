@@ -1,10 +1,11 @@
 import { IdentityConstants } from 'src/core/constants';
 import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
+import { debug } from 'src/shared/libraries/log';
 import type { ServerAppConfig } from '../config/types';
 import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
-import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
+import type { DeliveryPlatformKindValue } from '../environment/types';
 import {
   OutcomeAttributionType,
   type OutcomeAttribution,
@@ -13,7 +14,6 @@ import type { OutcomeRequestData } from '../outcomes/types';
 import { NotificationType } from '../subscriptions/constants';
 import * as OneSignalApiBase from './base';
 import { sendOutcome } from './shared';
-import { debug } from 'src/shared/libraries/log';
 
 export async function downloadSWServerAppConfig(
   appId: string,
