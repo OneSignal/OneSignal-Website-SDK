@@ -65,7 +65,7 @@ export const createPushSub = ({
     id,
     onesignalId,
     token,
-    type: SubscriptionType.ChromePush,
+    type: SubscriptionType._ChromePush,
   });
   return pushSubscription;
 };
@@ -97,7 +97,7 @@ export const setupSubModelStore = async ({
   await setPushToken(pushModel.token);
   OneSignal._coreDirector._subscriptionModelStore._replaceAll(
     [pushModel],
-    ModelChangeTags.NO_PROPAGATE,
+    ModelChangeTags._NoPropogate,
   );
 
   return pushModel;

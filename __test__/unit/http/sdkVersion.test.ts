@@ -46,7 +46,7 @@ describe('Sdk Version Header Tests', () => {
     getUserByAlias(
       { appId: APP_ID },
       {
-        label: IdentityConstants.EXTERNAL_ID,
+        label: IdentityConstants._ExternalID,
         id: EXTERNAL_ID,
       },
     );
@@ -57,7 +57,7 @@ describe('Sdk Version Header Tests', () => {
     updateUserByAlias(
       { appId: APP_ID },
       {
-        label: IdentityConstants.EXTERNAL_ID,
+        label: IdentityConstants._ExternalID,
         id: EXTERNAL_ID,
       },
       {},
@@ -69,7 +69,7 @@ describe('Sdk Version Header Tests', () => {
     updateUserByAlias(
       { appId: APP_ID, subscriptionId: SUB_ID },
       {
-        label: IdentityConstants.EXTERNAL_ID,
+        label: IdentityConstants._ExternalID,
         id: EXTERNAL_ID,
       },
       {},
@@ -81,7 +81,7 @@ describe('Sdk Version Header Tests', () => {
     deleteUserByAlias(
       { appId: APP_ID },
       {
-        label: IdentityConstants.EXTERNAL_ID,
+        label: IdentityConstants._ExternalID,
         id: EXTERNAL_ID,
       },
     );
@@ -92,7 +92,7 @@ describe('Sdk Version Header Tests', () => {
     createSubscriptionByAlias(
       { appId: APP_ID },
       {
-        label: IdentityConstants.EXTERNAL_ID,
+        label: IdentityConstants._ExternalID,
         id: EXTERNAL_ID,
       },
       {
@@ -107,7 +107,7 @@ describe('Sdk Version Header Tests', () => {
     getUserIdentity(
       { appId: APP_ID },
       {
-        label: IdentityConstants.EXTERNAL_ID,
+        label: IdentityConstants._ExternalID,
         id: EXTERNAL_ID,
       },
     );
@@ -118,10 +118,10 @@ describe('Sdk Version Header Tests', () => {
     deleteAlias(
       { appId: APP_ID },
       {
-        label: IdentityConstants.EXTERNAL_ID,
+        label: IdentityConstants._ExternalID,
         id: EXTERNAL_ID,
       },
-      IdentityConstants.EXTERNAL_ID,
+      IdentityConstants._ExternalID,
     );
     expectHeaderToBeSent();
   });

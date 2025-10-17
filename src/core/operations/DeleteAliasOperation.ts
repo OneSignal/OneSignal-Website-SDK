@@ -8,7 +8,7 @@ export class DeleteAliasOperation extends BaseAliasOperation {
   constructor();
   constructor(appId: string, onesignalId: string, label: string);
   constructor(appId?: string, onesignalId?: string, label?: string) {
-    super(OPERATION_NAME.DELETE_ALIAS, appId, onesignalId, label);
+    super(OPERATION_NAME._DeleteAlias, appId, onesignalId, label);
   }
 
   override get _modifyComparisonKey(): string {
@@ -16,6 +16,6 @@ export class DeleteAliasOperation extends BaseAliasOperation {
   }
 
   override get _groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.NONE;
+    return GroupComparisonType._None;
   }
 }

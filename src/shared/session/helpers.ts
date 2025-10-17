@@ -15,6 +15,6 @@ export function initializeNewSession(options: NewSessionOptions): Session {
     notificationId,
     sessionKey: ONESIGNAL_SESSION_KEY,
     startTimestamp: currentTimestamp,
-    status: SessionStatus.Active,
+    status: SessionStatus._Active,
   };
 }

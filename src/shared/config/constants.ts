@@ -1,15 +1,15 @@
 export const NotificationClickMatchBehavior = {
-  Exact: 'exact',
-  Origin: 'origin',
+  _Exact: 'exact',
+  _Origin: 'origin',
 } as const;
 
 export const NotificationClickActionBehavior = {
-  Navigate: 'navigate',
-  Focus: 'focus',
+  _Navigate: 'navigate',
+  _Focus: 'focus',
 } as const;
 
 export const ConfigIntegrationKind = {
-  TypicalSite: 'typical',
-  WordPress: 'wordpress',
-  Custom: 'custom',
+  _TypicalSite: 'typical',
+  _WordPress: 'wordpress',
+  _Custom: 'custom',
 } as const;

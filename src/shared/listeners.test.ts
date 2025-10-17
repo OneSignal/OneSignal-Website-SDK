@@ -95,7 +95,7 @@ describe('checkAndTriggerSubscriptionChanged', () => {
       token,
     });
     await setPushToken(token);
-    OneSignal._coreDirector._subscriptionModelStore.add(pushModel);
+    OneSignal._coreDirector._subscriptionModelStore._add(pushModel);
     mockPushManager.getSubscription.mockResolvedValue({
       ...mockPushSubscription,
       endpoint: token,

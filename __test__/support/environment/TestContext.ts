@@ -23,7 +23,7 @@ export default class TestContext {
     appId: string = APP_ID,
   ): ServerAppConfig {
     let remoteConfigMockDefaults: ServerAppConfig;
-    if (configIntegrationKind === ConfigIntegrationKind.Custom) {
+    if (configIntegrationKind === ConfigIntegrationKind._Custom) {
       remoteConfigMockDefaults = {
         success: true,
         version: 2,
@@ -49,7 +49,7 @@ export default class TestContext {
             proxyOriginEnabled: true,
           },
           integration: {
-            kind: ConfigIntegrationKind.Custom,
+            kind: ConfigIntegrationKind._Custom,
           },
           staticPrompts: {
             native: {
@@ -311,8 +311,8 @@ export default class TestContext {
           },
           notificationBehavior: {
             click: {
-              match: NotificationClickMatchBehavior.Exact,
-              action: NotificationClickActionBehavior.Navigate,
+              match: NotificationClickMatchBehavior._Exact,
+              action: NotificationClickActionBehavior._Navigate,
             },
             display: {
               persist: false,
@@ -453,15 +453,15 @@ export default class TestContext {
         'notification.dismissed':
           'https://fake-config.com/notification-dismissed',
       },
-      notificationClickHandlerMatch: NotificationClickMatchBehavior.Origin,
-      notificationClickHandlerAction: NotificationClickActionBehavior.Focus,
+      notificationClickHandlerMatch: NotificationClickMatchBehavior._Origin,
+      notificationClickHandlerAction: NotificationClickActionBehavior._Focus,
     };
   }
 
   static getFakeMergedConfig(config: TestEnvironmentConfig = {}): AppConfig {
     const fakeUserConfig = config.userConfig || this.getFakeAppUserConfig();
     const fakeServerConfig = this.getFakeServerAppConfig(
-      config.integration || ConfigIntegrationKind.Custom,
+      config.integration || ConfigIntegrationKind._Custom,
       config.overrideServerConfig,
     );
     const fakeMergedConfig = getMergedConfig(fakeUserConfig, fakeServerConfig);

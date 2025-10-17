@@ -1,9 +1,12 @@
 import { USER_AGENTS } from '__test__/constants';
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { Browser } from './constants';
 import {
   getBrowserName,
   getBrowserVersion,
+  isIosSafari,
   isMobileBrowser,
+  isPushNotificationsSupported,
   isTabletBrowser,
 } from './detect';
 
@@ -199,107 +202,107 @@ describe('getBrowserName()', () => {
     // chrome
     {
       userAgent: USER_AGENTS.CHROME_WINDOWS,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_MAC,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_LINUX,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_ANDROID,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_IOS_IPHONE,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
     {
       userAgent: USER_AGENTS.CHROME_IOS_IPAD,
-      expected: Browser.Chrome,
+      expected: Browser._Chrome,
     },
 
     // firefox
     {
       userAgent: USER_AGENTS.FIREFOX_WINDOWS,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
     {
       userAgent: USER_AGENTS.FIREFOX_MAC,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
     {
       userAgent: USER_AGENTS.FIREFOX_LINUX,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
     {
       userAgent: USER_AGENTS.FIREFOX_ANDROID,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
     {
       userAgent: USER_AGENTS.FIREFOX_IOS,
-      expected: Browser.Firefox,
+      expected: Browser._Firefox,
     },
 
     // edge
     {
       userAgent: USER_AGENTS.EDGE_WINDOWS,
-      expected: Browser.Edge,
+      expected: Browser._Edge,
     },
     {
       userAgent: USER_AGENTS.EDGE_MAC,
-      expected: Browser.Edge,
+      expected: Browser._Edge,
     },
     {
       userAgent: USER_AGENTS.EDGE_IOS,
-      expected: Browser.Edge,
+      expected: Browser._Edge,
     },
     {
       userAgent: USER_AGENTS.EDGE_ANDROID,
-      expected: Browser.Edge,
+      expected: Browser._Edge,
     },
 
     // safari
     {
       userAgent: USER_AGENTS.SAFARI_MAC,
-      expected: Browser.Safari,
+      expected: Browser._Safari,
     },
     {
       userAgent: USER_AGENTS.SAFARI_IPHONE,
-      expected: Browser.Safari,
+      expected: Browser._Safari,
     },
     {
       userAgent: USER_AGENTS.SAFARI_IPAD,
-      expected: Browser.Safari,
+      expected: Browser._Safari,
     },
     {
       userAgent: USER_AGENTS.SAFARI_IPOD,
-      expected: Browser.Safari,
+      expected: Browser._Safari,
     },
 
     // other
     {
       userAgent: USER_AGENTS.OPERA_WINDOWS,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
     {
       userAgent: USER_AGENTS.YANDEX_WINDOWS,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
     {
       userAgent: USER_AGENTS.VIVALDI_WINDOWS,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
     {
       userAgent: USER_AGENTS.FACEBOOK_APP_ANDROID,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
     {
       userAgent: USER_AGENTS.FACEBOOK_APP_IOS,
-      expected: Browser.Other,
+      expected: Browser._Other,
     },
   ].forEach(({ userAgent, expected }) => {
     test(`"${userAgent}" should be ${expected}`, () => {
@@ -423,5 +426,53 @@ describe('getBrowserVersion()', () => {
       mockUserAgent(userAgent);
       expect(getBrowserVersion()).toBe(expected);
     });
+  });
+});
+
+describe('isPushNotificationsSupported()', () => {
+  beforeEach(() => {
+    Object.defineProperty(global, 'PushSubscriptionOptions', {
+      value: {
+        prototype: {
+          applicationServerKey: 'test',
+        },
+      },
+      writable: true,
+    });
+    TestEnvironment.initialize();
+  });
+
+  test('can check if browser supports push notifications', () => {
+    expect(isPushNotificationsSupported()).toBe(true);
+
+    Object.defineProperty(global, 'PushSubscriptionOptions', {
+      value: undefined,
+      writable: true,
+    });
+    expect(isPushNotificationsSupported()).toBe(false);
+
+    Object.defineProperty(window, 'safari', {
+      value: {
+        pushNotification: {},
+      },
+      writable: true,
+    });
+    expect(isPushNotificationsSupported()).toBe(true);
+  });
+});
+
+describe('isIosSafari()', () => {
+  beforeEach(() => {
+    TestEnvironment.initialize();
+  });
+
+  test('can check if on ios safari browser', () => {
+    expect(isIosSafari()).toBe(false);
+
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      value: 1,
+      writable: true,
+    });
+    expect(isIosSafari()).toBe(true);
   });
 });

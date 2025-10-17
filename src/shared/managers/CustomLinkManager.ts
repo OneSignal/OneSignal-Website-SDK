@@ -55,8 +55,8 @@ export class CustomLinkManager {
     if (this._config.text.explanation) {
       const explanation = document.createElement('p');
       explanation.textContent = this._config.text.explanation;
-      addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.resetClass);
-      addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.explanationClass);
+      addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES._ResetClass);
+      addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES._ExplanationClass);
 
       if (this._config.size) {
         addCssClass(explanation, this._config.size);
@@ -65,9 +65,9 @@ export class CustomLinkManager {
       if (
         await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()
       ) {
-        addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
+        addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES._State._Subscribed);
       } else {
-        addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.unsubscribed);
+        addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES._State._Unsubscribed);
       }
 
       element.appendChild(explanation);
@@ -84,8 +84,8 @@ export class CustomLinkManager {
 
     if (this._config.text.subscribe) {
       const subscribeButton = document.createElement('button');
-      addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.resetClass);
-      addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.subscribeClass);
+      addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES._ResetClass);
+      addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES._SubscribeClass);
 
       if (this._config.size) {
         addCssClass(subscribeButton, this._config.size);
@@ -98,11 +98,14 @@ export class CustomLinkManager {
       if (
         await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()
       ) {
-        addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
+        addCssClass(
+          subscribeButton,
+          CUSTOM_LINK_CSS_CLASSES._State._Subscribed,
+        );
       } else {
         addCssClass(
           subscribeButton,
-          CUSTOM_LINK_CSS_CLASSES.state.unsubscribed,
+          CUSTOM_LINK_CSS_CLASSES._State._Unsubscribed,
         );
       }
 
@@ -125,7 +128,7 @@ export class CustomLinkManager {
   private async _loadSdkStyles(): Promise<boolean> {
     const sdkStylesLoadResult =
       await OneSignal._context._dynamicResourceLoader._loadSdkStylesheet();
-    if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
+    if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
       Log._debug(
         'Not initializing custom link button because styles failed to load.',
       );
@@ -135,7 +138,7 @@ export class CustomLinkManager {
   }
 
   private _hideElement(element: HTMLElement): void {
-    addCssClass(element, CUSTOM_LINK_CSS_CLASSES.hide);
+    addCssClass(element, CUSTOM_LINK_CSS_CLASSES._Hide);
   }
 
   /**
@@ -195,7 +198,7 @@ export class CustomLinkManager {
 
   get _customlinkContainerElements(): HTMLElement[] {
     const containers = document.querySelectorAll<HTMLElement>(
-      CUSTOM_LINK_CSS_SELECTORS.containerSelector,
+      CUSTOM_LINK_CSS_SELECTORS._ContainerSelector,
     );
     return Array.prototype.slice.call(containers);
   }

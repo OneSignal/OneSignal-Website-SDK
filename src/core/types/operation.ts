@@ -1,46 +1,53 @@
-import { type ExecutionResponse } from 'src/core/operations/ExecutionResponse';
 import { type Operation } from 'src/core/operations/Operation';
+
+// Types
+export type ExecutionResponse = {
+  _result: ExecutionResultValue;
+  _retryAfterSeconds?: number;
+  _operations?: Operation[];
+  _idTranslations?: Record<string, string>;
+};
 
 // Enums
 export const ExecutionResult = {
   /**
    * The operation was executed successfully.
    */
-  SUCCESS: 0,
+  _Success: 0,
 
   /**
    * The operation group failed but the starting op should be retried split from the group.
    */
-  SUCCESS_STARTING_ONLY: 1,
+  _SuccessStartingOnly: 1,
 
   /**
    * The operation failed but should be retried.
    */
-  FAIL_RETRY: 2,
+  _FailRetry: 2,
 
   /**
    * The operation failed and should not be tried again.
    */
-  FAIL_NORETRY: 3,
+  _FailNoretry: 3,
 
   /**
    * The operation failed because the request was not authorized.  The operation can be
    * retried if authorization can be achieved.
    */
-  FAIL_UNAUTHORIZED: 4,
+  _FailUnauthorized: 4,
 
   /**
    * Used in special login case.
    * The operation failed due to a conflict and can be handled.
    */
-  FAIL_CONFLICT: 5,
+  _FailConflict: 5,
 
   /**
    * Used in special create user case.
    * The operation failed due to a non-retryable error. Pause the operation repo
    * and retry on a new session, giving the SDK a chance to recover from the failed user create.
    */
-  FAIL_PAUSE_OPREPO: 6,
+  _FailPauseOpRepo: 6,
 } as const;
 
 export type ExecutionResultValue =

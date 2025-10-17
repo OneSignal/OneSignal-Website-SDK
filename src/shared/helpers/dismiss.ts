@@ -10,13 +10,13 @@ import { windowEnvString } from '../environment/detect';
 import Log from '../libraries/Log';
 
 const DISMISS_TYPE_COUNT_MAP = {
-  [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
-  [DismissPrompt.NonPush]: DismissCountKey.NonPushPromptsDismissCount,
+  [DismissPrompt._Push]: DismissCountKey._PromptDismissCount,
+  [DismissPrompt._NonPush]: DismissCountKey._NonPushPromptsDismissCount,
 };
 
 const DISMISS_TYPE_TIME_MAP = {
-  [DismissPrompt.Push]: DismissTimeKey.OneSignalNotificationPrompt,
-  [DismissPrompt.NonPush]: DismissTimeKey.OneSignalNonPushPrompt,
+  [DismissPrompt._Push]: DismissTimeKey._OneSignalNotificationPrompt,
+  [DismissPrompt._NonPush]: DismissTimeKey._OneSignalNonPushPrompt,
 };
 
 /**
@@ -53,12 +53,12 @@ export async function markPromptDismissedWithType(type: DismissPromptValue) {
  */
 export function wasPromptOfTypeDismissed(type: DismissPromptValue): boolean {
   switch (type) {
-    case DismissPrompt.Push:
+    case DismissPrompt._Push:
       return (
-        getItem(DismissTimeKey.OneSignalNotificationPrompt) === 'dismissed'
+        getItem(DismissTimeKey._OneSignalNotificationPrompt) === 'dismissed'
       );
-    case DismissPrompt.NonPush:
-      return getItem(DismissTimeKey.OneSignalNonPushPrompt) === 'dismissed';
+    case DismissPrompt._NonPush:
+      return getItem(DismissTimeKey._OneSignalNonPushPrompt) === 'dismissed';
     default:
       break;
   }

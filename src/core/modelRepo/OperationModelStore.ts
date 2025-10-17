@@ -40,34 +40,34 @@ export class OperationModelStore extends ModelStore<Operation> {
     let operation: Operation;
 
     switch (operationName) {
-      case OPERATION_NAME.SET_ALIAS:
+      case OPERATION_NAME._SetAlias:
         operation = new SetAliasOperation();
         break;
-      case OPERATION_NAME.DELETE_ALIAS:
+      case OPERATION_NAME._DeleteAlias:
         operation = new DeleteAliasOperation();
         break;
-      case OPERATION_NAME.CREATE_SUBSCRIPTION:
+      case OPERATION_NAME._CreateSubscription:
         operation = new CreateSubscriptionOperation();
         break;
-      case OPERATION_NAME.UPDATE_SUBSCRIPTION:
+      case OPERATION_NAME._UpdateSubscription:
         operation = new UpdateSubscriptionOperation();
         break;
-      case OPERATION_NAME.DELETE_SUBSCRIPTION:
+      case OPERATION_NAME._DeleteSubscription:
         operation = new DeleteSubscriptionOperation();
         break;
-      case OPERATION_NAME.TRANSFER_SUBSCRIPTION:
+      case OPERATION_NAME._TransferSubscription:
         operation = new TransferSubscriptionOperation();
         break;
-      case OPERATION_NAME.LOGIN_USER:
+      case OPERATION_NAME._LoginUser:
         operation = new LoginUserOperation();
         break;
-      case OPERATION_NAME.REFRESH_USER:
+      case OPERATION_NAME._RefreshUser:
         operation = new RefreshUserOperation();
         break;
-      case OPERATION_NAME.SET_PROPERTY:
+      case OPERATION_NAME._SetProperty:
         operation = new SetPropertyOperation();
         break;
-      case OPERATION_NAME.CUSTOM_EVENT:
+      case OPERATION_NAME._CustomEvent:
         operation = new TrackCustomEventOperation();
         break;
       default:
@@ -100,7 +100,7 @@ export class OperationModelStore extends ModelStore<Operation> {
       return false;
     }
 
-    const excluded = new Set<string>([OPERATION_NAME.LOGIN_USER]);
+    const excluded = new Set<string>([OPERATION_NAME._LoginUser]);
 
     // Must have onesignalId if it is not one of the excluded operations above
     if (!object.onesignalId && !excluded.has(operationName)) {

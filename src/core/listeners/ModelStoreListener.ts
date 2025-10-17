@@ -1,6 +1,10 @@
 import type { Model, ModelChangedArgs } from '../models/Model';
 import { Operation } from '../operations/Operation';
-import { ModelChangeTags, type IModelStore } from '../types/models';
+import {
+  ModelChangeTags,
+  type IModelStore,
+  type ModelChangeTagValue,
+} from '../types/models';
 import type { IOperationRepo } from '../types/operation';
 
 // Implements logic similar to Android SDK's ModelStoreListener
@@ -25,8 +29,8 @@ export abstract class ModelStoreListener<TModel extends Model> {
     this._store._unsubscribe(this);
   }
 
-  _onModelAdded(model: TModel, tag: string): void {
-    if (tag !== ModelChangeTags.NORMAL) {
+  _onModelAdded(model: TModel, tag: ModelChangeTagValue): void {
+    if (tag !== ModelChangeTags._Normal) {
       return;
     }
 
@@ -36,8 +40,11 @@ export abstract class ModelStoreListener<TModel extends Model> {
     }
   }
 
-  async _onModelUpdated(args: ModelChangedArgs, tag: string): Promise<void> {
-    if (tag !== ModelChangeTags.NORMAL) {
+  async _onModelUpdated(
+    args: ModelChangedArgs,
+    tag: ModelChangeTagValue,
+  ): Promise<void> {
+    if (tag !== ModelChangeTags._Normal) {
       return;
     }
 
@@ -52,8 +59,11 @@ export abstract class ModelStoreListener<TModel extends Model> {
     }
   }
 
-  async _onModelRemoved(model: TModel, tag: string): Promise<void> {
-    if (tag !== ModelChangeTags.NORMAL) {
+  async _onModelRemoved(
+    model: TModel,
+    tag: ModelChangeTagValue,
+  ): Promise<void> {
+    if (tag !== ModelChangeTags._Normal) {
       return;
     }
 

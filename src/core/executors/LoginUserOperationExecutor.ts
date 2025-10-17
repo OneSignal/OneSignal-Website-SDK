@@ -7,7 +7,7 @@ import { getTimeZoneId } from 'src/shared/helpers/general';
 import {
   getResponseStatusType,
   ResponseStatusType,
-} from 'src/shared/helpers/NetworkUtils';
+} from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
@@ -17,7 +17,6 @@ import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
-import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { type Operation } from '../operations/Operation';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
@@ -30,6 +29,7 @@ import type {
   ICreateUserSubscription,
   IUserProperties,
 } from '../types/api';
+import type { ExecutionResponse } from '../types/operation';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
 
 type SubscriptionMap = Record<
@@ -58,7 +58,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   }
 
   get _operations(): string[] {
-    return [OPERATION_NAME.LOGIN_USER];
+    return [OPERATION_NAME._LoginUser];
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
@@ -80,61 +80,59 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.
-    if (!loginUserOp.existingOnesignalId || !loginUserOp.externalId) {
+    if (!loginUserOp._existingOnesignalId || !loginUserOp._externalId) {
       return this._createUser(loginUserOp, operations);
     }
 
     const result = await this._identityOperationExecutor._execute([
       new SetAliasOperation(
         loginUserOp._appId,
-        loginUserOp.existingOnesignalId,
-        IdentityConstants.EXTERNAL_ID,
-        loginUserOp.externalId,
+        loginUserOp._existingOnesignalId,
+        IdentityConstants._ExternalID,
+        loginUserOp._externalId,
       ),
     ]);
 
-    switch (result.result) {
-      case ExecutionResult.SUCCESS: {
-        const backendOneSignalId = loginUserOp.existingOnesignalId;
+    switch (result._result) {
+      case ExecutionResult._Success: {
+        const backendOneSignalId = loginUserOp._existingOnesignalId;
         const opOneSignalId = loginUserOp._onesignalId;
 
-        if (this._identityModelStore.model._onesignalId === opOneSignalId) {
-          this._identityModelStore.model._setProperty(
-            IdentityConstants.ONESIGNAL_ID,
+        if (this._identityModelStore._model._onesignalId === opOneSignalId) {
+          this._identityModelStore._model._setProperty(
+            IdentityConstants._OneSignalID,
             backendOneSignalId,
-            ModelChangeTags.HYDRATE,
+            ModelChangeTags._Hydrate,
           );
         }
 
-        if (this._propertiesModelStore.model._onesignalId === opOneSignalId) {
-          this._propertiesModelStore.model._setProperty(
+        if (this._propertiesModelStore._model._onesignalId === opOneSignalId) {
+          this._propertiesModelStore._model._setProperty(
             'onesignalId',
             backendOneSignalId,
-            ModelChangeTags.HYDRATE,
+            ModelChangeTags._Hydrate,
           );
         }
-        return new ExecutionResponse(
-          ExecutionResult.SUCCESS_STARTING_ONLY,
-          undefined,
-          undefined,
-          {
+        return {
+          _result: ExecutionResult._SuccessStartingOnly,
+          _idTranslations: {
             [loginUserOp._onesignalId]: backendOneSignalId,
           },
-        );
+        };
       }
 
-      case ExecutionResult.FAIL_CONFLICT:
-        Log._debug(`Handling 409 for externalId: ${loginUserOp.externalId}`);
+      case ExecutionResult._FailConflict:
+        Log._debug(`Handling 409 for externalId: ${loginUserOp._externalId}`);
         return this._createUser(loginUserOp, operations);
 
-      case ExecutionResult.FAIL_NORETRY:
+      case ExecutionResult._FailNoretry:
         Log._error(
-          `Recovering from SetAlias failure for externalId: ${loginUserOp.externalId}`,
+          `Recovering from SetAlias failure for externalId: ${loginUserOp._externalId}`,
         );
         return this._createUser(loginUserOp, operations);
 
       default:
-        return new ExecutionResponse(result.result);
+        return { _result: result._result };
     }
   }
 
@@ -149,8 +147,8 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       language: getLanguage(),
     };
 
-    if (createUserOperation.externalId) {
-      identity[IdentityConstants.EXTERNAL_ID] = createUserOperation.externalId;
+    if (createUserOperation._externalId) {
+      identity[IdentityConstants._ExternalID] = createUserOperation._externalId;
     }
 
     for (const operation of operations) {
@@ -187,19 +185,19 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         [createUserOperation._onesignalId]: backendOneSignalId,
       };
 
-      if (this._identityModelStore.model._onesignalId === opOneSignalId) {
-        this._identityModelStore.model._setProperty(
-          IdentityConstants.ONESIGNAL_ID,
+      if (this._identityModelStore._model._onesignalId === opOneSignalId) {
+        this._identityModelStore._model._setProperty(
+          IdentityConstants._OneSignalID,
           backendOneSignalId,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
       }
 
-      if (this._propertiesModelStore.model._onesignalId === opOneSignalId) {
-        this._propertiesModelStore.model._setProperty(
+      if (this._propertiesModelStore._model._onesignalId === opOneSignalId) {
+        this._propertiesModelStore._model._setProperty(
           'onesignalId',
           backendOneSignalId,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
       }
 
@@ -207,10 +205,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       const resultProperties = response.result.properties;
       if (resultProperties) {
         for (const [key, value] of Object.entries(resultProperties)) {
-          this._propertiesModelStore.model._setProperty(
+          this._propertiesModelStore._model._setProperty(
             key as IPropertiesModelKeys,
             value,
-            ModelChangeTags.HYDRATE,
+            ModelChangeTags._Hydrate,
           );
         }
       }
@@ -223,12 +221,12 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         idTranslations[localId] = backendSub.id;
 
         const model =
-          this._subscriptionsModelStore.getBySubscriptionId(localId);
-        model?._setProperty('id', backendSub.id, ModelChangeTags.HYDRATE);
+          this._subscriptionsModelStore._getBySubscriptionId(localId);
+        model?._setProperty('id', backendSub.id, ModelChangeTags._Hydrate);
         model?._setProperty(
           'onesignalId',
           backendOneSignalId,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
       }
 
@@ -244,30 +242,29 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
             ]
           : undefined;
 
-      return new ExecutionResponse(
-        ExecutionResult.SUCCESS,
-        undefined,
-        followUp,
-        idTranslations,
-      );
+      return {
+        _result: ExecutionResult._Success,
+        _operations: followUp,
+        _idTranslations: idTranslations,
+      };
     }
 
     const { status, retryAfterSeconds } = response;
     const responseType = getResponseStatusType(status);
 
     switch (responseType) {
-      case ResponseStatusType.RETRYABLE:
-        return new ExecutionResponse(
-          ExecutionResult.FAIL_RETRY,
-          retryAfterSeconds,
-        );
-      case ResponseStatusType.UNAUTHORIZED:
-        return new ExecutionResponse(
-          ExecutionResult.FAIL_UNAUTHORIZED,
-          retryAfterSeconds,
-        );
+      case ResponseStatusType._Retryable:
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
+      case ResponseStatusType._Unauthorized:
+        return {
+          _result: ExecutionResult._FailUnauthorized,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
       default:
-        return new ExecutionResponse(ExecutionResult.FAIL_PAUSE_OPREPO);
+        return { _result: ExecutionResult._FailPauseOpRepo };
     }
   }
 
@@ -281,7 +278,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   ): SubscriptionMap {
     switch (true) {
       case operation instanceof CreateSubscriptionOperation: {
-        const subscriptionId = operation.subscriptionId;
+        const subscriptionId = operation._subscriptionId;
         return {
           ...currentSubs,
           [subscriptionId]: {
@@ -299,7 +296,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case operation instanceof UpdateSubscriptionOperation: {
-        const subscriptionId = operation.subscriptionId;
+        const subscriptionId = operation._subscriptionId;
 
         if (currentSubs[subscriptionId]) {
           return {
@@ -316,7 +313,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case operation instanceof TransferSubscriptionOperation: {
-        const subscriptionId = operation.subscriptionId;
+        const subscriptionId = operation._subscriptionId;
 
         return {
           ...currentSubs,
@@ -329,7 +326,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       case operation instanceof DeleteSubscriptionOperation: {
         const subs = { ...currentSubs };
-        delete subs[operation.subscriptionId];
+        delete subs[operation._subscriptionId];
         return subs;
       }
 

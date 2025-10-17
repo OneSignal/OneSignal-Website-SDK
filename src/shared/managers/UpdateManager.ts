@@ -1,8 +1,8 @@
-import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
 import User from 'src/onesignal/User';
 import type { ContextInterface } from 'src/shared/context/types';
 import { getPageViewCount, isFirstPageView } from 'src/shared/helpers/pageview';
 import Log from 'src/shared/libraries/Log';
+import { isCompleteSubscriptionObject } from 'src/shared/managers/utils';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { sendOutcome } from '../api/shared';
@@ -55,7 +55,7 @@ export class UpdateManager {
       await OneSignal._coreDirector._getPushSubscriptionModel();
 
     if (
-      subscriptionModel?._notification_types !== NotificationType.Subscribed &&
+      subscriptionModel?._notification_types !== NotificationType._Subscribed &&
       OneSignal.config?.enableOnSession !== true
     ) {
       return;
@@ -66,7 +66,7 @@ export class UpdateManager {
 
       // Not awaiting here on purpose
       this._context._sessionManager._upsertSession(
-        SessionOrigin.UserNewSession,
+        SessionOrigin._UserNewSession,
       );
       this._onSessionSent = true;
     } catch (e) {

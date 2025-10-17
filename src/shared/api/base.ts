@@ -5,7 +5,7 @@ import { delay } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';
 import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';
-import { IS_SERVICE_WORKER, VERSION } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER, VERSION } from '../utils/env';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 

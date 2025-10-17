@@ -5,7 +5,10 @@ import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
 import { getAppId } from 'src/shared/helpers/main';
 import { IDManager } from 'src/shared/managers/IDManager';
-import UserDirector from '../../onesignal/UserDirector';
+import {
+  createUserOnServer,
+  resetUserModels,
+} from '../../onesignal/userDirector';
 import Log from '../../shared/libraries/Log';
 
 export default class LoginManager {
@@ -40,15 +43,15 @@ export default class LoginManager {
       return;
     }
 
-    UserDirector._resetUserModels();
+    resetUserModels();
     identityModel = OneSignal._coreDirector._getIdentityModel();
 
     // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
     // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
     identityModel._setProperty(
-      IdentityConstants.EXTERNAL_ID,
+      IdentityConstants._ExternalID,
       externalId,
-      ModelChangeTags.HYDRATE,
+      ModelChangeTags._Hydrate,
     );
     const newIdentityOneSignalId = identityModel._onesignalId;
     const appId = getAppId();
@@ -90,9 +93,9 @@ export default class LoginManager {
     if (!identityModel._externalId)
       return Log._debug('Logout: User is not logged in, skipping logout');
 
-    UserDirector._resetUserModels();
+    resetUserModels();
 
     // create a new anonymous user
-    return UserDirector._createUserOnServer();
+    return createUserOnServer();
   }
 }

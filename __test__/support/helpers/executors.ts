@@ -18,7 +18,7 @@ export class SomeOperation extends Operation {
   }
 
   get _groupComparisonType() {
-    return GroupComparisonType.CREATE;
+    return GroupComparisonType._Create;
   }
 
   get _canStartExecute() {

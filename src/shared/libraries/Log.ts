@@ -1,4 +1,4 @@
-import { IS_SERVICE_WORKER, LOGGING } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER, LOGGING } from '../utils/env';
 
 export default class Log {
   private static _shouldLog(): boolean {

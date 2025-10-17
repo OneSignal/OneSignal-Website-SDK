@@ -12,7 +12,7 @@ import type {
   BellSize,
   BellText,
 } from 'src/shared/prompts/types';
-import { wasPromptOfTypeDismissed } from '../../shared/helpers/DismissHelper';
+import { wasPromptOfTypeDismissed } from '../../shared/helpers/dismiss';
 import { getNotificationIcons } from '../../shared/helpers/main';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
@@ -414,7 +414,7 @@ export default class Bell {
 
     const sdkStylesLoadResult =
       await OneSignal._context._dynamicResourceLoader._loadSdkStylesheet();
-    if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
+    if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
       Log._debug('Not showing notify button because styles failed to load.');
       return;
     }
@@ -481,7 +481,7 @@ export default class Bell {
 
     const isPushEnabled =
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
-    wasPromptOfTypeDismissed(DismissPrompt.Push);
+    wasPromptOfTypeDismissed(DismissPrompt._Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
     // where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small

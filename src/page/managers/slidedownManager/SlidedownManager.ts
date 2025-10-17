@@ -27,7 +27,7 @@ import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import {
   markPromptDismissedWithType,
   wasPromptOfTypeDismissed,
-} from '../../../shared/helpers/DismissHelper';
+} from '../../../shared/helpers/dismiss';
 import Log from '../../../shared/libraries/Log';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
 import { DismissPrompt } from '../../models/Dismiss';
@@ -84,7 +84,7 @@ export class SlidedownManager {
         return false;
       }
 
-      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt.Push);
+      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt._Push);
 
       if (optedOut) {
         throw new Error('User is opted out');
@@ -123,7 +123,7 @@ export class SlidedownManager {
         }
       }
 
-      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt.NonPush);
+      wasDismissed = wasPromptOfTypeDismissed(DismissPrompt._NonPush);
     }
 
     if (wasDismissed && !options.force && !options.isInUpdateMode) {
@@ -159,7 +159,7 @@ export class SlidedownManager {
       this._slidedown._channelCaptureContainer?._isEmailInputFieldEmpty();
 
     if (!emailInputFieldIsValid || isEmailEmpty) {
-      throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+      throw new ChannelCaptureError(InvalidChannelInputField._InvalidEmail);
     }
 
     const email =
@@ -178,7 +178,7 @@ export class SlidedownManager {
       this._slidedown._channelCaptureContainer?._isSmsInputFieldEmpty();
 
     if (!smsInputFieldIsValid || isSmsEmpty) {
-      throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+      throw new ChannelCaptureError(InvalidChannelInputField._InvalidSms);
     }
 
     const sms =
@@ -211,7 +211,7 @@ export class SlidedownManager {
 
     if (bothFieldsInvalid || bothFieldsEmpty) {
       throw new ChannelCaptureError(
-        InvalidChannelInputField.InvalidEmailAndSms,
+        InvalidChannelInputField._InvalidEmailAndSms,
       );
     }
 
@@ -229,7 +229,7 @@ export class SlidedownManager {
         this._updateEmail(email);
       }
     } else {
-      throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+      throw new ChannelCaptureError(InvalidChannelInputField._InvalidEmail);
     }
 
     if (smsInputFieldIsValid) {
@@ -237,7 +237,7 @@ export class SlidedownManager {
         this._updateSMS(sms);
       }
     } else {
-      throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+      throw new ChannelCaptureError(InvalidChannelInputField._InvalidSms);
     }
   }
 
@@ -408,11 +408,11 @@ export class SlidedownManager {
       case DelayedPromptType._Push:
       case DelayedPromptType._Category:
         Log._debug('Setting flag to not show the slidedown to the user again.');
-        markPromptDismissedWithType(DismissPrompt.Push);
+        markPromptDismissedWithType(DismissPrompt._Push);
         break;
       default:
         Log._debug('Setting flag to not show the slidedown to the user again.');
-        markPromptDismissedWithType(DismissPrompt.NonPush);
+        markPromptDismissedWithType(DismissPrompt._NonPush);
         break;
     }
   }

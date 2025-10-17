@@ -30,9 +30,9 @@ export class SetPropertyOperation<
     property?: P,
     value?: PropertyValue[P],
   ) {
-    super(OPERATION_NAME.SET_PROPERTY, appId, onesignalId);
+    super(OPERATION_NAME._SetProperty, appId, onesignalId);
     if (property && value) {
-      this.property = property;
+      this._property = property;
       this.value = value;
     }
   }
@@ -40,10 +40,10 @@ export class SetPropertyOperation<
   /**
    * The property that is to be updated against the user.
    */
-  get property(): string {
+  get _property(): string {
     return this._getProperty('property');
   }
-  private set property(value: P) {
+  private set _property(value: P) {
     this._setProperty('property', value);
   }
 

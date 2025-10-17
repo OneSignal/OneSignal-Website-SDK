@@ -131,7 +131,7 @@ describe('DynamicResourceLoader', () => {
     const loader = new DynamicResourceLoader();
     const state = await loader._loadSdkStylesheet();
 
-    expect(state).toBe(ResourceLoadState.Loaded);
+    expect(state).toBe(ResourceLoadState._Loaded);
     const stylesheets = document.head.querySelectorAll(
       'link[rel="stylesheet"]',
     );
@@ -154,17 +154,17 @@ describe('DynamicResourceLoader', () => {
 
     const loader = new DynamicResourceLoader();
     const state = await loader._loadIfNew(
-      ResourceType.Script,
+      ResourceType._Script,
       new URL(scriptURL),
     );
-    expect(state).toBe(ResourceLoadState.Loaded);
+    expect(state).toBe(ResourceLoadState._Loaded);
 
     // should not load the same script again
     const state2 = await loader._loadIfNew(
-      ResourceType.Script,
+      ResourceType._Script,
       new URL(scriptURL),
     );
-    expect(state2).toBe(ResourceLoadState.Loaded);
+    expect(state2).toBe(ResourceLoadState._Loaded);
   });
 
   test('should handle load error', async () => {
@@ -180,9 +180,9 @@ describe('DynamicResourceLoader', () => {
 
     const loader = new DynamicResourceLoader();
     const state = await loader._loadIfNew(
-      ResourceType.Script,
+      ResourceType._Script,
       new URL(scriptURL),
     );
-    expect(state).toBe(ResourceLoadState.Failed);
+    expect(state).toBe(ResourceLoadState._Failed);
   });
 });

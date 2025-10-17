@@ -7,16 +7,16 @@ import type { IRebuildUserService } from 'src/core/types/user';
 import {
   getResponseStatusType,
   ResponseStatusType,
-} from 'src/shared/helpers/NetworkUtils';
+} from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
-import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { type Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { addAlias, deleteAlias } from '../requests/api';
+import type { ExecutionResponse } from '../types/operation';
 
 // Implements logic similar to Android SDK's IdentityOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/IdentityOperationExecutor.kt
@@ -36,7 +36,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   get _operations(): string[] {
-    return [OPERATION_NAME.SET_ALIAS, OPERATION_NAME.DELETE_ALIAS];
+    return [OPERATION_NAME._SetAlias, OPERATION_NAME._DeleteAlias];
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
@@ -79,7 +79,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       ? addAlias(
           { appId: lastOperation._appId },
           {
-            label: IdentityConstants.ONESIGNAL_ID,
+            label: IdentityConstants._OneSignalID,
             id: lastOperation._onesignalId,
           },
           { [lastOperation.label]: lastOperation.value },
@@ -87,7 +87,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       : deleteAlias(
           { appId: lastOperation._appId },
           {
-            label: IdentityConstants.ONESIGNAL_ID,
+            label: IdentityConstants._OneSignalID,
             id: lastOperation._onesignalId,
           },
           lastOperation.label,
@@ -96,54 +96,54 @@ export class IdentityOperationExecutor implements IOperationExecutor {
     const { ok, status, retryAfterSeconds } = await request;
     if (ok) {
       if (
-        this._identityModelStore.model._onesignalId ===
+        this._identityModelStore._model._onesignalId ===
         lastOperation._onesignalId
       ) {
-        this._identityModelStore.model._setProperty(
+        this._identityModelStore._model._setProperty(
           lastOperation.label,
           isSetAlias ? lastOperation.value : undefined,
-          ModelChangeTags.HYDRATE,
+          ModelChangeTags._Hydrate,
         );
       }
-      return new ExecutionResponse(ExecutionResult.SUCCESS);
+      return { _result: ExecutionResult._Success };
     }
 
     const responseType = getResponseStatusType(status);
     switch (responseType) {
-      case ResponseStatusType.RETRYABLE:
-        return new ExecutionResponse(
-          ExecutionResult.FAIL_RETRY,
-          retryAfterSeconds,
-        );
-      case ResponseStatusType.INVALID:
-        return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+      case ResponseStatusType._Retryable:
+        return {
+          _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
+      case ResponseStatusType._Invalid:
+        return { _result: ExecutionResult._FailNoretry };
 
-      case ResponseStatusType.CONFLICT: {
+      case ResponseStatusType._Conflict: {
         if (isSetAlias)
-          return new ExecutionResponse(
-            ExecutionResult.FAIL_CONFLICT,
-            retryAfterSeconds,
-          );
-        return new ExecutionResponse(ExecutionResult.SUCCESS); // alias doesn't exist = good
+          return {
+            _result: ExecutionResult._FailConflict,
+            _retryAfterSeconds: retryAfterSeconds,
+          };
+        return { _result: ExecutionResult._Success }; // alias doesn't exist = good
       }
 
-      case ResponseStatusType.UNAUTHORIZED:
-        return new ExecutionResponse(
-          ExecutionResult.FAIL_UNAUTHORIZED,
-          retryAfterSeconds,
-        );
+      case ResponseStatusType._Unauthorized:
+        return {
+          _result: ExecutionResult._FailUnauthorized,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
 
-      case ResponseStatusType.MISSING: {
+      case ResponseStatusType._Missing: {
         if (
           status === 404 &&
           this._newRecordState._isInMissingRetryWindow(
             lastOperation._onesignalId,
           )
         )
-          return new ExecutionResponse(
-            ExecutionResult.FAIL_RETRY,
-            retryAfterSeconds,
-          );
+          return {
+            _result: ExecutionResult._FailRetry,
+            _retryAfterSeconds: retryAfterSeconds,
+          };
 
         if (isSetAlias) {
           const rebuildOps =
@@ -153,19 +153,19 @@ export class IdentityOperationExecutor implements IOperationExecutor {
             );
 
           if (rebuildOps == null)
-            return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+            return { _result: ExecutionResult._FailNoretry };
 
-          return new ExecutionResponse(
-            ExecutionResult.FAIL_RETRY,
-            retryAfterSeconds,
-            rebuildOps,
-          );
+          return {
+            _result: ExecutionResult._FailRetry,
+            _retryAfterSeconds: retryAfterSeconds,
+            _operations: rebuildOps,
+          };
         }
 
         // This means either the User or the Alias was already
         // deleted, either way the end state is the same, the
         // alias no longer exists on that User.
-        return new ExecutionResponse(ExecutionResult.SUCCESS);
+        return { _result: ExecutionResult._Success };
       }
     }
   }

@@ -16,7 +16,7 @@ import {
   TAGGING_CONTAINER_STRINGS,
 } from '../../shared/slidedown/constants';
 import type { TagsObjectWithBoolean } from '../tags/types';
-import { getLoadingIndicatorWithColor } from './LoadingIndicator';
+import { getLoadingIndicatorWithColor } from './loading';
 
 export default class TaggingContainer {
   public _mount(
@@ -28,7 +28,7 @@ export default class TaggingContainer {
       existingPlayerTags,
     );
 
-    const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.body}`);
+    const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Body}`);
     body.appendChild(taggingContainer);
 
     if (this._taggingContainer) {
@@ -36,12 +36,12 @@ export default class TaggingContainer {
     }
 
     const allowButton = getDomElementOrStub(
-      `#${SLIDEDOWN_CSS_IDS.allowButton}`,
+      `#${SLIDEDOWN_CSS_IDS._AllowButton}`,
     ) as HTMLButtonElement;
     allowButton.disabled = false;
 
     removeCssClass(allowButton, 'disabled');
-    removeDomElement(`#${SLIDEDOWN_CSS_IDS.loadingContainer}`);
+    removeDomElement(`#${SLIDEDOWN_CSS_IDS._LoadingContainer}`);
   }
 
   /**
@@ -49,28 +49,28 @@ export default class TaggingContainer {
    */
   public _load(): void {
     const loadingContainer = getDomElementOrStub(
-      `#${SLIDEDOWN_CSS_IDS.loadingContainer}`,
+      `#${SLIDEDOWN_CSS_IDS._LoadingContainer}`,
     );
     const allowButton = getDomElementOrStub(
-      `#${SLIDEDOWN_CSS_IDS.allowButton}`,
+      `#${SLIDEDOWN_CSS_IDS._AllowButton}`,
     ) as HTMLButtonElement;
     const loadingMessageContainer = document.createElement('div');
 
-    addCssClass(loadingContainer, `${SLIDEDOWN_CSS_CLASSES.loadingContainer}`);
+    addCssClass(loadingContainer, `${SLIDEDOWN_CSS_CLASSES._LoadingContainer}`);
     addCssClass(
       loadingMessageContainer,
-      TAGGING_CONTAINER_CSS_CLASSES.loadingMessage,
+      TAGGING_CONTAINER_CSS_CLASSES._LoadingMessage,
     );
     addCssClass(allowButton, 'disabled');
 
     addDomElement(
       loadingContainer,
       'beforeend',
-      getLoadingIndicatorWithColor(COLORS.greyLoadingIndicator),
+      getLoadingIndicatorWithColor(COLORS._GreyLoadingIndicator),
     );
 
     loadingMessageContainer.innerText =
-      TAGGING_CONTAINER_STRINGS.fetchingPreferences;
+      TAGGING_CONTAINER_STRINGS._FetchingPreferences;
     loadingContainer.appendChild(loadingMessageContainer);
     allowButton.disabled = true;
   }
@@ -97,18 +97,18 @@ export default class TaggingContainer {
 
     addCssClass(
       firstColumnContainer,
-      TAGGING_CONTAINER_CSS_CLASSES.taggingContainerCol,
+      TAGGING_CONTAINER_CSS_CLASSES._TaggingContainerCol,
     );
     addCssClass(
       secondColumnContainer,
-      TAGGING_CONTAINER_CSS_CLASSES.taggingContainerCol,
+      TAGGING_CONTAINER_CSS_CLASSES._TaggingContainerCol,
     );
     addCssClass(
       taggingContainer,
-      TAGGING_CONTAINER_CSS_CLASSES.taggingContainer,
+      TAGGING_CONTAINER_CSS_CLASSES._TaggingContainer,
     );
 
-    taggingContainer.id = TAGGING_CONTAINER_CSS_IDS.taggingContainer;
+    taggingContainer.id = TAGGING_CONTAINER_CSS_IDS._TaggingContainer;
 
     firstColumnArr.forEach((elem) => {
       firstColumnContainer.appendChild(this._getCategoryLabelElement(elem));
@@ -134,10 +134,13 @@ export default class TaggingContainer {
     const clear = document.createElement('div');
     const wrappingDiv = document.createElement('div');
 
-    addCssClass(labelElement, TAGGING_CONTAINER_CSS_CLASSES.categoryLabel);
-    addCssClass(labelSpan, TAGGING_CONTAINER_CSS_CLASSES.categoryLabelText);
-    addCssClass(inputElement, TAGGING_CONTAINER_CSS_CLASSES.categoryLabelInput);
-    addCssClass(checkmarkSpan, TAGGING_CONTAINER_CSS_CLASSES.checkmark);
+    addCssClass(labelElement, TAGGING_CONTAINER_CSS_CLASSES._CategoryLabel);
+    addCssClass(labelSpan, TAGGING_CONTAINER_CSS_CLASSES._CategoryLabelText);
+    addCssClass(
+      inputElement,
+      TAGGING_CONTAINER_CSS_CLASSES._CategoryLabelInput,
+    );
+    addCssClass(checkmarkSpan, TAGGING_CONTAINER_CSS_CLASSES._Checkmark);
 
     labelElement.title = label;
     labelSpan.innerText = label;
@@ -158,7 +161,7 @@ export default class TaggingContainer {
   }
 
   private get _taggingContainer(): Element {
-    const selector = `#${SLIDEDOWN_CSS_IDS.body} > div.${TAGGING_CONTAINER_CSS_CLASSES.taggingContainer}`;
+    const selector = `#${SLIDEDOWN_CSS_IDS._Body} > div.${TAGGING_CONTAINER_CSS_CLASSES._TaggingContainer}`;
     return getDomElementOrStub(selector);
   }
 
@@ -173,7 +176,7 @@ export default class TaggingContainer {
 
   static _getValuesFromTaggingContainer(): TagsObjectWithBoolean {
     const selector =
-      `#${SLIDEDOWN_CSS_IDS.body} > div.${TAGGING_CONTAINER_CSS_CLASSES.taggingContainer}` +
+      `#${SLIDEDOWN_CSS_IDS._Body} > div.${TAGGING_CONTAINER_CSS_CLASSES._TaggingContainer}` +
       `> div > div > label > input[type=checkbox]`;
     const inputNodeArr = document.querySelectorAll(selector);
     const tags: TagsObjectWithBoolean = {};

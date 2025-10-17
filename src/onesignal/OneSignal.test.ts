@@ -65,7 +65,7 @@ const setupEnv = (consentRequired: boolean) => {
   });
   OneSignal._coreDirector._subscriptionModelStore._replaceAll(
     [],
-    ModelChangeTags.NO_PROPAGATE,
+    ModelChangeTags._NoPropogate,
   );
   setupPropertiesModel();
   setupIdentityModel();
@@ -614,7 +614,7 @@ describe('OneSignal - No Consent Required', () => {
 
           OneSignal._coreDirector._subscriptionModelStore._replaceAll(
             [],
-            ModelChangeTags.NO_PROPAGATE,
+            ModelChangeTags._NoPropogate,
           );
 
           // wait for db to be updated
@@ -692,7 +692,7 @@ describe('OneSignal - No Consent Required', () => {
 
           OneSignal._coreDirector._subscriptionModelStore._replaceAll(
             [],
-            ModelChangeTags.NO_PROPAGATE,
+            ModelChangeTags._NoPropogate,
           );
           setPushToken('');
           subscribeFcmFromPageSpy.mockImplementation(async () =>

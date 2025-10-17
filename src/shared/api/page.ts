@@ -1,7 +1,7 @@
 import JSONP from 'jsonp';
 import type { ServerAppConfig } from '../config/types';
 import { getOneSignalApiUrl } from '../environment/detect';
-import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER } from '../utils/env';
 import { downloadSWServerAppConfig } from './sw';
 
 export function jsonpLib(

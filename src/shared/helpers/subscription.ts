@@ -4,7 +4,7 @@ import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER } from '../utils/env';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 
@@ -15,7 +15,7 @@ export async function registerForPush(): Promise<Subscription | null> {
   if (IS_SERVICE_WORKER) throw new Error('Unsupported environment');
   try {
     const rawSubscription = await context._subscriptionManager._subscribe(
-      SubscriptionStrategyKind.ResubscribeExisting,
+      SubscriptionStrategyKind._ResubscribeExisting,
     );
     subscription =
       await context._subscriptionManager._registerSubscription(rawSubscription);
@@ -35,10 +35,10 @@ export async function registerForPush(): Promise<Subscription | null> {
  */
 export function isPushSubscriptionType(type: SubscriptionTypeValue): boolean {
   switch (type) {
-    case SubscriptionType.ChromePush:
-    case SubscriptionType.SafariPush:
-    case SubscriptionType.SafariLegacyPush:
-    case SubscriptionType.FirefoxPush:
+    case SubscriptionType._ChromePush:
+    case SubscriptionType._SafariPush:
+    case SubscriptionType._SafariLegacyPush:
+    case SubscriptionType._FirefoxPush:
       return true;
     default:
       return false;

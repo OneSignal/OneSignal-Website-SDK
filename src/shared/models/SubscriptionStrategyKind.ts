@@ -25,7 +25,8 @@ export const SubscriptionStrategyKind = {
    * unchanged still as legacy GCM). Migrating the subscription to VAPID would require first
    * unsubscribing, which this strategy does not attempt.
    */
-  ResubscribeExisting: 0,
+  _ResubscribeExisting: 0,
+
   /**
    * Unsubscribes an existing push subscription if one exists, and creates a new push subscription
    * with a new endpoint and crypto keys.
@@ -34,7 +35,7 @@ export const SubscriptionStrategyKind = {
    * strategy is used to "refresh" Microsoft Edge's expiring push subscriptions by obtaining a new
    * subscription with a newly long duration expiration time.
    */
-  SubscribeNew: 1,
+  _SubscribeNew: 1,
 } as const;
 
 export type SubscriptionStrategyKindValue =

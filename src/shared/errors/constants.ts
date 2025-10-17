@@ -1,5 +1,5 @@
 export const InvalidChannelInputField = {
-  InvalidSms: 0,
-  InvalidEmail: 1,
-  InvalidEmailAndSms: 2,
+  _InvalidSms: 0,
+  _InvalidEmail: 1,
+  _InvalidEmailAndSms: 2,
 } as const;

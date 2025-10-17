@@ -1,4 +1,8 @@
-import { ModelChangeTags, type IEventNotifier } from 'src/core/types/models';
+import {
+  ModelChangeTags,
+  type IEventNotifier,
+  type ModelChangeTagValue,
+} from 'src/core/types/models';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
 
 /**
@@ -12,7 +16,7 @@ export interface IModelChangedHandler<T extends object = object> {
    * @param args Information related to what has changed.
    * @param tag The tag which identifies how/why the model was changed.
    */
-  _onChanged(args: ModelChangedArgs<T>, tag: string): void;
+  _onChanged(args: ModelChangedArgs<T>, tag: ModelChangeTagValue): void;
 }
 
 /**
@@ -135,7 +139,7 @@ export class Model<U extends object = object, T extends U & object = U & object>
   _setProperty<K extends keyof T>(
     name: string & K,
     value: T[K] | undefined,
-    tag: string = ModelChangeTags.NORMAL,
+    tag: ModelChangeTagValue = ModelChangeTags._Normal,
     forceChange = false,
   ): void {
     const oldValue = this._data.get(name);
@@ -171,7 +175,7 @@ export class Model<U extends object = object, T extends U & object = U & object>
 
   private _notifyChanged(
     property: string,
-    tag: string,
+    tag: ModelChangeTagValue,
     oldValue: unknown,
     newValue: unknown,
   ): void {

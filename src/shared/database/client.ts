@@ -1,7 +1,7 @@
 import { openDB } from 'idb';
 import Log from '../libraries/Log';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
-import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER } from '../utils/env';
 import { DATABASE_NAME, VERSION } from './constants';
 import type { IDBStoreName, IdKey, IndexedDBSchema, OptionKey } from './types';
 import {

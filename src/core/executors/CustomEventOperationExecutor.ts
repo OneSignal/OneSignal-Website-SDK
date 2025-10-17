@@ -6,22 +6,22 @@ import {
 import {
   getResponseStatusType,
   ResponseStatusType,
-} from 'src/shared/helpers/NetworkUtils';
+} from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
-import { VERSION } from 'src/shared/utils/EnvVariables';
+import { VERSION } from 'src/shared/utils/env';
 import { OPERATION_NAME } from '../constants';
-import { ExecutionResponse } from '../operations/ExecutionResponse';
 import { Operation } from '../operations/Operation';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
 import { sendCustomEvent } from '../requests/api';
 import type { ICustomEventMetadata } from '../types/customEvents';
+import type { ExecutionResponse } from '../types/operation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 
 // Implements logic similar to Android SDK's CustomEventOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/main/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/CustomEventOperationExecutor.kt
 export class CustomEventsOperationExecutor implements IOperationExecutor {
   get _operations(): string[] {
-    return [OPERATION_NAME.CUSTOM_EVENT];
+    return [OPERATION_NAME._CustomEvent];
   }
 
   private get _eventMetadata(): ICustomEventMetadata {
@@ -52,12 +52,12 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     const response = await sendCustomEvent(
       { appId: operation._appId },
       {
-        name: operation.event.name,
+        name: operation._event.name,
         onesignal_id: operation._onesignalId,
-        external_id: operation.externalId,
-        timestamp: operation.timestamp,
+        external_id: operation._externalId,
+        timestamp: operation._timestamp,
         payload: {
-          ...(operation.event.properties ?? {}),
+          ...(operation._event.properties ?? {}),
           os_sdk: this._eventMetadata,
         },
       },
@@ -66,13 +66,13 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     const { ok, status } = response;
     const responseType = getResponseStatusType(status);
 
-    if (ok) return new ExecutionResponse(ExecutionResult.SUCCESS);
+    if (ok) return { _result: ExecutionResult._Success };
 
     switch (responseType) {
-      case ResponseStatusType.RETRYABLE:
-        return new ExecutionResponse(ExecutionResult.FAIL_RETRY);
+      case ResponseStatusType._Retryable:
+        return { _result: ExecutionResult._FailRetry };
       default:
-        return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
+        return { _result: ExecutionResult._FailNoretry };
     }
   }
 }

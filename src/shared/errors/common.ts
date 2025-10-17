@@ -19,13 +19,13 @@ export class ChannelCaptureError extends Error {
   constructor(invalidChannelInput: InvalidChannelInputFieldValue) {
     let errorMessage;
     switch (invalidChannelInput) {
-      case InvalidChannelInputField.InvalidEmail:
+      case InvalidChannelInputField._InvalidEmail:
         errorMessage = `Invalid email`;
         break;
-      case InvalidChannelInputField.InvalidSms:
+      case InvalidChannelInputField._InvalidSms:
         errorMessage = `Invalid sms`;
         break;
-      case InvalidChannelInputField.InvalidEmailAndSms:
+      case InvalidChannelInputField._InvalidEmailAndSms:
         errorMessage = `Invalid email & sms`;
         break;
     }

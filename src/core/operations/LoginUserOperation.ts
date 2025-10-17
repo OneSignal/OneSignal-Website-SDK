@@ -32,18 +32,18 @@ export class LoginUserOperation extends Operation<ILoginOp> {
     externalId?: string,
     existingOneSignalId?: string,
   ) {
-    super(OPERATION_NAME.LOGIN_USER, appId, onesignalId);
-    if (externalId) this.externalId = externalId;
-    if (existingOneSignalId) this.existingOnesignalId = existingOneSignalId;
+    super(OPERATION_NAME._LoginUser, appId, onesignalId);
+    if (externalId) this._externalId = externalId;
+    if (existingOneSignalId) this._existingOnesignalId = existingOneSignalId;
   }
 
   /**
    * The optional external ID of this newly logged-in user. Must be unique for the appId.
    */
-  get externalId(): string | undefined {
+  get _externalId(): string | undefined {
     return this._getProperty('externalId');
   }
-  private set externalId(value: string) {
+  private set _externalId(value: string) {
     this._setProperty('externalId', value);
   }
 
@@ -52,10 +52,10 @@ export class LoginUserOperation extends Operation<ILoginOp> {
    * When null (or non-null but unsuccessful), a new user will be upserted. This ID *may* be locally generated
    * and can be checked via IDManager.isLocalId to ensure correct processing.
    */
-  get existingOnesignalId(): string | undefined {
+  get _existingOnesignalId(): string | undefined {
     return this._getProperty('existingOnesignalId');
   }
-  private set existingOnesignalId(value: string) {
+  private set _existingOnesignalId(value: string) {
     this._setProperty('existingOnesignalId', value);
   }
 
@@ -68,23 +68,23 @@ export class LoginUserOperation extends Operation<ILoginOp> {
   }
 
   override get _groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.CREATE;
+    return GroupComparisonType._Create;
   }
 
   override get _canStartExecute(): boolean {
     return (
-      !this.existingOnesignalId ||
-      !IDManager._isLocalId(this.existingOnesignalId)
+      !this._existingOnesignalId ||
+      !IDManager._isLocalId(this._existingOnesignalId)
     );
   }
 
   override get _applyToRecordId(): string {
-    return this.existingOnesignalId ?? this._onesignalId;
+    return this._existingOnesignalId ?? this._onesignalId;
   }
 
   override _translateIds(map: Record<string, string>): void {
-    if (this.existingOnesignalId && map[this.existingOnesignalId]) {
-      this.existingOnesignalId = map[this.existingOnesignalId];
+    if (this._existingOnesignalId && map[this._existingOnesignalId]) {
+      this._existingOnesignalId = map[this._existingOnesignalId];
     }
   }
 }

@@ -120,7 +120,7 @@ export default class OutcomesHelper {
     notifArr: string[],
   ) {
     // we should only send if type is unattributed OR there are notifs to attribute
-    if (outcomeAttribution.type === OutcomeAttributionType.Unattributed) {
+    if (outcomeAttribution.type === OutcomeAttributionType._Unattributed) {
       return true;
     }
     return notifArr.length > 0;
@@ -167,7 +167,7 @@ export default class OutcomesHelper {
     const { type, notificationIds, weight } = outcomeProps;
 
     switch (type) {
-      case OutcomeAttributionType.Direct:
+      case OutcomeAttributionType._Direct:
         if (this._isUnique) {
           await this._saveSentUniqueOutcome(notificationIds);
         }
@@ -178,7 +178,7 @@ export default class OutcomesHelper {
           weight,
         );
         return;
-      case OutcomeAttributionType.Indirect:
+      case OutcomeAttributionType._Indirect:
         if (this._isUnique) {
           await this._saveSentUniqueOutcome(notificationIds);
         }
@@ -189,7 +189,7 @@ export default class OutcomesHelper {
           weight,
         );
         return;
-      case OutcomeAttributionType.Unattributed:
+      case OutcomeAttributionType._Unattributed:
         if (this._isUnique) {
           if (await this._wasSentDuringSession()) {
             Log._warn(
@@ -243,7 +243,7 @@ export async function getConfigAttribution(
     const clickedNotifications = await getAllNotificationClickedForOutcomes();
     if (clickedNotifications.length > 0) {
       return {
-        type: OutcomeAttributionType.Direct,
+        type: OutcomeAttributionType._Direct,
         notificationIds: [clickedNotifications[0].notificationId],
       };
     }
@@ -298,7 +298,7 @@ export async function getConfigAttribution(
 
       if (matchingNotificationIds.length > 0) {
         return {
-          type: OutcomeAttributionType.Indirect,
+          type: OutcomeAttributionType._Indirect,
           notificationIds: matchingNotificationIds,
         };
       }
@@ -308,13 +308,13 @@ export async function getConfigAttribution(
   /* unattributed outcome report */
   if (config.unattributed && config.unattributed.enabled) {
     return {
-      type: OutcomeAttributionType.Unattributed,
+      type: OutcomeAttributionType._Unattributed,
       notificationIds: [],
     };
   }
 
   return {
-    type: OutcomeAttributionType.NotSupported,
+    type: OutcomeAttributionType._NotSupported,
     notificationIds: [],
   };
 }

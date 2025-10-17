@@ -1,11 +1,11 @@
-import * as BrowserSupportsPush from './BrowserSupportsPush';
-import { start } from './OneSignalShimLoader';
+import * as useragentHelpers from 'src/shared/useragent/detect';
+import { start } from './shimLoader';
 
 const supportsSpy = vi
-  .spyOn(BrowserSupportsPush, 'isPushNotificationsSupported')
+  .spyOn(useragentHelpers, 'isPushNotificationsSupported')
   .mockReturnValue(true);
 const isIosSafariSpy = vi
-  .spyOn(BrowserSupportsPush, 'isIosSafari')
+  .spyOn(useragentHelpers, 'isIosSafari')
   .mockReturnValue(false);
 
 describe('OneSignalShimLoader', () => {

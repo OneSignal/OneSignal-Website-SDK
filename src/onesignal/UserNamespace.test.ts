@@ -400,7 +400,7 @@ describe('Event Handling', () => {
     };
 
     userNamespace.addEventListener('change', mockListener);
-    UserNamespace._emitter.emit('change', event);
+    UserNamespace._emitter._emit('change', event);
 
     expect(mockListener).toHaveBeenCalledWith(event);
   });
@@ -417,7 +417,7 @@ describe('Event Handling', () => {
 
     userNamespace.addEventListener('change', mockListener);
     userNamespace.removeEventListener('change', mockListener);
-    UserNamespace._emitter.emit('change', event);
+    UserNamespace._emitter._emit('change', event);
 
     expect(mockListener).not.toHaveBeenCalled();
   });
@@ -466,7 +466,7 @@ describe('Initialization', () => {
 
   test('properties model should have onesignalId for new user', () => {
     // without an existing onesignalId
-    updateIdentityModel(IdentityConstants.ONESIGNAL_ID, undefined);
+    updateIdentityModel(IdentityConstants._OneSignalID, undefined);
 
     const user = new UserNamespace(true);
     expect(user.onesignalId).toBe(undefined); // since its local
@@ -498,7 +498,7 @@ describe('Custom Events', () => {
     identityModel._setProperty(
       'onesignal_id',
       ONESIGNAL_ID,
-      ModelChangeTags.NO_PROPAGATE,
+      ModelChangeTags._NoPropogate,
     );
 
     // should validate properties

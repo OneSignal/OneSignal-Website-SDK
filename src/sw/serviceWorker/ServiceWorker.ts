@@ -50,7 +50,7 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
-import { VERSION } from 'src/shared/utils/EnvVariables';
+import { VERSION } from 'src/shared/utils/env';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import {
   isValidPayload,
@@ -105,14 +105,14 @@ export function run() {
     const payload = data?.payload;
 
     switch (data?.command) {
-      case WorkerMessengerCommand.SessionUpsert:
+      case WorkerMessengerCommand._SessionUpsert:
         Log._debug('[Service Worker] Received SessionUpsert', payload);
         debounceRefreshSession(
           event,
           payload as UpsertOrDeactivateSessionPayload,
         );
         break;
-      case WorkerMessengerCommand.SessionDeactivate:
+      case WorkerMessengerCommand._SessionDeactivate:
         Log._debug('[Service Worker] Received SessionDeactivate', payload);
         debounceRefreshSession(
           event,
@@ -162,37 +162,37 @@ export async function getAppId(): Promise<string> {
 }
 
 function setupMessageListeners() {
-  workerMessenger._on(WorkerMessengerCommand.WorkerVersion, () => {
+  workerMessenger._on(WorkerMessengerCommand._WorkerVersion, () => {
     Log._debug('[Service Worker] Received worker version message.');
-    workerMessenger._broadcast(WorkerMessengerCommand.WorkerVersion, VERSION);
+    workerMessenger._broadcast(WorkerMessengerCommand._WorkerVersion, VERSION);
   });
   workerMessenger._on(
-    WorkerMessengerCommand.Subscribe,
+    WorkerMessengerCommand._Subscribe,
     async (appConfigBundle: AppConfig) => {
       const appConfig = appConfigBundle;
       Log._debug('[Service Worker] Received subscribe message.');
       const context = new ContextSW(appConfig);
       const rawSubscription = await context._subscriptionManager._subscribe(
-        SubscriptionStrategyKind.ResubscribeExisting,
+        SubscriptionStrategyKind._ResubscribeExisting,
       );
       const subscription =
         await context._subscriptionManager._registerSubscription(
           rawSubscription,
         );
       workerMessenger._broadcast(
-        WorkerMessengerCommand.Subscribe,
+        WorkerMessengerCommand._Subscribe,
         subscription._serialize(),
       );
     },
   );
   workerMessenger._on(
-    WorkerMessengerCommand.SubscribeNew,
+    WorkerMessengerCommand._SubscribeNew,
     async (appConfigBundle: AppConfig) => {
       const appConfig = appConfigBundle;
       Log._debug('[Service Worker] Received subscribe new message.');
       const context = new ContextSW(appConfig);
       const rawSubscription = await context._subscriptionManager._subscribe(
-        SubscriptionStrategyKind.SubscribeNew,
+        SubscriptionStrategyKind._SubscribeNew,
       );
       const subscription =
         await context._subscriptionManager._registerSubscription(
@@ -200,14 +200,14 @@ function setupMessageListeners() {
         );
 
       workerMessenger._broadcast(
-        WorkerMessengerCommand.SubscribeNew,
+        WorkerMessengerCommand._SubscribeNew,
         subscription._serialize(),
       );
     },
   );
 
   workerMessenger._on(
-    WorkerMessengerCommand.AreYouVisibleResponse,
+    WorkerMessengerCommand._AreYouVisibleResponse,
     async (payload: PageVisibilityResponse) => {
       Log._debug(
         '[Service Worker] Received response for AreYouVisible',
@@ -226,7 +226,7 @@ function setupMessageListeners() {
     },
   );
   workerMessenger._on(
-    WorkerMessengerCommand.SetLogging,
+    WorkerMessengerCommand._SetLogging,
     async (payload: { shouldLog: boolean }) => {
       if (payload.shouldLog) {
         self.shouldLog = true;
@@ -275,7 +275,7 @@ function onPushReceived(event: PushEvent): void {
                 };
               await workerMessenger
                 ._broadcast(
-                  WorkerMessengerCommand.NotificationWillDisplay,
+                  WorkerMessengerCommand._NotificationWillDisplay,
                   event,
                 )
                 .catch((e) => Log._error(e));
@@ -312,7 +312,7 @@ function onPushReceived(event: PushEvent): void {
  * to be safe we are disabling it for all Safari browsers.
  */
 function browserSupportsConfirmedDelivery(): boolean {
-  return getBrowserName() !== Browser.Safari;
+  return getBrowserName() !== Browser._Safari;
 }
 
 /**
@@ -441,7 +441,7 @@ async function checkIfAnyClientsFocusedAndUpdateSession(
   windowClients.forEach((c) => {
     // keeping track of number of sent requests mostly for debugging purposes
     self.clientsStatus!.sentRequestsCount++;
-    c.postMessage({ command: WorkerMessengerCommand.AreYouVisible, payload });
+    c.postMessage({ command: WorkerMessengerCommand._AreYouVisible, payload });
   });
   const updateOnHasActive = async () => {
     Log._debug('updateSessionBasedOnHasActive', self.clientsStatus);
@@ -674,7 +674,7 @@ async function onNotificationClosed(event: NotificationEvent) {
   const notification = event.notification.data as IOSNotification;
 
   workerMessenger
-    ._broadcast(WorkerMessengerCommand.NotificationDismissed, notification)
+    ._broadcast(WorkerMessengerCommand._NotificationDismissed, notification)
     .catch((e) => Log._error(e));
   const pushSubscriptionId = await getPushSubscriptionId();
 
@@ -762,7 +762,7 @@ async function onNotificationClicked(event: NotificationEvent) {
   const saveNotificationClickedPromise = (async (notificationClickEvent) => {
     try {
       const existingSession = await getCurrentSession();
-      if (existingSession && existingSession.status === SessionStatus.Active) {
+      if (existingSession && existingSession.status === SessionStatus._Active) {
         return;
       }
 
@@ -825,7 +825,7 @@ async function onNotificationClicked(event: NotificationEvent) {
           clientOrigin === launchOrigin)
       ) {
         workerMessenger._unicast(
-          WorkerMessengerCommand.NotificationClicked,
+          WorkerMessengerCommand._NotificationClicked,
           notificationClickEvent,
           client,
         );
@@ -1002,7 +1002,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
     // Otherwise set our push registration by resubscribing
     try {
       rawPushSubscription = await context._subscriptionManager._subscribe(
-        SubscriptionStrategyKind.SubscribeNew,
+        SubscriptionStrategyKind._SubscribeNew,
       );
     } catch (e) {
       // Let rawPushSubscription be null
@@ -1023,13 +1023,13 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
     const pushPermission = Notification.permission;
 
     if (pushPermission !== 'granted') {
-      subscriptionState = NotificationType.PermissionRevoked;
+      subscriptionState = NotificationType._PermissionRevoked;
     } else if (!rawPushSubscription) {
       /*
         If it's not a permission revoked issue, the subscription expired or was revoked by the
         push server.
        */
-      subscriptionState = NotificationType.PushSubscriptionRevoked;
+      subscriptionState = NotificationType._PushSubscriptionRevoked;
     }
 
     // rawPushSubscription may be null if no push subscription was retrieved

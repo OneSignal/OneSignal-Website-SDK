@@ -35,7 +35,7 @@ describe('SubscriptionManager', () => {
       const rawSubscription = getRawPushSubscription();
 
       let subModels =
-        await OneSignal._coreDirector._subscriptionModelStore.list();
+        await OneSignal._coreDirector._subscriptionModelStore._list();
       expect(subModels.length).toBe(0);
 
       // mimicing the event helper checkAndTriggerSubscriptionChanged
@@ -43,7 +43,7 @@ describe('SubscriptionManager', () => {
 
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
-      subModels = await OneSignal._coreDirector._subscriptionModelStore.list();
+      subModels = await OneSignal._coreDirector._subscriptionModelStore._list();
       expect(subModels.length).toBe(1);
 
       const id = subModels[0].id;

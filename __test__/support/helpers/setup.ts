@@ -64,9 +64,9 @@ export const setupIdentityModel = async (
 ) => {
   const newIdentityModel = new IdentityModel();
   newIdentityModel._onesignalId = onesignalID;
-  OneSignal._coreDirector._identityModelStore.replace(
+  OneSignal._coreDirector._identityModelStore._replace(
     newIdentityModel,
-    ModelChangeTags.NO_PROPAGATE,
+    ModelChangeTags._NoPropogate,
   );
 };
 
@@ -78,9 +78,9 @@ export const setupPropertiesModel = async (
 ) => {
   const newPropertiesModel = new PropertiesModel();
   newPropertiesModel._onesignalId = onesignalID;
-  OneSignal._coreDirector._propertiesModelStore.replace(
+  OneSignal._coreDirector._propertiesModelStore._replace(
     newPropertiesModel,
-    ModelChangeTags.NO_PROPAGATE,
+    ModelChangeTags._NoPropogate,
   );
 
   // wait for db to be updated
@@ -97,7 +97,7 @@ export const updateIdentityModel = async <
   value?: IdentitySchema[T],
 ) => {
   const identityModel = OneSignal._coreDirector._getIdentityModel();
-  identityModel._setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
+  identityModel._setProperty(property, value, ModelChangeTags._NoPropogate);
 };
 
 /**
@@ -113,7 +113,7 @@ export const updatePropertiesModel = async <
   value?: PropertiesSchema[T],
 ) => {
   const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-  propertiesModel._setProperty(property, value, ModelChangeTags.NO_PROPAGATE);
+  propertiesModel._setProperty(property, value, ModelChangeTags._NoPropogate);
 };
 
 /**
@@ -128,7 +128,7 @@ export const setupSubscriptionModel = async (
   subscriptionModel.token = token || '';
   OneSignal._coreDirector._subscriptionModelStore._replaceAll(
     [subscriptionModel],
-    ModelChangeTags.NO_PROPAGATE,
+    ModelChangeTags._NoPropogate,
   );
 };
 
@@ -139,7 +139,7 @@ export const setupLoadStylesheet = async () => {
   vi.spyOn(
     OneSignal._context._dynamicResourceLoader,
     '_loadSdkStylesheet',
-  ).mockResolvedValue(ResourceLoadState.Loaded);
+  ).mockResolvedValue(ResourceLoadState._Loaded);
 };
 
 export const getRawPushSubscription = () => {

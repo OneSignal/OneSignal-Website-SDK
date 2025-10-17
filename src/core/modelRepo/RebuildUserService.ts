@@ -32,16 +32,16 @@ export class RebuildUserService implements IRebuildUserService {
     onesignalId: string,
   ): Promise<Operation[] | null> {
     const identityModel = new IdentityModel();
-    identityModel._initializeFromModel(null, this._identityModelStore.model);
+    identityModel._initializeFromModel(null, this._identityModelStore._model);
 
     const propertiesModel = new PropertiesModel();
     propertiesModel._initializeFromModel(
       null,
-      this._propertiesModelStore.model,
+      this._propertiesModelStore._model,
     );
 
     const subscriptionModels: SubscriptionModel[] = [];
-    for (const activeSubscription of this._subscriptionsModelStore.list()) {
+    for (const activeSubscription of this._subscriptionsModelStore._list()) {
       const subscriptionModel = new SubscriptionModel();
       subscriptionModel._initializeFromModel(null, activeSubscription);
       subscriptionModels.push(subscriptionModel);
