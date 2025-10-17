@@ -80,19 +80,19 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
 };
 
 export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInterface> {
-  private safariPermissionPromptFailed = false;
+  private _safariPermissionPromptFailed = false;
 
-  public async isPushNotificationsEnabled(): Promise<boolean> {
-    const subscriptionState = await this.getSubscriptionState();
+  public async _isPushNotificationsEnabled(): Promise<boolean> {
+    const subscriptionState = await this._getSubscriptionState();
     return subscriptionState.subscribed && !subscriptionState.optedOut;
   }
 
-  async updateNotificationTypes(): Promise<void> {
-    const notificationTypes = await this.getNotificationTypes();
-    await this.updatePushSubscriptionNotificationTypes(notificationTypes);
+  async _updateNotificationTypes(): Promise<void> {
+    const notificationTypes = await this._getNotificationTypes();
+    await this._updatePushSubscriptionNotificationTypes(notificationTypes);
   }
 
-  async updatePushSubscriptionNotificationTypes(
+  async _updatePushSubscriptionNotificationTypes(
     notificationTypes: NotificationTypeValue,
   ): Promise<void> {
     const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
@@ -105,14 +105,14 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     pushModel.enabled = notificationTypes === NotificationType.Subscribed;
   }
 
-  async getNotificationTypes(): Promise<NotificationTypeValue> {
+  async _getNotificationTypes(): Promise<NotificationTypeValue> {
     const { optedOut } = await getSubscription();
     if (optedOut) {
       return NotificationType.UserOptedOut;
     }
 
     const permission =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager._getPermissionStatus();
     if (permission === 'granted') {
       return NotificationType.Subscribed;
     }
@@ -126,10 +126,10 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * the current state of the user's subscription, while isOptedIn() represents the user's intention.
    * @returns {Promise<boolean>}
    */
-  async isOptedIn(): Promise<boolean> {
-    const subscriptionState = await this.getSubscriptionState();
+  async _isOptedIn(): Promise<boolean> {
+    const subscriptionState = await this._getSubscriptionState();
     const permission =
-      await OneSignal._context._permissionManager.getPermissionStatus();
+      await OneSignal._context._permissionManager._getPermissionStatus();
     return permission === 'granted' && !subscriptionState.optedOut;
   }
 
@@ -138,7 +138,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * @param callback
    * @returns
    */
-  async isOptedOut(
+  async _isOptedOut(
     callback?: (optedOut: boolean | undefined | null) => void,
   ): Promise<boolean | undefined | null> {
     logMethodCall('isOptedOut', callback);
@@ -152,7 +152,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * @returns {Promise<boolean>}
    */
 
-  public async unsubscribe(strategy: UnsubscriptionStrategyValue) {
+  public async _unsubscribe(strategy: UnsubscriptionStrategyValue) {
     if (strategy === UnsubscriptionStrategy.DestroySubscription) {
       throw NotImplementedError;
     } else if (strategy === UnsubscriptionStrategy.MarkUnsubscribed) {
@@ -165,7 +165,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   /**
    * Returns an object describing the user's actual push subscription state and opt-out status.
    */
-  public async getSubscriptionState(): Promise<PushSubscriptionState> {
+  public async _getSubscriptionState(): Promise<PushSubscriptionState> {
     const { optedOut, subscriptionToken } = await getSubscription();
 
     const pushSubscriptionModel =
@@ -194,7 +194,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     const workerRegistration =
       await this._context._serviceWorkerManager._getOneSignalRegistration();
     const notificationPermission =
-      await this._context._permissionManager.getNotificationPermission(
+      await this._context._permissionManager._getNotificationPermission(
         this._context._appConfig.safariWebId,
       );
     if (!workerRegistration) {
@@ -234,7 +234,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * This method can be called from the page context or a webpage a service worker context
    * and will select the correct method.
    */
-  public async subscribe(
+  public async _subscribe(
     subscriptionStrategy: SubscriptionStrategyKindValue,
   ): Promise<RawPushSubscription> {
     let rawPushSubscription: RawPushSubscription;
@@ -251,13 +251,13 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         here.
       */
     if (
-      (await OneSignal._context._permissionManager.getPermissionStatus()) ===
+      (await OneSignal._context._permissionManager._getPermissionStatus()) ===
       'denied'
     )
       throw PermissionBlockedError;
 
     if (useSafariLegacyPush()) {
-      rawPushSubscription = await this.subscribeSafari();
+      rawPushSubscription = await this._subscribeSafari();
       await updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
       /* Now that permissions have been granted, install the service worker */
       Log._info('Installing SW on Safari');
@@ -276,7 +276,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     return rawPushSubscription;
   }
 
-  private async subscribeSafari(): Promise<RawPushSubscription> {
+  private async _subscribeSafari(): Promise<RawPushSubscription> {
     const pushSubscriptionDetails = new RawPushSubscription();
     if (!this._config.safariWebId) {
       throw MissingSafariWebIdError;
@@ -307,19 +307,19 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       We'll show the permissionPromptDisplay event if the Safari user isn't already subscribed,
       otherwise an already subscribed Safari user would not see the permission request again.
     */
-    OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
-    const deviceToken = await this.subscribeSafariPromptPermission();
+    OneSignalEvent._trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+    const deviceToken = await this._subscribeSafariPromptPermission();
     triggerNotificationPermissionChanged();
     if (deviceToken) {
       pushSubscriptionDetails._setFromSafariSubscription(deviceToken);
     } else {
-      this.safariPermissionPromptFailed = true;
+      this._safariPermissionPromptFailed = true;
       throw new Error('Safari url/icon/certificate invalid or in private mode');
     }
     return pushSubscriptionDetails;
   }
 
-  private async subscribeSafariPromptPermission(): Promise<string | null> {
+  private async _subscribeSafariPromptPermission(): Promise<string | null> {
     const requestPermission = (url: string) => {
       return new Promise<string | null>((resolve) => {
         window.safari?.pushNotification?.requestPermission(
@@ -337,7 +337,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       });
     };
 
-    if (!this.safariPermissionPromptFailed) {
+    if (!this._safariPermissionPromptFailed) {
       return requestPermission(
         `${getOneSignalApiUrl({
           legacy: true,
@@ -367,11 +367,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (Notification.permission === 'default') {
-      await OneSignalEvent.trigger(
+      await OneSignalEvent._trigger(
         OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED,
       );
       const permission =
-        await SubscriptionManagerPage.requestPresubscribeNotificationPermission();
+        await SubscriptionManagerPage._requestPresubscribeNotificationPermission();
 
       /*
         The native event handler does not broadcast an event for dismissing the
@@ -410,11 +410,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         // subscription was created so the customer knows this failed by seeing
         // subscriptions in this state on the OneSignal dashboard.
         if (err.status === 403) {
-          await this._context._subscriptionManager.registerFailedSubscription(
+          await this._context._subscriptionManager._registerFailedSubscription(
             NotificationType.ServiceWorkerStatus403,
           );
         } else if (err.status === 404) {
-          await this._context._subscriptionManager.registerFailedSubscription(
+          await this._context._subscriptionManager._registerFailedSubscription(
             NotificationType.ServiceWorkerStatus404,
           );
         }
@@ -440,7 +440,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * Do it only once for the first page view.
    * @param subscriptionState Describes what went wrong with the service worker installation.
    */
-  public async registerFailedSubscription(
+  public async _registerFailedSubscription(
     subscriptionState: SubscriptionStateServiceWorkerNotIntalled,
   ) {
     if (isFirstPageView()) {
@@ -457,8 +457,8 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * before installing the service worker to prevent non-subscribers from
    * querying our server for an updated service worker every 24 hours.
    */
-  private static async requestPresubscribeNotificationPermission(): Promise<NotificationPermission> {
-    return await SubscriptionManagerPage.requestNotificationPermission();
+  private static async _requestPresubscribeNotificationPermission(): Promise<NotificationPermission> {
+    return await SubscriptionManagerPage._requestNotificationPermission();
   }
 
   /**
@@ -467,14 +467,14 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    *
    * window.Notification.requestPermission: The callback was deprecated since Gecko 46 in favor of a Promise
    */
-  public static async requestNotificationPermission(): Promise<NotificationPermission> {
+  public static async _requestNotificationPermission(): Promise<NotificationPermission> {
     const results = await window.Notification.requestPermission();
     // TODO: Clean up our custom NotificationPermission
     //         in favor of TS union type NotificationPermission instead of converting
     return results as NotificationPermission;
   }
 
-  public async isSubscriptionExpiring(): Promise<boolean> {
+  public async _isSubscriptionExpiring(): Promise<boolean> {
     const serviceWorkerState =
       await this._context._serviceWorkerManager._getActiveState();
     if (!(serviceWorkerState === ServiceWorkerActiveState.OneSignalWorker)) {

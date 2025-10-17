@@ -23,14 +23,14 @@ import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constant
 import type { ISessionManager } from './types';
 
 export class SessionManager implements ISessionManager {
-  private context: ContextInterface;
-  private onSessionSent = false;
+  private _context: ContextInterface;
+  private _onSessionSent = false;
 
   constructor(context: ContextInterface) {
-    this.context = context;
+    this._context = context;
   }
 
-  async notifySWToUpsertSession(
+  async _notifySWToUpsertSession(
     onesignalId: string,
     subscriptionId: string,
     sessionOrigin: SessionOriginValue,
@@ -38,16 +38,16 @@ export class SessionManager implements ISessionManager {
     const payload: UpsertOrDeactivateSessionPayload = {
       onesignalId,
       subscriptionId,
-      appId: this.context._appConfig.appId,
-      sessionThreshold: this.context._appConfig.sessionThreshold || 0,
-      enableSessionDuration: !!this.context._appConfig.enableSessionDuration,
+      appId: this._context._appConfig.appId,
+      sessionThreshold: this._context._appConfig.sessionThreshold || 0,
+      enableSessionDuration: !!this._context._appConfig.enableSessionDuration,
       sessionOrigin,
       isSafari: hasSafariWindow(),
-      outcomesConfig: this.context._appConfig.userConfig.outcomes!,
+      outcomesConfig: this._context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
       Log._debug('Notify SW to upsert session');
-      await this.context._workerMessenger.unicast(
+      await this._context._workerMessenger.unicast(
         WorkerMessengerCommand.SessionUpsert,
         payload,
       );
@@ -58,24 +58,24 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async notifySWToDeactivateSession(
+  async _notifySWToDeactivateSession(
     onesignalId: string,
     subscriptionId: string,
     sessionOrigin: SessionOriginValue,
   ): Promise<void> {
     const payload: UpsertOrDeactivateSessionPayload = {
-      appId: this.context._appConfig.appId,
+      appId: this._context._appConfig.appId,
       subscriptionId,
       onesignalId,
-      sessionThreshold: this.context._appConfig.sessionThreshold!,
-      enableSessionDuration: this.context._appConfig.enableSessionDuration!,
+      sessionThreshold: this._context._appConfig.sessionThreshold!,
+      enableSessionDuration: this._context._appConfig.enableSessionDuration!,
       sessionOrigin,
       isSafari: hasSafariWindow(),
-      outcomesConfig: this.context._appConfig.userConfig.outcomes!,
+      outcomesConfig: this._context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
       Log._debug('Notify SW to deactivate session');
-      await this.context._workerMessenger.unicast(
+      await this._context._workerMessenger.unicast(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );
@@ -111,7 +111,7 @@ export class SessionManager implements ISessionManager {
     return { onesignalId, subscriptionId };
   }
 
-  async handleVisibilityChange(): Promise<void> {
+  async _handleVisibilityChange(): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
     if (!User._singletonInstance?.onesignalId) {
@@ -124,7 +124,7 @@ export class SessionManager implements ISessionManager {
         await this._getOneSignalAndSubscriptionIds();
 
       if (visibilityState === 'visible') {
-        this.setupOnFocusAndOnBlurForSession();
+        this._setupOnFocusAndOnBlurForSession();
 
         Log._debug(
           'handleVisibilityChange',
@@ -133,7 +133,7 @@ export class SessionManager implements ISessionManager {
         );
 
         if (document.hasFocus()) {
-          await this.notifySWToUpsertSession(
+          await this._notifySWToUpsertSession(
             onesignalId,
             subscriptionId,
             SessionOrigin.VisibilityVisible,
@@ -164,7 +164,7 @@ export class SessionManager implements ISessionManager {
           OneSignal._cache.isBlurEventSetup = false;
         }
 
-        await this.notifySWToDeactivateSession(
+        await this._notifySWToDeactivateSession(
           onesignalId,
           subscriptionId,
           SessionOrigin.VisibilityHidden,
@@ -179,7 +179,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async handleOnBeforeUnload(): Promise<void> {
+  async _handleOnBeforeUnload(): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
     if (!User._singletonInstance?.onesignalId) {
@@ -192,18 +192,18 @@ export class SessionManager implements ISessionManager {
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
       const payload: UpsertOrDeactivateSessionPayload = {
-        appId: this.context._appConfig.appId,
+        appId: this._context._appConfig.appId,
         onesignalId,
         subscriptionId,
-        sessionThreshold: this.context._appConfig.sessionThreshold!,
-        enableSessionDuration: this.context._appConfig.enableSessionDuration!,
+        sessionThreshold: this._context._appConfig.sessionThreshold!,
+        enableSessionDuration: this._context._appConfig.enableSessionDuration!,
         sessionOrigin: SessionOrigin.BeforeUnload,
         isSafari: hasSafariWindow(),
-        outcomesConfig: this.context._appConfig.userConfig.outcomes!,
+        outcomesConfig: this._context._appConfig.userConfig.outcomes!,
       };
 
       Log._debug('Notify SW to deactivate session (beforeunload)');
-      this.context._workerMessenger.directPostMessageToSW(
+      this._context._workerMessenger.directPostMessageToSW(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );
@@ -212,7 +212,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async handleOnFocus(e: Event): Promise<void> {
+  async _handleOnFocus(e: Event): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
     Log._debug('handleOnFocus', e);
@@ -232,7 +232,7 @@ export class SessionManager implements ISessionManager {
 
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
-      await this.notifySWToUpsertSession(
+      await this._notifySWToUpsertSession(
         onesignalId,
         subscriptionId,
         SessionOrigin.Focus,
@@ -242,7 +242,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async handleOnBlur(e: Event): Promise<void> {
+  async _handleOnBlur(e: Event): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
     Log._debug('handleOnBlur', e);
@@ -262,7 +262,7 @@ export class SessionManager implements ISessionManager {
 
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
-      await this.notifySWToDeactivateSession(
+      await this._notifySWToDeactivateSession(
         onesignalId,
         subscriptionId,
         SessionOrigin.Blur,
@@ -272,13 +272,13 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
+  async _upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
     await LoginManager.switchingUsersPromise;
 
     if (User._singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } =
         await this._getOneSignalAndSubscriptionIds();
-      await this.notifySWToUpsertSession(
+      await this._notifySWToUpsertSession(
         onesignalId,
         subscriptionId,
         sessionOrigin,
@@ -286,14 +286,14 @@ export class SessionManager implements ISessionManager {
     }
 
     if (supportsServiceWorkers()) {
-      this.setupSessionEventListeners();
+      this._setupSessionEventListeners();
     } else {
-      this.onSessionSent = sessionOrigin === SessionOrigin.UserCreate;
+      this._onSessionSent = sessionOrigin === SessionOrigin.UserCreate;
       OneSignal._emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
     }
   }
 
-  setupSessionEventListeners(): void {
+  _setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (!supportsServiceWorkers()) {
       Log._debug(
@@ -304,14 +304,14 @@ export class SessionManager implements ISessionManager {
 
     // Page lifecycle events https://developers.google.com/web/updates/2018/07/page-lifecycle-api
 
-    this.setupOnFocusAndOnBlurForSession();
+    this._setupOnFocusAndOnBlurForSession();
 
     // To make sure we add these event listeners only once.
     if (!OneSignal._cache.isVisibilityChangeEventSetup) {
       // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
       document.addEventListener(
         'visibilitychange',
-        this.handleVisibilityChange.bind(this),
+        this._handleVisibilityChange.bind(this),
         true,
       );
       OneSignal._cache.isVisibilityChangeEventSetup = true;
@@ -322,7 +322,7 @@ export class SessionManager implements ISessionManager {
       window.addEventListener(
         'beforeunload',
         (e) => {
-          this.handleOnBeforeUnload();
+          this._handleOnBeforeUnload();
           // deleting value to not show confirmation dialog
           delete e.returnValue;
         },
@@ -332,11 +332,11 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  setupOnFocusAndOnBlurForSession(): void {
+  _setupOnFocusAndOnBlurForSession(): void {
     Log._debug('setupOnFocusAndOnBlurForSession');
 
     if (!OneSignal._cache.focusHandler) {
-      OneSignal._cache.focusHandler = this.handleOnFocus.bind(this);
+      OneSignal._cache.focusHandler = this._handleOnFocus.bind(this);
     }
     if (!OneSignal._cache.isFocusEventSetup) {
       window.addEventListener('focus', OneSignal._cache.focusHandler, true);
@@ -344,7 +344,7 @@ export class SessionManager implements ISessionManager {
     }
 
     if (!OneSignal._cache.blurHandler) {
-      OneSignal._cache.blurHandler = this.handleOnBlur.bind(this);
+      OneSignal._cache.blurHandler = this._handleOnBlur.bind(this);
     }
     if (!OneSignal._cache.isBlurEventSetup) {
       window.addEventListener('blur', OneSignal._cache.blurHandler, true);
@@ -353,8 +353,8 @@ export class SessionManager implements ISessionManager {
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
-  async sendOnSessionUpdateFromPage(): Promise<void> {
-    const earlyReturn = this.onSessionSent || !isFirstPageView();
+  async _sendOnSessionUpdateFromPage(): Promise<void> {
+    const earlyReturn = this._onSessionSent || !isFirstPageView();
 
     if (earlyReturn) {
       return;
@@ -397,7 +397,7 @@ export class SessionManager implements ISessionManager {
         },
       };
 
-      const appId = MainHelper.getAppId();
+      const appId = MainHelper._getAppId();
       enforceAppId(appId);
       enforceAlias(aliasPair);
       try {
@@ -406,7 +406,7 @@ export class SessionManager implements ISessionManager {
           aliasPair,
           updateUserPayload,
         );
-        this.onSessionSent = true;
+        this._onSessionSent = true;
       } catch (e) {
         Log._debug('Error updating user session:', e);
       }

@@ -50,7 +50,7 @@ describe('Notification Types are set correctly on subscription change', () => {
       });
       await setDbPermission('granted');
 
-      await MainHelper.checkAndTriggerNotificationPermissionChanged();
+      await MainHelper._checkAndTriggerNotificationPermissionChanged();
       expect(triggerNotificationSpy).not.toHaveBeenCalled();
     });
 
@@ -74,7 +74,7 @@ describe('Notification Types are set correctly on subscription change', () => {
         permChangeStringListener,
       );
 
-      await MainHelper.checkAndTriggerNotificationPermissionChanged();
+      await MainHelper._checkAndTriggerNotificationPermissionChanged();
 
       // should update the db
       const dbPermission = await getOptionsValue<NotificationPermission>(

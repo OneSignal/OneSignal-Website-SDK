@@ -19,11 +19,11 @@ import type { TagsObjectWithBoolean } from '../tags/types';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 
 export default class TaggingContainer {
-  public mount(
+  public _mount(
     remoteTagCategories: Array<TagCategory>,
     existingPlayerTags?: TagsObjectWithBoolean,
   ): void {
-    const taggingContainer = this.generateHtml(
+    const taggingContainer = this._generateHtml(
       remoteTagCategories,
       existingPlayerTags,
     );
@@ -31,8 +31,8 @@ export default class TaggingContainer {
     const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.body}`);
     body.appendChild(taggingContainer);
 
-    if (this.taggingContainer) {
-      this.taggingContainer.addEventListener('change', this.toggleCheckedTag);
+    if (this._taggingContainer) {
+      this._taggingContainer.addEventListener('change', this._toggleCheckedTag);
     }
 
     const allowButton = getDomElementOrStub(
@@ -47,7 +47,7 @@ export default class TaggingContainer {
   /**
    * No longer used as of user model changes, but may be useful in the future
    */
-  public load(): void {
+  public _load(): void {
     const loadingContainer = getDomElementOrStub(
       `#${SLIDEDOWN_CSS_IDS.loadingContainer}`,
     );
@@ -75,7 +75,7 @@ export default class TaggingContainer {
     allowButton.disabled = true;
   }
 
-  private generateHtml(
+  private _generateHtml(
     remoteTagCategories: TagCategory[],
     existingPlayerTags?: TagsObjectWithBoolean,
   ): Element {
@@ -111,11 +111,11 @@ export default class TaggingContainer {
     taggingContainer.id = TAGGING_CONTAINER_CSS_IDS.taggingContainer;
 
     firstColumnArr.forEach((elem) => {
-      firstColumnContainer.appendChild(this.getCategoryLabelElement(elem));
+      firstColumnContainer.appendChild(this._getCategoryLabelElement(elem));
     });
 
     secondColumnArr.forEach((elem) => {
-      secondColumnContainer.appendChild(this.getCategoryLabelElement(elem));
+      secondColumnContainer.appendChild(this._getCategoryLabelElement(elem));
     });
 
     taggingContainer.appendChild(firstColumnContainer);
@@ -124,7 +124,7 @@ export default class TaggingContainer {
     return taggingContainer;
   }
 
-  private getCategoryLabelElement(tagCategory: TagCategory): Element {
+  private _getCategoryLabelElement(tagCategory: TagCategory): Element {
     const { label } = tagCategory;
 
     const labelElement = document.createElement('label');
@@ -157,12 +157,12 @@ export default class TaggingContainer {
     return wrappingDiv;
   }
 
-  private get taggingContainer(): Element {
+  private get _taggingContainer(): Element {
     const selector = `#${SLIDEDOWN_CSS_IDS.body} > div.${TAGGING_CONTAINER_CSS_CLASSES.taggingContainer}`;
     return getDomElementOrStub(selector);
   }
 
-  private toggleCheckedTag(e: Event): void {
+  private _toggleCheckedTag(e: Event): void {
     const target = e.target as HTMLInputElement;
 
     if (target && target.getAttribute('type') === 'checkbox') {
@@ -171,7 +171,7 @@ export default class TaggingContainer {
     }
   }
 
-  static getValuesFromTaggingContainer(): TagsObjectWithBoolean {
+  static _getValuesFromTaggingContainer(): TagsObjectWithBoolean {
     const selector =
       `#${SLIDEDOWN_CSS_IDS.body} > div.${TAGGING_CONTAINER_CSS_CLASSES.taggingContainer}` +
       `> div > div > label > input[type=checkbox]`;

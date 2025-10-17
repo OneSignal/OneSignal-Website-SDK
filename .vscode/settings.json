@@ -3,6 +3,7 @@
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "always"
   },
+
   // a macro to rename a variable to _variable
   "macros": {
     "rename_": [
@@ -24,9 +25,9 @@
           "  pos,",
           "  newName",
           ");",
-          "if (edit) {",
-          "  await vscode.workspace.applyEdit(edit);",
-          "}"
+          "if (edit) await vscode.workspace.applyEdit(edit);",
+          "await new Promise(resolve => setTimeout(resolve, 100));",
+          "await vscode.commands.executeCommand('workbench.action.files.saveAll');"
         ]
       }
     ]

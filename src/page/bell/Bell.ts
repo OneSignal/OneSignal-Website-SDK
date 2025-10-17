@@ -325,13 +325,13 @@ export default class Bell {
             this._badge._hide();
           }
           if (this._dialog._notificationIcons === null) {
-            const icons = await MainHelper.getNotificationIcons();
+            const icons = await MainHelper._getNotificationIcons();
             this._dialog._notificationIcons = icons;
           }
         }
 
         const permission =
-          await OneSignal._context._permissionManager.getPermissionStatus();
+          await OneSignal._context._permissionManager._getPermissionStatus();
         let bellState: BellStateValue;
         if (isSubscribed.current.optedIn) {
           bellState = BellState._Subscribed;
@@ -480,7 +480,7 @@ export default class Bell {
     addDomElement(this._button._selector, 'beforeend', logoSvg);
 
     const isPushEnabled =
-      await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
+      await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
     wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
@@ -501,7 +501,7 @@ export default class Bell {
     await (isPushEnabled ? this._launcher._inactivate() : nothing())
       .then(() => {
         if (isPushEnabled && this._dialog._notificationIcons === null) {
-          return MainHelper.getNotificationIcons().then((icons) => {
+          return MainHelper._getNotificationIcons().then((icons) => {
             this._dialog._notificationIcons = icons;
           });
         } else return nothing();
@@ -697,8 +697,8 @@ export default class Bell {
    */
   _updateState() {
     Promise.all([
-      OneSignal._context._subscriptionManager.isPushNotificationsEnabled(),
-      OneSignal._context._permissionManager.getPermissionStatus(),
+      OneSignal._context._subscriptionManager._isPushNotificationsEnabled(),
+      OneSignal._context._permissionManager._getPermissionStatus(),
     ])
       .then(([isEnabled, permission]) => {
         this._setState(
@@ -721,7 +721,7 @@ export default class Bell {
     const lastState = this._state;
     this._state = newState;
     if (lastState !== newState && !silent) {
-      OneSignalEvent.trigger(BellEvent._StateChanged, {
+      OneSignalEvent._trigger(BellEvent._StateChanged, {
         from: lastState,
         to: newState,
       });

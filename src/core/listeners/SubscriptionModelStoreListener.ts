@@ -29,7 +29,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     const { enabled, notification_types } =
       SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(model);
 
-    const appId = MainHelper.getAppId();
+    const appId = MainHelper._getAppId();
     return new CreateSubscriptionOperation({
       appId,
       onesignalId: this._identityModelStore.model.onesignalId,
@@ -42,7 +42,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
   }
 
   _getRemoveOperation(model: SubscriptionModel): Operation {
-    const appId = MainHelper.getAppId();
+    const appId = MainHelper._getAppId();
     return new DeleteSubscriptionOperation(
       appId,
       this._identityModelStore.model.onesignalId,
@@ -53,7 +53,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
   _getUpdateOperation(model: SubscriptionModel): Operation {
     const { enabled, notification_types } =
       SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(model);
-    const appId = MainHelper.getAppId();
+    const appId = MainHelper._getAppId();
 
     return new UpdateSubscriptionOperation({
       appId,

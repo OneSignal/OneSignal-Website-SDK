@@ -32,7 +32,7 @@ export abstract class ModelStoreListener<TModel extends Model> {
 
     const operation = this._getAddOperation(model);
     if (operation != null) {
-      this._opRepo.enqueue(operation);
+      this._opRepo._enqueue(operation);
     }
   }
 
@@ -48,7 +48,7 @@ export abstract class ModelStoreListener<TModel extends Model> {
       args.newValue,
     );
     if (operation != null) {
-      this._opRepo.enqueue(operation);
+      this._opRepo._enqueue(operation);
     }
   }
 
@@ -59,7 +59,7 @@ export abstract class ModelStoreListener<TModel extends Model> {
 
     const operation = await this._getRemoveOperation(model);
     if (operation != null) {
-      this._opRepo.enqueue(operation);
+      this._opRepo._enqueue(operation);
     }
   }
 

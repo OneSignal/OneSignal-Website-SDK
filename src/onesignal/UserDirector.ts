@@ -9,7 +9,7 @@ import MainHelper from '../shared/helpers/MainHelper';
 export default class UserDirector {
   static async _createUserOnServer(): Promise<void> {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    const appId = MainHelper.getAppId();
+    const appId = MainHelper._getAppId();
 
     const hasAnySubscription =
       OneSignal._coreDirector._subscriptionModelStore.list().length > 0;
@@ -27,14 +27,14 @@ export default class UserDirector {
     if (pushOp) {
       const subData = pushOp.toJSON();
 
-      OneSignal._coreDirector._operationRepo.enqueue(
+      OneSignal._coreDirector._operationRepo._enqueue(
         new LoginUserOperation(
           appId,
           identityModel.onesignalId,
           identityModel.externalId,
         ),
       );
-      await OneSignal._coreDirector._operationRepo.enqueueAndWait(
+      await OneSignal._coreDirector._operationRepo._enqueueAndWait(
         new CreateSubscriptionOperation({
           ...subData,
           appId,
@@ -43,7 +43,7 @@ export default class UserDirector {
         }),
       );
     } else {
-      OneSignal._coreDirector._operationRepo.enqueue(
+      OneSignal._coreDirector._operationRepo._enqueue(
         new LoginUserOperation(
           appId,
           identityModel.onesignalId,

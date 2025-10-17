@@ -117,7 +117,7 @@ export class CoreModuleDirector {
     SubscriptionModel | undefined
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
-    const pushToken = await MainHelper.getCurrentPushToken();
+    const pushToken = await MainHelper._getCurrentPushToken();
     if (pushToken) {
       return this._getSubscriptionOfTypeWithToken(
         SubscriptionChannel.Push,

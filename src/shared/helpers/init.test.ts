@@ -12,7 +12,7 @@ beforeEach(() => {
   TestEnvironment.initialize();
   isSubscriptionExpiringSpy = vi.spyOn(
     OneSignal._context._subscriptionManager,
-    'isSubscriptionExpiring',
+    '_isSubscriptionExpiring',
   );
 });
 
@@ -36,8 +36,8 @@ test('onSdkInitialized: processes expiring subscriptions', async () => {
 
 test('onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false', async () => {
   const spy = vi
-    .spyOn(OneSignal._context._updateManager, 'sendOnSessionUpdate')
-    .mockResolvedValue(undefined);
+    .spyOn(OneSignal._context._updateManager, '_sendOnSessionUpdate')
+    .mockResolvedValue();
 
   OneSignal.config!.userConfig.promptOptions!.autoPrompt = false;
   OneSignal.config!.userConfig.autoResubscribe = false;
@@ -49,8 +49,8 @@ test('onSdkInitialized: sends on session update only if both autoPrompt and auto
 
 test('onSdkInitialized: does not send on session update', async () => {
   const spy = vi
-    .spyOn(OneSignal._context._updateManager, 'sendOnSessionUpdate')
-    .mockResolvedValue(undefined);
+    .spyOn(OneSignal._context._updateManager, '_sendOnSessionUpdate')
+    .mockResolvedValue();
 
   OneSignal.config!.userConfig.promptOptions!.autoPrompt = true;
   OneSignal.config!.userConfig.autoResubscribe = true;

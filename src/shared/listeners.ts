@@ -22,10 +22,10 @@ export async function checkAndTriggerSubscriptionChanged() {
   const context = OneSignal._context;
   // isPushEnabled = subscribed && is not opted out
   const isPushEnabled: boolean =
-    await OneSignal._context._subscriptionManager.isPushNotificationsEnabled();
+    await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
   // isOptedIn = native permission granted && is not opted out
   const isOptedIn: boolean =
-    await OneSignal._context._subscriptionManager.isOptedIn!();
+    await OneSignal._context._subscriptionManager._isOptedIn!();
 
   const appState = await getAppState();
   const {
@@ -34,7 +34,7 @@ export async function checkAndTriggerSubscriptionChanged() {
     lastKnownPushToken,
     lastKnownOptedIn,
   } = appState;
-  const currentPushToken = await MainHelper.getCurrentPushToken();
+  const currentPushToken = await MainHelper._getCurrentPushToken();
 
   const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
   const pushSubscriptionId = pushModel?.id;
@@ -49,7 +49,7 @@ export async function checkAndTriggerSubscriptionChanged() {
   }
 
   // update notification_types via core module
-  await context._subscriptionManager.updateNotificationTypes!();
+  await context._subscriptionManager._updateNotificationTypes!();
 
   appState.lastKnownPushEnabled = isPushEnabled;
   appState.lastKnownPushToken = currentPushToken;
@@ -75,7 +75,7 @@ export async function checkAndTriggerSubscriptionChanged() {
 }
 
 function triggerSubscriptionChanged(change: SubscriptionChangeEvent) {
-  OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
+  OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
 }
 
 export function triggerNotificationClick(
@@ -85,7 +85,7 @@ export function triggerNotificationClick(
     notification: event.notification,
     result: event.result,
   };
-  return OneSignalEvent.trigger(
+  return OneSignalEvent._trigger(
     OneSignal.EVENTS.NOTIFICATION_CLICKED,
     publicEvent,
   );
@@ -148,7 +148,7 @@ export async function checkAndTriggerUserChanged() {
 }
 
 function triggerUserChanged(change: UserChangeEvent) {
-  OneSignalEvent.trigger(
+  OneSignalEvent._trigger(
     OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
     change,
     UserNamespace._emitter,
@@ -184,7 +184,7 @@ function onSubscriptionChanged_updateCustomLink() {
   if (OneSignal.config?.userConfig.promptOptions) {
     new CustomLinkManager(
       OneSignal.config?.userConfig.promptOptions.customlink,
-    ).initialize();
+    )._initialize();
   }
 }
 
@@ -245,7 +245,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   message = decodeHtmlEntities(message);
 
   Log._debug('Sending welcome notification.');
-  MainHelper.showLocalNotification(
+  MainHelper._showLocalNotification(
     title,
     message,
     url,
@@ -253,7 +253,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
     { __isOneSignalWelcomeNotification: true },
     undefined,
   );
-  OneSignalEvent.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+  OneSignalEvent._trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
     title: title,
     message: message,
     url: url,
@@ -268,7 +268,7 @@ async function onSubscriptionChanged_sendCategorySlidedownTags(
   const prompts =
     OneSignal._context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
   if (isCategorySlidedownConfigured(prompts)) {
-    await OneSignal._context._tagManager.sendTags();
+    await OneSignal._context._tagManager._sendTags();
   }
 }
 

@@ -56,7 +56,7 @@ export default class Dialog extends AnimatedElement {
 
   _updateBellLauncherDialogBody() {
     return OneSignal._context._subscriptionManager
-      .isPushNotificationsEnabled()
+      ._isPushNotificationsEnabled()
       .then((currentSetSubscription: boolean) => {
         if (this._nestedContentSelector) {
           clearDomElementChildren(this._nestedContentSelector);
@@ -132,12 +132,12 @@ export default class Dialog extends AnimatedElement {
               a notification shown in this resubscription case.
             */
             OneSignal._doNotShowWelcomeNotification = false;
-            OneSignalEvent.trigger(BellEvent._SubscribeClick);
+            OneSignalEvent._trigger(BellEvent._SubscribeClick);
           });
         }
         if (this._unsubscribeButton) {
           this._unsubscribeButton.addEventListener('click', () =>
-            OneSignalEvent.trigger(BellEvent._UnsubscribeClick),
+            OneSignalEvent._trigger(BellEvent._UnsubscribeClick),
           );
         }
         this._bell._setCustomColorsIfSpecified();

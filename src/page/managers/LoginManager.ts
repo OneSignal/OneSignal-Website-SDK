@@ -12,6 +12,7 @@ export default class LoginManager {
   // Other internal classes should await on this if they access users
   static switchingUsersPromise: Promise<void> = Promise.resolve();
 
+  // public api
   static async login(externalId: string, token?: string): Promise<void> {
     await (this.switchingUsersPromise = LoginManager._login(externalId, token));
   }
@@ -47,12 +48,12 @@ export default class LoginManager {
       ModelChangeTags.HYDRATE,
     );
     const newIdentityOneSignalId = identityModel.onesignalId;
-    const appId = MainHelper.getAppId();
+    const appId = MainHelper._getAppId();
 
     const promises: Promise<void>[] = [
       OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
-          OneSignal._coreDirector._operationRepo.enqueue(
+          OneSignal._coreDirector._operationRepo._enqueue(
             new TransferSubscriptionOperation(
               appId,
               newIdentityOneSignalId,
@@ -61,7 +62,7 @@ export default class LoginManager {
           );
         }
       }),
-      OneSignal._coreDirector._operationRepo.enqueueAndWait(
+      OneSignal._coreDirector._operationRepo._enqueueAndWait(
         new LoginUserOperation(
           appId,
           newIdentityOneSignalId,
@@ -74,6 +75,7 @@ export default class LoginManager {
     await Promise.all(promises);
   }
 
+  // public api
   static async logout(): Promise<void> {
     await (this.switchingUsersPromise = LoginManager._logout());
   }

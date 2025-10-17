@@ -18,7 +18,7 @@ export default class OneSignalEvent {
    * @param data Any JavaScript variable to be passed with the event.
    * @param emitter Emitter to emit the event from.
    */
-  static async trigger(eventName: string, data?: any, emitter?: Emitter) {
+  static async _trigger(eventName: string, data?: any, emitter?: Emitter) {
     if (!containsMatch(SILENT_EVENTS, eventName)) {
       const displayData = data;
 

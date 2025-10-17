@@ -94,7 +94,7 @@ export default class Slidedown {
   async _create(isInUpdateMode?: boolean): Promise<void> {
     // TODO: dynamically change btns depending on if its first or repeat display of slidedown (subscribe vs update)
     if (this._notificationIcons === null) {
-      const icons = await MainHelper.getNotificationIcons();
+      const icons = await MainHelper._getNotificationIcons();
 
       this._notificationIcons = icons;
 
@@ -160,7 +160,7 @@ export default class Slidedown {
   }
 
   static async _triggerSlidedownEvent(eventName: string): Promise<void> {
-    await OneSignalEvent.trigger(eventName);
+    await OneSignalEvent._trigger(eventName);
   }
 
   async _onSlidedownAllowed(_: any): Promise<void> {
@@ -268,14 +268,14 @@ export default class Slidedown {
   ): void {
     switch (invalidChannelInput) {
       case InvalidChannelInputField.InvalidSms:
-        ChannelCaptureContainer.showSmsInputError(true);
+        ChannelCaptureContainer._showSmsInputError(true);
         break;
       case InvalidChannelInputField.InvalidEmail:
-        ChannelCaptureContainer.showEmailInputError(true);
+        ChannelCaptureContainer._showEmailInputError(true);
         break;
       case InvalidChannelInputField.InvalidEmailAndSms:
-        ChannelCaptureContainer.showSmsInputError(true);
-        ChannelCaptureContainer.showEmailInputError(true);
+        ChannelCaptureContainer._showSmsInputError(true);
+        ChannelCaptureContainer._showEmailInputError(true);
         break;
       default:
         break;
@@ -287,7 +287,7 @@ export default class Slidedown {
     removeCssClass(this._allowButton, 'onesignal-error-state-button');
 
     if (!isSlidedownPushDependent(this._options.type)) {
-      ChannelCaptureContainer.resetInputErrorStates(this._options.type);
+      ChannelCaptureContainer._resetInputErrorStates(this._options.type);
     }
 
     this._isShowingFailureState = false;

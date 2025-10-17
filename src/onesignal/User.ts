@@ -257,7 +257,7 @@ export default class User {
 }
 
 function hasLoginOp(onesignalId: string) {
-  return OneSignal._coreDirector._operationRepo.queue.find(
+  return OneSignal._coreDirector._operationRepo._queue.find(
     (op) =>
       op.operation instanceof LoginUserOperation &&
       op.operation.onesignalId === onesignalId,
@@ -281,10 +281,10 @@ function addSubscriptionToModels({
 
   // Check if we need to enqueue a login operation for local IDs
   if (IDManager._isLocalId(onesignalId)) {
-    const appId = MainHelper.getAppId();
+    const appId = MainHelper._getAppId();
 
     if (!hasLoginOp(onesignalId)) {
-      OneSignal._coreDirector._operationRepo.enqueue(
+      OneSignal._coreDirector._operationRepo._enqueue(
         new LoginUserOperation(appId, onesignalId, identityModel.externalId),
       );
     }

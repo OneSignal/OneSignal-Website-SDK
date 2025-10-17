@@ -158,7 +158,7 @@ export class ServiceWorkerManager {
       workerState === ServiceWorkerActiveState.ThirdParty
     ) {
       const permission =
-        await OneSignal._context._permissionManager.getNotificationPermission(
+        await OneSignal._context._permissionManager._getNotificationPermission(
           OneSignal.config!.safariWebId,
         );
       const notificationsEnabled = permission === 'granted';
@@ -272,7 +272,7 @@ export class ServiceWorkerManager {
             throw new Error('Browser does not support preventing display.');
           },
         };
-        await OneSignalEvent.trigger(
+        await OneSignalEvent._trigger(
           OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY,
           publicEvent,
         );
@@ -317,7 +317,7 @@ export class ServiceWorkerManager {
     workerMessenger._on(
       WorkerMessengerCommand.NotificationDismissed,
       async (data) => {
-        await OneSignalEvent.trigger(
+        await OneSignalEvent._trigger(
           OneSignal.EVENTS.NOTIFICATION_DISMISSED,
           data,
         );

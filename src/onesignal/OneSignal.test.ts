@@ -858,7 +858,7 @@ describe('OneSignal - No Consent Required', () => {
     const getQueue = async (length: number) => {
       const queue = await vi.waitUntil(
         () => {
-          const _queue = OneSignal._coreDirector._operationRepo.queue;
+          const _queue = OneSignal._coreDirector._operationRepo._queue;
           return _queue.length === length ? _queue : null;
         },
         { interval: 0 },
@@ -1117,7 +1117,7 @@ describe('OneSignal - No Consent Required', () => {
     let queue: OperationQueueItem[] = [];
     await vi.waitUntil(
       () => {
-        queue = OneSignal._coreDirector._operationRepo.queue;
+        queue = OneSignal._coreDirector._operationRepo._queue;
         return queue.length === 3;
       },
       { interval: 1 },
@@ -1202,5 +1202,5 @@ const subscribeFcmFromPageSpy = vi.spyOn(
   '_subscribeFcmFromPage',
 );
 
-const showLocalNotificationSpy = vi.spyOn(MainHelper, 'showLocalNotification');
+const showLocalNotificationSpy = vi.spyOn(MainHelper, '_showLocalNotification');
 showLocalNotificationSpy.mockImplementation(async () => {});

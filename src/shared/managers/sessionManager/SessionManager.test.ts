@@ -23,7 +23,7 @@ describe('SessionManager', () => {
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnFocus(new Event('{}'));
+        await sessionManager._handleOnFocus(new Event('{}'));
         return 'session';
       })();
 
@@ -39,7 +39,7 @@ describe('SessionManager', () => {
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnFocus(new Event('{}'));
+        await sessionManager._handleOnFocus(new Event('{}'));
         return 'session';
       })();
 
@@ -55,7 +55,7 @@ describe('SessionManager', () => {
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnBlur(new Event('{}'));
+        await sessionManager._handleOnBlur(new Event('{}'));
         return 'session';
       })();
 
@@ -71,7 +71,7 @@ describe('SessionManager', () => {
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnBlur(new Event('{}'));
+        await sessionManager._handleOnBlur(new Event('{}'));
         return 'session';
       })();
 
@@ -87,7 +87,7 @@ describe('SessionManager', () => {
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleVisibilityChange();
+        await sessionManager._handleVisibilityChange();
         return 'session';
       })();
 
@@ -103,7 +103,7 @@ describe('SessionManager', () => {
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.handleOnBeforeUnload();
+        await sessionManager._handleOnBeforeUnload();
         return 'session';
       })();
 
@@ -119,7 +119,7 @@ describe('SessionManager', () => {
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager.upsertSession(SessionOrigin.UserCreate);
+        await sessionManager._upsertSession(SessionOrigin.UserCreate);
         return 'session';
       })();
 
