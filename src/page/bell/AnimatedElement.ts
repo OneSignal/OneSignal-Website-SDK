@@ -26,8 +26,8 @@ export default class AnimatedElement {
    * Show element using CSS classes and wait for animations to complete
    */
   async _show(): Promise<void> {
-    const element = this.element;
-    if (!element || this.shown) {
+    const element = this._element;
+    if (!element || this._shown) {
       return;
     }
 
@@ -35,15 +35,15 @@ export default class AnimatedElement {
       element.classList.add(this._showClass);
     }
 
-    await this.waitForAnimations();
+    await this._waitForAnimations();
   }
 
   /**
    * Hide element using CSS classes and wait for animations to complete
    */
-  async hide(): Promise<void> {
-    const element = this.element;
-    if (!element || !this.shown) {
+  async _hide(): Promise<void> {
+    const element = this._element;
+    if (!element || !this._shown) {
       return;
     }
 
@@ -51,15 +51,15 @@ export default class AnimatedElement {
       element.classList.remove(this._showClass);
     }
 
-    await this.waitForAnimations();
+    await this._waitForAnimations();
   }
 
   /**
    * Activate element using CSS classes
    */
   async _activate(): Promise<void> {
-    const element = this.element;
-    if (!element || this.active) {
+    const element = this._element;
+    if (!element || this._active) {
       return;
     }
 
@@ -70,15 +70,15 @@ export default class AnimatedElement {
       element.classList.add(this._activeClass);
     }
 
-    await this.waitForAnimations();
+    await this._waitForAnimations();
   }
 
   /**
    * Inactivate element using CSS classes
    */
   async _inactivate(): Promise<void> {
-    const element = this.element;
-    if (!element || !this.active) {
+    const element = this._element;
+    if (!element || !this._active) {
       return;
     }
 
@@ -89,7 +89,7 @@ export default class AnimatedElement {
       element.classList.add(this._inactiveClass);
     }
 
-    await this.waitForAnimations();
+    await this._waitForAnimations();
   }
 
   /**

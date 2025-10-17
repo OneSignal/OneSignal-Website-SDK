@@ -101,7 +101,7 @@ export default class Button extends AnimatedElement {
     try {
       if (
         this._bell._message._shown &&
-        this._bell._message._contentType == MesageType._Message
+        this._bell._message._contentType == MessageType._Message
       ) {
         // A message is being shown, it'll disappear soon
         return;
@@ -115,7 +115,7 @@ export default class Button extends AnimatedElement {
         OneSignal._emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
           this._bell._message
             ._display(
-              MesageType._Message,
+              MessageType._Message,
               this._bell._options.text['message.action.subscribed'],
               MESSAGE_TIMEOUT,
             )
