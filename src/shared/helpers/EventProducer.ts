@@ -1,40 +1,26 @@
 import type { IEventNotifier } from 'src/core/types/models';
 
 export class EventProducer<THandler> implements IEventNotifier<THandler> {
-  private subscribers: THandler[] = [];
+  private _subscribers: THandler[] = [];
 
   get _hasSubscribers(): boolean {
-    return this.subscribers.length > 0;
+    return this._subscribers.length > 0;
   }
 
   _subscribe(handler: THandler): void {
-    this.subscribers.push(handler);
+    this._subscribers.push(handler);
   }
 
   _unsubscribe(handler: THandler): void {
-    const index = this.subscribers.indexOf(handler);
+    const index = this._subscribers.indexOf(handler);
     if (index !== -1) {
-      this.subscribers.splice(index, 1);
+      this._subscribers.splice(index, 1);
     }
   }
 
-  subscribeAll(from: EventProducer<THandler>): void {
-    for (const handler of from.subscribers) {
-      this._subscribe(handler);
-    }
-  }
-
-  fire(callback: (handler: THandler) => void): void {
-    for (const handler of this.subscribers) {
+  _fire(callback: (handler: THandler) => void): void {
+    for (const handler of this._subscribers) {
       callback(handler);
-    }
-  }
-
-  async suspendingFire(
-    callback: (handler: THandler) => Promise<void>,
-  ): Promise<void> {
-    for (const handler of this.subscribers) {
-      await callback(handler);
     }
   }
 }

@@ -27,13 +27,13 @@ export class SessionNamespace {
       return;
     }
 
-    if (!(await outcomesHelper.beforeOutcomeSend())) {
+    if (!(await outcomesHelper._beforeOutcomeSend())) {
       return;
     }
 
-    const outcomeAttribution = await outcomesHelper.getAttribution();
+    const outcomeAttribution = await outcomesHelper._getAttribution();
 
-    await outcomesHelper.send({
+    await outcomesHelper._send({
       type: outcomeAttribution.type,
       notificationIds: outcomeAttribution.notificationIds,
       weight: outcomeWeight,
@@ -54,10 +54,10 @@ export class SessionNamespace {
       true,
     );
 
-    if (!(await outcomesHelper.beforeOutcomeSend())) {
+    if (!(await outcomesHelper._beforeOutcomeSend())) {
       return;
     }
-    const outcomeAttribution = await outcomesHelper.getAttribution();
+    const outcomeAttribution = await outcomesHelper._getAttribution();
 
     if (outcomeAttribution.type === OutcomeAttributionType.NotSupported) {
       Log._warn(
@@ -70,12 +70,12 @@ export class SessionNamespace {
     const { notificationIds } = outcomeAttribution;
     // only new notifs that ought to be attributed
     const newNotifsToAttributeWithOutcome =
-      await outcomesHelper.getNotifsToAttributeWithUniqueOutcome(
+      await outcomesHelper._getNotifsToAttributeWithUniqueOutcome(
         notificationIds,
       );
 
     if (
-      !outcomesHelper.shouldSendUnique(
+      !outcomesHelper._shouldSendUnique(
         outcomeAttribution,
         newNotifsToAttributeWithOutcome,
       )
@@ -84,7 +84,7 @@ export class SessionNamespace {
       return;
     }
 
-    await outcomesHelper.send({
+    await outcomesHelper._send({
       type: outcomeAttribution.type,
       notificationIds: newNotifsToAttributeWithOutcome,
     });

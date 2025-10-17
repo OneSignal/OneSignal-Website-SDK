@@ -18,6 +18,10 @@ import {
 } from 'src/shared/prompts/constants';
 import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
+import {
+  convertTagsApiToBooleans,
+  markAllTagsAsSpecified,
+} from 'src/shared/utils/tags';
 import { logMethodCall } from 'src/shared/utils/utils';
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import {
@@ -26,7 +30,6 @@ import {
 } from '../../../shared/helpers/DismissHelper';
 import Log from '../../../shared/libraries/Log';
 import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
-import TagUtils from '../../../shared/utils/TagUtils';
 import { DismissPrompt } from '../../models/Dismiss';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';
@@ -307,12 +310,12 @@ export class SlidedownManager {
         this._context._tagManager._storeRemotePlayerTags(
           existingTags as TagsObjectForApi,
         );
-        tagsForComponent = TagUtils.convertTagsApiToBooleans(
+        tagsForComponent = convertTagsApiToBooleans(
           existingTags as TagsObjectForApi,
         );
       } else {
         // first subscription or no existing tags
-        TagUtils.markAllTagsAsSpecified(categories, true);
+        markAllTagsAsSpecified(categories, true);
       }
 
       taggingContainer._mount(categories, tagsForComponent);

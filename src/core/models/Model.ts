@@ -182,7 +182,9 @@ export class Model<U extends object = object, T extends U & object = U & object>
       oldValue,
       newValue,
     };
-    this._changeNotifier.fire((handler) => handler._onChanged(changeArgs, tag));
+    this._changeNotifier._fire((handler) =>
+      handler._onChanged(changeArgs, tag),
+    );
   }
 
   /**

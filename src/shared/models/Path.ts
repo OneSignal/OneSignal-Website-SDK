@@ -1,5 +1,7 @@
 import { EmptyArgumentError } from '../errors/common';
 
+const QUERY_STRING = '?';
+
 /**
  * Represents a normalized path.
  *
@@ -7,44 +9,22 @@ import { EmptyArgumentError } from '../errors/common';
  * Paths without file names will never contain trailing slashes, except for empty paths.
  */
 export default class Path {
-  private static QUERY_STRING = '?';
-
-  private readonly path: string;
+  private readonly _path: string;
 
   constructor(path: string) {
     if (!path) throw EmptyArgumentError('path');
-    this.path = path.trim();
+    this._path = path.trim();
   }
 
-  getQueryString(): string | null {
-    // If there are no ? characters, return null
-    // If there are multiple ?, return the substring starting after the first ? all the way to the end
-    const indexOfDelimiter = this.path.indexOf('?');
-    if (indexOfDelimiter === -1) {
-      return null;
-    }
-    if (this.path.length > indexOfDelimiter) {
-      // Return the substring *after the first ? to the end
-      return this.path.substring(indexOfDelimiter + 1);
-    } else {
-      // The last character is ?
-      return null;
-    }
+  _getWithoutQueryString(): string {
+    return this._path.split(QUERY_STRING)[0];
   }
 
-  getWithoutQueryString(): string {
-    return this.path.split(Path.QUERY_STRING)[0];
+  _getFileName(): string | undefined {
+    return this._getWithoutQueryString().split('\\').pop()?.split('/').pop();
   }
 
-  getFileName(): string | undefined {
-    return this.getWithoutQueryString().split('\\').pop()?.split('/').pop();
-  }
-
-  getFileNameWithQuery(): string | undefined {
-    return this.path.split('\\').pop()?.split('/').pop();
-  }
-
-  getFullPath() {
-    return this.path;
+  _getFullPath() {
+    return this._path;
   }
 }

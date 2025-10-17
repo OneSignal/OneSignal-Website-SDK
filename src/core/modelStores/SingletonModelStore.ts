@@ -39,7 +39,7 @@ export class SingletonModelStore<TModel extends Model>
     const existingModel = this.model;
     existingModel._initializeFromModel(existingModel._modelId, model);
     this.store._persist();
-    this.changeSubscription.fire((handler) =>
+    this.changeSubscription._fire((handler) =>
       handler._onModelReplaced(existingModel, tag),
     );
   }
@@ -65,7 +65,7 @@ export class SingletonModelStore<TModel extends Model>
   }
 
   _onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): void {
-    this.changeSubscription.fire((handler) =>
+    this.changeSubscription._fire((handler) =>
       handler._onModelUpdated(args, tag),
     );
   }

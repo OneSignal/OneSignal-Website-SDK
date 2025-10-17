@@ -27,7 +27,7 @@ export function getServiceWorkerHref(
   sdkVersion: string,
 ): string {
   return appendServiceWorkerParams(
-    config.workerPath.getFullPath(),
+    config.workerPath._getFullPath(),
     appId,
     sdkVersion,
   );

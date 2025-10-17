@@ -1,4 +1,4 @@
-import MainHelper from 'src/shared/helpers/MainHelper';
+import { getAppId } from 'src/shared/helpers/main';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -29,7 +29,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     const { enabled, notification_types } =
       SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(model);
 
-    const appId = MainHelper._getAppId();
+    const appId = getAppId();
     return new CreateSubscriptionOperation({
       appId,
       onesignalId: this._identityModelStore.model._onesignalId,
@@ -42,7 +42,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
   }
 
   _getRemoveOperation(model: SubscriptionModel): Operation {
-    const appId = MainHelper._getAppId();
+    const appId = getAppId();
     return new DeleteSubscriptionOperation(
       appId,
       this._identityModelStore.model._onesignalId,
@@ -53,7 +53,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
   _getUpdateOperation(model: SubscriptionModel): Operation {
     const { enabled, notification_types } =
       SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(model);
-    const appId = MainHelper._getAppId();
+    const appId = getAppId();
 
     return new UpdateSubscriptionOperation({
       appId,

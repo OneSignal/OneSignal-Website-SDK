@@ -202,7 +202,7 @@ export class PromptsManager {
     }
 
     const sdkStylesLoadResult =
-      await this.context._dynamicResourceLoader.loadSdkStylesheet();
+      await this.context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log._debug(
         'Not showing slidedown permission message because styles failed to load.',

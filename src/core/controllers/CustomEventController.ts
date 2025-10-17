@@ -1,4 +1,4 @@
-import MainHelper from '../../shared/helpers/MainHelper';
+import { getAppId } from '../../shared/helpers/main';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
 import type {
@@ -22,7 +22,7 @@ export class CustomEventController implements ICustomEventController {
   }
 
   _sendCustomEvent(event: ICustomEvent): void {
-    const appId = MainHelper._getAppId();
+    const appId = getAppId();
     const identityModel = this._identityModelStore.model;
 
     const op = new TrackCustomEventOperation({

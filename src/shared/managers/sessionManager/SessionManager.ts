@@ -17,7 +17,7 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 import { isCompleteSubscriptionObject } from '../../../core/utils/typePredicates';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
-import MainHelper from '../../helpers/MainHelper';
+import { getAppId } from '../../helpers/main';
 import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constants';
 import type { ISessionManager } from './types';
@@ -47,7 +47,7 @@ export class SessionManager implements ISessionManager {
     };
     if (supportsServiceWorkers()) {
       Log._debug('Notify SW to upsert session');
-      await this._context._workerMessenger.unicast(
+      await this._context._workerMessenger._unicast(
         WorkerMessengerCommand.SessionUpsert,
         payload,
       );
@@ -75,7 +75,7 @@ export class SessionManager implements ISessionManager {
     };
     if (supportsServiceWorkers()) {
       Log._debug('Notify SW to deactivate session');
-      await this._context._workerMessenger.unicast(
+      await this._context._workerMessenger._unicast(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );
@@ -112,7 +112,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handleVisibilityChange(): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     if (!User._singletonInstance?.onesignalId) {
       return;
@@ -180,7 +180,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handleOnBeforeUnload(): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     if (!User._singletonInstance?.onesignalId) {
       return;
@@ -203,7 +203,7 @@ export class SessionManager implements ISessionManager {
       };
 
       Log._debug('Notify SW to deactivate session (beforeunload)');
-      this._context._workerMessenger.directPostMessageToSW(
+      this._context._workerMessenger._directPostMessageToSW(
         WorkerMessengerCommand.SessionDeactivate,
         payload,
       );
@@ -213,7 +213,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handleOnFocus(e: Event): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     Log._debug('handleOnFocus', e);
     if (!User._singletonInstance?.onesignalId) {
@@ -243,7 +243,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handleOnBlur(e: Event): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     Log._debug('handleOnBlur', e);
     if (!User._singletonInstance?.onesignalId) {
@@ -273,7 +273,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
-    await LoginManager.switchingUsersPromise;
+    await LoginManager._switchingUsersPromise;
 
     if (User._singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } =
@@ -397,7 +397,7 @@ export class SessionManager implements ISessionManager {
         },
       };
 
-      const appId = MainHelper._getAppId();
+      const appId = getAppId();
       enforceAppId(appId);
       enforceAlias(aliasPair);
       try {

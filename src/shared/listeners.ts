@@ -4,7 +4,7 @@ import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
 import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
-import MainHelper from './helpers/MainHelper';
+import { getCurrentPushToken, showLocalNotification } from './helpers/main';
 import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
 import { UserState } from './models/UserState';
@@ -13,7 +13,7 @@ import type {
   NotificationClickEventInternal,
 } from './notifications/types';
 import { isCategorySlidedownConfigured } from './prompts/helpers';
-import LimitStore from './services/LimitStore';
+import { limitStorePut } from './services/limitStore';
 import OneSignalEvent from './services/OneSignalEvent';
 import { logMethodCall } from './utils/utils';
 
@@ -34,7 +34,7 @@ export async function checkAndTriggerSubscriptionChanged() {
     lastKnownPushToken,
     lastKnownOptedIn,
   } = appState;
-  const currentPushToken = await MainHelper._getCurrentPushToken();
+  const currentPushToken = await getCurrentPushToken();
 
   const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
   const pushSubscriptionId = pushModel?.id;
@@ -189,7 +189,7 @@ function onSubscriptionChanged_updateCustomLink() {
 }
 
 export async function onInternalSubscriptionSet(optedOut: boolean) {
-  LimitStore.put('subscription.optedOut', optedOut);
+  limitStorePut('subscription.optedOut', optedOut);
 }
 
 async function onSubscriptionChanged_showWelcomeNotification(
@@ -245,7 +245,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   message = decodeHtmlEntities(message);
 
   Log._debug('Sending welcome notification.');
-  MainHelper._showLocalNotification(
+  showLocalNotification(
     title,
     message,
     url,

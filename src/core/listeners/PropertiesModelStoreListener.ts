@@ -1,4 +1,4 @@
-import MainHelper from 'src/shared/helpers/MainHelper';
+import { getAppId } from 'src/shared/helpers/main';
 import { PropertiesModel } from '../models/PropertiesModel';
 import { type PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type Operation } from '../operations/Operation';
@@ -28,7 +28,7 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
     _oldValue: unknown,
     newValue: unknown,
   ): Operation | null {
-    const appId = MainHelper._getAppId();
+    const appId = getAppId();
 
     return new SetPropertyOperation(
       appId,

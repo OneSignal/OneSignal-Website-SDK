@@ -68,21 +68,21 @@ const getOneSignalResourceUrlPath = () => {
 };
 
 export class DynamicResourceLoader {
-  private cache: DynamicResourceLoaderCache;
+  private _cache: DynamicResourceLoaderCache;
 
   constructor() {
-    this.cache = {};
+    this._cache = {};
   }
 
-  getCache(): DynamicResourceLoaderCache {
+  _getCache(): DynamicResourceLoaderCache {
     // Cache is private; return a cloned copy just for testing
-    return { ...this.cache };
+    return { ...this._cache };
   }
 
-  async loadSdkStylesheet(): Promise<ResourceLoadStateValue> {
+  async _loadSdkStylesheet(): Promise<ResourceLoadStateValue> {
     const pathForEnv = getOneSignalResourceUrlPath();
     const cssFileForEnv = getOneSignalCssFileName();
-    return this.loadIfNew(
+    return this._loadIfNew(
       ResourceType.Stylesheet,
       new URL(`${pathForEnv}/${cssFileForEnv}?v=${VERSION}`),
     );
@@ -92,24 +92,24 @@ export class DynamicResourceLoader {
    * Attempts to load a resource by adding it to the document's <head>.
    * Caches any previous load attempt's result and does not retry loading a previous resource.
    */
-  async loadIfNew(
+  async _loadIfNew(
     type: ResourceTypeValue,
     url: URL,
   ): Promise<ResourceLoadStateValue> {
     // Load for first time
-    if (!this.cache[url.toString()]) {
-      this.cache[url.toString()] = DynamicResourceLoader.load(type, url);
+    if (!this._cache[url.toString()]) {
+      this._cache[url.toString()] = DynamicResourceLoader._load(type, url);
     }
     // Resource is loading; multiple calls can be made to this while the same resource is loading
     // Waiting on the Promise is what we want here
-    return this.cache[url.toString()];
+    return this._cache[url.toString()];
   }
 
   /**
    * Attempts to load a resource by adding it to the document's <head>.
    * Each call creates a new DOM element and fetch attempt.
    */
-  static async load(
+  static async _load(
     type: ResourceTypeValue,
     url: URL,
   ): Promise<ResourceLoadStateValue> {

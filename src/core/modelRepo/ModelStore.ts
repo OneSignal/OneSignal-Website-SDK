@@ -96,7 +96,7 @@ export abstract class ModelStore<
 
   _onChanged(args: ModelChangedArgs, tag: string): void {
     this._persist();
-    this._changeSubscription.fire((handler) =>
+    this._changeSubscription._fire((handler) =>
       handler._onModelUpdated(args, tag),
     );
   }
@@ -116,7 +116,7 @@ export abstract class ModelStore<
     for (const item of this._models) {
       // no longer listen for changes to this model
       item._unsubscribe(this);
-      this._changeSubscription.fire((handler) =>
+      this._changeSubscription._fire((handler) =>
         handler._onModelRemoved(item, tag),
       );
       db.delete(this._modelName, item._modelId);
@@ -136,7 +136,7 @@ export abstract class ModelStore<
     model._subscribe(this);
     this._persist();
 
-    this._changeSubscription.fire((handler) =>
+    this._changeSubscription._fire((handler) =>
       handler._onModelAdded(model, tag),
     );
   }
@@ -151,7 +151,7 @@ export abstract class ModelStore<
     await db.delete(this._modelName, model._modelId);
     this._persist();
 
-    this._changeSubscription.fire((handler) =>
+    this._changeSubscription._fire((handler) =>
       handler._onModelRemoved(model, tag),
     );
   }

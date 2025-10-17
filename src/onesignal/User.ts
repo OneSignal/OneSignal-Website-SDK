@@ -9,7 +9,7 @@ import {
   ReservedArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
-import MainHelper from 'src/shared/helpers/MainHelper';
+import { getAppId } from 'src/shared/helpers/main';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -283,7 +283,7 @@ function addSubscriptionToModels({
 
   // Check if we need to enqueue a login operation for local IDs
   if (IDManager._isLocalId(onesignalId)) {
-    const appId = MainHelper._getAppId();
+    const appId = getAppId();
 
     if (!hasLoginOp(onesignalId)) {
       OneSignal._coreDirector._operationRepo._enqueue(

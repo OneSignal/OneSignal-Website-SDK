@@ -11,10 +11,10 @@ import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { clearStore, db, getOptionsValue } from 'src/shared/database/client';
 import { setAppState as setDBAppState } from 'src/shared/database/config';
 import type { AppState } from 'src/shared/database/types';
+import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
 import * as PermissionUtils from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
-import MainHelper from '../../../src/shared/helpers/MainHelper';
 
 vi.mock('src/shared/libraries/Log');
 const triggerNotificationSpy = vi.spyOn(
@@ -50,7 +50,7 @@ describe('Notification Types are set correctly on subscription change', () => {
       });
       await setDbPermission('granted');
 
-      await MainHelper._checkAndTriggerNotificationPermissionChanged();
+      await checkAndTriggerNotificationPermissionChanged();
       expect(triggerNotificationSpy).not.toHaveBeenCalled();
     });
 
@@ -74,7 +74,7 @@ describe('Notification Types are set correctly on subscription change', () => {
         permChangeStringListener,
       );
 
-      await MainHelper._checkAndTriggerNotificationPermissionChanged();
+      await checkAndTriggerNotificationPermissionChanged();
 
       // should update the db
       const dbPermission = await getOptionsValue<NotificationPermission>(

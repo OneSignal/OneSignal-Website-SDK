@@ -1,4 +1,4 @@
-import MainHelper from 'src/shared/helpers/MainHelper';
+import { getAppId } from 'src/shared/helpers/main';
 import { type IdentityModel } from '../models/IdentityModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
@@ -26,7 +26,7 @@ export class IdentityModelStoreListener extends SingletonModelStoreListener<Iden
     _oldValue: unknown,
     newValue: unknown,
   ): Operation {
-    const appId = MainHelper._getAppId();
+    const appId = getAppId();
     if (newValue != null && typeof newValue === 'string') {
       return new SetAliasOperation(
         appId,
