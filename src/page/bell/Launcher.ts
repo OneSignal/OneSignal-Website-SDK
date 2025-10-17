@@ -8,8 +8,8 @@ import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
 
 export default class Launcher extends AnimatedElement {
-  public bell: Bell;
-  public wasInactive: boolean;
+  public _bell: Bell;
+  public _wasInactive: boolean;
 
   constructor(bell: Bell) {
     super(
@@ -19,12 +19,12 @@ export default class Launcher extends AnimatedElement {
       'onesignal-bell-launcher-inactive',
     );
 
-    this.bell = bell;
-    this.wasInactive = false;
+    this._bell = bell;
+    this._wasInactive = false;
   }
 
-  async resize(size: BellSize) {
-    if (!this.element) {
+  async _resize(size: BellSize) {
+    if (!this._element) {
       // Notify button doesn't exist
       throw new Error('Missing DOM element');
     }
@@ -32,63 +32,66 @@ export default class Launcher extends AnimatedElement {
     // If the size is the same, do nothing and resolve an empty promise
     if (
       (size === 'small' &&
-        hasCssClass(this.element, 'onesignal-bell-launcher-sm')) ||
+        hasCssClass(this._element, 'onesignal-bell-launcher-sm')) ||
       (size === 'medium' &&
-        hasCssClass(this.element, 'onesignal-bell-launcher-md')) ||
+        hasCssClass(this._element, 'onesignal-bell-launcher-md')) ||
       (size === 'large' &&
-        hasCssClass(this.element, 'onesignal-bell-launcher-lg'))
+        hasCssClass(this._element, 'onesignal-bell-launcher-lg'))
     ) {
       return;
     }
-    removeCssClass(this.element, 'onesignal-bell-launcher-sm');
-    removeCssClass(this.element, 'onesignal-bell-launcher-md');
-    removeCssClass(this.element, 'onesignal-bell-launcher-lg');
+    removeCssClass(this._element, 'onesignal-bell-launcher-sm');
+    removeCssClass(this._element, 'onesignal-bell-launcher-md');
+    removeCssClass(this._element, 'onesignal-bell-launcher-lg');
     if (size === 'small') {
-      addCssClass(this.element, 'onesignal-bell-launcher-sm');
+      addCssClass(this._element, 'onesignal-bell-launcher-sm');
     } else if (size === 'medium') {
-      addCssClass(this.element, 'onesignal-bell-launcher-md');
+      addCssClass(this._element, 'onesignal-bell-launcher-md');
     } else if (size === 'large') {
-      addCssClass(this.element, 'onesignal-bell-launcher-lg');
+      addCssClass(this._element, 'onesignal-bell-launcher-lg');
     } else {
       throw new Error('Invalid OneSignal bell size ' + size);
     }
-    if (!this.shown) {
+    if (!this._shown) {
       return;
     } else {
-      await this.waitForAnimations();
+      await this._waitForAnimations();
     }
   }
 
-  async activateIfInactive() {
-    if (!this.active) {
-      this.wasInactive = true;
-      await this.activate();
+  async _activateIfInactive() {
+    if (!this._active) {
+      this._wasInactive = true;
+      await this._activate();
     }
   }
 
-  async inactivateIfWasInactive() {
-    if (this.wasInactive) {
-      this.wasInactive = false;
-      await this.inactivate();
+  async _inactivateIfWasInactive() {
+    if (this._wasInactive) {
+      this._wasInactive = false;
+      await this._inactivate();
     }
   }
 
-  clearIfWasInactive() {
-    this.wasInactive = false;
+  _clearIfWasInactive() {
+    this._wasInactive = false;
   }
 
-  async inactivate() {
-    await this.bell.message.hide();
-    const hasContent = this.bell.badge.content.length > 0;
-    if (hasContent) await this.bell.badge.hide();
-    await Promise.all([super.inactivate(), this.resize('small')]);
-    if (hasContent) await this.bell.badge.show();
+  async _inactivate() {
+    await this._bell._message._hide();
+    const hasContent = this._bell._badge._content.length > 0;
+    if (hasContent) await this._bell._badge._hide();
+    await Promise.all([super._inactivate(), this._resize('small')]);
+    if (hasContent) await this._bell._badge._show();
   }
 
-  async activate() {
-    if (this.bell.badge.content.length > 0) {
-      await this.bell.badge.hide();
+  async _activate() {
+    if (this._bell._badge._content.length > 0) {
+      await this._bell._badge._hide();
     }
-    await Promise.all([super.activate(), this.resize(this.bell.options.size!)]);
+    await Promise.all([
+      super._activate(),
+      this._resize(this._bell._options.size!),
+    ]);
   }
 }

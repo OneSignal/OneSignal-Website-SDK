@@ -6,9 +6,9 @@ import type Bell from './Bell';
 import { BellState } from './constants';
 
 export default class Message extends AnimatedElement {
-  public bell: Bell;
-  public contentType: string;
-  public queued: string[];
+  public _bell: Bell;
+  public _contentType: string;
+  public _queued: string[];
 
   constructor(bell: Bell) {
     super(
@@ -19,75 +19,75 @@ export default class Message extends AnimatedElement {
       '.onesignal-bell-launcher-message-body',
     );
 
-    this.bell = bell;
-    this.contentType = '';
-    this.queued = [];
+    this._bell = bell;
+    this._contentType = '';
+    this._queued = [];
   }
 
-  display(type: string, content: string, duration = 0) {
+  _display(type: string, content: string, duration = 0) {
     Log._debug(`Calling display(${type}, ${content}, ${duration}).`);
-    return (this.shown ? this.hide() : nothing())
+    return (this._shown ? this._hide() : nothing())
       .then(() => {
-        this.content = decodeHtmlEntities(content);
-        this.contentType = type;
+        this._content = decodeHtmlEntities(content);
+        this._contentType = type;
       })
       .then(() => {
-        return this.show();
+        return this._show();
       })
       .then(() => delay(duration))
       .then(() => {
-        return this.hide();
+        return this._hide();
       })
       .then(() => {
         // Reset back to normal content type so stuff can show a gain
-        this.content = this.getTipForState();
-        this.contentType = 'tip';
+        this._content = this._getTipForState();
+        this._contentType = 'tip';
       });
   }
 
-  getTipForState(): string {
-    if (this.bell.state === BellState._Unsubscribed)
-      return this.bell.options.text['tip.state.unsubscribed'];
-    else if (this.bell.state === BellState._Subscribed)
-      return this.bell.options.text['tip.state.subscribed'];
-    else if (this.bell.state === BellState._Blocked)
-      return this.bell.options.text['tip.state.blocked'];
+  _getTipForState(): string {
+    if (this._bell._state === BellState._Unsubscribed)
+      return this._bell._options.text['tip.state.unsubscribed'];
+    else if (this._bell._state === BellState._Subscribed)
+      return this._bell._options.text['tip.state.subscribed'];
+    else if (this._bell._state === BellState._Blocked)
+      return this._bell._options.text['tip.state.blocked'];
     return '';
   }
 
-  enqueue(message: string) {
-    this.queued.push(decodeHtmlEntities(message));
+  _enqueue(message: string) {
+    this._queued.push(decodeHtmlEntities(message));
     return new Promise((resolve) => {
-      if (this.bell.badge.shown) {
-        this.bell.badge
-          .hide()
-          .then(() => this.bell.badge.increment())
-          .then(() => this.bell.badge.show())
+      if (this._bell._badge._shown) {
+        this._bell._badge
+          ._hide()
+          .then(() => this._bell._badge._increment())
+          .then(() => this._bell._badge._show())
           .then(resolve);
       } else {
-        this.bell.badge.increment();
-        if (this.bell.initialized) this.bell.badge.show().then(resolve);
+        this._bell._badge._increment();
+        if (this._bell._initialized) this._bell._badge._show().then(resolve);
         else resolve(undefined);
       }
     });
   }
 
-  dequeue() {
-    const dequeuedMessage = this.queued.pop();
+  _dequeue() {
+    const dequeuedMessage = this._queued.pop();
     return new Promise((resolve) => {
-      if (this.bell.badge.shown) {
-        this.bell.badge
-          .hide()
+      if (this._bell._badge._shown) {
+        this._bell._badge
+          ._hide()
           .then(() => {
-            this.bell.badge.decrement();
-            if (this.bell.badge.content.length > 0) {
-              return this.bell.badge.show();
+            this._bell._badge._decrement();
+            if (this._bell._badge._content.length > 0) {
+              return this._bell._badge._show();
             }
             return Promise.resolve();
           })
           .then(() => resolve(dequeuedMessage));
       } else {
-        this.bell.badge.decrement();
+        this._bell._badge._decrement();
         resolve(dequeuedMessage);
       }
     });

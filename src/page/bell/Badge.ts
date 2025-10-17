@@ -10,24 +10,24 @@ export default class Badge extends AnimatedElement {
   }
 
   _updateCount(delta: number): void {
-    const num = Number(this.content);
+    const num = Number(this._content);
     if (!Number.isNaN(num)) {
       const newNum = num + delta;
-      this.content = newNum > 0 ? newNum.toString() : '';
+      this._content = newNum > 0 ? newNum.toString() : '';
     }
   }
 
-  increment(): void {
+  _increment(): void {
     this._updateCount(1);
   }
 
-  decrement(): void {
+  _decrement(): void {
     this._updateCount(-1);
   }
 
-  show(): Promise<void> {
-    const promise = super.show();
-    OneSignal._notifyButton?.setCustomColorsIfSpecified();
+  _show(): Promise<void> {
+    const promise = super._show();
+    OneSignal._notifyButton?._setCustomColorsIfSpecified();
     return promise;
   }
 }

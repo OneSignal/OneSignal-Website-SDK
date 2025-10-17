@@ -74,7 +74,7 @@ export class PromptsManager {
     // show native prompt
     const nativePromptOptions = this.getDelayedPromptOptions(
       userPromptOptions,
-      DelayedPromptType.Native,
+      DelayedPromptType._Native,
     );
     const isPageViewConditionMetForNative: boolean =
       this.isPageViewConditionMet(nativePromptOptions);
@@ -85,7 +85,7 @@ export class PromptsManager {
 
     if (conditionMetWithNativeOptions && !forceSlidedownWithNativeOptions) {
       this.internalShowDelayedPrompt(
-        DelayedPromptType.Native,
+        DelayedPromptType._Native,
         nativePromptOptions.timeDelay || 0,
       );
       return;
@@ -94,12 +94,12 @@ export class PromptsManager {
     // if slidedown not configured, condition met with native options, & should force slidedown over native:
     const isPushSlidedownConfigured = !!getFirstSlidedownPromptOptionsWithType(
       userPromptOptions?.slidedown?.prompts,
-      DelayedPromptType.Push,
+      DelayedPromptType._Push,
     );
 
     if (forceSlidedownWithNativeOptions && !isPushSlidedownConfigured) {
       this.internalShowDelayedPrompt(
-        DelayedPromptType.Push,
+        DelayedPromptType._Push,
         nativePromptOptions.timeDelay || 0,
       );
     }
@@ -145,8 +145,8 @@ export class PromptsManager {
       return;
     }
 
-    if (requiresUserInteraction() && type === DelayedPromptType.Native) {
-      type = DelayedPromptType.Push; // Push Slidedown for cases where user interaction is needed
+    if (requiresUserInteraction() && type === DelayedPromptType._Native) {
+      type = DelayedPromptType._Push; // Push Slidedown for cases where user interaction is needed
     }
 
     if (timeDelaySeconds > 0) {
@@ -154,22 +154,22 @@ export class PromptsManager {
     }
 
     switch (type) {
-      case DelayedPromptType.Native:
+      case DelayedPromptType._Native:
         await this.internalShowNativePrompt();
         break;
-      case DelayedPromptType.Push:
+      case DelayedPromptType._Push:
         await this.internalShowSlidedownPrompt(options);
         break;
-      case DelayedPromptType.Category:
+      case DelayedPromptType._Category:
         await this.internalShowCategorySlidedown(options);
         break;
-      case DelayedPromptType.Sms:
+      case DelayedPromptType._Sms:
         await this.internalShowSmsSlidedown(options);
         break;
-      case DelayedPromptType.Email:
+      case DelayedPromptType._Email:
         await this.internalShowEmailSlidedown(options);
         break;
-      case DelayedPromptType.SmsAndEmail:
+      case DelayedPromptType._SmsAndEmail:
         await this.internalShowSmsAndEmailSlidedown(options);
         break;
       default:
@@ -222,7 +222,7 @@ export class PromptsManager {
   ): Promise<void> {
     logMethodCall('internalShowCategorySlidedown');
     await this.internalShowParticularSlidedown(
-      DelayedPromptType.Category,
+      DelayedPromptType._Category,
       options,
     );
   }
@@ -231,7 +231,7 @@ export class PromptsManager {
     options?: AutoPromptOptions,
   ): Promise<void> {
     logMethodCall('internalShowSmsSlidedown');
-    await this.internalShowParticularSlidedown(DelayedPromptType.Sms, options);
+    await this.internalShowParticularSlidedown(DelayedPromptType._Sms, options);
   }
 
   public async internalShowEmailSlidedown(
@@ -239,7 +239,7 @@ export class PromptsManager {
   ): Promise<void> {
     logMethodCall('internalShowEmailSlidedown');
     await this.internalShowParticularSlidedown(
-      DelayedPromptType.Email,
+      DelayedPromptType._Email,
       options,
     );
   }
@@ -249,7 +249,7 @@ export class PromptsManager {
   ): Promise<void> {
     logMethodCall('internalShowSmsAndEmailSlidedown');
     await this.internalShowParticularSlidedown(
-      DelayedPromptType.SmsAndEmail,
+      DelayedPromptType._SmsAndEmail,
       options,
     );
   }
@@ -272,7 +272,7 @@ export class PromptsManager {
       getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
 
     if (!slidedownPromptOptions) {
-      if (typeToPullFromConfig !== DelayedPromptType.Push) {
+      if (typeToPullFromConfig !== DelayedPromptType._Push) {
         Log._error(
           `OneSignal: slidedown of type '${typeToPullFromConfig}' couldn't be shown. Check your configuration` +
             ` on the OneSignal dashboard or your custom code initialization.`,
@@ -313,10 +313,10 @@ export class PromptsManager {
         return;
       }
 
-      const type = this.context._slidedownManager._slidedown?.options.type;
+      const type = this.context._slidedownManager._slidedown?._options.type;
       switch (type) {
-        case DelayedPromptType.Push:
-        case DelayedPromptType.Category:
+        case DelayedPromptType._Push:
+        case DelayedPromptType._Category:
           Log._debug(
             'Setting flag to not show the slidedown to the user again.',
           );
@@ -362,7 +362,7 @@ export class PromptsManager {
     }
 
     switch (type) {
-      case DelayedPromptType.Native: {
+      case DelayedPromptType._Native: {
         const nativePromptOptions = promptOptions.native;
         return {
           enabled: nativePromptOptions?.enabled,
@@ -371,11 +371,11 @@ export class PromptsManager {
           pageViews: nativePromptOptions?.pageViews,
         };
       }
-      case DelayedPromptType.Push:
-      case DelayedPromptType.Category:
-      case DelayedPromptType.Email:
-      case DelayedPromptType.Sms:
-      case DelayedPromptType.SmsAndEmail: {
+      case DelayedPromptType._Push:
+      case DelayedPromptType._Category:
+      case DelayedPromptType._Email:
+      case DelayedPromptType._Sms:
+      case DelayedPromptType._SmsAndEmail: {
         const { userConfig } = this.context._appConfig;
         const options = getFirstSlidedownPromptOptionsWithType(
           userConfig.promptOptions?.slidedown?.prompts || [],

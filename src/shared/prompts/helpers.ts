@@ -8,7 +8,7 @@ export function isCategorySlidedownConfigured(
 
   const options = getFirstSlidedownPromptOptionsWithType(
     prompts,
-    DelayedPromptType.Category,
+    DelayedPromptType._Category,
   );
   if (!!options) {
     return !!options.categories && options.categories.length > 0;
@@ -29,7 +29,7 @@ export function isSlidedownPushDependent(
   slidedownType: DelayedPromptTypeValue,
 ): boolean {
   return (
-    slidedownType === DelayedPromptType.Push ||
-    slidedownType === DelayedPromptType.Category
+    slidedownType === DelayedPromptType._Push ||
+    slidedownType === DelayedPromptType._Category
   );
 }

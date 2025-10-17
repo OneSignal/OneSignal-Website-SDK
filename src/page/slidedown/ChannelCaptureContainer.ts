@@ -52,32 +52,32 @@ export default class ChannelCaptureContainer {
     let label, smsInputElement, emailInputElement;
 
     switch (this.promptOptions.type) {
-      case DelayedPromptType.Sms:
+      case DelayedPromptType._Sms:
         label = this.promptOptions.text.smsLabel || 'Phone Number';
         smsInputElement = this.getInputWithValidationElement(
-          DelayedPromptType.Sms,
+          DelayedPromptType._Sms,
           label,
         );
         captureContainer.appendChild(smsInputElement);
         break;
-      case DelayedPromptType.Email:
+      case DelayedPromptType._Email:
         label = this.promptOptions.text.emailLabel || 'Email';
         emailInputElement = this.getInputWithValidationElement(
-          DelayedPromptType.Email,
+          DelayedPromptType._Email,
           label,
         );
         captureContainer.appendChild(emailInputElement);
         break;
-      case DelayedPromptType.SmsAndEmail:
+      case DelayedPromptType._SmsAndEmail:
         label = this.promptOptions.text.emailLabel || 'Email';
         emailInputElement = this.getInputWithValidationElement(
-          DelayedPromptType.Email,
+          DelayedPromptType._Email,
           label,
         );
         captureContainer.appendChild(emailInputElement);
         label = this.promptOptions.text.smsLabel || 'Phone Number';
         smsInputElement = this.getInputWithValidationElement(
-          DelayedPromptType.Sms,
+          DelayedPromptType._Sms,
           label,
         );
         captureContainer.appendChild(smsInputElement);
@@ -157,7 +157,7 @@ export default class ChannelCaptureContainer {
   private getTypeSpecificVariablesForValidationElemGeneration(
     type: DelayedPromptTypeValue,
   ): TypeSpecificVariablePayload {
-    if (type === DelayedPromptType.Email) {
+    if (type === DelayedPromptType._Email) {
       return {
         message: 'Please enter a valid email',
         domElementType: 'email',
@@ -169,7 +169,7 @@ export default class ChannelCaptureContainer {
           CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement,
         tabIndex: 1,
       };
-    } else if (type === DelayedPromptType.Sms) {
+    } else if (type === DelayedPromptType._Sms) {
       return {
         message: 'Please enter a valid phone number',
         domElementType: 'tel',
@@ -442,13 +442,13 @@ export default class ChannelCaptureContainer {
 
   static resetInputErrorStates(type: DelayedPromptTypeValue): void {
     switch (type) {
-      case DelayedPromptType.Sms:
+      case DelayedPromptType._Sms:
         ChannelCaptureContainer.showSmsInputError(false);
         break;
-      case DelayedPromptType.Email:
+      case DelayedPromptType._Email:
         ChannelCaptureContainer.showEmailInputError(false);
         break;
-      case DelayedPromptType.SmsAndEmail:
+      case DelayedPromptType._SmsAndEmail:
         ChannelCaptureContainer.showSmsInputError(false);
         ChannelCaptureContainer.showEmailInputError(false);
         break;
@@ -464,13 +464,14 @@ export default class ChannelCaptureContainer {
 
   static isUsingSmsInputField(type: DelayedPromptTypeValue): boolean {
     return (
-      type === DelayedPromptType.Sms || type === DelayedPromptType.SmsAndEmail
+      type === DelayedPromptType._Sms || type === DelayedPromptType._SmsAndEmail
     );
   }
 
   static isUsingEmailInputField(type: DelayedPromptTypeValue): boolean {
     return (
-      type === DelayedPromptType.Email || type === DelayedPromptType.SmsAndEmail
+      type === DelayedPromptType._Email ||
+      type === DelayedPromptType._SmsAndEmail
     );
   }
 }

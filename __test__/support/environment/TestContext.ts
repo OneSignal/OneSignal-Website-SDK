@@ -95,7 +95,7 @@ export default class TestContext {
             slidedown: {
               prompts: [
                 {
-                  type: DelayedPromptType.Push,
+                  type: DelayedPromptType._Push,
                   autoPrompt: false,
                   text: {
                     acceptButton: 'Allow',
@@ -238,7 +238,7 @@ export default class TestContext {
             slidedown: {
               prompts: [
                 {
-                  type: DelayedPromptType.Push,
+                  type: DelayedPromptType._Push,
                   autoPrompt: false,
                   text: {
                     acceptButton: 'Allow',
@@ -364,7 +364,7 @@ export default class TestContext {
         slidedown: {
           prompts: [
             {
-              type: DelayedPromptType.Push,
+              type: DelayedPromptType._Push,
               autoPrompt: false,
               text: {
                 acceptButton: 'Allow',
