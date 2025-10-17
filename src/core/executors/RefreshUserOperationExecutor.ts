@@ -2,7 +2,7 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
-import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
+import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
 import Log from 'src/shared/libraries/Log';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
@@ -69,16 +69,16 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
 
   private async _getUser(op: RefreshUserOperation): Promise<ExecutionResponse> {
     const response = await getUserByAlias(
-      { appId: op.appId },
+      { appId: op._appId },
       {
         label: IdentityConstants.ONESIGNAL_ID,
-        id: op.onesignalId,
+        id: op._onesignalId,
       },
     );
 
     const { ok, result, retryAfterSeconds, status } = response;
     if (ok) {
-      if (op.onesignalId !== this._identityModelStore.model.onesignalId) {
+      if (op._onesignalId !== this._identityModelStore.model._onesignalId) {
         return new ExecutionResponse(ExecutionResult.SUCCESS);
       }
 
@@ -88,7 +88,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       }
 
       const propertiesModel = new PropertiesModel();
-      propertiesModel.onesignalId = op.onesignalId;
+      propertiesModel._onesignalId = op._onesignalId;
 
       const { properties = {}, subscriptions = [] } = result;
 
@@ -102,19 +102,19 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         model.id = sub.id!;
         model.token = sub.token ?? '';
-        model.notification_types =
+        model._notification_types =
           sub.notification_types ?? NotificationType.Subscribed;
         model.type = sub.type;
         model.enabled =
-          model.notification_types !== NotificationType.UserOptedOut;
+          model._notification_types !== NotificationType.UserOptedOut;
         model.sdk = sub.sdk;
         model.device_os = sub.device_os;
         model.device_model = sub.device_model;
-        model.onesignalId = op.onesignalId;
+        model._onesignalId = op._onesignalId;
 
         // We only add a non-push subscriptions. For push, the device is the source of truth
         // so we don't want to cache these subscriptions from the backend.
-        if (!SubscriptionHelper.isPushSubscriptionType(model.type)) {
+        if (!isPushSubscriptionType(model.type)) {
           subscriptionModels.push(model);
         }
       }
@@ -122,7 +122,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       const pushModel =
         await OneSignal._coreDirector._getPushSubscriptionModel();
       if (pushModel) {
-        pushModel.onesignalId = op.onesignalId;
+        pushModel._onesignalId = op._onesignalId;
         subscriptionModels.push(pushModel);
       }
 
@@ -131,7 +131,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         propertiesModel,
         ModelChangeTags.HYDRATE,
       );
-      this._subscriptionsModelStore.replaceAll(
+      this._subscriptionsModelStore._replaceAll(
         subscriptionModels,
         ModelChangeTags.HYDRATE,
       );
@@ -154,7 +154,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       case ResponseStatusType.MISSING: {
         if (
           status === 404 &&
-          this._newRecordState._isInMissingRetryWindow(op.onesignalId)
+          this._newRecordState._isInMissingRetryWindow(op._onesignalId)
         )
           return new ExecutionResponse(
             ExecutionResult.FAIL_RETRY,
@@ -162,9 +162,9 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
           );
 
         const rebuildOps =
-          await this._buildUserService.getRebuildOperationsIfCurrentUser(
-            op.appId,
-            op.onesignalId,
+          await this._buildUserService._getRebuildOperationsIfCurrentUser(
+            op._appId,
+            op._onesignalId,
           );
         return rebuildOps
           ? new ExecutionResponse(

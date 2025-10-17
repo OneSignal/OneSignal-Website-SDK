@@ -22,32 +22,32 @@ export abstract class Operation<
 > extends Model<T> {
   constructor(name: string, appId?: string, onesignalId?: string) {
     super();
-    this.name = name;
-    if (appId) this.appId = appId;
-    if (onesignalId) this.onesignalId = onesignalId;
+    this._name = name;
+    if (appId) this._appId = appId;
+    if (onesignalId) this._onesignalId = onesignalId;
   }
 
-  get name(): string {
+  get _name(): string {
     return this._getProperty('name');
   }
-  private set name(value: string) {
+  private set _name(value: string) {
     this._setProperty('name', value);
   }
 
   /**
    * The application ID this subscription will be created under.
    */
-  get appId(): string {
+  get _appId(): string {
     return this._getProperty('appId');
   }
-  protected set appId(value: string) {
+  protected set _appId(value: string) {
     this._setProperty('appId', value);
   }
 
-  get onesignalId(): string {
+  get _onesignalId(): string {
     return this._getProperty('onesignalId');
   }
-  protected set onesignalId(value: string) {
+  protected set _onesignalId(value: string) {
     this._setProperty('onesignalId', value);
   }
 
@@ -55,15 +55,15 @@ export abstract class Operation<
    * This is a unique id that points to a record this operation will affect.
    * Example: If the operation is updating tags on a User this will be the onesignalId.
    */
-  get applyToRecordId(): string {
-    return this.onesignalId;
+  get _applyToRecordId(): string {
+    return this._onesignalId;
   }
 
   /**
    * The key of this operation for when the starting operation has a `groupComparisonType`
    * of `GroupComparisonType.CREATE`
    */
-  get createComparisonKey(): string {
+  get _createComparisonKey(): string {
     return '';
   }
 
@@ -71,34 +71,30 @@ export abstract class Operation<
    * The key of this operation for when the starting operation has a `groupComparisonType`
    * of `GroupComparisonType.ALTER`
    */
-  abstract get modifyComparisonKey(): string;
+  abstract get _modifyComparisonKey(): string;
 
   /**
    * The comparison type to use when this operation is the starting operation, in terms of
    * which operations can be grouped with it.
    */
-  get groupComparisonType(): GroupComparisonValue {
+  get _groupComparisonType(): GroupComparisonValue {
     return GroupComparisonType.ALTER;
   }
 
   /**
    * Whether the operation can currently execute given its current state.
    */
-  get canStartExecute(): boolean {
-    return !IDManager._isLocalId(this.onesignalId);
+  get _canStartExecute(): boolean {
+    return !IDManager._isLocalId(this._onesignalId);
   }
 
   /**
    * Called when an operation has resolved a local ID to a backend ID.
    * Any IDs within the operation that could be local should be translated at this time.
    */
-  translateIds(map: Record<string, string>): void {
-    if (map[this.onesignalId]) {
-      this.onesignalId = map[this.onesignalId];
+  _translateIds(map: Record<string, string>): void {
+    if (map[this._onesignalId]) {
+      this._onesignalId = map[this._onesignalId];
     }
-  }
-
-  toString(): string {
-    return JSON.stringify(this.toJSON());
   }
 }

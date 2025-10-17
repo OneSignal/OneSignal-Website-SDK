@@ -10,20 +10,20 @@ import type { IDBStoreName } from 'src/shared/database/types';
  * which provides a basic create() method using the passed-in factory.
  */
 export class SimpleModelStore<TModel extends Model> extends ModelStore<TModel> {
-  private readonly _create: () => TModel;
+  private readonly _createFn: () => TModel;
 
   /**
-   * @param _create A factory function used to instantiate a new model instance.
+   * @param _createFn A factory function used to instantiate a new model instance.
    * @param modelName Name for persistence.
    */
-  constructor(_create: () => TModel, modelName: IDBStoreName) {
+  constructor(createFn: () => TModel, modelName: IDBStoreName) {
     super(modelName);
-    this._create = _create;
-    this.load(); // Automatically load on construction
+    this._createFn = createFn;
+    this._load(); // Automatically load on construction
   }
 
-  override create(modelData?: DatabaseModel<TModel>): TModel {
-    const model = this._create();
+  override _create(modelData?: DatabaseModel<TModel>): TModel {
+    const model = this._createFn();
     if (modelData != null) {
       model._initializeFromJson(modelData);
     }

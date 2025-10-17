@@ -13,11 +13,11 @@ export class TransferSubscriptionOperation extends BaseSubscriptionOperation {
     if (subscriptionId) this.subscriptionId = subscriptionId;
   }
 
-  override get groupComparisonType(): GroupComparisonValue {
+  override get _groupComparisonType(): GroupComparisonValue {
     return GroupComparisonType.NONE;
   }
 
-  override get modifyComparisonKey(): string {
-    return `${this.appId}.Subscription.${this.subscriptionId}.Transfer`;
+  override get _modifyComparisonKey(): string {
+    return `${this._appId}.Subscription.${this.subscriptionId}.Transfer`;
   }
 }

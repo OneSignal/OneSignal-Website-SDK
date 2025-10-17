@@ -95,7 +95,7 @@ export const setupSubModelStore = async ({
     pushModel.web_p256 = web_p256;
   }
   await setPushToken(pushModel.token);
-  OneSignal._coreDirector._subscriptionModelStore.replaceAll(
+  OneSignal._coreDirector._subscriptionModelStore._replaceAll(
     [pushModel],
     ModelChangeTags.NO_PROPAGATE,
   );

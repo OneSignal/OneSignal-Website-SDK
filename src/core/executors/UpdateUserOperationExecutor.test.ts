@@ -43,7 +43,7 @@ describe('UpdateUserOperationExecutor', () => {
     );
     getRebuildOpsSpy = vi.spyOn(
       buildUserService,
-      'getRebuildOperationsIfCurrentUser',
+      '_getRebuildOperationsIfCurrentUser',
     );
 
     // Set up initial model state
@@ -91,7 +91,7 @@ describe('UpdateUserOperationExecutor', () => {
 
       const result = await executor._execute([setPropertyOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
-      expect(propertiesModelStore.model.language).toBe('fr');
+      expect(propertiesModelStore.model._language).toBe('fr');
     });
 
     test('can set tags', async () => {
@@ -105,7 +105,7 @@ describe('UpdateUserOperationExecutor', () => {
 
       const result = await executor._execute([setPropertyOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
-      expect(propertiesModelStore.model.tags).toEqual({
+      expect(propertiesModelStore.model._tags).toEqual({
         tagA: 'valueA',
         tagB: 'valueB',
       });
@@ -150,14 +150,14 @@ describe('UpdateUserOperationExecutor', () => {
         retryAfterSeconds: 5,
         operations: [
           {
-            name: 'login-user',
-            appId: APP_ID,
-            onesignalId: ONESIGNAL_ID,
+            _name: 'login-user',
+            _appId: APP_ID,
+            _onesignalId: ONESIGNAL_ID,
           },
           {
-            name: 'refresh-user',
-            appId: APP_ID,
-            onesignalId: ONESIGNAL_ID,
+            _name: 'refresh-user',
+            _appId: APP_ID,
+            _onesignalId: ONESIGNAL_ID,
           },
         ],
       });

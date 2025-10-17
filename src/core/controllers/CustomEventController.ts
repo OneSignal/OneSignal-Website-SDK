@@ -27,8 +27,8 @@ export class CustomEventController implements ICustomEventController {
 
     const op = new TrackCustomEventOperation({
       appId,
-      onesignalId: identityModel.onesignalId,
-      externalId: identityModel.externalId,
+      onesignalId: identityModel._onesignalId,
+      externalId: identityModel._externalId,
       timestamp: new Date().toISOString(),
       event,
     });

@@ -70,7 +70,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     if (startingOp instanceof LoginUserOperation)
       return this._loginUser(startingOp, operations.slice(1));
 
-    throw new Error(`Unrecognized operation: ${startingOp.name}`);
+    throw new Error(`Unrecognized operation: ${startingOp._name}`);
   }
 
   private async _loginUser(
@@ -86,7 +86,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
     const result = await this._identityOperationExecutor._execute([
       new SetAliasOperation(
-        loginUserOp.appId,
+        loginUserOp._appId,
         loginUserOp.existingOnesignalId,
         IdentityConstants.EXTERNAL_ID,
         loginUserOp.externalId,
@@ -96,9 +96,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     switch (result.result) {
       case ExecutionResult.SUCCESS: {
         const backendOneSignalId = loginUserOp.existingOnesignalId;
-        const opOneSignalId = loginUserOp.onesignalId;
+        const opOneSignalId = loginUserOp._onesignalId;
 
-        if (this._identityModelStore.model.onesignalId === opOneSignalId) {
+        if (this._identityModelStore.model._onesignalId === opOneSignalId) {
           this._identityModelStore.model._setProperty(
             IdentityConstants.ONESIGNAL_ID,
             backendOneSignalId,
@@ -106,7 +106,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           );
         }
 
-        if (this._propertiesModelStore.model.onesignalId === opOneSignalId) {
+        if (this._propertiesModelStore.model._onesignalId === opOneSignalId) {
           this._propertiesModelStore.model._setProperty(
             'onesignalId',
             backendOneSignalId,
@@ -118,7 +118,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           undefined,
           undefined,
           {
-            [loginUserOp.onesignalId]: backendOneSignalId,
+            [loginUserOp._onesignalId]: backendOneSignalId,
           },
         );
       }
@@ -165,13 +165,13 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           subscriptions,
         );
       } else {
-        throw new Error(`Unrecognized operation: ${operation.name}`);
+        throw new Error(`Unrecognized operation: ${operation._name}`);
       }
     }
 
     const subscriptionList = Object.entries(subscriptions);
     const response = await createNewUser(
-      { appId: createUserOperation.appId },
+      { appId: createUserOperation._appId },
       {
         identity,
         subscriptions: subscriptionList.map(([, sub]) => sub),
@@ -181,13 +181,13 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
     if (response.ok) {
       const backendOneSignalId = response.result.identity.onesignal_id;
-      const opOneSignalId = createUserOperation.onesignalId;
+      const opOneSignalId = createUserOperation._onesignalId;
 
       const idTranslations: Record<string, string> = {
-        [createUserOperation.onesignalId]: backendOneSignalId,
+        [createUserOperation._onesignalId]: backendOneSignalId,
       };
 
-      if (this._identityModelStore.model.onesignalId === opOneSignalId) {
+      if (this._identityModelStore.model._onesignalId === opOneSignalId) {
         this._identityModelStore.model._setProperty(
           IdentityConstants.ONESIGNAL_ID,
           backendOneSignalId,
@@ -195,7 +195,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         );
       }
 
-      if (this._propertiesModelStore.model.onesignalId === opOneSignalId) {
+      if (this._propertiesModelStore.model._onesignalId === opOneSignalId) {
         this._propertiesModelStore.model._setProperty(
           'onesignalId',
           backendOneSignalId,
@@ -238,7 +238,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         Object.keys(identity).length > 0
           ? [
               new RefreshUserOperation(
-                createUserOperation.appId,
+                createUserOperation._appId,
                 backendOneSignalId,
               ),
             ]

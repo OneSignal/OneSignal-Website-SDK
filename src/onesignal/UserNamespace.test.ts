@@ -198,7 +198,7 @@ describe('Email Management', () => {
 
   test('can add an email subscription', async () => {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel.onesignalId = IDManager._createLocalId();
+    identityModel._onesignalId = IDManager._createLocalId();
 
     const email = 'test@example.com';
     const addSubscriptionSpy = vi.spyOn(
@@ -216,7 +216,7 @@ describe('Email Management', () => {
 
   test('should remove an email subscription', async () => {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel.onesignalId = IDManager._createLocalId();
+    identityModel._onesignalId = IDManager._createLocalId();
 
     const email = 'test@example.com';
 
@@ -248,7 +248,7 @@ describe('SMS Management', () => {
   test('should add an SMS subscription', async () => {
     const userNamespace = new UserNamespace(true);
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel.onesignalId = IDManager._createLocalId();
+    identityModel._onesignalId = IDManager._createLocalId();
 
     const smsNumber = '+15551234567';
     const addSubscriptionSpy = vi.spyOn(
@@ -269,7 +269,7 @@ describe('SMS Management', () => {
     const smsNumber = '+15551234567';
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel.onesignalId = IDManager._createLocalId();
+    identityModel._onesignalId = IDManager._createLocalId();
 
     // First add the SMS
     await userNamespace.addSms(smsNumber);
@@ -374,7 +374,7 @@ describe('Language Management', () => {
     const userNamespace = new UserNamespace(true);
     const language = 'es';
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    propertiesModel.language = language;
+    propertiesModel._language = language;
 
     expect(userNamespace.getLanguage()).toBe(language);
   });
@@ -382,7 +382,7 @@ describe('Language Management', () => {
   test('should return empty string if language is not set', () => {
     const userNamespace = new UserNamespace(true);
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    propertiesModel.language = undefined;
+    propertiesModel._language = undefined;
 
     expect(userNamespace.getLanguage()).toBe('');
   });
@@ -461,7 +461,7 @@ describe('Initialization', () => {
     const onesignalId = user.onesignalId;
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    expect(propertiesModel.onesignalId).toBe(onesignalId);
+    expect(propertiesModel._onesignalId).toBe(onesignalId);
   });
 
   test('properties model should have onesignalId for new user', () => {
@@ -470,12 +470,13 @@ describe('Initialization', () => {
 
     const user = new UserNamespace(true);
     expect(user.onesignalId).toBe(undefined); // since its local
-    const onesignalId = OneSignal._coreDirector._getIdentityModel().onesignalId;
+    const onesignalId =
+      OneSignal._coreDirector._getIdentityModel()._onesignalId;
     expect(IDManager._isLocalId(onesignalId)).toBe(true);
 
     // identity and properties models should have the same onesignalId
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    expect(propertiesModel.onesignalId).toBe(onesignalId);
+    expect(propertiesModel._onesignalId).toBe(onesignalId);
   });
 });
 

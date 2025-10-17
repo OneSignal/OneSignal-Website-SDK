@@ -4,7 +4,7 @@ import {
   type ModelChangeTagValue,
 } from 'src/core/types/models';
 import type { IDBStoreName } from 'src/shared/database/types';
-import SubscriptionHelper from 'src/shared/helpers/SubscriptionHelper';
+import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 
 // Implements logic similar to Android SDK's SubscriptionModelStore
@@ -21,17 +21,17 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     return super.list().find((m) => m.id === subscriptionId);
   }
 
-  override replaceAll(
+  override _replaceAll(
     models: SubscriptionModel[],
     tag?: ModelChangeTagValue,
   ): void {
     if (tag !== ModelChangeTags.HYDRATE) {
-      return super.replaceAll(models, tag);
+      return super._replaceAll(models, tag);
     }
 
     // When hydrating, preserve properties from existing PUSH subscription
     for (const model of models) {
-      if (SubscriptionHelper.isPushSubscriptionType(model.type)) {
+      if (isPushSubscriptionType(model.type)) {
         const existingPushModel = this.get(model._modelId);
         if (existingPushModel) {
           model.sdk = existingPushModel.sdk;
@@ -41,6 +41,6 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
       }
     }
 
-    super.replaceAll(models, tag);
+    super._replaceAll(models, tag);
   }
 }

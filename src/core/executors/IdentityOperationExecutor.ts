@@ -77,18 +77,18 @@ export class IdentityOperationExecutor implements IOperationExecutor {
     const isSetAlias = lastOperation instanceof SetAliasOperation;
     const request = isSetAlias
       ? addAlias(
-          { appId: lastOperation.appId },
+          { appId: lastOperation._appId },
           {
             label: IdentityConstants.ONESIGNAL_ID,
-            id: lastOperation.onesignalId,
+            id: lastOperation._onesignalId,
           },
           { [lastOperation.label]: lastOperation.value },
         )
       : deleteAlias(
-          { appId: lastOperation.appId },
+          { appId: lastOperation._appId },
           {
             label: IdentityConstants.ONESIGNAL_ID,
-            id: lastOperation.onesignalId,
+            id: lastOperation._onesignalId,
           },
           lastOperation.label,
         );
@@ -96,7 +96,8 @@ export class IdentityOperationExecutor implements IOperationExecutor {
     const { ok, status, retryAfterSeconds } = await request;
     if (ok) {
       if (
-        this._identityModelStore.model.onesignalId === lastOperation.onesignalId
+        this._identityModelStore.model._onesignalId ===
+        lastOperation._onesignalId
       ) {
         this._identityModelStore.model._setProperty(
           lastOperation.label,
@@ -136,7 +137,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         if (
           status === 404 &&
           this._newRecordState._isInMissingRetryWindow(
-            lastOperation.onesignalId,
+            lastOperation._onesignalId,
           )
         )
           return new ExecutionResponse(
@@ -146,9 +147,9 @@ export class IdentityOperationExecutor implements IOperationExecutor {
 
         if (isSetAlias) {
           const rebuildOps =
-            await this._buildUserService.getRebuildOperationsIfCurrentUser(
-              lastOperation.appId,
-              lastOperation.onesignalId,
+            await this._buildUserService._getRebuildOperationsIfCurrentUser(
+              lastOperation._appId,
+              lastOperation._onesignalId,
             );
 
           if (rebuildOps == null)

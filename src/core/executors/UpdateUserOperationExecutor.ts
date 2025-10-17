@@ -2,7 +2,6 @@ import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/NetworkUtils';
-import { PropertyOperationHelper } from 'src/shared/helpers/PropertyOperationHelper';
 import Log from 'src/shared/libraries/Log';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
@@ -51,14 +50,13 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     for (const operation of operations) {
       if (operation instanceof SetPropertyOperation) {
         if (!appId) {
-          appId = operation.appId;
-          onesignalId = operation.onesignalId;
+          appId = operation._appId;
+          onesignalId = operation._onesignalId;
         }
-        propertiesObject =
-          PropertyOperationHelper.createPropertiesFromOperation(
-            operation,
-            propertiesObject,
-          );
+        propertiesObject = createPropertiesFromOperation(
+          operation,
+          propertiesObject,
+        );
       } else {
         throw new Error(`Unrecognized operation: ${operation}`);
       }
@@ -100,7 +98,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     ): op is SetPropertyOperation<'tags'> => op.property === 'tags';
 
     if (ok) {
-      if (this._identityModelStore.model.onesignalId === onesignalId) {
+      if (this._identityModelStore.model._onesignalId === onesignalId) {
         for (const operation of operations) {
           if (operation instanceof SetPropertyOperation) {
             // removing empty string tags from operation.value to save space in IndexedDB and local memory.
@@ -146,7 +144,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           );
         }
         const rebuildOps =
-          await this._buildUserService.getRebuildOperationsIfCurrentUser(
+          await this._buildUserService._getRebuildOperationsIfCurrentUser(
             appId,
             onesignalId,
           );
@@ -165,4 +163,23 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
         return new ExecutionResponse(ExecutionResult.FAIL_NORETRY);
     }
   }
+}
+
+function createPropertiesFromOperation(
+  operation: Operation,
+  properties: PropertiesObject,
+): PropertiesObject {
+  if (operation instanceof SetPropertyOperation) {
+    const propertyKey = operation.property;
+    const allowedKeys = Object.keys(properties);
+    if (allowedKeys.includes(propertyKey)) {
+      return new PropertiesObject({
+        ...properties,
+        [propertyKey]: operation.value,
+      });
+    }
+    return new PropertiesObject({ ...properties });
+  }
+
+  throw new Error(`Unsupported operation type: ${operation._name}`);
 }

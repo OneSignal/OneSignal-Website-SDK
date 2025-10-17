@@ -101,7 +101,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       return;
     }
 
-    pushModel.notification_types = notificationTypes;
+    pushModel._notification_types = notificationTypes;
     pushModel.enabled = notificationTypes === NotificationType.Subscribed;
   }
 

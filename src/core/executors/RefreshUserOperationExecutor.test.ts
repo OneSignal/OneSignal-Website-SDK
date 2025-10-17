@@ -58,7 +58,7 @@ describe('RefreshUserOperationExecutor', () => {
     );
     getRebuildOpsSpy = vi.spyOn(
       buildUserService,
-      'getRebuildOperationsIfCurrentUser',
+      '_getRebuildOperationsIfCurrentUser',
     );
   });
 
@@ -108,7 +108,7 @@ describe('RefreshUserOperationExecutor', () => {
 
       const result = await executor._execute([refreshOp]);
       expect(result.result).toBe(ExecutionResult.SUCCESS);
-      expect(propertiesModelStore.model.language).not.toBe('fr');
+      expect(propertiesModelStore.model._language).not.toBe('fr');
     });
 
     test('should handle successful user retrieval and update models', async () => {
@@ -152,18 +152,18 @@ describe('RefreshUserOperationExecutor', () => {
       );
 
       // Check properties model updates
-      expect(propertiesModelStore.model.country).toBe('US');
-      expect(propertiesModelStore.model.language).toBe('en');
-      expect(propertiesModelStore.model.tags).toEqual({
+      expect(propertiesModelStore.model._country).toBe('US');
+      expect(propertiesModelStore.model._language).toBe('en');
+      expect(propertiesModelStore.model._tags).toEqual({
         test_tag: 'test_value',
         test_tag_2: 'test_value_2',
       });
-      expect(propertiesModelStore.model.timezone_id).toBe('America/New_York');
+      expect(propertiesModelStore.model._timezone_id).toBe('America/New_York');
 
       // Check subscription model updates
       const subscriptions = subscriptionModelStore.list();
       expect(subscriptions.length).toBe(1);
-      expect(subscriptions[0]).toMatchObject({
+      expect(subscriptions[0].toJSON()).toMatchObject({
         id: SUB_ID,
         notification_types: NotificationType.UserOptedOut,
         enabled: false,
@@ -181,7 +181,7 @@ describe('RefreshUserOperationExecutor', () => {
       pushSubModel.id = SUB_ID_2;
       pushSubModel.type = SubscriptionType.ChromePush;
       pushSubModel.token = PUSH_TOKEN;
-      pushSubModel.notification_types = NotificationType.Subscribed;
+      pushSubModel._notification_types = NotificationType.Subscribed;
 
       subscriptionModelStore.add(pushSubModel, ModelChangeTags.NO_PROPAGATE);
       await setPushToken(PUSH_TOKEN);
@@ -262,14 +262,14 @@ describe('RefreshUserOperationExecutor', () => {
         retryAfterSeconds: 5,
         operations: [
           {
-            name: 'login-user',
-            appId: APP_ID,
-            onesignalId: ONESIGNAL_ID,
+            _name: 'login-user',
+            _appId: APP_ID,
+            _onesignalId: ONESIGNAL_ID,
           },
           {
-            name: 'refresh-user',
-            appId: APP_ID,
-            onesignalId: ONESIGNAL_ID,
+            _name: 'refresh-user',
+            _appId: APP_ID,
+            _onesignalId: ONESIGNAL_ID,
           },
         ],
       });

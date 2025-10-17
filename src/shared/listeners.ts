@@ -123,8 +123,8 @@ export async function checkAndTriggerUserChanged() {
   const { previousOneSignalId, previousExternalId } = userState;
 
   const identityModel = await OneSignal._coreDirector._getIdentityModel();
-  const currentOneSignalId = identityModel?.onesignalId;
-  const currentExternalId = identityModel?.externalId;
+  const currentOneSignalId = identityModel?._onesignalId;
+  const currentExternalId = identityModel?._externalId;
 
   const didStateChange =
     currentOneSignalId !== previousOneSignalId ||

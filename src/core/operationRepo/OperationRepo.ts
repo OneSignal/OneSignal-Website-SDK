@@ -22,27 +22,11 @@ const removeOpFromDB = (op: Operation) => {
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationRepo.kt
-export class OperationQueueItem {
-  public operation: Operation;
-  public bucket: number;
-  public retries: number;
-  public resolver?: (value: boolean) => void;
-
-  constructor(props: {
-    operation: Operation;
-    bucket: number;
-    retries?: number;
-    resolver?: (value: boolean) => void;
-  }) {
-    this.operation = props.operation;
-    this.bucket = props.bucket;
-    this.retries = props.retries ?? 0;
-    this.resolver = props.resolver;
-  }
-
-  toString(): string {
-    return `bucket:${this.bucket}, retries:${this.retries}, operation:${this.operation}\n`;
-  }
+export interface OperationQueueItem {
+  operation: Operation;
+  bucket: number;
+  retries: number;
+  resolver?: (value: boolean) => void;
 }
 
 // OperationRepo Class
@@ -103,10 +87,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     Log._debug(`OperationRepo.enqueue(operation: ${operation})`);
 
     this._internalEnqueue(
-      new OperationQueueItem({
+      {
         operation,
         bucket: this._enqueueIntoBucket,
-      }),
+        retries: 0,
+      },
       true,
     );
   }
@@ -116,11 +101,12 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     await new Promise<void>((resolve, reject) => {
       this._internalEnqueue(
-        new OperationQueueItem({
+        {
           operation,
           bucket: this._enqueueIntoBucket,
+          retries: 0,
           resolver: (value) => (value ? resolve() : reject()),
-        }),
+        },
         true,
       );
     });
@@ -174,11 +160,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public async _executeOperations(ops: OperationQueueItem[]): Promise<void> {
     try {
       const startingOp = ops[0];
-      const executor = this._executorsMap.get(startingOp.operation.name);
+      const executor = this._executorsMap.get(startingOp.operation._name);
 
       if (!executor) {
         throw new Error(
-          `Could not find executor for operation ${startingOp.operation.name}`,
+          `Could not find executor for operation ${startingOp.operation._name}`,
         );
       }
 
@@ -190,9 +176,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       // Handle ID translations
       if (idTranslations) {
-        ops.forEach((op) => op.operation.translateIds(idTranslations));
+        ops.forEach((op) => op.operation._translateIds(idTranslations));
         this._queue.forEach((item) =>
-          item.operation.translateIds(idTranslations),
+          item.operation._translateIds(idTranslations),
         );
 
         Object.values(idTranslations).forEach((id) =>
@@ -258,10 +244,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       // Handle additional operations from the response
       if (response.operations) {
         for (const op of [...response.operations].reverse()) {
-          const queueItem = new OperationQueueItem({
+          const queueItem = {
             operation: op,
             bucket: 0,
-          });
+            retries: 0,
+          };
           this._queue.unshift(queueItem);
           this._operationModelStore.addAt(0, queueItem.operation);
         }
@@ -304,8 +291,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
     const startingOpIndex = this._queue.findIndex(
       (item) =>
-        item.operation.canStartExecute &&
-        this._newRecordState._canAccess(item.operation.applyToRecordId) &&
+        item.operation._canStartExecute &&
+        this._newRecordState._canAccess(item.operation._applyToRecordId) &&
         item.bucket <= bucketFilter,
     );
 
@@ -323,27 +310,27 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   ): OperationQueueItem[] {
     const ops = [startingOp];
 
-    if (startingOp.operation.groupComparisonType === GroupComparisonType.NONE)
+    if (startingOp.operation._groupComparisonType === GroupComparisonType.NONE)
       return ops;
 
     const startingKey =
-      startingOp.operation.groupComparisonType === GroupComparisonType.CREATE
-        ? startingOp.operation.createComparisonKey
-        : startingOp.operation.modifyComparisonKey;
+      startingOp.operation._groupComparisonType === GroupComparisonType.CREATE
+        ? startingOp.operation._createComparisonKey
+        : startingOp.operation._modifyComparisonKey;
 
     // Create a copy of queue to avoid modification during iteration
     const queueCopy = [...this._queue];
 
     for (const item of queueCopy) {
       const itemKey =
-        startingOp.operation.groupComparisonType === GroupComparisonType.CREATE
-          ? item.operation.createComparisonKey
-          : item.operation.modifyComparisonKey;
+        startingOp.operation._groupComparisonType === GroupComparisonType.CREATE
+          ? item.operation._createComparisonKey
+          : item.operation._modifyComparisonKey;
 
       if (itemKey === '' && startingKey === '')
         throw new Error('Both comparison keys cannot be blank!');
 
-      if (!this._newRecordState._canAccess(item.operation.applyToRecordId))
+      if (!this._newRecordState._canAccess(item.operation._applyToRecordId))
         continue;
 
       if (itemKey === startingKey) {
@@ -359,15 +346,16 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async _loadSavedOperations(): Promise<void> {
-    await this._operationModelStore.loadOperations();
+    await this._operationModelStore._loadOperations();
     const operations = [...this._operationModelStore.list()].reverse();
 
     for (const operation of operations) {
       this._internalEnqueue(
-        new OperationQueueItem({
+        {
           operation,
           bucket: this._enqueueIntoBucket,
-        }),
+          retries: 0,
+        },
         false,
         0,
       );

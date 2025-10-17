@@ -13,22 +13,22 @@ export class IdentityModel extends Model<IdentitySchema> {
    * WARNING: This *might* be a local ID depending on whether the user has been
    * successfully created on the backend or not.
    */
-  get onesignalId(): string {
+  get _onesignalId(): string {
     return this._getProperty(IdentityConstants.ONESIGNAL_ID);
   }
 
-  set onesignalId(value: string) {
+  set _onesignalId(value: string) {
     this._setProperty(IdentityConstants.ONESIGNAL_ID, value);
   }
 
   /**
    * The (developer-managed) identifier that uniquely identifies this user.
    */
-  get externalId(): string | undefined {
+  get _externalId(): string | undefined {
     return this._getProperty(IdentityConstants.EXTERNAL_ID);
   }
 
-  set externalId(value: string | undefined) {
+  set _externalId(value: string | undefined) {
     this._setProperty(IdentityConstants.EXTERNAL_ID, value);
   }
 }

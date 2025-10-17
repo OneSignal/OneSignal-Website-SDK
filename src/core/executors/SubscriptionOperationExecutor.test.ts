@@ -70,7 +70,7 @@ describe('SubscriptionOperationExecutor', () => {
     );
     getRebuildOpsSpy = vi.spyOn(
       buildUserService,
-      'getRebuildOperationsIfCurrentUser',
+      '_getRebuildOperationsIfCurrentUser',
     );
   });
 
@@ -294,23 +294,23 @@ describe('SubscriptionOperationExecutor', () => {
         retryAfterSeconds: 5,
         operations: [
           {
-            name: 'login-user',
-            appId: APP_ID,
-            onesignalId: ONESIGNAL_ID,
+            _name: 'login-user',
+            _appId: APP_ID,
+            _onesignalId: ONESIGNAL_ID,
           },
           {
-            name: 'create-subscription',
-            appId: APP_ID,
-            onesignalId: ONESIGNAL_ID,
+            _name: 'create-subscription',
+            _appId: APP_ID,
+            _onesignalId: ONESIGNAL_ID,
             type: SubscriptionType.ChromePush,
             token: pushSubscription.token,
             enabled: true,
             subscriptionId: pushSubscription.id,
           },
           {
-            name: 'refresh-user',
-            appId: APP_ID,
-            onesignalId: ONESIGNAL_ID,
+            _name: 'refresh-user',
+            _appId: APP_ID,
+            _onesignalId: ONESIGNAL_ID,
           },
         ],
       });
