@@ -164,14 +164,14 @@ describe('IdentityOperationExecutor', () => {
       expect(res7.retryAfterSeconds).toBeUndefined();
       expect(res7.operations).toMatchObject([
         {
-          name: 'login-user',
-          appId: APP_ID,
-          onesignalId: ONESIGNAL_ID,
+          _name: 'login-user',
+          _appId: APP_ID,
+          _onesignalId: ONESIGNAL_ID,
         },
         {
-          name: 'refresh-user',
-          appId: APP_ID,
-          onesignalId: ONESIGNAL_ID,
+          _name: 'refresh-user',
+          _appId: APP_ID,
+          _onesignalId: ONESIGNAL_ID,
         },
       ]);
 

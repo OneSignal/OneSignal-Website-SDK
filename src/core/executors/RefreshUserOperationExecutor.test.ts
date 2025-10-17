@@ -163,7 +163,7 @@ describe('RefreshUserOperationExecutor', () => {
       // Check subscription model updates
       const subscriptions = subscriptionModelStore.list();
       expect(subscriptions.length).toBe(1);
-      expect(subscriptions[0]).toMatchObject({
+      expect(subscriptions[0].toJSON()).toMatchObject({
         id: SUB_ID,
         notification_types: NotificationType.UserOptedOut,
         enabled: false,
@@ -262,14 +262,14 @@ describe('RefreshUserOperationExecutor', () => {
         retryAfterSeconds: 5,
         operations: [
           {
-            name: 'login-user',
-            appId: APP_ID,
-            onesignalId: ONESIGNAL_ID,
+            _name: 'login-user',
+            _appId: APP_ID,
+            _onesignalId: ONESIGNAL_ID,
           },
           {
-            name: 'refresh-user',
-            appId: APP_ID,
-            onesignalId: ONESIGNAL_ID,
+            _name: 'refresh-user',
+            _appId: APP_ID,
+            _onesignalId: ONESIGNAL_ID,
           },
         ],
       });
