@@ -3,12 +3,12 @@ import { registerForPushNotifications } from 'src/shared/helpers/init';
 import LimitStore from 'src/shared/services/LimitStore';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
-import Bell from './Bell';
-import Message from './Message';
+import type Bell from './Bell';
+import { BellEvent, MESSAGE_TIMEOUT, MessageType } from './constants';
 
 export default class Button extends AnimatedElement {
   public _isHandlingClick: boolean = false;
-  public events: any;
+  public events: Record<string, string>;
   public bell: Bell;
 
   constructor(bell: Bell) {
@@ -69,14 +69,14 @@ export default class Button extends AnimatedElement {
       LimitStore.isEmpty(this.events.mouse) ||
       LimitStore.getLast(this.events.mouse) === 'out'
     ) {
-      OneSignalEvent.trigger(Bell.EVENTS.HOVERING);
+      OneSignalEvent.trigger(BellEvent._Hovering);
     }
     LimitStore.put(this.events.mouse, 'over');
   }
 
   onHovered() {
     LimitStore.put(this.events.mouse, 'out');
-    OneSignalEvent.trigger(Bell.EVENTS.HOVERED);
+    OneSignalEvent.trigger(BellEvent._Hovered);
   }
 
   onTap() {
@@ -95,13 +95,13 @@ export default class Button extends AnimatedElement {
     if (this._isHandlingClick) return;
     this._isHandlingClick = true;
 
-    OneSignalEvent.trigger(Bell.EVENTS.BELL_CLICK);
-    OneSignalEvent.trigger(Bell.EVENTS.LAUNCHER_CLICK);
+    OneSignalEvent.trigger(BellEvent._BellClick);
+    OneSignalEvent.trigger(BellEvent._LauncherClick);
 
     try {
       if (
         this.bell.message.shown &&
-        this.bell.message.contentType == Message.TYPES.MESSAGE
+        this.bell.message.contentType == MessageType._Message
       ) {
         // A message is being shown, it'll disappear soon
         return;
@@ -115,9 +115,9 @@ export default class Button extends AnimatedElement {
         OneSignal._emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
           this.bell.message
             .display(
-              Message.TYPES.MESSAGE,
+              MessageType._Message,
               this.bell.options.text['message.action.subscribed'],
-              Message.TIMEOUT,
+              MESSAGE_TIMEOUT,
             )
             .then(() => {
               this.bell._ignoreSubscriptionState = false;

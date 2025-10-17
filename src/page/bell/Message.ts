@@ -2,12 +2,13 @@ import { decodeHtmlEntities } from 'src/shared/helpers/dom';
 import { delay, nothing } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import AnimatedElement from './AnimatedElement';
-import Bell from './Bell';
+import type Bell from './Bell';
+import { BellState } from './constants';
 
 export default class Message extends AnimatedElement {
   public bell: Bell;
   public contentType: string;
-  public queued: any;
+  public queued: string[];
 
   constructor(bell: Bell) {
     super(
@@ -21,18 +22,6 @@ export default class Message extends AnimatedElement {
     this.bell = bell;
     this.contentType = '';
     this.queued = [];
-  }
-
-  static get TIMEOUT() {
-    return 2500;
-  }
-
-  static get TYPES() {
-    return {
-      TIP: 'tip', // Appears on button hover, disappears on button endhover
-      MESSAGE: 'message', // Appears manually for a specified duration, site visitor cannot control its display. Messages override tips
-      QUEUED: 'queued', // This message was a user-queued message
-    };
   }
 
   display(type: string, content: string, duration = 0) {
@@ -57,18 +46,18 @@ export default class Message extends AnimatedElement {
   }
 
   getTipForState(): string {
-    if (this.bell.state === Bell.STATES.UNSUBSCRIBED)
+    if (this.bell.state === BellState._Unsubscribed)
       return this.bell.options.text['tip.state.unsubscribed'];
-    else if (this.bell.state === Bell.STATES.SUBSCRIBED)
+    else if (this.bell.state === BellState._Subscribed)
       return this.bell.options.text['tip.state.subscribed'];
-    else if (this.bell.state === Bell.STATES.BLOCKED)
+    else if (this.bell.state === BellState._Blocked)
       return this.bell.options.text['tip.state.blocked'];
     return '';
   }
 
   enqueue(message: string) {
     this.queued.push(decodeHtmlEntities(message));
-    return new Promise<void>((resolve) => {
+    return new Promise((resolve) => {
       if (this.bell.badge.shown) {
         this.bell.badge
           .hide()
@@ -78,26 +67,25 @@ export default class Message extends AnimatedElement {
       } else {
         this.bell.badge.increment();
         if (this.bell.initialized) this.bell.badge.show().then(resolve);
-        else resolve();
+        else resolve(undefined);
       }
     });
   }
 
-  dequeue(message: string) {
-    const dequeuedMessage = this.queued.pop(message);
+  dequeue() {
+    const dequeuedMessage = this.queued.pop();
     return new Promise((resolve) => {
       if (this.bell.badge.shown) {
         this.bell.badge
           .hide()
-          .then(() => this.bell.badge.decrement())
-          .then((numMessagesLeft: number) => {
-            if (numMessagesLeft > 0) {
+          .then(() => {
+            this.bell.badge.decrement();
+            if (this.bell.badge.content.length > 0) {
               return this.bell.badge.show();
-            } else {
-              return Promise.resolve(this);
             }
+            return Promise.resolve();
           })
-          .then(resolve(dequeuedMessage));
+          .then(() => resolve(dequeuedMessage));
       } else {
         this.bell.badge.decrement();
         resolve(dequeuedMessage);

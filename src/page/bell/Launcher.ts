@@ -5,7 +5,7 @@ import {
 } from 'src/shared/helpers/dom';
 import type { BellSize } from 'src/shared/prompts/types';
 import AnimatedElement from './AnimatedElement';
-import Bell from './Bell';
+import type Bell from './Bell';
 
 export default class Launcher extends AnimatedElement {
   public bell: Bell;
@@ -38,7 +38,7 @@ export default class Launcher extends AnimatedElement {
       (size === 'large' &&
         hasCssClass(this.element, 'onesignal-bell-launcher-lg'))
     ) {
-      return Promise.resolve(this);
+      return;
     }
     removeCssClass(this.element, 'onesignal-bell-launcher-sm');
     removeCssClass(this.element, 'onesignal-bell-launcher-md');
@@ -53,7 +53,7 @@ export default class Launcher extends AnimatedElement {
       throw new Error('Invalid OneSignal bell size ' + size);
     }
     if (!this.shown) {
-      return this;
+      return;
     } else {
       await this.waitForAnimations();
     }
@@ -64,7 +64,6 @@ export default class Launcher extends AnimatedElement {
       this.wasInactive = true;
       await this.activate();
     }
-    return this;
   }
 
   async inactivateIfWasInactive() {
@@ -72,38 +71,24 @@ export default class Launcher extends AnimatedElement {
       this.wasInactive = false;
       await this.inactivate();
     }
-    return this;
   }
 
   clearIfWasInactive() {
     this.wasInactive = false;
   }
 
-  inactivate() {
-    return this.bell.message.hide().then(() => {
-      if (this.bell.badge.content.length > 0) {
-        return this.bell.badge
-          .hide()
-          .then(() => Promise.all([super.inactivate(), this.resize('small')]))
-          .then(() => this.bell.badge.show());
-      } else {
-        return Promise.all([super.inactivate(), this.resize('small')]);
-      }
-    });
+  async inactivate() {
+    await this.bell.message.hide();
+    const hasContent = this.bell.badge.content.length > 0;
+    if (hasContent) await this.bell.badge.hide();
+    await Promise.all([super.inactivate(), this.resize('small')]);
+    if (hasContent) await this.bell.badge.show();
   }
 
-  activate() {
+  async activate() {
     if (this.bell.badge.content.length > 0) {
-      return this.bell.badge
-        .hide()
-        .then(() =>
-          Promise.all([super.activate(), this.resize(this.bell.options.size!)]),
-        );
-    } else {
-      return Promise.all([
-        super.activate(),
-        this.resize(this.bell.options.size!),
-      ]);
+      await this.bell.badge.hide();
     }
+    await Promise.all([super.activate(), this.resize(this.bell.options.size!)]);
   }
 }

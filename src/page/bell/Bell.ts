@@ -25,65 +25,38 @@ import Button from './Button';
 import Dialog from './Dialog';
 import Launcher from './Launcher';
 import Message from './Message';
+import {
+  BellEvent,
+  BellState,
+  type BellStateValue,
+  MESSAGE_TIMEOUT,
+  MessageType,
+} from './constants';
 
 const logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
-type BellState = 'uninitialized' | 'subscribed' | 'unsubscribed' | 'blocked';
+const DEFAULT_SIZE: BellSize = 'medium';
+const DEFAULT_POSITION: BellPosition = 'bottom-right';
+const DEFAULT_THEME = 'default';
 
 export default class Bell {
   public options: AppUserConfigNotifyButton;
-  public state: BellState = Bell.STATES.UNINITIALIZED;
+  public state: BellStateValue = BellState._Uninitialized;
   public _ignoreSubscriptionState = false;
   public hovering = false;
   public initialized = false;
   public _launcher: Launcher | undefined;
-  public _button: any;
-  public _badge: any;
-  public _message: any;
-  public _dialog: any;
-
-  private DEFAULT_SIZE: BellSize = 'medium';
-  private DEFAULT_POSITION: BellPosition = 'bottom-right';
-  private DEFAULT_THEME = 'default';
-
-  static get EVENTS() {
-    return {
-      STATE_CHANGED: 'notifyButtonStateChange',
-      LAUNCHER_CLICK: 'notifyButtonLauncherClick',
-      BELL_CLICK: 'notifyButtonButtonClick',
-      SUBSCRIBE_CLICK: 'notifyButtonSubscribeClick',
-      UNSUBSCRIBE_CLICK: 'notifyButtonUnsubscribeClick',
-      HOVERING: 'notifyButtonHovering',
-      HOVERED: 'notifyButtonHover',
-    };
-  }
-
-  static get STATES() {
-    return {
-      UNINITIALIZED: 'uninitialized' as BellState,
-      SUBSCRIBED: 'subscribed' as BellState,
-      UNSUBSCRIBED: 'unsubscribed' as BellState,
-      BLOCKED: 'blocked' as BellState,
-    };
-  }
-
-  static get TEXT_SUBS() {
-    return {
-      'prompt.native.grant': {
-        default: 'Allow',
-        chrome: 'Allow',
-        firefox: 'Always Receive Notifications',
-        safari: 'Allow',
-      },
-    };
-  }
+  public _button: Button | undefined;
+  public _badge: Badge | undefined;
+  public _message: Message | undefined;
+  public _dialog: Dialog | undefined;
 
   constructor(config: Partial<AppUserConfigNotifyButton>, launcher?: Launcher) {
     this.options = {
       enable: config.enable || false,
-      size: config.size || this.DEFAULT_SIZE,
-      position: config.position || this.DEFAULT_POSITION,
-      theme: config.theme || this.DEFAULT_THEME,
+      size: config.size || DEFAULT_SIZE,
+      position: config.position || DEFAULT_POSITION,
+      theme: config.theme || DEFAULT_THEME,
       showLauncherAfter: config.showLauncherAfter || 10,
       showBadgeAfter: config.showBadgeAfter || 300,
       text: this.setDefaultTextOptions(config.text || {}),
@@ -100,7 +73,7 @@ export default class Bell {
     if (!this.options.enable) return;
 
     this.validateOptions(this.options);
-    this.state = Bell.STATES.UNINITIALIZED;
+    this.state = BellState._Uninitialized;
     this._ignoreSubscriptionState = false;
 
     this.installEventHooks();
@@ -114,7 +87,9 @@ export default class Bell {
           document,
           'click',
           (e: Event, destroyEventListener: () => void) => {
-            const wasDialogClicked = this.dialog.element.contains(e.target);
+            const wasDialogClicked = this.dialog.element?.contains(
+              e.target as Node,
+            );
             if (wasDialogClicked) {
               return;
             }
@@ -198,19 +173,24 @@ export default class Bell {
 
   private installEventHooks() {
     // Install event hooks
-    OneSignal._emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
-      this.dialog.subscribeButton.disabled = true;
+    OneSignal._emitter.on(BellEvent._SubscribeClick, () => {
+      const subscribeButton = this.dialog.subscribeButton;
+      if (subscribeButton) {
+        subscribeButton.disabled = true;
+      }
       this._ignoreSubscriptionState = true;
       OneSignal.User.PushSubscription.optIn()
         .then(() => {
-          this.dialog.subscribeButton.disabled = false;
+          if (subscribeButton) {
+            subscribeButton.disabled = false;
+          }
           return this.dialog.hide();
         })
         .then(() => {
           return this.message.display(
-            Message.TYPES.MESSAGE,
+            MessageType._Message,
             this.options.text['message.action.resubscribed'],
-            Message.TIMEOUT,
+            MESSAGE_TIMEOUT,
           );
         })
         .then(() => {
@@ -226,11 +206,16 @@ export default class Bell {
         });
     });
 
-    OneSignal._emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
-      this.dialog.unsubscribeButton.disabled = true;
+    OneSignal._emitter.on(BellEvent._UnsubscribeClick, () => {
+      const unsubscribeButton = this.dialog.unsubscribeButton;
+      if (unsubscribeButton) {
+        unsubscribeButton.disabled = true;
+      }
       OneSignal.User.PushSubscription.optOut()
         .then(() => {
-          this.dialog.unsubscribeButton.disabled = false;
+          if (unsubscribeButton) {
+            unsubscribeButton.disabled = false;
+          }
           return this.dialog.hide();
         })
         .then(() => {
@@ -239,9 +224,9 @@ export default class Bell {
         })
         .then(() => {
           return this.message.display(
-            Message.TYPES.MESSAGE,
+            MessageType._Message,
             this.options.text['message.action.unsubscribed'],
-            Message.TIMEOUT,
+            MESSAGE_TIMEOUT,
           );
         })
         .then(() => {
@@ -249,7 +234,7 @@ export default class Bell {
         });
     });
 
-    OneSignal._emitter.on(Bell.EVENTS.HOVERING, () => {
+    OneSignal._emitter.on(BellEvent._Hovering, () => {
       this.hovering = true;
       this.launcher.activateIfInactive();
 
@@ -261,7 +246,7 @@ export default class Bell {
 
       // If the message is a message and not a tip, don't show it (only show tips)
       // Messages will go away on their own
-      if (this.message.contentType === Message.TYPES.MESSAGE) {
+      if (this.message.contentType === MessageType._Message) {
         this.hovering = false;
         return;
       }
@@ -271,14 +256,14 @@ export default class Bell {
         if (this.message.queued.length > 0) {
           return this.message.dequeue().then((msg: any) => {
             this.message.content = msg;
-            this.message.contentType = Message.TYPES.QUEUED;
+            this.message.contentType = MessageType._Queued;
             resolve();
           });
         } else {
           this.message.content = decodeHtmlEntities(
             this.message.getTipForState(),
           );
-          this.message.contentType = Message.TYPES.TIP;
+          this.message.contentType = MessageType._Tip;
           resolve();
         }
       })
@@ -293,13 +278,13 @@ export default class Bell {
         });
     });
 
-    OneSignal._emitter.on(Bell.EVENTS.HOVERED, () => {
+    OneSignal._emitter.on(BellEvent._Hovered, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
-      if (this.message.contentType === Message.TYPES.MESSAGE) {
+      if (this.message.contentType === MessageType._Message) {
         return;
       }
 
-      if (!this.dialog.hidden) {
+      if (this.dialog.shown) {
         // If the dialog is being brought up when clicking button, don't shrink
         return;
       }
@@ -311,11 +296,11 @@ export default class Bell {
         // immediately after because of the way mobile click events work. Basically only happens if HOVERING and HOVERED
         // fire within a few milliseconds of each other
         this.message
-          .waitUntilShown()
-          .then(() => delay(Message.TIMEOUT))
+          .show()
+          .then(() => delay(MESSAGE_TIMEOUT))
           .then(() => this.message.hide())
           .then(() => {
-            if (this.launcher.wasInactive && this.dialog.hidden) {
+            if (this.launcher.wasInactive && !this.dialog.shown) {
               this.launcher.inactivate();
               this.launcher.wasInactive = false;
             }
@@ -324,7 +309,7 @@ export default class Bell {
 
       if (this.message.shown) {
         this.message.hide().then(() => {
-          if (this.launcher.wasInactive && this.dialog.hidden) {
+          if (this.launcher.wasInactive && !this.dialog.shown) {
             this.launcher.inactivate();
             this.launcher.wasInactive = false;
           }
@@ -347,26 +332,29 @@ export default class Bell {
 
         const permission =
           await OneSignal._context._permissionManager.getPermissionStatus();
-        let bellState: BellState;
+        let bellState: BellStateValue;
         if (isSubscribed.current.optedIn) {
-          bellState = Bell.STATES.SUBSCRIBED;
+          bellState = BellState._Subscribed;
         } else if (permission === 'denied') {
-          bellState = Bell.STATES.BLOCKED;
+          bellState = BellState._Blocked;
         } else {
-          bellState = Bell.STATES.UNSUBSCRIBED;
+          bellState = BellState._Unsubscribed;
         }
         this.setState(bellState, this._ignoreSubscriptionState);
       },
     );
 
-    OneSignal._emitter.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+    OneSignal._emitter.on(BellEvent._StateChanged, (state) => {
       if (!this.launcher.element) {
         // Notify button doesn't exist
         return;
       }
-      if (state.to === Bell.STATES.SUBSCRIBED) {
+      if (state.to === BellState._Subscribed) {
         this.launcher.inactivate();
-      } else if (state.to === Bell.STATES.UNSUBSCRIBED || Bell.STATES.BLOCKED) {
+      } else if (
+        state.to === BellState._Unsubscribed ||
+        state.to === BellState._Blocked
+      ) {
         this.launcher.activate();
       }
     });
@@ -499,7 +487,7 @@ export default class Bell {
     // where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
     const resizeTo = isPushEnabled
       ? 'small'
-      : this.options.size || this.DEFAULT_SIZE;
+      : this.options.size || DEFAULT_SIZE;
     await this.launcher.resize(resizeTo);
 
     this.addDefaultClasses();
@@ -543,15 +531,15 @@ export default class Bell {
     const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
     const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
     const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
-    this.graphic.setAttribute(
+    this.graphic?.setAttribute(
       'style',
       `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`,
     );
-    this.badge.element.setAttribute(
+    this.badge?.element?.setAttribute(
       'style',
       `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`,
     );
-    this.dialog.element.setAttribute(
+    this.dialog?.element?.setAttribute(
       'style',
       `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
     );
@@ -587,19 +575,36 @@ export default class Bell {
 
   setCustomColorsIfSpecified() {
     // Some common vars first
-    const dialogButton = this.dialog.element.querySelector('button.action');
-    const pulseRing = this.button.element.querySelector('.pulse-ring');
+    const dialogElement = this.dialog.element;
+    const dialogButton =
+      dialogElement?.querySelector<HTMLButtonElement>('button.action');
+    const buttonElement = this.button.element;
+    const pulseRing = buttonElement?.querySelector<HTMLElement>('.pulse-ring');
+
     // Reset added styles first
-    this.graphic.querySelector('.background').style.cssText = '';
-    const foregroundElements = this.graphic.querySelectorAll('.foreground');
+    const background = this.graphic?.querySelector<HTMLElement>('.background');
+    if (background) {
+      background.style.cssText = '';
+    }
+    const foregroundElements =
+      this.graphic?.querySelectorAll<HTMLElement>('.foreground') ?? [];
     for (let i = 0; i < foregroundElements.length; i++) {
       const element = foregroundElements[i];
-      element.style.cssText = '';
+      if (element) {
+        element.style.cssText = '';
+      }
     }
-    this.graphic.querySelector('.stroke').style.cssText = '';
-    this.badge.element.style.cssText = '';
+    const stroke = this.graphic?.querySelector<HTMLElement>('.stroke');
+    if (stroke) {
+      stroke.style.cssText = '';
+    }
+
+    const badgeElement = this.badge.element;
+    if (badgeElement) {
+      badgeElement.style.cssText = '';
+    }
+
     if (dialogButton) {
-      dialogButton.style.cssText = '';
       dialogButton.style.cssText = '';
     }
     if (pulseRing) {
@@ -610,35 +615,49 @@ export default class Bell {
     if (this.options.colors) {
       const colors = this.options.colors;
       if (colors['circle.background']) {
-        this.graphic.querySelector('.background').style.cssText +=
-          `fill: ${colors['circle.background']}`;
+        const background =
+          this.graphic?.querySelector<HTMLElement>('.background');
+        if (background) {
+          background.style.cssText += `fill: ${colors['circle.background']}`;
+        }
       }
       if (colors['circle.foreground']) {
-        const foregroundElements = this.graphic.querySelectorAll('.foreground');
+        const foregroundElements =
+          this.graphic?.querySelectorAll<HTMLElement>('.foreground') ?? [];
         for (let i = 0; i < foregroundElements.length; i++) {
           const element = foregroundElements[i];
-          element.style.cssText += `fill: ${colors['circle.foreground']}`;
+          if (element) {
+            element.style.cssText += `fill: ${colors['circle.foreground']}`;
+          }
         }
-        this.graphic.querySelector('.stroke').style.cssText +=
-          `stroke: ${colors['circle.foreground']}`;
+        const stroke = this.graphic?.querySelector<HTMLElement>('.stroke');
+        if (stroke) {
+          stroke.style.cssText += `stroke: ${colors['circle.foreground']}`;
+        }
       }
-      if (colors['badge.background']) {
-        this.badge.element.style.cssText += `background: ${colors['badge.background']}`;
+      if (colors['badge.background'] && badgeElement) {
+        badgeElement.style.cssText += `background: ${colors['badge.background']}`;
       }
-      if (colors['badge.bordercolor']) {
-        this.badge.element.style.cssText += `border-color: ${colors['badge.bordercolor']}`;
+      if (colors['badge.bordercolor'] && badgeElement) {
+        badgeElement.style.cssText += `border-color: ${colors['badge.bordercolor']}`;
       }
-      if (colors['badge.foreground']) {
-        this.badge.element.style.cssText += `color: ${colors['badge.foreground']}`;
+      if (colors['badge.foreground'] && badgeElement) {
+        badgeElement.style.cssText += `color: ${colors['badge.foreground']}`;
       }
-      if (dialogButton) {
+      if (dialogButton && dialogElement) {
         if (colors['dialog.button.background']) {
-          this.dialog.element.querySelector('button.action').style.cssText +=
-            `background: ${colors['dialog.button.background']}`;
+          const actionButton =
+            dialogElement.querySelector<HTMLButtonElement>('button.action');
+          if (actionButton) {
+            actionButton.style.cssText += `background: ${colors['dialog.button.background']}`;
+          }
         }
         if (colors['dialog.button.foreground']) {
-          this.dialog.element.querySelector('button.action').style.cssText +=
-            `color: ${colors['dialog.button.foreground']}`;
+          const actionButton =
+            dialogElement.querySelector<HTMLButtonElement>('button.action');
+          if (actionButton) {
+            actionButton.style.cssText += `color: ${colors['dialog.button.foreground']}`;
+          }
         }
         if (colors['dialog.button.background.hovering']) {
           this.addCssToHead(
@@ -653,10 +672,11 @@ export default class Bell {
           );
         }
       }
-      if (pulseRing) {
-        if (colors['pulse.color']) {
-          this.button.element.querySelector('.pulse-ring').style.cssText =
-            `border-color: ${colors['pulse.color']}`;
+      if (colors['pulse.color']) {
+        const pulseRingElement =
+          buttonElement?.querySelector<HTMLElement>('.pulse-ring');
+        if (pulseRingElement) {
+          pulseRingElement.style.cssText = `border-color: ${colors['pulse.color']}`;
         }
       }
     }
@@ -682,10 +702,10 @@ export default class Bell {
     ])
       .then(([isEnabled, permission]) => {
         this.setState(
-          isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED,
+          isEnabled ? BellState._Subscribed : BellState._Unsubscribed,
         );
         if (permission === 'denied') {
-          this.setState(Bell.STATES.BLOCKED);
+          this.setState(BellState._Blocked);
         }
       })
       .catch((e) => {
@@ -697,11 +717,11 @@ export default class Bell {
    * Updates the current state to the specified new state.
    * @param newState One of ['subscribed', 'unsubscribed'].
    */
-  setState(newState: BellState, silent = false) {
+  setState(newState: BellStateValue, silent = false) {
     const lastState = this.state;
     this.state = newState;
     if (lastState !== newState && !silent) {
-      OneSignalEvent.trigger(Bell.EVENTS.STATE_CHANGED, {
+      OneSignalEvent.trigger(BellEvent._StateChanged, {
         from: lastState,
         to: newState,
       });
@@ -716,7 +736,7 @@ export default class Bell {
   }
 
   get graphic() {
-    return this.button.element.querySelector('svg');
+    return this.button.element?.querySelector('svg');
   }
 
   get launcher() {
@@ -745,14 +765,14 @@ export default class Bell {
   }
 
   get subscribed() {
-    return this.state === Bell.STATES.SUBSCRIBED;
+    return this.state === BellState._Subscribed;
   }
 
   get unsubscribed() {
-    return this.state === Bell.STATES.UNSUBSCRIBED;
+    return this.state === BellState._Unsubscribed;
   }
 
   get blocked() {
-    return this.state === Bell.STATES.BLOCKED;
+    return this.state === BellState._Blocked;
   }
 }
