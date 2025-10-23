@@ -3,5 +3,5 @@
  */
 import { run } from '../sw/serviceWorker/ServiceWorker';
 
-// The run() is already called in ServiceWorker.ts, but importing it ensures it's not tree-shaken
-void run;
+// Need to call run() to ensure the service worker is registered but also to ensure the service worker is not tree-shaken
+run();

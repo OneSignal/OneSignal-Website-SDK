@@ -1111,5 +1111,3 @@ function parseOrFetchNotifications(
     `Unexpected push message payload received: ${event.data}`,
   );
 }
-
-run();

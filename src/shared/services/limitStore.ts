@@ -1,11 +1,11 @@
 /*
- LimitStore.put('colorado', 'rocky');
+ limitStorePut('colorado', 'rocky');
  ["rocky"]
- LimitStore.put('colorado', 'mountain');
+ limitStorePut('colorado', 'mountain');
  ["rocky", "mountain"]
- LimitStore.put('colorado', 'national');
+ limitStorePut('colorado', 'national');
  ["mountain", "national"]
- LimitStore.put('colorado', 'park');
+ limitStorePut('colorado', 'park');
  ["national", "park"]
  */
 const LIMIT = 2;
@@ -16,7 +16,7 @@ export function limitStorePut<T>(key: string, value: T) {
     store[key] = [null, null];
   }
   store[key].push(value);
-  if (store[key].length == LIMIT + 1) {
+  if (store[key].length === LIMIT + 1) {
     store[key].shift();
   }
   return store[key];
