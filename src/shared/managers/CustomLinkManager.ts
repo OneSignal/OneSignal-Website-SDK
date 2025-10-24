@@ -124,7 +124,7 @@ export class CustomLinkManager {
 
   private async _loadSdkStyles(): Promise<boolean> {
     const sdkStylesLoadResult =
-      await OneSignal._context._dynamicResourceLoader.loadSdkStylesheet();
+      await OneSignal._context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log._debug(
         'Not initializing custom link button because styles failed to load.',

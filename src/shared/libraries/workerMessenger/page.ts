@@ -15,18 +15,18 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
    * synchronously add self.addEventListener('message') if we are running in the
    * service worker.
    */
-  public async listen() {
+  public async _listen() {
     if (!supportsServiceWorkers()) return;
-    await this.listenForPage();
+    await this._listenForPage();
   }
 
   /**
    * Listens for messages for the service worker.
    */
-  private async listenForPage() {
+  private async _listenForPage() {
     navigator.serviceWorker.addEventListener(
       'message',
-      this.onPageMessageReceivedFromServiceWorker.bind(this),
+      this._onPageMessageReceivedFromServiceWorker.bind(this),
     );
     Log._debug(
       `(${location.origin}) [Worker Messenger] Page is now listening for messages.`,
@@ -40,7 +40,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
   message topic. If no one is listening to the message, it is discarded;
   otherwise, the listener callback is executed.
   */
-  onPageMessageReceivedFromServiceWorker(event: MessageEvent) {
+  _onPageMessageReceivedFromServiceWorker(event: MessageEvent) {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */
@@ -74,17 +74,17 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
   /**
    * Sends a postMessage() to OneSignal's Serviceworker
    */
-  async unicast(
+  async _unicast(
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
   ) {
     Log._debug(
       `[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`,
     );
-    this.directPostMessageToSW(command, payload);
+    this._directPostMessageToSW(command, payload);
   }
 
-  public async directPostMessageToSW(
+  public async _directPostMessageToSW(
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
   ): Promise<void> {

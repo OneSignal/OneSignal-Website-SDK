@@ -3,7 +3,7 @@ import type {
   TagsObjectForApi,
   TagsObjectWithBoolean,
 } from 'src/page/tags/types';
-import TagUtils from './TagUtils';
+import * as TagUtils from './tags';
 
 describe('TagUtils', () => {
   test('should convert api tags to boolean format', () => {

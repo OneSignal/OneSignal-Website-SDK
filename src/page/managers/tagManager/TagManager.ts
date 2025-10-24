@@ -3,8 +3,12 @@ import type {
   TagsObjectWithBoolean,
 } from 'src/page/tags/types';
 import type { ContextInterface } from 'src/shared/context/types';
+import {
+  convertTagsBooleansToApi,
+  getObjectDifference,
+  isTagObjectEmpty,
+} from 'src/shared/utils/tags';
 import Log from '../../../shared/libraries/Log';
-import TagUtils from '../../../shared/utils/TagUtils';
 import type { ITagManager } from './types';
 
 /**
@@ -26,15 +30,15 @@ export default class TagManager implements ITagManager {
   public async _sendTags(): Promise<TagsObjectForApi> {
     Log._info('Category Slidedown Local Tags:', this._tagsFromTaggingContainer);
 
-    const localTagsConvertedToApi = TagUtils.convertTagsBooleansToApi(
+    const localTagsConvertedToApi = convertTagsBooleansToApi(
       this._tagsFromTaggingContainer,
     );
-    const finalTagsObject = TagUtils.getObjectDifference(
+    const finalTagsObject = getObjectDifference(
       localTagsConvertedToApi,
       this._remoteTags,
     );
 
-    const shouldSendUpdate = !TagUtils.isTagObjectEmpty(finalTagsObject);
+    const shouldSendUpdate = !isTagObjectEmpty(finalTagsObject);
     if (shouldSendUpdate) {
       await OneSignal.User.addTags(finalTagsObject);
       return finalTagsObject;

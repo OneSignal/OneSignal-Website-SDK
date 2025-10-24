@@ -6,6 +6,7 @@ import {
   removeCssClass,
   removeDomElement,
 } from 'src/shared/helpers/dom';
+import { getCheckedTagCategories } from 'src/shared/utils/tags';
 import {
   COLORS,
   SLIDEDOWN_CSS_CLASSES,
@@ -14,7 +15,6 @@ import {
   TAGGING_CONTAINER_CSS_IDS,
   TAGGING_CONTAINER_STRINGS,
 } from '../../shared/slidedown/constants';
-import TagUtils from '../../shared/utils/TagUtils';
 import type { TagsObjectWithBoolean } from '../tags/types';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 
@@ -79,7 +79,7 @@ export default class TaggingContainer {
     remoteTagCategories: TagCategory[],
     existingPlayerTags?: TagsObjectWithBoolean,
   ): Element {
-    const checkedTagCategories = TagUtils.getCheckedTagCategories(
+    const checkedTagCategories = getCheckedTagCategories(
       remoteTagCategories,
       existingPlayerTags,
     );

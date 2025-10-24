@@ -41,7 +41,6 @@ declare global {
 
   interface WorkerGlobalScope {
     OneSignal: _OneSignal;
-    OneSignalWorker: typeof import('./sw/serviceWorker/ServiceWorker').OneSignalServiceWorker;
     _workerMessenger: import('./sw/serviceWorker/WorkerMessengerSW').WorkerMessengerSW;
     shouldLog: boolean;
   }

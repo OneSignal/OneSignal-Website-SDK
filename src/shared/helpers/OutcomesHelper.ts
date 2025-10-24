@@ -19,10 +19,10 @@ const SEND_OUTCOME = 'sendOutcome';
 const SEND_UNIQUE_OUTCOME = 'sendUniqueOutcome';
 
 export default class OutcomesHelper {
-  private outcomeName: string;
-  private config: OutcomesConfig;
-  private appId: string;
-  private isUnique: boolean;
+  private _outcomeName: string;
+  private _config: OutcomesConfig;
+  private _appId: string;
+  private _isUnique: boolean;
 
   /**
    * @param  {string} appId
@@ -36,10 +36,10 @@ export default class OutcomesHelper {
     outcomeName: string,
     isUnique: boolean,
   ) {
-    this.outcomeName = outcomeName;
-    this.config = config;
-    this.appId = appId;
-    this.isUnique = isUnique;
+    this._outcomeName = outcomeName;
+    this._config = config;
+    this._appId = appId;
+    this._isUnique = isUnique;
   }
   /**
    * Returns `OutcomeAttribution` object which includes
@@ -50,8 +50,8 @@ export default class OutcomesHelper {
    *       does not check if they have been previously attributed (used in both sendOutcome & sendUniqueOutcome)
    * @returns Promise
    */
-  async getAttribution(): Promise<OutcomeAttribution> {
-    return await getConfigAttribution(this.config);
+  async _getAttribution(): Promise<OutcomeAttribution> {
+    return await getConfigAttribution(this._config);
   }
 
   /**
@@ -59,18 +59,18 @@ export default class OutcomesHelper {
    * @param  {boolean} isUnique
    * @returns Promise
    */
-  async beforeOutcomeSend(): Promise<boolean> {
-    const outcomeMethodString = this.isUnique
+  async _beforeOutcomeSend(): Promise<boolean> {
+    const outcomeMethodString = this._isUnique
       ? SEND_UNIQUE_OUTCOME
       : SEND_OUTCOME;
-    logMethodCall(outcomeMethodString, this.outcomeName);
+    logMethodCall(outcomeMethodString, this._outcomeName);
 
-    if (!this.config) {
+    if (!this._config) {
       Log._debug('Outcomes feature not supported by main application yet.');
       return false;
     }
 
-    if (!this.outcomeName) {
+    if (!this._outcomeName) {
       Log._error('Outcome name is required');
       return false;
     }
@@ -91,10 +91,10 @@ export default class OutcomesHelper {
    * @param  {string} outcomeName
    * @returns Promise
    */
-  async getAttributedNotifsByUniqueOutcomeName(): Promise<string[]> {
+  async _getAttributedNotifsByUniqueOutcomeName(): Promise<string[]> {
     const sentOutcomes = await db.getAll('SentUniqueOutcome');
     return sentOutcomes
-      .filter((o) => o.outcomeName === this.outcomeName)
+      .filter((o) => o.outcomeName === this._outcomeName)
       .reduce((acc: string[], curr: SentUniqueOutcome) => {
         const notificationIds = curr.notificationIds || [];
         return [...acc, ...notificationIds];
@@ -106,16 +106,19 @@ export default class OutcomesHelper {
    * @param  {string} outcomeName
    * @param  {string[]} notificationIds
    */
-  async getNotifsToAttributeWithUniqueOutcome(notificationIds: string[]) {
+  async _getNotifsToAttributeWithUniqueOutcome(notificationIds: string[]) {
     const previouslyAttributedArr: string[] =
-      await this.getAttributedNotifsByUniqueOutcomeName();
+      await this._getAttributedNotifsByUniqueOutcomeName();
 
     return notificationIds.filter(
       (id) => previouslyAttributedArr.indexOf(id) === -1,
     );
   }
 
-  shouldSendUnique(outcomeAttribution: OutcomeAttribution, notifArr: string[]) {
+  _shouldSendUnique(
+    outcomeAttribution: OutcomeAttribution,
+    notifArr: string[],
+  ) {
     // we should only send if type is unattributed OR there are notifs to attribute
     if (outcomeAttribution.type === OutcomeAttributionType.Unattributed) {
       return true;
@@ -123,8 +126,8 @@ export default class OutcomesHelper {
     return notifArr.length > 0;
   }
 
-  async saveSentUniqueOutcome(newNotificationIds: string[]): Promise<void> {
-    const outcomeName = this.outcomeName;
+  async _saveSentUniqueOutcome(newNotificationIds: string[]): Promise<void> {
+    const outcomeName = this._outcomeName;
     const existingSentOutcome = await db.get('SentUniqueOutcome', outcomeName);
     const currentSession = await getCurrentSession();
 
@@ -141,8 +144,8 @@ export default class OutcomesHelper {
     });
   }
 
-  async wasSentDuringSession() {
-    const sentOutcome = await db.get('SentUniqueOutcome', this.outcomeName);
+  async _wasSentDuringSession() {
+    const sentOutcome = await db.get('SentUniqueOutcome', this._outcomeName);
 
     if (!sentOutcome) {
       return false;
@@ -160,45 +163,45 @@ export default class OutcomesHelper {
     );
   }
 
-  async send(outcomeProps: OutcomeProps): Promise<void> {
+  async _send(outcomeProps: OutcomeProps): Promise<void> {
     const { type, notificationIds, weight } = outcomeProps;
 
     switch (type) {
       case OutcomeAttributionType.Direct:
-        if (this.isUnique) {
-          await this.saveSentUniqueOutcome(notificationIds);
+        if (this._isUnique) {
+          await this._saveSentUniqueOutcome(notificationIds);
         }
         await OneSignal._context._updateManager._sendOutcomeDirect(
-          this.appId,
+          this._appId,
           notificationIds,
-          this.outcomeName,
+          this._outcomeName,
           weight,
         );
         return;
       case OutcomeAttributionType.Indirect:
-        if (this.isUnique) {
-          await this.saveSentUniqueOutcome(notificationIds);
+        if (this._isUnique) {
+          await this._saveSentUniqueOutcome(notificationIds);
         }
         await OneSignal._context._updateManager._sendOutcomeInfluenced(
-          this.appId,
+          this._appId,
           notificationIds,
-          this.outcomeName,
+          this._outcomeName,
           weight,
         );
         return;
       case OutcomeAttributionType.Unattributed:
-        if (this.isUnique) {
-          if (await this.wasSentDuringSession()) {
+        if (this._isUnique) {
+          if (await this._wasSentDuringSession()) {
             Log._warn(
               `(Unattributed) unique outcome was already sent during this session`,
             );
             return;
           }
-          await this.saveSentUniqueOutcome([]);
+          await this._saveSentUniqueOutcome([]);
         }
         await OneSignal._context._updateManager._sendOutcomeUnattributed(
-          this.appId,
-          this.outcomeName,
+          this._appId,
+          this._outcomeName,
           weight,
         );
         return;
@@ -209,8 +212,6 @@ export default class OutcomesHelper {
         return;
     }
   }
-
-  // statics
 }
 
 /**

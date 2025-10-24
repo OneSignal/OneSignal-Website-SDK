@@ -138,7 +138,7 @@ export const setupSubscriptionModel = async (
 export const setupLoadStylesheet = async () => {
   vi.spyOn(
     OneSignal._context._dynamicResourceLoader,
-    'loadSdkStylesheet',
+    '_loadSdkStylesheet',
   ).mockResolvedValue(ResourceLoadState.Loaded);
 };
 

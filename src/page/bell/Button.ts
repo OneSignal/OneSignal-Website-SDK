@@ -1,6 +1,10 @@
 import { addDomElement, removeDomElement } from 'src/shared/helpers/dom';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
-import LimitStore from 'src/shared/services/LimitStore';
+import {
+  limitGetLast,
+  limitIsEmpty,
+  limitStorePut,
+} from 'src/shared/services/limitStore';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
@@ -66,16 +70,16 @@ export default class Button extends AnimatedElement {
 
   _onHovering() {
     if (
-      LimitStore.isEmpty(this._events.mouse) ||
-      LimitStore.getLast(this._events.mouse) === 'out'
+      limitIsEmpty(this._events.mouse) ||
+      limitGetLast(this._events.mouse) === 'out'
     ) {
       OneSignalEvent._trigger(BellEvent._Hovering);
     }
-    LimitStore.put(this._events.mouse, 'over');
+    limitStorePut(this._events.mouse, 'over');
   }
 
   _onHovered() {
-    LimitStore.put(this._events.mouse, 'out');
+    limitStorePut(this._events.mouse, 'out');
     OneSignalEvent._trigger(BellEvent._Hovered);
   }
 
@@ -107,7 +111,7 @@ export default class Button extends AnimatedElement {
         return;
       }
 
-      const optedOut = LimitStore.getLast<boolean>('subscription.optedOut');
+      const optedOut = limitGetLast<boolean>('subscription.optedOut');
       if (this._bell._unsubscribed && !optedOut) {
         // The user is actually subscribed, register him for notifications
         registerForPushNotifications();

@@ -1,8 +1,7 @@
 /**
  * New clients will only be including this entry file, which will result in a reduced service worker size.
  */
-import { OneSignalServiceWorker } from '../sw/serviceWorker/ServiceWorker';
+import { run } from '../sw/serviceWorker/ServiceWorker';
 
-// Expose this class to the global scope
-declare const self: ServiceWorkerGlobalScope;
-self.OneSignalWorker = OneSignalServiceWorker;
+// Need to call run() to ensure the service worker is registered but also to ensure the service worker is not tree-shaken
+run();

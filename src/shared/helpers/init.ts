@@ -7,11 +7,11 @@ import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import LimitStore from '../services/LimitStore';
+import { limitStorePut } from '../services/limitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
 import { once } from '../utils/utils';
-import MainHelper from './MainHelper';
+import { getAppId } from './main';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 import { registerForPush } from './subscription';
@@ -138,7 +138,7 @@ async function storeInitialValues() {
     await OneSignal._context._permissionManager._getPermissionStatus();
   const isOptedOut =
     await OneSignal._context._subscriptionManager._isOptedOut();
-  LimitStore.put('subscription.optedOut', isOptedOut);
+  limitStorePut('subscription.optedOut', isOptedOut);
   await db.put('Options', {
     key: 'isPushEnabled',
     value: isPushEnabled,
@@ -363,7 +363,7 @@ export async function saveInitOptions() {
 }
 
 export async function initSaveState(overridingPageTitle?: string) {
-  const appId = MainHelper._getAppId();
+  const appId = getAppId();
   const config: AppConfig = OneSignal.config!;
   await db.put('Ids', { type: 'appId', id: appId });
   const pageTitle: string =

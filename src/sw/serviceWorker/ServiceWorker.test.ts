@@ -31,7 +31,20 @@ import type {
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import { OneSignalServiceWorker } from './ServiceWorker';
+import { getAppId, run } from './ServiceWorker';
+
+// Mock webhook notification events
+vi.mock('../webhooks/notifications/webhookNotificationEvent', () => ({
+  notificationClick: vi.fn(),
+  notificationDismissed: vi.fn(),
+  notificationWillDisplay: vi.fn(),
+}));
+
+import {
+  notificationClick,
+  notificationDismissed,
+  notificationWillDisplay,
+} from '../webhooks/notifications/webhookNotificationEvent';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -39,6 +52,8 @@ const endpoint = 'https://example.com';
 const appId = APP_ID;
 const notificationId = 'test-notification-id';
 const version = __VERSION__;
+
+run();
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
@@ -109,7 +124,7 @@ describe('ServiceWorker', () => {
       // @ts-expect-error - search is readonly but we need to set it for testing
       self.location.search = '?appId=some-app-id';
 
-      const appId = await OneSignalServiceWorker._getAppId();
+      const appId = await getAppId();
       expect(appId).toBe('some-app-id');
     });
   });
@@ -178,9 +193,7 @@ describe('ServiceWorker', () => {
         notificationId,
         title: payload.title,
       };
-      expect(
-        OneSignalServiceWorker._webhookNotificationEventSender.willDisplay,
-      ).toHaveBeenCalledWith(
+      expect(notificationWillDisplay).toHaveBeenCalledWith(
         expect.objectContaining(notificationInfo),
         pushSubscriptionId,
       );
@@ -227,9 +240,7 @@ describe('ServiceWorker', () => {
       });
       await dispatchEvent(event);
 
-      expect(
-        OneSignalServiceWorker._webhookNotificationEventSender.dismiss,
-      ).toHaveBeenCalledWith(
+      expect(notificationDismissed).toHaveBeenCalledWith(
         {
           notificationId,
         },
@@ -279,9 +290,7 @@ describe('ServiceWorker', () => {
       );
 
       // should emit clicked event
-      expect(
-        OneSignalServiceWorker._webhookNotificationEventSender.click,
-      ).toHaveBeenCalledWith(
+      expect(notificationClick).toHaveBeenCalledWith(
         {
           notification: {
             launchURL,

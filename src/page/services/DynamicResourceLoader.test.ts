@@ -129,7 +129,7 @@ describe('DynamicResourceLoader', () => {
     );
 
     const loader = new DynamicResourceLoader();
-    const state = await loader.loadSdkStylesheet();
+    const state = await loader._loadSdkStylesheet();
 
     expect(state).toBe(ResourceLoadState.Loaded);
     const stylesheets = document.head.querySelectorAll(
@@ -137,7 +137,7 @@ describe('DynamicResourceLoader', () => {
     );
     const url = `${cssURL}?v=${__VERSION__}`;
     expect(stylesheets[0].getAttribute('href')).toBe(url);
-    expect(loader.getCache()).toEqual({
+    expect(loader._getCache()).toEqual({
       [url]: expect.any(Promise),
     });
   });
@@ -153,14 +153,14 @@ describe('DynamicResourceLoader', () => {
     );
 
     const loader = new DynamicResourceLoader();
-    const state = await loader.loadIfNew(
+    const state = await loader._loadIfNew(
       ResourceType.Script,
       new URL(scriptURL),
     );
     expect(state).toBe(ResourceLoadState.Loaded);
 
     // should not load the same script again
-    const state2 = await loader.loadIfNew(
+    const state2 = await loader._loadIfNew(
       ResourceType.Script,
       new URL(scriptURL),
     );
@@ -179,7 +179,7 @@ describe('DynamicResourceLoader', () => {
     );
 
     const loader = new DynamicResourceLoader();
-    const state = await loader.loadIfNew(
+    const state = await loader._loadIfNew(
       ResourceType.Script,
       new URL(scriptURL),
     );
