@@ -1,6 +1,7 @@
 import UserNamespace from 'src/onesignal/UserNamespace';
 import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
+import { debug, info } from 'src/shared/libraries/log';
 import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
@@ -75,7 +76,7 @@ export async function checkAndTriggerSubscriptionChanged() {
 }
 
 function triggerSubscriptionChanged(change: SubscriptionChangeEvent) {
-  OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
+  OneSignalEvent._trigger('change', change);
 }
 
 export function triggerNotificationClick(
@@ -85,10 +86,7 @@ export function triggerNotificationClick(
     notification: event.notification,
     result: event.result,
   };
-  return OneSignalEvent._trigger(
-    OneSignal.EVENTS.NOTIFICATION_CLICKED,
-    publicEvent,
-  );
+  return OneSignalEvent._trigger('click', publicEvent);
 }
 
 const getUserState = async (): Promise<UserState> => {
@@ -148,11 +146,7 @@ export async function checkAndTriggerUserChanged() {
 }
 
 function triggerUserChanged(change: UserChangeEvent) {
-  OneSignalEvent._trigger(
-    OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-    change,
-    UserNamespace._emitter,
-  );
+  UserNamespace._emitter._emit('change', change);
 }
 
 async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
@@ -167,14 +161,10 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   ) {
     const predicateResult = await displayPredicate();
     if (predicateResult !== false) {
-      Log._debug(
-        'Showing notify button because display predicate returned true.',
-      );
+      debug('Showing notify button because display predicate returned true.');
       OneSignal._notifyButton._launcher._show();
     } else {
-      Log._debug(
-        'Hiding notify button because display predicate returned false.',
-      );
+      debug('Hiding notify button because display predicate returned false.');
       OneSignal._notifyButton._launcher._hide();
     }
   }
@@ -253,7 +243,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
     { __isOneSignalWelcomeNotification: true },
     undefined,
   );
-  OneSignalEvent._trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+  OneSignalEvent._trigger('sendWelcomeNotification', {
     title: title,
     message: message,
     url: url,

@@ -1,3 +1,5 @@
+import type { UserEventsMap } from 'src/shared/services/types';
+import type { UserSubscription } from 'src/shared/subscriptions/types';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
@@ -10,7 +12,7 @@ export default class UserNamespace extends EventListenerBase {
 
   readonly PushSubscription = new PushSubscriptionNamespace(false);
 
-  static _emitter = new Emitter();
+  static _emitter = new Emitter<UserEventsMap>();
 
   constructor(
     initialize: boolean,
@@ -111,7 +113,7 @@ export default class UserNamespace extends EventListenerBase {
 
   addEventListener(
     event: 'change',
-    listener: (userChange: UserChangeEvent) => void,
+    listener: (userChange: UserEventsMap['change']) => void,
   ): void {
     UserNamespace._emitter.on(event, listener);
   }

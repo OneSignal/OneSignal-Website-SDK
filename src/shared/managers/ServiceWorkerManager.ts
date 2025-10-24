@@ -272,10 +272,7 @@ export class ServiceWorkerManager {
             throw new Error('Browser does not support preventing display.');
           },
         };
-        await OneSignalEvent._trigger(
-          OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY,
-          publicEvent,
-        );
+        await OneSignalEvent._trigger('foregroundWillDisplay', publicEvent);
       },
     );
 
@@ -283,9 +280,7 @@ export class ServiceWorkerManager {
       WorkerMessengerCommand._NotificationClicked,
       async (event: NotificationClickEventInternal) => {
         const clickedListenerCallbackCount =
-          OneSignal._emitter._numberOfListeners(
-            OneSignal.EVENTS.NOTIFICATION_CLICKED,
-          );
+          OneSignal._emitter._numberOfListeners('click');
 
         if (clickedListenerCallbackCount === 0) {
           /*
@@ -317,10 +312,7 @@ export class ServiceWorkerManager {
     workerMessenger._on(
       WorkerMessengerCommand._NotificationDismissed,
       async (data) => {
-        await OneSignalEvent._trigger(
-          OneSignal.EVENTS.NOTIFICATION_DISMISSED,
-          data,
-        );
+        await OneSignalEvent._trigger('dismiss', data);
       },
     );
 

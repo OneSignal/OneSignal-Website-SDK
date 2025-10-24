@@ -24,11 +24,8 @@ import {
 } from 'src/shared/useragent/detect';
 import { logMethodCall } from 'src/shared/utils/utils';
 import { markPromptDismissedWithType } from '../../shared/helpers/dismiss';
-import Log from '../../shared/libraries/Log';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { DismissPrompt } from '../models/Dismiss';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
-import Slidedown from '../slidedown/Slidedown';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -298,20 +295,17 @@ export class PromptsManager {
   public _installEventHooksForSlidedown(): void {
     this._eventHooksInstalled = true;
 
-    OneSignal._emitter.on(Slidedown.EVENTS.SHOWN, () => {
+    OneSignal._emitter.on('slidedownShown', () => {
       this._context._slidedownManager._setIsSlidedownShowing(true);
     });
-    OneSignal._emitter.on(Slidedown.EVENTS.CLOSED, () => {
+    OneSignal._emitter.on('slidedownClosed', () => {
       this._context._slidedownManager._setIsSlidedownShowing(false);
       this._context._slidedownManager._showQueued();
     });
-    OneSignal._emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+    OneSignal._emitter.on('slidedownAllowClick', async () => {
       await this._context._slidedownManager._handleAllowClick();
-      OneSignalEvent._trigger(
-        OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
-      );
     });
-    OneSignal._emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
+    OneSignal._emitter.on('slidedownCancelClick', () => {
       if (!this._context._slidedownManager._slidedown) {
         return;
       }
