@@ -36,7 +36,7 @@ export async function createUserOnServer(): Promise<void> {
         ...subData,
         appId,
         onesignalId: identityModel._onesignalId,
-        subscriptionId: pushOp.id!,
+        subscriptionId: pushOp._id!,
       }),
     );
   } else {

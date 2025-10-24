@@ -193,7 +193,7 @@ describe('Email Management', () => {
   const getEmailSubscription = (email: string) => {
     const subscriptionModels =
       OneSignal._coreDirector._getEmailSubscriptionModels();
-    return subscriptionModels.find((model) => model.token === email);
+    return subscriptionModels.find((model) => model._token === email);
   };
 
   test('can add an email subscription', async () => {
@@ -211,7 +211,7 @@ describe('Email Management', () => {
     expect(addSubscriptionSpy).toHaveBeenCalled();
     const subscription = getEmailSubscription(email);
     expect(subscription).toBeDefined();
-    expect(subscription?.token).toBe(email);
+    expect(subscription?._token).toBe(email);
   });
 
   test('should remove an email subscription', async () => {
@@ -242,7 +242,7 @@ describe('SMS Management', () => {
   const getSmsSubscription = (smsNumber: string) => {
     const subscriptionModels =
       OneSignal._coreDirector._getSmsSubscriptionModels();
-    return subscriptionModels.find((model) => model.token === smsNumber);
+    return subscriptionModels.find((model) => model._token === smsNumber);
   };
 
   test('should add an SMS subscription', async () => {
@@ -261,7 +261,7 @@ describe('SMS Management', () => {
     expect(addSubscriptionSpy).toHaveBeenCalled();
     const subscription = getSmsSubscription(smsNumber);
     expect(subscription).toBeDefined();
-    expect(subscription?.token).toBe(smsNumber);
+    expect(subscription?._token).toBe(smsNumber);
   });
 
   test('should remove an SMS subscription', async () => {
@@ -286,7 +286,7 @@ describe('SMS Management', () => {
     expect(removeSubscriptionSpy).toHaveBeenCalled();
     subscription = getSmsSubscription(smsNumber);
     expect(subscription).toBeUndefined();
-    expect(subscription?.token).toBe(undefined);
+    expect(subscription?._token).toBe(undefined);
   });
 });
 

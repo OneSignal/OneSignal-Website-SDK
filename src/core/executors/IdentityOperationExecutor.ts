@@ -82,7 +82,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
             label: IdentityConstants._OneSignalID,
             id: lastOperation._onesignalId,
           },
-          { [lastOperation.label]: lastOperation.value },
+          { [lastOperation._label]: lastOperation._value },
         )
       : deleteAlias(
           { appId: lastOperation._appId },
@@ -90,7 +90,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
             label: IdentityConstants._OneSignalID,
             id: lastOperation._onesignalId,
           },
-          lastOperation.label,
+          lastOperation._label,
         );
 
     const { ok, status, retryAfterSeconds } = await request;
@@ -100,8 +100,8 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         lastOperation._onesignalId
       ) {
         this._identityModelStore._model._setProperty(
-          lastOperation.label,
-          isSetAlias ? lastOperation.value : undefined,
+          lastOperation._label,
+          isSetAlias ? lastOperation._value : undefined,
           ModelChangeTags._Hydrate,
         );
       }

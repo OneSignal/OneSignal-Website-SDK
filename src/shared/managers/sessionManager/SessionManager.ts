@@ -106,7 +106,7 @@ export class SessionManager implements ISessionManager {
     }
 
     const { _onesignalId: onesignalId } = identityModel;
-    const { id: subscriptionId } = pushSubscriptionModel;
+    const { _id: subscriptionId } = pushSubscriptionModel;
 
     return { onesignalId, subscriptionId };
   }
@@ -379,7 +379,7 @@ export class SessionManager implements ISessionManager {
 
     let subscriptionId;
     if (isCompleteSubscriptionObject(pushSubscription)) {
-      subscriptionId = pushSubscription?.id;
+      subscriptionId = pushSubscription?._id;
     }
 
     try {

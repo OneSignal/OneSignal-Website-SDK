@@ -49,7 +49,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
       ._getPushSubscriptionModel()
       .then((pushModel) => {
         if (isCompleteSubscriptionObject(pushModel)) {
-          this._id = pushModel.id;
+          this._id = pushModel._id;
         }
       })
       .catch((e) => {

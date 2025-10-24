@@ -831,11 +831,11 @@ describe('OneSignal - No Consent Required', () => {
         expect(subscriptions).toEqual([
           {
             ...BASE_SUB,
-            id: pushSub.id,
+            id: pushSub._id,
             modelId: expect.any(String),
             modelName: 'subscriptions',
             onesignalId: ONESIGNAL_ID,
-            token: pushSub.token,
+            token: pushSub._token,
             type: 'ChromePush',
           },
         ]);

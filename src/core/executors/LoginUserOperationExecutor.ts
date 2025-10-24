@@ -282,15 +282,15 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         return {
           ...currentSubs,
           [subscriptionId]: {
-            enabled: operation.enabled,
-            device_model: operation.device_model,
-            device_os: operation.device_os,
-            notification_types: operation.notification_types,
-            sdk: operation.sdk,
-            token: operation.token,
-            type: operation.type,
-            web_auth: operation.web_auth,
-            web_p256: operation.web_p256,
+            enabled: operation._enabled,
+            device_model: operation._device_model,
+            device_os: operation._device_os,
+            notification_types: operation._notification_types,
+            sdk: operation._sdk,
+            token: operation._token,
+            type: operation._type,
+            web_auth: operation._web_auth,
+            web_p256: operation._web_p256,
           },
         };
       }
@@ -303,9 +303,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
             ...currentSubs,
             [subscriptionId]: {
               ...currentSubs[subscriptionId],
-              enabled: operation.enabled,
-              notification_types: operation.notification_types,
-              token: operation.token,
+              enabled: operation._enabled,
+              notification_types: operation._notification_types,
+              token: operation._token,
             },
           };
         }

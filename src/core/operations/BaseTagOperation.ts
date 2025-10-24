@@ -18,16 +18,16 @@ export abstract class BaseTagOperation<
     key?: string,
   ) {
     super(operationName, appId, onesignalId);
-    if (key) this.key = key;
+    if (key) this._key = key;
   }
 
   /**
    * The tag key.
    */
-  get key(): string {
+  get _key(): string {
     return this._getProperty('key');
   }
-  protected set key(value: string) {
+  protected set _key(value: string) {
     this._setProperty('key', value);
   }
 

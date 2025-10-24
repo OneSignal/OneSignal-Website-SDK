@@ -18,7 +18,7 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
   }
 
   _getBySubscriptionId(subscriptionId: string): SubscriptionModel | undefined {
-    return super._list().find((m) => m.id === subscriptionId);
+    return super._list().find((m) => m._id === subscriptionId);
   }
 
   override _replaceAll(
@@ -31,11 +31,11 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
 
     // When hydrating, preserve properties from existing PUSH subscription
     for (const model of models) {
-      if (isPushSubscriptionType(model.type)) {
+      if (isPushSubscriptionType(model._type)) {
         const existingPushModel = this._get(model._modelId);
         if (existingPushModel) {
-          model.sdk = existingPushModel.sdk;
-          model.device_os = existingPushModel.device_os;
+          model._sdk = existingPushModel._sdk;
+          model._device_os = existingPushModel._device_os;
         }
         break; // Only modify the first PUSH subscription model
       }

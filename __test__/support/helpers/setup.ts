@@ -124,8 +124,8 @@ export const setupSubscriptionModel = async (
   token: string | undefined,
 ) => {
   const subscriptionModel = new SubscriptionModel();
-  subscriptionModel.id = id || '';
-  subscriptionModel.token = token || '';
+  subscriptionModel._id = id || '';
+  subscriptionModel._token = token || '';
   OneSignal._coreDirector._subscriptionModelStore._replaceAll(
     [subscriptionModel],
     ModelChangeTags._NoPropogate,

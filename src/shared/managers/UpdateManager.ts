@@ -96,7 +96,7 @@ export class UpdateManager {
         notification_ids: notificationIds,
         direct: true,
         subscription: {
-          id: pushSubscriptionModel.id,
+          id: pushSubscriptionModel._id,
           type: getSubscriptionType(),
         },
       };
@@ -131,7 +131,7 @@ export class UpdateManager {
         notification_ids: notificationIds,
         direct: false,
         subscription: {
-          id: pushSubscriptionModel.id,
+          id: pushSubscriptionModel._id,
           type: getSubscriptionType(),
         },
       };
@@ -163,7 +163,7 @@ export class UpdateManager {
         id: outcomeName,
         app_id: appId,
         subscription: {
-          id: pushSubscriptionModel.id,
+          id: pushSubscriptionModel._id,
           type: getSubscriptionType(),
         },
       };

@@ -108,9 +108,9 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
         for (const operation of operations) {
           if (operation instanceof SetPropertyOperation) {
             // removing empty string tags from operation.value to save space in IndexedDB and local memory.
-            let value = operation.value;
+            let value = operation._value;
             if (isTagProperty(operation)) {
-              value = { ...operation.value };
+              value = { ...operation._value };
               for (const key in value) if (value[key] === '') delete value[key];
             }
 
@@ -186,7 +186,7 @@ function createPropertiesFromOperation(
     if (allowedKeys.includes(propertyKey as IPropertiesModelKeys)) {
       return {
         ...properties,
-        [propertyKey]: operation.value,
+        [propertyKey]: operation._value,
       };
     }
     return { ...properties };

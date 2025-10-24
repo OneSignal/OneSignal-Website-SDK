@@ -288,7 +288,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Missing error with rebuild ops
       subscriptionsModelStore._add(pushSubscription, ModelChangeTags._Hydrate);
-      await setPushToken(pushSubscription.token);
+      await setPushToken(pushSubscription._token);
 
       const res6 = await executor._execute([createOp]);
 
@@ -299,8 +299,8 @@ describe('SubscriptionOperationExecutor', () => {
           onesignalId: ONESIGNAL_ID,
           enabled: true,
           notification_types: NotificationType._Subscribed,
-          subscriptionId: pushSubscription.id,
-          token: pushSubscription.token,
+          subscriptionId: pushSubscription._id,
+          token: pushSubscription._token,
           type: SubscriptionType._ChromePush,
         }),
         new RefreshUserOperation(APP_ID, ONESIGNAL_ID),

@@ -29,106 +29,106 @@ export abstract class BaseFullSubscriptionOperation extends BaseSubscriptionOper
     super(operationName, appId, onesignalId);
 
     if (subscription) {
-      this.sdk = VERSION;
-      this.device_model = getDeviceModel();
-      this.device_os = getDeviceOS();
-      this.enabled = subscription.enabled;
-      this.notification_types = subscription.notification_types;
+      this._sdk = VERSION;
+      this._device_model = getDeviceModel();
+      this._device_os = getDeviceOS();
+      this._enabled = subscription.enabled;
+      this._notification_types = subscription.notification_types;
       this._subscriptionId = subscription.subscriptionId;
-      this.token = subscription.token;
-      this.type = subscription.type;
-      this.web_auth = subscription.web_auth;
-      this.web_p256 = subscription.web_p256;
+      this._token = subscription.token;
+      this._type = subscription.type;
+      this._web_auth = subscription.web_auth;
+      this._web_p256 = subscription.web_p256;
     }
   }
 
   /**
    * The type of subscription.
    */
-  public get type(): SubscriptionTypeValue {
+  public get _type(): SubscriptionTypeValue {
     return this._getProperty('type');
   }
-  protected set type(value: SubscriptionTypeValue) {
+  protected set _type(value: SubscriptionTypeValue) {
     this._setProperty('type', value);
   }
 
   /**
    * The token for the subscription.
    */
-  public get token(): string {
+  public get _token(): string {
     return this._getProperty('token');
   }
-  protected set token(value: string) {
+  protected set _token(value: string) {
     this._setProperty('token', value);
   }
 
   /**
    * Whether this subscription is currently enabled.
    */
-  get enabled(): boolean | undefined {
+  get _enabled(): boolean | undefined {
     return this._getProperty('enabled');
   }
-  protected set enabled(value: boolean | undefined) {
+  protected set _enabled(value: boolean | undefined) {
     this._setProperty('enabled', value);
   }
 
   /**
    * The notification types this subscription is subscribed to.
    */
-  get notification_types(): NotificationTypeValue | undefined {
+  get _notification_types(): NotificationTypeValue | undefined {
     return this._getProperty('notification_types');
   }
-  protected set notification_types(value: NotificationTypeValue | undefined) {
+  protected set _notification_types(value: NotificationTypeValue | undefined) {
     this._setProperty('notification_types', value);
   }
 
   /**
    * The SDK identifier
    */
-  get sdk(): string | undefined {
+  get _sdk(): string | undefined {
     return this._getProperty('sdk');
   }
-  protected set sdk(value: string | undefined) {
+  protected set _sdk(value: string | undefined) {
     this._setProperty('sdk', value);
   }
 
   /**
    * The device model
    */
-  get device_model(): string | undefined {
+  get _device_model(): string | undefined {
     return this._getProperty('device_model');
   }
-  protected set device_model(value: string | undefined) {
+  protected set _device_model(value: string | undefined) {
     this._setProperty('device_model', value);
   }
 
   /**
    * The device OS version
    */
-  get device_os(): string | undefined {
+  get _device_os(): string | undefined {
     return this._getProperty('device_os');
   }
-  protected set device_os(value: string | undefined) {
+  protected set _device_os(value: string | undefined) {
     this._setProperty('device_os', value);
   }
 
   /**
    * Web authentication value
    */
-  get web_auth(): string | undefined {
+  get _web_auth(): string | undefined {
     return this._getProperty('web_auth');
   }
-  protected set web_auth(value: string | undefined) {
+  protected set _web_auth(value: string | undefined) {
     this._setProperty('web_auth', value);
   }
 
   /**
    * Web P256 value
    */
-  get web_p256(): string | undefined {
+  get _web_p256(): string | undefined {
     return this._getProperty('web_p256');
   }
-  protected set web_p256(value: string | undefined) {
+  protected set _web_p256(value: string | undefined) {
     this._setProperty('web_p256', value);
   }
 }

@@ -33,10 +33,10 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     return new CreateSubscriptionOperation({
       appId,
       onesignalId: this._identityModelStore._model._onesignalId,
-      subscriptionId: model.id,
-      type: model.type,
+      subscriptionId: model._id,
+      type: model._type,
       enabled,
-      token: model.token,
+      token: model._token,
       notification_types,
     });
   }
@@ -46,7 +46,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     return new DeleteSubscriptionOperation(
       appId,
       this._identityModelStore._model._onesignalId,
-      model.id,
+      model._id,
     );
   }
 
@@ -58,13 +58,13 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     return new UpdateSubscriptionOperation({
       appId,
       onesignalId: this._identityModelStore._model._onesignalId,
-      subscriptionId: model.id,
-      type: model.type,
+      subscriptionId: model._id,
+      type: model._type,
       enabled,
-      token: model.token,
+      token: model._token,
       notification_types,
-      web_auth: model.web_auth,
-      web_p256: model.web_p256,
+      web_auth: model._web_auth,
+      web_p256: model._web_p256,
     });
   }
 
@@ -76,15 +76,15 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     let notification_types: NotificationTypeValue | undefined;
 
     if (
-      model.enabled &&
+      model._enabled &&
       model._notification_types === NotificationType._Subscribed &&
-      model.token
+      model._token
     ) {
       enabled = true;
       notification_types = NotificationType._Subscribed;
     } else {
       enabled = false;
-      notification_types = !model.enabled
+      notification_types = !model._enabled
         ? NotificationType._UserOptedOut
         : model._notification_types;
     }

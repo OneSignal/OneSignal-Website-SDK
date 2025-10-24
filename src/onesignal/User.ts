@@ -150,7 +150,7 @@ export default class User {
       OneSignal._coreDirector._getEmailSubscriptionModels();
 
     emailSubscriptions.forEach((model) => {
-      if (model.token === email) {
+      if (model._token === email) {
         OneSignal._coreDirector._removeSubscriptionModel(model._modelId);
       }
     });
@@ -165,7 +165,7 @@ export default class User {
     const smsSubscriptions =
       OneSignal._coreDirector._getSmsSubscriptionModels();
     smsSubscriptions.forEach((model) => {
-      if (model.token === smsNumber) {
+      if (model._token === smsNumber) {
         OneSignal._coreDirector._removeSubscriptionModel(model._modelId);
       }
     });
@@ -275,7 +275,7 @@ function addSubscriptionToModels({
 }): void {
   const hasSubscription = OneSignal._coreDirector._subscriptionModelStore
     ._list()
-    .find((model) => model.token === token && model.type === type);
+    .find((model) => model._token === token && model._type === type);
   if (hasSubscription) return;
 
   const identityModel = OneSignal._coreDirector._getIdentityModel();

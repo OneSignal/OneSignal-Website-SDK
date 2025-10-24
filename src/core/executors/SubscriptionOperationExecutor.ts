@@ -92,15 +92,15 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     const lastUpdateOperation = [...operations]
       .reverse()
       .find((op) => op instanceof UpdateSubscriptionOperation);
-    const enabled = lastUpdateOperation?.enabled ?? createOperation.enabled;
-    const token = lastUpdateOperation?.token ?? createOperation.token;
+    const enabled = lastUpdateOperation?._enabled ?? createOperation._enabled;
+    const token = lastUpdateOperation?._token ?? createOperation._token;
     const notification_types =
-      lastUpdateOperation?.notification_types ??
-      createOperation.notification_types;
+      lastUpdateOperation?._notification_types ??
+      createOperation._notification_types;
 
     const subscription = {
-      sdk: createOperation.sdk,
-      type: createOperation.type,
+      sdk: createOperation._sdk,
+      type: createOperation._type,
       enabled,
       token,
       notification_types,
@@ -209,12 +209,12 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     ] as UpdateSubscriptionOperation;
 
     const subscription = {
-      type: lastOp.type,
-      enabled: lastOp.enabled,
-      token: lastOp.token,
-      notification_types: lastOp.notification_types,
-      web_auth: lastOp.web_auth,
-      web_p256: lastOp.web_p256,
+      type: lastOp._type,
+      enabled: lastOp._enabled,
+      token: lastOp._token,
+      notification_types: lastOp._notification_types,
+      web_auth: lastOp._web_auth,
+      web_p256: lastOp._web_p256,
     };
 
     const response = await updateSubscriptionById(
@@ -254,12 +254,12 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           _operations: [
             new CreateSubscriptionOperation({
               appId: lastOp._appId,
-              enabled: lastOp.enabled,
-              notification_types: lastOp.notification_types,
+              enabled: lastOp._enabled,
+              notification_types: lastOp._notification_types,
               onesignalId: lastOp._onesignalId,
               subscriptionId: lastOp._subscriptionId,
-              token: lastOp.token,
-              type: lastOp.type,
+              token: lastOp._token,
+              type: lastOp._type,
             }),
           ],
         };

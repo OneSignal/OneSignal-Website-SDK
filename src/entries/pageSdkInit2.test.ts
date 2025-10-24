@@ -48,7 +48,7 @@ describe('pageSdkInit 2', () => {
         {
           ...subModel.toJSON(),
         },
-        emailSubModel,
+        emailSubModel.toJSON(),
       ],
     });
     setCreateUserResponse({
@@ -107,10 +107,10 @@ describe('pageSdkInit 2', () => {
     expect(subscriptions).toEqual([
       {
         ...shared,
-        id: subModel.id,
+        id: subModel._id,
         modelId: subModel._modelId,
         onesignalId: ONESIGNAL_ID,
-        token: subModel.token,
+        token: subModel._token,
         type: 'ChromePush',
       },
       {

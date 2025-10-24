@@ -100,21 +100,21 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       for (const sub of subscriptions) {
         const model = new SubscriptionModel();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        model.id = sub.id!;
-        model.token = sub.token ?? '';
+        model._id = sub.id!;
+        model._token = sub.token ?? '';
         model._notification_types =
           sub.notification_types ?? NotificationType._Subscribed;
-        model.type = sub.type;
-        model.enabled =
+        model._type = sub.type;
+        model._enabled =
           model._notification_types !== NotificationType._UserOptedOut;
-        model.sdk = sub.sdk;
-        model.device_os = sub.device_os;
-        model.device_model = sub.device_model;
+        model._sdk = sub.sdk;
+        model._device_os = sub.device_os;
+        model._device_model = sub.device_model;
         model._onesignalId = op._onesignalId;
 
         // We only add a non-push subscriptions. For push, the device is the source of truth
         // so we don't want to cache these subscriptions from the backend.
-        if (!isPushSubscriptionType(model.type)) {
+        if (!isPushSubscriptionType(model._type)) {
           subscriptionModels.push(model);
         }
       }

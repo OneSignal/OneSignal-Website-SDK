@@ -17,17 +17,17 @@ export class SetAliasOperation extends BaseAliasOperation<AliasOp> {
     value?: string,
   ) {
     super(OPERATION_NAME._SetAlias, appId, onesignalId, label);
-    if (value) this.value = value;
+    if (value) this._value = value;
   }
 
-  get value(): string {
+  get _value(): string {
     return this._getProperty('value');
   }
-  private set value(value: string) {
+  private set _value(value: string) {
     this._setProperty('value', value);
   }
 
   override get _modifyComparisonKey(): string {
-    return `${this._appId}.User.${this._onesignalId}.Identity.${this.label}`;
+    return `${this._appId}.User.${this._onesignalId}.Identity.${this._label}`;
   }
 }

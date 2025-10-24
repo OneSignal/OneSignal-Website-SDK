@@ -65,7 +65,7 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
     return createUserOnServer();
   }
   // for users with data failed to create a user or user + subscription on the server
-  if (IDManager._isLocalId(pushModel.id)) {
+  if (IDManager._isLocalId(pushModel._id)) {
     return createUserOnServer();
   }
 
@@ -102,7 +102,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     pushModel._notification_types = notificationTypes;
-    pushModel.enabled = notificationTypes === NotificationType._Subscribed;
+    pushModel._enabled = notificationTypes === NotificationType._Subscribed;
   }
 
   async _getNotificationTypes(): Promise<NotificationTypeValue> {

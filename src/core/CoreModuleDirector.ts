@@ -64,7 +64,7 @@ export class CoreModuleDirector {
     model._initializeFromJson(
       new FuturePushSubscriptionRecord(rawPushSubscription)._serialize(),
     );
-    model.id = IDManager._createLocalId();
+    model._id = IDManager._createLocalId();
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
     this._core._subscriptionModelStore._add(model, ModelChangeTags._Hydrate);
@@ -83,7 +83,7 @@ export class CoreModuleDirector {
   public _getEmailSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getEmailSubscriptionModels');
     const subscriptions = this._core._subscriptionModelStore._list();
-    return subscriptions.filter((s) => s.type === SubscriptionType._Email);
+    return subscriptions.filter((s) => s._type === SubscriptionType._Email);
   }
 
   public async _hasEmail(): Promise<boolean> {
@@ -94,7 +94,7 @@ export class CoreModuleDirector {
   public _getSmsSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getSmsSubscriptionModels');
     const subscriptions = this._core._subscriptionModelStore._list();
-    return subscriptions.filter((s) => s.type === SubscriptionType._SMS);
+    return subscriptions.filter((s) => s._type === SubscriptionType._SMS);
   }
 
   public async _hasSms(): Promise<boolean> {
@@ -108,7 +108,7 @@ export class CoreModuleDirector {
   public _getAllPushSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getAllPushSubscriptionModels');
     const subscriptions = this._core._subscriptionModelStore._list();
-    return subscriptions.filter((s) => isPushSubscriptionType(s.type));
+    return subscriptions.filter((s) => isPushSubscriptionType(s._type));
   }
 
   async _getPushSubscriptionModelByCurrentToken(): Promise<
@@ -205,6 +205,6 @@ export class CoreModuleDirector {
         return undefined;
     }
 
-    return subscriptions.find((subscription) => subscription.token === token);
+    return subscriptions.find((subscription) => subscription._token === token);
   }
 }

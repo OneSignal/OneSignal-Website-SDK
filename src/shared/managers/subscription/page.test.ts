@@ -46,7 +46,7 @@ describe('SubscriptionManager', () => {
       subModels = await OneSignal._coreDirector._subscriptionModelStore._list();
       expect(subModels.length).toBe(1);
 
-      const id = subModels[0].id;
+      const id = subModels[0]._id;
       expect(IDManager._isLocalId(id)).toBe(true);
       expect(subModels[0].toJSON()).toEqual({
         id,
@@ -137,11 +137,11 @@ describe('SubscriptionManager', () => {
 
       const updatedPushModel =
         (await OneSignal._coreDirector._getPushSubscriptionModel())!;
-      expect(updatedPushModel.token).toBe(
+      expect(updatedPushModel._token).toBe(
         rawSubscription.w3cEndpoint?.toString(),
       );
-      expect(updatedPushModel.web_auth).toBe(rawSubscription.w3cAuth);
-      expect(updatedPushModel.web_p256).toBe(rawSubscription.w3cP256dh);
+      expect(updatedPushModel._web_auth).toBe(rawSubscription.w3cAuth);
+      expect(updatedPushModel._web_p256).toBe(rawSubscription.w3cP256dh);
 
       await vi.waitUntil(() => updateSubscriptionFn.mock.calls.length > 0);
     });

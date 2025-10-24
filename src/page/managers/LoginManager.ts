@@ -63,7 +63,7 @@ export default class LoginManager {
             new TransferSubscriptionOperation(
               appId,
               newIdentityOneSignalId,
-              pushOp.id,
+              pushOp._id,
             ),
           );
         }
