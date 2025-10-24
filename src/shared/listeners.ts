@@ -1,6 +1,7 @@
 import UserNamespace from 'src/onesignal/UserNamespace';
 import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
+import { debug, info } from 'src/shared/libraries/log';
 import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
@@ -15,7 +16,6 @@ import { isCategorySlidedownConfigured } from './prompts/helpers';
 import { limitStorePut } from './services/limitStore';
 import OneSignalEvent from './services/OneSignalEvent';
 import { logMethodCall } from './utils/utils';
-import { debug, info } from 'src/shared/libraries/log';
 
 export async function checkAndTriggerSubscriptionChanged() {
   logMethodCall('checkAndTriggerSubscriptionChanged');
@@ -160,14 +160,10 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   ) {
     const predicateResult = await displayPredicate();
     if (predicateResult !== false) {
-      debug(
-        'Showing notify button because display predicate returned true.',
-      );
+      debug('Showing notify button because display predicate returned true.');
       OneSignal._notifyButton._launcher._show();
     } else {
-      debug(
-        'Hiding notify button because display predicate returned false.',
-      );
+      debug('Hiding notify button because display predicate returned false.');
       OneSignal._notifyButton._launcher._hide();
     }
   }

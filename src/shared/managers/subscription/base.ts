@@ -2,11 +2,14 @@ import {
   getSubscription,
   setSubscription,
 } from 'src/shared/database/subscription';
-import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
+import { debug, warn } from 'src/shared/libraries/log';
+import type {
+  NotificationTypeValue,
+  UserSubscription,
+} from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
-import type { Subscription } from '../../models/Subscription';
 import {
   SubscriptionStrategyKind,
   type SubscriptionStrategyKindValue,
@@ -18,7 +21,6 @@ import { getBrowserName } from '../../useragent/detect';
 import { base64ToUint8Array } from '../../utils/encode';
 import { IS_SERVICE_WORKER } from '../../utils/env';
 import { DEFAULT_DEVICE_ID } from './constants';
-import { debug, warn } from 'src/shared/libraries/log';
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -65,7 +67,7 @@ export class SubscriptionManagerBase<
     pushSubscription: RawPushSubscription | undefined,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _subscriptionState?: NotificationTypeValue | null,
-  ): Promise<Subscription> {
+  ): Promise<UserSubscription> {
     /*
       This may be called after the RawPushSubscription has been serialized across a postMessage
       frame. This means it will only have object properties and none of the functions. We have to
@@ -300,9 +302,7 @@ export class SubscriptionManagerBase<
   private static async _doPushUnsubscribe(
     pushSubscription: PushSubscription,
   ): Promise<boolean> {
-    debug(
-      '[Subscription Manager] Unsubscribing existing push subscription.',
-    );
+    debug('[Subscription Manager] Unsubscribing existing push subscription.');
     const result = await pushSubscription.unsubscribe();
     debug(
       `[Subscription Manager] Unsubscribing existing push subscription result: ${result}`,

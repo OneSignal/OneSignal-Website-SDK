@@ -1,4 +1,4 @@
-import { Subscription } from '../models/Subscription';
+import type { UserSubscription } from '../subscriptions/types';
 import { db, getOptionsValue } from './client';
 
 export const getPushId = async () => {
@@ -16,7 +16,7 @@ export const setPushToken = async (pushToken: string | undefined) => {
 };
 
 export const getSubscription = async () => {
-  const subscription = new Subscription();
+  const subscription: UserSubscription = {};
   subscription.deviceId = (await db.get('Ids', 'userId'))?.id;
   subscription.subscriptionToken = (await db.get('Ids', 'registrationId'))?.id;
 
@@ -44,7 +44,7 @@ export const getSubscription = async () => {
   return subscription;
 };
 
-export const setSubscription = async (subscription: Subscription) => {
+export const setSubscription = async (subscription: UserSubscription) => {
   if (subscription.deviceId) {
     await db.put('Ids', {
       type: 'userId',

@@ -181,7 +181,7 @@ function setupMessageListeners() {
         );
       workerMessenger._broadcast(
         WorkerMessengerCommand._Subscribe,
-        subscription._serialize(),
+        subscription,
       );
     },
   );
@@ -201,7 +201,7 @@ function setupMessageListeners() {
 
       workerMessenger._broadcast(
         WorkerMessengerCommand._SubscribeNew,
-        subscription._serialize(),
+        subscription,
       );
     },
   );

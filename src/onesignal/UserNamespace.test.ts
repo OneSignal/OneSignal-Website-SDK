@@ -5,8 +5,8 @@ import { IdentityConstants } from 'src/core/constants';
 import { ModelChangeTags } from 'src/core/types/models';
 import * as Log from 'src/shared/libraries/log';
 import { IDManager } from 'src/shared/managers/IDManager';
+import type { UserSubscription } from 'src/shared/subscriptions/types';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
-import { Subscription } from '../shared/models/Subscription';
 import User from './User';
 import UserNamespace from './UserNamespace';
 
@@ -438,11 +438,11 @@ describe('Initialization', () => {
   });
 
   test('should use provided subscription and permission when initializing', () => {
-    const subscription = new Subscription();
-    subscription.deviceId = 'device-123';
-    subscription.subscriptionToken = PUSH_TOKEN;
-    subscription.optedOut = false;
-    subscription.createdAt = Date.now();
+    const subscription: UserSubscription = {
+      deviceId: 'device-123',
+      subscriptionToken: PUSH_TOKEN,
+      optedOut: false,
+    };
 
     const permission: NotificationPermission = 'granted';
 

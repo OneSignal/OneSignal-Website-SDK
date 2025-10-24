@@ -14,9 +14,9 @@ import {
 } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 import type { EventsMap } from 'src/shared/services/types';
+import type { UserSubscription } from 'src/shared/subscriptions/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { isCompleteSubscriptionObject } from '../shared/managers/utils';
-import { Subscription } from '../shared/models/Subscription';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
@@ -30,7 +30,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
   constructor(
     initialize: boolean,
-    subscription?: Subscription,
+    subscription?: UserSubscription,
     permission?: NotificationPermission,
   ) {
     super();
