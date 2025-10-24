@@ -9,6 +9,7 @@ import {
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { ExecutionResult } from 'src/core/types/operation';
+import { UnknownOpError } from 'src/shared/errors/common';
 import type { MockInstance } from 'vitest';
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
@@ -82,11 +83,7 @@ describe('IdentityOperationExecutor', () => {
     // with invalid ops
     const ops = [setAliasOp, deleteAliasOp, someOp];
     const result = executor._execute(ops);
-    await expect(() => result).rejects.toThrow(
-      `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-        ops,
-      )}`,
-    );
+    await expect(() => result).rejects.toThrow(UnknownOpError(ops));
 
     // with both set and delete alias ops
     const ops2 = [setAliasOp, deleteAliasOp];

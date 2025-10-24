@@ -15,6 +15,7 @@ import {
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { setPushToken } from 'src/shared/database/subscription';
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   NotificationType,
   SubscriptionType,
@@ -83,11 +84,7 @@ describe('RefreshUserOperationExecutor', () => {
     const ops = [someOp];
 
     const result = executor._execute(ops);
-    await expect(() => result).rejects.toThrow(
-      `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-        ops,
-      )}`,
-    );
+    await expect(() => result).rejects.toThrow(UnknownOpError(ops));
   });
 
   describe('getUser', () => {

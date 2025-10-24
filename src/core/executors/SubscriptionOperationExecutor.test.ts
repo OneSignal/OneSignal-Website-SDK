@@ -17,6 +17,7 @@ import {
 } from '__test__/support/helpers/requests';
 import { setupSubscriptionModel } from '__test__/support/helpers/setup';
 import { setPushToken } from 'src/shared/database/subscription';
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   NotificationType,
   SubscriptionType,
@@ -100,9 +101,7 @@ describe('SubscriptionOperationExecutor', () => {
     const ops = [someOp];
 
     const res1 = executor._execute(ops);
-    await expect(() => res1).rejects.toThrow(
-      `Unrecognized operation: ${ops[0]}`,
-    );
+    await expect(() => res1).rejects.toThrow(UnknownOpError(ops));
 
     const deleteOp = new DeleteSubscriptionOperation(
       APP_ID,

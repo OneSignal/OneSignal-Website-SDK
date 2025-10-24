@@ -6,6 +6,7 @@ import {
   setUpdateUserResponse,
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
+import { UnknownOpError } from 'src/shared/errors/common';
 import { type MockInstance } from 'vitest';
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
@@ -70,9 +71,7 @@ describe('UpdateUserOperationExecutor', () => {
     const ops = [someOp];
 
     const result = executor._execute(ops);
-    await expect(() => result).rejects.toThrow(
-      `Unrecognized operation: ${ops[0]}`,
-    );
+    await expect(() => result).rejects.toThrow(UnknownOpError(someOp));
   });
 
   describe('SetPropertyOperation', () => {

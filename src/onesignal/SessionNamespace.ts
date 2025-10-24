@@ -1,6 +1,6 @@
+import { error, warn } from 'src/shared/libraries/log';
 import OutcomesHelper from '../shared/helpers/OutcomesHelper';
 import { OutcomeAttributionType } from '../shared/models/Outcomes';
-import { error, warn } from 'src/shared/libraries/log';
 
 export class SessionNamespace {
   async sendOutcome(
@@ -60,9 +60,7 @@ export class SessionNamespace {
     const outcomeAttribution = await outcomesHelper._getAttribution();
 
     if (outcomeAttribution.type === OutcomeAttributionType._NotSupported) {
-      warn(
-        'You are on a free plan. Please upgrade to use this functionality.',
-      );
+      warn('You are on a free plan. Please upgrade to use this functionality.');
       return;
     }
 
