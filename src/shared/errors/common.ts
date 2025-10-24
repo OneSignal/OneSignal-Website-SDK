@@ -65,3 +65,6 @@ export const WrongTypeArgumentError = (argName: string) =>
 
 export const ReservedArgumentError = (argName: string) =>
   new Error(`"${argName}" is reserved`);
+
+export const UnknownOpError = (op: { _name?: string } | { _name?: string }[]) =>
+  new Error(`Unknown op(s):${op}`);

@@ -1,3 +1,4 @@
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -52,16 +53,10 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    debug(
-      `RefreshUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
-    );
+    debug(`RefreshUserOperationExecutor`);
 
     if (operations.some((op) => !(op instanceof RefreshUserOperation)))
-      throw new Error(
-        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-          operations,
-        )}`,
-      );
+      throw UnknownOpError(operations);
 
     const startingOp = operations[0];
     return this._getUser(startingOp);

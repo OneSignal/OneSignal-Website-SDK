@@ -3,6 +3,7 @@ import {
   ExecutionResult,
   type IOperationExecutor,
 } from 'src/core/types/operation';
+import { UnknownOpError } from 'src/shared/errors/common';
 import { getTimeZoneId } from 'src/shared/helpers/general';
 import {
   getResponseStatusType,
@@ -62,15 +63,13 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    debug(
-      `LoginUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
-    );
+    debug(`LoginUserOperationExecutor`);
     const startingOp = operations[0];
 
     if (startingOp instanceof LoginUserOperation)
       return this._loginUser(startingOp, operations.slice(1));
 
-    throw new Error(`Unrecognized operation: ${startingOp._name}`);
+    throw UnknownOpError(startingOp);
   }
 
   private async _loginUser(
@@ -163,7 +162,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           subscriptions,
         );
       } else {
-        throw new Error(`Unrecognized operation: ${operation._name}`);
+        throw UnknownOpError(operation);
       }
     }
 

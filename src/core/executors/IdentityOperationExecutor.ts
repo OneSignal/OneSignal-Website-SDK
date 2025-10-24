@@ -4,6 +4,7 @@ import {
   type IOperationExecutor,
 } from 'src/core/types/operation';
 import type { IRebuildUserService } from 'src/core/types/user';
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -40,9 +41,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    debug(
-      `IdentityOperationExecutor(operations: ${JSON.stringify(operations)})`,
-    );
+    debug(`IdentityOperationExecutor`);
 
     const invalidOps = operations.filter(
       (op) =>
@@ -51,11 +50,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         ),
     );
     if (invalidOps.length > 0) {
-      throw new Error(
-        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-          operations,
-        )}`,
-      );
+      throw UnknownOpError(operations);
     }
 
     const hasSetAlias = operations.some(

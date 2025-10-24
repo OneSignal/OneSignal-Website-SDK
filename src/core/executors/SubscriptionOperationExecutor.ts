@@ -3,6 +3,7 @@ import {
   type IOperationExecutor,
 } from 'src/core/types/operation';
 import type { IRebuildUserService } from 'src/core/types/user';
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -79,7 +80,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
         );
       return this._transferSubscription(startingOp);
     }
-    throw new Error(`Unrecognized operation: ${startingOp}`);
+    throw UnknownOpError(startingOp);
   }
 
   private async _createSubscription(

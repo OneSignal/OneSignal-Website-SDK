@@ -1,3 +1,4 @@
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -65,7 +66,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           propertiesObject,
         );
       } else {
-        throw new Error(`Unrecognized operation: ${operation}`);
+        throw UnknownOpError(operation);
       }
     }
 

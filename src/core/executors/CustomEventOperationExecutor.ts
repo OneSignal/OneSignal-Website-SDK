@@ -3,6 +3,7 @@ import {
   getDeviceOS,
   getSubscriptionType,
 } from 'src/shared/environment/detect';
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -44,9 +45,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     const operation = operations[0];
 
     if (!(operation instanceof TrackCustomEventOperation)) {
-      throw new Error(
-        `Unrecognized operation! Expected TrackEventOperation, got: ${operation.constructor.name}`,
-      );
+      throw UnknownOpError(operation);
     }
 
     const response = await sendCustomEvent(

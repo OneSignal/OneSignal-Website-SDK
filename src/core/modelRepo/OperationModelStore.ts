@@ -1,4 +1,5 @@
 import type { IDBStoreName } from 'src/shared/database/types';
+import { UnknownOpError } from 'src/shared/errors/common';
 import { error } from 'src/shared/libraries/log';
 import { OPERATION_NAME } from '../constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -71,7 +72,7 @@ export class OperationModelStore extends ModelStore<Operation> {
         operation = new TrackCustomEventOperation();
         break;
       default:
-        throw new Error(`Unrecognized operation: ${operationName}`);
+        throw UnknownOpError({ _name: operationName });
     }
 
     // populate the operation with the data
