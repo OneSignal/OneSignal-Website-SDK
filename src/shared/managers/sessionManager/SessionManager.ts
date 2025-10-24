@@ -8,6 +8,7 @@ import {
   supportsServiceWorkers,
 } from 'src/shared/environment/detect';
 import { isFirstPageView } from 'src/shared/helpers/pageview';
+import { debug, error, warn } from 'src/shared/libraries/log';
 import { SessionOrigin } from 'src/shared/session/constants';
 import type {
   SessionOriginValue,
@@ -17,7 +18,6 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
 import { getAppId } from '../../helpers/main';
-import Log from '../../libraries/Log';
 import { WorkerMessengerCommand } from '../../libraries/workerMessenger/constants';
 import { isCompleteSubscriptionObject } from '../utils';
 import type { ISessionManager } from './types';
@@ -46,7 +46,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      Log._debug('Notify SW to upsert session');
+      debug('Notify SW to upsert session');
       await this._context._workerMessenger._unicast(
         WorkerMessengerCommand._SessionUpsert,
         payload,
@@ -54,7 +54,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      Log._debug('Notify upsert: do nothing');
+      debug('Notify upsert: do nothing');
     }
   }
 
@@ -74,7 +74,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      Log._debug('Notify SW to deactivate session');
+      debug('Notify SW to deactivate session');
       await this._context._workerMessenger._unicast(
         WorkerMessengerCommand._SessionDeactivate,
         payload,
@@ -82,7 +82,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      Log._debug('Notify deactivate: do nothing');
+      debug('Notify deactivate: do nothing');
     }
   }
 
@@ -106,7 +106,7 @@ export class SessionManager implements ISessionManager {
     }
 
     const { _onesignalId: onesignalId } = identityModel;
-    const { id: subscriptionId } = pushSubscriptionModel;
+    const { _id: subscriptionId } = pushSubscriptionModel;
 
     return { onesignalId, subscriptionId };
   }
@@ -126,7 +126,7 @@ export class SessionManager implements ISessionManager {
       if (visibilityState === 'visible') {
         this._setupOnFocusAndOnBlurForSession();
 
-        Log._debug(
+        debug(
           'handleVisibilityChange',
           'visible',
           `hasFocus: ${document.hasFocus()}`,
@@ -143,7 +143,7 @@ export class SessionManager implements ISessionManager {
       }
 
       if (visibilityState === 'hidden') {
-        Log._debug('handleVisibilityChange', 'hidden');
+        debug('handleVisibilityChange', 'hidden');
         if (
           OneSignal._cache.focusHandler &&
           OneSignal._cache.isFocusEventSetup
@@ -173,9 +173,9 @@ export class SessionManager implements ISessionManager {
       }
 
       // it should never be anything else at this point
-      Log._warn('Unhandled visibility state happened', visibilityState);
+      warn('Unhandled visibility state happened', visibilityState);
     } catch (e) {
-      Log._error('Error handling visibility change:', e);
+      error('Error handling visibility change:', e);
     }
   }
 
@@ -202,20 +202,20 @@ export class SessionManager implements ISessionManager {
         outcomesConfig: this._context._appConfig.userConfig.outcomes!,
       };
 
-      Log._debug('Notify SW to deactivate session (beforeunload)');
+      debug('Notify SW to deactivate session (beforeunload)');
       this._context._workerMessenger._directPostMessageToSW(
         WorkerMessengerCommand._SessionDeactivate,
         payload,
       );
     } catch (e) {
-      Log._error('Error handling onbeforeunload:', e);
+      error('Error handling onbeforeunload:', e);
     }
   }
 
   async _handleOnFocus(e: Event): Promise<void> {
     await LoginManager._switchingUsersPromise;
 
-    Log._debug('handleOnFocus', e);
+    debug('handleOnFocus', e);
     if (!User._singletonInstance?.onesignalId) {
       return;
     }
@@ -238,14 +238,14 @@ export class SessionManager implements ISessionManager {
         SessionOrigin._Focus,
       );
     } catch (e) {
-      Log._error('Error handling focus:', e);
+      error('Error handling focus:', e);
     }
   }
 
   async _handleOnBlur(e: Event): Promise<void> {
     await LoginManager._switchingUsersPromise;
 
-    Log._debug('handleOnBlur', e);
+    debug('handleOnBlur', e);
     if (!User._singletonInstance?.onesignalId) {
       return;
     }
@@ -268,7 +268,7 @@ export class SessionManager implements ISessionManager {
         SessionOrigin._Blur,
       );
     } catch (e) {
-      Log._error('Error handling blur:', e);
+      error('Error handling blur:', e);
     }
   }
 
@@ -296,9 +296,7 @@ export class SessionManager implements ISessionManager {
   _setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (!supportsServiceWorkers()) {
-      Log._debug(
-        'Not setting session event listeners. No service worker possible.',
-      );
+      debug('Not setting session event listeners. No service worker possible.');
       return;
     }
 
@@ -333,7 +331,7 @@ export class SessionManager implements ISessionManager {
   }
 
   _setupOnFocusAndOnBlurForSession(): void {
-    Log._debug('setupOnFocusAndOnBlurForSession');
+    debug('setupOnFocusAndOnBlurForSession');
 
     if (!OneSignal._cache.focusHandler) {
       OneSignal._cache.focusHandler = this._handleOnFocus.bind(this);
@@ -364,7 +362,7 @@ export class SessionManager implements ISessionManager {
     const onesignalId = identityModel._onesignalId;
 
     if (!onesignalId) {
-      Log._debug(
+      debug(
         'Not sending the on session because user is not registered with OneSignal (no onesignal id)',
       );
       return;
@@ -381,7 +379,7 @@ export class SessionManager implements ISessionManager {
 
     let subscriptionId;
     if (isCompleteSubscriptionObject(pushSubscription)) {
-      subscriptionId = pushSubscription?.id;
+      subscriptionId = pushSubscription?._id;
     }
 
     try {
@@ -408,13 +406,11 @@ export class SessionManager implements ISessionManager {
         );
         this._onSessionSent = true;
       } catch (e) {
-        Log._debug('Error updating user session:', e);
+        debug('Error updating user session:', e);
       }
     } catch (e) {
       if (e instanceof Error) {
-        Log._error(
-          `Failed to update user session. Error "${e.message}" ${e.stack}`,
-        );
+        error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
       }
     }
   }

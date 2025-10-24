@@ -33,7 +33,7 @@ export class SetPropertyOperation<
     super(OPERATION_NAME._SetProperty, appId, onesignalId);
     if (property && value) {
       this._property = property;
-      this.value = value;
+      this._value = value;
     }
   }
 
@@ -50,10 +50,10 @@ export class SetPropertyOperation<
   /**
    * The value of that property to update it to.
    */
-  get value() {
+  get _value() {
     return this._getProperty('value') as PropertyValue[P];
   }
-  private set value(_value) {
+  private set _value(_value) {
     this._setProperty('value', _value);
   }
 

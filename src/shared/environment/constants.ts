@@ -5,6 +5,3 @@ export const DeliveryPlatformKind = {
   _Email: 11,
   _SafariVapid: 17,
 } as const;
-
-export type DeliveryPlatformKindValue =
-  (typeof DeliveryPlatformKind)[keyof typeof DeliveryPlatformKind];

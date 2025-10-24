@@ -1,8 +1,8 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import SlidedownNamespace from './SlidedownNamespace';
 
-const warnSpy = vi.spyOn(Log, '_warn');
+const warnSpy = vi.spyOn(Log, 'warn');
 
 describe('Consent Required', () => {
   beforeEach(() => {

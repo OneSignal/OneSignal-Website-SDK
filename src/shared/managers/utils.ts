@@ -1,6 +1,6 @@
 export function isCompleteSubscriptionObject(obj?: {
-  type?: string;
-  id?: string;
-}): obj is { type: string; id: string } {
-  return obj?.type !== undefined && obj?.id !== undefined;
+  _type?: string;
+  _id?: string;
+}): obj is { _type: string; _id: string } {
+  return obj?._type !== undefined && obj?._id !== undefined;
 }

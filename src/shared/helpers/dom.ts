@@ -1,4 +1,4 @@
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 
 export function addDomElement(
   targetSelectorOrElement: string | Element,
@@ -59,7 +59,7 @@ export function clearDomElementChildren(
 export function getDomElementOrStub(selector: string): Element {
   const foundElement = document.querySelector(selector);
   if (!foundElement) {
-    Log._debug(`No instance of ${selector} found. Returning stub.`);
+    debug(`No instance of ${selector} found. Returning stub.`);
     return document.createElement('div');
   }
   return foundElement;

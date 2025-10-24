@@ -1,4 +1,4 @@
-import Log from '../libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import {
   getLocalPageViewCount,
   setLocalPageViewCount as setStoragePageViewCount,
@@ -71,7 +71,7 @@ export function incrementPageViewCount() {
   setLocalPageViewCount(newCountAcrossTabs);
   incrementedPageViewCount = true;
 
-  Log._debug(`Incremented page view count: newCountSingleTab: ${newCountSingleTab},
+  debug(`Incremented page view count: newCountSingleTab: ${newCountSingleTab},
       newCountAccrossTabs: ${newCountAcrossTabs}.`);
 }
 

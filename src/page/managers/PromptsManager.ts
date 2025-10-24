@@ -2,7 +2,7 @@ import type { ContextInterface } from 'src/shared/context/types';
 import { delay } from 'src/shared/helpers/general';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
 import { getLocalPageViewCount } from 'src/shared/helpers/localStorage';
-import Log from 'src/shared/libraries/Log';
+import { debug, error, warn } from 'src/shared/libraries/log';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -139,7 +139,7 @@ export class PromptsManager {
   ): Promise<void> {
     logMethodCall('internalShowDelayedPrompt');
     if (typeof timeDelaySeconds !== 'number') {
-      Log._error('internalShowDelayedPrompt: timeDelay not a number');
+      error('internalShowDelayedPrompt: timeDelay not a number');
       return;
     }
 
@@ -171,7 +171,7 @@ export class PromptsManager {
         await this._internalShowSmsAndEmailSlidedown(options);
         break;
       default:
-        Log._error('Invalid Delayed Prompt type');
+        error('Invalid Delayed Prompt type');
     }
   }
 
@@ -179,7 +179,7 @@ export class PromptsManager {
     logMethodCall('internalShowNativePrompt');
 
     if (this._isNativePromptShowing) {
-      Log._debug('Already showing autoprompt. Abort showing a native prompt.');
+      debug('Already showing autoprompt. Abort showing a native prompt.');
       return false;
     }
 
@@ -202,7 +202,7 @@ export class PromptsManager {
     const sdkStylesLoadResult =
       await this._context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
-      Log._debug(
+      debug(
         'Not showing slidedown permission message because styles failed to load.',
       );
       return;
@@ -274,13 +274,13 @@ export class PromptsManager {
 
     if (!slidedownPromptOptions) {
       if (typeToPullFromConfig !== DelayedPromptType._Push) {
-        Log._error(
+        error(
           `OneSignal: slidedown of type '${typeToPullFromConfig}' couldn't be shown. Check your configuration` +
             ` on the OneSignal dashboard or your custom code initialization.`,
         );
         return;
       } else {
-        Log._warn(
+        warn(
           `The OneSignal 'push' slidedown will be shown with default text settings.` +
             ` To customize, see the OneSignal documentation.`,
         );
@@ -315,15 +315,11 @@ export class PromptsManager {
       switch (type) {
         case DelayedPromptType._Push:
         case DelayedPromptType._Category:
-          Log._debug(
-            'Setting flag to not show the slidedown to the user again.',
-          );
+          debug('Setting flag to not show the slidedown to the user again.');
           markPromptDismissedWithType(DismissPrompt._Push);
           break;
         default:
-          Log._debug(
-            'Setting flag to not show the slidedown to the user again.',
-          );
+          debug('Setting flag to not show the slidedown to the user again.');
           markPromptDismissedWithType(DismissPrompt._NonPush);
           break;
       }

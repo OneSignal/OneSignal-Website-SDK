@@ -19,14 +19,14 @@ export abstract class BaseAliasOperation<
   ) {
     super(operationName, appId, onesignalId);
     if (label) {
-      this.label = label;
+      this._label = label;
     }
   }
 
-  get label(): string {
+  get _label(): string {
     return this._getProperty('label');
   }
-  protected set label(value: string | undefined) {
+  protected set _label(value: string | undefined) {
     this._setProperty('label', value);
   }
 }

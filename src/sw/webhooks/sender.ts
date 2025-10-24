@@ -1,6 +1,6 @@
 import { getOptionsValue } from 'src/shared/database/client';
 import type { OptionKey } from 'src/shared/database/types';
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import type { IOSWebhookEventPayload } from '../serviceWorker/types';
 
 export async function send(payload: IOSWebhookEventPayload): Promise<void> {
@@ -24,7 +24,7 @@ export async function send(payload: IOSWebhookEventPayload): Promise<void> {
       'Content-Type': 'application/json',
     };
   }
-  Log._debug(
+  debug(
     `Executing ${payload.event} webhook ${
       isServerCorsEnabled ? 'with' : 'without'
     } CORS POST ${webhookTargetUrl}`,

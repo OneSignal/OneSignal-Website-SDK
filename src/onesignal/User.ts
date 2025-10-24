@@ -11,7 +11,7 @@ import {
 } from 'src/shared/errors/common';
 import { getAppId } from 'src/shared/helpers/main';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
-import Log from 'src/shared/libraries/Log';
+import { error } from 'src/shared/libraries/log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   NotificationType,
@@ -150,7 +150,7 @@ export default class User {
       OneSignal._coreDirector._getEmailSubscriptionModels();
 
     emailSubscriptions.forEach((model) => {
-      if (model.token === email) {
+      if (model._token === email) {
         OneSignal._coreDirector._removeSubscriptionModel(model._modelId);
       }
     });
@@ -165,7 +165,7 @@ export default class User {
     const smsSubscriptions =
       OneSignal._coreDirector._getSmsSubscriptionModels();
     smsSubscriptions.forEach((model) => {
-      if (model.token === smsNumber) {
+      if (model._token === smsNumber) {
         OneSignal._coreDirector._removeSubscriptionModel(model._modelId);
       }
     });
@@ -241,12 +241,12 @@ export default class User {
     const onesignalId =
       OneSignal._coreDirector._getIdentityModel()._onesignalId;
     if (IDManager._isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
-      Log._error('User must be logged in first.');
+      error('User must be logged in first.');
       return;
     }
 
     if (!isObjectSerializable(properties)) {
-      Log._error('Properties must be JSON-serializable');
+      error('Properties must be JSON-serializable');
       return;
     }
     logMethodCall('trackEvent', { name, properties });
@@ -275,7 +275,7 @@ function addSubscriptionToModels({
 }): void {
   const hasSubscription = OneSignal._coreDirector._subscriptionModelStore
     ._list()
-    .find((model) => model.token === token && model.type === type);
+    .find((model) => model._token === token && model._type === type);
   if (hasSubscription) return;
 
   const identityModel = OneSignal._coreDirector._getIdentityModel();

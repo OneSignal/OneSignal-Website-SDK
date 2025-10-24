@@ -7,16 +7,16 @@ import {
   AppIDMissingError,
   MalformedArgumentError,
 } from 'src/shared/errors/common';
+import { error, warn } from 'src/shared/libraries/log';
 import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 import type { EventsMap } from 'src/shared/services/types';
+import type { UserSubscription } from 'src/shared/subscriptions/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
-import Log from '../shared/libraries/Log';
 import { isCompleteSubscriptionObject } from '../shared/managers/utils';
-import { Subscription } from '../shared/models/Subscription';
 import {
   awaitOneSignalInitAndSupported,
   logMethodCall,
@@ -30,12 +30,12 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
   constructor(
     initialize: boolean,
-    subscription?: Subscription,
+    subscription?: UserSubscription,
     permission?: NotificationPermission,
   ) {
     super();
     if (!initialize || !subscription) {
-      Log._warn(
+      warn(
         `PushSubscriptionNamespace: skipping initialization. One or more required params are falsy: initialize: ${initialize}, subscription: ${subscription}`,
       );
       return;
@@ -49,11 +49,11 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
       ._getPushSubscriptionModel()
       .then((pushModel) => {
         if (isCompleteSubscriptionObject(pushModel)) {
-          this._id = pushModel.id;
+          this._id = pushModel._id;
         }
       })
       .catch((e) => {
-        Log._error(e);
+        error(e);
       });
 
     OneSignal._emitter.on('change', async (change) => {
@@ -133,10 +133,10 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     subscriptionFromDb.optedOut = !enabled;
     await setSubscription(subscriptionFromDb);
     onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch((e) => {
-      Log._error(e);
+      error(e);
     });
     checkAndTriggerSubscriptionChanged().catch((e) => {
-      Log._error(e);
+      error(e);
     });
   }
 }

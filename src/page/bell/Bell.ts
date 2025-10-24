@@ -7,6 +7,7 @@ import {
   removeDomElement,
 } from 'src/shared/helpers/dom';
 import { delay, nothing } from 'src/shared/helpers/general';
+import { debug, error, info } from 'src/shared/libraries/log';
 import type {
   BellPosition,
   BellSize,
@@ -14,22 +15,21 @@ import type {
 } from 'src/shared/prompts/types';
 import { wasPromptOfTypeDismissed } from '../../shared/helpers/dismiss';
 import { getNotificationIcons } from '../../shared/helpers/main';
-import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Badge from './Badge';
 import Button from './Button';
-import Dialog from './Dialog';
-import Launcher from './Launcher';
-import Message from './Message';
 import {
   BellState,
   type BellStateValue,
   MESSAGE_TIMEOUT,
   MessageType,
 } from './constants';
+import Dialog from './Dialog';
+import Launcher from './Launcher';
+import Message from './Message';
 
 const logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
@@ -272,7 +272,7 @@ export default class Bell {
           this._hovering = false;
         })
         .catch((err) => {
-          Log._error(err);
+          error(err);
         });
     });
 
@@ -407,7 +407,7 @@ export default class Bell {
     const sdkStylesLoadResult =
       await OneSignal._context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
-      Log._debug('Not showing notify button because styles failed to load.');
+      debug('Not showing notify button because styles failed to load.');
       return;
     }
 
@@ -488,7 +488,7 @@ export default class Bell {
     this._setCustomColorsIfSpecified();
     this._addBadgeShadow();
 
-    Log._info('Showing the notify button.');
+    info('Showing the notify button.');
 
     await (isPushEnabled ? this._launcher._inactivate() : nothing())
       .then(() => {
@@ -543,7 +543,7 @@ export default class Bell {
       const element = this._launcher._element as HTMLElement;
 
       if (!element) {
-        Log._error('Could not find bell dom element');
+        error('Could not find bell dom element');
         return;
       }
       // Reset styles first
@@ -701,7 +701,7 @@ export default class Bell {
         }
       })
       .catch((e) => {
-        Log._error(e);
+        error(e);
       });
   }
 

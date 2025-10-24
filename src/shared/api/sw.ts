@@ -1,11 +1,11 @@
 import { IdentityConstants } from 'src/core/constants';
 import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
+import { debug } from 'src/shared/libraries/log';
 import type { ServerAppConfig } from '../config/types';
 import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
-import Log from '../libraries/Log';
-import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
+import type { DeliveryPlatformKindValue } from '../environment/types';
 import {
   OutcomeAttributionType,
   type OutcomeAttribution,
@@ -51,7 +51,7 @@ export async function getUserIdFromSubscriptionIdentifier(
       }
     })
     .catch((e) => {
-      Log._debug('Error getting user ID from subscription identifier:', e);
+      debug('Error getting user ID from subscription identifier:', e);
       return null;
     });
 }
@@ -86,7 +86,7 @@ export async function updateUserSession(
       updateUserPayload,
     );
   } catch (e) {
-    Log._debug('Error updating user session:', e);
+    debug('Error updating user session:', e);
   }
 }
 
@@ -138,6 +138,6 @@ export async function sendSessionDuration(
       await sendOutcome(outcomePayload);
     }
   } catch (e) {
-    Log._debug('Error sending session duration:', e);
+    debug('Error sending session duration:', e);
   }
 }

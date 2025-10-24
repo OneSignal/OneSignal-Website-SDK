@@ -3,15 +3,15 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { IdentityConstants } from 'src/core/constants';
 import { ModelChangeTags } from 'src/core/types/models';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import { IDManager } from 'src/shared/managers/IDManager';
+import type { UserSubscription } from 'src/shared/subscriptions/types';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
-import { Subscription } from '../shared/models/Subscription';
 import User from './User';
 import UserNamespace from './UserNamespace';
 
-const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
-const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => '');
+const errorSpy = vi.spyOn(Log, 'error').mockImplementation(() => '');
+const warnSpy = vi.spyOn(Log, 'warn').mockImplementation(() => '');
 vi.useFakeTimers();
 
 const setup = () => {
@@ -193,7 +193,7 @@ describe('Email Management', () => {
   const getEmailSubscription = (email: string) => {
     const subscriptionModels =
       OneSignal._coreDirector._getEmailSubscriptionModels();
-    return subscriptionModels.find((model) => model.token === email);
+    return subscriptionModels.find((model) => model._token === email);
   };
 
   test('can add an email subscription', async () => {
@@ -211,7 +211,7 @@ describe('Email Management', () => {
     expect(addSubscriptionSpy).toHaveBeenCalled();
     const subscription = getEmailSubscription(email);
     expect(subscription).toBeDefined();
-    expect(subscription?.token).toBe(email);
+    expect(subscription?._token).toBe(email);
   });
 
   test('should remove an email subscription', async () => {
@@ -242,7 +242,7 @@ describe('SMS Management', () => {
   const getSmsSubscription = (smsNumber: string) => {
     const subscriptionModels =
       OneSignal._coreDirector._getSmsSubscriptionModels();
-    return subscriptionModels.find((model) => model.token === smsNumber);
+    return subscriptionModels.find((model) => model._token === smsNumber);
   };
 
   test('should add an SMS subscription', async () => {
@@ -261,7 +261,7 @@ describe('SMS Management', () => {
     expect(addSubscriptionSpy).toHaveBeenCalled();
     const subscription = getSmsSubscription(smsNumber);
     expect(subscription).toBeDefined();
-    expect(subscription?.token).toBe(smsNumber);
+    expect(subscription?._token).toBe(smsNumber);
   });
 
   test('should remove an SMS subscription', async () => {
@@ -286,7 +286,7 @@ describe('SMS Management', () => {
     expect(removeSubscriptionSpy).toHaveBeenCalled();
     subscription = getSmsSubscription(smsNumber);
     expect(subscription).toBeUndefined();
-    expect(subscription?.token).toBe(undefined);
+    expect(subscription?._token).toBe(undefined);
   });
 });
 
@@ -438,11 +438,11 @@ describe('Initialization', () => {
   });
 
   test('should use provided subscription and permission when initializing', () => {
-    const subscription = new Subscription();
-    subscription.deviceId = 'device-123';
-    subscription.subscriptionToken = PUSH_TOKEN;
-    subscription.optedOut = false;
-    subscription.createdAt = Date.now();
+    const subscription: UserSubscription = {
+      deviceId: 'device-123',
+      subscriptionToken: PUSH_TOKEN,
+      optedOut: false,
+    };
 
     const permission: NotificationPermission = 'granted';
 

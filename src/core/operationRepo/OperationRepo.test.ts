@@ -2,7 +2,7 @@ import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
 import { setConsentRequired } from 'src/shared/helpers/localStorage';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { describe, expect, type Mock, vi } from 'vitest';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
@@ -21,7 +21,7 @@ import {
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo } from './OperationRepo';
 
-vi.spyOn(Log, '_error').mockImplementation((msg) => {
+vi.spyOn(Log, 'error').mockImplementation((msg) => {
   if (typeof msg === 'string' && msg.includes('Operation execution failed'))
     return '';
   return msg;

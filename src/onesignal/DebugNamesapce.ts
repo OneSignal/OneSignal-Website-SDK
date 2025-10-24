@@ -1,4 +1,4 @@
-import Log from '../shared/libraries/Log';
+import { setLevel } from 'src/shared/libraries/log';
 
 export default class DebugNamespace {
   /**
@@ -6,6 +6,6 @@ export default class DebugNamespace {
    * @param logLevel - string
    */
   setLogLevel(logLevel: string) {
-    Log._setLevel(logLevel);
+    setLevel(logLevel);
   }
 }

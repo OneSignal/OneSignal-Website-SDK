@@ -24,6 +24,7 @@ import {
   updatePropertiesModel,
 } from '__test__/support/helpers/setup';
 import { getPushToken, setPushToken } from 'src/shared/database/subscription';
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   NotificationType,
   SubscriptionType,
@@ -97,9 +98,7 @@ describe('LoginUserOperationExecutor', () => {
     // with invalid ops
     const ops = [someOp];
     const result = executor._execute(ops);
-    await expect(() => result).rejects.toThrow(
-      `Unrecognized operation: ${someOp._name}`,
-    );
+    await expect(() => result).rejects.toThrow(UnknownOpError(someOp));
   });
 
   describe('create user', () => {
@@ -124,9 +123,7 @@ describe('LoginUserOperationExecutor', () => {
       const someOp = new SomeOperation();
       const ops2 = [loginOp, transferSubOp, someOp];
       const res2 = executor._execute(ops2);
-      await expect(res2).rejects.toThrow(
-        `Unrecognized operation: ${someOp._name}`,
-      );
+      await expect(res2).rejects.toThrow(UnknownOpError(someOp));
     });
 
     test('can create user if there is no onesignal id or externalId', async () => {

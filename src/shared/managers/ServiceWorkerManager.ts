@@ -1,3 +1,4 @@
+import { debug, error, info } from 'src/shared/libraries/log';
 import {
   getAvailableServiceWorker,
   getSWRegistration,
@@ -14,7 +15,6 @@ import {
   type ServiceWorkerActiveStateValue,
   type ServiceWorkerManagerConfig,
 } from '../helpers/service-worker';
-import Log from '../libraries/Log';
 import { WorkerMessengerCommand } from '../libraries/workerMessenger/constants';
 import { triggerNotificationClick } from '../listeners';
 import Path from '../models/Path';
@@ -97,7 +97,7 @@ export class ServiceWorkerManager {
       );
       const importedSw = searchParams.get('othersw');
       if (importedSw) {
-        Log._debug(
+        debug(
           "Found a ServiceWorker under Akamai's akam-sw.js?othersw=",
           importedSw,
         );
@@ -152,7 +152,7 @@ export class ServiceWorkerManager {
     // If not and notification permissions are enabled we should install.
     // This prevents an unnecessary install of the OneSignal worker which saves bandwidth
     const workerState = await this._getActiveState();
-    Log._debug('[shouldInstallWorker] workerState', workerState);
+    debug('[shouldInstallWorker] workerState', workerState);
     if (
       workerState === ServiceWorkerActiveState._None ||
       workerState === ServiceWorkerActiveState._ThirdParty
@@ -163,7 +163,7 @@ export class ServiceWorkerManager {
         );
       const notificationsEnabled = permission === 'granted';
       if (notificationsEnabled) {
-        Log._info(
+        info(
           '[shouldInstallWorker] Notification Permissions enabled, will install ServiceWorker',
         );
       }
@@ -183,7 +183,7 @@ export class ServiceWorkerManager {
     // 1. No workerRegistration
     const workerRegistration = await this._getRegistration();
     if (!workerRegistration) {
-      Log._info(
+      info(
         '[changedServiceWorkerParams] workerRegistration not found at scope',
         this._config.registrationOptions.scope,
       );
@@ -194,7 +194,7 @@ export class ServiceWorkerManager {
     const existingSwScope = new URL(workerRegistration.scope).pathname;
     const configuredSwScope = this._config.registrationOptions.scope;
     if (existingSwScope != configuredSwScope) {
-      Log._info('[changedServiceWorkerParams] ServiceWorker scope changing', {
+      info('[changedServiceWorkerParams] ServiceWorker scope changing', {
         a_old: existingSwScope,
         b_new: configuredSwScope,
       });
@@ -214,7 +214,7 @@ export class ServiceWorkerManager {
     }
     // 3.2 If the new serviceWorkerHref (page-env SDK version as query param) is different than existing worker URL
     if (serviceWorkerHref !== availableWorker.scriptURL) {
-      Log._info('[changedServiceWorkerParams] ServiceWorker href changing:', {
+      info('[changedServiceWorkerParams] ServiceWorker href changing:', {
         a_old: availableWorker?.scriptURL,
         b_new: serviceWorkerHref,
       });
@@ -230,39 +230,39 @@ export class ServiceWorkerManager {
    * file.
    */
   private async _workerNeedsUpdate(): Promise<boolean> {
-    Log._info('[Service Worker Update] Checking service worker version...');
+    info('[Service Worker Update] Checking service worker version...');
     let workerVersion: string;
     try {
       workerVersion = await timeoutPromise(this._getWorkerVersion(), 2_000);
     } catch (e) {
-      Log._info(
+      info(
         '[Service Worker Update] Worker did not reply to version query; assuming older version and updating.',
       );
       return true;
     }
 
     if (workerVersion !== VERSION) {
-      Log._info(
+      info(
         `[Service Worker Update] Updating service worker from ${workerVersion} --> ${VERSION}.`,
       );
       return true;
     }
 
-    Log._info(
+    info(
       `[Service Worker Update] Service worker version is current at ${workerVersion} (no update required).`,
     );
     return false;
   }
 
   public async _establishServiceWorkerChannel() {
-    Log._debug('establishServiceWorkerChannel');
+    debug('establishServiceWorkerChannel');
     const workerMessenger = this._context._workerMessenger;
     workerMessenger._off();
 
     workerMessenger._on(
       WorkerMessengerCommand._NotificationWillDisplay,
       async (event: NotificationForegroundWillDisplayEventSerializable) => {
-        Log._debug(
+        debug(
           location.origin,
           'Received notification display event from service worker.',
         );
@@ -300,7 +300,7 @@ export class ServiceWorkerManager {
                    addListenerForNotificationOpened() returns no results even
                    though a notification was just clicked.
         */
-          Log._debug(
+          debug(
             'notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.',
           );
         } else {
@@ -383,13 +383,11 @@ export class ServiceWorkerManager {
       return this._getOneSignalRegistration();
     }
 
-    Log._info('Installing worker...');
+    info('Installing worker...');
     const workerState = await this._getActiveState();
 
     if (workerState === ServiceWorkerActiveState._ThirdParty) {
-      Log._info(
-        `[Service Worker Installation] 3rd party service worker detected.`,
-      );
+      info(`[Service Worker Installation] 3rd party service worker detected.`);
     }
 
     const workerHref = getServiceWorkerHref(
@@ -399,7 +397,7 @@ export class ServiceWorkerManager {
     );
 
     const scope = `${getBaseUrl()}${this._config.registrationOptions.scope}`;
-    Log._info(
+    info(
       `[Service Worker Installation] Installing service worker ${workerHref} ${scope}.`,
     );
 
@@ -409,19 +407,19 @@ export class ServiceWorkerManager {
         scope,
         type: import.meta.env.MODE === 'development' ? 'module' : undefined,
       });
-    } catch (error) {
-      Log._error(
-        `[Service Worker Installation] Installing service worker failed ${error}`,
+    } catch (e) {
+      error(
+        `[Service Worker Installation] Installing service worker failed ${e}`,
       );
       registration = await this._fallbackToUserModelBetaWorker();
     }
-    Log._debug(
+    debug(
       `[Service Worker Installation] Service worker installed. Waiting for activation`,
     );
 
     await waitUntilActive(registration);
 
-    Log._debug(`[Service Worker Installation] Service worker active`);
+    debug(`[Service Worker Installation] Service worker active`);
 
     await this._establishServiceWorkerChannel();
     return registration;
@@ -443,7 +441,7 @@ export class ServiceWorkerManager {
 
     const scope = `${getBaseUrl()}${this._config.registrationOptions.scope}`;
 
-    Log._info(
+    info(
       `[Service Worker Installation] Attempting to install v16 Beta Worker ${workerHref} ${scope}.`,
     );
 
@@ -460,7 +458,7 @@ export class ServiceWorkerManager {
         OneSignalSDK.sw.js & OneSignalSDKWorker.js.
       `;
 
-      Log._error(DEPRECATION_ERROR);
+      error(DEPRECATION_ERROR);
       return registration;
     } catch (error) {
       const response = await fetch(workerHref);

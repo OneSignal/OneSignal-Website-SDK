@@ -12,7 +12,7 @@ export class DeleteAliasOperation extends BaseAliasOperation {
   }
 
   override get _modifyComparisonKey(): string {
-    return `${this._appId}.User.${this._onesignalId}.Alias.${this.label}`;
+    return `${this._appId}.User.${this._onesignalId}.Alias.${this._label}`;
   }
 
   override get _groupComparisonType(): GroupComparisonValue {

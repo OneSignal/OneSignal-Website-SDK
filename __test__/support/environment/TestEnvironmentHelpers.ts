@@ -87,12 +87,12 @@ export const setupSubModelStore = async ({
     onesignalId,
   });
   if (web_auth) {
-    pushModel.web_auth = web_auth;
+    pushModel._web_auth = web_auth;
   }
   if (web_p256) {
-    pushModel.web_p256 = web_p256;
+    pushModel._web_p256 = web_p256;
   }
-  await setPushToken(pushModel.token);
+  await setPushToken(pushModel._token);
   OneSignal._coreDirector._subscriptionModelStore._replaceAll(
     [pushModel],
     ModelChangeTags._NoPropogate,

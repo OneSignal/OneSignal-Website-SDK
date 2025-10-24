@@ -2,7 +2,7 @@ import { db, getOptionsValue } from '../database/client';
 import { getDBAppConfig } from '../database/config';
 import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
 import { AppIDMissingError, MalformedArgumentError } from '../errors/common';
-import Log from '../libraries/Log';
+import { error } from '../libraries/log';
 import type { NotificationIcons } from '../notifications/types';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
 import { triggerNotificationPermissionChanged } from './permissions';
@@ -67,7 +67,7 @@ export async function showLocalNotification(
     ._getRegistration()
     .then(async (registration?: ServiceWorkerRegistration | null) => {
       if (!registration) {
-        Log._error('Service worker registration not available.');
+        error('Service worker registration not available.');
         return;
       }
 
@@ -107,7 +107,7 @@ export async function getNotificationIcons() {
   const response = await fetch(url);
   const data = await response.json();
   if (data.errors) {
-    Log._error(`API call ${url}`, 'failed with:', data.errors);
+    error(`API call ${url}`, 'failed with:', data.errors);
     throw new Error('Failed to get notification icons.');
   }
   return data as NotificationIcons;

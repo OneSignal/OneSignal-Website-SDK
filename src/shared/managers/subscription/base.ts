@@ -2,12 +2,14 @@ import {
   getSubscription,
   setSubscription,
 } from 'src/shared/database/subscription';
-import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
+import { debug, warn } from 'src/shared/libraries/log';
+import type {
+  NotificationTypeValue,
+  UserSubscription,
+} from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
-import Log from '../../libraries/Log';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
-import type { Subscription } from '../../models/Subscription';
 import {
   SubscriptionStrategyKind,
   type SubscriptionStrategyKindValue,
@@ -65,7 +67,7 @@ export class SubscriptionManagerBase<
     pushSubscription: RawPushSubscription | undefined,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _subscriptionState?: NotificationTypeValue | null,
-  ): Promise<Subscription> {
+  ): Promise<UserSubscription> {
     /*
       This may be called after the RawPushSubscription has been serialized across a postMessage
       frame. This means it will only have object properties and none of the functions. We have to
@@ -147,11 +149,11 @@ export class SubscriptionManagerBase<
         if (!existingPushSubscription) break;
 
         if (existingPushSubscription.options) {
-          Log._debug(
+          debug(
             "[Subscription Manager] An existing push subscription exists and it's options is not null.",
           );
         } else {
-          Log._debug(
+          debug(
             '[Subscription Manager] An existing push subscription exists and options is null. ' +
               'Unsubscribing from push first now.',
           );
@@ -266,7 +268,7 @@ export class SubscriptionManagerBase<
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey,
     };
-    Log._debug(
+    debug(
       '[Subscription Manager] Subscribing to web push with these options:',
       subscriptionOptions,
     );
@@ -283,7 +285,7 @@ export class SubscriptionManagerBase<
         // In Chrome, e.message contains will be the following in this case for reference;
         // Registration failed - A subscription with a different applicationServerKey (or gcm_sender_id) already exists;
         //    to change the applicationServerKey, unsubscribe then resubscribe.
-        Log._warn(
+        warn(
           "[Subscription Manager] Couldn't re-subscribe due to applicationServerKey changing, " +
             'unsubscribe and attempting to subscribe with new key.',
           e,
@@ -300,11 +302,9 @@ export class SubscriptionManagerBase<
   private static async _doPushUnsubscribe(
     pushSubscription: PushSubscription,
   ): Promise<boolean> {
-    Log._debug(
-      '[Subscription Manager] Unsubscribing existing push subscription.',
-    );
+    debug('[Subscription Manager] Unsubscribing existing push subscription.');
     const result = await pushSubscription.unsubscribe();
-    Log._debug(
+    debug(
       `[Subscription Manager] Unsubscribing existing push subscription result: ${result}`,
     );
     return result;

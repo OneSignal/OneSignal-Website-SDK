@@ -4,11 +4,12 @@ import {
   type IOperationExecutor,
 } from 'src/core/types/operation';
 import type { IRebuildUserService } from 'src/core/types/user';
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/network';
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -40,9 +41,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(
-      `IdentityOperationExecutor(operations: ${JSON.stringify(operations)})`,
-    );
+    debug(`IdentityOperationExecutor`);
 
     const invalidOps = operations.filter(
       (op) =>
@@ -51,11 +50,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         ),
     );
     if (invalidOps.length > 0) {
-      throw new Error(
-        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-          operations,
-        )}`,
-      );
+      throw UnknownOpError(operations);
     }
 
     const hasSetAlias = operations.some(
@@ -82,7 +77,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
             label: IdentityConstants._OneSignalID,
             id: lastOperation._onesignalId,
           },
-          { [lastOperation.label]: lastOperation.value },
+          { [lastOperation._label]: lastOperation._value },
         )
       : deleteAlias(
           { appId: lastOperation._appId },
@@ -90,7 +85,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
             label: IdentityConstants._OneSignalID,
             id: lastOperation._onesignalId,
           },
-          lastOperation.label,
+          lastOperation._label,
         );
 
     const { ok, status, retryAfterSeconds } = await request;
@@ -100,8 +95,8 @@ export class IdentityOperationExecutor implements IOperationExecutor {
         lastOperation._onesignalId
       ) {
         this._identityModelStore._model._setProperty(
-          lastOperation.label,
-          isSetAlias ? lastOperation.value : undefined,
+          lastOperation._label,
+          isSetAlias ? lastOperation._value : undefined,
           ModelChangeTags._Hydrate,
         );
       }

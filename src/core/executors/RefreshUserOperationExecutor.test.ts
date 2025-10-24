@@ -15,6 +15,7 @@ import {
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { setPushToken } from 'src/shared/database/subscription';
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   NotificationType,
   SubscriptionType,
@@ -83,11 +84,7 @@ describe('RefreshUserOperationExecutor', () => {
     const ops = [someOp];
 
     const result = executor._execute(ops);
-    await expect(() => result).rejects.toThrow(
-      `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-        ops,
-      )}`,
-    );
+    await expect(() => result).rejects.toThrow(UnknownOpError(ops));
   });
 
   describe('getUser', () => {
@@ -178,9 +175,9 @@ describe('RefreshUserOperationExecutor', () => {
     test('should preserve cached push subscription when updating models', async () => {
       // Set up a push subscription in the store
       const pushSubModel = new SubscriptionModel();
-      pushSubModel.id = SUB_ID_2;
-      pushSubModel.type = SubscriptionType._ChromePush;
-      pushSubModel.token = PUSH_TOKEN;
+      pushSubModel._id = SUB_ID_2;
+      pushSubModel._type = SubscriptionType._ChromePush;
+      pushSubModel._token = PUSH_TOKEN;
       pushSubModel._notification_types = NotificationType._Subscribed;
 
       subscriptionModelStore._add(pushSubModel, ModelChangeTags._NoPropogate);
@@ -209,11 +206,11 @@ describe('RefreshUserOperationExecutor', () => {
 
       // Find the push subscription
       const pushSub = subscriptions.find(
-        (sub: SubscriptionModel) => sub.type === SubscriptionType._ChromePush,
+        (sub: SubscriptionModel) => sub._type === SubscriptionType._ChromePush,
       );
       expect(pushSub).toBeDefined();
-      expect(pushSub?.id).toBe(SUB_ID_2);
-      expect(pushSub?.token).toBe(PUSH_TOKEN);
+      expect(pushSub?._id).toBe(SUB_ID_2);
+      expect(pushSub?._token).toBe(PUSH_TOKEN);
     });
 
     test('should handle network errors', async () => {

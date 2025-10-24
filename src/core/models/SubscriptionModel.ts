@@ -28,9 +28,9 @@ type ISubscriptionModel = Pick<
 export class SubscriptionModel extends Model<ISubscriptionModel> {
   constructor() {
     super();
-    this.sdk = VERSION;
-    this.device_model = getDeviceModel();
-    this.device_os = getDeviceOS();
+    this._sdk = VERSION;
+    this._device_model = getDeviceModel();
+    this._device_os = getDeviceOS();
   }
 
   /**
@@ -46,32 +46,32 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
   /**
    * The subscription ID.
    */
-  get id(): string {
+  get _id(): string {
     return this._getProperty('id');
   }
-  set id(value: string) {
+  set _id(value: string) {
     this._setProperty('id', value);
   }
 
-  get enabled(): boolean | undefined {
+  get _enabled(): boolean | undefined {
     return this._getProperty('enabled');
   }
-  set enabled(value: boolean) {
+  set _enabled(value: boolean) {
     this._setProperty('enabled', value);
   }
 
-  get type(): SubscriptionTypeValue {
+  get _type(): SubscriptionTypeValue {
     return this._getProperty('type');
   }
-  set type(value: SubscriptionTypeValue) {
+  set _type(value: SubscriptionTypeValue) {
     this._setProperty('type', value);
   }
 
   // Android SDK refers to this as address
-  get token(): string {
+  get _token(): string {
     return this._getProperty('token');
   }
-  set token(value: string) {
+  set _token(value: string) {
     this._setProperty('token', value);
   }
 
@@ -83,38 +83,38 @@ export class SubscriptionModel extends Model<ISubscriptionModel> {
     this._setProperty('notification_types', value);
   }
 
-  get sdk(): string | undefined {
+  get _sdk(): string | undefined {
     return this._getProperty('sdk');
   }
-  set sdk(value: string | undefined) {
+  set _sdk(value: string | undefined) {
     this._setProperty('sdk', value);
   }
 
-  get device_model(): string | undefined {
+  get _device_model(): string | undefined {
     return this._getProperty('device_model');
   }
-  set device_model(value: string | undefined) {
+  set _device_model(value: string | undefined) {
     this._setProperty('device_model', value);
   }
 
-  get device_os(): string | undefined {
+  get _device_os(): string | undefined {
     return this._getProperty('device_os');
   }
-  set device_os(value: string | undefined) {
+  set _device_os(value: string | undefined) {
     this._setProperty('device_os', value);
   }
 
-  get web_auth(): string | undefined {
+  get _web_auth(): string | undefined {
     return this._getProperty('web_auth');
   }
-  set web_auth(value: string | undefined) {
+  set _web_auth(value: string | undefined) {
     this._setProperty('web_auth', value);
   }
 
-  get web_p256(): string | undefined {
+  get _web_p256(): string | undefined {
     return this._getProperty('web_p256');
   }
-  set web_p256(value: string | undefined) {
+  set _web_p256(value: string | undefined) {
     this._setProperty('web_p256', value);
   }
 }

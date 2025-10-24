@@ -2,11 +2,11 @@ import { EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import LoginManager from 'src/page/managers/LoginManager';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { SessionManager } from './SessionManager';
 
-vi.spyOn(Log, '_error').mockImplementation(() => '');
+vi.spyOn(Log, 'error').mockImplementation(() => '');
 
 describe('SessionManager', () => {
   describe('Switching Users', () => {

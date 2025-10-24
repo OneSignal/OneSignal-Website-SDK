@@ -1,10 +1,14 @@
 import type { SetRequired } from 'type-fest';
 
-import type { APIHeaders } from 'src/shared/models/APIHeaders';
 import type {
   NotificationTypeValue,
   SubscriptionTypeValue,
 } from 'src/shared/subscriptions/types';
+
+export interface APIHeaders {
+  Authorization?: string;
+  [key: string]: any;
+}
 
 export interface RequestMetadata {
   appId: string;

@@ -1,5 +1,5 @@
 import { openDB } from 'idb';
-import Log from '../libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/env';
 import { DATABASE_NAME, VERSION } from './constants';
@@ -74,7 +74,7 @@ const open = async (version = VERSION) => {
       }
     },
     blocked() {
-      Log._debug('IndexedDB: Blocked event');
+      debug('IndexedDB: Blocked event');
     },
     terminated() {
       // reopen if db was terminated

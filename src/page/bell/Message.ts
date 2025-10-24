@@ -1,6 +1,6 @@
 import { decodeHtmlEntities } from 'src/shared/helpers/dom';
 import { delay, nothing } from 'src/shared/helpers/general';
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
 import { BellState } from './constants';
@@ -25,7 +25,7 @@ export default class Message extends AnimatedElement {
   }
 
   _display(type: string, content: string, duration = 0) {
-    Log._debug(`Calling display(${type}, ${content}, ${duration}).`);
+    debug(`Calling display(${type}, ${content}, ${duration}).`);
     return (this._shown ? this._hide() : nothing())
       .then(() => {
         this._content = decodeHtmlEntities(content);

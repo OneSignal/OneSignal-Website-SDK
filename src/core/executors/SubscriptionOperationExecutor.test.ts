@@ -17,6 +17,7 @@ import {
 } from '__test__/support/helpers/requests';
 import { setupSubscriptionModel } from '__test__/support/helpers/setup';
 import { setPushToken } from 'src/shared/database/subscription';
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   NotificationType,
   SubscriptionType,
@@ -100,9 +101,7 @@ describe('SubscriptionOperationExecutor', () => {
     const ops = [someOp];
 
     const res1 = executor._execute(ops);
-    await expect(() => res1).rejects.toThrow(
-      `Unrecognized operation: ${ops[0]}`,
-    );
+    await expect(() => res1).rejects.toThrow(UnknownOpError(ops));
 
     const deleteOp = new DeleteSubscriptionOperation(
       APP_ID,
@@ -288,7 +287,7 @@ describe('SubscriptionOperationExecutor', () => {
 
       // Missing error with rebuild ops
       subscriptionsModelStore._add(pushSubscription, ModelChangeTags._Hydrate);
-      await setPushToken(pushSubscription.token);
+      await setPushToken(pushSubscription._token);
 
       const res6 = await executor._execute([createOp]);
 
@@ -299,8 +298,8 @@ describe('SubscriptionOperationExecutor', () => {
           onesignalId: ONESIGNAL_ID,
           enabled: true,
           notification_types: NotificationType._Subscribed,
-          subscriptionId: pushSubscription.id,
-          token: pushSubscription.token,
+          subscriptionId: pushSubscription._id,
+          token: pushSubscription._token,
           type: SubscriptionType._ChromePush,
         }),
         new RefreshUserOperation(APP_ID, ONESIGNAL_ID),

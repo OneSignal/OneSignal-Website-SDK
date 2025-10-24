@@ -5,9 +5,9 @@ import { SubscriptionType } from 'src/shared/subscriptions/constants';
 
 test('Set function updates data', async () => {
   const newSub = generateNewSubscription();
-  expect(newSub.enabled).toBe(undefined);
+  expect(newSub._enabled).toBe(undefined);
   newSub._setProperty('enabled', true);
-  expect(newSub.enabled).toBe(true);
+  expect(newSub._enabled).toBe(true);
 });
 
 test('Set function broadcasts update event', async () => {
@@ -22,9 +22,9 @@ test('Set function broadcasts update event', async () => {
 
 test('Hydrate function updates data', async () => {
   const newSub = generateNewSubscription();
-  expect(newSub.type).toBe(SubscriptionType._Email);
+  expect(newSub._type).toBe(SubscriptionType._Email);
   newSub._setProperty('type', SubscriptionType._ChromePush);
-  expect(newSub.type).toBe(SubscriptionType._ChromePush);
+  expect(newSub._type).toBe(SubscriptionType._ChromePush);
 });
 
 test('Encode function returns encoded model', async () => {

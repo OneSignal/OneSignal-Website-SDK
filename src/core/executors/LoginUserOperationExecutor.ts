@@ -3,12 +3,13 @@ import {
   ExecutionResult,
   type IOperationExecutor,
 } from 'src/core/types/operation';
+import { UnknownOpError } from 'src/shared/errors/common';
 import { getTimeZoneId } from 'src/shared/helpers/general';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/network';
-import Log from 'src/shared/libraries/Log';
+import { debug, error } from 'src/shared/libraries/log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
@@ -62,15 +63,13 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(
-      `LoginUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
-    );
+    debug(`LoginUserOperationExecutor`);
     const startingOp = operations[0];
 
     if (startingOp instanceof LoginUserOperation)
       return this._loginUser(startingOp, operations.slice(1));
 
-    throw new Error(`Unrecognized operation: ${startingOp._name}`);
+    throw UnknownOpError(startingOp);
   }
 
   private async _loginUser(
@@ -122,11 +121,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       case ExecutionResult._FailConflict:
-        Log._debug(`Handling 409 for externalId: ${loginUserOp._externalId}`);
+        debug(`Handling 409 for externalId: ${loginUserOp._externalId}`);
         return this._createUser(loginUserOp, operations);
 
       case ExecutionResult._FailNoretry:
-        Log._error(
+        error(
           `Recovering from SetAlias failure for externalId: ${loginUserOp._externalId}`,
         );
         return this._createUser(loginUserOp, operations);
@@ -163,7 +162,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           subscriptions,
         );
       } else {
-        throw new Error(`Unrecognized operation: ${operation._name}`);
+        throw UnknownOpError(operation);
       }
     }
 
@@ -282,15 +281,15 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         return {
           ...currentSubs,
           [subscriptionId]: {
-            enabled: operation.enabled,
-            device_model: operation.device_model,
-            device_os: operation.device_os,
-            notification_types: operation.notification_types,
-            sdk: operation.sdk,
-            token: operation.token,
-            type: operation.type,
-            web_auth: operation.web_auth,
-            web_p256: operation.web_p256,
+            enabled: operation._enabled,
+            device_model: operation._device_model,
+            device_os: operation._device_os,
+            notification_types: operation._notification_types,
+            sdk: operation._sdk,
+            token: operation._token,
+            type: operation._type,
+            web_auth: operation._web_auth,
+            web_p256: operation._web_p256,
           },
         };
       }
@@ -303,9 +302,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
             ...currentSubs,
             [subscriptionId]: {
               ...currentSubs[subscriptionId],
-              enabled: operation.enabled,
-              notification_types: operation.notification_types,
-              token: operation.token,
+              enabled: operation._enabled,
+              notification_types: operation._notification_types,
+              token: operation._token,
             },
           };
         }
@@ -336,34 +335,16 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   }
 }
 
-const TRADITIONAL_CHINESE_LANGUAGE_TAG = ['tw', 'hant'];
 const SIMPLIFIED_CHINESE_LANGUAGE_TAG = ['cn', 'hans'];
 
 const getLanguage = () => {
-  let languageTag = navigator.language;
-  if (languageTag) {
-    languageTag = languageTag.toLowerCase();
-    const languageSubtags = languageTag.split('-');
-    if (languageSubtags[0] == 'zh') {
-      // The language is zh-?
-      // We must categorize the language as either zh-Hans (simplified) or zh-Hant (traditional);
-      // OneSignal only supports these two Chinese variants
-      for (const traditionalSubtag of TRADITIONAL_CHINESE_LANGUAGE_TAG) {
-        if (languageSubtags.indexOf(traditionalSubtag) !== -1) {
-          return 'zh-Hant';
-        }
-      }
-      for (const simpleSubtag of SIMPLIFIED_CHINESE_LANGUAGE_TAG) {
-        if (languageSubtags.indexOf(simpleSubtag) !== -1) {
-          return 'zh-Hans';
-        }
-      }
-      return 'zh-Hant'; // Return Chinese traditional by default
-    } else {
-      // Return the language subtag (it can be three characters, so truncate it down to 2 just to be sure)
-      return languageSubtags[0].substring(0, 2);
-    }
-  } else {
-    return 'en';
-  }
+  const languageTag = navigator.language?.toLowerCase();
+  if (!languageTag) return 'en';
+
+  const [primary, ...subtags] = languageTag.split('-');
+  if (primary !== 'zh') return primary.substring(0, 2);
+
+  if (SIMPLIFIED_CHINESE_LANGUAGE_TAG.some((tag) => subtags.includes(tag)))
+    return 'zh-Hans';
+  return 'zh-Hant';
 };

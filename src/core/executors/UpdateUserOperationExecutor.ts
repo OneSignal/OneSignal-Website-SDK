@@ -1,8 +1,9 @@
+import { UnknownOpError } from 'src/shared/errors/common';
 import {
   getResponseStatusType,
   ResponseStatusType,
 } from 'src/shared/helpers/network';
-import Log from 'src/shared/libraries/Log';
+import { debug } from 'src/shared/libraries/log';
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -65,7 +66,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           propertiesObject,
         );
       } else {
-        throw new Error(`Unrecognized operation: ${operation}`);
+        throw UnknownOpError(operation);
       }
     }
 
@@ -78,7 +79,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(`UpdateUserOperationExecutor(operation: ${operations})`);
+    debug(`UpdateUserOperationExecutor(operation: ${operations})`);
 
     const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
       this._processOperations(operations);
@@ -108,9 +109,9 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
         for (const operation of operations) {
           if (operation instanceof SetPropertyOperation) {
             // removing empty string tags from operation.value to save space in IndexedDB and local memory.
-            let value = operation.value;
+            let value = operation._value;
             if (isTagProperty(operation)) {
-              value = { ...operation.value };
+              value = { ...operation._value };
               for (const key in value) if (value[key] === '') delete value[key];
             }
 
@@ -186,7 +187,7 @@ function createPropertiesFromOperation(
     if (allowedKeys.includes(propertyKey as IPropertiesModelKeys)) {
       return {
         ...properties,
-        [propertyKey]: operation.value,
+        [propertyKey]: operation._value,
       };
     }
     return { ...properties };

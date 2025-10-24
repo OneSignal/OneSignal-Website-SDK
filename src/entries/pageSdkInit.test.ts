@@ -2,7 +2,7 @@ import { APP_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import Log from 'src/shared/libraries/Log';
+import * as Log from 'src/shared/libraries/log';
 
 // need to wait for full OperationRepo rework
 describe('pageSdkInit', () => {
@@ -42,7 +42,7 @@ describe('pageSdkInit', () => {
   });
 
   test('can process deferred items long after page init', async () => {
-    vi.spyOn(Log, '_error').mockImplementation(() => '');
+    vi.spyOn(Log, 'error').mockImplementation(() => '');
     await import('./pageSdkInit');
     const initSpy = vi.spyOn(window.OneSignal, 'init');
 

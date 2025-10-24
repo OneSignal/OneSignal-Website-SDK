@@ -4,12 +4,12 @@ import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubsc
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
 import { getAppId } from 'src/shared/helpers/main';
+import { debug } from 'src/shared/libraries/log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import {
   createUserOnServer,
   resetUserModels,
 } from '../../onesignal/userDirector';
-import Log from '../../shared/libraries/Log';
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users
@@ -39,7 +39,7 @@ export default class LoginManager {
 
     // if the current externalId is the same as the one we're trying to set, do nothing
     if (currentExternalId === externalId) {
-      Log._debug('Login: External ID already set, skipping login');
+      debug('Login: External ID already set, skipping login');
       return;
     }
 
@@ -63,7 +63,7 @@ export default class LoginManager {
             new TransferSubscriptionOperation(
               appId,
               newIdentityOneSignalId,
-              pushOp.id,
+              pushOp._id,
             ),
           );
         }
@@ -91,7 +91,7 @@ export default class LoginManager {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
 
     if (!identityModel._externalId)
-      return Log._debug('Logout: User is not logged in, skipping logout');
+      return debug('Logout: User is not logged in, skipping logout');
 
     resetUserModels();
 

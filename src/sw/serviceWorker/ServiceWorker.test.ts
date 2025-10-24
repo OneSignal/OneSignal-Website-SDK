@@ -14,11 +14,11 @@ import {
   putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
-import Log from 'src/shared/libraries/Log';
+import { DeliveryPlatformKind } from 'src/shared/environment/constants';
+import * as Log from 'src/shared/libraries/log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
 import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
-import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import {
@@ -57,7 +57,7 @@ run();
 
 vi.useFakeTimers();
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
-vi.spyOn(Log, '_debug').mockImplementation(() => {});
+vi.spyOn(Log, 'debug').mockImplementation(() => {});
 
 const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, '_subscribe');
 
@@ -529,7 +529,7 @@ describe('ServiceWorker', () => {
         });
         await dispatchEvent(event);
 
-        expect(Log._debug).toHaveBeenCalledWith(
+        expect(Log.debug).toHaveBeenCalledWith(
           'No active session found. Cannot deactivate.',
         );
       });
@@ -686,7 +686,7 @@ describe('ServiceWorker', () => {
 });
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const logDebugSpy = vi.spyOn(Log, '_debug');
+const logDebugSpy = vi.spyOn(Log, 'debug');
 // -- one signal api base mock
 
 // @ts-expect-error - for mocking

@@ -2,7 +2,7 @@ import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
-import Log from 'src/shared/libraries/Log';
+import { error } from 'src/shared/libraries/log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { getAppId } from '../shared/helpers/main';
 
@@ -16,7 +16,7 @@ export async function createUserOnServer(): Promise<void> {
   const hasExternalId = !!identityModel._externalId;
 
   if (!hasAnySubscription && !hasExternalId) {
-    Log._error('No subscriptions or external ID found, skipping user creation');
+    error('No subscriptions or external ID found, skipping user creation');
     return;
   }
 
@@ -36,7 +36,7 @@ export async function createUserOnServer(): Promise<void> {
         ...subData,
         appId,
         onesignalId: identityModel._onesignalId,
-        subscriptionId: pushOp.id!,
+        subscriptionId: pushOp._id!,
       }),
     );
   } else {
