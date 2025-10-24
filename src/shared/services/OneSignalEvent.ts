@@ -1,6 +1,6 @@
-import { debug } from 'src/shared/libraries/log';
 import { containsMatch } from '../context/helpers';
 import { windowEnvString } from '../environment/detect';
+import Log from '../libraries/Log';
 import { IS_SERVICE_WORKER } from '../utils/env';
 import type { EventsMap } from './types';
 

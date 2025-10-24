@@ -1,7 +1,6 @@
 import type { BellStateValue } from 'src/page/bell/constants';
 import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
-import type Emitter from '../libraries/Emitter';
 import type {
   NotificationClickEvent,
   NotificationDismissEvent,
@@ -97,30 +96,9 @@ export type EventsMap = {
   toastClosed: void;
 };
 
-export type NotificationEventsMap = Pick<
-  EventsMap,
-  | 'click'
-  | 'foregroundWillDisplay'
-  | 'dismiss'
-  | 'permissionChange'
-  | 'permissionPromptDisplay'
->;
-
-export type PushSubscriptionEventsMap = {
-  change: SubscriptionChangeEvent | undefined;
-};
-
-export type SlidedownEventsMap = Pick<EventsMap, 'slidedownShown'>;
-
 export type UserEventsMap = {
   change: UserChangeEvent;
 };
-
-export type EventTriggerArgs =
-  | ['change', UserChangeEvent, Emitter<UserEventsMap>]
-  | {
-      [K in keyof EventsMap]: [K, EventsMap[K], Emitter?] | [K];
-    }[keyof EventsMap];
 
 export type EventListenerArgs = {
   [K in keyof EventsMap]: [K, (data: EventsMap[K]) => void];

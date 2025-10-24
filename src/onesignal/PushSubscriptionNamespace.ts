@@ -13,7 +13,6 @@ import {
 } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 import type { EventsMap } from 'src/shared/services/types';
-import type { UserSubscription } from 'src/shared/subscriptions/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
 import { isCompleteSubscriptionObject } from '../shared/managers/utils';

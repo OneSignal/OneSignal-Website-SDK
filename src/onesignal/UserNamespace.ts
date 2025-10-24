@@ -1,5 +1,4 @@
 import type { UserEventsMap } from 'src/shared/services/types';
-import type { UserSubscription } from 'src/shared/subscriptions/types';
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';

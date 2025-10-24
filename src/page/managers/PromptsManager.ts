@@ -2,6 +2,7 @@ import type { ContextInterface } from 'src/shared/context/types';
 import { delay } from 'src/shared/helpers/general';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
 import { getLocalPageViewCount } from 'src/shared/helpers/localStorage';
+import Log from 'src/shared/libraries/Log';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,

@@ -1,7 +1,6 @@
 import UserNamespace from 'src/onesignal/UserNamespace';
 import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
-import { debug, info } from 'src/shared/libraries/log';
 import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
@@ -161,10 +160,14 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   ) {
     const predicateResult = await displayPredicate();
     if (predicateResult !== false) {
-      debug('Showing notify button because display predicate returned true.');
+      Log._debug(
+        'Showing notify button because display predicate returned true.',
+      );
       OneSignal._notifyButton._launcher._show();
     } else {
-      debug('Hiding notify button because display predicate returned false.');
+      Log._debug(
+        'Hiding notify button because display predicate returned false.',
+      );
       OneSignal._notifyButton._launcher._hide();
     }
   }
