@@ -78,7 +78,7 @@ export async function upsertSession(
     return;
   }
 
-  if (existingSession.status === SessionStatus.Active) {
+  if (existingSession.status === SessionStatus._Active) {
     Log._debug('Session already active', existingSession);
     return;
   }
@@ -97,7 +97,7 @@ export async function upsertSession(
     );
 
   if (timeSinceLastDeactivatedInSeconds <= sessionThresholdInSeconds) {
-    existingSession.status = SessionStatus.Active;
+    existingSession.status = SessionStatus._Active;
     existingSession.lastActivatedTimestamp = currentTimestamp;
     existingSession.lastDeactivatedTimestamp = null;
     await db.put('Sessions', existingSession);
@@ -156,7 +156,7 @@ export async function deactivateSession(
    * Timer gets cleaned up before figuring out it's activate or deactivate.
    * No update needed for the session, early return.
    */
-  if (existingSession.status === SessionStatus.Inactive) {
+  if (existingSession.status === SessionStatus._Inactive) {
     return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
   }
 
@@ -164,7 +164,7 @@ export async function deactivateSession(
    * Can only be active or expired at this point, but more statuses may come in in the future.
    * For anything but active, logging a warning and doing early return.
    */
-  if (existingSession.status !== SessionStatus.Active) {
+  if (existingSession.status !== SessionStatus._Active) {
     Log._warn(
       `Session in invalid state ${existingSession.status}. Cannot deactivate.`,
     );
@@ -180,7 +180,7 @@ export async function deactivateSession(
 
   existingSession.lastDeactivatedTimestamp = currentTimestamp;
   existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
-  existingSession.status = SessionStatus.Inactive;
+  existingSession.status = SessionStatus._Inactive;
 
   const cancelableFinalize = cancelableTimeout(
     finalizeSWSession,
@@ -203,7 +203,7 @@ async function sendOnSessionCallIfNotPlayerCreate(
   sessionOrigin: SessionOriginValue,
   session: Session,
 ) {
-  if (sessionOrigin === SessionOrigin.UserCreate) {
+  if (sessionOrigin === SessionOrigin._UserCreate) {
     return;
   }
 
@@ -289,16 +289,18 @@ export const ServiceWorkerActiveState = {
   /**
    * OneSignalSDKWorker.js, or the equivalent custom file name, is active.
    */
-  OneSignalWorker: 'OneSignal Worker',
+  _OneSignalWorker: 'OneSignal Worker',
+
   /**
    * A service worker is active, but it is not OneSignalSDKWorker.js
    * (or the equivalent custom file names as provided by user config).
    */
-  ThirdParty: '3rd Party',
+  _ThirdParty: '3rd Party',
+
   /**
    * No service worker is installed.
    */
-  None: 'None',
+  _None: 'None',
 } as const;
 
 export type ServiceWorkerActiveStateValue =

@@ -1,5 +1,4 @@
-import { isCompleteSubscriptionObject } from 'src/core/utils/typePredicates';
-import UserDirector from 'src/onesignal/UserDirector';
+import { createUserOnServer } from 'src/onesignal/userDirector';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
@@ -20,6 +19,7 @@ import {
 import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
 import { ServiceWorkerActiveState } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
+import { isCompleteSubscriptionObject } from 'src/shared/managers/utils';
 import type { PushSubscriptionState } from 'src/shared/models/PushSubscriptionState';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';
@@ -36,7 +36,7 @@ import { SubscriptionManagerBase } from './base';
 
 type SubscriptionStateServiceWorkerNotIntalled = Exclude<
   NotificationTypeValue,
-  typeof NotificationType.Subscribed | typeof NotificationType.UserOptedOut
+  typeof NotificationType._Subscribed | typeof NotificationType._UserOptedOut
 >;
 
 const NotImplementedError = new Error('Not implemented');
@@ -62,11 +62,11 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
       OneSignal._coreDirector._generatePushSubscriptionModel(
         rawPushSubscription,
       );
-    return UserDirector._createUserOnServer();
+    return createUserOnServer();
   }
   // for users with data failed to create a user or user + subscription on the server
   if (IDManager._isLocalId(pushModel.id)) {
-    return UserDirector._createUserOnServer();
+    return createUserOnServer();
   }
 
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
@@ -102,22 +102,22 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     pushModel._notification_types = notificationTypes;
-    pushModel.enabled = notificationTypes === NotificationType.Subscribed;
+    pushModel.enabled = notificationTypes === NotificationType._Subscribed;
   }
 
   async _getNotificationTypes(): Promise<NotificationTypeValue> {
     const { optedOut } = await getSubscription();
     if (optedOut) {
-      return NotificationType.UserOptedOut;
+      return NotificationType._UserOptedOut;
     }
 
     const permission =
       await OneSignal._context._permissionManager._getPermissionStatus();
     if (permission === 'granted') {
-      return NotificationType.Subscribed;
+      return NotificationType._Subscribed;
     }
 
-    return NotificationType.NoNativePermission;
+    return NotificationType._NoNativePermission;
   }
 
   /**
@@ -153,9 +153,9 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    */
 
   public async _unsubscribe(strategy: UnsubscriptionStrategyValue) {
-    if (strategy === UnsubscriptionStrategy.DestroySubscription) {
+    if (strategy === UnsubscriptionStrategy._DestroySubscription) {
       throw NotImplementedError;
-    } else if (strategy === UnsubscriptionStrategy.MarkUnsubscribed) {
+    } else if (strategy === UnsubscriptionStrategy._MarkUnsubscribed) {
       throw NotImplementedError;
     } else {
       throw NotImplementedError;
@@ -411,11 +411,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         // subscriptions in this state on the OneSignal dashboard.
         if (err.status === 403) {
           await this._context._subscriptionManager._registerFailedSubscription(
-            NotificationType.ServiceWorkerStatus403,
+            NotificationType._ServiceWorkerStatus403,
           );
         } else if (err.status === 404) {
           await this._context._subscriptionManager._registerFailedSubscription(
-            NotificationType.ServiceWorkerStatus404,
+            NotificationType._ServiceWorkerStatus404,
           );
         }
       }
@@ -477,7 +477,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   public async _isSubscriptionExpiring(): Promise<boolean> {
     const serviceWorkerState =
       await this._context._serviceWorkerManager._getActiveState();
-    if (!(serviceWorkerState === ServiceWorkerActiveState.OneSignalWorker)) {
+    if (!(serviceWorkerState === ServiceWorkerActiveState._OneSignalWorker)) {
       /* If the service worker isn't activated, there's no subscription to look for */
       return false;
     }

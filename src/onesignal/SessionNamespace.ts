@@ -59,7 +59,7 @@ export class SessionNamespace {
     }
     const outcomeAttribution = await outcomesHelper._getAttribution();
 
-    if (outcomeAttribution.type === OutcomeAttributionType.NotSupported) {
+    if (outcomeAttribution.type === OutcomeAttributionType._NotSupported) {
       Log._warn(
         'You are on a free plan. Please upgrade to use this functionality.',
       );

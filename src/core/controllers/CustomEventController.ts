@@ -23,7 +23,7 @@ export class CustomEventController implements ICustomEventController {
 
   _sendCustomEvent(event: ICustomEvent): void {
     const appId = getAppId();
-    const identityModel = this._identityModelStore.model;
+    const identityModel = this._identityModelStore._model;
 
     const op = new TrackCustomEventOperation({
       appId,

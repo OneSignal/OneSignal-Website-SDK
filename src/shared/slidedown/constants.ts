@@ -1,60 +1,60 @@
 export const SLIDEDOWN_CSS_CLASSES = {
-  body: 'slidedown-body',
-  buttonIndicatorHolder: 'onesignal-button-indicator-holder',
-  container: 'onesignal-slidedown-container',
-  dialog: 'onesignal-slidedown-dialog',
-  footer: 'slidedown-footer',
-  reset: 'onesignal-reset',
-  savingStateButton: 'onesignal-saving-state-button',
-  slideUp: 'slide-up',
-  slideDown: 'slide-down',
-  closeSlidedown: 'close-slidedown',
-  icon: 'slidedown-body-icon',
-  message: 'slidedown-body-message',
-  defaultIcon: 'default-icon',
-  loadingContainer: 'onesignal-loading-container',
-  clearfix: 'clearfix',
-};
+  _Body: 'slidedown-body',
+  _ButtonIndicatorHolder: 'onesignal-button-indicator-holder',
+  _Container: 'onesignal-slidedown-container',
+  _Dialog: 'onesignal-slidedown-dialog',
+  _Footer: 'slidedown-footer',
+  _Reset: 'onesignal-reset',
+  _SavingStateButton: 'onesignal-saving-state-button',
+  _SlideUp: 'slide-up',
+  _SlideDown: 'slide-down',
+  _CloseSlidedown: 'close-slidedown',
+  _Icon: 'slidedown-body-icon',
+  _Message: 'slidedown-body-message',
+  _DefaultIcon: 'default-icon',
+  _LoadingContainer: 'onesignal-loading-container',
+  _Clearfix: 'clearfix',
+} as const;
 
 export const TOAST_CLASSES = {
-  toastText: 'onesignal-toast-text',
-};
+  _ToastText: 'onesignal-toast-text',
+} as const;
 
 export const TOAST_IDS = {
-  toastText: 'onesignal-toast-text',
-};
+  _ToastText: 'onesignal-toast-text',
+} as const;
 
 export const SLIDEDOWN_CSS_IDS = {
-  allowButton: 'onesignal-slidedown-allow-button',
-  body: 'slidedown-body',
-  buttonIndicatorHolder: 'onesignal-button-indicator-holder',
-  cancelButton: 'onesignal-slidedown-cancel-button',
-  container: 'onesignal-slidedown-container',
-  dialog: 'onesignal-slidedown-dialog',
-  footer: 'slidedown-footer',
-  normalSlidedown: 'normal-slidedown',
-  loadingContainer: 'onesignal-loading-container',
-};
+  _AllowButton: 'onesignal-slidedown-allow-button',
+  _Body: 'slidedown-body',
+  _ButtonIndicatorHolder: 'onesignal-button-indicator-holder',
+  _CancelButton: 'onesignal-slidedown-cancel-button',
+  _Container: 'onesignal-slidedown-container',
+  _Dialog: 'onesignal-slidedown-dialog',
+  _Footer: 'slidedown-footer',
+  _NormalSlidedown: 'normal-slidedown',
+  _LoadingContainer: 'onesignal-loading-container',
+} as const;
 
 export const SLIDEDOWN_BUTTON_CLASSES = {
-  alignRight: 'align-right',
-  primary: 'primary',
-  secondary: 'secondary',
-  slidedownButton: 'slidedown-button',
-};
+  _AlignRight: 'align-right',
+  _Primary: 'primary',
+  _Secondary: 'secondary',
+  _SlidedownButton: 'slidedown-button',
+} as const;
 
 export const TAGGING_CONTAINER_CSS_CLASSES = {
-  categoryLabelInput: 'onesignal-category-label-input',
-  categoryLabelText: 'onesignal-category-label-text',
-  categoryLabel: 'onesignal-category-label',
-  checkmark: 'onesignal-checkmark',
-  taggingContainer: 'tagging-container',
-  taggingContainerCol: 'tagging-container-col',
-  loadingMessage: 'onesignal-loading-message',
+  _CategoryLabelInput: 'onesignal-category-label-input',
+  _CategoryLabelText: 'onesignal-category-label-text',
+  _CategoryLabel: 'onesignal-category-label',
+  _Checkmark: 'onesignal-checkmark',
+  _TaggingContainer: 'tagging-container',
+  _TaggingContainerCol: 'tagging-container-col',
+  _LoadingMessage: 'onesignal-loading-message',
 };
 
 export const TAGGING_CONTAINER_CSS_IDS = {
-  taggingContainer: 'tagging-container',
+  _TaggingContainer: 'tagging-container',
 };
 
 export const DEFAULT_ICON =
@@ -90,49 +90,49 @@ export const DANGER_ICON =
   `.92862 7.52768 8.80359C7.40266 8.67857 7.33242 8.509 7.33242 8.33219Z' fill='%23E54B4D'/%3e%3c/svg%3e`;
 
 export const COLORS = {
-  greyLoadingIndicator: '#95A1AC',
-  whiteLoadingIndicator: '#FFFFFF',
+  _GreyLoadingIndicator: '#95A1AC',
+  _WhiteLoadingIndicator: '#FFFFFF',
 };
 
 export const TAGGING_CONTAINER_STRINGS = {
-  fetchingPreferences: 'Fetching your preferences',
+  _FetchingPreferences: 'Fetching your preferences',
 };
 
 export const CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES = {
-  channelCaptureContainer: 'channel-capture-container',
-  inputWithValidationElement: 'input-with-validation-element',
-  onesignalErrorInput: 'onesignal-error-input',
-  onesignalSmsInput: 'iti-onesignal-sms-input',
-  onesignalEmailInput: 'onesignal-email-input',
-  onesignalValidationElementHidden: 'onesignal-validation-element-hidden',
-  onesignalValidationElement: 'onesignal-validation-element',
+  _ChannelCaptureContainer: 'channel-capture-container',
+  _InputWithValidationElement: 'input-with-validation-element',
+  _OnesignalErrorInput: 'onesignal-error-input',
+  _OnesignalSmsInput: 'iti-onesignal-sms-input',
+  _OnesignalEmailInput: 'onesignal-email-input',
+  _OnesignalValidationElementHidden: 'onesignal-validation-element-hidden',
+  _OnesignalValidationElement: 'onesignal-validation-element',
 };
 
 export const CHANNEL_CAPTURE_CONTAINER_CSS_IDS = {
-  smsInputWithValidationElement: 'sms-input-with-validation-element',
-  emailInputWithValidationElement: 'email-input-with-validation-element',
-  onesignalSmsInput: 'iti-onesignal-sms-input',
-  onesignalEmailInput: 'onesignal-email-input',
-  onesignalSmsValidationElement: 'onesignal-sms-validation-element',
-  onesignalEmailValidationElement: 'onesignal-email-validation-element',
+  _SmsInputWithValidationElement: 'sms-input-with-validation-element',
+  _EmailInputWithValidationElement: 'email-input-with-validation-element',
+  _OnesignalSmsInput: 'iti-onesignal-sms-input',
+  _OnesignalEmailInput: 'onesignal-email-input',
+  _OnesignalSmsValidationElement: 'onesignal-sms-validation-element',
+  _OnesignalEmailValidationElement: 'onesignal-email-validation-element',
 };
 
 const STATE = {
-  subscribed: 'state-subscribed',
-  unsubscribed: 'state-unsubscribed',
+  _Subscribed: 'state-subscribed',
+  _Unsubscribed: 'state-unsubscribed',
 };
 
 export const CUSTOM_LINK_CSS_CLASSES = {
-  containerClass: 'onesignal-customlink-container',
-  subscribeClass: 'onesignal-customlink-subscribe',
-  explanationClass: 'onesignal-customlink-explanation',
-  resetClass: 'onesignal-reset',
-  hide: 'hide',
-  state: STATE,
+  _ContainerClass: 'onesignal-customlink-container',
+  _SubscribeClass: 'onesignal-customlink-subscribe',
+  _ExplanationClass: 'onesignal-customlink-explanation',
+  _ResetClass: 'onesignal-reset',
+  _Hide: 'hide',
+  _State: STATE,
 };
 
 export const CUSTOM_LINK_CSS_SELECTORS = {
-  containerSelector: `.${CUSTOM_LINK_CSS_CLASSES.containerClass}`,
-  subscribeSelector: `.${CUSTOM_LINK_CSS_CLASSES.subscribeClass}`,
-  explanationSelector: `.${CUSTOM_LINK_CSS_CLASSES.explanationClass}`,
+  _ContainerSelector: `.${CUSTOM_LINK_CSS_CLASSES._ContainerClass}`,
+  _SubscribeSelector: `.${CUSTOM_LINK_CSS_CLASSES._SubscribeClass}`,
+  _ExplanationSelector: `.${CUSTOM_LINK_CSS_CLASSES._ExplanationClass}`,
 };

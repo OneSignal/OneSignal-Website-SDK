@@ -20,7 +20,7 @@ afterEach(() => {
   server.resetHandlers();
   if (typeof OneSignal !== 'undefined') {
     OneSignal._coreDirector?._operationRepo._clear();
-    OneSignal._emitter?.removeAllListeners();
+    OneSignal._emitter?._removeAllListeners();
   }
 });
 
@@ -53,7 +53,7 @@ Object.defineProperty(navigator, 'userAgent', {
 let downloadSpy: MockInstance;
 export const mockJsonp = () => {
   const serverConfig = TestContext.getFakeServerAppConfig(
-    ConfigIntegrationKind.Custom,
+    ConfigIntegrationKind._Custom,
   );
 
   if (!downloadSpy)

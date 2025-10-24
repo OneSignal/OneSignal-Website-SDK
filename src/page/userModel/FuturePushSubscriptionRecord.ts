@@ -9,7 +9,7 @@ import type {
   NotificationTypeValue,
   SubscriptionTypeValue,
 } from 'src/shared/subscriptions/types';
-import { VERSION } from 'src/shared/utils/EnvVariables';
+import { VERSION } from 'src/shared/utils/env';
 import type { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
@@ -27,7 +27,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     this.token = this._getToken(rawPushSubscription);
     this.type = getSubscriptionType();
     this.enabled = true;
-    this.notificationTypes = NotificationType.Subscribed;
+    this.notificationTypes = NotificationType._Subscribed;
     this.sdk = VERSION;
     this.deviceModel = getDeviceModel();
     this.deviceOs = getDeviceOS();

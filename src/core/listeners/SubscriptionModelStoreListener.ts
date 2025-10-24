@@ -32,7 +32,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     const appId = getAppId();
     return new CreateSubscriptionOperation({
       appId,
-      onesignalId: this._identityModelStore.model._onesignalId,
+      onesignalId: this._identityModelStore._model._onesignalId,
       subscriptionId: model.id,
       type: model.type,
       enabled,
@@ -45,7 +45,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     const appId = getAppId();
     return new DeleteSubscriptionOperation(
       appId,
-      this._identityModelStore.model._onesignalId,
+      this._identityModelStore._model._onesignalId,
       model.id,
     );
   }
@@ -57,7 +57,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
 
     return new UpdateSubscriptionOperation({
       appId,
-      onesignalId: this._identityModelStore.model._onesignalId,
+      onesignalId: this._identityModelStore._model._onesignalId,
       subscriptionId: model.id,
       type: model.type,
       enabled,
@@ -77,15 +77,15 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
 
     if (
       model.enabled &&
-      model._notification_types === NotificationType.Subscribed &&
+      model._notification_types === NotificationType._Subscribed &&
       model.token
     ) {
       enabled = true;
-      notification_types = NotificationType.Subscribed;
+      notification_types = NotificationType._Subscribed;
     } else {
       enabled = false;
       notification_types = !model.enabled
-        ? NotificationType.UserOptedOut
+        ? NotificationType._UserOptedOut
         : model._notification_types;
     }
 

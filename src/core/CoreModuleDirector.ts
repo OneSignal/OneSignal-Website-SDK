@@ -67,23 +67,23 @@ export class CoreModuleDirector {
     model.id = IDManager._createLocalId();
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
-    this._core._subscriptionModelStore.add(model, ModelChangeTags.HYDRATE);
+    this._core._subscriptionModelStore._add(model, ModelChangeTags._Hydrate);
     return model;
   }
 
   public _addSubscriptionModel(model: SubscriptionModel): void {
-    this._core._subscriptionModelStore.add(model);
+    this._core._subscriptionModelStore._add(model);
   }
 
   public _removeSubscriptionModel(modelId: string): void {
-    this._core._subscriptionModelStore.remove(modelId);
+    this._core._subscriptionModelStore._remove(modelId);
   }
 
   /* G E T T E R S */
   public _getEmailSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getEmailSubscriptionModels');
-    const subscriptions = this._core._subscriptionModelStore.list();
-    return subscriptions.filter((s) => s.type === SubscriptionType.Email);
+    const subscriptions = this._core._subscriptionModelStore._list();
+    return subscriptions.filter((s) => s.type === SubscriptionType._Email);
   }
 
   public async _hasEmail(): Promise<boolean> {
@@ -93,8 +93,8 @@ export class CoreModuleDirector {
 
   public _getSmsSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getSmsSubscriptionModels');
-    const subscriptions = this._core._subscriptionModelStore.list();
-    return subscriptions.filter((s) => s.type === SubscriptionType.SMS);
+    const subscriptions = this._core._subscriptionModelStore._list();
+    return subscriptions.filter((s) => s.type === SubscriptionType._SMS);
   }
 
   public async _hasSms(): Promise<boolean> {
@@ -107,7 +107,7 @@ export class CoreModuleDirector {
    */
   public _getAllPushSubscriptionModels(): SubscriptionModel[] {
     logMethodCall('CoreModuleDirector.getAllPushSubscriptionModels');
-    const subscriptions = this._core._subscriptionModelStore.list();
+    const subscriptions = this._core._subscriptionModelStore._list();
     return subscriptions.filter((s) => isPushSubscriptionType(s.type));
   }
 
@@ -118,7 +118,7 @@ export class CoreModuleDirector {
     const pushToken = await getCurrentPushToken();
     if (pushToken) {
       return this._getSubscriptionOfTypeWithToken(
-        SubscriptionChannel.Push,
+        SubscriptionChannel._Push,
         pushToken,
       );
     }
@@ -136,7 +136,7 @@ export class CoreModuleDirector {
     const lastKnownPushToken = await getPushToken();
     if (lastKnownPushToken) {
       return this._getSubscriptionOfTypeWithToken(
-        SubscriptionChannel.Push,
+        SubscriptionChannel._Push,
         lastKnownPushToken,
       );
     }
@@ -159,12 +159,12 @@ export class CoreModuleDirector {
 
   public _getIdentityModel(): IdentityModel {
     logMethodCall('CoreModuleDirector.getIdentityModel');
-    return this._core._identityModelStore.model;
+    return this._core._identityModelStore._model;
   }
 
   public _getPropertiesModel(): PropertiesModel {
     logMethodCall('CoreModuleDirector.getPropertiesModel');
-    return this._core._propertiesModelStore.model;
+    return this._core._propertiesModelStore._model;
   }
 
   public async _getAllSubscriptionsModels(): Promise<SubscriptionModel[]> {
@@ -192,13 +192,13 @@ export class CoreModuleDirector {
     let subscriptions: SubscriptionModel[];
 
     switch (type) {
-      case SubscriptionChannel.Email:
+      case SubscriptionChannel._Email:
         subscriptions = this._getEmailSubscriptionModels();
         break;
-      case SubscriptionChannel.SMS:
+      case SubscriptionChannel._SMS:
         subscriptions = this._getSmsSubscriptionModels();
         break;
-      case SubscriptionChannel.Push:
+      case SubscriptionChannel._Push:
         subscriptions = this._getAllPushSubscriptionModels();
         break;
       default:

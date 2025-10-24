@@ -1,4 +1,4 @@
-import { IS_SERVICE_WORKER } from 'src/shared/utils/EnvVariables';
+import { IS_SERVICE_WORKER } from 'src/shared/utils/env';
 import { type AppConfig } from './types';
 
 // The os.tc domain feature is no longer supported in v16, so throw if the

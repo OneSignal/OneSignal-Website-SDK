@@ -16,8 +16,8 @@ import OneSignalEvent from '../../services/OneSignalEvent';
 import { SessionOrigin } from '../../session/constants';
 import { Browser } from '../../useragent/constants';
 import { getBrowserName } from '../../useragent/detect';
-import { base64ToUint8Array } from '../../utils/Encoding';
-import { IS_SERVICE_WORKER } from '../../utils/EnvVariables';
+import { base64ToUint8Array } from '../../utils/encode';
+import { IS_SERVICE_WORKER } from '../../utils/env';
 import { DEFAULT_DEVICE_ID } from './constants';
 
 export interface SubscriptionManagerConfig {
@@ -85,7 +85,7 @@ export class SubscriptionManagerBase<
 
       // NOTE: We only have sessionManager in the page context, should sw upsert do anything?
     } else if (!IS_SERVICE_WORKER && '_sessionManager' in this._context) {
-      this._context._sessionManager._upsertSession(SessionOrigin.UserCreate);
+      this._context._sessionManager._upsertSession(SessionOrigin._UserCreate);
     }
 
     const subscription = await getSubscription();
@@ -143,7 +143,7 @@ export class SubscriptionManagerBase<
 
     /* Depending on the subscription strategy, handle existing subscription in various ways */
     switch (subscriptionStrategy) {
-      case SubscriptionStrategyKind.ResubscribeExisting:
+      case SubscriptionStrategyKind._ResubscribeExisting:
         if (!existingPushSubscription) break;
 
         if (existingPushSubscription.options) {
@@ -177,7 +177,7 @@ export class SubscriptionManagerBase<
           );
         }
         break;
-      case SubscriptionStrategyKind.SubscribeNew:
+      case SubscriptionStrategyKind._SubscribeNew:
         /* Since we want a new subscription every time with this strategy, just unsubscribe. */
         if (existingPushSubscription) {
           await SubscriptionManagerBase._doPushUnsubscribe(
@@ -215,7 +215,7 @@ export class SubscriptionManagerBase<
     // Specifically return undefined instead of null if the key isn't available
     let key = undefined;
 
-    if (getBrowserName() === Browser.Firefox) {
+    if (getBrowserName() === Browser._Firefox) {
       /*
         Firefox uses VAPID for application identification instead of
         authentication, and so all apps share an identification key.

@@ -88,9 +88,9 @@ export function getPlatformNotificationIcon(
   if (!notificationIcons) return 'default-icon';
 
   const browserName = getBrowserName();
-  if (browserName === Browser.Safari && notificationIcons.safari)
+  if (browserName === Browser._Safari && notificationIcons.safari)
     return notificationIcons.safari;
-  else if (browserName === Browser.Firefox && notificationIcons.firefox)
+  else if (browserName === Browser._Firefox && notificationIcons.firefox)
     return notificationIcons.firefox;
 
   return (

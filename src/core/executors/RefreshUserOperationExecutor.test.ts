@@ -74,7 +74,7 @@ describe('RefreshUserOperationExecutor', () => {
 
   test('should return correct operations (names)', async () => {
     const executor = getExecutor();
-    expect(executor._operations).toEqual([OPERATION_NAME.REFRESH_USER]);
+    expect(executor._operations).toEqual([OPERATION_NAME._RefreshUser]);
   });
 
   test('should validate operations', async () => {
@@ -107,8 +107,8 @@ describe('RefreshUserOperationExecutor', () => {
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
 
       const result = await executor._execute([refreshOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
-      expect(propertiesModelStore.model._language).not.toBe('fr');
+      expect(result._result).toBe(ExecutionResult._Success);
+      expect(propertiesModelStore._model._language).not.toBe('fr');
     });
 
     test('should handle successful user retrieval and update models', async () => {
@@ -127,9 +127,9 @@ describe('RefreshUserOperationExecutor', () => {
           {
             app_id: APP_ID,
             id: SUB_ID,
-            type: SubscriptionType.Email,
+            type: SubscriptionType._Email,
             token: 'test@example.com',
-            notification_types: NotificationType.UserOptedOut,
+            notification_types: NotificationType._UserOptedOut,
             device_os: DEVICE_OS,
             device_model: '',
             sdk: __VERSION__,
@@ -141,34 +141,34 @@ describe('RefreshUserOperationExecutor', () => {
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID);
 
       const result = await executor._execute([refreshOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // Check identity model updates
-      expect(identityModelStore.model._getProperty('onesignal_id')).toBe(
+      expect(identityModelStore._model._getProperty('onesignal_id')).toBe(
         ONESIGNAL_ID,
       );
-      expect(identityModelStore.model._getProperty('external_id')).toBe(
+      expect(identityModelStore._model._getProperty('external_id')).toBe(
         'test_user',
       );
 
       // Check properties model updates
-      expect(propertiesModelStore.model._country).toBe('US');
-      expect(propertiesModelStore.model._language).toBe('en');
-      expect(propertiesModelStore.model._tags).toEqual({
+      expect(propertiesModelStore._model._country).toBe('US');
+      expect(propertiesModelStore._model._language).toBe('en');
+      expect(propertiesModelStore._model._tags).toEqual({
         test_tag: 'test_value',
         test_tag_2: 'test_value_2',
       });
-      expect(propertiesModelStore.model._timezone_id).toBe('America/New_York');
+      expect(propertiesModelStore._model._timezone_id).toBe('America/New_York');
 
       // Check subscription model updates
-      const subscriptions = subscriptionModelStore.list();
+      const subscriptions = subscriptionModelStore._list();
       expect(subscriptions.length).toBe(1);
       expect(subscriptions[0].toJSON()).toMatchObject({
         id: SUB_ID,
-        notification_types: NotificationType.UserOptedOut,
+        notification_types: NotificationType._UserOptedOut,
         enabled: false,
         token: 'test@example.com',
-        type: SubscriptionType.Email,
+        type: SubscriptionType._Email,
         device_os: DEVICE_OS,
         device_model: '',
         sdk: __VERSION__,
@@ -179,11 +179,11 @@ describe('RefreshUserOperationExecutor', () => {
       // Set up a push subscription in the store
       const pushSubModel = new SubscriptionModel();
       pushSubModel.id = SUB_ID_2;
-      pushSubModel.type = SubscriptionType.ChromePush;
+      pushSubModel.type = SubscriptionType._ChromePush;
       pushSubModel.token = PUSH_TOKEN;
-      pushSubModel._notification_types = NotificationType.Subscribed;
+      pushSubModel._notification_types = NotificationType._Subscribed;
 
-      subscriptionModelStore.add(pushSubModel, ModelChangeTags.NO_PROPAGATE);
+      subscriptionModelStore._add(pushSubModel, ModelChangeTags._NoPropogate);
       await setPushToken(PUSH_TOKEN);
 
       const executor = getExecutor();
@@ -195,7 +195,7 @@ describe('RefreshUserOperationExecutor', () => {
         subscriptions: [
           {
             id: 'email-sub-id',
-            type: SubscriptionType.Email,
+            type: SubscriptionType._Email,
             token: 'test@example.com',
           },
         ],
@@ -204,12 +204,12 @@ describe('RefreshUserOperationExecutor', () => {
       await executor._execute([refreshOp]);
 
       // Check that both subscriptions exist (push is preserved)
-      const subscriptions = subscriptionModelStore.list();
+      const subscriptions = subscriptionModelStore._list();
       expect(subscriptions.length).toBe(2);
 
       // Find the push subscription
       const pushSub = subscriptions.find(
-        (sub: SubscriptionModel) => sub.type === SubscriptionType.ChromePush,
+        (sub: SubscriptionModel) => sub.type === SubscriptionType._ChromePush,
       );
       expect(pushSub).toBeDefined();
       expect(pushSub?.id).toBe(SUB_ID_2);
@@ -227,8 +227,8 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res1 = await executor._execute([refreshOp]);
       expect(res1).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 10,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 10,
       });
 
       // unauthorized error
@@ -238,8 +238,8 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res2 = await executor._execute([refreshOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
-        retryAfterSeconds: 15,
+        _result: ExecutionResult._FailUnauthorized,
+        _retryAfterSeconds: 15,
       });
 
       // missing error
@@ -251,16 +251,15 @@ describe('RefreshUserOperationExecutor', () => {
       getRebuildOpsSpy.mockReturnValueOnce(null);
       const res3 = await executor._execute([refreshOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
-        retryAfterSeconds: undefined,
+        _result: ExecutionResult._FailNoretry,
       });
 
       // -- with rebuild ops
       const res4 = await executor._execute([refreshOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 5,
-        operations: [
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 5,
+        _operations: [
           {
             _name: 'login-user',
             _appId: APP_ID,
@@ -282,8 +281,8 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res6 = await executor._execute([refreshOp]);
       expect(res6).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 20,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 20,
       });
 
       // other errors
@@ -292,8 +291,7 @@ describe('RefreshUserOperationExecutor', () => {
       });
       const res7 = await executor._execute([refreshOp]);
       expect(res7).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
-        retryAfterSeconds: undefined,
+        _result: ExecutionResult._FailNoretry,
       });
     });
   });

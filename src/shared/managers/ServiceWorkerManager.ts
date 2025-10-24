@@ -28,7 +28,7 @@ import type {
   PageVisibilityRequest,
   PageVisibilityResponse,
 } from '../session/types';
-import { VERSION } from '../utils/EnvVariables';
+import { VERSION } from '../utils/env';
 
 export class ServiceWorkerManager {
   private _context: ContextInterface;
@@ -58,7 +58,7 @@ export class ServiceWorkerManager {
     ServiceWorkerRegistration | undefined
   > {
     const state = await this._getActiveState();
-    if (state === ServiceWorkerActiveState.OneSignalWorker) {
+    if (state === ServiceWorkerActiveState._OneSignalWorker) {
       return this._getRegistration();
     }
     return undefined;
@@ -67,7 +67,7 @@ export class ServiceWorkerManager {
   public async _getActiveState(): Promise<ServiceWorkerActiveStateValue> {
     const workerRegistration = await this._getRegistration();
     if (!workerRegistration) {
-      return ServiceWorkerActiveState.None;
+      return ServiceWorkerActiveState._None;
     }
 
     // We are now; 1. Getting the filename of the SW; 2. Checking if it is ours or a 3rd parties.
@@ -112,29 +112,29 @@ export class ServiceWorkerManager {
     fileName?: string | null,
   ): ServiceWorkerActiveStateValue {
     if (!fileName) {
-      return ServiceWorkerActiveState.None;
+      return ServiceWorkerActiveState._None;
     }
     const isValidOSWorker =
       fileName == this._config.workerPath._getFileName() ||
       fileName == 'OneSignalSDK.sw.js'; // For backwards compatibility with temporary v16 user model beta filename (remove after 5/5/24 deprecation)
 
     if (isValidOSWorker) {
-      return ServiceWorkerActiveState.OneSignalWorker;
+      return ServiceWorkerActiveState._OneSignalWorker;
     }
-    return ServiceWorkerActiveState.ThirdParty;
+    return ServiceWorkerActiveState._ThirdParty;
   }
 
   public async _getWorkerVersion(): Promise<string> {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<string>(async (resolve) => {
       this._context._workerMessenger._once(
-        WorkerMessengerCommand.WorkerVersion,
+        WorkerMessengerCommand._WorkerVersion,
         (workerVersion) => {
           resolve(workerVersion);
         },
       );
       await this._context._workerMessenger._unicast(
-        WorkerMessengerCommand.WorkerVersion,
+        WorkerMessengerCommand._WorkerVersion,
       );
     });
   }
@@ -154,8 +154,8 @@ export class ServiceWorkerManager {
     const workerState = await this._getActiveState();
     Log._debug('[shouldInstallWorker] workerState', workerState);
     if (
-      workerState === ServiceWorkerActiveState.None ||
-      workerState === ServiceWorkerActiveState.ThirdParty
+      workerState === ServiceWorkerActiveState._None ||
+      workerState === ServiceWorkerActiveState._ThirdParty
     ) {
       const permission =
         await OneSignal._context._permissionManager._getNotificationPermission(
@@ -260,7 +260,7 @@ export class ServiceWorkerManager {
     workerMessenger._off();
 
     workerMessenger._on(
-      WorkerMessengerCommand.NotificationWillDisplay,
+      WorkerMessengerCommand._NotificationWillDisplay,
       async (event: NotificationForegroundWillDisplayEventSerializable) => {
         Log._debug(
           location.origin,
@@ -280,10 +280,10 @@ export class ServiceWorkerManager {
     );
 
     workerMessenger._on(
-      WorkerMessengerCommand.NotificationClicked,
+      WorkerMessengerCommand._NotificationClicked,
       async (event: NotificationClickEventInternal) => {
         const clickedListenerCallbackCount =
-          OneSignal._emitter.numberOfListeners(
+          OneSignal._emitter._numberOfListeners(
             OneSignal.EVENTS.NOTIFICATION_CLICKED,
           );
 
@@ -315,7 +315,7 @@ export class ServiceWorkerManager {
     );
 
     workerMessenger._on(
-      WorkerMessengerCommand.NotificationDismissed,
+      WorkerMessengerCommand._NotificationDismissed,
       async (data) => {
         await OneSignalEvent._trigger(
           OneSignal.EVENTS.NOTIFICATION_DISMISSED,
@@ -327,7 +327,7 @@ export class ServiceWorkerManager {
     const isSafari = hasSafariWindow();
 
     workerMessenger._on(
-      WorkerMessengerCommand.AreYouVisible,
+      WorkerMessengerCommand._AreYouVisible,
       async (incomingPayload: PageVisibilityRequest) => {
         // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
         // For Safari, unfortunately, we need this messaging workaround because SW always gets false.
@@ -337,7 +337,7 @@ export class ServiceWorkerManager {
             focused: document.hasFocus(),
           };
           await workerMessenger._directPostMessageToSW(
-            WorkerMessengerCommand.AreYouVisibleResponse,
+            WorkerMessengerCommand._AreYouVisibleResponse,
             payload,
           );
         }
@@ -394,7 +394,7 @@ export class ServiceWorkerManager {
     Log._info('Installing worker...');
     const workerState = await this._getActiveState();
 
-    if (workerState === ServiceWorkerActiveState.ThirdParty) {
+    if (workerState === ServiceWorkerActiveState._ThirdParty) {
       Log._info(
         `[Service Worker Installation] 3rd party service worker detected.`,
       );

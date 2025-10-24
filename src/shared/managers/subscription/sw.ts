@@ -26,25 +26,25 @@ export class SubscriptionManagerSW extends SubscriptionManagerBase<ContextSWInte
   ): Promise<RawPushSubscription> {
     /*
         We're running inside of the service worker.
-  
+
         Check to make sure our registration is activated, otherwise we can't
         subscribe for push.
-  
+
         HACK: Firefox doesn't set self.registration.active in the service worker
         context. From a non-service worker context, like
         navigator.serviceWorker.getRegistration().active, the property actually is
         set, but it's just not set within the service worker context.
-  
+
         Because of this, we're not able to check for this property on Firefox.
        */
 
     const swRegistration = self.registration;
 
-    if (!swRegistration.active && getBrowserName() !== Browser.Firefox) {
+    if (!swRegistration.active && getBrowserName() !== Browser._Firefox) {
       throw new Error('SW not activated');
       /*
           Or should we wait for the service worker to be ready?
-  
+
           await new Promise(resolve => self.onactivate = resolve);
          */
     }

@@ -12,10 +12,10 @@ export function getSlidedownElement(dialogProps: SlidedownHtmlProps): Element {
     dialogProps;
 
   const finalIcon =
-    icon === SLIDEDOWN_CSS_CLASSES.defaultIcon ? DEFAULT_ICON : icon;
+    icon === SLIDEDOWN_CSS_CLASSES._DefaultIcon ? DEFAULT_ICON : icon;
   const finalIconClass =
-    icon === SLIDEDOWN_CSS_CLASSES.defaultIcon
-      ? SLIDEDOWN_CSS_CLASSES.defaultIcon
+    icon === SLIDEDOWN_CSS_CLASSES._DefaultIcon
+      ? SLIDEDOWN_CSS_CLASSES._DefaultIcon
       : '';
 
   const normalSlidedown = document.createElement('div');
@@ -30,25 +30,25 @@ export function getSlidedownElement(dialogProps: SlidedownHtmlProps): Element {
   const clearfix2 = document.createElement('div');
   const image = document.createElement('img');
 
-  addCssClass(slidedownBody, SLIDEDOWN_CSS_CLASSES.body);
-  addCssClass(slidedownBodyIcon, SLIDEDOWN_CSS_CLASSES.icon);
-  addCssClass(bodyMessage, SLIDEDOWN_CSS_CLASSES.message);
-  addCssClass(slidedownFooter, SLIDEDOWN_CSS_CLASSES.footer);
-  addCssClass(clearfix, SLIDEDOWN_CSS_CLASSES.clearfix);
-  addCssClass(clearfix2, SLIDEDOWN_CSS_CLASSES.clearfix);
-  addCssClass(positiveButton, SLIDEDOWN_BUTTON_CLASSES.alignRight);
-  addCssClass(positiveButton, SLIDEDOWN_BUTTON_CLASSES.primary);
-  addCssClass(positiveButton, SLIDEDOWN_BUTTON_CLASSES.slidedownButton);
-  addCssClass(negativeButton, SLIDEDOWN_BUTTON_CLASSES.alignRight);
-  addCssClass(negativeButton, SLIDEDOWN_BUTTON_CLASSES.secondary);
-  addCssClass(negativeButton, SLIDEDOWN_BUTTON_CLASSES.slidedownButton);
+  addCssClass(slidedownBody, SLIDEDOWN_CSS_CLASSES._Body);
+  addCssClass(slidedownBodyIcon, SLIDEDOWN_CSS_CLASSES._Icon);
+  addCssClass(bodyMessage, SLIDEDOWN_CSS_CLASSES._Message);
+  addCssClass(slidedownFooter, SLIDEDOWN_CSS_CLASSES._Footer);
+  addCssClass(clearfix, SLIDEDOWN_CSS_CLASSES._Clearfix);
+  addCssClass(clearfix2, SLIDEDOWN_CSS_CLASSES._Clearfix);
+  addCssClass(positiveButton, SLIDEDOWN_BUTTON_CLASSES._AlignRight);
+  addCssClass(positiveButton, SLIDEDOWN_BUTTON_CLASSES._Primary);
+  addCssClass(positiveButton, SLIDEDOWN_BUTTON_CLASSES._SlidedownButton);
+  addCssClass(negativeButton, SLIDEDOWN_BUTTON_CLASSES._AlignRight);
+  addCssClass(negativeButton, SLIDEDOWN_BUTTON_CLASSES._Secondary);
+  addCssClass(negativeButton, SLIDEDOWN_BUTTON_CLASSES._SlidedownButton);
 
-  normalSlidedown.id = SLIDEDOWN_CSS_IDS.normalSlidedown;
-  slidedownBody.id = SLIDEDOWN_CSS_IDS.body;
-  loadingContainer.id = SLIDEDOWN_CSS_IDS.loadingContainer;
-  positiveButton.id = SLIDEDOWN_CSS_IDS.allowButton;
-  negativeButton.id = SLIDEDOWN_CSS_IDS.cancelButton;
-  slidedownFooter.id = SLIDEDOWN_CSS_IDS.footer;
+  normalSlidedown.id = SLIDEDOWN_CSS_IDS._NormalSlidedown;
+  slidedownBody.id = SLIDEDOWN_CSS_IDS._Body;
+  loadingContainer.id = SLIDEDOWN_CSS_IDS._LoadingContainer;
+  positiveButton.id = SLIDEDOWN_CSS_IDS._AllowButton;
+  negativeButton.id = SLIDEDOWN_CSS_IDS._CancelButton;
+  slidedownFooter.id = SLIDEDOWN_CSS_IDS._Footer;
 
   if (finalIconClass) {
     addCssClass(image, finalIconClass);

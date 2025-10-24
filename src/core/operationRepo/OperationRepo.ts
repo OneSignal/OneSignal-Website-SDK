@@ -134,7 +134,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
 
     if (addToStore) {
-      this._operationModelStore.add(queueItem.operation);
+      this._operationModelStore._add(queueItem.operation);
     }
   }
 
@@ -170,9 +170,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       const operations = ops.map((op) => op.operation);
       const response = await executor._execute(operations);
-      const idTranslations = response.idTranslations;
+      const idTranslations = response._idTranslations;
 
-      Log._debug(`OperationRepo: execute response = ${response.result}`);
+      Log._debug(`OperationRepo: execute response = ${response._result}`);
 
       // Handle ID translations
       if (idTranslations) {
@@ -187,28 +187,28 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
 
       let highestRetries = 0;
-      switch (response.result) {
-        case ExecutionResult.SUCCESS:
+      switch (response._result) {
+        case ExecutionResult._Success:
           // Remove operations from store
           ops.forEach((op) => {
-            this._operationModelStore.remove(op.operation._modelId);
+            this._operationModelStore._remove(op.operation._modelId);
           });
           ops.forEach((op) => op.resolver?.(true));
           break;
 
-        case ExecutionResult.FAIL_UNAUTHORIZED:
-        case ExecutionResult.FAIL_NORETRY:
-        case ExecutionResult.FAIL_CONFLICT:
+        case ExecutionResult._FailUnauthorized:
+        case ExecutionResult._FailNoretry:
+        case ExecutionResult._FailConflict:
           Log._error(`Operation execution failed without retry: ${operations}`);
           ops.forEach((op) => {
-            this._operationModelStore.remove(op.operation._modelId);
+            this._operationModelStore._remove(op.operation._modelId);
           });
           ops.forEach((op) => op.resolver?.(false));
           break;
 
-        case ExecutionResult.SUCCESS_STARTING_ONLY:
+        case ExecutionResult._SuccessStartingOnly:
           // Remove starting operation and re-add others to the queue
-          this._operationModelStore.remove(startingOp.operation._modelId);
+          this._operationModelStore._remove(startingOp.operation._modelId);
 
           startingOp.resolver?.(true);
           ops
@@ -217,7 +217,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
             .forEach((op) => this._queue.unshift(op));
           break;
 
-        case ExecutionResult.FAIL_RETRY:
+        case ExecutionResult._FailRetry:
           Log._error(`Operation execution failed, retrying: ${operations}`);
           // Add back all operations to front of queue
           [...ops].reverse().forEach((op) => {
@@ -230,7 +230,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           });
           break;
 
-        case ExecutionResult.FAIL_PAUSE_OPREPO:
+        case ExecutionResult._FailPauseOpRepo:
           Log._error(`Operation failed, pausing ops:${operations}`);
           this._pause();
           ops.forEach((op) => op.resolver?.(false));
@@ -242,24 +242,24 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
 
       // Handle additional operations from the response
-      if (response.operations) {
-        for (const op of [...response.operations].reverse()) {
+      if (response._operations) {
+        for (const op of [...response._operations].reverse()) {
           const queueItem = {
             operation: op,
             bucket: 0,
             retries: 0,
           };
           this._queue.unshift(queueItem);
-          this._operationModelStore.addAt(0, queueItem.operation);
+          this._operationModelStore._addAt(0, queueItem.operation);
         }
       }
 
       // Wait before next execution
       await this._delayBeforeNextExecution(
         highestRetries,
-        response.retryAfterSeconds,
+        response._retryAfterSeconds,
       );
-      if (response.idTranslations) {
+      if (response._idTranslations) {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
@@ -267,7 +267,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       // On failure remove operations from store
       ops.forEach((op) => {
-        this._operationModelStore.remove(op.operation._modelId);
+        this._operationModelStore._remove(op.operation._modelId);
       });
       ops.forEach((op) => op.resolver?.(false));
     }
@@ -310,11 +310,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   ): OperationQueueItem[] {
     const ops = [startingOp];
 
-    if (startingOp.operation._groupComparisonType === GroupComparisonType.NONE)
+    if (startingOp.operation._groupComparisonType === GroupComparisonType._None)
       return ops;
 
     const startingKey =
-      startingOp.operation._groupComparisonType === GroupComparisonType.CREATE
+      startingOp.operation._groupComparisonType === GroupComparisonType._Create
         ? startingOp.operation._createComparisonKey
         : startingOp.operation._modifyComparisonKey;
 
@@ -323,7 +323,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     for (const item of queueCopy) {
       const itemKey =
-        startingOp.operation._groupComparisonType === GroupComparisonType.CREATE
+        startingOp.operation._groupComparisonType ===
+        GroupComparisonType._Create
           ? item.operation._createComparisonKey
           : item.operation._modifyComparisonKey;
 
@@ -347,7 +348,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public async _loadSavedOperations(): Promise<void> {
     await this._operationModelStore._loadOperations();
-    const operations = [...this._operationModelStore.list()].reverse();
+    const operations = [...this._operationModelStore._list()].reverse();
 
     for (const operation of operations) {
       this._internalEnqueue(

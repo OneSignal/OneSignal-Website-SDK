@@ -86,7 +86,7 @@ describe('LoginUserOperationExecutor', () => {
   test('should return correct operations (names)', async () => {
     const executor = getExecutor();
 
-    expect(executor._operations).toEqual([OPERATION_NAME.LOGIN_USER]);
+    expect(executor._operations).toEqual([OPERATION_NAME._LoginUser]);
   });
 
   test('should validate operations', async () => {
@@ -141,10 +141,8 @@ describe('LoginUserOperationExecutor', () => {
       const res = await executor._execute(ops);
 
       expect(res).toEqual({
-        result: ExecutionResult.SUCCESS,
-        retryAfterSeconds: undefined,
-        operations: undefined,
-        idTranslations: {
+        _result: ExecutionResult._Success,
+        _idTranslations: {
           [ONESIGNAL_ID_2]: ONESIGNAL_ID,
         },
       });
@@ -154,7 +152,7 @@ describe('LoginUserOperationExecutor', () => {
       const someSubscription = {
         app_id: APP_ID,
         id: SUB_ID_2,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: PUSH_TOKEN,
       };
       setCreateUserResponse({
@@ -172,11 +170,11 @@ describe('LoginUserOperationExecutor', () => {
       subscriptionModel._setProperty(
         'id',
         SUB_ID,
-        ModelChangeTags.NO_PROPAGATE,
+        ModelChangeTags._NoPropogate,
       );
-      subscriptionModelStore.add(
+      subscriptionModelStore._add(
         subscriptionModel,
-        ModelChangeTags.NO_PROPAGATE,
+        ModelChangeTags._NoPropogate,
       );
 
       // perform operations with old onesignal id
@@ -194,9 +192,9 @@ describe('LoginUserOperationExecutor', () => {
 
       // should update model properties
       expect(
-        identityModelStore.model._getProperty(IdentityConstants.ONESIGNAL_ID),
+        identityModelStore._model._getProperty(IdentityConstants._OneSignalID),
       ).toEqual(ONESIGNAL_ID_2);
-      expect(propertiesModelStore.model._getProperty('onesignalId')).toEqual(
+      expect(propertiesModelStore._model._getProperty('onesignalId')).toEqual(
         ONESIGNAL_ID_2,
       );
       expect(await getPushToken()).toEqual(PUSH_TOKEN);
@@ -204,12 +202,11 @@ describe('LoginUserOperationExecutor', () => {
 
       // should have a refresh user operation
       const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
-      refreshOp._modelId = res.operations![0]._modelId;
+      refreshOp._modelId = res._operations![0]._modelId;
       expect(res).toEqual({
-        result: ExecutionResult.SUCCESS,
-        retryAfterSeconds: undefined,
-        operations: [refreshOp],
-        idTranslations: {
+        _result: ExecutionResult._Success,
+        _operations: [refreshOp],
+        _idTranslations: {
           [ONESIGNAL_ID]: ONESIGNAL_ID_2,
           [SUB_ID]: SUB_ID_2,
         },
@@ -230,24 +227,24 @@ describe('LoginUserOperationExecutor', () => {
       setCreateUserError({ status: 429, retryAfter: 10 });
       const res = await executor._execute(ops);
       expect(res).toEqual({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 10,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 10,
       });
 
       // unauthorized error
       setCreateUserError({ status: 401, retryAfter: 15 });
       const res2 = await executor._execute(ops);
       expect(res2).toEqual({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
-        retryAfterSeconds: 15,
+        _result: ExecutionResult._FailUnauthorized,
+        _retryAfterSeconds: 15,
       });
 
       // others errors - pause repo
       setCreateUserError({ status: 400, retryAfter: 20 });
       const res3 = await executor._execute(ops);
       expect(res3).toEqual({
-        result: ExecutionResult.FAIL_PAUSE_OPREPO,
-        retryAfterSeconds: undefined,
+        _result: ExecutionResult._FailPauseOpRepo,
+        _retryAfterSeconds: undefined,
       });
     });
   });
@@ -271,15 +268,15 @@ describe('LoginUserOperationExecutor', () => {
 
       // should update model properties
       expect(
-        identityModelStore.model._getProperty(IdentityConstants.ONESIGNAL_ID),
+        identityModelStore._model._getProperty(IdentityConstants._OneSignalID),
       ).toEqual(ONESIGNAL_ID_2);
-      expect(propertiesModelStore.model._getProperty('onesignalId')).toEqual(
+      expect(propertiesModelStore._model._getProperty('onesignalId')).toEqual(
         ONESIGNAL_ID_2,
       );
 
       expect(res).toEqual({
-        result: ExecutionResult.SUCCESS_STARTING_ONLY,
-        idTranslations: {
+        _result: ExecutionResult._SuccessStartingOnly,
+        _idTranslations: {
           [ONESIGNAL_ID]: ONESIGNAL_ID_2,
         },
       });
@@ -300,8 +297,8 @@ describe('LoginUserOperationExecutor', () => {
 
       const res = await executor._execute([loginOp]);
       expect(res).toMatchObject({
-        result: ExecutionResult.SUCCESS,
-        idTranslations: {
+        _result: ExecutionResult._Success,
+        _idTranslations: {
           [ONESIGNAL_ID]: '123',
         },
       });
@@ -314,8 +311,8 @@ describe('LoginUserOperationExecutor', () => {
 
       const res2 = await executor._execute([loginOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.SUCCESS,
-        idTranslations: {
+        _result: ExecutionResult._Success,
+        _idTranslations: {
           [ONESIGNAL_ID]: '456',
         },
       });
@@ -325,7 +322,7 @@ describe('LoginUserOperationExecutor', () => {
 
       const res3 = await executor._execute([loginOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
+        _result: ExecutionResult._FailUnauthorized,
       });
     });
   });
@@ -379,7 +376,7 @@ describe('LoginUserOperationExecutor', () => {
       );
       const updates = {
         enabled: false,
-        notification_types: NotificationType.NotSubscribed,
+        notification_types: NotificationType._NotSubscribed,
         token: PUSH_TOKEN_2,
       };
       const updateSubOp = new UpdateSubscriptionOperation({
@@ -431,7 +428,7 @@ describe('LoginUserOperationExecutor', () => {
       const transferSubOp = new TransferSubscriptionOperation(
         APP_ID,
         ONESIGNAL_ID,
-        createSubOp.subscriptionId,
+        createSubOp._subscriptionId,
       );
 
       const ops = [loginOp, createSubOp, transferSubOp];
@@ -471,7 +468,7 @@ describe('LoginUserOperationExecutor', () => {
       const deleteSubOp = new DeleteSubscriptionOperation(
         APP_ID,
         ONESIGNAL_ID,
-        createSubOp.subscriptionId,
+        createSubOp._subscriptionId,
       );
 
       const ops = [loginOp, createSubOp, deleteSubOp];
@@ -489,5 +486,5 @@ const mockSubscriptionOpInfo = {
   onesignalId: ONESIGNAL_ID,
   subscriptionId: SUB_ID,
   token: PUSH_TOKEN,
-  type: SubscriptionType.ChromePush,
+  type: SubscriptionType._ChromePush,
 } satisfies SubscriptionWithAppId;

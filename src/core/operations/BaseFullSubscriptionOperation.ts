@@ -3,7 +3,7 @@ import type {
   NotificationTypeValue,
   SubscriptionTypeValue,
 } from 'src/shared/subscriptions/types';
-import { VERSION } from 'src/shared/utils/EnvVariables';
+import { VERSION } from 'src/shared/utils/env';
 import type { ICreateUserSubscription } from '../types/api';
 import { BaseSubscriptionOperation } from './BaseSubscriptionOperation';
 
@@ -34,7 +34,7 @@ export abstract class BaseFullSubscriptionOperation extends BaseSubscriptionOper
       this.device_os = getDeviceOS();
       this.enabled = subscription.enabled;
       this.notification_types = subscription.notification_types;
-      this.subscriptionId = subscription.subscriptionId;
+      this._subscriptionId = subscription.subscriptionId;
       this.token = subscription.token;
       this.type = subscription.type;
       this.web_auth = subscription.web_auth;

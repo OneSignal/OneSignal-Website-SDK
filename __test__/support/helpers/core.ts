@@ -7,7 +7,7 @@ export function generateNewSubscription(modelId = '0000000000') {
   const model = new SubscriptionModel();
   model._modelId = modelId;
   model._mergeData({
-    type: SubscriptionType.Email,
+    type: SubscriptionType._Email,
     id: '123', // subscription id
     token: 'myToken',
   });

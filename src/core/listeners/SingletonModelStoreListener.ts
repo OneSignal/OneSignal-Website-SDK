@@ -3,6 +3,7 @@ import { type Operation } from '../operations/Operation';
 import {
   type ISingletonModelStoreChangeHandler,
   ModelChangeTags,
+  type ModelChangeTagValue,
 } from '../types/models';
 import type { IOperationRepo } from '../types/operation';
 import type { ISingletonModelStore } from './types';
@@ -27,8 +28,8 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
     this._store._subscribe(this);
   }
 
-  _onModelReplaced(model: TModel, tag: string): void {
-    if (tag !== ModelChangeTags.NORMAL) {
+  _onModelReplaced(model: TModel, tag: ModelChangeTagValue): void {
+    if (tag !== ModelChangeTags._Normal) {
       return;
     }
 
@@ -38,8 +39,8 @@ export abstract class SingletonModelStoreListener<TModel extends Model>
     }
   }
 
-  _onModelUpdated(args: ModelChangedArgs, tag: string): void {
-    if (tag !== ModelChangeTags.NORMAL) {
+  _onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): void {
+    if (tag !== ModelChangeTags._Normal) {
       return;
     }
 

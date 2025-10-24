@@ -30,6 +30,8 @@ import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
+import { LoginUserOperation } from '../operations/LoginUserOperation';
+import { RefreshUserOperation } from '../operations/RefreshUserOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ModelChangeTags } from '../types/models';
@@ -85,10 +87,10 @@ describe('SubscriptionOperationExecutor', () => {
   test('should return correct operations (names)', () => {
     const executor = getExecutor();
     expect(executor._operations).toEqual([
-      OPERATION_NAME.CREATE_SUBSCRIPTION,
-      OPERATION_NAME.UPDATE_SUBSCRIPTION,
-      OPERATION_NAME.DELETE_SUBSCRIPTION,
-      OPERATION_NAME.TRANSFER_SUBSCRIPTION,
+      OPERATION_NAME._CreateSubscription,
+      OPERATION_NAME._UpdateSubscription,
+      OPERATION_NAME._DeleteSubscription,
+      OPERATION_NAME._TransferSubscription,
     ]);
   });
 
@@ -112,7 +114,7 @@ describe('SubscriptionOperationExecutor', () => {
       onesignalId: ONESIGNAL_ID,
       subscriptionId: SUB_ID,
       token: 'test',
-      type: SubscriptionType.ChromePush,
+      type: SubscriptionType._ChromePush,
     });
 
     const res2 = executor._execute([deleteOp, updateOp]);
@@ -151,22 +153,22 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       const result = await executor._execute([createOp]);
       expect(result).toMatchObject({
-        result: ExecutionResult.SUCCESS,
-        idTranslations: {
+        _result: ExecutionResult._Success,
+        _idTranslations: {
           [SUB_ID]: BACKEND_SUBSCRIPTION_ID,
         },
       });
 
       // Verify models were updated
-      const subscriptionModel = subscriptionModelStore.getBySubscriptionId(
+      const subscriptionModel = subscriptionModelStore._getBySubscriptionId(
         BACKEND_SUBSCRIPTION_ID,
       );
       expect(subscriptionModel).toBeDefined();
@@ -178,32 +180,32 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'old-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       const updateOp = new UpdateSubscriptionOperation({
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.Email,
+        type: SubscriptionType._Email,
         token: 'new-token',
         enabled: false,
-        notification_types: NotificationType.UserOptedOut,
+        notification_types: NotificationType._UserOptedOut,
       });
 
       const result = await executor._execute([createOp, updateOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       expect(createSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
           enabled: false,
-          notification_types: NotificationType.UserOptedOut,
+          notification_types: NotificationType._UserOptedOut,
           token: 'new-token',
           sdk: __VERSION__,
-          type: SubscriptionType.ChromePush,
+          type: SubscriptionType._ChromePush,
         },
       });
     });
@@ -214,10 +216,10 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       const deleteOp = new DeleteSubscriptionOperation(
@@ -227,7 +229,7 @@ describe('SubscriptionOperationExecutor', () => {
       );
 
       const result = await executor._execute([createOp, deleteOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // API should not have been called
       expect(createSubscriptionFn).not.toHaveBeenCalled();
@@ -239,40 +241,40 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       // Retryable error
       setCreateSubscriptionError({ status: 429, retryAfter: 10 });
       const res1 = await executor._execute([createOp]);
       expect(res1).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 10,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 10,
       });
 
       // Conflict error
       setCreateSubscriptionError({ status: 400, retryAfter: 10 });
       const res2 = await executor._execute([createOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        _result: ExecutionResult._FailNoretry,
       });
 
       // Invalid error
       setCreateSubscriptionError({ status: 409, retryAfter: 10 });
       const res3 = await executor._execute([createOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        _result: ExecutionResult._FailNoretry,
       });
 
       // Unauthorized error
       setCreateSubscriptionError({ status: 401, retryAfter: 15 });
       const res4 = await executor._execute([createOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_UNAUTHORIZED,
-        retryAfterSeconds: 15,
+        _result: ExecutionResult._FailUnauthorized,
+        _retryAfterSeconds: 15,
       });
 
       // Missing error without rebuild ops
@@ -281,38 +283,36 @@ describe('SubscriptionOperationExecutor', () => {
       const res5 = await executor._execute([createOp]);
 
       expect(res5).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        _result: ExecutionResult._FailNoretry,
       });
 
       // Missing error with rebuild ops
-      subscriptionsModelStore.add(pushSubscription, ModelChangeTags.HYDRATE);
+      subscriptionsModelStore._add(pushSubscription, ModelChangeTags._Hydrate);
       await setPushToken(pushSubscription.token);
 
       const res6 = await executor._execute([createOp]);
+
+      const _operations = [
+        new LoginUserOperation(APP_ID, ONESIGNAL_ID),
+        new CreateSubscriptionOperation({
+          appId: APP_ID,
+          onesignalId: ONESIGNAL_ID,
+          enabled: true,
+          notification_types: NotificationType._Subscribed,
+          subscriptionId: pushSubscription.id,
+          token: pushSubscription.token,
+          type: SubscriptionType._ChromePush,
+        }),
+        new RefreshUserOperation(APP_ID, ONESIGNAL_ID),
+      ];
+      _operations.forEach((op, i) => {
+        op._modelId = res6._operations![i]._modelId;
+      });
+
       expect(res6).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 5,
-        operations: [
-          {
-            _name: 'login-user',
-            _appId: APP_ID,
-            _onesignalId: ONESIGNAL_ID,
-          },
-          {
-            _name: 'create-subscription',
-            _appId: APP_ID,
-            _onesignalId: ONESIGNAL_ID,
-            type: SubscriptionType.ChromePush,
-            token: pushSubscription.token,
-            enabled: true,
-            subscriptionId: pushSubscription.id,
-          },
-          {
-            _name: 'refresh-user',
-            _appId: APP_ID,
-            _onesignalId: ONESIGNAL_ID,
-          },
-        ],
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 5,
+        _operations: _operations,
       });
 
       // Missing error in retry window
@@ -320,15 +320,15 @@ describe('SubscriptionOperationExecutor', () => {
       setCreateSubscriptionError({ status: 404, retryAfter: 20 });
       const res7 = await executor._execute([createOp]);
       expect(res7).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 20,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 20,
       });
 
       // Other errors
       setCreateSubscriptionError({ status: 400 });
       const res8 = await executor._execute([createOp]);
       expect(res8).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        _result: ExecutionResult._FailNoretry,
       });
     });
   });
@@ -344,23 +344,23 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'updated-token',
         enabled: false,
-        notification_types: NotificationType.UserOptedOut,
+        notification_types: NotificationType._UserOptedOut,
         web_auth: 'some-web-auth',
         web_p256: 'some-web-p256',
       });
 
       const result = await executor._execute([updateOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       expect(updateSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
-          type: SubscriptionType.ChromePush,
+          type: SubscriptionType._ChromePush,
           enabled: false,
           token: 'updated-token',
-          notification_types: NotificationType.UserOptedOut,
+          notification_types: NotificationType._UserOptedOut,
           web_auth: 'some-web-auth',
           web_p256: 'some-web-p256',
         },
@@ -373,10 +373,10 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.Email,
+        type: SubscriptionType._Email,
         token: 'first-update',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
         web_auth: 'some-web-auth',
         web_p256: 'some-web-p256',
       });
@@ -385,24 +385,24 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'second-update',
         enabled: false,
-        notification_types: NotificationType.UserOptedOut,
+        notification_types: NotificationType._UserOptedOut,
         web_auth: 'some-web-auth-2',
         web_p256: 'some-web-p256-2',
       });
 
       const result = await executor._execute([updateOp1, updateOp2]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // Verify only the last update was used
       expect(updateSubscriptionFn).toHaveBeenCalledWith({
         subscription: {
-          type: SubscriptionType.ChromePush,
+          type: SubscriptionType._ChromePush,
           enabled: false,
           token: 'second-update',
-          notification_types: NotificationType.UserOptedOut,
+          notification_types: NotificationType._UserOptedOut,
           web_auth: 'some-web-auth-2',
           web_p256: 'some-web-p256-2',
         },
@@ -415,18 +415,18 @@ describe('SubscriptionOperationExecutor', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         token: 'test-token',
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
       });
 
       // Retryable error
       setUpdateSubscriptionError({ status: 429, retryAfter: 15 });
       const res1 = await executor._execute([updateOp]);
       expect(res1).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 15,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 15,
       });
 
       // Missing error
@@ -435,31 +435,31 @@ describe('SubscriptionOperationExecutor', () => {
       const subOp = new CreateSubscriptionOperation({
         appId: APP_ID,
         enabled: true,
-        notification_types: NotificationType.Subscribed,
+        notification_types: NotificationType._Subscribed,
         onesignalId: ONESIGNAL_ID,
         subscriptionId: SUB_ID,
         token: 'test-token',
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
       });
-      subOp._modelId = res2.operations![0]._modelId;
+      subOp._modelId = res2._operations![0]._modelId;
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
-        operations: [subOp],
+        _result: ExecutionResult._FailNoretry,
+        _operations: [subOp],
       });
 
       // Missing error with record in retry window
       newRecordsState._add(SUB_ID);
       const res3 = await executor._execute([updateOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 10,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 10,
       });
 
       // Other errors
       setUpdateSubscriptionError({ status: 400 });
       const res4 = await executor._execute([updateOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        _result: ExecutionResult._FailNoretry,
       });
     });
   });
@@ -481,10 +481,10 @@ describe('SubscriptionOperationExecutor', () => {
       );
 
       const result = await executor._execute([deleteOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // Verify model was removed
-      expect(subscriptionModelStore.get(SUB_ID)).toBeUndefined();
+      expect(subscriptionModelStore._get(SUB_ID)).toBeUndefined();
     });
 
     test('should handle network errors', async () => {
@@ -498,15 +498,15 @@ describe('SubscriptionOperationExecutor', () => {
       // Missing error
       setDeleteSubscriptionError({ status: 404 });
       const result = await executor._execute([deleteOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       // Missing error with record in retry window
       newRecordsState._add(SUB_ID);
       setDeleteSubscriptionError({ status: 404, retryAfter: 5 });
       const res2 = await executor._execute([deleteOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 5,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 5,
       });
 
       // Retryable error
@@ -517,8 +517,8 @@ describe('SubscriptionOperationExecutor', () => {
       });
       const res3 = await executor._execute([deleteOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 10,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 10,
       });
 
       // Other errors
@@ -528,7 +528,7 @@ describe('SubscriptionOperationExecutor', () => {
       });
       const res4 = await executor._execute([deleteOp]);
       expect(res4).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        _result: ExecutionResult._FailNoretry,
       });
     });
   });
@@ -547,7 +547,7 @@ describe('SubscriptionOperationExecutor', () => {
       );
 
       const result = await executor._execute([transferOp]);
-      expect(result.result).toBe(ExecutionResult.SUCCESS);
+      expect(result._result).toBe(ExecutionResult._Success);
 
       expect(transferSubscriptionFn).toHaveBeenCalledWith({
         identity: {
@@ -569,15 +569,15 @@ describe('SubscriptionOperationExecutor', () => {
       setTransferSubscriptionError({ status: 429, retryAfter: 10 });
       const res2 = await executor._execute([transferOp]);
       expect(res2).toMatchObject({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 10,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 10,
       });
 
       // Other errors
       setTransferSubscriptionError({ status: 400 });
       const res3 = await executor._execute([transferOp]);
       expect(res3).toMatchObject({
-        result: ExecutionResult.FAIL_NORETRY,
+        _result: ExecutionResult._FailNoretry,
       });
     });
   });

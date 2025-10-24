@@ -9,7 +9,7 @@ import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { limitStorePut } from '../services/limitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
-import { IS_SERVICE_WORKER } from '../utils/EnvVariables';
+import { IS_SERVICE_WORKER } from '../utils/env';
 import { once } from '../utils/utils';
 import { getAppId } from './main';
 import { incrementPageViewCount } from './pageview';
@@ -88,7 +88,7 @@ async function sessionInit(): Promise<void> {
   await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
   if (OneSignal.config?.userConfig.promptOptions?.autoPrompt && !isOptedOut) {
-    OneSignal._context.promptsManager._spawnAutoPrompts();
+    OneSignal._context._promptsManager._spawnAutoPrompts();
   }
 
   OneSignal._sessionInitAlreadyRunning = false;
@@ -188,7 +188,7 @@ export async function processExpiringSubscriptions(): Promise<boolean> {
 
   Log._debug('Subscription is considered expiring.');
   const rawPushSubscription = await context._subscriptionManager._subscribe(
-    SubscriptionStrategyKind.SubscribeNew,
+    SubscriptionStrategyKind._SubscribeNew,
   );
   await context._subscriptionManager._registerSubscription(rawPushSubscription);
   return true;

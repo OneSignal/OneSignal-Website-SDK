@@ -41,7 +41,7 @@ export async function getUserIdFromSubscriptionIdentifier(
     app_id: appId,
     device_type: deviceType,
     identifier: identifier,
-    notification_types: NotificationType.TemporaryWebRecord,
+    notification_types: NotificationType._TemporaryWebRecord,
   })
     .then((response) => {
       if (response?.result?.id) {
@@ -66,7 +66,7 @@ export async function updateUserSession(
   subscriptionId: string,
 ): Promise<void> {
   const aliasPair = {
-    label: IdentityConstants.ONESIGNAL_ID,
+    label: IdentityConstants._OneSignalID,
     id: onesignalId,
   };
   // TO DO: in future, we should aggregate session count in case network call fails
@@ -105,7 +105,7 @@ export async function sendSessionDuration(
   };
 
   const aliasPair = {
-    label: IdentityConstants.ONESIGNAL_ID,
+    label: IdentityConstants._OneSignalID,
     id: onesignalId,
   };
 
@@ -122,7 +122,7 @@ export async function sendSessionDuration(
   };
 
   outcomePayload.direct =
-    attribution.type === OutcomeAttributionType.Direct ? true : false;
+    attribution.type === OutcomeAttributionType._Direct ? true : false;
 
   try {
     await updateUserByAlias(

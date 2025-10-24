@@ -2,9 +2,9 @@ import { IDManager } from 'src/shared/managers/IDManager';
 import { Model } from '../models/Model';
 
 export const GroupComparisonType = {
-  CREATE: 0,
-  ALTER: 1,
-  NONE: 2,
+  _Create: 0,
+  _Alter: 1,
+  _None: 2,
 } as const;
 
 export type GroupComparisonValue =
@@ -78,7 +78,7 @@ export abstract class Operation<
    * which operations can be grouped with it.
    */
   get _groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.ALTER;
+    return GroupComparisonType._Alter;
   }
 
   /**

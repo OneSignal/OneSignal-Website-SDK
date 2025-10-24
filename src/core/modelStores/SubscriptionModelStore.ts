@@ -17,22 +17,22 @@ export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> 
     );
   }
 
-  getBySubscriptionId(subscriptionId: string): SubscriptionModel | undefined {
-    return super.list().find((m) => m.id === subscriptionId);
+  _getBySubscriptionId(subscriptionId: string): SubscriptionModel | undefined {
+    return super._list().find((m) => m.id === subscriptionId);
   }
 
   override _replaceAll(
     models: SubscriptionModel[],
     tag?: ModelChangeTagValue,
   ): void {
-    if (tag !== ModelChangeTags.HYDRATE) {
+    if (tag !== ModelChangeTags._Hydrate) {
       return super._replaceAll(models, tag);
     }
 
     // When hydrating, preserve properties from existing PUSH subscription
     for (const model of models) {
       if (isPushSubscriptionType(model.type)) {
-        const existingPushModel = this.get(model._modelId);
+        const existingPushModel = this._get(model._modelId);
         if (existingPushModel) {
           model.sdk = existingPushModel.sdk;
           model.device_os = existingPushModel.device_os;

@@ -1,33 +1,33 @@
 export const OPERATION_NAME = {
   // Identity Operations
-  SET_ALIAS: 'set-alias',
-  DELETE_ALIAS: 'delete-alias',
+  _SetAlias: 'set-alias',
+  _DeleteAlias: 'delete-alias',
 
   // Property Operations
-  SET_PROPERTY: 'set-property',
+  _SetProperty: 'set-property',
 
   // User Operations
-  REFRESH_USER: 'refresh-user',
-  LOGIN_USER: 'login-user',
+  _RefreshUser: 'refresh-user',
+  _LoginUser: 'login-user',
 
   // Subscription Operations
-  CREATE_SUBSCRIPTION: 'create-subscription',
-  UPDATE_SUBSCRIPTION: 'update-subscription',
-  DELETE_SUBSCRIPTION: 'delete-subscription',
-  TRANSFER_SUBSCRIPTION: 'transfer-subscription',
+  _CreateSubscription: 'create-subscription',
+  _UpdateSubscription: 'update-subscription',
+  _DeleteSubscription: 'delete-subscription',
+  _TransferSubscription: 'transfer-subscription',
 
   // Custom Events Operations
-  CUSTOM_EVENT: 'custom-event',
+  _CustomEvent: 'custom-event',
 } as const;
 
 export const IdentityConstants = {
   /**
    * The alias label for the external ID alias.
    */
-  EXTERNAL_ID: 'external_id',
+  _ExternalID: 'external_id',
 
   /**
    * The alias label for the internal OneSignal ID alias.
    */
-  ONESIGNAL_ID: 'onesignal_id',
+  _OneSignalID: 'onesignal_id',
 } as const;

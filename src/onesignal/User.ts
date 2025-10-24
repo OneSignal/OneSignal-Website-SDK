@@ -37,9 +37,9 @@ export default class User {
         identityModel._onesignalId ?? IDManager._createLocalId();
       if (!identityModel._onesignalId) {
         identityModel._setProperty(
-          IdentityConstants.ONESIGNAL_ID,
+          IdentityConstants._OneSignalID,
           onesignalId,
-          ModelChangeTags.NO_PROPAGATE,
+          ModelChangeTags._NoPropogate,
         );
       }
 
@@ -47,7 +47,7 @@ export default class User {
         propertiesModel._setProperty(
           'onesignalId',
           onesignalId,
-          ModelChangeTags.NO_PROPAGATE,
+          ModelChangeTags._NoPropogate,
         );
       }
     }
@@ -123,7 +123,7 @@ export default class User {
     if (!isValidEmail(email)) throw MalformedArgumentError('email');
 
     addSubscriptionToModels({
-      type: SubscriptionType.Email,
+      type: SubscriptionType._Email,
       token: email,
     });
   }
@@ -135,7 +135,7 @@ export default class User {
     validateStringLabel(sms, 'sms');
 
     addSubscriptionToModels({
-      type: SubscriptionType.SMS,
+      type: SubscriptionType._SMS,
       token: sms,
     });
   }
@@ -274,7 +274,7 @@ function addSubscriptionToModels({
   token: string;
 }): void {
   const hasSubscription = OneSignal._coreDirector._subscriptionModelStore
-    .list()
+    ._list()
     .find((model) => model.token === token && model.type === type);
   if (hasSubscription) return;
 
@@ -295,7 +295,7 @@ function addSubscriptionToModels({
   const subscription = {
     id: IDManager._createLocalId(),
     enabled: true,
-    notification_types: NotificationType.Subscribed,
+    notification_types: NotificationType._Subscribed,
     onesignalId,
     token,
     type,

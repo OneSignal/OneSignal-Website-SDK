@@ -52,8 +52,8 @@ describe('OperationRepo', () => {
   let opRepo: OperationRepo;
 
   const getGroupedOp = () => [
-    new Operation('1', GroupComparisonType.CREATE, 'abc'),
-    new Operation('2', GroupComparisonType.CREATE, 'abc'),
+    new Operation('1', GroupComparisonType._Create, 'abc'),
+    new Operation('2', GroupComparisonType._Create, 'abc'),
   ];
 
   beforeEach(async () => {
@@ -81,8 +81,8 @@ describe('OperationRepo', () => {
   describe('Enqueue/Load Operations', () => {
     test('can enqueue and load cached operations', async () => {
       const cachedOperations = [new Operation('2'), new Operation('3')];
-      mockOperationModelStore.add(cachedOperations[0]);
-      mockOperationModelStore.add(cachedOperations[1]);
+      mockOperationModelStore._add(cachedOperations[0]);
+      mockOperationModelStore._add(cachedOperations[1]);
 
       opRepo._enqueue(mockOperation);
       expect(opRepo._queue).toEqual([
@@ -129,11 +129,11 @@ describe('OperationRepo', () => {
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         token: 'some-token',
-        type: SubscriptionType.ChromePush,
+        type: SubscriptionType._ChromePush,
         subscriptionId: SUB_ID,
       });
       opRepo._enqueue(op2);
-      expect(mockOperationModelStore.list()).toEqual([op1, op2]);
+      expect(mockOperationModelStore._list()).toEqual([op1, op2]);
 
       // persist happens in the background, so we need to wait for it to complete
       let ops: IndexedDBSchema['operations']['value'][] = [];
@@ -221,7 +221,7 @@ describe('OperationRepo', () => {
   });
 
   test('can get grouped operations', () => {
-    const singleOp = new Operation('1', GroupComparisonType.NONE);
+    const singleOp = new Operation('1', GroupComparisonType._None);
     const groupedOps = getGroupedOp();
 
     let op = {
@@ -249,12 +249,12 @@ describe('OperationRepo', () => {
 
     // can group operations by same modify comparison key
     op = {
-      operation: new Operation('1', GroupComparisonType.ALTER, '', 'abc'),
+      operation: new Operation('1', GroupComparisonType._Alter, '', 'abc'),
       bucket: 0,
       retries: 0,
     };
     op2 = {
-      operation: new Operation('2', GroupComparisonType.ALTER, '', 'abc'),
+      operation: new Operation('2', GroupComparisonType._Alter, '', 'abc'),
       bucket: 0,
       retries: 0,
     };
@@ -263,7 +263,7 @@ describe('OperationRepo', () => {
 
     // throws for no comparison keys
     op = {
-      operation: new Operation('1', GroupComparisonType.CREATE),
+      operation: new Operation('1', GroupComparisonType._Create),
       bucket: 0,
       retries: 0,
     };
@@ -278,7 +278,7 @@ describe('OperationRepo', () => {
     records.set(blockedId, Date.now());
 
     op = {
-      operation: new Operation('1', GroupComparisonType.CREATE, 'def'),
+      operation: new Operation('1', GroupComparisonType._Create, 'def'),
       bucket: 0,
       retries: 0,
     };
@@ -291,24 +291,24 @@ describe('OperationRepo', () => {
   describe('Executor Operations', () => {
     test('can handle success operation and process additional operations', async () => {
       const additionalOps = [
-        new Operation('3', GroupComparisonType.NONE),
-        new Operation('4', GroupComparisonType.NONE),
+        new Operation('3', GroupComparisonType._None),
+        new Operation('4', GroupComparisonType._None),
       ];
 
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.SUCCESS,
-        operations: additionalOps,
+        _result: ExecutionResult._Success,
+        _operations: additionalOps,
       });
 
       opRepo._enqueue(mockOperation);
-      expect(mockOperationModelStore.list()).toEqual([mockOperation]);
+      expect(mockOperationModelStore._list()).toEqual([mockOperation]);
 
       // execute the operation
       await executeOps(opRepo);
 
       // operation should be removed from the model store
       // additional operations should be added to the model store
-      expect(mockOperationModelStore.list()).toEqual([
+      expect(mockOperationModelStore._list()).toEqual([
         additionalOps[0],
         additionalOps[1],
       ]);
@@ -327,27 +327,27 @@ describe('OperationRepo', () => {
     });
 
     test.each([
-      ['FailUnauthorized', ExecutionResult.FAIL_UNAUTHORIZED],
-      ['FailNoRetry', ExecutionResult.FAIL_NORETRY],
-      ['FailConflict', ExecutionResult.FAIL_CONFLICT],
+      ['FailUnauthorized', ExecutionResult._FailUnauthorized],
+      ['FailNoRetry', ExecutionResult._FailNoretry],
+      ['FailConflict', ExecutionResult._FailConflict],
     ])('can handle failed operation: %s', async (_, failResult) => {
       executeFn.mockResolvedValueOnce({
-        result: failResult,
+        _result: failResult,
       });
 
       opRepo._enqueue(mockOperation);
-      expect(mockOperationModelStore.list()).toEqual([mockOperation]);
+      expect(mockOperationModelStore._list()).toEqual([mockOperation]);
 
       // execute the operation
       await executeOps(opRepo);
 
       // operation should be removed from the model store
-      expect(mockOperationModelStore.list()).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
     });
 
     test('can handle success starting only operation', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.SUCCESS_STARTING_ONLY,
+        _result: ExecutionResult._SuccessStartingOnly,
       });
 
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
@@ -356,7 +356,7 @@ describe('OperationRepo', () => {
       opRepo._enqueue(groupedOps[0]);
       opRepo._enqueue(groupedOps[1]);
 
-      expect(mockOperationModelStore.list()).toEqual([
+      expect(mockOperationModelStore._list()).toEqual([
         groupedOps[0],
         groupedOps[1],
       ]);
@@ -365,7 +365,7 @@ describe('OperationRepo', () => {
       expect(executeOperationsSpy).toHaveBeenCalledOnce();
 
       // operation should be removed from the model store
-      expect(mockOperationModelStore.list()).toEqual([groupedOps[1]]);
+      expect(mockOperationModelStore._list()).toEqual([groupedOps[1]]);
 
       // group operations will be added to the queue except for the first/starting item
       expect(opRepo._queue).toEqual([
@@ -379,8 +379,8 @@ describe('OperationRepo', () => {
 
     test('can handle fail retry operation and delay next execution', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.FAIL_RETRY,
-        retryAfterSeconds: 30,
+        _result: ExecutionResult._FailRetry,
+        _retryAfterSeconds: 30,
       });
 
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
@@ -415,7 +415,7 @@ describe('OperationRepo', () => {
 
     test('can handle fail pause op repo operation', async () => {
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.FAIL_PAUSE_OPREPO,
+        _result: ExecutionResult._FailPauseOpRepo,
       });
 
       const groupedOps = getGroupedOp();
@@ -446,13 +446,13 @@ describe('OperationRepo', () => {
         '1': '2',
       };
       executeFn.mockResolvedValueOnce({
-        result: ExecutionResult.SUCCESS,
-        idTranslations,
+        _result: ExecutionResult._Success,
+        _idTranslations: idTranslations,
       });
 
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
-      const newOp = new Operation('2', GroupComparisonType.NONE);
+      const newOp = new Operation('2', GroupComparisonType._None);
       const opTranslateIdsSpy = vi.spyOn(newOp, '_translateIds');
 
       opRepo._enqueue(mockOperation);
@@ -474,7 +474,7 @@ describe('OperationRepo', () => {
     test('should process non-groupable operations separately', async () => {
       const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
 
-      const newOp = new Operation('2', GroupComparisonType.NONE);
+      const newOp = new Operation('2', GroupComparisonType._None);
       opRepo._enqueue(mockOperation);
       opRepo._enqueue(newOp);
       await executeOps(opRepo);
@@ -519,7 +519,7 @@ class Operation extends OperationBase<{ value: string }> {
 
   constructor(
     value: string,
-    groupComparisonTypeValue: GroupComparisonValue = GroupComparisonType.NONE,
+    groupComparisonTypeValue: GroupComparisonValue = GroupComparisonType._None,
     createComparisonKey = '',
     modifyComparisonKey = '',
     applyToRecordId = '',
@@ -572,13 +572,13 @@ class Operation extends OperationBase<{ value: string }> {
 
 const mockOperation = new Operation(
   '1',
-  GroupComparisonType.CREATE,
+  GroupComparisonType._Create,
   'abc',
   '',
   '123',
 );
 const executeFn: Mock<IOperationExecutor['_execute']> = vi.fn(async () => ({
-  result: ExecutionResult.SUCCESS,
+  _result: ExecutionResult._Success,
 }));
 
 const mockExecutor: IOperationExecutor = {

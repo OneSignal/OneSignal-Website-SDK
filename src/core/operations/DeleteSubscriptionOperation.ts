@@ -9,11 +9,11 @@ export class DeleteSubscriptionOperation extends BaseSubscriptionOperation {
   constructor();
   constructor(appId: string, onesignalId: string, subscriptionId: string);
   constructor(appId?: string, onesignalId?: string, subscriptionId?: string) {
-    super(OPERATION_NAME.DELETE_SUBSCRIPTION, appId, onesignalId);
-    if (subscriptionId) this.subscriptionId = subscriptionId;
+    super(OPERATION_NAME._DeleteSubscription, appId, onesignalId);
+    if (subscriptionId) this._subscriptionId = subscriptionId;
   }
 
   override get _groupComparisonType(): GroupComparisonValue {
-    return GroupComparisonType.NONE;
+    return GroupComparisonType._None;
   }
 }

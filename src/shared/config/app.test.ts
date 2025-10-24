@@ -16,7 +16,7 @@ vi.useFakeTimers();
 const SERVICE_WORKER_PATH = 'push/onesignal/';
 
 const serverConfig = TestContext.getFakeServerAppConfig(
-  ConfigIntegrationKind.Custom,
+  ConfigIntegrationKind._Custom,
 );
 
 describe('Config Helpers', () => {
@@ -196,10 +196,10 @@ describe('Config Helpers', () => {
       };
 
       const fakeServerConfig = TestContext.getFakeServerAppConfig(
-        ConfigIntegrationKind.Custom,
+        ConfigIntegrationKind._Custom,
       );
       const finalConfig = getUserConfigForConfigIntegrationKind(
-        ConfigIntegrationKind.Custom,
+        ConfigIntegrationKind._Custom,
         fakeUserConfig,
         fakeServerConfig,
       );
@@ -212,10 +212,10 @@ describe('Config Helpers', () => {
       };
 
       const fakeServerConfig = TestContext.getFakeServerAppConfig(
-        ConfigIntegrationKind.Custom,
+        ConfigIntegrationKind._Custom,
       );
       const finalConfig = getUserConfigForConfigIntegrationKind(
-        ConfigIntegrationKind.Custom,
+        ConfigIntegrationKind._Custom,
         fakeUserConfig,
         fakeServerConfig,
       );
@@ -232,10 +232,10 @@ describe('Config Helpers', () => {
       };
 
       const fakeServerConfig = TestContext.getFakeServerAppConfig(
-        ConfigIntegrationKind.Custom,
+        ConfigIntegrationKind._Custom,
       );
       const finalConfig = getUserConfigForConfigIntegrationKind(
-        ConfigIntegrationKind.Custom,
+        ConfigIntegrationKind._Custom,
         fakeUserConfig,
         fakeServerConfig,
       );
@@ -253,11 +253,11 @@ describe('Config Helpers', () => {
       };
 
       const fakeServerConfig = TestContext.getFakeServerAppConfig(
-        ConfigIntegrationKind.TypicalSite,
+        ConfigIntegrationKind._TypicalSite,
       );
 
       const finalConfig = getUserConfigForConfigIntegrationKind(
-        ConfigIntegrationKind.TypicalSite,
+        ConfigIntegrationKind._TypicalSite,
         fakeUserConfig,
         fakeServerConfig,
       );
@@ -279,11 +279,11 @@ describe('Config Helpers', () => {
       };
 
       const fakeServerConfig = TestContext.getFakeServerAppConfig(
-        ConfigIntegrationKind.TypicalSite,
+        ConfigIntegrationKind._TypicalSite,
       );
 
       const finalConfig = getUserConfigForConfigIntegrationKind(
-        ConfigIntegrationKind.TypicalSite,
+        ConfigIntegrationKind._TypicalSite,
         fakeUserConfig,
         fakeServerConfig,
       );
