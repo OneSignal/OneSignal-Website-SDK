@@ -6,7 +6,6 @@ import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 import OneSignal from '../../../src/onesignal/OneSignal';
-import { ONESIGNAL_EVENTS } from '../../../src/onesignal/OneSignalEvents';
 import User from '../../../src/onesignal/User';
 import UserNamespace from '../../../src/onesignal/UserNamespace';
 import Context from '../../../src/page/models/Context';
@@ -23,7 +22,6 @@ declare const global: {
 
 export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal = OneSignal;
-  global.OneSignal.EVENTS = ONESIGNAL_EVENTS;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
   global.OneSignal._context = new Context(global.OneSignal.config);
   global.OneSignal._initialized = true;
