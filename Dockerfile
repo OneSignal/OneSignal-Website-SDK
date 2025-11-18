@@ -1,4 +1,4 @@
-FROM node:14.21.1
+FROM node:22
 WORKDIR /sdk
 COPY package.json .
 RUN yarn
