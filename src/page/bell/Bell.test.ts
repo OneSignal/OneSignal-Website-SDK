@@ -1,5 +1,4 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { vi } from 'vitest';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import Bell from './Bell';
 

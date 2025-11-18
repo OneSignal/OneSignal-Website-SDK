@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import Bell from './Bell';
 import Button from './Button';
 import { MessageType } from './constants';

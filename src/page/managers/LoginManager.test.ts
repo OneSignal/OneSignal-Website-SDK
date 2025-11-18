@@ -2,7 +2,6 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { db } from 'src/shared/database/client';
 import Log from 'src/shared/libraries/Log';
-import { vi } from 'vitest';
 import LoginManager from './LoginManager';
 
 vi.mock('../../onesignal/userDirector', async (importOriginal) => {

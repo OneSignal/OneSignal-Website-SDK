@@ -1,5 +1,4 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { vi } from 'vitest';
 import PermissionManager from './PermissionManager';
 
 vi.mock('../environment/detect', async (importOriginal) => {

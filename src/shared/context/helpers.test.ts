@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import { enforceAlias, enforceAppId, timeoutPromise } from './helpers';
 
 describe('context/helpers', () => {
