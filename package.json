@@ -33,7 +33,8 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest watch --coverage",
     "validate:build": "node build/scripts/validate.js",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig"
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig --fix"
   },
   "config": {
     "sdkVersion": "160510"
