@@ -19,7 +19,6 @@ describe('PermissionManager', () => {
   test('_getPermissionStatus resolves from context manager', async () => {
     const pm = new PermissionManager();
     const spy = vi
-      // @ts-expect-error private access
       .spyOn(OneSignal._context._permissionManager, '_getNotificationPermission')
       .mockResolvedValue('granted');
     await expect(pm._getPermissionStatus()).resolves.toBe('granted');

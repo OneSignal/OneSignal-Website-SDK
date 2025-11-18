@@ -14,16 +14,15 @@ describe('TagManager', () => {
 
   test('_storeTagValuesToUpdate/_storeRemotePlayerTags set internal state', () => {
     const tm = new TagManager(OneSignal._context);
-    tm._storeRemotePlayerTags({ a: 1 });
+    tm._storeRemotePlayerTags({ a: '1' });
     tm._storeTagValuesToUpdate({ a: true, b: false });
-    expect(OneSignal._context._tagManager._remoteTags).toEqual({ a: 1 });
-    // @ts-expect-error private access for test
+    expect(OneSignal._context._tagManager._remoteTags).toEqual({ a: '1' });
     expect((tm as any)._tagsFromTaggingContainer).toEqual({ a: true, b: false });
   });
 
   test('_sendTags calls addTags when diff is non-empty and returns diff', async () => {
     const tm = new TagManager(OneSignal._context);
-    tm._storeRemotePlayerTags({ a: 1 });
+    tm._storeRemotePlayerTags({ a: '1' });
     tm._storeTagValuesToUpdate({ a: false, b: true }); // converts to { a:0, b:1 } and diff => { a:0, b:1 } vs { a:1 } -> { a:0, b:1 }
     const result = await tm._sendTags();
     expect(OneSignal.User.addTags).toHaveBeenCalledWith(result);
@@ -34,7 +33,6 @@ describe('TagManager', () => {
     const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => undefined as any);
     const tm = new TagManager(OneSignal._context);
     // Ensure this instance uses the same remote tags that will be diffed
-    // @ts-expect-error private for test
     (tm as any)._remoteTags = { c: '1' };
     tm._storeTagValuesToUpdate({ c: true }); // converts to { c:'1' } -> diff {}
 

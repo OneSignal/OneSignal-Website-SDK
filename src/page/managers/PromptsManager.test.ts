@@ -30,7 +30,6 @@ describe('PromptsManager', () => {
     (detect.requiresUserInteraction as any).mockReturnValue(false);
 
     const pm = new PromptsManager(OneSignal._context);
-    // @ts-expect-error private access
     expect(pm['_shouldForceSlidedownOverNative']()).toBe(true);
   });
 
@@ -43,7 +42,6 @@ describe('PromptsManager', () => {
     (detect.requiresUserInteraction as any).mockReturnValue(true);
 
     const pm = new PromptsManager(OneSignal._context);
-    // @ts-expect-error private access
     expect(pm['_shouldForceSlidedownOverNative']()).toBe(true);
   });
 

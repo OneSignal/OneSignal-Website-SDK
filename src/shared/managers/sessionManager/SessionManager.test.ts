@@ -139,7 +139,6 @@ describe('SessionManager', () => {
       vi.spyOn(detect, 'supportsServiceWorkers').mockReturnValue(true);
       const sm = new SessionManager(OneSignal._context);
       const unicastSpy = vi
-        // @ts-expect-error private access
         .spyOn(OneSignal._context._workerMessenger, '_unicast')
         .mockResolvedValue(undefined as any);
 
