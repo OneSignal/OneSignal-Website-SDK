@@ -12,14 +12,12 @@ describe('Dialog', () => {
       </div>
     `;
     // Polyfill Web Animations API method used by AnimatedElement
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (HTMLElement.prototype as any).getAnimations = () => [];
   });
 
   test('_show populates content and toggles shown flag', async () => {
     const bell = new Bell({ enable: false });
     // Put bell in unsubscribed state to render subscribe button
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (bell as any)._state = BellState._Unsubscribed;
     // Force subscription manager response to "disabled"
     const sm = OneSignal._context._subscriptionManager as any;
@@ -35,7 +33,6 @@ describe('Dialog', () => {
 
   test('_hide removes shown class and keeps state consistent', async () => {
     const bell = new Bell({ enable: false });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (bell as any)._state = BellState._Unsubscribed;
     const sm = OneSignal._context._subscriptionManager as any;
     vi.spyOn(sm, '_isPushNotificationsEnabled').mockResolvedValue(false);
@@ -47,5 +44,3 @@ describe('Dialog', () => {
     expect(dialog['_shown']).toBe(false);
   });
 });
-
-

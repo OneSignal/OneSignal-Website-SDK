@@ -16,9 +16,6 @@ beforeEach(() => {
   );
 });
 
-afterEach(() => {
-  });
-
 /** onSdkInitialized */
 test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
   OneSignal._emitter.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {

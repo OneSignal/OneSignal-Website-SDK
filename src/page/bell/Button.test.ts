@@ -8,7 +8,6 @@ describe('Button', () => {
       <div class="onesignal-bell-launcher-button"></div>
       <div class="onesignal-bell-launcher-message"></div>
     `;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (globalThis as any).OneSignal = (globalThis as any).OneSignal ?? {
       _emitter: {
         once: () => undefined,
@@ -39,5 +38,3 @@ describe('Button', () => {
     expect(button['_isHandlingClick']).toBe(false);
   });
 });
-
-

@@ -26,18 +26,12 @@ describe('context/helpers', () => {
   });
 
   test('enforceAlias throws when label or id is empty', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect(() => enforceAlias({ label: '', id: '' } as any)).toThrow(
+    expect(() => enforceAlias({ label: '', id: '' })).toThrow(
       'Alias label cannot be empty',
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect(() => enforceAlias({ label: 'x', id: '' } as any)).toThrow(
+    expect(() => enforceAlias({ label: 'x', id: '' })).toThrow(
       'Alias id cannot be empty',
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect(() => enforceAlias({ label: 'x', id: 'y' } as any)).not.toThrow();
+    expect(() => enforceAlias({ label: 'x', id: 'y' })).not.toThrow();
   });
 });
-
-
-

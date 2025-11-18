@@ -12,8 +12,7 @@ describe('Message', () => {
       <div class="onesignal-bell-launcher-badge"></div>
     `;
     // Polyfill Web Animations API method used by AnimatedElement
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (HTMLElement.prototype as any).getAnimations = () => [];
+    HTMLElement.prototype.getAnimations = () => [];
     vi.useFakeTimers();
   });
 
@@ -29,5 +28,3 @@ describe('Message', () => {
     expect(message['_shown']).toBe(false);
   });
 });
-
-

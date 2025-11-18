@@ -5,7 +5,6 @@ describe('IDManager', () => {
     // mock crypto.randomUUID to deterministic value
     const uuids = ['u1', 'u2', 'u3'];
     let i = 0;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.spyOn(global as any, 'crypto', 'get').mockReturnValue({
       randomUUID: () => uuids[i++],
     });
@@ -23,6 +22,3 @@ describe('IDManager', () => {
     expect(IDManager._isLocalId(null as unknown as string)).toBe(false);
   });
 });
-
-
-

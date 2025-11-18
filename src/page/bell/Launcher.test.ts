@@ -7,10 +7,8 @@ describe('Launcher', () => {
       <div class="onesignal-bell-launcher"></div>
     `;
     // Polyfill Web Animations API method used by AnimatedElement
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (HTMLElement.prototype as any).getAnimations = () => [];
+    HTMLElement.prototype.getAnimations = () => [];
     // Minimal OneSignal to satisfy any optional accesses down the line
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (globalThis as any).OneSignal = (globalThis as any).OneSignal ?? {};
   });
 
@@ -42,5 +40,3 @@ describe('Launcher', () => {
     expect(launcher['_active']).toBe(false);
   });
 });
-
-

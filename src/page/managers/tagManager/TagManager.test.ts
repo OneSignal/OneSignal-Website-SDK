@@ -5,9 +5,8 @@ import TagManager from './TagManager';
 describe('TagManager', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
-        // ensure addTags exists and is stubbed
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (OneSignal as any).User.addTags = vi.fn().mockResolvedValue(undefined);
+    // ensure addTags exists and is stubbed
+    OneSignal.User.addTags = vi.fn().mockResolvedValue(undefined);
   });
 
   test('_storeTagValuesToUpdate/_storeRemotePlayerTags set internal state', () => {
@@ -15,7 +14,11 @@ describe('TagManager', () => {
     tm._storeRemotePlayerTags({ a: '1' });
     tm._storeTagValuesToUpdate({ a: true, b: false });
     expect(OneSignal._context._tagManager._remoteTags).toEqual({ a: '1' });
-    expect((tm as any)._tagsFromTaggingContainer).toEqual({ a: true, b: false });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((tm as any)._tagsFromTaggingContainer).toEqual({
+      a: true,
+      b: false,
+    });
   });
 
   test('_sendTags calls addTags when diff is non-empty and returns diff', async () => {
@@ -28,10 +31,10 @@ describe('TagManager', () => {
   });
 
   test('_sendTags returns {} and warns when no change', async () => {
-    const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => undefined as any);
+    const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => undefined);
     const tm = new TagManager(OneSignal._context);
     // Ensure this instance uses the same remote tags that will be diffed
-    (tm as any)._remoteTags = { c: '1' };
+    tm._remoteTags = { c: '1' };
     tm._storeTagValuesToUpdate({ c: true }); // converts to { c:'1' } -> diff {}
 
     const result = await tm._sendTags();
@@ -40,5 +43,3 @@ describe('TagManager', () => {
     expect(OneSignal.User.addTags).not.toHaveBeenCalled();
   });
 });
-
-

@@ -27,5 +27,3 @@ describe('Badge', () => {
     expect(badge['_content']).toBe('');
   });
 });
-
-

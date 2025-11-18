@@ -9,16 +9,8 @@ describe('Bell', () => {
   });
 
   test('constructor early-returns when enable=false and applies defaults', () => {
-    const spyInstall = vi.spyOn(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (Bell.prototype as any),
-      '_installEventHooks',
-    );
-    const spyUpdate = vi.spyOn(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (Bell.prototype as any),
-      '_updateState',
-    );
+    const spyInstall = vi.spyOn(Bell.prototype as any, '_installEventHooks');
+    const spyUpdate = vi.spyOn(Bell.prototype, '_updateState');
 
     const bell = new Bell({ enable: false });
     expect(bell._options.size).toBe('medium');
@@ -30,12 +22,10 @@ describe('Bell', () => {
 
   test('constructor validates and installs hooks when enable=true', () => {
     const spyInstall = vi
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .spyOn(Bell.prototype as any, '_installEventHooks')
       .mockImplementation(() => undefined);
     const spyUpdate = vi
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .spyOn(Bell.prototype as any, '_updateState')
+      .spyOn(Bell.prototype, '_updateState')
       .mockImplementation(() => undefined);
 
     // Valid non-defaults to ensure validation path runs
@@ -56,10 +46,7 @@ describe('Bell', () => {
     const bell = new Bell({ enable: false });
     const trigger = vi.spyOn(OneSignalEvent, '_trigger');
     // transition should emit
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (bell as any)._setState(1 /* _Subscribed */);
+    bell._setState(1 /* _Subscribed */);
     expect(trigger).toHaveBeenCalled();
   });
 });
-
-

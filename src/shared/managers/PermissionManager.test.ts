@@ -20,36 +20,39 @@ describe('PermissionManager', () => {
     test('resolves from context manager', async () => {
       const pm = new PermissionManager();
       const spy = vi
-        .spyOn(OneSignal._context._permissionManager, '_getNotificationPermission')
+        .spyOn(
+          OneSignal._context._permissionManager,
+          '_getNotificationPermission',
+        )
         .mockResolvedValue('granted');
       await expect(pm._getPermissionStatus()).resolves.toBe('granted');
       expect(spy).toHaveBeenCalled();
     });
 
     test('throws if context is undefined', async () => {
-      OneSignal._context = undefined;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      OneSignal._context = undefined as any;
       const pm = new PermissionManager();
-      await expect(pm._getPermissionStatus()).rejects.toThrow('OneSignal.context is undefined. Call init first');
+      await expect(pm._getPermissionStatus()).rejects.toThrow(
+        'OneSignal.context is undefined. Call init first',
+      );
     });
   });
 
   test('_getNotificationPermission uses legacy Safari path and requires webId', async () => {
-    vi.spyOn(detect, 'useSafariLegacyPush')
-    .mockReturnValue(true);
+    vi.spyOn(detect, 'useSafariLegacyPush').mockReturnValue(true);
 
     const pm = new PermissionManager();
-    await expect(pm._getNotificationPermission(undefined))
-      .rejects.toThrow('"safariWebId" is empty');
+    await expect(pm._getNotificationPermission(undefined)).rejects.toThrow(
+      '"safariWebId" is empty',
+    );
   });
 
   test('_getNotificationPermission uses W3C Notification.permission when not legacy', async () => {
-    vi.spyOn(detect, 'useSafariLegacyPush')
-    .mockReturnValue(false);
+    vi.spyOn(detect, 'useSafariLegacyPush').mockReturnValue(false);
     MockNotification.permission = 'default';
 
     const pm = new PermissionManager();
     await expect(pm['_getNotificationPermission']()).resolves?.toBe('default');
   });
 });
-
-

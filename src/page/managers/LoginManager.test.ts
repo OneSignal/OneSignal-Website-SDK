@@ -5,7 +5,8 @@ import Log from 'src/shared/libraries/Log';
 import LoginManager from './LoginManager';
 
 vi.mock('../../onesignal/userDirector', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('../../onesignal/userDirector')>();
+  const mod =
+    await importOriginal<typeof import('../../onesignal/userDirector')>();
   return {
     ...mod,
     createUserOnServer: vi.fn().mockResolvedValue(undefined),
@@ -15,38 +16,54 @@ vi.mock('../../onesignal/userDirector', async (importOriginal) => {
 describe('LoginManager', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
-      });
+  });
 
   test('login: skips when externalId unchanged and logs debug', async () => {
-    const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => undefined as any);
+    const debugSpy = vi
+      .spyOn(Log, '_debug')
+      .mockImplementation(() => undefined);
     await updateIdentityModel('external_id', 'same-id');
 
     await LoginManager.login('same-id');
-    expect(debugSpy).toHaveBeenCalledWith('Login: External ID already set, skipping login');
+    expect(debugSpy).toHaveBeenCalledWith(
+      'Login: External ID already set, skipping login',
+    );
   });
 
   test('login: stores token when provided and enqueues operations', async () => {
     const dbSpy = vi.spyOn(db, 'put');
     // mock push subscription exists so transfer op enqueues
-    vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue({
+    vi.spyOn(
+      OneSignal._coreDirector,
+      '_getPushSubscriptionModel',
+    ).mockResolvedValue({
       id: 'push-sub-id',
     } as any);
-    const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue').mockResolvedValue(undefined as any);
+    const enqueueSpy = vi
+      .spyOn(OneSignal._coreDirector._operationRepo, '_enqueue')
+      .mockResolvedValue(undefined);
     const enqueueAndWaitSpy = vi
       .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
-      .mockResolvedValue(undefined as any);
+      .mockResolvedValue(undefined);
 
     await LoginManager.login('new-external-id', 'jwt-token-123');
-    expect(dbSpy).toHaveBeenCalledWith('Ids', { id: 'jwt-token-123', type: 'jwtToken' });
+    expect(dbSpy).toHaveBeenCalledWith('Ids', {
+      id: 'jwt-token-123',
+      type: 'jwtToken',
+    });
     expect(enqueueSpy).toHaveBeenCalled();
     expect(enqueueAndWaitSpy).toHaveBeenCalled();
   });
 
   test('logout: no external id logs debug and returns', async () => {
-    const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => undefined as any);
+    const debugSpy = vi
+      .spyOn(Log, '_debug')
+      .mockImplementation(() => undefined);
     await updateIdentityModel('external_id', undefined);
     await LoginManager.logout();
-    expect(debugSpy).toHaveBeenCalledWith('Logout: User is not logged in, skipping logout');
+    expect(debugSpy).toHaveBeenCalledWith(
+      'Logout: User is not logged in, skipping logout',
+    );
   });
 
   test('logout: with external id resets models and creates anonymous user', async () => {
@@ -56,6 +73,3 @@ describe('LoginManager', () => {
     expect(userDirector.createUserOnServer).toHaveBeenCalled();
   });
 });
-
-
-
