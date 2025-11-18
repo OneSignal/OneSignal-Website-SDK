@@ -1,6 +1,6 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import Log from 'src/shared/libraries/Log';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { vi } from 'vitest';
 import TagManager from './TagManager';
 
 describe('TagManager', () => {

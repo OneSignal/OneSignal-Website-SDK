@@ -1,5 +1,5 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { vi } from 'vitest';
 import Bell from './Bell';
 import Dialog from './Dialog';
 import { BellState } from './constants';

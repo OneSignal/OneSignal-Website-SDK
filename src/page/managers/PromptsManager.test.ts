@@ -1,6 +1,6 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupLoadStylesheet } from '__test__/support/helpers/setup';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { vi } from 'vitest';
 import { PromptsManager } from './PromptsManager';
 
 vi.mock('src/shared/useragent/detect', async (importOriginal) => {

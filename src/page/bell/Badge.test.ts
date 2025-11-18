@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, test } from 'vitest';
 import Badge from './Badge';
 
 describe('Badge', () => {
