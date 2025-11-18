@@ -4,7 +4,7 @@ import Message from './Message';
 
 describe('Message', () => {
   beforeEach(() => {
-    TestEnvironment.initialize({ initOneSignalId: false });
+    TestEnvironment.initialize();
     document.body.innerHTML = `
       <div class="onesignal-bell-launcher-message">
         <div class="onesignal-bell-launcher-message-body"></div>

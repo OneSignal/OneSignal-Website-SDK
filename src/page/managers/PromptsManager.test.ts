@@ -16,9 +16,8 @@ vi.mock('src/shared/useragent/detect', async (importOriginal) => {
 
 describe('PromptsManager', () => {
   beforeEach(() => {
-    TestEnvironment.initialize({ initOneSignalId: true, initUserAndPushSubscription: false });
-    vi.restoreAllMocks();
-  });
+    TestEnvironment.initialize();
+      });
 
   test('_shouldForceSlidedownOverNative returns true on Chrome>=63 mobile/tablet', async () => {
     const detect = await import('src/shared/useragent/detect');

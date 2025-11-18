@@ -17,8 +17,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  vi.restoreAllMocks();
-});
+  });
 
 /** onSdkInitialized */
 test('onSdkInitialized: ensure public sdk initialized triggered', async () => {

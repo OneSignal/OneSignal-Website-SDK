@@ -5,7 +5,7 @@ import Bell from './Bell';
 describe('Bell', () => {
   beforeEach(() => {
     // Set up OneSignal globals/context to avoid accidental runtime lookups
-    TestEnvironment.initialize({ initOneSignalId: false });
+    TestEnvironment.initialize();
   });
 
   test('constructor early-returns when enable=false and applies defaults', () => {

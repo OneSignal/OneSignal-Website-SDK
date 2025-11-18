@@ -13,8 +13,7 @@ vi.mock('../environment/detect', async (importOriginal) => {
 
 describe('PermissionManager', () => {
   beforeEach(() => {
-    TestEnvironment.initialize({ initOneSignalId: true, initUserAndPushSubscription: false });
-    vi.restoreAllMocks();
+    TestEnvironment.initialize();
   });
 
   describe('_getPermissionStatus', () => {

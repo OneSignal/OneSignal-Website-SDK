@@ -5,7 +5,7 @@ import { BellState } from './constants';
 
 describe('Dialog', () => {
   beforeEach(() => {
-    TestEnvironment.initialize({ initOneSignalId: false });
+    TestEnvironment.initialize();
     document.body.innerHTML = `
       <div class="onesignal-bell-launcher-dialog">
         <div class="onesignal-bell-launcher-dialog-body"></div>

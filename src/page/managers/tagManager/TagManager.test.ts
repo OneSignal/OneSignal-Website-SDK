@@ -4,9 +4,8 @@ import TagManager from './TagManager';
 
 describe('TagManager', () => {
   beforeEach(() => {
-    TestEnvironment.initialize({ initOneSignalId: true, initUserAndPushSubscription: false });
-    vi.restoreAllMocks();
-    // ensure addTags exists and is stubbed
+    TestEnvironment.initialize();
+        // ensure addTags exists and is stubbed
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (OneSignal as any).User.addTags = vi.fn().mockResolvedValue(undefined);
   });

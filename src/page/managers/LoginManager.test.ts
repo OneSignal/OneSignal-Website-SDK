@@ -14,9 +14,8 @@ vi.mock('../../onesignal/userDirector', async (importOriginal) => {
 
 describe('LoginManager', () => {
   beforeEach(() => {
-    TestEnvironment.initialize({ initOneSignalId: true, initUserAndPushSubscription: false });
-    vi.restoreAllMocks();
-  });
+    TestEnvironment.initialize();
+      });
 
   test('login: skips when externalId unchanged and logs debug', async () => {
     const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => undefined as any);
