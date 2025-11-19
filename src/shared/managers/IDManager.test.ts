@@ -3,11 +3,13 @@ import { IDManager } from './IDManager';
 describe('IDManager', () => {
   test('_createLocalId uses prefix and is unique-ish', () => {
     // mock crypto.randomUUID to deterministic value
-    const uuids = ['u1', 'u2', 'u3'];
     let i = 0;
-    vi.spyOn(global as any, 'crypto', 'get').mockReturnValue({
-      randomUUID: () => uuids[i++],
-    });
+    const uuids = [
+      'a-b-c-d-e',
+      'f-g-h-i-j',
+    ] satisfies `${string}-${string}-${string}-${string}-${string}`[];
+    vi.spyOn(window.crypto, 'randomUUID').mockImplementation(() => uuids[i++]);
+
     const a = IDManager._createLocalId();
     const b = IDManager._createLocalId();
     expect(a.startsWith(IDManager.LOCAL_PREFIX)).toBe(true);
