@@ -2,9 +2,12 @@ import { EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import LoginManager from 'src/page/managers/LoginManager';
+import * as detect from 'src/shared/environment/detect';
 import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { SessionManager } from './SessionManager';
+
+const supportsServiceWorkersSpy = vi.spyOn(detect, 'supportsServiceWorkers');
 
 vi.spyOn(Log, '_error').mockImplementation(() => '');
 
@@ -131,12 +134,10 @@ describe('SessionManager', () => {
   describe('Core behaviors', () => {
     beforeEach(() => {
       TestEnvironment.initialize();
-      vi.restoreAllMocks();
     });
 
     test('_notifySWToUpsertSession posts to worker when SW supported', async () => {
-      const detect = await import('src/shared/environment/detect');
-      vi.spyOn(detect, 'supportsServiceWorkers').mockReturnValue(true);
+      supportsServiceWorkersSpy.mockReturnValue(true);
       const sm = new SessionManager(OneSignal._context);
       const unicastSpy = vi
         .spyOn(OneSignal._context._workerMessenger, '_unicast')
@@ -154,8 +155,7 @@ describe('SessionManager', () => {
       // Remove user singleton
       (await import('src/onesignal/User')).default._singletonInstance =
         undefined;
-      const detect = await import('src/shared/environment/detect');
-      vi.spyOn(detect, 'supportsServiceWorkers').mockReturnValue(true);
+      supportsServiceWorkersSpy.mockReturnValue(true);
       const sm = new SessionManager(OneSignal._context);
       const notifySpy = vi.spyOn(sm, '_notifySWToUpsertSession');
       await sm._upsertSession(SessionOrigin._UserCreate);
@@ -163,8 +163,7 @@ describe('SessionManager', () => {
     });
 
     test('_upsertSession installs listeners when SW supported', async () => {
-      const detect = await import('src/shared/environment/detect');
-      vi.spyOn(detect, 'supportsServiceWorkers').mockReturnValue(true);
+      supportsServiceWorkersSpy.mockReturnValue(true);
       const sm = new SessionManager(OneSignal._context);
       const setupSpy = vi.spyOn(sm, '_setupSessionEventListeners');
       // also stub ids retrieval path to avoid errors
@@ -177,8 +176,7 @@ describe('SessionManager', () => {
     });
 
     test('_upsertSession emits SESSION_STARTED when SW not supported', async () => {
-      const detect = await import('src/shared/environment/detect');
-      vi.spyOn(detect, 'supportsServiceWorkers').mockReturnValue(false);
+      supportsServiceWorkersSpy.mockReturnValue(false);
       const sm = new SessionManager(OneSignal._context);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const emitSpy = vi
