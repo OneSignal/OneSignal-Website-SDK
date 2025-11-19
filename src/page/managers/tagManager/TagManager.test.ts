@@ -1,12 +1,12 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import UserNamespace from 'src/onesignal/UserNamespace';
 import Log from 'src/shared/libraries/Log';
 import TagManager from './TagManager';
 
 describe('TagManager', () => {
+  const addTagsSpy = vi.spyOn(UserNamespace.prototype, 'addTags')
   beforeEach(() => {
     TestEnvironment.initialize();
-    // ensure addTags exists and is stubbed
-    OneSignal.User.addTags = vi.fn().mockResolvedValue(undefined);
   });
 
   test('_storeTagValuesToUpdate/_storeRemotePlayerTags set internal state', () => {
@@ -14,7 +14,6 @@ describe('TagManager', () => {
     tm._storeRemotePlayerTags({ a: '1' });
     tm._storeTagValuesToUpdate({ a: true, b: false });
     expect(OneSignal._context._tagManager._remoteTags).toEqual({ a: '1' });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((tm as any)._tagsFromTaggingContainer).toEqual({
       a: true,
       b: false,
@@ -26,7 +25,7 @@ describe('TagManager', () => {
     tm._storeRemotePlayerTags({ a: '1' });
     tm._storeTagValuesToUpdate({ a: false, b: true }); // converts to { a:0, b:1 } and diff => { a:0, b:1 } vs { a:1 } -> { a:0, b:1 }
     const result = await tm._sendTags();
-    expect(OneSignal.User.addTags).toHaveBeenCalledWith(result);
+    expect(addTagsSpy).toHaveBeenCalledWith(result);
     expect(result).toMatchObject({ a: '0', b: '1' });
   });
 
@@ -40,6 +39,6 @@ describe('TagManager', () => {
     const result = await tm._sendTags();
     expect(result).toEqual({});
     expect(warnSpy).toHaveBeenCalled();
-    expect(OneSignal.User.addTags).not.toHaveBeenCalled();
+    expect(addTagsSpy).not.toHaveBeenCalled();
   });
 });
