@@ -1,3 +1,4 @@
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import Bell from './Bell';
 import Button from './Button';
 import { MessageType } from './constants';
@@ -8,14 +9,7 @@ describe('Button', () => {
       <div class="onesignal-bell-launcher-button"></div>
       <div class="onesignal-bell-launcher-message"></div>
     `;
-    (global as any).OneSignal = (global as any).OneSignal ?? {
-      _emitter: {
-        once: () => undefined,
-        _removeAllListeners: () => undefined,
-        _emit: async () => undefined,
-      },
-      EVENTS: {},
-    };
+    TestEnvironment.initialize();
   });
 
   test('_onClick concurrency guard and early-return when message showing', async () => {
@@ -29,7 +23,7 @@ describe('Button', () => {
     msgEl.classList.add('onesignal-bell-launcher-message-opened');
     bell['_message']['_contentType'] = MessageType._Message;
 
-    const toggleSpy = vi.spyOn(button as unknown as Button, '_toggleDialog');
+    const toggleSpy = vi.spyOn(button, '_toggleDialog');
 
     // Force concurrent scenario: set handling to true then call
     button['_isHandlingClick'] = false;
