@@ -2,16 +2,13 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { db } from 'src/shared/database/client';
 import Log from 'src/shared/libraries/Log';
+import * as userDirector from '../../onesignal/userDirector';
 import LoginManager from './LoginManager';
 
-vi.mock('../../onesignal/userDirector', async (importOriginal) => {
-  const mod =
-    await importOriginal<typeof import('../../onesignal/userDirector')>();
-  return {
-    ...mod,
-    createUserOnServer: vi.fn().mockResolvedValue(undefined),
-  };
-});
+const createUserOnServerSpy = vi.spyOn(
+  userDirector,
+  'createUserOnServer',
+).mockResolvedValue(undefined);
 
 describe('LoginManager', () => {
   beforeEach(() => {
@@ -67,9 +64,8 @@ describe('LoginManager', () => {
   });
 
   test('logout: with external id resets models and creates anonymous user', async () => {
-    const userDirector = await import('../../onesignal/userDirector');
     await updateIdentityModel('external_id', 'abc');
     await LoginManager.logout();
-    expect(userDirector.createUserOnServer).toHaveBeenCalled();
+    expect(createUserOnServerSpy).toHaveBeenCalled();
   });
 });
