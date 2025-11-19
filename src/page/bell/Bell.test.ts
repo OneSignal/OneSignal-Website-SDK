@@ -3,15 +3,16 @@ import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import Bell from './Bell';
 
 describe('Bell', () => {
+  // @ts-expect-error - _installEventHooks is not assignable
+  const spyInstall = vi.spyOn(Bell.prototype, '_installEventHooks');
+  const spyUpdate = vi.spyOn(Bell.prototype, '_updateState');
+
   beforeEach(() => {
     // Set up OneSignal globals/context to avoid accidental runtime lookups
     TestEnvironment.initialize();
   });
 
   test('constructor early-returns when enable=false and applies defaults', () => {
-    const spyInstall = vi.spyOn(Bell.prototype as any, '_installEventHooks');
-    const spyUpdate = vi.spyOn(Bell.prototype, '_updateState');
-
     const bell = new Bell({ enable: false });
     expect(bell._options.size).toBe('medium');
     expect(bell._options.position).toBe('bottom-right');
@@ -21,13 +22,6 @@ describe('Bell', () => {
   });
 
   test('constructor validates and installs hooks when enable=true', () => {
-    const spyInstall = vi
-      .spyOn(Bell.prototype as any, '_installEventHooks')
-      .mockImplementation(() => undefined);
-    const spyUpdate = vi
-      .spyOn(Bell.prototype, '_updateState')
-      .mockImplementation(() => undefined);
-
     // Valid non-defaults to ensure validation path runs
     const bell = new Bell({
       enable: true,
