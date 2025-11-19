@@ -5,10 +5,9 @@ import Log from 'src/shared/libraries/Log';
 import * as userDirector from '../../onesignal/userDirector';
 import LoginManager from './LoginManager';
 
-const createUserOnServerSpy = vi.spyOn(
-  userDirector,
-  'createUserOnServer',
-).mockResolvedValue(undefined);
+const createUserOnServerSpy = vi
+  .spyOn(userDirector, 'createUserOnServer')
+  .mockResolvedValue(undefined);
 
 describe('LoginManager', () => {
   beforeEach(() => {

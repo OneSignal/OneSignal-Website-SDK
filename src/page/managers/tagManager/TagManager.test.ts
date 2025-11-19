@@ -4,7 +4,7 @@ import Log from 'src/shared/libraries/Log';
 import TagManager from './TagManager';
 
 describe('TagManager', () => {
-  const addTagsSpy = vi.spyOn(UserNamespace.prototype, 'addTags')
+  const addTagsSpy = vi.spyOn(UserNamespace.prototype, 'addTags');
   beforeEach(() => {
     TestEnvironment.initialize();
   });
