@@ -1,14 +1,12 @@
+import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import Badge from './Badge';
 
 describe('Badge', () => {
   beforeEach(() => {
+    TestEnvironment.initialize();
     document.body.innerHTML = `
       <div class="onesignal-bell-launcher-badge"></div>
     `;
-    // Ensure optional OneSignal global doesn't explode when accessed
-    // Badge._show calls OneSignal?._notifyButton via optional chaining
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).OneSignal = (globalThis as any).OneSignal ?? {};
   });
 
   test('_updateCount increments and clamps to empty when <= 0', () => {

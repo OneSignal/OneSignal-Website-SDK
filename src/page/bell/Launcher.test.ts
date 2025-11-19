@@ -9,7 +9,7 @@ describe('Launcher', () => {
     // Polyfill Web Animations API method used by AnimatedElement
     HTMLElement.prototype.getAnimations = () => [];
     // Minimal OneSignal to satisfy any optional accesses down the line
-    (globalThis as any).OneSignal = (globalThis as any).OneSignal ?? {};
+    (global as any).OneSignal = (global as any).OneSignal ?? {};
   });
 
   test('_activateIfInactive sets wasInactive and activates only when inactive', async () => {

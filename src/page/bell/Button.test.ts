@@ -8,7 +8,7 @@ describe('Button', () => {
       <div class="onesignal-bell-launcher-button"></div>
       <div class="onesignal-bell-launcher-message"></div>
     `;
-    (globalThis as any).OneSignal = (globalThis as any).OneSignal ?? {
+    (global as any).OneSignal = (global as any).OneSignal ?? {
       _emitter: {
         once: () => undefined,
         _removeAllListeners: () => undefined,
