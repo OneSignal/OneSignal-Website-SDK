@@ -21,14 +21,14 @@ describe('Button', () => {
       '.onesignal-bell-launcher-message',
     ) as HTMLElement;
     msgEl.classList.add('onesignal-bell-launcher-message-opened');
-    bell['_message']['_contentType'] = MessageType._Message;
+    bell._message._contentType = MessageType._Message;
 
     const toggleSpy = vi.spyOn(button, '_toggleDialog');
 
     // Force concurrent scenario: set handling to true then call
-    button['_isHandlingClick'] = false;
-    await button['_onClick']();
+    button._isHandlingClick = false;
+    await button._onClick();
     expect(toggleSpy).not.toHaveBeenCalled();
-    expect(button['_isHandlingClick']).toBe(false);
+    expect(button._isHandlingClick).toBe(false);
   });
 });
