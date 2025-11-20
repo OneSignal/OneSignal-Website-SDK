@@ -12,16 +12,16 @@ describe('Badge', () => {
   test('_updateCount increments and clamps to empty when <= 0', () => {
     const badge = new Badge();
     // Start at empty, increment twice
-    badge['_content'] = '';
-    badge['_increment']();
-    expect(badge['_content']).toBe('1');
-    badge['_increment']();
-    expect(badge['_content']).toBe('2');
+    badge._content = '';
+    badge._increment();
+    expect(badge._content).toBe('1');
+    badge._increment();
+    expect(badge._content).toBe('2');
 
     // Decrement twice → goes to 0 and clears to empty string
-    badge['_decrement']();
-    expect(badge['_content']).toBe('1');
-    badge['_decrement']();
-    expect(badge['_content']).toBe('');
+    badge._decrement();
+    expect(badge._content).toBe('1');
+    badge._decrement();
+    expect(badge._content).toBe('');
   });
 });
