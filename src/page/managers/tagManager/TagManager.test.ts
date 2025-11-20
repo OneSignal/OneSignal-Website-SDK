@@ -3,8 +3,8 @@ import UserNamespace from 'src/onesignal/UserNamespace';
 import Log from 'src/shared/libraries/Log';
 import TagManager from './TagManager';
 
+const addTagsSpy = vi.spyOn(UserNamespace.prototype, 'addTags');
 describe('TagManager', () => {
-  const addTagsSpy = vi.spyOn(UserNamespace.prototype, 'addTags');
   beforeEach(() => {
     TestEnvironment.initialize();
   });
@@ -14,7 +14,7 @@ describe('TagManager', () => {
     tm._storeRemotePlayerTags({ a: '1' });
     tm._storeTagValuesToUpdate({ a: true, b: false });
     expect(OneSignal._context._tagManager._remoteTags).toEqual({ a: '1' });
-    expect((tm as any)._tagsFromTaggingContainer).toEqual({
+    expect(tm['_tagsFromTaggingContainer']).toEqual({
       a: true,
       b: false,
     });
@@ -30,7 +30,7 @@ describe('TagManager', () => {
   });
 
   test('_sendTags returns {} and warns when no change', async () => {
-    const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => '');
     const tm = new TagManager(OneSignal._context);
     // Ensure this instance uses the same remote tags that will be diffed
     tm._remoteTags = { c: '1' };
