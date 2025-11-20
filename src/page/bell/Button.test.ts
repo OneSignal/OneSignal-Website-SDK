@@ -17,7 +17,9 @@ describe('Button', () => {
     const button = new Button(bell);
 
     // Simulate message being shown of type Message by adding the show class
-    const msgEl = document.querySelector('.onesignal-bell-launcher-message') as HTMLElement;
+    const msgEl = document.querySelector(
+      '.onesignal-bell-launcher-message',
+    ) as HTMLElement;
     msgEl.classList.add('onesignal-bell-launcher-message-opened');
     bell._message._contentType = MessageType._Message;
 

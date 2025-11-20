@@ -6,8 +6,7 @@ import Log from 'src/shared/libraries/Log';
 import * as userDirector from '../../onesignal/userDirector';
 import LoginManager from './LoginManager';
 
-const createUserOnServerSpy = vi
-  .spyOn(userDirector, 'createUserOnServer')
+const createUserOnServerSpy = vi.spyOn(userDirector, 'createUserOnServer');
 
 describe('LoginManager', () => {
   beforeEach(() => {
@@ -36,8 +35,10 @@ describe('LoginManager', () => {
       OneSignal._coreDirector,
       '_getPushSubscriptionModel',
     ).mockResolvedValue(createPushSub() as SubscriptionModel);
-    const enqueueSpy = vi
-      .spyOn(OneSignal._coreDirector._operationRepo, '_enqueue')
+    const enqueueSpy = vi.spyOn(
+      OneSignal._coreDirector._operationRepo,
+      '_enqueue',
+    );
     const enqueueAndWaitSpy = vi
       .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
       .mockResolvedValue(undefined);
