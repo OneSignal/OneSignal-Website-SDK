@@ -60,3 +60,6 @@ export const mockJsonp = () => {
     downloadSpy = vi.spyOn(OneSignalApi, 'downloadServerAppConfig');
   downloadSpy.mockResolvedValue(serverConfig);
 };
+
+// Polyfill Web Animations API method used by AnimatedElement
+HTMLElement.prototype.getAnimations = () => [];

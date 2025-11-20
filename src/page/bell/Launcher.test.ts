@@ -6,8 +6,6 @@ describe('Launcher', () => {
     document.body.innerHTML = `
       <div class="onesignal-bell-launcher"></div>
     `;
-    // Polyfill Web Animations API method used by AnimatedElement
-    HTMLElement.prototype.getAnimations = () => [];
     // Minimal OneSignal to satisfy any optional accesses down the line
     (global as any).OneSignal = (global as any).OneSignal ?? {};
   });

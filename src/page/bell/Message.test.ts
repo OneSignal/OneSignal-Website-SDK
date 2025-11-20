@@ -11,9 +11,6 @@ describe('Message', () => {
       </div>
       <div class="onesignal-bell-launcher-badge"></div>
     `;
-    // Polyfill Web Animations API method used by AnimatedElement
-    HTMLElement.prototype.getAnimations = () => [];
-    vi.useFakeTimers();
   });
 
   test('_display shows then hides after duration and resets content type', async () => {

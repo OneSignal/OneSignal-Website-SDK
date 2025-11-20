@@ -11,8 +11,6 @@ describe('Dialog', () => {
         <div class="onesignal-bell-launcher-dialog-body"></div>
       </div>
     `;
-    // Polyfill Web Animations API method used by AnimatedElement
-    (HTMLElement.prototype as any).getAnimations = () => [];
   });
 
   test('_show populates content and toggles shown flag', async () => {
