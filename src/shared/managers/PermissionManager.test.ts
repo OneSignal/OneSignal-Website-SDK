@@ -24,8 +24,8 @@ describe('PermissionManager', () => {
     });
 
     test('throws if context is undefined', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      OneSignal._context = undefined as any;
+      // @ts-expect-error - testing undefined context
+      OneSignal._context = undefined;
       const pm = new PermissionManager();
       await expect(pm._getPermissionStatus()).rejects.toThrow(
         'OneSignal.context is undefined. Call init first',
