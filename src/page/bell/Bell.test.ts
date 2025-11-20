@@ -1,11 +1,12 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import Bell from './Bell';
+import { BellEvent, BellState } from './constants';
 
 describe('Bell', () => {
   // @ts-expect-error - _installEventHooks is not assignable
   const spyInstall = vi.spyOn(Bell.prototype, '_installEventHooks');
-  const spyUpdate = vi.spyOn(Bell.prototype, '_updateState');
+  const updateStateSpy = vi.spyOn(Bell.prototype, '_updateState');
 
   beforeEach(() => {
     // Set up OneSignal globals/context to avoid accidental runtime lookups
@@ -18,7 +19,7 @@ describe('Bell', () => {
     expect(bell._options.position).toBe('bottom-right');
     expect(bell._options.theme).toBe('default');
     expect(spyInstall).not.toHaveBeenCalled();
-    expect(spyUpdate).not.toHaveBeenCalled();
+    expect(updateStateSpy).not.toHaveBeenCalled();
   });
 
   test('constructor validates and installs hooks when enable=true', () => {
@@ -33,14 +34,18 @@ describe('Bell', () => {
     });
     expect(bell).toBeTruthy();
     expect(spyInstall).toHaveBeenCalledTimes(1);
-    expect(spyUpdate).toHaveBeenCalledTimes(1);
+    expect(updateStateSpy).toHaveBeenCalledTimes(1);
   });
 
   test('_setState triggers event when changed', () => {
     const bell = new Bell({ enable: false });
     const trigger = vi.spyOn(OneSignalEvent, '_trigger');
     // transition should emit
-    bell._setState(1 /* _Subscribed */);
-    expect(trigger).toHaveBeenCalled();
+    bell._setState(BellState._Subscribed);
+
+    expect(trigger).toHaveBeenCalledWith(BellEvent._StateChanged, {
+      from: BellState._Uninitialized,
+      to: BellState._Subscribed,
+    });
   });
 });
