@@ -2,6 +2,8 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import Bell from './Bell';
 import Message from './Message';
 
+vi.useFakeTimers();
+
 describe('Message', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
@@ -18,10 +20,10 @@ describe('Message', () => {
     const message = new Message(bell);
     const promise = message._display('message', 'Hello', 1000);
     // advance timers to cover delay
-    await vi.runAllTimersAsync();
+    await vi.runOnlyPendingTimersAsync();
     await promise;
     // After display finishes, contentType should reset to 'tip'
-    expect(message['_contentType']).toBe('tip');
-    expect(message['_shown']).toBe(false);
+    expect(message._contentType).toBe('tip');
+    expect(message._shown).toBe(false);
   });
 });
