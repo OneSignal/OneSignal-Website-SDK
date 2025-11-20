@@ -25,11 +25,11 @@ describe('Dialog', () => {
     isPushNotificationsEnabledSpy.mockResolvedValue(false);
 
     const dialog = new Dialog(bell);
-    expect(dialog['_shown']).toBe(false);
-    await dialog['_show']();
-    expect(dialog['_shown']).toBe(true);
+    expect(dialog._shown).toBe(false);
+    await dialog._show();
+    expect(dialog._shown).toBe(true);
     // Button should be present for subscribe
-    expect(dialog['_subscribeButton']).toBeTruthy();
+    expect(dialog._subscribeButton).toBeTruthy();
   });
 
   test('_hide removes shown class and keeps state consistent', async () => {
@@ -38,9 +38,9 @@ describe('Dialog', () => {
     isPushNotificationsEnabledSpy.mockResolvedValue(false);
 
     const dialog = new Dialog(bell);
-    await dialog['_show']();
-    expect(dialog['_shown']).toBe(true);
-    await dialog['_hide']();
-    expect(dialog['_shown']).toBe(false);
+    await dialog._show();
+    expect(dialog._shown).toBe(true);
+    await dialog._hide();
+    expect(dialog._shown).toBe(false);
   });
 });

@@ -16,7 +16,7 @@ describe('Message', () => {
   test('_display shows then hides after duration and resets content type', async () => {
     const bell = new Bell({ enable: false });
     const message = new Message(bell);
-    const promise = message['_display']('message', 'Hello', 1000);
+    const promise = message._display('message', 'Hello', 1000);
     // advance timers to cover delay
     await vi.runAllTimersAsync();
     await promise;
