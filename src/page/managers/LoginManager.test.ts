@@ -1,5 +1,6 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { db } from 'src/shared/database/client';
 import Log from 'src/shared/libraries/Log';
 import * as userDirector from '../../onesignal/userDirector';
@@ -7,7 +8,6 @@ import LoginManager from './LoginManager';
 
 const createUserOnServerSpy = vi
   .spyOn(userDirector, 'createUserOnServer')
-  .mockResolvedValue(undefined);
 
 describe('LoginManager', () => {
   beforeEach(() => {
@@ -29,15 +29,15 @@ describe('LoginManager', () => {
   test('login: stores token when provided and enqueues operations', async () => {
     const dbSpy = vi.spyOn(db, 'put');
     // mock push subscription exists so transfer op enqueues
+    const createPushSub = () => ({
+      id: 'push-sub-id',
+    });
     vi.spyOn(
       OneSignal._coreDirector,
       '_getPushSubscriptionModel',
-    ).mockResolvedValue({
-      id: 'push-sub-id',
-    } as any);
+    ).mockResolvedValue(createPushSub() as SubscriptionModel);
     const enqueueSpy = vi
       .spyOn(OneSignal._coreDirector._operationRepo, '_enqueue')
-      .mockResolvedValue(undefined);
     const enqueueAndWaitSpy = vi
       .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
       .mockResolvedValue(undefined);
