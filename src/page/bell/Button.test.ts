@@ -5,11 +5,11 @@ import { MessageType } from './constants';
 
 describe('Button', () => {
   beforeEach(() => {
+    TestEnvironment.initialize();
     document.body.innerHTML = `
       <div class="onesignal-bell-launcher-button"></div>
       <div class="onesignal-bell-launcher-message"></div>
     `;
-    TestEnvironment.initialize();
   });
 
   test('_onClick concurrency guard and early-return when message showing', async () => {
@@ -17,9 +17,7 @@ describe('Button', () => {
     const button = new Button(bell);
 
     // Simulate message being shown of type Message by adding the show class
-    const msgEl = document.querySelector(
-      '.onesignal-bell-launcher-message',
-    ) as HTMLElement;
+    const msgEl = document.querySelector('.onesignal-bell-launcher-message') as HTMLElement;
     msgEl.classList.add('onesignal-bell-launcher-message-opened');
     bell._message._contentType = MessageType._Message;
 
