@@ -2,9 +2,12 @@ import { EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setAddAliasResponse } from '__test__/support/helpers/requests';
 import LoginManager from 'src/page/managers/LoginManager';
+import * as detect from 'src/shared/environment/detect';
 import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { SessionManager } from './SessionManager';
+
+const supportsServiceWorkersSpy = vi.spyOn(detect, 'supportsServiceWorkers');
 
 vi.spyOn(Log, '_error').mockImplementation(() => '');
 
@@ -125,6 +128,53 @@ describe('SessionManager', () => {
 
       const winner = await Promise.race([loginPromise, sessionPromise]);
       expect(winner).toBe('login');
+    });
+  });
+
+  describe('Core behaviors', () => {
+    beforeEach(() => {
+      TestEnvironment.initialize();
+    });
+
+    test('_notifySWToUpsertSession posts to worker when SW supported', async () => {
+      supportsServiceWorkersSpy.mockReturnValue(true);
+      const sm = new SessionManager(OneSignal._context);
+      const unicastSpy = vi
+        .spyOn(OneSignal._context._workerMessenger, '_unicast')
+        .mockResolvedValue(undefined);
+
+      await sm['_notifySWToUpsertSession'](
+        'one',
+        'sub',
+        SessionOrigin._UserCreate,
+      );
+      expect(unicastSpy).toHaveBeenCalled();
+    });
+
+    test('_upsertSession does nothing when no user is present', async () => {
+      supportsServiceWorkersSpy.mockReturnValue(true);
+      const sm = new SessionManager(OneSignal._context);
+      const notifySpy = vi.spyOn(sm, '_notifySWToUpsertSession');
+      await sm._upsertSession(SessionOrigin._UserCreate);
+      expect(notifySpy).not.toHaveBeenCalled();
+    });
+
+    test('_upsertSession installs listeners when SW supported', async () => {
+      supportsServiceWorkersSpy.mockReturnValue(true);
+      const sm = new SessionManager(OneSignal._context);
+      const setupSpy = vi.spyOn(sm, '_setupSessionEventListeners');
+      await sm._upsertSession(SessionOrigin._Focus);
+      expect(setupSpy).toHaveBeenCalled();
+    });
+
+    test('_upsertSession emits SESSION_STARTED when SW not supported', async () => {
+      supportsServiceWorkersSpy.mockReturnValue(false);
+      const sm = new SessionManager(OneSignal._context);
+      const emitSpy = vi
+        .spyOn(OneSignal._emitter, '_emit')
+        .mockResolvedValue(OneSignal._emitter);
+      await sm._upsertSession(SessionOrigin._UserCreate);
+      expect(emitSpy).toHaveBeenCalledWith(OneSignal.EVENTS.SESSION_STARTED);
     });
   });
 });
