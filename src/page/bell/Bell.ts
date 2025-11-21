@@ -18,7 +18,6 @@ import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
-import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Badge from './Badge';
 import Button from './Button';
@@ -26,7 +25,6 @@ import Dialog from './Dialog';
 import Launcher from './Launcher';
 import Message from './Message';
 import {
-  BellEvent,
   BellState,
   type BellStateValue,
   MESSAGE_TIMEOUT,
@@ -173,7 +171,7 @@ export default class Bell {
 
   private _installEventHooks() {
     // Install event hooks
-    OneSignal._emitter.on(BellEvent._SubscribeClick, () => {
+    OneSignal._emitter.on('notifyButtonSubscribeClick', () => {
       const subscribeButton = this._dialog._subscribeButton;
       if (subscribeButton) {
         subscribeButton.disabled = true;
@@ -206,7 +204,7 @@ export default class Bell {
         });
     });
 
-    OneSignal._emitter.on(BellEvent._UnsubscribeClick, () => {
+    OneSignal._emitter.on('notifyButtonUnsubscribeClick', () => {
       const unsubscribeButton = this._dialog._unsubscribeButton;
       if (unsubscribeButton) {
         unsubscribeButton.disabled = true;
@@ -234,7 +232,7 @@ export default class Bell {
         });
     });
 
-    OneSignal._emitter.on(BellEvent._Hovering, () => {
+    OneSignal._emitter.on('notifyButtonHovering', () => {
       this._hovering = true;
       this._launcher._activateIfInactive();
 
@@ -278,7 +276,7 @@ export default class Bell {
         });
     });
 
-    OneSignal._emitter.on(BellEvent._Hovered, () => {
+    OneSignal._emitter.on('notifyButtonHover', () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
       if (this._message._contentType === MessageType._Message) {
         return;
@@ -317,34 +315,31 @@ export default class Bell {
       }
     });
 
-    OneSignal._emitter.on(
-      OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-      async (isSubscribed: SubscriptionChangeEvent) => {
-        if (isSubscribed.current.optedIn) {
-          if (this._badge._shown && this._options.prenotify) {
-            this._badge._hide();
-          }
-          if (this._dialog._notificationIcons === null) {
-            const icons = await getNotificationIcons();
-            this._dialog._notificationIcons = icons;
-          }
+    OneSignal._emitter.on('change', async (isSubscribed) => {
+      if (isSubscribed?.current.optedIn) {
+        if (this._badge._shown && this._options.prenotify) {
+          this._badge._hide();
         }
-
-        const permission =
-          await OneSignal._context._permissionManager._getPermissionStatus();
-        let bellState: BellStateValue;
-        if (isSubscribed.current.optedIn) {
-          bellState = BellState._Subscribed;
-        } else if (permission === 'denied') {
-          bellState = BellState._Blocked;
-        } else {
-          bellState = BellState._Unsubscribed;
+        if (this._dialog._notificationIcons === null) {
+          const icons = await getNotificationIcons();
+          this._dialog._notificationIcons = icons;
         }
-        this._setState(bellState, this._ignoreSubscriptionState);
-      },
-    );
+      }
 
-    OneSignal._emitter.on(BellEvent._StateChanged, (state) => {
+      const permission =
+        await OneSignal._context._permissionManager._getPermissionStatus();
+      let bellState: BellStateValue;
+      if (isSubscribed?.current.optedIn) {
+        bellState = BellState._Subscribed;
+      } else if (permission === 'denied') {
+        bellState = BellState._Blocked;
+      } else {
+        bellState = BellState._Unsubscribed;
+      }
+      this._setState(bellState, this._ignoreSubscriptionState);
+    });
+
+    OneSignal._emitter.on('notifyButtonStateChange', (state) => {
       if (!this._launcher._element) {
         // Notify button doesn't exist
         return;
@@ -359,12 +354,9 @@ export default class Bell {
       }
     });
 
-    OneSignal._emitter.on(
-      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-      () => {
-        this._updateState();
-      },
-    );
+    OneSignal._emitter.on('permissionChangeAsString', () => {
+      this._updateState();
+    });
   }
 
   private _addDefaultClasses() {
@@ -721,7 +713,7 @@ export default class Bell {
     const lastState = this._state;
     this._state = newState;
     if (lastState !== newState && !silent) {
-      OneSignalEvent._trigger(BellEvent._StateChanged, {
+      OneSignalEvent._trigger('notifyButtonStateChange', {
         from: lastState,
         to: newState,
       });

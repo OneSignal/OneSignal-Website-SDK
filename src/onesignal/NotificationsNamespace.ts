@@ -30,13 +30,10 @@ export default class NotificationsNamespace extends EventListenerBase {
     this._permission = permissionNative === 'granted';
 
     if (typeof OneSignal !== 'undefined') {
-      OneSignal._emitter.on(
-        OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-        (permissionNative: NotificationPermission) => {
-          this._permissionNative = permissionNative;
-          this._permission = permissionNative === 'granted';
-        },
-      );
+      OneSignal._emitter.on('permissionChangeAsString', (permissionNative) => {
+        this._permissionNative = permissionNative;
+        this._permission = permissionNative === 'granted';
+      });
     }
   }
 

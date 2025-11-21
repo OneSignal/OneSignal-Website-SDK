@@ -8,7 +8,7 @@ import {
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
-import { BellEvent, MESSAGE_TIMEOUT, MessageType } from './constants';
+import { MESSAGE_TIMEOUT, MessageType } from './constants';
 
 export default class Button extends AnimatedElement {
   public _isHandlingClick: boolean = false;
@@ -73,14 +73,14 @@ export default class Button extends AnimatedElement {
       limitIsEmpty(this._events.mouse) ||
       limitGetLast(this._events.mouse) === 'out'
     ) {
-      OneSignalEvent._trigger(BellEvent._Hovering);
+      OneSignalEvent._trigger('notifyButtonHovering');
     }
     limitStorePut(this._events.mouse, 'over');
   }
 
   _onHovered() {
     limitStorePut(this._events.mouse, 'out');
-    OneSignalEvent._trigger(BellEvent._Hovered);
+    OneSignalEvent._trigger('notifyButtonHover');
   }
 
   _onTap() {
@@ -99,8 +99,8 @@ export default class Button extends AnimatedElement {
     if (this._isHandlingClick) return;
     this._isHandlingClick = true;
 
-    OneSignalEvent._trigger(BellEvent._BellClick);
-    OneSignalEvent._trigger(BellEvent._LauncherClick);
+    OneSignalEvent._trigger('notifyButtonButtonClick');
+    OneSignalEvent._trigger('notifyButtonLauncherClick');
 
     try {
       if (
@@ -116,7 +116,7 @@ export default class Button extends AnimatedElement {
         // The user is actually subscribed, register him for notifications
         registerForPushNotifications();
         this._bell._ignoreSubscriptionState = true;
-        OneSignal._emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
+        OneSignal._emitter.once('change', () => {
           this._bell._message
             ._display(
               MessageType._Message,
