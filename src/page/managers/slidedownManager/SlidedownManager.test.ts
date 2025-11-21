@@ -314,7 +314,7 @@ export const mockPhoneLibraryLoading = () => {
 
     window.intlTelInputUtils = {
       numberType: { MOBILE: 1 },
-      // @ts-expect-error - mock intl-tel-input
+      // @ts-ignore @ts-expect-error - mock intl-tel-input
       numberFormat: { E164: 0 },
     };
     return Promise.resolve();

@@ -3,11 +3,10 @@ import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import Bell from './Bell';
 import { BellEvent, BellState } from './constants';
 
+// @ts-expect-error - _installEventHooks is not assignable
+const spyInstall = vi.spyOn(Bell.prototype, '_installEventHooks');
+const updateStateSpy = vi.spyOn(Bell.prototype, '_updateState');
 describe('Bell', () => {
-  // @ts-expect-error - _installEventHooks is not assignable
-  const spyInstall = vi.spyOn(Bell.prototype, '_installEventHooks');
-  const updateStateSpy = vi.spyOn(Bell.prototype, '_updateState');
-
   beforeEach(() => {
     // Set up OneSignal globals/context to avoid accidental runtime lookups
     TestEnvironment.initialize();

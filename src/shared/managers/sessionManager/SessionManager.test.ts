@@ -152,9 +152,6 @@ describe('SessionManager', () => {
     });
 
     test('_upsertSession does nothing when no user is present', async () => {
-      // Remove user singleton
-      (await import('src/onesignal/User')).default._singletonInstance =
-        undefined;
       supportsServiceWorkersSpy.mockReturnValue(true);
       const sm = new SessionManager(OneSignal._context);
       const notifySpy = vi.spyOn(sm, '_notifySWToUpsertSession');
@@ -166,11 +163,6 @@ describe('SessionManager', () => {
       supportsServiceWorkersSpy.mockReturnValue(true);
       const sm = new SessionManager(OneSignal._context);
       const setupSpy = vi.spyOn(sm, '_setupSessionEventListeners');
-      // also stub ids retrieval path to avoid errors
-      vi.spyOn(sm as any, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
-        onesignalId: 'one',
-        subscriptionId: 'sub',
-      });
       await sm._upsertSession(SessionOrigin._Focus);
       expect(setupSpy).toHaveBeenCalled();
     });
@@ -178,7 +170,6 @@ describe('SessionManager', () => {
     test('_upsertSession emits SESSION_STARTED when SW not supported', async () => {
       supportsServiceWorkersSpy.mockReturnValue(false);
       const sm = new SessionManager(OneSignal._context);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const emitSpy = vi
         .spyOn(OneSignal._emitter, '_emit')
         .mockResolvedValue(OneSignal._emitter);

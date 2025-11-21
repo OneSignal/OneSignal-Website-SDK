@@ -19,21 +19,29 @@ describe('context/helpers', () => {
     });
   });
 
-  test('enforceAppId throws on empty', () => {
-    expect(() => enforceAppId(undefined)).toThrow('App id cannot be empty');
-    expect(() => enforceAppId(null as unknown as string)).toThrow(
-      'App id cannot be empty',
-    );
-    expect(() => enforceAppId('abc')).not.toThrow();
+  describe('enforceAppId', () => {
+    test('throws on empty', () => {
+      expect(() => enforceAppId(undefined)).toThrow('App id cannot be empty');
+      expect(() => enforceAppId(null)).toThrow('App id cannot be empty');
+    });
+
+    test('does not throw on valid', () => {
+      expect(() => enforceAppId('abc')).not.toThrow();
+    });
   });
 
-  test('enforceAlias throws when label or id is empty', () => {
-    expect(() => enforceAlias({ label: '', id: '' })).toThrow(
-      'Alias label cannot be empty',
-    );
-    expect(() => enforceAlias({ label: 'x', id: '' })).toThrow(
-      'Alias id cannot be empty',
-    );
-    expect(() => enforceAlias({ label: 'x', id: 'y' })).not.toThrow();
+  describe('enforceAlias', () => {
+    test('throws when label or id is empty', () => {
+      expect(() => enforceAlias({ label: '', id: '' })).toThrow(
+        'Alias label cannot be empty',
+      );
+      expect(() => enforceAlias({ label: 'x', id: '' })).toThrow(
+        'Alias id cannot be empty',
+      );
+    });
+
+    test('does not throw on valid', () => {
+      expect(() => enforceAlias({ label: 'x', id: 'y' })).not.toThrow();
+    });
   });
 });

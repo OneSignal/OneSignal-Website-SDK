@@ -14,8 +14,10 @@ describe('Dialog', () => {
         <div class="onesignal-bell-launcher-dialog-body"></div>
       </div>
     `;
-    const sm = OneSignal._context._subscriptionManager;
-    isPushNotificationsEnabledSpy = vi.spyOn(sm, '_isPushNotificationsEnabled');
+    isPushNotificationsEnabledSpy = vi.spyOn(
+      OneSignal._context._subscriptionManager,
+      '_isPushNotificationsEnabled',
+    );
   });
 
   test('_show populates content and toggles shown flag', async () => {
@@ -29,7 +31,7 @@ describe('Dialog', () => {
     await dialog._show();
     expect(dialog._shown).toBe(true);
     // Button should be present for subscribe
-    expect(dialog._subscribeButton).toBeTruthy();
+    expect(dialog._subscribeButton).not.toBeNull();
   });
 
   test('_hide removes shown class and keeps state consistent', async () => {
