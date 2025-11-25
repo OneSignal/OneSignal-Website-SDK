@@ -5,8 +5,9 @@ import LoginManager from 'src/page/managers/LoginManager';
 import * as detect from 'src/shared/environment/detect';
 import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
+import { vi } from 'vitest';
+import User from '../../../onesignal/User';
 import { SessionManager } from './SessionManager';
-
 const supportsServiceWorkersSpy = vi.spyOn(detect, 'supportsServiceWorkers');
 
 vi.spyOn(Log, '_error').mockImplementation(() => '');
@@ -175,6 +176,62 @@ describe('SessionManager', () => {
         .mockResolvedValue(OneSignal._emitter);
       await sm._upsertSession(SessionOrigin._UserCreate);
       expect(emitSpy).toHaveBeenCalledWith(OneSignal.EVENTS.SESSION_STARTED);
+    });
+
+    test('_handleVisibilityChange visible triggers upsert; hidden triggers deactivate and removes listeners', async () => {
+      const sm = new SessionManager(OneSignal._context);
+      // ensure user present
+      User._createOrGetInstance();
+
+      vi.spyOn(sm as any, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
+        onesignalId: 'o',
+        subscriptionId: 's',
+      });
+
+      // visible and focused
+      const visSpy = vi
+        .spyOn(document, 'visibilityState', 'get')
+        .mockReturnValue('visible' as DocumentVisibilityState);
+      const focusSpy = vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+      const upsertSpy = vi
+        .spyOn(sm as any, '_notifySWToUpsertSession')
+        .mockResolvedValue(undefined);
+      await sm._handleVisibilityChange();
+      expect(upsertSpy).toHaveBeenCalled();
+      visSpy.mockRestore();
+      focusSpy.mockRestore();
+
+      // hidden path removes listeners
+      vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(
+        'hidden' as DocumentVisibilityState,
+      );
+      const deactSpy = vi
+        .spyOn(sm as any, '_notifySWToDeactivateSession')
+        .mockResolvedValue(undefined);
+      OneSignal._cache.isFocusEventSetup = true;
+      OneSignal._cache.isBlurEventSetup = true;
+      OneSignal._cache.focusHandler = () => undefined;
+      OneSignal._cache.blurHandler = () => undefined;
+      await sm._handleVisibilityChange();
+      expect(deactSpy).toHaveBeenCalled();
+      expect(OneSignal._cache.isFocusEventSetup).toBe(false);
+      expect(OneSignal._cache.isBlurEventSetup).toBe(false);
+    });
+
+    test('_handleOnFocus/Blur target guard prevents duplicate', async () => {
+      const sm = new SessionManager(OneSignal._context);
+      // ensure user present
+      User._createOrGetInstance();
+      const upsertSpy = vi
+        .spyOn(sm as any, '_notifySWToUpsertSession')
+        .mockResolvedValue(undefined);
+      const deactSpy = vi
+        .spyOn(sm as any, '_notifySWToDeactivateSession')
+        .mockResolvedValue(undefined);
+      await sm._handleOnFocus(new Event('focus'));
+      await sm._handleOnBlur(new Event('blur'));
+      expect(upsertSpy).not.toHaveBeenCalled();
+      expect(deactSpy).not.toHaveBeenCalled();
     });
   });
 });
