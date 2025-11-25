@@ -61,8 +61,14 @@ describe('PromptsManager', () => {
       .spyOn(pm, '_internalShowNativePrompt')
       .mockResolvedValue(true);
     const slidedownSpy = vi
-      .spyOn(pm, '_internalShowSlidedownPrompt')
-      .mockResolvedValue(undefined);
+      .spyOn(
+        PromptsManager.prototype as unknown as Record<
+          string,
+          (...args: unknown[]) => unknown
+        >,
+        '_internalShowSlidedownPrompt',
+      )
+      .mockResolvedValue(undefined as void);
     await pm._internalShowDelayedPrompt(DelayedPromptType._Native, 0);
     expect(nativeSpy).not.toHaveBeenCalled();
     expect(slidedownSpy).toHaveBeenCalled();
@@ -71,7 +77,13 @@ describe('PromptsManager', () => {
   test('_spawnAutoPrompts triggers native when condition met and not forced', async () => {
     const pm = new PromptsManager(OneSignal._context);
     const getOptsSpy = vi
-      .spyOn(pm, '_getDelayedPromptOptions')
+      .spyOn(
+        PromptsManager.prototype as unknown as Record<
+          string,
+          (...args: unknown[]) => unknown
+        >,
+        '_getDelayedPromptOptions',
+      )
       .mockReturnValue({
         enabled: true,
         autoPrompt: true,
@@ -79,11 +91,23 @@ describe('PromptsManager', () => {
         pageViews: 0,
       });
     const condSpy = vi
-      .spyOn(pm, '_isPageViewConditionMet')
+      .spyOn(
+        PromptsManager.prototype as unknown as Record<
+          string,
+          (...args: unknown[]) => unknown
+        >,
+        '_isPageViewConditionMet',
+      )
       .mockReturnValue(true);
     const delayedSpy = vi
-      .spyOn(pm, '_internalShowDelayedPrompt')
-      .mockResolvedValue(undefined);
+      .spyOn(
+        PromptsManager.prototype as unknown as Record<
+          string,
+          (...args: unknown[]) => unknown
+        >,
+        '_internalShowDelayedPrompt',
+      )
+      .mockResolvedValue(undefined as void);
     requiresUserInteractionSpy.mockReturnValue(false);
     getBrowserNameSpy.mockReturnValue(Browser._Chrome);
     getBrowserVersionSpy.mockReturnValue(62);

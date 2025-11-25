@@ -25,9 +25,10 @@ describe('CustomLinkManager', () => {
       enabled: true,
       text: { explanation: 'x', subscribe: 'Sub' },
     });
-    const loadSdkStylesheetSpy = vi
-      .spyOn(OneSignal._context._dynamicResourceLoader, '_loadSdkStylesheet')
-      .mockResolvedValue(ResourceLoadState._Failed);
+    vi.spyOn(
+      OneSignal._context._dynamicResourceLoader,
+      '_loadSdkStylesheet',
+    ).mockResolvedValue(ResourceLoadState._Failed);
     await mgr._initialize();
     // nothing injected
     const containers = document.querySelectorAll(
