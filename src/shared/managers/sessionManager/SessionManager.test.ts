@@ -194,17 +194,18 @@ describe('SessionManager', () => {
       // ensure user present
       User._createOrGetInstance();
 
-      vi.spyOn(sm as any, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
-        onesignalId: 'o',
-        subscriptionId: 's',
-      });
+      vi.spyOn(sm as unknown as { _getOneSignalAndSubscriptionIds: () => Promise<{ onesignalId: string; subscriptionId: string }> }, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
+          onesignalId: 'o',
+          subscriptionId: 's',
+        },
+      );
 
       // visible and focused
       const visSpy = vi
         .spyOn(document, 'visibilityState', 'get')
         .mockReturnValue('visible' as DocumentVisibilityState);
       const focusSpy = vi.spyOn(document, 'hasFocus').mockReturnValue(true);
-      (notifySpy as any).mockResolvedValue(undefined);
+      notifySpy.mockResolvedValue(undefined);
       await sm._handleVisibilityChange();
       expect(notifySpy).toHaveBeenCalled();
       visSpy.mockRestore();
@@ -214,7 +215,7 @@ describe('SessionManager', () => {
       vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(
         'hidden' as DocumentVisibilityState,
       );
-      (deactSpy as any).mockResolvedValue(undefined);
+      deactSpy.mockResolvedValue(undefined);
       OneSignal._cache.isFocusEventSetup = true;
       OneSignal._cache.isBlurEventSetup = true;
       OneSignal._cache.focusHandler = () => undefined;
@@ -228,8 +229,8 @@ describe('SessionManager', () => {
     test('_handleOnFocus/Blur target guard prevents duplicate', async () => {
       // ensure user present
       User._createOrGetInstance();
-      (notifySpy as any).mockResolvedValue(undefined);
-      (deactSpy as any).mockResolvedValue(undefined);
+      notifySpy.mockResolvedValue(undefined);
+      deactSpy.mockResolvedValue(undefined);
       await sm._handleOnFocus(new Event('focus'));
       await sm._handleOnBlur(new Event('blur'));
       expect(notifySpy).not.toHaveBeenCalled();
