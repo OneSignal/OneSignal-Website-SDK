@@ -16,13 +16,13 @@ describe('UpdateManager', () => {
   test('_sendPushDeviceRecordUpdate early returns with no user, otherwise calls _sendOnSessionUpdate once', async () => {
     const mgr = new UpdateManager(OneSignal._context);
     // No user
-    User._singletonInstance = undefined as unknown as User;
+    delete User._singletonInstance;
     const spy = vi.spyOn(mgr, '_sendOnSessionUpdate').mockResolvedValue();
     await mgr._sendPushDeviceRecordUpdate();
     expect(spy).not.toHaveBeenCalled();
 
     // With user present and first call triggers onSession
-    User._singletonInstance = { onesignalId: 'id' } as unknown as User;
+    User._createOrGetInstance();
     await mgr._sendPushDeviceRecordUpdate();
     expect(spy).toHaveBeenCalledTimes(1);
   });

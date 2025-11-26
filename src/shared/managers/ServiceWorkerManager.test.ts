@@ -109,7 +109,7 @@ describe('ServiceWorkerManager', () => {
 
     supportsSpy.mockReturnValue(true);
     const savedConfig = OneSignal.config;
-    OneSignal.config = null as any;
+    OneSignal.config = null;
     await expect(
       (
         mgr as unknown as { _shouldInstallWorker: () => Promise<boolean> }
@@ -157,6 +157,4 @@ describe('ServiceWorkerManager', () => {
       )._shouldInstallWorker(),
     ).resolves.toBe(false);
   });
-
-  // omit direct private _workerNeedsUpdate test
 });
