@@ -3,7 +3,7 @@ import * as detect from 'src/shared/environment/detect';
 import * as helpers from 'src/shared/helpers/service-worker';
 import Path from 'src/shared/models/Path';
 import * as registration from 'src/sw/helpers/registration';
-import { vi } from 'vitest';
+import { vi, type MockInstance } from 'vitest';
 import Log from '../libraries/Log';
 import { ServiceWorkerManager } from './ServiceWorkerManager';
 
@@ -13,13 +13,15 @@ describe('ServiceWorkerManager', () => {
     registrationOptions: { scope: '/' },
   } as const;
 
+  let getSWRegistrationSpy: MockInstance;
   beforeEach(() => {
     TestEnvironment.initialize();
     vi.restoreAllMocks();
+    getSWRegistrationSpy = vi.spyOn(registration, 'getSWRegistration');
   });
 
   test('_getActiveState returns None when no registration', async () => {
-    vi.spyOn(registration, 'getSWRegistration').mockResolvedValue(undefined);
+    getSWRegistrationSpy.mockResolvedValue(undefined);
     const mgr = new ServiceWorkerManager(OneSignal._context, config);
     await expect(mgr._getActiveState()).resolves.toBe(
       helpers.ServiceWorkerActiveState._None,
@@ -28,7 +30,7 @@ describe('ServiceWorkerManager', () => {
 
   test('_getActiveState detects OneSignal vs third-party from file name', async () => {
     const fakeReg = {} as ServiceWorkerRegistration;
-    vi.spyOn(registration, 'getSWRegistration').mockResolvedValue(fakeReg);
+    getSWRegistrationSpy.mockResolvedValue(fakeReg);
     const sw = (url: string): ServiceWorker =>
       ({
         scriptURL: url,

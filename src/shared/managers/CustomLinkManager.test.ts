@@ -4,16 +4,21 @@ import {
   CUSTOM_LINK_CSS_CLASSES,
   CUSTOM_LINK_CSS_SELECTORS,
 } from 'src/shared/slidedown/constants';
-import { expect, vi } from 'vitest';
+import { vi, type MockInstance } from 'vitest';
 import { ResourceLoadState } from '../../page/services/DynamicResourceLoader';
 import { CustomLinkManager } from './CustomLinkManager';
 
 describe('CustomLinkManager', () => {
+  let isPushEnabledSpy: MockInstance;
   beforeEach(() => {
     TestEnvironment.initialize();
     document.body.innerHTML = `
       <div class="${CUSTOM_LINK_CSS_SELECTORS._ContainerSelector.replace('.', '')}"></div>
     `;
+    isPushEnabledSpy = vi.spyOn(
+      OneSignal._context._subscriptionManager,
+      '_isPushNotificationsEnabled',
+    );
   });
 
   test('_initialize returns when disabled or stylesheet fails', async () => {
@@ -40,10 +45,7 @@ describe('CustomLinkManager', () => {
 
   test('_initialize hides containers when subscribed and unsubscribe disabled', async () => {
     await setupLoadStylesheet();
-    vi.spyOn(
-      OneSignal._context._subscriptionManager,
-      '_isPushNotificationsEnabled',
-    ).mockResolvedValue(true);
+    isPushEnabledSpy.mockResolvedValue(true);
     const mgr = new CustomLinkManager({
       enabled: true,
       unsubscribeEnabled: false,
@@ -64,10 +66,7 @@ describe('CustomLinkManager', () => {
 
   test('_initialize injects markup and click toggles subscription', async () => {
     await setupLoadStylesheet();
-    vi.spyOn(
-      OneSignal._context._subscriptionManager,
-      '_isPushNotificationsEnabled',
-    ).mockResolvedValue(false);
+    isPushEnabledSpy.mockResolvedValue(false);
     const optInSpy = vi
       .spyOn(OneSignal.User.PushSubscription, 'optIn')
       .mockResolvedValue();

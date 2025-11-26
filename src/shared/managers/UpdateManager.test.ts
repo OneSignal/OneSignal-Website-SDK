@@ -8,13 +8,14 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { UpdateManager } from './UpdateManager';
 
 describe('UpdateManager', () => {
+  let mgr: UpdateManager;
   beforeEach(() => {
     TestEnvironment.initialize();
     vi.restoreAllMocks();
+    mgr = new UpdateManager(OneSignal._context);
   });
 
   test('_sendPushDeviceRecordUpdate early returns with no user, otherwise calls _sendOnSessionUpdate once', async () => {
-    const mgr = new UpdateManager(OneSignal._context);
     // No user
     delete User._singletonInstance;
     const spy = vi.spyOn(mgr, '_sendOnSessionUpdate').mockResolvedValue();
@@ -28,7 +29,6 @@ describe('UpdateManager', () => {
   });
 
   test('_sendOnSessionUpdate flows: already sent, not first page, not registered, skip when unsubscribed, success path sets flag', async () => {
-    const mgr = new UpdateManager(OneSignal._context);
     // Already sent
     (mgr as unknown as { _onSessionSent: boolean })._onSessionSent = true;
     await mgr._sendOnSessionUpdate();
