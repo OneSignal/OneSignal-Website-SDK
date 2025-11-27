@@ -144,13 +144,13 @@ describe('SessionManager', () => {
       notifySpy = vi.spyOn(sm, '_notifySWToUpsertSession');
       deactSpy = vi
         .spyOn(
-          (sm as unknown as {
+          sm as unknown as {
             _notifySWToDeactivateSession: (
               onesignalId: string,
               subscriptionId: string,
               sessionOrigin: SessionOriginValue,
             ) => Promise<void>;
-          }),
+          },
           '_notifySWToDeactivateSession',
         )
         .mockResolvedValue(undefined);
@@ -185,7 +185,9 @@ describe('SessionManager', () => {
 
     test('_upsertSession emits SESSION_STARTED when SW not supported', async () => {
       supportsServiceWorkersSpy.mockReturnValue(false);
-      const emitSpy = vi.spyOn(OneSignal._emitter, '_emit').mockResolvedValue(OneSignal._emitter);
+      const emitSpy = vi
+        .spyOn(OneSignal._emitter, '_emit')
+        .mockResolvedValue(OneSignal._emitter);
       await sm._upsertSession(SessionOrigin._UserCreate);
       expect(emitSpy).toHaveBeenCalledWith(OneSignal.EVENTS.SESSION_STARTED);
     });
@@ -194,11 +196,18 @@ describe('SessionManager', () => {
       // ensure user present
       User._createOrGetInstance();
 
-      vi.spyOn(sm as unknown as { _getOneSignalAndSubscriptionIds: () => Promise<{ onesignalId: string; subscriptionId: string }> }, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
-          onesignalId: 'o',
-          subscriptionId: 's',
+      vi.spyOn(
+        sm as unknown as {
+          _getOneSignalAndSubscriptionIds: () => Promise<{
+            onesignalId: string;
+            subscriptionId: string;
+          }>;
         },
-      );
+        '_getOneSignalAndSubscriptionIds',
+      ).mockResolvedValue({
+        onesignalId: 'o',
+        subscriptionId: 's',
+      });
 
       // visible and focused
       const visSpy = vi
