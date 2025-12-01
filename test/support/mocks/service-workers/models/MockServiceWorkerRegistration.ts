@@ -7,7 +7,6 @@ export class MockServiceWorkerRegistration implements ServiceWorkerRegistration 
   waiting: ServiceWorker | null;
   onupdatefound: ((this: ServiceWorkerRegistration, ev: Event) => any) | null;
   readonly pushManager: PushManager;
-  readonly sync: SyncManager;
   navigationPreload: NavigationPreloadManager;
   updateViaCache: ServiceWorkerUpdateViaCache;
 
