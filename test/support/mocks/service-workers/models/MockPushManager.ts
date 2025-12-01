@@ -12,7 +12,7 @@ export class MockPushManager implements PushManager {
     return this.subscription;
   }
 
-  public async permissionState(_options?: PushSubscriptionOptionsInit): Promise<PushPermissionState> {
+  public async permissionState(_options?: PushSubscriptionOptionsInit): Promise<PermissionState> {
     return "granted";
   }
 
