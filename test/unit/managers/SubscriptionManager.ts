@@ -477,7 +477,7 @@ test(
 
     // Set the initial datetime
     timemachine.config({
-      timestamp: dateString
+      timestamp: Date.parse(dateString)
     });
 
     const initialSubscriptionOptions: PushSubscriptionOptions = {

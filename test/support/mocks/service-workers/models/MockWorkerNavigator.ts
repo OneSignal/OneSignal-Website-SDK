@@ -8,6 +8,14 @@ export class MockWorkerNavigator implements WorkerNavigator {
     public readonly userAgent: string
   ) {
   }
+  mediaCapabilities: MediaCapabilities;
+  clearAppBadge(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  setAppBadge(contents?: unknown): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  locks: LockManager;
 
   readonly hardwareConcurrency: number;
   readonly onLine: boolean;
