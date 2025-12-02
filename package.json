@@ -29,7 +29,7 @@
     "build:dev": "ENV=development yarn transpile:sources && ENV=development yarn bundle-sw && ENV=development yarn bundle-sdk && ENV=development yarn bundle-page-sdk-es6 && ENV=development build/scripts/publish.sh",
     "build:staging": "ENV=staging yarn transpile:sources && ENV=staging yarn bundle-sw && ENV=staging yarn bundle-sdk && ENV=staging yarn bundle-page-sdk-es6 && ENV=staging build/scripts/publish.sh",
     "build:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle-sw && ENV=production yarn bundle-sdk && ENV=production yarn bundle-page-sdk-es6 && bundlesize && ENV=production build/scripts/publish.sh",
-    "test": "ENV=development yarn transpile:tests && yarn run ava --verbose --color --watch",
+    "test": "ENV=development yarn transpile:tests && yarn run ava --verbose --color --watch --serial --no-worker-threads",
     "test:noWatch": "ENV=development yarn transpile:tests && ava --verbose --color --watch=false",
     "test:CI": "ENV=development yarn transpile:tests && ava --config ava-ci-config.js --verbose --color --watch=false",
     "publish": "yarn clean && yarn build:prod && yarn",
@@ -96,6 +96,7 @@
     "ts-node": "^9.1.1",
     "typescript": "^4.1.2",
     "uglifyjs-webpack-plugin": "^1.2.4",
+    "undici": "^7.16.0",
     "webpack": "^4.3.0",
     "webpack-bundle-analyzer": "^3.3.2",
     "webpack-cli": "3.3.12"

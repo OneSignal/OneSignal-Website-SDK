@@ -6,8 +6,6 @@ import { NotificationPermission } from "../../../src/models/NotificationPermissi
 import jsdom from 'jsdom';
 // @ts-ignore
 import DOMStorage from "dom-storage";
-// @ts-ignore
-import fetch from "node-fetch";
 
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
@@ -197,7 +195,6 @@ export class TestEnvironment {
     addServiceWorkerGlobalScopeToGlobal(serviceWorkerScope);
 
     global.location = config.url ? config.url : new URL('https://localhost:3001/webpush/sandbox?https=1');
-    global.fetch = fetch;
     global.self = global;
     return global;
   }
