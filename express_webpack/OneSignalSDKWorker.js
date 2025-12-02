@@ -1,1 +1,1 @@
-importScripts("https://localhost:4001/sdks/Dev-OneSignalSDKWorker.js");
+importScripts("https://localhost:4000/sdks/Dev-OneSignalSDKWorker.js");
