@@ -771,16 +771,16 @@ export class ServiceWorker {
         const defaultNotificationUrlFromConfig = config.origin;
         if (defaultNotificationUrlFromConfig) {
           launchUrl = defaultNotificationUrlFromConfig;
+
+          if (!dbDefaultNotificationUrl) {
+            // intentionally not awaiting this promise to not block notification click handling
+            Database.setAppState({ defaultNotificationUrl: defaultNotificationUrlFromConfig }).catch(e => {
+              Log.error("Failed to save default notification url to db", e);
+            });
+          }
         }
       } catch (e) {
         Log.error("Failed to get app config to determine default notification url", e);
-      }
-
-      if (!!launchUrl && !dbDefaultNotificationUrl) {
-        // intentionally not awaiting this promise to not block notification click handling
-        Database.setAppState({ defaultNotificationUrl: launchUrl }).catch(e => {
-          Log.error("Failed to save default notification url to db", e);
-        });
       }
     }
 
