@@ -18,6 +18,7 @@ import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
 import { setupFakePlayerId } from '../../../support/tester/utils';
 import * as awaitableTimeout from '../../../../src/utils/AwaitableTimeout';
 import { NockOneSignalHelper } from '../../../../test/support/tester/NockOneSignalHelper';
+import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -187,6 +188,31 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
     player_id: playerId,
     device_type: 5
   });
+});
+
+test('onNotificationClicked - get web config before open if empty in database', async t => {
+  await Database.remove("Options", "defaultUrl");
+
+   // Assert the URL is empty in the database
+   const urlBefore = await Database.get("Options", "defaultUrl");
+   t.true(urlBefore === undefined || urlBefore === null);
+
+  const serverConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom, false, null, appConfig.appId);
+  t.is(serverConfig.config.origin, "http://localhost:3000");
+  const webConfigNock = NockOneSignalHelper.nockGetConfig(appConfig.appId, serverConfig);
+
+  const notificationId = Random.getRandomUuid();
+  const notificationPutCall = NockOneSignalHelper.nockNotificationPut(notificationId);
+  const notificationEvent = mockNotificationNotificationEventInit(notificationId);
+
+  await OSServiceWorker.onNotificationClicked(notificationEvent);
+
+  t.true(webConfigNock.nockScope.isDone());
+  t.true(notificationPutCall.nockScope.isDone());
+
+  // Assert the URL is set after the handler runs
+  const urlAfter = await Database.get("Options", "defaultUrl");
+  t.is(urlAfter, "http://localhost:3000");
 });
 
 test('onNotificationClicked - notification click count omitted when appId is null', async t => {

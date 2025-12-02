@@ -39,6 +39,18 @@ export class NockOneSignalHelper {
     });
   }
 
+  static nockGetConfig(appId: string, body: any): NockScopeWithResultPromise {
+    return NockHelper.nockBase({
+      method: "get",
+      baseUrl: "https://onesignal.com",
+      path: `/api/v1/sync/${appId}/web`,
+      reply: {
+        status: 200,
+        body: body
+      }
+    });
+  }
+
   static nockNotificationConfirmedDelivery(notificationId?: string): NockScopeWithResultPromise {
     return NockHelper.nockBase({
       method: "put",
