@@ -262,17 +262,13 @@ export class TestEnvironment {
     (windowDef as any).isSecureContext = isSecureContext;
     (windowDef as any).location = url;
 
-    if (config.stubSetTimeout) {
-      (windowDef as any).setTimeout = async (callback: Function, timeDelay: number) => {
-        console.log("override setTimeout invoked");
-        const end = new Date().getTime() + timeDelay;
-        while (new Date().getTime() < end) {
-          // wait
-        }
-        await callback();
-      };
-    }
+    const realSetTimeout = global.setTimeout.bind(global);
+    const realClearTimeout = global.clearTimeout.bind(global);
 
+    if (config.stubSetTimeout) {
+      (windowDef as any).setTimeout = (cb: Function, ms: number = 0) => realSetTimeout(() => cb(), ms);
+      (windowDef as any).clearTimeout = (id: any) => realClearTimeout(id);
+    }
     TestEnvironment.addCustomEventPolyfill(windowDef);
 
     const topWindow = config.initializeAsIframe ? {
@@ -283,7 +279,15 @@ export class TestEnvironment {
       }
     } as any : windowDef;
     jsdom.reconfigureWindow(windowDef, { top: topWindow });
-    Object.assign(global, windowDef);
+    const { navigator, ...rest } = windowDef as any;
+    Object.assign(global, rest);
+
+    // then define navigator explicitly in a safe way
+    Object.defineProperty(global, "navigator", {
+      value: navigator,
+      configurable: true
+    });
+    // Object.assign(global, windowDef);
     return jsdom;
   }
 
@@ -910,8 +914,8 @@ export class TestEnvironment {
     // returnable spys
     const sendTagsSpy = sinonSandbox.spy(TagManager.prototype, "sendTags");
 
-    // network mocks
-    mockGetIcon();
+    // // network mocks
+    // mockGetIcon();
 
     if (testConfig.httpOrHttps === HttpHttpsEnvironment.Http) {
       stubMessageChannel(t);
