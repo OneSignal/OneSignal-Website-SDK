@@ -18,6 +18,11 @@ export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
     return this.registration;
   }
 
+  readonly fonts: FontFaceSet;
+  readonly crossOriginIsolated: boolean;
+  reportError: (e: any) => void;
+  structuredClone: (input: any) => any;
+
   readonly caches: CacheStorage;
   readonly clients: Clients = new MockClients();
   readonly console: Console;
@@ -51,7 +56,7 @@ export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
   onrejectionhandled: ((this: WorkerGlobalScope, ev: PromiseRejectionEvent) => any) | null = null;
   onpush: ((this: ServiceWorkerGlobalScope, ev: PushEvent) => any) | null = null;
   onpushsubscriptionchange: ((this: ServiceWorkerGlobalScope, ev: PushSubscriptionChangeEvent) => any) | null = null;
-  onsync: ((this: ServiceWorkerGlobalScope, ev: SyncEvent) => any) | null = null;
+  onsync: ((this: ServiceWorkerGlobalScope, ev: Event) => any) | null = null;
   onunhandledrejection: ((this: WorkerGlobalScope, ev: PromiseRejectionEvent) => any) | null = null;
   queueMicrotask(callback: VoidFunction): void {}
 

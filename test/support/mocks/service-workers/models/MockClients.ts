@@ -10,8 +10,8 @@ export class MockClients implements Clients {
     return Promise.resolve(client || null);
   }
 
-  async matchAll(_options?: ClientQueryOptions): Promise<Client[]> {
-    return this.clients;
+  async matchAll<T extends ClientQueryOptions>(options?: T): Promise<ReadonlyArray<T["type"] extends "window" ? WindowClient : Client>> {
+    return Object.freeze(this.clients) as ReadonlyArray<T["type"] extends "window" ? WindowClient : Client>;
   }
 
   async openWindow(_url: string): Promise<WindowClient | null> {

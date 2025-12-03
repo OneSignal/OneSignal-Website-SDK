@@ -16,23 +16,32 @@ import TimedLocalStorage from "../../../src/modules/TimedLocalStorage";
 import { DismissTimeKey } from "../../../src/models/Dismiss";
 import Slidedown from "../../../src/slidedown/Slidedown";
 import { AutoPromptOptions } from "../../../src/managers/PromptsManager";
+import { SlidedownPromptOptions } from "../../../src/models/Prompts";
+import { setupUndiciMocking } from "../../../test/support/tester/UndiciHelper";
+let undici: { mockAgent: any; restore: () => void };
 
-const sinonSandbox: SinonSandbox = sinon.sandbox.create();
-const testHelper = new SlidedownPromptingTestHelper(sinonSandbox);
+let sinonSandbox: SinonSandbox;
+let testHelper: SlidedownPromptingTestHelper;
+let minimalPushSlidedownOptions: SlidedownPromptOptions;
+let minimalSmsAndEmailOptions: SlidedownPromptOptions;
+let minimalCategorySlidedownOptions: SlidedownPromptOptions;
 
-const minimalPushSlidedownOptions     = testHelper.getMinimalPushSlidedownOptions();
-const minimalSmsAndEmailOptions       = testHelper.getMinimalSmsAndEmailOptions();
-const minimalCategorySlidedownOptions = testHelper.getMinimalCategorySlidedownOptions();
-
-test.beforeEach(() => {
-    mockGetIcon();
+test.serial.beforeEach(() => {
+  sinonSandbox = sinon.sandbox.create();
+  testHelper = new SlidedownPromptingTestHelper(sinonSandbox);
+  minimalPushSlidedownOptions     = testHelper.getMinimalPushSlidedownOptions();
+  minimalSmsAndEmailOptions       = testHelper.getMinimalSmsAndEmailOptions();
+  minimalCategorySlidedownOptions = testHelper.getMinimalCategorySlidedownOptions();
+  undici = setupUndiciMocking();
+  mockGetIcon(undici.mockAgent);
 });
 
-test.afterEach(function (_t: ExecutionContext) {
-    sinonSandbox.restore();
-    OneSignal._initCalled = false;
-    OneSignal.__initAlreadyCalled = false;
-    OneSignal._sessionInitAlreadyRunning = false;
+test.serial.afterEach.always(() => {
+  sinonSandbox.restore();
+  undici.restore();
+  OneSignal._initCalled = false;
+  OneSignal.__initAlreadyCalled = false;
+  OneSignal._sessionInitAlreadyRunning = false;
 });
 
 const testConfig: TestEnvironmentConfig = {
@@ -91,7 +100,6 @@ test("on push slidedown shown, allow, mark push prompt as dismissed", async t =>
 });
 
 test("on non-push slidedown dismiss, mark non-push prompt as dismissed", async t => {
-  await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
   sinonSandbox.stub(SlidedownManager.prototype as any, "checkIfSlidedownShouldBeShown").resolves(true);
   const eventsHelper = new EventsTestHelper(sinonSandbox);
   const dismissSpy = sinonSandbox.spy(DismissHelper, "markPromptDismissedWithType");
@@ -157,11 +165,13 @@ test("if subscribed w/ expired dismiss value, category slidedown doesn't prompt"
       testHelper.addPromptDelays(minimalCategorySlidedownOptions, 1, 0),
   ]);
 
+  await new Promise(res => setTimeout(res, 0));
+
   await subscriptionPromise;
   t.is(slidedownCreateSpy.callCount, 1);
 
   // simulate timed storage value expiration
-  TimedLocalStorage.removeItem(DismissTimeKey.OneSignalNotificationPrompt);
+  await TimedLocalStorage.removeItem(DismissTimeKey.OneSignalNotificationPrompt);
 
   const options: AutoPromptOptions = { slidedownPromptOptions: minimalCategorySlidedownOptions };
 

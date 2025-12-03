@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { MockServiceWorkerGlobalScope } from "../mocks/service-workers/models/MockServiceWorkerGlobalScope";
 
 // NodeJS.Global
@@ -8,7 +7,6 @@ global.URL = require('url').URL;
 global.indexedDB = require('fake-indexeddb');
 global.IDBKeyRange = require("fake-indexeddb/lib/FDBKeyRange");
 global.Headers = require('./Headers');
-global.fetch = fetch;
 
 global.btoa = function(str: string | Buffer) {
   let buffer;
@@ -24,15 +22,40 @@ global.atob = function(str: string) {
 };
 
 // Add any methods from ServiceWorkerGlobalScope to NodeJS's global if they don't exist already
-export function addServiceWorkerGlobalScopeToGlobal(serviceWorkerGlobalScope: ServiceWorkerGlobalScope): void {
-  global = Object.assign(global, serviceWorkerGlobalScope);
-  const props = Object.getOwnPropertyNames(MockServiceWorkerGlobalScope.prototype);
-  for(const propName of props) {
-    // Do NOT replace any existing stubs or default NodeJS global methods
-    if (!!global[propName])
-      continue;
+export function addServiceWorkerGlobalScopeToGlobal(serviceWorkerScope: ServiceWorkerGlobalScope): void {
+  for (const key of Object.keys(serviceWorkerScope)) {
+    const descriptor = Object.getOwnPropertyDescriptor(global, key);
 
-    // Add method to NodeJS global
-    global[propName] = (<any>serviceWorkerGlobalScope)[propName];
+    // Skip keys that exist and are not writable
+    if (descriptor && !descriptor.writable) continue;
+
+    // Skip non-configurable properties (navigator etc.)
+    if (descriptor && !descriptor.configurable) continue;
+
+    // Safe to define
+    Object.defineProperty(global, key, {
+      value: serviceWorkerScope[key],
+      writable: true,
+      configurable: true,
+      enumerable: true
+    });
+  }
+
+  // Install prototype methods too (but skip existing built-ins)
+  const protoKeys = Object.getOwnPropertyNames(MockServiceWorkerGlobalScope.prototype);
+  for (const key of protoKeys) {
+    if (key === "constructor") continue;
+
+    const descriptor = Object.getOwnPropertyDescriptor(global, key);
+    if (descriptor && !descriptor.configurable) continue;
+
+    if (!(key in global)) {
+      Object.defineProperty(global, key, {
+        value: serviceWorkerScope[key],
+        writable: true,
+        configurable: true,
+        enumerable: false,
+      });
+    }
   }
 }

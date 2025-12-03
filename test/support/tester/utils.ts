@@ -1,5 +1,4 @@
 import { SinonSandbox } from 'sinon';
-import nock from 'nock';
 import ProxyFrameHost from "../../../src/modules/frames/ProxyFrameHost";
 import AltOriginManager from "../../../src/managers/AltOriginManager";
 import OneSignalApi from "../../../src/OneSignalApi";
@@ -40,13 +39,16 @@ export function mockIframeMessaging(sinonSandbox: SinonSandbox) {
   sinonSandbox.stub(ProxyFrameHost.prototype, 'message').callsFake(mockIframeMessageReceiver);
 }
 
-export function mockGetIcon() {
-  nock('https://onesignal.com')
-    .get(/.*icon$/)
-    .reply(200, (_uri: string, _requestBody: string) => {
-      return { success: true };
-    });
-}
+  export function mockGetIcon(mockAgent: any) {
+    mockAgent
+      .get("https://onesignal.com")
+      .intercept({ method: "GET", path: /.*icon$/ })
+      .reply(
+        200,
+        JSON.stringify({ success: true }),
+        { headers: { "content-type": "application/json" } }
+      );
+  }
 
 export class InitTestHelper {
   private readonly sinonSandbox: SinonSandbox;
