@@ -28,6 +28,7 @@ import { NotificationReceived, NotificationClicked } from "../models/Notificatio
 import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
 import { DeviceRecord } from '../models/DeviceRecord';
 import { awaitableTimeout } from "../utils/AwaitableTimeout";
+import { AppConfig } from "src/models/AppConfig";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -154,6 +155,11 @@ export class ServiceWorker {
     }
     const { appId } = await Database.getAppConfig();
     return appId;
+  }
+
+  static async getAppConfig(): Promise<AppConfig> {
+    const appId = await ServiceWorker.getAppId();
+    return await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
   }
 
   static setupMessageListeners() {
@@ -750,8 +756,30 @@ export class ServiceWorker {
 
     // Use the user-provided default URL if one exists
     const { defaultNotificationUrl: dbDefaultNotificationUrl } = await Database.getAppState();
-    if (dbDefaultNotificationUrl)
+    if (dbDefaultNotificationUrl) {
       launchUrl = dbDefaultNotificationUrl;
+    }
+    else {
+      // There was an issue with legacy HTTP integrations where the defaultNotificationUrl
+      // was never saved to the DB. To account for this, we try to get the default URL
+      // from the app config on notification click and save it to the DB for future use.
+      // Choosing between notification received and notification clicked to do this logic,
+      // we decided on notification clicked to avoid doing extra api call when the user
+      // may never click the notification.
+      try {
+        const config = await ServiceWorker.getAppConfig();
+        const defaultNotificationUrlFromConfig = config.origin;
+        if (defaultNotificationUrlFromConfig) {
+          launchUrl = defaultNotificationUrlFromConfig;
+
+          if (!dbDefaultNotificationUrl) {
+            await Database.setAppState({ defaultNotificationUrl: defaultNotificationUrlFromConfig });
+          }
+        }
+      } catch (e) {
+        Log.error("Failed to update notification in the database", e);
+      }
+    }
 
     // If the user clicked an action button, use the URL provided by the action button
     // Unless the action button URL is null
