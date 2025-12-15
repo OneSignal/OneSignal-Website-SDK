@@ -40,6 +40,7 @@ describe('CustomLinkManager', () => {
       CUSTOM_LINK_CSS_SELECTORS._ContainerSelector,
     );
     expect(containers.length).toBe(1);
+
     expect(containers[0].children.length).toBe(0);
   });
 
@@ -90,6 +91,7 @@ describe('CustomLinkManager', () => {
       `.${CUSTOM_LINK_CSS_CLASSES._SubscribeClass}`,
     );
     expect(button).not.toBeNull();
+
     expect(button?.textContent).toBe('Subscribe');
 
     await button?.click();

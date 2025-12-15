@@ -72,6 +72,7 @@ describe('PromptsManager', () => {
       .mockResolvedValue(undefined as void);
     await pm._internalShowDelayedPrompt(DelayedPromptType._Native, 0);
     expect(nativeSpy).not.toHaveBeenCalled();
+
     expect(slidedownSpy).toHaveBeenCalled();
   });
 
@@ -112,7 +113,9 @@ describe('PromptsManager', () => {
     getBrowserVersionSpy.mockReturnValue(62);
     await pm._spawnAutoPrompts();
     expect(getOptsSpy).toHaveBeenCalled();
+
     expect(condSpy).toHaveBeenCalled();
+
     expect(delayedSpy).toHaveBeenCalledWith(DelayedPromptType._Native, 0);
   });
 });

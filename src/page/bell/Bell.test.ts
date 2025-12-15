@@ -103,10 +103,12 @@ describe('Bell', () => {
     bell._setCustomColorsIfSpecified();
     const background = document.querySelector<HTMLElement>('.background')!;
     expect(background.getAttribute('style')).toContain('#111');
+
     const badge = document.querySelector<HTMLElement>(
       '.onesignal-bell-launcher-badge',
     )!;
     expect(badge.getAttribute('style')).toContain('rgb(51, 51, 51)');
+
     const styleHover = document.getElementById(
       'onesignal-background-hover-style',
     );
