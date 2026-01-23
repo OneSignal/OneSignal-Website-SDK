@@ -35,6 +35,7 @@ describe('CustomLinkManager', () => {
       '_loadSdkStylesheet',
     ).mockResolvedValue(ResourceLoadState._Failed);
     await mgr._initialize();
+
     // nothing injected
     const containers = document.querySelectorAll(
       CUSTOM_LINK_CSS_SELECTORS._ContainerSelector,
