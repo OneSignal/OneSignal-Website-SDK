@@ -30,10 +30,10 @@ describe('UpdateManager', () => {
 
   test('_sendOnSessionUpdate flows: already sent, not first page, not registered, skip when unsubscribed, success path sets flag', async () => {
     // Already sent
-    (mgr as unknown as { _onSessionSent: boolean })._onSessionSent = true;
+    mgr['_onSessionSent'] = true;
     await mgr._sendOnSessionUpdate();
     // reset
-    (mgr as unknown as { _onSessionSent: boolean })._onSessionSent = false;
+    mgr['_onSessionSent'] = false;
 
     // Not first page
     const firstSpy = vi
@@ -53,11 +53,11 @@ describe('UpdateManager', () => {
 
     // Registered but not subscribed and enableOnSession not true -> skip
     alreadySpy.mockResolvedValue(true);
+    const pushSub = new SubscriptionModel();
+    pushSub._notification_types = 0;
     const pushSpy = vi
       .spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel')
-      .mockResolvedValue({
-        _notification_types: 0,
-      } as unknown as SubscriptionModel);
+      .mockResolvedValue(pushSub);
     const upsertSpy = vi
       .spyOn(OneSignal._context._sessionManager, '_upsertSession')
       .mockResolvedValue();
@@ -65,10 +65,9 @@ describe('UpdateManager', () => {
     expect(upsertSpy).not.toHaveBeenCalled();
 
     // Subscribed path
-    pushSpy.mockResolvedValue({
-      _notification_types: NotificationType._Subscribed,
-      id: 'sub',
-    } as unknown as SubscriptionModel);
+    pushSub._notification_types = NotificationType._Subscribed;
+    pushSub.id = 'sub';
+    pushSpy.mockResolvedValue(pushSub);
     await mgr._sendOnSessionUpdate();
     expect(upsertSpy).toHaveBeenCalledWith(SessionOrigin._UserNewSession);
   });
