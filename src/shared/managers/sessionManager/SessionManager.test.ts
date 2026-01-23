@@ -195,15 +195,13 @@ describe('SessionManager', () => {
       }));
 
       // visible and focused
-      const visSpy = vi
-        .spyOn(document, 'visibilityState', 'get')
-        .mockReturnValue('visible' as DocumentVisibilityState);
-      const focusSpy = vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+      vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(
+        'visible' as DocumentVisibilityState,
+      );
+      vi.spyOn(document, 'hasFocus').mockReturnValue(true);
       notifySpy.mockResolvedValue(undefined);
       await sm._handleVisibilityChange();
       expect(notifySpy).toHaveBeenCalled();
-      visSpy.mockRestore();
-      focusSpy.mockRestore();
 
       // hidden path removes listeners
       vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(
