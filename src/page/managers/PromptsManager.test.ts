@@ -1,11 +1,7 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupLoadStylesheet } from '__test__/support/helpers/setup';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
-import type {
-  AppUserConfigPromptOptions,
-  DelayedPromptOptions,
-  DelayedPromptTypeValue,
-} from 'src/shared/prompts/types';
+import type { DelayedPromptOptions } from 'src/shared/prompts/types';
 import { Browser } from 'src/shared/useragent/constants';
 import * as detect from 'src/shared/useragent/detect';
 import { PromptsManager } from './PromptsManager';
@@ -65,11 +61,8 @@ describe('PromptsManager', () => {
       .spyOn(pm, '_internalShowNativePrompt')
       .mockResolvedValue(true);
     const slidedownSpy = vi
-      .spyOn(
-        PromptsManager.prototype,
-        '_internalShowSlidedownPrompt' as keyof PromptsManager,
-      )
-      .mockResolvedValue(undefined as void);
+      .spyOn(pm, '_internalShowSlidedownPrompt')
+      .mockResolvedValue(undefined);
     await pm._internalShowDelayedPrompt(DelayedPromptType._Native, 0);
     expect(nativeSpy).not.toHaveBeenCalled();
 
@@ -79,15 +72,7 @@ describe('PromptsManager', () => {
   test('_spawnAutoPrompts triggers native when condition met and not forced', async () => {
     const pm = new PromptsManager(OneSignal._context);
     const getOptsSpy = vi
-      .spyOn(
-        pm as unknown as {
-          _getDelayedPromptOptions: (
-            opts: AppUserConfigPromptOptions | undefined,
-            type: DelayedPromptTypeValue,
-          ) => DelayedPromptOptions;
-        },
-        '_getDelayedPromptOptions',
-      )
+      .spyOn(pm, '_getDelayedPromptOptions' as keyof PromptsManager)
       .mockImplementation(
         (): DelayedPromptOptions => ({
           enabled: true,
@@ -97,17 +82,11 @@ describe('PromptsManager', () => {
         }),
       );
     const condSpy = vi
-      .spyOn(
-        pm as unknown as { _isPageViewConditionMet: (o?: unknown) => boolean },
-        '_isPageViewConditionMet',
-      )
+      .spyOn(pm, '_isPageViewConditionMet' as keyof PromptsManager)
       .mockReturnValue(true);
     const delayedSpy = vi
-      .spyOn(
-        PromptsManager.prototype,
-        '_internalShowDelayedPrompt' as keyof PromptsManager,
-      )
-      .mockResolvedValue(undefined as void);
+      .spyOn(pm, '_internalShowDelayedPrompt')
+      .mockResolvedValue(undefined);
     requiresUserInteractionSpy.mockReturnValue(false);
     getBrowserNameSpy.mockReturnValue(Browser._Chrome);
     getBrowserVersionSpy.mockReturnValue(62);
