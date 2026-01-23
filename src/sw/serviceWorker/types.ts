@@ -5,11 +5,18 @@ export interface ClientStatus {
   hasAnyActiveSessions: boolean;
 }
 
+export interface NotificationDisplayStatus {
+  notificationId: string;
+  preventDefault: boolean;
+  responded: boolean;
+}
+
 export interface OSServiceWorkerFields {
   shouldLog?: boolean;
   debounceSessionTimerId?: number;
   finalizeSessionTimerId?: number;
   clientsStatus?: ClientStatus;
+  notificationDisplayStatus?: NotificationDisplayStatus;
   cancel?: () => void;
 }
 
