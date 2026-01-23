@@ -103,20 +103,12 @@ describe('ServiceWorkerManager', () => {
     const supportsSpy = vi
       .spyOn(detect, 'supportsServiceWorkers')
       .mockReturnValue(false);
-    await expect(
-      (
-        mgr as unknown as { _shouldInstallWorker: () => Promise<boolean> }
-      )._shouldInstallWorker(),
-    ).resolves.toBe(false);
+    await expect(mgr['_shouldInstallWorker']()).resolves.toBe(false);
 
     supportsSpy.mockReturnValue(true);
     const savedConfig = OneSignal.config;
     OneSignal.config = null;
-    await expect(
-      (
-        mgr as unknown as { _shouldInstallWorker: () => Promise<boolean> }
-      )._shouldInstallWorker(),
-    ).resolves.toBe(false);
+    await expect(mgr['_shouldInstallWorker']()).resolves.toBe(false);
     OneSignal.config = savedConfig;
 
     vi.spyOn(mgr, '_getActiveState').mockResolvedValue(
@@ -126,37 +118,16 @@ describe('ServiceWorkerManager', () => {
       OneSignal._context._permissionManager,
       '_getNotificationPermission',
     ).mockResolvedValue('granted');
-    await expect(
-      (
-        mgr as unknown as { _shouldInstallWorker: () => Promise<boolean> }
-      )._shouldInstallWorker(),
-    ).resolves.toBe(true);
+    await expect(mgr['_shouldInstallWorker']()).resolves.toBe(true);
 
     vi.spyOn(mgr, '_getActiveState').mockResolvedValue(
       helpers.ServiceWorkerActiveState._OneSignalWorker,
     );
-    vi.spyOn(
-      mgr as unknown as { _haveParamsChanged: () => Promise<boolean> },
-      '_haveParamsChanged',
-    ).mockResolvedValue(true);
-    await expect(
-      (
-        mgr as unknown as { _shouldInstallWorker: () => Promise<boolean> }
-      )._shouldInstallWorker(),
-    ).resolves.toBe(true);
+    vi.spyOn(mgr, '_haveParamsChanged').mockResolvedValue(true);
+    await expect(mgr['_shouldInstallWorker']()).resolves.toBe(true);
 
-    vi.spyOn(
-      mgr as unknown as { _haveParamsChanged: () => Promise<boolean> },
-      '_haveParamsChanged',
-    ).mockResolvedValue(false);
-    vi.spyOn(
-      mgr as unknown as { _workerNeedsUpdate: () => Promise<boolean> },
-      '_workerNeedsUpdate',
-    ).mockResolvedValue(false);
-    await expect(
-      (
-        mgr as unknown as { _shouldInstallWorker: () => Promise<boolean> }
-      )._shouldInstallWorker(),
-    ).resolves.toBe(false);
+    vi.spyOn(mgr, '_haveParamsChanged').mockResolvedValue(false);
+    vi.spyOn(mgr, '_workerNeedsUpdate' as keyof ServiceWorkerManager).mockResolvedValue(false);
+    await expect(mgr['_shouldInstallWorker']()).resolves.toBe(false);
   });
 });
