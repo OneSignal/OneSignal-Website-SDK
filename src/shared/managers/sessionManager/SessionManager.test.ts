@@ -5,7 +5,6 @@ import LoginManager from 'src/page/managers/LoginManager';
 import * as detect from 'src/shared/environment/detect';
 import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
-import type { SessionOriginValue } from 'src/shared/session/types';
 import { vi, type MockInstance } from 'vitest';
 import User from '../../../onesignal/User';
 import { SessionManager } from './SessionManager';
@@ -143,16 +142,7 @@ describe('SessionManager', () => {
       sm = new SessionManager(OneSignal._context);
       notifySpy = vi.spyOn(sm, '_notifySWToUpsertSession');
       deactSpy = vi
-        .spyOn(
-          sm as unknown as {
-            _notifySWToDeactivateSession: (
-              onesignalId: string,
-              subscriptionId: string,
-              sessionOrigin: SessionOriginValue,
-            ) => Promise<void>;
-          },
-          '_notifySWToDeactivateSession',
-        )
+        .spyOn(sm, '_notifySWToDeactivateSession')
         .mockResolvedValue(undefined);
     });
 
@@ -197,13 +187,8 @@ describe('SessionManager', () => {
       User._createOrGetInstance();
 
       vi.spyOn(
-        sm as unknown as {
-          _getOneSignalAndSubscriptionIds: () => Promise<{
-            onesignalId: string;
-            subscriptionId: string;
-          }>;
-        },
-        '_getOneSignalAndSubscriptionIds',
+        sm,
+        '_getOneSignalAndSubscriptionIds' as keyof SessionManager,
       ).mockResolvedValue({
         onesignalId: 'o',
         subscriptionId: 's',
