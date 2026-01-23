@@ -127,7 +127,10 @@ describe('ServiceWorkerManager', () => {
     await expect(mgr['_shouldInstallWorker']()).resolves.toBe(true);
 
     vi.spyOn(mgr, '_haveParamsChanged').mockResolvedValue(false);
-    vi.spyOn(mgr, '_workerNeedsUpdate' as keyof ServiceWorkerManager).mockResolvedValue(false);
+    vi.spyOn(
+      mgr,
+      '_workerNeedsUpdate' as keyof ServiceWorkerManager,
+    ).mockResolvedValue(false);
     await expect(mgr['_shouldInstallWorker']()).resolves.toBe(false);
   });
 });

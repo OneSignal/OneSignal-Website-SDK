@@ -83,7 +83,7 @@ describe('PromptsManager', () => {
       );
     const condSpy = vi
       .spyOn(pm, '_isPageViewConditionMet' as keyof PromptsManager)
-      .mockReturnValue(true);
+      .mockResolvedValue(true);
     const delayedSpy = vi
       .spyOn(pm, '_internalShowDelayedPrompt')
       .mockResolvedValue(undefined);

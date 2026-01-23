@@ -189,10 +189,10 @@ describe('SessionManager', () => {
       vi.spyOn(
         sm,
         '_getOneSignalAndSubscriptionIds' as keyof SessionManager,
-      ).mockResolvedValue({
+      ).mockImplementation(() => ({
         onesignalId: 'o',
         subscriptionId: 's',
-      });
+      }));
 
       // visible and focused
       const visSpy = vi
