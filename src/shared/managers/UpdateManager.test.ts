@@ -54,7 +54,7 @@ describe('UpdateManager', () => {
     // Registered but not subscribed and enableOnSession not true -> skip
     alreadySpy.mockResolvedValue(true);
     const pushSub = new SubscriptionModel();
-    pushSub._notification_types = 0;
+    pushSub._notification_types = NotificationType._NoNativePermission;
     const pushSpy = vi
       .spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel')
       .mockResolvedValue(pushSub);
