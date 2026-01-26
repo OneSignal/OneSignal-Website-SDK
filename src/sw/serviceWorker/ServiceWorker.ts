@@ -271,13 +271,34 @@ function setupMessageListeners() {
 }
 
 /**
- * Checks if any window client is visible and wants to prevent notification display.
+ * Initializes the response tracking for a notification BEFORE broadcasting.
+ * This must be called before broadcasting to avoid race conditions where
+ * the page responds before we're ready to receive the response.
+ */
+function initializeNotificationDisplayStatus(notificationId: string): void {
+  console.log(
+    '[OneSignal SW] Initializing notification display status for:',
+    notificationId,
+  );
+  self.notificationDisplayStatus = {
+    notificationId,
+    preventDefault: false,
+    responded: false,
+  };
+}
+
+/**
+ * Checks if any window client is visible and waits for the page to respond
+ * with whether to prevent the notification display.
  * Uses a Promise-based approach with the page responding via postMessage.
  */
-async function shouldPreventNotificationDisplay(
+async function waitForPreventDefaultResponse(
   notificationId: string,
 ): Promise<boolean> {
-  console.log('[OneSignal SW] shouldPreventNotificationDisplay called for:', notificationId);
+  console.log(
+    '[OneSignal SW] waitForPreventDefaultResponse called for:',
+    notificationId,
+  );
 
   // Get all window clients
   const clients = await self.clients.matchAll({
@@ -289,8 +310,12 @@ async function shouldPreventNotificationDisplay(
 
   // If no clients, show notification
   if (clients.length === 0) {
-    console.log('[OneSignal SW] No window clients found, showing notification.');
-    Log._debug('[Service Worker] No window clients found, showing notification.');
+    console.log(
+      '[OneSignal SW] No window clients found, showing notification.',
+    );
+    Log._debug(
+      '[Service Worker] No window clients found, showing notification.',
+    );
     return false;
   }
 
@@ -303,7 +328,9 @@ async function shouldPreventNotificationDisplay(
 
   if (visibleClients.length === 0) {
     console.log('[OneSignal SW] No visible clients, showing notification.');
-    Log._debug('[Service Worker] No visible clients, showing notification.');
+    Log._debug(
+      '[Service Worker] No visible clients, showing notification.',
+    );
     return false;
   }
 
@@ -314,12 +341,17 @@ async function shouldPreventNotificationDisplay(
     `[Service Worker] Found ${visibleClients.length} visible client(s), waiting for preventDefault response.`,
   );
 
-  // Initialize response tracking
-  self.notificationDisplayStatus = {
-    notificationId,
-    preventDefault: false,
-    responded: false,
-  };
+  // Check if we already received a response (page may have responded very quickly)
+  if (self.notificationDisplayStatus?.responded) {
+    const preventDefault = self.notificationDisplayStatus.preventDefault;
+    console.log(
+      `[OneSignal SW] Already received preventDefault response: ${preventDefault}`,
+    );
+    Log._debug(
+      `[Service Worker] Already received preventDefault response: ${preventDefault}`,
+    );
+    return preventDefault;
+  }
 
   // Wait for response with timeout
   const startTime = Date.now();
@@ -390,6 +422,11 @@ function onPushReceived(event: PushEvent): void {
                 {
                   notification: notif,
                 };
+
+              // IMPORTANT: Set up response tracking BEFORE broadcasting to avoid race condition
+              // where the page responds before we're ready to receive the response
+              initializeNotificationDisplayStatus(notif.notificationId);
+
               await workerMessenger
                 ._broadcast(
                   WorkerMessengerCommand._NotificationWillDisplay,
@@ -398,7 +435,7 @@ function onPushReceived(event: PushEvent): void {
                 .catch((e) => Log._error(e));
 
               // Wait for page to potentially call preventDefault()
-              const shouldPreventDisplay = await shouldPreventNotificationDisplay(
+              const shouldPreventDisplay = await waitForPreventDefaultResponse(
                 notif.notificationId,
               );
 
