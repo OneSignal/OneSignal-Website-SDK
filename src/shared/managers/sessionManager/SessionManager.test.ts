@@ -186,13 +186,10 @@ describe('SessionManager', () => {
       // ensure user present
       User._createOrGetInstance();
 
-      vi.spyOn(
-        sm,
-        '_getOneSignalAndSubscriptionIds' as keyof SessionManager,
-      ).mockImplementation(() => ({
+      vi.spyOn(sm, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
         onesignalId: 'o',
         subscriptionId: 's',
-      }));
+      });
 
       // visible and focused
       vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(

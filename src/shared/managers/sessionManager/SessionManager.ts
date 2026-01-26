@@ -86,7 +86,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  private async _getOneSignalAndSubscriptionIds(): Promise<{
+  public async _getOneSignalAndSubscriptionIds(): Promise<{
     onesignalId: string;
     subscriptionId: string;
   }> {
