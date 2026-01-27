@@ -179,7 +179,7 @@ export class ServiceWorkerManager {
     return this._workerNeedsUpdate();
   }
 
-  private async _haveParamsChanged(): Promise<boolean> {
+  public async _haveParamsChanged(): Promise<boolean> {
     // 1. No workerRegistration
     const workerRegistration = await this._getRegistration();
     if (!workerRegistration) {

@@ -192,7 +192,7 @@ export class PromptsManager {
     return success;
   }
 
-  private async _internalShowSlidedownPrompt(
+  public async _internalShowSlidedownPrompt(
     options: AutoPromptOptions = { force: false },
   ): Promise<void> {
     logMethodCall('internalShowSlidedownPrompt');
