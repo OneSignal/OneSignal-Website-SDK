@@ -84,16 +84,16 @@ describe('PromptsManager', () => {
     const condSpy = vi
       .spyOn(pm, '_isPageViewConditionMet' as keyof PromptsManager)
       .mockResolvedValue(true);
-    
+
     const delayedSpy = vi
       .spyOn(pm, '_internalShowDelayedPrompt')
       .mockResolvedValue(undefined);
     requiresUserInteractionSpy.mockReturnValue(false);
     getBrowserNameSpy.mockReturnValue(Browser._Chrome);
     getBrowserVersionSpy.mockReturnValue(62);
-    
+
     await pm._spawnAutoPrompts();
-    
+
     expect(getOptsSpy).toHaveBeenCalled();
     expect(condSpy).toHaveBeenCalled();
     expect(delayedSpy).toHaveBeenCalledWith(DelayedPromptType._Native, 0);
