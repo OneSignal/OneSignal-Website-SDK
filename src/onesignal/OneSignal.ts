@@ -43,14 +43,11 @@ import Emitter from '../shared/libraries/Emitter';
 import Log from '../shared/libraries/Log';
 import DebugNamespace from './DebugNamesapce';
 import NotificationsNamespace from './NotificationsNamespace';
-import { ONESIGNAL_EVENTS } from './OneSignalEvents';
 import { SessionNamespace } from './SessionNamespace';
 import SlidedownNamespace from './SlidedownNamespace';
 import UserNamespace from './UserNamespace';
 
 export default class OneSignal {
-  static EVENTS = ONESIGNAL_EVENTS;
-
   static _consentGiven = false;
 
   private static async _initializeCoreModuleAndOSNamespaces() {
@@ -176,14 +173,11 @@ export default class OneSignal {
       OneSignal._initAlreadyCalled = true;
 
       OneSignal._emitter.on(
-        OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
+        'permissionChangeAsString',
         checkAndTriggerSubscriptionChanged,
       );
-      OneSignal._emitter.on(
-        OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-        _onSubscriptionChanged,
-      );
-      OneSignal._emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
+      OneSignal._emitter.on('change', _onSubscriptionChanged);
+      OneSignal._emitter.on('initializeInternal', onSdkInitialized);
 
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,

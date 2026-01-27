@@ -52,10 +52,12 @@ export default class ConfirmationToast {
         : SLIDEDOWN_CSS_CLASSES._SlideDown,
     );
 
-    ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.SHOWN);
+    ConfirmationToast._triggerSlidedownEvent('toastShown');
   }
 
-  static async _triggerSlidedownEvent(eventName: string): Promise<void> {
+  static async _triggerSlidedownEvent(
+    eventName: 'toastShown' | 'toastClosed',
+  ): Promise<void> {
     await OneSignalEvent._trigger(eventName);
   }
 
@@ -85,12 +87,5 @@ export default class ConfirmationToast {
 
   get _dialog() {
     return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Dialog}`);
-  }
-
-  static get EVENTS() {
-    return {
-      SHOWN: 'toastShown',
-      CLOSED: 'toastClosed',
-    };
   }
 }

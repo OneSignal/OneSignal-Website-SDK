@@ -160,18 +160,25 @@ export default class Slidedown {
     }
   }
 
-  static async _triggerSlidedownEvent(eventName: string): Promise<void> {
+  static async _triggerSlidedownEvent(
+    eventName:
+      | 'slidedownAllowClick'
+      | 'slidedownCancelClick'
+      | 'slidedownClosed'
+      | 'slidedownQueued'
+      | 'slidedownShown',
+  ): Promise<void> {
     await OneSignalEvent._trigger(eventName);
   }
 
   async _onSlidedownAllowed(_: any): Promise<void> {
-    await Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
+    await Slidedown._triggerSlidedownEvent('slidedownAllowClick');
   }
 
   _onSlidedownCanceled(_: any): void {
-    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
+    Slidedown._triggerSlidedownEvent('slidedownCancelClick');
     this._close();
-    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+    Slidedown._triggerSlidedownEvent('slidedownClosed');
   }
 
   _close(): void {
@@ -338,16 +345,6 @@ export default class Slidedown {
   get _slidedownFooter() {
     return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Footer}`);
   }
-
-  static get EVENTS() {
-    return {
-      ALLOW_CLICK: 'slidedownAllowClick',
-      CANCEL_CLICK: 'slidedownCancelClick',
-      SHOWN: 'slidedownShown',
-      CLOSED: 'slidedownClosed',
-      QUEUED: 'slidedownQueued',
-    };
-  }
 }
 
 export function manageNotifyButtonStateWhileSlidedownShows(): void {
@@ -361,7 +358,7 @@ export function manageNotifyButtonStateWhileSlidedownShows(): void {
       OneSignal._notifyButton?._launcher?._hide();
     });
   }
-  OneSignal._emitter.once(Slidedown.EVENTS.CLOSED, () => {
+  OneSignal._emitter.once('slidedownClosed', () => {
     if (OneSignal._notifyButton && OneSignal._notifyButton._options.enable) {
       OneSignal._notifyButton._launcher._show();
     }

@@ -10,7 +10,7 @@ import { getPlatformNotificationIcon } from 'src/shared/utils/utils';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
-import { BellEvent, BellState } from './constants';
+import { BellState } from './constants';
 
 const STATIC_RESOURCES_URL = new URL('https://media.onesignal.com/web-sdk');
 
@@ -132,12 +132,12 @@ export default class Dialog extends AnimatedElement {
               a notification shown in this resubscription case.
             */
             OneSignal._doNotShowWelcomeNotification = false;
-            OneSignalEvent._trigger(BellEvent._SubscribeClick);
+            OneSignalEvent._trigger('notifyButtonSubscribeClick');
           });
         }
         if (this._unsubscribeButton) {
           this._unsubscribeButton.addEventListener('click', () =>
-            OneSignalEvent._trigger(BellEvent._UnsubscribeClick),
+            OneSignalEvent._trigger('notifyButtonUnsubscribeClick'),
           );
         }
         this._bell._setCustomColorsIfSpecified();
