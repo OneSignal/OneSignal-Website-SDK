@@ -254,7 +254,10 @@ function setupMessageListeners() {
       );
 
       // Only process if we're waiting for this notification's response
-      if (self.notificationDisplayStatus?.notificationId !== payload.notificationId) {
+      if (
+        self.notificationDisplayStatus?.notificationId !==
+        payload.notificationId
+      ) {
         return;
       }
 
@@ -305,9 +308,7 @@ async function waitForPreventDefaultResponse(
   );
 
   if (visibleClients.length === 0) {
-    Log._debug(
-      '[Service Worker] No visible clients, showing notification.',
-    );
+    Log._debug('[Service Worker] No visible clients, showing notification.');
     return false;
   }
 

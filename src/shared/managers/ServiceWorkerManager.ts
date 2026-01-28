@@ -261,7 +261,11 @@ export class ServiceWorkerManager {
 
     workerMessenger._on(
       WorkerMessengerCommand._NotificationWillDisplay,
-      async (event: NotificationForegroundWillDisplayEventSerializable & { requestId?: string }) => {
+      async (
+        event: NotificationForegroundWillDisplayEventSerializable & {
+          requestId?: string;
+        },
+      ) => {
         Log._debug(
           location.origin,
           'Received notification display event from service worker.',
