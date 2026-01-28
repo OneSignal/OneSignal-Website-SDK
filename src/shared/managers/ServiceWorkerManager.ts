@@ -262,10 +262,6 @@ export class ServiceWorkerManager {
     workerMessenger._on(
       WorkerMessengerCommand._NotificationWillDisplay,
       async (event: NotificationForegroundWillDisplayEventSerializable & { requestId?: string }) => {
-        console.log(
-          '[OneSignal Page] Received notification.willDisplay from SW:',
-          event,
-        );
         Log._debug(
           location.origin,
           'Received notification display event from service worker.',
@@ -278,9 +274,6 @@ export class ServiceWorkerManager {
         const publicEvent: NotificationForegroundWillDisplayEvent = {
           notification: event.notification,
           preventDefault: function (): void {
-            console.log(
-              `[OneSignal Page] preventDefault() CALLED for notification: ${notificationId}`,
-            );
             Log._debug(
               `[Page] preventDefault() called for notification: ${notificationId}`,
             );
@@ -295,9 +288,6 @@ export class ServiceWorkerManager {
         );
 
         // Send response back to service worker
-        console.log(
-          `[OneSignal Page] Sending preventDefault response: ${preventDefaultCalled} for notification: ${notificationId}, requestId: ${requestId}`,
-        );
         Log._debug(
           `[Page] Sending preventDefault response: ${preventDefaultCalled} for notification: ${notificationId}`,
         );
@@ -309,7 +299,6 @@ export class ServiceWorkerManager {
             preventDefault: preventDefaultCalled,
           },
         );
-        console.log('[OneSignal Page] Response sent to SW');
       },
     );
 
