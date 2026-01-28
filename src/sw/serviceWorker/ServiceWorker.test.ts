@@ -264,9 +264,6 @@ describe('ServiceWorker', () => {
 
         // Simulate page responding with preventDefault=true
         // We simulate this by setting self.notificationDisplayStatus before the timeout
-        const originalDispatchEvent = dispatchEvent;
-
-        // Override dispatchEvent to inject the preventDefault response
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
@@ -549,7 +546,6 @@ describe('ServiceWorker', () => {
     describe('session upsert event', () => {
       test('with safari client', async () => {
         const cancel = vi.fn();
-        // @ts-expect-error - custom property, not part of the spec
         self.cancel = cancel;
 
         await db.put('Sessions', session);
@@ -741,6 +737,7 @@ describe('ServiceWorker', () => {
         self.clientsStatus = {
           hasAnyActiveSessions: false,
           timestamp,
+          sentRequestsCount: 0,
           receivedResponsesCount: 0,
         };
 
@@ -752,8 +749,8 @@ describe('ServiceWorker', () => {
 
         // should set client status as active
         expect(postMessageFn).not.toHaveBeenCalled();
-        expect(self.clientsStatus.receivedResponsesCount).toBe(1);
-        expect(self.clientsStatus.hasAnyActiveSessions).toBe(true);
+        expect(self.clientsStatus?.receivedResponsesCount).toBe(1);
+        expect(self.clientsStatus?.hasAnyActiveSessions).toBe(true);
       });
     });
 
