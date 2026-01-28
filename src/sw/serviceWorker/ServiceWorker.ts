@@ -27,7 +27,10 @@ import {
   upsertSession,
 } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
-import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
+import {
+  type NotificationWillDisplayResponsePayload,
+  WorkerMessengerCommand,
+} from 'src/shared/libraries/workerMessenger/constants';
 import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
 import type { WorkerMessengerMessage } from 'src/shared/libraries/workerMessenger/types';
 import ContextSW from 'src/shared/models/ContextSW';
@@ -72,6 +75,12 @@ import type {
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 const MAX_CONFIRMED_DELIVERY_DELAY = 25;
+/**
+ * How long to wait for page to respond to foregroundWillDisplay event before
+ * displaying the notification anyway. This is short to ensure timely notification
+ * display while giving the page a chance to call preventDefault().
+ */
+const NOTIFICATION_WILL_DISPLAY_RESPONSE_TIMEOUT_MS = 250;
 const workerMessenger = new WorkerMessengerSW(undefined);
 
 async function getPushSubscriptionId(): Promise<string | undefined> {
@@ -235,6 +244,99 @@ function setupMessageListeners() {
       }
     },
   );
+
+  workerMessenger._on(
+    WorkerMessengerCommand._NotificationWillDisplayResponse,
+    async (payload: NotificationWillDisplayResponsePayload) => {
+      Log._debug(
+        '[Service Worker] Received response for NotificationWillDisplay',
+        payload,
+      );
+
+      // Only process if we're waiting for this notification's response
+      if (
+        self.notificationDisplayStatus?.notificationId !==
+        payload.notificationId
+      ) {
+        return;
+      }
+
+      self.notificationDisplayStatus.responded = true;
+      self.notificationDisplayStatus.preventDefault = payload.preventDefault;
+    },
+  );
+}
+
+/**
+ * Initializes the response tracking for a notification BEFORE broadcasting.
+ * This must be called before broadcasting to avoid race conditions where
+ * the page responds before we're ready to receive the response.
+ */
+function initializeNotificationDisplayStatus(notificationId: string): void {
+  self.notificationDisplayStatus = {
+    notificationId,
+    preventDefault: false,
+    responded: false,
+  };
+}
+
+/**
+ * Checks if any window client is visible and waits for the page to respond
+ * with whether to prevent the notification display.
+ * Uses a Promise-based approach with the page responding via postMessage.
+ */
+async function waitForPreventDefaultResponse(
+  _notificationId: string,
+): Promise<boolean> {
+  // Get all window clients
+  const clients = await self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  });
+
+  // If no clients, show notification
+  if (clients.length === 0) {
+    Log._debug(
+      '[Service Worker] No window clients found, showing notification.',
+    );
+    return false;
+  }
+
+  // Check if any client is visible
+  const visibleClients = clients.filter(
+    (client) => (client as WindowClient).visibilityState === 'visible',
+  );
+
+  if (visibleClients.length === 0) {
+    Log._debug('[Service Worker] No visible clients, showing notification.');
+    return false;
+  }
+
+  Log._debug(
+    `[Service Worker] Found ${visibleClients.length} visible client(s), waiting for preventDefault response.`,
+  );
+
+  // Check if we already received a response (page may have responded very quickly)
+  if (self.notificationDisplayStatus?.responded) {
+    return self.notificationDisplayStatus.preventDefault;
+  }
+
+  // Wait for response with timeout
+  const startTime = Date.now();
+  const timeoutMs = NOTIFICATION_WILL_DISPLAY_RESPONSE_TIMEOUT_MS;
+
+  while (Date.now() - startTime < timeoutMs) {
+    if (self.notificationDisplayStatus?.responded) {
+      return self.notificationDisplayStatus.preventDefault;
+    }
+    // Short sleep to avoid busy waiting
+    await delay(10);
+  }
+
+  Log._debug(
+    '[Service Worker] No preventDefault response received within timeout, showing notification.',
+  );
+  return false;
 }
 
 /**
@@ -273,15 +375,33 @@ function onPushReceived(event: PushEvent): void {
                 {
                   notification: notif,
                 };
+
+              // IMPORTANT: Set up response tracking BEFORE broadcasting to avoid race condition
+              // where the page responds before we're ready to receive the response
+              initializeNotificationDisplayStatus(notif.notificationId);
+
               await workerMessenger
                 ._broadcast(
                   WorkerMessengerCommand._NotificationWillDisplay,
                   event,
                 )
                 .catch((e) => Log._error(e));
-              const pushSubscriptionId = await getPushSubscriptionId();
 
+              // Wait for page to potentially call preventDefault()
+              const shouldPreventDisplay = await waitForPreventDefaultResponse(
+                notif.notificationId,
+              );
+
+              const pushSubscriptionId = await getPushSubscriptionId();
               notificationWillDisplay(notif, pushSubscriptionId);
+
+              if (shouldPreventDisplay) {
+                Log._debug(
+                  `[Service Worker] Notification display prevented for: ${notif.notificationId}`,
+                );
+                // Still send confirmed delivery even if display is prevented
+                return sendConfirmedDelivery(notif);
+              }
 
               return displayNotification(notif)
                 .then(() => sendConfirmedDelivery(notif))

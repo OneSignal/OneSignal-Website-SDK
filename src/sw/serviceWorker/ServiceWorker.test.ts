@@ -45,8 +45,9 @@ import {
   notificationDismissed,
   notificationWillDisplay,
 } from '../webhooks/notifications/webhookNotificationEvent';
+import type { OSServiceWorkerFields } from './types';
 
-declare const self: ServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 const endpoint = 'https://example.com';
 const appId = APP_ID;
@@ -228,6 +229,96 @@ describe('ServiceWorker', () => {
           player_id: pushSubscriptionId,
         },
       );
+    });
+
+    describe('foregroundWillDisplay preventDefault', () => {
+      test('should display notification when no page responds (timeout)', async () => {
+        const showNotificationSpy = vi.spyOn(
+          self.registration,
+          'showNotification',
+        );
+        showNotificationSpy.mockClear();
+
+        const payload = mockOSMinifiedNotificationPayload();
+        await dispatchEvent(new PushEvent('push', payload));
+        await vi.runOnlyPendingTimersAsync();
+
+        // Notification should be displayed since no page called preventDefault
+        expect(showNotificationSpy).toHaveBeenCalledWith(
+          payload.title,
+          expect.objectContaining({
+            body: payload.alert,
+          }),
+        );
+      });
+
+      test('should prevent notification display when page responds with preventDefault=true', async () => {
+        const showNotificationSpy = vi.spyOn(
+          self.registration,
+          'showNotification',
+        );
+        showNotificationSpy.mockClear();
+
+        const payload = mockOSMinifiedNotificationPayload();
+        const notificationId = payload.custom.i;
+
+        // Simulate page responding with preventDefault=true
+        // We simulate this by setting self.notificationDisplayStatus before the timeout
+        const pushEvent = new PushEvent('push', payload);
+        self.dispatchEvent(pushEvent);
+
+        // Simulate page sending preventDefault response quickly (before timeout)
+        setTimeout(() => {
+          if (
+            self.notificationDisplayStatus?.notificationId === notificationId
+          ) {
+            self.notificationDisplayStatus.responded = true;
+            self.notificationDisplayStatus.preventDefault = true;
+          }
+        }, 50); // Respond in 50ms (before 250ms timeout)
+
+        await vi.advanceTimersByTimeAsync(1600);
+
+        // Notification should NOT be displayed
+        expect(showNotificationSpy).not.toHaveBeenCalled();
+
+        // But confirmed delivery should still be sent (if enabled)
+        // This is handled by the existing test
+      });
+
+      test('should display notification when page responds with preventDefault=false', async () => {
+        const showNotificationSpy = vi.spyOn(
+          self.registration,
+          'showNotification',
+        );
+        showNotificationSpy.mockClear();
+
+        const payload = mockOSMinifiedNotificationPayload();
+        const notificationId = payload.custom.i;
+
+        const pushEvent = new PushEvent('push', payload);
+        self.dispatchEvent(pushEvent);
+
+        // Simulate page responding with preventDefault=false
+        setTimeout(() => {
+          if (
+            self.notificationDisplayStatus?.notificationId === notificationId
+          ) {
+            self.notificationDisplayStatus.responded = true;
+            self.notificationDisplayStatus.preventDefault = false;
+          }
+        }, 50);
+
+        await vi.advanceTimersByTimeAsync(1600);
+
+        // Notification should be displayed
+        expect(showNotificationSpy).toHaveBeenCalledWith(
+          payload.title,
+          expect.objectContaining({
+            body: payload.alert,
+          }),
+        );
+      });
     });
   });
 
@@ -459,7 +550,6 @@ describe('ServiceWorker', () => {
     describe('session upsert event', () => {
       test('with safari client', async () => {
         const cancel = vi.fn();
-        // @ts-expect-error - custom property, not part of the spec
         self.cancel = cancel;
 
         await db.put('Sessions', session);
@@ -651,6 +741,7 @@ describe('ServiceWorker', () => {
         self.clientsStatus = {
           hasAnyActiveSessions: false,
           timestamp,
+          sentRequestsCount: 0,
           receivedResponsesCount: 0,
         };
 
@@ -662,8 +753,8 @@ describe('ServiceWorker', () => {
 
         // should set client status as active
         expect(postMessageFn).not.toHaveBeenCalled();
-        expect(self.clientsStatus.receivedResponsesCount).toBe(1);
-        expect(self.clientsStatus.hasAnyActiveSessions).toBe(true);
+        expect(self.clientsStatus?.receivedResponsesCount).toBe(1);
+        expect(self.clientsStatus?.hasAnyActiveSessions).toBe(true);
       });
     });
 
@@ -857,12 +948,19 @@ const postMessageFn = vi.fn();
 class Client {
   url: string;
   focused: boolean;
+  visibilityState: 'visible' | 'hidden';
   constructor({
     focused = true,
     url = 'http://some-client-url.com',
-  }: { focused?: boolean; url?: string } = {}) {
+    visibilityState = 'visible',
+  }: {
+    focused?: boolean;
+    url?: string;
+    visibilityState?: 'visible' | 'hidden';
+  } = {}) {
     this.focused = focused;
     this.url = url;
+    this.visibilityState = visibilityState;
   }
 
   postMessage(message: any) {
@@ -870,7 +968,10 @@ class Client {
   }
 }
 const mockClient = new Client();
-const unfocusedClient = new Client({ focused: false });
+const unfocusedClient = new Client({
+  focused: false,
+  visibilityState: 'hidden',
+});
 const matchAllFn = vi.fn().mockResolvedValue([mockClient]);
 
 Object.defineProperty(self, 'clients', {
