@@ -269,7 +269,9 @@ describe('ServiceWorker', () => {
 
         // Simulate page sending preventDefault response quickly (before timeout)
         setTimeout(() => {
-          if (self.notificationDisplayStatus?.notificationId === notificationId) {
+          if (
+            self.notificationDisplayStatus?.notificationId === notificationId
+          ) {
             self.notificationDisplayStatus.responded = true;
             self.notificationDisplayStatus.preventDefault = true;
           }
@@ -299,7 +301,9 @@ describe('ServiceWorker', () => {
 
         // Simulate page responding with preventDefault=false
         setTimeout(() => {
-          if (self.notificationDisplayStatus?.notificationId === notificationId) {
+          if (
+            self.notificationDisplayStatus?.notificationId === notificationId
+          ) {
             self.notificationDisplayStatus.responded = true;
             self.notificationDisplayStatus.preventDefault = false;
           }
@@ -949,7 +953,11 @@ class Client {
     focused = true,
     url = 'http://some-client-url.com',
     visibilityState = 'visible',
-  }: { focused?: boolean; url?: string; visibilityState?: 'visible' | 'hidden' } = {}) {
+  }: {
+    focused?: boolean;
+    url?: string;
+    visibilityState?: 'visible' | 'hidden';
+  } = {}) {
     this.focused = focused;
     this.url = url;
     this.visibilityState = visibilityState;
@@ -960,7 +968,10 @@ class Client {
   }
 }
 const mockClient = new Client();
-const unfocusedClient = new Client({ focused: false, visibilityState: 'hidden' });
+const unfocusedClient = new Client({
+  focused: false,
+  visibilityState: 'hidden',
+});
 const matchAllFn = vi.fn().mockResolvedValue([mockClient]);
 
 Object.defineProperty(self, 'clients', {
