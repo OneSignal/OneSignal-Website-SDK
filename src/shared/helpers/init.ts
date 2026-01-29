@@ -24,7 +24,7 @@ export async function internalInit() {
 
   const sessionManager = OneSignal._context._sessionManager;
   OneSignal._emitter.on(
-    OneSignal.EVENTS.SESSION_STARTED,
+    'os.sessionStarted',
     sessionManager._sendOnSessionUpdateFromPage.bind(sessionManager),
   );
   incrementPageViewCount();
@@ -92,7 +92,7 @@ async function sessionInit(): Promise<void> {
   }
 
   OneSignal._sessionInitAlreadyRunning = false;
-  await OneSignalEvent._trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  await OneSignalEvent._trigger('initializeInternal');
 }
 
 export async function registerForPushNotifications(): Promise<boolean> {
@@ -127,7 +127,7 @@ export async function onSdkInitialized() {
     await OneSignal._context._updateManager._sendOnSessionUpdate();
   }
 
-  await OneSignalEvent._trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
+  await OneSignalEvent._trigger('initialize');
 }
 
 /** Helper methods */
@@ -233,7 +233,7 @@ async function showNotifyButton() {
     const displayPredicate =
       OneSignal.config!.userConfig.notifyButton!.displayPredicate;
     if (displayPredicate && typeof displayPredicate === 'function') {
-      OneSignal._emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
+      OneSignal._emitter.once('initializeInternal', async () => {
         const predicateValue = await Promise.resolve(
           OneSignal.config!.userConfig.notifyButton!.displayPredicate?.(),
         );

@@ -12,7 +12,7 @@ import {
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
-import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
+import type { EventsMap } from 'src/shared/services/types';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
 import { isCompleteSubscriptionObject } from '../shared/managers/utils';
@@ -56,20 +56,14 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
         Log._error(e);
       });
 
-    OneSignal._emitter.on(
-      OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-      async (change: SubscriptionChangeEvent | undefined) => {
-        this._id = change?.current.id;
-        this._token = change?.current.token;
-      },
-    );
+    OneSignal._emitter.on('change', async (change) => {
+      this._id = change?.current.id;
+      this._token = change?.current.token;
+    });
 
-    OneSignal._emitter.on(
-      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-      async (permission: NotificationPermission) => {
-        this._permission = permission;
-      },
-    );
+    OneSignal._emitter.on('permissionChangeAsString', async (permission) => {
+      this._permission = permission;
+    });
   }
 
   get id(): string | null | undefined {
@@ -110,14 +104,14 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
   addEventListener(
     event: 'change',
-    listener: (change: SubscriptionChangeEvent) => void,
+    listener: (change: EventsMap['change']) => void,
   ): void {
     OneSignal._emitter.on(event, listener);
   }
 
   removeEventListener(
     event: 'change',
-    listener: (change: SubscriptionChangeEvent) => void,
+    listener: (change: EventsMap['change']) => void,
   ): void {
     OneSignal._emitter.off(event, listener);
   }

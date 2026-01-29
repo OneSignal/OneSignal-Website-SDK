@@ -269,7 +269,7 @@ export class SlidedownManager {
     await confirmationToast._show();
     await delay(5000);
     confirmationToast._close();
-    ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
+    ConfirmationToast._triggerSlidedownEvent('toastClosed');
   }
 
   private async _mountAuxiliaryContainers(
@@ -401,7 +401,7 @@ export class SlidedownManager {
       // timeout to allow slidedown close animation to finish in case another slidedown is queued
       await delay(1000);
 
-      Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+      Slidedown._triggerSlidedownEvent('slidedownClosed');
     }
 
     switch (slidedownType) {
@@ -433,7 +433,7 @@ export class SlidedownManager {
 
   public _enqueue(options: AutoPromptOptions): void {
     this._slidedownQueue.push(options);
-    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.QUEUED);
+    Slidedown._triggerSlidedownEvent('slidedownQueued');
   }
 
   public _dequeue(): AutoPromptOptions | undefined {
@@ -469,7 +469,7 @@ export class SlidedownManager {
       await this._slidedown._create(options.isInUpdateMode);
       await this._mountAuxiliaryContainers(options);
       Log._debug('Showing OneSignal Slidedown');
-      Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
+      Slidedown._triggerSlidedownEvent('slidedownShown');
     } catch (e) {
       Log._error('There was an error showing the OneSignal Slidedown:', e);
       this._setIsSlidedownShowing(false);
