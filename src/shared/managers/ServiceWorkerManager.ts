@@ -261,20 +261,47 @@ export class ServiceWorkerManager {
 
     workerMessenger._on(
       WorkerMessengerCommand._NotificationWillDisplay,
-      async (event: NotificationForegroundWillDisplayEventSerializable) => {
+      async (
+        event: NotificationForegroundWillDisplayEventSerializable & {
+          requestId?: string;
+        },
+      ) => {
         Log._debug(
           location.origin,
           'Received notification display event from service worker.',
         );
+
+        let preventDefaultCalled = false;
+        const notificationId = event.notification.notificationId;
+        const requestId = event.requestId; // Echo back the requestId if present
+
         const publicEvent: NotificationForegroundWillDisplayEvent = {
           notification: event.notification,
           preventDefault: function (): void {
-            throw new Error('Browser does not support preventing display.');
+            Log._debug(
+              `[Page] preventDefault() called for notification: ${notificationId}`,
+            );
+            preventDefaultCalled = true;
           },
         };
+
+        // Trigger the event and let listeners call preventDefault() synchronously
         await OneSignalEvent._trigger(
           OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY,
           publicEvent,
+        );
+
+        // Send response back to service worker
+        Log._debug(
+          `[Page] Sending preventDefault response: ${preventDefaultCalled} for notification: ${notificationId}`,
+        );
+        await workerMessenger._unicast(
+          WorkerMessengerCommand._NotificationWillDisplayResponse,
+          {
+            notificationId,
+            requestId, // Include requestId in response
+            preventDefault: preventDefaultCalled,
+          },
         );
       },
     );
