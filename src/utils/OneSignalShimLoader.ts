@@ -1,7 +1,7 @@
 import { isPushNotificationsSupported } from "../context/browser/utils/BrowserSupportsPush";
-import { OneSignalStubES6 } from "./OneSignalStubES6";
-import { OneSignalStubES5 } from "./OneSignalStubES5";
 import { PossiblePredefinedOneSignal } from "./OneSignalStub";
+import { OneSignalStubES5 } from "./OneSignalStubES5";
+import { OneSignalStubES6 } from "./OneSignalStubES6";
 // NOTE: Careful if adding imports, ES5 targets can't clean up functions never called.
 
 // See sdk.ts for what entry points this handles
@@ -79,7 +79,7 @@ export class OneSignalShimLoader {
     //    instead of "OneSignal.js" for importScripts();
     if (OneSignalShimLoader.isServiceWorkerRuntime()) {
       (<ServiceWorkerGlobalScope><any>self).importScripts(
-        `${OneSignalShimLoader.getPathAndPrefix()}OneSignalSDKWorker.js?v=${OneSignalShimLoader.VERSION}`
+        `${OneSignalShimLoader.getPathAndPrefix()}OneSignalSDKWorker.js?v=${OneSignalShimLoader.VERSION}`,
       );
     }
     else if (isPushNotificationsSupported()) {

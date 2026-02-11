@@ -1,23 +1,22 @@
-import Environment from '../Environment';
-import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
-import Path from '../models/Path';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import Database from '../services/Database';
-import { IntegrationKind } from '../models/IntegrationKind';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import NotImplementedError from '../errors/NotImplementedError';
-import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
-import Log from '../libraries/Log';
-import Event from '../Event';
-import ProxyFrame from '../modules/frames/ProxyFrame';
-import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError";
-import OneSignalUtils from "../utils/OneSignalUtils";
-import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConfig }
-  from "../helpers/ServiceWorkerHelper";
-import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/shared/utils/Utils";
-import { PageVisibilityRequest, PageVisibilityResponse } from "../models/Session";
+import Environment from '../Environment';
+import NotImplementedError from '../errors/NotImplementedError';
+import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError";
+import Event from '../Event';
 import ServiceWorkerUtilHelper from "../helpers/page/ServiceWorkerUtilHelper";
+import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConfig } from "../helpers/ServiceWorkerHelper";
+import Log from '../libraries/Log';
+import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { ContextSWInterface } from '../models/ContextSW';
+import { IntegrationKind } from '../models/IntegrationKind';
+import Path from '../models/Path';
+import { PageVisibilityRequest, PageVisibilityResponse } from "../models/Session";
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import ProxyFrame from '../modules/frames/ProxyFrame';
+import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
+import Database from '../services/Database';
+import OneSignalUtils from "../utils/OneSignalUtils";
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
