@@ -321,22 +321,27 @@ async function waitForPreventDefaultResponse(
     return self.notificationDisplayStatus.preventDefault;
   }
 
-  // Wait for response with timeout
-  const startTime = Date.now();
+  // Wait for response with timeout using interval-based polling
   const timeoutMs = NOTIFICATION_WILL_DISPLAY_RESPONSE_TIMEOUT_MS;
 
-  while (Date.now() - startTime < timeoutMs) {
-    if (self.notificationDisplayStatus?.responded) {
-      return self.notificationDisplayStatus.preventDefault;
-    }
-    // Short sleep to avoid busy waiting
-    await delay(10);
-  }
-
-  Log._debug(
-    '[Service Worker] No preventDefault response received within timeout, showing notification.',
-  );
-  return false;
+  return new Promise<boolean>((resolve) => {
+    const startTime = Date.now();
+    const timerId = setInterval(() => {
+      if (Date.now() - startTime < timeoutMs) {
+        if (self.notificationDisplayStatus?.responded) {
+          clearInterval(timerId);
+          resolve(self.notificationDisplayStatus.preventDefault);
+        }
+        // Continue polling if no response yet
+      } else {
+        clearInterval(timerId);
+        Log._debug(
+          '[Service Worker] No preventDefault response received within timeout, showing notification.',
+        );
+        resolve(false);
+      }
+    }, 10);
+  });
 }
 
 /**
