@@ -72,13 +72,16 @@ vi.mock('src/shared/utils/EnvVariables', async (importOriginal) => ({
   },
 }));
 
+/**
+ * Time to advance fake timers in tests to ensure all service worker timeouts
+ * complete. Accounts for: setTimeout(0) in run(), cancelable timeouts (0.5/1s),
+ * NOTIFICATION_WILL_DISPLAY_RESPONSE_TIMEOUT_MS (250ms), and IndexedDB buffer.
+ */
+const SW_TEST_TIMER_ADVANCE_MS = 1600;
+
 const dispatchEvent = async (event: Event) => {
   self.dispatchEvent(event);
-
-  // wait for the first setTimeout in the run method, then adds a 1s delay
-  // since some cancelable timeouts are 0.5/1s and sometimes there are multiple cancelable timeouts
-  // and plus we add some buffer time for IndexedDB operations
-  await vi.advanceTimersByTimeAsync(1600);
+  await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
 };
 
 const serverConfig = TestContext.getFakeServerAppConfig(
@@ -237,7 +240,6 @@ describe('ServiceWorker', () => {
           self.registration,
           'showNotification',
         );
-        showNotificationSpy.mockClear();
 
         const payload = mockOSMinifiedNotificationPayload();
         await dispatchEvent(new PushEvent('push', payload));
@@ -257,9 +259,12 @@ describe('ServiceWorker', () => {
           self.registration,
           'showNotification',
         );
-        showNotificationSpy.mockClear();
 
-        const payload = mockOSMinifiedNotificationPayload();
+        const payload = mockOSMinifiedNotificationPayload({
+          custom: {
+            rr: 'y',
+          },
+        });
         const notificationId = payload.custom.i;
 
         // Simulate page responding with preventDefault=true
@@ -277,13 +282,21 @@ describe('ServiceWorker', () => {
           }
         }, 50); // Respond in 50ms (before 250ms timeout)
 
-        await vi.advanceTimersByTimeAsync(1600);
+        await vi.advanceTimersByTimeAsync(60);
 
         // Notification should NOT be displayed
         expect(showNotificationSpy).not.toHaveBeenCalled();
 
-        // But confirmed delivery should still be sent (if enabled)
-        // This is handled by the existing test
+        // Confirmed delivery should still be sent even when display is prevented
+        await vi.runOnlyPendingTimersAsync();
+        expect(apiPutSpy).toHaveBeenCalledWith(
+          `notifications/${notificationId}/report_received`,
+          {
+            app_id: appId,
+            device_type: expect.any(Number),
+            player_id: pushSubscriptionId,
+          },
+        );
       });
 
       test('should display notification when page responds with preventDefault=false', async () => {
@@ -291,7 +304,6 @@ describe('ServiceWorker', () => {
           self.registration,
           'showNotification',
         );
-        showNotificationSpy.mockClear();
 
         const payload = mockOSMinifiedNotificationPayload();
         const notificationId = payload.custom.i;
@@ -309,7 +321,7 @@ describe('ServiceWorker', () => {
           }
         }, 50);
 
-        await vi.advanceTimersByTimeAsync(1600);
+        await vi.advanceTimersByTimeAsync(125);
 
         // Notification should be displayed
         expect(showNotificationSpy).toHaveBeenCalledWith(
