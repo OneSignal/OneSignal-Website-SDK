@@ -220,7 +220,7 @@ export class ServiceWorker {
 
         const timestamp = payload.timestamp;
         if (self.clientsStatus.timestamp !== timestamp) { return; }
-        
+
         self.clientsStatus.receivedResponsesCount++;
         if (payload.focused) {
           self.clientsStatus.hasAnyActiveSessions = true;
@@ -751,7 +751,6 @@ export class ServiceWorker {
    */
   static async getNotificationUrlToOpen(notification): Promise<string> {
     // Defaults to the URL the service worker was registered
-    // TODO: This should be fixed for HTTP sites
     let launchUrl = location.origin;
 
     // Use the user-provided default URL if one exists
@@ -768,13 +767,10 @@ export class ServiceWorker {
       // may never click the notification.
       try {
         const config = await ServiceWorker.getAppConfig();
-        const defaultNotificationUrlFromConfig = config.origin;
-        if (defaultNotificationUrlFromConfig) {
-          launchUrl = defaultNotificationUrlFromConfig;
-
-          if (!dbDefaultNotificationUrl) {
-            await Database.setAppState({ defaultNotificationUrl: defaultNotificationUrlFromConfig });
-          }
+        const defaultNotificationUrl = config.origin;
+        if (defaultNotificationUrl) {
+          launchUrl = defaultNotificationUrl;
+          await Database.setAppState({ defaultNotificationUrl });
         }
       } catch (e) {
         Log.error("Failed to update notification in the database", e);
