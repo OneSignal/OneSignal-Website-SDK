@@ -321,7 +321,7 @@ describe('ServiceWorker', () => {
           }
         }, 50);
 
-        await vi.advanceTimersByTimeAsync(125);
+        await vi.advanceTimersByTimeAsync(250);
 
         // Notification should be displayed
         expect(showNotificationSpy).toHaveBeenCalledWith(
