@@ -16,7 +16,9 @@ export async function createUserOnServer(): Promise<void> {
   const hasExternalId = !!identityModel._externalId;
 
   if (!hasAnySubscription && !hasExternalId) {
-    Log._error('No subscriptions or external ID found, skipping user creation');
+    Log._debug(
+      'No subscriptions or external ID on current user model, skipping user creation.',
+    );
     return;
   }
 
