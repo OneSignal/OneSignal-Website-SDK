@@ -93,9 +93,15 @@ export default class LoginManager {
     if (!identityModel._externalId)
       return Log._debug('Logout: User is not logged in, skipping logout');
 
+    const hasAnySubscription =
+      OneSignal._coreDirector._subscriptionModelStore._list().length > 0;
+
     resetUserModels();
 
-    // create a new anonymous user
-    return createUserOnServer();
+    // Only create an anonymous user if there is a subscription to associate with it.
+    // Without a subscription, there is nothing meaningful to register on the server.
+    if (hasAnySubscription) {
+      return createUserOnServer();
+    }
   }
 }

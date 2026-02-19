@@ -63,8 +63,20 @@ describe('LoginManager', () => {
     );
   });
 
-  test('logout: with external id resets models and creates anonymous user', async () => {
+  test('logout: with external id and no subscriptions resets models and skips user creation', async () => {
     await updateIdentityModel('external_id', 'abc');
+    await LoginManager.logout();
+    expect(createUserOnServerSpy).not.toHaveBeenCalled();
+  });
+
+  test('logout: with external id and a subscription resets models and creates anonymous user', async () => {
+    await updateIdentityModel('external_id', 'abc');
+    const mockSub = { id: 'sub-id' } as SubscriptionModel;
+    vi.spyOn(
+      OneSignal._coreDirector._subscriptionModelStore,
+      '_list',
+    ).mockReturnValue([mockSub]);
+
     await LoginManager.logout();
     expect(createUserOnServerSpy).toHaveBeenCalled();
   });
