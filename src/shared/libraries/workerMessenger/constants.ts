@@ -4,6 +4,7 @@ export const WorkerMessengerCommand = {
   _SubscribeNew: 'SubscribeNew',
   _NotificationWillDisplay: 'notification.willDisplay',
   _NotificationWillDisplayResponse: 'notification.willDisplay.response',
+  _DisplayNotification: 'notification.display',
   _NotificationClicked: 'notification.clicked',
   _NotificationDismissed: 'notification.dismissed',
   _SessionUpsert: 'os.session.upsert',
