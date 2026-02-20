@@ -125,12 +125,16 @@ export interface NotificationClickResult {
   readonly url?: string;
 }
 
+export interface IDisplayableOSNotification extends IOSNotification {
+  display(): void;
+}
+
 export interface NotificationForegroundWillDisplayEventSerializable {
   readonly notification: IOSNotification;
 }
 
-export interface NotificationForegroundWillDisplayEvent
-  extends NotificationForegroundWillDisplayEventSerializable {
+export interface NotificationForegroundWillDisplayEvent {
+  readonly notification: IDisplayableOSNotification;
   preventDefault(): void;
 }
 

@@ -276,7 +276,18 @@ export class ServiceWorkerManager {
         const requestId = event.requestId; // Echo back the requestId if present
 
         const publicEvent: NotificationForegroundWillDisplayEvent = {
-          notification: event.notification,
+          notification: {
+            ...event.notification,
+            display: () => {
+              Log._debug(
+                `[Page] display() called for notification: ${notificationId}`,
+              );
+              workerMessenger._unicast(
+                WorkerMessengerCommand._DisplayNotification,
+                { notification: event.notification },
+              );
+            },
+          },
           preventDefault: function (): void {
             Log._debug(
               `[Page] preventDefault() called for notification: ${notificationId}`,

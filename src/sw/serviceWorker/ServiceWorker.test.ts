@@ -331,6 +331,59 @@ describe('ServiceWorker', () => {
           }),
         );
       });
+
+      test('should display notification via display() after preventDefault', async () => {
+        const showNotificationSpy = vi.spyOn(
+          self.registration,
+          'showNotification',
+        );
+
+        const payload = mockOSMinifiedNotificationPayload();
+        const notificationId = payload.custom.i;
+
+        const pushEvent = new PushEvent('push', payload);
+        self.dispatchEvent(pushEvent);
+
+        // Simulate page responding with preventDefault=true
+        setTimeout(() => {
+          if (
+            self.notificationDisplayStatus?.notificationId === notificationId
+          ) {
+            self.notificationDisplayStatus.responded = true;
+            self.notificationDisplayStatus.preventDefault = true;
+          }
+        }, 50);
+
+        await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+        await vi.runOnlyPendingTimersAsync();
+
+        // Notification should NOT be displayed initially
+        expect(showNotificationSpy).not.toHaveBeenCalled();
+
+        // Now simulate the page calling display() by sending DisplayNotification
+        isServiceWorker = true;
+        const displayEvent = new ExtendableMessageEvent('message', {
+          command: WorkerMessengerCommand._DisplayNotification,
+          payload: {
+            notification: {
+              notificationId,
+              title: payload.title,
+              body: payload.alert,
+              icon: payload.icon,
+              confirmDelivery: false,
+            },
+          },
+        });
+        await dispatchEvent(displayEvent);
+
+        // Notification should now be displayed
+        expect(showNotificationSpy).toHaveBeenCalledWith(
+          payload.title,
+          expect.objectContaining({
+            body: payload.alert,
+          }),
+        );
+      });
     });
   });
 
@@ -784,6 +837,33 @@ describe('ServiceWorker', () => {
       });
       await dispatchEvent(event);
       expect(self.shouldLog).toBe(undefined);
+    });
+
+    test('should display notification via DisplayNotification command', async () => {
+      const showNotificationSpy = vi.spyOn(
+        self.registration,
+        'showNotification',
+      );
+
+      const notification = {
+        notificationId: 'display-test-id',
+        title: 'Display Test',
+        body: 'Test body',
+        confirmDelivery: false,
+      };
+
+      const event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand._DisplayNotification,
+        payload: { notification },
+      });
+      await dispatchEvent(event);
+
+      expect(showNotificationSpy).toHaveBeenCalledWith(
+        notification.title,
+        expect.objectContaining({
+          body: notification.body,
+        }),
+      );
     });
   });
 });

@@ -265,6 +265,19 @@ function setupMessageListeners() {
       self.notificationDisplayStatus.preventDefault = payload.preventDefault;
     },
   );
+
+  workerMessenger._on(
+    WorkerMessengerCommand._DisplayNotification,
+    async (payload: { notification: IOSNotification }) => {
+      Log._debug(
+        '[Service Worker] Received DisplayNotification request',
+        payload,
+      );
+      await displayNotification(
+        payload.notification as IMutableOSNotification,
+      );
+    },
+  );
 }
 
 /**
