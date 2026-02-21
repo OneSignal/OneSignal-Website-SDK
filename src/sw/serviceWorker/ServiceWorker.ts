@@ -75,12 +75,6 @@ import type {
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 const MAX_CONFIRMED_DELIVERY_DELAY = 25;
-/**
- * How long to wait for page to respond to foregroundWillDisplay event before
- * displaying the notification anyway. This is short to ensure timely notification
- * display while giving the page a chance to call preventDefault().
- */
-const NOTIFICATION_WILL_DISPLAY_RESPONSE_TIMEOUT_MS = 250;
 const workerMessenger = new WorkerMessengerSW(undefined);
 
 async function getPushSubscriptionId(): Promise<string | undefined> {
@@ -253,7 +247,6 @@ function setupMessageListeners() {
         payload,
       );
 
-      // Only process if we're waiting for this notification's response
       if (
         self.notificationDisplayStatus?.notificationId !==
         payload.notificationId
@@ -261,8 +254,8 @@ function setupMessageListeners() {
         return;
       }
 
-      self.notificationDisplayStatus.responded = true;
-      self.notificationDisplayStatus.preventDefault = payload.preventDefault;
+      self.notificationDisplayStatus.resolve(payload.preventDefault);
+      self.notificationDisplayStatus = undefined;
     },
   );
 
@@ -281,47 +274,53 @@ function setupMessageListeners() {
 }
 
 /**
- * Initializes the response tracking for a notification BEFORE broadcasting.
- * This must be called before broadcasting to avoid race conditions where
- * the page responds before we're ready to receive the response.
+ * Creates a promise that resolves when the page responds to the
+ * foregroundWillDisplay event. Must be called BEFORE broadcasting
+ * to avoid a race condition where the page responds before the
+ * resolve callback is registered.
  */
-function initializeNotificationDisplayStatus(notificationId: string): void {
-  self.notificationDisplayStatus = {
-    notificationId,
-    preventDefault: false,
-    responded: false,
-  };
+function createPreventDefaultPromise(
+  notificationId: string,
+): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    self.notificationDisplayStatus = { notificationId, resolve };
+  });
 }
 
 /**
- * Checks if any window client is visible and waits for the page to respond
- * with whether to prevent the notification display.
- * Uses a Promise-based approach with the page responding via postMessage.
+ * Checks if any window client is visible. If not, resolves the promise
+ * immediately with false (show notification). If visible clients exist,
+ * returns the promise which will be resolved by the page's response
+ * via the _NotificationWillDisplayResponse handler.
+ *
+ * Since preventDefault() is synchronous, the page responds immediately
+ * after receiving the broadcast -- no polling or timeout needed.
  */
 async function waitForPreventDefaultResponse(
-  _notificationId: string,
+  preventDefaultPromise: Promise<boolean>,
 ): Promise<boolean> {
-  // Get all window clients
   const clients = await self.clients.matchAll({
     type: 'window',
     includeUncontrolled: true,
   });
 
-  // If no clients, show notification
   if (clients.length === 0) {
     Log._debug(
       '[Service Worker] No window clients found, showing notification.',
     );
+    self.notificationDisplayStatus?.resolve(false);
+    self.notificationDisplayStatus = undefined;
     return false;
   }
 
-  // Check if any client is visible
   const visibleClients = clients.filter(
     (client) => (client as WindowClient).visibilityState === 'visible',
   );
 
   if (visibleClients.length === 0) {
     Log._debug('[Service Worker] No visible clients, showing notification.');
+    self.notificationDisplayStatus?.resolve(false);
+    self.notificationDisplayStatus = undefined;
     return false;
   }
 
@@ -329,32 +328,7 @@ async function waitForPreventDefaultResponse(
     `[Service Worker] Found ${visibleClients.length} visible client(s), waiting for preventDefault response.`,
   );
 
-  // Check if we already received a response (page may have responded very quickly)
-  if (self.notificationDisplayStatus?.responded) {
-    return self.notificationDisplayStatus.preventDefault;
-  }
-
-  // Wait for response with timeout using interval-based polling
-  const timeoutMs = NOTIFICATION_WILL_DISPLAY_RESPONSE_TIMEOUT_MS;
-
-  return new Promise<boolean>((resolve) => {
-    const startTime = Date.now();
-    const timerId = setInterval(() => {
-      if (Date.now() - startTime < timeoutMs) {
-        if (self.notificationDisplayStatus?.responded) {
-          clearInterval(timerId);
-          resolve(self.notificationDisplayStatus.preventDefault);
-        }
-        // Continue polling if no response yet
-      } else {
-        clearInterval(timerId);
-        Log._debug(
-          '[Service Worker] No preventDefault response received within timeout, showing notification.',
-        );
-        resolve(false);
-      }
-    }, 10);
-  });
+  return preventDefaultPromise;
 }
 
 /**
@@ -394,9 +368,9 @@ function onPushReceived(event: PushEvent): void {
                   notification: notif,
                 };
 
-              // IMPORTANT: Set up response tracking BEFORE broadcasting to avoid race condition
-              // where the page responds before we're ready to receive the response
-              initializeNotificationDisplayStatus(notif.notificationId);
+              const preventDefaultPromise = createPreventDefaultPromise(
+                notif.notificationId,
+              );
 
               await workerMessenger
                 ._broadcast(
@@ -405,10 +379,8 @@ function onPushReceived(event: PushEvent): void {
                 )
                 .catch((e) => Log._error(e));
 
-              // Wait for page to potentially call preventDefault()
-              const shouldPreventDisplay = await waitForPreventDefaultResponse(
-                notif.notificationId,
-              );
+              const shouldPreventDisplay =
+                await waitForPreventDefaultResponse(preventDefaultPromise);
 
               const pushSubscriptionId = await getPushSubscriptionId();
               notificationWillDisplay(notif, pushSubscriptionId);

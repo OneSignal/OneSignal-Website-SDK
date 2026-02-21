@@ -75,7 +75,7 @@ vi.mock('src/shared/utils/EnvVariables', async (importOriginal) => ({
 /**
  * Time to advance fake timers in tests to ensure all service worker timeouts
  * complete. Accounts for: setTimeout(0) in run(), cancelable timeouts (0.5/1s),
- * NOTIFICATION_WILL_DISPLAY_RESPONSE_TIMEOUT_MS (250ms), and IndexedDB buffer.
+ * and IndexedDB buffer.
  */
 const SW_TEST_TIMER_ADVANCE_MS = 1600;
 
@@ -173,7 +173,16 @@ describe('ServiceWorker', () => {
 
     test('should handle successful push event', async () => {
       const payload = mockOSMinifiedNotificationPayload();
-      await dispatchEvent(new PushEvent('push', payload));
+
+      self.dispatchEvent(new PushEvent('push', payload));
+
+      // Simulate page responding without preventDefault
+      setTimeout(() => {
+        self.notificationDisplayStatus?.resolve(false);
+      }, 10);
+
+      await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+
       const notificationId = payload.custom.i;
 
       // db should mark the notification as received
@@ -220,8 +229,15 @@ describe('ServiceWorker', () => {
           rr: 'y',
         },
       });
-      await dispatchEvent(new PushEvent('push', payload));
 
+      self.dispatchEvent(new PushEvent('push', payload));
+
+      // Simulate page responding without preventDefault
+      setTimeout(() => {
+        self.notificationDisplayStatus?.resolve(false);
+      }, 10);
+
+      await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
       await vi.runOnlyPendingTimersAsync();
 
       expect(apiPutSpy).toHaveBeenCalledWith(
@@ -235,7 +251,11 @@ describe('ServiceWorker', () => {
     });
 
     describe('foregroundWillDisplay preventDefault', () => {
-      test('should display notification when no page responds (timeout)', async () => {
+      test('should display notification when no visible clients exist', async () => {
+        // Mock both matchAll calls (broadcast + visibility check)
+        matchAllFn
+          .mockResolvedValueOnce([unfocusedClient])
+          .mockResolvedValueOnce([unfocusedClient]);
         const showNotificationSpy = vi.spyOn(
           self.registration,
           'showNotification',
@@ -245,7 +265,6 @@ describe('ServiceWorker', () => {
         await dispatchEvent(new PushEvent('push', payload));
         await vi.runOnlyPendingTimersAsync();
 
-        // Notification should be displayed since no page called preventDefault
         expect(showNotificationSpy).toHaveBeenCalledWith(
           payload.title,
           expect.objectContaining({
@@ -267,22 +286,15 @@ describe('ServiceWorker', () => {
         });
         const notificationId = payload.custom.i;
 
-        // Simulate page responding with preventDefault=true
-        // We simulate this by setting self.notificationDisplayStatus before the timeout
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        // Simulate page sending preventDefault response quickly (before timeout)
+        // Simulate page responding synchronously with preventDefault=true
         setTimeout(() => {
-          if (
-            self.notificationDisplayStatus?.notificationId === notificationId
-          ) {
-            self.notificationDisplayStatus.responded = true;
-            self.notificationDisplayStatus.preventDefault = true;
-          }
-        }, 50); // Respond in 50ms (before 250ms timeout)
+          self.notificationDisplayStatus?.resolve(true);
+        }, 10);
 
-        await vi.advanceTimersByTimeAsync(60);
+        await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
 
         // Notification should NOT be displayed
         expect(showNotificationSpy).not.toHaveBeenCalled();
@@ -306,22 +318,16 @@ describe('ServiceWorker', () => {
         );
 
         const payload = mockOSMinifiedNotificationPayload();
-        const notificationId = payload.custom.i;
 
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        // Simulate page responding with preventDefault=false
+        // Simulate page responding synchronously without calling preventDefault
         setTimeout(() => {
-          if (
-            self.notificationDisplayStatus?.notificationId === notificationId
-          ) {
-            self.notificationDisplayStatus.responded = true;
-            self.notificationDisplayStatus.preventDefault = false;
-          }
-        }, 50);
+          self.notificationDisplayStatus?.resolve(false);
+        }, 10);
 
-        await vi.advanceTimersByTimeAsync(250);
+        await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
 
         // Notification should be displayed
         expect(showNotificationSpy).toHaveBeenCalledWith(
@@ -344,15 +350,10 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        // Simulate page responding with preventDefault=true
+        // Simulate page responding synchronously with preventDefault=true
         setTimeout(() => {
-          if (
-            self.notificationDisplayStatus?.notificationId === notificationId
-          ) {
-            self.notificationDisplayStatus.responded = true;
-            self.notificationDisplayStatus.preventDefault = true;
-          }
-        }, 50);
+          self.notificationDisplayStatus?.resolve(true);
+        }, 10);
 
         await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
         await vi.runOnlyPendingTimersAsync();
