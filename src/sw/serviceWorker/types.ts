@@ -7,8 +7,7 @@ export interface ClientStatus {
 
 export interface NotificationDisplayStatus {
   notificationId: string;
-  preventDefault: boolean;
-  responded: boolean;
+  resolve: (preventDefault: boolean) => void;
 }
 
 export interface OSServiceWorkerFields {

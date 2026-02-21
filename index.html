@@ -122,17 +122,33 @@
           // },
         });
 
-        // Demo: foregroundWillDisplay with preventDefault()
-        // This allows suppressing system notifications when the tab is in focus
-        // and showing an in-app notification instead
+        // Demo: foregroundWillDisplay with preventDefault() and display()
+        // Call preventDefault() synchronously to suppress the system notification.
+        // Optionally call event.notification.display() later to re-show it.
         OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event) => {
           console.log('[Demo] foregroundWillDisplay event received:', event);
 
-          // Check if we should suppress based on user toggle and page visibility
+          // Display a counter every second and stop after 30 seconds
+          let counter = 0;
+          let secondsToWaitFor = 10
+          const counterInterval = setInterval(() => {
+            counter++;
+            console.log(`[Demo] Counter: ${counter}`);
+            if (counter >= secondsToWaitFor) {
+              clearInterval(counterInterval);
+              console.log(`[Demo] Counter stopped after ${secondsToWaitFor} seconds`);
+            }
+          }, 1000 * secondsToWaitFor);
           if (suppressWhenFocused && document.visibilityState === 'visible') {
-            console.log('[Demo] Preventing system notification, showing in-app instead');
             event.preventDefault();
+            console.log('[Demo] Preventing system notification, showing in-app instead');
             showInAppNotification(event.notification);
+
+            // Uncomment below to also re-display the system notification after a delay:
+            setTimeout(() => {
+              console.log('[Demo] showing the notification after some async delay');
+              event.notification.display();
+            }, 6000);
           } else {
             console.log('[Demo] Allowing system notification to display');
           }
