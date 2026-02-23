@@ -266,9 +266,7 @@ function setupMessageListeners() {
         '[Service Worker] Received DisplayNotification request',
         payload,
       );
-      await displayNotification(
-        payload.notification as IMutableOSNotification,
-      );
+      await displayNotification(payload.notification as IMutableOSNotification);
     },
   );
 }
@@ -279,9 +277,7 @@ function setupMessageListeners() {
  * to avoid a race condition where the page responds before the
  * resolve callback is registered.
  */
-function createPreventDefaultPromise(
-  notificationId: string,
-): Promise<boolean> {
+function createPreventDefaultPromise(notificationId: string): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     self.notificationDisplayStatus = { notificationId, resolve };
   });
@@ -379,8 +375,9 @@ function onPushReceived(event: PushEvent): void {
                 )
                 .catch((e) => Log._error(e));
 
-              const shouldPreventDisplay =
-                await waitForPreventDefaultResponse(preventDefaultPromise);
+              const shouldPreventDisplay = await waitForPreventDefaultResponse(
+                preventDefaultPromise,
+              );
 
               const pushSubscriptionId = await getPushSubscriptionId();
               notificationWillDisplay(notif, pushSubscriptionId);
