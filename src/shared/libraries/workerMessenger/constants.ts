@@ -16,6 +16,5 @@ export const WorkerMessengerCommand = {
 
 export interface NotificationWillDisplayResponsePayload {
   readonly notificationId: string;
-  readonly requestId?: string;
   readonly preventDefault: boolean;
 }

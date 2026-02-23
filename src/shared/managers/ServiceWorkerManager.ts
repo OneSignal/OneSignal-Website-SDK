@@ -261,11 +261,7 @@ export class ServiceWorkerManager {
 
     workerMessenger._on(
       WorkerMessengerCommand._NotificationWillDisplay,
-      async (
-        event: NotificationForegroundWillDisplayEventSerializable & {
-          requestId?: string;
-        },
-      ) => {
+      async (event: NotificationForegroundWillDisplayEventSerializable) => {
         Log._debug(
           location.origin,
           'Received notification display event from service worker.',
@@ -273,7 +269,6 @@ export class ServiceWorkerManager {
 
         let preventDefaultCalled = false;
         const notificationId = event.notification.notificationId;
-        const requestId = event.requestId; // Echo back the requestId if present
 
         const publicEvent: NotificationForegroundWillDisplayEvent = {
           notification: {
@@ -310,7 +305,6 @@ export class ServiceWorkerManager {
           WorkerMessengerCommand._NotificationWillDisplayResponse,
           {
             notificationId,
-            requestId, // Include requestId in response
             preventDefault: preventDefaultCalled,
           },
         );
