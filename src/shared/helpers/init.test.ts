@@ -1,9 +1,7 @@
 import { APP_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import {
-  setupSubModelStore,
-} from '__test__/support/environment/TestEnvironmentHelpers';
+import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import Context from 'src/page/models/Context';
 import { type AppConfig } from 'src/shared/config/types';
 import type { MockInstance } from 'vitest';
