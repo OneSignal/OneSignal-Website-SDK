@@ -1,7 +1,8 @@
 import Bell from '../../page/bell/Bell';
+import { ModelChangeTags } from 'src/core/types/models';
 import type { AppConfig } from '../config/types';
 import type { ContextInterface } from '../context/types';
-import { db } from '../database/client';
+import { db, getIdsValue } from '../database/client';
 import { getSubscription, setSubscription } from '../database/subscription';
 import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
@@ -365,6 +366,22 @@ export async function saveInitOptions() {
 export async function initSaveState(overridingPageTitle?: string) {
   const appId = getAppId();
   const config: AppConfig = OneSignal.config!;
+
+  const previousAppId = await getIdsValue<string>('appId');
+  if (previousAppId && previousAppId !== appId) {
+    Log._info(
+      `OneSignal: App ID changed from ${previousAppId} to ${appId}. Clearing stale state for migration.`,
+    );
+    await db.put('Options', { key: 'isPushEnabled', value: null });
+    await db.put('Options', { key: 'lastPushId', value: null });
+    await db.put('Options', { key: 'lastPushToken', value: null });
+    await db.put('Options', { key: 'lastOptedIn', value: null });
+    await db.put('Ids', { type: 'registrationId', id: null });
+    OneSignal._coreDirector._subscriptionModelStore._clear(
+      ModelChangeTags._Hydrate,
+    );
+  }
+
   await db.put('Ids', { type: 'appId', id: appId });
   const pageTitle: string =
     overridingPageTitle || config.siteName || document.title || 'Notification';
