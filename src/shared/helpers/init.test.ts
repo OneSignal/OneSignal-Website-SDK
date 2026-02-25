@@ -1,9 +1,14 @@
+import { APP_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import {
+  setupSubModelStore,
+} from '__test__/support/environment/TestEnvironmentHelpers';
 import Context from 'src/page/models/Context';
 import { type AppConfig } from 'src/shared/config/types';
 import type { MockInstance } from 'vitest';
 import { db } from '../database/client';
+import { getAppState } from '../database/config';
 import * as InitHelper from './init';
 
 let isSubscriptionExpiringSpy: MockInstance;
@@ -96,4 +101,97 @@ test('correct degree of persistNotification setting should be stored', async () 
   await InitHelper.saveInitOptions();
   persistNotification = (await db.get('Options', 'persistNotification'))?.value;
   expect(persistNotification).toBe(true);
+});
+
+/** initSaveState – App ID migration */
+describe('initSaveState: App ID migration', () => {
+  const OLD_APP_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+  const NEW_APP_ID = APP_ID; // the default test app id used in TestEnvironment
+
+  async function seedStaleState() {
+    await db.put('Ids', { type: 'appId', id: OLD_APP_ID });
+    await db.put('Options', { key: 'isPushEnabled', value: true });
+    await db.put('Options', { key: 'lastPushId', value: 'old-push-id' });
+    await db.put('Options', {
+      key: 'lastPushToken',
+      value: 'old-push-token',
+    });
+    await db.put('Options', { key: 'lastOptedIn', value: true });
+    await db.put('Ids', { type: 'registrationId', id: 'old-reg-token' });
+  }
+
+  test('clears stale lastKnown* values when App ID changes', async () => {
+    await seedStaleState();
+
+    await InitHelper.initSaveState();
+
+    const appState = await getAppState();
+    expect(appState.lastKnownPushEnabled).toBeNull();
+    expect(appState.lastKnownPushId).toBeUndefined();
+    expect(appState.lastKnownPushToken).toBeUndefined();
+    expect(appState.lastKnownOptedIn).toBeNull();
+  });
+
+  test('clears subscription models when App ID changes', async () => {
+    await setupSubModelStore({ id: 'old-sub-id', token: 'old-token' });
+    expect(
+      OneSignal._coreDirector._subscriptionModelStore._list().length,
+    ).toBeGreaterThan(0);
+
+    await seedStaleState();
+    await InitHelper.initSaveState();
+
+    expect(
+      OneSignal._coreDirector._subscriptionModelStore._list(),
+    ).toHaveLength(0);
+  });
+
+  test('clears stale registrationId when App ID changes', async () => {
+    await seedStaleState();
+
+    await InitHelper.initSaveState();
+
+    const regId = await db.get('Ids', 'registrationId');
+    expect(regId?.id).toBeNull();
+  });
+
+  test('saves the new App ID after migration', async () => {
+    await seedStaleState();
+
+    await InitHelper.initSaveState();
+
+    const storedAppId = await db.get('Ids', 'appId');
+    expect(storedAppId?.id).toBe(NEW_APP_ID);
+  });
+
+  test('does NOT clear state when App ID has not changed', async () => {
+    await db.put('Ids', { type: 'appId', id: NEW_APP_ID });
+    await db.put('Options', { key: 'isPushEnabled', value: true });
+    await db.put('Options', { key: 'lastPushId', value: 'current-id' });
+    await db.put('Options', {
+      key: 'lastPushToken',
+      value: 'current-token',
+    });
+    await db.put('Options', { key: 'lastOptedIn', value: true });
+
+    await InitHelper.initSaveState();
+
+    const appState = await getAppState();
+    expect(appState.lastKnownPushEnabled).toBe(true);
+    expect(appState.lastKnownPushId).toBe('current-id');
+    expect(appState.lastKnownPushToken).toBe('current-token');
+    expect(appState.lastKnownOptedIn).toBe(true);
+  });
+
+  test('does NOT clear state on first-ever initialization (no previous App ID)', async () => {
+    await db.put('Options', { key: 'isPushEnabled', value: true });
+
+    await InitHelper.initSaveState();
+
+    const appState = await getAppState();
+    expect(appState.lastKnownPushEnabled).toBe(true);
+
+    const storedAppId = await db.get('Ids', 'appId');
+    expect(storedAppId?.id).toBe(NEW_APP_ID);
+  });
 });
