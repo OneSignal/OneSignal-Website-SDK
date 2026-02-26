@@ -144,13 +144,16 @@ describe('initSaveState: App ID migration', () => {
     ).toHaveLength(0);
   });
 
-  test('clears stale registrationId when App ID changes', async () => {
+  test('clears stale registrationId and deviceId when App ID changes', async () => {
     await seedStaleState();
+    await db.put('Ids', { type: 'userId', id: 'old-device-id' });
 
     await InitHelper.initSaveState();
 
     const regId = await db.get('Ids', 'registrationId');
     expect(regId?.id).toBeNull();
+    const userId = await db.get('Ids', 'userId');
+    expect(userId?.id).toBeNull();
   });
 
   test('saves the new App ID after migration', async () => {
