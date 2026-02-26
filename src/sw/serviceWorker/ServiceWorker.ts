@@ -27,7 +27,10 @@ import {
   upsertSession,
 } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
-import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
+import {
+  type NotificationWillDisplayResponsePayload,
+  WorkerMessengerCommand,
+} from 'src/shared/libraries/workerMessenger/constants';
 import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
 import type { WorkerMessengerMessage } from 'src/shared/libraries/workerMessenger/types';
 import ContextSW from 'src/shared/models/ContextSW';
@@ -38,7 +41,6 @@ import type {
   IMutableOSNotification,
   IOSNotification,
   NotificationClickEventInternal,
-  NotificationForegroundWillDisplayEventSerializable,
 } from 'src/shared/notifications/types';
 import { SessionStatus } from 'src/shared/session/constants';
 import {
@@ -235,6 +237,93 @@ function setupMessageListeners() {
       }
     },
   );
+
+  workerMessenger._on(
+    WorkerMessengerCommand._NotificationWillDisplayResponse,
+    (payload: NotificationWillDisplayResponsePayload) => {
+      Log._debug(
+        '[Service Worker] Received response for NotificationWillDisplay',
+        payload,
+      );
+
+      if (
+        self.notificationDisplayStatus?.notificationId !==
+        payload.notificationId
+      ) {
+        return;
+      }
+
+      self.notificationDisplayStatus.resolve(payload.preventDefault);
+      self.notificationDisplayStatus = undefined;
+    },
+  );
+
+  workerMessenger._on(
+    WorkerMessengerCommand._DisplayNotification,
+    async (payload: { notification: IOSNotification }) => {
+      Log._debug(
+        '[Service Worker] Received DisplayNotification request',
+        payload,
+      );
+      await displayNotification(payload.notification as IMutableOSNotification);
+    },
+  );
+}
+
+/**
+ * Checks for visible window clients and, if any exist, broadcasts the
+ * notification event and waits for the page's preventDefault response.
+ * Returns false (show notification) immediately when no visible clients
+ * are present, skipping the broadcast entirely.
+ *
+ * Since preventDefault() is synchronous, the page responds immediately
+ * after receiving the broadcast -- no polling or timeout needed.
+ */
+async function shouldPreventNotificationDisplay(
+  notif: IOSNotification,
+): Promise<boolean> {
+  const clients = await self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  });
+
+  if (clients.length === 0) {
+    Log._debug(
+      '[Service Worker] No window clients found, showing notification.',
+    );
+    return false;
+  }
+
+  const visibleClients = clients.filter(
+    (client) => (client as WindowClient).visibilityState === 'visible',
+  );
+
+  if (visibleClients.length === 0) {
+    Log._debug('[Service Worker] No visible clients, showing notification.');
+    return false;
+  }
+
+  Log._debug(
+    `[Service Worker] Found ${visibleClients.length} visible client(s), waiting for preventDefault response.`,
+  );
+
+  // Deferred promise: store the resolve callback on self so the
+  // _NotificationWillDisplayResponse handler can settle it.
+  // Must be created BEFORE broadcasting to avoid a race condition.
+  const preventDefaultPromise = new Promise<boolean>((resolve) => {
+    self.notificationDisplayStatus = {
+      notificationId: notif.notificationId,
+      resolve,
+    };
+  });
+
+  await workerMessenger
+    ._broadcast(WorkerMessengerCommand._NotificationWillDisplay, {
+      notification: notif,
+    })
+    .catch((e) => Log._error(e));
+
+  return preventDefaultPromise;
 }
 
 /**
@@ -269,19 +358,19 @@ function onPushReceived(event: PushEvent): void {
           // Never nest the following line in a callback from the point of entering from retrieveNotifications
           notificationEventPromiseFns.push(
             (async (notif: IOSNotification) => {
-              const event: NotificationForegroundWillDisplayEventSerializable =
-                {
-                  notification: notif,
-                };
-              await workerMessenger
-                ._broadcast(
-                  WorkerMessengerCommand._NotificationWillDisplay,
-                  event,
-                )
-                .catch((e) => Log._error(e));
-              const pushSubscriptionId = await getPushSubscriptionId();
+              const shouldPreventDisplay =
+                await shouldPreventNotificationDisplay(notif);
 
+              const pushSubscriptionId = await getPushSubscriptionId();
               notificationWillDisplay(notif, pushSubscriptionId);
+
+              if (shouldPreventDisplay) {
+                Log._debug(
+                  `[Service Worker] Notification display prevented for: ${notif.notificationId}`,
+                );
+                // Still send confirmed delivery even if display is prevented
+                return sendConfirmedDelivery(notif);
+              }
 
               return displayNotification(notif)
                 .then(() => sendConfirmedDelivery(notif))

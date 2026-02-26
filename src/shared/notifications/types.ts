@@ -125,12 +125,30 @@ export interface NotificationClickResult {
   readonly url?: string;
 }
 
+export interface IDisplayableOSNotification extends IOSNotification {
+  /**
+   * Displays the notification as a system notification via the service worker.
+   * Use after calling {@link NotificationForegroundWillDisplayEvent.preventDefault}
+   * to re-display a previously suppressed notification.
+   *
+   * Do not call `preventDefault()` after calling `display()` as it will have no effect.
+   */
+  display(): void;
+}
+
 export interface NotificationForegroundWillDisplayEventSerializable {
   readonly notification: IOSNotification;
 }
 
-export interface NotificationForegroundWillDisplayEvent
-  extends NotificationForegroundWillDisplayEventSerializable {
+export interface NotificationForegroundWillDisplayEvent {
+  readonly notification: IDisplayableOSNotification;
+  /**
+   * Prevents the system notification from displaying. Must be called
+   * synchronously within the event listener. To show the notification
+   * later, use {@link IDisplayableOSNotification.display | event.notification.display()}.
+   *
+   * Do not call `preventDefault()` after calling `display()` as it will have no effect.
+   */
   preventDefault(): void;
 }
 

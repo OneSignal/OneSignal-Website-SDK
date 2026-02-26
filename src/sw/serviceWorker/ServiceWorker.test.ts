@@ -45,8 +45,9 @@ import {
   notificationDismissed,
   notificationWillDisplay,
 } from '../webhooks/notifications/webhookNotificationEvent';
+import type { OSServiceWorkerFields } from './types';
 
-declare const self: ServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 const endpoint = 'https://example.com';
 const appId = APP_ID;
@@ -71,13 +72,16 @@ vi.mock('src/shared/utils/EnvVariables', async (importOriginal) => ({
   },
 }));
 
+/**
+ * Time to advance fake timers in tests to ensure all service worker timeouts
+ * complete. Accounts for: setTimeout(0) in run(), cancelable timeouts (0.5/1s),
+ * and IndexedDB buffer.
+ */
+const SW_TEST_TIMER_ADVANCE_MS = 1600;
+
 const dispatchEvent = async (event: Event) => {
   self.dispatchEvent(event);
-
-  // wait for the first setTimeout in the run method, then adds a 1s delay
-  // since some cancelable timeouts are 0.5/1s and sometimes there are multiple cancelable timeouts
-  // and plus we add some buffer time for IndexedDB operations
-  await vi.advanceTimersByTimeAsync(1600);
+  await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
 };
 
 const serverConfig = TestContext.getFakeServerAppConfig(
@@ -169,7 +173,16 @@ describe('ServiceWorker', () => {
 
     test('should handle successful push event', async () => {
       const payload = mockOSMinifiedNotificationPayload();
-      await dispatchEvent(new PushEvent('push', payload));
+
+      self.dispatchEvent(new PushEvent('push', payload));
+
+      // Simulate page responding without preventDefault
+      setTimeout(() => {
+        self.notificationDisplayStatus?.resolve(false);
+      }, 10);
+
+      await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+
       const notificationId = payload.custom.i;
 
       // db should mark the notification as received
@@ -216,8 +229,15 @@ describe('ServiceWorker', () => {
           rr: 'y',
         },
       });
-      await dispatchEvent(new PushEvent('push', payload));
 
+      self.dispatchEvent(new PushEvent('push', payload));
+
+      // Simulate page responding without preventDefault
+      setTimeout(() => {
+        self.notificationDisplayStatus?.resolve(false);
+      }, 10);
+
+      await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
       await vi.runOnlyPendingTimersAsync();
 
       expect(apiPutSpy).toHaveBeenCalledWith(
@@ -228,6 +248,141 @@ describe('ServiceWorker', () => {
           player_id: pushSubscriptionId,
         },
       );
+    });
+
+    describe('foregroundWillDisplay preventDefault', () => {
+      test('should display notification when no visible clients exist', async () => {
+        // Visibility check finds no visible clients — broadcast is skipped
+        matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+        const showNotificationSpy = vi.spyOn(
+          self.registration,
+          'showNotification',
+        );
+
+        const payload = mockOSMinifiedNotificationPayload();
+        await dispatchEvent(new PushEvent('push', payload));
+        await vi.runOnlyPendingTimersAsync();
+
+        expect(showNotificationSpy).toHaveBeenCalledWith(
+          payload.title,
+          expect.objectContaining({
+            body: payload.alert,
+          }),
+        );
+      });
+
+      test('should prevent notification display when page responds with preventDefault=true', async () => {
+        const showNotificationSpy = vi.spyOn(
+          self.registration,
+          'showNotification',
+        );
+
+        const payload = mockOSMinifiedNotificationPayload({
+          custom: {
+            rr: 'y',
+          },
+        });
+        const notificationId = payload.custom.i;
+
+        const pushEvent = new PushEvent('push', payload);
+        self.dispatchEvent(pushEvent);
+
+        // Simulate page responding synchronously with preventDefault=true
+        setTimeout(() => {
+          self.notificationDisplayStatus?.resolve(true);
+        }, 10);
+
+        await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+
+        // Notification should NOT be displayed
+        expect(showNotificationSpy).not.toHaveBeenCalled();
+
+        // Confirmed delivery should still be sent even when display is prevented
+        await vi.runOnlyPendingTimersAsync();
+        expect(apiPutSpy).toHaveBeenCalledWith(
+          `notifications/${notificationId}/report_received`,
+          {
+            app_id: appId,
+            device_type: expect.any(Number),
+            player_id: pushSubscriptionId,
+          },
+        );
+      });
+
+      test('should display notification when page responds with preventDefault=false', async () => {
+        const showNotificationSpy = vi.spyOn(
+          self.registration,
+          'showNotification',
+        );
+
+        const payload = mockOSMinifiedNotificationPayload();
+
+        const pushEvent = new PushEvent('push', payload);
+        self.dispatchEvent(pushEvent);
+
+        // Simulate page responding synchronously without calling preventDefault
+        setTimeout(() => {
+          self.notificationDisplayStatus?.resolve(false);
+        }, 10);
+
+        await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+
+        // Notification should be displayed
+        expect(showNotificationSpy).toHaveBeenCalledWith(
+          payload.title,
+          expect.objectContaining({
+            body: payload.alert,
+          }),
+        );
+      });
+
+      test('should display notification via display() after preventDefault', async () => {
+        const showNotificationSpy = vi.spyOn(
+          self.registration,
+          'showNotification',
+        );
+
+        const payload = mockOSMinifiedNotificationPayload();
+        const notificationId = payload.custom.i;
+
+        const pushEvent = new PushEvent('push', payload);
+        self.dispatchEvent(pushEvent);
+
+        // Simulate page responding synchronously with preventDefault=true
+        setTimeout(() => {
+          self.notificationDisplayStatus?.resolve(true);
+        }, 10);
+
+        await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+        await vi.runOnlyPendingTimersAsync();
+
+        // Notification should NOT be displayed initially
+        expect(showNotificationSpy).not.toHaveBeenCalled();
+
+        // Now simulate the page calling display() by sending DisplayNotification
+        isServiceWorker = true;
+        const displayEvent = new ExtendableMessageEvent('message', {
+          command: WorkerMessengerCommand._DisplayNotification,
+          payload: {
+            notification: {
+              notificationId,
+              title: payload.title,
+              body: payload.alert,
+              icon: payload.icon,
+              confirmDelivery: false,
+            },
+          },
+        });
+        await dispatchEvent(displayEvent);
+
+        // Notification should now be displayed
+        expect(showNotificationSpy).toHaveBeenCalledWith(
+          payload.title,
+          expect.objectContaining({
+            body: payload.alert,
+          }),
+        );
+      });
     });
   });
 
@@ -459,7 +614,6 @@ describe('ServiceWorker', () => {
     describe('session upsert event', () => {
       test('with safari client', async () => {
         const cancel = vi.fn();
-        // @ts-expect-error - custom property, not part of the spec
         self.cancel = cancel;
 
         await db.put('Sessions', session);
@@ -651,6 +805,7 @@ describe('ServiceWorker', () => {
         self.clientsStatus = {
           hasAnyActiveSessions: false,
           timestamp,
+          sentRequestsCount: 0,
           receivedResponsesCount: 0,
         };
 
@@ -662,8 +817,8 @@ describe('ServiceWorker', () => {
 
         // should set client status as active
         expect(postMessageFn).not.toHaveBeenCalled();
-        expect(self.clientsStatus.receivedResponsesCount).toBe(1);
-        expect(self.clientsStatus.hasAnyActiveSessions).toBe(true);
+        expect(self.clientsStatus?.receivedResponsesCount).toBe(1);
+        expect(self.clientsStatus?.hasAnyActiveSessions).toBe(true);
       });
     });
 
@@ -681,6 +836,33 @@ describe('ServiceWorker', () => {
       });
       await dispatchEvent(event);
       expect(self.shouldLog).toBe(undefined);
+    });
+
+    test('should display notification via DisplayNotification command', async () => {
+      const showNotificationSpy = vi.spyOn(
+        self.registration,
+        'showNotification',
+      );
+
+      const notification = {
+        notificationId: 'display-test-id',
+        title: 'Display Test',
+        body: 'Test body',
+        confirmDelivery: false,
+      };
+
+      const event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand._DisplayNotification,
+        payload: { notification },
+      });
+      await dispatchEvent(event);
+
+      expect(showNotificationSpy).toHaveBeenCalledWith(
+        notification.title,
+        expect.objectContaining({
+          body: notification.body,
+        }),
+      );
     });
   });
 });
@@ -857,12 +1039,19 @@ const postMessageFn = vi.fn();
 class Client {
   url: string;
   focused: boolean;
+  visibilityState: 'visible' | 'hidden';
   constructor({
     focused = true,
     url = 'http://some-client-url.com',
-  }: { focused?: boolean; url?: string } = {}) {
+    visibilityState = 'visible',
+  }: {
+    focused?: boolean;
+    url?: string;
+    visibilityState?: 'visible' | 'hidden';
+  } = {}) {
     this.focused = focused;
     this.url = url;
+    this.visibilityState = visibilityState;
   }
 
   postMessage(message: any) {
@@ -870,7 +1059,10 @@ class Client {
   }
 }
 const mockClient = new Client();
-const unfocusedClient = new Client({ focused: false });
+const unfocusedClient = new Client({
+  focused: false,
+  visibilityState: 'hidden',
+});
 const matchAllFn = vi.fn().mockResolvedValue([mockClient]);
 
 Object.defineProperty(self, 'clients', {
