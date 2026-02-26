@@ -241,7 +241,7 @@ function setupMessageListeners() {
 
   workerMessenger._on(
     WorkerMessengerCommand._NotificationWillDisplayResponse,
-    async (payload: NotificationWillDisplayResponsePayload) => {
+    (payload: NotificationWillDisplayResponsePayload) => {
       Log._debug(
         '[Service Worker] Received response for NotificationWillDisplay',
         payload,
