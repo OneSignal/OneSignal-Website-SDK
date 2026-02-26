@@ -41,7 +41,6 @@ import type {
   IMutableOSNotification,
   IOSNotification,
   NotificationClickEventInternal,
-  NotificationForegroundWillDisplayEventSerializable,
 } from 'src/shared/notifications/types';
 import { SessionStatus } from 'src/shared/session/constants';
 import {
@@ -272,28 +271,16 @@ function setupMessageListeners() {
 }
 
 /**
- * Creates a promise that resolves when the page responds to the
- * foregroundWillDisplay event. Must be called BEFORE broadcasting
- * to avoid a race condition where the page responds before the
- * resolve callback is registered.
- */
-function createPreventDefaultPromise(notificationId: string): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
-    self.notificationDisplayStatus = { notificationId, resolve };
-  });
-}
-
-/**
- * Checks if any window client is visible. If not, resolves the promise
- * immediately with false (show notification). If visible clients exist,
- * returns the promise which will be resolved by the page's response
- * via the _NotificationWillDisplayResponse handler.
+ * Checks for visible window clients and, if any exist, broadcasts the
+ * notification event and waits for the page's preventDefault response.
+ * Returns false (show notification) immediately when no visible clients
+ * are present, skipping the broadcast entirely.
  *
  * Since preventDefault() is synchronous, the page responds immediately
  * after receiving the broadcast -- no polling or timeout needed.
  */
-async function waitForPreventDefaultResponse(
-  preventDefaultPromise: Promise<boolean>,
+async function shouldPreventNotificationDisplay(
+  notif: IOSNotification,
 ): Promise<boolean> {
   const clients = await self.clients.matchAll({
     type: 'window',
@@ -304,8 +291,6 @@ async function waitForPreventDefaultResponse(
     Log._debug(
       '[Service Worker] No window clients found, showing notification.',
     );
-    self.notificationDisplayStatus?.resolve(false);
-    self.notificationDisplayStatus = undefined;
     return false;
   }
 
@@ -315,14 +300,28 @@ async function waitForPreventDefaultResponse(
 
   if (visibleClients.length === 0) {
     Log._debug('[Service Worker] No visible clients, showing notification.');
-    self.notificationDisplayStatus?.resolve(false);
-    self.notificationDisplayStatus = undefined;
     return false;
   }
 
   Log._debug(
     `[Service Worker] Found ${visibleClients.length} visible client(s), waiting for preventDefault response.`,
   );
+
+  // Deferred promise: store the resolve callback on self so the
+  // _NotificationWillDisplayResponse handler can settle it.
+  // Must be created BEFORE broadcasting to avoid a race condition.
+  const preventDefaultPromise = new Promise<boolean>((resolve) => {
+    self.notificationDisplayStatus = {
+      notificationId: notif.notificationId,
+      resolve,
+    };
+  });
+
+  await workerMessenger
+    ._broadcast(WorkerMessengerCommand._NotificationWillDisplay, {
+      notification: notif,
+    })
+    .catch((e) => Log._error(e));
 
   return preventDefaultPromise;
 }
@@ -359,25 +358,8 @@ function onPushReceived(event: PushEvent): void {
           // Never nest the following line in a callback from the point of entering from retrieveNotifications
           notificationEventPromiseFns.push(
             (async (notif: IOSNotification) => {
-              const event: NotificationForegroundWillDisplayEventSerializable =
-                {
-                  notification: notif,
-                };
-
-              const preventDefaultPromise = createPreventDefaultPromise(
-                notif.notificationId,
-              );
-
-              await workerMessenger
-                ._broadcast(
-                  WorkerMessengerCommand._NotificationWillDisplay,
-                  event,
-                )
-                .catch((e) => Log._error(e));
-
-              const shouldPreventDisplay = await waitForPreventDefaultResponse(
-                preventDefaultPromise,
-              );
+              const shouldPreventDisplay =
+                await shouldPreventNotificationDisplay(notif);
 
               const pushSubscriptionId = await getPushSubscriptionId();
               notificationWillDisplay(notif, pushSubscriptionId);

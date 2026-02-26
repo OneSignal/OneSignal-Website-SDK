@@ -252,10 +252,8 @@ describe('ServiceWorker', () => {
 
     describe('foregroundWillDisplay preventDefault', () => {
       test('should display notification when no visible clients exist', async () => {
-        // Mock both matchAll calls (broadcast + visibility check)
-        matchAllFn
-          .mockResolvedValueOnce([unfocusedClient])
-          .mockResolvedValueOnce([unfocusedClient]);
+        // Visibility check finds no visible clients — broadcast is skipped
+        matchAllFn.mockResolvedValueOnce([unfocusedClient]);
         const showNotificationSpy = vi.spyOn(
           self.registration,
           'showNotification',
