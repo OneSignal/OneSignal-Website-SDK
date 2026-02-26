@@ -377,6 +377,7 @@ export async function initSaveState(overridingPageTitle?: string) {
     await db.put('Options', { key: 'lastPushToken', value: null });
     await db.put('Options', { key: 'lastOptedIn', value: null });
     await db.put('Ids', { type: 'registrationId', id: null });
+    await db.put('Ids', { type: 'userId', id: null });
     OneSignal._coreDirector._subscriptionModelStore._clear(
       ModelChangeTags._Hydrate,
     );
