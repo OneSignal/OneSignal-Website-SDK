@@ -259,7 +259,7 @@ export default class Database {
     return state;
   }
 
-  async setAppState(appState: AppState) {
+  async setAppState(appState: Partial<AppState>) {
     if (appState.defaultNotificationUrl)
       await this.put("Options", { key: "defaultUrl", value: appState.defaultNotificationUrl });
     if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === "")
@@ -525,7 +525,7 @@ export default class Database {
     return await Database.singletonInstance.getServiceWorkerState();
   }
 
-  static async setAppState(appState: AppState) {
+  static async setAppState(appState: Partial<AppState>) {
     return await Database.singletonInstance.setAppState(appState);
   }
 

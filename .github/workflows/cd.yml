@@ -5,7 +5,7 @@ on:
 
 jobs:
   test_build_deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     container:
       image: python:2.7.18-buster
 
@@ -21,27 +21,27 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install Yarn
         run: npm install -g yarn
-      - name: "[Setup] Install dependencies"
+      - name: '[Setup] Install dependencies'
         run: yarn
-      - name: "[Test] Run all tests"
+      - name: '[Test] Run all tests'
         run: yarn test:CI
-      - name: "[Build] Staging"
+      - name: '[Build] Staging'
         env:
           STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
         run: BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} yarn build:staging
-      - name: "[Build] Production"
+      - name: '[Build] Production'
         run: yarn build:prod
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-      - name: "[Deploy] Upload SDK Files to GCS"
+      - name: '[Deploy] Upload SDK Files to GCS'
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
           path: 'build/releases'
           destination: 'sdk-builds-persistence-onesignal/web-sdk/${{ github.sha }}'
           parent: false
-      - name: "[Deploy] Upload AMP SDK Files to GCS"
+      - name: '[Deploy] Upload AMP SDK Files to GCS'
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
           path: 'build/amp'
