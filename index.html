@@ -226,6 +226,105 @@
       </div>
     </div>
 
+    <hr />
+    <h2>App ID Migration Regression Test</h2>
+    <p>
+      Reproduces the issue where migrating App IDs on the same origin leaves the
+      push subscription in an "unsubscribed" state. Open the browser console to
+      observe each step.
+    </p>
+    <ol>
+      <li>Enter <strong>App ID 1</strong> and click <em>Init &amp; Subscribe with App ID 1</em>. Grant notification permission when prompted.</li>
+      <li>Enter <strong>App ID 2</strong> and click <em>Migrate to App ID 2</em>. The page reloads with the new App ID.</li>
+      <li>Check the status panel below &mdash; <code>optedIn</code> should be <strong>true</strong> after migration.</li>
+    </ol>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0">
+      <label>
+        App ID 1
+        <input id="appId1" type="text" size="40" placeholder="paste App ID 1 here" />
+      </label>
+      <label>
+        App ID 2
+        <input id="appId2" type="text" size="40" placeholder="paste App ID 2 here" />
+      </label>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+      <button id="btnInit1">Init &amp; Subscribe with App ID 1</button>
+      <button id="btnMigrate">Migrate to App ID 2 (reload)</button>
+      <button id="btnStatus">Refresh Status</button>
+    </div>
+
+    <h3>Subscription Status</h3>
+    <pre id="statusOutput" style="background:#f4f4f4;padding:12px;border-radius:4px;overflow:auto;max-height:300px">
+Click "Refresh Status" after init to see current state.
+    </pre>
+
+    <script>
+      // Populate App ID inputs from query params if present
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('app_id'))
+        document.getElementById('appId1').value = params.get('app_id');
+      if (params.get('app_id_2'))
+        document.getElementById('appId2').value = params.get('app_id_2');
+
+      function log(msg) {
+        console.log('[Migration Test]', msg);
+      }
+
+      document.getElementById('btnInit1').addEventListener('click', () => {
+        const id = document.getElementById('appId1').value.trim();
+        if (!id) return alert('Enter App ID 1 first');
+        log('Navigating with App ID 1: ' + id);
+        const url = new URL(window.location.href);
+        url.searchParams.set('app_id', id);
+        window.location.href = url.toString();
+      });
+
+      document.getElementById('btnMigrate').addEventListener('click', () => {
+        const id2 = document.getElementById('appId2').value.trim();
+        if (!id2) return alert('Enter App ID 2 first');
+        log('Migrating to App ID 2: ' + id2);
+        const url = new URL(window.location.href);
+        url.searchParams.set('app_id', id2);
+        url.searchParams.set('app_id_2', id2);
+        window.location.href = url.toString();
+      });
+
+      document.getElementById('btnStatus').addEventListener('click', refreshStatus);
+
+      async function refreshStatus() {
+        const out = document.getElementById('statusOutput');
+        try {
+          const sub = OneSignal.User.PushSubscription;
+          const info = {
+            'App ID (config)': OneSignal.config?.appId,
+            'Notification.permission': Notification.permission,
+            'PushSubscription.id': sub.id,
+            'PushSubscription.token': sub.token
+              ? sub.token.substring(0, 60) + '...'
+              : null,
+            'PushSubscription.optedIn': sub.optedIn,
+          };
+          out.textContent = JSON.stringify(info, null, 2);
+          log('Status: ' + JSON.stringify(info));
+        } catch (e) {
+          out.textContent = 'Error reading status: ' + e.message;
+        }
+      }
+
+      // Auto-refresh status once SDK is ready
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(function (OneSignal) {
+        OneSignal.User.PushSubscription.addEventListener('change', (e) => {
+          log('PushSubscription change event: ' + JSON.stringify(e));
+          refreshStatus();
+        });
+        setTimeout(refreshStatus, 1000);
+      });
+    </script>
+
     <script>
       // To check against race conditions
       // OneSignalDeferred.push(async function (OneSignal) {
