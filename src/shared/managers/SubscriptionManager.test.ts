@@ -157,8 +157,7 @@ describe('SubscriptionManager', () => {
         NotificationType._UserOptedOut,
       );
 
-      const subModels =
-        OneSignal._coreDirector._subscriptionModelStore._list();
+      const subModels = OneSignal._coreDirector._subscriptionModelStore._list();
       expect(subModels.length).toBe(1);
       expect(subModels[0]._notification_types).toBe(
         NotificationType._UserOptedOut,
