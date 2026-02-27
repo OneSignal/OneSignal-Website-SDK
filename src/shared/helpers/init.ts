@@ -411,11 +411,15 @@ async function createOptedOutSubscriptionForMigration() {
   Log._info(
     'App ID migration: creating unsubscribed subscription for opted-out user.',
   );
-  await registerForPush(NotificationType._UserOptedOut);
 
-  const subscription = await getSubscription();
-  subscription.optedOut = true;
-  await setSubscription(subscription);
+  // Call _subscribe directly instead of registerForPush to avoid
+  // _registerSubscription (which resets optedOut to false) and
+  // checkAndTriggerSubscriptionChanged (which would read that false
+  // value and overwrite notification_types back to _Subscribed).
+  await OneSignal._context._subscriptionManager._subscribe(
+    SubscriptionStrategyKind._ResubscribeExisting,
+    NotificationType._UserOptedOut,
+  );
 }
 
 async function handleAutoResubscribe(isOptedOut: boolean) {
