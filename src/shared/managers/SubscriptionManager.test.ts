@@ -18,6 +18,7 @@ import {
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
 import { setPushToken } from '../database/subscription';
+import { NotificationType } from '../subscriptions/constants';
 import { IDManager } from './IDManager';
 import {
   SubscriptionManagerPage,
@@ -144,6 +145,60 @@ describe('SubscriptionManager', () => {
       expect(updatedPushModel.web_p256).toBe(rawSubscription.w3cP256dh);
 
       await vi.waitUntil(() => updateSubscriptionFn.mock.calls.length > 0);
+    });
+
+    test('should apply notificationTypesOverride when creating a new model', async () => {
+      setCreateUserResponse();
+      const rawSubscription = getRawPushSubscription();
+      await setPushToken(rawSubscription.w3cEndpoint?.toString());
+
+      await updatePushSubscriptionModelWithRawSubscription(
+        rawSubscription,
+        NotificationType._UserOptedOut,
+      );
+
+      const subModels =
+        OneSignal._coreDirector._subscriptionModelStore._list();
+      expect(subModels.length).toBe(1);
+      expect(subModels[0]._notification_types).toBe(
+        NotificationType._UserOptedOut,
+      );
+      expect(subModels[0].enabled).toBe(false);
+
+      await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
+      expect(createUserFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subscriptions: [
+            expect.objectContaining({
+              notification_types: NotificationType._UserOptedOut,
+              enabled: false,
+            }),
+          ],
+        }),
+      );
+    });
+
+    test('should ignore notificationTypesOverride for existing models', async () => {
+      setUpdateSubscriptionResponse({ subscriptionId: '123' });
+      const rawSubscription = getRawPushSubscription();
+      await setPushToken(rawSubscription.w3cEndpoint?.toString());
+
+      await setupSubModelStore({
+        id: '123',
+        token: rawSubscription.w3cEndpoint?.toString(),
+        onesignalId: EXTERNAL_ID,
+      });
+
+      await updatePushSubscriptionModelWithRawSubscription(
+        rawSubscription,
+        NotificationType._UserOptedOut,
+      );
+
+      const updatedPushModel =
+        (await OneSignal._coreDirector._getPushSubscriptionModel())!;
+      expect(updatedPushModel._notification_types).not.toBe(
+        NotificationType._UserOptedOut,
+      );
     });
   });
 });
