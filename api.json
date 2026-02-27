@@ -147,32 +147,6 @@
         "name": "permission",
         "type": "boolean"
       }
-    ],
-    "events": [
-      {
-        "name": "foregroundWillDisplay",
-        "type": "NotificationForegroundWillDisplayEvent",
-        "methods": [
-          {
-            "name": "preventDefault",
-            "args": [],
-            "returnType": "void"
-          }
-        ],
-        "properties": [
-          {
-            "name": "notification",
-            "type": "IDisplayableOSNotification",
-            "methods": [
-              {
-                "name": "display",
-                "args": [],
-                "returnType": "void"
-              }
-            ]
-          }
-        ]
-      }
     ]
   },
   "Slidedown": {
