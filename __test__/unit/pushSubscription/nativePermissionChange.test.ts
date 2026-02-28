@@ -22,8 +22,6 @@ const triggerNotificationSpy = vi.spyOn(
   'triggerNotificationPermissionChanged',
 );
 
-vi.useFakeTimers();
-
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(() => {
     TestEnvironment.initialize();

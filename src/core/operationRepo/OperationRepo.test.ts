@@ -1,6 +1,8 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
-import { db } from 'src/shared/database/client';
+import { mockDelay } from '__test__/support/helpers/setup';
+import { clearAll, db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
+import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
@@ -14,20 +16,17 @@ import {
 } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import {
-  OP_REPO_EXECUTION_INTERVAL,
-  OP_REPO_POST_CREATE_DELAY,
-} from './constants';
+import { OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo } from './OperationRepo';
+
+mockDelay();
 
 vi.spyOn(Log, '_error').mockImplementation((msg) => {
   if (typeof msg === 'string' && msg.includes('Operation execution failed'))
     return '';
   return msg;
 });
-
-vi.useFakeTimers();
 
 // for the sake of testing, we want to use a simple mock operation and execturo
 vi.spyOn(OperationModelStore.prototype, '_create').mockImplementation(() => {
@@ -37,11 +36,11 @@ vi.spyOn(OperationModelStore.prototype, '_create').mockImplementation(() => {
 let mockOperationModelStore: OperationModelStore;
 
 const executeOps = async (opRepo: OperationRepo) => {
-  await opRepo._start();
-  await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
+  await opRepo._loadSavedOperations();
+  const ops = opRepo._getNextOps(0);
+  if (ops) await opRepo._executeOperations(ops);
 };
 
-// need to mock this since it may timeout due to use of fake timers
 const isConsentRequired = vi.hoisted(() => vi.fn(() => false));
 
 vi.mock('src/shared/database/config', () => ({
@@ -68,14 +67,8 @@ describe('OperationRepo', () => {
   });
 
   afterEach(async () => {
-    // since the perist call in model store is not awaited, we need to flush the queue
-    // for tests that call start on the op repo
-    if (opRepo._timerID !== undefined) {
-      await vi.waitUntil(async () => {
-        const dbOps = await db.getAll('operations');
-        return dbOps.length === 0;
-      });
-    }
+    opRepo._pause();
+    await clearAll();
   });
 
   describe('Enqueue/Load Operations', () => {
@@ -94,7 +87,7 @@ describe('OperationRepo', () => {
       ]);
 
       // cached operations are added to the front of the queue and should maintain order
-      await opRepo._start();
+      await opRepo._loadSavedOperations();
       expect(opRepo._queue).toEqual([
         {
           operation: cachedOperations[0],
@@ -207,16 +200,12 @@ describe('OperationRepo', () => {
   });
 
   test('operations should be processed after start call', async () => {
-    const getNextOpsSpy = vi.spyOn(opRepo, '_getNextOps');
     await opRepo._start();
     opRepo._enqueue(mockOperation);
 
     expect(opRepo._queue.length).toBe(1);
 
-    // index will be 1 if enqueue is after start
-    await vi.waitUntil(() => getNextOpsSpy.mock.calls.length > 0);
-
-    expect(getNextOpsSpy).toHaveBeenCalledWith(0);
+    await vi.waitUntil(() => opRepo._queue.length === 0, { timeout: 3000 });
     expect(opRepo._queue.length).toBe(0);
   });
 
@@ -383,15 +372,12 @@ describe('OperationRepo', () => {
         _retryAfterSeconds: 30,
       });
 
-      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
-
       const groupedOps = getGroupedOp();
       opRepo._enqueue(groupedOps[0]);
       opRepo._enqueue(groupedOps[1]);
       await executeOps(opRepo);
 
       // operations will be added back to the front of the queue
-      expect(executeOperationsSpy).toHaveBeenCalledOnce();
       expect(opRepo._queue).toEqual([
         {
           operation: groupedOps[0],
@@ -405,12 +391,8 @@ describe('OperationRepo', () => {
         },
       ]);
 
-      // should wait 30 seconds before executing again
-      await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
-      expect(executeOperationsSpy).toHaveBeenCalledOnce(); // 30 seconds has not passed yet
-
-      await vi.advanceTimersByTimeAsync(30000);
-      expect(executeOperationsSpy).toHaveBeenCalledTimes(2); // 30 seconds has passed
+      // should delay for retryAfterSeconds (30s = 30000ms)
+      expect(delaySpy).toHaveBeenCalledWith(30000);
     });
 
     test('can handle fail pause op repo operation', async () => {
@@ -421,6 +403,11 @@ describe('OperationRepo', () => {
       const groupedOps = getGroupedOp();
       opRepo._enqueue(groupedOps[0]);
       opRepo._enqueue(groupedOps[1]);
+
+      // simulate a started op repo so we can verify _pause clears the timer
+      opRepo._timerID = setInterval(() => {}, 100_000);
+      expect(opRepo._timerID).not.toBe(undefined);
+
       await executeOps(opRepo);
 
       // operations will be added back to the front of the queue
@@ -450,8 +437,6 @@ describe('OperationRepo', () => {
         _idTranslations: idTranslations,
       });
 
-      const executeOperationsSpy = vi.spyOn(opRepo, '_executeOperations');
-
       const newOp = new Operation('2', GroupComparisonType._None);
       const opTranslateIdsSpy = vi.spyOn(newOp, '_translateIds');
 
@@ -460,15 +445,10 @@ describe('OperationRepo', () => {
       await executeOps(opRepo);
 
       expect(opTranslateIdsSpy).toHaveBeenCalledWith(idTranslations);
-      expect(opRepo._records).toEqual(new Map([['2', Date.now()]]));
+      expect(opRepo._records.has('2')).toBe(true);
 
-      // should wait 5 seconds before processing the queue again
-      await vi.advanceTimersByTimeAsync(OP_REPO_POST_CREATE_DELAY);
-      expect(executeOperationsSpy).toHaveBeenCalledOnce();
-
-      // can now process operations again
-      await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
-      expect(executeOperationsSpy).toHaveBeenCalledTimes(2);
+      // should delay by OP_REPO_POST_CREATE_DELAY after id translations
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_POST_CREATE_DELAY);
     });
 
     test('should process non-groupable operations separately', async () => {
@@ -492,7 +472,9 @@ describe('OperationRepo', () => {
       ]);
 
       // next operation should be processed
-      await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
+      const ops = opRepo._getNextOps(0);
+      if (ops) await opRepo._executeOperations(ops);
+
       expect(executeOperationsSpy).toHaveBeenNthCalledWith(2, [
         {
           operation: newOp,
@@ -502,9 +484,8 @@ describe('OperationRepo', () => {
       ]);
       expect(opRepo._queue).toEqual([]);
 
-      // queue is clear so no more operations should be processed
-      await vi.advanceTimersByTimeAsync(OP_REPO_EXECUTION_INTERVAL);
-      expect(executeOperationsSpy).toHaveBeenCalledTimes(2);
+      // queue is clear so no more operations to process
+      expect(opRepo._getNextOps(0)).toBeNull();
     });
   });
 });

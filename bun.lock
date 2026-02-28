@@ -23,7 +23,7 @@
         "deepmerge": "^4.3.1",
         "eslint": "^8.23.0",
         "eslint-config-prettier": "9.0.0",
-        "fake-indexeddb": "5.0.2",
+        "fake-indexeddb": "6.2.5",
         "intl-tel-input": "^25.15.1",
         "jsdom": "^28.1.0",
         "msw": "^2.12.10",
@@ -480,7 +480,7 @@
 
     "expect-type": ["expect-type@1.2.2", "", {}, "sha512-JhFGDVJ7tmDJItKhYgJCGLOWjuK9vPxiXoUFLwLDc99NlmklilbiQJwoctZtt13+xMw91MCk/REan6MWHqDjyA=="],
 
-    "fake-indexeddb": ["fake-indexeddb@5.0.2", "", {}, "sha512-cB507r5T3D55DfclY01GLkninZLfU7HXV/mhVRTnTRm5k2u+fY7Fof2dBkr80p5t7G7dlA/G5dI87QiMdPpMCQ=="],
+    "fake-indexeddb": ["fake-indexeddb@6.2.5", "", {}, "sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w=="],
 
     "fast-deep-equal": ["fast-deep-equal@3.1.3", "", {}, "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q=="],
 
