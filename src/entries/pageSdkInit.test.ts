@@ -35,9 +35,12 @@ describe('pageSdkInit', () => {
     await import('./pageSdkInit');
     const logoutSpy = vi.spyOn(window.OneSignal, 'logout');
 
-    await vi.waitUntil(async () => {
-      return logoutSpy.mock.calls.length > 0;
-    });
+    await vi.waitUntil(
+      async () => {
+        return logoutSpy.mock.calls.length > 0;
+      },
+      { interval: 1 },
+    );
     expect(window.OneSignal._coreDirector).toBeDefined();
   });
 

@@ -35,10 +35,13 @@ export const getIdentityItem = async (
   condition: (identity: IdentitySchema) => boolean = () => true,
 ) => {
   let identity: IdentitySchema | undefined;
-  await vi.waitUntil(async () => {
-    identity = (await db.getAll('identity'))?.[0];
-    return identity && condition(identity);
-  });
+  await vi.waitUntil(
+    async () => {
+      identity = (await db.getAll('identity'))?.[0];
+      return identity && condition(identity);
+    },
+    { interval: 1 },
+  );
   return identity;
 };
 
@@ -49,10 +52,13 @@ export const getPropertiesItem = async (
   condition: (properties: PropertiesSchema) => boolean = () => true,
 ) => {
   let properties: PropertiesSchema | undefined;
-  await vi.waitUntil(async () => {
-    properties = (await db.getAll('properties'))?.[0];
-    return properties && condition(properties);
-  });
+  await vi.waitUntil(
+    async () => {
+      properties = (await db.getAll('properties'))?.[0];
+      return properties && condition(properties);
+    },
+    { interval: 1 },
+  );
   return properties;
 };
 
@@ -61,10 +67,13 @@ export const getPropertiesItem = async (
  */
 export const getDbSubscriptions = async (length: number) => {
   let subscriptions: SubscriptionSchema[] = [];
-  await vi.waitUntil(async () => {
-    subscriptions = await db.getAll('subscriptions');
-    return subscriptions.length === length;
-  });
+  await vi.waitUntil(
+    async () => {
+      subscriptions = await db.getAll('subscriptions');
+      return subscriptions.length === length;
+    },
+    { interval: 1 },
+  );
   return subscriptions;
 };
 
