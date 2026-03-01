@@ -1,5 +1,8 @@
 import * as InitHelper from '../../../src/shared/helpers/init';
+import { registerForPush } from '../../../src/shared/helpers/subscription';
 import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
+import { NotificationType } from '../../../src/shared/subscriptions/constants';
+import { SubscriptionStrategyKind } from '../../../src/shared/models/SubscriptionStrategyKind';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 
 //stub dismisshelper
@@ -47,5 +50,31 @@ describe('Register for push', () => {
       false,
     );
     expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  test('registerForPush passes notificationTypesOverride to _subscribe', async () => {
+    const subscribeSpy = vi
+      .spyOn(OneSignal._context._subscriptionManager, '_subscribe')
+      .mockRejectedValue(new Error('mock stop'));
+
+    await registerForPush(NotificationType._UserOptedOut);
+
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      SubscriptionStrategyKind._ResubscribeExisting,
+      NotificationType._UserOptedOut,
+    );
+  });
+
+  test('registerForPush calls _subscribe without override when none provided', async () => {
+    const subscribeSpy = vi
+      .spyOn(OneSignal._context._subscriptionManager, '_subscribe')
+      .mockRejectedValue(new Error('mock stop'));
+
+    await registerForPush();
+
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      SubscriptionStrategyKind._ResubscribeExisting,
+      undefined,
+    );
   });
 });

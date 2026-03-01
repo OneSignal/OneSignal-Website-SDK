@@ -1,5 +1,8 @@
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
-import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
+import type {
+  NotificationTypeValue,
+  SubscriptionTypeValue,
+} from 'src/shared/subscriptions/types';
 import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
@@ -8,7 +11,9 @@ import { IS_SERVICE_WORKER } from '../utils/env';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 
-export async function registerForPush(): Promise<Subscription | null> {
+export async function registerForPush(
+  notificationTypesOverride?: NotificationTypeValue,
+): Promise<Subscription | null> {
   const context = OneSignal._context;
   let subscription: Subscription | null = null;
 
@@ -16,6 +21,7 @@ export async function registerForPush(): Promise<Subscription | null> {
   try {
     const rawSubscription = await context._subscriptionManager._subscribe(
       SubscriptionStrategyKind._ResubscribeExisting,
+      notificationTypesOverride,
     );
     subscription =
       await context._subscriptionManager._registerSubscription(rawSubscription);

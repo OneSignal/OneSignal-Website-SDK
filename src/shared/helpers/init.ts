@@ -10,12 +10,15 @@ import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { limitStorePut } from '../services/limitStore';
 import OneSignalEvent from '../services/OneSignalEvent';
+import { NotificationType } from '../subscriptions/constants';
 import { IS_SERVICE_WORKER } from '../utils/env';
 import { once } from '../utils/utils';
 import { getAppId } from './main';
 import { incrementPageViewCount } from './pageview';
 import { triggerNotificationPermissionChanged } from './permissions';
 import { registerForPush } from './subscription';
+
+let _didAppIdMigrate = false;
 
 export async function internalInit() {
   Log._debug('Called internalInit()');
@@ -82,6 +85,10 @@ async function sessionInit(): Promise<void> {
 
   await setSubscription(subscription);
   await handleAutoResubscribe(isOptedOut);
+
+  if (_didAppIdMigrate && isOptedOut) {
+    await createOptedOutSubscriptionForMigration();
+  }
 
   const isSubscribed =
     await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
@@ -368,7 +375,9 @@ export async function initSaveState(overridingPageTitle?: string) {
   const config: AppConfig = OneSignal.config!;
 
   const previousAppId = await getIdsValue<string>('appId');
-  if (previousAppId && previousAppId !== appId) {
+  _didAppIdMigrate = !!(previousAppId && previousAppId !== appId);
+
+  if (_didAppIdMigrate) {
     Log._info(
       `OneSignal: App ID changed from ${previousAppId} to ${appId}. Clearing stale state for migration.`,
     );
@@ -388,6 +397,29 @@ export async function initSaveState(overridingPageTitle?: string) {
     overridingPageTitle || config.siteName || document.title || 'Notification';
   await db.put('Options', { key: 'pageTitle', value: pageTitle });
   Log._info(`OneSignal: Set pageTitle to be '${pageTitle}'.`);
+}
+
+async function createOptedOutSubscriptionForMigration() {
+  const currentPermission: NotificationPermission =
+    await OneSignal._context._permissionManager._getNotificationPermission(
+      OneSignal._context._appConfig.safariWebId,
+    );
+  if (currentPermission !== 'granted') {
+    return;
+  }
+
+  Log._info(
+    'App ID migration: creating unsubscribed subscription for opted-out user.',
+  );
+
+  // Call _subscribe directly instead of registerForPush to avoid
+  // _registerSubscription (which resets optedOut to false) and
+  // checkAndTriggerSubscriptionChanged (which would read that false
+  // value and overwrite notification_types back to _Subscribed).
+  await OneSignal._context._subscriptionManager._subscribe(
+    SubscriptionStrategyKind._ResubscribeExisting,
+    NotificationType._UserOptedOut,
+  );
 }
 
 async function handleAutoResubscribe(isOptedOut: boolean) {

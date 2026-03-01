@@ -50,6 +50,7 @@ function executeCallback<T>(callback?: (...args: any[]) => T, ...args: any[]) {
 
 export const updatePushSubscriptionModelWithRawSubscription = async (
   rawPushSubscription: RawPushSubscription,
+  notificationTypesOverride?: NotificationTypeValue,
 ) => {
   // incase a login op was called before user accepts the notifcations permissions, we need to wait for it to finish
   // otherwise there would be two login ops in the same bucket for LoginOperationExecutor which would error
@@ -62,6 +63,11 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
       OneSignal._coreDirector._generatePushSubscriptionModel(
         rawPushSubscription,
       );
+    if (notificationTypesOverride !== undefined) {
+      pushModel._notification_types = notificationTypesOverride;
+      pushModel.enabled =
+        notificationTypesOverride === NotificationType._Subscribed;
+    }
     return createUserOnServer();
   }
   // for users with data failed to create a user or user + subscription on the server
@@ -236,6 +242,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    */
   public async _subscribe(
     subscriptionStrategy: SubscriptionStrategyKindValue,
+    notificationTypesOverride?: NotificationTypeValue,
   ): Promise<RawPushSubscription> {
     let rawPushSubscription: RawPushSubscription;
 
@@ -258,7 +265,10 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
     if (useSafariLegacyPush()) {
       rawPushSubscription = await this._subscribeSafari();
-      await updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
+      await updatePushSubscriptionModelWithRawSubscription(
+        rawPushSubscription,
+        notificationTypesOverride,
+      );
       /* Now that permissions have been granted, install the service worker */
       Log._info('Installing SW on Safari');
       try {
@@ -270,7 +280,10 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     } else {
       rawPushSubscription =
         await this._subscribeFcmFromPage(subscriptionStrategy);
-      await updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
+      await updatePushSubscriptionModelWithRawSubscription(
+        rawPushSubscription,
+        notificationTypesOverride,
+      );
     }
 
     return rawPushSubscription;
