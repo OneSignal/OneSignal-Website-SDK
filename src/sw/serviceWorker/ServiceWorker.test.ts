@@ -1,6 +1,7 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { mockDelay } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
@@ -31,6 +32,7 @@ import type {
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+import { OperationRepo } from 'src/core/operationRepo/OperationRepo';
 import { getAppId, run } from './ServiceWorker';
 
 // Mock webhook notification events
@@ -54,9 +56,12 @@ const appId = APP_ID;
 const notificationId = 'test-notification-id';
 const version = __VERSION__;
 
+mockDelay();
+vi.spyOn(OperationRepo.prototype, '_start').mockResolvedValue(undefined);
+
 run();
 
-vi.useFakeTimers();
+vi.useFakeTimers({ shouldAdvanceTime: true });
 vi.setSystemTime('2025-01-01T00:08:00.000Z');
 vi.spyOn(Log, '_debug').mockImplementation(() => {});
 
@@ -107,7 +112,6 @@ describe('ServiceWorker', () => {
 
   beforeEach(async () => {
     isServiceWorker = false;
-    // await clearAll();
     await db.put('Ids', {
       type: 'appId',
       id: appId,
@@ -144,31 +148,33 @@ describe('ServiceWorker', () => {
 
   describe('push event', () => {
     test('should handle push event errors', async () => {
-      await dispatchEvent(new PushEvent('push'));
-
-      // missing event.data
-      await vi.runOnlyPendingTimersAsync();
-      expect(logDebugSpy).toHaveBeenCalledWith(
-        'Failed to display a notification:',
-        'Missing event.data on push payload!',
-      );
+      self.dispatchEvent(new PushEvent('push'));
+      await vi.waitFor(() => {
+        expect(logDebugSpy).toHaveBeenCalledWith(
+          'Failed to display a notification:',
+          'Missing event.data on push payload!',
+        );
+      });
 
       // malformed event.data
       logDebugSpy.mockClear();
-      await dispatchEvent(new PushEvent('push', 'some message'));
-
-      expect(logDebugSpy).toHaveBeenCalledWith(
-        'Failed to display a notification:',
-        'Unexpected push message payload received: some message',
-      );
+      self.dispatchEvent(new PushEvent('push', 'some message'));
+      await vi.waitFor(() => {
+        expect(logDebugSpy).toHaveBeenCalledWith(
+          'Failed to display a notification:',
+          'Unexpected push message payload received: some message',
+        );
+      });
 
       // with missing notification id
       logDebugSpy.mockClear();
-      await dispatchEvent(new PushEvent('push', {}));
-      expect(logDebugSpy).toHaveBeenCalledWith(
-        'isValidPushPayload: Valid JSON but missing notification UUID:',
-        {},
-      );
+      self.dispatchEvent(new PushEvent('push', {}));
+      await vi.waitFor(() => {
+        expect(logDebugSpy).toHaveBeenCalledWith(
+          'isValidPushPayload: Valid JSON but missing notification UUID:',
+          {},
+        );
+      });
     });
 
     test('should handle successful push event', async () => {
@@ -238,7 +244,6 @@ describe('ServiceWorker', () => {
       }, 10);
 
       await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
-      await vi.runOnlyPendingTimersAsync();
 
       expect(apiPutSpy).toHaveBeenCalledWith(
         `notifications/${payload.custom.i}/report_received`,
@@ -261,7 +266,6 @@ describe('ServiceWorker', () => {
 
         const payload = mockOSMinifiedNotificationPayload();
         await dispatchEvent(new PushEvent('push', payload));
-        await vi.runOnlyPendingTimersAsync();
 
         expect(showNotificationSpy).toHaveBeenCalledWith(
           payload.title,
@@ -297,8 +301,6 @@ describe('ServiceWorker', () => {
         // Notification should NOT be displayed
         expect(showNotificationSpy).not.toHaveBeenCalled();
 
-        // Confirmed delivery should still be sent even when display is prevented
-        await vi.runOnlyPendingTimersAsync();
         expect(apiPutSpy).toHaveBeenCalledWith(
           `notifications/${notificationId}/report_received`,
           {
@@ -354,7 +356,6 @@ describe('ServiceWorker', () => {
         }, 10);
 
         await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
-        await vi.runOnlyPendingTimersAsync();
 
         // Notification should NOT be displayed initially
         expect(showNotificationSpy).not.toHaveBeenCalled();
@@ -712,18 +713,22 @@ describe('ServiceWorker', () => {
         });
 
         // debounces event
-        dispatchEvent(event);
-        dispatchEvent(event);
+        self.dispatchEvent(event);
+        self.dispatchEvent(event);
 
         // should finalize session then clean up sessions
-        await vi.advanceTimersByTimeAsync(15000);
-        const currentSession = await getCurrentSession();
+        await vi.waitFor(
+          async () => {
+            const s = await getCurrentSession();
+            expect(s).toBeNull();
+          },
+          { timeout: 13000 },
+        );
         const notificationClicked =
           await getAllNotificationClickedForOutcomes();
 
-        expect(currentSession).toBeNull();
         expect(notificationClicked).toEqual([]);
-      });
+      }, 15000);
     });
   });
 
