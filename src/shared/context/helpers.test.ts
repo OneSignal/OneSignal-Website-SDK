@@ -1,6 +1,8 @@
 import { enforceAlias, enforceAppId, timeoutPromise } from './helpers';
 
-vi.useFakeTimers();
+vi.useFakeTimers({
+  toFake: ['setTimeout', 'clearTimeout'],
+});
 
 describe('context/helpers', () => {
   describe('timeoutPromise', () => {

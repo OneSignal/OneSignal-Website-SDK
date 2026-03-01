@@ -23,6 +23,7 @@ vi.spyOn(Log, '_error').mockImplementation(() => '');
 
 describe('Slidedown Types', () => {
   beforeEach(() => {
+    localStorage.clear();
     getNotificationIcons();
     TestEnvironment.initialize({
       userConfig: config,
@@ -37,6 +38,7 @@ describe('Slidedown Types', () => {
   test('can show email slidedown', async () => {
     const addEmailSpy = vi.spyOn(OneSignal.User, 'addEmail');
     setCreateUserResponse();
+
     await OneSignal.Slidedown.promptEmail();
 
     expect(getMessageText()).toBe(message);
@@ -314,7 +316,7 @@ export const mockPhoneLibraryLoading = () => {
 
     window.intlTelInputUtils = {
       numberType: { MOBILE: 1 },
-      // @ts-ignore @ts-expect-error - mock intl-tel-input
+      // @ts-expect-error - mock intl-tel-input
       numberFormat: { E164: 0 },
     };
     return Promise.resolve();

@@ -11,8 +11,6 @@ import {
 } from './integration';
 import type { AppUserConfig } from './types';
 
-vi.useFakeTimers();
-
 const SERVICE_WORKER_PATH = 'push/onesignal/';
 
 const serverConfig = TestContext.getFakeServerAppConfig(

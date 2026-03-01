@@ -16,9 +16,9 @@ import type { ISingletonModelStore } from './types';
  * This is an abstract class; a concrete implementation must provide
  * the actual Operation to be enqueued.
  */
-export abstract class SingletonModelStoreListener<TModel extends Model>
-  implements ISingletonModelStoreChangeHandler<TModel>
-{
+export abstract class SingletonModelStoreListener<
+  TModel extends Model,
+> implements ISingletonModelStoreChangeHandler<TModel> {
   protected _store: ISingletonModelStore<TModel>;
   protected _opRepo: IOperationRepo;
 

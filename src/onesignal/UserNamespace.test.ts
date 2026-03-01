@@ -12,7 +12,8 @@ import UserNamespace from './UserNamespace';
 
 const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
 const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => '');
-vi.useFakeTimers();
+
+vi.useFakeTimers({ toFake: ['setInterval'] });
 
 const setup = () => {
   TestEnvironment.initialize({});

@@ -74,9 +74,10 @@ export interface ModelChangedArgs<T extends object = object> {
  * When deserializing a flat Model nothing specific is required.
  */
 
-export class Model<U extends object = object, T extends U & object = U & object>
-  implements IEventNotifier<IModelChangedHandler>
-{
+export class Model<
+  U extends object = object,
+  T extends U & object = U & object,
+> implements IEventNotifier<IModelChangedHandler> {
   /**
    * Legacy Id used as keypath for the IndexedDB tables. A unique identifier for this model.
    */

@@ -5,8 +5,9 @@ import type {
   ModelChangeTagValue,
 } from '../types/models';
 
-export interface ISingletonModelStore<TModel extends Model>
-  extends IEventNotifier<ISingletonModelStoreChangeHandler<TModel>> {
+export interface ISingletonModelStore<
+  TModel extends Model,
+> extends IEventNotifier<ISingletonModelStoreChangeHandler<TModel>> {
   /**
    * The model managed by this singleton model store.
    */

@@ -121,8 +121,9 @@ export interface ISingletonModelStoreChangeHandler<TModel extends Model> {
   _onModelUpdated(args: ModelChangedArgs, tag?: ModelChangeTagValue): void;
 }
 
-export interface ISingletonModelStore<TModel extends Model>
-  extends IEventNotifier<ISingletonModelStoreChangeHandler<TModel>> {
+export interface ISingletonModelStore<
+  TModel extends Model,
+> extends IEventNotifier<ISingletonModelStoreChangeHandler<TModel>> {
   /**
    * The model managed by this singleton model store.
    */

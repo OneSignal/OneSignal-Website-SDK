@@ -2,7 +2,9 @@ import * as TimedLocalStorage from './timedStorage';
 
 const localStorageSpy = vi.spyOn(window, 'localStorage', 'get');
 
-vi.useFakeTimers();
+vi.useFakeTimers({
+  toFake: ['Date'],
+});
 
 describe('TimedLocalStorage', () => {
   test('can check if localStorage is supported', () => {
@@ -17,7 +19,7 @@ describe('TimedLocalStorage', () => {
     TimedLocalStorage.setItem('my-key', 'my-value', 3);
     expect(TimedLocalStorage.getItem('my-key')).toBe('my-value');
 
-    vi.advanceTimersByTime(3 * 60 * 1000);
+    vi.setSystemTime(new Date(Date.now() + 3 * 60 * 1000));
     expect(TimedLocalStorage.getItem('my-key')).toBe(null);
   });
 

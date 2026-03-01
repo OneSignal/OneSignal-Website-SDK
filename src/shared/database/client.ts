@@ -127,9 +127,7 @@ export const getObjectStoreNames = async () => {
   return Array.from((await dbPromise).objectStoreNames);
 };
 
-export const getOptionsValue = async <T extends unknown>(
-  key: OptionKey,
-): Promise<T | null> => {
+export const getOptionsValue = async <T>(key: OptionKey): Promise<T | null> => {
   const result = await db.get('Options', key);
   if (result && 'value' in result) return result.value as T;
   return null;

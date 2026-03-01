@@ -6,24 +6,30 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - name: Use Node.js
+      - name: Setup Node # Since Vitest uses Node apis
         uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
 
-      - name: '[Setup] Install dependencies'
-        run: npm ci
+      - name: Bun Setup
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
-      - name: 'Check build size'
-        run: npm run build:prod
+      - name: 'Install'
+        run: bun install
 
-      - name: '[Test] Run linters'
-        run: npm run lint
+      - name: 'Check Build'
+        run: bun run build:prod
 
-      - name: '[Test] Run all tests'
-        run: npm run test
+      - name: 'Lint'
+        run: bun run lint
+
+      - name: 'Test'
+        run: bun run test

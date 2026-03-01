@@ -12,8 +12,6 @@ import { getAppState } from './database/config';
 import { setPushToken } from './database/subscription';
 import { SubscriptionManagerPage } from './managers/subscription/page';
 
-vi.useFakeTimers();
-
 beforeEach(() => {
   TestEnvironment.initialize();
 });

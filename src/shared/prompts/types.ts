@@ -82,8 +82,7 @@ export interface SlidedownDelayOptions {
   timeDelay: number;
 }
 
-export interface FullscreenPermissionMessageOptions
-  extends DelayedPromptOptions {
+export interface FullscreenPermissionMessageOptions extends DelayedPromptOptions {
   autoAcceptTitle?: string;
   actionMessage: string;
   acceptButton: string;

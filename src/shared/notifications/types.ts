@@ -95,8 +95,7 @@ export interface IMutableOSNotification extends IOSNotification {
   confirmDelivery: boolean;
 }
 
-export interface IMutableOSNotificationActionButton
-  extends IOSNotificationActionButton {
+export interface IMutableOSNotificationActionButton extends IOSNotificationActionButton {
   actionId: string;
   text: string;
   icon?: string;
