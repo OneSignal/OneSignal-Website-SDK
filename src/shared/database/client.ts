@@ -149,9 +149,8 @@ export const cleanupCurrentSession = async () => {
 };
 
 export const clearAll = async () => {
-  const objectStoreNames = await getObjectStoreNames();
-  for (const storeName of objectStoreNames) {
-    await clearStore(storeName);
+  for (const name of await getObjectStoreNames()) {
+    await clearStore(name as IDBStoreName);
   }
 };
 

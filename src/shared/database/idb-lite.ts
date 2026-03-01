@@ -5,9 +5,9 @@ export function wrapRequest<T>(req: IDBRequest<T>): Promise<T> {
   });
 }
 
-type SchemaLike = Record<string, { key: IDBValidKey; value: unknown }>;
-
-export function wrapDb<S extends SchemaLike>(raw: IDBDatabase) {
+export function wrapDb<
+  S extends { [K in keyof S]: { key: IDBValidKey; value: unknown } },
+>(raw: IDBDatabase) {
   const store = (name: string, mode?: IDBTransactionMode) =>
     raw.transaction(name, mode).objectStore(name);
   return {
