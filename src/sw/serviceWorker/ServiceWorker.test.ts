@@ -6,6 +6,7 @@ import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
+import { OperationRepo } from 'src/core/operationRepo/OperationRepo';
 import * as OneSignalApiBase from 'src/shared/api/base';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import type { AppConfig } from 'src/shared/config/types';
@@ -32,7 +33,6 @@ import type {
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import { OperationRepo } from 'src/core/operationRepo/OperationRepo';
 import { getAppId, run } from './ServiceWorker';
 
 // Mock webhook notification events
@@ -59,10 +59,30 @@ const version = __VERSION__;
 mockDelay();
 vi.spyOn(OperationRepo.prototype, '_start').mockResolvedValue(undefined);
 
+vi.mock('src/sw/helpers/CancelableTimeout', () => ({
+  cancelableTimeout: vi.fn((callback: () => Promise<void>) => {
+    let cancelled = false;
+    const promise = new Promise<void>((resolve) => {
+      queueMicrotask(async () => {
+        if (!cancelled) {
+          try {
+            await callback();
+          } catch {}
+        }
+        resolve();
+      });
+    });
+    return {
+      promise,
+      cancel: () => {
+        cancelled = true;
+      },
+    };
+  }),
+}));
+
 run();
 
-vi.useFakeTimers({ shouldAdvanceTime: true });
-vi.setSystemTime('2025-01-01T00:08:00.000Z');
 vi.spyOn(Log, '_debug').mockImplementation(() => {});
 
 const subscribeCall = vi.spyOn(SubscriptionManagerSW.prototype, '_subscribe');
@@ -77,16 +97,23 @@ vi.mock('src/shared/utils/EnvVariables', async (importOriginal) => ({
   },
 }));
 
-/**
- * Time to advance fake timers in tests to ensure all service worker timeouts
- * complete. Accounts for: setTimeout(0) in run(), cancelable timeouts (0.5/1s),
- * and IndexedDB buffer.
- */
-const SW_TEST_TIMER_ADVANCE_MS = 1600;
+const tick = () => new Promise<void>((r) => setTimeout(r, 0));
+
+const flush = async () => {
+  for (let i = 0; i < 20; i++) {
+    await tick();
+  }
+};
+
+const waitForDisplayStatus = async () => {
+  while (!self.notificationDisplayStatus) {
+    await tick();
+  }
+};
 
 const dispatchEvent = async (event: Event) => {
   self.dispatchEvent(event);
-  await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+  await flush();
 };
 
 const serverConfig = TestContext.getFakeServerAppConfig(
@@ -111,6 +138,7 @@ describe('ServiceWorker', () => {
   });
 
   beforeEach(async () => {
+    self.notificationDisplayStatus = undefined;
     isServiceWorker = false;
     await db.put('Ids', {
       type: 'appId',
@@ -138,9 +166,9 @@ describe('ServiceWorker', () => {
   });
 
   describe('activate event', () => {
-    test('should call claim on activate', () => {
+    test('should call claim on activate', async () => {
       const event = new ExtendableEvent('activate');
-      dispatchEvent(event);
+      await dispatchEvent(event);
 
       expect(self.clients.claim).toHaveBeenCalled();
     });
@@ -149,32 +177,27 @@ describe('ServiceWorker', () => {
   describe('push event', () => {
     test('should handle push event errors', async () => {
       self.dispatchEvent(new PushEvent('push'));
-      await vi.waitFor(() => {
-        expect(logDebugSpy).toHaveBeenCalledWith(
-          'Failed to display a notification:',
-          'Missing event.data on push payload!',
-        );
-      });
+      await flush();
+      expect(logDebugSpy).toHaveBeenCalledWith(
+        'Failed to display a notification:',
+        'Missing event.data on push payload!',
+      );
 
-      // malformed event.data
       logDebugSpy.mockClear();
       self.dispatchEvent(new PushEvent('push', 'some message'));
-      await vi.waitFor(() => {
-        expect(logDebugSpy).toHaveBeenCalledWith(
-          'Failed to display a notification:',
-          'Unexpected push message payload received: some message',
-        );
-      });
+      await flush();
+      expect(logDebugSpy).toHaveBeenCalledWith(
+        'Failed to display a notification:',
+        'Unexpected push message payload received: some message',
+      );
 
-      // with missing notification id
       logDebugSpy.mockClear();
       self.dispatchEvent(new PushEvent('push', {}));
-      await vi.waitFor(() => {
-        expect(logDebugSpy).toHaveBeenCalledWith(
-          'isValidPushPayload: Valid JSON but missing notification UUID:',
-          {},
-        );
-      });
+      await flush();
+      expect(logDebugSpy).toHaveBeenCalledWith(
+        'isValidPushPayload: Valid JSON but missing notification UUID:',
+        {},
+      );
     });
 
     test('should handle successful push event', async () => {
@@ -182,12 +205,10 @@ describe('ServiceWorker', () => {
 
       self.dispatchEvent(new PushEvent('push', payload));
 
-      // Simulate page responding without preventDefault
-      setTimeout(() => {
-        self.notificationDisplayStatus?.resolve(false);
-      }, 10);
+      await waitForDisplayStatus();
+      self.notificationDisplayStatus!.resolve(false);
 
-      await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+      await flush();
 
       const notificationId = payload.custom.i;
 
@@ -238,12 +259,10 @@ describe('ServiceWorker', () => {
 
       self.dispatchEvent(new PushEvent('push', payload));
 
-      // Simulate page responding without preventDefault
-      setTimeout(() => {
-        self.notificationDisplayStatus?.resolve(false);
-      }, 10);
+      await waitForDisplayStatus();
+      self.notificationDisplayStatus!.resolve(false);
 
-      await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+      await flush();
 
       expect(apiPutSpy).toHaveBeenCalledWith(
         `notifications/${payload.custom.i}/report_received`,
@@ -291,12 +310,10 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        // Simulate page responding synchronously with preventDefault=true
-        setTimeout(() => {
-          self.notificationDisplayStatus?.resolve(true);
-        }, 10);
+        await waitForDisplayStatus();
+        self.notificationDisplayStatus!.resolve(true);
 
-        await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+        await flush();
 
         // Notification should NOT be displayed
         expect(showNotificationSpy).not.toHaveBeenCalled();
@@ -322,12 +339,10 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        // Simulate page responding synchronously without calling preventDefault
-        setTimeout(() => {
-          self.notificationDisplayStatus?.resolve(false);
-        }, 10);
+        await waitForDisplayStatus();
+        self.notificationDisplayStatus!.resolve(false);
 
-        await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+        await flush();
 
         // Notification should be displayed
         expect(showNotificationSpy).toHaveBeenCalledWith(
@@ -350,12 +365,10 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        // Simulate page responding synchronously with preventDefault=true
-        setTimeout(() => {
-          self.notificationDisplayStatus?.resolve(true);
-        }, 10);
+        await waitForDisplayStatus();
+        self.notificationDisplayStatus!.resolve(true);
 
-        await vi.advanceTimersByTimeAsync(SW_TEST_TIMER_ADVANCE_MS);
+        await flush();
 
         // Notification should NOT be displayed initially
         expect(showNotificationSpy).not.toHaveBeenCalled();
@@ -582,14 +595,14 @@ describe('ServiceWorker', () => {
         },
       },
       sessionOrigin: SessionOrigin._UserCreate,
-      sessionThreshold: 10,
+      sessionThreshold: 1,
       subscriptionId: SUB_ID,
     };
 
     const session: Session = {
       accumulatedDuration: 0,
       appId,
-      lastActivatedTimestamp: Date.now(),
+      lastActivatedTimestamp: Date.now() - 2000,
       lastDeactivatedTimestamp: null,
       notificationId: null,
       sessionKey: ONESIGNAL_SESSION_KEY,
@@ -610,10 +623,9 @@ describe('ServiceWorker', () => {
       timestamp: Date.now(),
     };
 
-    beforeEach(async () => {});
-
     describe('session upsert event', () => {
       test('with safari client', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
         const cancel = vi.fn();
         self.cancel = cancel;
 
@@ -716,19 +728,17 @@ describe('ServiceWorker', () => {
         self.dispatchEvent(event);
         self.dispatchEvent(event);
 
+        await flush();
+
         // should finalize session then clean up sessions
-        await vi.waitFor(
-          async () => {
-            const s = await getCurrentSession();
-            expect(s).toBeNull();
-          },
-          { timeout: 13000 },
-        );
+        const s = await getCurrentSession();
+        expect(s).toBeNull();
+
         const notificationClicked =
           await getAllNotificationClickedForOutcomes();
 
         expect(notificationClicked).toEqual([]);
-      }, 15000);
+      });
     });
   });
 
@@ -872,9 +882,7 @@ describe('ServiceWorker', () => {
   });
 });
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const logDebugSpy = vi.spyOn(Log, '_debug');
-// -- one signal api base mock
 
 // @ts-expect-error - for mocking
 const apiPutSpy = vi.spyOn(OneSignalApiBase, 'put').mockResolvedValue({
@@ -882,10 +890,6 @@ const apiPutSpy = vi.spyOn(OneSignalApiBase, 'put').mockResolvedValue({
   status: 200,
 });
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Mock classes/helpers
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// -- webhook notification event sender mock
 const mockSender = {
   willDisplay: vi.fn(),
   dismiss: vi.fn(),
@@ -902,7 +906,6 @@ vi.mock(
   }),
 );
 
-// -- push subscription id mock
 const pushSubscriptionId = '1234';
 vi.mock('./helpers', () => ({
   getPushSubscriptionIdByToken: vi
@@ -910,14 +913,10 @@ vi.mock('./helpers', () => ({
     .mockImplementation(() => pushSubscriptionId),
 }));
 
-// -- awaitable timeout mock
 vi.mock('../../../src/shared/utils/AwaitableTimeout', () => ({
   awaitableTimeout: vi.fn().mockResolvedValue(undefined),
 }));
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Web api classes
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 declare global {
   interface ServiceWorkerGlobalScope {
     clientsStatus?: {
