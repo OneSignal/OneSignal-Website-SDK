@@ -11,7 +11,7 @@ import type Bell from './Bell';
 import { BellEvent, MESSAGE_TIMEOUT, MessageType } from './constants';
 
 export default class Button extends AnimatedElement {
-  public _isHandlingClick: boolean = false;
+  public _isHandlingClick = false;
   public _events: Record<string, string>;
   public _bell: Bell;
 

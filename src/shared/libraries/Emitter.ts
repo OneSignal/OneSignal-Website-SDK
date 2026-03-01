@@ -42,10 +42,9 @@ export default class Emitter {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
 
-    function fn(this: EventHandler) {
+    function fn(this: EventHandler, ...args: Parameters<EventHandler>) {
       that.off(event, fn);
-      // @ts-expect-error - arguments is not typed
-      listener.apply(this, arguments);
+      listener.apply(this, args);
     }
 
     fn.listener = listener;

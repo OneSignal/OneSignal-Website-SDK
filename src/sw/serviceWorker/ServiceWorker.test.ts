@@ -67,7 +67,9 @@ vi.mock('src/sw/helpers/CancelableTimeout', () => ({
         if (!cancelled) {
           try {
             await callback();
-          } catch {}
+          } catch {
+            // no-op
+          }
         }
         resolve();
       });

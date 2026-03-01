@@ -125,13 +125,17 @@ describe('OneSignal - No Consent Required', () => {
         setDeleteAliasResponse();
 
         OneSignal.User.addAlias('someLabel', 'someId');
-        await vi.waitUntil(() => addAliasFn.mock.calls.length === 1, { interval: 1 });
+        await vi.waitUntil(() => addAliasFn.mock.calls.length === 1, {
+          interval: 1,
+        });
         OneSignal.User.removeAlias('someLabel');
 
         const identityModel = OneSignal._coreDirector._getIdentityModel();
         expect(identityModel._getProperty('someLabel')).toBeUndefined();
 
-        await vi.waitUntil(() => deleteAliasFn.mock.calls.length === 1, { interval: 1 });
+        await vi.waitUntil(() => deleteAliasFn.mock.calls.length === 1, {
+          interval: 1,
+        });
       });
 
       test('can delete multiple aliases from the current user', async () => {
@@ -144,12 +148,16 @@ describe('OneSignal - No Consent Required', () => {
         expect(identityModel._getProperty('someLabel')).toBe('someId');
         expect(identityModel._getProperty('someLabel2')).toBe('someId2');
 
-        await vi.waitUntil(async () => addAliasFn.mock.calls.length === 2, { interval: 1 });
+        await vi.waitUntil(async () => addAliasFn.mock.calls.length === 2, {
+          interval: 1,
+        });
 
         OneSignal.User.removeAlias('someLabel');
         OneSignal.User.removeAlias('someLabel2');
 
-        await vi.waitUntil(async () => deleteAliasFn.mock.calls.length === 2, { interval: 1 });
+        await vi.waitUntil(async () => deleteAliasFn.mock.calls.length === 2, {
+          interval: 1,
+        });
 
         identityModel = OneSignal._coreDirector._getIdentityModel();
         expect(identityModel._getProperty('someLabel')).toBeUndefined();
@@ -185,7 +193,9 @@ describe('OneSignal - No Consent Required', () => {
 
       test('can add an email subscription to the current user', async () => {
         OneSignal.User.addEmail(email);
-        await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 1, { interval: 1 });
+        await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 1, {
+          interval: 1,
+        });
 
         // should make a request to the backend
         const subscription: ICreateUserSubscription = {
@@ -252,7 +262,9 @@ describe('OneSignal - No Consent Required', () => {
 
         OneSignal.User.removeEmail(email);
 
-        await vi.waitUntil(() => deleteSubscriptionFn.mock.calls.length === 1, { interval: 1 });
+        await vi.waitUntil(() => deleteSubscriptionFn.mock.calls.length === 1, {
+          interval: 1,
+        });
         dbSubscriptions = await getEmailSubscriptionDbItems();
         expect(dbSubscriptions).toHaveLength(0);
       });
@@ -296,7 +308,9 @@ describe('OneSignal - No Consent Required', () => {
 
       test('can add an sms subscription to the current user', async () => {
         OneSignal.User.addSms(sms);
-        await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 1, { interval: 1 });
+        await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 1, {
+          interval: 1,
+        });
 
         // should make a request to the backend
         const subscription: ICreateUserSubscription = {
@@ -353,7 +367,9 @@ describe('OneSignal - No Consent Required', () => {
         OneSignal.User.addSms(sms);
         await getSmsSubscriptionDbItems(1);
 
-        await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 1, { interval: 1 });
+        await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 1, {
+          interval: 1,
+        });
         await vi.waitUntil(
           async () => {
             const sub = (await db.getAll('subscriptions'))[0];
@@ -364,7 +380,9 @@ describe('OneSignal - No Consent Required', () => {
 
         OneSignal.User.removeSms(sms);
 
-        await vi.waitUntil(() => deleteSubscriptionFn.mock.calls.length === 1, { interval: 1 });
+        await vi.waitUntil(() => deleteSubscriptionFn.mock.calls.length === 1, {
+          interval: 1,
+        });
 
         await getSmsSubscriptionDbItems(0);
       });
@@ -465,7 +483,9 @@ describe('OneSignal - No Consent Required', () => {
           setTransferSubscriptionResponse();
 
           await OneSignal.login(externalId); // should call set alias
-          await vi.waitUntil(() => addAliasFn.mock.calls.length === 1, { interval: 1 });
+          await vi.waitUntil(() => addAliasFn.mock.calls.length === 1, {
+            interval: 1,
+          });
           expect(addAliasFn).toHaveBeenCalledWith({
             identity: {
               external_id: externalId,
@@ -473,7 +493,9 @@ describe('OneSignal - No Consent Required', () => {
           });
 
           await OneSignal.login(newExternalId); // should call create user
-          await vi.waitUntil(() => createUserFn.mock.calls.length === 1, { interval: 1 });
+          await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
+            interval: 1,
+          });
           expect(createUserFn).toHaveBeenCalledWith({
             identity: {
               external_id: newExternalId,
@@ -486,7 +508,9 @@ describe('OneSignal - No Consent Required', () => {
             ],
           });
 
-          await vi.waitUntil(() => getUserFn.mock.calls.length === 1, { interval: 1 });
+          await vi.waitUntil(() => getUserFn.mock.calls.length === 1, {
+            interval: 1,
+          });
 
           const identityData = await getIdentityItem();
           expect(identityData).toEqual({
@@ -562,7 +586,9 @@ describe('OneSignal - No Consent Required', () => {
 
         test('login before adding email and sms - it should create subscriptions with the external ID', async () => {
           await OneSignal.login(externalId);
-          await vi.waitUntil(() => addAliasFn.mock.calls.length === 1, { interval: 1 });
+          await vi.waitUntil(() => addAliasFn.mock.calls.length === 1, {
+            interval: 1,
+          });
 
           const identityData = await getIdentityItem();
           expect(identityData).toEqual({
@@ -581,7 +607,9 @@ describe('OneSignal - No Consent Required', () => {
           OneSignal.User.addEmail(email);
 
           // want to use different subscription id for sms
-          await vi.waitUntil(() => createSubscriptionFn.mock.calls.length > 0, { interval: 1 });
+          await vi.waitUntil(() => createSubscriptionFn.mock.calls.length > 0, {
+            interval: 1,
+          });
           setCreateSubscriptionResponse({
             response: {
               id: SUB_ID_3,
@@ -619,9 +647,7 @@ describe('OneSignal - No Consent Required', () => {
           await vi.waitUntil(
             async () => {
               dbSubscriptions = await getDbSubscriptions(3);
-              const emailSub = dbSubscriptions.find(
-                (s) => s.type === 'Email',
-              );
+              const emailSub = dbSubscriptions.find((s) => s.type === 'Email');
               const smsSub = dbSubscriptions.find((s) => s.type === 'SMS');
               return emailSub?.id === SUB_ID_2 && smsSub?.id === SUB_ID_3;
             },
@@ -664,7 +690,9 @@ describe('OneSignal - No Consent Required', () => {
           await getIdentityItem((i) => i.onesignal_id === localId);
           OneSignal.login(externalId);
 
-          await vi.waitUntil(() => getUserFn.mock.calls.length === 1, { interval: 1 });
+          await vi.waitUntil(() => getUserFn.mock.calls.length === 1, {
+            interval: 1,
+          });
           const identityData = await getIdentityItem(
             (i) =>
               i.onesignal_id === ONESIGNAL_ID && i.external_id === externalId,
@@ -769,7 +797,9 @@ describe('OneSignal - No Consent Required', () => {
           await promise;
 
           // second call creates the subscription
-          await vi.waitUntil(() => createUserFn.mock.calls.length === 2, { interval: 1 });
+          await vi.waitUntil(() => createUserFn.mock.calls.length === 2, {
+            interval: 1,
+          });
           expect(createUserFn).toHaveBeenCalledWith({
             identity: {
               external_id: externalId,
@@ -851,7 +881,9 @@ describe('OneSignal - No Consent Required', () => {
           onesignalId,
         });
 
-        await vi.waitUntil(() => createUserFn.mock.calls.length === 1, { interval: 1 });
+        await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
+          interval: 1,
+        });
 
         // should update models and db
         identityModel = OneSignal._coreDirector._getIdentityModel();
@@ -917,7 +949,9 @@ describe('OneSignal - No Consent Required', () => {
       updateIdentityModel('external_id', 'some-id');
       OneSignal.User.trackEvent(name);
 
-      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, { interval: 1 });
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
+        interval: 1,
+      });
 
       expect(sendCustomEventFn).toHaveBeenCalledWith({
         events: [
@@ -960,7 +994,9 @@ describe('OneSignal - No Consent Required', () => {
       });
       expect(sendCustomEventFn).not.toHaveBeenCalled();
 
-      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, { interval: 1 });
+      await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
+        interval: 1,
+      });
       expect(sendCustomEventFn).toHaveBeenCalledWith({
         events: [
           {
@@ -1131,7 +1167,9 @@ describe('OneSignal - No Consent Required', () => {
       };
       registerForPushNotifications();
 
-      await vi.waitUntil(() => changeEvent.mock.calls.length === 1, { interval: 1 });
+      await vi.waitUntil(() => changeEvent.mock.calls.length === 1, {
+        interval: 1,
+      });
       expect(changeEvent).toHaveBeenCalledWith({
         previous: {
           id: undefined,

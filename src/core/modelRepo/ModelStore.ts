@@ -35,9 +35,9 @@ import type {
  * as part of its initialization process.
  */
 export abstract class ModelStore<
-    TModel extends Model,
-    DBModel extends DatabaseModel<TModel> = DatabaseModel<TModel>,
-  >
+  TModel extends Model,
+  DBModel extends DatabaseModel<TModel> = DatabaseModel<TModel>,
+>
   implements
     IEventNotifier<IModelStoreChangeHandler<TModel>>,
     IModelStore<TModel>,
