@@ -14,11 +14,12 @@
         color: white;
         padding: 16px 24px;
         border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         max-width: 350px;
         z-index: 10000;
         animation: slideIn 0.3s ease-out;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
       .in-app-notification h4 {
         margin: 0 0 8px 0;
@@ -44,8 +45,14 @@
         opacity: 1;
       }
       @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
       }
       .demo-section {
         margin: 20px 0;
@@ -107,7 +114,7 @@
         // for testing consent required
         // OneSignal.setConsentRequired(true);
 
-        await OneSignal.init({
+        OneSignal.init({
           appId,
           // requiresUserPrivacyConsent: true, // requires custom site sestting in dashboard
           // promptOptions: {
@@ -121,225 +128,22 @@
           //   },
           // },
         });
+        console.log('uhh', OneSignal.User);
+        OneSignal.User.addTag('test', 'test');
 
-        // Demo: foregroundWillDisplay with preventDefault() and display()
-        // Call preventDefault() synchronously to suppress the system notification.
-        // Optionally call event.notification.display() later to re-show it.
-        OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event) => {
-          console.log('[Demo] foregroundWillDisplay event received:', event);
-
-          // Display a counter every second and stop after 30 seconds
-          let counter = 0;
-          let secondsToWaitFor = 10
-          const counterInterval = setInterval(() => {
-            counter++;
-            console.log(`[Demo] Counter: ${counter}`);
-            if (counter >= secondsToWaitFor) {
-              clearInterval(counterInterval);
-              console.log(`[Demo] Counter stopped after ${secondsToWaitFor} seconds`);
-            }
-          }, 1000 * secondsToWaitFor);
-          if (suppressWhenFocused && document.visibilityState === 'visible') {
-            event.preventDefault();
-            console.log('[Demo] Preventing system notification, showing in-app instead');
-            showInAppNotification(event.notification);
-
-            // Uncomment below to also re-display the system notification after a delay:
-            setTimeout(() => {
-              console.log('[Demo] showing the notification after some async delay');
-              event.notification.display();
-            }, 6000);
-          } else {
-            console.log('[Demo] Allowing system notification to display');
-          }
-        });
+        OneSignal.Notifications.addEventListener(
+          'foregroundWillDisplay',
+          (event) => {
+            console.log('[Demo] foregroundWillDisplay event received:', event);
+          },
+        );
 
         // OneSignal.setConsentRequired(true);
       });
-
-      // function pushSubscriptionChangeListener(event) {
-      //   console.warn('event.previous.id', event.previous.id);
-      //   console.warn('event.current.id', event.current.id);
-      //   console.warn('event.previous.token', event.previous.token);
-      //   console.warn('event.current.token', event.current.token);
-      //   console.warn('event.previous.optedIn', event.previous.optedIn);
-      //   console.warn('event.current.optedIn', event.current.optedIn);
-      // }
-
-      // // uncomment to test push subscription change listener
-      // OneSignalDeferred.push(function (OneSignal) {
-      //   OneSignal.User.PushSubscription.addEventListener('change', (e) => {
-      //     console.log('PushSubscription.addEventListener', e);
-      //   });
-      //   OneSignal.Notifications.addEventListener('change', (e) => {
-      //     console.log('Notifications.addEventListener', e);
-      //   });
-      //   OneSignal.Notifications.addEventListener('permissionChange', (e) => {
-      //     console.log('permissionChange', e);
-      //   });
-      // });
-
-      // uncomment to test login
-      // OneSignalDeferred.push(async function (OneSignal) {
-      //   await OneSignal.login('new-web-sdk');
-      //   OneSignal.User.addEmail('test@test.com');
-      // });
-
-      function toggleSuppressNotifications(enabled) {
-        suppressWhenFocused = enabled;
-        document.getElementById('btn-suppress-on').classList.toggle('active', enabled);
-        document.getElementById('btn-suppress-off').classList.toggle('active', !enabled);
-        console.log('[Demo] Suppress notifications when focused:', enabled);
-      }
     </script>
   </head>
   <body>
     <script type="module" src="/src/entries/pageSdkInit.ts"></script>
     <h1>OneSignal Dev</h1>
-    <p>
-      This html file is for local development with hot-reloading. To preview the
-      bundle, it will use a separate html file in the preview folder.
-    </p>
-
-    <div class="demo-section">
-      <h3>Demo: Suppress Notifications When Tab is Focused</h3>
-      <p>
-        When enabled, push notifications will be suppressed when this tab is in focus.
-        Instead of a system notification, an in-app notification will be shown.
-      </p>
-      <p>
-        <strong>How to test:</strong>
-        <ol>
-          <li>Enable "Suppress when focused" below</li>
-          <li>Send a test push notification from your OneSignal dashboard</li>
-          <li>With this tab in focus, you'll see an in-app notification instead of a system notification</li>
-          <li>With this tab in background, you'll see a normal system notification</li>
-        </ol>
-      </p>
-      <div style="margin-top: 16px;">
-        <button id="btn-suppress-on" class="toggle-btn" onclick="toggleSuppressNotifications(true)">
-          Suppress when focused: ON
-        </button>
-        <button id="btn-suppress-off" class="toggle-btn active" onclick="toggleSuppressNotifications(false)">
-          Suppress when focused: OFF
-        </button>
-      </div>
-    </div>
-
-    <hr />
-    <h2>App ID Migration Regression Test</h2>
-    <p>
-      Reproduces the issue where migrating App IDs on the same origin leaves the
-      push subscription in an "unsubscribed" state. Open the browser console to
-      observe each step.
-    </p>
-    <ol>
-      <li>Enter <strong>App ID 1</strong> and click <em>Init &amp; Subscribe with App ID 1</em>. Grant notification permission when prompted.</li>
-      <li>Enter <strong>App ID 2</strong> and click <em>Migrate to App ID 2</em>. The page reloads with the new App ID.</li>
-      <li>Check the status panel below &mdash; <code>optedIn</code> should be <strong>true</strong> after migration.</li>
-    </ol>
-
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0">
-      <label>
-        App ID 1
-        <input id="appId1" type="text" size="40" placeholder="paste App ID 1 here" />
-      </label>
-      <label>
-        App ID 2
-        <input id="appId2" type="text" size="40" placeholder="paste App ID 2 here" />
-      </label>
-    </div>
-
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
-      <button id="btnInit1">Init &amp; Subscribe with App ID 1</button>
-      <button id="btnMigrate">Migrate to App ID 2 (reload)</button>
-      <button id="btnStatus">Refresh Status</button>
-    </div>
-
-    <h3>Subscription Status</h3>
-    <pre id="statusOutput" style="background:#f4f4f4;padding:12px;border-radius:4px;overflow:auto;max-height:300px">
-Click "Refresh Status" after init to see current state.
-    </pre>
-
-    <script>
-      // Populate App ID inputs from query params if present
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('app_id'))
-        document.getElementById('appId1').value = params.get('app_id');
-      if (params.get('app_id_2'))
-        document.getElementById('appId2').value = params.get('app_id_2');
-
-      function log(msg) {
-        console.log('[Migration Test]', msg);
-      }
-
-      document.getElementById('btnInit1').addEventListener('click', () => {
-        const id = document.getElementById('appId1').value.trim();
-        if (!id) return alert('Enter App ID 1 first');
-        log('Navigating with App ID 1: ' + id);
-        const url = new URL(window.location.href);
-        url.searchParams.set('app_id', id);
-        window.location.href = url.toString();
-      });
-
-      document.getElementById('btnMigrate').addEventListener('click', () => {
-        const id2 = document.getElementById('appId2').value.trim();
-        if (!id2) return alert('Enter App ID 2 first');
-        log('Migrating to App ID 2: ' + id2);
-        const url = new URL(window.location.href);
-        url.searchParams.set('app_id', id2);
-        url.searchParams.set('app_id_2', id2);
-        window.location.href = url.toString();
-      });
-
-      document.getElementById('btnStatus').addEventListener('click', refreshStatus);
-
-      async function refreshStatus() {
-        const out = document.getElementById('statusOutput');
-        try {
-          const sub = OneSignal.User.PushSubscription;
-          const info = {
-            'App ID (config)': OneSignal.config?.appId,
-            'Notification.permission': Notification.permission,
-            'PushSubscription.id': sub.id,
-            'PushSubscription.token': sub.token
-              ? sub.token.substring(0, 60) + '...'
-              : null,
-            'PushSubscription.optedIn': sub.optedIn,
-          };
-          out.textContent = JSON.stringify(info, null, 2);
-          log('Status: ' + JSON.stringify(info));
-        } catch (e) {
-          out.textContent = 'Error reading status: ' + e.message;
-        }
-      }
-
-      // Auto-refresh status once SDK is ready
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(function (OneSignal) {
-        OneSignal.User.PushSubscription.addEventListener('change', (e) => {
-          log('PushSubscription change event: ' + JSON.stringify(e));
-          refreshStatus();
-        });
-        setTimeout(refreshStatus, 1000);
-      });
-    </script>
-
-    <script>
-      // To check against race conditions
-      // OneSignalDeferred.push(async function (OneSignal) {
-      //   await OneSignal.logout();
-      // });
-
-      // to check against delayed OneSignalDeferred call, comment out the one in the head
-      // setTimeout(async () => {
-      //   window.OneSignalDeferred = window.OneSignalDeferred || [];
-      //   OneSignalDeferred.push(async function (OneSignal) {
-      //     await OneSignal.init({
-      //       appId,
-      //     });
-      //   });
-      // }, 5000);
-    </script>
   </body>
 </html>
