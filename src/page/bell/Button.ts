@@ -5,14 +5,14 @@ import {
   limitIsEmpty,
   limitStorePut,
 } from 'src/shared/services/limitStore';
-import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
-import { BellEvent, MESSAGE_TIMEOUT, MessageType } from './constants';
+import { MESSAGE_TIMEOUT, MessageType } from './constants';
+
+const MOUSE_EVENT_KEY = 'bell.launcher.button.mouse';
 
 export default class Button extends AnimatedElement {
   public _isHandlingClick = false;
-  public _events: Record<string, string>;
   public _bell: Bell;
 
   constructor(bell: Bell) {
@@ -23,9 +23,6 @@ export default class Button extends AnimatedElement {
     );
 
     this._bell = bell;
-    this._events = {
-      mouse: 'bell.launcher.button.mouse',
-    };
 
     const element = this._element;
     if (element) {
@@ -38,29 +35,13 @@ export default class Button extends AnimatedElement {
         { passive: true },
       );
 
-      element.addEventListener('mouseenter', () => {
-        this._onHovering();
+      element.addEventListener('mouseenter', () => this._onHovering());
+      element.addEventListener('mouseleave', () => this._onHovered());
+      element.addEventListener('touchmove', () => this._onHovered(), {
+        passive: true,
       });
-
-      element.addEventListener('mouseleave', () => {
-        this._onHovered();
-      });
-      element.addEventListener(
-        'touchmove',
-        () => {
-          this._onHovered();
-        },
-        { passive: true },
-      );
-
-      element.addEventListener('mousedown', () => {
-        this._onTap();
-      });
-
-      element.addEventListener('mouseup', () => {
-        this._onEndTap();
-      });
-
+      element.addEventListener('mousedown', () => this._onTap());
+      element.addEventListener('mouseup', () => this._onEndTap());
       element.addEventListener('click', () => {
         this._onHovered();
         this._onClick();
@@ -70,17 +51,17 @@ export default class Button extends AnimatedElement {
 
   _onHovering() {
     if (
-      limitIsEmpty(this._events.mouse) ||
-      limitGetLast(this._events.mouse) === 'out'
+      limitIsEmpty(MOUSE_EVENT_KEY) ||
+      limitGetLast(MOUSE_EVENT_KEY) === 'out'
     ) {
-      OneSignalEvent._trigger(BellEvent._Hovering);
+      this._bell._onHovering();
     }
-    limitStorePut(this._events.mouse, 'over');
+    limitStorePut(MOUSE_EVENT_KEY, 'over');
   }
 
   _onHovered() {
-    limitStorePut(this._events.mouse, 'out');
-    OneSignalEvent._trigger(BellEvent._Hovered);
+    limitStorePut(MOUSE_EVENT_KEY, 'out');
+    this._bell._onHovered();
   }
 
   _onTap() {
@@ -95,42 +76,32 @@ export default class Button extends AnimatedElement {
   }
 
   async _onClick() {
-    // Prevent concurrent clicks
     if (this._isHandlingClick) return;
     this._isHandlingClick = true;
-
-    OneSignalEvent._trigger(BellEvent._BellClick);
-    OneSignalEvent._trigger(BellEvent._LauncherClick);
 
     try {
       if (
         this._bell._message._shown &&
         this._bell._message._contentType == MessageType._Message
       ) {
-        // A message is being shown, it'll disappear soon
         return;
       }
 
       const optedOut = limitGetLast<boolean>('subscription.optedOut');
       if (this._bell._unsubscribed && !optedOut) {
-        // The user is actually subscribed, register him for notifications
         registerForPushNotifications();
         this._bell._ignoreSubscriptionState = true;
-        OneSignal._emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
-          this._bell._message
-            ._display(
-              MessageType._Message,
-              this._bell._options.text['message.action.subscribed'],
-              MESSAGE_TIMEOUT,
-            )
-            .then(() => {
-              this._bell._ignoreSubscriptionState = false;
-              this._bell._launcher._inactivate();
-            });
+        OneSignal._emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async () => {
+          await this._bell._message._display(
+            MessageType._Message,
+            this._bell._options.text['message.action.subscribed'],
+            MESSAGE_TIMEOUT,
+          );
+          this._bell._ignoreSubscriptionState = false;
+          this._bell._launcher._inactivate();
         });
       }
 
-      // Handle dialog toggle for all other cases
       if (
         this._bell._unsubscribed ||
         this._bell._subscribed ||
@@ -148,7 +119,6 @@ export default class Button extends AnimatedElement {
 
   async _toggleDialog() {
     if (this._bell._dialog._shown) {
-      // Close dialog if already open (toggle behavior)
       await this._bell._dialog._hide();
       await this._bell._launcher._inactivateIfWasInactive();
     } else {

@@ -1,15 +1,13 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { vi } from 'vitest';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import Bell from './Bell';
-import { BellEvent, BellState } from './constants';
+import { BellState } from './constants';
 
 // @ts-expect-error - _installEventHooks is not assignable
 const spyInstall = vi.spyOn(Bell.prototype, '_installEventHooks');
 const updateStateSpy = vi.spyOn(Bell.prototype, '_updateState');
 describe('Bell', () => {
   beforeEach(() => {
-    // Set up OneSignal globals/context to avoid accidental runtime lookups
     TestEnvironment.initialize();
   });
 
@@ -23,7 +21,6 @@ describe('Bell', () => {
   });
 
   test('constructor validates and installs hooks when enable=true', () => {
-    // Valid non-defaults to ensure validation path runs
     const bell = new Bell({
       enable: true,
       size: 'small',
@@ -37,16 +34,17 @@ describe('Bell', () => {
     expect(updateStateSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('_setState triggers event when changed', () => {
+  test('_setState updates state', () => {
     const bell = new Bell({ enable: false });
-    const trigger = vi.spyOn(OneSignalEvent, '_trigger');
-    // transition should emit
+    expect(bell._state).toBe(BellState._Uninitialized);
     bell._setState(BellState._Subscribed);
+    expect(bell._subscribed).toBe(true);
+  });
 
-    expect(trigger).toHaveBeenCalledWith(BellEvent._StateChanged, {
-      from: BellState._Uninitialized,
-      to: BellState._Subscribed,
-    });
+  test('_setState skips when silent', () => {
+    const bell = new Bell({ enable: false });
+    bell._setState(BellState._Subscribed, true);
+    expect(bell._subscribed).toBe(true);
   });
 
   test('_updateState sets blocked when permission denied', async () => {

@@ -14,7 +14,6 @@ import type {
 import { wasPromptOfTypeDismissed } from '../../shared/helpers/dismiss';
 import { getNotificationIcons } from '../../shared/helpers/main';
 import Log from '../../shared/libraries/Log';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
 import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent';
@@ -25,7 +24,6 @@ import Dialog from './Dialog';
 import Launcher from './Launcher';
 import Message from './Message';
 import {
-  BellEvent,
   BellState,
   type BellStateValue,
   MESSAGE_TIMEOUT,
@@ -140,95 +138,6 @@ export default class Bell {
   }
 
   private _installEventHooks() {
-    OneSignal._emitter.on(BellEvent._SubscribeClick, async () => {
-      const subscribeButton = this._dialog._subscribeButton;
-      if (subscribeButton) subscribeButton.disabled = true;
-      this._ignoreSubscriptionState = true;
-      await OneSignal.User.PushSubscription.optIn();
-      if (subscribeButton) subscribeButton.disabled = false;
-      await this._dialog._hide();
-      await this._message._display(
-        MessageType._Message,
-        this._options.text['message.action.resubscribed'],
-        MESSAGE_TIMEOUT,
-      );
-      this._ignoreSubscriptionState = false;
-      this._launcher._clearIfWasInactive();
-      await this._launcher._inactivate();
-      this._updateState();
-    });
-
-    OneSignal._emitter.on(BellEvent._UnsubscribeClick, async () => {
-      const unsubscribeButton = this._dialog._unsubscribeButton;
-      if (unsubscribeButton) unsubscribeButton.disabled = true;
-      await OneSignal.User.PushSubscription.optOut();
-      if (unsubscribeButton) unsubscribeButton.disabled = false;
-      await this._dialog._hide();
-      this._launcher._clearIfWasInactive();
-      await this._launcher._activate();
-      await this._message._display(
-        MessageType._Message,
-        this._options.text['message.action.unsubscribed'],
-        MESSAGE_TIMEOUT,
-      );
-      this._updateState();
-    });
-
-    OneSignal._emitter.on(BellEvent._Hovering, async () => {
-      this._hovering = true;
-      this._launcher._activateIfInactive();
-
-      if (this._message._shown || this._dialog._shown) {
-        this._hovering = false;
-        return;
-      }
-      if (this._message._contentType === MessageType._Message) {
-        this._hovering = false;
-        return;
-      }
-
-      try {
-        if (this._message._queued.length > 0) {
-          const msg = await this._message._dequeue();
-          this._message._content = msg;
-          this._message._contentType = MessageType._Queued;
-        } else {
-          this._message._content = decodeHtmlEntities(
-            this._message._getTipForState(),
-          );
-          this._message._contentType = MessageType._Tip;
-        }
-        await this._message._show();
-        this._hovering = false;
-      } catch (err) {
-        Log._error(err);
-      }
-    });
-
-    OneSignal._emitter.on(BellEvent._Hovered, async () => {
-      if (this._message._contentType === MessageType._Message) return;
-      if (this._dialog._shown) return;
-
-      if (this._hovering) {
-        this._hovering = false;
-        await this._message._show();
-        await delay(MESSAGE_TIMEOUT);
-        await this._message._hide();
-        if (this._launcher._wasInactive && !this._dialog._shown) {
-          await this._launcher._inactivate();
-          this._launcher._wasInactive = false;
-        }
-      }
-
-      if (this._message._shown) {
-        await this._message._hide();
-        if (this._launcher._wasInactive && !this._dialog._shown) {
-          await this._launcher._inactivate();
-          this._launcher._wasInactive = false;
-        }
-      }
-    });
-
     OneSignal._emitter.on(
       OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
       async (isSubscribed: SubscriptionChangeEvent) => {
@@ -252,22 +161,99 @@ export default class Bell {
       },
     );
 
-    OneSignal._emitter.on(BellEvent._StateChanged, (state) => {
-      if (!this._launcher._element) return;
-      if (state.to === BellState._Subscribed) {
-        this._launcher._inactivate();
-      } else if (
-        state.to === BellState._Unsubscribed ||
-        state.to === BellState._Blocked
-      ) {
-        this._launcher._activate();
-      }
-    });
-
     OneSignal._emitter.on(
       OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
       () => this._updateState(),
     );
+  }
+
+  async _onSubscribeClick() {
+    const subscribeButton = this._dialog._subscribeButton;
+    if (subscribeButton) subscribeButton.disabled = true;
+    this._ignoreSubscriptionState = true;
+    await OneSignal.User.PushSubscription.optIn();
+    if (subscribeButton) subscribeButton.disabled = false;
+    await this._dialog._hide();
+    await this._message._display(
+      MessageType._Message,
+      this._options.text['message.action.resubscribed'],
+      MESSAGE_TIMEOUT,
+    );
+    this._ignoreSubscriptionState = false;
+    this._launcher._clearIfWasInactive();
+    await this._launcher._inactivate();
+    this._updateState();
+  }
+
+  async _onUnsubscribeClick() {
+    const unsubscribeButton = this._dialog._unsubscribeButton;
+    if (unsubscribeButton) unsubscribeButton.disabled = true;
+    await OneSignal.User.PushSubscription.optOut();
+    if (unsubscribeButton) unsubscribeButton.disabled = false;
+    await this._dialog._hide();
+    this._launcher._clearIfWasInactive();
+    await this._launcher._activate();
+    await this._message._display(
+      MessageType._Message,
+      this._options.text['message.action.unsubscribed'],
+      MESSAGE_TIMEOUT,
+    );
+    this._updateState();
+  }
+
+  async _onHovering() {
+    this._hovering = true;
+    this._launcher._activateIfInactive();
+
+    if (this._message._shown || this._dialog._shown) {
+      this._hovering = false;
+      return;
+    }
+    if (this._message._contentType === MessageType._Message) {
+      this._hovering = false;
+      return;
+    }
+
+    try {
+      if (this._message._queued.length > 0) {
+        const msg = await this._message._dequeue();
+        this._message._content = msg;
+        this._message._contentType = MessageType._Queued;
+      } else {
+        this._message._content = decodeHtmlEntities(
+          this._message._getTipForState(),
+        );
+        this._message._contentType = MessageType._Tip;
+      }
+      await this._message._show();
+      this._hovering = false;
+    } catch (err) {
+      Log._error(err);
+    }
+  }
+
+  async _onHovered() {
+    if (this._message._contentType === MessageType._Message) return;
+    if (this._dialog._shown) return;
+
+    if (this._hovering) {
+      this._hovering = false;
+      await this._message._show();
+      await delay(MESSAGE_TIMEOUT);
+      await this._message._hide();
+      if (this._launcher._wasInactive && !this._dialog._shown) {
+        await this._launcher._inactivate();
+        this._launcher._wasInactive = false;
+      }
+    }
+
+    if (this._message._shown) {
+      await this._message._hide();
+      if (this._launcher._wasInactive && !this._dialog._shown) {
+        await this._launcher._inactivate();
+        this._launcher._wasInactive = false;
+      }
+    }
   }
 
   private _addDefaultClasses() {
@@ -531,11 +517,16 @@ export default class Bell {
   _setState(newState: BellStateValue, silent = false) {
     const lastState = this._state;
     this._state = newState;
-    if (lastState !== newState && !silent) {
-      OneSignalEvent._trigger(BellEvent._StateChanged, {
-        from: lastState,
-        to: newState,
-      });
+    if (lastState === newState || silent) return;
+
+    if (!this._launcher._element) return;
+    if (newState === BellState._Subscribed) {
+      this._launcher._inactivate();
+    } else if (
+      newState === BellState._Unsubscribed ||
+      newState === BellState._Blocked
+    ) {
+      this._launcher._activate();
     }
   }
 

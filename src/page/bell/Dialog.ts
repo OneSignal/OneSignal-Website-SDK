@@ -7,10 +7,9 @@ import {
   isTabletBrowser,
 } from 'src/shared/useragent/detect';
 import { getPlatformNotificationIcon } from 'src/shared/utils/utils';
-import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
-import { BellEvent, BellState } from './constants';
+import { BellState } from './constants';
 
 const STATIC_RESOURCES_URL = 'https://media.onesignal.com/web-sdk';
 
@@ -87,10 +86,10 @@ export default class Dialog extends AnimatedElement {
 
     this._subscribeButton?.addEventListener('click', () => {
       OneSignal._doNotShowWelcomeNotification = false;
-      OneSignalEvent._trigger(BellEvent._SubscribeClick);
+      this._bell._onSubscribeClick();
     });
     this._unsubscribeButton?.addEventListener('click', () =>
-      OneSignalEvent._trigger(BellEvent._UnsubscribeClick),
+      this._bell._onUnsubscribeClick(),
     );
 
     this._bell._setCustomColorsIfSpecified();
