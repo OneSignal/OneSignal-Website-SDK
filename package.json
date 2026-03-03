@@ -4,7 +4,6 @@
   "description": "Web push notifications from OneSignal.",
   "type": "module",
   "dependencies": {
-    "idb": "^8.0.3",
     "jsonp": "github:OneSignal/jsonp#onesignal"
   },
   "scripts": {

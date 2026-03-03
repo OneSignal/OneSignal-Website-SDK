@@ -1,4 +1,3 @@
-import type { DBSchema, StoreNames } from 'idb';
 import type {
   NotificationClickedForOutcomesSchema,
   NotificationClickForOpenHandlingSchema,
@@ -76,7 +75,7 @@ export interface PropertiesSchema {
   timezone_id: string;
 }
 
-export interface IndexedDBSchema extends DBSchema {
+export interface IndexedDBSchema {
   /**
    * @deprecated - should be migrated in openDB()
    */
@@ -204,4 +203,7 @@ export interface AppState {
   lastKnownOptedIn: boolean | null;
 }
 
-export type IDBStoreName = StoreNames<IndexedDBSchema>;
+export type OptionsValue =
+  IndexedDBSchema['Options']['value']['value'];
+
+export type IDBStoreName = keyof IndexedDBSchema & string;

@@ -1,7 +1,4 @@
-import type { IDBPDatabase, IDBPTransaction } from 'idb';
-import type { IndexedDBSchema } from './types';
-
-type Transaction = IDBPTransaction<IndexedDBSchema, any[], 'versionchange'>;
+import { wrapRequest } from './idb-lite';
 
 // Table rename "NotificationClicked" -> "Outcomes.NotificationClicked"
 // and migrate existing records.
@@ -14,26 +11,25 @@ type Transaction = IDBPTransaction<IndexedDBSchema, any[], 'versionchange'>;
 // However those new on 160000.beta4 to 160000.beta8 will have records
 // saved as "notification.id" that will be converted here.
 export async function migrateOutcomesNotificationClickedTableForV5(
-  db: IDBPDatabase<IndexedDBSchema>,
-  transaction: Transaction,
+  db: IDBDatabase,
+  transaction: IDBTransaction,
 ) {
   const oldTableName = 'NotificationClicked';
   const newTableName = 'Outcomes.NotificationClicked';
 
   db.createObjectStore(newTableName, { keyPath: 'notificationId' });
-  let cursor = await transaction.objectStore(oldTableName).openCursor();
+  const records = await wrapRequest(
+    transaction.objectStore(oldTableName).getAll(),
+  );
 
-  while (cursor) {
-    const oldValue = cursor.value;
-
-    await transaction.objectStore(newTableName).put({
-      // notification.id was possible from 160000.beta4 to 160000.beta8
+  const newStore = transaction.objectStore(newTableName);
+  for (const oldValue of records) {
+    // notification.id was possible from 160000.beta4 to 160000.beta8
+    newStore.put({
       notificationId: oldValue.notificationId || oldValue.notification.id,
       appId: oldValue.appId,
       timestamp: oldValue.timestamp,
     });
-
-    cursor = await cursor.continue();
   }
   db.deleteObjectStore(oldTableName);
 }
@@ -43,30 +39,34 @@ export async function migrateOutcomesNotificationClickedTableForV5(
 // Motivation: Consistency of using pre-fix "Outcomes." like we have for
 // the "Outcomes.NotificationClicked" table.
 export async function migrateOutcomesNotificationReceivedTableForV5(
-  db: IDBPDatabase<IndexedDBSchema>,
-  transaction: Transaction,
+  db: IDBDatabase,
+  transaction: IDBTransaction,
 ) {
   const oldTableName = 'NotificationReceived';
   const newTableName = 'Outcomes.NotificationReceived';
   db.createObjectStore(newTableName, { keyPath: 'notificationId' });
 
-  let cursor = await transaction.objectStore(oldTableName).openCursor();
-  while (cursor) {
-    await transaction.objectStore(newTableName).put(cursor.value);
-    cursor = await cursor.continue();
+  const records = await wrapRequest(
+    transaction.objectStore(oldTableName).getAll(),
+  );
+  const newStore = transaction.objectStore(newTableName);
+  for (const record of records) {
+    newStore.put(record);
   }
   db.deleteObjectStore(oldTableName);
 }
 
 export async function migrateModelNameSubscriptionsTableForV6(
-  db: IDBPDatabase<IndexedDBSchema>,
-  transaction: Transaction,
+  db: IDBDatabase,
+  transaction: IDBTransaction,
 ) {
   const newTableName = 'subscriptions';
   db.createObjectStore(newTableName, { keyPath: 'modelId' });
 
   let currentExternalId: string | undefined;
-  const identityData = await transaction.objectStore('identity').getAll();
+  const identityData = await wrapRequest(
+    transaction.objectStore('identity').getAll(),
+  );
 
   if (identityData.length > 0) {
     currentExternalId = identityData[0].externalId;
@@ -76,15 +76,17 @@ export async function migrateModelNameSubscriptionsTableForV6(
     'emailSubscriptions',
     'pushSubscriptions',
     'smsSubscriptions',
-  ] as const) {
-    let cursor = await transaction.objectStore(legacyModelName).openCursor();
-    while (cursor) {
-      await transaction.objectStore(newTableName).put({
-        ...cursor.value,
+  ]) {
+    const records = await wrapRequest(
+      transaction.objectStore(legacyModelName).getAll(),
+    );
+    const newStore = transaction.objectStore(newTableName);
+    for (const record of records) {
+      newStore.put({
+        ...record,
         modelName: 'subscriptions',
         externalId: currentExternalId,
       });
-      cursor = await cursor.continue();
     }
     db.deleteObjectStore(legacyModelName);
   }

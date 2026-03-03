@@ -1,4 +1,4 @@
-import { openDB } from 'idb';
+import { openDB, wrapDb } from './idb-lite';
 import Log from '../libraries/Log';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/env';
@@ -12,7 +12,7 @@ import {
 
 let terminated = false;
 const open = async (version = VERSION) => {
-  return openDB<IndexedDBSchema>(DATABASE_NAME, version, {
+  const raw = await openDB(DATABASE_NAME, version, {
     upgrade(_db, oldVersion, newVersion, transaction) {
       const newDbVersion = newVersion || version;
       if (newDbVersion >= 1 && oldVersion < 1) {
@@ -84,6 +84,7 @@ const open = async (version = VERSION) => {
       }
     },
   });
+  return wrapDb<IndexedDBSchema>(raw);
 };
 let dbPromise = open();
 
