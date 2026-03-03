@@ -71,6 +71,11 @@ export default class User {
     return IDManager._isLocalId(onesignalId) ? undefined : onesignalId;
   }
 
+  get externalId(): string | undefined {
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
+    return identityModel?._externalId;
+  }
+
   public addAlias(label: string, id: string): void {
     logMethodCall('addAlias', { label, id });
     if (isConsentRequiredButNotGiven()) return;

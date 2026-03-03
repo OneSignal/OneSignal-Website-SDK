@@ -1,8 +1,8 @@
-import { openDB } from 'idb';
 import Log from '../libraries/Log';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/env';
 import { DATABASE_NAME, VERSION } from './constants';
+import { openDB, wrapDb } from './idb-lite';
 import type { IDBStoreName, IdKey, IndexedDBSchema, OptionKey } from './types';
 import {
   migrateModelNameSubscriptionsTableForV6,
@@ -12,7 +12,7 @@ import {
 
 let terminated = false;
 const open = async (version = VERSION) => {
-  return openDB<IndexedDBSchema>(DATABASE_NAME, version, {
+  const raw = await openDB(DATABASE_NAME, version, {
     upgrade(_db, oldVersion, newVersion, transaction) {
       const newDbVersion = newVersion || version;
       if (newDbVersion >= 1 && oldVersion < 1) {
@@ -84,9 +84,10 @@ const open = async (version = VERSION) => {
       }
     },
   });
+  return wrapDb<IndexedDBSchema>(raw);
 };
-let dbPromise = open();
 
+export let dbPromise = open();
 export const getDb = (version = VERSION) => {
   dbPromise = open(version);
   return dbPromise;
@@ -124,7 +125,7 @@ export const clearStore = async <K extends IDBStoreName>(storeName: K) => {
 };
 
 export const getObjectStoreNames = async () => {
-  return Array.from((await dbPromise).objectStoreNames);
+  return Array.from((await dbPromise).objectStoreNames) as IDBStoreName[];
 };
 
 export const getOptionsValue = async <T>(key: OptionKey): Promise<T | null> => {
@@ -148,9 +149,8 @@ export const cleanupCurrentSession = async () => {
 };
 
 export const clearAll = async () => {
-  const objectStoreNames = await getObjectStoreNames();
-  for (const storeName of objectStoreNames) {
-    await clearStore(storeName);
+  for (const name of await getObjectStoreNames()) {
+    await clearStore(name);
   }
 };
 

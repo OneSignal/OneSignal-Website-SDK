@@ -1,6 +1,6 @@
 import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID } from '__test__/constants';
-import type * as idb from 'idb';
-import { deleteDB, type IDBPDatabase } from 'idb';
+import type * as idbLite from './idb-lite';
+import { wrapRequest } from './idb-lite';
 import { SubscriptionType } from '../subscriptions/constants';
 import { closeDb, getDb } from './client';
 import { DATABASE_NAME } from './constants';
@@ -8,7 +8,7 @@ import type { IndexedDBSchema } from './types';
 
 beforeEach(async () => {
   await closeDb();
-  await deleteDB(DATABASE_NAME);
+  await wrapRequest(indexedDB.deleteDatabase(DATABASE_NAME));
 });
 
 describe('general', () => {
@@ -196,7 +196,7 @@ describe('migrations', () => {
 
   describe('v6', () => {
     const populateLegacySubscriptions = async (
-      db: IDBPDatabase<IndexedDBSchema>,
+      db: Awaited<ReturnType<typeof getDb>>,
     ) => {
       await db.put('emailSubscriptions', {
         modelId: '1',
@@ -323,19 +323,14 @@ test('should reopen db when terminated', async () => {
   let terminatedCallback = vi.hoisted(() => vi.fn(() => false));
 
   const openFn = vi.hoisted(() => vi.fn());
-  const deleteDatabaseFn = vi.hoisted(() => vi.fn());
 
-  vi.mock('idb', async (importOriginal) => {
-    const actual = (await importOriginal()) as typeof idb;
+  vi.mock('./idb-lite', async (importOriginal) => {
+    const actual = (await importOriginal()) as typeof idbLite;
     return {
       ...actual,
       openDB: openFn.mockImplementation((name, version, callbacks) => {
         terminatedCallback = callbacks!.terminated!;
         return actual.openDB(name, version, callbacks);
-      }),
-      deleteDB: deleteDatabaseFn.mockImplementation((name) => {
-        terminatedCallback();
-        return actual.deleteDB(name);
       }),
     };
   });
@@ -346,7 +341,7 @@ test('should reopen db when terminated', async () => {
   await db.put('Options', { key: 'userConsent', value: true });
 
   // real world db.close() will trigger the terminated callback
-  deleteDB(DATABASE_NAME);
+  terminatedCallback();
 
   // terminate callback should reopen the db
   expect(openFn).toHaveBeenCalledTimes(2);

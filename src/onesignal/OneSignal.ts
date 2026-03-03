@@ -1,7 +1,7 @@
 import type Bell from 'src/page/bell/Bell';
 import { getAppConfig } from 'src/shared/config/app';
 import type { AppConfig, AppUserConfig } from 'src/shared/config/types';
-import { db } from 'src/shared/database/client';
+import { db, dbPromise } from 'src/shared/database/client';
 import {
   getConsentGiven,
   isConsentRequiredButNotGiven,
@@ -151,6 +151,14 @@ export default class OneSignal {
       Log._warn(MissingSafariWebIdError);
       return;
     }
+
+    const idb = await dbPromise.catch((e) => {
+      Log._error(
+        'OneSignal: IndexedDB unavailable, close & reopen the page to retry init',
+        e,
+      );
+    });
+    if (!idb) return;
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
 
