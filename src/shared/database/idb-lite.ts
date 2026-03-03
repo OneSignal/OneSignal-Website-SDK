@@ -52,7 +52,7 @@ export function openDB(
         req.result,
         e.oldVersion,
         e.newVersion,
-        req.transaction!,
+        req.transaction!, // per indexeddb spec, transaction is always defined for onupgradeneeded
       );
     req.onsuccess = () => {
       if (callbacks?.terminated) req.result.onclose = callbacks.terminated;

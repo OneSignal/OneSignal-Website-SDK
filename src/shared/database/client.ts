@@ -125,7 +125,7 @@ export const clearStore = async <K extends IDBStoreName>(storeName: K) => {
 };
 
 export const getObjectStoreNames = async () => {
-  return Array.from((await dbPromise).objectStoreNames);
+  return Array.from((await dbPromise).objectStoreNames) as IDBStoreName[];
 };
 
 export const getOptionsValue = async <T>(key: OptionKey): Promise<T | null> => {
@@ -150,7 +150,7 @@ export const cleanupCurrentSession = async () => {
 
 export const clearAll = async () => {
   for (const name of await getObjectStoreNames()) {
-    await clearStore(name as IDBStoreName);
+    await clearStore(name);
   }
 };
 
