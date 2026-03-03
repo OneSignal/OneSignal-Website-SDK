@@ -146,6 +146,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       if (runningOps) return Log._debug('Operations in progress');
 
       const ops = this._getNextOps(this._executeBucket);
+      console.log('ops', ops);
 
       if (ops) {
         runningOps = true;

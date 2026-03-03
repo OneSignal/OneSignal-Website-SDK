@@ -21,31 +21,22 @@ export async function createUserOnServer(): Promise<void> {
   }
 
   const pushOp = await OneSignal._coreDirector._getPushSubscriptionModel();
-  if (pushOp) {
-    const subData = pushOp.toJSON();
 
-    OneSignal._coreDirector._operationRepo._enqueue(
-      new LoginUserOperation(
-        appId,
-        identityModel._onesignalId,
-        identityModel._externalId,
-      ),
-    );
+  OneSignal._coreDirector._operationRepo._enqueue(
+    new LoginUserOperation(
+      appId,
+      identityModel._onesignalId,
+      identityModel._externalId,
+    ),
+  );
+  if (pushOp) {
     await OneSignal._coreDirector._operationRepo._enqueueAndWait(
       new CreateSubscriptionOperation({
-        ...subData,
+        ...pushOp.toJSON(),
         appId,
         onesignalId: identityModel._onesignalId,
         subscriptionId: pushOp.id!,
       }),
-    );
-  } else {
-    OneSignal._coreDirector._operationRepo._enqueue(
-      new LoginUserOperation(
-        appId,
-        identityModel._onesignalId,
-        identityModel._externalId,
-      ),
     );
   }
 }

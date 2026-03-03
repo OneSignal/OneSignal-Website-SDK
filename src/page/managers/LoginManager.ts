@@ -1,14 +1,13 @@
 import { IdentityConstants } from 'src/core/constants';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
+import { getSubscriptionType } from 'src/shared/environment/detect';
 import { getAppId } from 'src/shared/helpers/main';
 import { IDManager } from 'src/shared/managers/IDManager';
-import {
-  createUserOnServer,
-  resetUserModels,
-} from '../../onesignal/userDirector';
+import { resetUserModels } from '../../onesignal/userDirector';
 import Log from '../../shared/libraries/Log';
 
 export default class LoginManager {
@@ -66,6 +65,16 @@ export default class LoginManager {
               pushOp.id,
             ),
           );
+        } else {
+          // unlike mobile which creates a "fake" sub right away, for Web we just want to create a new sub when we login
+          const newSub = new SubscriptionModel();
+          newSub._mergeData({
+            id: IDManager._createLocalId(),
+            onesignalId: newIdentityOneSignalId,
+            type: getSubscriptionType(),
+            token: '',
+          });
+          OneSignal._coreDirector._subscriptionModelStore._add(newSub);
         }
       }),
       OneSignal._coreDirector._operationRepo._enqueueAndWait(
@@ -88,20 +97,36 @@ export default class LoginManager {
 
   private static async _logout(): Promise<void> {
     // check if user is already logged out
-    const identityModel = OneSignal._coreDirector._getIdentityModel();
+    let identityModel = OneSignal._coreDirector._getIdentityModel();
 
     if (!identityModel._externalId)
       return Log._debug('Logout: User is not logged in, skipping logout');
 
-    const hasAnySubscription =
-      OneSignal._coreDirector._subscriptionModelStore._list().length > 0;
-
     resetUserModels();
+    identityModel = OneSignal._coreDirector._getIdentityModel();
 
     // Only create an anonymous user if there is a subscription to associate with it.
     // Without a subscription, there is nothing meaningful to register on the server.
-    if (hasAnySubscription) {
-      return createUserOnServer();
-    }
+    const appId = getAppId();
+    let newIdentityOneSignalId = identityModel._onesignalId;
+
+    const promises: Promise<void>[] = [
+      OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
+        if (pushOp) {
+          OneSignal._coreDirector._operationRepo._enqueue(
+            new TransferSubscriptionOperation(
+              appId,
+              newIdentityOneSignalId,
+              pushOp.id,
+            ),
+          );
+        }
+      }),
+      OneSignal._coreDirector._operationRepo._enqueueAndWait(
+        new LoginUserOperation(appId, newIdentityOneSignalId),
+      ),
+    ];
+
+    await Promise.all(promises);
   }
 }
