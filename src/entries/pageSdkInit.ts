@@ -11,7 +11,7 @@ import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';
  * Since we use Vite lib mode, this is import is removed from the bundle but it will still
  * generate a separate CSS file.
  */
-import './stylesheet.scss';
+import './stylesheet.css';
 
 async function processOneSignalDeferredArray(
   onesignalDeferred: OneSignalDeferredLoadedCallback[],

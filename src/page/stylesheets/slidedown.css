@@ -1,37 +1,17 @@
-@use 'sass:color';
-
-$slidedown-transition-duration: 400ms;
-$border-radius: 0.5em;
-$mobile-width: 320px;
-$tablet-width: 768px;
-$desktop-width: 1024px;
-
-@mixin mobile {
-  @media (min-width: #{$mobile-width}) and (max-width: #{$tablet-width - 1px}) {
-    @content;
-  }
-}
-
-@mixin tablet {
-  @media (min-width: #{$tablet-width}) and (max-width: #{$desktop-width - 1px}) {
-    @content;
-  }
-}
-
 .iti--container {
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
     Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 
-  @include mobile {
+  @media (min-width: 320px) and (max-width: 767px) {
     z-index: 2258594001 !important;
   }
 
-  @include tablet {
+  @media (min-width: 768px) and (max-width: 1023px) {
     z-index: 2258594001 !important;
   }
 
-  .iti__country.iti__highlight {
+  & .iti__country.iti__highlight {
     background-color: #e5f2fc;
   }
 }
@@ -45,14 +25,14 @@ $desktop-width: 1024px;
   right: 0;
   -webkit-font-smoothing: initial;
 
-  .onesignal-toast-text {
+  & .onesignal-toast-text {
     display: flex;
     justify-content: center;
     text-align: center;
   }
 
-  #slidedown-body {
-    .channel-capture-container {
+  & #slidedown-body {
+    & .channel-capture-container {
       background-color: white;
       position: relative;
       white-space: nowrap;
@@ -62,26 +42,26 @@ $desktop-width: 1024px;
       align-items: flex-end;
       margin-top: -10px;
 
-      @include mobile {
+      @media (min-width: 320px) and (max-width: 767px) {
         margin-top: 10px;
         display: block;
       }
 
-      @include tablet {
+      @media (min-width: 768px) and (max-width: 1023px) {
         align-items: flex-start;
       }
 
-      label {
+      & label {
         display: inline-block;
         margin-bottom: 4px;
       }
 
-      .onesignal-error-input {
-        label: {
+      & .onesignal-error-input {
+        & label {
           color: #646d74;
         }
 
-        input {
+        & input {
           background: #fcecec;
           border: 1px solid #e54b4d;
 
@@ -92,7 +72,7 @@ $desktop-width: 1024px;
         }
       }
 
-      input {
+      & input {
         border: 1px solid #ced3d8;
         background: #ffffff;
         box-sizing: border-box;
@@ -102,7 +82,7 @@ $desktop-width: 1024px;
         font-size: 16px;
         padding-left: 8px;
 
-        @include mobile {
+        @media (min-width: 320px) and (max-width: 767px) {
           width: 100%;
         }
 
@@ -113,38 +93,37 @@ $desktop-width: 1024px;
       }
     }
 
-    /* International Telephone Input Styles */
-    .input-with-validation-element {
+    & .input-with-validation-element {
       background-color: white;
       position: relative;
       white-space: nowrap;
       box-sizing: border-box;
       margin-bottom: 24px;
 
-      p {
+      & p {
         margin-top: 6px;
         margin-bottom: 6px;
       }
 
-      label {
+      & label {
         color: #051b2c;
       }
 
-      @include tablet {
+      @media (min-width: 768px) and (max-width: 1023px) {
         margin-left: 16px;
       }
 
-      .iti {
-        @include mobile {
+      & .iti {
+        @media (min-width: 320px) and (max-width: 767px) {
           display: block;
         }
       }
 
-      .iti__dial-code {
+      & .iti__dial-code {
         color: grey;
       }
 
-      .iti__selected-flag {
+      & .iti__selected-flag {
         background-color: transparent;
         border-radius: 4px;
 
@@ -153,7 +132,7 @@ $desktop-width: 1024px;
         }
       }
 
-      .iti__country-list {
+      & .iti__country-list {
         width: 356px;
         box-shadow: 0px 1px 4px rgba(5, 27, 44, 0.2);
         border-radius: 4px;
@@ -162,19 +141,19 @@ $desktop-width: 1024px;
         line-height: 28px;
       }
 
-      .iti__country-name {
+      & .iti__country-name {
         white-space: pre-wrap;
       }
 
-      .iti__country.iti__highlight {
+      & .iti__country.iti__highlight {
         background-color: #e5f2fc;
       }
 
-      .onesignal-validation-element {
+      & .onesignal-validation-element {
         color: #e54b4d;
         display: flex;
 
-        img {
+        & img {
           padding-right: 8px;
         }
       }
@@ -185,54 +164,36 @@ $desktop-width: 1024px;
     top: 0;
 
     &.close-slidedown {
-      #onesignal-slidedown-dialog,
-      #onesignal-popover-dialog {
-        -webkit-animation-name: slideDownExit;
-        -webkit-animation-iteration-count: 1;
-        -webkit-animation-timing-function: ease-out;
-        -webkit-animation-duration: $slidedown-transition-duration;
-        -webkit-animation-fill-mode: forwards;
-        animation-name: slideDownExit;
-        animation-iteration-count: 1;
-        animation-timing-function: ease-out;
-        animation-duration: $slidedown-transition-duration;
-        animation-fill-mode: forwards;
+      & #onesignal-slidedown-dialog,
+      & #onesignal-popover-dialog {
+        animation: slideDownExit 400ms ease-out forwards;
       }
     }
 
-    #onesignal-slidedown-dialog,
-    #onesignal-popover-dialog {
+    & #onesignal-slidedown-dialog,
+    & #onesignal-popover-dialog {
       width: 500px;
-
-      -webkit-animation-name: slideDownEnter;
-      -webkit-animation-iteration-count: 1;
-      -webkit-animation-timing-function: ease-out;
-      -webkit-animation-duration: $slidedown-transition-duration;
-      -webkit-animation-fill-mode: forwards;
-      animation-name: slideDownEnter;
-      animation-iteration-count: 1;
-      animation-timing-function: ease-out;
-      animation-duration: $slidedown-transition-duration;
-      animation-fill-mode: forwards;
+      animation: slideDownEnter 400ms ease-out forwards;
 
       &.blocked-dialog {
-        #blocked-slidedown {
+        & #blocked-slidedown {
           display: block;
         }
-        #normal-slidedown,
-        #normal-popover {
+        & #normal-slidedown,
+        & #normal-popover {
           display: none;
         }
-        .slidedown-body-message,
-        .popover-body-message {
+        & .slidedown-body-message,
+        & .popover-body-message {
           padding: 0 0.2em 0 0.2em;
           text-align: center;
           width: 100%;
-          img {
+
+          & img {
             width: 100%;
           }
 
-          .unblock-image {
+          & .unblock-image {
             margin: 2em 0 0.5em 0;
           }
         }
@@ -240,16 +201,16 @@ $desktop-width: 1024px;
         width: 612px;
         margin-bottom: 18px;
 
-        .slidedown-button.secondary,
-        .popover-button.secondary {
+        & .slidedown-button.secondary,
+        & .popover-button.secondary {
           padding: 0.714em 2em;
         }
       }
     }
   }
 
-  #blocked-slidedown,
-  #blocked-popover {
+  & #blocked-slidedown,
+  & #blocked-popover {
     display: none;
   }
 
@@ -258,91 +219,67 @@ $desktop-width: 1024px;
 
     &.close-slidedown,
     &.close-popover {
-      #onesignal-slidedown-dialog,
-      #onesignal-popover-dialog {
-        -webkit-animation-name: slideUpExit;
-        -webkit-animation-iteration-count: 1;
-        -webkit-animation-timing-function: ease-out;
-        -webkit-animation-duration: $slidedown-transition-duration;
-        -webkit-animation-fill-mode: forwards;
-        animation-name: slideUpExit;
-        animation-iteration-count: 1;
-        animation-timing-function: ease-out;
-        animation-duration: $slidedown-transition-duration;
-        animation-fill-mode: forwards;
+      & #onesignal-slidedown-dialog,
+      & #onesignal-popover-dialog {
+        animation: slideUpExit 400ms ease-out forwards;
       }
     }
 
-    #onesignal-slidedown-dialog,
-    #onesignal-popover-dialog {
+    & #onesignal-slidedown-dialog,
+    & #onesignal-popover-dialog {
       border-bottom-left-radius: unset;
       border-bottom-right-radius: unset;
       width: 100%;
-
-      -webkit-animation-name: slideUpEnter;
-      -webkit-animation-iteration-count: 1;
-      -webkit-animation-timing-function: ease-out;
-      -webkit-animation-duration: $slidedown-transition-duration;
-      -webkit-animation-fill-mode: backwards;
-      animation-name: slideUpEnter;
-      animation-iteration-count: 1;
-      animation-timing-function: ease-out;
-      animation-duration: $slidedown-transition-duration;
-      animation-fill-mode: backwards;
+      animation: slideUpEnter 400ms ease-out backwards;
     }
   }
 
-  .tagging-container {
+  & .tagging-container {
     display: flex;
     margin: 2em 0;
   }
 
-  .tagging-container-col {
+  & .tagging-container-col {
     flex: 1;
     padding-left: 1em;
   }
 
-  .onesignal-category-label {
+  & .onesignal-category-label {
     display: block;
     position: relative;
     padding-left: 2.5em;
     margin-bottom: 1.5em;
     color: #051b2c;
     font-size: 1em;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     user-select: none;
     height: 1.5em;
     width: 80%;
     line-height: 1.5em;
     float: left;
 
-    .onesignal-category-label-input {
+    & .onesignal-category-label-input {
       position: absolute;
       opacity: 0;
       cursor: pointer;
       height: 0;
       width: 0;
 
-      /* When the checkbox is checked, add a blue background */
       &:checked ~ .onesignal-checkmark {
         transition: ease 75ms;
         background-color: #0078d1;
       }
 
-      &:checked ~ .onesignal-checkmark:after {
+      &:checked ~ .onesignal-checkmark::after {
         display: block;
         box-sizing: content-box;
       }
     }
 
-    /* On mouse-over, add a grey background color */
     &:hover input ~ .onesignal-checkmark {
       background-color: #dde1e4;
     }
 
-    .onesignal-category-label-text {
+    & .onesignal-category-label-text {
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
@@ -350,7 +287,7 @@ $desktop-width: 1024px;
       display: block;
     }
 
-    .onesignal-checkmark {
+    & .onesignal-checkmark {
       box-sizing: content-box;
       position: absolute;
       top: 0;
@@ -361,8 +298,7 @@ $desktop-width: 1024px;
       cursor: pointer;
       background-color: #ebedef;
 
-      /* Create the checkmark/indicator (hidden when not checked) */
-      &:after {
+      &::after {
         content: '';
         position: absolute;
         display: none;
@@ -373,14 +309,12 @@ $desktop-width: 1024px;
         border: solid white;
         box-sizing: content-box;
         border-width: 0 3px 3px 0;
-        -webkit-transform: rotate(45deg);
-        -ms-transform: rotate(45deg);
         transform: rotate(45deg);
       }
     }
   }
 
-  .onesignal-loading-container {
+  & .onesignal-loading-container {
     display: flex;
     margin-top: 1em;
     margin-bottom: 2em;
@@ -394,13 +328,13 @@ $desktop-width: 1024px;
     }
   }
 
-  .onesignal-button-indicator-holder {
+  & .onesignal-button-indicator-holder {
     display: flex;
     margin-left: 0.5em;
   }
 
-  #onesignal-slidedown-dialog,
-  #onesignal-popover-dialog {
+  & #onesignal-slidedown-dialog,
+  & #onesignal-popover-dialog {
     box-sizing: border-box;
     max-width: 100%;
     margin: 0 auto;
@@ -410,27 +344,27 @@ $desktop-width: 1024px;
     background: white !important;
     color: #051b2c;
     padding: 1.5em 1.5em;
-    border-bottom-left-radius: $border-radius;
-    border-bottom-right-radius: $border-radius;
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
     font-family:
       -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
       sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Seoe UI Symbol';
 
-    .slidedown-body,
-    .popover-body {
+    & .slidedown-body,
+    & .popover-body {
       box-sizing: border-box;
       margin: 0;
     }
 
-    .slidedown-body-icon,
-    .popover-body-icon {
+    & .slidedown-body-icon,
+    & .popover-body-icon {
       box-sizing: border-box;
       float: left;
       width: 80px;
       height: 80px;
       position: relative;
 
-      img {
+      & img {
         width: 100%;
         height: 100%;
 
@@ -445,21 +379,20 @@ $desktop-width: 1024px;
       }
     }
 
-    .slidedown-body-message,
-    .popover-body-message {
+    & .slidedown-body-message,
+    & .popover-body-message {
       box-sizing: border-box;
       padding: 0 0 0 1em;
       font-weight: 400;
       float: left;
       width: calc(100% - 80px);
       line-height: 1.45em;
-      -o-user-select: none;
       user-select: none;
       cursor: default;
       color: #051b2c !important;
     }
 
-    button {
+    & button {
       box-sizing: border-box;
       display: inline-block;
       padding: 0.375rem 1rem;
@@ -470,21 +403,17 @@ $desktop-width: 1024px;
       white-space: nowrap;
       vertical-align: middle;
       cursor: pointer;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
       user-select: none;
       border: 1px solid transparent;
       border-radius: 0.25rem;
       font-family: inherit;
       letter-spacing: 0.05em;
-      -webkit-transition: background-color 75ms ease;
       transition: background-color 75ms ease;
       margin: 0;
     }
 
-    .slidedown-button,
-    .popover-button {
+    & .slidedown-button,
+    & .popover-button {
       padding: 0.75em 1.5em;
       font-size: 1em;
       border-radius: 0.25em;
@@ -498,11 +427,11 @@ $desktop-width: 1024px;
         transition: linear 75ms;
 
         &:hover {
-          background: color.adjust(#0078d1, $lightness: -7.5%);
+          background: #0062ab;
         }
 
         &:active {
-          background: color.adjust(#0078d1, $lightness: -15%);
+          background: #004c85;
         }
 
         &.disabled {
@@ -522,7 +451,7 @@ $desktop-width: 1024px;
           transition: linear 75ms;
           align-items: center;
 
-          span {
+          & span {
             cursor: pointer;
           }
         }
@@ -537,41 +466,37 @@ $desktop-width: 1024px;
       &.secondary {
         box-shadow: none;
         background: white !important;
-        /*
-          We sparingly use an !important tag here because it's important for the user to be able to click "No Thanks".
-          Some sites set their own !important tag for text and we don't want that to be able to override ours.
-         */
         color: #0078d1 !important;
 
         &:hover {
-          color: color.adjust(#0078d1, $lightness: -12.5%);
+          color: #005391;
         }
 
         &:active {
-          color: color.adjust(#0078d1, $lightness: -30.5%);
+          color: #001f35;
         }
       }
     }
 
-    .primary.slidedown-button + .secondary.slidedown-button,
-    .primary.popover-button + .secondary.popover-button {
+    & .primary.slidedown-button + .secondary.slidedown-button,
+    & .primary.popover-button + .secondary.popover-button {
       margin-right: 0.714em;
     }
 
-    .slidedown-footer,
-    .popover-footer {
+    & .slidedown-footer,
+    & .popover-footer {
       position: relative;
     }
 
-    .align-right {
+    & .align-right {
       float: right;
     }
 
-    .clearfix {
+    & .clearfix {
       display: block;
-      backface-visibility: initial !important; // Causes buttons to be unclickable if set to hidden
+      backface-visibility: initial !important;
     }
-    .clearfix:after {
+    & .clearfix::after {
       content: '';
       display: block;
       height: 0;
@@ -579,7 +504,7 @@ $desktop-width: 1024px;
       visibility: hidden;
     }
 
-    .onesignal-tag-failure-message {
+    & .onesignal-tag-failure-message {
       display: flex;
       float: left;
       color: red;
@@ -587,14 +512,6 @@ $desktop-width: 1024px;
   }
 }
 
-@-webkit-keyframes slideDownEnter {
-  0% {
-    -webkit-transform: translateY(-150%);
-  }
-  100% {
-    -webkit-transform: translateY(0);
-  }
-}
 @keyframes slideDownEnter {
   0% {
     transform: translateY(-150%);
@@ -604,14 +521,6 @@ $desktop-width: 1024px;
   }
 }
 
-@-webkit-keyframes slideDownExit {
-  0% {
-    -webkit-transform: translateY(0%);
-  }
-  100% {
-    -webkit-transform: translateY(-150%);
-  }
-}
 @keyframes slideDownExit {
   0% {
     transform: translateY(0%);
@@ -621,14 +530,6 @@ $desktop-width: 1024px;
   }
 }
 
-@-webkit-keyframes slideUpEnter {
-  0% {
-    -webkit-transform: translateY(150%);
-  }
-  100% {
-    -webkit-transform: translateY(0);
-  }
-}
 @keyframes slideUpEnter {
   0% {
     transform: translateY(150%);
@@ -638,14 +539,6 @@ $desktop-width: 1024px;
   }
 }
 
-@-webkit-keyframes slideUpExit {
-  0% {
-    -webkit-transform: translateY(0%);
-  }
-  100% {
-    -webkit-transform: translateY(150%);
-  }
-}
 @keyframes slideUpExit {
   0% {
     transform: translateY(0%);

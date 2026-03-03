@@ -1,4 +1,4 @@
-import { addDomElement, clearDomElementChildren } from 'src/shared/helpers/dom';
+import { addDomElement, clearDomElementChildren, waitForAnimations } from 'src/shared/helpers/dom';
 import type { NotificationIcons } from 'src/shared/notifications/types';
 import { Browser } from 'src/shared/useragent/constants';
 import {
@@ -7,7 +7,6 @@ import {
   isTabletBrowser,
 } from 'src/shared/useragent/detect';
 import { getPlatformNotificationIcon } from 'src/shared/utils/utils';
-import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
 import { BellState } from './constants';
 
@@ -23,24 +22,21 @@ const UNBLOCK_IMAGES: Partial<Record<string, string>> = {
   [Browser._Edge]: '/bell/edge-unblock.png',
 };
 
-export default class Dialog extends AnimatedElement {
+export default class Dialog {
   public _bell: Bell;
   public _notificationIcons: NotificationIcons | null = null;
+  public _selector = '.onesignal-bell-launcher-dialog';
 
   constructor(bell: Bell) {
-    super(
-      '.onesignal-bell-launcher-dialog',
-      'onesignal-bell-launcher-dialog-opened',
-      undefined,
-      undefined,
-      '.onesignal-bell-launcher-dialog-body',
-    );
     this._bell = bell;
   }
 
-  async _show() {
-    await this._updateBellLauncherDialogBody();
-    await super._show();
+  get _element(): HTMLElement | null {
+    return document.querySelector(this._selector);
+  }
+
+  get _shown(): boolean {
+    return this._element?.classList.contains('onesignal-bell-launcher-dialog-opened') ?? false;
   }
 
   get _subscribeButton() {
@@ -55,13 +51,27 @@ export default class Dialog extends AnimatedElement {
     ) ?? null;
   }
 
+  async _show() {
+    await this._updateBellLauncherDialogBody();
+    const el = this._element;
+    if (!el || this._shown) return;
+    el.classList.add('onesignal-bell-launcher-dialog-opened');
+    await waitForAnimations(el);
+  }
+
+  async _hide() {
+    const el = this._element;
+    if (!el || !this._shown) return;
+    el.classList.remove('onesignal-bell-launcher-dialog-opened');
+    await waitForAnimations(el);
+  }
+
   private async _updateBellLauncherDialogBody() {
     const isEnabled =
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
 
-    if (this._nestedContentSelector) {
-      clearDomElementChildren(this._nestedContentSelector);
-    }
+    const bodySelector = '.onesignal-bell-launcher-dialog-body';
+    clearDomElementChildren(bodySelector);
 
     const text = this._bell._options.text;
     const footer = this._bell._options.showCredit
@@ -80,9 +90,7 @@ export default class Dialog extends AnimatedElement {
       contents = this._buildBlockedContent(text, footer);
     }
 
-    if (this._nestedContentSelector) {
-      addDomElement(this._nestedContentSelector, 'beforeend', contents);
-    }
+    addDomElement(bodySelector, 'beforeend', contents);
 
     this._subscribeButton?.addEventListener('click', () => {
       OneSignal._doNotShowWelcomeNotification = false;

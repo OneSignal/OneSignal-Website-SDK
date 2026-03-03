@@ -61,5 +61,5 @@ export const mockJsonp = () => {
   downloadSpy.mockResolvedValue(serverConfig);
 };
 
-// Polyfill Web Animations API method used by AnimatedElement
+// Polyfill Web Animations API method used by waitForAnimations
 HTMLElement.prototype.getAnimations = () => [];

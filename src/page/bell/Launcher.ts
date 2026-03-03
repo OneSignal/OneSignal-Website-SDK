@@ -1,9 +1,5 @@
-import {
-  addCssClass,
-  removeCssClass,
-} from 'src/shared/helpers/dom';
+import { addCssClass, removeCssClass, waitForAnimations } from 'src/shared/helpers/dom';
 import type { BellSize } from 'src/shared/prompts/types';
-import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
 
 const SIZE_CLASSES: Record<BellSize, string> = {
@@ -12,18 +8,52 @@ const SIZE_CLASSES: Record<BellSize, string> = {
   large: 'onesignal-bell-launcher-lg',
 };
 
-export default class Launcher extends AnimatedElement {
+export default class Launcher {
   public _bell: Bell;
-  public _wasInactive = false;
+  public _selector = '.onesignal-bell-launcher';
 
   constructor(bell: Bell) {
-    super(
-      '.onesignal-bell-launcher',
-      'onesignal-bell-launcher-active',
-      undefined,
-      'onesignal-bell-launcher-inactive',
-    );
     this._bell = bell;
+  }
+
+  get _element(): HTMLElement | null {
+    return document.querySelector(this._selector);
+  }
+
+  get _shown(): boolean {
+    return this._element?.classList.contains('onesignal-bell-launcher-active') ?? false;
+  }
+
+  get _active(): boolean {
+    return !(this._element?.classList.contains('onesignal-bell-launcher-inactive') ?? false);
+  }
+
+  async _show() {
+    const el = this._element;
+    if (!el || this._shown) return;
+    el.classList.add('onesignal-bell-launcher-active');
+    await waitForAnimations(el);
+  }
+
+  async _hide() {
+    const el = this._element;
+    if (!el || !this._shown) return;
+    el.classList.remove('onesignal-bell-launcher-active');
+    await waitForAnimations(el);
+  }
+
+  async _activate() {
+    const el = this._element;
+    if (!el || this._active) return;
+    el.classList.remove('onesignal-bell-launcher-inactive');
+    await waitForAnimations(el);
+  }
+
+  async _inactivate() {
+    const el = this._element;
+    if (!el || !this._active) return;
+    el.classList.add('onesignal-bell-launcher-inactive');
+    await waitForAnimations(el);
   }
 
   async _resize(size: BellSize) {
@@ -39,42 +69,6 @@ export default class Launcher extends AnimatedElement {
     }
     addCssClass(el, targetClass);
 
-    if (this._shown) await this._waitForAnimations();
-  }
-
-  async _activateIfInactive() {
-    if (!this._active) {
-      this._wasInactive = true;
-      await this._activate();
-    }
-  }
-
-  async _inactivateIfWasInactive() {
-    if (this._wasInactive) {
-      this._wasInactive = false;
-      await this._inactivate();
-    }
-  }
-
-  _clearIfWasInactive() {
-    this._wasInactive = false;
-  }
-
-  async _inactivate() {
-    await this._bell._message._hide();
-    const hasContent = this._bell._badge._content.length > 0;
-    if (hasContent) await this._bell._badge._hide();
-    await Promise.all([super._inactivate(), this._resize('small')]);
-    if (hasContent) await this._bell._badge._show();
-  }
-
-  async _activate() {
-    if (this._bell._badge._content.length > 0) {
-      await this._bell._badge._hide();
-    }
-    await Promise.all([
-      super._activate(),
-      this._resize(this._bell._options.size!),
-    ]);
+    if (this._shown) await waitForAnimations(el);
   }
 }
