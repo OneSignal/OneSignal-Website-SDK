@@ -1,4 +1,3 @@
-import { addDomElement, removeDomElement } from 'src/shared/helpers/dom';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
 import { limitGetLast } from 'src/shared/services/limitStore';
 import type Bell from './Bell';
@@ -28,8 +27,13 @@ export default class Button {
   }
 
   _onTap() {
-    this._pulse();
-    this._element?.classList.add('onesignal-bell-launcher-button-active');
+    const el = this._element;
+    if (el) {
+      el.classList.remove('pulsing');
+      void el.offsetWidth;
+      el.classList.add('pulsing');
+      el.classList.add('onesignal-bell-launcher-button-active');
+    }
     this._bell._badge._element?.classList.add('onesignal-bell-launcher-badge-active');
   }
 
@@ -85,21 +89,11 @@ export default class Button {
   async _toggleDialog() {
     if (this._bell._dialog._shown) {
       await this._bell._dialog._hide();
+      this._bell._launcher._element?.classList.remove('onesignal-bell-no-tip');
       await this._bell._launcher._inactivate();
     } else {
       await this._bell._showDialogProcedure();
     }
   }
 
-  _pulse() {
-    removeDomElement('.pulse-ring');
-    if (this._element) {
-      addDomElement(
-        this._element,
-        'beforeend',
-        '<div class="pulse-ring"></div>',
-      );
-    }
-    this._bell._setCustomColorsIfSpecified();
-  }
 }

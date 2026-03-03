@@ -373,10 +373,7 @@ export default class Bell {
     const dialogElement = this._dialog._element;
     const actionButton =
       dialogElement?.querySelector<HTMLButtonElement>('button.action');
-    const pulseRing =
-      this._button._element?.querySelector<HTMLElement>('.pulse-ring');
-
-    const resetTargets = [background, stroke, badgeElement, actionButton, pulseRing];
+    const resetTargets = [background, stroke, badgeElement, actionButton];
     for (const el of resetTargets) {
       if (el) el.style.cssText = '';
     }
@@ -424,8 +421,8 @@ export default class Bell {
         `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:active { background: ${colors['dialog.button.background.active']} !important; }`,
       );
     }
-    if (colors['pulse.color'] && pulseRing) {
-      pulseRing.style.cssText = `border-color: ${colors['pulse.color']}`;
+    if (colors['pulse.color']) {
+      this._launcher._element?.style.setProperty('--pulse-color', colors['pulse.color']);
     }
   }
 

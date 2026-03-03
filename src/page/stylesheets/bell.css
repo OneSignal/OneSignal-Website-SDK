@@ -132,6 +132,21 @@
         height: 100%;
         overflow: visible;
       }
+
+      &::after {
+        content: '';
+        border-radius: 50%;
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        z-index: 1000;
+        pointer-events: none;
+        border: 7px solid var(--pulse-color, rgba(255, 255, 255, 0.4));
+      }
+
+      &.pulsing::after {
+        animation: notifyButtonPulse 0.35s ease-in-out 1;
+      }
     }
 
     /* ---- Badge ---- */
@@ -449,10 +464,6 @@
             fill: #dd2022 !important;
           }
         }
-
-        & .pulse-ring {
-          border: 7px solid rgba(255, 255, 255, 0.4);
-        }
       }
 
       & .onesignal-bell-launcher-badge {
@@ -464,6 +475,8 @@
 
     /* ---- Theme: inverse ---- */
     &.onesignal-bell-launcher-theme-inverse {
+      --pulse-color: rgba(229, 75, 77, 0.4);
+
       & .onesignal-bell-launcher-button {
         & svg {
           & .background {
@@ -485,10 +498,6 @@
           & svg .background {
             fill: #f2f2f2 !important;
           }
-        }
-
-        & .pulse-ring {
-          border: 7px solid rgba(229, 75, 77, 0.4);
         }
       }
 
@@ -535,18 +544,6 @@
     }
   }
 
-  & .pulse-ring {
-    border-radius: 50%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    animation: notifyButtonPulse 0.35s ease-in-out 1;
-    opacity: 0;
-    z-index: 1000;
-    pointer-events: none;
-  }
 }
 
 @media print {

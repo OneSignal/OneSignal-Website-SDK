@@ -76,7 +76,6 @@ describe('Bell', () => {
             <g class="foreground"></g>
             <ellipse class="stroke"></ellipse>
           </svg>
-          <div class="pulse-ring"></div>
         </div>
         <div class="onesignal-bell-launcher-badge"></div>
         <div class="onesignal-bell-launcher-dialog">
