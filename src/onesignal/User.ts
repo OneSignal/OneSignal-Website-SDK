@@ -177,7 +177,6 @@ export default class User {
   }
 
   public addTag(key: string, value: string): void {
-    console.log('hii');
     logMethodCall('addTag', { key, value });
     if (isConsentRequiredButNotGiven()) return;
 

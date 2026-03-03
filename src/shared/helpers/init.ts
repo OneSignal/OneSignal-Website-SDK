@@ -53,7 +53,6 @@ function postponeSessionInitUntilPageIsInFocus(): void {
 }
 
 async function sessionInit(): Promise<void> {
-  console.trace('zz');
   Log._debug(`Called sessionInit()`);
 
   if (OneSignal._sessionInitAlreadyRunning) {

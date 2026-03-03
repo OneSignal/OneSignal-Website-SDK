@@ -203,7 +203,6 @@ export interface AppState {
   lastKnownOptedIn: boolean | null;
 }
 
-export type OptionsValue =
-  IndexedDBSchema['Options']['value']['value'];
+export type OptionsValue = IndexedDBSchema['Options']['value']['value'];
 
-export type IDBStoreName = keyof IndexedDBSchema & string;
+export type IDBStoreName = keyof IndexedDBSchema;

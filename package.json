@@ -73,7 +73,8 @@
     "vite-bundle-analyzer": "^1.3.6",
     "vite-plugin-mkcert": "^1.17.10",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "4.0.18"
+    "vitest": "4.0.18",
+    "@types/bun": "latest"
   },
   "size-limit": [
     {
@@ -83,7 +84,7 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "45.58 kB",
+      "limit": "45.556 kB",
       "gzip": true
     },
     {
@@ -96,5 +97,6 @@
       "limit": "8.81 kB",
       "gzip": true
     }
-  ]
+  ],
+  "private": true
 }

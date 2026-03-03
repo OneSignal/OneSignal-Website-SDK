@@ -1,7 +1,7 @@
 import type Bell from 'src/page/bell/Bell';
 import { getAppConfig } from 'src/shared/config/app';
 import type { AppConfig, AppUserConfig } from 'src/shared/config/types';
-import { db, getDbPromise } from 'src/shared/database/client';
+import { db, dbPromise } from 'src/shared/database/client';
 import {
   getConsentGiven,
   isConsentRequiredButNotGiven,
@@ -152,15 +152,13 @@ export default class OneSignal {
       return;
     }
 
-    try {
-      await getDbPromise();
-    } catch (e) {
+    const idb = await dbPromise.catch((e) => {
       Log._error(
-        'OneSignal: IndexedDB unavailable, close & ropen to retry init',
+        'OneSignal: IndexedDB unavailable, close & reopen the page to retry init',
         e,
       );
-      return;
-    }
+    });
+    if (!idb) return;
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
 

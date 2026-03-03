@@ -87,13 +87,11 @@ const open = async (version = VERSION) => {
   return wrapDb<IndexedDBSchema>(raw);
 };
 
-let dbPromise = open();
+export let dbPromise = open();
 export const getDb = (version = VERSION) => {
   dbPromise = open(version);
   return dbPromise;
 };
-
-export const getDbPromise = () => dbPromise;
 
 // Export db object with the same API as before
 export const db = {
