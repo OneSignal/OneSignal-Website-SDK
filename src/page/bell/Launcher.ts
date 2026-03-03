@@ -1,15 +1,20 @@
 import {
   addCssClass,
-  hasCssClass,
   removeCssClass,
 } from 'src/shared/helpers/dom';
 import type { BellSize } from 'src/shared/prompts/types';
 import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
 
+const SIZE_CLASSES: Record<BellSize, string> = {
+  small: 'onesignal-bell-launcher-sm',
+  medium: 'onesignal-bell-launcher-md',
+  large: 'onesignal-bell-launcher-lg',
+};
+
 export default class Launcher extends AnimatedElement {
   public _bell: Bell;
-  public _wasInactive: boolean;
+  public _wasInactive = false;
 
   constructor(bell: Bell) {
     super(
@@ -18,45 +23,23 @@ export default class Launcher extends AnimatedElement {
       undefined,
       'onesignal-bell-launcher-inactive',
     );
-
     this._bell = bell;
-    this._wasInactive = false;
   }
 
   async _resize(size: BellSize) {
-    if (!this._element) {
-      // Notify button doesn't exist
-      throw new Error('Missing DOM element');
-    }
+    const el = this._element;
+    if (!el) throw new Error('Missing DOM element');
 
-    // If the size is the same, do nothing and resolve an empty promise
-    if (
-      (size === 'small' &&
-        hasCssClass(this._element, 'onesignal-bell-launcher-sm')) ||
-      (size === 'medium' &&
-        hasCssClass(this._element, 'onesignal-bell-launcher-md')) ||
-      (size === 'large' &&
-        hasCssClass(this._element, 'onesignal-bell-launcher-lg'))
-    ) {
-      return;
+    const targetClass = SIZE_CLASSES[size];
+    if (!targetClass) throw new Error('Invalid OneSignal bell size ' + size);
+    if (el.classList.contains(targetClass)) return;
+
+    for (const cls of Object.values(SIZE_CLASSES)) {
+      removeCssClass(el, cls);
     }
-    removeCssClass(this._element, 'onesignal-bell-launcher-sm');
-    removeCssClass(this._element, 'onesignal-bell-launcher-md');
-    removeCssClass(this._element, 'onesignal-bell-launcher-lg');
-    if (size === 'small') {
-      addCssClass(this._element, 'onesignal-bell-launcher-sm');
-    } else if (size === 'medium') {
-      addCssClass(this._element, 'onesignal-bell-launcher-md');
-    } else if (size === 'large') {
-      addCssClass(this._element, 'onesignal-bell-launcher-lg');
-    } else {
-      throw new Error('Invalid OneSignal bell size ' + size);
-    }
-    if (!this._shown) {
-      return;
-    } else {
-      await this._waitForAnimations();
-    }
+    addCssClass(el, targetClass);
+
+    if (this._shown) await this._waitForAnimations();
   }
 
   async _activateIfInactive() {

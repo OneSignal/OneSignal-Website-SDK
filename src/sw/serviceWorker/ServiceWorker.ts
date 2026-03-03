@@ -5,7 +5,6 @@ import {
 } from 'src/shared/api/sw';
 import { getServerAppConfig } from 'src/shared/config/app';
 import type { AppConfig } from 'src/shared/config/types';
-import { containsMatch } from 'src/shared/context/helpers';
 import {
   db,
   getCurrentSession,
@@ -747,7 +746,7 @@ function shouldOpenNotificationUrl(url: string) {
   return (
     url !== 'javascript:void(0);' &&
     url !== 'do_not_open' &&
-    !containsMatch(url, '_osp=do_not_open')
+    !url.includes('_osp=do_not_open')
   );
 }
 
