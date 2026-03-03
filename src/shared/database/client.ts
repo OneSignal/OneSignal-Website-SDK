@@ -1,8 +1,8 @@
-import { openDB, wrapDb } from './idb-lite';
 import Log from '../libraries/Log';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/env';
 import { DATABASE_NAME, VERSION } from './constants';
+import { openDB, wrapDb } from './idb-lite';
 import type { IDBStoreName, IdKey, IndexedDBSchema, OptionKey } from './types';
 import {
   migrateModelNameSubscriptionsTableForV6,
@@ -86,12 +86,14 @@ const open = async (version = VERSION) => {
   });
   return wrapDb<IndexedDBSchema>(raw);
 };
-let dbPromise = open();
 
+let dbPromise = open();
 export const getDb = (version = VERSION) => {
   dbPromise = open(version);
   return dbPromise;
 };
+
+export const getDbPromise = () => dbPromise;
 
 // Export db object with the same API as before
 export const db = {

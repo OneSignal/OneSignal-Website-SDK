@@ -1,5 +1,5 @@
-import Bell from '../../page/bell/Bell';
 import { ModelChangeTags } from 'src/core/types/models';
+import Bell from '../../page/bell/Bell';
 import type { AppConfig } from '../config/types';
 import type { ContextInterface } from '../context/types';
 import { db, getIdsValue } from '../database/client';
@@ -53,6 +53,7 @@ function postponeSessionInitUntilPageIsInFocus(): void {
 }
 
 async function sessionInit(): Promise<void> {
+  console.trace('zz');
   Log._debug(`Called sessionInit()`);
 
   if (OneSignal._sessionInitAlreadyRunning) {
@@ -187,7 +188,7 @@ export async function processExpiringSubscriptions(): Promise<boolean> {
     return false;
   }
 
-  Log._debug('Subscription is considered expiring.');
+  Log._debug('Subscription expiring');
   const rawPushSubscription = await context._subscriptionManager._subscribe(
     SubscriptionStrategyKind._SubscribeNew,
   );
