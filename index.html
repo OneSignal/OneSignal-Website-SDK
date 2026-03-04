@@ -90,6 +90,7 @@
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function (OneSignal) {
         // for testing consent required
+        OneSignal.Debug.setLogLevel('trace');
         // OneSignal.setConsentRequired(true);
 
         // for testing, normally this is set on (temporary) in the database client
