@@ -116,7 +116,6 @@ export class CoreModuleDirector {
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
     const pushToken = await getCurrentPushToken();
-    console.log({ pushToken });
     if (pushToken) {
       return this._getSubscriptionOfTypeWithToken(
         SubscriptionChannel._Push,
@@ -137,7 +136,6 @@ export class CoreModuleDirector {
 
     // Checking '' in case we create a temp/fake subscription on logi
     const lastKnownPushToken = (await getPushToken()) ?? '';
-    console.log({ lastKnownPushToken });
     if (lastKnownPushToken !== null) {
       return this._getSubscriptionOfTypeWithToken(
         SubscriptionChannel._Push,
@@ -156,7 +154,6 @@ export class CoreModuleDirector {
   > {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModel');
     const sub = await this._getPushSubscriptionModelByLastKnownToken();
-    console.log({ sub });
     return (await this._getPushSubscriptionModelByCurrentToken()) || sub;
   }
 

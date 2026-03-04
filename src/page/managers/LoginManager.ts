@@ -94,6 +94,7 @@ export default class LoginManager {
         } else if (createSubIfMissing) {
           const newSub = new SubscriptionModel();
           newSub._mergeData({
+            enabled: true,
             id: IDManager._createLocalId(),
             onesignalId: newOneSignalId,
             type: getSubscriptionType(),
@@ -103,7 +104,12 @@ export default class LoginManager {
         }
       }),
       OneSignal._coreDirector._operationRepo._enqueueAndWait(
-        new LoginUserOperation(appId, newOneSignalId, externalId, existingOneSignalId),
+        new LoginUserOperation(
+          appId,
+          newOneSignalId,
+          externalId,
+          existingOneSignalId,
+        ),
       ),
     ]);
   }
