@@ -53,6 +53,13 @@ describe('Dialog', () => {
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
+    const body = dialog._element!.querySelector(
+      '.onesignal-bell-launcher-dialog-body',
+    )!;
+    expect(body.querySelector('h1')?.textContent).toBe(
+      'Manage Site Notifications',
+    );
+    expect(dialog._subscribeButton?.textContent).toBe('SUBSCRIBE');
     expect(dialog._subscribeButton).not.toBeNull();
     expect(dialog._unsubscribeButton).toBeNull();
   });
@@ -64,6 +71,13 @@ describe('Dialog', () => {
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
+    const body = dialog._element!.querySelector(
+      '.onesignal-bell-launcher-dialog-body',
+    )!;
+    expect(body.querySelector('h1')?.textContent).toBe(
+      'Manage Site Notifications',
+    );
+    expect(dialog._unsubscribeButton?.textContent).toBe('UNSUBSCRIBE');
     expect(dialog._unsubscribeButton).not.toBeNull();
     expect(dialog._subscribeButton).toBeNull();
   });
@@ -137,6 +151,9 @@ describe('Dialog', () => {
     )!;
     expect(body.querySelector('h1')?.textContent).toBe(
       'Unblock Notifications',
+    );
+    expect(body.querySelector('.instructions p')?.textContent).toBe(
+      'Follow these instructions to allow notifications:',
     );
     expect(body.querySelector('.instructions')).not.toBeNull();
     expect(body.querySelector('img')?.src).toContain('chrome-unblock.jpg');
