@@ -1,5 +1,4 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { vi } from 'vitest';
 import Badge from './Badge';
 
 describe('Badge', () => {
@@ -29,34 +28,27 @@ describe('Badge', () => {
     expect(badge._shown).toBe(true);
   });
 
-  test('_show adds opened class and applies custom colors', async () => {
-    const colorSpy = vi.fn();
-    OneSignal._notifyButton = { _setCustomColorsIfSpecified: colorSpy } as never;
-
-    await badge._show();
+  test('_show adds opened class', () => {
+    badge._show();
     expect(badge._shown).toBe(true);
-    expect(colorSpy).toHaveBeenCalled();
   });
 
-  test('_show is a no-op when already shown', async () => {
-    const colorSpy = vi.fn();
-    OneSignal._notifyButton = { _setCustomColorsIfSpecified: colorSpy } as never;
-
-    await badge._show();
-    await badge._show();
-    expect(colorSpy).toHaveBeenCalledTimes(1);
+  test('_show is a no-op when already shown', () => {
+    badge._show();
+    badge._show();
+    expect(badge._shown).toBe(true);
   });
 
-  test('_hide removes opened class', async () => {
-    await badge._show();
+  test('_hide removes opened class', () => {
+    badge._show();
     expect(badge._shown).toBe(true);
-    await badge._hide();
+    badge._hide();
     expect(badge._shown).toBe(false);
   });
 
-  test('_hide is a no-op when already hidden', async () => {
+  test('_hide is a no-op when already hidden', () => {
     expect(badge._shown).toBe(false);
-    await badge._hide();
+    badge._hide();
     expect(badge._shown).toBe(false);
   });
 

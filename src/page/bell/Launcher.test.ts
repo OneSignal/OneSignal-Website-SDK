@@ -70,9 +70,9 @@ describe('Launcher', () => {
     expect(el.style.getPropertyValue('--badge-font-size')).toBe('12px');
   });
 
-  test('_resize throws when element is missing', async () => {
+  test('_resize throws when element is missing', () => {
     document.body.innerHTML = '';
     const launcher = new Launcher(new Bell({ enable: false }));
-    await expect(launcher._resize('medium')).rejects.toThrow('Missing DOM element');
+    expect(() => launcher._resize('medium')).toThrow('Missing DOM element');
   });
 });

@@ -1,4 +1,3 @@
-import { waitForAnimations } from 'src/shared/helpers/dom';
 import type { BellSize } from 'src/shared/prompts/types';
 import type Bell from './Bell';
 
@@ -20,22 +19,20 @@ export default class Launcher {
     return this._element?.classList.contains('onesignal-bell-launcher-active') ?? false;
   }
 
-  async _show() {
+  _show(): void {
     const el = this._element;
     if (!el || this._shown) return;
     el.classList.add('onesignal-bell-launcher-active');
-    await waitForAnimations(el);
   }
 
-  async _hide() {
+  _hide(): void {
     const el = this._element;
     if (!el || !this._shown) return;
     this._bell._dialog._hide();
     el.classList.remove('onesignal-bell-launcher-active');
-    await waitForAnimations(el);
   }
 
-  async _resize(size: BellSize) {
+  _resize(size: BellSize): void {
     const el = this._element;
     if (!el) throw new Error('Missing DOM element');
 
@@ -45,7 +42,5 @@ export default class Launcher {
     el.style.setProperty('--bell-size', `${px}px`);
     el.style.setProperty('--bell-resting-scale', `${32 / px}`);
     el.style.setProperty('--badge-font-size', px <= 32 ? '8px' : '12px');
-
-    if (this._shown) await waitForAnimations(el);
   }
 }

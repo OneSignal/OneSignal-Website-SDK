@@ -1,4 +1,4 @@
-import { decodeHtmlEntities, waitForAnimations } from 'src/shared/helpers/dom';
+import { decodeHtmlEntities } from 'src/shared/helpers/dom';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import type Bell from './Bell';
@@ -46,18 +46,16 @@ export default class Message {
     );
   }
 
-  async _show() {
+  _show(): void {
     const el = this._element;
     if (!el || this._shown) return;
     el.classList.add('onesignal-bell-launcher-message-opened');
-    await waitForAnimations(el);
   }
 
-  async _hide() {
+  _hide(): void {
     const el = this._element;
     if (!el || !this._shown) return;
     el.classList.remove('onesignal-bell-launcher-message-opened');
-    await waitForAnimations(el);
   }
 
   async _display(type: string, content: string, duration = 0) {

@@ -1,5 +1,3 @@
-import { waitForAnimations } from 'src/shared/helpers/dom';
-
 export default class Badge {
   public _selector = '.onesignal-bell-launcher-badge';
 
@@ -24,19 +22,16 @@ export default class Badge {
     );
   }
 
-  async _show() {
+  _show(): void {
     const el = this._element;
     if (!el || this._shown) return;
     el.classList.add('onesignal-bell-launcher-badge-opened');
-    await waitForAnimations(el);
-    OneSignal._notifyButton?._setCustomColorsIfSpecified();
   }
 
-  async _hide() {
+  _hide(): void {
     const el = this._element;
     if (!el || !this._shown) return;
     el.classList.remove('onesignal-bell-launcher-badge-opened');
-    await waitForAnimations(el);
   }
 
   _updateCount(delta: number): void {
