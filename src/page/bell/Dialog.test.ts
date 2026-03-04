@@ -10,7 +10,7 @@ describe('Dialog', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
     document.body.innerHTML = `
-      <div class="onesignal-bell-launcher-dialog">
+      <div class="onesignal-bell-launcher-dialog" id="onesignal-bell-dialog" popover="auto">
         <div class="onesignal-bell-launcher-dialog-body"></div>
       </div>
     `;
@@ -20,29 +20,25 @@ describe('Dialog', () => {
     );
   });
 
-  test('_show populates content and toggles shown flag', async () => {
+  test('_updateContent populates dialog body with subscribe button', async () => {
     const bell = new Bell({ enable: false });
-    // Put bell in unsubscribed state to render subscribe button
     bell._state = BellState._Unsubscribed;
     isPushNotificationsEnabledSpy.mockResolvedValue(false);
 
     const dialog = new Dialog(bell);
-    expect(dialog._shown).toBe(false);
-    await dialog._show();
-    expect(dialog._shown).toBe(true);
-    // Button should be present for subscribe
+    await dialog._updateContent();
     expect(dialog._subscribeButton).not.toBeNull();
   });
 
-  test('_hide removes shown class and keeps state consistent', async () => {
+  test('_hide calls hidePopover when dialog is open', () => {
     const bell = new Bell({ enable: false });
-    bell._state = BellState._Unsubscribed;
-    isPushNotificationsEnabledSpy.mockResolvedValue(false);
-
     const dialog = new Dialog(bell);
-    await dialog._show();
-    expect(dialog._shown).toBe(true);
-    await dialog._hide();
-    expect(dialog._shown).toBe(false);
+    const el = dialog._element;
+    if (el) {
+      el.hidePopover = vi.fn();
+      vi.spyOn(dialog, '_shown', 'get').mockReturnValue(true);
+    }
+    dialog._hide();
+    expect(el?.hidePopover).toHaveBeenCalled();
   });
 });

@@ -14,7 +14,6 @@ import type {
 import { wasPromptOfTypeDismissed } from '../../shared/helpers/dismiss';
 import { getNotificationIcons } from '../../shared/helpers/main';
 import Log from '../../shared/libraries/Log';
-import { once } from '../../shared/utils/utils';
 import { DismissPrompt } from '../models/Dismiss';
 import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
@@ -63,6 +62,7 @@ export default class Bell {
   public _options: AppUserConfigNotifyButton;
   public _state: BellStateValue = BellState._Uninitialized;
   public _ignoreSubscriptionState = false;
+  public _actionInProgress = false;
   public _initialized = false;
   public _launcherEl: Launcher | undefined;
   public _buttonEl: Button | undefined;
@@ -94,27 +94,6 @@ export default class Bell {
     this._validateOptions(this._options);
     this._installEventHooks();
     this._updateState();
-  }
-
-  async _showDialogProcedure() {
-    if (this._dialog._shown) return;
-
-    this._launcher._element?.classList.add('onesignal-bell-no-tip');
-    await this._dialog._show();
-    once(
-      document,
-      'click',
-      async (e: Event, destroyEventListener: () => void) => {
-        if (this._dialog._element?.contains(e.target as Node)) return;
-        destroyEventListener();
-        if (this._dialog._shown) {
-          await this._dialog._hide();
-          this._launcher._element?.classList.remove('onesignal-bell-no-tip');
-          await this._launcher._inactivate();
-        }
-      },
-      true,
-    );
   }
 
   private _validateOptions(options: AppUserConfigNotifyButton) {
@@ -174,16 +153,17 @@ export default class Bell {
     const subscribeButton = this._dialog._subscribeButton;
     if (subscribeButton) subscribeButton.disabled = true;
     this._ignoreSubscriptionState = true;
+    this._actionInProgress = true;
     await OneSignal.User.PushSubscription.optIn();
     if (subscribeButton) subscribeButton.disabled = false;
-    await this._dialog._hide();
-    this._launcher._element?.classList.remove('onesignal-bell-no-tip');
+    this._dialog._hide();
     await this._message._display(
       MessageType._Message,
       this._options.text['message.action.resubscribed'],
       MESSAGE_TIMEOUT,
     );
     this._ignoreSubscriptionState = false;
+    this._actionInProgress = false;
     await this._launcher._inactivate();
     this._updateState();
   }
@@ -191,15 +171,16 @@ export default class Bell {
   async _onUnsubscribeClick() {
     const unsubscribeButton = this._dialog._unsubscribeButton;
     if (unsubscribeButton) unsubscribeButton.disabled = true;
+    this._actionInProgress = true;
     await OneSignal.User.PushSubscription.optOut();
     if (unsubscribeButton) unsubscribeButton.disabled = false;
-    await this._dialog._hide();
-    this._launcher._element?.classList.remove('onesignal-bell-no-tip');
+    this._dialog._hide();
     await this._message._display(
       MessageType._Message,
       this._options.text['message.action.unsubscribed'],
       MESSAGE_TIMEOUT,
     );
+    this._actionInProgress = false;
     await this._launcher._inactivate();
     this._updateState();
   }
@@ -250,7 +231,7 @@ export default class Bell {
     addDomElement(
       this._launcher._selector,
       'beforeend',
-      '<div class="onesignal-bell-launcher-button"></div>',
+      '<button type="button" class="onesignal-bell-launcher-button" popovertarget="onesignal-bell-dialog"></button>',
     );
     addDomElement(
       this._launcher._selector,
@@ -270,7 +251,7 @@ export default class Bell {
     addDomElement(
       this._launcher._selector,
       'beforeend',
-      '<div class="onesignal-bell-launcher-dialog"></div>',
+      '<div class="onesignal-bell-launcher-dialog" id="onesignal-bell-dialog" popover="auto"></div>',
     );
     addDomElement(
       this._dialog._selector,
@@ -279,6 +260,34 @@ export default class Bell {
     );
 
     addDomElement(this._button._selector, 'beforeend', logoSvg);
+
+    const dialogEl = this._dialog._element;
+    if (dialogEl) {
+      dialogEl.addEventListener('toggle', (e) => {
+        const te = e as ToggleEvent;
+        if (te.newState === 'open') {
+          this._dialog._updateContent();
+          this._launcher._activate();
+          this._launcher._element?.classList.add('onesignal-bell-no-tip');
+          this._message._hide();
+        } else {
+          this._launcher._element?.classList.remove('onesignal-bell-no-tip');
+          if (!this._actionInProgress) {
+            this._launcher._inactivate();
+          }
+        }
+      });
+      dialogEl.addEventListener('beforetoggle', (e) => {
+        const te = e as ToggleEvent;
+        if (
+          te.newState === 'open' &&
+          this._message._shown &&
+          this._message._contentType === MessageType._Message
+        ) {
+          e.preventDefault();
+        }
+      });
+    }
 
     const isPushEnabled =
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
@@ -322,6 +331,14 @@ export default class Bell {
     if (!el) return;
     const size = this._options.size || DEFAULT_SIZE;
     el.style.setProperty('--bell-inactive-scale', `${32 / SIZE_PX[size]}`);
+
+    const offset = this._options.offset;
+    if (offset?.bottom)
+      el.style.setProperty('--bell-offset-bottom', offset.bottom);
+    if (offset?.left)
+      el.style.setProperty('--bell-offset-left', offset.left);
+    if (offset?.right)
+      el.style.setProperty('--bell-offset-right', offset.right);
   }
 
   _addBadgeShadow() {

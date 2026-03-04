@@ -1,4 +1,4 @@
-import { addDomElement, clearDomElementChildren, waitForAnimations } from 'src/shared/helpers/dom';
+import { addDomElement, clearDomElementChildren } from 'src/shared/helpers/dom';
 import type { NotificationIcons } from 'src/shared/notifications/types';
 import { Browser } from 'src/shared/useragent/constants';
 import {
@@ -36,7 +36,7 @@ export default class Dialog {
   }
 
   get _shown(): boolean {
-    return this._element?.classList.contains('onesignal-bell-launcher-dialog-opened') ?? false;
+    return this._element?.matches(':popover-open') ?? false;
   }
 
   get _subscribeButton() {
@@ -51,22 +51,13 @@ export default class Dialog {
     ) ?? null;
   }
 
-  async _show() {
-    await this._updateBellLauncherDialogBody();
-    const el = this._element;
-    if (!el || this._shown) return;
-    el.classList.add('onesignal-bell-launcher-dialog-opened');
-    await waitForAnimations(el);
-  }
-
-  async _hide() {
+  _hide() {
     const el = this._element;
     if (!el || !this._shown) return;
-    el.classList.remove('onesignal-bell-launcher-dialog-opened');
-    await waitForAnimations(el);
+    el.hidePopover();
   }
 
-  private async _updateBellLauncherDialogBody() {
+  async _updateContent() {
     const isEnabled =
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
 
