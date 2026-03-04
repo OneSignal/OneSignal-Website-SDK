@@ -183,6 +183,136 @@ describe('Bell', () => {
     });
   });
 
+  describe('concurrency', () => {
+    function setupBellWithDOM() {
+      vi.stubGlobal('CSS', { supports: () => true });
+      vi.spyOn(
+        OneSignal._context._dynamicResourceLoader,
+        '_loadSdkStylesheet',
+      ).mockResolvedValue(ResourceLoadState._Loaded);
+      vi.spyOn(
+        OneSignal._context._subscriptionManager,
+        '_isPushNotificationsEnabled',
+      ).mockResolvedValue(false);
+      vi.spyOn(
+        OneSignal._context._permissionManager,
+        '_getPermissionStatus',
+      ).mockResolvedValue('default');
+    }
+
+    test('subscription change does not hide dialog while action in progress', async () => {
+      setupBellWithDOM();
+      const bell = new Bell({
+        enable: true,
+        showLauncherAfter: 0,
+        showBadgeAfter: 0,
+      });
+      await bell._create();
+
+      bell._actionInProgress = true;
+      bell._dialog._notificationIcons = {
+        chrome: null,
+        firefox: null,
+        safari: null,
+      };
+      const dialogHideSpy = vi.spyOn(bell._dialog, '_hide');
+
+      await OneSignal._emitter._emit(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, {
+        current: { optedIn: true },
+      });
+
+      expect(dialogHideSpy).not.toHaveBeenCalled();
+    });
+
+    test('subscription change hides dialog when no action in progress', async () => {
+      setupBellWithDOM();
+      const bell = new Bell({
+        enable: true,
+        showLauncherAfter: 0,
+        showBadgeAfter: 0,
+      });
+      await bell._create();
+
+      bell._actionInProgress = false;
+      bell._dialog._notificationIcons = {
+        chrome: null,
+        firefox: null,
+        safari: null,
+      };
+      const dialogHideSpy = vi.spyOn(bell._dialog, '_hide');
+
+      await OneSignal._emitter._emit(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, {
+        current: { optedIn: true },
+      });
+
+      expect(dialogHideSpy).toHaveBeenCalled();
+    });
+
+    test('_onSubscribeClick sets actionInProgress during execution', async () => {
+      setupBellWithDOM();
+      const bell = new Bell({
+        enable: true,
+        showLauncherAfter: 0,
+        showBadgeAfter: 0,
+      });
+      await bell._create();
+
+      vi.spyOn(OneSignal.User.PushSubscription, 'optIn').mockResolvedValue();
+      vi.spyOn(bell._message, '_display').mockResolvedValue();
+
+      expect(bell._actionInProgress).toBe(false);
+      const promise = bell._onSubscribeClick();
+      expect(bell._actionInProgress).toBe(true);
+
+      await promise;
+      expect(bell._actionInProgress).toBe(false);
+    });
+
+    test('_onUnsubscribeClick sets actionInProgress during execution', async () => {
+      setupBellWithDOM();
+      const bell = new Bell({
+        enable: true,
+        showLauncherAfter: 0,
+        showBadgeAfter: 0,
+      });
+      await bell._create();
+
+      vi.spyOn(OneSignal.User.PushSubscription, 'optOut').mockResolvedValue();
+      vi.spyOn(bell._message, '_display').mockResolvedValue();
+
+      expect(bell._actionInProgress).toBe(false);
+      const promise = bell._onUnsubscribeClick();
+      expect(bell._actionInProgress).toBe(true);
+
+      await promise;
+      expect(bell._actionInProgress).toBe(false);
+    });
+
+    test('subscription change uses silent setState when ignoreSubscriptionState', async () => {
+      setupBellWithDOM();
+      const bell = new Bell({
+        enable: true,
+        showLauncherAfter: 0,
+        showBadgeAfter: 0,
+      });
+      await bell._create();
+
+      bell._ignoreSubscriptionState = true;
+      bell._dialog._notificationIcons = {
+        chrome: null,
+        firefox: null,
+        safari: null,
+      };
+      const setStateSpy = vi.spyOn(bell, '_setState');
+
+      await OneSignal._emitter._emit(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, {
+        current: { optedIn: true },
+      });
+
+      expect(setStateSpy).toHaveBeenCalledWith(BellState._Subscribed, true);
+    });
+  });
+
   test('_setCustomColorsIfSpecified sets CSS variables on launcher', () => {
     const bell = new Bell({ enable: false });
     document.body.innerHTML = '<div class="onesignal-bell-launcher"></div>';
