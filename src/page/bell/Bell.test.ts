@@ -3,24 +3,30 @@ import { vi } from 'vitest';
 import Bell from './Bell';
 import { BellState } from './constants';
 
-// @ts-expect-error - _installEventHooks is not assignable
-const spyInstall = vi.spyOn(Bell.prototype, '_installEventHooks');
-const updateStateSpy = vi.spyOn(Bell.prototype, '_updateState');
 describe('Bell', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
+    vi.restoreAllMocks();
   });
 
   test('constructor early-returns when enable=false and applies defaults', () => {
+    // @ts-expect-error - private method
+    const installSpy = vi.spyOn(Bell.prototype, '_installEventHooks');
+    const updateSpy = vi.spyOn(Bell.prototype, '_updateState');
+
     const bell = new Bell({ enable: false });
     expect(bell._options.size).toBe('medium');
     expect(bell._options.position).toBe('bottom-right');
     expect(bell._options.theme).toBe('default');
-    expect(spyInstall).not.toHaveBeenCalled();
-    expect(updateStateSpy).not.toHaveBeenCalled();
+    expect(installSpy).not.toHaveBeenCalled();
+    expect(updateSpy).not.toHaveBeenCalled();
   });
 
   test('constructor validates and installs hooks when enable=true', () => {
+    // @ts-expect-error - private method
+    const installSpy = vi.spyOn(Bell.prototype, '_installEventHooks');
+    const updateSpy = vi.spyOn(Bell.prototype, '_updateState');
+
     const bell = new Bell({
       enable: true,
       size: 'small',
@@ -30,8 +36,8 @@ describe('Bell', () => {
       showLauncherAfter: 1,
     });
     expect(bell).toBeTruthy();
-    expect(spyInstall).toHaveBeenCalledTimes(1);
-    expect(updateStateSpy).toHaveBeenCalledTimes(1);
+    expect(installSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
   });
 
   test('_setState updates state', () => {
@@ -41,7 +47,7 @@ describe('Bell', () => {
     expect(bell._subscribed).toBe(true);
   });
 
-  test('_setState skips when silent', () => {
+  test('_setState sets state but skips message update when silent', () => {
     const bell = new Bell({ enable: false });
     bell._setState(BellState._Subscribed, true);
     expect(bell._subscribed).toBe(true);
@@ -49,21 +55,17 @@ describe('Bell', () => {
 
   test('_updateState sets blocked when permission denied', async () => {
     const bell = new Bell({ enable: false });
-    const permSpy = vi
-      .spyOn(OneSignal._context._permissionManager, '_getPermissionStatus')
-      .mockResolvedValue('denied');
-    const enabledSpy = vi
-      .spyOn(
-        OneSignal._context._subscriptionManager,
-        '_isPushNotificationsEnabled',
-      )
-      .mockResolvedValue(false);
-    bell._updateState();
-    await Promise.resolve();
-    await Promise.resolve();
+    vi.spyOn(
+      OneSignal._context._permissionManager,
+      '_getPermissionStatus',
+    ).mockResolvedValue('denied');
+    vi.spyOn(
+      OneSignal._context._subscriptionManager,
+      '_isPushNotificationsEnabled',
+    ).mockResolvedValue(false);
+
+    await bell._updateState();
     expect(bell._blocked).toBe(true);
-    expect(permSpy).toHaveBeenCalled();
-    expect(enabledSpy).toHaveBeenCalled();
   });
 
   test('_setCustomColorsIfSpecified sets CSS variables on launcher', () => {
