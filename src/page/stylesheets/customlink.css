@@ -1,0 +1,118 @@
+.onesignal-customlink-container {
+  &.hide {
+    display: none;
+  }
+  min-height: 6em;
+}
+
+.onesignal-customlink-subscribe {
+  display: inline-block;
+  transition: all 0.1s;
+  font-family:
+    -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  &:hover {
+    filter: brightness(0.9);
+  }
+
+  &.state-subscribed {
+    opacity: 0.8;
+  }
+
+  &.onesignal-reset {
+    font-family:
+      -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: inline-block;
+    transition: all 0.1s;
+  }
+
+  &.button {
+    touch-action: manipulation;
+    font-weight: 600px;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus,
+    &:active {
+      text-decoration: none;
+    }
+
+    &.state-subscribed {
+      text-transform: none;
+      font-weight: 400;
+    }
+  }
+
+  &.link {
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 600;
+
+    &.state-subscribed {
+      text-transform: none;
+      font-weight: 400;
+    }
+
+    &:hover,
+    &:focus,
+    &:active {
+      text-decoration: underline;
+    }
+  }
+
+  /* small */
+  &.button.small {
+    font-size: 13px;
+    padding: 4px 12px;
+  }
+  &.link.small {
+    font-size: 13px;
+  }
+
+  /* medium */
+  &.button.medium {
+    font-size: 15px;
+    padding: 8px 16px;
+  }
+  &.link.medium {
+    font-size: 15px;
+  }
+
+  /* large */
+  &.button.large {
+    font-size: 18px;
+    padding: 12px 20px;
+  }
+  &.link.large {
+    font-size: 18px;
+  }
+}
+
+.onesignal-customlink-explanation {
+  color: rgba(0, 0, 0, 0.64);
+  transition: all 0.1s;
+  font-family:
+    'Proxima-Nova', 'Proxima Nova', 'Open Sans', Arial, Helvetica, sans-serif;
+  margin-bottom: 12px;
+
+  &.onesignal-reset {
+    color: rgba(0, 0, 0, 0.64);
+    transition: all 0.1s;
+    font-family:
+      'Proxima-Nova', 'Proxima Nova', 'Open Sans', Arial, Helvetica, sans-serif;
+    margin-bottom: 12px;
+  }
+
+  &.small {
+    font-size: 13px;
+  }
+
+  &.medium {
+    font-size: 15px;
+  }
+
+  &.large {
+    font-size: 15px;
+  }
+}

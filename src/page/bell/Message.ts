@@ -1,95 +1,78 @@
 import { decodeHtmlEntities } from 'src/shared/helpers/dom';
-import { delay, nothing } from 'src/shared/helpers/general';
+import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
-import AnimatedElement from './AnimatedElement';
 import type Bell from './Bell';
-import { BellState } from './constants';
+import { type BellStateValue, BellState } from './constants';
 
-export default class Message extends AnimatedElement {
+const TIP_KEYS: Record<BellStateValue, keyof Bell['_options']['text'] | ''> = {
+  [BellState._Unsubscribed]: 'tip.state.unsubscribed',
+  [BellState._Subscribed]: 'tip.state.subscribed',
+  [BellState._Blocked]: 'tip.state.blocked',
+  [BellState._Uninitialized]: '',
+};
+
+export default class Message {
   public _bell: Bell;
-  public _contentType: string;
-  public _queued: string[];
+  public _contentType = '';
+  public _selector = '.onesignal-bell-launcher-message';
 
   constructor(bell: Bell) {
-    super(
-      '.onesignal-bell-launcher-message',
-      'onesignal-bell-launcher-message-opened',
-      undefined,
-      undefined,
-      '.onesignal-bell-launcher-message-body',
-    );
-
     this._bell = bell;
-    this._contentType = '';
-    this._queued = [];
   }
 
-  _display(type: string, content: string, duration = 0) {
+  get _element(): HTMLElement | null {
+    return document.querySelector(this._selector);
+  }
+
+  get _content(): string {
+    return (
+      this._element?.querySelector('.onesignal-bell-launcher-message-body')
+        ?.textContent ?? ''
+    );
+  }
+
+  set _content(value: string) {
+    const body = this._element?.querySelector(
+      '.onesignal-bell-launcher-message-body',
+    );
+    if (body) body.textContent = value;
+  }
+
+  get _shown(): boolean {
+    return (
+      this._element?.classList.contains(
+        'onesignal-bell-launcher-message-opened',
+      ) ?? false
+    );
+  }
+
+  _show(): void {
+    const el = this._element;
+    if (!el || this._shown) return;
+    el.classList.add('onesignal-bell-launcher-message-opened');
+  }
+
+  _hide(): void {
+    const el = this._element;
+    if (!el || !this._shown) return;
+    el.classList.remove('onesignal-bell-launcher-message-opened');
+  }
+
+  async _display(type: string, content: string, duration = 0) {
+    console.log('zzzzzdisplay', type, content, duration);
     Log._debug(`Calling display(${type}, ${content}, ${duration}).`);
-    return (this._shown ? this._hide() : nothing())
-      .then(() => {
-        this._content = decodeHtmlEntities(content);
-        this._contentType = type;
-      })
-      .then(() => {
-        return this._show();
-      })
-      .then(() => delay(duration))
-      .then(() => {
-        return this._hide();
-      })
-      .then(() => {
-        // Reset back to normal content type so stuff can show a gain
-        this._content = this._getTipForState();
-        this._contentType = 'tip';
-      });
+    if (this._shown) await this._hide();
+    this._content = decodeHtmlEntities(content);
+    this._contentType = type;
+    await this._show();
+    await delay(duration);
+    await this._hide();
+    this._content = this._getTipForState();
+    this._contentType = 'tip';
   }
 
   _getTipForState(): string {
-    if (this._bell._state === BellState._Unsubscribed)
-      return this._bell._options.text['tip.state.unsubscribed'];
-    else if (this._bell._state === BellState._Subscribed)
-      return this._bell._options.text['tip.state.subscribed'];
-    else if (this._bell._state === BellState._Blocked)
-      return this._bell._options.text['tip.state.blocked'];
-    return '';
-  }
-
-  _enqueue(message: string) {
-    this._queued.push(decodeHtmlEntities(message));
-    return new Promise((resolve) => {
-      if (this._bell._badge._shown) {
-        this._bell._badge
-          ._hide()
-          .then(() => this._bell._badge._increment())
-          .then(() => this._bell._badge._show())
-          .then(resolve);
-      } else {
-        this._bell._badge._increment();
-        if (this._bell._initialized) this._bell._badge._show().then(resolve);
-        else resolve(undefined);
-      }
-    });
-  }
-
-  _dequeue() {
-    const dequeuedMessage = this._queued.pop();
-    return new Promise((resolve) => {
-      if (this._bell._badge._shown) {
-        this._bell._badge
-          ._hide()
-          .then(() => {
-            this._bell._badge._decrement();
-            if (this._bell._badge._content.length > 0) {
-              return this._bell._badge._show();
-            }
-            return Promise.resolve();
-          })
-          .then(() => resolve(dequeuedMessage));
-      } else {
-        this._bell._badge._decrement();
-        resolve(dequeuedMessage);
-      }
-    });
+    const key = TIP_KEYS[this._bell._state];
+    return key ? this._bell._options.text[key] : '';
   }
 }

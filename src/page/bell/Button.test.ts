@@ -1,34 +1,24 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import Bell from './Bell';
 import Button from './Button';
-import { MessageType } from './constants';
 
 describe('Button', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
     document.body.innerHTML = `
-      <div class="onesignal-bell-launcher-button"></div>
-      <div class="onesignal-bell-launcher-message"></div>
+      <button class="onesignal-bell-launcher-button"></button>
     `;
   });
 
-  test('_onClick concurrency guard and early-return when message showing', async () => {
+  test('_onClick adds pulsing class to button element', () => {
     const bell = new Bell({ enable: false });
     const button = new Button(bell);
-
-    // Simulate message being shown of type Message by adding the show class
-    const msgEl = document.querySelector(
-      '.onesignal-bell-launcher-message',
+    const el = document.querySelector(
+      '.onesignal-bell-launcher-button',
     ) as HTMLElement;
-    msgEl.classList.add('onesignal-bell-launcher-message-opened');
-    bell._message._contentType = MessageType._Message;
 
-    const toggleSpy = vi.spyOn(button, '_toggleDialog');
+    button._onClick();
 
-    // Force concurrent scenario: set handling to true then call
-    button._isHandlingClick = false;
-    await button._onClick();
-    expect(toggleSpy).not.toHaveBeenCalled();
-    expect(button._isHandlingClick).toBe(false);
+    expect(el.classList.contains('pulsing')).toBe(true);
   });
 });

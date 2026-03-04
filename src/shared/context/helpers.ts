@@ -1,20 +1,5 @@
 import type { AliasPair } from 'src/core/types/api';
 
-interface IndexOfAble {
-  indexOf(match: string): number;
-}
-
-/**
- * Returns true if match is in string; otherwise, returns false.
- */
-export function containsMatch(
-  indexOfAble: IndexOfAble | null | undefined,
-  match: string,
-) {
-  if (!indexOfAble) return false;
-  return indexOfAble.indexOf(match) !== -1;
-}
-
 /**
  * JSON.stringify() but converts functions to "[Function]" so they aren't lost.
  * Helps when logging method calls.

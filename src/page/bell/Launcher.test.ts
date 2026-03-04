@@ -10,31 +10,71 @@ describe('Launcher', () => {
     `;
   });
 
-  test('_activateIfInactive sets wasInactive and activates only when inactive', async () => {
-    const bell = new Bell({ enable: false }); // disable side-effects
-    const launcher = new Launcher(bell);
-
-    // Mark element as inactive by adding inactive class
-    launcher._element?.classList.add('onesignal-bell-launcher-inactive');
-    expect(launcher._active).toBe(false);
-    await launcher._activateIfInactive();
-    expect(launcher._wasInactive).toBe(true);
-    expect(launcher._active).toBe(true);
-
-    // Calling again should be a no-op (remains active, wasInactive unchanged)
-    await launcher._activateIfInactive();
-    expect(launcher._wasInactive).toBe(true);
-    expect(launcher._active).toBe(true);
+  test('_show adds active class', async () => {
+    const launcher = new Launcher(new Bell({ enable: false }));
+    expect(launcher._shown).toBe(false);
+    await launcher._show();
+    expect(launcher._shown).toBe(true);
   });
 
-  test('_inactivateIfWasInactive only fires when previously inactive path set', async () => {
+  test('_show is a no-op when already shown', async () => {
+    const launcher = new Launcher(new Bell({ enable: false }));
+    await launcher._show();
+    const el = launcher._element!;
+    const classCount = el.classList.length;
+    await launcher._show();
+    expect(el.classList.length).toBe(classCount);
+  });
+
+  test('_hide removes active class', async () => {
+    const launcher = new Launcher(new Bell({ enable: false }));
+    await launcher._show();
+    expect(launcher._shown).toBe(true);
+    await launcher._hide();
+    expect(launcher._shown).toBe(false);
+  });
+
+  test('_hide closes dialog popover', async () => {
     const bell = new Bell({ enable: false });
     const launcher = new Launcher(bell);
-    // Mark that it was activated from inactive state
-    launcher._wasInactive = true;
+    const dialogHide = vi.spyOn(bell._dialog, '_hide');
+    await launcher._show();
+    await launcher._hide();
+    expect(dialogHide).toHaveBeenCalled();
+  });
 
-    await launcher._inactivateIfWasInactive();
-    expect(launcher._wasInactive).toBe(false);
-    expect(launcher._active).toBe(false);
+  test('_hide is a no-op when already hidden', async () => {
+    const launcher = new Launcher(new Bell({ enable: false }));
+    expect(launcher._shown).toBe(false);
+    await launcher._hide();
+    expect(launcher._shown).toBe(false);
+  });
+
+  test('_resize sets CSS variables for each size', async () => {
+    const launcher = new Launcher(new Bell({ enable: false }));
+    const el = launcher._element!;
+
+    await launcher._resize('small');
+    expect(el.style.getPropertyValue('--bell-size')).toBe('32px');
+    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe('1');
+    expect(el.style.getPropertyValue('--badge-font-size')).toBe('8px');
+
+    await launcher._resize('medium');
+    expect(el.style.getPropertyValue('--bell-size')).toBe('48px');
+    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe(
+      `${32 / 48}`,
+    );
+    expect(el.style.getPropertyValue('--badge-font-size')).toBe('12px');
+
+    await launcher._resize('large');
+    expect(el.style.getPropertyValue('--bell-size')).toBe('64px');
+    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe('0.5');
+    expect(el.style.getPropertyValue('--badge-font-size')).toBe('12px');
+  });
+
+  test('_resize throws when element is missing', () => {
+    document.body.innerHTML = '';
+    const launcher = new Launcher(new Bell({ enable: false }));
+    expect(() => launcher._resize('medium')).toThrow('Missing DOM element');
   });
 });

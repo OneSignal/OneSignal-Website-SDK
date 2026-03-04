@@ -25,6 +25,12 @@ export default defineConfig({
       reporter: ['text-summary', 'lcov'],
       reportsDirectory: 'coverage',
       reportOnFailure: true,
+      thresholds: {
+        statements: 75,
+        branches: 63,
+        functions: 81,
+        lines: 75,
+      },
     },
     environment: 'jsdom',
     globals: true,

@@ -1,15 +1,7 @@
-import { containsMatch } from '../context/helpers';
 import { windowEnvString } from '../environment/detect';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 import { IS_SERVICE_WORKER } from '../utils/env';
-
-const SILENT_EVENTS = [
-  'notifyButtonHovering',
-  'notifyButtonHover',
-  'notifyButtonButtonClick',
-  'notifyButtonLauncherClick',
-];
 
 export default class OneSignalEvent {
   /**
@@ -19,14 +11,10 @@ export default class OneSignalEvent {
    * @param emitter Emitter to emit the event from.
    */
   static async _trigger(eventName: string, data?: any, emitter?: Emitter) {
-    if (!containsMatch(SILENT_EVENTS, eventName)) {
-      const displayData = data;
-
-      if (displayData || displayData === false) {
-        Log._debug(`(${windowEnvString}) » ${eventName}:`, displayData);
-      } else {
-        Log._debug(`(${windowEnvString}) » ${eventName}`);
-      }
+    if (data || data === false) {
+      Log._debug(`(${windowEnvString}) » ${eventName}:`, data);
+    } else {
+      Log._debug(`(${windowEnvString}) » ${eventName}`);
     }
 
     // Fire internal event to those listening via OneSignal.emitter.on()

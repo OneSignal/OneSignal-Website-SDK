@@ -27,7 +27,6 @@
         "msw": "^2.12.10",
         "prettier": "3.8.1",
         "prettylint": "^2.0.0",
-        "sass-embedded": "^1.97.3",
         "terser": "^5.46.0",
         "type-fest": "^5.4.4",
         "typescript": "^5.9.3",

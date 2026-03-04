@@ -80,6 +80,9 @@ export class DynamicResourceLoader {
   }
 
   async _loadSdkStylesheet(): Promise<ResourceLoadStateValue> {
+    if (import.meta.env.MODE === 'development')
+      return ResourceLoadState._Loaded;
+
     const pathForEnv = getOneSignalResourceUrlPath();
     const cssFileForEnv = getOneSignalCssFileName();
     return this._loadIfNew(

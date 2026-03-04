@@ -1,20 +1,42 @@
-import AnimatedElement from './AnimatedElement';
+export default class Badge {
+  public _selector = '.onesignal-bell-launcher-badge';
 
-export default class Badge extends AnimatedElement {
-  constructor() {
-    super(
-      '.onesignal-bell-launcher-badge',
-      'onesignal-bell-launcher-badge-opened',
-      'onesignal-bell-launcher-badge-active',
+  get _element(): HTMLElement | null {
+    return document.querySelector(this._selector);
+  }
+
+  get _content(): string {
+    return this._element?.textContent ?? '';
+  }
+
+  set _content(value: string) {
+    const el = this._element;
+    if (el) el.textContent = value;
+  }
+
+  get _shown(): boolean {
+    return (
+      this._element?.classList.contains(
+        'onesignal-bell-launcher-badge-opened',
+      ) ?? false
     );
   }
 
+  _show(): void {
+    const el = this._element;
+    if (!el || this._shown) return;
+    el.classList.add('onesignal-bell-launcher-badge-opened');
+  }
+
+  _hide(): void {
+    const el = this._element;
+    if (!el || !this._shown) return;
+    el.classList.remove('onesignal-bell-launcher-badge-opened');
+  }
+
   _updateCount(delta: number): void {
-    const num = Number(this._content);
-    if (!Number.isNaN(num)) {
-      const newNum = num + delta;
-      this._content = newNum > 0 ? newNum.toString() : '';
-    }
+    const newNum = (Number(this._content) || 0) + delta;
+    this._content = newNum > 0 ? newNum.toString() : '';
   }
 
   _increment(): void {
@@ -23,11 +45,5 @@ export default class Badge extends AnimatedElement {
 
   _decrement(): void {
     this._updateCount(-1);
-  }
-
-  _show(): Promise<void> {
-    const promise = super._show();
-    OneSignal._notifyButton?._setCustomColorsIfSpecified();
-    return promise;
   }
 }

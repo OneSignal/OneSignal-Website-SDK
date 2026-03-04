@@ -128,6 +128,12 @@ export function hasCssClass(
   }
 }
 
+export async function waitForAnimations(el: HTMLElement | null) {
+  if (!el) return;
+  const anims = el.getAnimations();
+  if (anims.length) await Promise.allSettled(anims.map((a) => a.finished));
+}
+
 export function decodeHtmlEntities(text: string): string {
   if (typeof DOMParser === 'undefined') {
     return text;

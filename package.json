@@ -64,7 +64,6 @@
     "msw": "^2.12.10",
     "prettier": "3.8.1",
     "prettylint": "^2.0.0",
-    "sass-embedded": "^1.97.3",
     "terser": "^5.46.0",
     "type-fest": "^5.4.4",
     "typescript": "^5.9.3",
@@ -82,17 +81,17 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "45.556 kB",
+      "limit": "43.77 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "12.751 kB",
+      "limit": "12.743 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.page.styles.css",
-      "limit": "8.81 kB",
+      "limit": "6.61 kB",
       "gzip": true
     }
   ]
