@@ -1,12 +1,8 @@
-import { addCssClass, removeCssClass, waitForAnimations } from 'src/shared/helpers/dom';
+import { waitForAnimations } from 'src/shared/helpers/dom';
 import type { BellSize } from 'src/shared/prompts/types';
 import type Bell from './Bell';
 
-const SIZE_CLASSES: Record<BellSize, string> = {
-  small: 'onesignal-bell-launcher-sm',
-  medium: 'onesignal-bell-launcher-md',
-  large: 'onesignal-bell-launcher-lg',
-};
+const SIZE_PX: Record<BellSize, number> = { small: 32, medium: 48, large: 64 };
 
 export default class Launcher {
   public _bell: Bell;
@@ -61,14 +57,12 @@ export default class Launcher {
     const el = this._element;
     if (!el) throw new Error('Missing DOM element');
 
-    const targetClass = SIZE_CLASSES[size];
-    if (!targetClass) throw new Error('Invalid OneSignal bell size ' + size);
-    if (el.classList.contains(targetClass)) return;
+    const px = SIZE_PX[size];
+    if (!px) throw new Error('Invalid OneSignal bell size ' + size);
 
-    for (const cls of Object.values(SIZE_CLASSES)) {
-      removeCssClass(el, cls);
-    }
-    addCssClass(el, targetClass);
+    el.style.setProperty('--bell-size', `${px}px`);
+    el.style.setProperty('--bell-inactive-scale', `${32 / px}`);
+    el.style.setProperty('--badge-font-size', px <= 32 ? '8px' : '12px');
 
     if (this._shown) await waitForAnimations(el);
   }

@@ -66,25 +66,9 @@ describe('Bell', () => {
     expect(enabledSpy).toHaveBeenCalled();
   });
 
-  test('_setCustomColorsIfSpecified applies styles and adds CSS to head', async () => {
+  test('_setCustomColorsIfSpecified sets CSS variables on launcher', () => {
     const bell = new Bell({ enable: false });
-    document.body.innerHTML = `
-      <div class="onesignal-bell-launcher">
-        <div class="onesignal-bell-launcher-button">
-          <svg>
-            <circle class="background"></circle>
-            <g class="foreground"></g>
-            <ellipse class="stroke"></ellipse>
-          </svg>
-        </div>
-        <div class="onesignal-bell-launcher-badge"></div>
-        <div class="onesignal-bell-launcher-dialog">
-          <div class="onesignal-bell-launcher-dialog-body">
-            <button class="action">A</button>
-          </div>
-        </div>
-      </div>
-    `;
+    document.body.innerHTML = '<div class="onesignal-bell-launcher"></div>';
     bell._options.colors = {
       'circle.background': '#111',
       'circle.foreground': '#222',
@@ -98,25 +82,16 @@ describe('Bell', () => {
       'pulse.color': '#abc',
     };
     bell._setCustomColorsIfSpecified();
-    const background = document.querySelector<HTMLElement>('.background')!;
-    expect(background.getAttribute('style')).toContain('rgb(17, 17, 17)');
-
-    const badge = document.querySelector<HTMLElement>(
-      '.onesignal-bell-launcher-badge',
-    )!;
-    expect(badge.getAttribute('style')).toContain('rgb(51, 51, 51)');
-
-    const styleHover = document.getElementById(
-      'onesignal-background-hover-style',
-    );
-    expect(styleHover).not.toBeNull();
-  });
-
-  test('_addCssToHead appends once', () => {
-    const bell = new Bell({ enable: false });
-    bell._addCssToHead('x', '.a{color:red}');
-    bell._addCssToHead('x', '.b{color:blue}');
-    const style = document.getElementById('x')!;
-    expect(style.textContent).toContain('.a{color:red}');
+    const el = document.querySelector<HTMLElement>('.onesignal-bell-launcher')!;
+    expect(el.style.getPropertyValue('--bell-bg')).toBe('#111');
+    expect(el.style.getPropertyValue('--bell-fg')).toBe('#222');
+    expect(el.style.getPropertyValue('--badge-bg')).toBe('#333');
+    expect(el.style.getPropertyValue('--badge-border')).toBe('#444');
+    expect(el.style.getPropertyValue('--badge-fg')).toBe('#555');
+    expect(el.style.getPropertyValue('--btn-bg')).toBe('#666');
+    expect(el.style.getPropertyValue('--btn-fg')).toBe('#777');
+    expect(el.style.getPropertyValue('--btn-hover-bg')).toBe('#888');
+    expect(el.style.getPropertyValue('--btn-active-bg')).toBe('#999');
+    expect(el.style.getPropertyValue('--pulse-color')).toBe('#abc');
   });
 });

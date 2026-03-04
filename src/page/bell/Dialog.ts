@@ -90,8 +90,6 @@ export default class Dialog {
     this._unsubscribeButton?.addEventListener('click', () =>
       this._bell._onUnsubscribeClick(),
     );
-
-    this._bell._setCustomColorsIfSpecified();
   }
 
   private _buildSubscriptionContent(

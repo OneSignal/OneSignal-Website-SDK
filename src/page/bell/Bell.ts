@@ -39,8 +39,6 @@ const VALID_SIZES: readonly string[] = ['small', 'medium', 'large'];
 const VALID_POSITIONS: readonly string[] = ['bottom-left', 'bottom-right'];
 const VALID_THEMES: readonly string[] = ['default', 'inverse'];
 
-const SIZE_PX: Record<BellSize, number> = { small: 32, medium: 48, large: 64 };
-
 const DEFAULT_TEXT: BellText = {
   'tip.state.unsubscribed': 'Subscribe to notifications',
   'tip.state.subscribed': "You're subscribed to notifications",
@@ -304,9 +302,7 @@ export default class Bell {
 
     this._addDefaultClasses();
     this._applyOffsetIfSpecified();
-    this._setCssVars();
     this._setCustomColorsIfSpecified();
-    this._addBadgeShadow();
 
     Log._info('Showing the notify button.');
 
@@ -333,31 +329,6 @@ export default class Bell {
     this._initialized = true;
   }
 
-  private _setCssVars() {
-    const el = this._launcher._element;
-    if (!el) return;
-    const size = this._options.size || DEFAULT_SIZE;
-    el.style.setProperty('--bell-inactive-scale', `${32 / SIZE_PX[size]}`);
-  }
-
-  _addBadgeShadow() {
-    const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
-    const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
-    const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
-    this._graphic?.setAttribute(
-      'style',
-      `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`,
-    );
-    this._badge?._element?.setAttribute(
-      'style',
-      `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`,
-    );
-    this._dialog?._element?.setAttribute(
-      'style',
-      `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`,
-    );
-  }
-
   _applyOffsetIfSpecified() {
     const offset = this._options.offset;
     if (!offset) return;
@@ -368,7 +339,6 @@ export default class Bell {
       return;
     }
 
-    element.style.cssText = '';
     if (offset.bottom) element.style.bottom = offset.bottom;
     const side =
       this._options.position === 'bottom-right' ? offset.right : offset.left;
@@ -380,76 +350,24 @@ export default class Bell {
   }
 
   _setCustomColorsIfSpecified() {
-    const graphic = this._graphic;
-    const background = graphic?.querySelector<HTMLElement>('.background');
-    const foregrounds =
-      graphic?.querySelectorAll<HTMLElement>('.foreground') ?? [];
-    const stroke = graphic?.querySelector<HTMLElement>('.stroke');
-    const badgeElement = this._badge._element;
-    const dialogElement = this._dialog._element;
-    const actionButton =
-      dialogElement?.querySelector<HTMLButtonElement>('button.action');
-    const resetTargets = [background, stroke, badgeElement, actionButton];
-    for (const el of resetTargets) {
-      if (el) el.style.cssText = '';
-    }
-    for (const el of foregrounds) {
-      if (el) el.style.cssText = '';
-    }
-
     const colors = this._options.colors;
     if (!colors) return;
+    const el = this._launcher._element;
+    if (!el) return;
 
-    if (colors['circle.background'] && background) {
-      background.style.cssText = `fill: ${colors['circle.background']}`;
-    }
-    if (colors['circle.foreground']) {
-      for (const el of foregrounds) {
-        if (el) el.style.cssText = `fill: ${colors['circle.foreground']}`;
-      }
-      if (stroke) {
-        stroke.style.cssText = `stroke: ${colors['circle.foreground']}`;
-      }
-    }
-    if (badgeElement) {
-      if (colors['badge.background'])
-        badgeElement.style.cssText += `background: ${colors['badge.background']};`;
-      if (colors['badge.bordercolor'])
-        badgeElement.style.cssText += `border-color: ${colors['badge.bordercolor']};`;
-      if (colors['badge.foreground'])
-        badgeElement.style.cssText += `color: ${colors['badge.foreground']};`;
-    }
-    if (actionButton) {
-      if (colors['dialog.button.background'])
-        actionButton.style.cssText += `background: ${colors['dialog.button.background']};`;
-      if (colors['dialog.button.foreground'])
-        actionButton.style.cssText += `color: ${colors['dialog.button.foreground']};`;
-    }
-    if (colors['dialog.button.background.hovering']) {
-      this._addCssToHead(
-        'onesignal-background-hover-style',
-        `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:hover { background: ${colors['dialog.button.background.hovering']} !important; }`,
-      );
-    }
-    if (colors['dialog.button.background.active']) {
-      this._addCssToHead(
-        'onesignal-background-active-style',
-        `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:active { background: ${colors['dialog.button.background.active']} !important; }`,
-      );
-    }
-    if (colors['pulse.color']) {
-      this._launcher._element?.style.setProperty('--pulse-color', colors['pulse.color']);
-    }
-  }
-
-  _addCssToHead(id: string, css: string) {
-    const existingStyleDom = document.getElementById(id);
-    if (existingStyleDom) return;
-    const styleDom = document.createElement('style');
-    styleDom.id = id;
-    styleDom.type = 'text/css';
-    styleDom.appendChild(document.createTextNode(css));
-    document.head.appendChild(styleDom);
+    const setVar = (prop: string, value: string | undefined) => {
+      if (value) el.style.setProperty(prop, value);
+    };
+    setVar('--bell-bg', colors['circle.background']);
+    setVar('--bell-fg', colors['circle.foreground']);
+    setVar('--badge-bg', colors['badge.background']);
+    setVar('--badge-border', colors['badge.bordercolor']);
+    setVar('--badge-fg', colors['badge.foreground']);
+    setVar('--btn-bg', colors['dialog.button.background']);
+    setVar('--btn-fg', colors['dialog.button.foreground']);
+    setVar('--btn-hover-bg', colors['dialog.button.background.hovering']);
+    setVar('--btn-active-bg', colors['dialog.button.background.active']);
+    setVar('--pulse-color', colors['pulse.color']);
   }
 
   async _updateState() {
@@ -482,10 +400,6 @@ export default class Bell {
 
   get _container() {
     return document.querySelector('#onesignal-bell-container');
-  }
-
-  get _graphic() {
-    return this._button._element?.querySelector('svg');
   }
 
   get _launcher() {
