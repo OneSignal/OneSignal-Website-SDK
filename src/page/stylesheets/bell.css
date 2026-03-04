@@ -439,6 +439,7 @@
         cursor: pointer;
 
         &.action {
+          box-sizing: border-box;
           color: var(--btn-fg);
           background: var(--btn-bg);
           width: 100%;
