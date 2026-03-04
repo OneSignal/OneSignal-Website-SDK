@@ -114,28 +114,20 @@
         // for testing consent required
         // OneSignal.setConsentRequired(true);
 
+        // for testing, normally this is set on (temporary) in the database client
+        OneSignal._isNewVisitor = true;
+        console.log('_isNewVisitor', OneSignal._isNewVisitor);
+
         OneSignal.init({
           appId,
-          // requiresUserPrivacyConsent: true, // requires custom site sestting in dashboard
-          // promptOptions: {
-          //   slidedown: {
-          //     prompts: [
-          //       {
-          //         type: 'email',
-          //         // autoPrompt: false,
-          //       },
-          //     ],
-          //   },
-          // },
-        });
-        OneSignal.User.addTag('test', 'test');
-
-        OneSignal.Notifications.addEventListener(
-          'foregroundWillDisplay',
-          (event) => {
-            console.log('[Demo] foregroundWillDisplay event received:', event);
+          safari_web_id:
+            'web.onesignal.auto.6187ce57-f346-4a86-93e4-7d70d494c000',
+          notifyButton: {
+            enable: true,
+            prenotify: true,
+            showBadgeAfter: 0, // show immediately instead of waiting 300ms
           },
-        );
+        });
 
         // OneSignal.setConsentRequired(true);
       });
