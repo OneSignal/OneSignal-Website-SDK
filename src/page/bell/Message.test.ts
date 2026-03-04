@@ -33,7 +33,9 @@ describe('Message', () => {
     expect(message._getTipForState()).toBe('Subscribe to notifications');
 
     bell._setState(BellState._Subscribed, true);
-    expect(message._getTipForState()).toBe("You're subscribed to notifications");
+    expect(message._getTipForState()).toBe(
+      "You're subscribed to notifications",
+    );
 
     bell._setState(BellState._Blocked, true);
     expect(message._getTipForState()).toBe("You've blocked notifications");

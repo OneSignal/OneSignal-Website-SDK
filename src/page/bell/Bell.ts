@@ -203,9 +203,7 @@ export default class Bell {
     if (!this._options.enable) return;
 
     if (!CSS.supports('anchor-name: --a')) {
-      Log._error(
-        'Notify button requires CSS Anchor Positioning support.',
-      );
+      Log._error('Notify button requires CSS Anchor Positioning support.');
       return;
     }
 

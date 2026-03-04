@@ -61,7 +61,9 @@ describe('Launcher', () => {
 
     await launcher._resize('medium');
     expect(el.style.getPropertyValue('--bell-size')).toBe('48px');
-    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe(`${32 / 48}`);
+    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe(
+      `${32 / 48}`,
+    );
     expect(el.style.getPropertyValue('--badge-font-size')).toBe('12px');
 
     await launcher._resize('large');

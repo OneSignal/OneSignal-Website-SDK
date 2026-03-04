@@ -16,7 +16,10 @@ export default class Launcher {
   }
 
   get _shown(): boolean {
-    return this._element?.classList.contains('onesignal-bell-launcher-active') ?? false;
+    return (
+      this._element?.classList.contains('onesignal-bell-launcher-active') ??
+      false
+    );
   }
 
   _show(): void {

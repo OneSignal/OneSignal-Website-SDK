@@ -122,7 +122,11 @@ describe('Slidedown', () => {
 
     test('skips creation when icons already loaded', async () => {
       const sd = createSlidedown();
-      sd._notificationIcons = { chrome: 'test.png', firefox: null, safari: null };
+      sd._notificationIcons = {
+        chrome: 'test.png',
+        firefox: null,
+        safari: null,
+      };
 
       await sd._create();
 
@@ -179,9 +183,7 @@ describe('Slidedown', () => {
         expect(closedSpy).toHaveBeenCalled();
       });
       expect(
-        sd._container.classList.contains(
-          SLIDEDOWN_CSS_CLASSES._CloseSlidedown,
-        ),
+        sd._container.classList.contains(SLIDEDOWN_CSS_CLASSES._CloseSlidedown),
       ).toBe(true);
     });
   });
@@ -206,9 +208,7 @@ describe('Slidedown', () => {
       sd._close();
 
       expect(
-        sd._container.classList.contains(
-          SLIDEDOWN_CSS_CLASSES._CloseSlidedown,
-        ),
+        sd._container.classList.contains(SLIDEDOWN_CSS_CLASSES._CloseSlidedown),
       ).toBe(true);
     });
   });

@@ -149,9 +149,7 @@ describe('Dialog', () => {
     const body = dialog._element!.querySelector(
       '.onesignal-bell-launcher-dialog-body',
     )!;
-    expect(body.querySelector('h1')?.textContent).toBe(
-      'Unblock Notifications',
-    );
+    expect(body.querySelector('h1')?.textContent).toBe('Unblock Notifications');
     expect(body.querySelector('.instructions p')?.textContent).toBe(
       'Follow these instructions to allow notifications:',
     );

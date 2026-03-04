@@ -1,4 +1,5 @@
-body:has(#onesignal-slidedown-container:not(.close-slidedown)) #onesignal-bell-container {
+body:has(#onesignal-slidedown-container:not(.close-slidedown))
+  #onesignal-bell-container {
   visibility: hidden;
   pointer-events: none;
 }
@@ -477,7 +478,9 @@ body:has(#onesignal-slidedown-container:not(.close-slidedown)) #onesignal-bell-c
       opacity: 0.5;
       transform: scale(var(--bell-resting-scale, 0.667));
 
-      &:not(:has(.onesignal-bell-launcher-dialog:popover-open)):not(:has(:focus)):hover {
+      &:not(:has(.onesignal-bell-launcher-dialog:popover-open)):not(
+          :has(:focus)
+        ):hover {
         opacity: 1;
         transform: scale(1);
 
@@ -492,7 +495,8 @@ body:has(#onesignal-slidedown-container:not(.close-slidedown)) #onesignal-bell-c
         }
       }
 
-      &:has(.onesignal-bell-launcher-dialog:popover-open) {
+      &:has(.onesignal-bell-launcher-dialog:popover-open),
+      &:has(.onesignal-bell-launcher-message-opened) {
         opacity: 1;
         transform: scale(1);
       }
