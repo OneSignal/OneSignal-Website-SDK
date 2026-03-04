@@ -152,6 +152,37 @@ describe('Bell', () => {
     });
   });
 
+  describe('_create event listeners', () => {
+    function mockCreateDeps() {
+      vi.stubGlobal('CSS', { supports: () => true });
+      vi.spyOn(
+        OneSignal._context._dynamicResourceLoader,
+        '_loadSdkStylesheet',
+      ).mockResolvedValue(ResourceLoadState._Loaded);
+      vi.spyOn(
+        OneSignal._context._subscriptionManager,
+        '_isPushNotificationsEnabled',
+      ).mockResolvedValue(false);
+      vi.spyOn(
+        OneSignal._context._permissionManager,
+        '_getPermissionStatus',
+      ).mockResolvedValue('default');
+    }
+
+    test('mouseleave on launcher blurs the button', async () => {
+      mockCreateDeps();
+      const bell = new Bell({ enable: true, showLauncherAfter: 0 });
+      await bell._create();
+
+      const buttonEl = bell._button._element!;
+      const blurSpy = vi.spyOn(buttonEl, 'blur');
+
+      bell._launcher._element!.dispatchEvent(new Event('mouseleave'));
+
+      expect(blurSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   test('_setCustomColorsIfSpecified sets CSS variables on launcher', () => {
     const bell = new Bell({ enable: false });
     document.body.innerHTML = '<div class="onesignal-bell-launcher"></div>';

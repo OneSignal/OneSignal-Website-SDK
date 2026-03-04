@@ -40,15 +40,19 @@ export default class Dialog {
   }
 
   get _subscribeButton() {
-    return this._element?.querySelector<HTMLButtonElement>(
-      `#${SUBSCRIBE_BUTTON_ID}`,
-    ) ?? null;
+    return (
+      this._element?.querySelector<HTMLButtonElement>(
+        `#${SUBSCRIBE_BUTTON_ID}`,
+      ) ?? null
+    );
   }
 
   get _unsubscribeButton() {
-    return this._element?.querySelector<HTMLButtonElement>(
-      `#${UNSUBSCRIBE_BUTTON_ID}`,
-    ) ?? null;
+    return (
+      this._element?.querySelector<HTMLButtonElement>(
+        `#${UNSUBSCRIBE_BUTTON_ID}`,
+      ) ?? null
+    );
   }
 
   _hide() {
@@ -128,7 +132,7 @@ export default class Dialog {
           : UNBLOCK_IMAGES[browserName];
       if (imagePath) {
         const imageUrl = STATIC_RESOURCES_URL + imagePath;
-        instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>`;
+        instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a>`;
       }
     }
 
