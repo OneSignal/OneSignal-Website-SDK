@@ -204,6 +204,13 @@ export default class Bell {
   async _create() {
     if (!this._options.enable) return;
 
+    if (!CSS.supports('anchor-name: --a')) {
+      Log._error(
+        'Browser does not support CSS Anchor Positioning. Cannot render notify button.',
+      );
+      return;
+    }
+
     const sdkStylesLoadResult =
       await OneSignal._context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
@@ -331,14 +338,6 @@ export default class Bell {
     if (!el) return;
     const size = this._options.size || DEFAULT_SIZE;
     el.style.setProperty('--bell-inactive-scale', `${32 / SIZE_PX[size]}`);
-
-    const offset = this._options.offset;
-    if (offset?.bottom)
-      el.style.setProperty('--bell-offset-bottom', offset.bottom);
-    if (offset?.left)
-      el.style.setProperty('--bell-offset-left', offset.left);
-    if (offset?.right)
-      el.style.setProperty('--bell-offset-right', offset.right);
   }
 
   _addBadgeShadow() {

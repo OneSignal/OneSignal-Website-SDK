@@ -55,8 +55,8 @@
       }
 
       & .onesignal-bell-launcher-dialog {
-        bottom: calc(var(--bell-offset-bottom, 20px) + var(--bell-size) * 1.20625);
-        left: var(--bell-offset-left, 20px);
+        bottom: anchor(top);
+        left: anchor(left);
         transform-origin: left bottom;
 
         &::before {
@@ -93,8 +93,8 @@
       }
 
       & .onesignal-bell-launcher-dialog {
-        bottom: calc(var(--bell-offset-bottom, 20px) + var(--bell-size) * 1.20625);
-        right: var(--bell-offset-right, 20px);
+        bottom: anchor(top);
+        right: anchor(right);
         transform-origin: right bottom;
 
         &::before {
@@ -116,6 +116,7 @@
 
     /* ---- Button ---- */
     & .onesignal-bell-launcher-button {
+      anchor-name: --bell-button;
       appearance: none;
       background: none;
       border: none;
@@ -219,8 +220,10 @@
     & .onesignal-bell-launcher-dialog {
       cursor: pointer;
       position: fixed;
+      position-anchor: --bell-button;
       inset: auto;
       margin: 0;
+      margin-bottom: calc(var(--bell-size) * 0.20625);
       background-color: white;
       border-radius: 5px;
       border: 1px solid rgba(0, 0, 0, 0.1);
