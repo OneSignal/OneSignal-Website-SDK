@@ -1,5 +1,6 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { vi } from 'vitest';
+import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Bell from './Bell';
 import { BellState } from './constants';
 
@@ -37,7 +38,7 @@ describe('Bell', () => {
     });
     expect(bell).toBeTruthy();
     expect(installSpy).toHaveBeenCalledTimes(1);
-    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).not.toHaveBeenCalled();
   });
 
   test('_setState updates state', () => {
@@ -66,6 +67,71 @@ describe('Bell', () => {
 
     await bell._updateState();
     expect(bell._blocked).toBe(true);
+  });
+
+  describe('_create prenotify', () => {
+    function mockCreateDeps(opts: {
+      isPushEnabled: boolean;
+      permission: 'granted' | 'denied' | 'default';
+      isNewVisitor: boolean;
+    }) {
+      vi.stubGlobal('CSS', { supports: () => true });
+      vi.spyOn(
+        OneSignal._context._dynamicResourceLoader,
+        '_loadSdkStylesheet',
+      ).mockResolvedValue(ResourceLoadState._Loaded);
+      vi.spyOn(
+        OneSignal._context._subscriptionManager,
+        '_isPushNotificationsEnabled',
+      ).mockResolvedValue(opts.isPushEnabled);
+      vi.spyOn(
+        OneSignal._context._permissionManager,
+        '_getPermissionStatus',
+      ).mockResolvedValue(opts.permission);
+      OneSignal._isNewVisitor = opts.isNewVisitor;
+    }
+
+    test('shows prenotify message when unsubscribed and new visitor', async () => {
+      mockCreateDeps({
+        isPushEnabled: false,
+        permission: 'default',
+        isNewVisitor: true,
+      });
+
+      const bell = new Bell({
+        enable: true,
+        prenotify: true,
+        showLauncherAfter: 0,
+        showBadgeAfter: 0,
+      });
+      await bell._create();
+
+      expect(bell._state).toBe(BellState._Unsubscribed);
+      expect(bell._message._content).toBe(
+        bell._options.text['message.prenotify'],
+      );
+    });
+
+    test('does not show prenotify message when blocked', async () => {
+      mockCreateDeps({
+        isPushEnabled: false,
+        permission: 'denied',
+        isNewVisitor: true,
+      });
+
+      const bell = new Bell({
+        enable: true,
+        prenotify: true,
+        showLauncherAfter: 0,
+        showBadgeAfter: 0,
+      });
+      await bell._create();
+
+      expect(bell._state).toBe(BellState._Blocked);
+      expect(bell._message._content).toBe(
+        bell._options.text['tip.state.blocked'],
+      );
+    });
   });
 
   test('_setCustomColorsIfSpecified sets CSS variables on launcher', () => {

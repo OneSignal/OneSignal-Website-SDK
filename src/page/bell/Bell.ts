@@ -319,7 +319,12 @@ export default class Bell {
 
     await delay(this._options.showBadgeAfter || 0);
 
-    if (this._options.prenotify && !isPushEnabled && OneSignal._isNewVisitor) {
+    if (
+      this._options.prenotify &&
+      !isPushEnabled &&
+      !this._blocked &&
+      OneSignal._isNewVisitor
+    ) {
       this._message._content = decodeHtmlEntities(
         this._options.text['message.prenotify'],
       );
