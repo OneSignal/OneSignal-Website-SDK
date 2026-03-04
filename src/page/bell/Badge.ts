@@ -17,7 +17,11 @@ export default class Badge {
   }
 
   get _shown(): boolean {
-    return this._element?.classList.contains('onesignal-bell-launcher-badge-opened') ?? false;
+    return (
+      this._element?.classList.contains(
+        'onesignal-bell-launcher-badge-opened',
+      ) ?? false
+    );
   }
 
   async _show() {
@@ -36,11 +40,8 @@ export default class Badge {
   }
 
   _updateCount(delta: number): void {
-    const num = Number(this._content);
-    if (!Number.isNaN(num)) {
-      const newNum = num + delta;
-      this._content = newNum > 0 ? newNum.toString() : '';
-    }
+    const newNum = (Number(this._content) || 0) + delta;
+    this._content = newNum > 0 ? newNum.toString() : '';
   }
 
   _increment(): void {
