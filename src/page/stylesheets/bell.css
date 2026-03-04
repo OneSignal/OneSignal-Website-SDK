@@ -464,31 +464,30 @@
       --badge-bg: #e54b4d;
     }
 
-    /* ---- Hover: inactive bell restore size + show tooltip ---- */
-    &.onesignal-bell-launcher-inactive:hover {
-      opacity: 1;
-      transform: scale(1);
-
-      & .onesignal-bell-launcher-message {
-        pointer-events: auto;
-        opacity: 1;
-        transform: translateY(-50%) scaleX(1);
-      }
-
-      & .onesignal-bell-launcher-badge {
-        opacity: 0;
-      }
-    }
-
     /* ---- State classes ---- */
     &.onesignal-bell-launcher-active {
       transform: scale(1);
       opacity: 1;
-    }
 
-    &.onesignal-bell-launcher-inactive {
-      opacity: 0.5;
-      transform: scale(var(--bell-inactive-scale, 0.667));
+      &.onesignal-bell-launcher-inactive {
+        opacity: 0.5;
+        transform: scale(var(--bell-inactive-scale, 0.667));
+
+        &:hover {
+          opacity: 1;
+          transform: scale(1);
+
+          & .onesignal-bell-launcher-message {
+            pointer-events: auto;
+            opacity: 1;
+            transform: translateY(-50%) scaleX(1);
+          }
+
+          & .onesignal-bell-launcher-badge {
+            opacity: 0;
+          }
+        }
+      }
     }
   }
 }
