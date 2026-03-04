@@ -45,7 +45,7 @@
     &.onesignal-bell-launcher-bottom-left {
       bottom: 20px;
       left: 20px;
-      transform-origin: bottom left;
+      transform-origin: center;
 
       & .onesignal-bell-launcher-message {
         left: calc(var(--bell-size) + var(--msg-arrow) + 4px);
@@ -83,7 +83,7 @@
     &.onesignal-bell-launcher-bottom-right {
       bottom: 20px;
       right: 20px;
-      transform-origin: bottom right;
+      transform-origin: center;
 
       & .onesignal-bell-launcher-message {
         right: calc(var(--bell-size) + var(--msg-arrow) + 4px);
