@@ -819,9 +819,12 @@ describe('OneSignal - No Consent Required', () => {
           await promise;
 
           // accepting permissions patches the existing subscription with the token
-          await vi.waitUntil(() => updateSubscriptionFn.mock.calls.length >= 1, {
-            interval: 1,
-          });
+          await vi.waitUntil(
+            () => updateSubscriptionFn.mock.calls.length >= 1,
+            {
+              interval: 1,
+            },
+          );
 
           let pushSub: SubscriptionSchema | undefined;
           await vi.waitUntil(

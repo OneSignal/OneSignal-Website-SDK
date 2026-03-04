@@ -1,4 +1,6 @@
 import { IdentityConstants } from 'src/core/constants';
+import { IdentityModel } from 'src/core/models/IdentityModel';
+import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
@@ -6,9 +8,8 @@ import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
 import { getSubscriptionType } from 'src/shared/environment/detect';
 import { getAppId } from 'src/shared/helpers/main';
+import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import { resetUserModels } from '../../onesignal/userDirector';
-import Log from '../../shared/libraries/Log';
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users
@@ -73,7 +74,16 @@ export default class LoginManager {
   }
 
   private static _resetAndGetIdentityModel() {
-    resetUserModels();
+    const newIdentityModel = new IdentityModel();
+    const newPropertiesModel = new PropertiesModel();
+
+    const sdkId = IDManager._createLocalId();
+    newIdentityModel._onesignalId = sdkId;
+    newPropertiesModel._onesignalId = sdkId;
+
+    OneSignal._coreDirector._identityModelStore._replace(newIdentityModel);
+    OneSignal._coreDirector._propertiesModelStore._replace(newPropertiesModel);
+
     return OneSignal._coreDirector._getIdentityModel();
   }
 

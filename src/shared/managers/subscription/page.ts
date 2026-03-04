@@ -1,4 +1,6 @@
-import { createUserOnServer } from 'src/onesignal/userDirector';
+import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
@@ -12,6 +14,7 @@ import {
   PermissionBlockedError,
   SWRegistrationError,
 } from 'src/shared/errors/common';
+import { getAppId } from 'src/shared/helpers/main';
 import {
   incrementPageViewCount,
   isFirstPageView,
@@ -48,6 +51,29 @@ function executeCallback<T>(callback?: (...args: any[]) => T, ...args: any[]) {
   }
 }
 
+async function createSubscribedUser(
+  pushModel: SubscriptionModel,
+): Promise<void> {
+  const identityModel = OneSignal._coreDirector._getIdentityModel();
+  const appId = getAppId();
+
+  OneSignal._coreDirector._operationRepo._enqueue(
+    new LoginUserOperation(
+      appId,
+      identityModel._onesignalId,
+      identityModel._externalId,
+    ),
+  );
+  await OneSignal._coreDirector._operationRepo._enqueueAndWait(
+    new CreateSubscriptionOperation({
+      ...pushModel.toJSON(),
+      appId,
+      onesignalId: identityModel._onesignalId,
+      subscriptionId: pushModel.id!,
+    }),
+  );
+}
+
 export const updatePushSubscriptionModelWithRawSubscription = async (
   rawPushSubscription: RawPushSubscription,
 ) => {
@@ -55,18 +81,18 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   // otherwise there would be two login ops in the same bucket for LoginOperationExecutor which would error
   await LoginManager._switchingUsersPromise;
 
+  // for new Anonymous/not-logged-in users, we need to create a new push subscription model and also save its push id to IndexedDB
   let pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
-  // for new users, we need to create a new push subscription model and also save its push id to IndexedDB
   if (!pushModel) {
     pushModel =
       OneSignal._coreDirector._generatePushSubscriptionModel(
         rawPushSubscription,
       );
-    return createUserOnServer();
+    return createSubscribedUser(pushModel);
   }
   // for users with data failed to create a user or user + subscription on the server
   if (IDManager._isLocalId(pushModel.id)) {
-    return createUserOnServer();
+    return createSubscribedUser(pushModel);
   }
 
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
