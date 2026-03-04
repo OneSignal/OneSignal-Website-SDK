@@ -1,5 +1,6 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { vi } from 'vitest';
+import Log from 'src/shared/libraries/Log';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Bell from './Bell';
 import { BellState } from './constants';
@@ -67,6 +68,23 @@ describe('Bell', () => {
 
     await bell._updateState();
     expect(bell._blocked).toBe(true);
+  });
+
+  test('_create early-returns when CSS anchor positioning is unsupported', async () => {
+    vi.stubGlobal('CSS', { supports: () => false });
+    const errorSpy = vi.spyOn(Log, '_error');
+    const loadSpy = vi.spyOn(
+      OneSignal._context._dynamicResourceLoader,
+      '_loadSdkStylesheet',
+    );
+
+    const bell = new Bell({ enable: true, showLauncherAfter: 0 });
+    await bell._create();
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Notify button requires CSS Anchor Positioning support.',
+    );
+    expect(loadSpy).not.toHaveBeenCalled();
   });
 
   describe('_create prenotify', () => {

@@ -206,7 +206,7 @@ export default class Bell {
 
     if (!CSS.supports('anchor-name: --a')) {
       Log._error(
-        'Browser does not support CSS Anchor Positioning. Cannot render notify button.',
+        'Notify button requires CSS Anchor Positioning support.',
       );
       return;
     }
