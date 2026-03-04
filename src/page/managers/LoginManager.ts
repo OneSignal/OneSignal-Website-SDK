@@ -30,64 +30,31 @@ export default class LoginManager {
       db.put('Ids', { id: token, type: 'jwtToken' });
     }
 
-    let identityModel = OneSignal._coreDirector._getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     const currentOneSignalId = !IDManager._isLocalId(identityModel._onesignalId)
       ? identityModel._onesignalId
       : undefined;
     const currentExternalId = identityModel._externalId;
 
-    // if the current externalId is the same as the one we're trying to set, do nothing
     if (currentExternalId === externalId) {
       Log._debug('Login: External ID already set, skipping login');
       return;
     }
 
-    resetUserModels();
-    identityModel = OneSignal._coreDirector._getIdentityModel();
-
-    // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
-    // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
-    identityModel._setProperty(
+    // avoid duplicate identity requests when dev calls init and login in quick succession
+    const newIdentityModel = LoginManager._resetAndGetIdentityModel();
+    newIdentityModel._setProperty(
       IdentityConstants._ExternalID,
       externalId,
       ModelChangeTags._Hydrate,
     );
-    const newIdentityOneSignalId = identityModel._onesignalId;
-    const appId = getAppId();
 
-    const promises: Promise<void>[] = [
-      OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
-        if (pushOp) {
-          OneSignal._coreDirector._operationRepo._enqueue(
-            new TransferSubscriptionOperation(
-              appId,
-              newIdentityOneSignalId,
-              pushOp.id,
-            ),
-          );
-        } else {
-          // unlike mobile which creates a "fake" sub right away, for Web we just want to create a new sub when we login
-          const newSub = new SubscriptionModel();
-          newSub._mergeData({
-            id: IDManager._createLocalId(),
-            onesignalId: newIdentityOneSignalId,
-            type: getSubscriptionType(),
-            token: '',
-          });
-          OneSignal._coreDirector._subscriptionModelStore._add(newSub);
-        }
-      }),
-      OneSignal._coreDirector._operationRepo._enqueueAndWait(
-        new LoginUserOperation(
-          appId,
-          newIdentityOneSignalId,
-          externalId,
-          !currentExternalId ? currentOneSignalId : undefined,
-        ),
-      ),
-    ];
-
-    await Promise.all(promises);
+    await LoginManager._switchUser(
+      newIdentityModel._onesignalId,
+      externalId,
+      !currentExternalId ? currentOneSignalId : undefined,
+      true,
+    );
   }
 
   // public api
@@ -96,37 +63,48 @@ export default class LoginManager {
   }
 
   private static async _logout(): Promise<void> {
-    // check if user is already logged out
-    let identityModel = OneSignal._coreDirector._getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
 
     if (!identityModel._externalId)
       return Log._debug('Logout: User is not logged in, skipping logout');
 
+    const newIdentityModel = LoginManager._resetAndGetIdentityModel();
+    await LoginManager._switchUser(newIdentityModel._onesignalId);
+  }
+
+  private static _resetAndGetIdentityModel() {
     resetUserModels();
-    identityModel = OneSignal._coreDirector._getIdentityModel();
+    return OneSignal._coreDirector._getIdentityModel();
+  }
 
-    // Only create an anonymous user if there is a subscription to associate with it.
-    // Without a subscription, there is nothing meaningful to register on the server.
+  private static async _switchUser(
+    newOneSignalId: string,
+    externalId?: string,
+    existingOneSignalId?: string,
+    createSubIfMissing = false,
+  ): Promise<void> {
     const appId = getAppId();
-    let newIdentityOneSignalId = identityModel._onesignalId;
 
-    const promises: Promise<void>[] = [
+    await Promise.all([
       OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
           OneSignal._coreDirector._operationRepo._enqueue(
-            new TransferSubscriptionOperation(
-              appId,
-              newIdentityOneSignalId,
-              pushOp.id,
-            ),
+            new TransferSubscriptionOperation(appId, newOneSignalId, pushOp.id),
           );
+        } else if (createSubIfMissing) {
+          const newSub = new SubscriptionModel();
+          newSub._mergeData({
+            id: IDManager._createLocalId(),
+            onesignalId: newOneSignalId,
+            type: getSubscriptionType(),
+            token: '',
+          });
+          OneSignal._coreDirector._subscriptionModelStore._add(newSub);
         }
       }),
       OneSignal._coreDirector._operationRepo._enqueueAndWait(
-        new LoginUserOperation(appId, newIdentityOneSignalId),
+        new LoginUserOperation(appId, newOneSignalId, externalId, existingOneSignalId),
       ),
-    ];
-
-    await Promise.all(promises);
+    ]);
   }
 }
