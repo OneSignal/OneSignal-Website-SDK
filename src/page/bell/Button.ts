@@ -37,7 +37,6 @@ export default class Button {
         );
         this._bell._ignoreSubscriptionState = false;
         this._bell._actionInProgress = false;
-        this._bell._launcher._inactivate();
       });
     }
   }

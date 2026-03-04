@@ -34,26 +34,20 @@ describe('Launcher', () => {
     expect(launcher._shown).toBe(false);
   });
 
+  test('_hide closes dialog popover', async () => {
+    const bell = new Bell({ enable: false });
+    const launcher = new Launcher(bell);
+    const dialogHide = vi.spyOn(bell._dialog, '_hide');
+    await launcher._show();
+    await launcher._hide();
+    expect(dialogHide).toHaveBeenCalled();
+  });
+
   test('_hide is a no-op when already hidden', async () => {
     const launcher = new Launcher(new Bell({ enable: false }));
     expect(launcher._shown).toBe(false);
     await launcher._hide();
     expect(launcher._shown).toBe(false);
-  });
-
-  test('_activate removes inactive class', async () => {
-    const launcher = new Launcher(new Bell({ enable: false }));
-    launcher._element?.classList.add('onesignal-bell-launcher-inactive');
-    expect(launcher._active).toBe(false);
-    await launcher._activate();
-    expect(launcher._active).toBe(true);
-  });
-
-  test('_inactivate adds inactive class', async () => {
-    const launcher = new Launcher(new Bell({ enable: false }));
-    expect(launcher._active).toBe(true);
-    await launcher._inactivate();
-    expect(launcher._active).toBe(false);
   });
 
   test('_resize sets CSS variables for each size', async () => {
@@ -62,17 +56,17 @@ describe('Launcher', () => {
 
     await launcher._resize('small');
     expect(el.style.getPropertyValue('--bell-size')).toBe('32px');
-    expect(el.style.getPropertyValue('--bell-inactive-scale')).toBe('1');
+    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe('1');
     expect(el.style.getPropertyValue('--badge-font-size')).toBe('8px');
 
     await launcher._resize('medium');
     expect(el.style.getPropertyValue('--bell-size')).toBe('48px');
-    expect(el.style.getPropertyValue('--bell-inactive-scale')).toBe(`${32 / 48}`);
+    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe(`${32 / 48}`);
     expect(el.style.getPropertyValue('--badge-font-size')).toBe('12px');
 
     await launcher._resize('large');
     expect(el.style.getPropertyValue('--bell-size')).toBe('64px');
-    expect(el.style.getPropertyValue('--bell-inactive-scale')).toBe('0.5');
+    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe('0.5');
     expect(el.style.getPropertyValue('--badge-font-size')).toBe('12px');
   });
 

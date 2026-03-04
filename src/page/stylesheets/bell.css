@@ -464,29 +464,29 @@
       --badge-bg: #e54b4d;
     }
 
-    /* ---- State classes ---- */
+    /* ---- Shown (resting) ---- */
     &.onesignal-bell-launcher-active {
-      transform: scale(1);
-      opacity: 1;
+      opacity: 0.5;
+      transform: scale(var(--bell-resting-scale, 0.667));
 
-      &.onesignal-bell-launcher-inactive {
-        opacity: 0.5;
-        transform: scale(var(--bell-inactive-scale, 0.667));
+      &:hover {
+        opacity: 1;
+        transform: scale(1);
 
-        &:hover {
+        & .onesignal-bell-launcher-message {
+          pointer-events: auto;
           opacity: 1;
-          transform: scale(1);
-
-          & .onesignal-bell-launcher-message {
-            pointer-events: auto;
-            opacity: 1;
-            transform: translateY(-50%) scaleX(1);
-          }
-
-          & .onesignal-bell-launcher-badge {
-            opacity: 0;
-          }
+          transform: translateY(-50%) scaleX(1);
         }
+
+        & .onesignal-bell-launcher-badge {
+          opacity: 0;
+        }
+      }
+
+      &:has(.onesignal-bell-launcher-dialog:popover-open) {
+        opacity: 1;
+        transform: scale(1);
       }
     }
   }

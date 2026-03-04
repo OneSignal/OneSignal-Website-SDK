@@ -164,7 +164,6 @@ export default class Bell {
     );
     this._ignoreSubscriptionState = false;
     this._actionInProgress = false;
-    await this._launcher._inactivate();
     this._updateState();
   }
 
@@ -181,7 +180,6 @@ export default class Bell {
       MESSAGE_TIMEOUT,
     );
     this._actionInProgress = false;
-    await this._launcher._inactivate();
     this._updateState();
   }
 
@@ -274,12 +272,7 @@ export default class Bell {
         const te = e as ToggleEvent;
         if (te.newState === 'open') {
           this._dialog._updateContent();
-          this._launcher._activate();
           this._message._hide();
-        } else {
-          if (!this._actionInProgress) {
-            this._launcher._inactivate();
-          }
         }
       });
       dialogEl.addEventListener('beforetoggle', (e) => {
@@ -305,8 +298,6 @@ export default class Bell {
     this._setCustomColorsIfSpecified();
 
     Log._info('Showing the notify button.');
-
-    await this._launcher._inactivate();
 
     if (isPushEnabled && this._dialog._notificationIcons === null) {
       this._dialog._notificationIcons = await getNotificationIcons();

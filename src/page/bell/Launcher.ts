@@ -20,10 +20,6 @@ export default class Launcher {
     return this._element?.classList.contains('onesignal-bell-launcher-active') ?? false;
   }
 
-  get _active(): boolean {
-    return !(this._element?.classList.contains('onesignal-bell-launcher-inactive') ?? false);
-  }
-
   async _show() {
     const el = this._element;
     if (!el || this._shown) return;
@@ -34,21 +30,8 @@ export default class Launcher {
   async _hide() {
     const el = this._element;
     if (!el || !this._shown) return;
+    this._bell._dialog._hide();
     el.classList.remove('onesignal-bell-launcher-active');
-    await waitForAnimations(el);
-  }
-
-  async _activate() {
-    const el = this._element;
-    if (!el || this._active) return;
-    el.classList.remove('onesignal-bell-launcher-inactive');
-    await waitForAnimations(el);
-  }
-
-  async _inactivate() {
-    const el = this._element;
-    if (!el || !this._active) return;
-    el.classList.add('onesignal-bell-launcher-inactive');
     await waitForAnimations(el);
   }
 
@@ -60,7 +43,7 @@ export default class Launcher {
     if (!px) throw new Error('Invalid OneSignal bell size ' + size);
 
     el.style.setProperty('--bell-size', `${px}px`);
-    el.style.setProperty('--bell-inactive-scale', `${32 / px}`);
+    el.style.setProperty('--bell-resting-scale', `${32 / px}`);
     el.style.setProperty('--badge-font-size', px <= 32 ? '8px' : '12px');
 
     if (this._shown) await waitForAnimations(el);
