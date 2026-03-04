@@ -494,7 +494,7 @@
       & .onesignal-bell-launcher-message {
         pointer-events: auto;
         opacity: 1;
-        transform: translateY(-50%) scaleX(1) translateZ(0);
+        transform: translateY(-50%) scaleX(1);
       }
     }
 
