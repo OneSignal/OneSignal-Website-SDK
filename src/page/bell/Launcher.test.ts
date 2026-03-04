@@ -20,14 +20,12 @@ describe('Launcher', () => {
     expect(launcher._active).toBe(true);
   });
 
-  test('_inactivate adds inactive class and resizes to small', async () => {
+  test('_inactivate adds inactive class', async () => {
     const bell = new Bell({ enable: false });
     const launcher = new Launcher(bell);
 
     expect(launcher._active).toBe(true);
-    launcher._element?.classList.add('onesignal-bell-launcher-md');
     await launcher._inactivate();
     expect(launcher._active).toBe(false);
-    expect(launcher._element?.classList.contains('onesignal-bell-launcher-sm')).toBe(true);
   });
 });

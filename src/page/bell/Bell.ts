@@ -95,26 +95,26 @@ export default class Bell {
   }
 
   private _validateOptions(options: AppUserConfigNotifyButton) {
-    if (!options.size || !VALID_SIZES.includes(options.size))
-      throw new Error(
-        `Invalid size ${options.size} for notify button. Choose among 'small', 'medium', or 'large'.`,
-      );
-    if (!options.position || !VALID_POSITIONS.includes(options.position))
-      throw new Error(
-        `Invalid position ${options.position} for notify button. Choose either 'bottom-left', or 'bottom-right'.`,
-      );
-    if (!options.theme || !VALID_THEMES.includes(options.theme))
-      throw new Error(
-        `Invalid theme ${options.theme} for notify button. Choose either 'default', or 'inverse'.`,
-      );
-    if (!options.showLauncherAfter || options.showLauncherAfter < 0)
-      throw new Error(
-        `Invalid delay duration of ${this._options.showLauncherAfter} for showing the notify button. Choose a value above 0.`,
-      );
-    if (!options.showBadgeAfter || options.showBadgeAfter < 0)
-      throw new Error(
-        `Invalid delay duration of ${this._options.showBadgeAfter} for showing the notify button's badge. Choose a value above 0.`,
-      );
+    const assertChoice = (
+      val: string | undefined,
+      valid: readonly string[],
+      label: string,
+    ) => {
+      if (!val || !valid.includes(val))
+        throw new Error(
+          `Invalid ${label} '${val}'. Choose: ${valid.join(', ')}`,
+        );
+    };
+    const assertAboveZero = (val: number | undefined, label: string) => {
+      if (!val || val < 0)
+        throw new Error(`Invalid ${label}. Must be above 0.`);
+    };
+
+    assertChoice(options.size, VALID_SIZES, 'size');
+    assertChoice(options.position, VALID_POSITIONS, 'position');
+    assertChoice(options.theme, VALID_THEMES, 'theme');
+    assertAboveZero(options.showLauncherAfter, 'showLauncherAfter');
+    assertAboveZero(options.showBadgeAfter, 'showBadgeAfter');
   }
 
   private _installEventHooks() {
@@ -326,6 +326,7 @@ export default class Bell {
       this._message._content = decodeHtmlEntities(
         this._options.text['message.prenotify'],
       );
+      this._badge._increment();
       await this._badge._show();
     }
 
