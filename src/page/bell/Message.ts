@@ -25,16 +25,25 @@ export default class Message {
   }
 
   get _content(): string {
-    return this._element?.querySelector('.onesignal-bell-launcher-message-body')?.textContent ?? '';
+    return (
+      this._element?.querySelector('.onesignal-bell-launcher-message-body')
+        ?.textContent ?? ''
+    );
   }
 
   set _content(value: string) {
-    const body = this._element?.querySelector('.onesignal-bell-launcher-message-body');
+    const body = this._element?.querySelector(
+      '.onesignal-bell-launcher-message-body',
+    );
     if (body) body.textContent = value;
   }
 
   get _shown(): boolean {
-    return this._element?.classList.contains('onesignal-bell-launcher-message-opened') ?? false;
+    return (
+      this._element?.classList.contains(
+        'onesignal-bell-launcher-message-opened',
+      ) ?? false
+    );
   }
 
   async _show() {
@@ -52,6 +61,7 @@ export default class Message {
   }
 
   async _display(type: string, content: string, duration = 0) {
+    console.log('zzzzzdisplay', type, content, duration);
     Log._debug(`Calling display(${type}, ${content}, ${duration}).`);
     if (this._shown) await this._hide();
     this._content = decodeHtmlEntities(content);

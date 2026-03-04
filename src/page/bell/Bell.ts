@@ -91,7 +91,6 @@ export default class Bell {
 
     this._validateOptions(this._options);
     this._installEventHooks();
-    this._updateState();
   }
 
   private _validateOptions(options: AppUserConfigNotifyButton) {
@@ -316,9 +315,7 @@ export default class Bell {
     await delay(this._options.showLauncherAfter || 0);
     await this._launcher._show();
 
-    this._message._content = decodeHtmlEntities(
-      this._message._getTipForState(),
-    );
+    await this._updateState();
 
     await delay(this._options.showBadgeAfter || 0);
 

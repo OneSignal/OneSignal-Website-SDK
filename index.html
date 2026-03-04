@@ -87,28 +87,6 @@
         new URLSearchParams(window.location.search).get('app_id') ||
         '%VITE_APP_ID%';
 
-      // Track whether to suppress notifications when tab is focused
-      let suppressWhenFocused = false;
-
-      // In-app notification display function
-      function showInAppNotification(notification) {
-        // Remove existing in-app notification if any
-        const existing = document.querySelector('.in-app-notification');
-        if (existing) existing.remove();
-
-        const div = document.createElement('div');
-        div.className = 'in-app-notification';
-        div.innerHTML = `
-          <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-          <h4>${notification.title || 'Notification'}</h4>
-          <p>${notification.body || ''}</p>
-        `;
-        document.body.appendChild(div);
-
-        // Auto-remove after 5 seconds
-        setTimeout(() => div.remove(), 5000);
-      }
-
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function (OneSignal) {
         // for testing consent required
