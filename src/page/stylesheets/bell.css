@@ -294,6 +294,7 @@ body:has(#onesignal-slidedown-container:not(.close-slidedown)) #onesignal-bell-c
         height: 0;
         width: 0;
         position: absolute;
+        pointer-events: none;
       }
 
       &::after {
