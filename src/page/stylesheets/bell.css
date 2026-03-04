@@ -469,7 +469,7 @@
       opacity: 0.5;
       transform: scale(var(--bell-resting-scale, 0.667));
 
-      &:not(:has(.onesignal-bell-launcher-dialog:popover-open)):hover {
+      &:not(:has(.onesignal-bell-launcher-dialog:popover-open)):not(:has(:focus)):hover {
         opacity: 1;
         transform: scale(1);
 

@@ -266,6 +266,10 @@ export default class Bell {
 
     addDomElement(this._button._selector, 'beforeend', logoSvg);
 
+    this._launcher._element?.addEventListener('mouseleave', () => {
+      this._button._element?.blur();
+    });
+
     const dialogEl = this._dialog._element;
     if (dialogEl) {
       dialogEl.addEventListener('toggle', (e) => {
