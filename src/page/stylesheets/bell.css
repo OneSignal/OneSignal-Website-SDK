@@ -464,19 +464,16 @@
       --badge-bg: #e54b4d;
     }
 
-    /* ---- Hover: show message tooltip ---- */
-    &:not(.onesignal-bell-no-tip):hover {
+    /* ---- Hover: inactive bell restore size + show tooltip ---- */
+    &.onesignal-bell-launcher-inactive:hover {
+      opacity: 1;
+      transform: scale(1);
+
       & .onesignal-bell-launcher-message {
         pointer-events: auto;
         opacity: 1;
         transform: translateY(-50%) scaleX(1);
       }
-    }
-
-    /* ---- Hover: inactive bell restore size + opacity ---- */
-    &.onesignal-bell-launcher-inactive:not(.onesignal-bell-no-tip):hover {
-      opacity: 1;
-      transform: scale(1);
 
       & .onesignal-bell-launcher-badge {
         opacity: 0;

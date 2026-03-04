@@ -53,20 +53,14 @@ export default class Message {
 
   async _display(type: string, content: string, duration = 0) {
     Log._debug(`Calling display(${type}, ${content}, ${duration}).`);
-    const launcher = this._bell._launcher._element;
-    launcher?.classList.add('onesignal-bell-no-tip');
-    try {
-      if (this._shown) await this._hide();
-      this._content = decodeHtmlEntities(content);
-      this._contentType = type;
-      await this._show();
-      await delay(duration);
-      await this._hide();
-      this._content = this._getTipForState();
-      this._contentType = 'tip';
-    } finally {
-      launcher?.classList.remove('onesignal-bell-no-tip');
-    }
+    if (this._shown) await this._hide();
+    this._content = decodeHtmlEntities(content);
+    this._contentType = type;
+    await this._show();
+    await delay(duration);
+    await this._hide();
+    this._content = this._getTipForState();
+    this._contentType = 'tip';
   }
 
   _getTipForState(): string {

@@ -128,6 +128,9 @@ export default class Bell {
           if (this._dialog._notificationIcons === null) {
             this._dialog._notificationIcons = await getNotificationIcons();
           }
+          if (!this._actionInProgress) {
+            this._dialog._hide();
+          }
         }
 
         const permission =
@@ -273,10 +276,8 @@ export default class Bell {
         if (te.newState === 'open') {
           this._dialog._updateContent();
           this._launcher._activate();
-          this._launcher._element?.classList.add('onesignal-bell-no-tip');
           this._message._hide();
         } else {
-          this._launcher._element?.classList.remove('onesignal-bell-no-tip');
           if (!this._actionInProgress) {
             this._launcher._inactivate();
           }
@@ -315,7 +316,9 @@ export default class Bell {
     await delay(this._options.showLauncherAfter || 0);
     await this._launcher._show();
 
-    this._message._content = decodeHtmlEntities(this._message._getTipForState());
+    this._message._content = decodeHtmlEntities(
+      this._message._getTipForState(),
+    );
 
     await delay(this._options.showBadgeAfter || 0);
 
@@ -395,7 +398,9 @@ export default class Bell {
 
     if (!this._launcher._element) return;
 
-    this._message._content = decodeHtmlEntities(this._message._getTipForState());
+    this._message._content = decodeHtmlEntities(
+      this._message._getTipForState(),
+    );
   }
 
   get _container() {

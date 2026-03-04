@@ -49,7 +49,6 @@ export default class Launcher {
     const el = this._element;
     if (!el || !this._active) return;
     el.classList.add('onesignal-bell-launcher-inactive');
-    el.classList.remove('onesignal-bell-no-tip');
     await waitForAnimations(el);
   }
 
