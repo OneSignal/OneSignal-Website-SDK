@@ -260,19 +260,19 @@
         opacity 175ms ease-in-out,
         overlay 175ms allow-discrete,
         display 175ms allow-discrete;
-      padding: 0.3em 0.8em 0.6em 0.8em;
+      padding: 4px 12px 8px 12px;
       color: rgb(51, 51, 51);
 
       & ol {
         counter-reset: foo;
         display: table;
-        border-spacing: 0.3em 0.75em;
+        border-spacing: 4px 10px;
       }
 
       & ol > li {
         counter-increment: foo;
         display: table-row;
-        margin-bottom: 0.75em;
+        margin-bottom: 10px;
       }
 
       & ol > li::before {
@@ -309,7 +309,7 @@
 
         & h1 {
           font-size: 15px;
-          line-height: 1.2em;
+          line-height: 18px;
           font-weight: 500;
           letter-spacing: 0.2px;
           text-align: center;
@@ -323,7 +323,7 @@
 
         & .divider {
           border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-          margin: 0.25em -0.93em;
+          margin: 4px -13px;
         }
 
         & .kickback {
@@ -351,7 +351,7 @@
           border-radius: 3px;
           background: rgba(250, 250, 250, 0.5);
           overflow: auto;
-          margin: 0.5em 0;
+          margin: 7px 0;
 
           & .push-notification-icon {
             width: 50px;
@@ -429,7 +429,7 @@
       }
 
       & button {
-        padding: 0.625em 1em;
+        padding: 8px 12px;
         border: none;
         border-radius: 4px;
         font: inherit;
