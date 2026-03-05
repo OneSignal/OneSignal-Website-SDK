@@ -29,8 +29,10 @@ import {
   setGetUserResponse,
   setSendCustomEventResponse,
   setTransferSubscriptionResponse,
+  setUpdateSubscriptionResponse,
   setUpdateUserResponse,
   transferSubscriptionFn,
+  updateSubscriptionFn,
   updateUserFn,
 } from '__test__/support/helpers/requests';
 import {
@@ -713,7 +715,16 @@ describe('OneSignal - No Consent Required', () => {
               external_id: externalId,
             },
             ...BASE_IDENTITY,
-            subscriptions: [],
+            subscriptions: [
+              {
+                device_model: '',
+                device_os: DEVICE_OS,
+                enabled: false,
+                sdk: expect.any(String),
+                token: '',
+                type: 'ChromePush',
+              },
+            ],
           });
         });
 
@@ -747,7 +758,7 @@ describe('OneSignal - No Consent Required', () => {
           });
         });
 
-        test('login then accept web push permissions - it should make two user calls', async () => {
+        test('login then accept web push permissions - it should create user then update subscription', async () => {
           const { promise, resolve } = Promise.withResolvers();
           OneSignal._emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, resolve);
           setGetUserResponse();
@@ -760,6 +771,7 @@ describe('OneSignal - No Consent Required', () => {
               },
             ],
           });
+          setUpdateSubscriptionResponse({ subscriptionId: SUB_ID });
 
           OneSignal._coreDirector._subscriptionModelStore._replaceAll(
             [],
@@ -783,23 +795,11 @@ describe('OneSignal - No Consent Required', () => {
           };
           registerForPushNotifications();
 
-          // first call just sets the external id
+          // create user call includes the empty subscription
           await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
             interval: 0,
           });
-          expect(createUserFn).toHaveBeenCalledWith({
-            identity: {
-              external_id: externalId,
-            },
-            ...BASE_IDENTITY,
-            subscriptions: [],
-          });
-          await promise;
-
-          // second call creates the subscription
-          await vi.waitUntil(() => createUserFn.mock.calls.length === 2, {
-            interval: 1,
-          });
+          expect(createUserFn).toHaveBeenCalledTimes(1);
           expect(createUserFn).toHaveBeenCalledWith({
             identity: {
               external_id: externalId,
@@ -807,14 +807,24 @@ describe('OneSignal - No Consent Required', () => {
             ...BASE_IDENTITY,
             subscriptions: [
               {
-                ...BASE_SUB,
-                token: PUSH_TOKEN,
+                device_model: '',
+                device_os: DEVICE_OS,
+                enabled: false,
+                sdk: expect.any(String),
+                token: '',
                 type: 'ChromePush',
-                web_auth: 'w3cAuth',
-                web_p256: 'w3cP256dh',
               },
             ],
           });
+          await promise;
+
+          // accepting permissions patches the existing subscription with the token
+          await vi.waitUntil(
+            () => updateSubscriptionFn.mock.calls.length >= 1,
+            {
+              interval: 1,
+            },
+          );
 
           let pushSub: SubscriptionSchema | undefined;
           await vi.waitUntil(

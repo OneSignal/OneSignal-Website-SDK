@@ -59,7 +59,6 @@ export default class Message {
   }
 
   async _display(type: string, content: string, duration = 0) {
-    console.log('zzzzzdisplay', type, content, duration);
     Log._debug(`Calling display(${type}, ${content}, ${duration}).`);
     if (this._shown) await this._hide();
     this._content = decodeHtmlEntities(content);

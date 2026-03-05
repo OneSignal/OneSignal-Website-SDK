@@ -1,15 +1,15 @@
 import { IdentityConstants } from 'src/core/constants';
+import { IdentityModel } from 'src/core/models/IdentityModel';
+import { PropertiesModel } from 'src/core/models/PropertiesModel';
+import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import { db } from 'src/shared/database/client';
+import { getSubscriptionType } from 'src/shared/environment/detect';
 import { getAppId } from 'src/shared/helpers/main';
+import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import {
-  createUserOnServer,
-  resetUserModels,
-} from '../../onesignal/userDirector';
-import Log from '../../shared/libraries/Log';
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users
@@ -31,54 +31,31 @@ export default class LoginManager {
       db.put('Ids', { id: token, type: 'jwtToken' });
     }
 
-    let identityModel = OneSignal._coreDirector._getIdentityModel();
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
     const currentOneSignalId = !IDManager._isLocalId(identityModel._onesignalId)
       ? identityModel._onesignalId
       : undefined;
     const currentExternalId = identityModel._externalId;
 
-    // if the current externalId is the same as the one we're trying to set, do nothing
     if (currentExternalId === externalId) {
       Log._debug('Login: External ID already set, skipping login');
       return;
     }
 
-    resetUserModels();
-    identityModel = OneSignal._coreDirector._getIdentityModel();
-
-    // avoid duplicate identity requests, this is needed if dev calls init and login in quick succession e.g.
-    // e.g. OneSignalDeferred.push(OneSignal) => OneSignal.init({...})); OneSignalDeferred.push(OneSignal) => OneSignal.login('some-external-id'));
-    identityModel._setProperty(
+    // avoid duplicate identity requests when dev calls init and login in quick succession
+    const newIdentityModel = LoginManager._resetAndGetIdentityModel();
+    newIdentityModel._setProperty(
       IdentityConstants._ExternalID,
       externalId,
       ModelChangeTags._Hydrate,
     );
-    const newIdentityOneSignalId = identityModel._onesignalId;
-    const appId = getAppId();
 
-    const promises: Promise<void>[] = [
-      OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
-        if (pushOp) {
-          OneSignal._coreDirector._operationRepo._enqueue(
-            new TransferSubscriptionOperation(
-              appId,
-              newIdentityOneSignalId,
-              pushOp.id,
-            ),
-          );
-        }
-      }),
-      OneSignal._coreDirector._operationRepo._enqueueAndWait(
-        new LoginUserOperation(
-          appId,
-          newIdentityOneSignalId,
-          externalId,
-          !currentExternalId ? currentOneSignalId : undefined,
-        ),
-      ),
-    ];
-
-    await Promise.all(promises);
+    await LoginManager._switchUser(
+      newIdentityModel._onesignalId,
+      externalId,
+      !currentExternalId ? currentOneSignalId : undefined,
+      true,
+    );
   }
 
   // public api
@@ -87,21 +64,63 @@ export default class LoginManager {
   }
 
   private static async _logout(): Promise<void> {
-    // check if user is already logged out
     const identityModel = OneSignal._coreDirector._getIdentityModel();
 
     if (!identityModel._externalId)
       return Log._debug('Logout: User is not logged in, skipping logout');
 
-    const hasAnySubscription =
-      OneSignal._coreDirector._subscriptionModelStore._list().length > 0;
+    const newIdentityModel = LoginManager._resetAndGetIdentityModel();
+    await LoginManager._switchUser(newIdentityModel._onesignalId);
+  }
 
-    resetUserModels();
+  private static _resetAndGetIdentityModel() {
+    const newIdentityModel = new IdentityModel();
+    const newPropertiesModel = new PropertiesModel();
 
-    // Only create an anonymous user if there is a subscription to associate with it.
-    // Without a subscription, there is nothing meaningful to register on the server.
-    if (hasAnySubscription) {
-      return createUserOnServer();
-    }
+    const sdkId = IDManager._createLocalId();
+    newIdentityModel._onesignalId = sdkId;
+    newPropertiesModel._onesignalId = sdkId;
+
+    OneSignal._coreDirector._identityModelStore._replace(newIdentityModel);
+    OneSignal._coreDirector._propertiesModelStore._replace(newPropertiesModel);
+
+    return OneSignal._coreDirector._getIdentityModel();
+  }
+
+  private static async _switchUser(
+    newOneSignalId: string,
+    externalId?: string,
+    existingOneSignalId?: string,
+    createSubIfMissing = false,
+  ): Promise<void> {
+    const appId = getAppId();
+
+    await Promise.all([
+      OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
+        if (pushOp) {
+          OneSignal._coreDirector._operationRepo._enqueue(
+            new TransferSubscriptionOperation(appId, newOneSignalId, pushOp.id),
+          );
+        } else if (createSubIfMissing) {
+          const newSub = new SubscriptionModel();
+          newSub._mergeData({
+            enabled: true,
+            id: IDManager._createLocalId(),
+            onesignalId: newOneSignalId,
+            type: getSubscriptionType(),
+            token: '',
+          });
+          OneSignal._coreDirector._subscriptionModelStore._add(newSub);
+        }
+      }),
+      OneSignal._coreDirector._operationRepo._enqueueAndWait(
+        new LoginUserOperation(
+          appId,
+          newOneSignalId,
+          externalId,
+          existingOneSignalId,
+        ),
+      ),
+    ]);
   }
 }

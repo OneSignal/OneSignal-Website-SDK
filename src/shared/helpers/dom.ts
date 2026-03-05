@@ -107,33 +107,6 @@ export function removeCssClass(
   }
 }
 
-export function hasCssClass(
-  targetSelectorOrElement: Element | string,
-  cssClass: string,
-) {
-  if (typeof targetSelectorOrElement === 'string') {
-    const element = document.querySelector(targetSelectorOrElement);
-    if (element === null) {
-      throw new Error(
-        `Cannot find element with selector "${targetSelectorOrElement}"`,
-      );
-    }
-    return element.classList.contains(cssClass);
-  } else if (typeof targetSelectorOrElement === 'object') {
-    return targetSelectorOrElement.classList.contains(cssClass);
-  } else {
-    throw new Error(
-      `${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`,
-    );
-  }
-}
-
-export async function waitForAnimations(el: HTMLElement | null) {
-  if (!el) return;
-  const anims = el.getAnimations();
-  if (anims.length) await Promise.allSettled(anims.map((a) => a.finished));
-}
-
 export function decodeHtmlEntities(text: string): string {
   if (typeof DOMParser === 'undefined') {
     return text;
