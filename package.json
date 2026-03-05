@@ -32,8 +32,8 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest watch --coverage",
     "validate:build": "node build/scripts/validate.js",
-    "lint": "oxlint src; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig",
-    "lint:fix": "oxlint src --fix; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig --fix"
+    "lint": "oxlint src; prettier --check 'src/**/*' '__test__/**/*'",
+    "lint:fix": "oxlint src --fix; prettier --write 'src/**/*' '__test__/**/*'"
   },
   "config": {
     "sdkVersion": "160600"
@@ -60,7 +60,6 @@
     "msw": "^2.12.10",
     "oxlint": "^1.51.0",
     "prettier": "3.8.1",
-    "prettylint": "^2.0.0",
     "terser": "^5.46.0",
     "type-fest": "^5.4.4",
     "typescript": "^5.9.3",
