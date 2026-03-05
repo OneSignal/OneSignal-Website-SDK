@@ -32,8 +32,8 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest watch --coverage",
     "validate:build": "node build/scripts/validate.js",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig",
-    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig --fix"
+    "lint": "oxlint src; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig",
+    "lint:fix": "oxlint src --fix; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig --fix"
   },
   "config": {
     "sdkVersion": "160600"
@@ -51,17 +51,14 @@
     "@types/jsdom": "^28.0.0",
     "@types/jsonp": "^0.2.3",
     "@types/uuid": "^11.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.36.1",
-    "@typescript-eslint/parser": "^5.36.1",
     "@vitest/coverage-v8": "4.0.18",
     "concurrently": "^9.2.1",
     "deepmerge": "^4.3.1",
-    "eslint": "^8.23.0",
-    "eslint-config-prettier": "9.0.0",
     "fake-indexeddb": "6.2.5",
     "intl-tel-input": "^25.15.1",
     "jsdom": "^28.1.0",
     "msw": "^2.12.10",
+    "oxlint": "^1.51.0",
     "prettier": "3.8.1",
     "prettylint": "^2.0.0",
     "terser": "^5.46.0",
