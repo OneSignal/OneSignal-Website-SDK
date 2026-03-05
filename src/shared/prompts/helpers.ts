@@ -10,7 +10,7 @@ export function isCategorySlidedownConfigured(
     prompts,
     DelayedPromptType._Category,
   );
-  if (!!options) {
+  if (options) {
     return !!options.categories && options.categories.length > 0;
   }
   return false;

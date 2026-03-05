@@ -21,7 +21,7 @@ export function getPageViewCount(): number {
     } else {
       return pageViewCount;
     }
-  } catch (e) {
+  } catch {
     /*
         If we're in incognito mode or sessionStorage is otherwise unsupported,
         pretend we're starting our first session.
@@ -33,7 +33,7 @@ export function getPageViewCount(): number {
 export function setPageViewCount(sessionCount: number) {
   try {
     sessionStorage.setItem(SESSION_STORAGE_KEY_NAME, sessionCount.toString());
-  } catch (e) {
+  } catch {
     /*
         If sessionStorage isn't available, don't error.
        */

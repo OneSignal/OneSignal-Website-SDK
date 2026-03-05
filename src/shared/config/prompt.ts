@@ -1,4 +1,3 @@
-import { getValueOrDefault } from '../helpers/general';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../prompts/constants';
 import type {
   AppUserConfigCustomLinkOptions,
@@ -22,14 +21,12 @@ export function getPromptOptionsForDashboardConfiguration(
         autoPrompt:
           staticPrompts.native.enabled &&
           staticPrompts.native.autoPrompt !== false,
-        pageViews: getValueOrDefault(
-          staticPrompts.native.pageViews,
+        pageViews:
+          staticPrompts.native.pageViews ??
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
-        ),
-        timeDelay: getValueOrDefault(
-          staticPrompts.native.timeDelay,
+        timeDelay:
+          staticPrompts.native.timeDelay ??
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
-        ),
       }
     : {
         enabled: false,

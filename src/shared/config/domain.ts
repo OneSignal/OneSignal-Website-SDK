@@ -33,7 +33,7 @@ export function checkRestrictedOrigin(appConfig: AppConfig) {
 function doesCurrentOriginMatchConfigOrigin(configOrigin: string): boolean {
   try {
     return location.origin === new URL(configOrigin).origin;
-  } catch (e) {
+  } catch {
     return false;
   }
 }

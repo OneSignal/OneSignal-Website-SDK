@@ -75,10 +75,10 @@ export function sortArrayOfObjects<TObject, TProperty>(
     const propertyB = predicateForProperty(b);
 
     if (propertyA > propertyB) {
-      return !!descending ? -1 : 1;
+      return descending ? -1 : 1;
     }
     if (propertyA < propertyB) {
-      return !!descending ? 1 : -1;
+      return descending ? 1 : -1;
     }
     return 0;
   });

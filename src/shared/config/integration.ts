@@ -9,7 +9,6 @@ import {
   DEFAULT_SERVICE_WORKER_OPTIONS,
   DEFAULT_SERVICE_WORKER_PATH,
 } from '../context/constants';
-import { getValueOrDefault } from '../helpers/general';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -226,13 +225,13 @@ export function getUserConfigForConfigIntegrationKind(
           userConfig,
         ),
         ...{
-          serviceWorkerParam: !!userConfig.serviceWorkerParam
+          serviceWorkerParam: userConfig.serviceWorkerParam
             ? userConfig.serviceWorkerParam
             : DEFAULT_SERVICE_WORKER_OPTIONS,
-          serviceWorkerPath: !!userConfig.serviceWorkerPath
+          serviceWorkerPath: userConfig.serviceWorkerPath
             ? userConfig.serviceWorkerPath
             : DEFAULT_SERVICE_WORKER_PATH,
-          path: !!userConfig.path ? userConfig.path : '/',
+          path: userConfig.path ? userConfig.path : '/',
         },
         outcomes: {
           direct: serverConfig.config.outcomes.direct,
@@ -273,18 +272,15 @@ function getServiceWorkerValues(
 
   return {
     path: useUserOverride
-      ? getValueOrDefault(userConfig.path, serviceWorker.path)
+      ? (userConfig.path ?? serviceWorker.path)
       : serviceWorker.path,
     serviceWorkerParam: useUserOverride
-      ? getValueOrDefault(userConfig.serviceWorkerParam, {
+      ? (userConfig.serviceWorkerParam ?? {
           scope: serviceWorker.registrationScope,
         })
       : { scope: serviceWorker.registrationScope },
     serviceWorkerPath: useUserOverride
-      ? getValueOrDefault(
-          userConfig.serviceWorkerPath,
-          serviceWorker.workerName,
-        )
+      ? (userConfig.serviceWorkerPath ?? serviceWorker.workerName)
       : serviceWorker.workerName,
   };
 }
@@ -309,39 +305,25 @@ function injectDefaultsIntoPromptOptions(
   const promptOptionsConfig: AppUserConfigPromptOptions = {
     ...promptOptions,
     customlink: {
-      enabled: getValueOrDefault(
-        customlinkUser.enabled,
-        customlinkDefaults.enabled,
-      ),
-      style: getValueOrDefault(customlinkUser.style, customlinkDefaults.style),
-      size: getValueOrDefault(customlinkUser.size, customlinkDefaults.size),
-      unsubscribeEnabled: getValueOrDefault(
-        customlinkUser.unsubscribeEnabled,
+      enabled: customlinkUser.enabled ?? customlinkDefaults.enabled,
+      style: customlinkUser.style ?? customlinkDefaults.style,
+      size: customlinkUser.size ?? customlinkDefaults.size,
+      unsubscribeEnabled:
+        customlinkUser.unsubscribeEnabled ??
         customlinkDefaults.unsubscribeEnabled,
-      ),
       text: {
-        subscribe: getValueOrDefault(
-          customlinkUser.text ? customlinkUser.text.subscribe : undefined,
-          customlinkDefaults.text.subscribe,
-        ),
-        unsubscribe: getValueOrDefault(
-          customlinkUser.text ? customlinkUser.text.unsubscribe : undefined,
+        subscribe:
+          customlinkUser.text?.subscribe ?? customlinkDefaults.text.subscribe,
+        unsubscribe:
+          customlinkUser.text?.unsubscribe ??
           customlinkDefaults.text.unsubscribe,
-        ),
-        explanation: getValueOrDefault(
-          customlinkUser.text ? customlinkUser.text.explanation : undefined,
+        explanation:
+          customlinkUser.text?.explanation ??
           customlinkDefaults.text.explanation,
-        ),
       },
       color: {
-        button: getValueOrDefault(
-          customlinkUser.color ? customlinkUser.color.button : undefined,
-          customlinkDefaults.color.button,
-        ),
-        text: getValueOrDefault(
-          customlinkUser.color ? customlinkUser.color.text : undefined,
-          customlinkDefaults.color.text,
-        ),
+        button: customlinkUser.color?.button ?? customlinkDefaults.color.button,
+        text: customlinkUser.color?.text ?? customlinkDefaults.color.text,
       },
     },
   };
@@ -349,66 +331,51 @@ function injectDefaultsIntoPromptOptions(
   if (promptOptionsConfig.slidedown) {
     promptOptionsConfig.slidedown.prompts =
       promptOptionsConfig.slidedown?.prompts?.map((promptOption) => {
-        promptOption.type = getValueOrDefault(
-          promptOption.type,
-          DelayedPromptType._Push,
-        );
+        promptOption.type = promptOption.type ?? DelayedPromptType._Push;
 
         if (promptOption.type === DelayedPromptType._Category) {
           promptOption.text = {
             ...promptOption.text,
-            positiveUpdateButton: getValueOrDefault(
-              promptOption.text?.positiveUpdateButton,
+            positiveUpdateButton:
+              promptOption.text?.positiveUpdateButton ??
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults
                 .positiveUpdateButton,
-            ),
-            negativeUpdateButton: getValueOrDefault(
-              promptOption.text?.negativeUpdateButton,
+            negativeUpdateButton:
+              promptOption.text?.negativeUpdateButton ??
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults
                 .negativeUpdateButton,
-            ),
-            updateMessage: getValueOrDefault(
-              promptOption.text?.updateMessage,
+            updateMessage:
+              promptOption.text?.updateMessage ??
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage,
-            ),
           };
         }
 
         promptOption.text = {
           ...promptOption.text,
-          actionMessage: getValueOrDefault(
-            promptOption.text?.actionMessage,
+          actionMessage:
+            promptOption.text?.actionMessage ??
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
-          ),
-          acceptButton: getValueOrDefault(
-            promptOption.text?.acceptButton,
+          acceptButton:
+            promptOption.text?.acceptButton ??
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
-          ),
-          cancelButton: getValueOrDefault(
-            promptOption.text?.cancelButton,
+          cancelButton:
+            promptOption.text?.cancelButton ??
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
-          ),
-          confirmMessage: getValueOrDefault(
-            promptOption.text?.confirmMessage,
+          confirmMessage:
+            promptOption.text?.confirmMessage ??
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage,
-          ),
         };
 
         // default autoPrompt to true iff slidedown config exists but omitted the autoPrompt setting
-        promptOption.autoPrompt = getValueOrDefault(
-          promptOption.autoPrompt,
-          true,
-        );
+        promptOption.autoPrompt = promptOption.autoPrompt ?? true;
 
         promptOption.delay = {
-          pageViews: getValueOrDefault(
-            promptOption.delay?.pageViews,
+          pageViews:
+            promptOption.delay?.pageViews ??
             SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
-          ),
-          timeDelay: getValueOrDefault(
-            promptOption.delay?.timeDelay,
+          timeDelay:
+            promptOption.delay?.timeDelay ??
             SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
-          ),
         };
 
         if (promptOption.categories) {
@@ -438,14 +405,12 @@ function injectDefaultsIntoPromptOptions(
 
     promptOptionsConfig.native.enabled = !!promptOptionsConfig.native.enabled;
 
-    promptOptionsConfig.native.pageViews = getValueOrDefault(
-      promptOptionsConfig.native.pageViews,
-      SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
-    );
-    promptOptionsConfig.native.timeDelay = getValueOrDefault(
-      promptOptionsConfig.native.timeDelay,
-      SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
-    );
+    promptOptionsConfig.native.pageViews =
+      promptOptionsConfig.native.pageViews ??
+      SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews;
+    promptOptionsConfig.native.timeDelay =
+      promptOptionsConfig.native.timeDelay ??
+      SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay;
   } else {
     promptOptionsConfig.native = {
       enabled: false,

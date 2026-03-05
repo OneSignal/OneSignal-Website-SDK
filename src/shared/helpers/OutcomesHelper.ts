@@ -131,7 +131,7 @@ export default class OutcomesHelper {
     const existingSentOutcome = await db.get('SentUniqueOutcome', outcomeName);
     const currentSession = await getCurrentSession();
 
-    const existingNotificationIds = !!existingSentOutcome
+    const existingNotificationIds = existingSentOutcome
       ? existingSentOutcome.notificationIds
       : [];
     const notificationIds = [...existingNotificationIds, ...newNotificationIds];

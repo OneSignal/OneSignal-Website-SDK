@@ -68,7 +68,7 @@ export class SlidedownManager {
 
     let _isSlidedownPushDependent = false;
 
-    if (!!slidedownType) {
+    if (slidedownType) {
       _isSlidedownPushDependent = isSlidedownPushDependent(slidedownType);
     }
 
@@ -332,7 +332,7 @@ export class SlidedownManager {
   ): Promise<void> {
     logMethodCall('mountChannelCaptureContainer');
     try {
-      if (!!options.slidedownPromptOptions) {
+      if (options.slidedownPromptOptions) {
         const channelCaptureContainer = new ChannelCaptureContainer(
           options.slidedownPromptOptions,
         );
@@ -425,7 +425,7 @@ export class SlidedownManager {
     if (this._slidedownQueue.length > 0) {
       const options = this._dequeue();
 
-      if (!!options) {
+      if (options) {
         await this._createSlidedown(options);
       }
     }

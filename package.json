@@ -32,8 +32,8 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest watch --coverage",
     "validate:build": "node build/scripts/validate.js",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig",
-    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix; prettylint 'src/**/*' 'test/**/*' '__test__/**/*' --no-editorconfig --fix"
+    "lint": "oxlint src; prettier --check 'src/**/*' '__test__/**/*'",
+    "lint:fix": "oxlint src --fix; prettier --write 'src/**/*' '__test__/**/*'"
   },
   "config": {
     "sdkVersion": "160600"
@@ -51,19 +51,15 @@
     "@types/jsdom": "^28.0.0",
     "@types/jsonp": "^0.2.3",
     "@types/uuid": "^11.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.36.1",
-    "@typescript-eslint/parser": "^5.36.1",
     "@vitest/coverage-v8": "4.0.18",
     "concurrently": "^9.2.1",
     "deepmerge": "^4.3.1",
-    "eslint": "^8.23.0",
-    "eslint-config-prettier": "9.0.0",
     "fake-indexeddb": "6.2.5",
     "intl-tel-input": "^25.15.1",
     "jsdom": "^28.1.0",
     "msw": "^2.12.10",
+    "oxlint": "^1.51.0",
     "prettier": "3.8.1",
-    "prettylint": "^2.0.0",
     "terser": "^5.46.0",
     "type-fest": "^5.4.4",
     "typescript": "^5.9.3",
@@ -81,12 +77,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "43.75 kB",
+      "limit": "43.701 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "12.743 kB",
+      "limit": "12.701 kB",
       "gzip": true
     },
     {

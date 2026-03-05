@@ -319,7 +319,7 @@ function isObjectSerializable(value: unknown): boolean {
   try {
     JSON.stringify(value);
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 }

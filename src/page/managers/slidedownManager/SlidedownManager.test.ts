@@ -307,7 +307,7 @@ export const mockPhoneLibraryLoading = () => {
     OneSignal._didLoadITILibrary = true;
 
     // @ts-expect-error - mock intl-tel-input
-    window.intlTelInput = vi.fn().mockImplementation((input) => ({
+    window.intlTelInput = vi.fn().mockImplementation((_input) => ({
       getNumber: () => '+1234567890', // Return formatted number
       isValidNumber: () => true,
       getNumberType: () => 0,

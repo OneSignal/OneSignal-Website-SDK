@@ -34,7 +34,7 @@ export function isValidUrl(
       if (options && options.requireHttps) {
         return parsedUrl.protocol === 'https:';
       } else return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
