@@ -234,7 +234,7 @@ export class ServiceWorkerManager {
     let workerVersion: string;
     try {
       workerVersion = await timeoutPromise(this._getWorkerVersion(), 2_000);
-    } catch (e) {
+    } catch {
       Log._info(
         '[Service Worker Update] Worker did not reply to version query; assuming older version and updating.',
       );

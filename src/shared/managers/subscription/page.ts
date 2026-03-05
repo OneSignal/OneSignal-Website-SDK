@@ -290,7 +290,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       try {
         await this._context._serviceWorkerManager._installWorker();
         Log._info('SW on Safari successfully installed');
-      } catch (e) {
+      } catch {
         Log._error('SW on Safari failed to install.');
       }
     } else {

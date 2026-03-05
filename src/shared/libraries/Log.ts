@@ -8,7 +8,7 @@ export default class Log {
       /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
       const level = window.localStorage.getItem('loglevel');
       return level?.toLowerCase() === 'trace';
-    } catch (e) {
+    } catch {
       return false;
     }
   }

@@ -16,7 +16,7 @@ export function isLocalStorageSupported(): boolean {
     }
     localStorage.getItem('test');
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -59,7 +59,7 @@ export function getItem(key: string): any | null {
   try {
     // @ts-expect-error - we have this in a try catch
     parsedRecord = JSON.parse(record);
-  } catch (e) {
+  } catch {
     return null;
   }
   if (parsedRecord === null) {
@@ -77,7 +77,7 @@ export function getItem(key: string): any | null {
   let parsedRecordValue = parsedRecord.value;
   try {
     parsedRecordValue = JSON.parse(parsedRecord.value);
-  } catch (e) {
+  } catch {
     return parsedRecordValue;
   }
   return parsedRecordValue;

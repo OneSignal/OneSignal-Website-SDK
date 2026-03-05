@@ -226,13 +226,13 @@ export function getUserConfigForConfigIntegrationKind(
           userConfig,
         ),
         ...{
-          serviceWorkerParam: !!userConfig.serviceWorkerParam
+          serviceWorkerParam: userConfig.serviceWorkerParam
             ? userConfig.serviceWorkerParam
             : DEFAULT_SERVICE_WORKER_OPTIONS,
-          serviceWorkerPath: !!userConfig.serviceWorkerPath
+          serviceWorkerPath: userConfig.serviceWorkerPath
             ? userConfig.serviceWorkerPath
             : DEFAULT_SERVICE_WORKER_PATH,
-          path: !!userConfig.path ? userConfig.path : '/',
+          path: userConfig.path ? userConfig.path : '/',
         },
         outcomes: {
           direct: serverConfig.config.outcomes.direct,

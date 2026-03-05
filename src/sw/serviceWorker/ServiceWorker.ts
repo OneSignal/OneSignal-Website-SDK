@@ -1092,7 +1092,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
       rawPushSubscription = await context._subscriptionManager._subscribe(
         SubscriptionStrategyKind._SubscribeNew,
       );
-    } catch (e) {
+    } catch {
       // Let rawPushSubscription be null
     }
   }

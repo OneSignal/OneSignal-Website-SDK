@@ -101,7 +101,7 @@ export default class Emitter {
   ): (EventHandler | OnceEventHandler)[] | undefined {
     try {
       return this._events[event];
-    } catch (e) {
+    } catch {
       return undefined;
     }
   }

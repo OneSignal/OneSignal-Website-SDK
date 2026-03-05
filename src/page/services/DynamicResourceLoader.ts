@@ -137,7 +137,7 @@ export class DynamicResourceLoader {
         document.querySelector('head')?.appendChild(domElement);
       });
       return ResourceLoadState._Loaded;
-    } catch (e) {
+    } catch {
       return ResourceLoadState._Failed;
     }
   }

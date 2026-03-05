@@ -32,13 +32,13 @@ export class RawPushSubscription implements Serializable {
         let p256dh = null;
         try {
           p256dh = pushSubscription.getKey('p256dh');
-        } catch (e) {
+        } catch {
           // User is most likely running < Chrome < 50
         }
         let auth = null;
         try {
           auth = pushSubscription.getKey('auth');
-        } catch (e) {
+        } catch {
           // User is most likely running < Firefox 45
         }
 
@@ -96,7 +96,7 @@ export class RawPushSubscription implements Serializable {
     }
     try {
       subscription.w3cEndpoint = new URL(bundle.w3cEndpoint);
-    } catch (e) {
+    } catch {
       // w3cEndpoint will be null for Safari
     }
     subscription.w3cP256dh = bundle.w3cP256dh;
