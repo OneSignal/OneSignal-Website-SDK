@@ -7,7 +7,6 @@ import {
   removeCssClass,
   removeDomElement,
 } from 'src/shared/helpers/dom';
-import { getValueOrDefault } from 'src/shared/helpers/general';
 import { getNotificationIcons } from 'src/shared/helpers/main';
 import type { NotificationIcons } from 'src/shared/notifications/types';
 import {
@@ -72,18 +71,16 @@ export default class Slidedown {
           90,
         );
         this._tagCategories = options.categories;
-        this._errorButton = getValueOrDefault(
-          this._options.text.positiveUpdateButton,
-          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton,
-        );
+        this._errorButton =
+          this._options.text.positiveUpdateButton ??
+          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton;
         break;
       case DelayedPromptType._Sms:
       case DelayedPromptType._Email:
       case DelayedPromptType._SmsAndEmail:
-        this._errorButton = getValueOrDefault(
-          this._options.text.acceptButton,
-          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton,
-        );
+        this._errorButton =
+          this._options.text.acceptButton ??
+          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton;
         break;
       default:
         break;

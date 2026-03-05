@@ -3,7 +3,6 @@ import {
   ExecutionResult,
   type IOperationExecutor,
 } from 'src/core/types/operation';
-import { getTimeZoneId } from 'src/shared/helpers/general';
 import {
   getResponseStatusType,
   ResponseStatusType,
@@ -367,3 +366,5 @@ const getLanguage = () => {
     return 'en';
   }
 };
+
+const getTimeZoneId = () => Intl.DateTimeFormat().resolvedOptions().timeZone;

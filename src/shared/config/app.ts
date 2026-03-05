@@ -1,6 +1,5 @@
 import { downloadServerAppConfig } from '../api/page';
 import { InvalidAppIdError } from '../errors/common';
-import { getValueOrDefault } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';
 import { checkRestrictedOrigin, checkUnsupportedSubdomain } from './domain';
 import {
@@ -88,17 +87,14 @@ export function getMergedConfig(
     vapidPublicKey: serverConfig.config.vapid_public_key,
     onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
     userConfig: mergedUserConfig,
-    enableOnSession: getValueOrDefault(
-      serverConfig.features.enable_on_session,
+    enableOnSession:
+      serverConfig.features.enable_on_session ??
       SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed,
-    ),
-    sessionThreshold: getValueOrDefault(
-      serverConfig.features.session_threshold,
+    sessionThreshold:
+      serverConfig.features.session_threshold ??
       SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold,
-    ),
-    enableSessionDuration: getValueOrDefault(
-      serverConfig.features.web_on_focus_enabled,
+    enableSessionDuration:
+      serverConfig.features.web_on_focus_enabled ??
       SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
-    ),
   };
 }
