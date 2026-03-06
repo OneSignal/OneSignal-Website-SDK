@@ -11,16 +11,18 @@ git config user.email "github-actions[bot]@users.noreply.github.com"
 # Create new branch
 BRANCH_NAME="web-sdk-${SDK_VERSION}-release"
 
-# Check if PR already exists
-EXISTING_PR=$(curl -s \
+# Close any existing PRs for this branch
+curl -s \
   -H "Authorization: Bearer $GH_TURBINE_TOKEN" \
   "https://api.github.com/repos/OneSignal/turbine/pulls?head=OneSignal:$BRANCH_NAME&state=open" |
-  jq length)
-
-if [ "$EXISTING_PR" -gt 0 ]; then
-  echo "PR already exists for branch $BRANCH_NAME"
-  exit 0
-fi
+  jq -r '.[].number' | while read PR_NUM; do
+    echo "Closing existing PR #$PR_NUM"
+    curl -sS -X PATCH \
+      -H "Authorization: Bearer $GH_TURBINE_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{"state": "closed"}' \
+      "https://api.github.com/repos/OneSignal/turbine/pulls/$PR_NUM"
+  done
 
 git checkout -B "$BRANCH_NAME"
 

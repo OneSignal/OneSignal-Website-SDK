@@ -1,4 +1,4 @@
-name: Build SDK Files & GCS Upload
+name: Build, Deploy & Create GitHub Release
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
     paths-ignore:
       - '**.md'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   check_release:
@@ -23,52 +26,70 @@ jobs:
                              /Release \d{6}/.test(context.payload.head_commit.message);
             core.setOutput('should_run', shouldRun);
 
-  test_build_deploy:
+  build_deploy:
+    name: Build & Deploy
     runs-on: ubuntu-latest
     needs: check_release
     if: needs.check_release.outputs.should_run == 'true'
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Bun Setup
+      - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: 'Install'
-        run: bun install
+      - name: Install
+        run: bun install --frozen-lockfile
 
-      - name: 'Build for Staging'
+      - name: Build for Staging
         run: bun run build:staging
 
-      - name: 'Build for Production'
+      - name: Build for Production
         run: bun run build:prod
 
-      - name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v1'
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-      - name: 'Upload SDK Files to GCS'
-        uses: 'google-github-actions/upload-cloud-storage@v1'
+      - name: Upload SDK Files to GCS
+        uses: google-github-actions/upload-cloud-storage@v1
         with:
           path: 'build/releases'
           destination: 'sdk-builds-persistence-onesignal/web-sdk/${{ github.sha }}'
           parent: false
 
-      - name: 'Get SDK Version'
+      - name: Get version
         id: get_version
-        run: echo "SDK_VERSION=$(bun -e "console.log(require('./package.json').config.sdkVersion)")" >> $GITHUB_OUTPUT
+        run: |
+          SDK_VERSION=$(bun -e "console.log(require('./package.json').config.sdkVersion)")
+          if git rev-parse "$SDK_VERSION" >/dev/null 2>&1; then
+            echo "Tag $SDK_VERSION already exists, skipping release"
+          else
+            echo "version=$SDK_VERSION" >> $GITHUB_OUTPUT
+          fi
 
-      - name: 'Create turbine pr'
+      - name: Create turbine PR
+        if: steps.get_version.outputs.version != ''
         run: ./build/scripts/turbine.sh
         env:
           GH_TURBINE_TOKEN: ${{ secrets.GH_TURBINE_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
-          SDK_VERSION: ${{ steps.get_version.outputs.SDK_VERSION }}
+          SDK_VERSION: ${{ steps.get_version.outputs.version }}
 
-  create_release:
-    needs: test_build_deploy
-    uses: ./.github/workflows/create-release-on-github.yml
+  create_github_release:
+    needs: build_deploy
+    if: needs.build_deploy.outputs.version != ''
+    uses: OneSignal/sdk-shared/.github/workflows/github-release.yml@main
+    secrets:
+      GH_PUSH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
+    with:
+      version: ${{ needs.build_deploy.outputs.version }}

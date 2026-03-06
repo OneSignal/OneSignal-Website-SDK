@@ -14,21 +14,21 @@
     "build:sdk": "LIB=sdk vite build",
     "build:page": "LIB=page vite build",
     "build:sw": "LIB=worker vite build",
-    "build": "npm run build:sdk && npm run build:page && npm run build:sw",
+    "build": "bun run build:sdk && bun run build:page && bun run build:sw",
     "build:watch": "LIB=sdk vite build --watch",
-    "build:dev": "ENV=development npm run build",
+    "build:dev": "ENV=development bun run build",
     "build:dev:watch": "ENV=development concurrently \"LIB=sdk vite build --watch\" \"LIB=page vite build --watch\" \"LIB=worker vite build --watch\"",
-    "build:staging": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com npm run build",
-    "build:staging:watch": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com npm run build:watch",
-    "build:prod": "ENV=production API=production npm run build && size-limit",
-    "build:prod:watch": "ENV=production API=production npm run build:watch",
-    "postbuild:prod": "npm run validate:build",
-    "build:dev-dev": "API=development npm run build:dev",
-    "build:dev-dev:watch": "API=development npm run build:dev:watch",
-    "build:dev-prod": "API=production API_ORIGIN=onesignal.com npm run build:dev",
-    "build:dev-prod:watch": "API=production API_ORIGIN=onesignal.com npm run build:dev:watch",
-    "build:dev-stag": "API=staging API_ORIGIN=onesignal.com npm run build:dev",
-    "build:dev-stag:watch": "API=staging API_ORIGIN=onesignal.com npm run build:dev:watch",
+    "build:staging": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com bun run build",
+    "build:staging:watch": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com bun run build:watch",
+    "build:prod": "ENV=production API=production bun run build && size-limit",
+    "build:prod:watch": "ENV=production API=production bun run build:watch",
+    "postbuild:prod": "bun run validate:build",
+    "build:dev-dev": "API=development bun run build:dev",
+    "build:dev-dev:watch": "API=development bun run build:dev:watch",
+    "build:dev-prod": "API=production API_ORIGIN=onesignal.com bun run build:dev",
+    "build:dev-prod:watch": "API=production API_ORIGIN=onesignal.com bun run build:dev:watch",
+    "build:dev-stag": "API=staging API_ORIGIN=onesignal.com bun run build:dev",
+    "build:dev-stag:watch": "API=staging API_ORIGIN=onesignal.com bun run build:dev:watch",
     "test": "vitest run --coverage",
     "test:watch": "vitest watch --coverage",
     "validate:build": "node build/scripts/validate.js",
@@ -36,7 +36,7 @@
     "lint:fix": "oxlint src --fix; prettier --write 'src/**/*' '__test__/**/*'"
   },
   "config": {
-    "sdkVersion": "160600"
+    "sdkVersion": "160601"
   },
   "repository": {
     "type": "git",
@@ -77,7 +77,7 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "43.701 kB",
+      "limit": "43.69 kB",
       "gzip": true
     },
     {
