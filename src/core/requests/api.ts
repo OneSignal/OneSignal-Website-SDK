@@ -252,14 +252,12 @@ export async function transferSubscriptionById(
   requestMetadata: RequestMetadata,
   subscriptionId: string,
   identity: IUserIdentity,
-  retainPreviousOwner: boolean,
 ) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.patch<{ identity: IUserIdentity }>(
     `apps/${appId}/subscriptions/${subscriptionId}/owner`,
     {
       identity: { ...identity },
-      retain_previous_owner: retainPreviousOwner,
     },
     requestMetadata.jwtHeader,
   );

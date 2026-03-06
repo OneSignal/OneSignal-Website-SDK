@@ -275,7 +275,6 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       { appId: op._appId },
       op._subscriptionId,
       { onesignal_id: op._onesignalId },
-      false,
     );
 
     if (response.ok) {

@@ -553,7 +553,6 @@ describe('SubscriptionOperationExecutor', () => {
         identity: {
           onesignal_id: ONESIGNAL_ID,
         },
-        retain_previous_owner: false,
       });
     });
 
