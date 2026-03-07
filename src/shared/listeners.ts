@@ -7,7 +7,6 @@ import { decodeHtmlEntities } from './helpers/dom';
 import { getCurrentPushToken, showLocalNotification } from './helpers/main';
 import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
-import { UserState } from './models/UserState';
 import type {
   NotificationClickEvent,
   NotificationClickEventInternal,
@@ -91,18 +90,16 @@ export function triggerNotificationClick(
   );
 }
 
+interface UserState {
+  previousOneSignalId: string | null | undefined;
+  previousExternalId: string | null | undefined;
+}
+
 const getUserState = async (): Promise<UserState> => {
-  const userState = new UserState();
-  userState.previousOneSignalId = '';
-  userState.previousExternalId = '';
-  // previous<OneSignalId|ExternalId> are used to track changes to the user's state.
-  // Displayed in the `current` & `previous` fields of the `userChange` event.
-  userState.previousOneSignalId = await getOptionsValue<string>(
-    'previousOneSignalId',
-  );
-  userState.previousExternalId =
-    await getOptionsValue<string>('previousExternalId');
-  return userState;
+  return {
+    previousOneSignalId: await getOptionsValue<string>('previousOneSignalId'),
+    previousExternalId: await getOptionsValue<string>('previousExternalId'),
+  };
 };
 
 const setUserState = async (userState: UserState) => {
