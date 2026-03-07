@@ -12,8 +12,8 @@ import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import type { AppConfig } from 'src/shared/config/types';
 import { db, getCurrentSession } from 'src/shared/database/client';
 import {
-    getAllNotificationClickedForOutcomes,
-    putNotificationClickedForOutcomes,
+  getAllNotificationClickedForOutcomes,
+  putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
 import Log from 'src/shared/libraries/Log';
@@ -21,16 +21,15 @@ import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/con
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
 import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
-import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import {
-    ONESIGNAL_SESSION_KEY,
-    SessionOrigin,
-    SessionStatus,
+  ONESIGNAL_SESSION_KEY,
+  SessionOrigin,
+  SessionStatus,
 } from 'src/shared/session/constants';
 import type {
-    Session,
-    UpsertOrDeactivateSessionPayload,
+  Session,
+  UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { getAppId, run } from './ServiceWorker';
@@ -43,9 +42,9 @@ vi.mock('../webhooks/notifications/webhookNotificationEvent', () => ({
 }));
 
 import {
-    notificationClick,
-    notificationDismissed,
-    notificationWillDisplay,
+  notificationClick,
+  notificationDismissed,
+  notificationWillDisplay,
 } from '../webhooks/notifications/webhookNotificationEvent';
 import type { OSServiceWorkerFields } from './types';
 
@@ -196,10 +195,7 @@ describe('ServiceWorker', () => {
       logDebugSpy.mockClear();
       self.dispatchEvent(new PushEvent('push', {}));
       await flush();
-      expect(logDebugSpy).toHaveBeenCalledWith(
-        'Valid JSON missing UUID:',
-        {},
-      );
+      expect(logDebugSpy).toHaveBeenCalledWith('Valid JSON missing UUID:', {});
     });
 
     test('should handle successful push event', async () => {
@@ -570,8 +566,8 @@ describe('ServiceWorker', () => {
 
       const [rawSubscription, subscriptionState] =
         registerSubscriptionCall.mock.calls[0];
-      expect(rawSubscription).toBeInstanceOf(RawPushSubscription);
-      expect(rawSubscription?.w3cEndpoint?.href).toBe('https://example.com/');
+      expect(rawSubscription).toBeDefined();
+      expect(rawSubscription?.w3cEndpoint).toBe('https://example.com/');
       expect(rawSubscription?.safariDeviceToken).toBeUndefined();
       expect(subscriptionState).toBe(NotificationType._PermissionRevoked);
     });

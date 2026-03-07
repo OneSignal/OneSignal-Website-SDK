@@ -33,7 +33,10 @@ import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
 import type { WorkerMessengerMessage } from 'src/shared/libraries/workerMessenger/types';
 import ContextSW from 'src/shared/models/ContextSW';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
-import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import {
+  type RawPushSubscription,
+  rawPushSubscriptionFromW3c,
+} from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import type {
   IMutableOSNotification,
@@ -1053,9 +1056,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
   // Set it initially by the provided new push subscription
   const providedNewSubscription = event.newSubscription;
   if (providedNewSubscription) {
-    rawPushSubscription = RawPushSubscription._setFromW3cSubscription(
-      providedNewSubscription,
-    );
+    rawPushSubscription = rawPushSubscriptionFromW3c(providedNewSubscription);
   } else {
     // Otherwise set our push registration by resubscribing
     try {

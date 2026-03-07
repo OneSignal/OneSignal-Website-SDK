@@ -10,7 +10,7 @@ import type {
   PropertiesSchema,
   SubscriptionSchema,
 } from 'src/shared/database/types';
-import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import type { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
 /**
  * Mocks `delay` from `src/shared/helpers/general` to resolve immediately.
@@ -163,11 +163,9 @@ export const setupLoadStylesheet = async () => {
   ).mockResolvedValue(ResourceLoadState._Loaded);
 };
 
-export const getRawPushSubscription = () => {
-  const rawPushSubscription = new RawPushSubscription();
-  rawPushSubscription.w3cEndpoint = new URL(PUSH_TOKEN);
-  rawPushSubscription.w3cP256dh = 'w3cP256dh';
-  rawPushSubscription.w3cAuth = 'w3cAuth';
-  rawPushSubscription.safariDeviceToken = 'safariDeviceToken';
-  return rawPushSubscription;
-};
+export const getRawPushSubscription = (): RawPushSubscription => ({
+  w3cEndpoint: PUSH_TOKEN,
+  w3cP256dh: 'w3cP256dh',
+  w3cAuth: 'w3cAuth',
+  safariDeviceToken: 'safariDeviceToken',
+});

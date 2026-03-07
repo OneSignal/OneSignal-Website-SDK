@@ -2,7 +2,7 @@ import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import LoginManager from 'src/page/managers/LoginManager';
-import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import { serializePushSubscriptionRecord } from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
 import { getSubscription } from 'src/shared/database/subscription';
 import {
@@ -24,7 +24,7 @@ import { ServiceWorkerActiveState } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import { isCompleteSubscriptionObject } from 'src/shared/managers/utils';
 import type { PushSubscriptionState } from 'src/shared/models/PushSubscriptionState';
-import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import type { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';
 import {
   UnsubscriptionStrategy,
@@ -96,9 +96,8 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   }
 
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
-  const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
-    rawPushSubscription,
-  )._serialize();
+  const serializedSubscriptionRecord =
+    serializePushSubscriptionRecord(rawPushSubscription);
   for (const key in serializedSubscriptionRecord) {
     const modelKey = key as keyof typeof serializedSubscriptionRecord;
     pushModel._setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
@@ -303,7 +302,6 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   }
 
   private async _subscribeSafari(): Promise<RawPushSubscription> {
-    const pushSubscriptionDetails = new RawPushSubscription();
     if (!this._config.safariWebId) {
       throw MissingSafariWebIdError;
     }
@@ -313,10 +311,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       {};
 
     if (existingDeviceToken) {
-      pushSubscriptionDetails._setFromSafariSubscription(
-        existingDeviceToken.toLowerCase(),
-      );
-      return pushSubscriptionDetails;
+      return { safariDeviceToken: existingDeviceToken.toLowerCase() };
     }
 
     /*
@@ -337,12 +332,10 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     const deviceToken = await this._subscribeSafariPromptPermission();
     triggerNotificationPermissionChanged();
     if (deviceToken) {
-      pushSubscriptionDetails._setFromSafariSubscription(deviceToken);
-    } else {
-      this._safariPermissionPromptFailed = true;
-      throw new Error('Safari url/icon/certificate invalid or in private mode');
+      return { safariDeviceToken: deviceToken };
     }
-    return pushSubscriptionDetails;
+    this._safariPermissionPromptFailed = true;
+    throw new Error('Safari url/icon/certificate invalid or in private mode');
   }
 
   private async _subscribeSafariPromptPermission(): Promise<string | null> {
@@ -465,7 +458,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   ) {
     if (isFirstPageView()) {
       this._context._subscriptionManager._registerSubscription(
-        new RawPushSubscription(),
+        {},
         subscriptionState,
       );
       incrementPageViewCount();
