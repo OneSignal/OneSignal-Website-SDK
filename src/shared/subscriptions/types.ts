@@ -12,3 +12,8 @@ export type SubscriptionTypeValue =
 
 export type NotificationTypeValue =
   (typeof NotificationType)[keyof typeof NotificationType];
+
+export interface PushSubscriptionState {
+  _subscribed: boolean;
+  _optedOut: boolean;
+}

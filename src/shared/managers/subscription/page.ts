@@ -23,7 +23,7 @@ import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permiss
 import { ServiceWorkerActiveState } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import { isCompleteSubscriptionObject } from 'src/shared/managers/utils';
-import type { PushSubscriptionState } from 'src/shared/models/PushSubscriptionState';
+import type { PushSubscriptionState } from 'src/shared/subscriptions/types';
 import type { RawPushSubscription } from 'src/shared/subscriptions/rawPushSubscription';
 import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';
 import {
@@ -109,7 +109,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
   public async _isPushNotificationsEnabled(): Promise<boolean> {
     const subscriptionState = await this._getSubscriptionState();
-    return subscriptionState.subscribed && !subscriptionState.optedOut;
+    return subscriptionState._subscribed && !subscriptionState._optedOut;
   }
 
   async _updateNotificationTypes(): Promise<void> {
@@ -155,7 +155,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     const subscriptionState = await this._getSubscriptionState();
     const permission =
       await OneSignal._context._permissionManager._getPermissionStatus();
-    return permission === 'granted' && !subscriptionState.optedOut;
+    return permission === 'granted' && !subscriptionState._optedOut;
   }
 
   /**
@@ -211,8 +211,8 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       );
 
       return {
-        subscribed: isSubscribedToSafari,
-        optedOut: !!_optedOut,
+        _subscribed: isSubscribedToSafari,
+        _optedOut: !!_optedOut,
       };
     }
 
@@ -225,8 +225,8 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     if (!workerRegistration) {
       /* You can't be subscribed without a service worker registration */
       return {
-        subscribed: false,
-        optedOut: !!_optedOut,
+        _subscribed: false,
+        _optedOut: !!_optedOut,
       };
     }
 
@@ -248,8 +248,8 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     );
 
     return {
-      subscribed: isPushEnabled,
-      optedOut: !!_optedOut,
+      _subscribed: isPushEnabled,
+      _optedOut: !!_optedOut,
     };
   }
 
