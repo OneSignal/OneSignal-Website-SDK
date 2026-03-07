@@ -82,7 +82,7 @@ describe('Bell', () => {
     await bell._create();
 
     expect(errorSpy).toHaveBeenCalledWith(
-      'Notify button requires CSS Anchor Positioning support.',
+      'Bell requires CSS Anchor Positioning',
     );
     expect(loadSpy).not.toHaveBeenCalled();
   });

@@ -123,7 +123,7 @@ describe('requestPermission', () => {
     notifications.requestPermission();
     await expect(notifications.requestPermission()).resolves.toBe(false);
     expect(debugSpy).toHaveBeenCalledWith(
-      'Already showing autoprompt. Abort showing a native prompt.',
+      'Autoprompt already showing',
     );
 
     // permission is denied

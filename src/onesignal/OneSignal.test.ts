@@ -466,7 +466,7 @@ describe('OneSignal - No Consent Required', () => {
 
           expect(addAliasFn).toHaveBeenCalledTimes(1);
           expect(debugSpy).toHaveBeenCalledWith(
-            'Login: External ID already set, skipping login',
+            'Login: externalId already set',
           );
           await vi.waitUntil(
             () => transferSubscriptionFn.mock.calls.length === 1,
@@ -845,7 +845,7 @@ describe('OneSignal - No Consent Required', () => {
 
         OneSignal.logout();
         expect(debugSpy).toHaveBeenCalledWith(
-          'Logout: User is not logged in, skipping logout',
+          'Logout: not logged in',
         );
       });
 

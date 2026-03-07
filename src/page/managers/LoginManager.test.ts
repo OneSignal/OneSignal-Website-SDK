@@ -19,7 +19,7 @@ describe('LoginManager', () => {
 
     await LoginManager.login('same-id');
     expect(debugSpy).toHaveBeenCalledWith(
-      'Login: External ID already set, skipping login',
+      'Login: externalId already set',
     );
   });
 
@@ -99,7 +99,7 @@ describe('LoginManager', () => {
     await updateIdentityModel('external_id', undefined);
     await LoginManager.logout();
     expect(debugSpy).toHaveBeenCalledWith(
-      'Logout: User is not logged in, skipping logout',
+      'Logout: not logged in',
     );
   });
 

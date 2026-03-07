@@ -492,7 +492,7 @@ describe('Custom Events', () => {
 
     updateIdentityModel('onesignal_id', IDManager._createLocalId());
     userNamespace.trackEvent(name, {});
-    expect(errorSpy).toHaveBeenCalledWith('User must be logged in first.');
+    expect(errorSpy).toHaveBeenCalledWith('User not logged in');
     errorSpy.mockClear();
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
@@ -506,7 +506,7 @@ describe('Custom Events', () => {
     // @ts-expect-error - mock invalid argument
     userNamespace.trackEvent(name, 123);
     expect(errorSpy).toHaveBeenCalledWith(
-      'Properties must be JSON-serializable',
+      'Properties not serializable',
     );
 
     // big ints can't be serialized
@@ -514,7 +514,7 @@ describe('Custom Events', () => {
       data: 10n,
     });
     expect(errorSpy).toHaveBeenCalledWith(
-      'Properties must be JSON-serializable',
+      'Properties not serializable',
     );
 
     userNamespace.trackEvent(name, properties);
