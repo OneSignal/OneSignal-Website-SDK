@@ -76,7 +76,7 @@ async function sessionInit(): Promise<void> {
     (await OneSignal._context._subscriptionManager._isOptedOut()) ?? false;
   // saves isOptedOut to localStorage. used for require user interaction functionality
   const subscription = await getSubscription();
-  subscription.optedOut = isOptedOut;
+  subscription._optedOut = isOptedOut;
 
   await setSubscription(subscription);
   await handleAutoResubscribe(isOptedOut);

@@ -12,8 +12,8 @@ import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import type { AppConfig } from 'src/shared/config/types';
 import { db, getCurrentSession } from 'src/shared/database/client';
 import {
-  getAllNotificationClickedForOutcomes,
-  putNotificationClickedForOutcomes,
+    getAllNotificationClickedForOutcomes,
+    putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
 import Log from 'src/shared/libraries/Log';
@@ -24,13 +24,13 @@ import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import {
-  ONESIGNAL_SESSION_KEY,
-  SessionOrigin,
-  SessionStatus,
+    ONESIGNAL_SESSION_KEY,
+    SessionOrigin,
+    SessionStatus,
 } from 'src/shared/session/constants';
 import type {
-  Session,
-  UpsertOrDeactivateSessionPayload,
+    Session,
+    UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { getAppId, run } from './ServiceWorker';
@@ -43,9 +43,9 @@ vi.mock('../webhooks/notifications/webhookNotificationEvent', () => ({
 }));
 
 import {
-  notificationClick,
-  notificationDismissed,
-  notificationWillDisplay,
+    notificationClick,
+    notificationDismissed,
+    notificationWillDisplay,
 } from '../webhooks/notifications/webhookNotificationEvent';
 import type { OSServiceWorkerFields } from './types';
 
@@ -548,7 +548,7 @@ describe('ServiceWorker', () => {
 
       // the device id will be reset regardless of the old subscription state
       const subscription = await getSubscription();
-      expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
+      expect(subscription._deviceId).toBe(DEFAULT_DEVICE_ID);
     });
 
     test('with new subscription ', async () => {
@@ -751,11 +751,11 @@ describe('ServiceWorker', () => {
       userConfig: TestContext.getFakeAppUserConfig(),
     };
     const serializedSubscription = {
-      createdAt: null,
-      deviceId: DEFAULT_DEVICE_ID,
-      expirationTime: null,
-      optedOut: false,
-      subscriptionToken: endpoint + '/',
+      _createdAt: null,
+      _deviceId: DEFAULT_DEVICE_ID,
+      _expirationTime: null,
+      _optedOut: false,
+      _token: endpoint + '/',
     };
 
     beforeEach(async () => {

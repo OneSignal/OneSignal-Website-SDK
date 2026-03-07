@@ -1,25 +1,25 @@
 import { getDBAppConfig } from 'src/shared/database/config';
 import {
-  getSubscription,
-  setSubscription,
+    getSubscription,
+    setSubscription,
 } from 'src/shared/database/subscription';
 import {
-  AppIDMissingError,
-  MalformedArgumentError,
+    AppIDMissingError,
+    MalformedArgumentError,
 } from 'src/shared/errors/common';
 import {
-  checkAndTriggerSubscriptionChanged,
-  onInternalSubscriptionSet,
+    checkAndTriggerSubscriptionChanged,
+    onInternalSubscriptionSet,
 } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
 import { isCompleteSubscriptionObject } from '../shared/managers/utils';
-import { Subscription } from '../shared/models/Subscription';
+import type { Subscription } from '../shared/database/types';
 import {
-  awaitOneSignalInitAndSupported,
-  logMethodCall,
+    awaitOneSignalInitAndSupported,
+    logMethodCall,
 } from '../shared/utils/utils';
 
 export default class PushSubscriptionNamespace extends EventListenerBase {
@@ -41,9 +41,9 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
       return;
     }
 
-    this._optedIn = !subscription.optedOut;
+    this._optedIn = !subscription._optedOut;
     this._permission = permission;
-    this._token = subscription.subscriptionToken;
+    this._token = subscription._token;
 
     OneSignal._coreDirector
       ._getPushSubscriptionModel()
@@ -136,9 +136,9 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
       throw MalformedArgumentError('enabled');
     }
 
-    subscriptionFromDb.optedOut = !enabled;
+    subscriptionFromDb._optedOut = !enabled;
     await setSubscription(subscriptionFromDb);
-    onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch((e) => {
+    onInternalSubscriptionSet(subscriptionFromDb._optedOut).catch((e) => {
       Log._error(e);
     });
     checkAndTriggerSubscriptionChanged().catch((e) => {

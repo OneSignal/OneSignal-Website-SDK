@@ -132,8 +132,8 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   }
 
   async _getNotificationTypes(): Promise<NotificationTypeValue> {
-    const { optedOut } = await getSubscription();
-    if (optedOut) {
+    const { _optedOut } = await getSubscription();
+    if (_optedOut) {
       return NotificationType._UserOptedOut;
     }
 
@@ -168,9 +168,9 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     callback?: (optedOut: boolean | undefined | null) => void,
   ): Promise<boolean | undefined | null> {
     logMethodCall('isOptedOut', callback);
-    const { optedOut } = await getSubscription();
-    executeCallback(callback, optedOut);
-    return optedOut;
+    const { _optedOut } = await getSubscription();
+    executeCallback(callback, _optedOut);
+    return _optedOut;
   }
 
   /**
@@ -192,7 +192,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * Returns an object describing the user's actual push subscription state and opt-out status.
    */
   public async _getSubscriptionState(): Promise<PushSubscriptionState> {
-    const { optedOut, subscriptionToken } = await getSubscription();
+    const { _optedOut, _token } = await getSubscription();
 
     const pushSubscriptionModel =
       await OneSignal._coreDirector._getPushSubscriptionModel();
@@ -206,14 +206,14 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       );
       const isSubscribedToSafari = !!(
         isValidPushSubscription &&
-        subscriptionToken &&
+        _token &&
         subscriptionState?.permission === 'granted' &&
         subscriptionState?.deviceToken
       );
 
       return {
         subscribed: isSubscribedToSafari,
-        optedOut: !!optedOut,
+        optedOut: !!_optedOut,
       };
     }
 
@@ -227,7 +227,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       /* You can't be subscribed without a service worker registration */
       return {
         subscribed: false,
-        optedOut: !!optedOut,
+        optedOut: !!_optedOut,
       };
     }
 
@@ -244,13 +244,13 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
      */
     const isPushEnabled = !!(
       isValidPushSubscription &&
-      subscriptionToken &&
+      _token &&
       notificationPermission === 'granted'
     );
 
     return {
       subscribed: isPushEnabled,
-      optedOut: !!optedOut,
+      optedOut: !!_optedOut,
     };
   }
 
@@ -518,7 +518,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     // No push subscription expiration time
     if (!pushSubscription.expirationTime) return false;
 
-    let { createdAt: subscriptionCreatedAt } = await getSubscription();
+    let { _createdAt: subscriptionCreatedAt } = await getSubscription();
 
     if (!subscriptionCreatedAt) {
       /* If we don't have a record of when the subscription was created, set it into the future to
