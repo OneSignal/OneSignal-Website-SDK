@@ -5,7 +5,7 @@ import { delay } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';
 import Log from '../libraries/Log';
 import type { APIHeaders } from 'src/core/types/api';
-import { IS_SERVICE_WORKER, VERSION } from '../utils/env';
+import { VERSION } from '../utils/env';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -15,13 +15,6 @@ export interface OneSignalApiBaseResponse<T = unknown> {
   status: number;
   retryAfterSeconds?: number;
 }
-
-const getOrigin = () => {
-  if (IS_SERVICE_WORKER) {
-    return self.location.origin;
-  }
-  return window.location.origin;
-};
 
 export function get<T>(
   action: string,
@@ -77,7 +70,7 @@ function call<T = unknown>(
   }
 
   const callHeaders = new Headers();
-  callHeaders.append('Origin', getOrigin());
+  callHeaders.append('Origin', self.location.origin);
   callHeaders.append('SDK-Version', `onesignal/web/${VERSION}`);
   callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
   callHeaders.append('Accept', 'application/vnd.onesignal.v1+json');
