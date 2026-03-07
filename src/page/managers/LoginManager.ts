@@ -28,7 +28,7 @@ export default class LoginManager {
     token?: string,
   ): Promise<void> {
     if (token) {
-      db.put('Ids', { id: token, type: 'jwtToken' });
+      db._put('Ids', { id: token, type: 'jwtToken' });
     }
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
@@ -66,8 +66,7 @@ export default class LoginManager {
   private static async _logout(): Promise<void> {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
 
-    if (!identityModel._externalId)
-      return Log._debug('Logout: not logged in');
+    if (!identityModel._externalId) return Log._debug('Logout: not logged in');
 
     const newIdentityModel = LoginManager._resetAndGetIdentityModel();
     await LoginManager._switchUser(newIdentityModel._onesignalId);

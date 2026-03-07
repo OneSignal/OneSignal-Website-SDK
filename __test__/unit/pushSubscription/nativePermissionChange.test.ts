@@ -34,7 +34,7 @@ describe('Notification Types are set correctly on subscription change', () => {
   });
 
   const setDbPermission = async (permission: NotificationPermission) => {
-    await db.put('Options', {
+    await db._put('Options', {
       key: 'notificationPermission',
       value: permission,
     });

@@ -37,7 +37,7 @@ export const getAppState = async (): Promise<AppState> => {
 
 export const setAppState = async (appState: AppState) => {
   if (appState.defaultNotificationUrl)
-    await db.put('Options', {
+    await db._put('Options', {
       key: 'defaultUrl',
       value: appState.defaultNotificationUrl,
     });
@@ -45,31 +45,31 @@ export const setAppState = async (appState: AppState) => {
     appState.defaultNotificationTitle ||
     appState.defaultNotificationTitle === ''
   )
-    await db.put('Options', {
+    await db._put('Options', {
       key: 'defaultTitle',
       value: appState.defaultNotificationTitle,
     });
 
   if (appState.lastKnownPushEnabled != null)
-    await db.put('Options', {
+    await db._put('Options', {
       key: 'isPushEnabled',
       value: appState.lastKnownPushEnabled,
     });
 
   if (appState.lastKnownPushId != null)
-    await db.put('Options', {
+    await db._put('Options', {
       key: 'lastPushId',
       value: appState.lastKnownPushId,
     });
 
   if (appState.lastKnownPushToken != null)
-    await db.put('Options', {
+    await db._put('Options', {
       key: 'lastPushToken',
       value: appState.lastKnownPushToken,
     });
 
   if (appState.lastKnownOptedIn != null)
-    await db.put('Options', {
+    await db._put('Options', {
       key: 'lastOptedIn',
       value: appState.lastKnownOptedIn,
     });

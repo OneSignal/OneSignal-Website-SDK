@@ -84,7 +84,7 @@ async function sessionInit(): Promise<void> {
   const isSubscribed =
     await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
   // saves isSubscribed to IndexedDb. used for require user interaction functionality
-  await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
+  await db._put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
   if (OneSignal.config?.userConfig.promptOptions?.autoPrompt && !isOptedOut) {
     OneSignal._context._promptsManager._spawnAutoPrompts();
@@ -138,11 +138,11 @@ async function storeInitialValues() {
   const isOptedOut =
     await OneSignal._context._subscriptionManager._isOptedOut();
   limitStorePut('subscription.optedOut', isOptedOut);
-  await db.put('Options', {
+  await db._put('Options', {
     key: 'isPushEnabled',
     value: isPushEnabled,
   });
-  await db.put('Options', {
+  await db._put('Options', {
     key: 'notificationPermission',
     value: notificationPermission,
   });
@@ -286,7 +286,7 @@ export async function saveInitOptions() {
 
   const persistNotification = OneSignal.config?.userConfig.persistNotification;
   opPromises.push(
-    db.put('Options', {
+    db._put('Options', {
       key: 'persistNotification',
       value: persistNotification != null ? persistNotification : true,
     }),
@@ -303,14 +303,14 @@ export async function saveInitOptions() {
       webhookOptions[event as keyof typeof webhookOptions]
     ) {
       opPromises.push(
-        db.put('Options', {
+        db._put('Options', {
           key: `webhooks.${event}` as OptionKey,
           value: webhookOptions[event as keyof typeof webhookOptions],
         }),
       );
     } else {
       opPromises.push(
-        db.put('Options', {
+        db._put('Options', {
           key: `webhooks.${event}` as OptionKey,
           value: false,
         }),
@@ -318,21 +318,21 @@ export async function saveInitOptions() {
     }
   });
   if (webhookOptions && webhookOptions.cors) {
-    opPromises.push(db.put('Options', { key: `webhooks.cors`, value: true }));
+    opPromises.push(db._put('Options', { key: `webhooks.cors`, value: true }));
   } else {
-    opPromises.push(db.put('Options', { key: `webhooks.cors`, value: false }));
+    opPromises.push(db._put('Options', { key: `webhooks.cors`, value: false }));
   }
 
   if (OneSignal.config?.userConfig.notificationClickHandlerMatch) {
     opPromises.push(
-      db.put('Options', {
+      db._put('Options', {
         key: 'notificationClickHandlerMatch',
         value: OneSignal.config.userConfig.notificationClickHandlerMatch,
       }),
     );
   } else {
     opPromises.push(
-      db.put('Options', {
+      db._put('Options', {
         key: 'notificationClickHandlerMatch',
         value: 'exact',
       }),
@@ -341,14 +341,14 @@ export async function saveInitOptions() {
 
   if (OneSignal.config?.userConfig.notificationClickHandlerAction) {
     opPromises.push(
-      db.put('Options', {
+      db._put('Options', {
         key: 'notificationClickHandlerAction',
         value: OneSignal.config.userConfig.notificationClickHandlerAction,
       }),
     );
   } else {
     opPromises.push(
-      db.put('Options', {
+      db._put('Options', {
         key: 'notificationClickHandlerAction',
         value: 'navigate',
       }),
@@ -364,21 +364,21 @@ export async function initSaveState(overridingPageTitle?: string) {
   const previousAppId = await getIdsValue<string>('appId');
   if (previousAppId && previousAppId !== appId) {
     Log._info(`App ID changed ${previousAppId} -> ${appId}, clearing state`);
-    await db.put('Options', { key: 'isPushEnabled', value: null });
-    await db.put('Options', { key: 'lastPushId', value: null });
-    await db.put('Options', { key: 'lastPushToken', value: null });
-    await db.put('Options', { key: 'lastOptedIn', value: null });
-    await db.put('Ids', { type: 'registrationId', id: null });
-    await db.put('Ids', { type: 'userId', id: null });
+    await db._put('Options', { key: 'isPushEnabled', value: null });
+    await db._put('Options', { key: 'lastPushId', value: null });
+    await db._put('Options', { key: 'lastPushToken', value: null });
+    await db._put('Options', { key: 'lastOptedIn', value: null });
+    await db._put('Ids', { type: 'registrationId', id: null });
+    await db._put('Ids', { type: 'userId', id: null });
     OneSignal._coreDirector._subscriptionModelStore._clear(
       ModelChangeTags._Hydrate,
     );
   }
 
-  await db.put('Ids', { type: 'appId', id: appId });
+  await db._put('Ids', { type: 'appId', id: appId });
   const pageTitle: string =
     overridingPageTitle || config.siteName || document.title || 'Notification';
-  await db.put('Options', { key: 'pageTitle', value: pageTitle });
+  await db._put('Options', { key: 'pageTitle', value: pageTitle });
   Log._info(`Set pageTitle to be '${pageTitle}'.`);
 }
 

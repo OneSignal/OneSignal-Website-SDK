@@ -8,7 +8,7 @@ import { db } from 'src/shared/database/client';
 export async function getPushSubscriptionIdByToken(
   token: string,
 ): Promise<string | undefined> {
-  const pushSubscriptions = await db.getAll('subscriptions');
+  const pushSubscriptions = await db._getAll('subscriptions');
   for (const pushSubscription of pushSubscriptions) {
     if (pushSubscription['token'] === token) {
       return pushSubscription['id'] as string;

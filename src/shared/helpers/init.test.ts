@@ -84,20 +84,22 @@ test('correct degree of persistNotification setting should be stored', async () 
   // If not set, default to true
   delete config.userConfig.persistNotification;
   await InitHelper.saveInitOptions();
-  let persistNotification = (await db.get('Options', 'persistNotification'))
+  let persistNotification = (await db._get('Options', 'persistNotification'))
     ?.value;
   expect(persistNotification).toBe(true);
 
   // If set to false, ensure value is false
   config.userConfig.persistNotification = false;
   await InitHelper.saveInitOptions();
-  persistNotification = (await db.get('Options', 'persistNotification'))?.value;
+  persistNotification = (await db._get('Options', 'persistNotification'))
+    ?.value;
   expect(persistNotification).toBe(false);
 
   // If set to true, ensure value is true
   config.userConfig.persistNotification = true;
   await InitHelper.saveInitOptions();
-  persistNotification = (await db.get('Options', 'persistNotification'))?.value;
+  persistNotification = (await db._get('Options', 'persistNotification'))
+    ?.value;
   expect(persistNotification).toBe(true);
 });
 
@@ -107,15 +109,15 @@ describe('initSaveState: App ID migration', () => {
   const NEW_APP_ID = APP_ID; // the default test app id used in TestEnvironment
 
   async function seedStaleState() {
-    await db.put('Ids', { type: 'appId', id: OLD_APP_ID });
-    await db.put('Options', { key: 'isPushEnabled', value: true });
-    await db.put('Options', { key: 'lastPushId', value: 'old-push-id' });
-    await db.put('Options', {
+    await db._put('Ids', { type: 'appId', id: OLD_APP_ID });
+    await db._put('Options', { key: 'isPushEnabled', value: true });
+    await db._put('Options', { key: 'lastPushId', value: 'old-push-id' });
+    await db._put('Options', {
       key: 'lastPushToken',
       value: 'old-push-token',
     });
-    await db.put('Options', { key: 'lastOptedIn', value: true });
-    await db.put('Ids', { type: 'registrationId', id: 'old-reg-token' });
+    await db._put('Options', { key: 'lastOptedIn', value: true });
+    await db._put('Ids', { type: 'registrationId', id: 'old-reg-token' });
   }
 
   test('clears stale lastKnown* values when App ID changes', async () => {
@@ -146,13 +148,13 @@ describe('initSaveState: App ID migration', () => {
 
   test('clears stale registrationId and deviceId when App ID changes', async () => {
     await seedStaleState();
-    await db.put('Ids', { type: 'userId', id: 'old-device-id' });
+    await db._put('Ids', { type: 'userId', id: 'old-device-id' });
 
     await InitHelper.initSaveState();
 
-    const regId = await db.get('Ids', 'registrationId');
+    const regId = await db._get('Ids', 'registrationId');
     expect(regId?.id).toBeNull();
-    const userId = await db.get('Ids', 'userId');
+    const userId = await db._get('Ids', 'userId');
     expect(userId?.id).toBeNull();
   });
 
@@ -161,19 +163,19 @@ describe('initSaveState: App ID migration', () => {
 
     await InitHelper.initSaveState();
 
-    const storedAppId = await db.get('Ids', 'appId');
+    const storedAppId = await db._get('Ids', 'appId');
     expect(storedAppId?.id).toBe(NEW_APP_ID);
   });
 
   test('does NOT clear state when App ID has not changed', async () => {
-    await db.put('Ids', { type: 'appId', id: NEW_APP_ID });
-    await db.put('Options', { key: 'isPushEnabled', value: true });
-    await db.put('Options', { key: 'lastPushId', value: 'current-id' });
-    await db.put('Options', {
+    await db._put('Ids', { type: 'appId', id: NEW_APP_ID });
+    await db._put('Options', { key: 'isPushEnabled', value: true });
+    await db._put('Options', { key: 'lastPushId', value: 'current-id' });
+    await db._put('Options', {
       key: 'lastPushToken',
       value: 'current-token',
     });
-    await db.put('Options', { key: 'lastOptedIn', value: true });
+    await db._put('Options', { key: 'lastOptedIn', value: true });
 
     await InitHelper.initSaveState();
 
@@ -185,14 +187,14 @@ describe('initSaveState: App ID migration', () => {
   });
 
   test('does NOT clear state on first-ever initialization (no previous App ID)', async () => {
-    await db.put('Options', { key: 'isPushEnabled', value: true });
+    await db._put('Options', { key: 'isPushEnabled', value: true });
 
     await InitHelper.initSaveState();
 
     const appState = await getAppState();
     expect(appState.lastKnownPushEnabled).toBe(true);
 
-    const storedAppId = await db.get('Ids', 'appId');
+    const storedAppId = await db._get('Ids', 'appId');
     expect(storedAppId?.id).toBe(NEW_APP_ID);
   });
 });

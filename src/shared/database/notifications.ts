@@ -18,7 +18,7 @@ export const putNotificationClickedForOutcomes = async (
   appId: string,
   event: NotificationClickEventInternal,
 ) => {
-  await db.put(
+  await db._put(
     'Outcomes.NotificationClicked',
     notificationClickedForOutcomesToDatabase(appId, event),
   );
@@ -28,7 +28,7 @@ export const putNotificationReceivedForOutcomes = async (
   appId: string,
   notification: IOSNotification,
 ) => {
-  await db.put(
+  await db._put(
     'Outcomes.NotificationReceived',
     notificationReceivedForOutcomesToDatabase(appId, notification, Date.now()),
   );
@@ -37,7 +37,7 @@ export const putNotificationReceivedForOutcomes = async (
 export const getAllNotificationClickedForOutcomes = async (): Promise<
   OutcomesNotificationClicked[]
 > => {
-  const notifications = await db.getAll('Outcomes.NotificationClicked');
+  const notifications = await db._getAll('Outcomes.NotificationClicked');
   return notifications.map((notification) =>
     notificationClickedForOutcomesFromDatabase(notification),
   );
@@ -46,7 +46,7 @@ export const getAllNotificationClickedForOutcomes = async (): Promise<
 export const getAllNotificationReceivedForOutcomes = async (): Promise<
   OutcomesNotificationReceived[]
 > => {
-  const notifications = await db.getAll('Outcomes.NotificationReceived');
+  const notifications = await db._getAll('Outcomes.NotificationReceived');
   return notifications.map((notification) =>
     notificationReceivedForOutcomesFromDatabase(notification),
   );

@@ -1,9 +1,9 @@
 import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID } from '__test__/constants';
-import type * as idbLite from './idb-lite';
-import { wrapRequest } from './idb-lite';
 import { SubscriptionType } from '../subscriptions/constants';
 import { closeDb, getDb, getObjectStoreNames } from './client';
 import { DATABASE_NAME } from './constants';
+import type * as idbLite from './idb-lite';
+import { wrapRequest } from './idb-lite';
 import type { IndexedDBSchema } from './types';
 
 beforeEach(async () => {
@@ -30,31 +30,31 @@ describe('general', () => {
   test('can get 1 or all values', async () => {
     const db = await getDb();
     for (const value of values) {
-      await db.put('Options', value);
+      await db._put('Options', value);
     }
 
-    const retrievedValue = await db.get('Options', 'userConsent');
+    const retrievedValue = await db._get('Options', 'userConsent');
     expect(retrievedValue).toEqual({
       key: 'userConsent',
       value: true,
     });
 
-    const retrievedValues = await db.getAll('Options');
+    const retrievedValues = await db._getAll('Options');
     expect(retrievedValues).toEqual(values);
   });
 
   test('can set/update a value', async () => {
     const db = await getDb();
-    await db.put('Options', { key: 'userConsent', value: 'optionsValue' });
-    const retrievedValue = await db.get('Options', 'userConsent');
+    await db._put('Options', { key: 'userConsent', value: 'optionsValue' });
+    const retrievedValue = await db._get('Options', 'userConsent');
     expect(retrievedValue).toEqual({
       key: 'userConsent',
       value: 'optionsValue',
     });
 
     // can update value
-    await db.put('Options', { key: 'userConsent', value: 'optionsValue2' });
-    const retrievedValue2 = await db.get('Options', 'userConsent');
+    await db._put('Options', { key: 'userConsent', value: 'optionsValue2' });
+    const retrievedValue2 = await db._get('Options', 'userConsent');
     expect(retrievedValue2).toEqual({
       key: 'userConsent',
       value: 'optionsValue2',
@@ -62,7 +62,7 @@ describe('general', () => {
 
     await expect(
       // @ts-expect-error - for testing invalid value
-      db.put('Options', ''),
+      db._put('Options', ''),
     ).rejects.toThrow(
       'Data provided to an operation does not meet requirements.',
     );
@@ -71,23 +71,23 @@ describe('general', () => {
   test('can remove a value', async () => {
     const db = await getDb();
     for (const value of values) {
-      await db.put('Options', value);
+      await db._put('Options', value);
     }
 
     // can remove a single value
-    await db.delete('Options', 'userConsent');
-    const retrievedValue = await db.get('Options', 'userConsent');
+    await db._delete('Options', 'userConsent');
+    const retrievedValue = await db._get('Options', 'userConsent');
     expect(retrievedValue).toBeUndefined();
 
     // can remove remaining values
-    await db.clear('Options');
-    const retrievedValues = await db.getAll('Options');
+    await db._clear('Options');
+    const retrievedValues = await db._getAll('Options');
     expect(retrievedValues).toEqual([]);
 
     // resolves undefined if key does not exist
     await expect(
       // @ts-expect-error - using invalid key for testing
-      db.delete('Options', 'non-existent-key'),
+      db._delete('Options', 'non-existent-key'),
     ).resolves.toBeUndefined();
   });
 });
@@ -96,14 +96,14 @@ describe('migrations', () => {
   describe('v5', () => {
     test('can to write to new v5 tables', async () => {
       const db = await getDb();
-      const result = await db.put('Outcomes.NotificationClicked', {
+      const result = await db._put('Outcomes.NotificationClicked', {
         appId: APP_ID,
         notificationId: '1',
         timestamp: 1,
       });
       expect(result).toEqual('1');
 
-      const result2 = await db.put('Outcomes.NotificationReceived', {
+      const result2 = await db._put('Outcomes.NotificationReceived', {
         appId: APP_ID,
         notificationId: '1',
         timestamp: 1,
@@ -115,12 +115,12 @@ describe('migrations', () => {
     test('migrates notificationId type records into Outcomes.NotificationClicked', async () => {
       const db = await getDb(4);
 
-      await db.put('NotificationClicked', { notificationId: '1' });
-      await db.put('NotificationClicked', { notificationId: '2' });
+      await db._put('NotificationClicked', { notificationId: '1' });
+      await db._put('NotificationClicked', { notificationId: '2' });
       await closeDb();
 
       const db2 = await getDb(5);
-      const result = await db2.getAll('Outcomes.NotificationClicked');
+      const result = await db2._getAll('Outcomes.NotificationClicked');
       expect(result).toEqual([
         { appId: undefined, notificationId: '1', timestamp: undefined },
         { appId: undefined, notificationId: '2', timestamp: undefined },
@@ -133,12 +133,12 @@ describe('migrations', () => {
     // Tests NotificationReceived records migrate over from a v15 SDK version
     test('migrates notificationId type records into Outcomes.NotificationReceived', async () => {
       const db = await getDb(4);
-      await db.put('NotificationReceived', {
+      await db._put('NotificationReceived', {
         appId: APP_ID,
         notificationId: '1',
         timestamp: 1,
       });
-      await db.put('NotificationReceived', {
+      await db._put('NotificationReceived', {
         appId: APP_ID,
         notificationId: '2',
         timestamp: 1,
@@ -146,7 +146,7 @@ describe('migrations', () => {
       await closeDb();
 
       const db2 = await getDb(5);
-      const result = await db2.getAll('Outcomes.NotificationReceived');
+      const result = await db2._getAll('Outcomes.NotificationReceived');
       expect(result).toEqual([
         { appId: APP_ID, notificationId: '1', timestamp: 1 },
         { appId: APP_ID, notificationId: '2', timestamp: 1 },
@@ -186,7 +186,7 @@ describe('migrations', () => {
 
       // 3. Open the DB with the OneSignal IndexedDb class
       const db2 = await getDb(5);
-      const result = await db2.getAll('Outcomes.NotificationClicked');
+      const result = await db2._getAll('Outcomes.NotificationClicked');
       // 4. Expect the that data is brought over to the new table.
       expect(result).toEqual([
         { appId: undefined, notificationId: '1', timestamp: undefined },
@@ -198,21 +198,21 @@ describe('migrations', () => {
     const populateLegacySubscriptions = async (
       db: Awaited<ReturnType<typeof getDb>>,
     ) => {
-      await db.put('emailSubscriptions', {
+      await db._put('emailSubscriptions', {
         modelId: '1',
         modelName: 'emailSubscriptions',
         onesignalId: ONESIGNAL_ID,
         type: SubscriptionType._Email,
         token: 'email-token',
       });
-      await db.put('pushSubscriptions', {
+      await db._put('pushSubscriptions', {
         modelId: '2',
         modelName: 'pushSubscriptions',
         onesignalId: ONESIGNAL_ID,
         type: SubscriptionType._ChromePush,
         token: 'push-token',
       });
-      await db.put('smsSubscriptions', {
+      await db._put('smsSubscriptions', {
         modelId: '3',
         modelName: 'smsSubscriptions',
         onesignalId: ONESIGNAL_ID,
@@ -250,7 +250,7 @@ describe('migrations', () => {
 
     test('can write to new subscriptions table', async () => {
       const db = await getDb();
-      const result = await db.put('subscriptions', {
+      const result = await db._put('subscriptions', {
         modelId: '1',
         modelName: 'subscriptions',
         onesignalId: '1',
@@ -266,7 +266,7 @@ describe('migrations', () => {
       await closeDb();
 
       const db2 = await getDb(6);
-      const result = await db2.getAll('subscriptions');
+      const result = await db2._getAll('subscriptions');
       expect(result).toEqual([
         migratedSubscriptions.email,
         migratedSubscriptions.push,
@@ -289,7 +289,7 @@ describe('migrations', () => {
       await populateLegacySubscriptions(db);
       // user is logged in
       // @ts-expect-error - for testing legacy migration
-      await db.put('identity', {
+      await db._put('identity', {
         modelId: '4',
         modelName: 'identity',
         onesignalId: ONESIGNAL_ID,
@@ -298,7 +298,7 @@ describe('migrations', () => {
       await closeDb();
 
       const db2 = await getDb(6);
-      const result = await db2.getAll('subscriptions');
+      const result = await db2._getAll('subscriptions');
       expect(result).toEqual([
         {
           ...migratedSubscriptions.email,
@@ -338,7 +338,7 @@ test('should reopen db when terminated', async () => {
   const { db } = await vi.importActual<typeof import('./client')>('./client');
   expect(openFn).toHaveBeenCalledTimes(1); // initial open
 
-  await db.put('Options', { key: 'userConsent', value: true });
+  await db._put('Options', { key: 'userConsent', value: true });
 
   // real world db.close() will trigger the terminated callback
   terminatedCallback();
@@ -346,7 +346,7 @@ test('should reopen db when terminated', async () => {
   // terminate callback should reopen the db
   expect(openFn).toHaveBeenCalledTimes(2);
 
-  expect(await db.get('Options', 'userConsent')).toEqual({
+  expect(await db._get('Options', 'userConsent')).toEqual({
     key: 'userConsent',
     value: true,
   });

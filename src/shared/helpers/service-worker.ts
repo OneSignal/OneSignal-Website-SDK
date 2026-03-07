@@ -67,7 +67,7 @@ export async function upsertSession(
       session.notificationId = clickedNotification.notificationId;
     }
 
-    await db.put('Sessions', session);
+    await db._put('Sessions', session);
     await sendOnSessionCallIfNotPlayerCreate(
       appId,
       onesignalId,
@@ -100,7 +100,7 @@ export async function upsertSession(
     existingSession.status = SessionStatus._Active;
     existingSession.lastActivatedTimestamp = currentTimestamp;
     existingSession.lastDeactivatedTimestamp = null;
-    await db.put('Sessions', existingSession);
+    await db._put('Sessions', existingSession);
     return;
   }
 
@@ -116,7 +116,7 @@ export async function upsertSession(
     outcomesConfig,
   );
   const session: Session = initializeNewSession({ appId });
-  await db.put('Sessions', session);
+  await db._put('Sessions', session);
   await sendOnSessionCallIfNotPlayerCreate(
     appId,
     onesignalId,
@@ -185,7 +185,7 @@ export async function deactivateSession(
     thresholdInSeconds,
   );
 
-  await db.put('Sessions', existingSession);
+  await db._put('Sessions', existingSession);
 
   return cancelableFinalize;
 }
@@ -205,7 +205,7 @@ async function sendOnSessionCallIfNotPlayerCreate(
     return;
   }
 
-  db.put('Sessions', session);
+  db._put('Sessions', session);
   resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
@@ -249,10 +249,10 @@ async function finalizeSession(
 }
 
 const resetSentUniqueOutcomes = async (): Promise<void> => {
-  const outcomes = await db.getAll('SentUniqueOutcome');
+  const outcomes = await db._getAll('SentUniqueOutcome');
   const promises = outcomes.map((o) => {
     o.sentDuringSession = null;
-    return db.put('SentUniqueOutcome', o);
+    return db._put('SentUniqueOutcome', o);
   });
   await Promise.all(promises);
 };

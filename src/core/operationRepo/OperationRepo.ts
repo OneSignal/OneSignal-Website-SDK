@@ -17,7 +17,7 @@ import {
 import { type NewRecordsState } from './NewRecordsState';
 
 const removeOpFromDB = (op: Operation) => {
-  db.delete('operations', op._modelId);
+  db._delete('operations', op._modelId);
 };
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem

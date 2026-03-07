@@ -97,30 +97,30 @@ const store = async (name: IDBStoreName, mode?: IDBTransactionMode) =>
   (await dbPromise).transaction(name, mode).objectStore(name);
 
 export const db = {
-  async get<K extends IDBStoreName>(
+  async _get<K extends IDBStoreName>(
     storeName: K,
     key: IndexedDBSchema[K]['key'],
   ): Promise<IndexedDBSchema[K]['value'] | undefined> {
     return wrapRequest((await store(storeName)).get(key));
   },
-  async getAll<K extends IDBStoreName>(
+  async _getAll<K extends IDBStoreName>(
     storeName: K,
   ): Promise<IndexedDBSchema[K]['value'][]> {
     return wrapRequest((await store(storeName)).getAll());
   },
-  async put<K extends IDBStoreName>(
+  async _put<K extends IDBStoreName>(
     storeName: K,
     value: IndexedDBSchema[K]['value'],
   ) {
     return wrapRequest((await store(storeName, 'readwrite')).put(value));
   },
-  async delete<K extends IDBStoreName>(
+  async _delete<K extends IDBStoreName>(
     storeName: K,
     key: IndexedDBSchema[K]['key'],
   ) {
     return wrapRequest((await store(storeName, 'readwrite')).delete(key));
   },
-  async clear<K extends IDBStoreName>(storeName: K) {
+  async _clear<K extends IDBStoreName>(storeName: K) {
     return wrapRequest((await store(storeName, 'readwrite')).clear());
   },
 };
@@ -130,30 +130,30 @@ export const getObjectStoreNames = async () => {
 };
 
 export const getOptionsValue = async <T>(key: OptionKey): Promise<T | null> => {
-  const result = await db.get('Options', key);
+  const result = await db._get('Options', key);
   if (result && 'value' in result) return result.value as T;
   return null;
 };
 
 export const getIdsValue = async <T>(key: IdKey): Promise<T | null> => {
-  const result = await db.get('Ids', key);
+  const result = await db._get('Ids', key);
   if (result && 'id' in result) return result.id as T;
   return null;
 };
 
 export const getCurrentSession = async () => {
-  return (await db.get('Sessions', ONESIGNAL_SESSION_KEY)) ?? null;
+  return (await db._get('Sessions', ONESIGNAL_SESSION_KEY)) ?? null;
 };
 
 export const cleanupCurrentSession = async () => {
-  await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
+  await db._delete('Sessions', ONESIGNAL_SESSION_KEY);
 };
 
-export const clearStore = db.clear;
+export const clearStore = db._clear;
 
 export const clearAll = async () => {
   for (const name of await getObjectStoreNames()) {
-    await db.clear(name);
+    await db._clear(name);
   }
 };
 

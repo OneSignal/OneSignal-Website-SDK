@@ -74,7 +74,7 @@ test('Should update Notification.permission in time', async () => {
     },
   );
 
-  await db.put('Options', {
+  await db._put('Options', {
     key: 'notificationPermission',
     value: 'granted',
   });

@@ -18,13 +18,11 @@ describe('LoginManager', () => {
     await updateIdentityModel('external_id', 'same-id');
 
     await LoginManager.login('same-id');
-    expect(debugSpy).toHaveBeenCalledWith(
-      'Login: externalId already set',
-    );
+    expect(debugSpy).toHaveBeenCalledWith('Login: externalId already set');
   });
 
   test('login: stores token when provided and enqueues operations', async () => {
-    const dbSpy = vi.spyOn(db, 'put');
+    const dbSpy = vi.spyOn(db, '_put');
     // mock push subscription exists so transfer op enqueues
     const createPushSub = () => ({
       id: 'push-sub-id',
@@ -98,9 +96,7 @@ describe('LoginManager', () => {
       .mockImplementation(() => undefined);
     await updateIdentityModel('external_id', undefined);
     await LoginManager.logout();
-    expect(debugSpy).toHaveBeenCalledWith(
-      'Logout: not logged in',
-    );
+    expect(debugSpy).toHaveBeenCalledWith('Logout: not logged in');
   });
 
   test('logout: with external id and push sub enqueues transfer and login operations', async () => {

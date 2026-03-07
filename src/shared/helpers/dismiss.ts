@@ -38,7 +38,7 @@ export async function markPromptDismissedWithType(type: DismissPromptValue) {
     dismissDays = 30;
   }
   Log._debug(`Prompt dismissed (${type}), reprompt in ${dismissDays}d`);
-  await db.put('Options', { key: countKey, value: dismissCount });
+  await db._put('Options', { key: countKey, value: dismissCount });
 
   const dismissMinutes = dismissDays * 24 * 60;
   return setItem(timeKey, 'dismissed', dismissMinutes);

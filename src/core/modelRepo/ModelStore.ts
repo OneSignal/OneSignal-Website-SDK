@@ -125,7 +125,7 @@ export abstract class ModelStore<
       this._changeSubscription._fire((handler) =>
         handler._onModelRemoved(item, tag),
       );
-      db.delete(this._modelName, item._modelId);
+      db._delete(this._modelName, item._modelId);
     }
 
     this._models = [];
@@ -161,7 +161,7 @@ export abstract class ModelStore<
     // no longer listen for changes to this model
     model._unsubscribe(this);
 
-    await db.delete(this._modelName, model._modelId);
+    await db._delete(this._modelName, model._modelId);
     this._persist();
 
     this._changeSubscription._fire((handler) =>
@@ -176,7 +176,7 @@ export abstract class ModelStore<
   protected async _load(): Promise<void> {
     if (!this._modelName) return;
 
-    const jsonArray = (await db.getAll(
+    const jsonArray = (await db._getAll(
       this._modelName,
     )) as unknown as DBModel[];
 
@@ -208,7 +208,7 @@ export abstract class ModelStore<
     if (!this._modelName || !this._hasLoadedFromCache) return;
 
     for (const model of this._models) {
-      await db.put(this._modelName, {
+      await db._put(this._modelName, {
         modelId: model._modelId,
         modelName: this._modelName, // TODO: ModelName is a legacy property, could be removed sometime after web refactor launch
         ...model.toJSON(),

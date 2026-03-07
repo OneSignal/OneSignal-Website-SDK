@@ -33,7 +33,7 @@ const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
     return;
   }
 
-  await db.put('Options', {
+  await db._put('Options', {
     key: 'notificationPermission',
     value: newPermission,
   });

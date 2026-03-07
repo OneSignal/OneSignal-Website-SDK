@@ -33,10 +33,6 @@ import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
 import type { WorkerMessengerMessage } from 'src/shared/libraries/workerMessenger/types';
 import ContextSW from 'src/shared/models/ContextSW';
 import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatformKind';
-import {
-  type RawPushSubscription,
-  rawPushSubscriptionFromW3c,
-} from 'src/shared/subscriptions/rawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import type {
   IMutableOSNotification,
@@ -50,6 +46,10 @@ import {
   type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+import {
+  type RawPushSubscription,
+  rawPushSubscriptionFromW3c,
+} from 'src/shared/subscriptions/rawPushSubscription';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
@@ -837,7 +837,7 @@ async function onNotificationClicked(event: NotificationEvent) {
       if (existingSession) {
         existingSession.notificationId =
           notificationClickEvent.notification.notificationId;
-        await db.put('Sessions', existingSession);
+        await db._put('Sessions', existingSession);
       }
     } catch (e) {
       Log._error('Failed to save click', e);
@@ -1068,8 +1068,8 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
   const hasNewSubscription = !!rawPushSubscription;
 
   if (!deviceIdExists && !hasNewSubscription) {
-    await db.delete('Ids', 'userId');
-    await db.delete('Ids', 'registrationId');
+    await db._delete('Ids', 'userId');
+    await db._delete('Ids', 'registrationId');
   } else {
     /*
       Determine subscription state we should set new record to.

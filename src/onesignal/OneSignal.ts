@@ -153,7 +153,7 @@ export default class OneSignal {
     }
 
     try {
-      await db.get('Options', 'appState');
+      await db._get('Options', 'appState');
     } catch (e) {
       Log._error(
         'IndexedDB unavailable, close & reopen the page to retry init',
@@ -242,7 +242,7 @@ export default class OneSignal {
 
     // for quick access as to not wait for async operations / loading from DB
     OneSignal._consentGiven = consent;
-    await db.put('Options', { key: 'userConsent', value: consent });
+    await db._put('Options', { key: 'userConsent', value: consent });
 
     if (consent && OneSignal._pendingInit) await OneSignal._delayedInit();
   }

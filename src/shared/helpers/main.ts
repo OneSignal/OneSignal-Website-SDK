@@ -91,7 +91,7 @@ export async function checkAndTriggerNotificationPermissionChanged() {
 
   if (previousPermission !== currentPermission) {
     await triggerNotificationPermissionChanged();
-    await db.put('Options', {
+    await db._put('Options', {
       key: 'notificationPermission',
       value: currentPermission,
     });

@@ -103,11 +103,11 @@ const getUserState = async (): Promise<UserState> => {
 };
 
 const setUserState = async (userState: UserState) => {
-  await db.put('Options', {
+  await db._put('Options', {
     key: 'previousOneSignalId',
     value: userState.previousOneSignalId,
   });
-  await db.put('Options', {
+  await db._put('Options', {
     key: 'previousExternalId',
     value: userState.previousExternalId,
   });

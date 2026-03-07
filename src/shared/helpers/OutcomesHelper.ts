@@ -90,7 +90,7 @@ export default class OutcomesHelper {
    * @returns Promise
    */
   async _getAttributedNotifsByUniqueOutcomeName(): Promise<string[]> {
-    const sentOutcomes = await db.getAll('SentUniqueOutcome');
+    const sentOutcomes = await db._getAll('SentUniqueOutcome');
     return sentOutcomes
       .filter((o) => o.outcomeName === this._outcomeName)
       .reduce((acc: string[], curr: SentUniqueOutcome) => {
@@ -126,7 +126,7 @@ export default class OutcomesHelper {
 
   async _saveSentUniqueOutcome(newNotificationIds: string[]): Promise<void> {
     const outcomeName = this._outcomeName;
-    const existingSentOutcome = await db.get('SentUniqueOutcome', outcomeName);
+    const existingSentOutcome = await db._get('SentUniqueOutcome', outcomeName);
     const currentSession = await getCurrentSession();
 
     const existingNotificationIds = existingSentOutcome
@@ -135,7 +135,7 @@ export default class OutcomesHelper {
     const notificationIds = [...existingNotificationIds, ...newNotificationIds];
 
     const timestamp = currentSession ? currentSession.startTimestamp : null;
-    await db.put('SentUniqueOutcome', {
+    await db._put('SentUniqueOutcome', {
       outcomeName,
       notificationIds,
       sentDuringSession: timestamp,
@@ -143,7 +143,7 @@ export default class OutcomesHelper {
   }
 
   async _wasSentDuringSession() {
-    const sentOutcome = await db.get('SentUniqueOutcome', this._outcomeName);
+    const sentOutcome = await db._get('SentUniqueOutcome', this._outcomeName);
 
     if (!sentOutcome) {
       return false;
@@ -267,7 +267,9 @@ export async function getConfigAttribution(
         .filter((notif) => notif.timestamp >= maxTimestamp)
         .slice(0, max)
         .map((notif) => notif.notificationId);
-      Log._debug(`${matchingNotificationIds.length} notifs in reporting window`);
+      Log._debug(
+        `${matchingNotificationIds.length} notifs in reporting window`,
+      );
 
       // Deleting all unmatched received notifications
       const notificationIdsToDelete = allReceivedNotificationSorted
@@ -277,7 +279,7 @@ export async function getConfigAttribution(
         )
         .map((notif) => notif.notificationId);
       notificationIdsToDelete.forEach((id) =>
-        db.delete('Outcomes.NotificationReceived', id),
+        db._delete('Outcomes.NotificationReceived', id),
       );
       Log._debug(`${notificationIdsToDelete.length} notifs to delete`);
 

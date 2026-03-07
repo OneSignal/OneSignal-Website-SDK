@@ -131,7 +131,7 @@ describe('OperationRepo', () => {
       // persist happens in the background, so we need to wait for it to complete
       let ops: IndexedDBSchema['operations']['value'][] = [];
       await vi.waitUntil(async () => {
-        ops = await db.getAll('operations');
+        ops = await db._getAll('operations');
         return ops.length === 2;
       });
 
@@ -155,12 +155,12 @@ describe('OperationRepo', () => {
     test('operations can be loaded from IndexedDb on start', async () => {
       const op = new SetAliasOperation();
       const op2 = new CreateSubscriptionOperation();
-      await db.put('operations', {
+      await db._put('operations', {
         ...op.toJSON(),
         modelId: '1',
         modelName: 'operations',
       });
-      await db.put('operations', {
+      await db._put('operations', {
         ...op2.toJSON(),
         modelId: '2',
         modelName: 'operations',
@@ -168,7 +168,7 @@ describe('OperationRepo', () => {
 
       await opRepo._loadSavedOperations();
 
-      const list = await db.getAll('operations');
+      const list = await db._getAll('operations');
       expect(list).toEqual([
         {
           ...op.toJSON(),

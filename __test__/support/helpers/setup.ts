@@ -25,7 +25,7 @@ export const mockDelay = () => {
 };
 
 export const setIsPushEnabled = async (isPushEnabled: boolean) => {
-  await db.put('Options', { key: 'isPushEnabled', value: isPushEnabled });
+  await db._put('Options', { key: 'isPushEnabled', value: isPushEnabled });
 };
 
 /**
@@ -37,7 +37,7 @@ export const getIdentityItem = async (
   let identity: IdentitySchema | undefined;
   await vi.waitUntil(
     async () => {
-      identity = (await db.getAll('identity'))?.[0];
+      identity = (await db._getAll('identity'))?.[0];
       return identity && condition(identity);
     },
     { interval: 1 },
@@ -54,7 +54,7 @@ export const getPropertiesItem = async (
   let properties: PropertiesSchema | undefined;
   await vi.waitUntil(
     async () => {
-      properties = (await db.getAll('properties'))?.[0];
+      properties = (await db._getAll('properties'))?.[0];
       return properties && condition(properties);
     },
     { interval: 1 },
@@ -69,7 +69,7 @@ export const getDbSubscriptions = async (length: number) => {
   let subscriptions: SubscriptionSchema[] = [];
   await vi.waitUntil(
     async () => {
-      subscriptions = await db.getAll('subscriptions');
+      subscriptions = await db._getAll('subscriptions');
       return subscriptions.length === length;
     },
     { interval: 1 },

@@ -141,7 +141,7 @@ describe('ServiceWorker', () => {
   beforeEach(async () => {
     self.notificationDisplayStatus = undefined;
     isServiceWorker = false;
-    await db.put('Ids', {
+    await db._put('Ids', {
       type: 'appId',
       id: appId,
     });
@@ -211,7 +211,7 @@ describe('ServiceWorker', () => {
       const notificationId = payload.custom.i;
 
       // db should mark the notification as received
-      const notifcationReceived = await db.getAll(
+      const notifcationReceived = await db._getAll(
         'Outcomes.NotificationReceived',
       );
       expect(notifcationReceived).toEqual(
@@ -432,7 +432,7 @@ describe('ServiceWorker', () => {
       expect(notificationClose).toHaveBeenCalled();
 
       // should save clicked info to db
-      const notificationClicked = await db.getAll(
+      const notificationClicked = await db._getAll(
         'Outcomes.NotificationClicked',
       );
       expect(notificationClicked).toEqual(
@@ -502,11 +502,11 @@ describe('ServiceWorker', () => {
         http.post(`**/players`, () => HttpResponse.json({ id: null })),
       );
 
-      await db.put('Ids', {
+      await db._put('Ids', {
         type: 'userId',
         id: null,
       });
-      await db.put('Ids', {
+      await db._put('Ids', {
         type: 'registrationId',
         id: '456',
       });
@@ -517,7 +517,7 @@ describe('ServiceWorker', () => {
       await dispatchEvent(event);
 
       // should remove previous ids
-      const ids = await db.getAll('Ids');
+      const ids = await db._getAll('Ids');
       expect(ids).toEqual([
         {
           type: 'appId',
@@ -627,7 +627,7 @@ describe('ServiceWorker', () => {
         const cancel = vi.fn();
         self.cancel = cancel;
 
-        await db.put('Sessions', session);
+        await db._put('Sessions', session);
 
         const event = new ExtendableMessageEvent('message', {
           command: WorkerMessengerCommand._SessionUpsert,
@@ -708,7 +708,7 @@ describe('ServiceWorker', () => {
         );
 
         matchAllFn.mockResolvedValueOnce([unfocusedClient]);
-        await db.put('Sessions', {
+        await db._put('Sessions', {
           ...session,
           status: SessionStatus._Inactive,
         });

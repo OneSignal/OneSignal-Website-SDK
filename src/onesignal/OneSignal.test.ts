@@ -171,7 +171,7 @@ describe('OneSignal - No Consent Required', () => {
       const email = 'test@test.com';
 
       const getEmailSubscriptionDbItems = async () =>
-        (await db.getAll<'subscriptions'>('subscriptions')).filter(
+        (await db._getAll<'subscriptions'>('subscriptions')).filter(
           (s) => s.type === 'Email',
         );
 
@@ -279,7 +279,7 @@ describe('OneSignal - No Consent Required', () => {
         await vi.waitUntil(
           async () => {
             subscriptions = (
-              await db.getAll<'subscriptions'>('subscriptions')
+              await db._getAll<'subscriptions'>('subscriptions')
             ).filter((s) => s.type === 'SMS');
             return subscriptions.length === length;
           },
@@ -374,7 +374,7 @@ describe('OneSignal - No Consent Required', () => {
         });
         await vi.waitUntil(
           async () => {
-            const sub = (await db.getAll('subscriptions'))[0];
+            const sub = (await db._getAll('subscriptions'))[0];
             return sub.id === SUB_ID_3;
           },
           { interval: 1 },
@@ -829,7 +829,7 @@ describe('OneSignal - No Consent Required', () => {
           let pushSub: SubscriptionSchema | undefined;
           await vi.waitUntil(
             async () => {
-              pushSub = (await db.getAll('subscriptions'))[0];
+              pushSub = (await db._getAll('subscriptions'))[0];
               return pushSub && !IDManager._isLocalId(pushSub.id);
             },
             { interval: 1 },
@@ -844,9 +844,7 @@ describe('OneSignal - No Consent Required', () => {
         expect(identityModel._externalId).toBeUndefined();
 
         OneSignal.logout();
-        expect(debugSpy).toHaveBeenCalledWith(
-          'Logout: not logged in',
-        );
+        expect(debugSpy).toHaveBeenCalledWith('Logout: not logged in');
       });
 
       test('can logout the user with existing external id and subscription', async () => {
@@ -915,7 +913,7 @@ describe('OneSignal - No Consent Required', () => {
           onesignalId: ONESIGNAL_ID,
         });
 
-        const subscriptions = await db.getAll('subscriptions');
+        const subscriptions = await db._getAll('subscriptions');
         expect(subscriptions).toEqual([
           {
             ...BASE_SUB,
@@ -1151,7 +1149,7 @@ describe('OneSignal - No Consent Required', () => {
 
   describe('Listeners', () => {
     test('can listen for subscription changed event', async () => {
-      await db.put('Options', {
+      await db._put('Options', {
         key: 'notificationPermission',
         value: 'granted',
       });
@@ -1289,7 +1287,7 @@ vi.spyOn(Log, '_error').mockImplementation(() => '');
 const debugSpy = vi.spyOn(Log, '_debug');
 const warnSpy = vi.spyOn(Log, '_warn');
 
-const getPropertiesItem = async () => (await db.getAll('properties'))[0];
+const getPropertiesItem = async () => (await db._getAll('properties'))[0];
 
 const subscribeFcmFromPageSpy = vi.spyOn(
   SubscriptionManagerPage.prototype,
