@@ -10,7 +10,7 @@ import type {
   PropertiesSchema,
   SubscriptionSchema,
 } from 'src/shared/database/types';
-import type { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import type { RawPushSubscription } from 'src/shared/subscriptions/rawPushSubscription';
 
 /**
  * Mocks `delay` from `src/shared/helpers/general` to resolve immediately.

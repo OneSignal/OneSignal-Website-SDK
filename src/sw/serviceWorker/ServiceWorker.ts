@@ -36,7 +36,7 @@ import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatfo
 import {
   type RawPushSubscription,
   rawPushSubscriptionFromW3c,
-} from 'src/shared/models/RawPushSubscription';
+} from 'src/shared/subscriptions/rawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import type {
   IMutableOSNotification,

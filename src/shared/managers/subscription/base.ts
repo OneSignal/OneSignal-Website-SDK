@@ -1,19 +1,19 @@
 import {
-    getSubscription,
-    setSubscription,
+  getSubscription,
+  setSubscription,
 } from 'src/shared/database/subscription';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
+import type { Subscription } from '../../database/types';
 import { useSafariLegacyPush } from '../../environment/detect';
 import Log from '../../libraries/Log';
 import {
-    type RawPushSubscription,
-    rawPushSubscriptionFromW3c,
-} from '../../models/RawPushSubscription';
-import type { Subscription } from '../../database/types';
+  type RawPushSubscription,
+  rawPushSubscriptionFromW3c,
+} from '../../subscriptions/rawPushSubscription';
 import {
-    SubscriptionStrategyKind,
-    type SubscriptionStrategyKindValue,
+  SubscriptionStrategyKind,
+  type SubscriptionStrategyKindValue,
 } from '../../models/SubscriptionStrategyKind';
 import OneSignalEvent from '../../services/OneSignalEvent';
 import { SessionOrigin } from '../../session/constants';

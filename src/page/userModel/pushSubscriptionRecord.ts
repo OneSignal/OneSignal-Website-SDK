@@ -3,7 +3,7 @@ import {
   getDeviceOS,
   getSubscriptionType,
 } from 'src/shared/environment/detect';
-import type { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import type { RawPushSubscription } from 'src/shared/subscriptions/rawPushSubscription';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { VERSION } from 'src/shared/utils/env';
 
