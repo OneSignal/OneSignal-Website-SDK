@@ -1,4 +1,3 @@
-import { sortArrayOfObjects } from '../context/helpers';
 import { db, getCurrentSession } from '../database/client';
 import {
   getAllNotificationClickedForOutcomes,
@@ -11,7 +10,6 @@ import {
   OutcomeAttributionType,
   type SentUniqueOutcome,
 } from '../models/Outcomes';
-import type { OutcomesNotificationReceived } from '../models/OutcomesNotificationEvents';
 import type { OutcomesConfig } from '../outcomes/types';
 import { awaitOneSignalInitAndSupported, logMethodCall } from '../utils/utils';
 
@@ -262,12 +260,9 @@ export async function getConfigAttribution(
        * we check the appId on notifications to match the current app.
        */
 
-      const allReceivedNotificationSorted = sortArrayOfObjects(
-        allReceivedNotification,
-        (notif: OutcomesNotificationReceived) => notif.timestamp,
-        true,
-        false,
-      );
+      const allReceivedNotificationSorted = allReceivedNotification
+        .slice()
+        .sort((a, b) => b.timestamp - a.timestamp);
       const matchingNotificationIds = allReceivedNotificationSorted
         .filter((notif) => notif.timestamp >= maxTimestamp)
         .slice(0, max)

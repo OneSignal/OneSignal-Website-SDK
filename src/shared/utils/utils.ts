@@ -1,5 +1,4 @@
 import type { NotificationIcons } from 'src/shared/notifications/types';
-import { stringify } from '../context/helpers';
 import Log from '../libraries/Log';
 import { Browser } from '../useragent/constants';
 import { getBrowserName } from '../useragent/detect';
@@ -17,7 +16,7 @@ export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
 }
 
 export function logMethodCall(methodName: string, ...args: any[]) {
-  return Log._debug(`${methodName}(${args.map(stringify).join(', ')})`);
+  return Log._debug(`${methodName}(${args.map((a) => JSON.stringify(a)).join(', ')})`);
 }
 
 export function once(

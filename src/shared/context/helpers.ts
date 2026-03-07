@@ -1,24 +1,6 @@
 import type { AliasPair } from 'src/core/types/api';
 
 /**
- * JSON.stringify() but converts functions to "[Function]" so they aren't lost.
- * Helps when logging method calls.
- */
-export function stringify(obj: any) {
-  return JSON.stringify(
-    obj,
-    (_, value) => {
-      if (typeof value === 'function') {
-        return '[Function]';
-      } else {
-        return value;
-      }
-    },
-    4,
-  );
-}
-
-/**
  * Used for generating query params
  *  e.g: -> hash = { appId } // with appId = '1234'
  *       -> returns "appId=1234"
@@ -61,26 +43,4 @@ export function enforceAlias(aliasPair: AliasPair): void {
   if (!aliasPair.id) {
     throw new Error('Alias id cannot be empty');
   }
-}
-
-export function sortArrayOfObjects<TObject, TProperty>(
-  arrayToSort: TObject[],
-  predicateForProperty: (obj: TObject) => TProperty,
-  descending = false,
-  doItInPlace = true,
-): TObject[] {
-  const internalArrayToSort = doItInPlace ? arrayToSort : arrayToSort.slice();
-  internalArrayToSort.sort((a: TObject, b: TObject) => {
-    const propertyA = predicateForProperty(a);
-    const propertyB = predicateForProperty(b);
-
-    if (propertyA > propertyB) {
-      return descending ? -1 : 1;
-    }
-    if (propertyA < propertyB) {
-      return descending ? 1 : -1;
-    }
-    return 0;
-  });
-  return internalArrayToSort;
 }
