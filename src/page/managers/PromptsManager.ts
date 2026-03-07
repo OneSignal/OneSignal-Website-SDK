@@ -141,7 +141,7 @@ export class PromptsManager {
   ): Promise<void> {
     logMethodCall('internalShowDelayedPrompt');
     if (typeof timeDelaySeconds !== 'number') {
-      Log._error('internalShowDelayedPrompt: timeDelay not a number');
+      Log._error('timeDelay not a number');
       return;
     }
 
@@ -181,7 +181,7 @@ export class PromptsManager {
     logMethodCall('internalShowNativePrompt');
 
     if (this._isNativePromptShowing) {
-      Log._debug('Already showing autoprompt. Abort showing a native prompt.');
+      Log._debug('Autoprompt already showing');
       return false;
     }
 
@@ -204,9 +204,7 @@ export class PromptsManager {
     const sdkStylesLoadResult =
       await this._context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
-      Log._debug(
-        'Not showing slidedown permission message because styles failed to load.',
-      );
+      Log._debug('Slidedown styles failed to load');
       return;
     }
 
@@ -276,16 +274,10 @@ export class PromptsManager {
 
     if (!slidedownPromptOptions) {
       if (typeToPullFromConfig !== DelayedPromptType._Push) {
-        Log._error(
-          `OneSignal: slidedown of type '${typeToPullFromConfig}' couldn't be shown. Check your configuration` +
-            ` on the OneSignal dashboard or your custom code initialization.`,
-        );
+        Log._error(`Slidedown type '${typeToPullFromConfig}' not configured`);
         return;
       } else {
-        Log._warn(
-          `The OneSignal 'push' slidedown will be shown with default text settings.` +
-            ` To customize, see the OneSignal documentation.`,
-        );
+        Log._warn('Push slidedown shown with default text');
       }
     }
 
@@ -320,15 +312,11 @@ export class PromptsManager {
       switch (type) {
         case DelayedPromptType._Push:
         case DelayedPromptType._Category:
-          Log._debug(
-            'Setting flag to not show the slidedown to the user again.',
-          );
+          Log._debug('Marking slidedown dismissed');
           markPromptDismissedWithType(DismissPrompt._Push);
           break;
         default:
-          Log._debug(
-            'Setting flag to not show the slidedown to the user again.',
-          );
+          Log._debug('Marking slidedown dismissed');
           markPromptDismissedWithType(DismissPrompt._NonPush);
           break;
       }

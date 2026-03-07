@@ -59,7 +59,7 @@ export function clearDomElementChildren(
 export function getDomElementOrStub(selector: string): Element {
   const foundElement = document.querySelector(selector);
   if (!foundElement) {
-    Log._debug(`No instance of ${selector} found. Returning stub.`);
+    Log._debug(`No ${selector} found, returning stub`);
     return document.createElement('div');
   }
   return foundElement;

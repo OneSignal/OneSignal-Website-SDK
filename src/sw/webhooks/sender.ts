@@ -24,12 +24,7 @@ export async function send(payload: IOSWebhookEventPayload): Promise<void> {
       'Content-Type': 'application/json',
     };
   }
-  Log._debug(
-    `Executing ${payload.event} webhook ${
-      isServerCorsEnabled ? 'with' : 'without'
-    } CORS POST ${webhookTargetUrl}`,
-    payload,
-  );
+  Log._debug(`Webhook ${payload.event} ${isServerCorsEnabled ? '+' : '-'}CORS ${webhookTargetUrl}`);
   await fetch(webhookTargetUrl, fetchOptions);
   return;
 }

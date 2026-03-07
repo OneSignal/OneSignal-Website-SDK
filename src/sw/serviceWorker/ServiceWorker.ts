@@ -107,14 +107,14 @@ export function run() {
 
     switch (data?.command) {
       case WorkerMessengerCommand._SessionUpsert:
-        Log._debug('[Service Worker] Received SessionUpsert', payload);
+        Log._debug('[SW] SessionUpsert', payload);
         debounceRefreshSession(
           event,
           payload as UpsertOrDeactivateSessionPayload,
         );
         break;
       case WorkerMessengerCommand._SessionDeactivate:
-        Log._debug('[Service Worker] Received SessionDeactivate', payload);
+        Log._debug('[SW] SessionDeactivate', payload);
         debounceRefreshSession(
           event,
           payload as UpsertOrDeactivateSessionPayload,
@@ -137,7 +137,7 @@ export function run() {
 
     Also see: https://github.com/w3c/ServiceWorker/issues/1156
   */
-  Log._debug('Setting up message listeners.');
+  Log._debug('Setting up message listeners');
 
   // delay for setting up test mocks like global.ServiceWorkerGlobalScope
   setTimeout(() => {
@@ -164,14 +164,14 @@ export async function getAppId(): Promise<string> {
 
 function setupMessageListeners() {
   workerMessenger._on(WorkerMessengerCommand._WorkerVersion, () => {
-    Log._debug('[Service Worker] Received worker version message.');
+    Log._debug('[SW] Worker version msg');
     workerMessenger._broadcast(WorkerMessengerCommand._WorkerVersion, VERSION);
   });
   workerMessenger._on(
     WorkerMessengerCommand._Subscribe,
     async (appConfigBundle: AppConfig) => {
       const appConfig = appConfigBundle;
-      Log._debug('[Service Worker] Received subscribe message.');
+      Log._debug('[SW] Subscribe msg');
       const context = new ContextSW(appConfig);
       const rawSubscription = await context._subscriptionManager._subscribe(
         SubscriptionStrategyKind._ResubscribeExisting,
@@ -190,7 +190,7 @@ function setupMessageListeners() {
     WorkerMessengerCommand._SubscribeNew,
     async (appConfigBundle: AppConfig) => {
       const appConfig = appConfigBundle;
-      Log._debug('[Service Worker] Received subscribe new message.');
+      Log._debug('[SW] Subscribe new msg');
       const context = new ContextSW(appConfig);
       const rawSubscription = await context._subscriptionManager._subscribe(
         SubscriptionStrategyKind._SubscribeNew,
@@ -210,10 +210,7 @@ function setupMessageListeners() {
   workerMessenger._on(
     WorkerMessengerCommand._AreYouVisibleResponse,
     async (payload: PageVisibilityResponse) => {
-      Log._debug(
-        '[Service Worker] Received response for AreYouVisible',
-        payload,
-      );
+      Log._debug('[SW] AreYouVisible response', payload);
 
       const timestamp = payload.timestamp;
       if (self.clientsStatus?.timestamp !== timestamp) {
@@ -240,10 +237,7 @@ function setupMessageListeners() {
   workerMessenger._on(
     WorkerMessengerCommand._NotificationWillDisplayResponse,
     (payload: NotificationWillDisplayResponsePayload) => {
-      Log._debug(
-        '[Service Worker] Received response for NotificationWillDisplay',
-        payload,
-      );
+      Log._debug('[SW] NotifWillDisplay response', payload);
 
       if (
         self.notificationDisplayStatus?.notificationId !==
@@ -260,10 +254,7 @@ function setupMessageListeners() {
   workerMessenger._on(
     WorkerMessengerCommand._DisplayNotification,
     async (payload: { notification: IOSNotification }) => {
-      Log._debug(
-        '[Service Worker] Received DisplayNotification request',
-        payload,
-      );
+      Log._debug('[SW] DisplayNotification', payload);
       await displayNotification(payload.notification as IMutableOSNotification);
     },
   );
@@ -287,9 +278,7 @@ async function shouldPreventNotificationDisplay(
   });
 
   if (clients.length === 0) {
-    Log._debug(
-      '[Service Worker] No window clients found, showing notification.',
-    );
+    Log._debug('[SW] No window clients, showing notif');
     return false;
   }
 
@@ -298,12 +287,12 @@ async function shouldPreventNotificationDisplay(
   );
 
   if (visibleClients.length === 0) {
-    Log._debug('[Service Worker] No visible clients, showing notification.');
+    Log._debug('[SW] No visible clients, showing notif');
     return false;
   }
 
   Log._debug(
-    `[Service Worker] Found ${visibleClients.length} visible client(s), waiting for preventDefault response.`,
+    `[SW] ${visibleClients.length} visible clients, awaiting preventDefault`,
   );
 
   // Deferred promise: store the resolve callback on self so the
@@ -331,10 +320,7 @@ async function shouldPreventNotificationDisplay(
  * notifications.
  */
 function onPushReceived(event: PushEvent): void {
-  Log._debug(
-    `Called onPushReceived(${JSON.stringify(event, null, 4)}):`,
-    event,
-  );
+  Log._debug('onPushReceived:', event);
 
   event.waitUntil(
     parseOrFetchNotifications(event)
@@ -345,7 +331,7 @@ function onPushReceived(event: PushEvent): void {
         const appId = await getAppId();
 
         for (const rawNotification of rawNotificationsArray) {
-          Log._debug('Raw Notification from OneSignal:', rawNotification);
+          Log._debug('Raw Notification:', rawNotification);
           const notification = toOSNotification(rawNotification);
 
           notificationReceivedPromises.push(
@@ -365,7 +351,7 @@ function onPushReceived(event: PushEvent): void {
 
               if (shouldPreventDisplay) {
                 Log._debug(
-                  `[Service Worker] Notification display prevented for: ${notif.notificationId}`,
+                  `[SW] Display prevented: ${notif.notificationId}`,
                 );
                 // Still send confirmed delivery even if display is prevented
                 return sendConfirmedDelivery(notif);
@@ -385,7 +371,7 @@ function onPushReceived(event: PushEvent): void {
         }, Promise.resolve());
       })
       .catch((e) => {
-        Log._debug('Failed to display a notification:', e);
+        Log._debug('Failed to display notif:', e);
       }),
   );
 }
@@ -433,9 +419,7 @@ async function sendConfirmedDelivery(
     device_type: getDeviceType(),
   };
 
-  Log._debug(
-    `Called sendConfirmedDelivery(${JSON.stringify(notification, null, 4)})`,
-  );
+  Log._debug('sendConfirmedDelivery:', notification);
 
   await delay(Math.floor(Math.random() * MAX_CONFIRMED_DELIVERY_DELAY * 1_000));
   await OneSignalApiBase.put(
@@ -490,7 +474,7 @@ async function refreshSession(
   event: ExtendableMessageEvent,
   options: UpsertOrDeactivateSessionPayload,
 ): Promise<void> {
-  Log._debug('[Service Worker] refreshSession');
+  Log._debug('[SW] refreshSession');
   /**
    * getWindowClients -> check for the first focused
    * unfortunately, not enough for safari, it always returns false for focused state of a client
@@ -508,7 +492,7 @@ async function refreshSession(
     const hasAnyActiveSessions: boolean = windowClients.some(
       (w) => (w as WindowClient).focused,
     );
-    Log._debug('[Service Worker] hasAnyActiveSessions', hasAnyActiveSessions);
+    Log._debug('[SW] hasAnyActive', hasAnyActiveSessions);
     await updateSessionBasedOnHasActive(event, hasAnyActiveSessions, options);
   }
 }
@@ -549,7 +533,7 @@ function debounceRefreshSession(
   event: ExtendableMessageEvent,
   options: UpsertOrDeactivateSessionPayload,
 ) {
-  Log._debug('[Service Worker] debounceRefreshSession', options);
+  Log._debug('[SW] debounceRefresh', options);
 
   if (self.cancel) {
     self.cancel();
@@ -596,7 +580,7 @@ function ensureImageResourceHttps(imageUrl?: string) {
       const replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;
       return `https://i0.wp.com/${replacedImageUrl}`;
     } catch (e) {
-      Log._error('ensureImageResourceHttps: ', e);
+      Log._error('ensureImageHttps:', e);
     }
   }
   return undefined;
@@ -644,10 +628,7 @@ function requiresMacOS15ChromiumAfterDisplayWorkaround(): boolean {
  * @param notification A structured notification object.
  */
 async function displayNotification(notification: IMutableOSNotification) {
-  Log._debug(
-    `Called displayNotification(${JSON.stringify(notification, null, 4)}):`,
-    notification,
-  );
+  Log._debug('displayNotification:', notification);
 
   // Use the default title if one isn't provided
   const defaultTitle = await getTitle();
@@ -755,10 +736,7 @@ function shouldOpenNotificationUrl(url: string) {
  * Supported on: Chrome 50+ only
  */
 async function onNotificationClosed(event: NotificationEvent) {
-  Log._debug(
-    `Called onNotificationClosed(${JSON.stringify(event, null, 4)}):`,
-    event,
-  );
+  Log._debug('onNotificationClosed:', event);
   const notification = event.notification.data as IOSNotification;
 
   workerMessenger
@@ -806,10 +784,7 @@ async function getNotificationUrlToOpen(
  * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
  */
 async function onNotificationClicked(event: NotificationEvent) {
-  Log._debug(
-    `Called onNotificationClicked(${JSON.stringify(event, null, 4)}):`,
-    event,
-  );
+  Log._debug('onNotificationClicked:', event);
 
   // Close the notification first here, before we do anything that might fail
   event.notification.close();
@@ -864,7 +839,7 @@ async function onNotificationClicked(event: NotificationEvent) {
         await db.put('Sessions', existingSession);
       }
     } catch (e) {
-      Log._error('Failed to save clicked notification.', e);
+      Log._error('Failed to save click', e);
     }
   })(notificationClickEvent);
 
@@ -892,14 +867,14 @@ async function onNotificationClicked(event: NotificationEvent) {
     try {
       clientOrigin = new URL(clientUrl).origin;
     } catch (e) {
-      Log._error(`Failed to get the HTTP site's actual origin:`, e);
+      Log._error('Failed to get origin:', e);
     }
     let launchOrigin = null;
     try {
       // Check if the launchUrl is valid; it can be null
       launchOrigin = new URL(launchUrl).origin;
     } catch (e) {
-      Log._error(`Failed parse launchUrl:`, e);
+      Log._error('Failed parse URL:', e);
     }
 
     if (
@@ -931,19 +906,17 @@ async function onNotificationClicked(event: NotificationEvent) {
          */
         if (client instanceof WindowClient && client.navigate) {
           try {
-            Log._debug(
-              'Client is standard HTTPS site. Attempting to focus() client.',
-            );
+            Log._debug('Attempting focus()');
             if (client instanceof WindowClient) await client.focus();
           } catch (e) {
             Log._error('Failed to focus:', client, e);
           }
           try {
             if (notificationOpensLink) {
-              Log._debug(`Redirecting HTTPS site to (${launchUrl}).`);
+              Log._debug(`Redirecting to ${launchUrl}`);
               await client.navigate(launchUrl);
             } else {
-              Log._debug('Not navigating because link is special.');
+              Log._debug('Skipping nav, special link');
             }
           } catch (e) {
             Log._error('Failed to navigate:', client, launchUrl, e);
@@ -1015,11 +988,11 @@ async function sendConvertedAPIRequests(
  * @param url May not be well-formed.
  */
 async function openUrl(url: string): Promise<Client | null> {
-  Log._debug('Opening notification URL:', url);
+  Log._debug('Opening URL:', url);
   try {
     return await self.clients.openWindow(url);
   } catch (e) {
-    Log._warn(`Failed to open the URL '${url}':`, e);
+    Log._warn(`Failed to open URL '${url}':`, e);
     return null;
   }
 }
@@ -1029,15 +1002,12 @@ async function openUrl(url: string): Promise<Client | null> {
  * @param event
  */
 function onServiceWorkerActivated(event: ExtendableEvent) {
-  Log._info(`OneSignal Service Worker activated (version ${VERSION})`);
+  Log._info(`Service Worker activated (version ${VERSION})`);
   event.waitUntil(self.clients.claim());
 }
 
 async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
-  Log._debug(
-    `Called onPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`,
-    event,
-  );
+  Log._debug('onPushSubscriptionChange:', event);
 
   const appId = await getAppId();
   if (!appId) {
@@ -1159,14 +1129,11 @@ function isValidPushPayload(rawData: PushMessageData) {
     if (isValidPayload(payload)) {
       return true;
     } else {
-      Log._debug(
-        'isValidPushPayload: Valid JSON but missing notification UUID:',
-        payload,
-      );
+      Log._debug('Valid JSON missing UUID:', payload);
       return false;
     }
   } catch (e) {
-    Log._debug('isValidPushPayload: Parsing to JSON failed with:', e);
+    Log._debug('JSON parse failed:', e);
     return false;
   }
 }
@@ -1186,7 +1153,6 @@ function parseOrFetchNotifications(
 
   const isValidPayload = isValidPushPayload(event.data);
   if (isValidPayload) {
-    Log._debug('Received a valid encrypted push payload.');
     const payload: OSMinifiedNotificationPayload = event.data.json();
     return Promise.resolve([payload]);
   }

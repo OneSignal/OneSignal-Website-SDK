@@ -71,8 +71,7 @@ export function incrementPageViewCount() {
   setLocalPageViewCount(newCountAcrossTabs);
   incrementedPageViewCount = true;
 
-  Log._debug(`Incremented page view count: newCountSingleTab: ${newCountSingleTab},
-      newCountAccrossTabs: ${newCountAcrossTabs}.`);
+  Log._debug(`Page views: tab=${newCountSingleTab}, total=${newCountAcrossTabs}`);
 }
 
 /**

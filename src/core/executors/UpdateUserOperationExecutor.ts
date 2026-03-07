@@ -78,7 +78,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(`UpdateUserOperationExecutor(operation: ${operations})`);
+    Log._debug(`UpdateUserOpExec(${operations})`);
 
     const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
       this._processOperations(operations);

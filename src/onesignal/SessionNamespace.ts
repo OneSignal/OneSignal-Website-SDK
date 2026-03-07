@@ -9,7 +9,7 @@ export class SessionNamespace {
   ): Promise<void> {
     const config = OneSignal.config?.userConfig.outcomes;
     if (!config) {
-      Log._error(`Could not send ${outcomeName}. No outcomes config found.`);
+      Log._error(`No outcomes config for ${outcomeName}`);
       return;
     }
 
@@ -23,7 +23,7 @@ export class SessionNamespace {
       typeof outcomeWeight !== 'undefined' &&
       typeof outcomeWeight !== 'number'
     ) {
-      Log._error('Outcome weight can only be a number if present.');
+      Log._error('Outcome weight must be a number');
       return;
     }
 
@@ -43,7 +43,7 @@ export class SessionNamespace {
   async sendUniqueOutcome(outcomeName: string): Promise<void> {
     const config = OneSignal.config?.userConfig.outcomes;
     if (!config) {
-      Log._error(`Could not send ${outcomeName}. No outcomes config found.`);
+      Log._error(`No outcomes config for ${outcomeName}`);
       return;
     }
 
@@ -60,9 +60,7 @@ export class SessionNamespace {
     const outcomeAttribution = await outcomesHelper._getAttribution();
 
     if (outcomeAttribution.type === OutcomeAttributionType._NotSupported) {
-      Log._warn(
-        'You are on a free plan. Please upgrade to use this functionality.',
-      );
+      Log._warn('Upgrade required for this feature');
       return;
     }
 
@@ -80,7 +78,7 @@ export class SessionNamespace {
         newNotifsToAttributeWithOutcome,
       )
     ) {
-      Log._warn(`'${outcomeName}' was already reported for all notifications.`);
+      Log._warn(`'${outcomeName}' already reported`);
       return;
     }
 

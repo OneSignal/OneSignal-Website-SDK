@@ -137,7 +137,7 @@ export async function deactivateSession(
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
-    Log._debug('No active session found. Cannot deactivate.');
+    Log._debug('No active session to deactivate');
     return undefined;
   }
 
@@ -165,9 +165,7 @@ export async function deactivateSession(
    * For anything but active, logging a warning and doing early return.
    */
   if (existingSession.status !== SessionStatus._Active) {
-    Log._warn(
-      `Session in invalid state ${existingSession.status}. Cannot deactivate.`,
-    );
+    Log._warn(`Invalid session state: ${existingSession.status}`);
     return undefined;
   }
 
@@ -228,11 +226,9 @@ async function finalizeSession(
     `duration: ${session.accumulatedDuration}s`,
   );
   if (sendOnFocusEnabled) {
-    Log._debug(
-      `send on_focus reporting session duration -> ${session.accumulatedDuration}s`,
-    );
+    Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
-    Log._debug('send on_focus with attribution', attribution);
+    Log._debug('on_focus attribution', attribution);
     await sendSessionDuration(
       appId,
       onesignalId,
@@ -268,7 +264,7 @@ const getLastNotificationClickedForOutcomes = async (
   try {
     allClickedNotifications = await getAllNotificationClickedForOutcomes();
   } catch (e) {
-    Log._error('Database.getLastNotificationClickedForOutcomes', e);
+    Log._error('getLastClickedNotif error', e);
   }
   const predicate = (notification: OutcomesNotificationClicked) =>
     notification.appId === appId;

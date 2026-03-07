@@ -29,14 +29,8 @@ async function processOneSignalDeferredArray(
 function onesignalSdkInit() {
   incrementSdkLoadCount();
   if (getSdkLoadCount() > 1) {
-    Log._warn(
-      `OneSignal: The web push SDK is included more than once. For optimal performance, please include our ` +
-        `SDK only once on your page.`,
-    );
-    Log._debug(
-      `OneSignal: Exiting from SDK initialization to prevent double-initialization errors. ` +
-        `Occurred ${getSdkLoadCount()} times.`,
-    );
+    Log._warn('OneSignal: SDK included more than once');
+    Log._debug(`OneSignal: Skipping duplicate init (${getSdkLoadCount()})`);
     return;
   }
 

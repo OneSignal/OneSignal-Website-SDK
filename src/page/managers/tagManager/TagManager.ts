@@ -28,7 +28,7 @@ export default class TagManager implements ITagManager {
    * @returns Promise resolving TagsObject if successful, {} if no change detected, null if failed
    */
   public async _sendTags(): Promise<TagsObjectForApi> {
-    Log._info('Category Slidedown Local Tags:', this._tagsFromTaggingContainer);
+    Log._info('Local tags:', this._tagsFromTaggingContainer);
 
     const localTagsConvertedToApi = convertTagsBooleansToApi(
       this._tagsFromTaggingContainer,
@@ -43,9 +43,7 @@ export default class TagManager implements ITagManager {
       await OneSignal.User.addTags(finalTagsObject);
       return finalTagsObject;
     }
-    Log._warn(
-      'OneSignal: no change detected in Category preferences. Skipping tag update.',
-    );
+    Log._warn('No tag change detected');
     // no change detected, return {}
     return finalTagsObject;
   }

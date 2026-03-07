@@ -67,7 +67,7 @@ export async function showLocalNotification(
     ._getRegistration()
     .then(async (registration?: ServiceWorkerRegistration | null) => {
       if (!registration) {
-        Log._error('Service worker registration not available.');
+        Log._error('SW registration unavailable');
         return;
       }
 
@@ -107,7 +107,7 @@ export async function getNotificationIcons() {
   const response = await fetch(url);
   const data = await response.json();
   if (data.errors) {
-    Log._error(`API call ${url}`, 'failed with:', data.errors);
+    Log._error(`API ${url} failed:`, data.errors);
     throw new Error('Failed to get notification icons.');
   }
   return data as NotificationIcons;

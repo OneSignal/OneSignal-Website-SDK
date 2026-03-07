@@ -147,14 +147,9 @@ export class SubscriptionManagerBase<
         if (!existingPushSubscription) break;
 
         if (existingPushSubscription.options) {
-          Log._debug(
-            "[Subscription Manager] An existing push subscription exists and it's options is not null.",
-          );
+          Log._debug('Existing push sub options present');
         } else {
-          Log._debug(
-            '[Subscription Manager] An existing push subscription exists and options is null. ' +
-              'Unsubscribing from push first now.',
-          );
+          Log._debug('Existing push sub options null, unsubscribing first');
           /*
             NOTE: Only applies to rare edge case of migrating from senderId to a VAPID subscription
             There isn't a great solution if PushSubscriptionOptions (supported on Chrome 54+) isn't
@@ -266,10 +261,7 @@ export class SubscriptionManagerBase<
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey,
     };
-    Log._debug(
-      '[Subscription Manager] Subscribing to web push with these options:',
-      subscriptionOptions,
-    );
+    Log._debug('Subscribing with options:', subscriptionOptions);
     try {
       const existingSubscription = await pushManager.getSubscription();
       return [
@@ -283,11 +275,7 @@ export class SubscriptionManagerBase<
         // In Chrome, e.message contains will be the following in this case for reference;
         // Registration failed - A subscription with a different applicationServerKey (or gcm_sender_id) already exists;
         //    to change the applicationServerKey, unsubscribe then resubscribe.
-        Log._warn(
-          "[Subscription Manager] Couldn't re-subscribe due to applicationServerKey changing, " +
-            'unsubscribe and attempting to subscribe with new key.',
-          e,
-        );
+        Log._warn('Re-subscribing with new applicationServerKey', e);
         const subscription = await pushManager.getSubscription();
         if (subscription) {
           await SubscriptionManagerBase._doPushUnsubscribe(subscription);
@@ -300,13 +288,9 @@ export class SubscriptionManagerBase<
   private static async _doPushUnsubscribe(
     pushSubscription: PushSubscription,
   ): Promise<boolean> {
-    Log._debug(
-      '[Subscription Manager] Unsubscribing existing push subscription.',
-    );
+    Log._debug('Unsubscribing existing push sub');
     const result = await pushSubscription.unsubscribe();
-    Log._debug(
-      `[Subscription Manager] Unsubscribing existing push subscription result: ${result}`,
-    );
+    Log._debug(`Unsubscribe result: ${result}`);
     return result;
   }
 }

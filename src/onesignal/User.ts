@@ -246,12 +246,12 @@ export default class User {
     const onesignalId =
       OneSignal._coreDirector._getIdentityModel()._onesignalId;
     if (IDManager._isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
-      Log._error('User must be logged in first.');
+      Log._error('User not logged in');
       return;
     }
 
     if (!isObjectSerializable(properties)) {
-      Log._error('Properties must be JSON-serializable');
+      Log._error('Properties not serializable');
       return;
     }
     logMethodCall('trackEvent', { name, properties });

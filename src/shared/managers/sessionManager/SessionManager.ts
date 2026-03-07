@@ -46,7 +46,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      Log._debug('Notify SW to upsert session');
+      Log._debug('SW upsert session');
       await this._context._workerMessenger._unicast(
         WorkerMessengerCommand._SessionUpsert,
         payload,
@@ -54,7 +54,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      Log._debug('Notify upsert: do nothing');
+      Log._debug('Upsert: no-op');
     }
   }
 
@@ -74,7 +74,7 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
     };
     if (supportsServiceWorkers()) {
-      Log._debug('Notify SW to deactivate session');
+      Log._debug('SW deactivate session');
       await this._context._workerMessenger._unicast(
         WorkerMessengerCommand._SessionDeactivate,
         payload,
@@ -82,7 +82,7 @@ export class SessionManager implements ISessionManager {
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
-      Log._debug('Notify deactivate: do nothing');
+      Log._debug('Deactivate: no-op');
     }
   }
 
@@ -173,9 +173,9 @@ export class SessionManager implements ISessionManager {
       }
 
       // it should never be anything else at this point
-      Log._warn('Unhandled visibility state happened', visibilityState);
+      Log._warn('Unhandled visibility state', visibilityState);
     } catch (e) {
-      Log._error('Error handling visibility change:', e);
+      Log._error('Visibility change error:', e);
     }
   }
 
@@ -202,13 +202,13 @@ export class SessionManager implements ISessionManager {
         outcomesConfig: this._context._appConfig.userConfig.outcomes!,
       };
 
-      Log._debug('Notify SW to deactivate session (beforeunload)');
+      Log._debug('SW deactivate (beforeunload)');
       this._context._workerMessenger._directPostMessageToSW(
         WorkerMessengerCommand._SessionDeactivate,
         payload,
       );
     } catch (e) {
-      Log._error('Error handling onbeforeunload:', e);
+      Log._error('beforeunload error:', e);
     }
   }
 
@@ -238,7 +238,7 @@ export class SessionManager implements ISessionManager {
         SessionOrigin._Focus,
       );
     } catch (e) {
-      Log._error('Error handling focus:', e);
+      Log._error('Focus error:', e);
     }
   }
 
@@ -268,7 +268,7 @@ export class SessionManager implements ISessionManager {
         SessionOrigin._Blur,
       );
     } catch (e) {
-      Log._error('Error handling blur:', e);
+      Log._error('Blur error:', e);
     }
   }
 
@@ -296,9 +296,7 @@ export class SessionManager implements ISessionManager {
   _setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (!supportsServiceWorkers()) {
-      Log._debug(
-        'Not setting session event listeners. No service worker possible.',
-      );
+      Log._debug('No SW support, skipping session listeners');
       return;
     }
 
@@ -364,9 +362,7 @@ export class SessionManager implements ISessionManager {
     const onesignalId = identityModel._onesignalId;
 
     if (!onesignalId) {
-      Log._debug(
-        'Not sending the on session because user is not registered with OneSignal (no onesignal id)',
-      );
+      Log._debug('No onesignal id, skipping on_session');
       return;
     }
 
@@ -408,13 +404,11 @@ export class SessionManager implements ISessionManager {
         );
         this._onSessionSent = true;
       } catch (e) {
-        Log._debug('Error updating user session:', e);
+        Log._debug('Session update error:', e);
       }
     } catch (e) {
       if (e instanceof Error) {
-        Log._error(
-          `Failed to update user session. Error "${e.message}" ${e.stack}`,
-        );
+        Log._error(`Session update failed: "${e.message}" ${e.stack}`);
       }
     }
   }

@@ -27,7 +27,7 @@ export class OperationModelStore extends ModelStore<Operation> {
 
   _create(jsonObject?: { name?: string } | null): Operation | null {
     if (jsonObject === null) {
-      Log._error('null jsonObject sent to OperationModelStore.create');
+      Log._error('null jsonObject in OpModelStore.create');
       return null;
     }
 
@@ -96,7 +96,7 @@ export class OperationModelStore extends ModelStore<Operation> {
   } {
     const operationName = object?.name;
     if (!operationName) {
-      Log._error("jsonObject must have 'name' attribute");
+      Log._error("Missing 'name' attribute");
       return false;
     }
 
