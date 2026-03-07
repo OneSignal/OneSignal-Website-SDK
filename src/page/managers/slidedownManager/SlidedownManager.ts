@@ -29,7 +29,7 @@ import {
   wasPromptOfTypeDismissed,
 } from '../../../shared/helpers/dismiss';
 import Log from '../../../shared/libraries/Log';
-import type { PushSubscriptionState } from '../../../shared/models/PushSubscriptionState';
+import type { PushSubscriptionState } from '../../../shared/subscriptions/types';
 import { DismissPrompt } from '../../models/Dismiss';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';
@@ -62,7 +62,7 @@ export class SlidedownManager {
 
     const subscriptionInfo: PushSubscriptionState =
       await OneSignal._context._subscriptionManager._getSubscriptionState();
-    const { subscribed, optedOut } = subscriptionInfo;
+    const { _subscribed, _optedOut } = subscriptionInfo;
 
     const slidedownType = options.slidedownPromptOptions?.type;
 
@@ -74,7 +74,7 @@ export class SlidedownManager {
 
     // applies to both push and category slidedown types
     if (_isSlidedownPushDependent) {
-      if (subscribed) {
+      if (_subscribed) {
         // applies to category slidedown type only
         if (options.isInUpdateMode) {
           return true;
@@ -86,7 +86,7 @@ export class SlidedownManager {
 
       wasDismissed = wasPromptOfTypeDismissed(DismissPrompt._Push);
 
-      if (optedOut) {
+      if (_optedOut) {
         throw new Error('User is opted out');
       }
 
