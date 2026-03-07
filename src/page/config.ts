@@ -1,27 +1,20 @@
-import { downloadServerAppConfig } from '../api/page';
-import { InvalidAppIdError } from '../errors/common';
-import { isValidUuid } from '../helpers/validators';
-import { checkRestrictedOrigin, checkUnsupportedSubdomain } from './domain';
+import { downloadServerAppConfig } from 'src/shared/api/page';
+import { InvalidAppIdError } from 'src/shared/errors/common';
+import { isValidUuid } from 'src/shared/helpers/validators';
+import { SESSION_DEFAULTS } from 'src/shared/config/constants';
+import { checkUnsupportedSubdomain } from 'src/shared/config/domain';
 import {
   getConfigIntegrationKind,
   getUserConfigForConfigIntegrationKind,
   hasUnsupportedSubdomainForConfigIntegrationKind,
-} from './integration';
+} from 'src/shared/config/integration';
 import {
   type AppConfig,
   type AppUserConfig,
   type ServerAppConfig,
-} from './types';
-import { upgradeConfigToVersionTwo } from './version';
+} from 'src/shared/config/types';
+import { upgradeConfigToVersionTwo } from 'src/shared/config/version';
 
-// local constants
-const SERVER_CONFIG_DEFAULTS_SESSION = {
-  reportingThreshold: 30,
-  enableOnSessionForUnsubcribed: false,
-  enableOnFocus: true,
-};
-
-// helpers
 export async function getAppConfig(
   userConfig: AppUserConfig,
 ): Promise<AppConfig> {
@@ -56,6 +49,21 @@ export async function getServerAppConfig(
  * Merges configuration downloaded from the OneSignal dashboard with user-provided JavaScript configuration to produce
  * a final web SDK-specific configuration.
  */
+function checkRestrictedOrigin(appConfig: AppConfig) {
+  if (!appConfig.restrictedOriginEnabled) return;
+
+  let originsMatch = false;
+  try {
+    originsMatch = location.origin === new URL(appConfig.origin).origin;
+  } catch {
+    // invalid origin URL — treat as mismatch
+  }
+
+  if (!originsMatch) {
+    throw new Error(`Can only be used on: ${new URL(appConfig.origin).origin}`);
+  }
+}
+
 export function getMergedConfig(
   userConfig: AppUserConfig,
   serverConfig: ServerAppConfig,
@@ -89,12 +97,12 @@ export function getMergedConfig(
     userConfig: mergedUserConfig,
     enableOnSession:
       serverConfig.features.enable_on_session ??
-      SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed,
+      SESSION_DEFAULTS.enableOnSession,
     sessionThreshold:
       serverConfig.features.session_threshold ??
-      SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold,
+      SESSION_DEFAULTS.sessionThreshold,
     enableSessionDuration:
       serverConfig.features.web_on_focus_enabled ??
-      SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
+      SESSION_DEFAULTS.enableSessionDuration,
   };
 }

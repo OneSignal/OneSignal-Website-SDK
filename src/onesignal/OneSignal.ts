@@ -1,5 +1,5 @@
 import type Bell from 'src/page/bell/Bell';
-import { getAppConfig } from 'src/shared/config/app';
+import { getAppConfig } from 'src/page/config';
 import type { AppConfig, AppUserConfig } from 'src/shared/config/types';
 import { db, dbPromise } from 'src/shared/database/client';
 import {

@@ -3,7 +3,7 @@ import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { getFinalAppConfig } from '__test__/support/helpers/configHelper';
 import type { TagCategory } from 'src/page/tags/types';
-import { getAppConfig, getMergedConfig } from './app';
+import { getAppConfig, getMergedConfig } from 'src/page/config';
 import { ConfigIntegrationKind } from './constants';
 import {
   getUserConfigForConfigIntegrationKind,
