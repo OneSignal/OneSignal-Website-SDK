@@ -1,5 +1,5 @@
 import deepmerge from 'deepmerge';
-import { getMergedConfig } from 'src/shared/config/app';
+import { getMergedConfig } from 'src/page/config';
 import {
   ConfigIntegrationKind,
   NotificationClickActionBehavior,

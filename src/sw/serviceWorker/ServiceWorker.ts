@@ -3,7 +3,7 @@ import {
   downloadSWServerAppConfig,
   getUserIdFromSubscriptionIdentifier,
 } from 'src/shared/api/sw';
-import { getServerAppConfig } from 'src/shared/config/app';
+import { getServerAppConfigSW } from 'src/sw/config';
 import type { AppConfig } from 'src/shared/config/types';
 import {
   db,
@@ -1014,8 +1014,8 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
     // Without an app ID, we can't make any calls
     return;
   }
-  const appConfig = await getServerAppConfig(
-    { appId },
+  const appConfig = await getServerAppConfigSW(
+    appId,
     downloadSWServerAppConfig,
   );
   if (!appConfig) {

@@ -1,4 +1,4 @@
-import { getServerAppConfig } from 'src/shared/config/app';
+import { getServerAppConfig } from 'src/page/config';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import type { AppConfig, ServerAppConfig } from 'src/shared/config/types';
 import TestContext from '../environment/TestContext';

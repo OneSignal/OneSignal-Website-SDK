@@ -1,4 +1,3 @@
-import { IS_SERVICE_WORKER } from 'src/shared/utils/env';
 import { type AppConfig } from './types';
 
 // The os.tc domain feature is no longer supported in v16, so throw if the
@@ -17,23 +16,5 @@ export function checkUnsupportedSubdomain(appConfig: AppConfig): void {
         'OneSignalSDK: The "My site is not fully HTTPS" option is no longer supported starting with version 16 (User Model) of the OneSignal SDK.',
       );
     }
-  }
-}
-
-export function checkRestrictedOrigin(appConfig: AppConfig) {
-  if (!appConfig.restrictedOriginEnabled) return;
-
-  if (IS_SERVICE_WORKER) return;
-
-  if (!doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
-    throw new Error(`Can only be used on: ${new URL(appConfig.origin).origin}`);
-  }
-}
-
-function doesCurrentOriginMatchConfigOrigin(configOrigin: string): boolean {
-  try {
-    return location.origin === new URL(configOrigin).origin;
-  } catch {
-    return false;
   }
 }
