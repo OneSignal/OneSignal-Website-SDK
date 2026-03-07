@@ -206,3 +206,11 @@ export interface AppState {
 export type OptionsValue = IndexedDBSchema['Options']['value']['value'];
 
 export type IDBStoreName = keyof IndexedDBSchema;
+
+export interface Subscription {
+  _deviceId: string | null | undefined;
+  _token: string | null | undefined;
+  _optedOut: boolean | undefined;
+  _createdAt: number | null | undefined;
+  _expirationTime: number | null | undefined;
+}

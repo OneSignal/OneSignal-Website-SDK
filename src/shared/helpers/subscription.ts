@@ -2,7 +2,7 @@ import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
-import { Subscription } from '../models/Subscription';
+import type { Subscription } from '../database/types';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import { IS_SERVICE_WORKER } from '../utils/env';
 import { incrementPageViewCount } from './pageview';

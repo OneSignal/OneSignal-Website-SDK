@@ -1,16 +1,16 @@
 import {
-  getSubscription,
-  setSubscription,
+    getSubscription,
+    setSubscription,
 } from 'src/shared/database/subscription';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
 import Log from '../../libraries/Log';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
-import type { Subscription } from '../../models/Subscription';
+import type { Subscription } from '../../database/types';
 import {
-  SubscriptionStrategyKind,
-  type SubscriptionStrategyKindValue,
+    SubscriptionStrategyKind,
+    type SubscriptionStrategyKindValue,
 } from '../../models/SubscriptionStrategyKind';
 import OneSignalEvent from '../../services/OneSignalEvent';
 import { SessionOrigin } from '../../session/constants';
@@ -90,18 +90,18 @@ export class SubscriptionManagerBase<
 
     const subscription = await getSubscription();
     // User Model: TO DO: Remove this once we have a better way to determine if the user is subscribed
-    subscription.deviceId = DEFAULT_DEVICE_ID;
-    subscription.optedOut = false;
+    subscription._deviceId = DEFAULT_DEVICE_ID;
+    subscription._optedOut = false;
     if (pushSubscription) {
       if (useSafariLegacyPush()) {
-        subscription.subscriptionToken = pushSubscription.safariDeviceToken;
+        subscription._token = pushSubscription.safariDeviceToken;
       } else {
-        subscription.subscriptionToken = pushSubscription.w3cEndpoint
+        subscription._token = pushSubscription.w3cEndpoint
           ? pushSubscription.w3cEndpoint.toString()
           : null;
       }
     } else {
-      subscription.subscriptionToken = null;
+      subscription._token = null;
     }
     await setSubscription(subscription);
 
@@ -116,7 +116,7 @@ export class SubscriptionManagerBase<
   }
 
   public async _isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
-    const { deviceId } = await getSubscription();
+    const { _deviceId: deviceId } = await getSubscription();
     return !!deviceId;
   }
 
@@ -237,9 +237,9 @@ export class SubscriptionManagerBase<
   ): Promise<void> {
     const bundle = await getSubscription();
     if (updateCreatedAt) {
-      bundle.createdAt = new Date().getTime();
+      bundle._createdAt = new Date().getTime();
     }
-    bundle.expirationTime = expirationTime;
+    bundle._expirationTime = expirationTime;
     await setSubscription(bundle);
   }
 

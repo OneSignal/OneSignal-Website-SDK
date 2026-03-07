@@ -3,7 +3,6 @@ import {
   downloadSWServerAppConfig,
   getUserIdFromSubscriptionIdentifier,
 } from 'src/shared/api/sw';
-import { getServerAppConfigSW } from 'src/sw/config';
 import type { AppConfig } from 'src/shared/config/types';
 import {
   db,
@@ -52,6 +51,7 @@ import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
+import { getServerAppConfigSW } from 'src/sw/config';
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import {
   isValidPayload,
@@ -182,7 +182,7 @@ function setupMessageListeners() {
         );
       workerMessenger._broadcast(
         WorkerMessengerCommand._Subscribe,
-        subscription._serialize(),
+        subscription,
       );
     },
   );
@@ -202,7 +202,7 @@ function setupMessageListeners() {
 
       workerMessenger._broadcast(
         WorkerMessengerCommand._SubscribeNew,
-        subscription._serialize(),
+        subscription,
       );
     },
   );
@@ -1028,7 +1028,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
   let deviceIdExists: boolean;
   {
     let deviceId: string | null | undefined = (await getSubscription())
-      .deviceId;
+      ._deviceId;
 
     deviceIdExists = !!deviceId;
     if (!deviceIdExists && event.oldSubscription) {
@@ -1041,7 +1041,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
 
       // Store the device ID, so it can be looked up when subscribing
       const subscription = await getSubscription();
-      subscription.deviceId = deviceId;
+      subscription._deviceId = deviceId;
       await setSubscription(subscription);
     }
     deviceIdExists = !!deviceId;

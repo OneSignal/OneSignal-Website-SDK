@@ -1,4 +1,4 @@
-import { Subscription } from '../models/Subscription';
+import type { Subscription } from './types';
 import { db, getOptionsValue } from './client';
 
 export const getPushId = async () => {
@@ -15,70 +15,67 @@ export const setPushToken = async (pushToken: string | undefined) => {
   await db.put('Options', { key: 'lastPushToken', value: pushToken });
 };
 
-export const getSubscription = async () => {
-  const subscription = new Subscription();
-  subscription.deviceId = (await db.get('Ids', 'userId'))?.id;
-  subscription.subscriptionToken = (await db.get('Ids', 'registrationId'))?.id;
+export const getSubscription = async (): Promise<Subscription> => {
+  const deviceId = (await db.get('Ids', 'userId'))?.id;
+  const token = (await db.get('Ids', 'registrationId'))?.id;
 
-  // The preferred database key to store our subscription
   const dbOptedOut = await getOptionsValue<boolean>('optedOut');
-  // For backwards compatibility, we need to read from this if the above is not found
   const dbNotOptedOut = await getOptionsValue<boolean>('subscription');
   const createdAt = await getOptionsValue<number>('subscriptionCreatedAt');
   const expirationTime = await getOptionsValue<number>(
     'subscriptionExpirationTime',
   );
 
+  let optedOut: boolean;
   if (dbOptedOut != null) {
-    subscription.optedOut = dbOptedOut;
+    optedOut = dbOptedOut;
   } else {
-    if (dbNotOptedOut == null) {
-      subscription.optedOut = false;
-    } else {
-      subscription.optedOut = !dbNotOptedOut;
-    }
+    optedOut = dbNotOptedOut == null ? false : !dbNotOptedOut;
   }
-  subscription.createdAt = createdAt ?? null;
-  subscription.expirationTime = expirationTime ?? null;
 
-  return subscription;
+  return {
+    _deviceId: deviceId,
+    _token: token,
+    _optedOut: optedOut,
+    _createdAt: createdAt ?? null,
+    _expirationTime: expirationTime ?? null,
+  };
 };
 
 export const setSubscription = async (subscription: Subscription) => {
-  if (subscription.deviceId) {
+  if (subscription._deviceId) {
     await db.put('Ids', {
       type: 'userId',
-      id: subscription.deviceId,
+      id: subscription._deviceId,
     });
   }
 
-  if (typeof subscription.subscriptionToken !== 'undefined') {
-    // Allow null subscriptions to be set
+  if (typeof subscription._token !== 'undefined') {
     await db.put('Ids', {
       type: 'registrationId',
-      id: subscription.subscriptionToken,
+      id: subscription._token,
     });
   }
 
-  if (subscription.optedOut != null) {
+  if (subscription._optedOut != null) {
     // Checks if null or undefined, allows false
     await db.put('Options', {
       key: 'optedOut',
-      value: subscription.optedOut,
+      value: subscription._optedOut,
     });
   }
 
-  if (subscription.createdAt != null) {
+  if (subscription._createdAt != null) {
     await db.put('Options', {
       key: 'subscriptionCreatedAt',
-      value: subscription.createdAt,
+      value: subscription._createdAt,
     });
   }
 
-  if (subscription.expirationTime != null) {
+  if (subscription._expirationTime != null) {
     await db.put('Options', {
       key: 'subscriptionExpirationTime',
-      value: subscription.expirationTime,
+      value: subscription._expirationTime,
     });
   } else {
     await db.delete('Options', 'subscriptionExpirationTime');

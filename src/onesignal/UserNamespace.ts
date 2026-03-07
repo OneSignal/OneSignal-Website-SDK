@@ -1,7 +1,7 @@
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
-import { Subscription } from '../shared/models/Subscription';
+import type { Subscription } from '../shared/database/types';
 import PushSubscriptionNamespace from './PushSubscriptionNamespace';
 import User from './User';
 
