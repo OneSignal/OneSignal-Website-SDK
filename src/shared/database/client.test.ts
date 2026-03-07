@@ -2,7 +2,7 @@ import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID } from '__test__/constants';
 import type * as idbLite from './idb-lite';
 import { wrapRequest } from './idb-lite';
 import { SubscriptionType } from '../subscriptions/constants';
-import { closeDb, getDb } from './client';
+import { closeDb, getDb, getObjectStoreNames } from './client';
 import { DATABASE_NAME } from './constants';
 import type { IndexedDBSchema } from './types';
 
@@ -127,7 +127,7 @@ describe('migrations', () => {
       ]);
 
       // old table should be removed
-      expect(db2.objectStoreNames).not.toContain('NotificationClicked');
+      expect(await getObjectStoreNames()).not.toContain('NotificationClicked');
     });
 
     // Tests NotificationReceived records migrate over from a v15 SDK version
@@ -153,7 +153,7 @@ describe('migrations', () => {
       ]);
 
       // old table should be removed
-      expect(db2.objectStoreNames).not.toContain('NotificationReceived');
+      expect(await getObjectStoreNames()).not.toContain('NotificationReceived');
     });
 
     // Tests records coming from a broken SDK (160000.beta4 to 160000) and upgrading to fixed v5 db
@@ -280,7 +280,7 @@ describe('migrations', () => {
         'smsSubscriptions',
       ];
       for (const tableName of oldTableNames) {
-        expect(db2.objectStoreNames).not.toContain(tableName);
+        expect(await getObjectStoreNames()).not.toContain(tableName);
       }
     });
 

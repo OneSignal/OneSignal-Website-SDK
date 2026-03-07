@@ -2,7 +2,7 @@ import Log from '../libraries/Log';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/env';
 import { DATABASE_NAME, VERSION } from './constants';
-import { openDB, wrapDb } from './idb-lite';
+import { openDB, wrapRequest } from './idb-lite';
 import type { IDBStoreName, IdKey, IndexedDBSchema, OptionKey } from './types';
 import {
   migrateModelNameSubscriptionsTableForV6,
@@ -84,44 +84,45 @@ const open = async (version = VERSION) => {
       }
     },
   });
-  return wrapDb<IndexedDBSchema>(raw);
+  return raw;
 };
 
-export let dbPromise = open();
+let dbPromise = open();
 export const getDb = (version = VERSION) => {
   dbPromise = open(version);
-  return dbPromise;
+  return db;
 };
 
-// Export db object with the same API as before
+const store = async (name: IDBStoreName, mode?: IDBTransactionMode) =>
+  (await dbPromise).transaction(name, mode).objectStore(name);
+
 export const db = {
   async get<K extends IDBStoreName>(
     storeName: K,
     key: IndexedDBSchema[K]['key'],
   ): Promise<IndexedDBSchema[K]['value'] | undefined> {
-    return (await dbPromise).get(storeName, key);
+    return wrapRequest((await store(storeName)).get(key));
   },
   async getAll<K extends IDBStoreName>(
     storeName: K,
   ): Promise<IndexedDBSchema[K]['value'][]> {
-    return (await dbPromise).getAll(storeName);
+    return wrapRequest((await store(storeName)).getAll());
   },
   async put<K extends IDBStoreName>(
     storeName: K,
     value: IndexedDBSchema[K]['value'],
   ) {
-    return (await dbPromise).put(storeName, value);
+    return wrapRequest((await store(storeName, 'readwrite')).put(value));
   },
   async delete<K extends IDBStoreName>(
     storeName: K,
     key: IndexedDBSchema[K]['key'],
   ) {
-    return (await dbPromise).delete(storeName, key);
+    return wrapRequest((await store(storeName, 'readwrite')).delete(key));
   },
-};
-
-export const clearStore = async <K extends IDBStoreName>(storeName: K) => {
-  return (await dbPromise).clear(storeName);
+  async clear<K extends IDBStoreName>(storeName: K) {
+    return wrapRequest((await store(storeName, 'readwrite')).clear());
+  },
 };
 
 export const getObjectStoreNames = async () => {
@@ -148,9 +149,11 @@ export const cleanupCurrentSession = async () => {
   await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
 };
 
+export const clearStore = db.clear;
+
 export const clearAll = async () => {
   for (const name of await getObjectStoreNames()) {
-    await clearStore(name);
+    await db.clear(name);
   }
 };
 
