@@ -45,10 +45,7 @@ export async function getServerAppConfig(
   }
 }
 
-/**
- * Merges configuration downloaded from the OneSignal dashboard with user-provided JavaScript configuration to produce
- * a final web SDK-specific configuration.
- */
+/** Throws if the current page origin doesn't match the configured origin. */
 function checkRestrictedOrigin(appConfig: AppConfig) {
   if (!appConfig.restrictedOriginEnabled) return;
 
