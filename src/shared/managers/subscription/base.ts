@@ -6,7 +6,10 @@ import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
 import Log from '../../libraries/Log';
-import { RawPushSubscription } from '../../models/RawPushSubscription';
+import {
+    type RawPushSubscription,
+    rawPushSubscriptionFromW3c,
+} from '../../models/RawPushSubscription';
 import type { Subscription } from '../../database/types';
 import {
     SubscriptionStrategyKind,
@@ -66,18 +69,6 @@ export class SubscriptionManagerBase<
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _subscriptionState?: NotificationTypeValue | null,
   ): Promise<Subscription> {
-    /*
-      This may be called after the RawPushSubscription has been serialized across a postMessage
-      frame. This means it will only have object properties and none of the functions. We have to
-      recreate the RawPushSubscription.
-
-      Keep in mind pushSubscription can be null in cases where resubscription isn't possible
-      (blocked permission).
-    */
-    if (pushSubscription) {
-      pushSubscription = RawPushSubscription._deserialize(pushSubscription);
-    }
-
     if (await this._isAlreadyRegisteredWithOneSignal()) {
       if (!IS_SERVICE_WORKER && '_updateManager' in this._context) {
         await this._context._updateManager._sendPushDeviceRecordUpdate();
@@ -96,9 +87,7 @@ export class SubscriptionManagerBase<
       if (useSafariLegacyPush()) {
         subscription._token = pushSubscription.safariDeviceToken;
       } else {
-        subscription._token = pushSubscription.w3cEndpoint
-          ? pushSubscription.w3cEndpoint.toString()
-          : null;
+        subscription._token = pushSubscription.w3cEndpoint ?? null;
       }
     } else {
       subscription._token = null;
@@ -195,10 +184,7 @@ export class SubscriptionManagerBase<
       newPushSubscription.expirationTime,
     );
 
-    // Create our own custom object from the browser's native PushSubscription object
-    const pushSubscriptionDetails =
-      RawPushSubscription._setFromW3cSubscription(newPushSubscription);
-    return pushSubscriptionDetails;
+    return rawPushSubscriptionFromW3c(newPushSubscription);
   }
 
   /**

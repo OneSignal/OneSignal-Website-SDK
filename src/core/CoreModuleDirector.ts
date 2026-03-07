@@ -1,4 +1,4 @@
-import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
+import { serializePushSubscriptionRecord } from 'src/page/userModel/FuturePushSubscriptionRecord';
 import { getPushToken } from 'src/shared/database/subscription';
 import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -9,7 +9,7 @@ import {
 import type { SubscriptionChannelValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 import { getCurrentPushToken } from '../shared/helpers/main';
-import { RawPushSubscription } from '../shared/models/RawPushSubscription';
+import type { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import CoreModule from './CoreModule';
 import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';
@@ -62,7 +62,7 @@ export class CoreModuleDirector {
     });
     const model = new SubscriptionModel();
     model._initializeFromJson(
-      new FuturePushSubscriptionRecord(rawPushSubscription)._serialize(),
+      serializePushSubscriptionRecord(rawPushSubscription),
     );
     model.id = IDManager._createLocalId();
 
