@@ -1,5 +1,5 @@
 import { PermissionBlockedError } from 'src/shared/errors/common';
-import type { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import type { RawPushSubscription } from 'src/shared/subscriptions/rawPushSubscription';
 import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';

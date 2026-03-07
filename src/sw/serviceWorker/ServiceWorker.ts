@@ -36,7 +36,7 @@ import type { DeliveryPlatformKindValue } from 'src/shared/models/DeliveryPlatfo
 import {
   type RawPushSubscription,
   rawPushSubscriptionFromW3c,
-} from 'src/shared/models/RawPushSubscription';
+} from 'src/shared/subscriptions/rawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import type {
   IMutableOSNotification,
@@ -353,9 +353,7 @@ function onPushReceived(event: PushEvent): void {
               notificationWillDisplay(notif, pushSubscriptionId);
 
               if (shouldPreventDisplay) {
-                Log._debug(
-                  `[SW] Display prevented: ${notif.notificationId}`,
-                );
+                Log._debug(`[SW] Display prevented: ${notif.notificationId}`);
                 // Still send confirmed delivery even if display is prevented
                 return sendConfirmedDelivery(notif);
               }

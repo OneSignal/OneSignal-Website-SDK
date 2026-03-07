@@ -2,7 +2,7 @@ import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import LoginManager from 'src/page/managers/LoginManager';
-import { serializePushSubscriptionRecord } from 'src/page/userModel/FuturePushSubscriptionRecord';
+import { serializePushSubscriptionRecord } from 'src/page/userModel/pushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
 import { getSubscription } from 'src/shared/database/subscription';
 import {
@@ -24,7 +24,7 @@ import { ServiceWorkerActiveState } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import { isCompleteSubscriptionObject } from 'src/shared/managers/utils';
 import type { PushSubscriptionState } from 'src/shared/models/PushSubscriptionState';
-import type { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import type { RawPushSubscription } from 'src/shared/subscriptions/rawPushSubscription';
 import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';
 import {
   UnsubscriptionStrategy,

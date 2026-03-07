@@ -1,4 +1,4 @@
-import { serializePushSubscriptionRecord } from 'src/page/userModel/FuturePushSubscriptionRecord';
+import { serializePushSubscriptionRecord } from 'src/page/userModel/pushSubscriptionRecord';
 import { getPushToken } from 'src/shared/database/subscription';
 import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -9,7 +9,7 @@ import {
 import type { SubscriptionChannelValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 import { getCurrentPushToken } from '../shared/helpers/main';
-import type { RawPushSubscription } from '../shared/models/RawPushSubscription';
+import type { RawPushSubscription } from '../shared/subscriptions/rawPushSubscription';
 import CoreModule from './CoreModule';
 import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';

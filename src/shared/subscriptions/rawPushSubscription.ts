@@ -11,8 +11,8 @@ const encodeArrayBuffer = (buffer: ArrayBuffer): string =>
 export function rawPushSubscriptionFromW3c(
   pushSubscription: PushSubscription,
 ): RawPushSubscription {
-  const p256dh = pushSubscription.getKey('p256dh');
-  const auth = pushSubscription.getKey('auth');
+  const p256dh = pushSubscription.getKey?.('p256dh');
+  const auth = pushSubscription.getKey?.('auth');
 
   return {
     w3cEndpoint: new URL(pushSubscription.endpoint).toString(),
