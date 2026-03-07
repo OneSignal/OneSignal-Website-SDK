@@ -6,7 +6,6 @@ import {
 import { timeoutPromise } from '../context/helpers';
 import type { ContextInterface } from '../context/types';
 import { hasSafariWindow, supportsServiceWorkers } from '../environment/detect';
-import { SWRegistrationError } from '../errors/common';
 import { getBaseUrl } from '../helpers/general';
 import {
   getServiceWorkerHref,
@@ -112,8 +111,7 @@ export class ServiceWorkerManager {
       return ServiceWorkerActiveState._None;
     }
     const isValidOSWorker =
-      fileName == this._config.workerPath._getFileName() ||
-      fileName == 'OneSignalSDK.sw.js'; // For backwards compatibility with temporary v16 user model beta filename (remove after 5/5/24 deprecation)
+      fileName == this._config.workerPath._getFileName();
 
     if (isValidOSWorker) {
       return ServiceWorkerActiveState._OneSignalWorker;
@@ -414,16 +412,10 @@ export class ServiceWorkerManager {
     const scope = `${getBaseUrl()}${this._config.registrationOptions.scope}`;
     Log._info(`Installing SW ${workerHref} ${scope}`);
 
-    let registration: ServiceWorkerRegistration;
-    try {
-      registration = await navigator.serviceWorker.register(workerHref, {
-        scope,
-        type: import.meta.env.MODE === 'development' ? 'module' : undefined,
-      });
-    } catch (error) {
-      Log._error(`SW install failed ${error}`);
-      registration = await this._fallbackToUserModelBetaWorker();
-    }
+    const registration = await navigator.serviceWorker.register(workerHref, {
+      scope,
+      type: import.meta.env.MODE === 'development' ? 'module' : undefined,
+    });
     Log._debug('SW installed, waiting for activation');
 
     await waitUntilActive(registration);
@@ -434,46 +426,4 @@ export class ServiceWorkerManager {
     return registration;
   }
 
-  async _fallbackToUserModelBetaWorker(): Promise<ServiceWorkerRegistration> {
-    const BETA_WORKER_NAME = 'OneSignalSDK.sw.js';
-
-    const configWithBetaWorkerName: ServiceWorkerManagerConfig = {
-      workerPath: new Path(`/${BETA_WORKER_NAME}`),
-      registrationOptions: this._config.registrationOptions,
-    };
-
-    const workerHref = getServiceWorkerHref(
-      configWithBetaWorkerName,
-      this._context._appConfig.appId,
-      VERSION,
-    );
-
-    const scope = `${getBaseUrl()}${this._config.registrationOptions.scope}`;
-
-    Log._info(`Installing v16 Beta Worker ${workerHref} ${scope}`);
-
-    try {
-      const registration = await navigator.serviceWorker.register(workerHref, {
-        scope,
-      });
-
-      const DEPRECATION_ERROR = `
-        [Service Worker Installation] Successfully installed v16 Beta Worker.
-        Deprecation warning: support for the v16 beta worker name of ${BETA_WORKER_NAME}
-        will be removed May 5 2024. We have decided to keep the v15 name.
-        To avoid breaking changes for your users, please host both worker files:
-        OneSignalSDK.sw.js & OneSignalSDKWorker.js.
-      `;
-
-      Log._error(DEPRECATION_ERROR);
-      return registration;
-    } catch (error) {
-      const response = await fetch(workerHref);
-      if (response.status === 403 || response.status === 404) {
-        throw new SWRegistrationError(response.status, response.statusText);
-      }
-
-      throw error;
-    }
-  }
 }
