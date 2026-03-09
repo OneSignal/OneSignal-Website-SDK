@@ -34,11 +34,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(
-      `CustomEventsOperationExecutor(operations: ${JSON.stringify(
-        operations,
-      )})`,
-    );
+    Log._debug(`CustomEventOpExec(${JSON.stringify(operations)})`);
 
     // TODO: each trackEvent is sent individually right now; may need to batch in the future
     const operation = operations[0];

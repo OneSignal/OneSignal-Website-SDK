@@ -1,4 +1,3 @@
-import { sortArrayOfObjects } from '../context/helpers';
 import { db, getCurrentSession } from '../database/client';
 import {
   getAllNotificationClickedForOutcomes,
@@ -11,7 +10,6 @@ import {
   OutcomeAttributionType,
   type SentUniqueOutcome,
 } from '../models/Outcomes';
-import type { OutcomesNotificationReceived } from '../models/OutcomesNotificationEvents';
 import type { OutcomesConfig } from '../outcomes/types';
 import { awaitOneSignalInitAndSupported, logMethodCall } from '../utils/utils';
 
@@ -66,7 +64,7 @@ export default class OutcomesHelper {
     logMethodCall(outcomeMethodString, this._outcomeName);
 
     if (!this._config) {
-      Log._debug('Outcomes feature not supported by main application yet.');
+      Log._debug('Outcomes not supported yet');
       return false;
     }
 
@@ -80,7 +78,7 @@ export default class OutcomesHelper {
     const isSubscribed =
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
     if (!isSubscribed) {
-      Log._warn('Reporting outcomes is supported only for subscribed users.');
+      Log._warn('Outcomes require subscription');
       return false;
     }
     return true;
@@ -192,9 +190,7 @@ export default class OutcomesHelper {
       case OutcomeAttributionType._Unattributed:
         if (this._isUnique) {
           if (await this._wasSentDuringSession()) {
-            Log._warn(
-              `(Unattributed) unique outcome was already sent during this session`,
-            );
+            Log._warn('Unattributed unique outcome already sent this session');
             return;
           }
           await this._saveSentUniqueOutcome([]);
@@ -206,9 +202,7 @@ export default class OutcomesHelper {
         );
         return;
       default:
-        Log._warn(
-          'You are on a free plan. Please upgrade to use this functionality.',
-        );
+        Log._warn('Upgrade required for this functionality');
         return;
     }
   }
@@ -257,9 +251,7 @@ export async function getConfigAttribution(
 
     const allReceivedNotification =
       await getAllNotificationReceivedForOutcomes();
-    Log._debug(
-      `\tFound total of ${allReceivedNotification.length} received notifications`,
-    );
+    Log._debug(`${allReceivedNotification.length} received notifs found`);
 
     if (allReceivedNotification.length > 0) {
       const max: number = config.indirect.influencedNotificationsLimit;
@@ -268,18 +260,15 @@ export async function getConfigAttribution(
        * we check the appId on notifications to match the current app.
        */
 
-      const allReceivedNotificationSorted = sortArrayOfObjects(
-        allReceivedNotification,
-        (notif: OutcomesNotificationReceived) => notif.timestamp,
-        true,
-        false,
-      );
+      const allReceivedNotificationSorted = allReceivedNotification
+        .slice()
+        .sort((a, b) => b.timestamp - a.timestamp);
       const matchingNotificationIds = allReceivedNotificationSorted
         .filter((notif) => notif.timestamp >= maxTimestamp)
         .slice(0, max)
         .map((notif) => notif.notificationId);
       Log._debug(
-        `\tTotal of ${matchingNotificationIds.length} received notifications are within reporting window.`,
+        `${matchingNotificationIds.length} notifs in reporting window`,
       );
 
       // Deleting all unmatched received notifications
@@ -292,9 +281,7 @@ export async function getConfigAttribution(
       notificationIdsToDelete.forEach((id) =>
         db.delete('Outcomes.NotificationReceived', id),
       );
-      Log._debug(
-        `\t${notificationIdsToDelete.length} received notifications will be deleted.`,
-      );
+      Log._debug(`${notificationIdsToDelete.length} notifs to delete`);
 
       if (matchingNotificationIds.length > 0) {
         return {

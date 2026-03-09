@@ -1,5 +1,4 @@
 import type { NotificationIcons } from 'src/shared/notifications/types';
-import { stringify } from '../context/helpers';
 import Log from '../libraries/Log';
 import { Browser } from '../useragent/constants';
 import { getBrowserName } from '../useragent/detect';
@@ -17,7 +16,9 @@ export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
 }
 
 export function logMethodCall(methodName: string, ...args: any[]) {
-  return Log._debug(`Called ${methodName}(${args.map(stringify).join(', ')})`);
+  return Log._debug(
+    `${methodName}(${args.map((a) => JSON.stringify(a)).join(', ')})`,
+  );
 }
 
 export function once(
@@ -27,10 +28,10 @@ export function once(
   manualDestroy = false,
 ) {
   if (!event) {
-    Log._error('Cannot call on() with no event: ', event);
+    Log._error('on() missing event:', event);
   }
   if (!task) {
-    Log._error('Cannot call on() with no task: ', task);
+    Log._error('on() missing task:', task);
   }
   if (typeof targetSelectorOrElement === 'string') {
     const els = document.querySelectorAll(targetSelectorOrElement);

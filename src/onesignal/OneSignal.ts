@@ -67,7 +67,7 @@ export default class OneSignal {
   private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await getAppConfig(options);
 
-    Log._debug('OneSignal: Final web app config:', appConfig);
+    Log._debug('Final web app config:', appConfig);
 
     // Workaround to temp assign config so that it can be used in context.
     OneSignal.config = appConfig;
@@ -154,7 +154,7 @@ export default class OneSignal {
 
     const idb = await dbPromise.catch((e) => {
       Log._error(
-        'OneSignal: IndexedDB unavailable, close & reopen the page to retry init',
+        'IndexedDB unavailable, close & reopen the page to retry init',
         e,
       );
     });
@@ -210,10 +210,6 @@ export default class OneSignal {
     )
       await __init();
     else {
-      Log._debug(
-        'OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
-          ' initialization...',
-      );
       window.addEventListener('DOMContentLoaded', () => {
         __init();
       });
@@ -312,8 +308,7 @@ function processItem(
 }
 
 Log._info(
-  `OneSignal Web SDK loaded (version ${VERSION},
-  ${windowEnvString} environment).`,
+  `Web SDK loaded (version ${VERSION}, ${windowEnvString} environment).`,
 );
 Log._debug(
   `Current Page URL: ${

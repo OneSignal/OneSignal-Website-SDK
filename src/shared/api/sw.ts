@@ -51,7 +51,7 @@ export async function getUserIdFromSubscriptionIdentifier(
       }
     })
     .catch((e) => {
-      Log._debug('Error getting user ID from subscription identifier:', e);
+      Log._debug('Error getting user ID:', e);
       return null;
     });
 }
@@ -86,7 +86,7 @@ export async function updateUserSession(
       updateUserPayload,
     );
   } catch (e) {
-    Log._debug('Error updating user session:', e);
+    Log._debug('Session update error:', e);
   }
 }
 
@@ -138,6 +138,6 @@ export async function sendSessionDuration(
       await sendOutcome(outcomePayload);
     }
   } catch (e) {
-    Log._debug('Error sending session duration:', e);
+    Log._debug('Session duration error:', e);
   }
 }

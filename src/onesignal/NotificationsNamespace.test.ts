@@ -122,9 +122,7 @@ describe('requestPermission', () => {
     // in flight error
     notifications.requestPermission();
     await expect(notifications.requestPermission()).resolves.toBe(false);
-    expect(debugSpy).toHaveBeenCalledWith(
-      'Already showing autoprompt. Abort showing a native prompt.',
-    );
+    expect(debugSpy).toHaveBeenCalledWith('Autoprompt already showing');
 
     // permission is denied
     await expect(notifications.requestPermission()).resolves.toBe(false);

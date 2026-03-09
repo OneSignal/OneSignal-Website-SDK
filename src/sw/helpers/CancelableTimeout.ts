@@ -24,7 +24,7 @@ export function cancelableTimeout(
         await callback();
         resolve();
       } catch (e) {
-        Log._error('Failed to execute callback', e);
+        Log._error('Callback failed', e);
         reject();
       }
     }, delayInMilliseconds);

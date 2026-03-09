@@ -38,7 +38,7 @@ export default class LoginManager {
     const currentExternalId = identityModel._externalId;
 
     if (currentExternalId === externalId) {
-      Log._debug('Login: External ID already set, skipping login');
+      Log._debug('Login: externalId already set');
       return;
     }
 
@@ -66,8 +66,7 @@ export default class LoginManager {
   private static async _logout(): Promise<void> {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
 
-    if (!identityModel._externalId)
-      return Log._debug('Logout: User is not logged in, skipping logout');
+    if (!identityModel._externalId) return Log._debug('Logout: not logged in');
 
     const newIdentityModel = LoginManager._resetAndGetIdentityModel();
     await LoginManager._switchUser(newIdentityModel._onesignalId);

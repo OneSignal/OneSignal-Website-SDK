@@ -21,9 +21,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       'message',
       this._onWorkerMessageReceivedFromPage.bind(this),
     );
-    Log._debug(
-      '[Worker Messenger] Service worker is now listening for messages.',
-    );
+    Log._debug('[WM] SW listening');
   }
 
   _onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
@@ -42,10 +40,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    Log._debug(
-      `[Worker Messenger] Service worker received message:`,
-      event.data,
-    );
+    Log._debug('[WM] SW received:', event.data);
 
     for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {
@@ -74,11 +69,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       includeUncontrolled: true,
     });
     for (const client of clients) {
-      Log._debug(
-        `[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${
-          client.url
-        }.`,
-      );
+      Log._debug(`[WM] SW->Page broadcast '${command}' ${client.url}`);
       client.postMessage({
         command: command,
         payload: payload,
@@ -98,11 +89,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       throw EmptyArgumentError('windowClient');
     }
 
-    Log._debug(
-      `[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${
-        windowClient.url
-      }.`,
-    );
+    Log._debug(`[WM] SW->Page unicast '${command}' ${windowClient.url}`);
     windowClient.postMessage({
       command: command,
       payload: payload,

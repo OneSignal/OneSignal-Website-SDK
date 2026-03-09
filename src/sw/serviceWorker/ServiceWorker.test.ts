@@ -181,7 +181,7 @@ describe('ServiceWorker', () => {
       self.dispatchEvent(new PushEvent('push'));
       await flush();
       expect(logDebugSpy).toHaveBeenCalledWith(
-        'Failed to display a notification:',
+        'Failed to display notif:',
         'Missing event.data on push payload!',
       );
 
@@ -189,17 +189,14 @@ describe('ServiceWorker', () => {
       self.dispatchEvent(new PushEvent('push', 'some message'));
       await flush();
       expect(logDebugSpy).toHaveBeenCalledWith(
-        'Failed to display a notification:',
+        'Failed to display notif:',
         'Unexpected push message payload received: some message',
       );
 
       logDebugSpy.mockClear();
       self.dispatchEvent(new PushEvent('push', {}));
       await flush();
-      expect(logDebugSpy).toHaveBeenCalledWith(
-        'isValidPushPayload: Valid JSON but missing notification UUID:',
-        {},
-      );
+      expect(logDebugSpy).toHaveBeenCalledWith('Valid JSON missing UUID:', {});
     });
 
     test('should handle successful push event', async () => {
@@ -699,7 +696,7 @@ describe('ServiceWorker', () => {
         await dispatchEvent(event);
 
         expect(Log._debug).toHaveBeenCalledWith(
-          'No active session found. Cannot deactivate.',
+          'No active session to deactivate',
         );
       });
 

@@ -203,14 +203,14 @@ export default class Bell {
     if (!this._options.enable) return;
 
     if (!CSS.supports('anchor-name: --a')) {
-      Log._error('Notify button requires CSS Anchor Positioning support.');
+      Log._error('Bell requires CSS Anchor Positioning');
       return;
     }
 
     const sdkStylesLoadResult =
       await OneSignal._context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
-      Log._debug('Not showing notify button because styles failed to load.');
+      Log._debug('Bell styles failed to load');
       return;
     }
 
@@ -299,7 +299,7 @@ export default class Bell {
     this._applyOffsetIfSpecified();
     this._setCustomColorsIfSpecified();
 
-    Log._info('Showing the notify button.');
+    Log._info('Showing bell');
 
     if (isPushEnabled && this._dialog._notificationIcons === null) {
       this._dialog._notificationIcons = await getNotificationIcons();
@@ -334,7 +334,7 @@ export default class Bell {
 
     const element = this._launcher._element;
     if (!element) {
-      Log._error('Could not find bell dom element');
+      Log._error('Bell element not found');
       return;
     }
 

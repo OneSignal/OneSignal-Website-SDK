@@ -18,9 +18,7 @@ describe('LoginManager', () => {
     await updateIdentityModel('external_id', 'same-id');
 
     await LoginManager.login('same-id');
-    expect(debugSpy).toHaveBeenCalledWith(
-      'Login: External ID already set, skipping login',
-    );
+    expect(debugSpy).toHaveBeenCalledWith('Login: externalId already set');
   });
 
   test('login: stores token when provided and enqueues operations', async () => {
@@ -98,9 +96,7 @@ describe('LoginManager', () => {
       .mockImplementation(() => undefined);
     await updateIdentityModel('external_id', undefined);
     await LoginManager.logout();
-    expect(debugSpy).toHaveBeenCalledWith(
-      'Logout: User is not logged in, skipping logout',
-    );
+    expect(debugSpy).toHaveBeenCalledWith('Logout: not logged in');
   });
 
   test('logout: with external id and push sub enqueues transfer and login operations', async () => {

@@ -80,11 +80,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   public _pause(): void {
     clearInterval(this._timerID);
     this._timerID = undefined;
-    Log._debug('OperationRepo: Paused');
+    Log._debug('OpRepo: Paused');
   }
 
   public _enqueue(operation: Operation): void {
-    Log._debug(`OperationRepo.enqueue(operation: ${operation})`);
+    Log._debug(`OpRepo.enqueue: ${operation}`);
 
     this._internalEnqueue(
       {
@@ -97,7 +97,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async _enqueueAndWait(operation: Operation): Promise<void> {
-    Log._debug(`OperationRepo.enqueueAndWaitoperation: ${operation})`);
+    Log._debug(`OpRepo.enqueueAndWait: ${operation}`);
 
     await new Promise<void>((resolve, reject) => {
       this._internalEnqueue(
@@ -121,9 +121,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       (item) => item.operation._modelId === queueItem.operation._modelId,
     );
     if (hasExisting) {
-      Log._debug(
-        `OperationRepo: internalEnqueue - operation.modelId: ${queueItem.operation._modelId} already exists in the queue.`,
-      );
+      Log._debug(`OpRepo: duplicate modelId: ${queueItem.operation._modelId}`);
       return;
     }
 
@@ -143,7 +141,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     let runningOps = false;
 
     this._timerID = setInterval(async () => {
-      if (runningOps) return Log._debug('Operations in progress');
+      if (runningOps) return Log._debug('Ops in progress');
 
       const ops = this._getNextOps(this._executeBucket);
 
@@ -172,7 +170,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       const response = await executor._execute(operations);
       const idTranslations = response._idTranslations;
 
-      Log._debug(`OperationRepo: execute response = ${response._result}`);
+      Log._debug(`OpRepo: result = ${response._result}`);
 
       // Handle ID translations
       if (idTranslations) {
@@ -199,7 +197,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult._FailUnauthorized:
         case ExecutionResult._FailNoretry:
         case ExecutionResult._FailConflict:
-          Log._error(`Operation execution failed without retry: ${operations}`);
+          Log._error(`Op failed (no retry): ${operations}`);
           ops.forEach((op) => {
             this._operationModelStore._remove(op.operation._modelId);
           });
@@ -218,7 +216,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult._FailRetry:
-          Log._error(`Operation execution failed, retrying: ${operations}`);
+          Log._error(`Op failed, retrying: ${operations}`);
           // Add back all operations to front of queue
           [...ops].reverse().forEach((op) => {
             removeOpFromDB(op.operation);
@@ -231,7 +229,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult._FailPauseOpRepo:
-          Log._error(`Operation failed, pausing ops:${operations}`);
+          Log._error(`Op failed, pausing: ${operations}`);
           this._pause();
           ops.forEach((op) => op.resolver?.(false));
           [...ops].reverse().forEach((op) => {
@@ -263,7 +261,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
-      Log._error(`Error attempting to execute operation: ${ops}`, e);
+      Log._error(`Op execute error: ${ops}`, e);
 
       // On failure remove operations from store
       ops.forEach((op) => {
@@ -284,7 +282,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     if (delayFor < 1) return;
 
-    Log._error(`Operations being delay for: ${delayFor} ms`);
+    Log._error(`Ops delayed: ${delayFor}ms`);
     await delay(delayFor);
   }
 

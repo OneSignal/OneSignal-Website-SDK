@@ -52,9 +52,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(
-      `RefreshUserOperationExecutor(operation: ${JSON.stringify(operations)})`,
-    );
+    Log._debug(`RefreshUserOpExec(${JSON.stringify(operations)})`);
 
     if (operations.some((op) => !(op instanceof RefreshUserOperation)))
       throw new Error(

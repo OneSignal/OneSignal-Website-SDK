@@ -18,7 +18,7 @@ import { triggerNotificationPermissionChanged } from './permissions';
 import { registerForPush } from './subscription';
 
 export async function internalInit() {
-  Log._debug('Called internalInit()');
+  Log._debug('internalInit()');
 
   // Always check for an updated service worker
   await OneSignal._context._serviceWorkerManager._installWorker();
@@ -53,12 +53,10 @@ function postponeSessionInitUntilPageIsInFocus(): void {
 }
 
 async function sessionInit(): Promise<void> {
-  Log._debug(`Called sessionInit()`);
+  Log._debug('sessionInit()');
 
   if (OneSignal._sessionInitAlreadyRunning) {
-    Log._debug(
-      'Returning from sessionInit because it has already been called.',
-    );
+    Log._debug('sessionInit already running');
     return;
   }
   OneSignal._sessionInitAlreadyRunning = true;
@@ -179,15 +177,15 @@ async function establishServiceWorkerChannel(): Promise<void> {
 export async function processExpiringSubscriptions(): Promise<boolean> {
   const context: ContextInterface = OneSignal._context;
 
-  Log._debug('Checking subscription expiration...');
+  Log._debug('Checking sub expiration');
   const isSubscriptionExpiring =
     await context._subscriptionManager._isSubscriptionExpiring();
   if (!isSubscriptionExpiring) {
-    Log._debug('Subscription is not considered expired.');
+    Log._debug('Sub not expired');
     return false;
   }
 
-  Log._debug('Subscription expiring');
+  Log._debug('Sub expiring');
   const rawPushSubscription = await context._subscriptionManager._subscribe(
     SubscriptionStrategyKind._SubscribeNew,
   );
@@ -244,9 +242,7 @@ async function showNotifyButton() {
           );
           OneSignal._notifyButton._create();
         } else {
-          Log._debug(
-            'Notify button display predicate returned false so not showing the notify button.',
-          );
+          Log._debug('Notify button predicate returned false');
         }
       });
     } else {
@@ -281,9 +277,7 @@ async function installNativePromptPermissionChangedHook() {
   } catch (e) {
     // Some browsers (Safari 16.3 and older) have the API navigator.permissions.query, but don't support the
     // { name: 'notifications' } param and throws.
-    Log._warn(
-      `Could not install native notification permission change hook w/ error: ${e}`,
-    );
+    Log._warn(`Permission change hook failed: ${e}`);
   }
 }
 
@@ -369,9 +363,7 @@ export async function initSaveState(overridingPageTitle?: string) {
 
   const previousAppId = await getIdsValue<string>('appId');
   if (previousAppId && previousAppId !== appId) {
-    Log._info(
-      `OneSignal: App ID changed from ${previousAppId} to ${appId}. Clearing stale state for migration.`,
-    );
+    Log._info(`App ID changed ${previousAppId} -> ${appId}, clearing state`);
     await db.put('Options', { key: 'isPushEnabled', value: null });
     await db.put('Options', { key: 'lastPushId', value: null });
     await db.put('Options', { key: 'lastPushToken', value: null });
@@ -387,7 +379,7 @@ export async function initSaveState(overridingPageTitle?: string) {
   const pageTitle: string =
     overridingPageTitle || config.siteName || document.title || 'Notification';
   await db.put('Options', { key: 'pageTitle', value: pageTitle });
-  Log._info(`OneSignal: Set pageTitle to be '${pageTitle}'.`);
+  Log._info(`Set pageTitle to be '${pageTitle}'.`);
 }
 
 async function handleAutoResubscribe(isOptedOut: boolean) {
