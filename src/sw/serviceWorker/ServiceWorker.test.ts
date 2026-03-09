@@ -196,10 +196,7 @@ describe('ServiceWorker', () => {
       logDebugSpy.mockClear();
       self.dispatchEvent(new PushEvent('push', {}));
       await flush();
-      expect(logDebugSpy).toHaveBeenCalledWith(
-        'Valid JSON missing UUID:',
-        {},
-      );
+      expect(logDebugSpy).toHaveBeenCalledWith('Valid JSON missing UUID:', {});
     });
 
     test('should handle successful push event', async () => {

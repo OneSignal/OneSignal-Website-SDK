@@ -110,8 +110,7 @@ export class ServiceWorkerManager {
     if (!fileName) {
       return ServiceWorkerActiveState._None;
     }
-    const isValidOSWorker =
-      fileName == this._config.workerPath._getFileName();
+    const isValidOSWorker = fileName == this._config.workerPath._getFileName();
 
     if (isValidOSWorker) {
       return ServiceWorkerActiveState._OneSignalWorker;
@@ -176,7 +175,10 @@ export class ServiceWorkerManager {
     // 1. No workerRegistration
     const workerRegistration = await this._getRegistration();
     if (!workerRegistration) {
-      Log._info('SW registration not found at scope', this._config.registrationOptions.scope);
+      Log._info(
+        'SW registration not found at scope',
+        this._config.registrationOptions.scope,
+      );
       return true;
     }
 
@@ -275,7 +277,9 @@ export class ServiceWorkerManager {
         );
 
         // Send response back to service worker
-        Log._debug(`preventDefault response: ${preventDefaultCalled} for: ${notificationId}`);
+        Log._debug(
+          `preventDefault response: ${preventDefaultCalled} for: ${notificationId}`,
+        );
         await workerMessenger._unicast(
           WorkerMessengerCommand._NotificationWillDisplayResponse,
           {
@@ -425,5 +429,4 @@ export class ServiceWorkerManager {
     await this._establishServiceWorkerChannel();
     return registration;
   }
-
 }

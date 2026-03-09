@@ -16,7 +16,9 @@ export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
 }
 
 export function logMethodCall(methodName: string, ...args: any[]) {
-  return Log._debug(`${methodName}(${args.map((a) => JSON.stringify(a)).join(', ')})`);
+  return Log._debug(
+    `${methodName}(${args.map((a) => JSON.stringify(a)).join(', ')})`,
+  );
 }
 
 export function once(

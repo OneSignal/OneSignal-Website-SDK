@@ -350,9 +350,7 @@ function onPushReceived(event: PushEvent): void {
               notificationWillDisplay(notif, pushSubscriptionId);
 
               if (shouldPreventDisplay) {
-                Log._debug(
-                  `[SW] Display prevented: ${notif.notificationId}`,
-                );
+                Log._debug(`[SW] Display prevented: ${notif.notificationId}`);
                 // Still send confirmed delivery even if display is prevented
                 return sendConfirmedDelivery(notif);
               }

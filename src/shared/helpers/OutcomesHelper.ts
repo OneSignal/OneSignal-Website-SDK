@@ -267,7 +267,9 @@ export async function getConfigAttribution(
         .filter((notif) => notif.timestamp >= maxTimestamp)
         .slice(0, max)
         .map((notif) => notif.notificationId);
-      Log._debug(`${matchingNotificationIds.length} notifs in reporting window`);
+      Log._debug(
+        `${matchingNotificationIds.length} notifs in reporting window`,
+      );
 
       // Deleting all unmatched received notifications
       const notificationIdsToDelete = allReceivedNotificationSorted

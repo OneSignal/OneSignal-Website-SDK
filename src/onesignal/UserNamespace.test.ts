@@ -505,17 +505,13 @@ describe('Custom Events', () => {
     // should validate properties
     // @ts-expect-error - mock invalid argument
     userNamespace.trackEvent(name, 123);
-    expect(errorSpy).toHaveBeenCalledWith(
-      'Properties not serializable',
-    );
+    expect(errorSpy).toHaveBeenCalledWith('Properties not serializable');
 
     // big ints can't be serialized
     userNamespace.trackEvent(name, {
       data: 10n,
     });
-    expect(errorSpy).toHaveBeenCalledWith(
-      'Properties not serializable',
-    );
+    expect(errorSpy).toHaveBeenCalledWith('Properties not serializable');
 
     userNamespace.trackEvent(name, properties);
     expect(trackEventSpy).toHaveBeenCalledWith(name, properties);

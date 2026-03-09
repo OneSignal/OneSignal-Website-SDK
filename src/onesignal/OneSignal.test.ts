@@ -844,9 +844,7 @@ describe('OneSignal - No Consent Required', () => {
         expect(identityModel._externalId).toBeUndefined();
 
         OneSignal.logout();
-        expect(debugSpy).toHaveBeenCalledWith(
-          'Logout: not logged in',
-        );
+        expect(debugSpy).toHaveBeenCalledWith('Logout: not logged in');
       });
 
       test('can logout the user with existing external id and subscription', async () => {

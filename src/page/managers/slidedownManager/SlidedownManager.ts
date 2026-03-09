@@ -127,7 +127,9 @@ export class SlidedownManager {
     }
 
     if (wasDismissed && !options.force && !options.isInUpdateMode) {
-      Log._info(new Error(`${slidedownType || 'unknown'} previously dismissed`));
+      Log._info(
+        new Error(`${slidedownType || 'unknown'} previously dismissed`),
+      );
       return false;
     }
 
