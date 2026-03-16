@@ -137,6 +137,8 @@ jobs:
 
           # Write release notes to file to avoid shell interpretation
           cat > release_notes.md << 'EOF'
+          Channels: Current, Stable
+
           ${{ steps.release_notes.outputs.notes }}
           EOF
 
