@@ -19,8 +19,27 @@ export const supportsServiceWorkers = () => {
 
 export const windowEnvString = IS_SERVICE_WORKER ? 'Service Worker' : 'Browser';
 
-export const useSafariLegacyPush = () =>
-  isBrowser() && window.safari?.pushNotification != undefined;
+/**
+ * Returns true only when the user has an active legacy Safari push subscription.
+ *
+ * Safari 16.4+ supports standard Web Push (VAPID), but `window.safari.pushNotification`
+ * was never removed. Previously this function returned true whenever that API existed,
+ * which forced ALL macOS Safari users onto the legacy path — even on browsers that
+ * fully support VAPID. Now we check the actual permission state: only users who have
+ * already granted legacy push (and have a deviceToken) stay on the legacy path, because
+ * Safari doesn't support migrating from legacy push to standard web push.
+ */
+export const useSafariLegacyPush = (): boolean => {
+  if (!isBrowser() || window.safari?.pushNotification == undefined) {
+    return false;
+  }
+  const safariWebId = OneSignal?.config?.safariWebId;
+  if (!safariWebId) return false;
+
+  const { permission, deviceToken } =
+    window.safari.pushNotification.permission(safariWebId);
+  return permission === 'granted' && deviceToken != null;
+};
 
 export const supportsVapidPush =
   typeof PushSubscriptionOptions !== 'undefined' &&
