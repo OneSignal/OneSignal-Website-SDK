@@ -8,7 +8,7 @@ export function jsonpLib(
   url: string,
   fn: (err: Error | null, data: ServerAppConfig) => void,
 ) {
-  JSONP(url, undefined, fn);
+  JSONP(url, { prefix: '__jp' }, fn);
 }
 
 export async function downloadServerAppConfig(
