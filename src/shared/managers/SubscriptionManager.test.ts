@@ -77,7 +77,6 @@ describe('SubscriptionManager', () => {
         '_generatePushSubscriptionModel',
       );
       const rawSubscription = getRawPushSubscription();
-      // @ts-expect-error - using partial types
       mockPushManager.getSubscription.mockResolvedValue(
         Object.assign({}, mockPushSubscription, {
           endpoint: rawSubscription.w3cEndpoint?.toString(),

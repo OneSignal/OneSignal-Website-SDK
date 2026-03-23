@@ -33,18 +33,20 @@ describe('Dialog', () => {
   test('_hide calls hidePopover when dialog is open', () => {
     const dialog = new Dialog(new Bell({ enable: false }));
     const el = dialog._element!;
-    el.hidePopover = vi.fn();
+    const hidePopoverSpy = vi.fn();
+    el.hidePopover = hidePopoverSpy;
     vi.spyOn(dialog, '_shown', 'get').mockReturnValue(true);
     dialog._hide();
-    expect(el.hidePopover).toHaveBeenCalled();
+    expect(hidePopoverSpy).toHaveBeenCalled();
   });
 
   test('_hide is a no-op when already hidden', () => {
     const dialog = new Dialog(new Bell({ enable: false }));
     const el = dialog._element!;
-    el.hidePopover = vi.fn();
+    const hidePopoverSpy = vi.fn();
+    el.hidePopover = hidePopoverSpy;
     dialog._hide();
-    expect(el.hidePopover).not.toHaveBeenCalled();
+    expect(hidePopoverSpy).not.toHaveBeenCalled();
   });
 
   test('_updateContent renders subscribe button when unsubscribed', async () => {
@@ -79,24 +81,26 @@ describe('Dialog', () => {
     isPushEnabledSpy.mockResolvedValue(false);
     const bell = new Bell({ enable: false });
     bell._state = BellState._Unsubscribed;
-    bell._onSubscribeClick = vi.fn();
+    const onSubscribeClickSpy = vi.fn();
+    bell._onSubscribeClick = onSubscribeClickSpy;
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
     dialog._subscribeButton!.click();
-    expect(bell._onSubscribeClick).toHaveBeenCalled();
+    expect(onSubscribeClickSpy).toHaveBeenCalled();
   });
 
   test('unsubscribe button calls _onUnsubscribeClick', async () => {
     isPushEnabledSpy.mockResolvedValue(true);
     const bell = new Bell({ enable: false });
     bell._state = BellState._Subscribed;
-    bell._onUnsubscribeClick = vi.fn();
+    const onUnsubscribeClickSpy = vi.fn();
+    bell._onUnsubscribeClick = onUnsubscribeClickSpy;
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
     dialog._unsubscribeButton!.click();
-    expect(bell._onUnsubscribeClick).toHaveBeenCalled();
+    expect(onUnsubscribeClickSpy).toHaveBeenCalled();
   });
 
   test('_updateContent uses custom notification icon when available', async () => {

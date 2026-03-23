@@ -24,9 +24,11 @@ export class DispatchEventUtil {
     if (!handlers) return false;
 
     for (const handler of handlers) {
-      const eventListenerObj = (handler as EventListenerObject).handleEvent;
-      if (eventListenerObj) eventListenerObj(evt);
-      else (handler as EventHandler)(evt);
+      if (typeof handler === 'function') {
+        handler(evt);
+      } else {
+        handler.handleEvent(evt);
+      }
     }
     return true;
   }

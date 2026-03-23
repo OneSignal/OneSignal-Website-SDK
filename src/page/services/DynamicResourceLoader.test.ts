@@ -16,8 +16,8 @@ describe('DynamicResourceLoader', () => {
 
   // Helper function to mock successful loading
   const mockSuccessfulLoading = () => {
-    const originalCreateElement = document.createElement;
-    const originalAppendChild = document.head?.appendChild;
+    const originalCreateElement = document.createElement.bind(document);
+    const originalAppendChild = document.head?.appendChild.bind(document.head);
 
     vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       const element = originalCreateElement.call(document, tagName) as HTMLElement;
@@ -62,8 +62,8 @@ describe('DynamicResourceLoader', () => {
 
   // Helper function to mock failed loading
   const mockFailedLoading = () => {
-    const originalCreateElement = document.createElement;
-    const originalAppendChild = document.head?.appendChild;
+    const originalCreateElement = document.createElement.bind(document);
+    const originalAppendChild = document.head?.appendChild.bind(document.head);
 
     vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       const element = originalCreateElement.call(document, tagName) as HTMLElement;

@@ -195,7 +195,7 @@ function setupMessageListeners() {
       if (payload.shouldLog) {
         self.shouldLog = true;
       } else {
-        self.shouldLog = undefined;
+        self.shouldLog = false;
       }
     },
   );

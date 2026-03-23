@@ -24,7 +24,6 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     OneSignal.User.PushSubscription.addEventListener('change', changeListener);
 
     // no change
-    // @ts-expect-error - using partial types
     mockPushManager.getSubscription.mockResolvedValue(
       Object.assign({}, mockPushSubscription, { endpoint: undefined }),
     );

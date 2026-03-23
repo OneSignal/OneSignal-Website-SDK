@@ -165,7 +165,7 @@ describe('ServiceWorker', () => {
       const event = new ExtendableEvent('activate');
       await dispatchEvent(event);
 
-      expect(self.clients.claim).toHaveBeenCalled();
+      expect(claimFn).toHaveBeenCalled();
     });
   });
 
@@ -183,7 +183,7 @@ describe('ServiceWorker', () => {
       await flush();
       expect(logDebugSpy).toHaveBeenCalledWith(
         'Failed to display notif:',
-        'Unexpected push message payload received: some message',
+        'Unexpected push message payload received: "some message"',
       );
 
       logDebugSpy.mockClear();
@@ -193,6 +193,7 @@ describe('ServiceWorker', () => {
     });
 
     test('should handle successful push event', async () => {
+      const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
       const payload = mockOSMinifiedNotificationPayload();
 
       self.dispatchEvent(new PushEvent('push', payload));
@@ -229,7 +230,7 @@ describe('ServiceWorker', () => {
       );
 
       // should display the notification
-      expect(self.registration.showNotification).toHaveBeenCalledWith(
+      expect(showNotificationSpy).toHaveBeenCalledWith(
         payload.title,
         expect.objectContaining({
           body: payload.alert,
@@ -442,7 +443,7 @@ describe('ServiceWorker', () => {
       );
 
       // should open url
-      expect(self.clients.openWindow).toHaveBeenCalledWith(launchURL);
+      expect(openWindowFn).toHaveBeenCalledWith(launchURL);
     });
   });
 
@@ -802,7 +803,7 @@ describe('ServiceWorker', () => {
         payload: { shouldLog: false },
       });
       await dispatchEvent(event);
-      expect(self.shouldLog).toBe(undefined);
+      expect(self.shouldLog).toBe(false);
     });
 
     test('should display notification via DisplayNotification command', async () => {
@@ -860,17 +861,6 @@ vi.mock('./helpers', () => ({
 vi.mock('../../../src/shared/utils/AwaitableTimeout', () => ({
   awaitableTimeout: vi.fn().mockResolvedValue(undefined),
 }));
-
-declare global {
-  interface ServiceWorkerGlobalScope {
-    clientsStatus?: {
-      hasAnyActiveSessions: boolean;
-      timestamp: number;
-      receivedResponsesCount: number;
-    };
-    shouldLog?: boolean;
-  }
-}
 
 class ExtendableEvent extends Event {
   waitUntil(promise: Promise<any>) {
@@ -1010,12 +1000,14 @@ const unfocusedClient = new Client({
   visibilityState: 'hidden',
 });
 const matchAllFn = vi.fn().mockResolvedValue([mockClient]);
+const claimFn = vi.fn();
+const openWindowFn = vi.fn();
 
 Object.defineProperty(self, 'clients', {
   value: {
-    claim: vi.fn(),
+    claim: claimFn,
     matchAll: matchAllFn,
-    openWindow: vi.fn(),
+    openWindow: openWindowFn,
   },
   writable: true, // Allow further modifications if needed
 });
