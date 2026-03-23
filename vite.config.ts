@@ -1,7 +1,12 @@
+import { readFileSync } from 'node:fs';
 import path from 'path';
 import { defineConfig, type LibraryOptions } from 'vite-plus';
 import { analyzer } from 'vite-bundle-analyzer';
 import mkcert from 'vite-plugin-mkcert';
+
+const { config: { sdkVersion } } = JSON.parse(
+  readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'),
+);
 
 type Lib = 'sdk' | 'page' | 'worker';
 
@@ -127,9 +132,7 @@ export default defineConfig(({ mode }) => {
           __LOGGING__: JSON.stringify(
             getBooleanEnv(process.env.LOGGING) ?? !isProdEnv,
           ),
-          __VERSION__: JSON.stringify(
-            process.env.npm_package_config_sdkVersion,
-          ),
+          __VERSION__: JSON.stringify(sdkVersion),
           __IS_SERVICE_WORKER__: JSON.stringify(lib === 'worker'),
           __API_ORIGIN__: JSON.stringify(process.env.API_ORIGIN),
           __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN),
