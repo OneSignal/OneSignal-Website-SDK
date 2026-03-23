@@ -10,7 +10,7 @@
     "dev": "LOGGING=false vp dev",
     "dev:logging": "LOGGING=true vp dev",
     "ngrok": "./build/scripts/ngrok.sh",
-    "prebuild": "tsc --noEmit && mkdir -p build/stats",
+    "prebuild": "mkdir -p build/stats",
     "build:sdk": "LIB=sdk vp build",
     "build:page": "LIB=page vp build",
     "build:sw": "LIB=worker vp build",
@@ -51,7 +51,6 @@
     "@types/intl-tel-input": "^18.1.4",
     "@types/jsdom": "^28.0.0",
     "@types/jsonp": "^0.2.3",
-    "@types/uuid": "^11.0.0",
     "@vitest/coverage-v8": "4.0.18",
     "concurrently": "^9.2.1",
     "deepmerge": "^4.3.1",
@@ -59,22 +58,22 @@
     "intl-tel-input": "^25.15.1",
     "jsdom": "^28.1.0",
     "msw": "^2.12.10",
-    "terser": "^5.46.0",
+    "terser": "^5.46.1",
     "type-fest": "^5.4.4",
     "typescript": "^5.9.3",
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
     "vite-bundle-analyzer": "^1.3.6",
-    "vite-plugin-mkcert": "^1.17.10"
+    "vite-plugin-mkcert": "^1.17.10",
+    "vite-plus": "latest"
   },
   "size-limit": [
     {
       "path": "./build/releases/OneSignalSDK.page.js",
-      "limit": "420 B",
+      "limit": "400 B",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "41.96 kB",
+      "limit": "42.2 kB",
       "gzip": true
     },
     {
@@ -84,7 +83,7 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.styles.css",
-      "limit": "6.61 kB",
+      "limit": "6.82 kB",
       "gzip": true
     }
   ],
