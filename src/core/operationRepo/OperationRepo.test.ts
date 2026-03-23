@@ -1,5 +1,4 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
-import { mockDelay } from '__test__/support/helpers/setup';
 import { clearAll, db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
 import { delay as delaySpy } from 'src/shared/helpers/general';
@@ -20,7 +19,11 @@ import { OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo } from './OperationRepo';
 
-mockDelay();
+vi.mock('src/shared/helpers/general', async (importOriginal) => {
+  const mod =
+    await importOriginal<typeof import('src/shared/helpers/general')>();
+  return { ...mod, delay: vi.fn(() => Promise.resolve()) };
+});
 
 vi.spyOn(Log, '_error').mockImplementation((msg) => {
   if (typeof msg === 'string' && msg.includes('Operation execution failed'))

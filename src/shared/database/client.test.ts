@@ -6,6 +6,20 @@ import { closeDb, getDb } from './client';
 import { DATABASE_NAME } from './constants';
 import type { IndexedDBSchema } from './types';
 
+let terminatedCallback = vi.hoisted(() => vi.fn(() => false));
+const openFn = vi.hoisted(() => vi.fn());
+
+vi.mock('./idb-lite', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof idbLite;
+  return {
+    ...actual,
+    openDB: openFn.mockImplementation((name, version, callbacks) => {
+      terminatedCallback = callbacks!.terminated!;
+      return actual.openDB(name, version, callbacks);
+    }),
+  };
+});
+
 beforeEach(async () => {
   await closeDb();
   await wrapRequest(indexedDB.deleteDatabase(DATABASE_NAME));
@@ -318,22 +332,8 @@ describe('migrations', () => {
 });
 
 test('should reopen db when terminated', async () => {
-  // mocking to keep track of the terminated callback
   vi.resetModules();
-  let terminatedCallback = vi.hoisted(() => vi.fn(() => false));
-
-  const openFn = vi.hoisted(() => vi.fn());
-
-  vi.mock('./idb-lite', async (importOriginal) => {
-    const actual = (await importOriginal()) as typeof idbLite;
-    return {
-      ...actual,
-      openDB: openFn.mockImplementation((name, version, callbacks) => {
-        terminatedCallback = callbacks!.terminated!;
-        return actual.openDB(name, version, callbacks);
-      }),
-    };
-  });
+  openFn.mockClear();
 
   const { db } = await vi.importActual<typeof import('./client')>('./client');
   expect(openFn).toHaveBeenCalledTimes(1); // initial open
