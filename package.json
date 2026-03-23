@@ -36,7 +36,7 @@
     "lint:fix": "oxlint src --fix; prettier --write 'src/**/*' '__test__/**/*'"
   },
   "config": {
-    "sdkVersion": "160601"
+    "sdkVersion": "160602"
   },
   "repository": {
     "type": "git",
