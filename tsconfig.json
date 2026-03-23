@@ -4,6 +4,7 @@
     "lib": ["ES2022", "DOM", "WebWorker"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "moduleDetection": "force",
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,

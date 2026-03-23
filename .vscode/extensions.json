@@ -1,7 +1,6 @@
 {
   "recommendations": [
-    "esbenp.prettier-vscode",
     "jeff-hykin.macro-commander",
-    "VoidZero.vite-plus-extension-pack"
+    "void-zero.vite-plus-extension-pack"
   ]
 }
