@@ -130,7 +130,7 @@ describe('SubscriptionOperationExecutor', () => {
     });
 
     test('should create subscription successfully', async () => {
-      void setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
+      setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
 
       setCreateSubscriptionResponse({
         response: {
@@ -457,7 +457,7 @@ describe('SubscriptionOperationExecutor', () => {
 
     test('should delete subscription successfully', async () => {
       // Set up a subscription model to be deleted
-      void setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
+      setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
 
       const executor = getExecutor();
       const deleteOp = new DeleteSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);

@@ -36,8 +36,8 @@ export class TestEnvironment {
     OneSignal._coreDirector._operationRepo._queue = [];
 
     if (config.initOneSignalId) {
-      void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
-      void updatePropertiesModel('onesignalId', ONESIGNAL_ID);
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
     }
 
     // Set URL if provided

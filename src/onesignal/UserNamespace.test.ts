@@ -31,21 +31,21 @@ describe('User Identity Properties', () => {
   test('should return correct onesignalId', () => {
     const userNamespace = new UserNamespace(true);
 
-    void updateIdentityModel('onesignal_id', undefined);
+    updateIdentityModel('onesignal_id', undefined);
     expect(userNamespace.onesignalId).toBe(undefined);
 
     const localId = IDManager._createLocalId();
-    void updateIdentityModel('onesignal_id', localId);
+    updateIdentityModel('onesignal_id', localId);
     expect(userNamespace.onesignalId).toBe(undefined);
 
-    void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     expect(userNamespace.onesignalId).toBe(ONESIGNAL_ID);
   });
 
   test('should return correct externalId', () => {
     const userNamespace = new UserNamespace(true);
     const externalId = 'some-external-id';
-    void updateIdentityModel('external_id', externalId);
+    updateIdentityModel('external_id', externalId);
 
     expect(userNamespace.externalId).toBe(externalId);
   });
@@ -418,7 +418,7 @@ describe('Initialization', () => {
 
   test('properties model should have onesignalId for existing user', () => {
     // with an existing onesignalId
-    void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     const user = new UserNamespace(true);
     expect(IDManager._isLocalId(user.onesignalId)).toBe(false);
 
@@ -431,7 +431,7 @@ describe('Initialization', () => {
 
   test('properties model should have onesignalId for new user', () => {
     // without an existing onesignalId
-    void updateIdentityModel(IdentityConstants._OneSignalID, undefined);
+    updateIdentityModel(IdentityConstants._OneSignalID, undefined);
 
     const user = new UserNamespace(true);
     expect(user.onesignalId).toBe(undefined); // since its local
@@ -453,7 +453,7 @@ describe('Custom Events', () => {
       test_property: 'test_value',
     };
 
-    void updateIdentityModel('onesignal_id', IDManager._createLocalId());
+    updateIdentityModel('onesignal_id', IDManager._createLocalId());
     userNamespace.trackEvent(name, {});
     expect(errorSpy).toHaveBeenCalledWith('User not logged in');
     errorSpy.mockClear();

@@ -68,7 +68,7 @@ const setupEnv = (consentRequired: boolean) => {
   });
   OneSignal._coreDirector._subscriptionModelStore._replaceAll([], ModelChangeTags._NoPropogate);
   void setupPropertiesModel();
-  void setupIdentityModel();
+  setupIdentityModel();
 };
 
 describe('OneSignal - No Consent Required', () => {
@@ -654,7 +654,7 @@ describe('OneSignal - No Consent Required', () => {
           setCreateUserResponse({});
 
           const localId = IDManager._createLocalId();
-          void setupIdentityModel(localId);
+          setupIdentityModel(localId);
 
           OneSignal._coreDirector._subscriptionModelStore._replaceAll(
             [],
@@ -702,7 +702,7 @@ describe('OneSignal - No Consent Required', () => {
 
         test('login with a prior web push subscription - it should transfer the subscription', async () => {
           setCreateUserResponse();
-          void updateIdentityModel('onesignal_id', '');
+          updateIdentityModel('onesignal_id', '');
 
           await getDbSubscriptions(1);
 
@@ -753,7 +753,7 @@ describe('OneSignal - No Consent Required', () => {
           subscribeFcmFromPageSpy.mockImplementation(async () => getRawPushSubscription());
 
           // new/empty user
-          void setupIdentityModel(IDManager._createLocalId());
+          setupIdentityModel(IDManager._createLocalId());
 
           // calling login before accept permissions
           void OneSignal.login(externalId);
@@ -822,7 +822,7 @@ describe('OneSignal - No Consent Required', () => {
 
         // existing user
         let identityModel = OneSignal._coreDirector._getIdentityModel();
-        void updateIdentityModel('external_id', 'jd-1');
+        updateIdentityModel('external_id', 'jd-1');
 
         setCreateUserResponse({});
 
@@ -921,7 +921,7 @@ describe('OneSignal - No Consent Required', () => {
 
     test('can send a custom event', async () => {
       setSendCustomEventResponse();
-      void updateIdentityModel('external_id', 'some-id');
+      updateIdentityModel('external_id', 'some-id');
       OneSignal.User.trackEvent(name);
 
       await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
@@ -951,8 +951,8 @@ describe('OneSignal - No Consent Required', () => {
       });
       setSendCustomEventResponse();
 
-      void updateIdentityModel('onesignal_id', IDManager._createLocalId());
-      void updateIdentityModel('external_id', 'some-id');
+      updateIdentityModel('onesignal_id', IDManager._createLocalId());
+      updateIdentityModel('external_id', 'some-id');
 
       void OneSignal.login('some-id-2');
       OneSignal.User.trackEvent(name, properties);
@@ -1055,7 +1055,7 @@ describe('OneSignal - No Consent Required', () => {
     });
 
     test('custom event can execute before login for an existing user w/ external id', async () => {
-      void updateIdentityModel('external_id', 'some-id');
+      updateIdentityModel('external_id', 'some-id');
 
       setSendCustomEventResponse();
       setCreateUserResponse({

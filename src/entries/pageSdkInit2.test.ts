@@ -20,7 +20,7 @@ describe('pageSdkInit 2', () => {
 
   test('can login and addEmail', async () => {
     const onesignalId = IDManager._createLocalId();
-    void updateIdentityModel('onesignal_id', onesignalId);
+    updateIdentityModel('onesignal_id', onesignalId);
 
     const email = 'joe@example.com';
     const subModel = await setupSubModelStore({

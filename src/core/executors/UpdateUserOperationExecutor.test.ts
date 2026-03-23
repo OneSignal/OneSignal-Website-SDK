@@ -50,7 +50,7 @@ describe('UpdateUserOperationExecutor', () => {
     getRebuildOpsSpy = vi.spyOn(buildUserService, '_getRebuildOperationsIfCurrentUser');
 
     // Set up initial model state
-    void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
   });
 
   const getExecutor = () => {

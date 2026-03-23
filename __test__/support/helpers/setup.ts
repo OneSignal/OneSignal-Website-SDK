@@ -69,7 +69,7 @@ export const getDbSubscriptions = async (length: number) => {
 /**
  * Update identity model but not trigger action to trigger api call.
  */
-export const setupIdentityModel = async (onesignalID: string = ONESIGNAL_ID) => {
+export const setupIdentityModel = (onesignalID: string = ONESIGNAL_ID) => {
   const newIdentityModel = new IdentityModel();
   newIdentityModel._onesignalId = onesignalID;
   OneSignal._coreDirector._identityModelStore._replace(
@@ -96,7 +96,7 @@ export const setupPropertiesModel = async (onesignalID: string = ONESIGNAL_ID) =
 /**
  * Update identity model but not trigger action to trigger api call.
  */
-export const updateIdentityModel = async <T extends keyof IdentitySchema & string>(
+export const updateIdentityModel = <T extends keyof IdentitySchema & string>(
   property: T,
   value?: IdentitySchema[T],
 ) => {
@@ -107,7 +107,7 @@ export const updateIdentityModel = async <T extends keyof IdentitySchema & strin
 /**
  * Update properties model but not trigger action to trigger api call.
  */
-export const updatePropertiesModel = async <
+export const updatePropertiesModel = <
   T extends Exclude<
     keyof PropertiesSchema,
     'modelId' | 'modelName' | 'first_active' | 'last_active'
@@ -123,7 +123,7 @@ export const updatePropertiesModel = async <
 /**
  * Update subscription model but not trigger action to trigger api call.
  */
-export const setupSubscriptionModel = async (id: string | undefined, token: string | undefined) => {
+export const setupSubscriptionModel = (id: string | undefined, token: string | undefined) => {
   const subscriptionModel = new SubscriptionModel();
   subscriptionModel.id = id || '';
   subscriptionModel.token = token || '';
@@ -136,7 +136,7 @@ export const setupSubscriptionModel = async (id: string | undefined, token: stri
 /**
  * In case some action triggers a call to loadSdkStylesheet, we need to mock it.
  */
-export const setupLoadStylesheet = async () => {
+export const setupLoadStylesheet = () => {
   vi.spyOn(OneSignal._context._dynamicResourceLoader, '_loadSdkStylesheet').mockResolvedValue(
     ResourceLoadState._Loaded,
   );

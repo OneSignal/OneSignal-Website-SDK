@@ -41,7 +41,7 @@ describe('CustomLinkManager', () => {
   });
 
   test('_initialize hides containers when subscribed and unsubscribe disabled', async () => {
-    await setupLoadStylesheet();
+    setupLoadStylesheet();
     isPushEnabledSpy.mockResolvedValue(true);
     const mgr = new CustomLinkManager({
       enabled: true,
@@ -60,7 +60,7 @@ describe('CustomLinkManager', () => {
   });
 
   test('_initialize injects markup and click toggles subscription', async () => {
-    await setupLoadStylesheet();
+    setupLoadStylesheet();
     isPushEnabledSpy.mockResolvedValue(false);
     const optInSpy = vi.spyOn(OneSignal.User.PushSubscription, 'optIn').mockResolvedValue();
     const optOutSpy = vi.spyOn(OneSignal.User.PushSubscription, 'optOut').mockResolvedValue();

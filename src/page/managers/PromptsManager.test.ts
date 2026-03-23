@@ -41,7 +41,7 @@ describe('PromptsManager', () => {
   });
 
   test('event hooks install only once for slidedown path', async () => {
-    await setupLoadStylesheet();
+    setupLoadStylesheet();
     const pm = new PromptsManager(OneSignal._context);
 
     // stub _createSlidedown to avoid side effects

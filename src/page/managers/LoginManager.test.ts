@@ -15,7 +15,7 @@ describe('LoginManager', () => {
 
   test('login: skips when externalId unchanged and logs debug', async () => {
     const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => undefined);
-    await updateIdentityModel('external_id', 'same-id');
+    updateIdentityModel('external_id', 'same-id');
 
     await LoginManager.login('same-id');
     expect(debugSpy).toHaveBeenCalledWith('Login: externalId already set');
@@ -74,13 +74,13 @@ describe('LoginManager', () => {
 
   test('logout: no external id logs debug and returns', async () => {
     const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => undefined);
-    await updateIdentityModel('external_id', undefined);
+    updateIdentityModel('external_id', undefined);
     await LoginManager.logout();
     expect(debugSpy).toHaveBeenCalledWith('Logout: not logged in');
   });
 
   test('logout: with external id and push sub enqueues transfer and login operations', async () => {
-    await updateIdentityModel('external_id', 'abc');
+    updateIdentityModel('external_id', 'abc');
     const mockPushSub = { id: 'sub-id' } as SubscriptionModel;
     vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(mockPushSub);
     const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');

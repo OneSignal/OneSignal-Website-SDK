@@ -29,7 +29,7 @@ describe('Slidedown Types', () => {
       initOneSignalId: false,
     });
     document.body.innerHTML = '';
-    void setupLoadStylesheet();
+    setupLoadStylesheet();
     mockPhoneLibraryLoading();
   });
 

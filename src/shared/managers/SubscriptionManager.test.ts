@@ -88,8 +88,8 @@ describe('SubscriptionManager', () => {
 
       // create push sub with no id
       const onesignalId = IDManager._createLocalId();
-      void updateIdentityModel('onesignal_id', onesignalId);
-      void updateIdentityModel('external_id', 'some-external-id');
+      updateIdentityModel('onesignal_id', onesignalId);
+      updateIdentityModel('external_id', 'some-external-id');
 
       await setupSubModelStore({
         id: IDManager._createLocalId(),

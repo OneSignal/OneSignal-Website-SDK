@@ -91,7 +91,7 @@ describe('RefreshUserOperationExecutor', () => {
   describe('getUser', () => {
     beforeEach(async () => {
       // Set up initial model state
-      void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     });
 
     test('should ignore refresh if id is different in identity model store', async () => {
