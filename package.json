@@ -32,8 +32,8 @@
     "test": "vp test run --coverage",
     "test:watch": "vp test watch --coverage",
     "validate:build": "node build/scripts/validate.js",
-    "lint": "vp lint src; prettier --check 'src/**/*' '__test__/**/*'",
-    "lint:fix": "vp lint src --fix; prettier --write 'src/**/*' '__test__/**/*'",
+    "lint": "vp check",
+    "lint:fix": "vp check --fix",
     "prepare": "vp config"
   },
   "config": {
@@ -59,7 +59,6 @@
     "intl-tel-input": "^25.15.1",
     "jsdom": "^28.1.0",
     "msw": "^2.12.10",
-    "prettier": "3.8.1",
     "terser": "^5.46.0",
     "type-fest": "^5.4.4",
     "typescript": "^5.9.3",
