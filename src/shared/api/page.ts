@@ -8,6 +8,7 @@ export function jsonpLib(
   url: string,
   fn: (err: Error | null, data: ServerAppConfig) => void,
 ) {
+  // Explicit opts prevent prototype pollution
   JSONP(url, { prefix: '__jp', name: undefined, param: 'callback', timeout: 60000 }, fn);
 }
 
