@@ -5,7 +5,8 @@ import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
-import { describe, expect, type Mock, vi } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vite-plus/test';
+
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import {
@@ -20,14 +21,12 @@ import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo } from './OperationRepo';
 
 vi.mock('src/shared/helpers/general', async (importOriginal) => {
-  const mod =
-    await importOriginal<typeof import('src/shared/helpers/general')>();
+  const mod = await importOriginal<typeof import('src/shared/helpers/general')>();
   return { ...mod, delay: vi.fn(() => Promise.resolve()) };
 });
 
 vi.spyOn(Log, '_error').mockImplementation((msg) => {
-  if (typeof msg === 'string' && msg.includes('Operation execution failed'))
-    return '';
+  if (typeof msg === 'string' && msg.includes('Operation execution failed')) return '';
   return msg;
 });
 
@@ -62,11 +61,7 @@ describe('OperationRepo', () => {
     setConsentRequired(false);
 
     mockOperationModelStore = new OperationModelStore();
-    opRepo = new OperationRepo(
-      [mockExecutor],
-      mockOperationModelStore,
-      new NewRecordsState(),
-    );
+    opRepo = new OperationRepo([mockExecutor], mockOperationModelStore, new NewRecordsState());
   });
 
   afterEach(async () => {
@@ -113,12 +108,7 @@ describe('OperationRepo', () => {
     test('enqueue should persist operations in IndexedDb', async () => {
       await opRepo._loadSavedOperations();
 
-      const op1 = new SetAliasOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        'some-label',
-        'some-value',
-      );
+      const op1 = new SetAliasOperation(APP_ID, ONESIGNAL_ID, 'some-label', 'some-value');
       opRepo._enqueue(op1);
 
       const op2 = new CreateSubscriptionOperation({
@@ -300,10 +290,7 @@ describe('OperationRepo', () => {
 
       // operation should be removed from the model store
       // additional operations should be added to the model store
-      expect(mockOperationModelStore._list()).toEqual([
-        additionalOps[0],
-        additionalOps[1],
-      ]);
+      expect(mockOperationModelStore._list()).toEqual([additionalOps[0], additionalOps[1]]);
       expect(opRepo._queue).toEqual([
         {
           operation: additionalOps[0],
@@ -348,10 +335,7 @@ describe('OperationRepo', () => {
       opRepo._enqueue(groupedOps[0]);
       opRepo._enqueue(groupedOps[1]);
 
-      expect(mockOperationModelStore._list()).toEqual([
-        groupedOps[0],
-        groupedOps[1],
-      ]);
+      expect(mockOperationModelStore._list()).toEqual([groupedOps[0], groupedOps[1]]);
 
       await executeOps(opRepo);
       expect(executeOperationsSpy).toHaveBeenCalledOnce();
@@ -470,9 +454,7 @@ describe('OperationRepo', () => {
           retries: 0,
         },
       ]);
-      expect(opRepo._queue).toEqual([
-        { operation: newOp, bucket: 0, retries: 0 },
-      ]);
+      expect(opRepo._queue).toEqual([{ operation: newOp, bucket: 0, retries: 0 }]);
 
       // next operation should be processed
       const ops = opRepo._getNextOps(0);
@@ -554,13 +536,7 @@ class Operation extends OperationBase<{ value: string }> {
   }
 }
 
-const mockOperation = new Operation(
-  '1',
-  GroupComparisonType._Create,
-  'abc',
-  '',
-  '123',
-);
+const mockOperation = new Operation('1', GroupComparisonType._Create, 'abc', '', '123');
 const executeFn: Mock<IOperationExecutor['_execute']> = vi.fn(async () => ({
   _result: ExecutionResult._Success,
 }));

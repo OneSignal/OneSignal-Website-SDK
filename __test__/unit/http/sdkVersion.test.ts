@@ -13,6 +13,8 @@ import {
   updateSubscriptionById,
   updateUserByAlias,
 } from 'src/core/requests/api';
+import { describe, test, beforeAll } from 'vite-plus/test';
+
 import { expectHeaderToBeSent } from '../../support/helpers/sdkVersion';
 
 describe('Sdk Version Header Tests', () => {

@@ -1,7 +1,5 @@
-import type {
-  IOSNotification,
-  NotificationClickEvent,
-} from 'src/shared/notifications/types';
+import type { IOSNotification, NotificationClickEvent } from 'src/shared/notifications/types';
+
 import { send } from '../sender';
 
 export async function notificationClick(

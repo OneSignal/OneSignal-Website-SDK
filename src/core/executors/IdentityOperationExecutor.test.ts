@@ -9,7 +9,16 @@ import {
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { ExecutionResult } from 'src/core/types/operation';
-import type { MockInstance } from 'vite-plus/test';
+import {
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from 'vite-plus/test';
+
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -34,11 +43,7 @@ let getRebuildOpsSpy: MockInstance;
 
 describe('IdentityOperationExecutor', () => {
   const getExecutor = () => {
-    return new IdentityOperationExecutor(
-      identityModelStore,
-      rebuildUserService,
-      newRecordsState,
-    );
+    return new IdentityOperationExecutor(identityModelStore, rebuildUserService, newRecordsState);
   };
 
   beforeAll(() => {
@@ -59,19 +64,13 @@ describe('IdentityOperationExecutor', () => {
       propertiesModelStore,
       subscriptionModelStore,
     );
-    getRebuildOpsSpy = vi.spyOn(
-      rebuildUserService,
-      '_getRebuildOperationsIfCurrentUser',
-    );
+    getRebuildOpsSpy = vi.spyOn(rebuildUserService, '_getRebuildOperationsIfCurrentUser');
   });
 
   test('should return correct operations (names)', async () => {
     const executor = getExecutor();
 
-    expect(executor._operations).toEqual([
-      OPERATION_NAME._SetAlias,
-      OPERATION_NAME._DeleteAlias,
-    ]);
+    expect(executor._operations).toEqual([OPERATION_NAME._SetAlias, OPERATION_NAME._DeleteAlias]);
   });
 
   test('should validate operations', async () => {
@@ -83,9 +82,7 @@ describe('IdentityOperationExecutor', () => {
     const ops = [setAliasOp, deleteAliasOp, someOp];
     const result = executor._execute(ops);
     await expect(() => result).rejects.toThrow(
-      `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-        ops,
-      )}`,
+      `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(ops)}`,
     );
 
     // with both set and delete alias ops

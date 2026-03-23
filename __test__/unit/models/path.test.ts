@@ -1,3 +1,5 @@
+import { describe, test, expect } from 'vite-plus/test';
+
 import Path from '../../../src/shared/models/Path';
 
 describe('Path tests', () => {
@@ -10,9 +12,7 @@ describe('Path tests', () => {
   test(`should return correct components for a file-based path`, () => {
     const path = new Path('file:///c:/web-folder/assets/service-worker.js');
     expect(path._getFileName()).toBe('service-worker.js');
-    expect(path._getFullPath()).toBe(
-      'file:///c:/web-folder/assets/service-worker.js',
-    );
+    expect(path._getFullPath()).toBe('file:///c:/web-folder/assets/service-worker.js');
   });
 
   test(`should return case-sensitive correct components for a file-based path`, () => {
@@ -24,9 +24,7 @@ describe('Path tests', () => {
   test(`should return correct components for a double-extension path`, () => {
     const path = new Path('/web-folder/assets/service-worker.js.php');
     expect(path._getFileName()).toBe('service-worker.js.php');
-    expect(path._getFullPath()).toBe(
-      '/web-folder/assets/service-worker.js.php',
-    );
+    expect(path._getFullPath()).toBe('/web-folder/assets/service-worker.js.php');
   });
 
   test(`should return correct components for a root-relative path`, () => {
@@ -38,24 +36,16 @@ describe('Path tests', () => {
   test(`should return correct components for an absolute web path`, () => {
     const path = new Path('https://site.com/web-folder/service-worker.js');
     expect(path._getFileName()).toBe('service-worker.js');
-    expect(path._getFullPath()).toBe(
-      'https://site.com/web-folder/service-worker.js',
-    );
+    expect(path._getFullPath()).toBe('https://site.com/web-folder/service-worker.js');
   });
 
   test('should include query string in full path', () => {
-    const path = new Path(
-      'https://site.com/web-folder/service-worker.js?appId=12345',
-    );
-    expect(path._getFullPath()).toBe(
-      'https://site.com/web-folder/service-worker.js?appId=12345',
-    );
+    const path = new Path('https://site.com/web-folder/service-worker.js?appId=12345');
+    expect(path._getFullPath()).toBe('https://site.com/web-folder/service-worker.js?appId=12345');
   });
 
   test(`should not include query string in path filename`, () => {
-    const path = new Path(
-      'https://site.com/web-folder/service-worker.js?appId=12345',
-    );
+    const path = new Path('https://site.com/web-folder/service-worker.js?appId=12345');
     expect(path._getFileName()).toBe('service-worker.js');
   });
 });

@@ -3,8 +3,7 @@ export const DismissPrompt = {
   _NonPush: 1,
 } as const;
 
-export type DismissPromptValue =
-  (typeof DismissPrompt)[keyof typeof DismissPrompt];
+export type DismissPromptValue = (typeof DismissPrompt)[keyof typeof DismissPrompt];
 
 export const DismissCountKey = {
   _PromptDismissCount: 'promptDismissCount', // legacy. applies to 'push' and 'category' slidedown types + native

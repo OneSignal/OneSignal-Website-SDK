@@ -20,8 +20,7 @@ export async function getSWRegistration(
 export function getAvailableServiceWorker(
   registration: ServiceWorkerRegistration,
 ): ServiceWorker | null {
-  const availableWorker =
-    registration.active || registration.installing || registration.waiting;
+  const availableWorker = registration.active || registration.installing || registration.waiting;
   // This never be null unless ServiceWorkerRegistration is pointing to a worker that is completely gone.
   if (!availableWorker) {
     Log._warn('No available SW instance');
@@ -32,9 +31,7 @@ export function getAvailableServiceWorker(
 // Allows waiting for the service worker registration to become active.
 // Some APIs, like registration.pushManager.subscribe, required it be active
 // otherwise it throws.
-export function waitUntilActive(
-  registration: ServiceWorkerRegistration,
-): Promise<void> {
+export function waitUntilActive(registration: ServiceWorkerRegistration): Promise<void> {
   return new Promise((resolve) => {
     // IMPORTANT: checking non-active instances first,
     // otherwise the 'statechange' event could be missed.

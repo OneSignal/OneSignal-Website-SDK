@@ -1,5 +1,4 @@
 import { OPERATION_NAME } from '../constants';
-
 import { Operation } from './Operation';
 
 type Property = 'tags' | string;
@@ -11,25 +10,13 @@ export type PropertyValue = {
 /**
  * An Operation to update a property related to a specific user.
  */
-export class SetPropertyOperation<
-  P extends Property = string,
-> extends Operation<{
+export class SetPropertyOperation<P extends Property = string> extends Operation<{
   property: P;
   value: PropertyValue[P];
 }> {
   constructor();
-  constructor(
-    appId: string,
-    onesignalId: string,
-    property: P,
-    value: PropertyValue[P],
-  );
-  constructor(
-    appId?: string,
-    onesignalId?: string,
-    property?: P,
-    value?: PropertyValue[P],
-  ) {
+  constructor(appId: string, onesignalId: string, property: P, value: PropertyValue[P]);
+  constructor(appId?: string, onesignalId?: string, property?: P, value?: PropertyValue[P]) {
     super(OPERATION_NAME._SetProperty, appId, onesignalId);
     if (property && value) {
       this._property = property;

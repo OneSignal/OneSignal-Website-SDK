@@ -1,11 +1,9 @@
 import type { OutcomesConfig } from '../outcomes/types';
 import type { SessionOrigin, SessionStatus } from './constants';
 
-export type SessionStatusValue =
-  (typeof SessionStatus)[keyof typeof SessionStatus];
+export type SessionStatusValue = (typeof SessionStatus)[keyof typeof SessionStatus];
 
-export type SessionOriginValue =
-  (typeof SessionOrigin)[keyof typeof SessionOrigin];
+export type SessionOriginValue = (typeof SessionOrigin)[keyof typeof SessionOrigin];
 
 export interface Session {
   sessionKey: string; // indexDb keyPath, always ONESIGNAL_SESSION_KEY

@@ -1,7 +1,4 @@
-import type {
-  TagsObjectForApi,
-  TagsObjectWithBoolean,
-} from 'src/page/tags/types';
+import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags/types';
 import type { ContextInterface } from 'src/shared/context/types';
 import { isConsentRequiredButNotGiven } from 'src/shared/database/config';
 import {
@@ -12,17 +9,12 @@ import {
 import { InvalidChannelInputField } from 'src/shared/errors/constants';
 import { delay } from 'src/shared/helpers/general';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
-import {
-  CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
-  DelayedPromptType,
-} from 'src/shared/prompts/constants';
+import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS, DelayedPromptType } from 'src/shared/prompts/constants';
 import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { DelayedPromptTypeValue } from 'src/shared/prompts/types';
-import {
-  convertTagsApiToBooleans,
-  markAllTagsAsSpecified,
-} from 'src/shared/utils/tags';
+import { convertTagsApiToBooleans, markAllTagsAsSpecified } from 'src/shared/utils/tags';
 import { logMethodCall } from 'src/shared/utils/utils';
+
 import { CoreModuleDirector } from '../../../core/CoreModuleDirector';
 import {
   markPromptDismissedWithType,
@@ -33,9 +25,7 @@ import type { PushSubscriptionState } from '../../../shared/models/PushSubscript
 import { DismissPrompt } from '../../models/Dismiss';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';
-import Slidedown, {
-  manageNotifyButtonStateWhileSlidedownShows,
-} from '../../slidedown/Slidedown';
+import Slidedown, { manageNotifyButtonStateWhileSlidedownShows } from '../../slidedown/Slidedown';
 import TaggingContainer from '../../slidedown/TaggingContainer';
 import type { AutoPromptOptions } from '../PromptsManager';
 
@@ -52,12 +42,9 @@ export class SlidedownManager {
   }
 
   /* P R I V A T E */
-  private async _checkIfSlidedownShouldBeShown(
-    options: AutoPromptOptions,
-  ): Promise<boolean> {
+  private async _checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
     const permissionDenied =
-      (await OneSignal._context._permissionManager._getPermissionStatus()) ===
-      'denied';
+      (await OneSignal._context._permissionManager._getPermissionStatus()) === 'denied';
     let wasDismissed: boolean;
 
     const subscriptionInfo: PushSubscriptionState =
@@ -96,12 +83,8 @@ export class SlidedownManager {
       }
     } else {
       if (!options.force) {
-        const smsSubscribed = await (
-          OneSignal._coreDirector as CoreModuleDirector
-        )._hasSms();
-        const emailSubscribed = await (
-          OneSignal._coreDirector as CoreModuleDirector
-        )._hasEmail();
+        const smsSubscribed = await (OneSignal._coreDirector as CoreModuleDirector)._hasSms();
+        const emailSubscribed = await (OneSignal._coreDirector as CoreModuleDirector)._hasEmail();
         const bothSubscribed = smsSubscribed && emailSubscribed;
 
         if (smsSubscribed && slidedownType === DelayedPromptType._Sms) {
@@ -114,10 +97,7 @@ export class SlidedownManager {
           return false;
         }
 
-        if (
-          bothSubscribed &&
-          slidedownType === DelayedPromptType._SmsAndEmail
-        ) {
+        if (bothSubscribed && slidedownType === DelayedPromptType._SmsAndEmail) {
           Log._info(ExistingChannelError(DelayedPromptType._SmsAndEmail));
           return false;
         }
@@ -127,9 +107,7 @@ export class SlidedownManager {
     }
 
     if (wasDismissed && !options.force && !options.isInUpdateMode) {
-      Log._info(
-        new Error(`${slidedownType || 'unknown'} previously dismissed`),
-      );
+      Log._info(new Error(`${slidedownType || 'unknown'} previously dismissed`));
       return false;
     }
 
@@ -155,15 +133,13 @@ export class SlidedownManager {
 
     const emailInputFieldIsValid =
       this._slidedown._channelCaptureContainer?._emailInputFieldIsValid;
-    const isEmailEmpty =
-      this._slidedown._channelCaptureContainer?._isEmailInputFieldEmpty();
+    const isEmailEmpty = this._slidedown._channelCaptureContainer?._isEmailInputFieldEmpty();
 
     if (!emailInputFieldIsValid || isEmailEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField._InvalidEmail);
     }
 
-    const email =
-      this._slidedown._channelCaptureContainer?._getValueFromEmailInput();
+    const email = this._slidedown._channelCaptureContainer?._getValueFromEmailInput();
     this._updateEmail(email);
   }
 
@@ -172,17 +148,14 @@ export class SlidedownManager {
       throw SlidedownMissingError;
     }
 
-    const smsInputFieldIsValid =
-      this._slidedown._channelCaptureContainer?._smsInputFieldIsValid;
-    const isSmsEmpty =
-      this._slidedown._channelCaptureContainer?._isSmsInputFieldEmpty();
+    const smsInputFieldIsValid = this._slidedown._channelCaptureContainer?._smsInputFieldIsValid;
+    const isSmsEmpty = this._slidedown._channelCaptureContainer?._isSmsInputFieldEmpty();
 
     if (!smsInputFieldIsValid || isSmsEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField._InvalidSms);
     }
 
-    const sms =
-      this._slidedown._channelCaptureContainer?._getValueFromSmsInput();
+    const sms = this._slidedown._channelCaptureContainer?._getValueFromSmsInput();
     this._updateSMS(sms);
   }
 
@@ -191,8 +164,7 @@ export class SlidedownManager {
       throw SlidedownMissingError;
     }
 
-    const smsInputFieldIsValid =
-      this._slidedown._channelCaptureContainer?._smsInputFieldIsValid;
+    const smsInputFieldIsValid = this._slidedown._channelCaptureContainer?._smsInputFieldIsValid;
     const emailInputFieldIsValid =
       this._slidedown._channelCaptureContainer?._emailInputFieldIsValid;
     /**
@@ -201,24 +173,18 @@ export class SlidedownManager {
      *
      * thus, we need separate checks for the emptiness properties
      */
-    const isEmailEmpty =
-      this._slidedown._channelCaptureContainer?._isEmailInputFieldEmpty();
-    const isSmsEmpty =
-      this._slidedown._channelCaptureContainer?._isSmsInputFieldEmpty();
+    const isEmailEmpty = this._slidedown._channelCaptureContainer?._isEmailInputFieldEmpty();
+    const isSmsEmpty = this._slidedown._channelCaptureContainer?._isSmsInputFieldEmpty();
 
     const bothFieldsEmpty = isEmailEmpty && isSmsEmpty;
     const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
 
     if (bothFieldsInvalid || bothFieldsEmpty) {
-      throw new ChannelCaptureError(
-        InvalidChannelInputField._InvalidEmailAndSms,
-      );
+      throw new ChannelCaptureError(InvalidChannelInputField._InvalidEmailAndSms);
     }
 
-    const email =
-      this._slidedown._channelCaptureContainer?._getValueFromEmailInput();
-    const sms =
-      this._slidedown._channelCaptureContainer?._getValueFromSmsInput();
+    const email = this._slidedown._channelCaptureContainer?._getValueFromEmailInput();
+    const sms = this._slidedown._channelCaptureContainer?._getValueFromSmsInput();
 
     /**
      * empty is ok (we can accept only one of two input fields), but invalid is not
@@ -272,9 +238,7 @@ export class SlidedownManager {
     ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
   }
 
-  private async _mountAuxiliaryContainers(
-    options: AutoPromptOptions,
-  ): Promise<void> {
+  private async _mountAuxiliaryContainers(options: AutoPromptOptions): Promise<void> {
     switch (options.slidedownPromptOptions?.type) {
       case DelayedPromptType._Category:
         this._mountTaggingContainer(options);
@@ -289,9 +253,7 @@ export class SlidedownManager {
     }
   }
 
-  private async _mountTaggingContainer(
-    options: AutoPromptOptions,
-  ): Promise<void> {
+  private async _mountTaggingContainer(options: AutoPromptOptions): Promise<void> {
     logMethodCall('mountTaggingContainer');
     try {
       // show slidedown with tagging container
@@ -307,12 +269,8 @@ export class SlidedownManager {
       const existingTags = propertiesModel._tags;
 
       if (options.isInUpdateMode && existingTags) {
-        this._context._tagManager._storeRemotePlayerTags(
-          existingTags as TagsObjectForApi,
-        );
-        tagsForComponent = convertTagsApiToBooleans(
-          existingTags as TagsObjectForApi,
-        );
+        this._context._tagManager._storeRemotePlayerTags(existingTags as TagsObjectForApi);
+        tagsForComponent = convertTagsApiToBooleans(existingTags as TagsObjectForApi);
       } else {
         // first subscription or no existing tags
         markAllTagsAsSpecified(categories, true);
@@ -324,15 +282,11 @@ export class SlidedownManager {
     }
   }
 
-  private async _mountChannelCaptureContainer(
-    options: AutoPromptOptions,
-  ): Promise<void> {
+  private async _mountChannelCaptureContainer(options: AutoPromptOptions): Promise<void> {
     logMethodCall('mountChannelCaptureContainer');
     try {
       if (options.slidedownPromptOptions) {
-        const channelCaptureContainer = new ChannelCaptureContainer(
-          options.slidedownPromptOptions,
-        );
+        const channelCaptureContainer = new ChannelCaptureContainer(options.slidedownPromptOptions);
         channelCaptureContainer._mount();
 
         if (this._slidedown) {

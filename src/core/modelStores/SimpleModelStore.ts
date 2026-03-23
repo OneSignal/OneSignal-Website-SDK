@@ -19,7 +19,7 @@ export class SimpleModelStore<TModel extends Model> extends ModelStore<TModel> {
   constructor(createFn: () => TModel, modelName: IDBStoreName) {
     super(modelName);
     this._createFn = createFn;
-    this._load(); // Automatically load on construction
+    void this._load(); // Automatically load on construction
   }
 
   override _create(modelData?: DatabaseModel<TModel>): TModel {

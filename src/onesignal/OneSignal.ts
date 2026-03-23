@@ -2,10 +2,7 @@ import type Bell from 'src/page/bell/Bell';
 import { getAppConfig } from 'src/shared/config/app';
 import type { AppConfig, AppUserConfig } from 'src/shared/config/types';
 import { db, dbPromise } from 'src/shared/database/client';
-import {
-  getConsentGiven,
-  isConsentRequiredButNotGiven,
-} from 'src/shared/database/config';
+import { getConsentGiven, isConsentRequiredButNotGiven } from 'src/shared/database/config';
 import { getSubscription } from 'src/shared/database/subscription';
 import { windowEnvString } from 'src/shared/environment/detect';
 import {
@@ -26,14 +23,12 @@ import {
   setConsentRequired as setStorageConsentRequired,
 } from 'src/shared/helpers/localStorage';
 import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
-import {
-  _onSubscriptionChanged,
-  checkAndTriggerSubscriptionChanged,
-} from 'src/shared/listeners';
+import { _onSubscriptionChanged, checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
 import { logMethodCall } from 'src/shared/utils/utils';
+
 import CoreModule from '../core/CoreModule';
 import { CoreModuleDirector } from '../core/CoreModuleDirector';
 import LoginManager from '../page/managers/LoginManager';
@@ -58,8 +53,7 @@ export default class OneSignal {
     await core._init();
     OneSignal._coreDirector = new CoreModuleDirector(core);
     const subscription = await getSubscription();
-    const permission =
-      await OneSignal._context._permissionManager._getPermissionStatus();
+    const permission = await OneSignal._context._permissionManager._getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);
     this.Notifications = new NotificationsNamespace(permission);
   }
@@ -130,9 +124,7 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
-    Log._debug(
-      `Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`,
-    );
+    Log._debug(`Browser Environment: ${getBrowserName()} ${getBrowserVersion()}`);
 
     removeLegacySubscriptionOptions();
 
@@ -153,10 +145,7 @@ export default class OneSignal {
     }
 
     const idb = await dbPromise.catch((e) => {
-      Log._error(
-        'IndexedDB unavailable, close & reopen the page to retry init',
-        e,
-      );
+      Log._error('IndexedDB unavailable, close & reopen the page to retry init', e);
     });
     if (!idb) return;
 
@@ -187,10 +176,7 @@ export default class OneSignal {
         OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
         checkAndTriggerSubscriptionChanged,
       );
-      OneSignal._emitter.on(
-        OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-        _onSubscriptionChanged,
-      );
+      OneSignal._emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, _onSubscriptionChanged);
       OneSignal._emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
 
       window.addEventListener('focus', () => {
@@ -204,21 +190,13 @@ export default class OneSignal {
       await internalInit();
     }
 
-    if (
-      document.readyState === 'complete' ||
-      document.readyState === 'interactive'
-    )
-      await __init();
+    if (document.readyState === 'complete' || document.readyState === 'interactive') await __init();
     else {
       window.addEventListener('DOMContentLoaded', () => {
         __init();
       });
       document.onreadystatechange = () => {
-        if (
-          document.readyState === 'complete' ||
-          document.readyState === 'interactive'
-        )
-          __init();
+        if (document.readyState === 'complete' || document.readyState === 'interactive') __init();
       };
     }
   }
@@ -297,21 +275,12 @@ export default class OneSignal {
   /* END NEW USER MODEL CHANGES */
 }
 
-function processItem(
-  oneSignalInstance: typeof OneSignal,
-  item: OneSignalDeferredLoadedCallback,
-) {
+function processItem(oneSignalInstance: typeof OneSignal, item: OneSignalDeferredLoadedCallback) {
   if (typeof item === 'function') return item(oneSignalInstance);
   else {
     throw new Error('Callback is not a function');
   }
 }
 
-Log._info(
-  `Web SDK loaded (version ${VERSION}, ${windowEnvString} environment).`,
-);
-Log._debug(
-  `Current Page URL: ${
-    typeof location === 'undefined' ? 'NodeJS' : location.href
-  }`,
-);
+Log._info(`Web SDK loaded (version ${VERSION}, ${windowEnvString} environment).`);
+Log._debug(`Current Page URL: ${typeof location === 'undefined' ? 'NodeJS' : location.href}`);

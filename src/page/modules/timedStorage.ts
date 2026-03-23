@@ -24,18 +24,12 @@ export function isLocalStorageSupported(): boolean {
 /**
  * Sets a key in LocalStorage with an expiration time measured in minutes.
  */
-export function setItem(
-  key: string,
-  value: any,
-  expirationInMinutes?: number,
-): void {
+export function setItem(key: string, value: any, expirationInMinutes?: number): void {
   if (!isLocalStorageSupported()) {
     return;
   }
   const expirationInMilliseconds =
-    typeof expirationInMinutes !== 'undefined'
-      ? expirationInMinutes * 60 * 1000
-      : 0;
+    typeof expirationInMinutes !== 'undefined' ? expirationInMinutes * 60 * 1000 : 0;
   const record = {
     value: JSON.stringify(value),
     timestamp:
@@ -66,10 +60,7 @@ export function getItem(key: string): any | null {
     return null;
   }
 
-  if (
-    parsedRecord.timestamp &&
-    new Date().getTime() >= parsedRecord.timestamp
-  ) {
+  if (parsedRecord.timestamp && new Date().getTime() >= parsedRecord.timestamp) {
     localStorage.removeItem(key);
     return null;
   }

@@ -1,7 +1,4 @@
-import type {
-  TagsObjectForApi,
-  TagsObjectWithBoolean,
-} from 'src/page/tags/types';
+import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags/types';
 
 export interface ITagManager {
   _sendTags: (isInUpdateMode?: boolean) => Promise<TagsObjectForApi | null>;

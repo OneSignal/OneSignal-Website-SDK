@@ -1,6 +1,7 @@
 import type { SlidedownManager } from 'src/page/managers/slidedownManager/SlidedownManager';
 import type { ITagManager } from 'src/page/managers/tagManager/types';
 import type { DynamicResourceLoader } from 'src/page/services/DynamicResourceLoader';
+
 import type { AppConfig } from '../config/types';
 import type { WorkerMessengerPage } from '../libraries/workerMessenger/page';
 import type { WorkerMessengerSW } from '../libraries/workerMessenger/sw';

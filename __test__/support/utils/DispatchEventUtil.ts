@@ -1,8 +1,7 @@
 import type { EventHandler } from '../../../src/shared/libraries/Emitter';
 
 export class DispatchEventUtil {
-  private listeners: Map<string, Array<EventHandler | EventListenerObject>> =
-    new Map();
+  private listeners: Map<string, Array<EventHandler | EventListenerObject>> = new Map();
 
   public addEventListener(
     type: string,

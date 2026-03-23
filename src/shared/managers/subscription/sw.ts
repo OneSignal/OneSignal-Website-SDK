@@ -3,6 +3,7 @@ import type { RawPushSubscription } from 'src/shared/models/RawPushSubscription'
 import type { SubscriptionStrategyKindValue } from 'src/shared/models/SubscriptionStrategyKind';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
+
 import type { ContextSWInterface } from '../../context/types';
 import { SubscriptionManagerBase } from './base';
 
@@ -61,9 +62,6 @@ export class SubscriptionManagerSW extends SubscriptionManagerBase<ContextSWInte
       throw new Error('Permission not granted');
     }
 
-    return await this._subscribeWithVapidKey(
-      swRegistration.pushManager,
-      subscriptionStrategy,
-    );
+    return await this._subscribeWithVapidKey(swRegistration.pushManager, subscriptionStrategy);
   }
 }

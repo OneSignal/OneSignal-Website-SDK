@@ -1,26 +1,18 @@
 import { getDBAppConfig } from 'src/shared/database/config';
-import {
-  getSubscription,
-  setSubscription,
-} from 'src/shared/database/subscription';
-import {
-  AppIDMissingError,
-  MalformedArgumentError,
-} from 'src/shared/errors/common';
+import { getSubscription, setSubscription } from 'src/shared/database/subscription';
+import { AppIDMissingError, MalformedArgumentError } from 'src/shared/errors/common';
 import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
+
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
 import { isCompleteSubscriptionObject } from '../shared/managers/utils';
 import { Subscription } from '../shared/models/Subscription';
-import {
-  awaitOneSignalInitAndSupported,
-  logMethodCall,
-} from '../shared/utils/utils';
+import { awaitOneSignalInitAndSupported, logMethodCall } from '../shared/utils/utils';
 
 export default class PushSubscriptionNamespace extends EventListenerBase {
   private _id?: string | null;
@@ -89,8 +81,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     await awaitOneSignalInitAndSupported();
     this._optedIn = true;
 
-    const permissionStatus =
-      await OneSignal._context._permissionManager._getPermissionStatus();
+    const permissionStatus = await OneSignal._context._permissionManager._getPermissionStatus();
 
     if (permissionStatus !== 'granted') {
       // TO DO: use user-config options prompting method
@@ -108,17 +99,11 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     await this._enable(false);
   }
 
-  addEventListener(
-    event: 'change',
-    listener: (change: SubscriptionChangeEvent) => void,
-  ): void {
+  addEventListener(event: 'change', listener: (change: SubscriptionChangeEvent) => void): void {
     OneSignal._emitter.on(event, listener);
   }
 
-  removeEventListener(
-    event: 'change',
-    listener: (change: SubscriptionChangeEvent) => void,
-  ): void {
+  removeEventListener(event: 'change', listener: (change: SubscriptionChangeEvent) => void): void {
     OneSignal._emitter.off(event, listener);
   }
 

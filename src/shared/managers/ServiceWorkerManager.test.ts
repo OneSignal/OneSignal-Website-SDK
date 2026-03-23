@@ -3,7 +3,8 @@ import * as detect from 'src/shared/environment/detect';
 import * as helpers from 'src/shared/helpers/service-worker';
 import Path from 'src/shared/models/Path';
 import * as registration from 'src/sw/helpers/registration';
-import { vi, type MockInstance } from 'vite-plus/test';
+import { beforeEach, describe, expect, test, vi, type MockInstance } from 'vite-plus/test';
+
 import Log from '../libraries/Log';
 import { ServiceWorkerManager } from './ServiceWorkerManager';
 
@@ -23,9 +24,7 @@ describe('ServiceWorkerManager', () => {
   test('_getActiveState returns None when no registration', async () => {
     getSWRegistrationSpy.mockResolvedValue(undefined);
     const mgr = new ServiceWorkerManager(OneSignal._context, config);
-    await expect(mgr._getActiveState()).resolves.toBe(
-      helpers.ServiceWorkerActiveState._None,
-    );
+    await expect(mgr._getActiveState()).resolves.toBe(helpers.ServiceWorkerActiveState._None);
   });
 
   test('_getActiveState detects OneSignal vs third-party from file name', async () => {
@@ -42,21 +41,15 @@ describe('ServiceWorkerManager', () => {
         dispatchEvent: () => false,
       }) as unknown as ServiceWorker;
     const swSpy = vi.spyOn(registration, 'getAvailableServiceWorker');
-    swSpy.mockReturnValue(
-      sw(new URL('https://example.com/OneSignalSDKWorker.js').toString()),
-    );
+    swSpy.mockReturnValue(sw(new URL('https://example.com/OneSignalSDKWorker.js').toString()));
     const mgr = new ServiceWorkerManager(OneSignal._context, config);
     await expect(mgr._getActiveState()).resolves.toBe(
       helpers.ServiceWorkerActiveState._OneSignalWorker,
     );
 
     // third-party
-    swSpy.mockReturnValue(
-      sw(new URL('https://example.com/othersw.js').toString()),
-    );
-    await expect(mgr._getActiveState()).resolves.toBe(
-      helpers.ServiceWorkerActiveState._ThirdParty,
-    );
+    swSpy.mockReturnValue(sw(new URL('https://example.com/othersw.js').toString()));
+    await expect(mgr._getActiveState()).resolves.toBe(helpers.ServiceWorkerActiveState._ThirdParty);
   });
 
   test('_haveParamsChanged covers no registration, scope diff, missing scriptURL, href diff and same', async () => {
@@ -85,24 +78,18 @@ describe('ServiceWorkerManager', () => {
     vi.mocked(registration.getAvailableServiceWorker).mockReturnValue({
       scriptURL: 'https://example.com/old.js',
     } as ServiceWorker);
-    vi.spyOn(helpers, 'getServiceWorkerHref').mockReturnValue(
-      'https://example.com/new.js',
-    );
+    vi.spyOn(helpers, 'getServiceWorkerHref').mockReturnValue('https://example.com/new.js');
     await expect(mgr['_haveParamsChanged']()).resolves.toBe(true);
 
     // same href
-    vi.mocked(helpers.getServiceWorkerHref).mockReturnValue(
-      'https://example.com/old.js',
-    );
+    vi.mocked(helpers.getServiceWorkerHref).mockReturnValue('https://example.com/old.js');
     await expect(mgr['_haveParamsChanged']()).resolves.toBe(false);
   });
 
   test('_shouldInstallWorker branches', async () => {
     const mgr = new ServiceWorkerManager(OneSignal._context, config);
 
-    const supportsSpy = vi
-      .spyOn(detect, 'supportsServiceWorkers')
-      .mockReturnValue(false);
+    const supportsSpy = vi.spyOn(detect, 'supportsServiceWorkers').mockReturnValue(false);
     await expect(mgr['_shouldInstallWorker']()).resolves.toBe(false);
 
     supportsSpy.mockReturnValue(true);
@@ -111,13 +98,10 @@ describe('ServiceWorkerManager', () => {
     await expect(mgr['_shouldInstallWorker']()).resolves.toBe(false);
     OneSignal.config = savedConfig;
 
-    vi.spyOn(mgr, '_getActiveState').mockResolvedValue(
-      helpers.ServiceWorkerActiveState._None,
+    vi.spyOn(mgr, '_getActiveState').mockResolvedValue(helpers.ServiceWorkerActiveState._None);
+    vi.spyOn(OneSignal._context._permissionManager, '_getNotificationPermission').mockResolvedValue(
+      'granted',
     );
-    vi.spyOn(
-      OneSignal._context._permissionManager,
-      '_getNotificationPermission',
-    ).mockResolvedValue('granted');
     await expect(mgr['_shouldInstallWorker']()).resolves.toBe(true);
 
     vi.spyOn(mgr, '_getActiveState').mockResolvedValue(
@@ -127,10 +111,7 @@ describe('ServiceWorkerManager', () => {
     await expect(mgr['_shouldInstallWorker']()).resolves.toBe(true);
 
     vi.spyOn(mgr, '_haveParamsChanged').mockResolvedValue(false);
-    vi.spyOn(
-      mgr,
-      '_workerNeedsUpdate' as keyof ServiceWorkerManager,
-    ).mockResolvedValue(false);
+    vi.spyOn(mgr, '_workerNeedsUpdate' as keyof ServiceWorkerManager).mockResolvedValue(false);
     await expect(mgr['_shouldInstallWorker']()).resolves.toBe(false);
   });
 });

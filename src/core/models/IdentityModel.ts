@@ -1,4 +1,5 @@
 import type { IdentitySchema } from 'src/shared/database/types';
+
 import { IdentityConstants } from '../constants';
 import { Model } from './Model';
 

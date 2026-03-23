@@ -3,8 +3,7 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 export const APP_ID = '34fcbe85-278d-4fd2-a4ec-0f80e95072c5';
 
 export const PUSH_TOKEN = 'https://fcm.googleapis.com/fcm/send/01010101010101';
-export const PUSH_TOKEN_2 =
-  'https://fcm.googleapis.com/fcm/send/01010101010102';
+export const PUSH_TOKEN_2 = 'https://fcm.googleapis.com/fcm/send/01010101010102';
 
 export const ONESIGNAL_ID = '1111111111-2222222222-3333333333';
 export const ONESIGNAL_ID_2 = '2222222222-3333333333-4444444444';

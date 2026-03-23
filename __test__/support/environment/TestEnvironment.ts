@@ -6,6 +6,7 @@ import type {
   ServerAppConfig,
 } from 'src/shared/config/types';
 import type { RecursivePartial } from 'src/shared/context/types';
+
 import { updateIdentityModel, updatePropertiesModel } from '../helpers/setup';
 import { initOSGlobals, stubNotification } from './TestEnvironmentHelpers';
 

@@ -1,4 +1,5 @@
 import { logMethodCall } from 'src/shared/utils/utils';
+
 import { CustomEventController } from './controllers/CustomEventController';
 import { CustomEventsOperationExecutor } from './executors/CustomEventOperationExecutor';
 import { IdentityOperationExecutor } from './executors/IdentityOperationExecutor';
@@ -67,14 +68,8 @@ export default class CoreModule {
   private _initializeListeners() {
     if (!this._operationRepo) return [];
     return [
-      new IdentityModelStoreListener(
-        this._identityModelStore,
-        this._operationRepo,
-      ),
-      new PropertiesModelStoreListener(
-        this._propertiesModelStore,
-        this._operationRepo,
-      ),
+      new IdentityModelStoreListener(this._identityModelStore, this._operationRepo),
+      new PropertiesModelStoreListener(this._propertiesModelStore, this._operationRepo),
       new SubscriptionModelStoreListener(
         this._subscriptionModelStore,
         this._operationRepo,

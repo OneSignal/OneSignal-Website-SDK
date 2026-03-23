@@ -1,5 +1,7 @@
 import { USER_AGENTS } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { beforeEach, describe, expect, test } from 'vite-plus/test';
+
 import { Browser } from './constants';
 import {
   getBrowserName,

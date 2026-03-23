@@ -2,6 +2,7 @@ import { DEVICE_OS } from '__test__/constants';
 import { generateNewSubscription } from '__test__/support/helpers/core';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
+import { test, expect } from 'vite-plus/test';
 
 test('Set function updates data', async () => {
   const newSub = generateNewSubscription();

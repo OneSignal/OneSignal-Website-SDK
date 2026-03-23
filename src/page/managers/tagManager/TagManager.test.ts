@@ -1,6 +1,8 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import UserNamespace from 'src/onesignal/UserNamespace';
 import Log from 'src/shared/libraries/Log';
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
+
 import TagManager from './TagManager';
 
 const addTagsSpy = vi.spyOn(UserNamespace.prototype, 'addTags');

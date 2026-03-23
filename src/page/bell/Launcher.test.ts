@@ -1,4 +1,6 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
+
 import Bell from './Bell';
 import Launcher from './Launcher';
 
@@ -61,9 +63,7 @@ describe('Launcher', () => {
 
     await launcher._resize('medium');
     expect(el.style.getPropertyValue('--bell-size')).toBe('48px');
-    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe(
-      `${32 / 48}`,
-    );
+    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe(`${32 / 48}`);
     expect(el.style.getPropertyValue('--badge-font-size')).toBe('12px');
 
     await launcher._resize('large');

@@ -1,5 +1,6 @@
 import type { IDBStoreName } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
+
 import { OPERATION_NAME } from '../constants';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
@@ -87,10 +88,7 @@ export class OperationModelStore extends ModelStore<Operation> {
    *
    * @param object The JSON object that represents an Operation
    */
-  private _isValidOperation(object?: {
-    name?: string;
-    onesignalId?: string;
-  }): object is {
+  private _isValidOperation(object?: { name?: string; onesignalId?: string }): object is {
     name: string;
     onesignalId?: string;
   } {
@@ -104,9 +102,7 @@ export class OperationModelStore extends ModelStore<Operation> {
 
     // Must have onesignalId if it is not one of the excluded operations above
     if (!object.onesignalId && !excluded.has(operationName)) {
-      Log._error(
-        `${operationName} jsonObject must have 'onesignalId' attribute`,
-      );
+      Log._error(`${operationName} jsonObject must have 'onesignalId' attribute`);
       return false;
     }
 

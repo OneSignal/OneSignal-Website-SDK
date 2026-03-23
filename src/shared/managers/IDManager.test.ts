@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from 'vite-plus/test';
+
 import { IDManager } from './IDManager';
 
 describe('IDManager', () => {

@@ -1,10 +1,7 @@
 import { getAppId } from '../../shared/helpers/main';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
-import type {
-  ICustomEvent,
-  ICustomEventController,
-} from '../types/customEvents';
+import type { ICustomEvent, ICustomEventController } from '../types/customEvents';
 import type { IOperationRepo } from '../types/operation';
 
 /**

@@ -13,18 +13,15 @@ export const getDBAppConfig = async () => {
 
 export const getAppState = async (): Promise<AppState> => {
   const defaultNotificationUrl = await getOptionsValue<string>('defaultUrl');
-  const defaultNotificationTitle =
-    await getOptionsValue<string>('defaultTitle');
+  const defaultNotificationTitle = await getOptionsValue<string>('defaultTitle');
   const lastKnownPushEnabled = await getOptionsValue<boolean>('isPushEnabled');
   const lastKnownOptedIn = await getOptionsValue<boolean>('lastOptedIn');
 
   // lastKnown<PushId|PushToken|OptedIn> are used to track changes to the user's subscription
   // state. Displayed in the `current` & `previous` fields of the `subscriptionChange` event.
   // want undefined instead of null since its used to check for subscription changes
-  const lastKnownPushId =
-    (await getOptionsValue<string>('lastPushId')) ?? undefined;
-  const lastKnownPushToken =
-    (await getOptionsValue<string>('lastPushToken')) ?? undefined;
+  const lastKnownPushId = (await getOptionsValue<string>('lastPushId')) ?? undefined;
+  const lastKnownPushToken = (await getOptionsValue<string>('lastPushToken')) ?? undefined;
   return {
     defaultNotificationUrl,
     defaultNotificationTitle,
@@ -41,10 +38,7 @@ export const setAppState = async (appState: AppState) => {
       key: 'defaultUrl',
       value: appState.defaultNotificationUrl,
     });
-  if (
-    appState.defaultNotificationTitle ||
-    appState.defaultNotificationTitle === ''
-  )
+  if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === '')
     await db.put('Options', {
       key: 'defaultTitle',
       value: appState.defaultNotificationTitle,

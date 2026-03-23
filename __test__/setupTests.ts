@@ -1,7 +1,8 @@
 import * as OneSignalApi from 'src/shared/api/page';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { clearAll } from 'src/shared/database/client';
-import type { MockInstance } from 'vite-plus/test';
+import { vi, beforeAll, beforeEach, afterEach, afterAll, type MockInstance } from 'vite-plus/test';
+
 import { DEFAULT_USER_AGENT } from './constants';
 import TestContext from './support/environment/TestContext';
 import { server } from './support/mocks/server';
@@ -52,11 +53,8 @@ Object.defineProperty(navigator, 'userAgent', {
 
 let downloadSpy: MockInstance;
 export const mockJsonp = () => {
-  const serverConfig = TestContext.getFakeServerAppConfig(
-    ConfigIntegrationKind._Custom,
-  );
+  const serverConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind._Custom);
 
-  if (!downloadSpy)
-    downloadSpy = vi.spyOn(OneSignalApi, 'downloadServerAppConfig');
+  if (!downloadSpy) downloadSpy = vi.spyOn(OneSignalApi, 'downloadServerAppConfig');
   downloadSpy.mockResolvedValue(serverConfig);
 };

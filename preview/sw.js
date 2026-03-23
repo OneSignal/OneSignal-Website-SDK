@@ -5,10 +5,10 @@
 // This exists to point out the fact this service worker is being
 // used instead of the intended OneSignalSDKWorker.js.
 self.addEventListener('push', async (e) => {
-  console.error("push - Should not fire on sw.js");
+  console.error('push - Should not fire on sw.js');
 
   const options = {
-      body: 'Non-SDK from sw.js',
+    body: 'Non-SDK from sw.js',
   };
 
   // Display notification

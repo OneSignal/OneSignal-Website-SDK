@@ -70,10 +70,7 @@ From:
 To:
 
 ```html
-<script
-  src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"
-  defer
-></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 ```
 
 ### Service Worker

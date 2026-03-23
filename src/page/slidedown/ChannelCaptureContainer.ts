@@ -1,13 +1,7 @@
-import {
-  addCssClass,
-  getDomElementOrStub,
-  removeCssClass,
-} from 'src/shared/helpers/dom';
+import { addCssClass, getDomElementOrStub, removeCssClass } from 'src/shared/helpers/dom';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
-import type {
-  DelayedPromptTypeValue,
-  SlidedownPromptOptions,
-} from 'src/shared/prompts/types';
+import type { DelayedPromptTypeValue, SlidedownPromptOptions } from 'src/shared/prompts/types';
+
 import Log from '../../shared/libraries/Log';
 import {
   CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES,
@@ -40,43 +34,27 @@ export default class ChannelCaptureContainer {
   /* P R I V A T E */
   private _generateHtml(): Element {
     const captureContainer = document.createElement('div');
-    addCssClass(
-      captureContainer,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._ChannelCaptureContainer,
-    );
-    captureContainer.id =
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._ChannelCaptureContainer;
+    addCssClass(captureContainer, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._ChannelCaptureContainer);
+    captureContainer.id = CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._ChannelCaptureContainer;
     let label, smsInputElement, emailInputElement;
 
     switch (this._promptOptions.type) {
       case DelayedPromptType._Sms:
         label = this._promptOptions.text.smsLabel || 'Phone Number';
-        smsInputElement = this._getInputWithValidationElement(
-          DelayedPromptType._Sms,
-          label,
-        );
+        smsInputElement = this._getInputWithValidationElement(DelayedPromptType._Sms, label);
         captureContainer.appendChild(smsInputElement);
         break;
       case DelayedPromptType._Email:
         label = this._promptOptions.text.emailLabel || 'Email';
-        emailInputElement = this._getInputWithValidationElement(
-          DelayedPromptType._Email,
-          label,
-        );
+        emailInputElement = this._getInputWithValidationElement(DelayedPromptType._Email, label);
         captureContainer.appendChild(emailInputElement);
         break;
       case DelayedPromptType._SmsAndEmail:
         label = this._promptOptions.text.emailLabel || 'Email';
-        emailInputElement = this._getInputWithValidationElement(
-          DelayedPromptType._Email,
-          label,
-        );
+        emailInputElement = this._getInputWithValidationElement(DelayedPromptType._Email, label);
         captureContainer.appendChild(emailInputElement);
         label = this._promptOptions.text.smsLabel || 'Phone Number';
-        smsInputElement = this._getInputWithValidationElement(
-          DelayedPromptType._Sms,
-          label,
-        );
+        smsInputElement = this._getInputWithValidationElement(DelayedPromptType._Sms, label);
         captureContainer.appendChild(smsInputElement);
         break;
       default:
@@ -98,20 +76,14 @@ export default class ChannelCaptureContainer {
     return wrapperDiv;
   }
 
-  private _getInputWithValidationElement(
-    type: DelayedPromptTypeValue,
-    label: string,
-  ): Element {
-    const varPayload =
-      this._getTypeSpecificVariablesForValidationElemGeneration(type); // {message}
+  private _getInputWithValidationElement(type: DelayedPromptTypeValue, label: string): Element {
+    const varPayload = this._getTypeSpecificVariablesForValidationElemGeneration(type); // {message}
 
     const labelElement = document.createElement('label');
     const inputElement = document.createElement('input');
     const clear = document.createElement('div');
     const clear2 = document.createElement('div');
-    const validationElement = this._getValidationElementWithMessage(
-      varPayload.message,
-    );
+    const validationElement = this._getValidationElementWithMessage(varPayload.message);
     const wrappingDiv = document.createElement('div');
 
     clear.setAttribute('style', 'clear:both');
@@ -136,10 +108,7 @@ export default class ChannelCaptureContainer {
     inputElement.tabIndex = varPayload.tabIndex;
 
     addCssClass(inputElement, varPayload.inputClass);
-    addCssClass(
-      wrappingDiv,
-      CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._InputWithValidationElement,
-    );
+    addCssClass(wrappingDiv, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._InputWithValidationElement);
     wrappingDiv.id = varPayload.wrappingDivId;
 
     wrappingDiv.appendChild(labelElement);
@@ -158,24 +127,20 @@ export default class ChannelCaptureContainer {
       return {
         message: 'Please enter a valid email',
         domElementType: 'email',
-        validationElementId:
-          CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalEmailValidationElement,
+        validationElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalEmailValidationElement,
         inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalEmailInput,
         inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalEmailInput,
-        wrappingDivId:
-          CHANNEL_CAPTURE_CONTAINER_CSS_IDS._EmailInputWithValidationElement,
+        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS._EmailInputWithValidationElement,
         tabIndex: 1,
       };
     } else if (type === DelayedPromptType._Sms) {
       return {
         message: 'Please enter a valid phone number',
         domElementType: 'tel',
-        validationElementId:
-          CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsValidationElement,
+        validationElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsValidationElement,
         inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsInput,
         inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalSmsInput,
-        wrappingDivId:
-          CHANNEL_CAPTURE_CONTAINER_CSS_IDS._SmsInputWithValidationElement,
+        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS._SmsInputWithValidationElement,
         tabIndex: 2,
       };
     } else throw new Error('invalid channel type for input validation');
@@ -186,13 +151,10 @@ export default class ChannelCaptureContainer {
       `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS._OnesignalSmsInput}`,
     );
     if (onesignalSmsInput && !!window.intlTelInput) {
-      this._itiOneSignal = window.intlTelInput(
-        onesignalSmsInput as HTMLInputElement,
-        {
-          autoPlaceholder: 'off',
-          separateDialCode: true,
-        },
-      );
+      this._itiOneSignal = window.intlTelInput(onesignalSmsInput as HTMLInputElement, {
+        autoPlaceholder: 'off',
+        separateDialCode: true,
+      });
     } else {
       Log._error('Failed to init phone input library');
     }
@@ -205,8 +167,7 @@ export default class ChannelCaptureContainer {
 
     smsInput.addEventListener('keyup', (event) => {
       this._smsInputFieldIsValid =
-        this._itiOneSignal?.isValidNumber() ||
-        (smsInput as HTMLInputElement)?.value === '';
+        this._itiOneSignal?.isValidNumber() || (smsInput as HTMLInputElement)?.value === '';
 
       // @ts-expect-error - TODO: improve type
       if (event.key === 'Enter') {
@@ -220,8 +181,7 @@ export default class ChannelCaptureContainer {
     // handles case where number is typed, then country is changed after
     smsInput.addEventListener('blur', () => {
       this._smsInputFieldIsValid =
-        this._itiOneSignal?.isValidNumber() ||
-        (smsInput as HTMLInputElement)?.value === '';
+        this._itiOneSignal?.isValidNumber() || (smsInput as HTMLInputElement)?.value === '';
 
       this._updateValidationOnSmsInputChange();
     });
@@ -325,12 +285,8 @@ export default class ChannelCaptureContainer {
 
   /* P U B L I C */
   public async _mount(): Promise<void> {
-    const isUsingSms = ChannelCaptureContainer._isUsingSmsInputField(
-      this._promptOptions.type,
-    );
-    const isUsingEmail = ChannelCaptureContainer._isUsingEmailInputField(
-      this._promptOptions.type,
-    );
+    const isUsingSms = ChannelCaptureContainer._isUsingSmsInputField(this._promptOptions.type);
+    const isUsingEmail = ChannelCaptureContainer._isUsingEmailInputField(this._promptOptions.type);
 
     if (isUsingSms) {
       await this._loadPhoneLibraryScripts();
@@ -366,11 +322,7 @@ export default class ChannelCaptureContainer {
   }
 
   _getValueFromSmsInput(): string {
-    return (
-      this._itiOneSignal?.getNumber(
-        window.intlTelInputUtils?.numberFormat.E164,
-      ) || ''
-    );
+    return this._itiOneSignal?.getNumber(window.intlTelInputUtils?.numberFormat.E164) || '';
   }
 
   /* S T A T I C */
@@ -391,16 +343,12 @@ export default class ChannelCaptureContainer {
       validationElement.classList.remove(
         CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
       );
-      inputElement.classList.add(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
-      );
+      inputElement.classList.add(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput);
     } else {
       validationElement.classList.add(
         CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
       );
-      inputElement.classList.remove(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
-      );
+      inputElement.classList.remove(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput);
     }
   }
 
@@ -422,16 +370,12 @@ export default class ChannelCaptureContainer {
       validationElement.classList.remove(
         CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
       );
-      inputElement.classList.add(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
-      );
+      inputElement.classList.add(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput);
     } else {
       validationElement.classList.add(
         CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalValidationElementHidden,
       );
-      inputElement.classList.remove(
-        CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput,
-      );
+      inputElement.classList.remove(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES._OnesignalErrorInput);
     }
   }
 
@@ -458,15 +402,10 @@ export default class ChannelCaptureContainer {
   }
 
   static _isUsingSmsInputField(type: DelayedPromptTypeValue): boolean {
-    return (
-      type === DelayedPromptType._Sms || type === DelayedPromptType._SmsAndEmail
-    );
+    return type === DelayedPromptType._Sms || type === DelayedPromptType._SmsAndEmail;
   }
 
   static _isUsingEmailInputField(type: DelayedPromptTypeValue): boolean {
-    return (
-      type === DelayedPromptType._Email ||
-      type === DelayedPromptType._SmsAndEmail
-    );
+    return type === DelayedPromptType._Email || type === DelayedPromptType._SmsAndEmail;
   }
 }

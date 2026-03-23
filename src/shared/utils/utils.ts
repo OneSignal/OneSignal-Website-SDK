@@ -1,4 +1,5 @@
 import type { NotificationIcons } from 'src/shared/notifications/types';
+
 import Log from '../libraries/Log';
 import { Browser } from '../useragent/constants';
 import { getBrowserName } from '../useragent/detect';
@@ -9,16 +10,13 @@ import { getBrowserName } from '../useragent/detect';
  */
 export async function awaitOneSignalInitAndSupported(): Promise<object | void> {
   return new Promise((resolve) => {
-    if (!OneSignal._initialized)
-      OneSignal._emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
+    if (!OneSignal._initialized) OneSignal._emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
     else resolve();
   });
 }
 
 export function logMethodCall(methodName: string, ...args: any[]) {
-  return Log._debug(
-    `${methodName}(${args.map((a) => JSON.stringify(a)).join(', ')})`,
-  );
+  return Log._debug(`${methodName}(${args.map((a) => JSON.stringify(a)).join(', ')})`);
 }
 
 export function once(
@@ -45,10 +43,7 @@ export function once(
     const taskWrapper = (function () {
       const internalTaskFunction = function (e: Event) {
         const destroyEventListener = function () {
-          (targetSelectorOrElement as Element | Document).removeEventListener(
-            e.type,
-            taskWrapper,
-          );
+          (targetSelectorOrElement as Element | Document).removeEventListener(e.type, taskWrapper);
         };
         if (!manualDestroy) {
           destroyEventListener();
@@ -57,10 +52,7 @@ export function once(
       };
       return internalTaskFunction;
     })();
-    (targetSelectorOrElement as Element | Document).addEventListener(
-      event,
-      taskWrapper,
-    );
+    (targetSelectorOrElement as Element | Document).addEventListener(event, taskWrapper);
   } else
     throw new Error(
       `${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`,
@@ -83,14 +75,11 @@ export function incrementSdkLoadCount() {
   window.__oneSignalSdkLoadCount = getSdkLoadCount() + 1;
 }
 
-export function getPlatformNotificationIcon(
-  notificationIcons: NotificationIcons | null,
-): string {
+export function getPlatformNotificationIcon(notificationIcons: NotificationIcons | null): string {
   if (!notificationIcons) return 'default-icon';
 
   const browserName = getBrowserName();
-  if (browserName === Browser._Safari && notificationIcons.safari)
-    return notificationIcons.safari;
+  if (browserName === Browser._Safari && notificationIcons.safari) return notificationIcons.safari;
   else if (browserName === Browser._Firefox && notificationIcons.firefox)
     return notificationIcons.firefox;
 

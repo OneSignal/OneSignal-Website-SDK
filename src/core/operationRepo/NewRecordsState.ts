@@ -1,9 +1,6 @@
 // Implements logic similar to Android SDK's NewRecordsState
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/states/NewRecordsState.kt
-import {
-  OP_REPO_POST_CREATE_DELAY,
-  OP_REPO_POST_CREATE_RETRY_UP_TO,
-} from './constants';
+import { OP_REPO_POST_CREATE_DELAY, OP_REPO_POST_CREATE_RETRY_UP_TO } from './constants';
 
 export class NewRecordsState {
   private _recordsMap: Map<string, number> = new Map();
@@ -29,8 +26,6 @@ export class NewRecordsState {
     const timeLastMovedOrCreated = this._recordsMap.get(key);
     if (!timeLastMovedOrCreated) return false;
 
-    return (
-      Date.now() - timeLastMovedOrCreated <= OP_REPO_POST_CREATE_RETRY_UP_TO
-    );
+    return Date.now() - timeLastMovedOrCreated <= OP_REPO_POST_CREATE_RETRY_UP_TO;
   }
 }

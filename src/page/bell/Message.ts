@@ -1,6 +1,7 @@
 import { decodeHtmlEntities } from 'src/shared/helpers/dom';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
+
 import type Bell from './Bell';
 import { type BellStateValue, BellState } from './constants';
 
@@ -25,25 +26,16 @@ export default class Message {
   }
 
   get _content(): string {
-    return (
-      this._element?.querySelector('.onesignal-bell-launcher-message-body')
-        ?.textContent ?? ''
-    );
+    return this._element?.querySelector('.onesignal-bell-launcher-message-body')?.textContent ?? '';
   }
 
   set _content(value: string) {
-    const body = this._element?.querySelector(
-      '.onesignal-bell-launcher-message-body',
-    );
+    const body = this._element?.querySelector('.onesignal-bell-launcher-message-body');
     if (body) body.textContent = value;
   }
 
   get _shown(): boolean {
-    return (
-      this._element?.classList.contains(
-        'onesignal-bell-launcher-message-opened',
-      ) ?? false
-    );
+    return this._element?.classList.contains('onesignal-bell-launcher-message-opened') ?? false;
   }
 
   _show(): void {

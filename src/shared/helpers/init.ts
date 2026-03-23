@@ -1,4 +1,5 @@
 import { ModelChangeTags } from 'src/core/types/models';
+
 import Bell from '../../page/bell/Bell';
 import type { AppConfig } from '../config/types';
 import type { ContextInterface } from '../context/types';
@@ -72,8 +73,7 @@ async function sessionInit(): Promise<void> {
    * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
    * prevent the popup from opening.
    */
-  const isOptedOut =
-    (await OneSignal._context._subscriptionManager._isOptedOut()) ?? false;
+  const isOptedOut = (await OneSignal._context._subscriptionManager._isOptedOut()) ?? false;
   // saves isOptedOut to localStorage. used for require user interaction functionality
   const subscription = await getSubscription();
   subscription.optedOut = isOptedOut;
@@ -81,8 +81,7 @@ async function sessionInit(): Promise<void> {
   await setSubscription(subscription);
   await handleAutoResubscribe(isOptedOut);
 
-  const isSubscribed =
-    await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
+  const isSubscribed = await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
   // saves isSubscribed to IndexedDb. used for require user interaction functionality
   await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
@@ -131,12 +130,9 @@ export async function onSdkInitialized() {
 
 /** Helper methods */
 async function storeInitialValues() {
-  const isPushEnabled =
-    await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
-  const notificationPermission =
-    await OneSignal._context._permissionManager._getPermissionStatus();
-  const isOptedOut =
-    await OneSignal._context._subscriptionManager._isOptedOut();
+  const isPushEnabled = await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
+  const notificationPermission = await OneSignal._context._permissionManager._getPermissionStatus();
+  const isOptedOut = await OneSignal._context._subscriptionManager._isOptedOut();
   limitStorePut('subscription.optedOut', isOptedOut);
   await db.put('Options', {
     key: 'isPushEnabled',
@@ -178,8 +174,7 @@ export async function processExpiringSubscriptions(): Promise<boolean> {
   const context: ContextInterface = OneSignal._context;
 
   Log._debug('Checking sub expiration');
-  const isSubscriptionExpiring =
-    await context._subscriptionManager._isSubscriptionExpiring();
+  const isSubscriptionExpiring = await context._subscriptionManager._isSubscriptionExpiring();
   if (!isSubscriptionExpiring) {
     Log._debug('Sub not expired');
     return false;
@@ -215,8 +210,7 @@ async function doInitialize(): Promise<void> {
 
 async function showNotifyButton() {
   if (!IS_SERVICE_WORKER && !OneSignal._notifyButton) {
-    OneSignal.config!.userConfig.notifyButton =
-      OneSignal.config!.userConfig.notifyButton || {};
+    OneSignal.config!.userConfig.notifyButton = OneSignal.config!.userConfig.notifyButton || {};
     if (OneSignal.config!.userConfig.bell) {
       // If both bell and notifyButton, notifyButton's options take precedence
       OneSignal.config!.userConfig.bell = {
@@ -229,26 +223,21 @@ async function showNotifyButton() {
       };
     }
 
-    const displayPredicate =
-      OneSignal.config!.userConfig.notifyButton!.displayPredicate;
+    const displayPredicate = OneSignal.config!.userConfig.notifyButton!.displayPredicate;
     if (displayPredicate && typeof displayPredicate === 'function') {
       OneSignal._emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
         const predicateValue = await Promise.resolve(
           OneSignal.config!.userConfig.notifyButton!.displayPredicate?.(),
         );
         if (predicateValue !== false) {
-          OneSignal._notifyButton = new Bell(
-            OneSignal.config!.userConfig.notifyButton!,
-          );
+          OneSignal._notifyButton = new Bell(OneSignal.config!.userConfig.notifyButton!);
           OneSignal._notifyButton._create();
         } else {
           Log._debug('Notify button predicate returned false');
         }
       });
     } else {
-      OneSignal._notifyButton = new Bell(
-        OneSignal.config!.userConfig.notifyButton!,
-      );
+      OneSignal._notifyButton = new Bell(OneSignal.config!.userConfig.notifyButton!);
       OneSignal._notifyButton._create();
     }
   }
@@ -257,9 +246,7 @@ async function showNotifyButton() {
 async function showPromptsFromWebConfigEditor() {
   const config: AppConfig = OneSignal.config!;
   if (config.userConfig.promptOptions) {
-    await new CustomLinkManager(
-      config.userConfig.promptOptions.customlink,
-    )._initialize();
+    await new CustomLinkManager(config.userConfig.promptOptions.customlink)._initialize();
   }
 }
 
@@ -293,30 +280,25 @@ export async function saveInitOptions() {
   );
 
   const webhookOptions = OneSignal.config?.userConfig.webhooks;
-  [
-    'notification.willDisplay',
-    'notification.clicked',
-    'notification.dismissed',
-  ].forEach((event) => {
-    if (
-      webhookOptions &&
-      webhookOptions[event as keyof typeof webhookOptions]
-    ) {
-      opPromises.push(
-        db.put('Options', {
-          key: `webhooks.${event}` as OptionKey,
-          value: webhookOptions[event as keyof typeof webhookOptions],
-        }),
-      );
-    } else {
-      opPromises.push(
-        db.put('Options', {
-          key: `webhooks.${event}` as OptionKey,
-          value: false,
-        }),
-      );
-    }
-  });
+  ['notification.willDisplay', 'notification.clicked', 'notification.dismissed'].forEach(
+    (event) => {
+      if (webhookOptions && webhookOptions[event as keyof typeof webhookOptions]) {
+        opPromises.push(
+          db.put('Options', {
+            key: `webhooks.${event}` as OptionKey,
+            value: webhookOptions[event as keyof typeof webhookOptions],
+          }),
+        );
+      } else {
+        opPromises.push(
+          db.put('Options', {
+            key: `webhooks.${event}` as OptionKey,
+            value: false,
+          }),
+        );
+      }
+    },
+  );
   if (webhookOptions && webhookOptions.cors) {
     opPromises.push(db.put('Options', { key: `webhooks.cors`, value: true }));
   } else {
@@ -370,9 +352,7 @@ export async function initSaveState(overridingPageTitle?: string) {
     await db.put('Options', { key: 'lastOptedIn', value: null });
     await db.put('Ids', { type: 'registrationId', id: null });
     await db.put('Ids', { type: 'userId', id: null });
-    OneSignal._coreDirector._subscriptionModelStore._clear(
-      ModelChangeTags._Hydrate,
-    );
+    OneSignal._coreDirector._subscriptionModelStore._clear(ModelChangeTags._Hydrate);
   }
 
   await db.put('Ids', { type: 'appId', id: appId });

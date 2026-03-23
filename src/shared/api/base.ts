@@ -1,4 +1,5 @@
 import { RETRY_MS } from 'src/core/operationRepo/constants';
+
 import { getOneSignalApiUrl } from '../environment/detect';
 import { AppIDMissingError, RetryLimitError } from '../errors/common';
 import { delay } from '../helpers/general';
@@ -26,7 +27,7 @@ const getOrigin = () => {
 export function get<T>(
   action: string,
   data?: any,
-  headers?: APIHeaders | undefined,
+  headers?: APIHeaders,
 ): Promise<OneSignalApiBaseResponse<T>> {
   return call('GET', action, data, headers);
 }
@@ -34,7 +35,7 @@ export function get<T>(
 export function post<T>(
   action: string,
   data?: any,
-  headers?: APIHeaders | undefined,
+  headers?: APIHeaders,
 ): Promise<OneSignalApiBaseResponse<T>> {
   return call('POST', action, data, headers);
 }
@@ -42,7 +43,7 @@ export function post<T>(
 export function put<T>(
   action: string,
   data?: any,
-  headers?: APIHeaders | undefined,
+  headers?: APIHeaders,
 ): Promise<OneSignalApiBaseResponse<T>> {
   return call('PUT', action, data, headers);
 }
@@ -50,7 +51,7 @@ export function put<T>(
 function del<T>(
   action: string,
   data?: any,
-  headers?: APIHeaders | undefined,
+  headers?: APIHeaders,
 ): Promise<OneSignalApiBaseResponse<T>> {
   return call('DELETE', action, data, headers);
 }
@@ -61,7 +62,7 @@ export { del as delete };
 export function patch<T = unknown>(
   action: string,
   data?: any,
-  headers?: APIHeaders | undefined,
+  headers?: APIHeaders,
 ): Promise<OneSignalApiBaseResponse<T>> {
   return call('PATCH', action, data, headers);
 }

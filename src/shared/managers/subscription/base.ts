@@ -1,8 +1,6 @@
-import {
-  getSubscription,
-  setSubscription,
-} from 'src/shared/database/subscription';
+import { getSubscription, setSubscription } from 'src/shared/database/subscription';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
+
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
 import { useSafariLegacyPush } from '../../environment/detect';
 import Log from '../../libraries/Log';
@@ -34,9 +32,7 @@ export interface SubscriptionManagerConfig {
   onesignalVapidPublicKey?: string;
 }
 
-export class SubscriptionManagerBase<
-  C extends ContextSWInterface | ContextInterface,
-> {
+export class SubscriptionManagerBase<C extends ContextSWInterface | ContextInterface> {
   protected _context: C;
   protected _config: SubscriptionManagerConfig;
 
@@ -167,27 +163,22 @@ export class SubscriptionManagerBase<
           */
 
           /* We're unsubscribing, so we want to store the created at timestamp */
-          await SubscriptionManagerBase._doPushUnsubscribe(
-            existingPushSubscription,
-          );
+          await SubscriptionManagerBase._doPushUnsubscribe(existingPushSubscription);
         }
         break;
       case SubscriptionStrategyKind._SubscribeNew:
         /* Since we want a new subscription every time with this strategy, just unsubscribe. */
         if (existingPushSubscription) {
-          await SubscriptionManagerBase._doPushUnsubscribe(
-            existingPushSubscription,
-          );
+          await SubscriptionManagerBase._doPushUnsubscribe(existingPushSubscription);
         }
         break;
     }
 
     // Actually subscribe the user to push
-    const [newPushSubscription, isNewSubscription] =
-      await SubscriptionManagerBase._doPushSubscribe(
-        pushManager,
-        this._getVapidKeyForBrowser(),
-      );
+    const [newPushSubscription, isNewSubscription] = await SubscriptionManagerBase._doPushSubscribe(
+      pushManager,
+      this._getVapidKeyForBrowser(),
+    );
 
     // Update saved create and expired times
     await SubscriptionManagerBase._updateSubscriptionTime(
@@ -264,10 +255,7 @@ export class SubscriptionManagerBase<
     Log._debug('Subscribing with options:', subscriptionOptions);
     try {
       const existingSubscription = await pushManager.getSubscription();
-      return [
-        await pushManager.subscribe(subscriptionOptions),
-        !existingSubscription,
-      ];
+      return [await pushManager.subscribe(subscriptionOptions), !existingSubscription];
     } catch (e) {
       if (e instanceof Error) {
         // This exception is thrown if the key for the existing applicationServerKey is different,
@@ -285,9 +273,7 @@ export class SubscriptionManagerBase<
     }
   }
 
-  private static async _doPushUnsubscribe(
-    pushSubscription: PushSubscription,
-  ): Promise<boolean> {
+  private static async _doPushUnsubscribe(pushSubscription: PushSubscription): Promise<boolean> {
     Log._debug('Unsubscribing existing push sub');
     const result = await pushSubscription.unsubscribe();
     Log._debug(`Unsubscribe result: ${result}`);

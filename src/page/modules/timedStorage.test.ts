@@ -1,3 +1,5 @@
+import { describe, test, expect, vi } from 'vite-plus/test';
+
 import * as TimedLocalStorage from './timedStorage';
 
 const localStorageSpy = vi.spyOn(window, 'localStorage', 'get');

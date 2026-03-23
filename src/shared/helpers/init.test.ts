@@ -4,7 +4,8 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import Context from 'src/page/models/Context';
 import { type AppConfig } from 'src/shared/config/types';
-import type { MockInstance } from 'vite-plus/test';
+import { beforeEach, describe, expect, test, vi, type MockInstance } from 'vite-plus/test';
+
 import { db } from '../database/client';
 import { getAppState } from '../database/config';
 import * as InitHelper from './init';
@@ -84,8 +85,7 @@ test('correct degree of persistNotification setting should be stored', async () 
   // If not set, default to true
   delete config.userConfig.persistNotification;
   await InitHelper.saveInitOptions();
-  let persistNotification = (await db.get('Options', 'persistNotification'))
-    ?.value;
+  let persistNotification = (await db.get('Options', 'persistNotification'))?.value;
   expect(persistNotification).toBe(true);
 
   // If set to false, ensure value is false
@@ -132,16 +132,12 @@ describe('initSaveState: App ID migration', () => {
 
   test('clears subscription models when App ID changes', async () => {
     await setupSubModelStore({ id: 'old-sub-id', token: 'old-token' });
-    expect(
-      OneSignal._coreDirector._subscriptionModelStore._list().length,
-    ).toBeGreaterThan(0);
+    expect(OneSignal._coreDirector._subscriptionModelStore._list().length).toBeGreaterThan(0);
 
     await seedStaleState();
     await InitHelper.initSaveState();
 
-    expect(
-      OneSignal._coreDirector._subscriptionModelStore._list(),
-    ).toHaveLength(0);
+    expect(OneSignal._coreDirector._subscriptionModelStore._list()).toHaveLength(0);
   });
 
   test('clears stale registrationId and deviceId when App ID changes', async () => {

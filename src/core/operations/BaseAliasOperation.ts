@@ -11,12 +11,7 @@ export abstract class BaseAliasOperation<
   U extends object = AliasOperation,
   T extends U & AliasOperation = U & AliasOperation,
 > extends Operation<T> {
-  constructor(
-    operationName: string,
-    appId?: string,
-    onesignalId?: string,
-    label?: string,
-  ) {
+  constructor(operationName: string, appId?: string, onesignalId?: string, label?: string) {
     super(operationName, appId, onesignalId);
     if (label) {
       this.label = label;

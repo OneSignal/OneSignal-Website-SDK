@@ -50,8 +50,7 @@ export const ExecutionResult = {
   _FailPauseOpRepo: 6,
 } as const;
 
-export type ExecutionResultValue =
-  (typeof ExecutionResult)[keyof typeof ExecutionResult];
+export type ExecutionResultValue = (typeof ExecutionResult)[keyof typeof ExecutionResult];
 
 // Interfaces
 export interface IOperationExecutor {
@@ -61,9 +60,7 @@ export interface IOperationExecutor {
 
 export interface IOperationRepo {
   _enqueue(operation: Operation, flush?: boolean): void;
-  _containsInstanceOf<T extends Operation>(
-    type: new (...args: any[]) => T,
-  ): boolean;
+  _containsInstanceOf<T extends Operation>(type: new (...args: any[]) => T): boolean;
 }
 
 export interface IStartableService {

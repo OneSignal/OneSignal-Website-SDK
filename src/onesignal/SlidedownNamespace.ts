@@ -1,4 +1,5 @@
 import { isConsentRequiredButNotGiven } from 'src/shared/database/config';
+
 import type { AutoPromptOptions } from '../page/managers/PromptsManager';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { DelayedPromptType } from '../shared/prompts/constants';
@@ -56,17 +57,11 @@ export default class SlidedownNamespace extends EventListenerBase {
     });
   }
 
-  addEventListener(
-    event: 'slidedownShown',
-    listener: (wasShown: boolean) => void,
-  ): void {
+  addEventListener(event: 'slidedownShown', listener: (wasShown: boolean) => void): void {
     OneSignal._emitter.on(event, listener);
   }
 
-  removeEventListener(
-    event: 'slidedownShown',
-    listener: (wasShown: boolean) => void,
-  ): void {
+  removeEventListener(event: 'slidedownShown', listener: (wasShown: boolean) => void): void {
     OneSignal._emitter.off(event, listener);
   }
 }

@@ -1,11 +1,9 @@
 import { getAppId } from 'src/shared/helpers/main';
+
 import { PropertiesModel } from '../models/PropertiesModel';
 import { type PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type Operation } from '../operations/Operation';
-import {
-  SetPropertyOperation,
-  type PropertyValue,
-} from '../operations/SetPropertyOperation';
+import { SetPropertyOperation, type PropertyValue } from '../operations/SetPropertyOperation';
 import { type IOperationRepo } from '../types/operation';
 import { SingletonModelStoreListener } from './SingletonModelStoreListener';
 

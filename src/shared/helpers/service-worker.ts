@@ -4,12 +4,7 @@ import {
 } from '../../sw/helpers/CancelableTimeout';
 import { sendSessionDuration, updateUserSession } from '../api/sw';
 import { encodeHashAsUriComponent } from '../context/helpers';
-import {
-  cleanupCurrentSession,
-  clearStore,
-  db,
-  getCurrentSession,
-} from '../database/client';
+import { cleanupCurrentSession, clearStore, db, getCurrentSession } from '../database/client';
 import { getAllNotificationClickedForOutcomes } from '../database/notifications';
 import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
@@ -18,19 +13,15 @@ import type { OutcomesConfig } from '../outcomes/types';
 import { SessionOrigin, SessionStatus } from '../session/constants';
 import { initializeNewSession } from '../session/helpers';
 import type { Session, SessionOriginValue } from '../session/types';
-import { getConfigAttribution } from './OutcomesHelper';
 import { getBaseUrl } from './general';
+import { getConfigAttribution } from './OutcomesHelper';
 
 export function getServiceWorkerHref(
   config: ServiceWorkerManagerConfig,
   appId: string,
   sdkVersion: string,
 ): string {
-  return appendServiceWorkerParams(
-    config.workerPath._getFullPath(),
-    appId,
-    sdkVersion,
-  );
+  return appendServiceWorkerParams(config.workerPath._getFullPath(), appId, sdkVersion);
 }
 
 function appendServiceWorkerParams(
@@ -90,11 +81,10 @@ export async function upsertSession(
   }
 
   const currentTimestamp = new Date().getTime();
-  const timeSinceLastDeactivatedInSeconds: number =
-    timeInSecondsBetweenTimestamps(
-      currentTimestamp,
-      existingSession.lastDeactivatedTimestamp,
-    );
+  const timeSinceLastDeactivatedInSeconds: number = timeInSecondsBetweenTimestamps(
+    currentTimestamp,
+    existingSession.lastDeactivatedTimestamp,
+  );
 
   if (timeSinceLastDeactivatedInSeconds <= sessionThresholdInSeconds) {
     existingSession.status = SessionStatus._Active;
@@ -170,20 +160,16 @@ export async function deactivateSession(
   }
 
   const currentTimestamp = new Date().getTime();
-  const timeSinceLastActivatedInSeconds: number =
-    timeInSecondsBetweenTimestamps(
-      currentTimestamp,
-      existingSession.lastActivatedTimestamp,
-    );
+  const timeSinceLastActivatedInSeconds: number = timeInSecondsBetweenTimestamps(
+    currentTimestamp,
+    existingSession.lastActivatedTimestamp,
+  );
 
   existingSession.lastDeactivatedTimestamp = currentTimestamp;
   existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
   existingSession.status = SessionStatus._Inactive;
 
-  const cancelableFinalize = cancelableTimeout(
-    finalizeSWSession,
-    thresholdInSeconds,
-  );
+  const cancelableFinalize = cancelableTimeout(finalizeSWSession, thresholdInSeconds);
 
   await db.put('Sessions', existingSession);
 
@@ -238,14 +224,8 @@ async function finalizeSession(
     );
   }
 
-  await Promise.all([
-    cleanupCurrentSession(),
-    clearStore('Outcomes.NotificationClicked'),
-  ]);
-  Log._debug(
-    'Finalize session finished',
-    `started: ${new Date(session.startTimestamp)}`,
-  );
+  await Promise.all([cleanupCurrentSession(), clearStore('Outcomes.NotificationClicked')]);
+  Log._debug('Finalize session finished', `started: ${new Date(session.startTimestamp)}`);
 }
 
 const resetSentUniqueOutcomes = async (): Promise<void> => {
@@ -266,15 +246,11 @@ const getLastNotificationClickedForOutcomes = async (
   } catch (e) {
     Log._error('getLastClickedNotif error', e);
   }
-  const predicate = (notification: OutcomesNotificationClicked) =>
-    notification.appId === appId;
+  const predicate = (notification: OutcomesNotificationClicked) => notification.appId === appId;
   return allClickedNotifications.find(predicate) || null;
 };
 
-function timeInSecondsBetweenTimestamps(
-  timestamp1: number,
-  timestamp2: number,
-): number {
+function timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {
   if (timestamp1 <= timestamp2) {
     return 0;
   }

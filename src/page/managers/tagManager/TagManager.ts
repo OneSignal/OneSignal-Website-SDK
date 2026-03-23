@@ -1,13 +1,11 @@
-import type {
-  TagsObjectForApi,
-  TagsObjectWithBoolean,
-} from 'src/page/tags/types';
+import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags/types';
 import type { ContextInterface } from 'src/shared/context/types';
 import {
   convertTagsBooleansToApi,
   getObjectDifference,
   isTagObjectEmpty,
 } from 'src/shared/utils/tags';
+
 import Log from '../../../shared/libraries/Log';
 import type { ITagManager } from './types';
 
@@ -30,13 +28,8 @@ export default class TagManager implements ITagManager {
   public async _sendTags(): Promise<TagsObjectForApi> {
     Log._info('Local tags:', this._tagsFromTaggingContainer);
 
-    const localTagsConvertedToApi = convertTagsBooleansToApi(
-      this._tagsFromTaggingContainer,
-    );
-    const finalTagsObject = getObjectDifference(
-      localTagsConvertedToApi,
-      this._remoteTags,
-    );
+    const localTagsConvertedToApi = convertTagsBooleansToApi(this._tagsFromTaggingContainer);
+    const finalTagsObject = getObjectDifference(localTagsConvertedToApi, this._remoteTags);
 
     const shouldSendUpdate = !isTagObjectEmpty(finalTagsObject);
     if (shouldSendUpdate) {

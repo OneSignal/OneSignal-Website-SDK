@@ -1,16 +1,11 @@
-import {
-  getResponseStatusType,
-  ResponseStatusType,
-} from 'src/shared/helpers/network';
+import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
 import Log from 'src/shared/libraries/Log';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { IdentityModel } from '../models/IdentityModel';
-import {
-  type IPropertiesModelKeys,
-  PropertiesModel,
-} from '../models/PropertiesModel';
+import { type IPropertiesModelKeys, PropertiesModel } from '../models/PropertiesModel';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -56,9 +51,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
 
     if (operations.some((op) => !(op instanceof RefreshUserOperation)))
       throw new Error(
-        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-          operations,
-        )}`,
+        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(operations)}`,
       );
 
     const startingOp = operations[0];
@@ -100,11 +93,9 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         model.id = sub.id!;
         model.token = sub.token ?? '';
-        model._notification_types =
-          sub.notification_types ?? NotificationType._Subscribed;
+        model._notification_types = sub.notification_types ?? NotificationType._Subscribed;
         model.type = sub.type;
-        model.enabled =
-          model._notification_types !== NotificationType._UserOptedOut;
+        model.enabled = model._notification_types !== NotificationType._UserOptedOut;
         model.sdk = sub.sdk;
         model.device_os = sub.device_os;
         model.device_model = sub.device_model;
@@ -117,25 +108,15 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
         }
       }
 
-      const pushModel =
-        await OneSignal._coreDirector._getPushSubscriptionModel();
+      const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
       if (pushModel) {
         pushModel._onesignalId = op._onesignalId;
         subscriptionModels.push(pushModel);
       }
 
-      this._identityModelStore._replace(
-        identityModel,
-        ModelChangeTags._Hydrate,
-      );
-      this._propertiesModelStore._replace(
-        propertiesModel,
-        ModelChangeTags._Hydrate,
-      );
-      this._subscriptionsModelStore._replaceAll(
-        subscriptionModels,
-        ModelChangeTags._Hydrate,
-      );
+      this._identityModelStore._replace(identityModel, ModelChangeTags._Hydrate);
+      this._propertiesModelStore._replace(propertiesModel, ModelChangeTags._Hydrate);
+      this._subscriptionsModelStore._replaceAll(subscriptionModels, ModelChangeTags._Hydrate);
 
       return { _result: ExecutionResult._Success };
     }
@@ -153,20 +134,16 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
           _retryAfterSeconds: retryAfterSeconds,
         };
       case ResponseStatusType._Missing: {
-        if (
-          status === 404 &&
-          this._newRecordState._isInMissingRetryWindow(op._onesignalId)
-        )
+        if (status === 404 && this._newRecordState._isInMissingRetryWindow(op._onesignalId))
           return {
             _result: ExecutionResult._FailRetry,
             _retryAfterSeconds: retryAfterSeconds,
           };
 
-        const rebuildOps =
-          await this._buildUserService._getRebuildOperationsIfCurrentUser(
-            op._appId,
-            op._onesignalId,
-          );
+        const rebuildOps = await this._buildUserService._getRebuildOperationsIfCurrentUser(
+          op._appId,
+          op._onesignalId,
+        );
         return rebuildOps
           ? {
               _result: ExecutionResult._FailRetry,

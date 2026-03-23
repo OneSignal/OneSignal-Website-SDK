@@ -1,6 +1,8 @@
 import { http, HttpResponse } from 'msw';
 import type { ISubscription, IUserProperties } from 'src/core/types/api';
 import type { NotificationIcons } from 'src/shared/notifications/types';
+import { vi } from 'vite-plus/test';
+
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '../../constants';
 import { server } from '../mocks/server';
 
@@ -8,14 +10,11 @@ import { server } from '../mocks/server';
 // configs
 export const mockPageStylesCss = () => {
   server.use(
-    http.get(
-      'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css',
-      () => {
-        return new HttpResponse('/* CSS */', {
-          headers: { 'Content-Type': 'text/css' },
-        });
-      },
-    ),
+    http.get('https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css', () => {
+      return new HttpResponse('/* CSS */', {
+        headers: { 'Content-Type': 'text/css' },
+      });
+    }),
   );
 };
 
@@ -46,9 +45,7 @@ export const getHandler = ({
 
       return HttpResponse.json(response, {
         status,
-        headers: retryAfter
-          ? { 'Retry-After': retryAfter?.toString() }
-          : undefined,
+        headers: retryAfter ? { 'Retry-After': retryAfter?.toString() } : undefined,
       });
     }),
   );
@@ -62,9 +59,7 @@ const getDeleteAliasUri = (onesignalId: string = ONESIGNAL_ID) =>
   `**/apps/${APP_ID}/users/by/onesignal_id/${onesignalId}/identity/*`;
 
 export const addAliasFn = vi.fn();
-export const setAddAliasResponse = ({
-  onesignalId,
-}: { onesignalId?: string } = {}) =>
+export const setAddAliasResponse = ({ onesignalId }: { onesignalId?: string } = {}) =>
   getHandler({
     uri: getSetAliasUri(onesignalId),
     method: 'patch',
@@ -88,9 +83,7 @@ export const setAddAliasError = ({
   });
 
 export const deleteAliasFn = vi.fn();
-export const setDeleteAliasResponse = ({
-  onesignalId,
-}: { onesignalId?: string } = {}) =>
+export const setDeleteAliasResponse = ({ onesignalId }: { onesignalId?: string } = {}) =>
   getHandler({
     uri: getDeleteAliasUri(onesignalId),
     method: 'delete',
@@ -332,8 +325,7 @@ export const setCreateUserError = ({
 }: {
   status: number;
   retryAfter?: number;
-}) =>
-  getHandler({ uri: getCreateUserUri(), method: 'post', status, retryAfter });
+}) => getHandler({ uri: getCreateUserUri(), method: 'post', status, retryAfter });
 
 // update user
 export const updateUserFn = vi.fn();

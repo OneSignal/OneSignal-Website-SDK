@@ -94,7 +94,7 @@ export default class MockNotification implements Notification {
   ): void {}
 
   static async requestPermission(
-    callback?: NotificationPermissionCallback | undefined,
+    callback?: NotificationPermissionCallback,
   ): Promise<NotificationPermission> {
     if (callback) {
       callback(MockNotification.permission);

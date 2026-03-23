@@ -26,13 +26,9 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission
    * state on Legacy Safari on macOS.
    */
-  public async _getNotificationPermission(
-    safariWebId?: string,
-  ): Promise<NotificationPermission> {
+  public async _getNotificationPermission(safariWebId?: string): Promise<NotificationPermission> {
     if (useSafariLegacyPush()) {
-      return PermissionManager._getLegacySafariNotificationPermission(
-        safariWebId,
-      );
+      return PermissionManager._getLegacySafariNotificationPermission(safariWebId);
     }
     return this._getW3cNotificationPermission();
   }

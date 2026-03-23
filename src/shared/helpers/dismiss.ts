@@ -1,5 +1,6 @@
 import { getItem, setItem } from 'src/page/modules/timedStorage';
 import { db, getOptionsValue } from 'src/shared/database/client';
+
 import {
   DismissCountKey,
   DismissPrompt,
@@ -50,9 +51,7 @@ export async function markPromptDismissedWithType(type: DismissPromptValue) {
 export function wasPromptOfTypeDismissed(type: DismissPromptValue): boolean {
   switch (type) {
     case DismissPrompt._Push:
-      return (
-        getItem(DismissTimeKey._OneSignalNotificationPrompt) === 'dismissed'
-      );
+      return getItem(DismissTimeKey._OneSignalNotificationPrompt) === 'dismissed';
     case DismissPrompt._NonPush:
       return getItem(DismissTimeKey._OneSignalNonPushPrompt) === 'dismissed';
     default:

@@ -44,18 +44,14 @@ export const InvalidAppIdError = new Error("AppID doesn't match existing apps");
 
 export const SdkAlreadyInitializedError = new Error('SDK already initialized');
 
-export const MissingSafariWebIdError = new Error(
-  'Safari web platform must be enabled',
-);
+export const MissingSafariWebIdError = new Error('Safari web platform must be enabled');
 
 export const ExistingChannelError = (type: DelayedPromptTypeValue) =>
   new Error(`Channel '${type}' already exists`);
 
-export const EmptyArgumentError = (argName: string) =>
-  new Error(`"${argName}" is empty`);
+export const EmptyArgumentError = (argName: string) => new Error(`"${argName}" is empty`);
 
-export const MalformedArgumentError = (argName: string) =>
-  new Error(`"${argName}" is malformed`);
+export const MalformedArgumentError = (argName: string) => new Error(`"${argName}" is malformed`);
 
 export const EnumOutOfRangeArgumentError = (argName: string) =>
   new Error(`"${argName}" is out of range`);
@@ -63,5 +59,4 @@ export const EnumOutOfRangeArgumentError = (argName: string) =>
 export const WrongTypeArgumentError = (argName: string) =>
   new Error(`"${argName}" is the wrong type`);
 
-export const ReservedArgumentError = (argName: string) =>
-  new Error(`"${argName}" is reserved`);
+export const ReservedArgumentError = (argName: string) => new Error(`"${argName}" is reserved`);

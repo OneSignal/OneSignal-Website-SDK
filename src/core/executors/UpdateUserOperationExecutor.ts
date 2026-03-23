@@ -1,8 +1,6 @@
-import {
-  getResponseStatusType,
-  ResponseStatusType,
-} from 'src/shared/helpers/network';
+import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
+
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -60,10 +58,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
           appId = operation._appId;
           onesignalId = operation._onesignalId;
         }
-        propertiesObject = createPropertiesFromOperation(
-          operation,
-          propertiesObject,
-        );
+        propertiesObject = createPropertiesFromOperation(operation, propertiesObject);
       } else {
         throw new Error(`Unrecognized operation: ${operation}`);
       }
@@ -99,9 +94,8 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
 
     const { ok, retryAfterSeconds, status } = response;
 
-    const isTagProperty = (
-      op: SetPropertyOperation,
-    ): op is SetPropertyOperation<'tags'> => op._property === 'tags';
+    const isTagProperty = (op: SetPropertyOperation): op is SetPropertyOperation<'tags'> =>
+      op._property === 'tags';
 
     if (ok) {
       if (this._identityModelStore._model._onesignalId === onesignalId) {
@@ -140,20 +134,16 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
         };
 
       case ResponseStatusType._Missing: {
-        if (
-          status === 404 &&
-          this._newRecordState._isInMissingRetryWindow(onesignalId)
-        ) {
+        if (status === 404 && this._newRecordState._isInMissingRetryWindow(onesignalId)) {
           return {
             _result: ExecutionResult._FailRetry,
             _retryAfterSeconds: retryAfterSeconds,
           };
         }
-        const rebuildOps =
-          await this._buildUserService._getRebuildOperationsIfCurrentUser(
-            appId,
-            onesignalId,
-          );
+        const rebuildOps = await this._buildUserService._getRebuildOperationsIfCurrentUser(
+          appId,
+          onesignalId,
+        );
 
         if (!rebuildOps) return { _result: ExecutionResult._FailNoretry };
 

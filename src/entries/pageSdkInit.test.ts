@@ -3,12 +3,12 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Log from 'src/shared/libraries/Log';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 // need to wait for full OperationRepo rework
 describe('pageSdkInit', () => {
   beforeEach(() => {
-    const cssURL =
-      'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
+    const cssURL = 'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
 
     server.use(http.get(cssURL, () => HttpResponse.text('')));
     TestEnvironment.initialize();

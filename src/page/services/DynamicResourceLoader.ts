@@ -1,19 +1,12 @@
 import { EnumOutOfRangeArgumentError } from 'src/shared/errors/common';
-import {
-  BUILD_ORIGIN,
-  BUILD_TYPE,
-  IS_HTTPS,
-  NO_DEV_PORT,
-  VERSION,
-} from 'src/shared/utils/env';
+import { BUILD_ORIGIN, BUILD_TYPE, IS_HTTPS, NO_DEV_PORT, VERSION } from 'src/shared/utils/env';
 
 export const ResourceType = {
   _Stylesheet: 0,
   _Script: 1,
 } as const;
 
-export type ResourceTypeValue =
-  (typeof ResourceType)[keyof typeof ResourceType];
+export type ResourceTypeValue = (typeof ResourceType)[keyof typeof ResourceType];
 
 export const ResourceLoadState = {
   /**
@@ -26,8 +19,7 @@ export const ResourceLoadState = {
   _Failed: 1,
 } as const;
 
-export type ResourceLoadStateValue =
-  (typeof ResourceLoadState)[keyof typeof ResourceLoadState];
+export type ResourceLoadStateValue = (typeof ResourceLoadState)[keyof typeof ResourceLoadState];
 
 interface DynamicResourceLoaderCache {
   [key: string]: Promise<ResourceLoadStateValue>;
@@ -80,8 +72,7 @@ export class DynamicResourceLoader {
   }
 
   async _loadSdkStylesheet(): Promise<ResourceLoadStateValue> {
-    if (import.meta.env.MODE === 'development')
-      return ResourceLoadState._Loaded;
+    if (import.meta.env.MODE === 'development') return ResourceLoadState._Loaded;
 
     const pathForEnv = getOneSignalResourceUrlPath();
     const cssFileForEnv = getOneSignalCssFileName();
@@ -95,10 +86,7 @@ export class DynamicResourceLoader {
    * Attempts to load a resource by adding it to the document's <head>.
    * Caches any previous load attempt's result and does not retry loading a previous resource.
    */
-  async _loadIfNew(
-    type: ResourceTypeValue,
-    url: URL,
-  ): Promise<ResourceLoadStateValue> {
+  async _loadIfNew(type: ResourceTypeValue, url: URL): Promise<ResourceLoadStateValue> {
     // Load for first time
     if (!this._cache[url.toString()]) {
       this._cache[url.toString()] = DynamicResourceLoader._load(type, url);
@@ -112,10 +100,7 @@ export class DynamicResourceLoader {
    * Attempts to load a resource by adding it to the document's <head>.
    * Each call creates a new DOM element and fetch attempt.
    */
-  static async _load(
-    type: ResourceTypeValue,
-    url: URL,
-  ): Promise<ResourceLoadStateValue> {
+  static async _load(type: ResourceTypeValue, url: URL): Promise<ResourceLoadStateValue> {
     try {
       let domElement: HTMLElement;
       await new Promise((resolve, reject) => {

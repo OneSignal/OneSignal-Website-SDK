@@ -1,14 +1,14 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import MockNotification from '__test__/support/mocks/MockNotification';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
+import { beforeEach, expect, test, vi } from 'vite-plus/test';
+
 import OneSignal from '../../onesignal/OneSignal';
 import { db } from '../database/client';
 import { delay } from './general';
 import { triggerNotificationPermissionChanged } from './permissions';
 
-function expectPermissionChangeEvent(
-  expectedPermission: boolean,
-): Promise<void> {
+function expectPermissionChangeEvent(expectedPermission: boolean): Promise<void> {
   return new Promise<void>((resolve) => {
     const listener = (permission: boolean) => {
       expect(permission).toBe(expectedPermission);
@@ -46,9 +46,7 @@ test.each([
 
 test('When permission changes, removeEventListener should stop callback from firing', async () => {
   const callback = (_permission: boolean) => {
-    throw new Error(
-      'Should never be call since removeEventListener should prevent this.',
-    );
+    throw new Error('Should never be call since removeEventListener should prevent this.');
   };
   OneSignal.Notifications.addEventListener('permissionChange', callback);
   OneSignal.Notifications.removeEventListener('permissionChange', callback);
@@ -67,12 +65,10 @@ test('Should update Notification.permission in time', async () => {
 
   // simulating delay permission change event to fire after permission boolean change event
   const originalEmit = OneSignal._emitter._emit.bind(OneSignal._emitter);
-  vi.spyOn(OneSignal._emitter, '_emit').mockImplementation(
-    async (...args: any[]) => {
-      if (args[0] === 'permissionChangeAsString') await delay(100);
-      return originalEmit(...args);
-    },
-  );
+  vi.spyOn(OneSignal._emitter, '_emit').mockImplementation(async (...args: any[]) => {
+    if (args[0] === 'permissionChangeAsString') await delay(100);
+    return originalEmit(...args);
+  });
 
   await db.put('Options', {
     key: 'notificationPermission',

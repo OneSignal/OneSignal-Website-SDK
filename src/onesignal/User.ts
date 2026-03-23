@@ -13,10 +13,7 @@ import { getAppId } from 'src/shared/helpers/main';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import {
-  NotificationType,
-  SubscriptionType,
-} from 'src/shared/subscriptions/constants';
+import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
 
@@ -33,8 +30,7 @@ export default class User {
       const identityModel = OneSignal._coreDirector._getIdentityModel();
       const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
 
-      const onesignalId =
-        identityModel._onesignalId ?? IDManager._createLocalId();
+      const onesignalId = identityModel._onesignalId ?? IDManager._createLocalId();
       if (!identityModel._onesignalId) {
         identityModel._setProperty(
           IdentityConstants._OneSignalID,
@@ -44,20 +40,14 @@ export default class User {
       }
 
       if (!propertiesModel._onesignalId) {
-        propertiesModel._setProperty(
-          'onesignalId',
-          onesignalId,
-          ModelChangeTags._NoPropogate,
-        );
+        propertiesModel._setProperty('onesignalId', onesignalId, ModelChangeTags._NoPropogate);
       }
     }
 
     return User._singletonInstance;
   }
 
-  private _updateIdentityModel(aliases: {
-    [key: string]: string | undefined;
-  }): void {
+  private _updateIdentityModel(aliases: { [key: string]: string | undefined }): void {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     Object.keys(aliases).forEach((label) => {
       identityModel._setProperty(label, aliases[label]);
@@ -66,8 +56,7 @@ export default class User {
 
   /* PUBLIC API METHODS */
   get onesignalId(): string | undefined {
-    const onesignalId =
-      OneSignal._coreDirector._getIdentityModel()._onesignalId;
+    const onesignalId = OneSignal._coreDirector._getIdentityModel()._onesignalId;
     return IDManager._isLocalId(onesignalId) ? undefined : onesignalId;
   }
 
@@ -113,9 +102,7 @@ export default class User {
 
     validateArray(aliases, 'aliases');
 
-    const newAliases = Object.fromEntries(
-      aliases.map((key) => [key, undefined]),
-    );
+    const newAliases = Object.fromEntries(aliases.map((key) => [key, undefined]));
     this._updateIdentityModel(newAliases);
   }
 
@@ -151,8 +138,7 @@ export default class User {
 
     validateStringLabel(email, 'email');
 
-    const emailSubscriptions =
-      OneSignal._coreDirector._getEmailSubscriptionModels();
+    const emailSubscriptions = OneSignal._coreDirector._getEmailSubscriptionModels();
 
     emailSubscriptions.forEach((model) => {
       if (model.token === email) {
@@ -167,8 +153,7 @@ export default class User {
 
     validateStringLabel(smsNumber, 'smsNumber');
 
-    const smsSubscriptions =
-      OneSignal._coreDirector._getSmsSubscriptionModels();
+    const smsSubscriptions = OneSignal._coreDirector._getSmsSubscriptionModels();
     smsSubscriptions.forEach((model) => {
       if (model.token === smsNumber) {
         OneSignal._coreDirector._removeSubscriptionModel(model._modelId);
@@ -243,8 +228,7 @@ export default class User {
     if (isConsentRequiredButNotGiven()) return;
 
     // login operation / non-local onesignalId is needed to send custom events
-    const onesignalId =
-      OneSignal._coreDirector._getIdentityModel()._onesignalId;
+    const onesignalId = OneSignal._coreDirector._getIdentityModel()._onesignalId;
     if (IDManager._isLocalId(onesignalId) && !hasLoginOp(onesignalId)) {
       Log._error('User not logged in');
       return;
@@ -265,9 +249,7 @@ export default class User {
 
 function hasLoginOp(onesignalId: string) {
   return OneSignal._coreDirector._operationRepo._queue.find(
-    (op) =>
-      op.operation instanceof LoginUserOperation &&
-      op.operation._onesignalId === onesignalId,
+    (op) => op.operation instanceof LoginUserOperation && op.operation._onesignalId === onesignalId,
   );
 }
 
@@ -343,8 +325,7 @@ function validateArray(array: string[], arrayName: string): void {
 function validateObject(object: unknown, objectName: string): void {
   if (!isObject(object)) throw WrongTypeArgumentError(objectName);
 
-  if (!object || Object.keys(object).length === 0)
-    throw EmptyArgumentError(objectName);
+  if (!object || Object.keys(object).length === 0) throw EmptyArgumentError(objectName);
 }
 
 function validateLabel(label: string, labelName: string): void {

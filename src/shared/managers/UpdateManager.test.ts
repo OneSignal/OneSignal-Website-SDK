@@ -5,6 +5,7 @@ import * as pageview from 'src/shared/helpers/pageview';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import { UpdateManager } from './UpdateManager';
 
 describe('UpdateManager', () => {
@@ -36,18 +37,13 @@ describe('UpdateManager', () => {
     mgr['_onSessionSent'] = false;
 
     // Not first page
-    const firstSpy = vi
-      .spyOn(pageview, 'isFirstPageView')
-      .mockReturnValue(false);
+    const firstSpy = vi.spyOn(pageview, 'isFirstPageView').mockReturnValue(false);
     await mgr._sendOnSessionUpdate();
     firstSpy.mockReturnValue(true);
 
     // Not registered with OneSignal
     const alreadySpy = vi
-      .spyOn(
-        OneSignal._context._subscriptionManager,
-        '_isAlreadyRegisteredWithOneSignal',
-      )
+      .spyOn(OneSignal._context._subscriptionManager, '_isAlreadyRegisteredWithOneSignal')
       .mockResolvedValue(false);
     await mgr._sendOnSessionUpdate();
 

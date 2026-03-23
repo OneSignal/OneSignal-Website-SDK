@@ -1,5 +1,6 @@
 import { EmptyArgumentError } from 'src/shared/errors/common';
 import type ContextSW from 'src/shared/models/ContextSW';
+
 import Log from '../Log';
 import { WorkerMessengerBase } from './base';
 import type {
@@ -17,10 +18,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
    * service worker.
    */
   public async _listen() {
-    self.addEventListener(
-      'message',
-      this._onWorkerMessageReceivedFromPage.bind(this),
-    );
+    self.addEventListener('message', this._onWorkerMessageReceivedFromPage.bind(this));
     Log._debug('[WM] SW listening');
   }
 
@@ -34,9 +32,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       return;
     }
 
-    const listenerRecords = this._replies._findListenersForMessage(
-      data.command,
-    );
+    const listenerRecords = this._replies._findListenersForMessage(data.command);
     const listenersToRemove = [];
     const listenersToCall = [];
 
@@ -60,10 +56,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
   /**
    * Broadcasts a message from a service worker to all clients, including uncontrolled clients.
    */
-  async _broadcast(
-    command: WorkerMessengerCommandValue,
-    payload: WorkerMessengerPayload,
-  ) {
+  async _broadcast(command: WorkerMessengerCommandValue, payload: WorkerMessengerPayload) {
     const clients = await self.clients.matchAll({
       type: 'window',
       includeUncontrolled: true,

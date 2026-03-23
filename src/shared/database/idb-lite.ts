@@ -5,9 +5,9 @@ export function wrapRequest<T>(req: IDBRequest<T>): Promise<T> {
   });
 }
 
-export function wrapDb<
-  S extends { [K in keyof S]: { key: IDBValidKey; value: unknown } },
->(raw: IDBDatabase) {
+export function wrapDb<S extends { [K in keyof S]: { key: IDBValidKey; value: unknown } }>(
+  raw: IDBDatabase,
+) {
   const store = (name: string, mode?: IDBTransactionMode) =>
     raw.transaction(name, mode).objectStore(name);
   return {
@@ -15,15 +15,13 @@ export function wrapDb<
       s: K,
       k: S[K]['key'],
     ): Promise<S[K]['value'] | undefined> => wrapRequest(store(s).get(k)),
-    getAll: async <K extends keyof S & string>(
-      s: K,
-    ): Promise<S[K]['value'][]> => wrapRequest(store(s).getAll()),
+    getAll: async <K extends keyof S & string>(s: K): Promise<S[K]['value'][]> =>
+      wrapRequest(store(s).getAll()),
     put: async <K extends keyof S & string>(s: K, v: S[K]['value']) =>
       wrapRequest(store(s, 'readwrite').put(v)),
     delete: async <K extends keyof S & string>(s: K, k: S[K]['key']) =>
       wrapRequest(store(s, 'readwrite').delete(k)),
-    clear: async <K extends keyof S & string>(s: K) =>
-      wrapRequest(store(s, 'readwrite').clear()),
+    clear: async <K extends keyof S & string>(s: K) => wrapRequest(store(s, 'readwrite').clear()),
     close: () => raw.close(),
     get objectStoreNames() {
       return raw.objectStoreNames;

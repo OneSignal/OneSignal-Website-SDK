@@ -13,6 +13,7 @@ import type {
 } from 'src/shared/config/types';
 import type { RecursivePartial } from 'src/shared/context/types';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
+
 import { APP_ID } from '../../constants';
 import type { TestEnvironmentConfig } from './TestEnvironment';
 
@@ -113,8 +114,7 @@ export default class TestContext {
               message: 'This is an example notification message.',
               acceptButton: 'Continue',
               cancelButton: 'No Thanks',
-              actionMessage:
-                "We'd like to send you notifications for the latest news and updates.",
+              actionMessage: "We'd like to send you notifications for the latest news and updates.",
               autoAcceptTitle: 'Click Allow',
               customizeTextEnabled: true,
             },
@@ -256,8 +256,7 @@ export default class TestContext {
               message: 'This is an example notification message.',
               acceptButton: 'Continue',
               cancelButton: 'No Thanks',
-              actionMessage:
-                "We'd like to send you notifications for the latest news and updates.",
+              actionMessage: "We'd like to send you notifications for the latest news and updates.",
               autoAcceptTitle: 'Click Allow',
               customizeTextEnabled: true,
             },
@@ -272,8 +271,7 @@ export default class TestContext {
               text: {
                 subscribe: 'Subscribe to push notifications',
                 unsubscribe: 'Unsubscribe from push notifications',
-                explanation:
-                  'Get updates from all sorts of things that matter to you',
+                explanation: 'Get updates from all sorts of things that matter to you',
               },
               unsubscribeEnabled: true,
             },
@@ -282,8 +280,7 @@ export default class TestContext {
             name: 'My Website',
             origin: 'https://www.site.com',
             proxyOrigin: undefined,
-            defaultIconUrl:
-              'https://onesignal.com/images/notification_logo.png',
+            defaultIconUrl: 'https://onesignal.com/images/notification_logo.png',
             proxyOriginEnabled: false,
           },
           webhooks: {
@@ -322,8 +319,7 @@ export default class TestContext {
             'BLJozaErc0QXdS7ykMyqniAcvfmdoziwfoSN-Mde_OckAbN_XrOC9Zt2Sfz4pD0UnYT5w3frWjF2iTTtjqEBgbE',
           onesignal_vapid_public_key:
             'BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0',
-          safari_web_id:
-            'web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d',
+          safari_web_id: 'web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d',
           outcomes: {
             direct: {
               enabled: true,
@@ -447,11 +443,9 @@ export default class TestContext {
       persistNotification: false,
       webhooks: {
         cors: true,
-        'notification.willDisplay':
-          'https://fake-config.com/notification-displayed',
+        'notification.willDisplay': 'https://fake-config.com/notification-displayed',
         'notification.clicked': 'https://fake-config.com/notification-clicked',
-        'notification.dismissed':
-          'https://fake-config.com/notification-dismissed',
+        'notification.dismissed': 'https://fake-config.com/notification-dismissed',
       },
       notificationClickHandlerMatch: NotificationClickMatchBehavior._Origin,
       notificationClickHandlerAction: NotificationClickActionBehavior._Focus,

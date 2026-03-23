@@ -1,22 +1,18 @@
 import type { IndexableByString } from 'src/page/slidedown/types';
+import { expect } from 'vite-plus/test';
+
 import { ReaderManager } from '../managers/ReaderManager';
 
 export function isAsyncFunction(fn: () => any): boolean {
   const fnStr = fn.toString().trim();
-  return !!(
-    fnStr.startsWith('async ') ||
-    fnStr.includes('await') ||
-    fn instanceof Promise
-  );
+  return !!(fnStr.startsWith('async ') || fnStr.includes('await') || fn instanceof Promise);
 }
 
 const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm;
 const ARGUMENT_NAMES = /([^\s,]+)/g;
 function getParamNames(func: () => unknown): null | string[] {
   const fnStr = func.toString().replace(STRIP_COMMENTS, '');
-  return fnStr
-    .slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')'))
-    .match(ARGUMENT_NAMES);
+  return fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
 }
 
 export const matchNestedProperties = (
@@ -33,19 +29,13 @@ export const matchNestedProperties = (
 
   // Check if all properties are present in the SDK
   for (const prop of nestedProperties) {
-    const propertyDescriptor = Object.getOwnPropertyDescriptor(
-      classPrototype,
-      prop.name,
-    );
+    const propertyDescriptor = Object.getOwnPropertyDescriptor(classPrototype, prop.name);
     const isPropertyDefined =
       propertyDescriptor &&
-      (propertyDescriptor.value !== undefined ||
-        propertyDescriptor.get !== undefined);
+      (propertyDescriptor.value !== undefined || propertyDescriptor.get !== undefined);
 
     if (!isPropertyDefined) {
-      throw new Error(
-        `Property ${prop.name} for namespace ${namespaceName} not found`,
-      );
+      throw new Error(`Property ${prop.name} for namespace ${namespaceName} not found`);
     }
   }
 };
@@ -93,9 +83,7 @@ export const matchNestedFunctions = (
 };
 
 export const matchApiToSpec = async (parent: object, namespace: string) => {
-  const rawJson = await ReaderManager.readFile(
-    __dirname + '/../../../api.json',
-  );
+  const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
   const api = JSON.parse(rawJson);
   matchNestedProperties(api, parent, namespace);
   matchNestedNamespaces(api, parent, namespace);

@@ -17,16 +17,10 @@ export default class LoginManager {
 
   // public api
   static async login(externalId: string, token?: string): Promise<void> {
-    await (this._switchingUsersPromise = LoginManager._login(
-      externalId,
-      token,
-    ));
+    await (this._switchingUsersPromise = LoginManager._login(externalId, token));
   }
 
-  private static async _login(
-    externalId: string,
-    token?: string,
-  ): Promise<void> {
+  private static async _login(externalId: string, token?: string): Promise<void> {
     if (token) {
       db.put('Ids', { id: token, type: 'jwtToken' });
     }
@@ -113,12 +107,7 @@ export default class LoginManager {
         }
       }),
       OneSignal._coreDirector._operationRepo._enqueueAndWait(
-        new LoginUserOperation(
-          appId,
-          newOneSignalId,
-          externalId,
-          existingOneSignalId,
-        ),
+        new LoginUserOperation(appId, newOneSignalId, externalId, existingOneSignalId),
       ),
     ]);
   }

@@ -1,8 +1,6 @@
-import type {
-  TagCategory,
-  TagsObjectForApi,
-  TagsObjectWithBoolean,
-} from 'src/page/tags/types';
+import type { TagCategory, TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags/types';
+import { describe, expect, test } from 'vite-plus/test';
+
 import * as TagUtils from './tags';
 
 describe('TagUtils', () => {
@@ -73,10 +71,7 @@ describe('TagUtils', () => {
     };
 
     // with no existing player tags
-    let checkedCategories = TagUtils.getCheckedTagCategories(
-      categories,
-      undefined,
-    );
+    let checkedCategories = TagUtils.getCheckedTagCategories(categories, undefined);
     expect(checkedCategories).toEqual(categories);
 
     // with empty existing tags
@@ -87,10 +82,7 @@ describe('TagUtils', () => {
     ]);
 
     // with existing tags
-    checkedCategories = TagUtils.getCheckedTagCategories(
-      categories,
-      existingPlayerTags,
-    );
+    checkedCategories = TagUtils.getCheckedTagCategories(categories, existingPlayerTags);
     expect(checkedCategories).toEqual([
       { tag: 'tag1', label: 'label1', checked: true },
       { tag: 'tag2', label: 'label2', checked: false },

@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from 'vite-plus/test';
+
 import { enforceAlias, enforceAppId, timeoutPromise } from './helpers';
 
 vi.useFakeTimers({
@@ -34,12 +36,8 @@ describe('context/helpers', () => {
 
   describe('enforceAlias', () => {
     test('throws when label or id is empty', () => {
-      expect(() => enforceAlias({ label: '', id: '' })).toThrow(
-        'Alias label cannot be empty',
-      );
-      expect(() => enforceAlias({ label: 'x', id: '' })).toThrow(
-        'Alias id cannot be empty',
-      );
+      expect(() => enforceAlias({ label: '', id: '' })).toThrow('Alias label cannot be empty');
+      expect(() => enforceAlias({ label: 'x', id: '' })).toThrow('Alias id cannot be empty');
     });
 
     test('does not throw on valid', () => {

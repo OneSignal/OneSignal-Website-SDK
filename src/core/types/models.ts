@@ -17,8 +17,7 @@ export const ModelChangeTags = {
   _Hydrate: 2,
 } as const;
 
-export type ModelChangeTagValue =
-  (typeof ModelChangeTags)[keyof typeof ModelChangeTags];
+export type ModelChangeTagValue = (typeof ModelChangeTags)[keyof typeof ModelChangeTags];
 
 /**
  * A handler interface for subscribing to model change events for a specific model store.
@@ -49,9 +48,7 @@ export interface IModelStoreChangeHandler<TModel extends Model> {
   _onModelRemoved(model: TModel, tag: ModelChangeTagValue): void;
 }
 
-export type DatabaseModel<TModel extends Model> = ReturnType<
-  TModel['toJSON']
-> & {
+export type DatabaseModel<TModel extends Model> = ReturnType<TModel['toJSON']> & {
   modelId: string;
   modelName: string;
 };
@@ -121,9 +118,9 @@ export interface ISingletonModelStoreChangeHandler<TModel extends Model> {
   _onModelUpdated(args: ModelChangedArgs, tag?: ModelChangeTagValue): void;
 }
 
-export interface ISingletonModelStore<
-  TModel extends Model,
-> extends IEventNotifier<ISingletonModelStoreChangeHandler<TModel>> {
+export interface ISingletonModelStore<TModel extends Model> extends IEventNotifier<
+  ISingletonModelStoreChangeHandler<TModel>
+> {
   /**
    * The model managed by this singleton model store.
    */

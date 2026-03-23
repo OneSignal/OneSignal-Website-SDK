@@ -8,6 +8,8 @@ import {
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
 import * as eventListeners from 'src/shared/listeners';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import { getAppState } from './database/config';
 import { setPushToken } from './database/subscription';
 import { SubscriptionManagerPage } from './managers/subscription/page';
@@ -127,7 +129,4 @@ Object.defineProperty(global.navigator, 'serviceWorker', {
 });
 
 // dont want to make a call to update notification types
-vi.spyOn(
-  SubscriptionManagerPage.prototype,
-  '_updateNotificationTypes',
-).mockResolvedValue();
+vi.spyOn(SubscriptionManagerPage.prototype, '_updateNotificationTypes').mockResolvedValue();

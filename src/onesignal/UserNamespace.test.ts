@@ -5,6 +5,8 @@ import { IdentityConstants } from 'src/core/constants';
 import { ModelChangeTags } from 'src/core/types/models';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { Subscription } from '../shared/models/Subscription';
 import User from './User';
@@ -72,9 +74,7 @@ describe('Alias Management', () => {
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     expect(identityModel._getProperty('someLabel')).toBe(aliases.someLabel);
-    expect(identityModel._getProperty('anotherLabel')).toBe(
-      aliases.anotherLabel,
-    );
+    expect(identityModel._getProperty('anotherLabel')).toBe(aliases.anotherLabel);
   });
 
   test('can remove a single alias', () => {
@@ -104,9 +104,7 @@ describe('Alias Management', () => {
     // First add the aliases
     userNamespace.addAliases(aliases);
     expect(identityModel._getProperty('someLabel')).toBe(aliases.someLabel);
-    expect(identityModel._getProperty('anotherLabel')).toBe(
-      aliases.anotherLabel,
-    );
+    expect(identityModel._getProperty('anotherLabel')).toBe(aliases.anotherLabel);
 
     // Then remove them
     userNamespace.removeAliases(Object.keys(aliases));
@@ -119,13 +117,9 @@ describe('Alias Management', () => {
     const userNamespace = new UserNamespace(true);
     // wrong types
     // @ts-expect-error - mock invalid argument
-    expect(() => userNamespace.addAlias(1234, '5678')).toThrowError(
-      '"label" is the wrong type',
-    );
+    expect(() => userNamespace.addAlias(1234, '5678')).toThrowError('"label" is the wrong type');
     // @ts-expect-error - mock invalid argument
-    expect(() => userNamespace.addAlias('some-label', 1234)).toThrowError(
-      '"id" is the wrong type',
-    );
+    expect(() => userNamespace.addAlias('some-label', 1234)).toThrowError('"id" is the wrong type');
     // @ts-expect-error - mock invalid argument
     expect(() => userNamespace.addAliases(['some-label'])).toThrowError(
       '"aliases" is the wrong type',
@@ -138,23 +132,17 @@ describe('Alias Management', () => {
     ).toThrowError('"key: some-label" is the wrong type');
 
     // empty values
-    expect(() => userNamespace.addAliases({})).toThrowError(
-      '"aliases" is empty',
-    );
-    expect(() => userNamespace.addAlias('', 'some-id')).toThrowError(
-      '"label" is empty',
-    );
-    expect(() => userNamespace.addAlias('some-label', '')).toThrowError(
-      '"id" is empty',
-    );
+    expect(() => userNamespace.addAliases({})).toThrowError('"aliases" is empty');
+    expect(() => userNamespace.addAlias('', 'some-id')).toThrowError('"label" is empty');
+    expect(() => userNamespace.addAlias('some-label', '')).toThrowError('"id" is empty');
 
     // reserved aliases
     expect(() => userNamespace.addAlias('external_id', 'some-id')).toThrowError(
       '"external_id" is reserved',
     );
-    expect(() =>
-      userNamespace.addAlias('onesignal_id', 'some-id'),
-    ).toThrowError('"onesignal_id" is reserved');
+    expect(() => userNamespace.addAlias('onesignal_id', 'some-id')).toThrowError(
+      '"onesignal_id" is reserved',
+    );
     expect(() =>
       userNamespace.addAliases({
         external_id: 'some-id',
@@ -171,29 +159,20 @@ describe('Alias Management', () => {
     const userNamespace = new UserNamespace(true);
     // wrong types
     // @ts-expect-error - mock invalid argument
-    expect(() => userNamespace.removeAliases(1234)).toThrowError(
-      '"aliases" is the wrong type',
-    );
+    expect(() => userNamespace.removeAliases(1234)).toThrowError('"aliases" is the wrong type');
     // @ts-expect-error - mock invalid argument
-    expect(() => userNamespace.removeAlias(1234)).toThrowError(
-      '"label" is the wrong type',
-    );
+    expect(() => userNamespace.removeAlias(1234)).toThrowError('"label" is the wrong type');
 
     // empty values
-    expect(() => userNamespace.removeAliases([])).toThrowError(
-      '"aliases" is empty',
-    );
-    expect(() => userNamespace.removeAlias('')).toThrowError(
-      '"label" is empty',
-    );
+    expect(() => userNamespace.removeAliases([])).toThrowError('"aliases" is empty');
+    expect(() => userNamespace.removeAlias('')).toThrowError('"label" is empty');
   });
 });
 
 describe('Email Management', () => {
   const userNamespace = new UserNamespace(true);
   const getEmailSubscription = (email: string) => {
-    const subscriptionModels =
-      OneSignal._coreDirector._getEmailSubscriptionModels();
+    const subscriptionModels = OneSignal._coreDirector._getEmailSubscriptionModels();
     return subscriptionModels.find((model) => model.token === email);
   };
 
@@ -202,10 +181,7 @@ describe('Email Management', () => {
     identityModel._onesignalId = IDManager._createLocalId();
 
     const email = 'test@example.com';
-    const addSubscriptionSpy = vi.spyOn(
-      OneSignal._coreDirector,
-      '_addSubscriptionModel',
-    );
+    const addSubscriptionSpy = vi.spyOn(OneSignal._coreDirector, '_addSubscriptionModel');
 
     await userNamespace.addEmail(email);
 
@@ -227,10 +203,7 @@ describe('Email Management', () => {
     expect(subscription).toBeDefined();
 
     // Then remove it
-    const removeSubscriptionSpy = vi.spyOn(
-      OneSignal._coreDirector,
-      '_removeSubscriptionModel',
-    );
+    const removeSubscriptionSpy = vi.spyOn(OneSignal._coreDirector, '_removeSubscriptionModel');
     userNamespace.removeEmail(email);
 
     expect(removeSubscriptionSpy).toHaveBeenCalled();
@@ -241,8 +214,7 @@ describe('Email Management', () => {
 
 describe('SMS Management', () => {
   const getSmsSubscription = (smsNumber: string) => {
-    const subscriptionModels =
-      OneSignal._coreDirector._getSmsSubscriptionModels();
+    const subscriptionModels = OneSignal._coreDirector._getSmsSubscriptionModels();
     return subscriptionModels.find((model) => model.token === smsNumber);
   };
 
@@ -252,10 +224,7 @@ describe('SMS Management', () => {
     identityModel._onesignalId = IDManager._createLocalId();
 
     const smsNumber = '+15551234567';
-    const addSubscriptionSpy = vi.spyOn(
-      OneSignal._coreDirector,
-      '_addSubscriptionModel',
-    );
+    const addSubscriptionSpy = vi.spyOn(OneSignal._coreDirector, '_addSubscriptionModel');
 
     await userNamespace.addSms(smsNumber);
 
@@ -278,10 +247,7 @@ describe('SMS Management', () => {
     expect(subscription).toBeDefined();
 
     // Then remove it
-    const removeSubscriptionSpy = vi.spyOn(
-      OneSignal._coreDirector,
-      '_removeSubscriptionModel',
-    );
+    const removeSubscriptionSpy = vi.spyOn(OneSignal._coreDirector, '_removeSubscriptionModel');
     userNamespace.removeSms(smsNumber);
 
     expect(removeSubscriptionSpy).toHaveBeenCalled();
@@ -363,9 +329,7 @@ describe('Language Management', () => {
     const language = 'fr';
 
     // @ts-expect-error - mock invalid argument
-    expect(() => userNamespace.setLanguage(123)).toThrowError(
-      '"language" is the wrong type',
-    );
+    expect(() => userNamespace.setLanguage(123)).toThrowError('"language" is the wrong type');
 
     userNamespace.setLanguage(language);
     expect(userNamespace.getLanguage()).toBe(language);
@@ -471,8 +435,7 @@ describe('Initialization', () => {
 
     const user = new UserNamespace(true);
     expect(user.onesignalId).toBe(undefined); // since its local
-    const onesignalId =
-      OneSignal._coreDirector._getIdentityModel()._onesignalId;
+    const onesignalId = OneSignal._coreDirector._getIdentityModel()._onesignalId;
     expect(IDManager._isLocalId(onesignalId)).toBe(true);
 
     // identity and properties models should have the same onesignalId
@@ -496,11 +459,7 @@ describe('Custom Events', () => {
     errorSpy.mockClear();
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    identityModel._setProperty(
-      'onesignal_id',
-      ONESIGNAL_ID,
-      ModelChangeTags._NoPropogate,
-    );
+    identityModel._setProperty('onesignal_id', ONESIGNAL_ID, ModelChangeTags._NoPropogate);
 
     // should validate properties
     // @ts-expect-error - mock invalid argument

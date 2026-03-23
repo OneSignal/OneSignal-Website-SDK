@@ -15,11 +15,7 @@ export default class Badge {
   }
 
   get _shown(): boolean {
-    return (
-      this._element?.classList.contains(
-        'onesignal-bell-launcher-badge-opened',
-      ) ?? false
-    );
+    return this._element?.classList.contains('onesignal-bell-launcher-badge-opened') ?? false;
   }
 
   _show(): void {

@@ -1,9 +1,10 @@
+import { describe, expect, test, vi } from 'vite-plus/test';
+
 let getOneSignalApiUrl: typeof import('src/shared/environment/detect').getOneSignalApiUrl;
 
 const resetModules = async () => {
   vi.resetModules();
-  getOneSignalApiUrl = (await import('src/shared/environment/detect'))
-    .getOneSignalApiUrl;
+  getOneSignalApiUrl = (await import('src/shared/environment/detect')).getOneSignalApiUrl;
 };
 
 describe('Environment Helper', () => {
@@ -12,17 +13,13 @@ describe('Environment Helper', () => {
     (global as any).__API_TYPE__ = 'staging';
     (global as any).__API_ORIGIN__ = 'onesignal-staging.com';
     await resetModules();
-    expect(getOneSignalApiUrl().toString()).toBe(
-      'https://onesignal-staging.com/api/v1/',
-    );
+    expect(getOneSignalApiUrl().toString()).toBe('https://onesignal-staging.com/api/v1/');
 
     // development -  turbine endpoint
     (global as any).__API_ORIGIN__ = 'localhost';
     (global as any).__API_TYPE__ = 'development';
     await resetModules();
-    expect(getOneSignalApiUrl().toString()).toBe(
-      'http://localhost:3000/api/v1/',
-    );
+    expect(getOneSignalApiUrl().toString()).toBe('http://localhost:3000/api/v1/');
     expect(
       getOneSignalApiUrl({
         action: 'outcomes',

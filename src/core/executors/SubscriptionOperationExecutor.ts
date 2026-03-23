@@ -1,13 +1,8 @@
-import {
-  ExecutionResult,
-  type IOperationExecutor,
-} from 'src/core/types/operation';
+import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operation';
 import type { IRebuildUserService } from 'src/core/types/user';
-import {
-  getResponseStatusType,
-  ResponseStatusType,
-} from 'src/shared/helpers/network';
+import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
+
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -53,7 +48,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(`SubOpExec(${operations})`);
+    Log._debug(`SubOpExec(${JSON.stringify(operations)})`);
 
     const startingOp = operations[0];
     if (startingOp instanceof CreateSubscriptionOperation)
@@ -61,12 +56,8 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
     if (operations.some((op) => op instanceof DeleteSubscriptionOperation)) {
       if (operations.length > 1)
-        throw new Error(
-          `Only supports one operation! Attempted operations:\n${operations}`,
-        );
-      return this._deleteSubscription(
-        operations[0] as DeleteSubscriptionOperation,
-      );
+        throw new Error(`Only supports one operation! Attempted operations:\n${JSON.stringify(operations)}`);
+      return this._deleteSubscription(operations[0] as DeleteSubscriptionOperation);
     }
 
     if (startingOp instanceof UpdateSubscriptionOperation)
@@ -95,8 +86,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     const enabled = lastUpdateOperation?.enabled ?? createOperation.enabled;
     const token = lastUpdateOperation?.token ?? createOperation.token;
     const notification_types =
-      lastUpdateOperation?.notification_types ??
-      createOperation.notification_types;
+      lastUpdateOperation?.notification_types ?? createOperation.notification_types;
 
     const subscription = {
       sdk: createOperation.sdk,
@@ -117,18 +107,13 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
     if (response.ok) {
       const { subscription } = response.result;
-      const subscriptionModel =
-        this._subscriptionModelStore._getBySubscriptionId(
-          createOperation._subscriptionId,
-        );
+      const subscriptionModel = this._subscriptionModelStore._getBySubscriptionId(
+        createOperation._subscriptionId,
+      );
 
       const backendSubscriptionId = subscription?.id;
       if (backendSubscriptionId) {
-        subscriptionModel?._setProperty(
-          'id',
-          backendSubscriptionId,
-          ModelChangeTags._Hydrate,
-        );
+        subscriptionModel?._setProperty('id', backendSubscriptionId, ModelChangeTags._Hydrate);
         subscriptionModel?._setProperty(
           'onesignalId',
           createOperation._onesignalId,
@@ -139,12 +124,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       return {
         _result: ExecutionResult._Success,
         _operations: !backendSubscriptionId
-          ? [
-              new RefreshUserOperation(
-                createOperation._appId,
-                createOperation._onesignalId,
-              ),
-            ]
+          ? [new RefreshUserOperation(createOperation._appId, createOperation._onesignalId)]
           : undefined,
         _idTranslations: backendSubscriptionId
           ? {
@@ -176,9 +156,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       case ResponseStatusType._Missing: {
         if (
           status === 404 &&
-          this._newRecordState._isInMissingRetryWindow(
-            createOperation._onesignalId,
-          )
+          this._newRecordState._isInMissingRetryWindow(createOperation._onesignalId)
         ) {
           return {
             _result: ExecutionResult._FailRetry,
@@ -186,11 +164,10 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           };
         }
 
-        const rebuildOps =
-          await this._buildUserService._getRebuildOperationsIfCurrentUser(
-            createOperation._appId,
-            createOperation._onesignalId,
-          );
+        const rebuildOps = await this._buildUserService._getRebuildOperationsIfCurrentUser(
+          createOperation._appId,
+          createOperation._onesignalId,
+        );
         if (!rebuildOps) return { _result: ExecutionResult._FailNoretry };
         return {
           _result: ExecutionResult._FailRetry,
@@ -201,12 +178,8 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     }
   }
 
-  private async _updateSubscription(
-    operations: Operation[],
-  ): Promise<ExecutionResponse> {
-    const lastOp = operations[
-      operations.length - 1
-    ] as UpdateSubscriptionOperation;
+  private async _updateSubscription(operations: Operation[]): Promise<ExecutionResponse> {
+    const lastOp = operations[operations.length - 1] as UpdateSubscriptionOperation;
 
     const subscription = {
       type: lastOp.type,
@@ -271,11 +244,9 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   private async _transferSubscription(
     op: TransferSubscriptionOperation,
   ): Promise<ExecutionResponse> {
-    const response = await transferSubscriptionById(
-      { appId: op._appId },
-      op._subscriptionId,
-      { onesignal_id: op._onesignalId },
-    );
+    const response = await transferSubscriptionById({ appId: op._appId }, op._subscriptionId, {
+      onesignal_id: op._onesignalId,
+    });
 
     if (response.ok) {
       return { _result: ExecutionResult._Success };
@@ -296,19 +267,11 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     }
   }
 
-  private async _deleteSubscription(
-    op: DeleteSubscriptionOperation,
-  ): Promise<ExecutionResponse> {
-    const response = await deleteSubscriptionById(
-      { appId: op._appId },
-      op._subscriptionId,
-    );
+  private async _deleteSubscription(op: DeleteSubscriptionOperation): Promise<ExecutionResponse> {
+    const response = await deleteSubscriptionById({ appId: op._appId }, op._subscriptionId);
 
     if (response.ok) {
-      this._subscriptionModelStore._remove(
-        op._subscriptionId,
-        ModelChangeTags._Hydrate,
-      );
+      this._subscriptionModelStore._remove(op._subscriptionId, ModelChangeTags._Hydrate);
       return { _result: ExecutionResult._Success };
     }
 

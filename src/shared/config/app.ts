@@ -7,11 +7,7 @@ import {
   getUserConfigForConfigIntegrationKind,
   hasUnsupportedSubdomainForConfigIntegrationKind,
 } from './integration';
-import {
-  type AppConfig,
-  type AppUserConfig,
-  type ServerAppConfig,
-} from './types';
+import { type AppConfig, type AppUserConfig, type ServerAppConfig } from './types';
 import { upgradeConfigToVersionTwo } from './version';
 
 // local constants
@@ -22,9 +18,7 @@ const SERVER_CONFIG_DEFAULTS_SESSION = {
 };
 
 // helpers
-export async function getAppConfig(
-  userConfig: AppUserConfig,
-): Promise<AppConfig> {
+export async function getAppConfig(userConfig: AppUserConfig): Promise<AppConfig> {
   return getServerAppConfig(userConfig, downloadServerAppConfig);
 }
 
@@ -33,8 +27,7 @@ export async function getServerAppConfig(
   downloadConfig: (appId: string) => Promise<ServerAppConfig>,
 ): Promise<AppConfig> {
   try {
-    if (!userConfig || !userConfig.appId || !isValidUuid(userConfig.appId))
-      throw InvalidAppIdError;
+    if (!userConfig || !userConfig.appId || !isValidUuid(userConfig.appId)) throw InvalidAppIdError;
 
     const serverConfig = await downloadConfig(userConfig.appId);
     upgradeConfigToVersionTwo(userConfig);
@@ -62,12 +55,11 @@ export function getMergedConfig(
 ): AppConfig {
   const configIntegrationKind = getConfigIntegrationKind(serverConfig);
 
-  const hasUnsupportedSubdomain =
-    hasUnsupportedSubdomainForConfigIntegrationKind(
-      configIntegrationKind,
-      userConfig,
-      serverConfig,
-    );
+  const hasUnsupportedSubdomain = hasUnsupportedSubdomainForConfigIntegrationKind(
+    configIntegrationKind,
+    userConfig,
+    serverConfig,
+  );
 
   const mergedUserConfig = getUserConfigForConfigIntegrationKind(
     configIntegrationKind,
@@ -81,8 +73,7 @@ export function getMergedConfig(
     siteName: serverConfig.config.siteInfo.name,
     origin: serverConfig.config.origin,
     restrictedOriginEnabled:
-      serverConfig.features.restrict_origin &&
-      serverConfig.features.restrict_origin.enable,
+      serverConfig.features.restrict_origin && serverConfig.features.restrict_origin.enable,
     safariWebId: serverConfig.config.safari_web_id,
     vapidPublicKey: serverConfig.config.vapid_public_key,
     onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
@@ -91,10 +82,8 @@ export function getMergedConfig(
       serverConfig.features.enable_on_session ??
       SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed,
     sessionThreshold:
-      serverConfig.features.session_threshold ??
-      SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold,
+      serverConfig.features.session_threshold ?? SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold,
     enableSessionDuration:
-      serverConfig.features.web_on_focus_enabled ??
-      SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
+      serverConfig.features.web_on_focus_enabled ?? SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
   };
 }

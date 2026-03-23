@@ -1,5 +1,7 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import MockNotification from '__test__/support/mocks/MockNotification';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import * as detect from '../environment/detect';
 import PermissionManager from './PermissionManager';
 
@@ -14,10 +16,7 @@ describe('PermissionManager', () => {
     test('resolves from context manager', async () => {
       const pm = new PermissionManager();
       const spy = vi
-        .spyOn(
-          OneSignal._context._permissionManager,
-          '_getNotificationPermission',
-        )
+        .spyOn(OneSignal._context._permissionManager, '_getNotificationPermission')
         .mockResolvedValue('granted');
       await expect(pm._getPermissionStatus()).resolves.toBe('granted');
       expect(spy).toHaveBeenCalled();

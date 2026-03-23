@@ -1,30 +1,17 @@
 import * as OneSignalApiBase from 'src/shared/api/base';
-import {
-  downloadSWServerAppConfig,
-  getUserIdFromSubscriptionIdentifier,
-} from 'src/shared/api/sw';
+import { downloadSWServerAppConfig, getUserIdFromSubscriptionIdentifier } from 'src/shared/api/sw';
 import { getServerAppConfig } from 'src/shared/config/app';
 import type { AppConfig } from 'src/shared/config/types';
-import {
-  db,
-  getCurrentSession,
-  getOptionsValue,
-} from 'src/shared/database/client';
+import { db, getCurrentSession, getOptionsValue } from 'src/shared/database/client';
 import { getAppState, getDBAppConfig } from 'src/shared/database/config';
 import {
   putNotificationClickedForOutcomes,
   putNotificationReceivedForOutcomes,
 } from 'src/shared/database/notifications';
-import {
-  getSubscription,
-  setSubscription,
-} from 'src/shared/database/subscription';
+import { getSubscription, setSubscription } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
 import { delay } from 'src/shared/helpers/general';
-import {
-  deactivateSession,
-  upsertSession,
-} from 'src/shared/helpers/service-worker';
+import { deactivateSession, upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import {
   type NotificationWillDisplayResponsePayload,
@@ -52,6 +39,7 @@ import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
+
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import {
   isValidPayload,
@@ -76,8 +64,7 @@ const MAX_CONFIRMED_DELIVERY_DELAY = 25;
 const workerMessenger = new WorkerMessengerSW(undefined);
 
 async function getPushSubscriptionId(): Promise<string | undefined> {
-  const pushSubscription =
-    await self.registration.pushManager.getSubscription();
+  const pushSubscription = await self.registration.pushManager.getSubscription();
   const pushToken = pushSubscription?.endpoint;
   if (!pushToken) return undefined;
   return getPushSubscriptionIdByToken(pushToken);
@@ -108,17 +95,11 @@ export function run() {
     switch (data?.command) {
       case WorkerMessengerCommand._SessionUpsert:
         Log._debug('[SW] SessionUpsert', payload);
-        debounceRefreshSession(
-          event,
-          payload as UpsertOrDeactivateSessionPayload,
-        );
+        debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
         break;
       case WorkerMessengerCommand._SessionDeactivate:
         Log._debug('[SW] SessionDeactivate', payload);
-        debounceRefreshSession(
-          event,
-          payload as UpsertOrDeactivateSessionPayload,
-        );
+        debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
         break;
       default:
         return;
@@ -167,45 +148,27 @@ function setupMessageListeners() {
     Log._debug('[SW] Worker version msg');
     workerMessenger._broadcast(WorkerMessengerCommand._WorkerVersion, VERSION);
   });
-  workerMessenger._on(
-    WorkerMessengerCommand._Subscribe,
-    async (appConfigBundle: AppConfig) => {
-      const appConfig = appConfigBundle;
-      Log._debug('[SW] Subscribe msg');
-      const context = new ContextSW(appConfig);
-      const rawSubscription = await context._subscriptionManager._subscribe(
-        SubscriptionStrategyKind._ResubscribeExisting,
-      );
-      const subscription =
-        await context._subscriptionManager._registerSubscription(
-          rawSubscription,
-        );
-      workerMessenger._broadcast(
-        WorkerMessengerCommand._Subscribe,
-        subscription._serialize(),
-      );
-    },
-  );
-  workerMessenger._on(
-    WorkerMessengerCommand._SubscribeNew,
-    async (appConfigBundle: AppConfig) => {
-      const appConfig = appConfigBundle;
-      Log._debug('[SW] Subscribe new msg');
-      const context = new ContextSW(appConfig);
-      const rawSubscription = await context._subscriptionManager._subscribe(
-        SubscriptionStrategyKind._SubscribeNew,
-      );
-      const subscription =
-        await context._subscriptionManager._registerSubscription(
-          rawSubscription,
-        );
+  workerMessenger._on(WorkerMessengerCommand._Subscribe, async (appConfigBundle: AppConfig) => {
+    const appConfig = appConfigBundle;
+    Log._debug('[SW] Subscribe msg');
+    const context = new ContextSW(appConfig);
+    const rawSubscription = await context._subscriptionManager._subscribe(
+      SubscriptionStrategyKind._ResubscribeExisting,
+    );
+    const subscription = await context._subscriptionManager._registerSubscription(rawSubscription);
+    workerMessenger._broadcast(WorkerMessengerCommand._Subscribe, subscription._serialize());
+  });
+  workerMessenger._on(WorkerMessengerCommand._SubscribeNew, async (appConfigBundle: AppConfig) => {
+    const appConfig = appConfigBundle;
+    Log._debug('[SW] Subscribe new msg');
+    const context = new ContextSW(appConfig);
+    const rawSubscription = await context._subscriptionManager._subscribe(
+      SubscriptionStrategyKind._SubscribeNew,
+    );
+    const subscription = await context._subscriptionManager._registerSubscription(rawSubscription);
 
-      workerMessenger._broadcast(
-        WorkerMessengerCommand._SubscribeNew,
-        subscription._serialize(),
-      );
-    },
-  );
+    workerMessenger._broadcast(WorkerMessengerCommand._SubscribeNew, subscription._serialize());
+  });
 
   workerMessenger._on(
     WorkerMessengerCommand._AreYouVisibleResponse,
@@ -239,10 +202,7 @@ function setupMessageListeners() {
     (payload: NotificationWillDisplayResponsePayload) => {
       Log._debug('[SW] NotifWillDisplay response', payload);
 
-      if (
-        self.notificationDisplayStatus?.notificationId !==
-        payload.notificationId
-      ) {
+      if (self.notificationDisplayStatus?.notificationId !== payload.notificationId) {
         return;
       }
 
@@ -269,9 +229,7 @@ function setupMessageListeners() {
  * Since preventDefault() is synchronous, the page responds immediately
  * after receiving the broadcast -- no polling or timeout needed.
  */
-async function shouldPreventNotificationDisplay(
-  notif: IOSNotification,
-): Promise<boolean> {
+async function shouldPreventNotificationDisplay(notif: IOSNotification): Promise<boolean> {
   const clients = await self.clients.matchAll({
     type: 'window',
     includeUncontrolled: true,
@@ -291,9 +249,7 @@ async function shouldPreventNotificationDisplay(
     return false;
   }
 
-  Log._debug(
-    `[SW] ${visibleClients.length} visible clients, awaiting preventDefault`,
-  );
+  Log._debug(`[SW] ${visibleClients.length} visible clients, awaiting preventDefault`);
 
   // Deferred promise: store the resolve callback on self so the
   // _NotificationWillDisplayResponse handler can settle it.
@@ -343,8 +299,7 @@ function onPushReceived(event: PushEvent): void {
           // Never nest the following line in a callback from the point of entering from retrieveNotifications
           notificationEventPromiseFns.push(
             (async (notif: IOSNotification) => {
-              const shouldPreventDisplay =
-                await shouldPreventNotificationDisplay(notif);
+              const shouldPreventDisplay = await shouldPreventNotificationDisplay(notif);
 
               const pushSubscriptionId = await getPushSubscriptionId();
               notificationWillDisplay(notif, pushSubscriptionId);
@@ -392,9 +347,7 @@ function browserSupportsConfirmedDelivery(): boolean {
  * @param notification A JSON object containing notification details.
  * @returns {Promise}
  */
-async function sendConfirmedDelivery(
-  notification: IOSNotification,
-): Promise<void | null> {
+async function sendConfirmedDelivery(notification: IOSNotification): Promise<void | null> {
   if (!notification) return;
 
   if (!browserSupportsConfirmedDelivery()) return null;
@@ -481,15 +434,9 @@ async function refreshSession(
   const windowClients = await getWindowClients();
 
   if (options.isSafari) {
-    await checkIfAnyClientsFocusedAndUpdateSession(
-      event,
-      windowClients,
-      options,
-    );
+    await checkIfAnyClientsFocusedAndUpdateSession(event, windowClients, options);
   } else {
-    const hasAnyActiveSessions: boolean = windowClients.some(
-      (w) => (w as WindowClient).focused,
-    );
+    const hasAnyActiveSessions: boolean = windowClients.some((w) => (w as WindowClient).focused);
     Log._debug('[SW] hasAnyActive', hasAnyActiveSessions);
     await updateSessionBasedOnHasActive(event, hasAnyActiveSessions, options);
   }
@@ -587,9 +534,7 @@ function ensureImageResourceHttps(imageUrl?: string) {
 /**
  * Given a structured notification object, HTTPS-ifies the notification icons and action button icons, if they exist.
  */
-function ensureNotificationResourcesHttps(
-  notification: IMutableOSNotification,
-) {
+function ensureNotificationResourcesHttps(notification: IMutableOSNotification) {
   if (notification) {
     if (notification.icon) {
       notification.icon = ensureImageResourceHttps(notification.icon);
@@ -633,19 +578,13 @@ async function displayNotification(notification: IMutableOSNotification) {
   // Use the default icon if one isn't provided
   const defaultIcon = await getOptionsValue<string>('defaultIcon');
   // Get option of whether we should leave notification displaying indefinitely
-  const persistNotification = await getOptionsValue<boolean>(
-    'persistNotification',
-  );
+  const persistNotification = await getOptionsValue<boolean>('persistNotification');
 
   // Get app ID for tag value
   const appId = await getAppId();
 
   notification.title = notification.title ? notification.title : defaultTitle;
-  notification.icon = notification.icon
-    ? notification.icon
-    : defaultIcon
-      ? defaultIcon
-      : undefined;
+  notification.icon = notification.icon ? notification.icon : defaultIcon ? defaultIcon : undefined;
 
   ensureNotificationResourcesHttps(notification);
 
@@ -706,10 +645,7 @@ async function displayNotification(notification: IMutableOSNotification) {
     badge: notification.badgeIcon,
   };
 
-  await self.registration.showNotification(
-    notification.title,
-    notificationOptions,
-  );
+  await self.registration.showNotification(notification.title, notificationOptions);
 
   if (requiresMacOS15ChromiumAfterDisplayWorkaround()) {
     await delay(1_000);
@@ -723,9 +659,7 @@ async function displayNotification(notification: IMutableOSNotification) {
  */
 function shouldOpenNotificationUrl(url: string) {
   return (
-    url !== 'javascript:void(0);' &&
-    url !== 'do_not_open' &&
-    !url.includes('_osp=do_not_open')
+    url !== 'javascript:void(0);' && url !== 'do_not_open' && !url.includes('_osp=do_not_open')
   );
 }
 
@@ -768,8 +702,7 @@ async function getNotificationUrlToOpen(
     return notification.launchURL;
   }
 
-  const { defaultNotificationUrl: dbDefaultNotificationUrl } =
-    await getAppState();
+  const { defaultNotificationUrl: dbDefaultNotificationUrl } = await getAppState();
   if (dbDefaultNotificationUrl) {
     return dbDefaultNotificationUrl;
   }
@@ -792,20 +725,13 @@ async function onNotificationClicked(event: NotificationEvent) {
   let notificationClickHandlerMatch = 'exact';
   let notificationClickHandlerAction = 'navigate';
 
-  const matchPreference = await getOptionsValue<string>(
-    'notificationClickHandlerMatch',
-  );
+  const matchPreference = await getOptionsValue<string>('notificationClickHandlerMatch');
   if (matchPreference) notificationClickHandlerMatch = matchPreference;
 
-  const actionPreference = await getOptionsValue<string>(
-    'notificationClickHandlerAction',
-  );
+  const actionPreference = await getOptionsValue<string>('notificationClickHandlerAction');
   if (actionPreference) notificationClickHandlerAction = actionPreference;
 
-  const launchUrl = await getNotificationUrlToOpen(
-    osNotification,
-    event.action,
-  );
+  const launchUrl = await getNotificationUrlToOpen(osNotification, event.action);
   const notificationOpensLink: boolean = shouldOpenNotificationUrl(launchUrl);
   const appId = await getAppId();
   const deviceType = getDeviceType();
@@ -832,8 +758,7 @@ async function onNotificationClicked(event: NotificationEvent) {
       // upgrade existing session to be directly attributed to the notif
       // if it results in re-focusing the site
       if (existingSession) {
-        existingSession.notificationId =
-          notificationClickEvent.notification.notificationId;
+        existingSession.notificationId = notificationClickEvent.notification.notificationId;
         await db.put('Sessions', existingSession);
       }
     } catch (e) {
@@ -877,13 +802,11 @@ async function onNotificationClicked(event: NotificationEvent) {
 
     if (
       (notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
-      (notificationClickHandlerMatch === 'origin' &&
-        clientOrigin === launchOrigin)
+      (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)
     ) {
       if (
         client.url === launchUrl ||
-        (notificationClickHandlerAction === 'focus' &&
-          clientOrigin === launchOrigin)
+        (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)
       ) {
         workerMessenger._unicast(
           WorkerMessengerCommand._NotificationClicked,
@@ -953,9 +876,7 @@ async function sendConvertedAPIRequests(
   const notificationData = notificationClickEvent.notification;
 
   if (!notificationData.notificationId) {
-    console.error(
-      'No notification id, skipping networks calls to report open!',
-    );
+    console.error('No notification id, skipping networks calls to report open!');
     return;
   }
 
@@ -972,9 +893,7 @@ async function sendConvertedAPIRequests(
       },
     );
   } else {
-    console.error(
-      'No app Id, skipping OneSignal API call for notification open!',
-    );
+    console.error('No app Id, skipping OneSignal API call for notification open!');
   }
 
   await notificationClick(notificationClickEvent, pushSubscriptionId);
@@ -1012,10 +931,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
     // Without an app ID, we can't make any calls
     return;
   }
-  const appConfig = await getServerAppConfig(
-    { appId },
-    downloadSWServerAppConfig,
-  );
+  const appConfig = await getServerAppConfig({ appId }, downloadSWServerAppConfig);
   if (!appConfig) {
     // Without a valid app config (e.g. deleted app), we can't make any calls
     return;
@@ -1025,8 +941,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
   // Get our current device ID
   let deviceIdExists: boolean;
   {
-    let deviceId: string | null | undefined = (await getSubscription())
-      .deviceId;
+    let deviceId: string | null | undefined = (await getSubscription()).deviceId;
 
     deviceIdExists = !!deviceId;
     if (!deviceIdExists && event.oldSubscription) {
@@ -1051,9 +966,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
   // Set it initially by the provided new push subscription
   const providedNewSubscription = event.newSubscription;
   if (providedNewSubscription) {
-    rawPushSubscription = RawPushSubscription._setFromW3cSubscription(
-      providedNewSubscription,
-    );
+    rawPushSubscription = RawPushSubscription._setFromW3cSubscription(providedNewSubscription);
   } else {
     // Otherwise set our push registration by resubscribing
     try {
@@ -1142,9 +1055,7 @@ function isValidPushPayload(rawData: PushMessageData) {
  * @returns An array of notifications. The new web push protocol will only ever contain one notification, however
  * an array is returned for backwards compatibility with the rest of the service worker plumbing.
  */
-function parseOrFetchNotifications(
-  event: PushEvent,
-): Promise<OSMinifiedNotificationPayload[]> {
+function parseOrFetchNotifications(event: PushEvent): Promise<OSMinifiedNotificationPayload[]> {
   if (!event || !event.data) {
     return Promise.reject('Missing event.data on push payload!');
   }
@@ -1159,7 +1070,5 @@ function parseOrFetchNotifications(
    We received a push message payload from another service provider or a malformed
    payload. The last received notification will be displayed.
   */
-  return Promise.reject(
-    `Unexpected push message payload received: ${event.data}`,
-  );
+  return Promise.reject(`Unexpected push message payload received: ${event.data}`);
 }

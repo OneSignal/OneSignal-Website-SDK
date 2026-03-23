@@ -4,6 +4,8 @@ import { DelayedPromptType } from 'src/shared/prompts/constants';
 import type { DelayedPromptOptions } from 'src/shared/prompts/types';
 import { Browser } from 'src/shared/useragent/constants';
 import * as detect from 'src/shared/useragent/detect';
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
+
 import { PromptsManager } from './PromptsManager';
 const getBrowserNameSpy = vi.spyOn(detect, 'getBrowserName');
 const getBrowserVersionSpy = vi.spyOn(detect, 'getBrowserVersion');
@@ -43,10 +45,7 @@ describe('PromptsManager', () => {
     const pm = new PromptsManager(OneSignal._context);
 
     // stub _createSlidedown to avoid side effects
-    vi.spyOn(
-      OneSignal._context._slidedownManager,
-      '_createSlidedown',
-    ).mockResolvedValue(undefined);
+    vi.spyOn(OneSignal._context._slidedownManager, '_createSlidedown').mockResolvedValue(undefined);
     const installSpy = vi.spyOn(pm, '_installEventHooksForSlidedown');
 
     await pm['_internalShowSlidedownPrompt']();
@@ -57,12 +56,8 @@ describe('PromptsManager', () => {
   test('_internalShowDelayedPrompt forces slidedown when interaction required', async () => {
     requiresUserInteractionSpy.mockReturnValue(true);
     const pm = new PromptsManager(OneSignal._context);
-    const nativeSpy = vi
-      .spyOn(pm, '_internalShowNativePrompt')
-      .mockResolvedValue(true);
-    const slidedownSpy = vi
-      .spyOn(pm, '_internalShowSlidedownPrompt')
-      .mockResolvedValue(undefined);
+    const nativeSpy = vi.spyOn(pm, '_internalShowNativePrompt').mockResolvedValue(true);
+    const slidedownSpy = vi.spyOn(pm, '_internalShowSlidedownPrompt').mockResolvedValue(undefined);
     await pm._internalShowDelayedPrompt(DelayedPromptType._Native, 0);
     expect(nativeSpy).not.toHaveBeenCalled();
 
@@ -85,9 +80,7 @@ describe('PromptsManager', () => {
       .spyOn(pm, '_isPageViewConditionMet' as keyof PromptsManager)
       .mockResolvedValue(true);
 
-    const delayedSpy = vi
-      .spyOn(pm, '_internalShowDelayedPrompt')
-      .mockResolvedValue(undefined);
+    const delayedSpy = vi.spyOn(pm, '_internalShowDelayedPrompt').mockResolvedValue(undefined);
     requiresUserInteractionSpy.mockReturnValue(false);
     getBrowserNameSpy.mockReturnValue(Browser._Chrome);
     getBrowserVersionSpy.mockReturnValue(62);

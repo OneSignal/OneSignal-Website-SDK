@@ -3,10 +3,7 @@ import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
 import { enforceAlias, enforceAppId } from 'src/shared/context/helpers';
 import type { ContextInterface } from 'src/shared/context/types';
-import {
-  hasSafariWindow,
-  supportsServiceWorkers,
-} from 'src/shared/environment/detect';
+import { hasSafariWindow, supportsServiceWorkers } from 'src/shared/environment/detect';
 import { isFirstPageView } from 'src/shared/helpers/pageview';
 import { SessionOrigin } from 'src/shared/session/constants';
 import type {
@@ -14,6 +11,7 @@ import type {
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+
 import User from '../../../onesignal/User';
 import LoginManager from '../../../page/managers/LoginManager';
 import { getAppId } from '../../helpers/main';
@@ -47,10 +45,7 @@ export class SessionManager implements ISessionManager {
     };
     if (supportsServiceWorkers()) {
       Log._debug('SW upsert session');
-      await this._context._workerMessenger._unicast(
-        WorkerMessengerCommand._SessionUpsert,
-        payload,
-      );
+      await this._context._workerMessenger._unicast(WorkerMessengerCommand._SessionUpsert, payload);
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
@@ -91,17 +86,13 @@ export class SessionManager implements ISessionManager {
     subscriptionId: string;
   }> {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
-    const pushSubscriptionModel =
-      await OneSignal._coreDirector._getPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal._coreDirector._getPushSubscriptionModel();
 
     if (!identityModel || !identityModel._onesignalId) {
       throw new Error('No identity');
     }
 
-    if (
-      !pushSubscriptionModel ||
-      !isCompleteSubscriptionObject(pushSubscriptionModel)
-    ) {
+    if (!pushSubscriptionModel || !isCompleteSubscriptionObject(pushSubscriptionModel)) {
       throw new Error('No subscription');
     }
 
@@ -120,17 +111,12 @@ export class SessionManager implements ISessionManager {
 
     try {
       const visibilityState = document.visibilityState;
-      const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
 
       if (visibilityState === 'visible') {
         this._setupOnFocusAndOnBlurForSession();
 
-        Log._debug(
-          'handleVisibilityChange',
-          'visible',
-          `hasFocus: ${document.hasFocus()}`,
-        );
+        Log._debug('handleVisibilityChange', 'visible', `hasFocus: ${document.hasFocus()}`);
 
         if (document.hasFocus()) {
           await this._notifySWToUpsertSession(
@@ -144,23 +130,12 @@ export class SessionManager implements ISessionManager {
 
       if (visibilityState === 'hidden') {
         Log._debug('handleVisibilityChange', 'hidden');
-        if (
-          OneSignal._cache.focusHandler &&
-          OneSignal._cache.isFocusEventSetup
-        ) {
-          window.removeEventListener(
-            'focus',
-            OneSignal._cache.focusHandler,
-            true,
-          );
+        if (OneSignal._cache.focusHandler && OneSignal._cache.isFocusEventSetup) {
+          window.removeEventListener('focus', OneSignal._cache.focusHandler, true);
           OneSignal._cache.isFocusEventSetup = false;
         }
         if (OneSignal._cache.blurHandler && OneSignal._cache.isBlurEventSetup) {
-          window.removeEventListener(
-            'blur',
-            OneSignal._cache.blurHandler,
-            true,
-          );
+          window.removeEventListener('blur', OneSignal._cache.blurHandler, true);
           OneSignal._cache.isBlurEventSetup = false;
         }
 
@@ -189,8 +164,7 @@ export class SessionManager implements ISessionManager {
     try {
       // don't have much time on before unload
       // have to skip adding device record to the payload
-      const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
       const payload: UpsertOrDeactivateSessionPayload = {
         appId: this._context._appConfig.appId,
         onesignalId,
@@ -230,13 +204,8 @@ export class SessionManager implements ISessionManager {
         return;
       }
 
-      const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
-      await this._notifySWToUpsertSession(
-        onesignalId,
-        subscriptionId,
-        SessionOrigin._Focus,
-      );
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+      await this._notifySWToUpsertSession(onesignalId, subscriptionId, SessionOrigin._Focus);
     } catch (e) {
       Log._error('Focus error:', e);
     }
@@ -260,13 +229,8 @@ export class SessionManager implements ISessionManager {
         return;
       }
 
-      const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
-      await this._notifySWToDeactivateSession(
-        onesignalId,
-        subscriptionId,
-        SessionOrigin._Blur,
-      );
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+      await this._notifySWToDeactivateSession(onesignalId, subscriptionId, SessionOrigin._Blur);
     } catch (e) {
       Log._error('Blur error:', e);
     }
@@ -276,13 +240,8 @@ export class SessionManager implements ISessionManager {
     await LoginManager._switchingUsersPromise;
 
     if (User._singletonInstance?.onesignalId) {
-      const { onesignalId, subscriptionId } =
-        await this._getOneSignalAndSubscriptionIds();
-      await this._notifySWToUpsertSession(
-        onesignalId,
-        subscriptionId,
-        sessionOrigin,
-      );
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+      await this._notifySWToUpsertSession(onesignalId, subscriptionId, sessionOrigin);
     }
 
     if (supportsServiceWorkers()) {
@@ -307,11 +266,7 @@ export class SessionManager implements ISessionManager {
     // To make sure we add these event listeners only once.
     if (!OneSignal._cache.isVisibilityChangeEventSetup) {
       // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
-      document.addEventListener(
-        'visibilitychange',
-        this._handleVisibilityChange.bind(this),
-        true,
-      );
+      document.addEventListener('visibilitychange', this._handleVisibilityChange.bind(this), true);
       OneSignal._cache.isVisibilityChangeEventSetup = true;
     }
 
@@ -366,8 +321,7 @@ export class SessionManager implements ISessionManager {
       return;
     }
 
-    const pushSubscription =
-      await OneSignal._coreDirector._getPushSubscriptionModel();
+    const pushSubscription = await OneSignal._coreDirector._getPushSubscriptionModel();
     if (
       pushSubscription?._notification_types !== NotificationType._Subscribed &&
       OneSignal.config?.enableOnSession !== true
@@ -397,11 +351,7 @@ export class SessionManager implements ISessionManager {
       enforceAppId(appId);
       enforceAlias(aliasPair);
       try {
-        await updateUserByAlias(
-          { appId, subscriptionId },
-          aliasPair,
-          updateUserPayload,
-        );
+        await updateUserByAlias({ appId, subscriptionId }, aliasPair, updateUserPayload);
         this._onSessionSent = true;
       } catch (e) {
         Log._debug('Session update error:', e);

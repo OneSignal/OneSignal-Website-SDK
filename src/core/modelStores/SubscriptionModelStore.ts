@@ -1,30 +1,22 @@
 import { SimpleModelStore } from 'src/core/modelStores/SimpleModelStore';
-import {
-  ModelChangeTags,
-  type ModelChangeTagValue,
-} from 'src/core/types/models';
+import { ModelChangeTags, type ModelChangeTagValue } from 'src/core/types/models';
 import type { IDBStoreName } from 'src/shared/database/types';
 import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
+
 import { SubscriptionModel } from '../models/SubscriptionModel';
 
 // Implements logic similar to Android SDK's SubscriptionModelStore
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/subscriptions/SubscriptionModelStore.kt
 export class SubscriptionModelStore extends SimpleModelStore<SubscriptionModel> {
   constructor() {
-    super(
-      () => new SubscriptionModel(),
-      'subscriptions' satisfies IDBStoreName,
-    );
+    super(() => new SubscriptionModel(), 'subscriptions' satisfies IDBStoreName);
   }
 
   _getBySubscriptionId(subscriptionId: string): SubscriptionModel | undefined {
     return super._list().find((m) => m.id === subscriptionId);
   }
 
-  override _replaceAll(
-    models: SubscriptionModel[],
-    tag?: ModelChangeTagValue,
-  ): void {
+  override _replaceAll(models: SubscriptionModel[], tag?: ModelChangeTagValue): void {
     if (tag !== ModelChangeTags._Hydrate) {
       return super._replaceAll(models, tag);
     }

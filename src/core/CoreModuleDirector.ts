@@ -2,12 +2,10 @@ import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscript
 import { getPushToken } from 'src/shared/database/subscription';
 import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
 import { IDManager } from 'src/shared/managers/IDManager';
-import {
-  SubscriptionChannel,
-  SubscriptionType,
-} from 'src/shared/subscriptions/constants';
+import { SubscriptionChannel, SubscriptionType } from 'src/shared/subscriptions/constants';
 import type { SubscriptionChannelValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
+
 import { getCurrentPushToken } from '../shared/helpers/main';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import CoreModule from './CoreModule';
@@ -61,9 +59,7 @@ export class CoreModuleDirector {
       rawPushSubscription,
     });
     const model = new SubscriptionModel();
-    model._initializeFromJson(
-      new FuturePushSubscriptionRecord(rawPushSubscription)._serialize(),
-    );
+    model._initializeFromJson(new FuturePushSubscriptionRecord(rawPushSubscription)._serialize());
     model.id = IDManager._createLocalId();
 
     // we enqueue a login operation w/ a create subscription operation the first time we generate/save a push subscription model
@@ -111,36 +107,24 @@ export class CoreModuleDirector {
     return subscriptions.filter((s) => isPushSubscriptionType(s.type));
   }
 
-  async _getPushSubscriptionModelByCurrentToken(): Promise<
-    SubscriptionModel | undefined
-  > {
+  async _getPushSubscriptionModelByCurrentToken(): Promise<SubscriptionModel | undefined> {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModelByCurrentToken');
     const pushToken = await getCurrentPushToken();
     if (pushToken) {
-      return this._getSubscriptionOfTypeWithToken(
-        SubscriptionChannel._Push,
-        pushToken,
-      );
+      return this._getSubscriptionOfTypeWithToken(SubscriptionChannel._Push, pushToken);
     }
     return undefined;
   }
 
   // Browser may return a different PushToken value, use the last-known value as a fallback.
   //   - This happens if you disable notification permissions then re-enable them.
-  async _getPushSubscriptionModelByLastKnownToken(): Promise<
-    SubscriptionModel | undefined
-  > {
-    logMethodCall(
-      'CoreModuleDirector.getPushSubscriptionModelByLastKnownToken',
-    );
+  async _getPushSubscriptionModelByLastKnownToken(): Promise<SubscriptionModel | undefined> {
+    logMethodCall('CoreModuleDirector.getPushSubscriptionModelByLastKnownToken');
 
     // Checking '' in case we create a temp/fake subscription on logi
     const lastKnownPushToken = (await getPushToken()) ?? '';
     if (lastKnownPushToken !== null) {
-      return this._getSubscriptionOfTypeWithToken(
-        SubscriptionChannel._Push,
-        lastKnownPushToken,
-      );
+      return this._getSubscriptionOfTypeWithToken(SubscriptionChannel._Push, lastKnownPushToken);
     }
     return undefined;
   }
@@ -149,9 +133,7 @@ export class CoreModuleDirector {
    * Gets the current push subscription model for the current browser.
    * @returns The push subscription model for the current browser, or undefined if no push subscription exists.
    */
-  public async _getPushSubscriptionModel(): Promise<
-    SubscriptionModel | undefined
-  > {
+  public async _getPushSubscriptionModel(): Promise<SubscriptionModel | undefined> {
     logMethodCall('CoreModuleDirector.getPushSubscriptionModel');
     const sub = await this._getPushSubscriptionModelByLastKnownToken();
     return (await this._getPushSubscriptionModelByCurrentToken()) || sub;

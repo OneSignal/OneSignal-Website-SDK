@@ -1,12 +1,9 @@
 import { addDomElement, clearDomElementChildren } from 'src/shared/helpers/dom';
 import type { NotificationIcons } from 'src/shared/notifications/types';
 import { Browser } from 'src/shared/useragent/constants';
-import {
-  getBrowserName,
-  isMobileBrowser,
-  isTabletBrowser,
-} from 'src/shared/useragent/detect';
+import { getBrowserName, isMobileBrowser, isTabletBrowser } from 'src/shared/useragent/detect';
 import { getPlatformNotificationIcon } from 'src/shared/utils/utils';
+
 import type Bell from './Bell';
 import { BellState } from './constants';
 
@@ -40,19 +37,11 @@ export default class Dialog {
   }
 
   get _subscribeButton() {
-    return (
-      this._element?.querySelector<HTMLButtonElement>(
-        `#${SUBSCRIBE_BUTTON_ID}`,
-      ) ?? null
-    );
+    return this._element?.querySelector<HTMLButtonElement>(`#${SUBSCRIBE_BUTTON_ID}`) ?? null;
   }
 
   get _unsubscribeButton() {
-    return (
-      this._element?.querySelector<HTMLButtonElement>(
-        `#${UNSUBSCRIBE_BUTTON_ID}`,
-      ) ?? null
-    );
+    return this._element?.querySelector<HTMLButtonElement>(`#${UNSUBSCRIBE_BUTTON_ID}`) ?? null;
   }
 
   _hide() {
@@ -62,8 +51,7 @@ export default class Dialog {
   }
 
   async _updateContent() {
-    const isEnabled =
-      await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
+    const isEnabled = await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
 
     const bodySelector = '.onesignal-bell-launcher-dialog-body';
     clearDomElementChildren(bodySelector);
@@ -91,15 +79,10 @@ export default class Dialog {
       OneSignal._doNotShowWelcomeNotification = false;
       this._bell._onSubscribeClick();
     });
-    this._unsubscribeButton?.addEventListener('click', () =>
-      this._bell._onUnsubscribeClick(),
-    );
+    this._unsubscribeButton?.addEventListener('click', () => this._bell._onUnsubscribeClick());
   }
 
-  private _buildSubscriptionContent(
-    text: Bell['_options']['text'],
-    footer: string,
-  ): string {
+  private _buildSubscriptionContent(text: Bell['_options']['text'], footer: string): string {
     const imageUrl = getPlatformNotificationIcon(this._notificationIcons);
     const iconHtml =
       imageUrl !== 'default-icon'
@@ -115,10 +98,7 @@ export default class Dialog {
     return `<h1>${text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${iconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container"><button type="button" class="action" id="${buttonId}">${buttonText}</button></div>${footer}`;
   }
 
-  private _buildBlockedContent(
-    text: Bell['_options']['text'],
-    footer: string,
-  ): string {
+  private _buildBlockedContent(text: Bell['_options']['text'], footer: string): string {
     const browserName = getBrowserName();
     const isMobileOrTablet = isMobileBrowser() || isTabletBrowser();
 

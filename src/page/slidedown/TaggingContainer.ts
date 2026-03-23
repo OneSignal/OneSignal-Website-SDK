@@ -7,6 +7,7 @@ import {
   removeDomElement,
 } from 'src/shared/helpers/dom';
 import { getCheckedTagCategories } from 'src/shared/utils/tags';
+
 import {
   COLORS,
   SLIDEDOWN_CSS_CLASSES,
@@ -23,10 +24,7 @@ export default class TaggingContainer {
     remoteTagCategories: Array<TagCategory>,
     existingPlayerTags?: TagsObjectWithBoolean,
   ): void {
-    const taggingContainer = this._generateHtml(
-      remoteTagCategories,
-      existingPlayerTags,
-    );
+    const taggingContainer = this._generateHtml(remoteTagCategories, existingPlayerTags);
 
     const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._Body}`);
     body.appendChild(taggingContainer);
@@ -48,19 +46,14 @@ export default class TaggingContainer {
    * No longer used as of user model changes, but may be useful in the future
    */
   public _load(): void {
-    const loadingContainer = getDomElementOrStub(
-      `#${SLIDEDOWN_CSS_IDS._LoadingContainer}`,
-    );
+    const loadingContainer = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._LoadingContainer}`);
     const allowButton = getDomElementOrStub(
       `#${SLIDEDOWN_CSS_IDS._AllowButton}`,
     ) as HTMLButtonElement;
     const loadingMessageContainer = document.createElement('div');
 
     addCssClass(loadingContainer, `${SLIDEDOWN_CSS_CLASSES._LoadingContainer}`);
-    addCssClass(
-      loadingMessageContainer,
-      TAGGING_CONTAINER_CSS_CLASSES._LoadingMessage,
-    );
+    addCssClass(loadingMessageContainer, TAGGING_CONTAINER_CSS_CLASSES._LoadingMessage);
     addCssClass(allowButton, 'disabled');
 
     addDomElement(
@@ -69,8 +62,7 @@ export default class TaggingContainer {
       getLoadingIndicatorWithColor(COLORS._GreyLoadingIndicator),
     );
 
-    loadingMessageContainer.innerText =
-      TAGGING_CONTAINER_STRINGS._FetchingPreferences;
+    loadingMessageContainer.innerText = TAGGING_CONTAINER_STRINGS._FetchingPreferences;
     loadingContainer.appendChild(loadingMessageContainer);
     allowButton.disabled = true;
   }
@@ -79,10 +71,7 @@ export default class TaggingContainer {
     remoteTagCategories: TagCategory[],
     existingPlayerTags?: TagsObjectWithBoolean,
   ): Element {
-    const checkedTagCategories = getCheckedTagCategories(
-      remoteTagCategories,
-      existingPlayerTags,
-    );
+    const checkedTagCategories = getCheckedTagCategories(remoteTagCategories, existingPlayerTags);
 
     const firstColumnArr = checkedTagCategories.filter(
       (elem) => checkedTagCategories.indexOf(elem) % 2 === 0,
@@ -95,18 +84,9 @@ export default class TaggingContainer {
     const secondColumnContainer = document.createElement('div');
     const taggingContainer = document.createElement('div');
 
-    addCssClass(
-      firstColumnContainer,
-      TAGGING_CONTAINER_CSS_CLASSES._TaggingContainerCol,
-    );
-    addCssClass(
-      secondColumnContainer,
-      TAGGING_CONTAINER_CSS_CLASSES._TaggingContainerCol,
-    );
-    addCssClass(
-      taggingContainer,
-      TAGGING_CONTAINER_CSS_CLASSES._TaggingContainer,
-    );
+    addCssClass(firstColumnContainer, TAGGING_CONTAINER_CSS_CLASSES._TaggingContainerCol);
+    addCssClass(secondColumnContainer, TAGGING_CONTAINER_CSS_CLASSES._TaggingContainerCol);
+    addCssClass(taggingContainer, TAGGING_CONTAINER_CSS_CLASSES._TaggingContainer);
 
     taggingContainer.id = TAGGING_CONTAINER_CSS_IDS._TaggingContainer;
 
@@ -136,10 +116,7 @@ export default class TaggingContainer {
 
     addCssClass(labelElement, TAGGING_CONTAINER_CSS_CLASSES._CategoryLabel);
     addCssClass(labelSpan, TAGGING_CONTAINER_CSS_CLASSES._CategoryLabelText);
-    addCssClass(
-      inputElement,
-      TAGGING_CONTAINER_CSS_CLASSES._CategoryLabelInput,
-    );
+    addCssClass(inputElement, TAGGING_CONTAINER_CSS_CLASSES._CategoryLabelInput);
     addCssClass(checkmarkSpan, TAGGING_CONTAINER_CSS_CLASSES._Checkmark);
 
     labelElement.title = label;
@@ -182,9 +159,7 @@ export default class TaggingContainer {
     const tags: TagsObjectWithBoolean = {};
 
     inputNodeArr.forEach((node) => {
-      tags[(node as HTMLInputElement).value] = (
-        node as HTMLInputElement
-      ).checked;
+      tags[(node as HTMLInputElement).value] = (node as HTMLInputElement).checked;
     });
     return tags;
   }

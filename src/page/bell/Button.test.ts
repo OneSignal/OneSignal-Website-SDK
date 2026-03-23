@@ -1,4 +1,6 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { describe, test, expect, beforeEach } from 'vite-plus/test';
+
 import Bell from './Bell';
 import Button from './Button';
 
@@ -13,9 +15,7 @@ describe('Button', () => {
   test('_onClick adds pulsing class to button element', () => {
     const bell = new Bell({ enable: false });
     const button = new Button(bell);
-    const el = document.querySelector(
-      '.onesignal-bell-launcher-button',
-    ) as HTMLElement;
+    const el = document.querySelector('.onesignal-bell-launcher-button') as HTMLElement;
 
     button._onClick();
 

@@ -1,5 +1,7 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import Log from 'src/shared/libraries/Log';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import SlidedownNamespace from './SlidedownNamespace';
 
 const warnSpy = vi.spyOn(Log, '_warn');

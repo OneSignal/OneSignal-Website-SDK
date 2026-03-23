@@ -1,8 +1,8 @@
 import type { Categories, TagCategory } from 'src/page/tags/types';
+
 import type { DelayedPromptType } from './constants';
 
-export type DelayedPromptTypeValue =
-  (typeof DelayedPromptType)[keyof typeof DelayedPromptType];
+export type DelayedPromptTypeValue = (typeof DelayedPromptType)[keyof typeof DelayedPromptType];
 
 // app config prompts
 export interface AppUserConfigPromptOptions {

@@ -14,12 +14,11 @@ import {
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { getAppState } from 'src/shared/database/config';
-import {
-  EmptyArgumentError,
-  WrongTypeArgumentError,
-} from 'src/shared/errors/common';
+import { EmptyArgumentError, WrongTypeArgumentError } from 'src/shared/errors/common';
 import Log from 'src/shared/libraries/Log';
 import * as utils from 'src/shared/utils/utils';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import NotificationsNamespace from './NotificationsNamespace';
 
 beforeEach(async () => {
@@ -37,14 +36,10 @@ test('should set the default url', async () => {
   const appState = await getAppState();
   expect(appState.defaultNotificationUrl).toBe('https://test.com');
 
-  await expect(notifications.setDefaultUrl(undefined)).rejects.toThrow(
-    EmptyArgumentError('url'),
-  );
+  await expect(notifications.setDefaultUrl(undefined)).rejects.toThrow(EmptyArgumentError('url'));
 
   // @ts-expect-error - testing throwing invalid type
-  await expect(notifications.setDefaultUrl(1)).rejects.toThrow(
-    WrongTypeArgumentError('url'),
-  );
+  await expect(notifications.setDefaultUrl(1)).rejects.toThrow(WrongTypeArgumentError('url'));
 });
 
 test('should set the default title', async () => {
@@ -55,9 +50,7 @@ test('should set the default title', async () => {
   expect(appState.defaultNotificationTitle).toBe('My notification title');
 
   // @ts-expect-error - testing throwing invalid type
-  await expect(notifications.setDefaultTitle(1)).rejects.toThrow(
-    WrongTypeArgumentError('title'),
-  );
+  await expect(notifications.setDefaultTitle(1)).rejects.toThrow(WrongTypeArgumentError('title'));
 
   await expect(notifications.setDefaultTitle(undefined)).rejects.toThrow(
     EmptyArgumentError('title'),
@@ -72,10 +65,7 @@ describe('Consent Required', () => {
   });
 
   test('should not show native prompt if consent is required but not given', async () => {
-    const initAndSupportedSpy = vi.spyOn(
-      utils,
-      'awaitOneSignalInitAndSupported',
-    );
+    const initAndSupportedSpy = vi.spyOn(utils, 'awaitOneSignalInitAndSupported');
     const notifications = new NotificationsNamespace();
     await notifications.requestPermission();
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');

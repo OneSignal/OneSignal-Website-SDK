@@ -18,15 +18,9 @@ export function getPromptOptionsForDashboardConfiguration(
   const native = staticPrompts.native
     ? {
         enabled: staticPrompts.native.enabled,
-        autoPrompt:
-          staticPrompts.native.enabled &&
-          staticPrompts.native.autoPrompt !== false,
-        pageViews:
-          staticPrompts.native.pageViews ??
-          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
-        timeDelay:
-          staticPrompts.native.timeDelay ??
-          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
+        autoPrompt: staticPrompts.native.enabled && staticPrompts.native.autoPrompt !== false,
+        pageViews: staticPrompts.native.pageViews ?? SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
+        timeDelay: staticPrompts.native.timeDelay ?? SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
       }
     : {
         enabled: false,
@@ -57,9 +51,7 @@ export function getPromptOptionsForDashboardConfiguration(
   };
 }
 
-export function isSlidedownAutoPromptConfigured(
-  prompts: SlidedownPromptOptions[],
-): boolean {
+export function isSlidedownAutoPromptConfigured(prompts: SlidedownPromptOptions[]): boolean {
   if (!prompts) {
     return false;
   }
@@ -70,9 +62,7 @@ export function isSlidedownAutoPromptConfigured(
   return false;
 }
 
-function getCustomLinkConfig(
-  serverConfig: ServerAppConfig,
-): AppUserConfigCustomLinkOptions {
+function getCustomLinkConfig(serverConfig: ServerAppConfig): AppUserConfigCustomLinkOptions {
   const initialState: AppUserConfigCustomLinkOptions = {
     enabled: false,
     style: 'button',

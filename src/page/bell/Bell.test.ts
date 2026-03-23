@@ -1,6 +1,7 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { vi } from 'vite-plus/test';
 import Log from 'src/shared/libraries/Log';
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
+
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Bell from './Bell';
 import { BellState } from './constants';
@@ -57,10 +58,9 @@ describe('Bell', () => {
 
   test('_updateState sets blocked when permission denied', async () => {
     const bell = new Bell({ enable: false });
-    vi.spyOn(
-      OneSignal._context._permissionManager,
-      '_getPermissionStatus',
-    ).mockResolvedValue('denied');
+    vi.spyOn(OneSignal._context._permissionManager, '_getPermissionStatus').mockResolvedValue(
+      'denied',
+    );
     vi.spyOn(
       OneSignal._context._subscriptionManager,
       '_isPushNotificationsEnabled',
@@ -73,17 +73,12 @@ describe('Bell', () => {
   test('_create early-returns when CSS anchor positioning is unsupported', async () => {
     vi.stubGlobal('CSS', { supports: () => false });
     const errorSpy = vi.spyOn(Log, '_error');
-    const loadSpy = vi.spyOn(
-      OneSignal._context._dynamicResourceLoader,
-      '_loadSdkStylesheet',
-    );
+    const loadSpy = vi.spyOn(OneSignal._context._dynamicResourceLoader, '_loadSdkStylesheet');
 
     const bell = new Bell({ enable: true, showLauncherAfter: 0 });
     await bell._create();
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      'Bell requires CSS Anchor Positioning',
-    );
+    expect(errorSpy).toHaveBeenCalledWith('Bell requires CSS Anchor Positioning');
     expect(loadSpy).not.toHaveBeenCalled();
   });
 
@@ -94,18 +89,16 @@ describe('Bell', () => {
       isNewVisitor: boolean;
     }) {
       vi.stubGlobal('CSS', { supports: () => true });
-      vi.spyOn(
-        OneSignal._context._dynamicResourceLoader,
-        '_loadSdkStylesheet',
-      ).mockResolvedValue(ResourceLoadState._Loaded);
+      vi.spyOn(OneSignal._context._dynamicResourceLoader, '_loadSdkStylesheet').mockResolvedValue(
+        ResourceLoadState._Loaded,
+      );
       vi.spyOn(
         OneSignal._context._subscriptionManager,
         '_isPushNotificationsEnabled',
       ).mockResolvedValue(opts.isPushEnabled);
-      vi.spyOn(
-        OneSignal._context._permissionManager,
-        '_getPermissionStatus',
-      ).mockResolvedValue(opts.permission);
+      vi.spyOn(OneSignal._context._permissionManager, '_getPermissionStatus').mockResolvedValue(
+        opts.permission,
+      );
       OneSignal._isNewVisitor = opts.isNewVisitor;
     }
 
@@ -125,9 +118,7 @@ describe('Bell', () => {
       await bell._create();
 
       expect(bell._state).toBe(BellState._Unsubscribed);
-      expect(bell._message._content).toBe(
-        bell._options.text['message.prenotify'],
-      );
+      expect(bell._message._content).toBe(bell._options.text['message.prenotify']);
     });
 
     test('does not show prenotify message when blocked', async () => {
@@ -146,27 +137,23 @@ describe('Bell', () => {
       await bell._create();
 
       expect(bell._state).toBe(BellState._Blocked);
-      expect(bell._message._content).toBe(
-        bell._options.text['tip.state.blocked'],
-      );
+      expect(bell._message._content).toBe(bell._options.text['tip.state.blocked']);
     });
   });
 
   describe('_create event listeners', () => {
     function mockCreateDeps() {
       vi.stubGlobal('CSS', { supports: () => true });
-      vi.spyOn(
-        OneSignal._context._dynamicResourceLoader,
-        '_loadSdkStylesheet',
-      ).mockResolvedValue(ResourceLoadState._Loaded);
+      vi.spyOn(OneSignal._context._dynamicResourceLoader, '_loadSdkStylesheet').mockResolvedValue(
+        ResourceLoadState._Loaded,
+      );
       vi.spyOn(
         OneSignal._context._subscriptionManager,
         '_isPushNotificationsEnabled',
       ).mockResolvedValue(false);
-      vi.spyOn(
-        OneSignal._context._permissionManager,
-        '_getPermissionStatus',
-      ).mockResolvedValue('default');
+      vi.spyOn(OneSignal._context._permissionManager, '_getPermissionStatus').mockResolvedValue(
+        'default',
+      );
     }
 
     test('mouseleave on launcher blurs the button', async () => {
@@ -186,18 +173,16 @@ describe('Bell', () => {
   describe('concurrency', () => {
     function setupBellWithDOM() {
       vi.stubGlobal('CSS', { supports: () => true });
-      vi.spyOn(
-        OneSignal._context._dynamicResourceLoader,
-        '_loadSdkStylesheet',
-      ).mockResolvedValue(ResourceLoadState._Loaded);
+      vi.spyOn(OneSignal._context._dynamicResourceLoader, '_loadSdkStylesheet').mockResolvedValue(
+        ResourceLoadState._Loaded,
+      );
       vi.spyOn(
         OneSignal._context._subscriptionManager,
         '_isPushNotificationsEnabled',
       ).mockResolvedValue(false);
-      vi.spyOn(
-        OneSignal._context._permissionManager,
-        '_getPermissionStatus',
-      ).mockResolvedValue('default');
+      vi.spyOn(OneSignal._context._permissionManager, '_getPermissionStatus').mockResolvedValue(
+        'default',
+      );
     }
 
     test('subscription change does not hide dialog while action in progress', async () => {

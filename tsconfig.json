@@ -8,12 +8,11 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "__test__/*": ["./__test__/*"],
       "src/*": ["./src/*"]
     },
     "types": ["bun", "jsdom"]
   },
-  "include": ["src", "__test__", "node_modules/vitest/globals.d.ts"]
+  "include": ["src", "__test__"]
 }

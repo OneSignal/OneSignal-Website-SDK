@@ -1,3 +1,4 @@
+import { vi } from 'vite-plus/test';
 /**
  * DON'T use with vi.useFakeTimers()
  * Flushes promises within some window

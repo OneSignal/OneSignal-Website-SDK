@@ -1,14 +1,9 @@
 import { ModelChangeTags } from 'src/core/types/models';
-import {
-  ExecutionResult,
-  type IOperationExecutor,
-} from 'src/core/types/operation';
+import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operation';
 import type { IRebuildUserService } from 'src/core/types/user';
-import {
-  getResponseStatusType,
-  ResponseStatusType,
-} from 'src/shared/helpers/network';
+import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
+
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -43,29 +38,18 @@ export class IdentityOperationExecutor implements IOperationExecutor {
     Log._debug(`IdentityOpExec(${JSON.stringify(operations)})`);
 
     const invalidOps = operations.filter(
-      (op) =>
-        !(
-          op instanceof SetAliasOperation || op instanceof DeleteAliasOperation
-        ),
+      (op) => !(op instanceof SetAliasOperation || op instanceof DeleteAliasOperation),
     );
     if (invalidOps.length > 0) {
       throw new Error(
-        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-          operations,
-        )}`,
+        `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(operations)}`,
       );
     }
 
-    const hasSetAlias = operations.some(
-      (op) => op instanceof SetAliasOperation,
-    );
-    const hasDeleteAlias = operations.some(
-      (op) => op instanceof DeleteAliasOperation,
-    );
+    const hasSetAlias = operations.some((op) => op instanceof SetAliasOperation);
+    const hasDeleteAlias = operations.some((op) => op instanceof DeleteAliasOperation);
     if (hasSetAlias && hasDeleteAlias) {
-      throw new Error(
-        `Can't process SetAliasOperation and DeleteAliasOperation at the same time.`,
-      );
+      throw new Error(`Can't process SetAliasOperation and DeleteAliasOperation at the same time.`);
     }
 
     const lastOperation = operations[operations.length - 1] as
@@ -93,10 +77,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
 
     const { ok, status, retryAfterSeconds } = await request;
     if (ok) {
-      if (
-        this._identityModelStore._model._onesignalId ===
-        lastOperation._onesignalId
-      ) {
+      if (this._identityModelStore._model._onesignalId === lastOperation._onesignalId) {
         this._identityModelStore._model._setProperty(
           lastOperation.label,
           isSetAlias ? lastOperation.value : undefined,
@@ -134,9 +115,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       case ResponseStatusType._Missing: {
         if (
           status === 404 &&
-          this._newRecordState._isInMissingRetryWindow(
-            lastOperation._onesignalId,
-          )
+          this._newRecordState._isInMissingRetryWindow(lastOperation._onesignalId)
         )
           return {
             _result: ExecutionResult._FailRetry,
@@ -144,14 +123,12 @@ export class IdentityOperationExecutor implements IOperationExecutor {
           };
 
         if (isSetAlias) {
-          const rebuildOps =
-            await this._buildUserService._getRebuildOperationsIfCurrentUser(
-              lastOperation._appId,
-              lastOperation._onesignalId,
-            );
+          const rebuildOps = await this._buildUserService._getRebuildOperationsIfCurrentUser(
+            lastOperation._appId,
+            lastOperation._onesignalId,
+          );
 
-          if (rebuildOps == null)
-            return { _result: ExecutionResult._FailNoretry };
+          if (rebuildOps == null) return { _result: ExecutionResult._FailNoretry };
 
           return {
             _result: ExecutionResult._FailRetry,

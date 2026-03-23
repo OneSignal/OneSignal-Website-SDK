@@ -96,9 +96,7 @@ export class Model<
    *
    * @param object The JSON object to initialize this model from.
    */
-  _initializeFromJson(
-    modelData: Partial<T> & { modelId?: string; modelName?: string },
-  ): void {
+  _initializeFromJson(modelData: Partial<T> & { modelId?: string; modelName?: string }): void {
     // we manually pass modelName model store persist action
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { modelId, modelName: _, ...rest } = modelData;
@@ -187,9 +185,7 @@ export class Model<
       oldValue,
       newValue,
     };
-    this._changeNotifier._fire((handler) =>
-      handler._onChanged(changeArgs, tag),
-    );
+    this._changeNotifier._fire((handler) => handler._onChanged(changeArgs, tag));
   }
 
   /**

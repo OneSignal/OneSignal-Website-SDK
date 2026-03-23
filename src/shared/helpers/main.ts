@@ -16,21 +16,12 @@ export async function showLocalNotification(
   data?: Record<string, any>,
   buttons?: Array<any>,
 ): Promise<void> {
-  logMethodCall(
-    'MainHelper:showLocalNotification: ',
-    title,
-    message,
-    url,
-    icon,
-    data,
-    buttons,
-  );
+  logMethodCall('MainHelper:showLocalNotification: ', title, message, url, icon, data, buttons);
 
   const appConfig = await getDBAppConfig();
 
   if (!appConfig.appId) throw AppIDMissingError;
-  if (!OneSignal.Notifications.permission)
-    throw new Error('User is not subscribed');
+  if (!OneSignal.Notifications.permission) throw new Error('User is not subscribed');
   if (!isValidUrl(url)) throw MalformedArgumentError('url');
   if (!isValidUrl(icon, { allowEmpty: true, requireHttps: true }))
     throw MalformedArgumentError('icon');
@@ -58,9 +49,7 @@ export async function showLocalNotification(
   const dataPayload = {
     data,
     launchURL: url,
-    buttons: buttons
-      ? convertButtonsToNotificationActionType(buttons)
-      : undefined,
+    buttons: buttons ? convertButtonsToNotificationActionType(buttons) : undefined,
   };
 
   OneSignal._context._serviceWorkerManager
@@ -82,12 +71,9 @@ export async function showLocalNotification(
 }
 
 export async function checkAndTriggerNotificationPermissionChanged() {
-  const previousPermission = await getOptionsValue<string>(
-    'notificationPermission',
-  );
+  const previousPermission = await getOptionsValue<string>('notificationPermission');
 
-  const currentPermission =
-    await OneSignal._context._permissionManager._getPermissionStatus();
+  const currentPermission = await OneSignal._context._permissionManager._getPermissionStatus();
 
   if (previousPermission !== currentPermission) {
     await triggerNotificationPermissionChanged();
@@ -126,8 +112,7 @@ export async function getCurrentPushToken(): Promise<string | undefined> {
     return safariToken?.toLowerCase() || undefined;
   }
 
-  const registration =
-    await OneSignal._context._serviceWorkerManager._getRegistration();
+  const registration = await OneSignal._context._serviceWorkerManager._getRegistration();
   if (!registration) {
     return undefined;
   }

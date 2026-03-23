@@ -1,8 +1,5 @@
 import type { ContextInterface, ContextSWInterface } from '../../context/types';
-import type {
-  WorkerMessengerCommandValue,
-  WorkerMessengerReplyBufferRecord,
-} from './types';
+import type { WorkerMessengerCommandValue, WorkerMessengerReplyBufferRecord } from './types';
 
 export class WorkerMessengerReplyBuffer {
   private _replies: {
@@ -42,10 +39,7 @@ export class WorkerMessengerReplyBuffer {
     this._replies = {};
   }
 
-  public _deleteListenerRecord(
-    command: WorkerMessengerCommandValue,
-    targetRecord: object,
-  ) {
+  public _deleteListenerRecord(command: WorkerMessengerCommandValue, targetRecord: object) {
     const listenersForCommand = this._replies[command.toString()];
     if (listenersForCommand == null) return;
 
@@ -67,17 +61,12 @@ export class WorkerMessengerReplyBuffer {
  * service workers and window frames.
  */
 export class WorkerMessengerBase<
-  C extends ContextInterface | ContextSWInterface =
-    | ContextInterface
-    | ContextSWInterface,
+  C extends ContextInterface | ContextSWInterface = ContextInterface | ContextSWInterface,
 > {
   protected _context?: C;
   protected _replies: WorkerMessengerReplyBuffer;
 
-  constructor(
-    context?: C,
-    replies: WorkerMessengerReplyBuffer = new WorkerMessengerReplyBuffer(),
-  ) {
+  constructor(context?: C, replies: WorkerMessengerReplyBuffer = new WorkerMessengerReplyBuffer()) {
     this._context = context;
     this._replies = replies;
   }
@@ -86,10 +75,7 @@ export class WorkerMessengerBase<
     Subscribes a callback to be notified every time a service worker sends a
     message to the window frame with the specific command.
    */
-  _on(
-    command: WorkerMessengerCommandValue,
-    callback: (WorkerMessengerPayload: any) => void,
-  ): void {
+  _on(command: WorkerMessengerCommandValue, callback: (WorkerMessengerPayload: any) => void): void {
     this._replies._addListener(command, callback, false);
   }
 

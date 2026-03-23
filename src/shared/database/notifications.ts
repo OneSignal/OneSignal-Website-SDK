@@ -8,10 +8,7 @@ import type {
   OutcomesNotificationClicked,
   OutcomesNotificationReceived,
 } from '../models/OutcomesNotificationEvents';
-import type {
-  IOSNotification,
-  NotificationClickEventInternal,
-} from '../notifications/types';
+import type { IOSNotification, NotificationClickEventInternal } from '../notifications/types';
 import { db } from './client';
 
 export const putNotificationClickedForOutcomes = async (

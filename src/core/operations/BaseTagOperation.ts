@@ -11,12 +11,7 @@ export abstract class BaseTagOperation<
   U extends object = TagOperation,
   T extends U & TagOperation = U & TagOperation,
 > extends Operation<T> {
-  constructor(
-    operationName: string,
-    appId?: string,
-    onesignalId?: string,
-    key?: string,
-  ) {
+  constructor(operationName: string, appId?: string, onesignalId?: string, key?: string) {
     super(operationName, appId, onesignalId);
     if (key) this.key = key;
   }

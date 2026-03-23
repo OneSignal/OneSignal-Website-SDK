@@ -7,6 +7,7 @@ import {
 import { db } from 'src/shared/database/client';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
+
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
@@ -17,7 +18,7 @@ import {
 import { type NewRecordsState } from './NewRecordsState';
 
 const removeOpFromDB = (op: Operation) => {
-  db.delete('operations', op._modelId);
+  void db.delete('operations', op._modelId);
 };
 
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem
@@ -66,15 +67,13 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return this._enqueueIntoBucket === 0 ? 0 : this._enqueueIntoBucket - 1;
   }
 
-  public _containsInstanceOf<T extends Operation>(
-    type: new (...args: any[]) => T,
-  ): boolean {
+  public _containsInstanceOf<T extends Operation>(type: new (...args: any[]) => T): boolean {
     return this._queue.some((item) => item.operation instanceof type);
   }
 
   public async _start(): Promise<void> {
     await this._loadSavedOperations();
-    this._processQueueForever();
+    void this._processQueueForever();
   }
 
   public _pause(): void {
@@ -84,7 +83,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public _enqueue(operation: Operation): void {
-    Log._debug(`OpRepo.enqueue: ${operation}`);
+    Log._debug(`OpRepo.enqueue: ${JSON.stringify(operation)}`);
 
     this._internalEnqueue(
       {
@@ -97,7 +96,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async _enqueueAndWait(operation: Operation): Promise<void> {
-    Log._debug(`OpRepo.enqueueAndWait: ${operation}`);
+    Log._debug(`OpRepo.enqueueAndWait: ${JSON.stringify(operation)}`);
 
     await new Promise<void>((resolve, reject) => {
       this._internalEnqueue(
@@ -161,9 +160,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       const executor = this._executorsMap.get(startingOp.operation._name);
 
       if (!executor) {
-        throw new Error(
-          `Could not find executor for operation ${startingOp.operation._name}`,
-        );
+        throw new Error(`Could not find executor for operation ${startingOp.operation._name}`);
       }
 
       const operations = ops.map((op) => op.operation);
@@ -175,13 +172,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       // Handle ID translations
       if (idTranslations) {
         ops.forEach((op) => op.operation._translateIds(idTranslations));
-        this._queue.forEach((item) =>
-          item.operation._translateIds(idTranslations),
-        );
+        this._queue.forEach((item) => item.operation._translateIds(idTranslations));
 
-        Object.values(idTranslations).forEach((id) =>
-          this._newRecordState._add(id),
-        );
+        Object.values(idTranslations).forEach((id) => this._newRecordState._add(id));
       }
 
       let highestRetries = 0;
@@ -197,7 +190,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult._FailUnauthorized:
         case ExecutionResult._FailNoretry:
         case ExecutionResult._FailConflict:
-          Log._error(`Op failed (no retry): ${operations}`);
+          Log._error(`Op failed (no retry): ${JSON.stringify(operations)}`);
           ops.forEach((op) => {
             this._operationModelStore._remove(op.operation._modelId);
           });
@@ -216,7 +209,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult._FailRetry:
-          Log._error(`Op failed, retrying: ${operations}`);
+          Log._error(`Op failed, retrying: ${JSON.stringify(operations)}`);
           // Add back all operations to front of queue
           [...ops].reverse().forEach((op) => {
             removeOpFromDB(op.operation);
@@ -229,7 +222,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult._FailPauseOpRepo:
-          Log._error(`Op failed, pausing: ${operations}`);
+          Log._error(`Op failed, pausing: ${JSON.stringify(operations)}`);
           this._pause();
           ops.forEach((op) => op.resolver?.(false));
           [...ops].reverse().forEach((op) => {
@@ -253,15 +246,12 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
 
       // Wait before next execution
-      await this._delayBeforeNextExecution(
-        highestRetries,
-        response._retryAfterSeconds,
-      );
+      await this._delayBeforeNextExecution(highestRetries, response._retryAfterSeconds);
       if (response._idTranslations) {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
-      Log._error(`Op execute error: ${ops}`, e);
+      Log._error(`Op execute error: ${JSON.stringify(ops)}`, e);
 
       // On failure remove operations from store
       ops.forEach((op) => {
@@ -303,13 +293,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     return null;
   }
 
-  public _getGroupableOperations(
-    startingOp: OperationQueueItem,
-  ): OperationQueueItem[] {
+  public _getGroupableOperations(startingOp: OperationQueueItem): OperationQueueItem[] {
     const ops = [startingOp];
 
-    if (startingOp.operation._groupComparisonType === GroupComparisonType._None)
-      return ops;
+    if (startingOp.operation._groupComparisonType === GroupComparisonType._None) return ops;
 
     const startingKey =
       startingOp.operation._groupComparisonType === GroupComparisonType._Create
@@ -321,16 +308,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
     for (const item of queueCopy) {
       const itemKey =
-        startingOp.operation._groupComparisonType ===
-        GroupComparisonType._Create
+        startingOp.operation._groupComparisonType === GroupComparisonType._Create
           ? item.operation._createComparisonKey
           : item.operation._modifyComparisonKey;
 
       if (itemKey === '' && startingKey === '')
         throw new Error('Both comparison keys cannot be blank!');
 
-      if (!this._newRecordState._canAccess(item.operation._applyToRecordId))
-        continue;
+      if (!this._newRecordState._canAccess(item.operation._applyToRecordId)) continue;
 
       if (itemKey === startingKey) {
         const index = this._queue.indexOf(item);

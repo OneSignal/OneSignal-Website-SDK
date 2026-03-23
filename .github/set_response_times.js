@@ -1,10 +1,7 @@
 function calcResponseTimeForIssueCreatedAt(createdAt) {
   const issueOpenedDate = new Date(createdAt);
   const issueTriagedDate = new Date();
-  const businessDaysResponseTime = calcBusinessDaysBetweenDates(
-    issueOpenedDate,
-    issueTriagedDate,
-  );
+  const businessDaysResponseTime = calcBusinessDaysBetweenDates(issueOpenedDate, issueTriagedDate);
   return businessDaysResponseTime;
 }
 
@@ -18,9 +15,7 @@ function calcBusinessDaysBetweenDates(openedDate, triagedDate) {
   openedDay = openedDay > 5 ? 5 : openedDay; // only count weekdays
   triagedDay = triagedDay > 5 ? 5 : triagedDay;
   // calculate differnece in weeks (1000mS * 60sec * 60min * 24hrs * 7 days = 604800000)
-  differenceInWeeks = Math.floor(
-    (triagedDate.getTime() - openedDate.getTime()) / 604800000,
-  );
+  differenceInWeeks = Math.floor((triagedDate.getTime() - openedDate.getTime()) / 604800000);
   if (openedDay < triagedDay) {
     //Equal to makes it reduce 5 days
     responseTime = differenceInWeeks * 5 + (triagedDay - openedDay);
@@ -33,12 +28,9 @@ function calcBusinessDaysBetweenDates(openedDate, triagedDate) {
 }
 
 module.exports = async (context, osmetadata) => {
-  const foundResponseTime = await osmetadata(context).get(
-    'response_time_in_business_days',
-  );
+  const foundResponseTime = await osmetadata(context).get('response_time_in_business_days');
   if (foundResponseTime) {
-    const foundString =
-      'already found response time in business days: ' + foundResponseTime;
+    const foundString = 'already found response time in business days: ' + foundResponseTime;
     console.info(foundString);
     return foundString;
   }

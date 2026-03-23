@@ -1,3 +1,5 @@
+import { describe, test } from 'vite-plus/test';
+
 import OneSignal from '../../../src/onesignal/OneSignal';
 import { matchApiToSpec } from '../../support/helpers/api';
 

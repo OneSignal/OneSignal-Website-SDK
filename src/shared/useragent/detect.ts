@@ -103,12 +103,7 @@ export function isMobileBrowser(userAgent = navigator.userAgent): boolean {
   if (isTabletBrowser(userAgent)) return false;
 
   const ios = getIOSDeviceType(userAgent);
-  return (
-    /[^-]mobi/i.test(userAgent) ||
-    ios === 'iphone' ||
-    ios === 'ipod' ||
-    isAndroid(userAgent)
-  );
+  return /[^-]mobi/i.test(userAgent) || ios === 'iphone' || ios === 'ipod' || isAndroid(userAgent);
 }
 
 const BROWSER_MAP: Record<string, BrowserValue> = {
@@ -151,8 +146,7 @@ function supportsVapidPush(): boolean {
 // Does the browser support legacy Safari push? (only available on macOS)
 export function supportsSafariLegacyPush(): boolean {
   return (
-    typeof window.safari !== 'undefined' &&
-    typeof window.safari.pushNotification !== 'undefined'
+    typeof window.safari !== 'undefined' && typeof window.safari.pushNotification !== 'undefined'
   );
 }
 

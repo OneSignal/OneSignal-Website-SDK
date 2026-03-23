@@ -1,6 +1,7 @@
 import type { ContextInterface } from 'src/shared/context/types';
 import { supportsServiceWorkers } from 'src/shared/environment/detect';
 import { getAvailableServiceWorker } from 'src/sw/helpers/registration';
+
 import Log from '../Log';
 import { WorkerMessengerBase } from './base';
 import type {
@@ -46,9 +47,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
       return;
     }
 
-    const listenerRecords = this._replies._findListenersForMessage(
-      data.command,
-    );
+    const listenerRecords = this._replies._findListenersForMessage(data.command);
     const listenersToRemove = [];
     const listenersToCall = [];
 
@@ -72,10 +71,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
   /**
    * Sends a postMessage() to OneSignal's Serviceworker
    */
-  async _unicast(
-    command: WorkerMessengerCommandValue,
-    payload?: WorkerMessengerPayload,
-  ) {
+  async _unicast(command: WorkerMessengerCommandValue, payload?: WorkerMessengerPayload) {
     Log._debug(`[WM] Page->SW unicast '${command}'`);
     this._directPostMessageToSW(command, payload);
   }

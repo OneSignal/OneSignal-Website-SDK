@@ -1,5 +1,6 @@
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import type { SubscriptionTypeValue } from 'src/shared/subscriptions/types';
+
 import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import { Subscription } from '../models/Subscription';
@@ -17,8 +18,7 @@ export async function registerForPush(): Promise<Subscription | null> {
     const rawSubscription = await context._subscriptionManager._subscribe(
       SubscriptionStrategyKind._ResubscribeExisting,
     );
-    subscription =
-      await context._subscriptionManager._registerSubscription(rawSubscription);
+    subscription = await context._subscriptionManager._registerSubscription(rawSubscription);
 
     incrementPageViewCount();
 

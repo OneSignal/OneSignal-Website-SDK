@@ -101,21 +101,13 @@ export const db = {
   ): Promise<IndexedDBSchema[K]['value'] | undefined> {
     return (await dbPromise).get(storeName, key);
   },
-  async getAll<K extends IDBStoreName>(
-    storeName: K,
-  ): Promise<IndexedDBSchema[K]['value'][]> {
+  async getAll<K extends IDBStoreName>(storeName: K): Promise<IndexedDBSchema[K]['value'][]> {
     return (await dbPromise).getAll(storeName);
   },
-  async put<K extends IDBStoreName>(
-    storeName: K,
-    value: IndexedDBSchema[K]['value'],
-  ) {
+  async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
     return (await dbPromise).put(storeName, value);
   },
-  async delete<K extends IDBStoreName>(
-    storeName: K,
-    key: IndexedDBSchema[K]['key'],
-  ) {
+  async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
     return (await dbPromise).delete(storeName, key);
   },
 };

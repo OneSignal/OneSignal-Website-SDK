@@ -61,10 +61,7 @@ export default class Emitter {
 
     if (listeners !== undefined) {
       for (let j = 0; j < listeners.length; j += 1) {
-        if (
-          listeners[j] === listener ||
-          (listeners[j] as OnceEventHandler).listener === listener
-        ) {
+        if (listeners[j] === listener || (listeners[j] as OnceEventHandler).listener === listener) {
           listeners.splice(j, 1);
           break;
         }
@@ -96,9 +93,7 @@ export default class Emitter {
    * @example
    * me.listeners('ready');
    */
-  public _listeners(
-    event: string,
-  ): (EventHandler | OnceEventHandler)[] | undefined {
+  public _listeners(event: string): (EventHandler | OnceEventHandler)[] | undefined {
     try {
       return this._events[event];
     } catch {

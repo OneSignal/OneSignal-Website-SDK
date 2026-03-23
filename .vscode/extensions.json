@@ -1,6 +1,3 @@
 {
-  "recommendations": [
-    "jeff-hykin.macro-commander",
-    "void-zero.vite-plus-extension-pack"
-  ]
+  "recommendations": ["jeff-hykin.macro-commander", "void-zero.vite-plus-extension-pack"]
 }

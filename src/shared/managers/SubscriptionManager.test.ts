@@ -7,16 +7,15 @@ import {
   setUpdateSubscriptionResponse,
   updateSubscriptionFn,
 } from '__test__/support/helpers/requests';
-import {
-  getRawPushSubscription,
-  updateIdentityModel,
-} from '__test__/support/helpers/setup';
+import { getRawPushSubscription, updateIdentityModel } from '__test__/support/helpers/setup';
 import MockNotification from '__test__/support/mocks/MockNotification';
 import {
   mockPushManager,
   mockPushSubscription,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import { setPushToken } from '../database/subscription';
 import { IDManager } from './IDManager';
 import {
@@ -34,8 +33,7 @@ describe('SubscriptionManager', () => {
       setCreateUserResponse();
       const rawSubscription = getRawPushSubscription();
 
-      let subModels =
-        await OneSignal._coreDirector._subscriptionModelStore._list();
+      let subModels = await OneSignal._coreDirector._subscriptionModelStore._list();
       expect(subModels.length).toBe(0);
 
       // mimicing the event helper checkAndTriggerSubscriptionChanged
@@ -135,11 +133,8 @@ describe('SubscriptionManager', () => {
 
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
-      const updatedPushModel =
-        (await OneSignal._coreDirector._getPushSubscriptionModel())!;
-      expect(updatedPushModel.token).toBe(
-        rawSubscription.w3cEndpoint?.toString(),
-      );
+      const updatedPushModel = (await OneSignal._coreDirector._getPushSubscriptionModel())!;
+      expect(updatedPushModel.token).toBe(rawSubscription.w3cEndpoint?.toString());
       expect(updatedPushModel.web_auth).toBe(rawSubscription.w3cAuth);
       expect(updatedPushModel.web_p256).toBe(rawSubscription.w3cP256dh);
 
@@ -151,23 +146,17 @@ describe('SubscriptionManager', () => {
 describe('SubscriptionManagerPage', () => {
   test('default', async () => {
     MockNotification.permission = 'default';
-    expect(await SubscriptionManagerPage._requestNotificationPermission()).toBe(
-      'default',
-    );
+    expect(await SubscriptionManagerPage._requestNotificationPermission()).toBe('default');
   });
 
   test('denied', async () => {
     MockNotification.permission = 'denied';
-    expect(await SubscriptionManagerPage._requestNotificationPermission()).toBe(
-      'denied',
-    );
+    expect(await SubscriptionManagerPage._requestNotificationPermission()).toBe('denied');
   });
 
   test('granted', async () => {
     MockNotification.permission = 'granted';
-    expect(await SubscriptionManagerPage._requestNotificationPermission()).toBe(
-      'granted',
-    );
+    expect(await SubscriptionManagerPage._requestNotificationPermission()).toBe('granted');
   });
 });
 
