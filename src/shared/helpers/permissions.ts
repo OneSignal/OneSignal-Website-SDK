@@ -54,7 +54,7 @@ const triggerBooleanPermissionChangeEvent = (
   const triggerEvent = newPermission !== previousPermission || force;
   if (!triggerEvent) return;
 
-  OneSignalEvent._trigger(
+  void OneSignalEvent._trigger(
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN,
     newPermissionBoolean,
   );

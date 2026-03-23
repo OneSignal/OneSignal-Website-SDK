@@ -73,7 +73,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
    */
   async _unicast(command: WorkerMessengerCommandValue, payload?: WorkerMessengerPayload) {
     Log._debug(`[WM] Page->SW unicast '${command}'`);
-    this._directPostMessageToSW(command, payload);
+    void this._directPostMessageToSW(command, payload);
   }
 
   public async _directPostMessageToSW(

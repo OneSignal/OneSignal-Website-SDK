@@ -84,12 +84,12 @@ describe('CustomLinkManager', () => {
 
     expect(button?.textContent).toBe('Subscribe');
 
-    await button?.click();
+    button?.click();
     expect(optInSpy).toHaveBeenCalled();
 
     // simulate subscribed now (set optedIn getter)
     vi.spyOn(OneSignal.User.PushSubscription, 'optedIn', 'get').mockReturnValue(true);
-    await button?.click();
+    button?.click();
     expect(optOutSpy).toHaveBeenCalled();
   });
 });

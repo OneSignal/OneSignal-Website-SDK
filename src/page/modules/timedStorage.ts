@@ -44,7 +44,7 @@ export function setItem(key: string, value: any, expirationInMinutes?: number): 
  * Retrieves a key from LocalStorage if the expiration time when the key was set hasn't already
  * expired.
  */
-export function getItem(key: string): any | null {
+export function getItem(key: string): any {
   if (!isLocalStorageSupported()) {
     return null;
   }

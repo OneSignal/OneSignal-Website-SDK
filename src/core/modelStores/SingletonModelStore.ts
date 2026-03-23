@@ -29,7 +29,8 @@ export class SingletonModelStore<TModel extends Model>
     if (model) return model;
 
     const createdModel = this.store._create();
-    if (!createdModel) throw new Error(`Unable to initialize model from store ${String(this.store)}`);
+    if (!createdModel)
+      throw new Error(`Unable to initialize model from store ${this.store._modelName}`);
 
     this.store._add(createdModel);
     return createdModel;

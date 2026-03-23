@@ -33,7 +33,7 @@ describe('SubscriptionManager', () => {
       setCreateUserResponse();
       const rawSubscription = getRawPushSubscription();
 
-      let subModels = await OneSignal._coreDirector._subscriptionModelStore._list();
+      let subModels = OneSignal._coreDirector._subscriptionModelStore._list();
       expect(subModels.length).toBe(0);
 
       // mimicing the event helper checkAndTriggerSubscriptionChanged
@@ -41,7 +41,7 @@ describe('SubscriptionManager', () => {
 
       await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
 
-      subModels = await OneSignal._coreDirector._subscriptionModelStore._list();
+      subModels = OneSignal._coreDirector._subscriptionModelStore._list();
       expect(subModels.length).toBe(1);
 
       const id = subModels[0].id;
@@ -77,19 +77,20 @@ describe('SubscriptionManager', () => {
         '_generatePushSubscriptionModel',
       );
       const rawSubscription = getRawPushSubscription();
-      mockPushManager.getSubscription.mockResolvedValue({
-        ...mockPushSubscription,
-        // @ts-expect-error - using partial types
-        endpoint: rawSubscription.w3cEndpoint?.toString(),
-      });
+      // @ts-expect-error - using partial types
+      mockPushManager.getSubscription.mockResolvedValue(
+        Object.assign({}, mockPushSubscription, {
+          endpoint: rawSubscription.w3cEndpoint?.toString(),
+        }),
+      );
       setCreateUserResponse({
         externalId: 'some-external-id',
       });
 
       // create push sub with no id
       const onesignalId = IDManager._createLocalId();
-      updateIdentityModel('onesignal_id', onesignalId);
-      updateIdentityModel('external_id', 'some-external-id');
+      void updateIdentityModel('onesignal_id', onesignalId);
+      void updateIdentityModel('external_id', 'some-external-id');
 
       await setupSubModelStore({
         id: IDManager._createLocalId(),

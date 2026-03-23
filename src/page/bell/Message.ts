@@ -52,12 +52,12 @@ export default class Message {
 
   async _display(type: string, content: string, duration = 0) {
     Log._debug('display:', type, content, duration);
-    if (this._shown) await this._hide();
+    if (this._shown) this._hide();
     this._content = decodeHtmlEntities(content);
     this._contentType = type;
-    await this._show();
+    this._show();
     await delay(duration);
-    await this._hide();
+    this._hide();
     this._content = this._getTipForState();
     this._contentType = 'tip';
   }

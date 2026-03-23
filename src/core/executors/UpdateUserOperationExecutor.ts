@@ -60,7 +60,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
         }
         propertiesObject = createPropertiesFromOperation(operation, propertiesObject);
       } else {
-        throw new Error(`Unrecognized operation: ${operation}`);
+        throw new Error(`Unrecognized operation: ${JSON.stringify(operation)}`);
       }
     }
 
@@ -73,7 +73,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
   }
 
   async _execute(operations: Operation[]): Promise<ExecutionResponse> {
-    Log._debug(`UpdateUserOpExec(${operations})`);
+    Log._debug(`UpdateUserOpExec(${JSON.stringify(operations)})`);
 
     const { appId, onesignalId, propertiesObject, refreshDeviceMetadata } =
       this._processOperations(operations);

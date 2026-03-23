@@ -33,7 +33,7 @@ export default class TagManager implements ITagManager {
 
     const shouldSendUpdate = !isTagObjectEmpty(finalTagsObject);
     if (shouldSendUpdate) {
-      await OneSignal.User.addTags(finalTagsObject);
+      OneSignal.User.addTags(finalTagsObject);
       return finalTagsObject;
     }
     Log._warn('No tag change detected');

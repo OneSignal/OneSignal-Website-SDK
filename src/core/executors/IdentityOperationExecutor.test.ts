@@ -94,7 +94,7 @@ describe('IdentityOperationExecutor', () => {
   });
 
   test('can execute set alias op', async () => {
-    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     const executor = getExecutor();
     const ops = [setAliasOp];
     await executor._execute(ops);
@@ -104,8 +104,8 @@ describe('IdentityOperationExecutor', () => {
   });
 
   test('can execute delete alias op', async () => {
-    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
-    updateIdentityModel(label, value);
+    void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    void updateIdentityModel(label, value);
 
     const executor = getExecutor();
 
@@ -150,7 +150,7 @@ describe('IdentityOperationExecutor', () => {
       const res5 = await executor._execute(ops);
 
       // no rebuild ops
-      updateIdentityModel('onesignal_id', undefined);
+      void updateIdentityModel('onesignal_id', undefined);
       expect(res5._result).toBe(ExecutionResult._FailNoretry);
       expect(res5._retryAfterSeconds).toBeUndefined();
 

@@ -41,7 +41,7 @@ export abstract class ModelStoreListener<TModel extends Model> {
       return;
     }
 
-    const operation = await this._getUpdateOperation(
+    const operation = this._getUpdateOperation(
       args.model as TModel,
       args.property,
       args.oldValue,
@@ -57,7 +57,7 @@ export abstract class ModelStoreListener<TModel extends Model> {
       return;
     }
 
-    const operation = await this._getRemoveOperation(model);
+    const operation = this._getRemoveOperation(model);
     if (operation != null) {
       this._opRepo._enqueue(operation);
     }

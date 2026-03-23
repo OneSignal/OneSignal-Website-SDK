@@ -30,7 +30,7 @@ export default class TaggingContainer {
     body.appendChild(taggingContainer);
 
     if (this._taggingContainer) {
-      this._taggingContainer.addEventListener('change', this._toggleCheckedTag);
+      this._taggingContainer.addEventListener('change', this._toggleCheckedTag.bind(this));
     }
 
     const allowButton = getDomElementOrStub(

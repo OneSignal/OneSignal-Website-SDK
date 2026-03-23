@@ -165,7 +165,7 @@ export default class OneSignal {
   private static async _delayedInit(): Promise<void> {
     OneSignal._pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
-    OneSignal._context._workerMessenger._listen();
+    void OneSignal._context._workerMessenger._listen();
 
     async function __init() {
       if (OneSignal._initAlreadyCalled) return;
@@ -182,7 +182,7 @@ export default class OneSignal {
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,
         //     since a user has to click out of and back on the page to check permissions
-        checkAndTriggerNotificationPermissionChanged();
+        void checkAndTriggerNotificationPermissionChanged();
       });
 
       await initSaveState();
@@ -193,10 +193,11 @@ export default class OneSignal {
     if (document.readyState === 'complete' || document.readyState === 'interactive') await __init();
     else {
       window.addEventListener('DOMContentLoaded', () => {
-        __init();
+        void __init();
       });
       document.onreadystatechange = () => {
-        if (document.readyState === 'complete' || document.readyState === 'interactive') __init();
+        if (document.readyState === 'complete' || document.readyState === 'interactive')
+          void __init();
       };
     }
   }

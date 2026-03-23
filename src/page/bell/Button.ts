@@ -27,7 +27,7 @@ export default class Button {
 
     const optedOut = limitGetLast<boolean>('subscription.optedOut');
     if (this._bell._unsubscribed && !optedOut) {
-      registerForPushNotifications();
+      void registerForPushNotifications();
       this._bell._ignoreSubscriptionState = true;
       OneSignal._emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async () => {
         this._bell._actionInProgress = true;

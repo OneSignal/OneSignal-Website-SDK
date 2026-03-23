@@ -20,7 +20,7 @@ describe('pageSdkInit 2', () => {
 
   test('can login and addEmail', async () => {
     const onesignalId = IDManager._createLocalId();
-    updateIdentityModel('onesignal_id', onesignalId);
+    void updateIdentityModel('onesignal_id', onesignalId);
 
     const email = 'joe@example.com';
     const subModel = await setupSubModelStore({
@@ -60,7 +60,7 @@ describe('pageSdkInit 2', () => {
     });
     await import('./pageSdkInit');
 
-    await window.OneSignalDeferred.push(async function (OneSignal) {
+    window.OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.login('some-id');
       OneSignal.User.addEmail(email);
 

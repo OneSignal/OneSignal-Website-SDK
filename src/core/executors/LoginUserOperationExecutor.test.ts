@@ -148,8 +148,8 @@ describe('LoginUserOperationExecutor', () => {
 
       // have identity model, config, properties model have the same onesignalId to check
       // that their properties are updated
-      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
-      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
+      void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      void updatePropertiesModel('onesignalId', ONESIGNAL_ID);
       await setPushToken(PUSH_TOKEN);
 
       const subscriptionModel = new SubscriptionModel();
@@ -224,8 +224,8 @@ describe('LoginUserOperationExecutor', () => {
 
   describe('login user', () => {
     test('can add/set alias when logging in a user with existing onesignal id', async () => {
-      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
-      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
+      void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      void updatePropertiesModel('onesignalId', ONESIGNAL_ID);
 
       const executor = getExecutor();
 

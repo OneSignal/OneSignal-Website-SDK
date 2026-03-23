@@ -77,7 +77,7 @@ export default class Dialog {
 
     this._subscribeButton?.addEventListener('click', () => {
       OneSignal._doNotShowWelcomeNotification = false;
-      this._bell._onSubscribeClick();
+      void this._bell._onSubscribeClick();
     });
     this._unsubscribeButton?.addEventListener('click', () => this._bell._onUnsubscribeClick());
   }

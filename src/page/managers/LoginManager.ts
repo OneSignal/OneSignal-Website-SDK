@@ -22,7 +22,7 @@ export default class LoginManager {
 
   private static async _login(externalId: string, token?: string): Promise<void> {
     if (token) {
-      db.put('Ids', { id: token, type: 'jwtToken' });
+      void db.put('Ids', { id: token, type: 'jwtToken' });
     }
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();

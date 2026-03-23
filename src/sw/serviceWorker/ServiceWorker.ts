@@ -123,7 +123,7 @@ export function run() {
   // delay for setting up test mocks like global.ServiceWorkerGlobalScope
   setTimeout(() => {
     // self.addEventListener('message') is statically added inside the listen() method
-    workerMessenger._listen();
+    void workerMessenger._listen();
 
     // Install messaging event handlers for page <-> service worker communication
     setupMessageListeners();
@@ -146,7 +146,7 @@ export async function getAppId(): Promise<string> {
 function setupMessageListeners() {
   workerMessenger._on(WorkerMessengerCommand._WorkerVersion, () => {
     Log._debug('[SW] Worker version msg');
-    workerMessenger._broadcast(WorkerMessengerCommand._WorkerVersion, VERSION);
+    void workerMessenger._broadcast(WorkerMessengerCommand._WorkerVersion, VERSION);
   });
   workerMessenger._on(WorkerMessengerCommand._Subscribe, async (appConfigBundle: AppConfig) => {
     const appConfig = appConfigBundle;
@@ -156,7 +156,7 @@ function setupMessageListeners() {
       SubscriptionStrategyKind._ResubscribeExisting,
     );
     const subscription = await context._subscriptionManager._registerSubscription(rawSubscription);
-    workerMessenger._broadcast(WorkerMessengerCommand._Subscribe, subscription._serialize());
+    void workerMessenger._broadcast(WorkerMessengerCommand._Subscribe, subscription._serialize());
   });
   workerMessenger._on(WorkerMessengerCommand._SubscribeNew, async (appConfigBundle: AppConfig) => {
     const appConfig = appConfigBundle;
@@ -167,7 +167,10 @@ function setupMessageListeners() {
     );
     const subscription = await context._subscriptionManager._registerSubscription(rawSubscription);
 
-    workerMessenger._broadcast(WorkerMessengerCommand._SubscribeNew, subscription._serialize());
+    void workerMessenger._broadcast(
+      WorkerMessengerCommand._SubscribeNew,
+      subscription._serialize(),
+    );
   });
 
   workerMessenger._on(
@@ -302,7 +305,7 @@ function onPushReceived(event: PushEvent): void {
               const shouldPreventDisplay = await shouldPreventNotificationDisplay(notif);
 
               const pushSubscriptionId = await getPushSubscriptionId();
-              notificationWillDisplay(notif, pushSubscriptionId);
+              void notificationWillDisplay(notif, pushSubscriptionId);
 
               if (shouldPreventDisplay) {
                 Log._debug(`[SW] Display prevented: ${notif.notificationId}`);
@@ -676,7 +679,7 @@ async function onNotificationClosed(event: NotificationEvent) {
     .catch((e) => Log._error(e));
   const pushSubscriptionId = await getPushSubscriptionId();
 
-  notificationDismissed(notification, pushSubscriptionId);
+  void notificationDismissed(notification, pushSubscriptionId);
 }
 
 /**
@@ -808,7 +811,7 @@ async function onNotificationClicked(event: NotificationEvent) {
         client.url === launchUrl ||
         (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)
       ) {
-        workerMessenger._unicast(
+        void workerMessenger._unicast(
           WorkerMessengerCommand._NotificationClicked,
           notificationClickEvent,
           client,
@@ -1014,7 +1017,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
  */
 function getTitle(): Promise<string> {
   return new Promise((resolve) => {
-    Promise.all([
+    void Promise.all([
       getOptionsValue<string>('defaultTitle'),
       getOptionsValue<string>('pageTitle'),
     ]).then(([defaultTitle, pageTitle]) => {
@@ -1070,5 +1073,5 @@ function parseOrFetchNotifications(event: PushEvent): Promise<OSMinifiedNotifica
    We received a push message payload from another service provider or a malformed
    payload. The last received notification will be displayed.
   */
-  return Promise.reject(`Unexpected push message payload received: ${event.data}`);
+  return Promise.reject(`Unexpected push message payload received: ${JSON.stringify(event.data)}`);
 }

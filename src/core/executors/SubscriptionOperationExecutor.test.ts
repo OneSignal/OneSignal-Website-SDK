@@ -103,7 +103,7 @@ describe('SubscriptionOperationExecutor', () => {
     const ops = [someOp];
 
     const res1 = executor._execute(ops);
-    await expect(() => res1).rejects.toThrow(`Unrecognized operation: ${ops[0]}`);
+    await expect(() => res1).rejects.toThrow(`Unrecognized operation: ${JSON.stringify(ops[0])}`);
 
     const deleteOp = new DeleteSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);
     const updateOp = new UpdateSubscriptionOperation({
@@ -130,7 +130,7 @@ describe('SubscriptionOperationExecutor', () => {
     });
 
     test('should create subscription successfully', async () => {
-      setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
+      void setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
 
       setCreateSubscriptionResponse({
         response: {
@@ -457,7 +457,7 @@ describe('SubscriptionOperationExecutor', () => {
 
     test('should delete subscription successfully', async () => {
       // Set up a subscription model to be deleted
-      setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
+      void setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
 
       const executor = getExecutor();
       const deleteOp = new DeleteSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);

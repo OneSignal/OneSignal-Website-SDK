@@ -84,7 +84,7 @@ test('Should update Notification.permission in time', async () => {
     resolve();
   });
 
-  callPermissionChange('denied');
+  void callPermissionChange('denied');
   await promise;
 });
 
@@ -101,7 +101,7 @@ test('should handle denied permission', async () => {
     resolve();
   });
 
-  callPermissionChange('denied');
+  void callPermissionChange('denied');
   await promise;
 });
 

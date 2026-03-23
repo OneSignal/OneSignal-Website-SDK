@@ -67,7 +67,7 @@ export async function checkAndTriggerSubscriptionChanged() {
 }
 
 function triggerSubscriptionChanged(change: SubscriptionChangeEvent) {
-  OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
+  void OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
 }
 
 export function triggerNotificationClick(event: NotificationClickEventInternal): Promise<void> {
@@ -106,7 +106,7 @@ export async function checkAndTriggerUserChanged() {
   const userState = await getUserState();
   const { previousOneSignalId, previousExternalId } = userState;
 
-  const identityModel = await OneSignal._coreDirector._getIdentityModel();
+  const identityModel = OneSignal._coreDirector._getIdentityModel();
   const currentOneSignalId = identityModel?._onesignalId;
   const currentExternalId = identityModel?._externalId;
 
@@ -131,7 +131,11 @@ export async function checkAndTriggerUserChanged() {
 }
 
 function triggerUserChanged(change: UserChangeEvent) {
-  OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change, UserNamespace._emitter);
+  void OneSignalEvent._trigger(
+    OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
+    change,
+    UserNamespace._emitter,
+  );
 }
 
 async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
@@ -139,7 +143,7 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
 
   const displayPredicate = OneSignal.config.userConfig.notifyButton.displayPredicate;
   if (displayPredicate && typeof displayPredicate === 'function' && OneSignal._notifyButton) {
-    const predicateResult = await displayPredicate();
+    const predicateResult = displayPredicate();
     if (predicateResult !== false) {
       Log._debug('Showing notify button: predicate true');
       OneSignal._notifyButton._launcher._show();
@@ -152,7 +156,7 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
 
 function onSubscriptionChanged_updateCustomLink() {
   if (OneSignal.config?.userConfig.promptOptions) {
-    new CustomLinkManager(OneSignal.config?.userConfig.promptOptions.customlink)._initialize();
+    void new CustomLinkManager(OneSignal.config?.userConfig.promptOptions.customlink)._initialize();
   }
 }
 
@@ -208,7 +212,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   message = decodeHtmlEntities(message);
 
   Log._debug('Sending welcome notif');
-  showLocalNotification(
+  void showLocalNotification(
     title,
     message,
     url,
@@ -216,7 +220,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
     { __isOneSignalWelcomeNotification: true },
     undefined,
   );
-  OneSignalEvent._trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+  void OneSignalEvent._trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
     title: title,
     message: message,
     url: url,
@@ -233,8 +237,8 @@ async function onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed?: bo
 }
 
 export function _onSubscriptionChanged(change: SubscriptionChangeEvent | undefined) {
-  onSubscriptionChanged_showWelcomeNotification(change?.current?.optedIn, change?.current?.id);
-  onSubscriptionChanged_sendCategorySlidedownTags(change?.current?.optedIn);
-  onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
+  void onSubscriptionChanged_showWelcomeNotification(change?.current?.optedIn, change?.current?.id);
+  void onSubscriptionChanged_sendCategorySlidedownTags(change?.current?.optedIn);
+  void onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
   onSubscriptionChanged_updateCustomLink();
 }

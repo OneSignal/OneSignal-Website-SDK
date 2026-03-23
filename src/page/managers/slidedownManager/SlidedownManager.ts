@@ -122,7 +122,7 @@ export class SlidedownManager {
     const tags = TaggingContainer._getValuesFromTaggingContainer();
     this._context._tagManager._storeTagValuesToUpdate(tags);
 
-    registerForPushNotifications();
+    void registerForPushNotifications();
     await this._context._tagManager._sendTags(true);
   }
 
@@ -235,13 +235,13 @@ export class SlidedownManager {
     await confirmationToast._show();
     await delay(5000);
     confirmationToast._close();
-    ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
+    void ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
   }
 
   private async _mountAuxiliaryContainers(options: AutoPromptOptions): Promise<void> {
     switch (options.slidedownPromptOptions?.type) {
       case DelayedPromptType._Category:
-        this._mountTaggingContainer(options);
+        void this._mountTaggingContainer(options);
         break;
       case DelayedPromptType._Email:
       case DelayedPromptType._Sms:
@@ -287,7 +287,7 @@ export class SlidedownManager {
     try {
       if (options.slidedownPromptOptions) {
         const channelCaptureContainer = new ChannelCaptureContainer(options.slidedownPromptOptions);
-        channelCaptureContainer._mount();
+        void channelCaptureContainer._mount();
 
         if (this._slidedown) {
           this._slidedown._channelCaptureContainer = channelCaptureContainer;
@@ -311,7 +311,7 @@ export class SlidedownManager {
     try {
       switch (slidedownType) {
         case DelayedPromptType._Push:
-          registerForPushNotifications();
+          void registerForPushNotifications();
           break;
         case DelayedPromptType._Category:
           await this._handleAllowForCategoryType();
@@ -349,18 +349,18 @@ export class SlidedownManager {
       // timeout to allow slidedown close animation to finish in case another slidedown is queued
       await delay(1000);
 
-      Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+      void Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
     }
 
     switch (slidedownType) {
       case DelayedPromptType._Push:
       case DelayedPromptType._Category:
         Log._debug('Marking slidedown dismissed');
-        markPromptDismissedWithType(DismissPrompt._Push);
+        void markPromptDismissedWithType(DismissPrompt._Push);
         break;
       default:
         Log._debug('Marking slidedown dismissed');
-        markPromptDismissedWithType(DismissPrompt._NonPush);
+        void markPromptDismissedWithType(DismissPrompt._NonPush);
         break;
     }
   }
@@ -381,7 +381,7 @@ export class SlidedownManager {
 
   public _enqueue(options: AutoPromptOptions): void {
     this._slidedownQueue.push(options);
-    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.QUEUED);
+    void Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.QUEUED);
   }
 
   public _dequeue(): AutoPromptOptions | undefined {
@@ -417,7 +417,7 @@ export class SlidedownManager {
       await this._slidedown._create(options.isInUpdateMode);
       await this._mountAuxiliaryContainers(options);
       Log._debug('Showing Slidedown');
-      Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
+      void Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
     } catch (e) {
       Log._error('Error showing Slidedown:', e);
       this._setIsSlidedownShowing(false);

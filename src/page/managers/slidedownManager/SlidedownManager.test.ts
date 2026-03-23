@@ -29,7 +29,7 @@ describe('Slidedown Types', () => {
       initOneSignalId: false,
     });
     document.body.innerHTML = '';
-    setupLoadStylesheet();
+    void setupLoadStylesheet();
     mockPhoneLibraryLoading();
   });
 
@@ -186,7 +186,7 @@ const warnSpy = vi.spyOn(Log, '_warn');
 describe('Consent Required', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
-    OneSignal.setConsentRequired(true);
+    void OneSignal.setConsentRequired(true);
   });
 
   test('should not show slidedown if consent is required but not given', async () => {

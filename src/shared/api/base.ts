@@ -128,7 +128,7 @@ async function executeFetch<T = unknown>(
       Log._error(`Fetch timeout ${url}, retrying...`);
       return executeFetch(url, contents, retry - 1);
     }
-    throw new Error(`Failed to execute HTTP call: ${e}`);
+    throw new Error(`Failed to execute HTTP call: ${String(e)}`);
   }
 }
 

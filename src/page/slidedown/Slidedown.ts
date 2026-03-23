@@ -134,9 +134,9 @@ export default class Slidedown {
   }
 
   _onSlidedownCanceled(_: any): void {
-    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
+    void Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
     this._close();
-    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+    void Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
   }
 
   _close(): void {

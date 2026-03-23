@@ -55,7 +55,7 @@ export function once(
     (targetSelectorOrElement as Element | Document).addEventListener(event, taskWrapper);
   } else
     throw new Error(
-      `${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`,
+      `${String(targetSelectorOrElement)} must be a CSS selector string or DOM Element object.`,
     );
 }
 

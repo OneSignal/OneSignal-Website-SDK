@@ -147,7 +147,7 @@ export default class Bell {
     );
     this._ignoreSubscriptionState = false;
     this._actionInProgress = false;
-    this._updateState();
+    void this._updateState();
   }
 
   async _onUnsubscribeClick() {
@@ -163,7 +163,7 @@ export default class Bell {
       MESSAGE_TIMEOUT,
     );
     this._actionInProgress = false;
-    this._updateState();
+    void this._updateState();
   }
 
   private _addDefaultClasses() {
@@ -250,7 +250,7 @@ export default class Bell {
       dialogEl.addEventListener('toggle', (e) => {
         const te = e as ToggleEvent;
         if (te.newState === 'open') {
-          this._dialog._updateContent();
+          void this._dialog._updateContent();
           this._message._hide();
         }
       });
@@ -270,7 +270,7 @@ export default class Bell {
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
     wasPromptOfTypeDismissed(DismissPrompt._Push);
 
-    await this._launcher._resize(this._options.size || DEFAULT_SIZE);
+    this._launcher._resize(this._options.size || DEFAULT_SIZE);
 
     this._addDefaultClasses();
     this._applyOffsetIfSpecified();
@@ -283,7 +283,7 @@ export default class Bell {
     }
 
     await delay(this._options.showLauncherAfter || 0);
-    await this._launcher._show();
+    this._launcher._show();
 
     await this._updateState();
 
@@ -292,7 +292,7 @@ export default class Bell {
     if (this._options.prenotify && !isPushEnabled && !this._blocked && OneSignal._isNewVisitor) {
       this._message._content = decodeHtmlEntities(this._options.text['message.prenotify']);
       this._badge._increment();
-      await this._badge._show();
+      this._badge._show();
     }
 
     this._initialized = true;

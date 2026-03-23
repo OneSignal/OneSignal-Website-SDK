@@ -56,7 +56,9 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
 
     if (operations.some((op) => op instanceof DeleteSubscriptionOperation)) {
       if (operations.length > 1)
-        throw new Error(`Only supports one operation! Attempted operations:\n${JSON.stringify(operations)}`);
+        throw new Error(
+          `Only supports one operation! Attempted operations:\n${JSON.stringify(operations)}`,
+        );
       return this._deleteSubscription(operations[0] as DeleteSubscriptionOperation);
     }
 
@@ -66,11 +68,11 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     if (startingOp instanceof TransferSubscriptionOperation) {
       if (operations.length > 1)
         throw new Error(
-          `TransferSubscriptionOperation only supports one operation! Attempted operations:\n${operations}`,
+          `TransferSubscriptionOperation only supports one operation! Attempted operations:\n${JSON.stringify(operations)}`,
         );
       return this._transferSubscription(startingOp);
     }
-    throw new Error(`Unrecognized operation: ${startingOp}`);
+    throw new Error(`Unrecognized operation: ${JSON.stringify(startingOp)}`);
   }
 
   private async _createSubscription(

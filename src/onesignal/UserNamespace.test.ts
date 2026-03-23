@@ -31,21 +31,21 @@ describe('User Identity Properties', () => {
   test('should return correct onesignalId', () => {
     const userNamespace = new UserNamespace(true);
 
-    updateIdentityModel('onesignal_id', undefined);
+    void updateIdentityModel('onesignal_id', undefined);
     expect(userNamespace.onesignalId).toBe(undefined);
 
     const localId = IDManager._createLocalId();
-    updateIdentityModel('onesignal_id', localId);
+    void updateIdentityModel('onesignal_id', localId);
     expect(userNamespace.onesignalId).toBe(undefined);
 
-    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     expect(userNamespace.onesignalId).toBe(ONESIGNAL_ID);
   });
 
   test('should return correct externalId', () => {
     const userNamespace = new UserNamespace(true);
     const externalId = 'some-external-id';
-    updateIdentityModel('external_id', externalId);
+    void updateIdentityModel('external_id', externalId);
 
     expect(userNamespace.externalId).toBe(externalId);
   });
@@ -183,7 +183,7 @@ describe('Email Management', () => {
     const email = 'test@example.com';
     const addSubscriptionSpy = vi.spyOn(OneSignal._coreDirector, '_addSubscriptionModel');
 
-    await userNamespace.addEmail(email);
+    userNamespace.addEmail(email);
 
     expect(addSubscriptionSpy).toHaveBeenCalled();
     const subscription = getEmailSubscription(email);
@@ -198,7 +198,7 @@ describe('Email Management', () => {
     const email = 'test@example.com';
 
     // First add the email
-    await userNamespace.addEmail(email);
+    userNamespace.addEmail(email);
     let subscription = getEmailSubscription(email);
     expect(subscription).toBeDefined();
 
@@ -226,7 +226,7 @@ describe('SMS Management', () => {
     const smsNumber = '+15551234567';
     const addSubscriptionSpy = vi.spyOn(OneSignal._coreDirector, '_addSubscriptionModel');
 
-    await userNamespace.addSms(smsNumber);
+    userNamespace.addSms(smsNumber);
 
     expect(addSubscriptionSpy).toHaveBeenCalled();
     const subscription = getSmsSubscription(smsNumber);
@@ -242,7 +242,7 @@ describe('SMS Management', () => {
     identityModel._onesignalId = IDManager._createLocalId();
 
     // First add the SMS
-    await userNamespace.addSms(smsNumber);
+    userNamespace.addSms(smsNumber);
     let subscription = getSmsSubscription(smsNumber);
     expect(subscription).toBeDefined();
 
@@ -365,7 +365,7 @@ describe('Event Handling', () => {
     };
 
     userNamespace.addEventListener('change', mockListener);
-    UserNamespace._emitter._emit('change', event);
+    void UserNamespace._emitter._emit('change', event);
 
     expect(mockListener).toHaveBeenCalledWith(event);
   });
@@ -382,7 +382,7 @@ describe('Event Handling', () => {
 
     userNamespace.addEventListener('change', mockListener);
     userNamespace.removeEventListener('change', mockListener);
-    UserNamespace._emitter._emit('change', event);
+    void UserNamespace._emitter._emit('change', event);
 
     expect(mockListener).not.toHaveBeenCalled();
   });
@@ -418,7 +418,7 @@ describe('Initialization', () => {
 
   test('properties model should have onesignalId for existing user', () => {
     // with an existing onesignalId
-    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     const user = new UserNamespace(true);
     expect(IDManager._isLocalId(user.onesignalId)).toBe(false);
 
@@ -431,7 +431,7 @@ describe('Initialization', () => {
 
   test('properties model should have onesignalId for new user', () => {
     // without an existing onesignalId
-    updateIdentityModel(IdentityConstants._OneSignalID, undefined);
+    void updateIdentityModel(IdentityConstants._OneSignalID, undefined);
 
     const user = new UserNamespace(true);
     expect(user.onesignalId).toBe(undefined); // since its local
@@ -453,7 +453,7 @@ describe('Custom Events', () => {
       test_property: 'test_value',
     };
 
-    updateIdentityModel('onesignal_id', IDManager._createLocalId());
+    void updateIdentityModel('onesignal_id', IDManager._createLocalId());
     userNamespace.trackEvent(name, {});
     expect(errorSpy).toHaveBeenCalledWith('User not logged in');
     errorSpy.mockClear();
@@ -479,7 +479,7 @@ describe('Custom Events', () => {
 
 describe('Consent Required', () => {
   beforeEach(async () => {
-    OneSignal.setConsentRequired(true);
+    void OneSignal.setConsentRequired(true);
     await OneSignal.setConsentGiven(false);
   });
 

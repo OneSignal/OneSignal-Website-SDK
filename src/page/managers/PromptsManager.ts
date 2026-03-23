@@ -99,7 +99,10 @@ export class PromptsManager {
     );
 
     if (forceSlidedownWithNativeOptions && !isPushSlidedownConfigured) {
-      void this._internalShowDelayedPrompt(DelayedPromptType._Push, nativePromptOptions.timeDelay || 0);
+      void this._internalShowDelayedPrompt(
+        DelayedPromptType._Push,
+        nativePromptOptions.timeDelay || 0,
+      );
     }
 
     // spawn slidedown prompts
@@ -275,7 +278,7 @@ export class PromptsManager {
     });
     OneSignal._emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       await this._context._slidedownManager._handleAllowClick();
-      OneSignalEvent._trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
+      void OneSignalEvent._trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
     });
     OneSignal._emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
       if (!this._context._slidedownManager._slidedown) {
@@ -287,11 +290,11 @@ export class PromptsManager {
         case DelayedPromptType._Push:
         case DelayedPromptType._Category:
           Log._debug('Marking slidedown dismissed');
-          markPromptDismissedWithType(DismissPrompt._Push);
+          void markPromptDismissedWithType(DismissPrompt._Push);
           break;
         default:
           Log._debug('Marking slidedown dismissed');
-          markPromptDismissedWithType(DismissPrompt._NonPush);
+          void markPromptDismissedWithType(DismissPrompt._NonPush);
           break;
       }
     });

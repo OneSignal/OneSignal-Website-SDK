@@ -46,7 +46,7 @@ function postponeSessionInitUntilPageIsInFocus(): void {
     (_: unknown, destroyEventListener: () => void) => {
       if (document.visibilityState === 'visible') {
         destroyEventListener();
-        sessionInit();
+        void sessionInit();
       }
     },
     true,
@@ -86,7 +86,7 @@ async function sessionInit(): Promise<void> {
   await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
   if (OneSignal.config?.userConfig.promptOptions?.autoPrompt && !isOptedOut) {
-    OneSignal._context._promptsManager._spawnAutoPrompts();
+    void OneSignal._context._promptsManager._spawnAutoPrompts();
   }
 
   OneSignal._sessionInitAlreadyRunning = false;
@@ -231,14 +231,14 @@ async function showNotifyButton() {
         );
         if (predicateValue !== false) {
           OneSignal._notifyButton = new Bell(OneSignal.config!.userConfig.notifyButton!);
-          OneSignal._notifyButton._create();
+          void OneSignal._notifyButton._create();
         } else {
           Log._debug('Notify button predicate returned false');
         }
       });
     } else {
       OneSignal._notifyButton = new Bell(OneSignal.config!.userConfig.notifyButton!);
-      OneSignal._notifyButton._create();
+      void OneSignal._notifyButton._create();
     }
   }
 }
@@ -258,13 +258,13 @@ async function installNativePromptPermissionChangedHook() {
       });
       // NOTE: Safari 16.4 has a bug where onchange callback never fires
       permissionStatus.onchange = function () {
-        triggerNotificationPermissionChanged();
+        void triggerNotificationPermissionChanged();
       };
     }
   } catch (e) {
     // Some browsers (Safari 16.3 and older) have the API navigator.permissions.query, but don't support the
     // { name: 'notifications' } param and throws.
-    Log._warn(`Permission change hook failed: ${e}`);
+    Log._warn(`Permission change hook failed: ${String(e)}`);
   }
 }
 

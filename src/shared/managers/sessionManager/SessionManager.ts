@@ -177,7 +177,7 @@ export class SessionManager implements ISessionManager {
       };
 
       Log._debug('SW deactivate (beforeunload)');
-      this._context._workerMessenger._directPostMessageToSW(
+      void this._context._workerMessenger._directPostMessageToSW(
         WorkerMessengerCommand._SessionDeactivate,
         payload,
       );
@@ -248,7 +248,7 @@ export class SessionManager implements ISessionManager {
       this._setupSessionEventListeners();
     } else {
       this._onSessionSent = sessionOrigin === SessionOrigin._UserCreate;
-      OneSignal._emitter._emit(OneSignal.EVENTS.SESSION_STARTED);
+      void OneSignal._emitter._emit(OneSignal.EVENTS.SESSION_STARTED);
     }
   }
 
@@ -275,7 +275,7 @@ export class SessionManager implements ISessionManager {
       window.addEventListener(
         'beforeunload',
         (e) => {
-          this._handleOnBeforeUnload();
+          void this._handleOnBeforeUnload();
           // deleting value to not show confirmation dialog
           delete e.returnValue;
         },

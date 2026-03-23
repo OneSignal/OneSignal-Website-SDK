@@ -205,7 +205,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         model?._setProperty('onesignalId', backendOneSignalId, ModelChangeTags._Hydrate);
       }
 
-      checkAndTriggerUserChanged();
+      void checkAndTriggerUserChanged();
 
       const followUp =
         Object.keys(identity).length > 0

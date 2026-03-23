@@ -342,7 +342,7 @@ describe('manageNotifyButtonStateWhileSlidedownShows', () => {
 
   test('hides shown launcher', async () => {
     const bell = createBell();
-    await bell._launcher._show();
+    bell._launcher._show();
     OneSignal._notifyButton = bell;
 
     manageNotifyButtonStateWhileSlidedownShows();
@@ -351,7 +351,7 @@ describe('manageNotifyButtonStateWhileSlidedownShows', () => {
 
   test('restores launcher when slidedown closes', async () => {
     const bell = createBell();
-    await bell._launcher._show();
+    bell._launcher._show();
     OneSignal._notifyButton = bell;
 
     manageNotifyButtonStateWhileSlidedownShows();
@@ -372,7 +372,7 @@ describe('manageNotifyButtonStateWhileSlidedownShows', () => {
 
   test('hides dialog popover when hiding launcher', async () => {
     const bell = createBell();
-    await bell._launcher._show();
+    bell._launcher._show();
     const dialogHide = vi.spyOn(bell._dialog, '_hide');
     OneSignal._notifyButton = bell;
 

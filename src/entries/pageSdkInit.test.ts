@@ -50,12 +50,13 @@ describe('pageSdkInit', () => {
     const initSpy = vi.spyOn(window.OneSignal, 'init');
 
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    await window.OneSignalDeferred.push(async function (OneSignal) {
+    void window.OneSignalDeferred.push(async function (OneSignal) {
       return OneSignal.init({
         appId: APP_ID,
       });
     });
 
+    await vi.waitUntil(() => initSpy.mock.calls.length > 0, { interval: 1 });
     expect(initSpy).toHaveBeenCalled();
   });
 });

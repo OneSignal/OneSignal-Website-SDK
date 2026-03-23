@@ -52,7 +52,7 @@ export async function showLocalNotification(
     buttons: buttons ? convertButtonsToNotificationActionType(buttons) : undefined,
   };
 
-  OneSignal._context._serviceWorkerManager
+  void OneSignal._context._serviceWorkerManager
     ._getRegistration()
     .then(async (registration?: ServiceWorkerRegistration | null) => {
       if (!registration) {
@@ -66,7 +66,7 @@ export async function showLocalNotification(
         icon: icon,
         actions: buttons ? convertButtonsToNotificationActionType(buttons) : [],
       };
-      registration.showNotification(title, options);
+      await registration.showNotification(title, options);
     });
 }
 

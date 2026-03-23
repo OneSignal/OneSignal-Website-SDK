@@ -50,7 +50,7 @@ describe('UpdateUserOperationExecutor', () => {
     getRebuildOpsSpy = vi.spyOn(buildUserService, '_getRebuildOperationsIfCurrentUser');
 
     // Set up initial model state
-    updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+    void updateIdentityModel('onesignal_id', ONESIGNAL_ID);
   });
 
   const getExecutor = () => {
@@ -73,7 +73,7 @@ describe('UpdateUserOperationExecutor', () => {
     const ops = [someOp];
 
     const result = executor._execute(ops);
-    await expect(() => result).rejects.toThrow(`Unrecognized operation: ${ops[0]}`);
+    await expect(() => result).rejects.toThrow(`Unrecognized operation: ${JSON.stringify(ops[0])}`);
   });
 
   describe('SetPropertyOperation', () => {

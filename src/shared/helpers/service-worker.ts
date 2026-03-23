@@ -155,7 +155,7 @@ export async function deactivateSession(
    * For anything but active, logging a warning and doing early return.
    */
   if (existingSession.status !== SessionStatus._Active) {
-    Log._warn(`Invalid session state: ${existingSession.status}`);
+    Log._warn(`Invalid session state: ${String(existingSession.status)}`);
     return undefined;
   }
 
@@ -191,8 +191,8 @@ async function sendOnSessionCallIfNotPlayerCreate(
     return;
   }
 
-  db.put('Sessions', session);
-  resetSentUniqueOutcomes();
+  void db.put('Sessions', session);
+  void resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
   await updateUserSession(appId, onesignalId, subscriptionId);
@@ -208,7 +208,7 @@ async function finalizeSession(
 ): Promise<void> {
   Log._debug(
     'Finalize session',
-    `started: ${new Date(session.startTimestamp)}`,
+    `started: ${new Date(session.startTimestamp).toISOString()}`,
     `duration: ${session.accumulatedDuration}s`,
   );
   if (sendOnFocusEnabled) {
@@ -225,7 +225,10 @@ async function finalizeSession(
   }
 
   await Promise.all([cleanupCurrentSession(), clearStore('Outcomes.NotificationClicked')]);
-  Log._debug('Finalize session finished', `started: ${new Date(session.startTimestamp)}`);
+  Log._debug(
+    'Finalize session finished',
+    `started: ${new Date(session.startTimestamp).toISOString()}`,
+  );
 }
 
 const resetSentUniqueOutcomes = async (): Promise<void> => {

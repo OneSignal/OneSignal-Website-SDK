@@ -81,7 +81,7 @@ export class SubscriptionManagerBase<C extends ContextSWInterface | ContextInter
 
       // NOTE: We only have sessionManager in the page context, should sw upsert do anything?
     } else if (!IS_SERVICE_WORKER && '_sessionManager' in this._context) {
-      this._context._sessionManager._upsertSession(SessionOrigin._UserCreate);
+      void this._context._sessionManager._upsertSession(SessionOrigin._UserCreate);
     }
 
     const subscription = await getSubscription();
@@ -102,7 +102,7 @@ export class SubscriptionManagerBase<C extends ContextSWInterface | ContextInter
     await setSubscription(subscription);
 
     if (!IS_SERVICE_WORKER) {
-      OneSignalEvent._trigger(OneSignal.EVENTS.REGISTERED);
+      void OneSignalEvent._trigger(OneSignal.EVENTS.REGISTERED);
     }
 
     if (typeof OneSignal !== 'undefined') {

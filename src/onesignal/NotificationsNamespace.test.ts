@@ -26,7 +26,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  OneSignal.setConsentRequired(false);
+  void OneSignal.setConsentRequired(false);
 });
 
 test('should set the default url', async () => {
@@ -60,7 +60,7 @@ test('should set the default title', async () => {
 const warnSpy = vi.spyOn(Log, '_warn');
 describe('Consent Required', () => {
   beforeEach(() => {
-    OneSignal.setConsentRequired(true);
+    void OneSignal.setConsentRequired(true);
     TestEnvironment.initialize();
   });
 
@@ -110,7 +110,7 @@ describe('requestPermission', () => {
     const notifications = new NotificationsNamespace();
 
     // in flight error
-    notifications.requestPermission();
+    void notifications.requestPermission();
     await expect(notifications.requestPermission()).resolves.toBe(false);
     expect(debugSpy).toHaveBeenCalledWith('Autoprompt already showing');
 

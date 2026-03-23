@@ -28,7 +28,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     super();
     if (!initialize || !subscription) {
       Log._warn(
-        `PushSubscriptionNamespace: skipping initialization. One or more required params are falsy: initialize: ${initialize}, subscription: ${subscription}`,
+        `PushSubscriptionNamespace: skipping initialization. One or more required params are falsy: initialize: ${initialize}, subscription: ${JSON.stringify(subscription)}`,
       );
       return;
     }

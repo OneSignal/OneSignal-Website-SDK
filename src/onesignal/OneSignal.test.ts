@@ -67,8 +67,8 @@ const setupEnv = (consentRequired: boolean) => {
     },
   });
   OneSignal._coreDirector._subscriptionModelStore._replaceAll([], ModelChangeTags._NoPropogate);
-  setupPropertiesModel();
-  setupIdentityModel();
+  void setupPropertiesModel();
+  void setupIdentityModel();
 };
 
 describe('OneSignal - No Consent Required', () => {
@@ -654,7 +654,7 @@ describe('OneSignal - No Consent Required', () => {
           setCreateUserResponse({});
 
           const localId = IDManager._createLocalId();
-          setupIdentityModel(localId);
+          void setupIdentityModel(localId);
 
           OneSignal._coreDirector._subscriptionModelStore._replaceAll(
             [],
@@ -663,7 +663,7 @@ describe('OneSignal - No Consent Required', () => {
 
           // wait for db to be updated
           await getIdentityItem((i) => i.onesignal_id === localId);
-          OneSignal.login(externalId);
+          void OneSignal.login(externalId);
 
           await vi.waitUntil(() => getUserFn.mock.calls.length === 1, {
             interval: 1,
@@ -702,7 +702,7 @@ describe('OneSignal - No Consent Required', () => {
 
         test('login with a prior web push subscription - it should transfer the subscription', async () => {
           setCreateUserResponse();
-          updateIdentityModel('onesignal_id', '');
+          void updateIdentityModel('onesignal_id', '');
 
           await getDbSubscriptions(1);
 
@@ -749,21 +749,21 @@ describe('OneSignal - No Consent Required', () => {
             [],
             ModelChangeTags._NoPropogate,
           );
-          setPushToken('');
+          void setPushToken('');
           subscribeFcmFromPageSpy.mockImplementation(async () => getRawPushSubscription());
 
           // new/empty user
-          setupIdentityModel(IDManager._createLocalId());
+          void setupIdentityModel(IDManager._createLocalId());
 
           // calling login before accept permissions
-          OneSignal.login(externalId);
+          void OneSignal.login(externalId);
 
           // slidedown manager calls this on allow click
           // @ts-expect-error - Notification is not defined in the global scope
           global.Notification = {
             permission: 'granted',
           };
-          registerForPushNotifications();
+          void registerForPushNotifications();
 
           // create user call includes the empty subscription
           await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
@@ -810,7 +810,7 @@ describe('OneSignal - No Consent Required', () => {
         const identityModel = OneSignal._coreDirector._getIdentityModel();
         expect(identityModel._externalId).toBeUndefined();
 
-        OneSignal.logout();
+        void OneSignal.logout();
         expect(debugSpy).toHaveBeenCalledWith('Logout: not logged in');
       });
 
@@ -822,11 +822,11 @@ describe('OneSignal - No Consent Required', () => {
 
         // existing user
         let identityModel = OneSignal._coreDirector._getIdentityModel();
-        updateIdentityModel('external_id', 'jd-1');
+        void updateIdentityModel('external_id', 'jd-1');
 
         setCreateUserResponse({});
 
-        OneSignal.logout();
+        void OneSignal.logout();
 
         // identity model should be reset
         identityModel = OneSignal._coreDirector._getIdentityModel();
@@ -921,7 +921,7 @@ describe('OneSignal - No Consent Required', () => {
 
     test('can send a custom event', async () => {
       setSendCustomEventResponse();
-      updateIdentityModel('external_id', 'some-id');
+      void updateIdentityModel('external_id', 'some-id');
       OneSignal.User.trackEvent(name);
 
       await vi.waitUntil(() => sendCustomEventFn.mock.calls.length === 1, {
@@ -951,10 +951,10 @@ describe('OneSignal - No Consent Required', () => {
       });
       setSendCustomEventResponse();
 
-      updateIdentityModel('onesignal_id', IDManager._createLocalId());
-      updateIdentityModel('external_id', 'some-id');
+      void updateIdentityModel('onesignal_id', IDManager._createLocalId());
+      void updateIdentityModel('external_id', 'some-id');
 
-      OneSignal.login('some-id-2');
+      void OneSignal.login('some-id-2');
       OneSignal.User.trackEvent(name, properties);
 
       const queue = await getQueue(2);
@@ -995,7 +995,7 @@ describe('OneSignal - No Consent Required', () => {
       OneSignal.User.trackEvent('test_event_1', {
         test_property_1: 'test_value_1',
       });
-      OneSignal.login('some-id');
+      void OneSignal.login('some-id');
       OneSignal.User.trackEvent('test_event_2', {
         test_property_2: 'test_value_2',
       });
@@ -1055,7 +1055,7 @@ describe('OneSignal - No Consent Required', () => {
     });
 
     test('custom event can execute before login for an existing user w/ external id', async () => {
-      updateIdentityModel('external_id', 'some-id');
+      void updateIdentityModel('external_id', 'some-id');
 
       setSendCustomEventResponse();
       setCreateUserResponse({
@@ -1066,7 +1066,7 @@ describe('OneSignal - No Consent Required', () => {
       OneSignal.User.trackEvent('test_event_1', {
         test_property_1: 'test_value_1',
       });
-      OneSignal.login('some-id-2');
+      void OneSignal.login('some-id-2');
       OneSignal.User.trackEvent('test_event_2', {
         test_property_2: 'test_value_2',
       });
@@ -1138,7 +1138,7 @@ describe('OneSignal - No Consent Required', () => {
       global.Notification = {
         permission: 'granted',
       };
-      registerForPushNotifications();
+      void registerForPushNotifications();
 
       await vi.waitUntil(() => changeEvent.mock.calls.length === 1, {
         interval: 1,
@@ -1167,7 +1167,7 @@ describe('OneSignal - No Consent Required', () => {
     setTransferSubscriptionResponse();
     setUpdateUserResponse();
 
-    OneSignal.login('some-id');
+    void OneSignal.login('some-id');
     OneSignal.User.addTag('some-tag', 'some-value');
     const tags = OneSignal.User.getTags();
 
@@ -1224,21 +1224,21 @@ describe('OneSignal - No Consent Required', () => {
 describe('OneSignal - Consent Required', () => {
   beforeEach(() => {
     setupEnv(true);
-    OneSignal.setConsentGiven(false);
+    void OneSignal.setConsentGiven(false);
   });
 
   test('cannot call login if consent is required but not given', async () => {
-    OneSignal.login('some-id');
+    void OneSignal.login('some-id');
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
 
-    OneSignal.setConsentGiven(true);
+    void OneSignal.setConsentGiven(true);
     warnSpy.mockClear();
-    OneSignal.login('some-id');
+    void OneSignal.login('some-id');
     expect(warnSpy).not.toHaveBeenCalled();
   });
 
   test('cannot call logout if consent is required but not given', async () => {
-    OneSignal.logout();
+    void OneSignal.logout();
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
   });
 });

@@ -24,11 +24,10 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     OneSignal.User.PushSubscription.addEventListener('change', changeListener);
 
     // no change
-    mockPushManager.getSubscription.mockResolvedValue({
-      ...mockPushSubscription,
-      // @ts-expect-error - using partial types
-      endpoint: undefined,
-    });
+    // @ts-expect-error - using partial types
+    mockPushManager.getSubscription.mockResolvedValue(
+      Object.assign({}, mockPushSubscription, { endpoint: undefined }),
+    );
     await setIsPushEnabled(false);
     await eventListeners.checkAndTriggerSubscriptionChanged();
 
@@ -59,10 +58,9 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     });
 
     // token change
-    mockPushManager.getSubscription.mockResolvedValue({
-      ...mockPushSubscription,
-      endpoint: PUSH_TOKEN,
-    });
+    mockPushManager.getSubscription.mockResolvedValue(
+      Object.assign({}, mockPushSubscription, { endpoint: PUSH_TOKEN }),
+    );
     await setIsPushEnabled(false);
 
     changeListener.mockClear();
@@ -96,10 +94,9 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     });
     await setPushToken(token);
     OneSignal._coreDirector._subscriptionModelStore._add(pushModel);
-    mockPushManager.getSubscription.mockResolvedValue({
-      ...mockPushSubscription,
-      endpoint: token,
-    });
+    mockPushManager.getSubscription.mockResolvedValue(
+      Object.assign({}, mockPushSubscription, { endpoint: token }),
+    );
 
     await eventListeners.checkAndTriggerSubscriptionChanged();
     expect(changeListener).toHaveBeenCalledWith({

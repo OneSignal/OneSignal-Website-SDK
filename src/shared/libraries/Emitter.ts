@@ -131,7 +131,7 @@ export default class Emitter {
       const len = listeners.length;
       for (let i = 0; i < len; i += 1)
         // @ts-expect-error - TODO: improve args type
-        await (listeners[i] as () => void).apply(this, args);
+        (listeners[i] as () => void).apply(this, args);
     }
 
     return this;

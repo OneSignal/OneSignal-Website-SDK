@@ -240,7 +240,7 @@ export class ServiceWorkerManager {
             ...event.notification,
             display: () => {
               Log._debug(`display() called: ${notificationId}`);
-              workerMessenger._unicast(WorkerMessengerCommand._DisplayNotification, {
+              void workerMessenger._unicast(WorkerMessengerCommand._DisplayNotification, {
                 notification: event.notification,
               });
             },
