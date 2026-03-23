@@ -4,7 +4,7 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import Context from 'src/page/models/Context';
 import { type AppConfig } from 'src/shared/config/types';
-import type { MockInstance } from 'vitest';
+import type { MockInstance } from 'vite-plus/test';
 import { db } from '../database/client';
 import { getAppState } from '../database/config';
 import * as InitHelper from './init';

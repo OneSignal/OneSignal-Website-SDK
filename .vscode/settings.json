@@ -1,11 +1,10 @@
 {
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "always"
+    "source.organizeImports": "always",
+    "source.fixAll.oxc": "explicit"
   },
   "editor.rename.enablePreview": false,
-
-  // a macro to rename a variable to _variable
   "macros": {
     "rename_": [
       {
@@ -31,5 +30,9 @@
         ]
       }
     ]
-  }
+  },
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "oxc.fmt.configPath": "./vite.config.ts",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file"
 }

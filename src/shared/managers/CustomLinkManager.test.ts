@@ -4,7 +4,7 @@ import {
   CUSTOM_LINK_CSS_CLASSES,
   CUSTOM_LINK_CSS_SELECTORS,
 } from 'src/shared/slidedown/constants';
-import { vi, type MockInstance } from 'vitest';
+import { vi, type MockInstance } from 'vite-plus/test';
 import { ResourceLoadState } from '../../page/services/DynamicResourceLoader';
 import { CustomLinkManager } from './CustomLinkManager';
 

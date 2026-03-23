@@ -19,7 +19,7 @@ import {
   NotificationType,
   SubscriptionType,
 } from 'src/shared/subscriptions/constants';
-import type { MockInstance } from 'vitest';
+import type { MockInstance } from 'vite-plus/test';
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';

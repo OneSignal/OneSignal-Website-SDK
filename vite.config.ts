@@ -1,4 +1,4 @@
-import { defineConfig, LibraryOptions } from 'vite';
+import { defineConfig, LibraryOptions } from 'vite-plus';
 import { analyzer } from 'vite-bundle-analyzer';
 import mkcert from 'vite-plugin-mkcert';
 import tsconfigPaths from 'vite-tsconfig-paths';
@@ -42,6 +42,11 @@ export default defineConfig(({ mode }) => {
   const lib = process.env.LIB as Lib;
 
   return {
+    staged: {
+      "*": "",
+      // "*": "vp check --fix"
+    },
+    lint: {"options":{"typeAware":true,"typeCheck":true}},
     plugins: [
       tsconfigPaths(),
       mkcert(),
@@ -89,7 +94,7 @@ export default defineConfig(({ mode }) => {
         },
 
         // for getting rid of unused imports for builds otherwise we would need dynamic imports
-        treeshake: 'smallest',
+        treeshake: { moduleSideEffects: false },
       },
     },
 
@@ -121,7 +126,7 @@ export default defineConfig(({ mode }) => {
         key: './certs/dev.pem',
       },
     },
-  };
+  }
 });
 
 const getBooleanEnv = (env?: string) => {

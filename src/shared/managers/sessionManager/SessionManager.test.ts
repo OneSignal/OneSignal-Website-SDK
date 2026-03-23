@@ -5,7 +5,7 @@ import LoginManager from 'src/page/managers/LoginManager';
 import * as detect from 'src/shared/environment/detect';
 import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
-import { vi, type MockInstance } from 'vitest';
+import { vi, type MockInstance } from 'vite-plus/test';
 import User from '../../../onesignal/User';
 import { SessionManager } from './SessionManager';
 const supportsServiceWorkersSpy = vi.spyOn(detect, 'supportsServiceWorkers');

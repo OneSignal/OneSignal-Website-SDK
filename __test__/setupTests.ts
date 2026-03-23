@@ -1,7 +1,7 @@
 import * as OneSignalApi from 'src/shared/api/page';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { clearAll } from 'src/shared/database/client';
-import type { MockInstance } from 'vitest';
+import type { MockInstance } from 'vite-plus/test';
 import { DEFAULT_USER_AGENT } from './constants';
 import TestContext from './support/environment/TestContext';
 import { server } from './support/mocks/server';

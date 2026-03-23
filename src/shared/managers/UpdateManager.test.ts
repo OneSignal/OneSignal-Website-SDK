@@ -4,7 +4,7 @@ import User from 'src/onesignal/User';
 import * as pageview from 'src/shared/helpers/pageview';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 import { UpdateManager } from './UpdateManager';
 
 describe('UpdateManager', () => {

@@ -3,7 +3,7 @@ import * as detect from 'src/shared/environment/detect';
 import * as helpers from 'src/shared/helpers/service-worker';
 import Path from 'src/shared/models/Path';
 import * as registration from 'src/sw/helpers/registration';
-import { vi, type MockInstance } from 'vitest';
+import { vi, type MockInstance } from 'vite-plus/test';
 import Log from '../libraries/Log';
 import { ServiceWorkerManager } from './ServiceWorkerManager';
 

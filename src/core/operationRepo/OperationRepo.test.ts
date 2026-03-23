@@ -6,7 +6,7 @@ import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
-import { describe, expect, type Mock, vi } from 'vitest';
+import { describe, expect, type Mock, vi } from 'vite-plus/test';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import {
