@@ -12,24 +12,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup Node # Since Vitest uses Node apis
-        uses: actions/setup-node@v5
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
         with:
           node-version-file: '.nvmrc'
+          cache: true
 
-      - name: Bun Setup
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+      - name: Check Build
+        run: vp run build:prod
 
-      - name: 'Install'
-        run: bun install
+      - name: Lint
+        run: vp run lint
 
-      - name: 'Check Build'
-        run: bun run build:prod
-
-      - name: 'Lint'
-        run: bun run lint
-
-      - name: 'Test'
-        run: bun run test
+      - name: Test
+        run: vp run test

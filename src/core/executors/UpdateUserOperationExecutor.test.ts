@@ -6,7 +6,7 @@ import {
   setUpdateUserResponse,
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
-import { type MockInstance } from 'vitest';
+import { type MockInstance } from 'vite-plus/test';
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';

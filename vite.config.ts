@@ -1,7 +1,12 @@
-import { defineConfig, LibraryOptions } from 'vite';
+import { readFileSync } from 'node:fs';
+import path from 'path';
+import { defineConfig, type LibraryOptions } from 'vite-plus';
 import { analyzer } from 'vite-bundle-analyzer';
 import mkcert from 'vite-plugin-mkcert';
-import tsconfigPaths from 'vite-tsconfig-paths';
+
+const { config: { sdkVersion } } = JSON.parse(
+  readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'),
+);
 
 type Lib = 'sdk' | 'page' | 'worker';
 
@@ -39,11 +44,25 @@ const libConfig: Record<Lib, LibraryOptions> = {
  */
 export default defineConfig(({ mode }) => {
   const isProdEnv = process.env.ENV === 'production';
+  const isTest = mode === 'test';
   const lib = process.env.LIB as Lib;
 
   return {
+    staged: {
+      "*": "",
+      // "*": "vp check --fix"
+    },
+    lint: {"options":{"typeAware":true,"typeCheck":true}},
+    resolve: {
+      tsconfigPaths: true,
+      alias: isTest
+        ? {
+            src: path.resolve(__dirname, 'src'),
+            __test__: path.resolve(__dirname, '__test__'),
+          }
+        : undefined,
+    },
     plugins: [
-      tsconfigPaths(),
       mkcert(),
       ...(mode === 'production'
         ? [
@@ -89,30 +108,39 @@ export default defineConfig(({ mode }) => {
         },
 
         // for getting rid of unused imports for builds otherwise we would need dynamic imports
-        treeshake: 'smallest',
+        treeshake: { moduleSideEffects: false },
       },
     },
 
     // Could move some of these to .env.[ENV] file
     // NOTE!!!: Since the service worker is registered separately, the define WONT probably replace it for the SW
     // But it will be fine for builds. So check if field exists for development e.g. typeof __VERSION__ !== 'undefined'
-    define: {
-      __API_TYPE__: JSON.stringify(process.env.API),
-      __BUILD_TYPE__: JSON.stringify(process.env.ENV),
-      __LOGGING__: JSON.stringify(
-        getBooleanEnv(process.env.LOGGING) ?? !isProdEnv,
-      ),
-      __VERSION__: JSON.stringify(process.env.npm_package_config_sdkVersion),
-      __IS_SERVICE_WORKER__: JSON.stringify(lib === 'worker'),
-
-      // ignored for prod
-      __API_ORIGIN__: JSON.stringify(process.env.API_ORIGIN),
-      __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN),
-
-      // dev only
-      __IS_HTTPS__: JSON.stringify(getBooleanEnv(process.env.HTTPS)),
-      __NO_DEV_PORT__: JSON.stringify(getBooleanEnv(process.env.NO_DEV_PORT)),
-    },
+    define: isTest
+      ? {
+          __API_ORIGIN__: JSON.stringify('onesignal.com'),
+          __API_TYPE__: JSON.stringify('staging'),
+          __BUILD_ORIGIN__: JSON.stringify('onesignal.com'),
+          __BUILD_TYPE__: JSON.stringify('production'),
+          __IS_HTTPS__: JSON.stringify(true),
+          __LOGGING__: JSON.stringify(false),
+          __NO_DEV_PORT__: JSON.stringify(true),
+          __VERSION__: JSON.stringify('160000'),
+        }
+      : {
+          __API_TYPE__: JSON.stringify(process.env.API),
+          __BUILD_TYPE__: JSON.stringify(process.env.ENV),
+          __LOGGING__: JSON.stringify(
+            getBooleanEnv(process.env.LOGGING) ?? !isProdEnv,
+          ),
+          __VERSION__: JSON.stringify(sdkVersion),
+          __IS_SERVICE_WORKER__: JSON.stringify(lib === 'worker'),
+          __API_ORIGIN__: JSON.stringify(process.env.API_ORIGIN),
+          __BUILD_ORIGIN__: JSON.stringify(process.env.BUILD_ORIGIN),
+          __IS_HTTPS__: JSON.stringify(getBooleanEnv(process.env.HTTPS)),
+          __NO_DEV_PORT__: JSON.stringify(
+            getBooleanEnv(process.env.NO_DEV_PORT),
+          ),
+        },
     server: {
       open: true,
       port: 4000,
@@ -121,7 +149,26 @@ export default defineConfig(({ mode }) => {
         key: './certs/dev.pem',
       },
     },
-  };
+    test: {
+      clearMocks: true,
+      coverage: {
+        include: ['src/**'],
+        reporter: ['text-summary', 'lcov'],
+        reportsDirectory: 'coverage',
+        reportOnFailure: true,
+        thresholds: {
+          statements: 75,
+          branches: 63,
+          functions: 81,
+          lines: 75,
+        },
+      },
+      environment: 'jsdom',
+      globals: true,
+      include: ['src/**/*.test.ts', '__test__/**/*.test.ts'],
+      setupFiles: ['fake-indexeddb/auto', './__test__/setupTests.ts'],
+    },
+  }
 });
 
 const getBooleanEnv = (env?: string) => {

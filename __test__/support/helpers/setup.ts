@@ -12,18 +12,6 @@ import type {
 } from 'src/shared/database/types';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 
-/**
- * Mocks `delay` from `src/shared/helpers/general` to resolve immediately.
- * Must be called at the top level of a test file (alongside other vi.mock calls).
- */
-export const mockDelay = () => {
-  vi.mock('src/shared/helpers/general', async (importOriginal) => {
-    const mod =
-      await importOriginal<typeof import('src/shared/helpers/general')>();
-    return { ...mod, delay: vi.fn(() => Promise.resolve()) };
-  });
-};
-
 export const setIsPushEnabled = async (isPushEnabled: boolean) => {
   await db.put('Options', { key: 'isPushEnabled', value: isPushEnabled });
 };

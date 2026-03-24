@@ -40,19 +40,17 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
         with:
-          bun-version: latest
-
-      - name: Install
-        run: bun install --frozen-lockfile
+          node-version-file: '.nvmrc'
+          cache: true
 
       - name: Build for Staging
-        run: bun run build:staging
+        run: vp run build:staging
 
       - name: Build for Production
-        run: bun run build:prod
+        run: vp run build:prod
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
@@ -69,7 +67,7 @@ jobs:
       - name: Get version
         id: get_version
         run: |
-          SDK_VERSION=$(bun -e "console.log(require('./package.json').config.sdkVersion)")
+          SDK_VERSION=$(node -p "require('./package.json').config.sdkVersion")
           if git rev-parse "$SDK_VERSION" >/dev/null 2>&1; then
             echo "Tag $SDK_VERSION already exists, skipping release"
           else

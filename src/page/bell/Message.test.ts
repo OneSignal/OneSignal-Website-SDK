@@ -1,10 +1,13 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { mockDelay } from '__test__/support/helpers/setup';
 import Bell from './Bell';
 import { BellState } from './constants';
 import Message from './Message';
 
-mockDelay();
+vi.mock('src/shared/helpers/general', async (importOriginal) => {
+  const mod =
+    await importOriginal<typeof import('src/shared/helpers/general')>();
+  return { ...mod, delay: vi.fn(() => Promise.resolve()) };
+});
 
 describe('Message', () => {
   beforeEach(() => {

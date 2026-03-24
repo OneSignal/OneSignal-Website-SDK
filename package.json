@@ -7,33 +7,34 @@
     "jsonp": "github:OneSignal/jsonp#onesignal"
   },
   "scripts": {
-    "dev": "LOGGING=false vite",
-    "dev:logging": "LOGGING=true vite",
+    "dev": "LOGGING=false vp dev",
+    "dev:logging": "LOGGING=true vp dev",
     "ngrok": "./build/scripts/ngrok.sh",
-    "prebuild": "tsc --noEmit && mkdir -p build/stats",
-    "build:sdk": "LIB=sdk vite build",
-    "build:page": "LIB=page vite build",
-    "build:sw": "LIB=worker vite build",
-    "build": "bun run build:sdk && bun run build:page && bun run build:sw",
-    "build:watch": "LIB=sdk vite build --watch",
-    "build:dev": "ENV=development bun run build",
+    "prebuild": "mkdir -p build/stats",
+    "build:sdk": "LIB=sdk vp build",
+    "build:page": "LIB=page vp build",
+    "build:sw": "LIB=worker vp build",
+    "build": "vp run build:sdk && vp run build:page && vp run build:sw",
+    "build:watch": "LIB=sdk vp build --watch",
+    "build:dev": "ENV=development vp run build",
     "build:dev:watch": "ENV=development concurrently \"LIB=sdk vite build --watch\" \"LIB=page vite build --watch\" \"LIB=worker vite build --watch\"",
-    "build:staging": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com bun run build",
-    "build:staging:watch": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com bun run build:watch",
-    "build:prod": "ENV=production API=production bun run build && size-limit",
-    "build:prod:watch": "ENV=production API=production bun run build:watch",
-    "postbuild:prod": "bun run validate:build",
-    "build:dev-dev": "API=development bun run build:dev",
-    "build:dev-dev:watch": "API=development bun run build:dev:watch",
-    "build:dev-prod": "API=production API_ORIGIN=onesignal.com bun run build:dev",
-    "build:dev-prod:watch": "API=production API_ORIGIN=onesignal.com bun run build:dev:watch",
-    "build:dev-stag": "API=staging API_ORIGIN=onesignal.com bun run build:dev",
-    "build:dev-stag:watch": "API=staging API_ORIGIN=onesignal.com bun run build:dev:watch",
-    "test": "vitest run --coverage",
-    "test:watch": "vitest watch --coverage",
+    "build:staging": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com vp run build",
+    "build:staging:watch": "ENV=staging BUILD_ORIGIN=staging.onesignal.com API=staging API_ORIGIN=staging.onesignal.com vp run build:watch",
+    "build:prod": "ENV=production API=production vp run build && size-limit",
+    "build:prod:watch": "ENV=production API=production vp run build:watch",
+    "postbuild:prod": "vp run validate:build",
+    "build:dev-dev": "API=development vp run build:dev",
+    "build:dev-dev:watch": "API=development vp run build:dev:watch",
+    "build:dev-prod": "API=production API_ORIGIN=onesignal.com vp run build:dev",
+    "build:dev-prod:watch": "API=production API_ORIGIN=onesignal.com vp run build:dev:watch",
+    "build:dev-stag": "API=staging API_ORIGIN=onesignal.com vp run build:dev",
+    "build:dev-stag:watch": "API=staging API_ORIGIN=onesignal.com vp run build:dev:watch",
+    "test": "vp test run --coverage",
+    "test:watch": "vp test watch --coverage",
     "validate:build": "node build/scripts/validate.js",
-    "lint": "oxlint src; prettier --check 'src/**/*' '__test__/**/*'",
-    "lint:fix": "oxlint src --fix; prettier --write 'src/**/*' '__test__/**/*'"
+    "lint": "vp check",
+    "lint:fix": "vp check --fix",
+    "prepare": "vp config"
   },
   "config": {
     "sdkVersion": "160602"
@@ -45,12 +46,11 @@
   "author": "OneSignal",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
-    "@size-limit/file": "^12.0.0",
+    "@size-limit/file": "12.0.0",
     "@types/bun": "^1.3.10",
     "@types/intl-tel-input": "^18.1.4",
     "@types/jsdom": "^28.0.0",
     "@types/jsonp": "^0.2.3",
-    "@types/uuid": "^11.0.0",
     "@vitest/coverage-v8": "4.0.18",
     "concurrently": "^9.2.1",
     "deepmerge": "^4.3.1",
@@ -58,37 +58,41 @@
     "intl-tel-input": "^25.15.1",
     "jsdom": "^28.1.0",
     "msw": "^2.12.10",
-    "oxlint": "^1.51.0",
-    "prettier": "3.8.1",
-    "terser": "^5.46.0",
+    "size-limit": "12.0.0",
+    "terser": "^5.46.1",
     "type-fest": "^5.4.4",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
     "vite-bundle-analyzer": "^1.3.6",
     "vite-plugin-mkcert": "^1.17.10",
-    "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "4.0.18"
+    "vite-plus": "latest"
   },
   "size-limit": [
     {
       "path": "./build/releases/OneSignalSDK.page.js",
-      "limit": "420 B",
+      "limit": "405 B",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "41.96 kB",
+      "limit": "42.23 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "12.272 kB",
+      "limit": "12.292 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.page.styles.css",
-      "limit": "6.61 kB",
+      "limit": "6.82 kB",
       "gzip": true
     }
-  ]
+  ],
+  "packageManager": "pnpm@10.32.1",
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+      "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+    }
+  }
 }

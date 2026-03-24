@@ -1,7 +1,6 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { mockDelay } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
@@ -56,7 +55,12 @@ const appId = APP_ID;
 const notificationId = 'test-notification-id';
 const version = __VERSION__;
 
-mockDelay();
+vi.mock('src/shared/helpers/general', async (importOriginal) => {
+  const mod =
+    await importOriginal<typeof import('src/shared/helpers/general')>();
+  return { ...mod, delay: vi.fn(() => Promise.resolve()) };
+});
+
 vi.spyOn(OperationRepo.prototype, '_start').mockResolvedValue(undefined);
 
 vi.mock('src/sw/helpers/CancelableTimeout', () => ({

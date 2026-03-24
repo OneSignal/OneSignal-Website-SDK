@@ -1,5 +1,5 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import type { MockInstance } from 'vitest';
+import type { MockInstance } from 'vite-plus/test';
 import * as detect from 'src/shared/useragent/detect';
 import * as utils from 'src/shared/utils/utils';
 import { Browser } from 'src/shared/useragent/constants';

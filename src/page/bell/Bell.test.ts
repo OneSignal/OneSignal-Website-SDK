@@ -1,5 +1,5 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 import Log from 'src/shared/libraries/Log';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Bell from './Bell';

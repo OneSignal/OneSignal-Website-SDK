@@ -1,4 +1,4 @@
-/// <reference types="vite/client" />
+/// <reference types="vite-plus/client" />
 
 /**
  * The version of the SDK in package.json (config.sdkVersion)
