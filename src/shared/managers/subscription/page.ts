@@ -162,7 +162,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * @returns {Promise<boolean>}
    */
 
-  public async _unsubscribe(strategy: UnsubscriptionStrategyValue) {
+  public _unsubscribe(strategy: UnsubscriptionStrategyValue) {
     if (strategy === UnsubscriptionStrategy._DestroySubscription) {
       throw NotImplementedError;
     } else if (strategy === UnsubscriptionStrategy._MarkUnsubscribed) {
@@ -200,10 +200,9 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
     const workerRegistration =
       await this._context._serviceWorkerManager._getOneSignalRegistration();
-    const notificationPermission =
-      await this._context._permissionManager._getNotificationPermission(
-        this._context._appConfig.safariWebId,
-      );
+    const notificationPermission = this._context._permissionManager._getNotificationPermission(
+      this._context._appConfig.safariWebId,
+    );
     if (!workerRegistration) {
       /* You can't be subscribed without a service worker registration */
       return {
@@ -307,7 +306,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       We'll show the permissionPromptDisplay event if the Safari user isn't already subscribed,
       otherwise an already subscribed Safari user would not see the permission request again.
     */
-    void OneSignalEvent._trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+    OneSignalEvent._trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     const deviceToken = await this._subscribeSafariPromptPermission();
     void triggerNotificationPermissionChanged();
     if (deviceToken) {
@@ -367,7 +366,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (Notification.permission === 'default') {
-      await OneSignalEvent._trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+      OneSignalEvent._trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
       const permission = await SubscriptionManagerPage._requestPresubscribeNotificationPermission();
 
       /*
@@ -402,11 +401,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         // subscription was created so the customer knows this failed by seeing
         // subscriptions in this state on the OneSignal dashboard.
         if (err.status === 403) {
-          await this._context._subscriptionManager._registerFailedSubscription(
+          this._context._subscriptionManager._registerFailedSubscription(
             NotificationType._ServiceWorkerStatus403,
           );
         } else if (err.status === 404) {
-          await this._context._subscriptionManager._registerFailedSubscription(
+          this._context._subscriptionManager._registerFailedSubscription(
             NotificationType._ServiceWorkerStatus404,
           );
         }
@@ -427,9 +426,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * Do it only once for the first page view.
    * @param subscriptionState Describes what went wrong with the service worker installation.
    */
-  public async _registerFailedSubscription(
-    subscriptionState: SubscriptionStateServiceWorkerNotIntalled,
-  ) {
+  public _registerFailedSubscription(subscriptionState: SubscriptionStateServiceWorkerNotIntalled) {
     if (isFirstPageView()) {
       void this._context._subscriptionManager._registerSubscription(
         new RawPushSubscription(),

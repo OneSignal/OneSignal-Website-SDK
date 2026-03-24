@@ -75,7 +75,7 @@ describe('LoginUserOperationExecutor', () => {
     );
   };
 
-  test('should return correct operations (names)', async () => {
+  test('should return correct operations (names)', () => {
     const executor = getExecutor();
 
     expect(executor._operations).toEqual([OPERATION_NAME._LoginUser]);

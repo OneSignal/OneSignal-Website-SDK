@@ -21,12 +21,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/tes
 
 import NotificationsNamespace from './NotificationsNamespace';
 
-beforeEach(async () => {
+beforeEach(() => {
   TestEnvironment.initialize();
 });
 
 afterEach(() => {
-  void OneSignal.setConsentRequired(false);
+  OneSignal.setConsentRequired(false);
 });
 
 test('should set the default url', async () => {
@@ -60,7 +60,7 @@ test('should set the default title', async () => {
 const warnSpy = vi.spyOn(Log, '_warn');
 describe('Consent Required', () => {
   beforeEach(() => {
-    void OneSignal.setConsentRequired(true);
+    OneSignal.setConsentRequired(true);
     TestEnvironment.initialize();
   });
 

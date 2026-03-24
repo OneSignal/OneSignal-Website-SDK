@@ -25,7 +25,7 @@ export default class TagManager implements ITagManager {
   /**
    * @returns Promise resolving TagsObject if successful, {} if no change detected, null if failed
    */
-  public async _sendTags(): Promise<TagsObjectForApi> {
+  public _sendTags(): TagsObjectForApi {
     Log._info('Local tags:', this._tagsFromTaggingContainer);
 
     const localTagsConvertedToApi = convertTagsBooleansToApi(this._tagsFromTaggingContainer);

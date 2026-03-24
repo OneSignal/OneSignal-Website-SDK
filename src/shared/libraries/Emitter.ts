@@ -122,7 +122,7 @@ export default class Emitter {
    * @param event - String of the event name
    * @param args - Variable number of args to pass to the functions subscribe to the event
    */
-  public async _emit(...args: any[]): Promise<Emitter> {
+  public _emit(...args: any[]): Emitter {
     const event = args.shift();
     let listeners = this._events[event];
 

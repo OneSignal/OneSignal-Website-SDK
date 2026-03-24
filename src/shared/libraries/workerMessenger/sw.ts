@@ -17,7 +17,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
    * synchronously add self.addEventListener('message') if we are running in the
    * service worker.
    */
-  public async _listen() {
+  public _listen() {
     self.addEventListener('message', this._onWorkerMessageReceivedFromPage.bind(this));
     Log._debug('[WM] SW listening');
   }
@@ -73,7 +73,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
   /**
    * Sends a postMessage() to the supplied windowClient
    */
-  async _unicast(
+  _unicast(
     command: WorkerMessengerCommandValue,
     payload?: WorkerMessengerPayload,
     windowClient?: Client,

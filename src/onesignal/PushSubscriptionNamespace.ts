@@ -50,7 +50,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
     OneSignal._emitter.on(
       OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-      async (change: SubscriptionChangeEvent | undefined) => {
+      (change: SubscriptionChangeEvent | undefined) => {
         this._id = change?.current.id;
         this._token = change?.current.token;
       },
@@ -58,7 +58,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
     OneSignal._emitter.on(
       OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-      async (permission: NotificationPermission) => {
+      (permission: NotificationPermission) => {
         this._permission = permission;
       },
     );
@@ -123,9 +123,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
     subscriptionFromDb.optedOut = !enabled;
     await setSubscription(subscriptionFromDb);
-    onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch((e) => {
-      Log._error(e);
-    });
+    onInternalSubscriptionSet(subscriptionFromDb.optedOut);
     checkAndTriggerSubscriptionChanged().catch((e) => {
       Log._error(e);
     });

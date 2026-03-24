@@ -14,7 +14,7 @@ describe('pageSdkInit', () => {
     TestEnvironment.initialize();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     vi.resetModules();
     localStorage.clear();
     sessionStorage.clear();
@@ -36,7 +36,7 @@ describe('pageSdkInit', () => {
     const logoutSpy = vi.spyOn(window.OneSignal, 'logout');
 
     await vi.waitUntil(
-      async () => {
+      () => {
         return logoutSpy.mock.calls.length > 0;
       },
       { interval: 1 },

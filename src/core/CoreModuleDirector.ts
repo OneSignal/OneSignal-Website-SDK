@@ -82,7 +82,7 @@ export class CoreModuleDirector {
     return subscriptions.filter((s) => s.type === SubscriptionType._Email);
   }
 
-  public async _hasEmail(): Promise<boolean> {
+  public _hasEmail(): boolean {
     const emails = this._getEmailSubscriptionModels();
     return Object.keys(emails).length > 0;
   }
@@ -93,7 +93,7 @@ export class CoreModuleDirector {
     return subscriptions.filter((s) => s.type === SubscriptionType._SMS);
   }
 
-  public async _hasSms(): Promise<boolean> {
+  public _hasSms(): boolean {
     const smsModels = this._getSmsSubscriptionModels();
     return Object.keys(smsModels).length > 0;
   }

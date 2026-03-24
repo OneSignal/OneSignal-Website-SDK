@@ -36,7 +36,7 @@ export abstract class ModelStoreListener<TModel extends Model> {
     }
   }
 
-  async _onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): Promise<void> {
+  _onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): void {
     if (tag !== ModelChangeTags._Normal) {
       return;
     }
@@ -52,7 +52,7 @@ export abstract class ModelStoreListener<TModel extends Model> {
     }
   }
 
-  async _onModelRemoved(model: TModel, tag: ModelChangeTagValue): Promise<void> {
+  _onModelRemoved(model: TModel, tag: ModelChangeTagValue): void {
     if (tag !== ModelChangeTags._Normal) {
       return;
     }

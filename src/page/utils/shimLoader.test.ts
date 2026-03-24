@@ -9,7 +9,7 @@ const supportsSpy = vi
 const isIosSafariSpy = vi.spyOn(useragentHelpers, 'isIosSafari').mockReturnValue(false);
 
 describe('OneSignalShimLoader', () => {
-  test('start should load the page script', async () => {
+  test('start should load the page script', () => {
     start();
 
     // should load the page script if supported

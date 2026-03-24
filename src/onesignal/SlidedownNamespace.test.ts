@@ -9,7 +9,7 @@ const warnSpy = vi.spyOn(Log, '_warn');
 describe('Consent Required', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
-    void OneSignal.setConsentRequired(true);
+    OneSignal.setConsentRequired(true);
   });
 
   test('should not show slidedown if consent is required but not given', async () => {

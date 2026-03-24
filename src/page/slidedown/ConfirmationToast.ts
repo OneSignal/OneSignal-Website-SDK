@@ -16,7 +16,7 @@ export default class ConfirmationToast {
     this._message = message;
   }
 
-  async _show(): Promise<void> {
+  _show(): void {
     const toastElement = document.createElement('div');
     const toastText = document.createElement('p');
 
@@ -46,11 +46,11 @@ export default class ConfirmationToast {
       isMobileBrowser() ? SLIDEDOWN_CSS_CLASSES._SlideUp : SLIDEDOWN_CSS_CLASSES._SlideDown,
     );
 
-    void ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.SHOWN);
+    ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.SHOWN);
   }
 
-  static async _triggerSlidedownEvent(eventName: string): Promise<void> {
-    await OneSignalEvent._trigger(eventName);
+  static _triggerSlidedownEvent(eventName: string): void {
+    OneSignalEvent._trigger(eventName);
   }
 
   _close(): void {

@@ -18,7 +18,7 @@ describe('PromptsManager', () => {
     TestEnvironment.initialize();
   });
 
-  test('_shouldForceSlidedownOverNative returns true on Chrome>=63 mobile/tablet', async () => {
+  test('_shouldForceSlidedownOverNative returns true on Chrome>=63 mobile/tablet', () => {
     getBrowserNameSpy.mockReturnValue(Browser._Chrome);
     getBrowserVersionSpy.mockReturnValue(70);
     isMobileBrowserSpy.mockReturnValue(true);
@@ -29,7 +29,7 @@ describe('PromptsManager', () => {
     expect(pm['_shouldForceSlidedownOverNative']()).toBe(true);
   });
 
-  test('_shouldForceSlidedownOverNative returns true when requiresUserInteraction', async () => {
+  test('_shouldForceSlidedownOverNative returns true when requiresUserInteraction', () => {
     getBrowserNameSpy.mockReturnValue(Browser._Firefox);
     getBrowserVersionSpy.mockReturnValue(100);
     isMobileBrowserSpy.mockReturnValue(false);
@@ -64,7 +64,7 @@ describe('PromptsManager', () => {
     expect(slidedownSpy).toHaveBeenCalled();
   });
 
-  test('_spawnAutoPrompts triggers native when condition met and not forced', async () => {
+  test('_spawnAutoPrompts triggers native when condition met and not forced', () => {
     const pm = new PromptsManager(OneSignal._context);
     const getOptsSpy = vi
       .spyOn(pm, '_getDelayedPromptOptions' as keyof PromptsManager)
@@ -85,7 +85,7 @@ describe('PromptsManager', () => {
     getBrowserNameSpy.mockReturnValue(Browser._Chrome);
     getBrowserVersionSpy.mockReturnValue(62);
 
-    await pm._spawnAutoPrompts();
+    pm._spawnAutoPrompts();
 
     expect(getOptsSpy).toHaveBeenCalled();
     expect(condSpy).toHaveBeenCalled();

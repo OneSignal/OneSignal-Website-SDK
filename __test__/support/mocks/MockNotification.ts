@@ -93,12 +93,12 @@ export default class MockNotification implements Notification {
     _options?: boolean | EventListenerOptions,
   ): void {}
 
-  static async requestPermission(
+  static requestPermission(
     callback?: NotificationPermissionCallback,
   ): Promise<NotificationPermission> {
     if (callback) {
       callback(MockNotification.permission);
     }
-    return MockNotification.permission;
+    return Promise.resolve(MockNotification.permission);
   }
 }

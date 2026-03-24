@@ -202,7 +202,7 @@ describe('Bell', () => {
       };
       const dialogHideSpy = vi.spyOn(bell._dialog, '_hide');
 
-      await OneSignal._emitter._emit(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, {
+      OneSignal._emitter._emit(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, {
         current: { optedIn: true },
       });
 
@@ -226,7 +226,7 @@ describe('Bell', () => {
       };
       const dialogHideSpy = vi.spyOn(bell._dialog, '_hide');
 
-      await OneSignal._emitter._emit(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, {
+      OneSignal._emitter._emit(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, {
         current: { optedIn: true },
       });
 
@@ -290,7 +290,7 @@ describe('Bell', () => {
       };
       const setStateSpy = vi.spyOn(bell, '_setState');
 
-      await OneSignal._emitter._emit(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, {
+      OneSignal._emitter._emit(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, {
         current: { optedIn: true },
       });
 

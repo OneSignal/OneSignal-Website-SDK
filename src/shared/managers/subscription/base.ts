@@ -102,7 +102,7 @@ export class SubscriptionManagerBase<C extends ContextSWInterface | ContextInter
     await setSubscription(subscription);
 
     if (!IS_SERVICE_WORKER) {
-      void OneSignalEvent._trigger(OneSignal.EVENTS.REGISTERED);
+      OneSignalEvent._trigger(OneSignal.EVENTS.REGISTERED);
     }
 
     if (typeof OneSignal !== 'undefined') {

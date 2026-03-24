@@ -1,11 +1,10 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import MockNotification from '__test__/support/mocks/MockNotification';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
-import { beforeEach, expect, test, vi } from 'vite-plus/test';
+import { beforeEach, expect, test } from 'vite-plus/test';
 
 import OneSignal from '../../onesignal/OneSignal';
 import { db } from '../database/client';
-import { delay } from './general';
 import { triggerNotificationPermissionChanged } from './permissions';
 
 function expectPermissionChangeEvent(expectedPermission: boolean): Promise<void> {
@@ -61,13 +60,6 @@ test('Should update Notification.permission in time', async () => {
   // setup NotificationsNamespace with permission granted
   TestEnvironment.initialize({
     permission: 'granted',
-  });
-
-  // simulating delay permission change event to fire after permission boolean change event
-  const originalEmit = OneSignal._emitter._emit.bind(OneSignal._emitter);
-  vi.spyOn(OneSignal._emitter, '_emit').mockImplementation(async (...args: any[]) => {
-    if (args[0] === 'permissionChangeAsString') await delay(100);
-    return originalEmit(...args);
   });
 
   await db.put('Options', {

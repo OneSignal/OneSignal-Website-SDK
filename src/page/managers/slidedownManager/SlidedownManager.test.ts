@@ -186,7 +186,7 @@ const warnSpy = vi.spyOn(Log, '_warn');
 describe('Consent Required', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
-    void OneSignal.setConsentRequired(true);
+    OneSignal.setConsentRequired(true);
   });
 
   test('should not show slidedown if consent is required but not given', async () => {
@@ -279,7 +279,7 @@ const subscribeFcmFromPageSpy = vi.spyOn(
 
 const mockSubscribeCall = () => {
   const rawPushSubscription = getRawPushSubscription();
-  subscribeFcmFromPageSpy.mockImplementation(async () => rawPushSubscription);
+  subscribeFcmFromPageSpy.mockImplementation(() => Promise.resolve(rawPushSubscription));
 };
 
 Object.defineProperty(global.navigator, 'serviceWorker', {

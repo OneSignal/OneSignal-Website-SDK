@@ -57,7 +57,12 @@ export default defineConfig({
       enabled: true,
     },
   },
-  lint: { options: { typeAware: true, typeCheck: true } },
+  lint: {
+    rules: {
+      'typescript/require-await': 'error',
+    },
+    options: { typeAware: true, typeCheck: true },
+  },
   resolve: {
     tsconfigPaths: true,
     alias: isTest

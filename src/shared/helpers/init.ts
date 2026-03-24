@@ -86,11 +86,11 @@ async function sessionInit(): Promise<void> {
   await db.put('Options', { key: 'isPushEnabled', value: !!isSubscribed });
 
   if (OneSignal.config?.userConfig.promptOptions?.autoPrompt && !isOptedOut) {
-    void OneSignal._context._promptsManager._spawnAutoPrompts();
+    OneSignal._context._promptsManager._spawnAutoPrompts();
   }
 
   OneSignal._sessionInitAlreadyRunning = false;
-  await OneSignalEvent._trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  OneSignalEvent._trigger(OneSignal.EVENTS.SDK_INITIALIZED);
 }
 
 export async function registerForPushNotifications(): Promise<boolean> {
@@ -125,7 +125,7 @@ export async function onSdkInitialized() {
     await OneSignal._context._updateManager._sendOnSessionUpdate();
   }
 
-  await OneSignalEvent._trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
+  OneSignalEvent._trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
 }
 
 /** Helper methods */
@@ -144,29 +144,31 @@ async function storeInitialValues() {
   });
 }
 
-async function setWelcomeNotificationFlag(): Promise<void> {
+function setWelcomeNotificationFlag(): Promise<void> {
   /*
    * If the user has already granted permission, the user has previously
    * already subscribed. Don't show welcome notifications if the user is
    * automatically resubscribed.
    */
   const permission: NotificationPermission =
-    await OneSignal._context._permissionManager._getNotificationPermission(
+    OneSignal._context._permissionManager._getNotificationPermission(
       OneSignal._context._appConfig.safariWebId,
     );
   if (permission === 'granted') {
     OneSignal._doNotShowWelcomeNotification = true;
   }
+  return Promise.resolve();
 }
 
-async function establishServiceWorkerChannel(): Promise<void> {
+function establishServiceWorkerChannel(): Promise<void> {
   if (navigator.serviceWorker && window.isSecureContext) {
     try {
-      await OneSignal._context._serviceWorkerManager._establishServiceWorkerChannel();
+      OneSignal._context._serviceWorkerManager._establishServiceWorkerChannel();
     } catch (e) {
       Log._error(e);
     }
   }
+  return Promise.resolve();
 }
 
 /** Entry method for any environment that sets expiring subscriptions. */
@@ -197,7 +199,7 @@ async function doInitialize(): Promise<void> {
   promises.push(installNativePromptPermissionChangedHook());
   promises.push(setWelcomeNotificationFlag());
   promises.push(establishServiceWorkerChannel());
-  promises.push(showNotifyButton());
+  showNotifyButton();
   promises.push(showPromptsFromWebConfigEditor());
 
   try {
@@ -208,7 +210,7 @@ async function doInitialize(): Promise<void> {
   }
 }
 
-async function showNotifyButton() {
+function showNotifyButton() {
   if (!IS_SERVICE_WORKER && !OneSignal._notifyButton) {
     OneSignal.config!.userConfig.notifyButton = OneSignal.config!.userConfig.notifyButton || {};
     if (OneSignal.config!.userConfig.bell) {
@@ -369,7 +371,7 @@ async function handleAutoResubscribe(isOptedOut: boolean) {
   });
   if (OneSignal.config?.userConfig.autoResubscribe && !isOptedOut) {
     const currentPermission: NotificationPermission =
-      await OneSignal._context._permissionManager._getNotificationPermission(
+      OneSignal._context._permissionManager._getNotificationPermission(
         OneSignal._context._appConfig.safariWebId,
       );
     if (currentPermission == 'granted') {

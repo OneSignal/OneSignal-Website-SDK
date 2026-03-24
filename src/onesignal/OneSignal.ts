@@ -165,7 +165,7 @@ export default class OneSignal {
   private static async _delayedInit(): Promise<void> {
     OneSignal._pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
-    void OneSignal._context._workerMessenger._listen();
+    OneSignal._context._workerMessenger._listen();
 
     async function __init() {
       if (OneSignal._initAlreadyCalled) return;
@@ -224,7 +224,7 @@ export default class OneSignal {
     if (consent && OneSignal._pendingInit) await OneSignal._delayedInit();
   }
 
-  static async setConsentRequired(requiresConsent: boolean): Promise<void> {
+  static setConsentRequired(requiresConsent: boolean): void {
     logMethodCall('setConsentRequired', { requiresConsent });
 
     if (typeof requiresConsent === 'undefined') {
@@ -246,7 +246,7 @@ export default class OneSignal {
    * @Example
    *  OneSignalDeferred.push(function(onesignal) { onesignal.functionName(param1, param2); });
    */
-  static async push(item: OneSignalDeferredLoadedCallback) {
+  static push(item: OneSignalDeferredLoadedCallback): void | PromiseLike<void> {
     return processItem(OneSignal, item);
   }
 
@@ -276,7 +276,10 @@ export default class OneSignal {
   /* END NEW USER MODEL CHANGES */
 }
 
-function processItem(oneSignalInstance: typeof OneSignal, item: OneSignalDeferredLoadedCallback) {
+function processItem(
+  oneSignalInstance: typeof OneSignal,
+  item: OneSignalDeferredLoadedCallback,
+): void | PromiseLike<void> {
   if (typeof item === 'function') return item(oneSignalInstance);
   else {
     throw new Error('Callback is not a function');

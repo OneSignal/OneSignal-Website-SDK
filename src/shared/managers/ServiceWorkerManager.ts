@@ -107,15 +107,14 @@ export class ServiceWorkerManager {
   }
 
   public async _getWorkerVersion(): Promise<string> {
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise<string>(async (resolve) => {
+    return new Promise<string>((resolve) => {
       this._context._workerMessenger._once(
         WorkerMessengerCommand._WorkerVersion,
         (workerVersion) => {
           resolve(workerVersion);
         },
       );
-      await this._context._workerMessenger._unicast(WorkerMessengerCommand._WorkerVersion);
+      this._context._workerMessenger._unicast(WorkerMessengerCommand._WorkerVersion);
     });
   }
 
@@ -137,7 +136,7 @@ export class ServiceWorkerManager {
       workerState === ServiceWorkerActiveState._None ||
       workerState === ServiceWorkerActiveState._ThirdParty
     ) {
-      const permission = await OneSignal._context._permissionManager._getNotificationPermission(
+      const permission = OneSignal._context._permissionManager._getNotificationPermission(
         OneSignal.config!.safariWebId,
       );
       const notificationsEnabled = permission === 'granted';
@@ -222,14 +221,14 @@ export class ServiceWorkerManager {
     return false;
   }
 
-  public async _establishServiceWorkerChannel() {
+  public _establishServiceWorkerChannel() {
     Log._debug('establishSWChannel');
     const workerMessenger = this._context._workerMessenger;
     workerMessenger._off();
 
     workerMessenger._on(
       WorkerMessengerCommand._NotificationWillDisplay,
-      async (event: NotificationForegroundWillDisplayEventSerializable) => {
+      (event: NotificationForegroundWillDisplayEventSerializable) => {
         Log._debug(location.origin, 'Notif display event from SW');
 
         let preventDefaultCalled = false;
@@ -240,7 +239,7 @@ export class ServiceWorkerManager {
             ...event.notification,
             display: () => {
               Log._debug(`display() called: ${notificationId}`);
-              void workerMessenger._unicast(WorkerMessengerCommand._DisplayNotification, {
+              workerMessenger._unicast(WorkerMessengerCommand._DisplayNotification, {
                 notification: event.notification,
               });
             },
@@ -252,11 +251,11 @@ export class ServiceWorkerManager {
         };
 
         // Trigger the event and let listeners call preventDefault() synchronously
-        await OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, publicEvent);
+        OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, publicEvent);
 
         // Send response back to service worker
         Log._debug(`preventDefault response: ${preventDefaultCalled} for: ${notificationId}`);
-        await workerMessenger._unicast(WorkerMessengerCommand._NotificationWillDisplayResponse, {
+        workerMessenger._unicast(WorkerMessengerCommand._NotificationWillDisplayResponse, {
           notificationId,
           preventDefault: preventDefaultCalled,
         });
@@ -265,7 +264,7 @@ export class ServiceWorkerManager {
 
     workerMessenger._on(
       WorkerMessengerCommand._NotificationClicked,
-      async (event: NotificationClickEventInternal) => {
+      (event: NotificationClickEventInternal) => {
         const clickedListenerCallbackCount = OneSignal._emitter._numberOfListeners(
           OneSignal.EVENTS.NOTIFICATION_CLICKED,
         );
@@ -290,13 +289,13 @@ export class ServiceWorkerManager {
         */
           Log._debug('Click event with no listeners, storing for later');
         } else {
-          await triggerNotificationClick(event);
+          triggerNotificationClick(event);
         }
       },
     );
 
-    workerMessenger._on(WorkerMessengerCommand._NotificationDismissed, async (data) => {
-      await OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
+    workerMessenger._on(WorkerMessengerCommand._NotificationDismissed, (data) => {
+      OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
 
     const isSafari = hasSafariWindow();
@@ -386,7 +385,7 @@ export class ServiceWorkerManager {
 
     Log._debug('SW active');
 
-    await this._establishServiceWorkerChannel();
+    this._establishServiceWorkerChannel();
     return registration;
   }
 }

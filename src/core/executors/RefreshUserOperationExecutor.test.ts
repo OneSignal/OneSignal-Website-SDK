@@ -72,7 +72,7 @@ describe('RefreshUserOperationExecutor', () => {
     );
   };
 
-  test('should return correct operations (names)', async () => {
+  test('should return correct operations (names)', () => {
     const executor = getExecutor();
     expect(executor._operations).toEqual([OPERATION_NAME._RefreshUser]);
   });
@@ -89,7 +89,7 @@ describe('RefreshUserOperationExecutor', () => {
   });
 
   describe('getUser', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       // Set up initial model state
       updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     });

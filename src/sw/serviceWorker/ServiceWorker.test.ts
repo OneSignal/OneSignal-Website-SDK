@@ -712,7 +712,7 @@ describe('ServiceWorker', () => {
       subscriptionToken: endpoint + '/',
     };
 
-    beforeEach(async () => {
+    beforeEach(() => {
       isServiceWorker = true;
     });
 

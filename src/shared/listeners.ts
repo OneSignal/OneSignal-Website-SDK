@@ -67,15 +67,15 @@ export async function checkAndTriggerSubscriptionChanged() {
 }
 
 function triggerSubscriptionChanged(change: SubscriptionChangeEvent) {
-  void OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
+  OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
 }
 
-export function triggerNotificationClick(event: NotificationClickEventInternal): Promise<void> {
+export function triggerNotificationClick(event: NotificationClickEventInternal): void {
   const publicEvent: NotificationClickEvent = {
     notification: event.notification,
     result: event.result,
   };
-  return OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, publicEvent);
+  OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, publicEvent);
 }
 
 const getUserState = async (): Promise<UserState> => {
@@ -131,14 +131,10 @@ export async function checkAndTriggerUserChanged() {
 }
 
 function triggerUserChanged(change: UserChangeEvent) {
-  void OneSignalEvent._trigger(
-    OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-    change,
-    UserNamespace._emitter,
-  );
+  OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change, UserNamespace._emitter);
 }
 
-async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
+function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   if (!OneSignal.config?.userConfig.notifyButton) return;
 
   const displayPredicate = OneSignal.config.userConfig.notifyButton.displayPredicate;
@@ -160,11 +156,11 @@ function onSubscriptionChanged_updateCustomLink() {
   }
 }
 
-export async function onInternalSubscriptionSet(optedOut: boolean) {
+export function onInternalSubscriptionSet(optedOut: boolean): void {
   limitStorePut('subscription.optedOut', optedOut);
 }
 
-async function onSubscriptionChanged_showWelcomeNotification(
+function onSubscriptionChanged_showWelcomeNotification(
   isSubscribed: boolean | undefined,
   pushSubscriptionId: string | undefined | null,
 ) {
@@ -220,25 +216,25 @@ async function onSubscriptionChanged_showWelcomeNotification(
     { __isOneSignalWelcomeNotification: true },
     undefined,
   );
-  void OneSignalEvent._trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+  OneSignalEvent._trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
     title: title,
     message: message,
     url: url,
   });
 }
 
-async function onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed?: boolean | null) {
+function onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed?: boolean | null) {
   if (isSubscribed !== true) return;
 
   const prompts = OneSignal._context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
   if (isCategorySlidedownConfigured(prompts)) {
-    await OneSignal._context._tagManager._sendTags();
+    OneSignal._context._tagManager._sendTags();
   }
 }
 
 export function _onSubscriptionChanged(change: SubscriptionChangeEvent | undefined) {
-  void onSubscriptionChanged_showWelcomeNotification(change?.current?.optedIn, change?.current?.id);
-  void onSubscriptionChanged_sendCategorySlidedownTags(change?.current?.optedIn);
-  void onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
+  onSubscriptionChanged_showWelcomeNotification(change?.current?.optedIn, change?.current?.id);
+  onSubscriptionChanged_sendCategorySlidedownTags(change?.current?.optedIn);
+  onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
   onSubscriptionChanged_updateCustomLink();
 }

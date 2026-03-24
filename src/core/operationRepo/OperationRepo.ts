@@ -73,7 +73,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public async _start(): Promise<void> {
     await this._loadSavedOperations();
-    void this._processQueueForever();
+    this._processQueueForever();
   }
 
   public _pause(): void {
@@ -135,7 +135,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
   }
 
-  private async _processQueueForever(): Promise<void> {
+  private _processQueueForever(): void {
     this._enqueueIntoBucket++;
     let runningOps = false;
 

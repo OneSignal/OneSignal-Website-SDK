@@ -28,7 +28,7 @@ export class SessionManager implements ISessionManager {
     this._context = context;
   }
 
-  async _notifySWToUpsertSession(
+  _notifySWToUpsertSession(
     onesignalId: string,
     subscriptionId: string,
     sessionOrigin: SessionOriginValue,
@@ -45,15 +45,16 @@ export class SessionManager implements ISessionManager {
     };
     if (supportsServiceWorkers()) {
       Log._debug('SW upsert session');
-      await this._context._workerMessenger._unicast(WorkerMessengerCommand._SessionUpsert, payload);
+      this._context._workerMessenger._unicast(WorkerMessengerCommand._SessionUpsert, payload);
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
       Log._debug('Upsert: no-op');
     }
+    return Promise.resolve();
   }
 
-  async _notifySWToDeactivateSession(
+  _notifySWToDeactivateSession(
     onesignalId: string,
     subscriptionId: string,
     sessionOrigin: SessionOriginValue,
@@ -70,15 +71,13 @@ export class SessionManager implements ISessionManager {
     };
     if (supportsServiceWorkers()) {
       Log._debug('SW deactivate session');
-      await this._context._workerMessenger._unicast(
-        WorkerMessengerCommand._SessionDeactivate,
-        payload,
-      );
+      this._context._workerMessenger._unicast(WorkerMessengerCommand._SessionDeactivate, payload);
     } else {
       // http w/o our iframe
       // we probably shouldn't even be here
       Log._debug('Deactivate: no-op');
     }
+    return Promise.resolve();
   }
 
   public async _getOneSignalAndSubscriptionIds(): Promise<{

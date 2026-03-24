@@ -123,7 +123,7 @@ export function run() {
   // delay for setting up test mocks like global.ServiceWorkerGlobalScope
   setTimeout(() => {
     // self.addEventListener('message') is statically added inside the listen() method
-    void workerMessenger._listen();
+    workerMessenger._listen();
 
     // Install messaging event handlers for page <-> service worker communication
     setupMessageListeners();
@@ -175,7 +175,7 @@ function setupMessageListeners() {
 
   workerMessenger._on(
     WorkerMessengerCommand._AreYouVisibleResponse,
-    async (payload: PageVisibilityResponse) => {
+    (payload: PageVisibilityResponse) => {
       Log._debug('[SW] AreYouVisible response', payload);
 
       const timestamp = payload.timestamp;
@@ -189,16 +189,13 @@ function setupMessageListeners() {
       }
     },
   );
-  workerMessenger._on(
-    WorkerMessengerCommand._SetLogging,
-    async (payload: { shouldLog: boolean }) => {
-      if (payload.shouldLog) {
-        self.shouldLog = true;
-      } else {
-        self.shouldLog = false;
-      }
-    },
-  );
+  workerMessenger._on(WorkerMessengerCommand._SetLogging, (payload: { shouldLog: boolean }) => {
+    if (payload.shouldLog) {
+      self.shouldLog = true;
+    } else {
+      self.shouldLog = false;
+    }
+  });
 
   workerMessenger._on(
     WorkerMessengerCommand._NotificationWillDisplayResponse,
@@ -437,7 +434,7 @@ async function refreshSession(
   const windowClients = await getWindowClients();
 
   if (options.isSafari) {
-    await checkIfAnyClientsFocusedAndUpdateSession(event, windowClients, options);
+    checkIfAnyClientsFocusedAndUpdateSession(event, windowClients, options);
   } else {
     const hasAnyActiveSessions: boolean = windowClients.some((w) => (w as WindowClient).focused);
     Log._debug('[SW] hasAnyActive', hasAnyActiveSessions);
@@ -445,11 +442,11 @@ async function refreshSession(
   }
 }
 
-async function checkIfAnyClientsFocusedAndUpdateSession(
+function checkIfAnyClientsFocusedAndUpdateSession(
   event: ExtendableMessageEvent,
   windowClients: ReadonlyArray<Client>,
   sessionInfo: UpsertOrDeactivateSessionPayload,
-): Promise<void> {
+): void {
   const timestamp = new Date().getTime();
   self.clientsStatus = {
     timestamp,
@@ -811,7 +808,7 @@ async function onNotificationClicked(event: NotificationEvent) {
         client.url === launchUrl ||
         (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)
       ) {
-        void workerMessenger._unicast(
+        workerMessenger._unicast(
           WorkerMessengerCommand._NotificationClicked,
           notificationClickEvent,
           client,

@@ -170,12 +170,12 @@ describe('Slidedown', () => {
   });
 
   describe('_onSlidedownAllowed', () => {
-    test('triggers allow click event', async () => {
+    test('triggers allow click event', () => {
       const sd = createSlidedown();
       const allowSpy = vi.fn();
       OneSignal._emitter.on(Slidedown.EVENTS.ALLOW_CLICK, allowSpy);
 
-      await sd._onSlidedownAllowed(null);
+      sd._onSlidedownAllowed(null);
 
       expect(allowSpy).toHaveBeenCalled();
     });
@@ -340,7 +340,7 @@ describe('manageNotifyButtonStateWhileSlidedownShows', () => {
     expect(OneSignal._emitter._numberOfListeners('slidedownClosed')).toBe(0);
   });
 
-  test('hides shown launcher', async () => {
+  test('hides shown launcher', () => {
     const bell = createBell();
     bell._launcher._show();
     OneSignal._notifyButton = bell;
@@ -349,7 +349,7 @@ describe('manageNotifyButtonStateWhileSlidedownShows', () => {
     expect(bell._launcher._shown).toBe(false);
   });
 
-  test('restores launcher when slidedown closes', async () => {
+  test('restores launcher when slidedown closes', () => {
     const bell = createBell();
     bell._launcher._show();
     OneSignal._notifyButton = bell;
@@ -357,7 +357,7 @@ describe('manageNotifyButtonStateWhileSlidedownShows', () => {
     manageNotifyButtonStateWhileSlidedownShows();
     expect(bell._launcher._shown).toBe(false);
 
-    await OneSignal._emitter._emit('slidedownClosed');
+    OneSignal._emitter._emit('slidedownClosed');
     expect(bell._launcher._shown).toBe(true);
   });
 
@@ -370,7 +370,7 @@ describe('manageNotifyButtonStateWhileSlidedownShows', () => {
     expect(OneSignal._emitter._numberOfListeners('slidedownClosed')).toBe(1);
   });
 
-  test('hides dialog popover when hiding launcher', async () => {
+  test('hides dialog popover when hiding launcher', () => {
     const bell = createBell();
     bell._launcher._show();
     const dialogHide = vi.spyOn(bell._dialog, '_hide');

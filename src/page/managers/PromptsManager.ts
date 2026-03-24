@@ -59,7 +59,7 @@ export class PromptsManager {
     );
   }
 
-  public async _spawnAutoPrompts() {
+  public _spawnAutoPrompts() {
     // user config prompt options
     const userPromptOptions = OneSignal.config?.userConfig.promptOptions;
 
@@ -278,7 +278,7 @@ export class PromptsManager {
     });
     OneSignal._emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       await this._context._slidedownManager._handleAllowClick();
-      void OneSignalEvent._trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
+      OneSignalEvent._trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
     });
     OneSignal._emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
       if (!this._context._slidedownManager._slidedown) {

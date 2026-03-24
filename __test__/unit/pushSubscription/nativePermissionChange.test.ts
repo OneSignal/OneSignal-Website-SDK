@@ -71,7 +71,7 @@ describe('Notification Types are set correctly on subscription change', () => {
     });
   });
 
-  describe('checkAndTriggerSubscriptionChanged', async () => {
+  describe('checkAndTriggerSubscriptionChanged', () => {
     const setAppState = async (appState: Partial<AppState>) => {
       const currentAppState = (await getOptionsValue<AppState>('appState'))!;
       await setDBAppState({

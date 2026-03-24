@@ -176,7 +176,7 @@ describe('Email Management', () => {
     return subscriptionModels.find((model) => model.token === email);
   };
 
-  test('can add an email subscription', async () => {
+  test('can add an email subscription', () => {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     identityModel._onesignalId = IDManager._createLocalId();
 
@@ -191,7 +191,7 @@ describe('Email Management', () => {
     expect(subscription?.token).toBe(email);
   });
 
-  test('should remove an email subscription', async () => {
+  test('should remove an email subscription', () => {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     identityModel._onesignalId = IDManager._createLocalId();
 
@@ -218,7 +218,7 @@ describe('SMS Management', () => {
     return subscriptionModels.find((model) => model.token === smsNumber);
   };
 
-  test('should add an SMS subscription', async () => {
+  test('should add an SMS subscription', () => {
     const userNamespace = new UserNamespace(true);
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     identityModel._onesignalId = IDManager._createLocalId();
@@ -234,7 +234,7 @@ describe('SMS Management', () => {
     expect(subscription?.token).toBe(smsNumber);
   });
 
-  test('should remove an SMS subscription', async () => {
+  test('should remove an SMS subscription', () => {
     const userNamespace = new UserNamespace(true);
     const smsNumber = '+15551234567';
 
@@ -479,7 +479,7 @@ describe('Custom Events', () => {
 
 describe('Consent Required', () => {
   beforeEach(async () => {
-    void OneSignal.setConsentRequired(true);
+    OneSignal.setConsentRequired(true);
     await OneSignal.setConsentGiven(false);
   });
 

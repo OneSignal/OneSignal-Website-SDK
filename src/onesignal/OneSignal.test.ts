@@ -72,7 +72,7 @@ const setupEnv = (consentRequired: boolean) => {
 };
 
 describe('OneSignal - No Consent Required', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     setupEnv(false);
   });
 
@@ -148,14 +148,14 @@ describe('OneSignal - No Consent Required', () => {
         expect(identityModel._getProperty('someLabel')).toBe('someId');
         expect(identityModel._getProperty('someLabel2')).toBe('someId2');
 
-        await vi.waitUntil(async () => addAliasFn.mock.calls.length === 2, {
+        await vi.waitUntil(() => addAliasFn.mock.calls.length === 2, {
           interval: 1,
         });
 
         OneSignal.User.removeAlias('someLabel');
         OneSignal.User.removeAlias('someLabel2');
 
-        await vi.waitUntil(async () => deleteAliasFn.mock.calls.length === 2, {
+        await vi.waitUntil(() => deleteAliasFn.mock.calls.length === 2, {
           interval: 1,
         });
 
@@ -750,7 +750,9 @@ describe('OneSignal - No Consent Required', () => {
             ModelChangeTags._NoPropogate,
           );
           void setPushToken('');
-          subscribeFcmFromPageSpy.mockImplementation(async () => getRawPushSubscription());
+          subscribeFcmFromPageSpy.mockImplementation(() =>
+            Promise.resolve(getRawPushSubscription()),
+          );
 
           // new/empty user
           setupIdentityModel(IDManager._createLocalId());
@@ -806,7 +808,7 @@ describe('OneSignal - No Consent Required', () => {
     });
 
     describe('logout', () => {
-      test('should not do anything if user has no external id', async () => {
+      test('should not do anything if user has no external id', () => {
         const identityModel = OneSignal._coreDirector._getIdentityModel();
         expect(identityModel._externalId).toBeUndefined();
 
@@ -1132,7 +1134,7 @@ describe('OneSignal - No Consent Required', () => {
       const changeEvent = vi.fn();
       OneSignal.User.PushSubscription.addEventListener('change', changeEvent);
 
-      subscribeFcmFromPageSpy.mockImplementation(async () => getRawPushSubscription());
+      subscribeFcmFromPageSpy.mockImplementation(() => Promise.resolve(getRawPushSubscription()));
 
       // @ts-expect-error - Notification is not defined in the global scope
       global.Notification = {
@@ -1227,7 +1229,7 @@ describe('OneSignal - Consent Required', () => {
     void OneSignal.setConsentGiven(false);
   });
 
-  test('cannot call login if consent is required but not given', async () => {
+  test('cannot call login if consent is required but not given', () => {
     void OneSignal.login('some-id');
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
 
@@ -1237,7 +1239,7 @@ describe('OneSignal - Consent Required', () => {
     expect(warnSpy).not.toHaveBeenCalled();
   });
 
-  test('cannot call logout if consent is required but not given', async () => {
+  test('cannot call logout if consent is required but not given', () => {
     void OneSignal.logout();
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
   });

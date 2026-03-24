@@ -125,18 +125,18 @@ export default class Slidedown {
     }
   }
 
-  static async _triggerSlidedownEvent(eventName: string): Promise<void> {
-    await OneSignalEvent._trigger(eventName);
+  static _triggerSlidedownEvent(eventName: string): void {
+    OneSignalEvent._trigger(eventName);
   }
 
-  async _onSlidedownAllowed(_: any): Promise<void> {
-    await Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
+  _onSlidedownAllowed(_: any): void {
+    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
   }
 
   _onSlidedownCanceled(_: any): void {
-    void Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
+    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
     this._close();
-    void Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
   }
 
   _close(): void {

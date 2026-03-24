@@ -57,7 +57,7 @@ describe('OperationRepo', () => {
     new Operation('2', GroupComparisonType._Create, 'abc'),
   ];
 
-  beforeEach(async () => {
+  beforeEach(() => {
     setConsentRequired(false);
 
     mockOperationModelStore = new OperationModelStore();
@@ -177,7 +177,7 @@ describe('OperationRepo', () => {
     });
   });
 
-  test('containsInstanceOf', async () => {
+  test('containsInstanceOf', () => {
     class MyOperation extends Operation {
       constructor() {
         super('id1');
@@ -537,9 +537,11 @@ class Operation extends OperationBase<{ value: string }> {
 }
 
 const mockOperation = new Operation('1', GroupComparisonType._Create, 'abc', '', '123');
-const executeFn: Mock<IOperationExecutor['_execute']> = vi.fn(async () => ({
-  _result: ExecutionResult._Success,
-}));
+const executeFn: Mock<IOperationExecutor['_execute']> = vi.fn(() =>
+  Promise.resolve({
+    _result: ExecutionResult._Success,
+  }),
+);
 
 const mockExecutor: IOperationExecutor = {
   _operations: [mockOperation._name],
