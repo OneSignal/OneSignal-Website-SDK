@@ -99,7 +99,7 @@ describe('ServiceWorkerManager', () => {
     OneSignal.config = savedConfig;
 
     vi.spyOn(mgr, '_getActiveState').mockResolvedValue(helpers.ServiceWorkerActiveState._None);
-    vi.spyOn(OneSignal._context._permissionManager, '_getNotificationPermission').mockResolvedValue(
+    vi.spyOn(OneSignal._context._permissionManager, '_getNotificationPermission').mockReturnValue(
       'granted',
     );
     await expect(mgr['_shouldInstallWorker']()).resolves.toBe(true);

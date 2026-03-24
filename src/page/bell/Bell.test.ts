@@ -294,7 +294,9 @@ describe('Bell', () => {
         current: { optedIn: true },
       });
 
-      expect(setStateSpy).toHaveBeenCalledWith(BellState._Subscribed, true);
+      await vi.waitFor(() => {
+        expect(setStateSpy).toHaveBeenCalledWith(BellState._Subscribed, true);
+      });
     });
   });
 
