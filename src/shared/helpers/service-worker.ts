@@ -206,11 +206,7 @@ async function finalizeSession(
   sendOnFocusEnabled: boolean,
   outcomesConfig: OutcomesConfig,
 ): Promise<void> {
-  Log._debug(
-    'Finalize session',
-    `started: ${new Date(session.startTimestamp).toISOString()}`,
-    `duration: ${session.accumulatedDuration}s`,
-  );
+  Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
   if (sendOnFocusEnabled) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
@@ -225,10 +221,7 @@ async function finalizeSession(
   }
 
   await Promise.all([cleanupCurrentSession(), clearStore('Outcomes.NotificationClicked')]);
-  Log._debug(
-    'Finalize session finished',
-    `started: ${new Date(session.startTimestamp).toISOString()}`,
-  );
+  Log._debug('Finalize session finished');
 }
 
 const resetSentUniqueOutcomes = async (): Promise<void> => {
