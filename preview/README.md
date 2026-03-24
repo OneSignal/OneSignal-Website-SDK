@@ -5,7 +5,6 @@
 ### Run Instructions
 
 1. `docker-compose up`
-
    - If SSL certs need to be created, this will be done for you automatically with the common name default setting `localhost` and alternative DNS names (this can be customized in `certs/gen-cert.sh`):
      - texas
      - california
@@ -14,13 +13,17 @@
 
 2. Follow the following instructions (also logged in console)
    - copy `dev-ssl.crt` from container to host with:
+
      ```
      docker cp "$(docker-compose ps -q onesignal-web-sdk-dev)":sdk/preview/certs/dev-ssl.crt .
      ```
+
      - If you're running the container in a VM, get the cert file onto the VM's host (e.g: use `scp`)
+
    - Add cert to system's trusted store
      - macOS: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain dev-ssl.crt`
      - Windows: `Import-Certificate -FilePath dev-ssl.crt -CertStoreLocation cert:\CurrentUser\Root`
+
 3. Make sure the common name (e.g: localhost, texas, oregon, etc...) maps to the correct IP in your `/etc/hosts` file
 4. Visit [https://localhost:4001?app_id=](https://localhost:4001?app_id=) and insert your app id as a URL query parameter
 
@@ -108,7 +111,6 @@ You may want to run the Web SDK Sandbox with the configuration `dev-dev`. You wi
    See above for example on using `texas` as the API environment option
 
 3. Make sure that the OneSignal container is using the URLs to your WebSDK container's build files. To do this,
-
    - change the URLs in the file `development.rb` so that they point to the files' absolute paths (these are the files in the `build` directory after running `npm run build:<>-<>`)
 
 ## Troubleshooting

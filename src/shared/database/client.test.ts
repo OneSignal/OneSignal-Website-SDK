@@ -1,9 +1,11 @@
 import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID } from '__test__/constants';
-import type * as idbLite from './idb-lite';
-import { wrapRequest } from './idb-lite';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import { SubscriptionType } from '../subscriptions/constants';
 import { closeDb, getDb } from './client';
 import { DATABASE_NAME } from './constants';
+import type * as idbLite from './idb-lite';
+import { wrapRequest } from './idb-lite';
 import type { IndexedDBSchema } from './types';
 
 let terminatedCallback = vi.hoisted(() => vi.fn(() => false));
@@ -77,9 +79,7 @@ describe('general', () => {
     await expect(
       // @ts-expect-error - for testing invalid value
       db.put('Options', ''),
-    ).rejects.toThrow(
-      'Data provided to an operation does not meet requirements.',
-    );
+    ).rejects.toThrow('Data provided to an operation does not meet requirements.');
   });
 
   test('can remove a value', async () => {
@@ -202,16 +202,12 @@ describe('migrations', () => {
       const db2 = await getDb(5);
       const result = await db2.getAll('Outcomes.NotificationClicked');
       // 4. Expect the that data is brought over to the new table.
-      expect(result).toEqual([
-        { appId: undefined, notificationId: '1', timestamp: undefined },
-      ]);
+      expect(result).toEqual([{ appId: undefined, notificationId: '1', timestamp: undefined }]);
     });
   });
 
   describe('v6', () => {
-    const populateLegacySubscriptions = async (
-      db: Awaited<ReturnType<typeof getDb>>,
-    ) => {
+    const populateLegacySubscriptions = async (db: Awaited<ReturnType<typeof getDb>>) => {
       await db.put('emailSubscriptions', {
         modelId: '1',
         modelName: 'emailSubscriptions',
@@ -288,11 +284,7 @@ describe('migrations', () => {
       ]);
 
       // old tables should be removed
-      const oldTableNames = [
-        'emailSubscriptions',
-        'pushSubscriptions',
-        'smsSubscriptions',
-      ];
+      const oldTableNames = ['emailSubscriptions', 'pushSubscriptions', 'smsSubscriptions'];
       for (const tableName of oldTableNames) {
         expect(db2.objectStoreNames).not.toContain(tableName);
       }

@@ -1,14 +1,9 @@
 import { ModelChangeTags } from 'src/core/types/models';
-import {
-  ExecutionResult,
-  type IOperationExecutor,
-} from 'src/core/types/operation';
-import {
-  getResponseStatusType,
-  ResponseStatusType,
-} from 'src/shared/helpers/network';
+import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operation';
+import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
+
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -23,18 +18,11 @@ import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { createNewUser } from '../requests/api';
-import type {
-  ICreateUserIdentity,
-  ICreateUserSubscription,
-  IUserProperties,
-} from '../types/api';
+import type { ICreateUserIdentity, ICreateUserSubscription, IUserProperties } from '../types/api';
 import type { ExecutionResponse } from '../types/operation';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
 
-type SubscriptionMap = Record<
-  string,
-  ICreateUserSubscription & { id?: string }
->;
+type SubscriptionMap = Record<string, ICreateUserSubscription & { id?: string }>;
 
 // Implements logic similar to Android's SDK's LoginUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/LoginUserOperationExecutor.kt
@@ -153,10 +141,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         operation instanceof UpdateSubscriptionOperation ||
         operation instanceof DeleteSubscriptionOperation
       ) {
-        subscriptions = this._createSubscriptionsFromOperation(
-          operation,
-          subscriptions,
-        );
+        subscriptions = this._createSubscriptionsFromOperation(operation, subscriptions);
       } else {
         throw new Error(`Unrecognized operation: ${operation._name}`);
       }
@@ -215,26 +200,16 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         if (!backendSub || !('id' in backendSub)) continue;
         idTranslations[localId] = backendSub.id;
 
-        const model =
-          this._subscriptionsModelStore._getBySubscriptionId(localId);
+        const model = this._subscriptionsModelStore._getBySubscriptionId(localId);
         model?._setProperty('id', backendSub.id, ModelChangeTags._Hydrate);
-        model?._setProperty(
-          'onesignalId',
-          backendOneSignalId,
-          ModelChangeTags._Hydrate,
-        );
+        model?._setProperty('onesignalId', backendOneSignalId, ModelChangeTags._Hydrate);
       }
 
-      checkAndTriggerUserChanged();
+      void checkAndTriggerUserChanged();
 
       const followUp =
         Object.keys(identity).length > 0
-          ? [
-              new RefreshUserOperation(
-                createUserOperation._appId,
-                backendOneSignalId,
-              ),
-            ]
+          ? [new RefreshUserOperation(createUserOperation._appId, backendOneSignalId)]
           : undefined;
 
       return {

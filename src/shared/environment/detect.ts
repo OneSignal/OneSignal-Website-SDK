@@ -10,8 +10,7 @@ import { API_ORIGIN, API_TYPE, IS_SERVICE_WORKER } from '../utils/env';
 
 export const isBrowser = () => typeof window !== 'undefined';
 
-export const hasSafariWindow = () =>
-  isBrowser() && typeof window.safari !== 'undefined';
+export const hasSafariWindow = () => isBrowser() && typeof window.safari !== 'undefined';
 
 export const supportsServiceWorkers = () => {
   if (IS_SERVICE_WORKER) return true;
@@ -29,9 +28,7 @@ export const supportsVapidPush =
   PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey');
 
 export const useSafariVapidPush = () =>
-  getBrowserName() === Browser._Safari &&
-  supportsVapidPush &&
-  !useSafariLegacyPush();
+  getBrowserName() === Browser._Safari && supportsVapidPush && !useSafariLegacyPush();
 
 // for determing the api url
 const API_URL_PORT = 3000;
@@ -54,9 +51,7 @@ export const getOneSignalApiUrl = ({
   if (API_TYPE === 'staging') return new URL(`https://${API_ORIGIN}/api/v1/`);
 
   if (API_TYPE === 'production')
-    return new URL(
-      legacy ? 'https://onesignal.com/api/v1/' : 'https://api.onesignal.com/',
-    );
+    return new URL(legacy ? 'https://onesignal.com/api/v1/' : 'https://api.onesignal.com/');
 
   throw new Error('Invalid API type');
 };
@@ -67,9 +62,7 @@ const isTurbineEndpoint = (action?: string): boolean => {
     return false;
   }
 
-  return TURBINE_ENDPOINTS.some(
-    (turbine_endpoint) => action.indexOf(turbine_endpoint) > -1,
-  );
+  return TURBINE_ENDPOINTS.some((turbine_endpoint) => action.indexOf(turbine_endpoint) > -1);
 };
 
 export const getSubscriptionType = (): SubscriptionTypeValue => {

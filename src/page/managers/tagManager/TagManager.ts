@@ -1,13 +1,11 @@
-import type {
-  TagsObjectForApi,
-  TagsObjectWithBoolean,
-} from 'src/page/tags/types';
+import type { TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags/types';
 import type { ContextInterface } from 'src/shared/context/types';
 import {
   convertTagsBooleansToApi,
   getObjectDifference,
   isTagObjectEmpty,
 } from 'src/shared/utils/tags';
+
 import Log from '../../../shared/libraries/Log';
 import type { ITagManager } from './types';
 
@@ -27,20 +25,15 @@ export default class TagManager implements ITagManager {
   /**
    * @returns Promise resolving TagsObject if successful, {} if no change detected, null if failed
    */
-  public async _sendTags(): Promise<TagsObjectForApi> {
+  public _sendTags(): TagsObjectForApi {
     Log._info('Local tags:', this._tagsFromTaggingContainer);
 
-    const localTagsConvertedToApi = convertTagsBooleansToApi(
-      this._tagsFromTaggingContainer,
-    );
-    const finalTagsObject = getObjectDifference(
-      localTagsConvertedToApi,
-      this._remoteTags,
-    );
+    const localTagsConvertedToApi = convertTagsBooleansToApi(this._tagsFromTaggingContainer);
+    const finalTagsObject = getObjectDifference(localTagsConvertedToApi, this._remoteTags);
 
     const shouldSendUpdate = !isTagObjectEmpty(finalTagsObject);
     if (shouldSendUpdate) {
-      await OneSignal.User.addTags(finalTagsObject);
+      OneSignal.User.addTags(finalTagsObject);
       return finalTagsObject;
     }
     Log._warn('No tag change detected');

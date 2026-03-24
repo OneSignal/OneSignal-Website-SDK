@@ -1,4 +1,5 @@
 import { IDManager } from 'src/shared/managers/IDManager';
+
 import { Model } from '../models/Model';
 
 export const GroupComparisonType = {
@@ -7,8 +8,7 @@ export const GroupComparisonType = {
   _None: 2,
 } as const;
 
-export type GroupComparisonValue =
-  (typeof GroupComparisonType)[keyof typeof GroupComparisonType];
+export type GroupComparisonValue = (typeof GroupComparisonType)[keyof typeof GroupComparisonType];
 
 type BaseOperation = {
   name: string;

@@ -5,18 +5,15 @@ import {
   SLIDEDOWN_CSS_CLASSES,
   SLIDEDOWN_CSS_IDS,
 } from 'src/shared/slidedown/constants';
+
 import type { SlidedownHtmlProps } from './types';
 
 export function getSlidedownElement(dialogProps: SlidedownHtmlProps): Element {
-  const { icon, messageText, positiveButtonText, negativeButtonText } =
-    dialogProps;
+  const { icon, messageText, positiveButtonText, negativeButtonText } = dialogProps;
 
-  const finalIcon =
-    icon === SLIDEDOWN_CSS_CLASSES._DefaultIcon ? DEFAULT_ICON : icon;
+  const finalIcon = icon === SLIDEDOWN_CSS_CLASSES._DefaultIcon ? DEFAULT_ICON : icon;
   const finalIconClass =
-    icon === SLIDEDOWN_CSS_CLASSES._DefaultIcon
-      ? SLIDEDOWN_CSS_CLASSES._DefaultIcon
-      : '';
+    icon === SLIDEDOWN_CSS_CLASSES._DefaultIcon ? SLIDEDOWN_CSS_CLASSES._DefaultIcon : '';
 
   const normalSlidedown = document.createElement('div');
   const slidedownBody = document.createElement('div');

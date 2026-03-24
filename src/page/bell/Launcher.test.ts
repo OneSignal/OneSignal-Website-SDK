@@ -1,4 +1,6 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
+
 import Bell from './Bell';
 import Launcher from './Launcher';
 
@@ -10,63 +12,61 @@ describe('Launcher', () => {
     `;
   });
 
-  test('_show adds active class', async () => {
+  test('_show adds active class', () => {
     const launcher = new Launcher(new Bell({ enable: false }));
     expect(launcher._shown).toBe(false);
-    await launcher._show();
+    launcher._show();
     expect(launcher._shown).toBe(true);
   });
 
-  test('_show is a no-op when already shown', async () => {
+  test('_show is a no-op when already shown', () => {
     const launcher = new Launcher(new Bell({ enable: false }));
-    await launcher._show();
+    launcher._show();
     const el = launcher._element!;
     const classCount = el.classList.length;
-    await launcher._show();
+    launcher._show();
     expect(el.classList.length).toBe(classCount);
   });
 
-  test('_hide removes active class', async () => {
+  test('_hide removes active class', () => {
     const launcher = new Launcher(new Bell({ enable: false }));
-    await launcher._show();
+    launcher._show();
     expect(launcher._shown).toBe(true);
-    await launcher._hide();
+    launcher._hide();
     expect(launcher._shown).toBe(false);
   });
 
-  test('_hide closes dialog popover', async () => {
+  test('_hide closes dialog popover', () => {
     const bell = new Bell({ enable: false });
     const launcher = new Launcher(bell);
     const dialogHide = vi.spyOn(bell._dialog, '_hide');
-    await launcher._show();
-    await launcher._hide();
+    launcher._show();
+    launcher._hide();
     expect(dialogHide).toHaveBeenCalled();
   });
 
-  test('_hide is a no-op when already hidden', async () => {
+  test('_hide is a no-op when already hidden', () => {
     const launcher = new Launcher(new Bell({ enable: false }));
     expect(launcher._shown).toBe(false);
-    await launcher._hide();
+    launcher._hide();
     expect(launcher._shown).toBe(false);
   });
 
-  test('_resize sets CSS variables for each size', async () => {
+  test('_resize sets CSS variables for each size', () => {
     const launcher = new Launcher(new Bell({ enable: false }));
     const el = launcher._element!;
 
-    await launcher._resize('small');
+    launcher._resize('small');
     expect(el.style.getPropertyValue('--bell-size')).toBe('32px');
     expect(el.style.getPropertyValue('--bell-resting-scale')).toBe('1');
     expect(el.style.getPropertyValue('--badge-font-size')).toBe('8px');
 
-    await launcher._resize('medium');
+    launcher._resize('medium');
     expect(el.style.getPropertyValue('--bell-size')).toBe('48px');
-    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe(
-      `${32 / 48}`,
-    );
+    expect(el.style.getPropertyValue('--bell-resting-scale')).toBe(`${32 / 48}`);
     expect(el.style.getPropertyValue('--badge-font-size')).toBe('12px');
 
-    await launcher._resize('large');
+    launcher._resize('large');
     expect(el.style.getPropertyValue('--bell-size')).toBe('64px');
     expect(el.style.getPropertyValue('--bell-resting-scale')).toBe('0.5');
     expect(el.style.getPropertyValue('--badge-font-size')).toBe('12px');

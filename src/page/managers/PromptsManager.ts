@@ -23,6 +23,7 @@ import {
   requiresUserInteraction,
 } from 'src/shared/useragent/detect';
 import { logMethodCall } from 'src/shared/utils/utils';
+
 import { markPromptDismissedWithType } from '../../shared/helpers/dismiss';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
@@ -58,7 +59,7 @@ export class PromptsManager {
     );
   }
 
-  public async _spawnAutoPrompts() {
+  public _spawnAutoPrompts() {
     // user config prompt options
     const userPromptOptions = OneSignal.config?.userConfig.promptOptions;
 
@@ -84,7 +85,7 @@ export class PromptsManager {
       forceSlidedownOverNative && conditionMetWithNativeOptions;
 
     if (conditionMetWithNativeOptions && !forceSlidedownWithNativeOptions) {
-      this._internalShowDelayedPrompt(
+      void this._internalShowDelayedPrompt(
         DelayedPromptType._Native,
         nativePromptOptions.timeDelay || 0,
       );
@@ -98,7 +99,7 @@ export class PromptsManager {
     );
 
     if (forceSlidedownWithNativeOptions && !isPushSlidedownConfigured) {
-      this._internalShowDelayedPrompt(
+      void this._internalShowDelayedPrompt(
         DelayedPromptType._Push,
         nativePromptOptions.timeDelay || 0,
       );
@@ -124,7 +125,7 @@ export class PromptsManager {
         };
 
         if (conditionMetWithSlidedownOptions) {
-          this._internalShowDelayedPrompt(
+          void this._internalShowDelayedPrompt(
             promptOptions.type,
             slidedownPromptOptions.timeDelay || 0,
             options,
@@ -188,7 +189,7 @@ export class PromptsManager {
     this._isNativePromptShowing = true;
     const success = await registerForPushNotifications();
     this._isNativePromptShowing = false;
-    markPromptDismissedWithType(DismissPrompt._Push);
+    void markPromptDismissedWithType(DismissPrompt._Push);
     return success;
   }
 
@@ -201,8 +202,7 @@ export class PromptsManager {
       options.slidedownPromptOptions = CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
     }
 
-    const sdkStylesLoadResult =
-      await this._context._dynamicResourceLoader._loadSdkStylesheet();
+    const sdkStylesLoadResult = await this._context._dynamicResourceLoader._loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState._Loaded) {
       Log._debug('Slidedown styles failed to load');
       return;
@@ -215,44 +215,24 @@ export class PromptsManager {
     await this._context._slidedownManager._createSlidedown(options);
   }
 
-  public async _internalShowCategorySlidedown(
-    options?: AutoPromptOptions,
-  ): Promise<void> {
+  public async _internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
     logMethodCall('internalShowCategorySlidedown');
-    await this._internalShowParticularSlidedown(
-      DelayedPromptType._Category,
-      options,
-    );
+    await this._internalShowParticularSlidedown(DelayedPromptType._Category, options);
   }
 
-  public async _internalShowSmsSlidedown(
-    options?: AutoPromptOptions,
-  ): Promise<void> {
+  public async _internalShowSmsSlidedown(options?: AutoPromptOptions): Promise<void> {
     logMethodCall('internalShowSmsSlidedown');
-    await this._internalShowParticularSlidedown(
-      DelayedPromptType._Sms,
-      options,
-    );
+    await this._internalShowParticularSlidedown(DelayedPromptType._Sms, options);
   }
 
-  public async _internalShowEmailSlidedown(
-    options?: AutoPromptOptions,
-  ): Promise<void> {
+  public async _internalShowEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
     logMethodCall('internalShowEmailSlidedown');
-    await this._internalShowParticularSlidedown(
-      DelayedPromptType._Email,
-      options,
-    );
+    await this._internalShowParticularSlidedown(DelayedPromptType._Email, options);
   }
 
-  public async _internalShowSmsAndEmailSlidedown(
-    options?: AutoPromptOptions,
-  ): Promise<void> {
+  public async _internalShowSmsAndEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
     logMethodCall('internalShowSmsAndEmailSlidedown');
-    await this._internalShowParticularSlidedown(
-      DelayedPromptType._SmsAndEmail,
-      options,
-    );
+    await this._internalShowParticularSlidedown(DelayedPromptType._SmsAndEmail, options);
   }
 
   /**
@@ -266,8 +246,7 @@ export class PromptsManager {
     typeToPullFromConfig: DelayedPromptTypeValue,
     options?: AutoPromptOptions,
   ): Promise<void> {
-    const prompts =
-      this._context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
+    const prompts = this._context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
     const slidedownPromptOptions =
       options?.slidedownPromptOptions ||
       getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
@@ -295,13 +274,11 @@ export class PromptsManager {
     });
     OneSignal._emitter.on(Slidedown.EVENTS.CLOSED, () => {
       this._context._slidedownManager._setIsSlidedownShowing(false);
-      this._context._slidedownManager._showQueued();
+      void this._context._slidedownManager._showQueued();
     });
     OneSignal._emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       await this._context._slidedownManager._handleAllowClick();
-      OneSignalEvent._trigger(
-        OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING,
-      );
+      OneSignalEvent._trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
     });
     OneSignal._emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
       if (!this._context._slidedownManager._slidedown) {
@@ -313,11 +290,11 @@ export class PromptsManager {
         case DelayedPromptType._Push:
         case DelayedPromptType._Category:
           Log._debug('Marking slidedown dismissed');
-          markPromptDismissedWithType(DismissPrompt._Push);
+          void markPromptDismissedWithType(DismissPrompt._Push);
           break;
         default:
           Log._debug('Marking slidedown dismissed');
-          markPromptDismissedWithType(DismissPrompt._NonPush);
+          void markPromptDismissedWithType(DismissPrompt._NonPush);
           break;
       }
     });

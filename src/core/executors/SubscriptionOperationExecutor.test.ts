@@ -17,11 +17,17 @@ import {
 } from '__test__/support/helpers/requests';
 import { setupSubscriptionModel } from '__test__/support/helpers/setup';
 import { setPushToken } from 'src/shared/database/subscription';
+import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import {
-  NotificationType,
-  SubscriptionType,
-} from 'src/shared/subscriptions/constants';
-import type { MockInstance } from 'vite-plus/test';
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from 'vite-plus/test';
+
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -70,10 +76,7 @@ describe('SubscriptionOperationExecutor', () => {
       propertiesModelStore,
       subscriptionsModelStore,
     );
-    getRebuildOpsSpy = vi.spyOn(
-      buildUserService,
-      '_getRebuildOperationsIfCurrentUser',
-    );
+    getRebuildOpsSpy = vi.spyOn(buildUserService, '_getRebuildOperationsIfCurrentUser');
   });
 
   const getExecutor = () => {
@@ -100,15 +103,9 @@ describe('SubscriptionOperationExecutor', () => {
     const ops = [someOp];
 
     const res1 = executor._execute(ops);
-    await expect(() => res1).rejects.toThrow(
-      `Unrecognized operation: ${ops[0]}`,
-    );
+    await expect(() => res1).rejects.toThrow(`Unrecognized operation: ${JSON.stringify(ops[0])}`);
 
-    const deleteOp = new DeleteSubscriptionOperation(
-      APP_ID,
-      ONESIGNAL_ID,
-      SUB_ID,
-    );
+    const deleteOp = new DeleteSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);
     const updateOp = new UpdateSubscriptionOperation({
       appId: APP_ID,
       onesignalId: ONESIGNAL_ID,
@@ -118,15 +115,9 @@ describe('SubscriptionOperationExecutor', () => {
     });
 
     const res2 = executor._execute([deleteOp, updateOp]);
-    await expect(() => res2).rejects.toThrow(
-      'Only supports one operation! Attempted operations:',
-    );
+    await expect(() => res2).rejects.toThrow('Only supports one operation! Attempted operations:');
 
-    const transferOp = new TransferSubscriptionOperation(
-      APP_ID,
-      ONESIGNAL_ID,
-      SUB_ID,
-    );
+    const transferOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);
     const res3 = executor._execute([transferOp, updateOp]);
     await expect(() => res3).rejects.toThrow(
       'TransferSubscriptionOperation only supports one operation! Attempted operations:',
@@ -168,9 +159,8 @@ describe('SubscriptionOperationExecutor', () => {
       });
 
       // Verify models were updated
-      const subscriptionModel = subscriptionModelStore._getBySubscriptionId(
-        BACKEND_SUBSCRIPTION_ID,
-      );
+      const subscriptionModel =
+        subscriptionModelStore._getBySubscriptionId(BACKEND_SUBSCRIPTION_ID);
       expect(subscriptionModel).toBeDefined();
     });
 
@@ -222,11 +212,7 @@ describe('SubscriptionOperationExecutor', () => {
         notification_types: NotificationType._Subscribed,
       });
 
-      const deleteOp = new DeleteSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        SUB_ID,
-      );
+      const deleteOp = new DeleteSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);
 
       const result = await executor._execute([createOp, deleteOp]);
       expect(result._result).toBe(ExecutionResult._Success);
@@ -474,11 +460,7 @@ describe('SubscriptionOperationExecutor', () => {
       setupSubscriptionModel(SUB_ID, PUSH_TOKEN);
 
       const executor = getExecutor();
-      const deleteOp = new DeleteSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        SUB_ID,
-      );
+      const deleteOp = new DeleteSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);
 
       const result = await executor._execute([deleteOp]);
       expect(result._result).toBe(ExecutionResult._Success);
@@ -489,11 +471,7 @@ describe('SubscriptionOperationExecutor', () => {
 
     test('should handle network errors', async () => {
       const executor = getExecutor();
-      const deleteOp = new DeleteSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        SUB_ID,
-      );
+      const deleteOp = new DeleteSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);
 
       // Missing error
       setDeleteSubscriptionError({ status: 404 });
@@ -540,11 +518,7 @@ describe('SubscriptionOperationExecutor', () => {
 
     test('should transfer subscription successfully', async () => {
       const executor = getExecutor();
-      const transferOp = new TransferSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        SUB_ID,
-      );
+      const transferOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);
 
       const result = await executor._execute([transferOp]);
       expect(result._result).toBe(ExecutionResult._Success);
@@ -558,11 +532,7 @@ describe('SubscriptionOperationExecutor', () => {
 
     test('should handle network errors', async () => {
       const executor = getExecutor();
-      const transferOp = new TransferSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        SUB_ID,
-      );
+      const transferOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID);
 
       // Retryable error
       setTransferSubscriptionError({ status: 429, retryAfter: 10 });

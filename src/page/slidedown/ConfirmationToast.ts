@@ -1,8 +1,4 @@
-import {
-  addCssClass,
-  getDomElementOrStub,
-  removeDomElement,
-} from 'src/shared/helpers/dom';
+import { addCssClass, getDomElementOrStub, removeDomElement } from 'src/shared/helpers/dom';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import {
   SLIDEDOWN_CSS_CLASSES,
@@ -20,7 +16,7 @@ export default class ConfirmationToast {
     this._message = message;
   }
 
-  async _show(): Promise<void> {
+  _show(): void {
     const toastElement = document.createElement('div');
     const toastText = document.createElement('p');
 
@@ -47,16 +43,14 @@ export default class ConfirmationToast {
     // Animate it in depending on environment
     addCssClass(
       this._container,
-      isMobileBrowser()
-        ? SLIDEDOWN_CSS_CLASSES._SlideUp
-        : SLIDEDOWN_CSS_CLASSES._SlideDown,
+      isMobileBrowser() ? SLIDEDOWN_CSS_CLASSES._SlideUp : SLIDEDOWN_CSS_CLASSES._SlideDown,
     );
 
     ConfirmationToast._triggerSlidedownEvent(ConfirmationToast.EVENTS.SHOWN);
   }
 
-  static async _triggerSlidedownEvent(eventName: string): Promise<void> {
-    await OneSignalEvent._trigger(eventName);
+  static _triggerSlidedownEvent(eventName: string): void {
+    OneSignalEvent._trigger(eventName);
   }
 
   _close(): void {
@@ -67,8 +61,7 @@ export default class ConfirmationToast {
       (event: any, destroyListenerFn: () => void) => {
         if (
           event.target === this._dialog &&
-          (event.animationName === 'slideDownExit' ||
-            event.animationName === 'slideUpExit')
+          (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')
         ) {
           // Uninstall the event listener for animationend
           removeDomElement(`#${SLIDEDOWN_CSS_IDS._Container}`);

@@ -1,4 +1,5 @@
 import { getAppId } from 'src/shared/helpers/main';
+
 import { type IdentityModel } from '../models/IdentityModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
@@ -28,12 +29,7 @@ export class IdentityModelStoreListener extends SingletonModelStoreListener<Iden
   ): Operation {
     const appId = getAppId();
     if (newValue != null && typeof newValue === 'string') {
-      return new SetAliasOperation(
-        appId,
-        model._onesignalId,
-        property,
-        newValue,
-      );
+      return new SetAliasOperation(appId, model._onesignalId, property, newValue);
     } else {
       return new DeleteAliasOperation(appId, model._onesignalId, property);
     }

@@ -2,15 +2,16 @@ import { DEVICE_OS } from '__test__/constants';
 import { generateNewSubscription } from '__test__/support/helpers/core';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
+import { test, expect } from 'vite-plus/test';
 
-test('Set function updates data', async () => {
+test('Set function updates data', () => {
   const newSub = generateNewSubscription();
   expect(newSub.enabled).toBe(undefined);
   newSub._setProperty('enabled', true);
   expect(newSub.enabled).toBe(true);
 });
 
-test('Set function broadcasts update event', async () => {
+test('Set function broadcasts update event', () => {
   const newSub = generateNewSubscription();
   newSub._subscribe({
     _onChanged: () => {
@@ -20,14 +21,14 @@ test('Set function broadcasts update event', async () => {
   newSub._setProperty('enabled', true);
 });
 
-test('Hydrate function updates data', async () => {
+test('Hydrate function updates data', () => {
   const newSub = generateNewSubscription();
   expect(newSub.type).toBe(SubscriptionType._Email);
   newSub._setProperty('type', SubscriptionType._ChromePush);
   expect(newSub.type).toBe(SubscriptionType._ChromePush);
 });
 
-test('Encode function returns encoded model', async () => {
+test('Encode function returns encoded model', () => {
   const newSub = generateNewSubscription();
   expect(newSub.toJSON()).toEqual({
     type: SubscriptionType._Email,

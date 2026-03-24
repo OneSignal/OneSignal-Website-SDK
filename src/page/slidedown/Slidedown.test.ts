@@ -3,15 +3,12 @@ import { InvalidChannelInputField } from 'src/shared/errors/constants';
 import { getNotificationIcons } from 'src/shared/helpers/main';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
 import type { SlidedownPromptOptions } from 'src/shared/prompts/types';
-import {
-  SLIDEDOWN_CSS_CLASSES,
-  SLIDEDOWN_CSS_IDS,
-} from 'src/shared/slidedown/constants';
+import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS } from 'src/shared/slidedown/constants';
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
+
 import Bell from '../bell/Bell';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
-import Slidedown, {
-  manageNotifyButtonStateWhileSlidedownShows,
-} from './Slidedown';
+import Slidedown, { manageNotifyButtonStateWhileSlidedownShows } from './Slidedown';
 
 vi.mock('src/shared/helpers/main', () => ({
   getNotificationIcons: vi.fn().mockResolvedValue(null),
@@ -89,27 +86,17 @@ describe('Slidedown', () => {
       const sd = createSlidedown();
       await sd._create();
 
-      expect(
-        document.querySelector(`#${SLIDEDOWN_CSS_IDS._Container}`),
-      ).toBeTruthy();
-      expect(
-        document.querySelector(`#${SLIDEDOWN_CSS_IDS._Dialog}`),
-      ).toBeTruthy();
-      expect(
-        document.querySelector(`#${SLIDEDOWN_CSS_IDS._AllowButton}`),
-      ).toBeTruthy();
-      expect(
-        document.querySelector(`#${SLIDEDOWN_CSS_IDS._CancelButton}`),
-      ).toBeTruthy();
+      expect(document.querySelector(`#${SLIDEDOWN_CSS_IDS._Container}`)).toBeTruthy();
+      expect(document.querySelector(`#${SLIDEDOWN_CSS_IDS._Dialog}`)).toBeTruthy();
+      expect(document.querySelector(`#${SLIDEDOWN_CSS_IDS._AllowButton}`)).toBeTruthy();
+      expect(document.querySelector(`#${SLIDEDOWN_CSS_IDS._CancelButton}`)).toBeTruthy();
     });
 
     test('adds slide-down class on desktop', async () => {
       const sd = createSlidedown();
       await sd._create();
 
-      expect(
-        sd._container.classList.contains(SLIDEDOWN_CSS_CLASSES._SlideDown),
-      ).toBe(true);
+      expect(sd._container.classList.contains(SLIDEDOWN_CSS_CLASSES._SlideDown)).toBe(true);
     });
 
     test('fetches notification icons', async () => {
@@ -137,17 +124,13 @@ describe('Slidedown', () => {
       const sd = createSlidedown();
       await sd._create();
 
-      const firstContainer = document.querySelector(
-        `#${SLIDEDOWN_CSS_IDS._Container}`,
-      );
+      const firstContainer = document.querySelector(`#${SLIDEDOWN_CSS_IDS._Container}`);
       expect(firstContainer).toBeTruthy();
 
       sd._notificationIcons = null;
       await sd._create();
 
-      const containers = document.querySelectorAll(
-        `#${SLIDEDOWN_CSS_IDS._Container}`,
-      );
+      const containers = document.querySelectorAll(`#${SLIDEDOWN_CSS_IDS._Container}`);
       expect(containers).toHaveLength(1);
     });
 
@@ -182,19 +165,17 @@ describe('Slidedown', () => {
         expect(cancelSpy).toHaveBeenCalled();
         expect(closedSpy).toHaveBeenCalled();
       });
-      expect(
-        sd._container.classList.contains(SLIDEDOWN_CSS_CLASSES._CloseSlidedown),
-      ).toBe(true);
+      expect(sd._container.classList.contains(SLIDEDOWN_CSS_CLASSES._CloseSlidedown)).toBe(true);
     });
   });
 
   describe('_onSlidedownAllowed', () => {
-    test('triggers allow click event', async () => {
+    test('triggers allow click event', () => {
       const sd = createSlidedown();
       const allowSpy = vi.fn();
       OneSignal._emitter.on(Slidedown.EVENTS.ALLOW_CLICK, allowSpy);
 
-      await sd._onSlidedownAllowed(null);
+      sd._onSlidedownAllowed(null);
 
       expect(allowSpy).toHaveBeenCalled();
     });
@@ -207,9 +188,7 @@ describe('Slidedown', () => {
 
       sd._close();
 
-      expect(
-        sd._container.classList.contains(SLIDEDOWN_CSS_CLASSES._CloseSlidedown),
-      ).toBe(true);
+      expect(sd._container.classList.contains(SLIDEDOWN_CSS_CLASSES._CloseSlidedown)).toBe(true);
     });
   });
 
@@ -222,11 +201,9 @@ describe('Slidedown', () => {
 
       expect(sd._allowButton.disabled).toBe(true);
       expect(sd._allowButton.classList.contains('disabled')).toBe(true);
-      expect(
-        sd._allowButton.classList.contains(
-          SLIDEDOWN_CSS_CLASSES._SavingStateButton,
-        ),
-      ).toBe(true);
+      expect(sd._allowButton.classList.contains(SLIDEDOWN_CSS_CLASSES._SavingStateButton)).toBe(
+        true,
+      );
     });
   });
 
@@ -240,11 +217,9 @@ describe('Slidedown', () => {
 
       expect(sd._allowButton.disabled).toBe(false);
       expect(sd._allowButton.classList.contains('disabled')).toBe(false);
-      expect(
-        sd._allowButton.classList.contains(
-          SLIDEDOWN_CSS_CLASSES._SavingStateButton,
-        ),
-      ).toBe(false);
+      expect(sd._allowButton.classList.contains(SLIDEDOWN_CSS_CLASSES._SavingStateButton)).toBe(
+        false,
+      );
     });
   });
 
@@ -272,9 +247,7 @@ describe('Slidedown', () => {
 
       sd._setFailureState();
 
-      expect(
-        sd._allowButton.classList.contains('onesignal-error-state-button'),
-      ).toBe(true);
+      expect(sd._allowButton.classList.contains('onesignal-error-state-button')).toBe(true);
     });
   });
 
@@ -287,9 +260,7 @@ describe('Slidedown', () => {
       sd._removeFailureState();
 
       expect(sd._isShowingFailureState).toBe(false);
-      expect(
-        sd._allowButton.classList.contains('onesignal-error-state-button'),
-      ).toBe(false);
+      expect(sd._allowButton.classList.contains('onesignal-error-state-button')).toBe(false);
     });
   });
 
@@ -300,9 +271,7 @@ describe('Slidedown', () => {
         .mockImplementation(() => {});
       const sd = createSlidedown();
 
-      sd._setFailureStateForInvalidChannelInput(
-        InvalidChannelInputField._InvalidSms,
-      );
+      sd._setFailureStateForInvalidChannelInput(InvalidChannelInputField._InvalidSms);
 
       expect(smsSpy).toHaveBeenCalledWith(true);
     });
@@ -313,9 +282,7 @@ describe('Slidedown', () => {
         .mockImplementation(() => {});
       const sd = createSlidedown();
 
-      sd._setFailureStateForInvalidChannelInput(
-        InvalidChannelInputField._InvalidEmail,
-      );
+      sd._setFailureStateForInvalidChannelInput(InvalidChannelInputField._InvalidEmail);
 
       expect(emailSpy).toHaveBeenCalledWith(true);
     });
@@ -329,9 +296,7 @@ describe('Slidedown', () => {
         .mockImplementation(() => {});
       const sd = createSlidedown();
 
-      sd._setFailureStateForInvalidChannelInput(
-        InvalidChannelInputField._InvalidEmailAndSms,
-      );
+      sd._setFailureStateForInvalidChannelInput(InvalidChannelInputField._InvalidEmailAndSms);
 
       expect(smsSpy).toHaveBeenCalledWith(true);
       expect(emailSpy).toHaveBeenCalledWith(true);
@@ -375,24 +340,24 @@ describe('manageNotifyButtonStateWhileSlidedownShows', () => {
     expect(OneSignal._emitter._numberOfListeners('slidedownClosed')).toBe(0);
   });
 
-  test('hides shown launcher', async () => {
+  test('hides shown launcher', () => {
     const bell = createBell();
-    await bell._launcher._show();
+    bell._launcher._show();
     OneSignal._notifyButton = bell;
 
     manageNotifyButtonStateWhileSlidedownShows();
     expect(bell._launcher._shown).toBe(false);
   });
 
-  test('restores launcher when slidedown closes', async () => {
+  test('restores launcher when slidedown closes', () => {
     const bell = createBell();
-    await bell._launcher._show();
+    bell._launcher._show();
     OneSignal._notifyButton = bell;
 
     manageNotifyButtonStateWhileSlidedownShows();
     expect(bell._launcher._shown).toBe(false);
 
-    await OneSignal._emitter._emit('slidedownClosed');
+    OneSignal._emitter._emit('slidedownClosed');
     expect(bell._launcher._shown).toBe(true);
   });
 
@@ -405,9 +370,9 @@ describe('manageNotifyButtonStateWhileSlidedownShows', () => {
     expect(OneSignal._emitter._numberOfListeners('slidedownClosed')).toBe(1);
   });
 
-  test('hides dialog popover when hiding launcher', async () => {
+  test('hides dialog popover when hiding launcher', () => {
     const bell = createBell();
-    await bell._launcher._show();
+    bell._launcher._show();
     const dialogHide = vi.spyOn(bell._dialog, '_hide');
     OneSignal._notifyButton = bell;
 

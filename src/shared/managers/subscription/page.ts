@@ -5,20 +5,14 @@ import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
 import { getSubscription } from 'src/shared/database/subscription';
-import {
-  getOneSignalApiUrl,
-  useSafariLegacyPush,
-} from 'src/shared/environment/detect';
+import { getOneSignalApiUrl, useSafariLegacyPush } from 'src/shared/environment/detect';
 import {
   MissingSafariWebIdError,
   PermissionBlockedError,
   SWRegistrationError,
 } from 'src/shared/errors/common';
 import { getAppId } from 'src/shared/helpers/main';
-import {
-  incrementPageViewCount,
-  isFirstPageView,
-} from 'src/shared/helpers/pageview';
+import { incrementPageViewCount, isFirstPageView } from 'src/shared/helpers/pageview';
 import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
 import { ServiceWorkerActiveState } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
@@ -34,6 +28,7 @@ import OneSignalEvent from 'src/shared/services/OneSignalEvent';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { logMethodCall } from 'src/shared/utils/utils';
+
 import { IDManager } from '../IDManager';
 import { SubscriptionManagerBase } from './base';
 
@@ -51,18 +46,12 @@ function executeCallback<T>(callback?: (...args: any[]) => T, ...args: any[]) {
   }
 }
 
-async function createSubscribedUser(
-  pushModel: SubscriptionModel,
-): Promise<void> {
+async function createSubscribedUser(pushModel: SubscriptionModel): Promise<void> {
   const identityModel = OneSignal._coreDirector._getIdentityModel();
   const appId = getAppId();
 
   OneSignal._coreDirector._operationRepo._enqueue(
-    new LoginUserOperation(
-      appId,
-      identityModel._onesignalId,
-      identityModel._externalId,
-    ),
+    new LoginUserOperation(appId, identityModel._onesignalId, identityModel._externalId),
   );
   await OneSignal._coreDirector._operationRepo._enqueueAndWait(
     new CreateSubscriptionOperation({
@@ -84,10 +73,7 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   // for new Anonymous/not-logged-in users, we need to create a new push subscription model and also save its push id to IndexedDB
   let pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
   if (!pushModel) {
-    pushModel =
-      OneSignal._coreDirector._generatePushSubscriptionModel(
-        rawPushSubscription,
-      );
+    pushModel = OneSignal._coreDirector._generatePushSubscriptionModel(rawPushSubscription);
     return createSubscribedUser(pushModel);
   }
   // for users with data failed to create a user or user + subscription on the server
@@ -137,8 +123,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       return NotificationType._UserOptedOut;
     }
 
-    const permission =
-      await OneSignal._context._permissionManager._getPermissionStatus();
+    const permission = await OneSignal._context._permissionManager._getPermissionStatus();
     if (permission === 'granted') {
       return NotificationType._Subscribed;
     }
@@ -154,8 +139,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    */
   async _isOptedIn(): Promise<boolean> {
     const subscriptionState = await this._getSubscriptionState();
-    const permission =
-      await OneSignal._context._permissionManager._getPermissionStatus();
+    const permission = await OneSignal._context._permissionManager._getPermissionStatus();
     return permission === 'granted' && !subscriptionState.optedOut;
   }
 
@@ -178,7 +162,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * @returns {Promise<boolean>}
    */
 
-  public async _unsubscribe(strategy: UnsubscriptionStrategyValue) {
+  public _unsubscribe(strategy: UnsubscriptionStrategyValue) {
     if (strategy === UnsubscriptionStrategy._DestroySubscription) {
       throw NotImplementedError;
     } else if (strategy === UnsubscriptionStrategy._MarkUnsubscribed) {
@@ -194,11 +178,8 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   public async _getSubscriptionState(): Promise<PushSubscriptionState> {
     const { optedOut, subscriptionToken } = await getSubscription();
 
-    const pushSubscriptionModel =
-      await OneSignal._coreDirector._getPushSubscriptionModel();
-    const isValidPushSubscription = isCompleteSubscriptionObject(
-      pushSubscriptionModel,
-    );
+    const pushSubscriptionModel = await OneSignal._coreDirector._getPushSubscriptionModel();
+    const isValidPushSubscription = isCompleteSubscriptionObject(pushSubscriptionModel);
 
     if (useSafariLegacyPush()) {
       const subscriptionState = window.safari?.pushNotification?.permission(
@@ -219,10 +200,9 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
 
     const workerRegistration =
       await this._context._serviceWorkerManager._getOneSignalRegistration();
-    const notificationPermission =
-      await this._context._permissionManager._getNotificationPermission(
-        this._context._appConfig.safariWebId,
-      );
+    const notificationPermission = this._context._permissionManager._getNotificationPermission(
+      this._context._appConfig.safariWebId,
+    );
     if (!workerRegistration) {
       /* You can't be subscribed without a service worker registration */
       return {
@@ -276,10 +256,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         Subscribing is only possible on the top-level frame, so there's no permission ambiguity
         here.
       */
-    if (
-      (await OneSignal._context._permissionManager._getPermissionStatus()) ===
-      'denied'
-    )
+    if ((await OneSignal._context._permissionManager._getPermissionStatus()) === 'denied')
       throw PermissionBlockedError;
 
     if (useSafariLegacyPush()) {
@@ -294,8 +271,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         Log._error('Safari SW install failed');
       }
     } else {
-      rawPushSubscription =
-        await this._subscribeFcmFromPage(subscriptionStrategy);
+      rawPushSubscription = await this._subscribeFcmFromPage(subscriptionStrategy);
       await updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
     }
 
@@ -309,13 +285,10 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const { deviceToken: existingDeviceToken } =
-      window.safari?.pushNotification?.permission(this._config.safariWebId) ||
-      {};
+      window.safari?.pushNotification?.permission(this._config.safariWebId) || {};
 
     if (existingDeviceToken) {
-      pushSubscriptionDetails._setFromSafariSubscription(
-        existingDeviceToken.toLowerCase(),
-      );
+      pushSubscriptionDetails._setFromSafariSubscription(existingDeviceToken.toLowerCase());
       return pushSubscriptionDetails;
     }
 
@@ -335,7 +308,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     */
     OneSignalEvent._trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     const deviceToken = await this._subscribeSafariPromptPermission();
-    triggerNotificationPermissionChanged();
+    void triggerNotificationPermissionChanged();
     if (deviceToken) {
       pushSubscriptionDetails._setFromSafariSubscription(deviceToken);
     } else {
@@ -393,11 +366,8 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (Notification.permission === 'default') {
-      await OneSignalEvent._trigger(
-        OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED,
-      );
-      const permission =
-        await SubscriptionManagerPage._requestPresubscribeNotificationPermission();
+      OneSignalEvent._trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+      const permission = await SubscriptionManagerPage._requestPresubscribeNotificationPermission();
 
       /*
         The native event handler does not broadcast an event for dismissing the
@@ -423,8 +393,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     /* Now that permissions have been granted, install the service worker */
     let workerRegistration: ServiceWorkerRegistration | undefined | null;
     try {
-      workerRegistration =
-        await this._context._serviceWorkerManager._installWorker();
+      workerRegistration = await this._context._serviceWorkerManager._installWorker();
     } catch (err) {
       if (err instanceof SWRegistrationError) {
         // TODO: This doesn't register the subscription any more, most likely broke
@@ -432,11 +401,11 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
         // subscription was created so the customer knows this failed by seeing
         // subscriptions in this state on the OneSignal dashboard.
         if (err.status === 403) {
-          await this._context._subscriptionManager._registerFailedSubscription(
+          this._context._subscriptionManager._registerFailedSubscription(
             NotificationType._ServiceWorkerStatus403,
           );
         } else if (err.status === 404) {
-          await this._context._subscriptionManager._registerFailedSubscription(
+          this._context._subscriptionManager._registerFailedSubscription(
             NotificationType._ServiceWorkerStatus404,
           );
         }
@@ -449,10 +418,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
     Log._debug('SW ready, continuing subscription');
 
-    return await this._subscribeWithVapidKey(
-      workerRegistration.pushManager,
-      subscriptionStrategy,
-    );
+    return await this._subscribeWithVapidKey(workerRegistration.pushManager, subscriptionStrategy);
   }
 
   /**
@@ -460,11 +426,9 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
    * Do it only once for the first page view.
    * @param subscriptionState Describes what went wrong with the service worker installation.
    */
-  public async _registerFailedSubscription(
-    subscriptionState: SubscriptionStateServiceWorkerNotIntalled,
-  ) {
+  public _registerFailedSubscription(subscriptionState: SubscriptionStateServiceWorkerNotIntalled) {
     if (isFirstPageView()) {
-      this._context._subscriptionManager._registerSubscription(
+      void this._context._subscriptionManager._registerSubscription(
         new RawPushSubscription(),
         subscriptionState,
       );
@@ -495,8 +459,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
   }
 
   public async _isSubscriptionExpiring(): Promise<boolean> {
-    const serviceWorkerState =
-      await this._context._serviceWorkerManager._getActiveState();
+    const serviceWorkerState = await this._context._serviceWorkerManager._getActiveState();
     if (!(serviceWorkerState === ServiceWorkerActiveState._OneSignalWorker)) {
       /* If the service worker isn't activated, there's no subscription to look for */
       return false;
@@ -510,8 +473,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     //   since they released support for service workers but not push api.
     if (!serviceWorkerRegistration.pushManager) return false;
 
-    const pushSubscription =
-      await serviceWorkerRegistration.pushManager.getSubscription();
+    const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
     // Not subscribed to web push
     if (!pushSubscription) return false;
 
@@ -528,8 +490,7 @@ export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInte
     }
 
     const midpointExpirationTime =
-      subscriptionCreatedAt +
-      (pushSubscription.expirationTime - subscriptionCreatedAt) / 2;
+      subscriptionCreatedAt + (pushSubscription.expirationTime - subscriptionCreatedAt) / 2;
 
     return (
       !!pushSubscription.expirationTime &&

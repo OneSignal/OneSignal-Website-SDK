@@ -55,12 +55,12 @@ const open = async (version = VERSION) => {
       }
 
       if (newDbVersion >= 5 && oldVersion < 5) {
-        migrateOutcomesNotificationClickedTableForV5(_db, transaction);
-        migrateOutcomesNotificationReceivedTableForV5(_db, transaction);
+        void migrateOutcomesNotificationClickedTableForV5(_db, transaction);
+        void migrateOutcomesNotificationReceivedTableForV5(_db, transaction);
       }
 
       if (newDbVersion >= 6 && oldVersion < 6) {
-        migrateModelNameSubscriptionsTableForV6(_db, transaction);
+        void migrateModelNameSubscriptionsTableForV6(_db, transaction);
       }
 
       if (newDbVersion >= 7 && oldVersion < 7) {
@@ -80,7 +80,7 @@ const open = async (version = VERSION) => {
       // reopen if db was terminated
       if (!terminated) {
         terminated = true;
-        getDb();
+        void getDb();
       }
     },
   });
@@ -101,21 +101,13 @@ export const db = {
   ): Promise<IndexedDBSchema[K]['value'] | undefined> {
     return (await dbPromise).get(storeName, key);
   },
-  async getAll<K extends IDBStoreName>(
-    storeName: K,
-  ): Promise<IndexedDBSchema[K]['value'][]> {
+  async getAll<K extends IDBStoreName>(storeName: K): Promise<IndexedDBSchema[K]['value'][]> {
     return (await dbPromise).getAll(storeName);
   },
-  async put<K extends IDBStoreName>(
-    storeName: K,
-    value: IndexedDBSchema[K]['value'],
-  ) {
+  async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
     return (await dbPromise).put(storeName, value);
   },
-  async delete<K extends IDBStoreName>(
-    storeName: K,
-    key: IndexedDBSchema[K]['key'],
-  ) {
+  async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
     return (await dbPromise).delete(storeName, key);
   },
 };

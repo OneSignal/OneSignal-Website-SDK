@@ -3,18 +3,18 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import Log from 'src/shared/libraries/Log';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 // need to wait for full OperationRepo rework
 describe('pageSdkInit', () => {
   beforeEach(() => {
-    const cssURL =
-      'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
+    const cssURL = 'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
 
     server.use(http.get(cssURL, () => HttpResponse.text('')));
     TestEnvironment.initialize();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     vi.resetModules();
     localStorage.clear();
     sessionStorage.clear();
@@ -36,7 +36,7 @@ describe('pageSdkInit', () => {
     const logoutSpy = vi.spyOn(window.OneSignal, 'logout');
 
     await vi.waitUntil(
-      async () => {
+      () => {
         return logoutSpy.mock.calls.length > 0;
       },
       { interval: 1 },
@@ -50,12 +50,13 @@ describe('pageSdkInit', () => {
     const initSpy = vi.spyOn(window.OneSignal, 'init');
 
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    await window.OneSignalDeferred.push(async function (OneSignal) {
+    void window.OneSignalDeferred.push(async function (OneSignal) {
       return OneSignal.init({
         appId: APP_ID,
       });
     });
 
+    await vi.waitUntil(() => initSpy.mock.calls.length > 0, { interval: 1 });
     expect(initSpy).toHaveBeenCalled();
   });
 });

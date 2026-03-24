@@ -12,9 +12,7 @@ import type { AppUserConfig } from './types';
  */
 export function upgradeConfigToVersionTwo(userConfig: AppUserConfig) {
   if (isPromptOptionsVersion0(userConfig.promptOptions)) {
-    userConfig.promptOptions = convertConfigToVersionOne(
-      userConfig.promptOptions,
-    );
+    userConfig.promptOptions = convertConfigToVersionOne(userConfig.promptOptions);
   }
 
   if (isSlidedownConfigVersion1(userConfig.promptOptions?.slidedown)) {
@@ -35,15 +33,9 @@ export function upgradeConfigToVersionTwo(userConfig: AppUserConfig) {
 function isPromptOptionsVersion0(slidedownConfig: unknown): boolean {
   if (!slidedownConfig) return false;
 
-  const version0Keys = [
-    'acceptButtonText',
-    'cancelButtonText',
-    'actionMessage',
-  ];
+  const version0Keys = ['acceptButtonText', 'cancelButtonText', 'actionMessage'];
 
-  return version0Keys.some((key) =>
-    Object.prototype.hasOwnProperty.call(slidedownConfig, key),
-  );
+  return version0Keys.some((key) => Object.prototype.hasOwnProperty.call(slidedownConfig, key));
 }
 
 /**
@@ -73,9 +65,7 @@ function isPromptOptionsVersion0(slidedownConfig: unknown): boolean {
  * @param  {any} promptOptions
  * @returns AppUserConfigPromptOptions
  */
-function convertConfigToVersionOne(
-  promptOptions: any,
-): AppUserConfigPromptOptions {
+function convertConfigToVersionOne(promptOptions: any): AppUserConfigPromptOptions {
   if (!promptOptions.slidedown) {
     promptOptions.slidedown = {};
   }
@@ -97,17 +87,12 @@ function convertConfigToVersionOne(
    * }
    */
   slidedown.acceptButtonText =
-    slidedown.acceptButtonText ??
-    promptOptions.acceptButtonText ??
-    promptOptions.acceptButton;
+    slidedown.acceptButtonText ?? promptOptions.acceptButtonText ?? promptOptions.acceptButton;
 
   slidedown.cancelButtonText =
-    slidedown.cancelButtonText ??
-    promptOptions.cancelButtonText ??
-    promptOptions.cancelButton;
+    slidedown.cancelButtonText ?? promptOptions.cancelButtonText ?? promptOptions.cancelButton;
 
-  slidedown.actionMessage =
-    slidedown.actionMessage ?? promptOptions.actionMessage;
+  slidedown.actionMessage = slidedown.actionMessage ?? promptOptions.actionMessage;
 
   return promptOptions;
 }
@@ -156,18 +141,14 @@ function isSlidedownConfigVersion1(
     'categories',
   ] as const;
 
-  return version1Keys.some((key) =>
-    Object.prototype.hasOwnProperty.call(slidedownConfig, key),
-  );
+  return version1Keys.some((key) => Object.prototype.hasOwnProperty.call(slidedownConfig, key));
 }
 
 function convertConfigToVersionTwo(
   slidedownConfig: SlidedownOptionsVersion1 & SlidedownOptions,
 ): SlidedownOptions {
   const isCategory = isCategorySlidedownConfiguredVersion1(slidedownConfig);
-  const promptType = isCategory
-    ? DelayedPromptType._Category
-    : DelayedPromptType._Push;
+  const promptType = isCategory ? DelayedPromptType._Category : DelayedPromptType._Push;
 
   const { categories, prompts = [] } = slidedownConfig;
 
@@ -176,10 +157,8 @@ function convertConfigToVersionTwo(
     autoPrompt: slidedownConfig.autoPrompt,
     text: {
       actionMessage: slidedownConfig.actionMessage,
-      acceptButton:
-        slidedownConfig.acceptButton ?? slidedownConfig.acceptButtonText,
-      cancelButton:
-        slidedownConfig.cancelButton ?? slidedownConfig.cancelButtonText,
+      acceptButton: slidedownConfig.acceptButton ?? slidedownConfig.acceptButtonText,
+      cancelButton: slidedownConfig.cancelButton ?? slidedownConfig.cancelButtonText,
       ...(isCategory && {
         positiveUpdateButton: categories?.positiveUpdateButton,
         negativeUpdateButton: categories?.negativeUpdateButton,
@@ -203,8 +182,6 @@ function convertConfigToVersionTwo(
  * @param  {SlidedownOptionsVersion1} options
  * @returns boolean
  */
-function isCategorySlidedownConfiguredVersion1(
-  options?: SlidedownOptionsVersion1,
-): boolean {
+function isCategorySlidedownConfiguredVersion1(options?: SlidedownOptionsVersion1): boolean {
   return (options?.categories?.tags?.length || 0) > 0;
 }

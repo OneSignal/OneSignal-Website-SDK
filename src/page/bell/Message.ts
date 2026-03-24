@@ -1,6 +1,7 @@
 import { decodeHtmlEntities } from 'src/shared/helpers/dom';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
+
 import type Bell from './Bell';
 import { type BellStateValue, BellState } from './constants';
 
@@ -25,25 +26,16 @@ export default class Message {
   }
 
   get _content(): string {
-    return (
-      this._element?.querySelector('.onesignal-bell-launcher-message-body')
-        ?.textContent ?? ''
-    );
+    return this._element?.querySelector('.onesignal-bell-launcher-message-body')?.textContent ?? '';
   }
 
   set _content(value: string) {
-    const body = this._element?.querySelector(
-      '.onesignal-bell-launcher-message-body',
-    );
+    const body = this._element?.querySelector('.onesignal-bell-launcher-message-body');
     if (body) body.textContent = value;
   }
 
   get _shown(): boolean {
-    return (
-      this._element?.classList.contains(
-        'onesignal-bell-launcher-message-opened',
-      ) ?? false
-    );
+    return this._element?.classList.contains('onesignal-bell-launcher-message-opened') ?? false;
   }
 
   _show(): void {
@@ -60,12 +52,12 @@ export default class Message {
 
   async _display(type: string, content: string, duration = 0) {
     Log._debug('display:', type, content, duration);
-    if (this._shown) await this._hide();
+    if (this._shown) this._hide();
     this._content = decodeHtmlEntities(content);
     this._contentType = type;
-    await this._show();
+    this._show();
     await delay(duration);
-    await this._hide();
+    this._hide();
     this._content = this._getTipForState();
     this._contentType = 'tip';
   }

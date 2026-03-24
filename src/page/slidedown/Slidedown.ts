@@ -9,20 +9,14 @@ import {
 } from 'src/shared/helpers/dom';
 import { getNotificationIcons } from 'src/shared/helpers/main';
 import type { NotificationIcons } from 'src/shared/notifications/types';
-import {
-  DelayedPromptType,
-  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
-} from 'src/shared/prompts/constants';
+import { DelayedPromptType, SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from 'src/shared/prompts/constants';
 import { isSlidedownPushDependent } from 'src/shared/prompts/helpers';
 import type { SlidedownPromptOptions } from 'src/shared/prompts/types';
 import OneSignalEvent from 'src/shared/services/OneSignalEvent';
-import {
-  COLORS,
-  SLIDEDOWN_CSS_CLASSES,
-  SLIDEDOWN_CSS_IDS,
-} from 'src/shared/slidedown/constants';
+import { COLORS, SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS } from 'src/shared/slidedown/constants';
 import { isMobileBrowser } from 'src/shared/useragent/detect';
 import { getPlatformNotificationIcon, once } from 'src/shared/utils/utils';
+
 import type { TagCategory } from '../tags/types';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { getSlidedownElement } from './element';
@@ -44,43 +38,27 @@ export default class Slidedown {
 
   constructor(options: SlidedownPromptOptions) {
     this._options = options;
-    this._options.text.actionMessage = options.text.actionMessage.substring(
-      0,
-      90,
-    );
-    this._options.text.acceptButton = options.text.acceptButton.substring(
-      0,
-      16,
-    );
-    this._options.text.cancelButton = options.text.cancelButton.substring(
-      0,
-      16,
-    );
+    this._options.text.actionMessage = options.text.actionMessage.substring(0, 90);
+    this._options.text.acceptButton = options.text.acceptButton.substring(0, 16);
+    this._options.text.cancelButton = options.text.cancelButton.substring(0, 16);
     this._notificationIcons = null;
     this._channelCaptureContainer = null;
     this._isShowingFailureState = false;
 
     switch (options.type) {
       case DelayedPromptType._Category:
-        this._negativeUpdateButton =
-          this._options.text.negativeUpdateButton?.substring(0, 16);
-        this._positiveUpdateButton =
-          this._options.text.positiveUpdateButton?.substring(0, 16);
-        this._updateMessage = this._options.text.updateMessage?.substring(
-          0,
-          90,
-        );
+        this._negativeUpdateButton = this._options.text.negativeUpdateButton?.substring(0, 16);
+        this._positiveUpdateButton = this._options.text.positiveUpdateButton?.substring(0, 16);
+        this._updateMessage = this._options.text.updateMessage?.substring(0, 90);
         this._tagCategories = options.categories;
         this._errorButton =
-          this._options.text.positiveUpdateButton ??
-          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton;
+          this._options.text.positiveUpdateButton ?? SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton;
         break;
       case DelayedPromptType._Sms:
       case DelayedPromptType._Email:
       case DelayedPromptType._SmsAndEmail:
         this._errorButton =
-          this._options.text.acceptButton ??
-          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton;
+          this._options.text.acceptButton ?? SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton;
         break;
       default:
         break;
@@ -95,9 +73,7 @@ export default class Slidedown {
       this._notificationIcons = icons;
 
       // Remove any existing container
-      if (
-        this._container.className.includes(SLIDEDOWN_CSS_CLASSES._Container)
-      ) {
+      if (this._container.className.includes(SLIDEDOWN_CSS_CLASSES._Container)) {
         removeDomElement(`#${SLIDEDOWN_CSS_IDS._Container}`);
       }
       const positiveButtonText =
@@ -140,29 +116,21 @@ export default class Slidedown {
       // Animate it in depending on environment
       addCssClass(
         this._container,
-        isMobileBrowser()
-          ? SLIDEDOWN_CSS_CLASSES._SlideUp
-          : SLIDEDOWN_CSS_CLASSES._SlideDown,
+        isMobileBrowser() ? SLIDEDOWN_CSS_CLASSES._SlideUp : SLIDEDOWN_CSS_CLASSES._SlideDown,
       );
 
       // Add click event handlers
-      this._allowButton.addEventListener(
-        'click',
-        this._onSlidedownAllowed.bind(this),
-      );
-      this._cancelButton.addEventListener(
-        'click',
-        this._onSlidedownCanceled.bind(this),
-      );
+      this._allowButton.addEventListener('click', this._onSlidedownAllowed.bind(this));
+      this._cancelButton.addEventListener('click', this._onSlidedownCanceled.bind(this));
     }
   }
 
-  static async _triggerSlidedownEvent(eventName: string): Promise<void> {
-    await OneSignalEvent._trigger(eventName);
+  static _triggerSlidedownEvent(eventName: string): void {
+    OneSignalEvent._trigger(eventName);
   }
 
-  async _onSlidedownAllowed(_: any): Promise<void> {
-    await Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
+  _onSlidedownAllowed(_: any): void {
+    Slidedown._triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
   }
 
   _onSlidedownCanceled(_: any): void {
@@ -179,8 +147,7 @@ export default class Slidedown {
       (event: any, destroyListenerFn: () => void) => {
         if (
           event.target === this._dialog &&
-          (event.animationName === 'slideDownExit' ||
-            event.animationName === 'slideUpExit')
+          (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')
         ) {
           // Uninstall the event listener for animationend
           removeDomElement(`#${SLIDEDOWN_CSS_IDS._Container}`);
@@ -204,14 +171,8 @@ export default class Slidedown {
     this._allowButton.disabled = true;
     this._allowButton.textContent = null;
 
-    this._allowButton.insertAdjacentElement(
-      'beforeend',
-      this._getTextSpan(this._savingButton),
-    );
-    this._allowButton.insertAdjacentElement(
-      'beforeend',
-      this._getIndicatorHolder(),
-    );
+    this._allowButton.insertAdjacentElement('beforeend', this._getTextSpan(this._savingButton));
+    this._allowButton.insertAdjacentElement('beforeend', this._getIndicatorHolder());
 
     addDomElement(
       this._buttonIndicatorHolder,
@@ -240,30 +201,18 @@ export default class Slidedown {
    */
   _setFailureState(): void {
     this._allowButton.textContent = null;
-    this._allowButton.insertAdjacentElement(
-      'beforeend',
-      this._getTextSpan(this._errorButton),
-    );
+    this._allowButton.insertAdjacentElement('beforeend', this._getTextSpan(this._errorButton));
 
     if (this._options.type === DelayedPromptType._Category) {
-      this._allowButton.insertAdjacentElement(
-        'beforeend',
-        this._getIndicatorHolder(),
-      );
-      addDomElement(
-        this._buttonIndicatorHolder,
-        'beforeend',
-        getRetryIndicator(),
-      );
+      this._allowButton.insertAdjacentElement('beforeend', this._getIndicatorHolder());
+      addDomElement(this._buttonIndicatorHolder, 'beforeend', getRetryIndicator());
       addCssClass(this._allowButton, 'onesignal-error-state-button');
     }
 
     this._isShowingFailureState = true;
   }
 
-  _setFailureStateForInvalidChannelInput(
-    invalidChannelInput: InvalidChannelInputFieldValue,
-  ): void {
+  _setFailureStateForInvalidChannelInput(invalidChannelInput: InvalidChannelInputFieldValue): void {
     switch (invalidChannelInput) {
       case InvalidChannelInputField._InvalidSms:
         ChannelCaptureContainer._showSmsInputError(true);
@@ -317,15 +266,11 @@ export default class Slidedown {
   }
 
   get _allowButton() {
-    return getDomElementOrStub(
-      `#${SLIDEDOWN_CSS_IDS._AllowButton}`,
-    ) as HTMLButtonElement;
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._AllowButton}`) as HTMLButtonElement;
   }
 
   get _cancelButton() {
-    return getDomElementOrStub(
-      `#${SLIDEDOWN_CSS_IDS._CancelButton}`,
-    ) as HTMLButtonElement;
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS._CancelButton}`) as HTMLButtonElement;
   }
 
   get _buttonIndicatorHolder() {

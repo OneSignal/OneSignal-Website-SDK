@@ -11,6 +11,7 @@ import type {
   SubscriptionSchema,
 } from 'src/shared/database/types';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
+import { vi } from 'vite-plus/test';
 
 export const setIsPushEnabled = async (isPushEnabled: boolean) => {
   await db.put('Options', { key: 'isPushEnabled', value: isPushEnabled });
@@ -68,9 +69,7 @@ export const getDbSubscriptions = async (length: number) => {
 /**
  * Update identity model but not trigger action to trigger api call.
  */
-export const setupIdentityModel = async (
-  onesignalID: string = ONESIGNAL_ID,
-) => {
+export const setupIdentityModel = (onesignalID: string = ONESIGNAL_ID) => {
   const newIdentityModel = new IdentityModel();
   newIdentityModel._onesignalId = onesignalID;
   OneSignal._coreDirector._identityModelStore._replace(
@@ -82,9 +81,7 @@ export const setupIdentityModel = async (
 /**
  * Update properties model but not trigger action to trigger api call.
  */
-export const setupPropertiesModel = async (
-  onesignalID: string = ONESIGNAL_ID,
-) => {
+export const setupPropertiesModel = async (onesignalID: string = ONESIGNAL_ID) => {
   const newPropertiesModel = new PropertiesModel();
   newPropertiesModel._onesignalId = onesignalID;
   OneSignal._coreDirector._propertiesModelStore._replace(
@@ -99,9 +96,7 @@ export const setupPropertiesModel = async (
 /**
  * Update identity model but not trigger action to trigger api call.
  */
-export const updateIdentityModel = async <
-  T extends keyof IdentitySchema & string,
->(
+export const updateIdentityModel = <T extends keyof IdentitySchema & string>(
   property: T,
   value?: IdentitySchema[T],
 ) => {
@@ -112,7 +107,7 @@ export const updateIdentityModel = async <
 /**
  * Update properties model but not trigger action to trigger api call.
  */
-export const updatePropertiesModel = async <
+export const updatePropertiesModel = <
   T extends Exclude<
     keyof PropertiesSchema,
     'modelId' | 'modelName' | 'first_active' | 'last_active'
@@ -128,10 +123,7 @@ export const updatePropertiesModel = async <
 /**
  * Update subscription model but not trigger action to trigger api call.
  */
-export const setupSubscriptionModel = async (
-  id: string | undefined,
-  token: string | undefined,
-) => {
+export const setupSubscriptionModel = (id: string | undefined, token: string | undefined) => {
   const subscriptionModel = new SubscriptionModel();
   subscriptionModel.id = id || '';
   subscriptionModel.token = token || '';
@@ -144,11 +136,10 @@ export const setupSubscriptionModel = async (
 /**
  * In case some action triggers a call to loadSdkStylesheet, we need to mock it.
  */
-export const setupLoadStylesheet = async () => {
-  vi.spyOn(
-    OneSignal._context._dynamicResourceLoader,
-    '_loadSdkStylesheet',
-  ).mockResolvedValue(ResourceLoadState._Loaded);
+export const setupLoadStylesheet = () => {
+  vi.spyOn(OneSignal._context._dynamicResourceLoader, '_loadSdkStylesheet').mockResolvedValue(
+    ResourceLoadState._Loaded,
+  );
 };
 
 export const getRawPushSubscription = () => {

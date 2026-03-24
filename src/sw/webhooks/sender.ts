@@ -1,12 +1,11 @@
 import { getOptionsValue } from 'src/shared/database/client';
 import type { OptionKey } from 'src/shared/database/types';
 import Log from 'src/shared/libraries/Log';
+
 import type { IOSWebhookEventPayload } from '../serviceWorker/types';
 
 export async function send(payload: IOSWebhookEventPayload): Promise<void> {
-  const webhookTargetUrl = await getOptionsValue<string>(
-    `webhooks.${payload.event}` as OptionKey,
-  );
+  const webhookTargetUrl = await getOptionsValue<string>(`webhooks.${payload.event}` as OptionKey);
   if (!webhookTargetUrl) return;
 
   const isServerCorsEnabled = await getOptionsValue<boolean>('webhooks.cors');
@@ -24,9 +23,7 @@ export async function send(payload: IOSWebhookEventPayload): Promise<void> {
       'Content-Type': 'application/json',
     };
   }
-  Log._debug(
-    `Webhook ${payload.event} ${isServerCorsEnabled ? '+' : '-'}CORS ${webhookTargetUrl}`,
-  );
+  Log._debug(`Webhook ${payload.event} ${isServerCorsEnabled ? '+' : '-'}CORS ${webhookTargetUrl}`);
   await fetch(webhookTargetUrl, fetchOptions);
   return;
 }

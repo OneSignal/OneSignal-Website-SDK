@@ -5,7 +5,8 @@ import LoginManager from 'src/page/managers/LoginManager';
 import * as detect from 'src/shared/environment/detect';
 import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
-import { vi, type MockInstance } from 'vite-plus/test';
+import { beforeEach, describe, expect, test, vi, type MockInstance } from 'vite-plus/test';
+
 import User from '../../../onesignal/User';
 import { SessionManager } from './SessionManager';
 const supportsServiceWorkersSpy = vi.spyOn(detect, 'supportsServiceWorkers');
@@ -141,9 +142,7 @@ describe('SessionManager', () => {
       TestEnvironment.initialize();
       sm = new SessionManager(OneSignal._context);
       notifySpy = vi.spyOn(sm, '_notifySWToUpsertSession');
-      deactSpy = vi
-        .spyOn(sm, '_notifySWToDeactivateSession')
-        .mockResolvedValue(undefined);
+      deactSpy = vi.spyOn(sm, '_notifySWToDeactivateSession').mockResolvedValue(undefined);
     });
 
     test('_notifySWToUpsertSession posts to worker when SW supported', async () => {
@@ -152,11 +151,7 @@ describe('SessionManager', () => {
         .spyOn(OneSignal._context._workerMessenger, '_unicast')
         .mockResolvedValue(undefined);
 
-      await sm['_notifySWToUpsertSession'](
-        'one',
-        'sub',
-        SessionOrigin._UserCreate,
-      );
+      await sm['_notifySWToUpsertSession']('one', 'sub', SessionOrigin._UserCreate);
       expect(unicastSpy).toHaveBeenCalled();
     });
 
@@ -175,9 +170,7 @@ describe('SessionManager', () => {
 
     test('_upsertSession emits SESSION_STARTED when SW not supported', async () => {
       supportsServiceWorkersSpy.mockReturnValue(false);
-      const emitSpy = vi
-        .spyOn(OneSignal._emitter, '_emit')
-        .mockResolvedValue(OneSignal._emitter);
+      const emitSpy = vi.spyOn(OneSignal._emitter, '_emit').mockResolvedValue(OneSignal._emitter);
       await sm._upsertSession(SessionOrigin._UserCreate);
       expect(emitSpy).toHaveBeenCalledWith(OneSignal.EVENTS.SESSION_STARTED);
     });

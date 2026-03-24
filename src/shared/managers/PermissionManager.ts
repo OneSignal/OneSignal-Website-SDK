@@ -10,13 +10,15 @@ export default class PermissionManager {
    * Returns a promise that resolves to the browser's current notification permission as
    *    'default', 'granted', or 'denied'.
    */
-  async _getPermissionStatus(): Promise<NotificationPermission> {
+  _getPermissionStatus(): Promise<NotificationPermission> {
     if (!OneSignal._context) {
-      throw new Error(`OneSignal.context is undefined. Call init first`);
+      return Promise.reject(new Error(`OneSignal.context is undefined. Call init first`));
     }
 
-    return await OneSignal._context._permissionManager._getNotificationPermission(
-      OneSignal.config!.safariWebId,
+    return Promise.resolve(
+      OneSignal._context._permissionManager._getNotificationPermission(
+        OneSignal.config!.safariWebId,
+      ),
     );
   }
 
@@ -26,13 +28,9 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission
    * state on Legacy Safari on macOS.
    */
-  public async _getNotificationPermission(
-    safariWebId?: string,
-  ): Promise<NotificationPermission> {
+  public _getNotificationPermission(safariWebId?: string): NotificationPermission {
     if (useSafariLegacyPush()) {
-      return PermissionManager._getLegacySafariNotificationPermission(
-        safariWebId,
-      );
+      return PermissionManager._getLegacySafariNotificationPermission(safariWebId);
     }
     return this._getW3cNotificationPermission();
   }

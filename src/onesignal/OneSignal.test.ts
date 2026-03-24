@@ -55,6 +55,7 @@ import * as MainHelper from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 mockPageStylesCss();
 
@@ -65,16 +66,13 @@ const setupEnv = (consentRequired: boolean) => {
       requiresUserPrivacyConsent: consentRequired,
     },
   });
-  OneSignal._coreDirector._subscriptionModelStore._replaceAll(
-    [],
-    ModelChangeTags._NoPropogate,
-  );
-  setupPropertiesModel();
+  OneSignal._coreDirector._subscriptionModelStore._replaceAll([], ModelChangeTags._NoPropogate);
+  void setupPropertiesModel();
   setupIdentityModel();
 };
 
 describe('OneSignal - No Consent Required', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     setupEnv(false);
   });
 
@@ -150,14 +148,14 @@ describe('OneSignal - No Consent Required', () => {
         expect(identityModel._getProperty('someLabel')).toBe('someId');
         expect(identityModel._getProperty('someLabel2')).toBe('someId2');
 
-        await vi.waitUntil(async () => addAliasFn.mock.calls.length === 2, {
+        await vi.waitUntil(() => addAliasFn.mock.calls.length === 2, {
           interval: 1,
         });
 
         OneSignal.User.removeAlias('someLabel');
         OneSignal.User.removeAlias('someLabel2');
 
-        await vi.waitUntil(async () => deleteAliasFn.mock.calls.length === 2, {
+        await vi.waitUntil(() => deleteAliasFn.mock.calls.length === 2, {
           interval: 1,
         });
 
@@ -171,9 +169,7 @@ describe('OneSignal - No Consent Required', () => {
       const email = 'test@test.com';
 
       const getEmailSubscriptionDbItems = async () =>
-        (await db.getAll<'subscriptions'>('subscriptions')).filter(
-          (s) => s.type === 'Email',
-        );
+        (await db.getAll<'subscriptions'>('subscriptions')).filter((s) => s.type === 'Email');
 
       beforeEach(() => {
         // id not returned for sms or email
@@ -278,9 +274,9 @@ describe('OneSignal - No Consent Required', () => {
         let subscriptions: SubscriptionSchema[] = [];
         await vi.waitUntil(
           async () => {
-            subscriptions = (
-              await db.getAll<'subscriptions'>('subscriptions')
-            ).filter((s) => s.type === 'SMS');
+            subscriptions = (await db.getAll<'subscriptions'>('subscriptions')).filter(
+              (s) => s.type === 'SMS',
+            );
             return subscriptions.length === length;
           },
           { interval: 1 },
@@ -405,9 +401,7 @@ describe('OneSignal - No Consent Required', () => {
 
         test('should validate external id', async () => {
           // @ts-expect-error - testing invalid argument
-          await expect(OneSignal.login()).rejects.toThrowError(
-            '"externalId" is empty',
-          );
+          await expect(OneSignal.login()).rejects.toThrowError('"externalId" is empty');
 
           // @ts-expect-error - testing invalid argument
           await expect(OneSignal.login(null)).rejects.toThrowError(
@@ -415,9 +409,7 @@ describe('OneSignal - No Consent Required', () => {
           );
 
           // @ts-expect-error - testing invalid argument
-          await expect(OneSignal.login('', 1)).rejects.toThrowError(
-            '"jwtToken" is the wrong type',
-          );
+          await expect(OneSignal.login('', 1)).rejects.toThrowError('"jwtToken" is the wrong type');
         });
 
         test('can login with a new external id', async () => {
@@ -440,9 +432,7 @@ describe('OneSignal - No Consent Required', () => {
           });
 
           // should also update the identity in the IndexedDB
-          identityData = await getIdentityItem(
-            (i) => i.onesignal_id === ONESIGNAL_ID,
-          );
+          identityData = await getIdentityItem((i) => i.onesignal_id === ONESIGNAL_ID);
           expect(identityData).toEqual({
             external_id: externalId,
             modelId: expect.any(String),
@@ -453,10 +443,7 @@ describe('OneSignal - No Consent Required', () => {
           const identityModel = OneSignal._coreDirector._getIdentityModel();
           expect(identityModel._externalId).toBe(externalId);
 
-          await vi.waitUntil(
-            () => transferSubscriptionFn.mock.calls.length === 1,
-            { interval: 1 },
-          );
+          await vi.waitUntil(() => transferSubscriptionFn.mock.calls.length === 1, { interval: 1 });
         });
 
         test('login twice with same user -> only one call to identify user', async () => {
@@ -465,13 +452,8 @@ describe('OneSignal - No Consent Required', () => {
           await OneSignal.login(externalId);
 
           expect(addAliasFn).toHaveBeenCalledTimes(1);
-          expect(debugSpy).toHaveBeenCalledWith(
-            'Login: externalId already set',
-          );
-          await vi.waitUntil(
-            () => transferSubscriptionFn.mock.calls.length === 1,
-            { interval: 1 },
-          );
+          expect(debugSpy).toHaveBeenCalledWith('Login: externalId already set');
+          await vi.waitUntil(() => transferSubscriptionFn.mock.calls.length === 1, { interval: 1 });
         });
 
         test('login twice with different user -> logs in to second user', async () => {
@@ -560,9 +542,7 @@ describe('OneSignal - No Consent Required', () => {
 
           // calls refresh user
           // onesignal id should be changed
-          const identityData = await getIdentityItem(
-            (i) => i.onesignal_id === ONESIGNAL_ID_2,
-          );
+          const identityData = await getIdentityItem((i) => i.onesignal_id === ONESIGNAL_ID_2);
           expect(identityData).toEqual({
             external_id: externalId,
             modelId: expect.any(String),
@@ -619,10 +599,7 @@ describe('OneSignal - No Consent Required', () => {
           });
           OneSignal.User.addSms(sms);
 
-          await vi.waitUntil(
-            () => createSubscriptionFn.mock.calls.length === 2,
-            { interval: 1 },
-          );
+          await vi.waitUntil(() => createSubscriptionFn.mock.calls.length === 2, { interval: 1 });
 
           expect(createSubscriptionFn).toHaveBeenCalledWith({
             subscription: {
@@ -656,12 +633,8 @@ describe('OneSignal - No Consent Required', () => {
             { interval: 1 },
           );
 
-          const emailSubscriptions = dbSubscriptions.filter(
-            (s) => s.type === 'Email',
-          );
-          const smsSubscriptions = dbSubscriptions.filter(
-            (s) => s.type === 'SMS',
-          );
+          const emailSubscriptions = dbSubscriptions.filter((s) => s.type === 'Email');
+          const smsSubscriptions = dbSubscriptions.filter((s) => s.type === 'SMS');
 
           expect(emailSubscriptions).toHaveLength(1);
           expect(emailSubscriptions[0].id).toBe(SUB_ID_2);
@@ -690,14 +663,13 @@ describe('OneSignal - No Consent Required', () => {
 
           // wait for db to be updated
           await getIdentityItem((i) => i.onesignal_id === localId);
-          OneSignal.login(externalId);
+          void OneSignal.login(externalId);
 
           await vi.waitUntil(() => getUserFn.mock.calls.length === 1, {
             interval: 1,
           });
           const identityData = await getIdentityItem(
-            (i) =>
-              i.onesignal_id === ONESIGNAL_ID && i.external_id === externalId,
+            (i) => i.onesignal_id === ONESIGNAL_ID && i.external_id === externalId,
           );
 
           expect(identityData).toEqual({
@@ -777,23 +749,23 @@ describe('OneSignal - No Consent Required', () => {
             [],
             ModelChangeTags._NoPropogate,
           );
-          setPushToken('');
-          subscribeFcmFromPageSpy.mockImplementation(async () =>
-            getRawPushSubscription(),
+          void setPushToken('');
+          subscribeFcmFromPageSpy.mockImplementation(() =>
+            Promise.resolve(getRawPushSubscription()),
           );
 
           // new/empty user
           setupIdentityModel(IDManager._createLocalId());
 
           // calling login before accept permissions
-          OneSignal.login(externalId);
+          void OneSignal.login(externalId);
 
           // slidedown manager calls this on allow click
           // @ts-expect-error - Notification is not defined in the global scope
           global.Notification = {
             permission: 'granted',
           };
-          registerForPushNotifications();
+          void registerForPushNotifications();
 
           // create user call includes the empty subscription
           await vi.waitUntil(() => createUserFn.mock.calls.length === 1, {
@@ -819,12 +791,9 @@ describe('OneSignal - No Consent Required', () => {
           await promise;
 
           // accepting permissions patches the existing subscription with the token
-          await vi.waitUntil(
-            () => updateSubscriptionFn.mock.calls.length >= 1,
-            {
-              interval: 1,
-            },
-          );
+          await vi.waitUntil(() => updateSubscriptionFn.mock.calls.length >= 1, {
+            interval: 1,
+          });
 
           let pushSub: SubscriptionSchema | undefined;
           await vi.waitUntil(
@@ -839,11 +808,11 @@ describe('OneSignal - No Consent Required', () => {
     });
 
     describe('logout', () => {
-      test('should not do anything if user has no external id', async () => {
+      test('should not do anything if user has no external id', () => {
         const identityModel = OneSignal._coreDirector._getIdentityModel();
         expect(identityModel._externalId).toBeUndefined();
 
-        OneSignal.logout();
+        void OneSignal.logout();
         expect(debugSpy).toHaveBeenCalledWith('Logout: not logged in');
       });
 
@@ -859,7 +828,7 @@ describe('OneSignal - No Consent Required', () => {
 
         setCreateUserResponse({});
 
-        OneSignal.logout();
+        void OneSignal.logout();
 
         // identity model should be reset
         identityModel = OneSignal._coreDirector._getIdentityModel();
@@ -987,7 +956,7 @@ describe('OneSignal - No Consent Required', () => {
       updateIdentityModel('onesignal_id', IDManager._createLocalId());
       updateIdentityModel('external_id', 'some-id');
 
-      OneSignal.login('some-id-2');
+      void OneSignal.login('some-id-2');
       OneSignal.User.trackEvent(name, properties);
 
       const queue = await getQueue(2);
@@ -1028,7 +997,7 @@ describe('OneSignal - No Consent Required', () => {
       OneSignal.User.trackEvent('test_event_1', {
         test_property_1: 'test_value_1',
       });
-      OneSignal.login('some-id');
+      void OneSignal.login('some-id');
       OneSignal.User.trackEvent('test_event_2', {
         test_property_2: 'test_value_2',
       });
@@ -1099,7 +1068,7 @@ describe('OneSignal - No Consent Required', () => {
       OneSignal.User.trackEvent('test_event_1', {
         test_property_1: 'test_value_1',
       });
-      OneSignal.login('some-id-2');
+      void OneSignal.login('some-id-2');
       OneSignal.User.trackEvent('test_event_2', {
         test_property_2: 'test_value_2',
       });
@@ -1165,15 +1134,13 @@ describe('OneSignal - No Consent Required', () => {
       const changeEvent = vi.fn();
       OneSignal.User.PushSubscription.addEventListener('change', changeEvent);
 
-      subscribeFcmFromPageSpy.mockImplementation(async () =>
-        getRawPushSubscription(),
-      );
+      subscribeFcmFromPageSpy.mockImplementation(() => Promise.resolve(getRawPushSubscription()));
 
       // @ts-expect-error - Notification is not defined in the global scope
       global.Notification = {
         permission: 'granted',
       };
-      registerForPushNotifications();
+      void registerForPushNotifications();
 
       await vi.waitUntil(() => changeEvent.mock.calls.length === 1, {
         interval: 1,
@@ -1202,7 +1169,7 @@ describe('OneSignal - No Consent Required', () => {
     setTransferSubscriptionResponse();
     setUpdateUserResponse();
 
-    OneSignal.login('some-id');
+    void OneSignal.login('some-id');
     OneSignal.User.addTag('some-tag', 'some-value');
     const tags = OneSignal.User.getTags();
 
@@ -1259,21 +1226,21 @@ describe('OneSignal - No Consent Required', () => {
 describe('OneSignal - Consent Required', () => {
   beforeEach(() => {
     setupEnv(true);
-    OneSignal.setConsentGiven(false);
+    void OneSignal.setConsentGiven(false);
   });
 
-  test('cannot call login if consent is required but not given', async () => {
-    OneSignal.login('some-id');
+  test('cannot call login if consent is required but not given', () => {
+    void OneSignal.login('some-id');
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
 
-    OneSignal.setConsentGiven(true);
+    void OneSignal.setConsentGiven(true);
     warnSpy.mockClear();
-    OneSignal.login('some-id');
+    void OneSignal.login('some-id');
     expect(warnSpy).not.toHaveBeenCalled();
   });
 
-  test('cannot call logout if consent is required but not given', async () => {
-    OneSignal.logout();
+  test('cannot call logout if consent is required but not given', () => {
+    void OneSignal.logout();
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
   });
 });

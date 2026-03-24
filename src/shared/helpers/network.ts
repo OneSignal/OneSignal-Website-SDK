@@ -8,8 +8,7 @@ export const ResponseStatusType = {
   _Conflict: 4,
 } as const;
 
-type ResponseStatusValue =
-  (typeof ResponseStatusType)[keyof typeof ResponseStatusType];
+type ResponseStatusValue = (typeof ResponseStatusType)[keyof typeof ResponseStatusType];
 
 /**
  * Determines the response status type based on HTTP status code.

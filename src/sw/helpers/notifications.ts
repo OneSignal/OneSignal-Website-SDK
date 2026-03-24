@@ -3,14 +3,13 @@ import type {
   IOSNotificationActionButton,
   NotificationAction,
 } from 'src/shared/notifications/types';
+
 import type {
   OSMinifiedButtonsPayload,
   OSMinifiedNotificationPayload,
 } from '../serviceWorker/types';
 
-export function toOSNotification(
-  payload: OSMinifiedNotificationPayload,
-): IOSNotification {
+export function toOSNotification(payload: OSMinifiedNotificationPayload): IOSNotification {
   return {
     notificationId: payload.custom.i,
     title: payload.title,

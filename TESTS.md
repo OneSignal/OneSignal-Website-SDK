@@ -70,11 +70,7 @@ server.use(
 
 // or
 
-server.use(
-  http.get('**/v1/notifications', () =>
-    HttpResponse.json({ result: {}, status: 200 }),
-  ),
-);
+server.use(http.get('**/v1/notifications', () => HttpResponse.json({ result: {}, status: 200 })));
 ```
 
 ## Fake Timers and IndexedDB

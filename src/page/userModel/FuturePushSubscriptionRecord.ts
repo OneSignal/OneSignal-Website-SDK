@@ -1,15 +1,9 @@
-import {
-  getDeviceModel,
-  getDeviceOS,
-  getSubscriptionType,
-} from 'src/shared/environment/detect';
+import { getDeviceModel, getDeviceOS, getSubscriptionType } from 'src/shared/environment/detect';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import type {
-  NotificationTypeValue,
-  SubscriptionTypeValue,
-} from 'src/shared/subscriptions/types';
+import type { NotificationTypeValue, SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import { VERSION } from 'src/shared/utils/env';
+
 import type { Serializable } from '../models/Serializable';
 
 export default class FuturePushSubscriptionRecord implements Serializable {

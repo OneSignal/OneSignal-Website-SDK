@@ -1,3 +1,5 @@
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test';
+
 import * as InitHelper from '../../../src/shared/helpers/init';
 import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
@@ -43,9 +45,7 @@ describe('Register for push', () => {
     global.OneSignal._initialized = true;
     global.OneSignal._initCalled = false;
 
-    await expect(InitHelper.registerForPushNotifications()).resolves.toBe(
-      false,
-    );
+    await expect(InitHelper.registerForPushNotifications()).resolves.toBe(false);
     expect(spy).toHaveBeenCalledTimes(1);
   });
 });

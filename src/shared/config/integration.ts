@@ -5,10 +5,8 @@ import type {
   ServerAppConfig,
   ServiceWorkerConfigParams,
 } from 'src/shared/config/types';
-import {
-  DEFAULT_SERVICE_WORKER_OPTIONS,
-  DEFAULT_SERVICE_WORKER_PATH,
-} from '../context/constants';
+
+import { DEFAULT_SERVICE_WORKER_OPTIONS, DEFAULT_SERVICE_WORKER_PATH } from '../context/constants';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   DelayedPromptType,
@@ -61,9 +59,7 @@ export function hasUnsupportedSubdomainForConfigIntegrationKind(
   userConfig: AppUserConfig,
   serverConfig: ServerAppConfig,
 ): boolean {
-  const integrationCapabilities = getIntegrationCapabilities(
-    configIntegrationKind,
-  );
+  const integrationCapabilities = getIntegrationCapabilities(configIntegrationKind);
 
   switch (integrationCapabilities.configuration) {
     case IntegrationConfigurationKind._Dashboard:
@@ -90,16 +86,16 @@ export function getUserConfigForConfigIntegrationKind(
   userConfig: AppUserConfig,
   serverConfig: ServerAppConfig,
 ): AppUserConfig {
-  const integrationCapabilities = getIntegrationCapabilities(
-    configIntegrationKind,
-  );
+  const integrationCapabilities = getIntegrationCapabilities(configIntegrationKind);
   switch (integrationCapabilities.configuration) {
     case IntegrationConfigurationKind._Dashboard: {
       /*
            Ignores code-based initialization configuration and uses dashboard configuration only.
           */
-      const { path, serviceWorkerPath, serviceWorkerParam } =
-        getServiceWorkerValues(userConfig, serverConfig);
+      const { path, serviceWorkerPath, serviceWorkerParam } = getServiceWorkerValues(
+        userConfig,
+        serverConfig,
+      );
 
       return {
         appId: serverConfig.app_id,
@@ -119,8 +115,7 @@ export function getUserConfigForConfigIntegrationKind(
         notifyButton: {
           enable: serverConfig.config.staticPrompts.bell.enabled,
           displayPredicate:
-            serverConfig.config.staticPrompts.bell.hideWhenSubscribed &&
-            !IS_SERVICE_WORKER
+            serverConfig.config.staticPrompts.bell.hideWhenSubscribed && !IS_SERVICE_WORKER
               ? () => !OneSignal.User.PushSubscription.optedIn
               : null,
           size: serverConfig.config.staticPrompts.bell.size,
@@ -132,51 +127,36 @@ export function getUserConfigForConfigIntegrationKind(
             right: `${serverConfig.config.staticPrompts.bell.offset.right}px`,
           },
           colors: {
-            'circle.background':
-              serverConfig.config.staticPrompts.bell.color.main,
-            'circle.foreground':
-              serverConfig.config.staticPrompts.bell.color.accent,
+            'circle.background': serverConfig.config.staticPrompts.bell.color.main,
+            'circle.foreground': serverConfig.config.staticPrompts.bell.color.accent,
             'badge.background': 'black',
             'badge.foreground': 'white',
             'badge.bordercolor': 'black',
             'pulse.color': serverConfig.config.staticPrompts.bell.color.accent,
-            'dialog.button.background.hovering':
-              serverConfig.config.staticPrompts.bell.color.main,
-            'dialog.button.background.active':
-              serverConfig.config.staticPrompts.bell.color.main,
-            'dialog.button.background':
-              serverConfig.config.staticPrompts.bell.color.main,
+            'dialog.button.background.hovering': serverConfig.config.staticPrompts.bell.color.main,
+            'dialog.button.background.active': serverConfig.config.staticPrompts.bell.color.main,
+            'dialog.button.background': serverConfig.config.staticPrompts.bell.color.main,
             'dialog.button.foreground': 'white',
           },
           text: {
-            'tip.state.unsubscribed':
-              serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
-            'tip.state.subscribed':
-              serverConfig.config.staticPrompts.bell.tooltip.subscribed,
-            'tip.state.blocked':
-              serverConfig.config.staticPrompts.bell.tooltip.blocked,
-            'message.prenotify':
-              serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
+            'tip.state.unsubscribed': serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
+            'tip.state.subscribed': serverConfig.config.staticPrompts.bell.tooltip.subscribed,
+            'tip.state.blocked': serverConfig.config.staticPrompts.bell.tooltip.blocked,
+            'message.prenotify': serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
             'message.action.subscribing':
               serverConfig.config.staticPrompts.bell.message.subscribing,
-            'message.action.subscribed':
-              serverConfig.config.staticPrompts.bell.message.subscribing,
+            'message.action.subscribed': serverConfig.config.staticPrompts.bell.message.subscribing,
             'message.action.resubscribed':
               serverConfig.config.staticPrompts.bell.message.subscribing,
             'message.action.unsubscribed':
               serverConfig.config.staticPrompts.bell.message.unsubscribing,
-            'dialog.main.title':
-              serverConfig.config.staticPrompts.bell.dialog.main.title,
+            'dialog.main.title': serverConfig.config.staticPrompts.bell.dialog.main.title,
             'dialog.main.button.subscribe':
-              serverConfig.config.staticPrompts.bell.dialog.main
-                .subscribeButton,
+              serverConfig.config.staticPrompts.bell.dialog.main.subscribeButton,
             'dialog.main.button.unsubscribe':
-              serverConfig.config.staticPrompts.bell.dialog.main
-                .unsubscribeButton,
-            'dialog.blocked.title':
-              serverConfig.config.staticPrompts.bell.dialog.blocked.title,
-            'dialog.blocked.message':
-              serverConfig.config.staticPrompts.bell.dialog.blocked.message,
+              serverConfig.config.staticPrompts.bell.dialog.main.unsubscribeButton,
+            'dialog.blocked.title': serverConfig.config.staticPrompts.bell.dialog.blocked.title,
+            'dialog.blocked.message': serverConfig.config.staticPrompts.bell.dialog.blocked.message,
           },
         },
         persistNotification: serverConfig.config.notificationBehavior
@@ -184,12 +164,9 @@ export function getUserConfigForConfigIntegrationKind(
           : undefined,
         webhooks: {
           cors: serverConfig.config.webhooks.corsEnable,
-          'notification.willDisplay':
-            serverConfig.config.webhooks.notificationDisplayedHook,
-          'notification.clicked':
-            serverConfig.config.webhooks.notificationClickedHook,
-          'notification.dismissed':
-            serverConfig.config.webhooks.notificationDismissedHook,
+          'notification.willDisplay': serverConfig.config.webhooks.notificationDisplayedHook,
+          'notification.clicked': serverConfig.config.webhooks.notificationClickedHook,
+          'notification.dismissed': serverConfig.config.webhooks.notificationDismissedHook,
         },
         notificationClickHandlerMatch: serverConfig.config.notificationBehavior
           ? serverConfig.config.notificationBehavior.click.match
@@ -205,8 +182,7 @@ export function getUserConfigForConfigIntegrationKind(
               serverConfig.config.outcomes.indirect.notification_attribution
                 .minutes_since_displayed,
             influencedNotificationsLimit:
-              serverConfig.config.outcomes.indirect.notification_attribution
-                .limit,
+              serverConfig.config.outcomes.indirect.notification_attribution.limit,
           },
           unattributed: serverConfig.config.outcomes.unattributed,
         },
@@ -224,15 +200,13 @@ export function getUserConfigForConfigIntegrationKind(
           serverConfig.config.staticPrompts,
           userConfig,
         ),
-        ...{
-          serviceWorkerParam: userConfig.serviceWorkerParam
-            ? userConfig.serviceWorkerParam
-            : DEFAULT_SERVICE_WORKER_OPTIONS,
-          serviceWorkerPath: userConfig.serviceWorkerPath
-            ? userConfig.serviceWorkerPath
-            : DEFAULT_SERVICE_WORKER_PATH,
-          path: userConfig.path ? userConfig.path : '/',
-        },
+        serviceWorkerParam: userConfig.serviceWorkerParam
+          ? userConfig.serviceWorkerParam
+          : DEFAULT_SERVICE_WORKER_OPTIONS,
+        serviceWorkerPath: userConfig.serviceWorkerPath
+          ? userConfig.serviceWorkerPath
+          : DEFAULT_SERVICE_WORKER_PATH,
+        path: userConfig.path ? userConfig.path : '/',
         outcomes: {
           direct: serverConfig.config.outcomes.direct,
           indirect: {
@@ -241,8 +215,7 @@ export function getUserConfigForConfigIntegrationKind(
               serverConfig.config.outcomes.indirect.notification_attribution
                 .minutes_since_displayed,
             influencedNotificationsLimit:
-              serverConfig.config.outcomes.indirect.notification_attribution
-                .limit,
+              serverConfig.config.outcomes.indirect.notification_attribution.limit,
           },
           unattributed: serverConfig.config.outcomes.unattributed,
         },
@@ -250,9 +223,7 @@ export function getUserConfigForConfigIntegrationKind(
 
       if (Object.prototype.hasOwnProperty.call(userConfig, 'autoResubscribe')) {
         config.autoResubscribe = !!userConfig.autoResubscribe;
-      } else if (
-        Object.prototype.hasOwnProperty.call(userConfig, 'autoRegister')
-      ) {
+      } else if (Object.prototype.hasOwnProperty.call(userConfig, 'autoRegister')) {
         config.autoResubscribe = !!userConfig.autoRegister;
       } else {
         config.autoResubscribe = !!serverConfig.config.autoResubscribe;
@@ -271,9 +242,7 @@ function getServiceWorkerValues(
   const useUserOverride = userConfig.serviceWorkerOverrideForTypical;
 
   return {
-    path: useUserOverride
-      ? (userConfig.path ?? serviceWorker.path)
-      : serviceWorker.path,
+    path: useUserOverride ? (userConfig.path ?? serviceWorker.path) : serviceWorker.path,
     serviceWorkerParam: useUserOverride
       ? (userConfig.serviceWorkerParam ?? {
           scope: serviceWorker.registrationScope,
@@ -309,17 +278,11 @@ function injectDefaultsIntoPromptOptions(
       style: customlinkUser.style ?? customlinkDefaults.style,
       size: customlinkUser.size ?? customlinkDefaults.size,
       unsubscribeEnabled:
-        customlinkUser.unsubscribeEnabled ??
-        customlinkDefaults.unsubscribeEnabled,
+        customlinkUser.unsubscribeEnabled ?? customlinkDefaults.unsubscribeEnabled,
       text: {
-        subscribe:
-          customlinkUser.text?.subscribe ?? customlinkDefaults.text.subscribe,
-        unsubscribe:
-          customlinkUser.text?.unsubscribe ??
-          customlinkDefaults.text.unsubscribe,
-        explanation:
-          customlinkUser.text?.explanation ??
-          customlinkDefaults.text.explanation,
+        subscribe: customlinkUser.text?.subscribe ?? customlinkDefaults.text.subscribe,
+        unsubscribe: customlinkUser.text?.unsubscribe ?? customlinkDefaults.text.unsubscribe,
+        explanation: customlinkUser.text?.explanation ?? customlinkDefaults.text.explanation,
       },
       color: {
         button: customlinkUser.color?.button ?? customlinkDefaults.color.button,
@@ -329,8 +292,8 @@ function injectDefaultsIntoPromptOptions(
   };
 
   if (promptOptionsConfig.slidedown) {
-    promptOptionsConfig.slidedown.prompts =
-      promptOptionsConfig.slidedown?.prompts?.map((promptOption) => {
+    promptOptionsConfig.slidedown.prompts = promptOptionsConfig.slidedown?.prompts?.map(
+      (promptOption) => {
         promptOption.type = promptOption.type ?? DelayedPromptType._Push;
 
         if (promptOption.type === DelayedPromptType._Category) {
@@ -338,12 +301,10 @@ function injectDefaultsIntoPromptOptions(
             ...promptOption.text,
             positiveUpdateButton:
               promptOption.text?.positiveUpdateButton ??
-              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults
-                .positiveUpdateButton,
+              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton,
             negativeUpdateButton:
               promptOption.text?.negativeUpdateButton ??
-              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults
-                .negativeUpdateButton,
+              SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton,
             updateMessage:
               promptOption.text?.updateMessage ??
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage,
@@ -353,17 +314,13 @@ function injectDefaultsIntoPromptOptions(
         promptOption.text = {
           ...promptOption.text,
           actionMessage:
-            promptOption.text?.actionMessage ??
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
+            promptOption.text?.actionMessage ?? SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
           acceptButton:
-            promptOption.text?.acceptButton ??
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
+            promptOption.text?.acceptButton ?? SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
           cancelButton:
-            promptOption.text?.cancelButton ??
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
+            promptOption.text?.cancelButton ?? SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
           confirmMessage:
-            promptOption.text?.confirmMessage ??
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage,
+            promptOption.text?.confirmMessage ?? SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage,
         };
 
         // default autoPrompt to true iff slidedown config exists but omitted the autoPrompt setting
@@ -371,23 +328,19 @@ function injectDefaultsIntoPromptOptions(
 
         promptOption.delay = {
           pageViews:
-            promptOption.delay?.pageViews ??
-            SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
+            promptOption.delay?.pageViews ?? SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
           timeDelay:
-            promptOption.delay?.timeDelay ??
-            SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
+            promptOption.delay?.timeDelay ?? SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
         };
 
         if (promptOption.categories) {
           const { categories } = promptOption;
-          promptOption.categories = limitCategoriesToMaxCount(
-            categories,
-            MAX_CATEGORIES,
-          );
+          promptOption.categories = limitCategoriesToMaxCount(categories, MAX_CATEGORIES);
         }
 
         return promptOption;
-      });
+      },
+    );
   } else {
     promptOptionsConfig.slidedown = { prompts: [] };
     promptOptionsConfig.slidedown.prompts = [CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS];
@@ -399,18 +352,15 @@ function injectDefaultsIntoPromptOptions(
       'autoPrompt',
     );
     promptOptionsConfig.native.autoPrompt = hasAutoPromptProperty
-      ? !!promptOptionsConfig.native.enabled &&
-        !!promptOptionsConfig.native.autoPrompt
+      ? !!promptOptionsConfig.native.enabled && !!promptOptionsConfig.native.autoPrompt
       : !!promptOptionsConfig.native.enabled;
 
     promptOptionsConfig.native.enabled = !!promptOptionsConfig.native.enabled;
 
     promptOptionsConfig.native.pageViews =
-      promptOptionsConfig.native.pageViews ??
-      SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews;
+      promptOptionsConfig.native.pageViews ?? SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews;
     promptOptionsConfig.native.timeDelay =
-      promptOptionsConfig.native.timeDelay ??
-      SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay;
+      promptOptionsConfig.native.timeDelay ?? SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay;
   } else {
     promptOptionsConfig.native = {
       enabled: false,

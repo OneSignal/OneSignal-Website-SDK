@@ -17,10 +17,7 @@ export function encodeHashAsUriComponent(hash: any): string {
   return uriComponent;
 }
 
-export function timeoutPromise(
-  promise: Promise<any>,
-  milliseconds: number,
-): Promise<Error | any> {
+export function timeoutPromise(promise: Promise<any>, milliseconds: number): Promise<any> {
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
       reject(new Error('Async operation timed out'));

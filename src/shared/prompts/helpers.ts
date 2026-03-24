@@ -1,15 +1,10 @@
 import { DelayedPromptType } from './constants';
 import type { DelayedPromptTypeValue, SlidedownPromptOptions } from './types';
 
-export function isCategorySlidedownConfigured(
-  prompts?: SlidedownPromptOptions[],
-): boolean {
+export function isCategorySlidedownConfigured(prompts?: SlidedownPromptOptions[]): boolean {
   if (!prompts) return false;
 
-  const options = getFirstSlidedownPromptOptionsWithType(
-    prompts,
-    DelayedPromptType._Category,
-  );
+  const options = getFirstSlidedownPromptOptionsWithType(prompts, DelayedPromptType._Category);
   if (options) {
     return !!options.categories && options.categories.length > 0;
   }
@@ -20,16 +15,9 @@ export function getFirstSlidedownPromptOptionsWithType(
   prompts: SlidedownPromptOptions[] | undefined,
   type: DelayedPromptTypeValue,
 ): SlidedownPromptOptions | undefined {
-  return prompts
-    ? prompts.filter((options) => options.type === type)[0]
-    : undefined;
+  return prompts ? prompts.filter((options) => options.type === type)[0] : undefined;
 }
 
-export function isSlidedownPushDependent(
-  slidedownType: DelayedPromptTypeValue,
-): boolean {
-  return (
-    slidedownType === DelayedPromptType._Push ||
-    slidedownType === DelayedPromptType._Category
-  );
+export function isSlidedownPushDependent(slidedownType: DelayedPromptTypeValue): boolean {
+  return slidedownType === DelayedPromptType._Push || slidedownType === DelayedPromptType._Category;
 }

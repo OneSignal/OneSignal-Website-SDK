@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from 'vite-plus/test';
+
 const { mockJsonp } = vi.hoisted(() => ({
   mockJsonp: vi.fn(),
 }));

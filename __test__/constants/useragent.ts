@@ -21,12 +21,10 @@ export const USER_AGENTS = {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.1',
   FIREFOX_MAC:
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 15.6; rv:141.0) Gecko/20100101 Firefox/141.0',
-  FIREFOX_LINUX:
-    'Mozilla/5.0 (X11; Linux i686; rv:141.0) Gecko/20100101 Firefox/141.0',
+  FIREFOX_LINUX: 'Mozilla/5.0 (X11; Linux i686; rv:141.0) Gecko/20100101 Firefox/141.0',
   FIREFOX_IOS:
     'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/141.0 Mobile/15E148 Safari/605.1.15',
-  FIREFOX_ANDROID:
-    'Mozilla/5.0 (Android 16; Mobile; rv:141.0) Gecko/141.0 Firefox/141.0',
+  FIREFOX_ANDROID: 'Mozilla/5.0 (Android 16; Mobile; rv:141.0) Gecko/141.0 Firefox/141.0',
   SAFARI_MAC:
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Safari/605.1.15',
   SAFARI_IPHONE:
@@ -53,8 +51,7 @@ export const USER_AGENTS = {
     'Mozilla/5.0 (iPhone; CPU iPhone OS 12_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/238.0.0.50.115;FBBV/171859800;FBDV/iPhone9,3;FBMD/iPhone;FBSN/iOS;FBSV/12.4.1;FBSS/2;FBID/phone;FBLC/en_US;FBOP/5;FBRV/172564136;FBCR/AT&T]',
   FACEBOOK_APP_ANDROID:
     'Mozilla/5.0 (Linux; Android 8.1.0; SM-J410G Build/M1AJB; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.6778.81 Mobile Safari/537.36[FBAN/EMA;FBLC/es_LA;FBAV/457.0.0.12.82;FBCX/modulariab;]',
-  SAMSUNG_TABLET:
-    'Dalvik/2.1.0 (Linux; U; Android 14; SM-X306B Build/UP1A.231005.007)',
+  SAMSUNG_TABLET: 'Dalvik/2.1.0 (Linux; U; Android 14; SM-X306B Build/UP1A.231005.007)',
   GOOGLE_TABLET:
     'Mozilla/5.0 (Linux; Android 7.0; Pixel C Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/52.0.2743.98 Safari/537.36',
   //   AMAZON_FIRE_TV:

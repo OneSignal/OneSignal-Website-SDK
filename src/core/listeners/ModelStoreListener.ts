@@ -1,10 +1,6 @@
 import type { Model, ModelChangedArgs } from '../models/Model';
 import { Operation } from '../operations/Operation';
-import {
-  ModelChangeTags,
-  type IModelStore,
-  type ModelChangeTagValue,
-} from '../types/models';
+import { ModelChangeTags, type IModelStore, type ModelChangeTagValue } from '../types/models';
 import type { IOperationRepo } from '../types/operation';
 
 // Implements logic similar to Android SDK's ModelStoreListener
@@ -40,15 +36,12 @@ export abstract class ModelStoreListener<TModel extends Model> {
     }
   }
 
-  async _onModelUpdated(
-    args: ModelChangedArgs,
-    tag: ModelChangeTagValue,
-  ): Promise<void> {
+  _onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): void {
     if (tag !== ModelChangeTags._Normal) {
       return;
     }
 
-    const operation = await this._getUpdateOperation(
+    const operation = this._getUpdateOperation(
       args.model as TModel,
       args.property,
       args.oldValue,
@@ -59,15 +52,12 @@ export abstract class ModelStoreListener<TModel extends Model> {
     }
   }
 
-  async _onModelRemoved(
-    model: TModel,
-    tag: ModelChangeTagValue,
-  ): Promise<void> {
+  _onModelRemoved(model: TModel, tag: ModelChangeTagValue): void {
     if (tag !== ModelChangeTags._Normal) {
       return;
     }
 
-    const operation = await this._getRemoveOperation(model);
+    const operation = this._getRemoveOperation(model);
     if (operation != null) {
       this._opRepo._enqueue(operation);
     }

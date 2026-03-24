@@ -20,11 +20,7 @@ export default class UserNamespace extends EventListenerBase {
     super();
     if (initialize) {
       this._currentUser = User._createOrGetInstance();
-      this.PushSubscription = new PushSubscriptionNamespace(
-        true,
-        subscription,
-        permission,
-      );
+      this.PushSubscription = new PushSubscriptionNamespace(true, subscription, permission);
     }
   }
 
@@ -108,17 +104,11 @@ export default class UserNamespace extends EventListenerBase {
     return this._currentUser?.trackEvent(name, properties);
   }
 
-  addEventListener(
-    event: 'change',
-    listener: (userChange: UserChangeEvent) => void,
-  ): void {
+  addEventListener(event: 'change', listener: (userChange: UserChangeEvent) => void): void {
     UserNamespace._emitter.on(event, listener);
   }
 
-  removeEventListener(
-    event: 'change',
-    listener: (userChange: UserChangeEvent) => void,
-  ): void {
+  removeEventListener(event: 'change', listener: (userChange: UserChangeEvent) => void): void {
     UserNamespace._emitter.off(event, listener);
   }
 }

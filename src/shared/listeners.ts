@@ -1,6 +1,7 @@
 import UserNamespace from 'src/onesignal/UserNamespace';
 import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
+
 import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
@@ -8,10 +9,7 @@ import { getCurrentPushToken, showLocalNotification } from './helpers/main';
 import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
 import { UserState } from './models/UserState';
-import type {
-  NotificationClickEvent,
-  NotificationClickEventInternal,
-} from './notifications/types';
+import type { NotificationClickEvent, NotificationClickEventInternal } from './notifications/types';
 import { isCategorySlidedownConfigured } from './prompts/helpers';
 import { limitStorePut } from './services/limitStore';
 import OneSignalEvent from './services/OneSignalEvent';
@@ -24,16 +22,10 @@ export async function checkAndTriggerSubscriptionChanged() {
   const isPushEnabled: boolean =
     await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
   // isOptedIn = native permission granted && is not opted out
-  const isOptedIn: boolean =
-    await OneSignal._context._subscriptionManager._isOptedIn!();
+  const isOptedIn: boolean = await OneSignal._context._subscriptionManager._isOptedIn!();
 
   const appState = await getAppState();
-  const {
-    lastKnownPushEnabled,
-    lastKnownPushId,
-    lastKnownPushToken,
-    lastKnownOptedIn,
-  } = appState;
+  const { lastKnownPushEnabled, lastKnownPushId, lastKnownPushToken, lastKnownOptedIn } = appState;
   const currentPushToken = await getCurrentPushToken();
 
   const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
@@ -78,17 +70,12 @@ function triggerSubscriptionChanged(change: SubscriptionChangeEvent) {
   OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
 }
 
-export function triggerNotificationClick(
-  event: NotificationClickEventInternal,
-): Promise<void> {
+export function triggerNotificationClick(event: NotificationClickEventInternal): void {
   const publicEvent: NotificationClickEvent = {
     notification: event.notification,
     result: event.result,
   };
-  return OneSignalEvent._trigger(
-    OneSignal.EVENTS.NOTIFICATION_CLICKED,
-    publicEvent,
-  );
+  OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, publicEvent);
 }
 
 const getUserState = async (): Promise<UserState> => {
@@ -97,11 +84,8 @@ const getUserState = async (): Promise<UserState> => {
   userState.previousExternalId = '';
   // previous<OneSignalId|ExternalId> are used to track changes to the user's state.
   // Displayed in the `current` & `previous` fields of the `userChange` event.
-  userState.previousOneSignalId = await getOptionsValue<string>(
-    'previousOneSignalId',
-  );
-  userState.previousExternalId =
-    await getOptionsValue<string>('previousExternalId');
+  userState.previousOneSignalId = await getOptionsValue<string>('previousOneSignalId');
+  userState.previousExternalId = await getOptionsValue<string>('previousExternalId');
   return userState;
 };
 
@@ -122,13 +106,12 @@ export async function checkAndTriggerUserChanged() {
   const userState = await getUserState();
   const { previousOneSignalId, previousExternalId } = userState;
 
-  const identityModel = await OneSignal._coreDirector._getIdentityModel();
+  const identityModel = OneSignal._coreDirector._getIdentityModel();
   const currentOneSignalId = identityModel?._onesignalId;
   const currentExternalId = identityModel?._externalId;
 
   const didStateChange =
-    currentOneSignalId !== previousOneSignalId ||
-    currentExternalId !== previousExternalId;
+    currentOneSignalId !== previousOneSignalId || currentExternalId !== previousExternalId;
   if (!didStateChange) {
     return;
   }
@@ -148,24 +131,15 @@ export async function checkAndTriggerUserChanged() {
 }
 
 function triggerUserChanged(change: UserChangeEvent) {
-  OneSignalEvent._trigger(
-    OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-    change,
-    UserNamespace._emitter,
-  );
+  OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change, UserNamespace._emitter);
 }
 
-async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
+function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
   if (!OneSignal.config?.userConfig.notifyButton) return;
 
-  const displayPredicate =
-    OneSignal.config.userConfig.notifyButton.displayPredicate;
-  if (
-    displayPredicate &&
-    typeof displayPredicate === 'function' &&
-    OneSignal._notifyButton
-  ) {
-    const predicateResult = await displayPredicate();
+  const displayPredicate = OneSignal.config.userConfig.notifyButton.displayPredicate;
+  if (displayPredicate && typeof displayPredicate === 'function' && OneSignal._notifyButton) {
+    const predicateResult = displayPredicate();
     if (predicateResult !== false) {
       Log._debug('Showing notify button: predicate true');
       OneSignal._notifyButton._launcher._show();
@@ -178,17 +152,15 @@ async function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
 
 function onSubscriptionChanged_updateCustomLink() {
   if (OneSignal.config?.userConfig.promptOptions) {
-    new CustomLinkManager(
-      OneSignal.config?.userConfig.promptOptions.customlink,
-    )._initialize();
+    void new CustomLinkManager(OneSignal.config?.userConfig.promptOptions.customlink)._initialize();
   }
 }
 
-export async function onInternalSubscriptionSet(optedOut: boolean) {
+export function onInternalSubscriptionSet(optedOut: boolean): void {
   limitStorePut('subscription.optedOut', optedOut);
 }
 
-async function onSubscriptionChanged_showWelcomeNotification(
+function onSubscriptionChanged_showWelcomeNotification(
   isSubscribed: boolean | undefined,
   pushSubscriptionId: string | undefined | null,
 ) {
@@ -196,11 +168,9 @@ async function onSubscriptionChanged_showWelcomeNotification(
     Log._debug('Skipping welcome notif: already subscribed');
     return;
   }
-  const welcome_notification_opts =
-    OneSignal.config?.userConfig.welcomeNotification;
+  const welcome_notification_opts = OneSignal.config?.userConfig.welcomeNotification;
   const welcome_notification_disabled =
-    welcome_notification_opts !== undefined &&
-    welcome_notification_opts['disable'] === true;
+    welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true;
 
   if (welcome_notification_disabled) {
     return;
@@ -227,8 +197,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
     welcome_notification_opts['message'].length > 0
       ? welcome_notification_opts['message']
       : 'Thanks for subscribing!';
-  const unopenableWelcomeNotificationUrl =
-    new URL(location.href).origin + '?_osp=do_not_open';
+  const unopenableWelcomeNotificationUrl = new URL(location.href).origin + '?_osp=do_not_open';
   const url =
     welcome_notification_opts &&
     welcome_notification_opts['url'] &&
@@ -239,7 +208,7 @@ async function onSubscriptionChanged_showWelcomeNotification(
   message = decodeHtmlEntities(message);
 
   Log._debug('Sending welcome notif');
-  showLocalNotification(
+  void showLocalNotification(
     title,
     message,
     url,
@@ -254,25 +223,17 @@ async function onSubscriptionChanged_showWelcomeNotification(
   });
 }
 
-async function onSubscriptionChanged_sendCategorySlidedownTags(
-  isSubscribed?: boolean | null,
-) {
+function onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed?: boolean | null) {
   if (isSubscribed !== true) return;
 
-  const prompts =
-    OneSignal._context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
+  const prompts = OneSignal._context._appConfig.userConfig.promptOptions?.slidedown?.prompts;
   if (isCategorySlidedownConfigured(prompts)) {
-    await OneSignal._context._tagManager._sendTags();
+    OneSignal._context._tagManager._sendTags();
   }
 }
 
-export function _onSubscriptionChanged(
-  change: SubscriptionChangeEvent | undefined,
-) {
-  onSubscriptionChanged_showWelcomeNotification(
-    change?.current?.optedIn,
-    change?.current?.id,
-  );
+export function _onSubscriptionChanged(change: SubscriptionChangeEvent | undefined) {
+  onSubscriptionChanged_showWelcomeNotification(change?.current?.optedIn, change?.current?.id);
   onSubscriptionChanged_sendCategorySlidedownTags(change?.current?.optedIn);
   onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
   onSubscriptionChanged_updateCustomLink();

@@ -3,6 +3,7 @@ import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
 import { setPushToken } from 'src/shared/database/subscription';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
+
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import NotificationsNamespace from '../../../src/onesignal/NotificationsNamespace';
 import OneSignal from '../../../src/onesignal/OneSignal';
@@ -36,9 +37,7 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
 
   const userNamespace = new UserNamespace(!!config.initUserAndPushSubscription); // TO DO: pass in subscription, and permission
   global.OneSignal.User = userNamespace;
-  global.OneSignal.Notifications = new NotificationsNamespace(
-    config.permission,
-  );
+  global.OneSignal.Notifications = new NotificationsNamespace(config.permission);
 
   return global.OneSignal;
 }

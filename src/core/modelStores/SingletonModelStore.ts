@@ -6,6 +6,7 @@ import {
   type ISingletonModelStoreChangeHandler,
   type ModelChangeTagValue,
 } from 'src/core/types/models';
+
 import { EventProducer } from '../../shared/helpers/EventProducer';
 
 // Implements logic similar to Android SDK's SingletonModelStore
@@ -29,7 +30,7 @@ export class SingletonModelStore<TModel extends Model>
 
     const createdModel = this.store._create();
     if (!createdModel)
-      throw new Error(`Unable to initialize model from store ${this.store}`);
+      throw new Error(`Unable to initialize model from store ${this.store._modelName}`);
 
     this.store._add(createdModel);
     return createdModel;
@@ -38,10 +39,8 @@ export class SingletonModelStore<TModel extends Model>
   _replace(model: TModel, tag?: ModelChangeTagValue): void {
     const existingModel = this._model;
     existingModel._initializeFromModel(existingModel._modelId, model);
-    this.store._persist();
-    this.changeSubscription._fire((handler) =>
-      handler._onModelReplaced(existingModel, tag),
-    );
+    void this.store._persist();
+    this.changeSubscription._fire((handler) => handler._onModelReplaced(existingModel, tag));
   }
 
   _subscribe(handler: ISingletonModelStoreChangeHandler<TModel>): void {
@@ -65,9 +64,7 @@ export class SingletonModelStore<TModel extends Model>
   }
 
   _onModelUpdated(args: ModelChangedArgs, tag: ModelChangeTagValue): void {
-    this.changeSubscription._fire((handler) =>
-      handler._onModelUpdated(args, tag),
-    );
+    this.changeSubscription._fire((handler) => handler._onModelUpdated(args, tag));
   }
 
   /**

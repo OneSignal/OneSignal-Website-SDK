@@ -1,9 +1,7 @@
 import { getDeviceModel, getDeviceOS } from 'src/shared/environment/detect';
-import type {
-  NotificationTypeValue,
-  SubscriptionTypeValue,
-} from 'src/shared/subscriptions/types';
+import type { NotificationTypeValue, SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import { VERSION } from 'src/shared/utils/env';
+
 import type { ISubscription } from '../types/api';
 import { Model } from './Model';
 

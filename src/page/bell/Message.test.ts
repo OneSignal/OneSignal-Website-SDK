@@ -1,11 +1,12 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
+
 import Bell from './Bell';
 import { BellState } from './constants';
 import Message from './Message';
 
 vi.mock('src/shared/helpers/general', async (importOriginal) => {
-  const mod =
-    await importOriginal<typeof import('src/shared/helpers/general')>();
+  const mod = await importOriginal<typeof import('src/shared/helpers/general')>();
   return { ...mod, delay: vi.fn(() => Promise.resolve()) };
 });
 
@@ -36,9 +37,7 @@ describe('Message', () => {
     expect(message._getTipForState()).toBe('Subscribe to notifications');
 
     bell._setState(BellState._Subscribed, true);
-    expect(message._getTipForState()).toBe(
-      "You're subscribed to notifications",
-    );
+    expect(message._getTipForState()).toBe("You're subscribed to notifications");
 
     bell._setState(BellState._Blocked, true);
     expect(message._getTipForState()).toBe("You've blocked notifications");

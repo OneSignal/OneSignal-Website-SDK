@@ -25,9 +25,7 @@ export const getSubscription = async () => {
   // For backwards compatibility, we need to read from this if the above is not found
   const dbNotOptedOut = await getOptionsValue<boolean>('subscription');
   const createdAt = await getOptionsValue<number>('subscriptionCreatedAt');
-  const expirationTime = await getOptionsValue<number>(
-    'subscriptionExpirationTime',
-  );
+  const expirationTime = await getOptionsValue<number>('subscriptionExpirationTime');
 
   if (dbOptedOut != null) {
     subscription.optedOut = dbOptedOut;

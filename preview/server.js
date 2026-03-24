@@ -35,9 +35,7 @@ app.get('/:file', (req, res) => {
 });
 
 app.get('/push/onesignal/:file', (req, res) => {
-  res.sendFile(
-    path.join(DIST_DIR, '/push/onesignal/') + sanitize(req.params.file),
-  );
+  res.sendFile(path.join(DIST_DIR, '/push/onesignal/') + sanitize(req.params.file));
 });
 
 https

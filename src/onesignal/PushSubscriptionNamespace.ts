@@ -1,26 +1,18 @@
 import { getDBAppConfig } from 'src/shared/database/config';
-import {
-  getSubscription,
-  setSubscription,
-} from 'src/shared/database/subscription';
-import {
-  AppIDMissingError,
-  MalformedArgumentError,
-} from 'src/shared/errors/common';
+import { getSubscription, setSubscription } from 'src/shared/database/subscription';
+import { AppIDMissingError, MalformedArgumentError } from 'src/shared/errors/common';
 import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,
 } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
+
 import type { SubscriptionChangeEvent } from '../page/models/SubscriptionChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Log from '../shared/libraries/Log';
 import { isCompleteSubscriptionObject } from '../shared/managers/utils';
 import { Subscription } from '../shared/models/Subscription';
-import {
-  awaitOneSignalInitAndSupported,
-  logMethodCall,
-} from '../shared/utils/utils';
+import { awaitOneSignalInitAndSupported, logMethodCall } from '../shared/utils/utils';
 
 export default class PushSubscriptionNamespace extends EventListenerBase {
   private _id?: string | null;
@@ -36,7 +28,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     super();
     if (!initialize || !subscription) {
       Log._warn(
-        `PushSubscriptionNamespace: skipping initialization. One or more required params are falsy: initialize: ${initialize}, subscription: ${subscription}`,
+        `PushSubscriptionNamespace: skipping initialization. One or more required params are falsy: initialize: ${initialize}, subscription: ${JSON.stringify(subscription)}`,
       );
       return;
     }
@@ -58,7 +50,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
     OneSignal._emitter.on(
       OneSignal.EVENTS.SUBSCRIPTION_CHANGED,
-      async (change: SubscriptionChangeEvent | undefined) => {
+      (change: SubscriptionChangeEvent | undefined) => {
         this._id = change?.current.id;
         this._token = change?.current.token;
       },
@@ -66,7 +58,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
     OneSignal._emitter.on(
       OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-      async (permission: NotificationPermission) => {
+      (permission: NotificationPermission) => {
         this._permission = permission;
       },
     );
@@ -89,8 +81,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     await awaitOneSignalInitAndSupported();
     this._optedIn = true;
 
-    const permissionStatus =
-      await OneSignal._context._permissionManager._getPermissionStatus();
+    const permissionStatus = await OneSignal._context._permissionManager._getPermissionStatus();
 
     if (permissionStatus !== 'granted') {
       // TO DO: use user-config options prompting method
@@ -108,17 +99,11 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     await this._enable(false);
   }
 
-  addEventListener(
-    event: 'change',
-    listener: (change: SubscriptionChangeEvent) => void,
-  ): void {
+  addEventListener(event: 'change', listener: (change: SubscriptionChangeEvent) => void): void {
     OneSignal._emitter.on(event, listener);
   }
 
-  removeEventListener(
-    event: 'change',
-    listener: (change: SubscriptionChangeEvent) => void,
-  ): void {
+  removeEventListener(event: 'change', listener: (change: SubscriptionChangeEvent) => void): void {
     OneSignal._emitter.off(event, listener);
   }
 
@@ -138,9 +123,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
     subscriptionFromDb.optedOut = !enabled;
     await setSubscription(subscriptionFromDb);
-    onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch((e) => {
-      Log._error(e);
-    });
+    onInternalSubscriptionSet(subscriptionFromDb.optedOut);
     checkAndTriggerSubscriptionChanged().catch((e) => {
       Log._error(e);
     });

@@ -1,10 +1,7 @@
 import { IDManager } from 'src/shared/managers/IDManager';
+
 import { OPERATION_NAME } from '../constants';
-import {
-  GroupComparisonType,
-  type GroupComparisonValue,
-  Operation,
-} from './Operation';
+import { GroupComparisonType, type GroupComparisonValue, Operation } from './Operation';
 
 type ILoginOp = {
   externalId?: string;
@@ -72,10 +69,7 @@ export class LoginUserOperation extends Operation<ILoginOp> {
   }
 
   override get _canStartExecute(): boolean {
-    return (
-      !this._existingOnesignalId ||
-      !IDManager._isLocalId(this._existingOnesignalId)
-    );
+    return !this._existingOnesignalId || !IDManager._isLocalId(this._existingOnesignalId);
   }
 
   override get _applyToRecordId(): string {

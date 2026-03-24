@@ -1,10 +1,5 @@
 import { OPERATION_NAME } from '../constants';
-
-import {
-  GroupComparisonType,
-  type GroupComparisonValue,
-  Operation,
-} from './Operation';
+import { GroupComparisonType, type GroupComparisonValue, Operation } from './Operation';
 
 /**
  * An Operation to retrieve a user from the OneSignal backend. The resulting user

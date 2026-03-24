@@ -8,6 +8,8 @@ import {
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
 import * as eventListeners from 'src/shared/listeners';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import { getAppState } from './database/config';
 import { setPushToken } from './database/subscription';
 import { SubscriptionManagerPage } from './managers/subscription/page';
@@ -22,11 +24,9 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     OneSignal.User.PushSubscription.addEventListener('change', changeListener);
 
     // no change
-    mockPushManager.getSubscription.mockResolvedValue({
-      ...mockPushSubscription,
-      // @ts-expect-error - using partial types
-      endpoint: undefined,
-    });
+    mockPushManager.getSubscription.mockResolvedValue(
+      Object.assign({}, mockPushSubscription, { endpoint: undefined }),
+    );
     await setIsPushEnabled(false);
     await eventListeners.checkAndTriggerSubscriptionChanged();
 
@@ -57,10 +57,9 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     });
 
     // token change
-    mockPushManager.getSubscription.mockResolvedValue({
-      ...mockPushSubscription,
-      endpoint: PUSH_TOKEN,
-    });
+    mockPushManager.getSubscription.mockResolvedValue(
+      Object.assign({}, mockPushSubscription, { endpoint: PUSH_TOKEN }),
+    );
     await setIsPushEnabled(false);
 
     changeListener.mockClear();
@@ -94,10 +93,9 @@ describe('checkAndTriggerSubscriptionChanged', () => {
     });
     await setPushToken(token);
     OneSignal._coreDirector._subscriptionModelStore._add(pushModel);
-    mockPushManager.getSubscription.mockResolvedValue({
-      ...mockPushSubscription,
-      endpoint: token,
-    });
+    mockPushManager.getSubscription.mockResolvedValue(
+      Object.assign({}, mockPushSubscription, { endpoint: token }),
+    );
 
     await eventListeners.checkAndTriggerSubscriptionChanged();
     expect(changeListener).toHaveBeenCalledWith({
@@ -127,7 +125,4 @@ Object.defineProperty(global.navigator, 'serviceWorker', {
 });
 
 // dont want to make a call to update notification types
-vi.spyOn(
-  SubscriptionManagerPage.prototype,
-  '_updateNotificationTypes',
-).mockResolvedValue();
+vi.spyOn(SubscriptionManagerPage.prototype, '_updateNotificationTypes').mockResolvedValue();

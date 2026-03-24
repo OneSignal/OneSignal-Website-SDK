@@ -1,6 +1,7 @@
 import type { ContextInterface } from 'src/shared/context/types';
 import { supportsServiceWorkers } from 'src/shared/environment/detect';
 import { getAvailableServiceWorker } from 'src/sw/helpers/registration';
+
 import Log from '../Log';
 import { WorkerMessengerBase } from './base';
 import type {
@@ -15,15 +16,15 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
    * synchronously add self.addEventListener('message') if we are running in the
    * service worker.
    */
-  public async _listen() {
+  public _listen() {
     if (!supportsServiceWorkers()) return;
-    await this._listenForPage();
+    this._listenForPage();
   }
 
   /**
    * Listens for messages for the service worker.
    */
-  private async _listenForPage() {
+  private _listenForPage() {
     navigator.serviceWorker.addEventListener(
       'message',
       this._onPageMessageReceivedFromServiceWorker.bind(this),
@@ -46,9 +47,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
       return;
     }
 
-    const listenerRecords = this._replies._findListenersForMessage(
-      data.command,
-    );
+    const listenerRecords = this._replies._findListenersForMessage(data.command);
     const listenersToRemove = [];
     const listenersToCall = [];
 
@@ -72,12 +71,9 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
   /**
    * Sends a postMessage() to OneSignal's Serviceworker
    */
-  async _unicast(
-    command: WorkerMessengerCommandValue,
-    payload?: WorkerMessengerPayload,
-  ) {
+  _unicast(command: WorkerMessengerCommandValue, payload?: WorkerMessengerPayload) {
     Log._debug(`[WM] Page->SW unicast '${command}'`);
-    this._directPostMessageToSW(command, payload);
+    void this._directPostMessageToSW(command, payload);
   }
 
   public async _directPostMessageToSW(

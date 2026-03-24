@@ -1,5 +1,6 @@
 import { InvalidAppIdError } from 'src/shared/errors/common';
 import { isValidUuid } from 'src/shared/helpers/validators';
+
 import type { OneSignalApiBaseResponse } from '../../shared/api/base';
 import * as OneSignalApiBase from '../../shared/api/base';
 import { encodeRFC3986URIComponent } from '../../shared/utils/encode';
@@ -22,10 +23,7 @@ import type { ICreateEvent } from '../types/customEvents';
  * @param requestMetadata - { appId }
  * @param requestBody - The user's properties, identity, and subscriptions
  */
-export async function createNewUser(
-  requestMetadata: RequestMetadata,
-  requestBody: ICreateUser,
-) {
+export async function createNewUser(requestMetadata: RequestMetadata, requestBody: ICreateUser) {
   const { appId, subscriptionId } = requestMetadata;
 
   const subscriptionHeader = subscriptionId
@@ -44,11 +42,7 @@ export async function createNewUser(
 
   requestBody['refresh_device_metadata'] = true;
 
-  return OneSignalApiBase.post<UserData>(
-    `apps/${appId}/users`,
-    requestBody,
-    headers,
-  );
+  return OneSignalApiBase.post<UserData>(`apps/${appId}/users`, requestBody, headers);
 }
 
 /**
@@ -57,10 +51,7 @@ export async function createNewUser(
  * @param alias - The user's alias
  * @returns - A promise that resolves with the user's properties, identity, and subscriptions
  */
-export async function getUserByAlias(
-  requestMetadata: RequestMetadata,
-  alias: AliasPair,
-) {
+export async function getUserByAlias(requestMetadata: RequestMetadata, alias: AliasPair) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.get<UserData>(
     `apps/${appId}/users/by/${alias.label}/${alias.id}`,
@@ -264,10 +255,7 @@ export async function transferSubscriptionById(
 }
 
 // custom events
-export async function sendCustomEvent(
-  requestMetadata: RequestMetadata,
-  event: ICreateEvent,
-) {
+export async function sendCustomEvent(requestMetadata: RequestMetadata, event: ICreateEvent) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.post(
     `apps/${appId}/custom_events`,

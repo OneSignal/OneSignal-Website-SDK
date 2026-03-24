@@ -3,6 +3,7 @@
  * Loaded from OneSignalSDK.page.js only if the browser supports push.
  */
 import type { OneSignalDeferredLoadedCallback } from 'src/page/models/OneSignalDeferredLoadedCallback';
+
 import OneSignal from '../onesignal/OneSignal';
 import Log from '../shared/libraries/Log';
 import { getSdkLoadCount, incrementSdkLoadCount } from '../shared/utils/utils';

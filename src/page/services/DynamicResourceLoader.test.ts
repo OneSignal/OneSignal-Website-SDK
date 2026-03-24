@@ -1,11 +1,9 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
-import {
-  DynamicResourceLoader,
-  ResourceLoadState,
-  ResourceType,
-} from './DynamicResourceLoader';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test';
+
+import { DynamicResourceLoader, ResourceLoadState, ResourceType } from './DynamicResourceLoader';
 
 describe('DynamicResourceLoader', () => {
   beforeEach(() => {
@@ -18,37 +16,32 @@ describe('DynamicResourceLoader', () => {
 
   // Helper function to mock successful loading
   const mockSuccessfulLoading = () => {
-    const originalCreateElement = document.createElement;
-    const originalAppendChild = document.head?.appendChild;
+    const originalCreateElement = document.createElement.bind(document);
+    const originalAppendChild = document.head?.appendChild.bind(document.head);
 
-    vi.spyOn(document, 'createElement').mockImplementation(
-      (tagName: string) => {
-        const element = originalCreateElement.call(
-          document,
-          tagName,
-        ) as HTMLElement;
+    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+      const element = originalCreateElement.call(document, tagName) as HTMLElement;
 
-        // Store handlers on the element
-        let onloadHandler: ((event: Event) => void) | null = null;
-        let onerrorHandler: ((event: Event) => void) | null = null;
+      // Store handlers on the element
+      let onloadHandler: ((event: Event) => void) | null = null;
+      let onerrorHandler: ((event: Event) => void) | null = null;
 
-        Object.defineProperty(element, 'onload', {
-          set: (handler) => {
-            onloadHandler = handler;
-          },
-          get: () => onloadHandler,
-        });
+      Object.defineProperty(element, 'onload', {
+        set: (handler) => {
+          onloadHandler = handler;
+        },
+        get: () => onloadHandler,
+      });
 
-        Object.defineProperty(element, 'onerror', {
-          set: (handler) => {
-            onerrorHandler = handler;
-          },
-          get: () => onerrorHandler,
-        });
+      Object.defineProperty(element, 'onerror', {
+        set: (handler) => {
+          onerrorHandler = handler;
+        },
+        get: () => onerrorHandler,
+      });
 
-        return element;
-      },
-    );
+      return element;
+    });
 
     if (originalAppendChild) {
       vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
@@ -69,36 +62,31 @@ describe('DynamicResourceLoader', () => {
 
   // Helper function to mock failed loading
   const mockFailedLoading = () => {
-    const originalCreateElement = document.createElement;
-    const originalAppendChild = document.head?.appendChild;
+    const originalCreateElement = document.createElement.bind(document);
+    const originalAppendChild = document.head?.appendChild.bind(document.head);
 
-    vi.spyOn(document, 'createElement').mockImplementation(
-      (tagName: string) => {
-        const element = originalCreateElement.call(
-          document,
-          tagName,
-        ) as HTMLElement;
+    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+      const element = originalCreateElement.call(document, tagName) as HTMLElement;
 
-        let onloadHandler: ((event: Event) => void) | null = null;
-        let onerrorHandler: ((event: Event) => void) | null = null;
+      let onloadHandler: ((event: Event) => void) | null = null;
+      let onerrorHandler: ((event: Event) => void) | null = null;
 
-        Object.defineProperty(element, 'onload', {
-          set: (handler) => {
-            onloadHandler = handler;
-          },
-          get: () => onloadHandler,
-        });
+      Object.defineProperty(element, 'onload', {
+        set: (handler) => {
+          onloadHandler = handler;
+        },
+        get: () => onloadHandler,
+      });
 
-        Object.defineProperty(element, 'onerror', {
-          set: (handler) => {
-            onerrorHandler = handler;
-          },
-          get: () => onerrorHandler,
-        });
+      Object.defineProperty(element, 'onerror', {
+        set: (handler) => {
+          onerrorHandler = handler;
+        },
+        get: () => onerrorHandler,
+      });
 
-        return element;
-      },
-    );
+      return element;
+    });
 
     if (originalAppendChild) {
       vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
@@ -120,8 +108,7 @@ describe('DynamicResourceLoader', () => {
   test('should load sdk stylesheet', async () => {
     mockSuccessfulLoading(); // Set up success mock for this test only
 
-    const cssURL =
-      'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
+    const cssURL = 'https://onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css';
     server.use(
       http.get(cssURL, () => {
         return HttpResponse.text('body { color: red; }');
@@ -132,9 +119,7 @@ describe('DynamicResourceLoader', () => {
     const state = await loader._loadSdkStylesheet();
 
     expect(state).toBe(ResourceLoadState._Loaded);
-    const stylesheets = document.head.querySelectorAll(
-      'link[rel="stylesheet"]',
-    );
+    const stylesheets = document.head.querySelectorAll('link[rel="stylesheet"]');
     const url = `${cssURL}?v=${__VERSION__}`;
     expect(stylesheets[0].getAttribute('href')).toBe(url);
     expect(loader._getCache()).toEqual({
@@ -153,17 +138,11 @@ describe('DynamicResourceLoader', () => {
     );
 
     const loader = new DynamicResourceLoader();
-    const state = await loader._loadIfNew(
-      ResourceType._Script,
-      new URL(scriptURL),
-    );
+    const state = await loader._loadIfNew(ResourceType._Script, new URL(scriptURL));
     expect(state).toBe(ResourceLoadState._Loaded);
 
     // should not load the same script again
-    const state2 = await loader._loadIfNew(
-      ResourceType._Script,
-      new URL(scriptURL),
-    );
+    const state2 = await loader._loadIfNew(ResourceType._Script, new URL(scriptURL));
     expect(state2).toBe(ResourceLoadState._Loaded);
   });
 
@@ -179,10 +158,7 @@ describe('DynamicResourceLoader', () => {
     );
 
     const loader = new DynamicResourceLoader();
-    const state = await loader._loadIfNew(
-      ResourceType._Script,
-      new URL(scriptURL),
-    );
+    const state = await loader._loadIfNew(ResourceType._Script, new URL(scriptURL));
     expect(state).toBe(ResourceLoadState._Failed);
   });
 });

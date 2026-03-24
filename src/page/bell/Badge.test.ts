@@ -1,4 +1,6 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { describe, test, expect, beforeEach } from 'vite-plus/test';
+
 import Badge from './Badge';
 
 describe('Badge', () => {
@@ -6,8 +8,7 @@ describe('Badge', () => {
 
   beforeEach(() => {
     TestEnvironment.initialize();
-    document.body.innerHTML =
-      '<div class="onesignal-bell-launcher-badge"></div>';
+    document.body.innerHTML = '<div class="onesignal-bell-launcher-badge"></div>';
     badge = new Badge();
   });
 

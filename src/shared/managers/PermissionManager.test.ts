@@ -1,5 +1,7 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import MockNotification from '__test__/support/mocks/MockNotification';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import * as detect from '../environment/detect';
 import PermissionManager from './PermissionManager';
 
@@ -14,11 +16,8 @@ describe('PermissionManager', () => {
     test('resolves from context manager', async () => {
       const pm = new PermissionManager();
       const spy = vi
-        .spyOn(
-          OneSignal._context._permissionManager,
-          '_getNotificationPermission',
-        )
-        .mockResolvedValue('granted');
+        .spyOn(OneSignal._context._permissionManager, '_getNotificationPermission')
+        .mockReturnValue('granted');
       await expect(pm._getPermissionStatus()).resolves.toBe('granted');
       expect(spy).toHaveBeenCalled();
     });
@@ -33,19 +32,17 @@ describe('PermissionManager', () => {
     });
   });
 
-  test('_getNotificationPermission uses legacy Safari path and requires webId', async () => {
+  test('_getNotificationPermission uses legacy Safari path and requires webId', () => {
     useSafariLegacyPushSpy.mockImplementation(() => true);
     const pm = new PermissionManager();
-    await expect(pm._getNotificationPermission(undefined)).rejects.toThrow(
-      '"safariWebId" is empty',
-    );
+    expect(() => pm._getNotificationPermission(undefined)).toThrow('"safariWebId" is empty');
   });
 
-  test('_getNotificationPermission uses W3C Notification.permission when not legacy', async () => {
+  test('_getNotificationPermission uses W3C Notification.permission when not legacy', () => {
     useSafariLegacyPushSpy.mockImplementation(() => false);
     MockNotification.permission = 'default';
 
     const pm = new PermissionManager();
-    await expect(pm['_getNotificationPermission']()).resolves?.toBe('default');
+    expect(pm._getNotificationPermission()).toBe('default');
   });
 });

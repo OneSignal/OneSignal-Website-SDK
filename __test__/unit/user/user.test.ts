@@ -1,3 +1,5 @@
+import { describe, test, expect, vi } from 'vite-plus/test';
+
 import User from '../../../src/onesignal/User';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
 

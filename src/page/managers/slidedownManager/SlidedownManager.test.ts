@@ -7,10 +7,7 @@ import {
   setUpdateUserResponse,
   updateUserFn,
 } from '__test__/support/helpers/requests';
-import {
-  getRawPushSubscription,
-  setupLoadStylesheet,
-} from '__test__/support/helpers/setup';
+import { getRawPushSubscription, setupLoadStylesheet } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { SlidedownManager } from 'src/page/managers/slidedownManager/SlidedownManager';
 import ChannelCaptureContainer from 'src/page/slidedown/ChannelCaptureContainer';
@@ -18,6 +15,7 @@ import Log from 'src/shared/libraries/Log';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
 
 vi.spyOn(Log, '_error').mockImplementation(() => '');
 
@@ -146,9 +144,7 @@ describe('Slidedown Types', () => {
     const submitButton = getSubmitButton();
 
     // toggle sports
-    const sportsCheckbox = document.querySelector(
-      'input[value="sports"]',
-    ) as HTMLInputElement;
+    const sportsCheckbox = document.querySelector('input[value="sports"]') as HTMLInputElement;
     expect(sportsCheckbox.checked).toBe(true);
 
     sportsCheckbox.click();
@@ -205,27 +201,19 @@ const getMessageText = () =>
   (document.querySelector('.slidedown-body-message') as HTMLElement)?.innerText;
 
 const getSubmitButton = () =>
-  document.querySelector(
-    '#onesignal-slidedown-allow-button',
-  ) as HTMLButtonElement;
+  document.querySelector('#onesignal-slidedown-allow-button') as HTMLButtonElement;
 
-const getEmailInput = () =>
-  document.querySelector('#onesignal-email-input') as HTMLInputElement;
+const getEmailInput = () => document.querySelector('#onesignal-email-input') as HTMLInputElement;
 
 const getEmailValidationMessage = () =>
-  (
-    document.querySelector('#onesignal-email-validation-element')
-      ?.childNodes[1] as HTMLElement
-  )?.innerText;
+  (document.querySelector('#onesignal-email-validation-element')?.childNodes[1] as HTMLElement)
+    ?.innerText;
 
-const getSmsInput = () =>
-  document.querySelector('#iti-onesignal-sms-input') as HTMLInputElement;
+const getSmsInput = () => document.querySelector('#iti-onesignal-sms-input') as HTMLInputElement;
 
 const getSmsValidationMessage = () =>
-  (
-    document.querySelector('#onesignal-sms-validation-element')
-      ?.childNodes[1] as HTMLElement
-  )?.innerText;
+  (document.querySelector('#onesignal-sms-validation-element')?.childNodes[1] as HTMLElement)
+    ?.innerText;
 
 const message = 'Receive the latest news, updates and offers as they happen.';
 
@@ -291,7 +279,7 @@ const subscribeFcmFromPageSpy = vi.spyOn(
 
 const mockSubscribeCall = () => {
   const rawPushSubscription = getRawPushSubscription();
-  subscribeFcmFromPageSpy.mockImplementation(async () => rawPushSubscription);
+  subscribeFcmFromPageSpy.mockImplementation(() => Promise.resolve(rawPushSubscription));
 };
 
 Object.defineProperty(global.navigator, 'serviceWorker', {
@@ -300,10 +288,7 @@ Object.defineProperty(global.navigator, 'serviceWorker', {
 });
 
 export const mockPhoneLibraryLoading = () => {
-  vi.spyOn(
-    ChannelCaptureContainer.prototype,
-    '_loadPhoneLibraryScripts',
-  ).mockImplementation(() => {
+  vi.spyOn(ChannelCaptureContainer.prototype, '_loadPhoneLibraryScripts').mockImplementation(() => {
     OneSignal._didLoadITILibrary = true;
 
     // @ts-expect-error - mock intl-tel-input

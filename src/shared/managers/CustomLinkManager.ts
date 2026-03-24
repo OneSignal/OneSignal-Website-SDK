@@ -2,10 +2,7 @@ import { ResourceLoadState } from '../../page/services/DynamicResourceLoader';
 import { addCssClass } from '../helpers/dom';
 import Log from '../libraries/Log';
 import type { AppUserConfigCustomLinkOptions } from '../prompts/types';
-import {
-  CUSTOM_LINK_CSS_CLASSES,
-  CUSTOM_LINK_CSS_SELECTORS,
-} from '../slidedown/constants';
+import { CUSTOM_LINK_CSS_CLASSES, CUSTOM_LINK_CSS_SELECTORS } from '../slidedown/constants';
 
 export class CustomLinkManager {
   private _config: AppUserConfigCustomLinkOptions | undefined;
@@ -60,9 +57,7 @@ export class CustomLinkManager {
         addCssClass(explanation, this._config.size);
       }
 
-      if (
-        await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()
-      ) {
+      if (await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()) {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES._State._Subscribed);
       } else {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES._State._Unsubscribed);
@@ -91,18 +86,10 @@ export class CustomLinkManager {
         addCssClass(subscribeButton, this._config.style);
       }
 
-      if (
-        await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()
-      ) {
-        addCssClass(
-          subscribeButton,
-          CUSTOM_LINK_CSS_CLASSES._State._Subscribed,
-        );
+      if (await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()) {
+        addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES._State._Subscribed);
       } else {
-        addCssClass(
-          subscribeButton,
-          CUSTOM_LINK_CSS_CLASSES._State._Unsubscribed,
-        );
+        addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES._State._Unsubscribed);
       }
 
       this._setCustomColors(subscribeButton);
@@ -161,17 +148,13 @@ export class CustomLinkManager {
 
   private async _setTextFromPushStatus(element: HTMLElement): Promise<void> {
     if (this._config?.text?.subscribe) {
-      if (
-        !(await OneSignal._context._subscriptionManager._isPushNotificationsEnabled())
-      ) {
+      if (!(await OneSignal._context._subscriptionManager._isPushNotificationsEnabled())) {
         element.textContent = this._config.text.subscribe;
       }
     }
 
     if (this._config?.text?.unsubscribe) {
-      if (
-        await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()
-      ) {
+      if (await OneSignal._context._subscriptionManager._isPushNotificationsEnabled()) {
         element.textContent = this._config.text.unsubscribe;
       }
     }

@@ -1,12 +1,6 @@
-import type {
-  TagCategory,
-  TagsObjectForApi,
-  TagsObjectWithBoolean,
-} from 'src/page/tags/types';
+import type { TagCategory, TagsObjectForApi, TagsObjectWithBoolean } from 'src/page/tags/types';
 
-export function convertTagsApiToBooleans(
-  tags: TagsObjectForApi,
-): TagsObjectWithBoolean {
+export function convertTagsApiToBooleans(tags: TagsObjectForApi): TagsObjectWithBoolean {
   const convertedTags: TagsObjectWithBoolean = {};
   Object.keys(tags).forEach((key) => {
     convertedTags[key] = tags[key] === '1' ? true : false;
@@ -14,9 +8,7 @@ export function convertTagsApiToBooleans(
   return convertedTags;
 }
 
-export function convertTagsBooleansToApi(
-  tags: TagsObjectWithBoolean,
-): TagsObjectForApi {
+export function convertTagsBooleansToApi(tags: TagsObjectWithBoolean): TagsObjectForApi {
   const convertedTags: TagsObjectForApi = {};
   Object.keys(tags).forEach((key) => {
     convertedTags[key] = tags[key] === true ? '1' : '0';
@@ -50,18 +42,13 @@ export function getObjectDifference(
   return finalTags;
 }
 
-export function markAllTagsAsSpecified(
-  categoryArray: TagCategory[],
-  checked: boolean,
-): void {
+export function markAllTagsAsSpecified(categoryArray: TagCategory[], checked: boolean): void {
   categoryArray.forEach((category) => {
     category.checked = checked;
   });
 }
 
-export function isTagObjectEmpty(
-  tags: TagsObjectForApi | TagsObjectWithBoolean,
-): boolean {
+export function isTagObjectEmpty(tags: TagsObjectForApi | TagsObjectWithBoolean): boolean {
   return Object.keys(tags).length === 0;
 }
 /**
@@ -92,9 +79,7 @@ export function getCheckedTagCategories(
   });
 }
 
-export function getCheckedStatusForTagValue(
-  tagValue: boolean | undefined,
-): boolean {
+export function getCheckedStatusForTagValue(tagValue: boolean | undefined): boolean {
   // If user does not have tag assigned to them, consider it selected
   if (tagValue === undefined) {
     return true;

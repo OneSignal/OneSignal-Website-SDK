@@ -5,9 +5,7 @@ import { db } from 'src/shared/database/client';
  * PURPOSE: CoreModuleDirector doesn't work in the SW context.
  * TODO: This is duplicated logic tech debt to address later
  */
-export async function getPushSubscriptionIdByToken(
-  token: string,
-): Promise<string | undefined> {
+export async function getPushSubscriptionIdByToken(token: string): Promise<string | undefined> {
   const pushSubscriptions = await db.getAll('subscriptions');
   for (const pushSubscription of pushSubscriptions) {
     if (pushSubscription['token'] === token) {

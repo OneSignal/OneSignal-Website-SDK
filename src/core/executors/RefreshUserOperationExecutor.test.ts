@@ -9,17 +9,20 @@ import {
 } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
-import {
-  setGetUserError,
-  setGetUserResponse,
-} from '__test__/support/helpers/requests';
+import { setGetUserError, setGetUserResponse } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { setPushToken } from 'src/shared/database/subscription';
+import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import {
-  NotificationType,
-  SubscriptionType,
-} from 'src/shared/subscriptions/constants';
-import type { MockInstance } from 'vite-plus/test';
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from 'vite-plus/test';
+
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -56,10 +59,7 @@ describe('RefreshUserOperationExecutor', () => {
       propertiesModelStore,
       subscriptionModelStore,
     );
-    getRebuildOpsSpy = vi.spyOn(
-      buildUserService,
-      '_getRebuildOperationsIfCurrentUser',
-    );
+    getRebuildOpsSpy = vi.spyOn(buildUserService, '_getRebuildOperationsIfCurrentUser');
   });
 
   const getExecutor = () => {
@@ -72,7 +72,7 @@ describe('RefreshUserOperationExecutor', () => {
     );
   };
 
-  test('should return correct operations (names)', async () => {
+  test('should return correct operations (names)', () => {
     const executor = getExecutor();
     expect(executor._operations).toEqual([OPERATION_NAME._RefreshUser]);
   });
@@ -84,14 +84,12 @@ describe('RefreshUserOperationExecutor', () => {
 
     const result = executor._execute(ops);
     await expect(() => result).rejects.toThrow(
-      `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(
-        ops,
-      )}`,
+      `Unrecognized operation(s)! Attempted operations:\n${JSON.stringify(ops)}`,
     );
   });
 
   describe('getUser', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       // Set up initial model state
       updateIdentityModel('onesignal_id', ONESIGNAL_ID);
     });
@@ -144,12 +142,8 @@ describe('RefreshUserOperationExecutor', () => {
       expect(result._result).toBe(ExecutionResult._Success);
 
       // Check identity model updates
-      expect(identityModelStore._model._getProperty('onesignal_id')).toBe(
-        ONESIGNAL_ID,
-      );
-      expect(identityModelStore._model._getProperty('external_id')).toBe(
-        'test_user',
-      );
+      expect(identityModelStore._model._getProperty('onesignal_id')).toBe(ONESIGNAL_ID);
+      expect(identityModelStore._model._getProperty('external_id')).toBe('test_user');
 
       // Check properties model updates
       expect(propertiesModelStore._model._country).toBe('US');

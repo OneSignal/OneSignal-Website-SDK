@@ -1,8 +1,4 @@
-import {
-  getAppState,
-  isConsentRequiredButNotGiven,
-  setAppState,
-} from 'src/shared/database/config';
+import { getAppState, isConsentRequiredButNotGiven, setAppState } from 'src/shared/database/config';
 import {
   EmptyArgumentError,
   MalformedArgumentError,
@@ -13,11 +9,9 @@ import type {
   NotificationEventName,
   NotificationEventTypeMap,
 } from 'src/shared/notifications/types';
+
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
-import {
-  awaitOneSignalInitAndSupported,
-  logMethodCall,
-} from '../shared/utils/utils';
+import { awaitOneSignalInitAndSupported, logMethodCall } from '../shared/utils/utils';
 
 export default class NotificationsNamespace extends EventListenerBase {
   private _permission: boolean;
@@ -63,8 +57,7 @@ export default class NotificationsNamespace extends EventListenerBase {
       throw WrongTypeArgumentError('url');
     }
 
-    if (!isValidUrl(url, { allowNull: true }))
-      throw MalformedArgumentError('url');
+    if (!isValidUrl(url, { allowNull: true })) throw MalformedArgumentError('url');
     await awaitOneSignalInitAndSupported();
     logMethodCall('setDefaultNotificationUrl', url);
     const appState = await getAppState();

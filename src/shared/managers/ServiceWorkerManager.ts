@@ -23,10 +23,7 @@ import type {
   NotificationForegroundWillDisplayEventSerializable,
 } from '../notifications/types';
 import OneSignalEvent from '../services/OneSignalEvent';
-import type {
-  PageVisibilityRequest,
-  PageVisibilityResponse,
-} from '../session/types';
+import type { PageVisibilityRequest, PageVisibilityResponse } from '../session/types';
 import { VERSION } from '../utils/env';
 
 export class ServiceWorkerManager {
@@ -44,18 +41,14 @@ export class ServiceWorkerManager {
    * WARNING: This might be a non-OneSignal service worker, use
    * getOneSignalRegistration() instead if you need this guarantee.
    */
-  public async _getRegistration(): Promise<
-    ServiceWorkerRegistration | undefined
-  > {
+  public async _getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     return getSWRegistration(this._config.registrationOptions.scope);
   }
 
   /**
    *  Gets the OneSignal ServiceWorkerRegistration reference, if it was registered
    */
-  public async _getOneSignalRegistration(): Promise<
-    ServiceWorkerRegistration | undefined
-  > {
+  public async _getOneSignalRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     const state = await this._getActiveState();
     if (state === ServiceWorkerActiveState._OneSignalWorker) {
       return this._getRegistration();
@@ -70,8 +63,7 @@ export class ServiceWorkerManager {
     }
 
     // We are now; 1. Getting the filename of the SW; 2. Checking if it is ours or a 3rd parties.
-    const swFileName =
-      ServiceWorkerManager._activeSwFileName(workerRegistration);
+    const swFileName = ServiceWorkerManager._activeSwFileName(workerRegistration);
     const workerState = this._swActiveStateByFileName(swFileName);
     return workerState;
   }
@@ -91,9 +83,7 @@ export class ServiceWorkerManager {
     // If the current service worker is Akamai's
     if (swFileName == 'akam-sw.js') {
       // Check if its importing a ServiceWorker under it's "othersw" query param
-      const searchParams = new URLSearchParams(
-        new URL(serviceWorker.scriptURL).search,
-      );
+      const searchParams = new URLSearchParams(new URL(serviceWorker.scriptURL).search);
       const importedSw = searchParams.get('othersw');
       if (importedSw) {
         Log._debug('Found SW under akam-sw.js?othersw=', importedSw);
@@ -104,9 +94,7 @@ export class ServiceWorkerManager {
   }
 
   // Check if the ServiceWorker file name is ours or a third party's
-  private _swActiveStateByFileName(
-    fileName?: string | null,
-  ): ServiceWorkerActiveStateValue {
+  private _swActiveStateByFileName(fileName?: string | null): ServiceWorkerActiveStateValue {
     if (!fileName) {
       return ServiceWorkerActiveState._None;
     }
@@ -119,17 +107,14 @@ export class ServiceWorkerManager {
   }
 
   public async _getWorkerVersion(): Promise<string> {
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise<string>(async (resolve) => {
+    return new Promise<string>((resolve) => {
       this._context._workerMessenger._once(
         WorkerMessengerCommand._WorkerVersion,
         (workerVersion) => {
           resolve(workerVersion);
         },
       );
-      await this._context._workerMessenger._unicast(
-        WorkerMessengerCommand._WorkerVersion,
-      );
+      this._context._workerMessenger._unicast(WorkerMessengerCommand._WorkerVersion);
     });
   }
 
@@ -151,10 +136,9 @@ export class ServiceWorkerManager {
       workerState === ServiceWorkerActiveState._None ||
       workerState === ServiceWorkerActiveState._ThirdParty
     ) {
-      const permission =
-        await OneSignal._context._permissionManager._getNotificationPermission(
-          OneSignal.config!.safariWebId,
-        );
+      const permission = OneSignal._context._permissionManager._getNotificationPermission(
+        OneSignal.config!.safariWebId,
+      );
       const notificationsEnabled = permission === 'granted';
       if (notificationsEnabled) {
         Log._info('Permissions enabled, installing SW');
@@ -175,10 +159,7 @@ export class ServiceWorkerManager {
     // 1. No workerRegistration
     const workerRegistration = await this._getRegistration();
     if (!workerRegistration) {
-      Log._info(
-        'SW registration not found at scope',
-        this._config.registrationOptions.scope,
-      );
+      Log._info('SW registration not found at scope', this._config.registrationOptions.scope);
       return true;
     }
 
@@ -240,14 +221,14 @@ export class ServiceWorkerManager {
     return false;
   }
 
-  public async _establishServiceWorkerChannel() {
+  public _establishServiceWorkerChannel() {
     Log._debug('establishSWChannel');
     const workerMessenger = this._context._workerMessenger;
     workerMessenger._off();
 
     workerMessenger._on(
       WorkerMessengerCommand._NotificationWillDisplay,
-      async (event: NotificationForegroundWillDisplayEventSerializable) => {
+      (event: NotificationForegroundWillDisplayEventSerializable) => {
         Log._debug(location.origin, 'Notif display event from SW');
 
         let preventDefaultCalled = false;
@@ -258,10 +239,9 @@ export class ServiceWorkerManager {
             ...event.notification,
             display: () => {
               Log._debug(`display() called: ${notificationId}`);
-              workerMessenger._unicast(
-                WorkerMessengerCommand._DisplayNotification,
-                { notification: event.notification },
-              );
+              workerMessenger._unicast(WorkerMessengerCommand._DisplayNotification, {
+                notification: event.notification,
+              });
             },
           },
           preventDefault: function (): void {
@@ -271,32 +251,23 @@ export class ServiceWorkerManager {
         };
 
         // Trigger the event and let listeners call preventDefault() synchronously
-        await OneSignalEvent._trigger(
-          OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY,
-          publicEvent,
-        );
+        OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, publicEvent);
 
         // Send response back to service worker
-        Log._debug(
-          `preventDefault response: ${preventDefaultCalled} for: ${notificationId}`,
-        );
-        await workerMessenger._unicast(
-          WorkerMessengerCommand._NotificationWillDisplayResponse,
-          {
-            notificationId,
-            preventDefault: preventDefaultCalled,
-          },
-        );
+        Log._debug(`preventDefault response: ${preventDefaultCalled} for: ${notificationId}`);
+        workerMessenger._unicast(WorkerMessengerCommand._NotificationWillDisplayResponse, {
+          notificationId,
+          preventDefault: preventDefaultCalled,
+        });
       },
     );
 
     workerMessenger._on(
       WorkerMessengerCommand._NotificationClicked,
-      async (event: NotificationClickEventInternal) => {
-        const clickedListenerCallbackCount =
-          OneSignal._emitter._numberOfListeners(
-            OneSignal.EVENTS.NOTIFICATION_CLICKED,
-          );
+      (event: NotificationClickEventInternal) => {
+        const clickedListenerCallbackCount = OneSignal._emitter._numberOfListeners(
+          OneSignal.EVENTS.NOTIFICATION_CLICKED,
+        );
 
         if (clickedListenerCallbackCount === 0) {
           /*
@@ -318,20 +289,14 @@ export class ServiceWorkerManager {
         */
           Log._debug('Click event with no listeners, storing for later');
         } else {
-          await triggerNotificationClick(event);
+          triggerNotificationClick(event);
         }
       },
     );
 
-    workerMessenger._on(
-      WorkerMessengerCommand._NotificationDismissed,
-      async (data) => {
-        await OneSignalEvent._trigger(
-          OneSignal.EVENTS.NOTIFICATION_DISMISSED,
-          data,
-        );
-      },
-    );
+    workerMessenger._on(WorkerMessengerCommand._NotificationDismissed, (data) => {
+      OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
+    });
 
     const isSafari = hasSafariWindow();
 
@@ -393,9 +358,7 @@ export class ServiceWorkerManager {
    * additional query parameters, but this must then stay consistent.
    */
 
-  public async _installWorker(): Promise<
-    ServiceWorkerRegistration | undefined | null
-  > {
+  public async _installWorker(): Promise<ServiceWorkerRegistration | undefined | null> {
     if (!(await this._shouldInstallWorker())) {
       return this._getOneSignalRegistration();
     }
@@ -407,11 +370,7 @@ export class ServiceWorkerManager {
       Log._info('3rd party SW detected');
     }
 
-    const workerHref = getServiceWorkerHref(
-      this._config,
-      this._context._appConfig.appId,
-      VERSION,
-    );
+    const workerHref = getServiceWorkerHref(this._config, this._context._appConfig.appId, VERSION);
 
     const scope = `${getBaseUrl()}${this._config.registrationOptions.scope}`;
     Log._info(`Installing SW ${workerHref} ${scope}`);
@@ -426,7 +385,7 @@ export class ServiceWorkerManager {
 
     Log._debug('SW active');
 
-    await this._establishServiceWorkerChannel();
+    this._establishServiceWorkerChannel();
     return registration;
   }
 }

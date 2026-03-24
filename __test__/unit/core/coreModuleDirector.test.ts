@@ -1,9 +1,8 @@
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
+
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
 import { TestEnvironment } from '../../support/environment/TestEnvironment';
-import {
-  generateNewSubscription,
-  getCoreModuleDirector,
-} from '../../support/helpers/core';
+import { generateNewSubscription, getCoreModuleDirector } from '../../support/helpers/core';
 
 describe('CoreModuleDirector tests', () => {
   beforeEach(() => {

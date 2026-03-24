@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { indexedDB } from 'fake-indexeddb';
-import 'fake-indexeddb/auto';
 import { readFileSync } from 'fs';
+
+import 'fake-indexeddb/auto';
+import { indexedDB } from 'fake-indexeddb';
 import { JSDOM } from 'jsdom';
 
 const loadJson = (path) => JSON.parse(readFileSync(path, 'utf-8'));
@@ -40,9 +41,7 @@ const validateNamespace = (obj, spec, apiSpec, path = 'OneSignal') => {
   });
 
   spec.properties?.forEach(({ name }) => {
-    const exists =
-      name in obj ||
-      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(obj), name);
+    const exists = name in obj || Object.getOwnPropertyDescriptor(Object.getPrototypeOf(obj), name);
     if (exists) {
       if (SHOW_VERBOSE) console.log(`✓ ${path}.${name}`);
     } else {
@@ -56,12 +55,7 @@ const validateNamespace = (obj, spec, apiSpec, path = 'OneSignal') => {
 
       const nestedSpec = apiSpec[name];
       if (nestedSpec) {
-        const nestedErrors = validateNamespace(
-          obj[name],
-          nestedSpec,
-          apiSpec,
-          `${path}.${name}`,
-        );
+        const nestedErrors = validateNamespace(obj[name], nestedSpec, apiSpec, `${path}.${name}`);
         errors.push(...nestedErrors);
       }
     } else {
@@ -76,10 +70,7 @@ const validateBundle = async () => {
   console.log('🔍 Validating OneSignal bundle...\n');
 
   const apiSpec = loadJson('api.json');
-  const bundle = readFileSync(
-    'build/releases/OneSignalSDK.page.es6.js',
-    'utf-8',
-  );
+  const bundle = readFileSync('build/releases/OneSignalSDK.page.es6.js', 'utf-8');
   const window = setupEnvironment();
 
   const script = window.document.createElement('script');
@@ -90,11 +81,7 @@ const validateBundle = async () => {
 
   if (!window.OneSignal) throw new Error('OneSignal not found');
 
-  const errors = validateNamespace(
-    window.OneSignal,
-    apiSpec.OneSignal,
-    apiSpec,
-  );
+  const errors = validateNamespace(window.OneSignal, apiSpec.OneSignal, apiSpec);
 
   if (errors.length > 0) {
     console.log('❌ Validation failures:');

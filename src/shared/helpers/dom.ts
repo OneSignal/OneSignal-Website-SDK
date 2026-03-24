@@ -12,10 +12,7 @@ export function addDomElement(
   addOrder: InsertPosition,
   elementHtml: string,
 ) {
-  resolveElement(targetSelectorOrElement).insertAdjacentHTML(
-    addOrder,
-    elementHtml,
-  );
+  resolveElement(targetSelectorOrElement).insertAdjacentHTML(addOrder, elementHtml);
 }
 
 export function removeDomElement(selector: string) {

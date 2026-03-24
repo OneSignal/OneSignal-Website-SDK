@@ -61,10 +61,7 @@ export default class Emitter {
 
     if (listeners !== undefined) {
       for (let j = 0; j < listeners.length; j += 1) {
-        if (
-          listeners[j] === listener ||
-          (listeners[j] as OnceEventHandler).listener === listener
-        ) {
+        if (listeners[j] === listener || (listeners[j] as OnceEventHandler).listener === listener) {
           listeners.splice(j, 1);
           break;
         }
@@ -96,9 +93,7 @@ export default class Emitter {
    * @example
    * me.listeners('ready');
    */
-  public _listeners(
-    event: string,
-  ): (EventHandler | OnceEventHandler)[] | undefined {
+  public _listeners(event: string): (EventHandler | OnceEventHandler)[] | undefined {
     try {
       return this._events[event];
     } catch {
@@ -127,7 +122,7 @@ export default class Emitter {
    * @param event - String of the event name
    * @param args - Variable number of args to pass to the functions subscribe to the event
    */
-  public async _emit(...args: any[]): Promise<Emitter> {
+  public _emit(...args: any[]): Emitter {
     const event = args.shift();
     let listeners = this._events[event];
 
@@ -136,7 +131,7 @@ export default class Emitter {
       const len = listeners.length;
       for (let i = 0; i < len; i += 1)
         // @ts-expect-error - TODO: improve args type
-        await (listeners[i] as () => void).apply(this, args);
+        (listeners[i] as () => void).apply(this, args);
     }
 
     return this;

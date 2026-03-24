@@ -10,7 +10,7 @@ export default class OneSignalEvent {
    * @param data Any JavaScript variable to be passed with the event.
    * @param emitter Emitter to emit the event from.
    */
-  static async _trigger(eventName: string, data?: any, emitter?: Emitter) {
+  static _trigger(eventName: string, data?: any, emitter?: Emitter): void {
     if (data || data === false) {
       Log._debug(`(${windowEnvString}) » ${eventName}:`, data);
     } else {
@@ -24,9 +24,9 @@ export default class OneSignalEvent {
         else OneSignal._initialized = true;
       }
       if (emitter) {
-        await emitter._emit(eventName, data);
+        emitter._emit(eventName, data);
       } else {
-        await OneSignal._emitter._emit(eventName, data);
+        OneSignal._emitter._emit(eventName, data);
       }
     }
   }

@@ -21,13 +21,9 @@ export function isValidEmail(email: string | undefined | null) {
   );
 }
 
-export function isValidUrl(
-  url: string | null | undefined,
-  options?: ValidatorOptions,
-) {
+export function isValidUrl(url: string | null | undefined, options?: ValidatorOptions) {
   if (options && options.allowNull && url === null) return true;
-  else if (options && options.allowEmpty && (url === null || url === undefined))
-    return true;
+  else if (options && options.allowEmpty && (url === null || url === undefined)) return true;
   else {
     try {
       const parsedUrl = new URL(url as string);
@@ -46,7 +42,5 @@ export function isValidUrl(
  * @returns {*|boolean}
  */
 export function isValidUuid(uuid: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(
-    uuid,
-  );
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(uuid);
 }

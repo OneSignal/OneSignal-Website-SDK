@@ -1,4 +1,5 @@
 import { IDManager } from 'src/shared/managers/IDManager';
+
 import { Operation } from './Operation';
 
 export type BaseSubOp = {
@@ -42,10 +43,7 @@ export abstract class BaseSubscriptionOperation<
   }
 
   override get _canStartExecute(): boolean {
-    return (
-      !IDManager._isLocalId(this._onesignalId) &&
-      !IDManager._isLocalId(this._subscriptionId)
-    );
+    return !IDManager._isLocalId(this._onesignalId) && !IDManager._isLocalId(this._subscriptionId);
   }
 
   override get _applyToRecordId(): string {

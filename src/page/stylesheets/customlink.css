@@ -8,8 +8,7 @@
 .onesignal-customlink-subscribe {
   display: inline-block;
   transition: all 0.1s;
-  font-family:
-    -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
   &:hover {
     filter: brightness(0.9);
@@ -20,8 +19,7 @@
   }
 
   &.onesignal-reset {
-    font-family:
-      -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     display: inline-block;
     transition: all 0.1s;
   }
@@ -92,15 +90,13 @@
 .onesignal-customlink-explanation {
   color: rgba(0, 0, 0, 0.64);
   transition: all 0.1s;
-  font-family:
-    'Proxima-Nova', 'Proxima Nova', 'Open Sans', Arial, Helvetica, sans-serif;
+  font-family: 'Proxima-Nova', 'Proxima Nova', 'Open Sans', Arial, Helvetica, sans-serif;
   margin-bottom: 12px;
 
   &.onesignal-reset {
     color: rgba(0, 0, 0, 0.64);
     transition: all 0.1s;
-    font-family:
-      'Proxima-Nova', 'Proxima Nova', 'Open Sans', Arial, Helvetica, sans-serif;
+    font-family: 'Proxima-Nova', 'Proxima Nova', 'Open Sans', Arial, Helvetica, sans-serif;
     margin-bottom: 12px;
   }
 

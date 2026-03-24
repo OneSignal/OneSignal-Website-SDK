@@ -28,12 +28,7 @@ export default class OutcomesHelper {
    * @param  {boolean} isUnique
    * @param  {string} outcomeName
    */
-  constructor(
-    appId: string,
-    config: OutcomesConfig,
-    outcomeName: string,
-    isUnique: boolean,
-  ) {
+  constructor(appId: string, config: OutcomesConfig, outcomeName: string, isUnique: boolean) {
     this._outcomeName = outcomeName;
     this._config = config;
     this._appId = appId;
@@ -58,9 +53,7 @@ export default class OutcomesHelper {
    * @returns Promise
    */
   async _beforeOutcomeSend(): Promise<boolean> {
-    const outcomeMethodString = this._isUnique
-      ? SEND_UNIQUE_OUTCOME
-      : SEND_OUTCOME;
+    const outcomeMethodString = this._isUnique ? SEND_UNIQUE_OUTCOME : SEND_OUTCOME;
     logMethodCall(outcomeMethodString, this._outcomeName);
 
     if (!this._config) {
@@ -105,18 +98,12 @@ export default class OutcomesHelper {
    * @param  {string[]} notificationIds
    */
   async _getNotifsToAttributeWithUniqueOutcome(notificationIds: string[]) {
-    const previouslyAttributedArr: string[] =
-      await this._getAttributedNotifsByUniqueOutcomeName();
+    const previouslyAttributedArr: string[] = await this._getAttributedNotifsByUniqueOutcomeName();
 
-    return notificationIds.filter(
-      (id) => previouslyAttributedArr.indexOf(id) === -1,
-    );
+    return notificationIds.filter((id) => previouslyAttributedArr.indexOf(id) === -1);
   }
 
-  _shouldSendUnique(
-    outcomeAttribution: OutcomeAttribution,
-    notifArr: string[],
-  ) {
+  _shouldSendUnique(outcomeAttribution: OutcomeAttribution, notifArr: string[]) {
     // we should only send if type is unattributed OR there are notifs to attribute
     if (outcomeAttribution.type === OutcomeAttributionType._Unattributed) {
       return true;
@@ -129,9 +116,7 @@ export default class OutcomesHelper {
     const existingSentOutcome = await db.get('SentUniqueOutcome', outcomeName);
     const currentSession = await getCurrentSession();
 
-    const existingNotificationIds = existingSentOutcome
-      ? existingSentOutcome.notificationIds
-      : [];
+    const existingNotificationIds = existingSentOutcome ? existingSentOutcome.notificationIds : [];
     const notificationIds = [...existingNotificationIds, ...newNotificationIds];
 
     const timestamp = currentSession ? currentSession.startTimestamp : null;
@@ -153,12 +138,9 @@ export default class OutcomesHelper {
 
     const sessionExistsAndWasPreviouslySent =
       session && sentOutcome.sentDuringSession === session.startTimestamp;
-    const sessionWasClearedButWasPreviouslySent =
-      !session && !!sentOutcome.sentDuringSession;
+    const sessionWasClearedButWasPreviouslySent = !session && !!sentOutcome.sentDuringSession;
 
-    return (
-      sessionExistsAndWasPreviouslySent || sessionWasClearedButWasPreviouslySent
-    );
+    return sessionExistsAndWasPreviouslySent || sessionWasClearedButWasPreviouslySent;
   }
 
   async _send(outcomeProps: OutcomeProps): Promise<void> {
@@ -218,9 +200,7 @@ export default class OutcomesHelper {
  * @param  {OutcomesConfig} config
  * @returns Promise
  */
-export async function getConfigAttribution(
-  config: OutcomesConfig,
-): Promise<OutcomeAttribution> {
+export async function getConfigAttribution(config: OutcomesConfig): Promise<OutcomeAttribution> {
   /**
    * Flow:
    * 1. check if the url was opened as a result of a notif;
@@ -249,8 +229,7 @@ export async function getConfigAttribution(
     const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
     const maxTimestamp = beginningOfTimeframe.getTime();
 
-    const allReceivedNotification =
-      await getAllNotificationReceivedForOutcomes();
+    const allReceivedNotification = await getAllNotificationReceivedForOutcomes();
     Log._debug(`${allReceivedNotification.length} received notifs found`);
 
     if (allReceivedNotification.length > 0) {
@@ -267,20 +246,13 @@ export async function getConfigAttribution(
         .filter((notif) => notif.timestamp >= maxTimestamp)
         .slice(0, max)
         .map((notif) => notif.notificationId);
-      Log._debug(
-        `${matchingNotificationIds.length} notifs in reporting window`,
-      );
+      Log._debug(`${matchingNotificationIds.length} notifs in reporting window`);
 
       // Deleting all unmatched received notifications
       const notificationIdsToDelete = allReceivedNotificationSorted
-        .filter(
-          (notif) =>
-            matchingNotificationIds.indexOf(notif.notificationId) === -1,
-        )
+        .filter((notif) => matchingNotificationIds.indexOf(notif.notificationId) === -1)
         .map((notif) => notif.notificationId);
-      notificationIdsToDelete.forEach((id) =>
-        db.delete('Outcomes.NotificationReceived', id),
-      );
+      notificationIdsToDelete.forEach((id) => db.delete('Outcomes.NotificationReceived', id));
       Log._debug(`${notificationIdsToDelete.length} notifs to delete`);
 
       if (matchingNotificationIds.length > 0) {

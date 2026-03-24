@@ -1,15 +1,15 @@
 import * as useragentHelpers from 'src/shared/useragent/detect';
+import { describe, test, expect, vi } from 'vite-plus/test';
+
 import { start } from './shimLoader';
 
 const supportsSpy = vi
   .spyOn(useragentHelpers, 'isPushNotificationsSupported')
   .mockReturnValue(true);
-const isIosSafariSpy = vi
-  .spyOn(useragentHelpers, 'isIosSafari')
-  .mockReturnValue(false);
+const isIosSafariSpy = vi.spyOn(useragentHelpers, 'isIosSafari').mockReturnValue(false);
 
 describe('OneSignalShimLoader', () => {
-  test('start should load the page script', async () => {
+  test('start should load the page script', () => {
     start();
 
     // should load the page script if supported

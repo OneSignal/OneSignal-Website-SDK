@@ -1,12 +1,18 @@
 import { APP_ID, ONESIGNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
-import {
-  setUpdateUserError,
-  setUpdateUserResponse,
-} from '__test__/support/helpers/requests';
+import { setUpdateUserError, setUpdateUserResponse } from '__test__/support/helpers/requests';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
-import { type MockInstance } from 'vite-plus/test';
+import {
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from 'vite-plus/test';
+
 import { OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -41,10 +47,7 @@ describe('UpdateUserOperationExecutor', () => {
       propertiesModelStore,
       subscriptionsModelStore,
     );
-    getRebuildOpsSpy = vi.spyOn(
-      buildUserService,
-      '_getRebuildOperationsIfCurrentUser',
-    );
+    getRebuildOpsSpy = vi.spyOn(buildUserService, '_getRebuildOperationsIfCurrentUser');
 
     // Set up initial model state
     updateIdentityModel('onesignal_id', ONESIGNAL_ID);
@@ -70,9 +73,7 @@ describe('UpdateUserOperationExecutor', () => {
     const ops = [someOp];
 
     const result = executor._execute(ops);
-    await expect(() => result).rejects.toThrow(
-      `Unrecognized operation: ${ops[0]}`,
-    );
+    await expect(() => result).rejects.toThrow(`Unrecognized operation: ${JSON.stringify(ops[0])}`);
   });
 
   describe('SetPropertyOperation', () => {
@@ -82,12 +83,7 @@ describe('UpdateUserOperationExecutor', () => {
 
     test('should update property in properties model on success', async () => {
       const executor = getExecutor();
-      const setPropertyOp = new SetPropertyOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        'language',
-        'fr',
-      );
+      const setPropertyOp = new SetPropertyOperation(APP_ID, ONESIGNAL_ID, 'language', 'fr');
 
       const result = await executor._execute([setPropertyOp]);
       expect(result._result).toBe(ExecutionResult._Success);
@@ -96,12 +92,10 @@ describe('UpdateUserOperationExecutor', () => {
 
     test('can set tags', async () => {
       const executor = getExecutor();
-      const setPropertyOp = new SetPropertyOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        'tags',
-        { tagA: 'valueA', tagB: 'valueB' },
-      );
+      const setPropertyOp = new SetPropertyOperation(APP_ID, ONESIGNAL_ID, 'tags', {
+        tagA: 'valueA',
+        tagB: 'valueB',
+      });
 
       const result = await executor._execute([setPropertyOp]);
       expect(result._result).toBe(ExecutionResult._Success);

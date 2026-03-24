@@ -1,12 +1,5 @@
 // separate test file to avoid side effects from pageSdkInit.test.ts
-import {
-  APP_ID,
-  BASE_SUB,
-  ONESIGNAL_ID,
-  PUSH_TOKEN,
-  SUB_ID,
-  SUB_ID_2,
-} from '__test__/constants';
+import { APP_ID, BASE_SUB, ONESIGNAL_ID, PUSH_TOKEN, SUB_ID, SUB_ID_2 } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
@@ -14,13 +7,11 @@ import {
   setCreateUserResponse,
   setGetUserResponse,
 } from '__test__/support/helpers/requests';
-import {
-  getDbSubscriptions,
-  updateIdentityModel,
-} from '__test__/support/helpers/setup';
+import { getDbSubscriptions, updateIdentityModel } from '__test__/support/helpers/setup';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 describe('pageSdkInit 2', () => {
   beforeEach(() => {
@@ -69,7 +60,7 @@ describe('pageSdkInit 2', () => {
     });
     await import('./pageSdkInit');
 
-    await window.OneSignalDeferred.push(async function (OneSignal) {
+    window.OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.login('some-id');
       OneSignal.User.addEmail(email);
 

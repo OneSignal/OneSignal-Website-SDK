@@ -1,4 +1,5 @@
 import type { BellSize } from 'src/shared/prompts/types';
+
 import type Bell from './Bell';
 
 const SIZE_PX: Record<BellSize, number> = { small: 32, medium: 48, large: 64 };
@@ -16,10 +17,7 @@ export default class Launcher {
   }
 
   get _shown(): boolean {
-    return (
-      this._element?.classList.contains('onesignal-bell-launcher-active') ??
-      false
-    );
+    return this._element?.classList.contains('onesignal-bell-launcher-active') ?? false;
   }
 
   _show(): void {

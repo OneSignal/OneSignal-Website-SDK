@@ -50,7 +50,7 @@
       },
       {
         "name": "setConsentRequired",
-        "isAsync": true,
+        "isAsync": false,
         "args": [
           {
             "name": "requiresConsent",
@@ -58,7 +58,7 @@
             "optional": false
           }
         ],
-        "returnType": "Promise<void>"
+        "returnType": "void"
       }
     ],
     "namespaces": ["Slidedown", "Notifications", "Session", "User", "Debug"]

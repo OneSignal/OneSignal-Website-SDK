@@ -2,15 +2,15 @@
   "name": "preview",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "index.js",
   "scripts": {
     "certs": "./certs/gen-cert.sh",
     "start": "node ./server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "express": "^4.17.3",
     "express-rate-limit": "^7.1.2",

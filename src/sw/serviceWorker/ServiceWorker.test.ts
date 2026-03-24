@@ -22,16 +22,11 @@ import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
-import {
-  ONESIGNAL_SESSION_KEY,
-  SessionOrigin,
-  SessionStatus,
-} from 'src/shared/session/constants';
-import type {
-  Session,
-  UpsertOrDeactivateSessionPayload,
-} from 'src/shared/session/types';
+import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from 'src/shared/session/constants';
+import type { Session, UpsertOrDeactivateSessionPayload } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
 import { getAppId, run } from './ServiceWorker';
 
 // Mock webhook notification events
@@ -56,8 +51,7 @@ const notificationId = 'test-notification-id';
 const version = __VERSION__;
 
 vi.mock('src/shared/helpers/general', async (importOriginal) => {
-  const mod =
-    await importOriginal<typeof import('src/shared/helpers/general')>();
+  const mod = await importOriginal<typeof import('src/shared/helpers/general')>();
   return { ...mod, delay: vi.fn(() => Promise.resolve()) };
 });
 
@@ -122,16 +116,13 @@ const dispatchEvent = async (event: Event) => {
   await flush();
 };
 
-const serverConfig = TestContext.getFakeServerAppConfig(
-  ConfigIntegrationKind._Custom,
-  {
-    features: {
-      restrict_origin: {
-        enable: false,
-      },
+const serverConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind._Custom, {
+  features: {
+    restrict_origin: {
+      enable: false,
     },
   },
-);
+});
 
 describe('ServiceWorker', () => {
   beforeAll(() => {
@@ -150,9 +141,7 @@ describe('ServiceWorker', () => {
       type: 'appId',
       id: appId,
     });
-    server.use(
-      http.get(`**/sync/*/web`, () => HttpResponse.json(serverConfig)),
-    );
+    server.use(http.get(`**/sync/*/web`, () => HttpResponse.json(serverConfig)));
 
     // @ts-expect-error - search is readonly but we need to set it for testing
     self.location.search = '';
@@ -176,7 +165,7 @@ describe('ServiceWorker', () => {
       const event = new ExtendableEvent('activate');
       await dispatchEvent(event);
 
-      expect(self.clients.claim).toHaveBeenCalled();
+      expect(claimFn).toHaveBeenCalled();
     });
   });
 
@@ -194,7 +183,7 @@ describe('ServiceWorker', () => {
       await flush();
       expect(logDebugSpy).toHaveBeenCalledWith(
         'Failed to display notif:',
-        'Unexpected push message payload received: some message',
+        'Unexpected push message payload received: "some message"',
       );
 
       logDebugSpy.mockClear();
@@ -204,6 +193,7 @@ describe('ServiceWorker', () => {
     });
 
     test('should handle successful push event', async () => {
+      const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
       const payload = mockOSMinifiedNotificationPayload();
 
       self.dispatchEvent(new PushEvent('push', payload));
@@ -216,9 +206,7 @@ describe('ServiceWorker', () => {
       const notificationId = payload.custom.i;
 
       // db should mark the notification as received
-      const notifcationReceived = await db.getAll(
-        'Outcomes.NotificationReceived',
-      );
+      const notifcationReceived = await db.getAll('Outcomes.NotificationReceived');
       expect(notifcationReceived).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -242,7 +230,7 @@ describe('ServiceWorker', () => {
       );
 
       // should display the notification
-      expect(self.registration.showNotification).toHaveBeenCalledWith(
+      expect(showNotificationSpy).toHaveBeenCalledWith(
         payload.title,
         expect.objectContaining({
           body: payload.alert,
@@ -267,24 +255,18 @@ describe('ServiceWorker', () => {
 
       await flush();
 
-      expect(apiPutSpy).toHaveBeenCalledWith(
-        `notifications/${payload.custom.i}/report_received`,
-        {
-          app_id: appId,
-          device_type: DeliveryPlatformKind._ChromeLike,
-          player_id: pushSubscriptionId,
-        },
-      );
+      expect(apiPutSpy).toHaveBeenCalledWith(`notifications/${payload.custom.i}/report_received`, {
+        app_id: appId,
+        device_type: DeliveryPlatformKind._ChromeLike,
+        player_id: pushSubscriptionId,
+      });
     });
 
     describe('foregroundWillDisplay preventDefault', () => {
       test('should display notification when no visible clients exist', async () => {
         // Visibility check finds no visible clients — broadcast is skipped
         matchAllFn.mockResolvedValueOnce([unfocusedClient]);
-        const showNotificationSpy = vi.spyOn(
-          self.registration,
-          'showNotification',
-        );
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
 
         const payload = mockOSMinifiedNotificationPayload();
         await dispatchEvent(new PushEvent('push', payload));
@@ -298,10 +280,7 @@ describe('ServiceWorker', () => {
       });
 
       test('should prevent notification display when page responds with preventDefault=true', async () => {
-        const showNotificationSpy = vi.spyOn(
-          self.registration,
-          'showNotification',
-        );
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
 
         const payload = mockOSMinifiedNotificationPayload({
           custom: {
@@ -321,21 +300,15 @@ describe('ServiceWorker', () => {
         // Notification should NOT be displayed
         expect(showNotificationSpy).not.toHaveBeenCalled();
 
-        expect(apiPutSpy).toHaveBeenCalledWith(
-          `notifications/${notificationId}/report_received`,
-          {
-            app_id: appId,
-            device_type: expect.any(Number),
-            player_id: pushSubscriptionId,
-          },
-        );
+        expect(apiPutSpy).toHaveBeenCalledWith(`notifications/${notificationId}/report_received`, {
+          app_id: appId,
+          device_type: expect.any(Number),
+          player_id: pushSubscriptionId,
+        });
       });
 
       test('should display notification when page responds with preventDefault=false', async () => {
-        const showNotificationSpy = vi.spyOn(
-          self.registration,
-          'showNotification',
-        );
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
 
         const payload = mockOSMinifiedNotificationPayload();
 
@@ -357,10 +330,7 @@ describe('ServiceWorker', () => {
       });
 
       test('should display notification via display() after preventDefault', async () => {
-        const showNotificationSpy = vi.spyOn(
-          self.registration,
-          'showNotification',
-        );
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
 
         const payload = mockOSMinifiedNotificationPayload();
         const notificationId = payload.custom.i;
@@ -437,9 +407,7 @@ describe('ServiceWorker', () => {
       expect(notificationClose).toHaveBeenCalled();
 
       // should save clicked info to db
-      const notificationClicked = await db.getAll(
-        'Outcomes.NotificationClicked',
-      );
+      const notificationClicked = await db.getAll('Outcomes.NotificationClicked');
       expect(notificationClicked).toEqual(
         expect.arrayContaining([
           {
@@ -451,15 +419,12 @@ describe('ServiceWorker', () => {
       );
 
       // should call api to report opened
-      expect(apiPutSpy).toHaveBeenCalledWith(
-        `notifications/${notificationId}`,
-        {
-          app_id: appId,
-          device_type: DeliveryPlatformKind._ChromeLike,
-          opened: true,
-          player_id: pushSubscriptionId,
-        },
-      );
+      expect(apiPutSpy).toHaveBeenCalledWith(`notifications/${notificationId}`, {
+        app_id: appId,
+        device_type: DeliveryPlatformKind._ChromeLike,
+        opened: true,
+        player_id: pushSubscriptionId,
+      });
 
       // should emit clicked event
       expect(notificationClick).toHaveBeenCalledWith(
@@ -478,7 +443,7 @@ describe('ServiceWorker', () => {
       );
 
       // should open url
-      expect(self.clients.openWindow).toHaveBeenCalledWith(launchURL);
+      expect(openWindowFn).toHaveBeenCalledWith(launchURL);
     });
   });
 
@@ -491,9 +456,7 @@ describe('ServiceWorker', () => {
     const someDeviceId = '123';
 
     beforeEach(() => {
-      server.use(
-        http.post(`**/players`, () => HttpResponse.json({ id: someDeviceId })),
-      );
+      server.use(http.post(`**/players`, () => HttpResponse.json({ id: someDeviceId })));
 
       // @ts-expect-error - for setting sdk env
       global.ServiceWorkerGlobalScope = undefined;
@@ -503,9 +466,7 @@ describe('ServiceWorker', () => {
       subscribeCall.mockImplementationOnce(() => {
         throw new Error('cant get raw sub');
       });
-      server.use(
-        http.post(`**/players`, () => HttpResponse.json({ id: null })),
-      );
+      server.use(http.post(`**/players`, () => HttpResponse.json({ id: null })));
 
       await db.put('Ids', {
         type: 'userId',
@@ -542,9 +503,7 @@ describe('ServiceWorker', () => {
 
       await dispatchEvent(event);
 
-      expect(subscribeCall).toHaveBeenCalledWith(
-        SubscriptionStrategyKind._SubscribeNew,
-      );
+      expect(subscribeCall).toHaveBeenCalledWith(SubscriptionStrategyKind._SubscribeNew);
       expect(registerSubscriptionCall).toHaveBeenCalledWith(
         undefined,
         NotificationType._PushSubscriptionRevoked,
@@ -556,9 +515,7 @@ describe('ServiceWorker', () => {
     });
 
     test('with new subscription ', async () => {
-      server.use(
-        http.post(`**/players`, () => HttpResponse.json({ id: null })),
-      );
+      server.use(http.post(`**/players`, () => HttpResponse.json({ id: null })));
 
       // @ts-expect-error - normally readonly but doing this for testing
       global.Notification.permission = 'revoked';
@@ -569,8 +526,7 @@ describe('ServiceWorker', () => {
 
       await dispatchEvent(event);
 
-      const [rawSubscription, subscriptionState] =
-        registerSubscriptionCall.mock.calls[0];
+      const [rawSubscription, subscriptionState] = registerSubscriptionCall.mock.calls[0];
       expect(rawSubscription).toBeInstanceOf(RawPushSubscription);
       expect(rawSubscription?.w3cEndpoint?.href).toBe('https://example.com/');
       expect(rawSubscription?.safariDeviceToken).toBeUndefined();
@@ -636,8 +592,7 @@ describe('ServiceWorker', () => {
 
         const event = new ExtendableMessageEvent('message', {
           command: WorkerMessengerCommand._SessionUpsert,
-          payload:
-            baseMessagePayload satisfies UpsertOrDeactivateSessionPayload,
+          payload: baseMessagePayload satisfies UpsertOrDeactivateSessionPayload,
         });
         await dispatchEvent(event);
 
@@ -699,16 +654,12 @@ describe('ServiceWorker', () => {
         });
         await dispatchEvent(event);
 
-        expect(Log._debug).toHaveBeenCalledWith(
-          'No active session to deactivate',
-        );
+        expect(Log._debug).toHaveBeenCalledWith('No active session to deactivate');
       });
 
       test('with multiple active sessions', async () => {
         server.use(
-          http.patch(`**/apps/${appId}/users/by/*/*`, () =>
-            HttpResponse.json({}),
-          ),
+          http.patch(`**/apps/${appId}/users/by/*/*`, () => HttpResponse.json({})),
           http.post(`**/outcomes/measure`, () => HttpResponse.json({})),
         );
 
@@ -737,8 +688,7 @@ describe('ServiceWorker', () => {
         const s = await getCurrentSession();
         expect(s).toBeNull();
 
-        const notificationClicked =
-          await getAllNotificationClickedForOutcomes();
+        const notificationClicked = await getAllNotificationClickedForOutcomes();
 
         expect(notificationClicked).toEqual([]);
       });
@@ -762,7 +712,7 @@ describe('ServiceWorker', () => {
       subscriptionToken: endpoint + '/',
     };
 
-    beforeEach(async () => {
+    beforeEach(() => {
       isServiceWorker = true;
     });
 
@@ -853,14 +803,11 @@ describe('ServiceWorker', () => {
         payload: { shouldLog: false },
       });
       await dispatchEvent(event);
-      expect(self.shouldLog).toBe(undefined);
+      expect(self.shouldLog).toBe(false);
     });
 
     test('should display notification via DisplayNotification command', async () => {
-      const showNotificationSpy = vi.spyOn(
-        self.registration,
-        'showNotification',
-      );
+      const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
 
       const notification = {
         notificationId: 'display-test-id',
@@ -898,38 +845,22 @@ const mockSender = {
   dismiss: vi.fn(),
   click: vi.fn(),
 };
-vi.mock(
-  'src/sw/webhooks/notifications/OSWebhookNotificationEventSender',
-  () => ({
-    OSWebhookNotificationEventSender: class {
-      willDisplay = mockSender.willDisplay;
-      dismiss = mockSender.dismiss;
-      click = mockSender.click;
-    },
-  }),
-);
+vi.mock('src/sw/webhooks/notifications/OSWebhookNotificationEventSender', () => ({
+  OSWebhookNotificationEventSender: class {
+    willDisplay = mockSender.willDisplay;
+    dismiss = mockSender.dismiss;
+    click = mockSender.click;
+  },
+}));
 
 const pushSubscriptionId = '1234';
 vi.mock('./helpers', () => ({
-  getPushSubscriptionIdByToken: vi
-    .fn()
-    .mockImplementation(() => pushSubscriptionId),
+  getPushSubscriptionIdByToken: vi.fn().mockImplementation(() => pushSubscriptionId),
 }));
 
 vi.mock('../../../src/shared/utils/AwaitableTimeout', () => ({
   awaitableTimeout: vi.fn().mockResolvedValue(undefined),
 }));
-
-declare global {
-  interface ServiceWorkerGlobalScope {
-    clientsStatus?: {
-      hasAnyActiveSessions: boolean;
-      timestamp: number;
-      receivedResponsesCount: number;
-    };
-    shouldLog?: boolean;
-  }
-}
 
 class ExtendableEvent extends Event {
   waitUntil(promise: Promise<any>) {
@@ -1013,19 +944,17 @@ global.ExtendableEvent = class extends Event {
 };
 
 const mockServiceWorker = {};
-const getSubscriptionMock = vi
-  .fn<() => Promise<PushSubscription | null>>()
-  .mockResolvedValue({
-    endpoint,
-    expirationTime: Date.now(),
-    options: {
-      applicationServerKey: null,
-      userVisibleOnly: true,
-    },
-    getKey: vi.fn(),
-    toJSON: vi.fn(),
-    unsubscribe: vi.fn().mockResolvedValue(true),
-  });
+const getSubscriptionMock = vi.fn<() => Promise<PushSubscription | null>>().mockResolvedValue({
+  endpoint,
+  expirationTime: Date.now(),
+  options: {
+    applicationServerKey: null,
+    userVisibleOnly: true,
+  },
+  getKey: vi.fn(),
+  toJSON: vi.fn(),
+  unsubscribe: vi.fn().mockResolvedValue(true),
+});
 Object.defineProperty(self, 'registration', {
   value: {
     active: mockServiceWorker,
@@ -1071,12 +1000,14 @@ const unfocusedClient = new Client({
   visibilityState: 'hidden',
 });
 const matchAllFn = vi.fn().mockResolvedValue([mockClient]);
+const claimFn = vi.fn();
+const openWindowFn = vi.fn();
 
 Object.defineProperty(self, 'clients', {
   value: {
-    claim: vi.fn(),
+    claim: claimFn,
     matchAll: matchAllFn,
-    openWindow: vi.fn(),
+    openWindow: openWindowFn,
   },
   writable: true, // Allow further modifications if needed
 });

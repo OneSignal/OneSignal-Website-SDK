@@ -1,28 +1,21 @@
 import { IdentityConstants } from 'src/core/constants';
 import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
+
 import type { ServerAppConfig } from '../config/types';
 import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
 import Log from '../libraries/Log';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
-import {
-  OutcomeAttributionType,
-  type OutcomeAttribution,
-} from '../models/Outcomes';
+import { OutcomeAttributionType, type OutcomeAttribution } from '../models/Outcomes';
 import type { OutcomeRequestData } from '../outcomes/types';
 import { NotificationType } from '../subscriptions/constants';
 import * as OneSignalApiBase from './base';
 import { sendOutcome } from './shared';
 
-export async function downloadSWServerAppConfig(
-  appId: string,
-): Promise<ServerAppConfig> {
+export async function downloadSWServerAppConfig(appId: string): Promise<ServerAppConfig> {
   enforceAppId(appId);
-  const response = await OneSignalApiBase.get<ServerAppConfig>(
-    `sync/${appId}/web`,
-    null,
-  );
+  const response = await OneSignalApiBase.get<ServerAppConfig>(`sync/${appId}/web`, null);
   return response?.result;
 }
 
@@ -80,11 +73,7 @@ export async function updateUserSession(
   enforceAppId(appId);
   enforceAlias(aliasPair);
   try {
-    await updateUserByAlias(
-      { appId, subscriptionId },
-      aliasPair,
-      updateUserPayload,
-    );
+    await updateUserByAlias({ appId, subscriptionId }, aliasPair, updateUserPayload);
   } catch (e) {
     Log._debug('Session update error:', e);
   }
@@ -121,20 +110,12 @@ export async function sendSessionDuration(
     onesignal_id: onesignalId,
   };
 
-  outcomePayload.direct =
-    attribution.type === OutcomeAttributionType._Direct ? true : false;
+  outcomePayload.direct = attribution.type === OutcomeAttributionType._Direct ? true : false;
 
   try {
-    await updateUserByAlias(
-      { appId, subscriptionId },
-      aliasPair,
-      updateUserPayload,
-    );
+    await updateUserByAlias({ appId, subscriptionId }, aliasPair, updateUserPayload);
 
-    if (
-      outcomePayload.notification_ids &&
-      outcomePayload.notification_ids.length > 0
-    ) {
+    if (outcomePayload.notification_ids && outcomePayload.notification_ids.length > 0) {
       await sendOutcome(outcomePayload);
     }
   } catch (e) {

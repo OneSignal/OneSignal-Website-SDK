@@ -10,12 +10,7 @@ type AliasOp = {
 export class SetAliasOperation extends BaseAliasOperation<AliasOp> {
   constructor();
   constructor(appId: string, onesignalId: string, label: string, value: string);
-  constructor(
-    appId?: string,
-    onesignalId?: string,
-    label?: string,
-    value?: string,
-  ) {
+  constructor(appId?: string, onesignalId?: string, label?: string, value?: string) {
     super(OPERATION_NAME._SetAlias, appId, onesignalId, label);
     if (value) this.value = value;
   }

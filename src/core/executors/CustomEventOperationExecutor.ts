@@ -1,14 +1,8 @@
-import {
-  getDeviceModel,
-  getDeviceOS,
-  getSubscriptionType,
-} from 'src/shared/environment/detect';
-import {
-  getResponseStatusType,
-  ResponseStatusType,
-} from 'src/shared/helpers/network';
+import { getDeviceModel, getDeviceOS, getSubscriptionType } from 'src/shared/environment/detect';
+import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { VERSION } from 'src/shared/utils/env';
+
 import { OPERATION_NAME } from '../constants';
 import { Operation } from '../operations/Operation';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
@@ -53,7 +47,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
         external_id: operation._externalId,
         timestamp: operation._timestamp,
         payload: {
-          ...(operation._event.properties ?? {}),
+          ...operation._event.properties,
           os_sdk: this._eventMetadata,
         },
       },

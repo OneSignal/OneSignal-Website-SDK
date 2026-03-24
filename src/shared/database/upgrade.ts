@@ -18,9 +18,7 @@ export async function migrateOutcomesNotificationClickedTableForV5(
   const newTableName = 'Outcomes.NotificationClicked';
 
   db.createObjectStore(newTableName, { keyPath: 'notificationId' });
-  const records = await wrapRequest(
-    transaction.objectStore(oldTableName).getAll(),
-  );
+  const records = await wrapRequest(transaction.objectStore(oldTableName).getAll());
 
   const newStore = transaction.objectStore(newTableName);
   for (const oldValue of records) {
@@ -46,9 +44,7 @@ export async function migrateOutcomesNotificationReceivedTableForV5(
   const newTableName = 'Outcomes.NotificationReceived';
   db.createObjectStore(newTableName, { keyPath: 'notificationId' });
 
-  const records = await wrapRequest(
-    transaction.objectStore(oldTableName).getAll(),
-  );
+  const records = await wrapRequest(transaction.objectStore(oldTableName).getAll());
   const newStore = transaction.objectStore(newTableName);
   for (const record of records) {
     newStore.put(record);
@@ -64,22 +60,14 @@ export async function migrateModelNameSubscriptionsTableForV6(
   db.createObjectStore(newTableName, { keyPath: 'modelId' });
 
   let currentExternalId: string | undefined;
-  const identityData = await wrapRequest(
-    transaction.objectStore('identity').getAll(),
-  );
+  const identityData = await wrapRequest(transaction.objectStore('identity').getAll());
 
   if (identityData.length > 0) {
     currentExternalId = identityData[0].externalId;
   }
 
-  for (const legacyModelName of [
-    'emailSubscriptions',
-    'pushSubscriptions',
-    'smsSubscriptions',
-  ]) {
-    const records = await wrapRequest(
-      transaction.objectStore(legacyModelName).getAll(),
-    );
+  for (const legacyModelName of ['emailSubscriptions', 'pushSubscriptions', 'smsSubscriptions']) {
+    const records = await wrapRequest(transaction.objectStore(legacyModelName).getAll());
     const newStore = transaction.objectStore(newTableName);
     for (const record of records) {
       newStore.put({

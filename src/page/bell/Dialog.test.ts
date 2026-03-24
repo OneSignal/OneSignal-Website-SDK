@@ -1,11 +1,12 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import type { MockInstance } from 'vite-plus/test';
+import { Browser } from 'src/shared/useragent/constants';
 import * as detect from 'src/shared/useragent/detect';
 import * as utils from 'src/shared/utils/utils';
-import { Browser } from 'src/shared/useragent/constants';
+import { describe, test, expect, beforeEach, vi, type MockInstance } from 'vite-plus/test';
+
 import Bell from './Bell';
-import Dialog from './Dialog';
 import { BellState } from './constants';
+import Dialog from './Dialog';
 
 describe('Dialog', () => {
   let isPushEnabledSpy: MockInstance;
@@ -32,18 +33,20 @@ describe('Dialog', () => {
   test('_hide calls hidePopover when dialog is open', () => {
     const dialog = new Dialog(new Bell({ enable: false }));
     const el = dialog._element!;
-    el.hidePopover = vi.fn();
+    const hidePopoverSpy = vi.fn();
+    el.hidePopover = hidePopoverSpy;
     vi.spyOn(dialog, '_shown', 'get').mockReturnValue(true);
     dialog._hide();
-    expect(el.hidePopover).toHaveBeenCalled();
+    expect(hidePopoverSpy).toHaveBeenCalled();
   });
 
   test('_hide is a no-op when already hidden', () => {
     const dialog = new Dialog(new Bell({ enable: false }));
     const el = dialog._element!;
-    el.hidePopover = vi.fn();
+    const hidePopoverSpy = vi.fn();
+    el.hidePopover = hidePopoverSpy;
     dialog._hide();
-    expect(el.hidePopover).not.toHaveBeenCalled();
+    expect(hidePopoverSpy).not.toHaveBeenCalled();
   });
 
   test('_updateContent renders subscribe button when unsubscribed', async () => {
@@ -53,12 +56,8 @@ describe('Dialog', () => {
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
-    const body = dialog._element!.querySelector(
-      '.onesignal-bell-launcher-dialog-body',
-    )!;
-    expect(body.querySelector('h1')?.textContent).toBe(
-      'Manage Site Notifications',
-    );
+    const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
+    expect(body.querySelector('h1')?.textContent).toBe('Manage Site Notifications');
     expect(dialog._subscribeButton?.textContent).toBe('SUBSCRIBE');
     expect(dialog._subscribeButton).not.toBeNull();
     expect(dialog._unsubscribeButton).toBeNull();
@@ -71,12 +70,8 @@ describe('Dialog', () => {
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
-    const body = dialog._element!.querySelector(
-      '.onesignal-bell-launcher-dialog-body',
-    )!;
-    expect(body.querySelector('h1')?.textContent).toBe(
-      'Manage Site Notifications',
-    );
+    const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
+    expect(body.querySelector('h1')?.textContent).toBe('Manage Site Notifications');
     expect(dialog._unsubscribeButton?.textContent).toBe('UNSUBSCRIBE');
     expect(dialog._unsubscribeButton).not.toBeNull();
     expect(dialog._subscribeButton).toBeNull();
@@ -86,31 +81,31 @@ describe('Dialog', () => {
     isPushEnabledSpy.mockResolvedValue(false);
     const bell = new Bell({ enable: false });
     bell._state = BellState._Unsubscribed;
-    bell._onSubscribeClick = vi.fn();
+    const onSubscribeClickSpy = vi.fn();
+    bell._onSubscribeClick = onSubscribeClickSpy;
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
     dialog._subscribeButton!.click();
-    expect(bell._onSubscribeClick).toHaveBeenCalled();
+    expect(onSubscribeClickSpy).toHaveBeenCalled();
   });
 
   test('unsubscribe button calls _onUnsubscribeClick', async () => {
     isPushEnabledSpy.mockResolvedValue(true);
     const bell = new Bell({ enable: false });
     bell._state = BellState._Subscribed;
-    bell._onUnsubscribeClick = vi.fn();
+    const onUnsubscribeClickSpy = vi.fn();
+    bell._onUnsubscribeClick = onUnsubscribeClickSpy;
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
     dialog._unsubscribeButton!.click();
-    expect(bell._onUnsubscribeClick).toHaveBeenCalled();
+    expect(onUnsubscribeClickSpy).toHaveBeenCalled();
   });
 
   test('_updateContent uses custom notification icon when available', async () => {
     isPushEnabledSpy.mockResolvedValue(false);
-    vi.spyOn(utils, 'getPlatformNotificationIcon').mockReturnValue(
-      'https://example.com/icon.png',
-    );
+    vi.spyOn(utils, 'getPlatformNotificationIcon').mockReturnValue('https://example.com/icon.png');
     const bell = new Bell({ enable: false });
     bell._state = BellState._Unsubscribed;
     const dialog = new Dialog(bell);
@@ -122,17 +117,13 @@ describe('Dialog', () => {
 
   test('_updateContent uses default icon class when no custom icon', async () => {
     isPushEnabledSpy.mockResolvedValue(false);
-    vi.spyOn(utils, 'getPlatformNotificationIcon').mockReturnValue(
-      'default-icon',
-    );
+    vi.spyOn(utils, 'getPlatformNotificationIcon').mockReturnValue('default-icon');
     const bell = new Bell({ enable: false });
     bell._state = BellState._Unsubscribed;
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
-    const icon = dialog._element!.querySelector(
-      '.push-notification-icon-default',
-    );
+    const icon = dialog._element!.querySelector('.push-notification-icon-default');
     expect(icon).not.toBeNull();
   });
 
@@ -146,9 +137,7 @@ describe('Dialog', () => {
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
-    const body = dialog._element!.querySelector(
-      '.onesignal-bell-launcher-dialog-body',
-    )!;
+    const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
     expect(body.querySelector('h1')?.textContent).toBe('Unblock Notifications');
     expect(body.querySelector('.instructions p')?.textContent).toBe(
       'Follow these instructions to allow notifications:',
@@ -167,9 +156,7 @@ describe('Dialog', () => {
     const dialog = new Dialog(bell);
 
     await dialog._updateContent();
-    const body = dialog._element!.querySelector(
-      '.onesignal-bell-launcher-dialog-body',
-    )!;
+    const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
     expect(body.querySelector('ol')).not.toBeNull();
     expect(body.querySelector('img')).toBeNull();
   });

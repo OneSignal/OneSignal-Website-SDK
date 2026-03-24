@@ -1,4 +1,5 @@
 import intlTelInput from 'intl-tel-input';
+
 import { OneSignalDeferredLoadedCallback } from './page/models/OneSignalDeferredLoadedCallback';
 
 /**
@@ -12,9 +13,7 @@ interface SafariRemoteNotificationPermission {
 }
 
 interface SafariRemoteNotification {
-  permission(
-    websitePushID: string | undefined,
-  ): SafariRemoteNotificationPermission;
+  permission(websitePushID: string | undefined): SafariRemoteNotificationPermission;
   requestPermission(
     webAPIURL: string,
     websitePushID: string | undefined,

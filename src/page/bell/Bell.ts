@@ -6,11 +6,8 @@ import {
   removeDomElement,
 } from 'src/shared/helpers/dom';
 import { delay } from 'src/shared/helpers/general';
-import type {
-  BellPosition,
-  BellSize,
-  BellText,
-} from 'src/shared/prompts/types';
+import type { BellPosition, BellSize, BellText } from 'src/shared/prompts/types';
+
 import { wasPromptOfTypeDismissed } from '../../shared/helpers/dismiss';
 import { getNotificationIcons } from '../../shared/helpers/main';
 import Log from '../../shared/libraries/Log';
@@ -19,15 +16,10 @@ import type { SubscriptionChangeEvent } from '../models/SubscriptionChangeEvent'
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Badge from './Badge';
 import Button from './Button';
+import { BellState, type BellStateValue, MESSAGE_TIMEOUT, MessageType } from './constants';
 import Dialog from './Dialog';
 import Launcher from './Launcher';
 import Message from './Message';
-import {
-  BellState,
-  type BellStateValue,
-  MESSAGE_TIMEOUT,
-  MessageType,
-} from './constants';
 
 const logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
@@ -94,19 +86,12 @@ export default class Bell {
   }
 
   private _validateOptions(options: AppUserConfigNotifyButton) {
-    const assertChoice = (
-      val: string | undefined,
-      valid: readonly string[],
-      label: string,
-    ) => {
+    const assertChoice = (val: string | undefined, valid: readonly string[], label: string) => {
       if (!val || !valid.includes(val))
-        throw new Error(
-          `Invalid ${label} '${val}'. Choose: ${valid.join(', ')}`,
-        );
+        throw new Error(`Invalid ${label} '${val}'. Choose: ${valid.join(', ')}`);
     };
     const assertAboveZero = (val: number | undefined, label: string) => {
-      if (!val || val < 0)
-        throw new Error(`Invalid ${label}. Must be above 0.`);
+      if (!val || val < 0) throw new Error(`Invalid ${label}. Must be above 0.`);
     };
 
     assertChoice(options.size, VALID_SIZES, 'size');
@@ -132,8 +117,7 @@ export default class Bell {
           }
         }
 
-        const permission =
-          await OneSignal._context._permissionManager._getPermissionStatus();
+        const permission = await OneSignal._context._permissionManager._getPermissionStatus();
         const bellState = isSubscribed.current.optedIn
           ? BellState._Subscribed
           : permission === 'denied'
@@ -143,9 +127,8 @@ export default class Bell {
       },
     );
 
-    OneSignal._emitter.on(
-      OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-      () => this._updateState(),
+    OneSignal._emitter.on(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, () =>
+      this._updateState(),
     );
   }
 
@@ -164,7 +147,7 @@ export default class Bell {
     );
     this._ignoreSubscriptionState = false;
     this._actionInProgress = false;
-    this._updateState();
+    void this._updateState();
   }
 
   async _onUnsubscribeClick() {
@@ -180,7 +163,7 @@ export default class Bell {
       MESSAGE_TIMEOUT,
     );
     this._actionInProgress = false;
-    this._updateState();
+    void this._updateState();
   }
 
   private _addDefaultClasses() {
@@ -189,14 +172,8 @@ export default class Bell {
     if (container) {
       addCssClass(container, `onesignal-bell-container-${position}`);
     }
-    addCssClass(
-      this._launcher._selector,
-      `onesignal-bell-launcher-${position}`,
-    );
-    addCssClass(
-      this._launcher._selector,
-      `onesignal-bell-launcher-theme-${theme}`,
-    );
+    addCssClass(this._launcher._selector, `onesignal-bell-launcher-${position}`);
+    addCssClass(this._launcher._selector, `onesignal-bell-launcher-theme-${theme}`);
   }
 
   async _create() {
@@ -273,7 +250,7 @@ export default class Bell {
       dialogEl.addEventListener('toggle', (e) => {
         const te = e as ToggleEvent;
         if (te.newState === 'open') {
-          this._dialog._updateContent();
+          void this._dialog._updateContent();
           this._message._hide();
         }
       });
@@ -293,7 +270,7 @@ export default class Bell {
       await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
     wasPromptOfTypeDismissed(DismissPrompt._Push);
 
-    await this._launcher._resize(this._options.size || DEFAULT_SIZE);
+    this._launcher._resize(this._options.size || DEFAULT_SIZE);
 
     this._addDefaultClasses();
     this._applyOffsetIfSpecified();
@@ -306,23 +283,16 @@ export default class Bell {
     }
 
     await delay(this._options.showLauncherAfter || 0);
-    await this._launcher._show();
+    this._launcher._show();
 
     await this._updateState();
 
     await delay(this._options.showBadgeAfter || 0);
 
-    if (
-      this._options.prenotify &&
-      !isPushEnabled &&
-      !this._blocked &&
-      OneSignal._isNewVisitor
-    ) {
-      this._message._content = decodeHtmlEntities(
-        this._options.text['message.prenotify'],
-      );
+    if (this._options.prenotify && !isPushEnabled && !this._blocked && OneSignal._isNewVisitor) {
+      this._message._content = decodeHtmlEntities(this._options.text['message.prenotify']);
       this._badge._increment();
-      await this._badge._show();
+      this._badge._show();
     }
 
     this._initialized = true;
@@ -339,12 +309,9 @@ export default class Bell {
     }
 
     if (offset.bottom) element.style.bottom = offset.bottom;
-    const side =
-      this._options.position === 'bottom-right' ? offset.right : offset.left;
+    const side = this._options.position === 'bottom-right' ? offset.right : offset.left;
     if (side) {
-      element.style[
-        this._options.position === 'bottom-right' ? 'right' : 'left'
-      ] = side;
+      element.style[this._options.position === 'bottom-right' ? 'right' : 'left'] = side;
     }
   }
 
@@ -394,9 +361,7 @@ export default class Bell {
 
     if (!this._launcher._element) return;
 
-    this._message._content = decodeHtmlEntities(
-      this._message._getTipForState(),
-    );
+    this._message._content = decodeHtmlEntities(this._message._getTipForState());
   }
 
   get _container() {

@@ -4,6 +4,8 @@ import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { BaseSubscriptionOperation } from 'src/core/operations/BaseSubscriptionOperation';
 import { db } from 'src/shared/database/client';
 import Log from 'src/shared/libraries/Log';
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
+
 import LoginManager from './LoginManager';
 
 describe('LoginManager', () => {
@@ -12,10 +14,8 @@ describe('LoginManager', () => {
   });
 
   test('login: skips when externalId unchanged and logs debug', async () => {
-    const debugSpy = vi
-      .spyOn(Log, '_debug')
-      .mockImplementation(() => undefined);
-    await updateIdentityModel('external_id', 'same-id');
+    const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => undefined);
+    updateIdentityModel('external_id', 'same-id');
 
     await LoginManager.login('same-id');
     expect(debugSpy).toHaveBeenCalledWith('Login: externalId already set');
@@ -27,14 +27,10 @@ describe('LoginManager', () => {
     const createPushSub = () => ({
       id: 'push-sub-id',
     });
-    vi.spyOn(
-      OneSignal._coreDirector,
-      '_getPushSubscriptionModel',
-    ).mockResolvedValue(createPushSub() as SubscriptionModel);
-    const enqueueSpy = vi.spyOn(
-      OneSignal._coreDirector._operationRepo,
-      '_enqueue',
+    vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(
+      createPushSub() as SubscriptionModel,
     );
+    const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
     const enqueueAndWaitSpy = vi
       .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
       .mockResolvedValue(undefined);
@@ -50,18 +46,11 @@ describe('LoginManager', () => {
 
   test('login: with existing push sub enqueues transfer operation', async () => {
     const mockPushSub = { id: 'push-sub-id' } as SubscriptionModel;
-    vi.spyOn(
-      OneSignal._coreDirector,
-      '_getPushSubscriptionModel',
-    ).mockResolvedValue(mockPushSub);
-    const enqueueSpy = vi.spyOn(
-      OneSignal._coreDirector._operationRepo,
-      '_enqueue',
+    vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(mockPushSub);
+    const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+    vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockResolvedValue(
+      undefined,
     );
-    vi.spyOn(
-      OneSignal._coreDirector._operationRepo,
-      '_enqueueAndWait',
-    ).mockResolvedValue(undefined);
 
     await LoginManager.login('new-id');
 
@@ -71,18 +60,11 @@ describe('LoginManager', () => {
   });
 
   test('login: without push sub creates new subscription model', async () => {
-    vi.spyOn(
-      OneSignal._coreDirector,
-      '_getPushSubscriptionModel',
-    ).mockResolvedValue(undefined);
-    vi.spyOn(
-      OneSignal._coreDirector._operationRepo,
-      '_enqueueAndWait',
-    ).mockResolvedValue(undefined);
-    const addSpy = vi.spyOn(
-      OneSignal._coreDirector._subscriptionModelStore,
-      '_add',
+    vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(undefined);
+    vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockResolvedValue(
+      undefined,
     );
+    const addSpy = vi.spyOn(OneSignal._coreDirector._subscriptionModelStore, '_add');
 
     await LoginManager.login('new-id');
 
@@ -91,29 +73,20 @@ describe('LoginManager', () => {
   });
 
   test('logout: no external id logs debug and returns', async () => {
-    const debugSpy = vi
-      .spyOn(Log, '_debug')
-      .mockImplementation(() => undefined);
-    await updateIdentityModel('external_id', undefined);
+    const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => undefined);
+    updateIdentityModel('external_id', undefined);
     await LoginManager.logout();
     expect(debugSpy).toHaveBeenCalledWith('Logout: not logged in');
   });
 
   test('logout: with external id and push sub enqueues transfer and login operations', async () => {
-    await updateIdentityModel('external_id', 'abc');
+    updateIdentityModel('external_id', 'abc');
     const mockPushSub = { id: 'sub-id' } as SubscriptionModel;
-    vi.spyOn(
-      OneSignal._coreDirector,
-      '_getPushSubscriptionModel',
-    ).mockResolvedValue(mockPushSub);
-    const enqueueSpy = vi.spyOn(
-      OneSignal._coreDirector._operationRepo,
-      '_enqueue',
+    vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(mockPushSub);
+    const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+    vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockResolvedValue(
+      undefined,
     );
-    vi.spyOn(
-      OneSignal._coreDirector._operationRepo,
-      '_enqueueAndWait',
-    ).mockResolvedValue(undefined);
 
     await LoginManager.logout();
 

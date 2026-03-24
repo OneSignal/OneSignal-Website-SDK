@@ -3,19 +3,16 @@ import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { getFinalAppConfig } from '__test__/support/helpers/configHelper';
 import type { TagCategory } from 'src/page/tags/types';
+import { beforeEach, describe, expect, test } from 'vite-plus/test';
+
 import { getAppConfig, getMergedConfig } from './app';
 import { ConfigIntegrationKind } from './constants';
-import {
-  getUserConfigForConfigIntegrationKind,
-  limitCategoriesToMaxCount,
-} from './integration';
+import { getUserConfigForConfigIntegrationKind, limitCategoriesToMaxCount } from './integration';
 import type { AppUserConfig } from './types';
 
 const SERVICE_WORKER_PATH = 'push/onesignal/';
 
-const serverConfig = TestContext.getFakeServerAppConfig(
-  ConfigIntegrationKind._Custom,
-);
+const serverConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind._Custom);
 
 describe('Config Helpers', () => {
   beforeEach(() => {
@@ -193,9 +190,7 @@ describe('Config Helpers', () => {
         autoRegister: true,
       };
 
-      const fakeServerConfig = TestContext.getFakeServerAppConfig(
-        ConfigIntegrationKind._Custom,
-      );
+      const fakeServerConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind._Custom);
       const finalConfig = getUserConfigForConfigIntegrationKind(
         ConfigIntegrationKind._Custom,
         fakeUserConfig,
@@ -209,17 +204,13 @@ describe('Config Helpers', () => {
         appId: APP_ID,
       };
 
-      const fakeServerConfig = TestContext.getFakeServerAppConfig(
-        ConfigIntegrationKind._Custom,
-      );
+      const fakeServerConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind._Custom);
       const finalConfig = getUserConfigForConfigIntegrationKind(
         ConfigIntegrationKind._Custom,
         fakeUserConfig,
         fakeServerConfig,
       );
-      expect(finalConfig.autoResubscribe).toBe(
-        fakeServerConfig.config.autoResubscribe,
-      );
+      expect(finalConfig.autoResubscribe).toBe(fakeServerConfig.config.autoResubscribe);
     });
 
     test('autoResubscribe - autoRegister backwards compatibility for custom integration 3', () => {
@@ -229,9 +220,7 @@ describe('Config Helpers', () => {
         autoResubscribe: true,
       };
 
-      const fakeServerConfig = TestContext.getFakeServerAppConfig(
-        ConfigIntegrationKind._Custom,
-      );
+      const fakeServerConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind._Custom);
       const finalConfig = getUserConfigForConfigIntegrationKind(
         ConfigIntegrationKind._Custom,
         fakeUserConfig,
@@ -260,9 +249,7 @@ describe('Config Helpers', () => {
         fakeServerConfig,
       );
 
-      expect(finalConfig.serviceWorkerPath).toBe(
-        'push/onesignal/OneSignalSDKWorker.js',
-      );
+      expect(finalConfig.serviceWorkerPath).toBe('push/onesignal/OneSignalSDKWorker.js');
       expect(finalConfig.serviceWorkerParam).toEqual({
         scope: '/push/onesignal/',
       });

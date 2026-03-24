@@ -1,10 +1,4 @@
-import {
-  PUSH_TOKEN,
-  PUSH_TOKEN_2,
-  SUB_ID,
-  SUB_ID_2,
-  SUB_ID_3,
-} from '__test__/constants';
+import { PUSH_TOKEN, PUSH_TOKEN_2, SUB_ID, SUB_ID_2, SUB_ID_3 } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
@@ -15,12 +9,10 @@ import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers
 import * as PermissionUtils from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test';
 
 vi.mock('src/shared/libraries/Log');
-const triggerNotificationSpy = vi.spyOn(
-  PermissionUtils,
-  'triggerNotificationPermissionChanged',
-);
+const triggerNotificationSpy = vi.spyOn(PermissionUtils, 'triggerNotificationPermissionChanged');
 
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(() => {
@@ -61,10 +53,7 @@ describe('Notification Types are set correctly on subscription change', () => {
 
       const permChangeStringListener = vi.fn();
       const permChangeListener = vi.fn();
-      OneSignal.Notifications.addEventListener(
-        'permissionChange',
-        permChangeListener,
-      );
+      OneSignal.Notifications.addEventListener('permissionChange', permChangeListener);
 
       OneSignal.Notifications.addEventListener(
         // @ts-expect-error - we dont expose it in the types
@@ -75,16 +64,14 @@ describe('Notification Types are set correctly on subscription change', () => {
       await checkAndTriggerNotificationPermissionChanged();
 
       // should update the db
-      const dbPermission = await getOptionsValue<NotificationPermission>(
-        'notificationPermission',
-      );
+      const dbPermission = await getOptionsValue<NotificationPermission>('notificationPermission');
       expect(dbPermission).toBe('granted');
       expect(permChangeListener).toHaveBeenCalledWith(true);
       expect(permChangeStringListener).toHaveBeenCalledWith('granted');
     });
   });
 
-  describe('checkAndTriggerSubscriptionChanged', async () => {
+  describe('checkAndTriggerSubscriptionChanged', () => {
     const setAppState = async (appState: Partial<AppState>) => {
       const currentAppState = (await getOptionsValue<AppState>('appState'))!;
       await setDBAppState({

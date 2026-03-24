@@ -1,10 +1,8 @@
 import type { AppConfig } from 'src/shared/config/types';
 import type { ContextInterface } from 'src/shared/context/types';
 import { WorkerMessengerPage } from 'src/shared/libraries/workerMessenger/page';
-import {
-  getServiceWorkerManager,
-  getSubscriptionManagerPage,
-} from '../../shared/helpers/context';
+
+import { getServiceWorkerManager, getSubscriptionManagerPage } from '../../shared/helpers/context';
 import PermissionManager from '../../shared/managers/PermissionManager';
 import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager';
 import { SessionManager } from '../../shared/managers/sessionManager/SessionManager';

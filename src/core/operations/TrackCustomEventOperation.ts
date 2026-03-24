@@ -1,11 +1,8 @@
 import { IDManager } from 'src/shared/managers/IDManager';
+
 import { OPERATION_NAME } from '../constants';
 import type { ICustomEvent } from '../types/customEvents';
-import {
-  GroupComparisonType,
-  Operation,
-  type GroupComparisonValue,
-} from './Operation';
+import { GroupComparisonType, Operation, type GroupComparisonValue } from './Operation';
 
 type OperationProps = {
   appId: string;

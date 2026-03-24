@@ -18,8 +18,5 @@ export abstract class EventListenerBase {
    * @param event - event name to stop listening for
    * @param listener - callback function to remove from event
    */
-  abstract removeEventListener(
-    event: string,
-    listener: (obj: any) => void,
-  ): void;
+  abstract removeEventListener(event: string, listener: (obj: any) => void): void;
 }

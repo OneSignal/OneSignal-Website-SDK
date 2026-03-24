@@ -5,6 +5,7 @@ import Log from 'src/shared/libraries/Log';
 import { isCompleteSubscriptionObject } from 'src/shared/managers/utils';
 import { SessionOrigin } from 'src/shared/session/constants';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+
 import { sendOutcome } from '../api/shared';
 import { getSubscriptionType } from '../environment/detect';
 import type { OutcomeRequestData } from '../outcomes/types';
@@ -47,8 +48,7 @@ export class UpdateManager {
       return;
     }
 
-    const subscriptionModel =
-      await OneSignal._coreDirector._getPushSubscriptionModel();
+    const subscriptionModel = await OneSignal._coreDirector._getPushSubscriptionModel();
 
     if (
       subscriptionModel?._notification_types !== NotificationType._Subscribed &&
@@ -61,9 +61,7 @@ export class UpdateManager {
       // Not sending on_session here but from SW instead.
 
       // Not awaiting here on purpose
-      this._context._sessionManager._upsertSession(
-        SessionOrigin._UserNewSession,
-      );
+      void this._context._sessionManager._upsertSession(SessionOrigin._UserNewSession);
       this._onSessionSent = true;
     } catch (e) {
       if (e instanceof Error) {
@@ -79,13 +77,9 @@ export class UpdateManager {
     value?: number,
   ) {
     logMethodCall('sendOutcomeDirect');
-    const pushSubscriptionModel =
-      await OneSignal._coreDirector._getPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal._coreDirector._getPushSubscriptionModel();
 
-    if (
-      pushSubscriptionModel &&
-      isCompleteSubscriptionObject(pushSubscriptionModel)
-    ) {
+    if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel)) {
       const outcomeRequestData: OutcomeRequestData = {
         id: outcomeName,
         app_id: appId,
@@ -112,13 +106,9 @@ export class UpdateManager {
     value?: number,
   ) {
     logMethodCall('sendOutcomeInfluenced');
-    const pushSubscriptionModel =
-      await OneSignal._coreDirector._getPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal._coreDirector._getPushSubscriptionModel();
 
-    if (
-      pushSubscriptionModel &&
-      isCompleteSubscriptionObject(pushSubscriptionModel)
-    ) {
+    if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel)) {
       const outcomeRequestData: OutcomeRequestData = {
         id: outcomeName,
         app_id: appId,
@@ -138,19 +128,11 @@ export class UpdateManager {
     Log._warn('Outcome aborted: no push sub model');
   }
 
-  public async _sendOutcomeUnattributed(
-    appId: string,
-    outcomeName: string,
-    value?: number,
-  ) {
+  public async _sendOutcomeUnattributed(appId: string, outcomeName: string, value?: number) {
     logMethodCall('sendOutcomeUnattributed');
-    const pushSubscriptionModel =
-      await OneSignal._coreDirector._getPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal._coreDirector._getPushSubscriptionModel();
 
-    if (
-      pushSubscriptionModel &&
-      isCompleteSubscriptionObject(pushSubscriptionModel)
-    ) {
+    if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel)) {
       const outcomeRequestData: OutcomeRequestData = {
         id: outcomeName,
         app_id: appId,

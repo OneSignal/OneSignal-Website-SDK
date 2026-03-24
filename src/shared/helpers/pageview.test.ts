@@ -1,3 +1,5 @@
+import { beforeEach, expect, test, vi } from 'vite-plus/test';
+
 let getPageViewCount: typeof import('./pageview').getPageViewCount;
 let incrementPageViewCount: typeof import('./pageview').incrementPageViewCount;
 

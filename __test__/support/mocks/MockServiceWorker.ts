@@ -1,3 +1,5 @@
+import { vi } from 'vite-plus/test';
+
 import { PUSH_TOKEN } from '../../constants';
 
 export const mockPushSubscription: PushSubscription = {
@@ -15,9 +17,7 @@ export const mockPushSubscription: PushSubscription = {
 export const mockPushManager = {
   permissionState: vi.fn().mockResolvedValue('granted'),
   subscribe: vi.fn().mockResolvedValue(mockPushSubscription),
-  getSubscription: vi
-    .fn<() => Promise<PushSubscription>>()
-    .mockResolvedValue(mockPushSubscription),
+  getSubscription: vi.fn<() => Promise<PushSubscription>>().mockResolvedValue(mockPushSubscription),
 } satisfies PushManager;
 
 const registration: Partial<ServiceWorkerRegistration> = {
