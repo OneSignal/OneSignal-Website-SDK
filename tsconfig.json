@@ -12,7 +12,7 @@
       "__test__/*": ["./__test__/*"],
       "src/*": ["./src/*"]
     },
-    "types": ["bun", "jsdom"]
+    "types": ["bun", "jsdom", "jest"]
   },
   "include": ["src", "__test__"]
 }

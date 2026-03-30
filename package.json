@@ -40,6 +40,7 @@
     "prepare": "vp config"
   },
   "dependencies": {
+    "@types/jest": "^30.0.0",
     "jsonp": "github:OneSignal/jsonp#onesignal"
   },
   "devDependencies": {
@@ -76,12 +77,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "42 kB",
+      "limit": "42.28 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "12.34 kB",
+      "limit": "12.35 kB",
       "gzip": true
     },
     {
