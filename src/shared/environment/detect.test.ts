@@ -37,6 +37,16 @@ const clearSafariWindow = () => {
   });
 };
 
+const mockVapidSupport = () => {
+  (globalThis as any).PushSubscriptionOptions = {
+    prototype: { applicationServerKey: undefined },
+  };
+};
+
+const clearVapidSupport = () => {
+  delete (globalThis as any).PushSubscriptionOptions;
+};
+
 describe("Environment Helper", () => {
   test("can get api url ", async () => {
     // staging
@@ -78,6 +88,11 @@ describe("useSafariLegacyPush", () => {
   beforeEach(() => {
     TestEnvironment.initialize();
     clearSafariWindow();
+    mockVapidSupport();
+  });
+
+  afterEach(() => {
+    clearVapidSupport();
   });
 
   test("returns false when window.safari is undefined", () => {
@@ -99,7 +114,7 @@ describe("useSafariLegacyPush", () => {
     expect(useSafariLegacyPush()).toBe(false);
   });
 
-  test('returns false when legacy permission is "default" (new user)', () => {
+  test('returns false when legacy permission is "default" (new user on Safari 16.4+)', () => {
     mockSafariPushNotification("default", null);
     OneSignal.config!.safariWebId = FAKE_SAFARI_WEB_ID;
     expect(useSafariLegacyPush()).toBe(false);
@@ -122,12 +137,24 @@ describe("useSafariLegacyPush", () => {
     OneSignal.config!.safariWebId = FAKE_SAFARI_WEB_ID;
     expect(useSafariLegacyPush()).toBe(true);
   });
+
+  test("returns true on Safari < 16.4 (no VAPID support) even for new users", () => {
+    clearVapidSupport();
+    mockSafariPushNotification("default", null);
+    OneSignal.config!.safariWebId = FAKE_SAFARI_WEB_ID;
+    expect(useSafariLegacyPush()).toBe(true);
+  });
 });
 
 describe("getSubscriptionType", () => {
   beforeEach(() => {
     TestEnvironment.initialize();
     clearSafariWindow();
+    mockVapidSupport();
+  });
+
+  afterEach(() => {
+    clearVapidSupport();
   });
 
   test("returns SafariLegacyPush for existing legacy Safari subscribers", () => {
@@ -146,5 +173,12 @@ describe("getSubscriptionType", () => {
     mockSafariPushNotification("denied", null);
     OneSignal.config!.safariWebId = FAKE_SAFARI_WEB_ID;
     expect(getSubscriptionType()).not.toBe(SubscriptionType._SafariLegacyPush);
+  });
+
+  test("returns SafariLegacyPush on Safari < 16.4 (no VAPID support)", () => {
+    clearVapidSupport();
+    mockSafariPushNotification("default", null);
+    OneSignal.config!.safariWebId = FAKE_SAFARI_WEB_ID;
+    expect(getSubscriptionType()).toBe(SubscriptionType._SafariLegacyPush);
   });
 });
