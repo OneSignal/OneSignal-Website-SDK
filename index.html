@@ -20,7 +20,9 @@
         animation: slideIn 0.3s ease-out;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         max-width: 720px;
@@ -28,8 +30,14 @@
         padding: 0 20px;
         color: #1a1a2e;
       }
-      h1 { font-size: 22px; margin-bottom: 4px; }
-      .subtitle { color: #666; margin-bottom: 24px; }
+      h1 {
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .subtitle {
+        color: #666;
+        margin-bottom: 24px;
+      }
       .card {
         background: #f8f9fa;
         border: 1px solid #e0e0e0;
@@ -37,7 +45,9 @@
         padding: 20px;
         margin-bottom: 16px;
       }
-      .card h3 { margin-top: 0; }
+      .card h3 {
+        margin-top: 0;
+      }
       button {
         padding: 10px 20px;
         font-size: 14px;
@@ -47,10 +57,20 @@
         margin-right: 8px;
         margin-bottom: 8px;
       }
-      .btn-primary { background: #e63946; color: white; }
-      .btn-primary:hover { background: #c1121f; }
-      .btn-secondary { background: #457b9d; color: white; }
-      .btn-secondary:hover { background: #1d3557; }
+      .btn-primary {
+        background: #e63946;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #c1121f;
+      }
+      .btn-secondary {
+        background: #457b9d;
+        color: white;
+      }
+      .btn-secondary:hover {
+        background: #1d3557;
+      }
       #log {
         background: #1a1a2e;
         color: #a8dadc;
@@ -63,12 +83,27 @@
         white-space: pre-wrap;
         word-break: break-all;
       }
-      #log .error { color: #e63946; }
-      #log .success { color: #2a9d8f; }
-      #log .info { color: #e9c46a; }
-      table { width: 100%; border-collapse: collapse; font-size: 14px; }
-      td { padding: 6px 0; }
-      td:first-child { font-weight: 600; width: 200px; }
+      #log .error {
+        color: #e63946;
+      }
+      #log .success {
+        color: #2a9d8f;
+      }
+      #log .info {
+        color: #e9c46a;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      td {
+        padding: 6px 0;
+      }
+      td:first-child {
+        font-weight: 600;
+        width: 200px;
+      }
       .tag {
         display: inline-block;
         padding: 2px 8px;
@@ -76,9 +111,18 @@
         font-size: 12px;
         font-weight: 600;
       }
-      .tag-legacy { background: #ffc9c9; color: #c92a2a; }
-      .tag-vapid { background: #b2f2bb; color: #2b8a3e; }
-      .tag-unknown { background: #e0e0e0; color: #666; }
+      .tag-legacy {
+        background: #ffc9c9;
+        color: #c92a2a;
+      }
+      .tag-vapid {
+        background: #b2f2bb;
+        color: #2b8a3e;
+      }
+      .tag-unknown {
+        background: #e0e0e0;
+        color: #666;
+      }
     </style>
     <script>
       // set can a query param ?app_id=your_app_id OR
@@ -104,18 +148,41 @@
   </head>
   <body>
     <h1>SDK-4180: Safari VAPID Push Test</h1>
-    <p class="subtitle">Test page to verify Safari uses VAPID instead of legacy push for new users</p>
+    <p class="subtitle">
+      Test page to verify Safari uses VAPID instead of legacy push for new users
+    </p>
 
     <div class="card">
       <h3>Browser & Safari Push Info</h3>
       <table>
-        <tr><td>User Agent</td><td id="ua">—</td></tr>
-        <tr><td>window.safari exists</td><td id="safari-exists">—</td></tr>
-        <tr><td>Legacy permission state</td><td id="legacy-perm">—</td></tr>
-        <tr><td>Legacy deviceToken</td><td id="legacy-token">—</td></tr>
-        <tr><td>Notification.permission</td><td id="notif-perm">—</td></tr>
-        <tr><td>PushSubscriptionOptions</td><td id="vapid-support">—</td></tr>
-        <tr><td>Expected push path</td><td id="push-path">—</td></tr>
+        <tr>
+          <td>User Agent</td>
+          <td id="ua">—</td>
+        </tr>
+        <tr>
+          <td>window.safari exists</td>
+          <td id="safari-exists">—</td>
+        </tr>
+        <tr>
+          <td>Legacy permission state</td>
+          <td id="legacy-perm">—</td>
+        </tr>
+        <tr>
+          <td>Legacy deviceToken</td>
+          <td id="legacy-token">—</td>
+        </tr>
+        <tr>
+          <td>Notification.permission</td>
+          <td id="notif-perm">—</td>
+        </tr>
+        <tr>
+          <td>PushSubscriptionOptions</td>
+          <td id="vapid-support">—</td>
+        </tr>
+        <tr>
+          <td>Expected push path</td>
+          <td id="push-path">—</td>
+        </tr>
       </table>
     </div>
 
@@ -145,21 +212,26 @@
       function refreshInfo() {
         $('ua').textContent = navigator.userAgent;
 
-        const hasSafari = typeof window.safari !== 'undefined' &&
+        const hasSafari =
+          typeof window.safari !== 'undefined' &&
           typeof window.safari.pushNotification !== 'undefined';
         $('safari-exists').textContent = hasSafari ? 'Yes' : 'No';
 
         if (hasSafari) {
           try {
-            const safariWebId = OneSignal?.config?.safariWebId || 'web.onesignal.auto.6187ce57-f346-4a86-93e4-7d70d494c000';
+            const safariWebId =
+              OneSignal?.config?.safariWebId ||
+              'web.onesignal.auto.6187ce57-f346-4a86-93e4-7d70d494c000';
             const perm = window.safari.pushNotification.permission(safariWebId);
             $('legacy-perm').textContent = perm.permission;
             $('legacy-token').textContent = perm.deviceToken || '(null)';
 
             if (perm.permission === 'granted' && perm.deviceToken) {
-              $('push-path').innerHTML = '<span class="tag tag-legacy">Legacy Safari Push</span> (existing subscriber)';
+              $('push-path').innerHTML =
+                '<span class="tag tag-legacy">Legacy Safari Push</span> (existing subscriber)';
             } else {
-              $('push-path').innerHTML = '<span class="tag tag-vapid">Standard VAPID Push</span> (new user)';
+              $('push-path').innerHTML =
+                '<span class="tag tag-vapid">Standard VAPID Push</span> (new user)';
             }
           } catch (e) {
             $('legacy-perm').textContent = 'Error: ' + e.message;
@@ -176,8 +248,8 @@
 
         const vapidSupport = typeof PushSubscriptionOptions !== 'undefined';
         $('vapid-support').textContent = vapidSupport ? 'Supported' : 'Not available';
-        $('notif-perm').textContent = typeof Notification !== 'undefined'
-          ? Notification.permission : 'N/A';
+        $('notif-perm').textContent =
+          typeof Notification !== 'undefined' ? Notification.permission : 'N/A';
       }
 
       $('request-perm').addEventListener('click', async () => {

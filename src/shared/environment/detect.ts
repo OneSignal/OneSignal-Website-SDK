@@ -43,8 +43,7 @@ export const useSafariLegacyPush = (): boolean => {
     PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey');
   if (!hasVapidSupport) return true;
 
-  const { permission, deviceToken } =
-    window.safari.pushNotification.permission(safariWebId);
+  const { permission, deviceToken } = window.safari.pushNotification.permission(safariWebId);
   return permission === 'granted' && deviceToken != null;
 };
 
