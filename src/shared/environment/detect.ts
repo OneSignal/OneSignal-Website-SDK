@@ -40,7 +40,6 @@ export const useSafariLegacyPush = (): boolean => {
 
   const hasVapidSupport =
     typeof PushSubscriptionOptions !== 'undefined' &&
-    // eslint-disable-next-line no-prototype-builtins
     PushSubscriptionOptions.prototype.hasOwnProperty('applicationServerKey');
   if (!hasVapidSupport) return true;
 
