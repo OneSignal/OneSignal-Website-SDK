@@ -1,5 +1,5 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { describe, expect, test, vi } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { SubscriptionType } from '../subscriptions/constants';
 import { getSubscriptionType, useSafariLegacyPush } from './detect';
