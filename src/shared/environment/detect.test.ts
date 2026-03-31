@@ -1,5 +1,5 @@
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { SubscriptionType } from '../subscriptions/constants';
 import { getSubscriptionType, useSafariLegacyPush } from './detect';
@@ -88,7 +88,6 @@ describe('useSafariLegacyPush', () => {
     clearSafariWindow();
     mockVapidSupport();
   });
-
   test('returns false when window.safari is undefined', () => {
     expect(useSafariLegacyPush()).toBe(false);
   });
