@@ -151,7 +151,7 @@ export default defineConfig({
     open: true,
     port: 4000,
     https:
-      getBooleanEnv(process.env.HTTPS) === (false as any)
+      getBooleanEnv(process.env.HTTPS) === false
         ? {}
         : { cert: './certs/cert.pem', key: './certs/dev.pem' },
   },
