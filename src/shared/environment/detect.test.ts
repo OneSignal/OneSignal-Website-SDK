@@ -37,8 +37,11 @@ const clearSafariWindow = () => {
 };
 
 const mockVapidSupport = () => {
-  (globalThis as any).PushSubscriptionOptions = {
-    prototype: { applicationServerKey: undefined },
+  window.PushSubscriptionOptions = {
+    prototype: {
+      // @ts-expect-error - we're mocking the PushSubscriptionOptions type
+      applicationServerKey: undefined,
+    },
   };
 };
 
@@ -84,10 +87,6 @@ describe('useSafariLegacyPush', () => {
     TestEnvironment.initialize();
     clearSafariWindow();
     mockVapidSupport();
-  });
-
-  afterEach(() => {
-    clearVapidSupport();
   });
 
   test('returns false when window.safari is undefined', () => {
@@ -146,10 +145,6 @@ describe('getSubscriptionType', () => {
     TestEnvironment.initialize();
     clearSafariWindow();
     mockVapidSupport();
-  });
-
-  afterEach(() => {
-    clearVapidSupport();
   });
 
   test('returns SafariLegacyPush for existing legacy Safari subscribers', () => {
