@@ -150,10 +150,10 @@ export default defineConfig({
   server: {
     open: true,
     port: 4000,
-    https: {
-      cert: './certs/cert.pem',
-      key: './certs/dev.pem',
-    },
+    https:
+      getBooleanEnv(process.env.HTTPS) === (false as any)
+        ? {}
+        : { cert: './certs/cert.pem', key: './certs/dev.pem' },
   },
   test: {
     clearMocks: true,
