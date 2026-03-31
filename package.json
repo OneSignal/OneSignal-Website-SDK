@@ -40,7 +40,6 @@
     "prepare": "vp config"
   },
   "dependencies": {
-    "@types/jest": "^30.0.0",
     "jsonp": "github:OneSignal/jsonp#onesignal"
   },
   "devDependencies": {
