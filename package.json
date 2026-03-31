@@ -59,9 +59,11 @@
     "terser": "^5.46.1",
     "type-fest": "^5.4.4",
     "typescript": "^5.9.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.13",
     "vite-bundle-analyzer": "^1.3.6",
     "vite-plugin-mkcert": "^1.17.10",
-    "vite-plus": "latest"
+    "vite-plus": "0.1.13",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.13"
   },
   "config": {
     "sdkVersion": "160602"
@@ -91,8 +93,8 @@
   "packageManager": "pnpm@10.32.1",
   "pnpm": {
     "overrides": {
-      "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-      "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+      "vite": "npm:@voidzero-dev/vite-plus-core@0.1.13",
+      "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.13"
     }
   }
 }
