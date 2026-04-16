@@ -62,7 +62,7 @@
     "vite": "npm:@voidzero-dev/vite-plus-core@0.1.13",
     "vite-bundle-analyzer": "^1.3.6",
     "vite-plugin-mkcert": "^1.17.10",
-    "vite-plus": "0.1.13",
+    "vite-plus": "0.1.17",
     "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.13"
   },
   "config": {
