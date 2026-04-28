@@ -112,9 +112,53 @@ describe('SubscriptionManager', () => {
             ...BASE_SUB,
             token: rawSubscription.w3cEndpoint?.toString(),
             type: 'ChromePush',
+            web_auth: rawSubscription.w3cAuth,
+            web_p256: rawSubscription.w3cP256dh,
           },
         ],
       });
+    });
+
+    test('should populate token from rawPushSubscription when model has local id and empty token (SDK-4341)', async () => {
+      const rawSubscription = getRawPushSubscription();
+      mockPushManager.getSubscription.mockResolvedValue(
+        Object.assign({}, mockPushSubscription, {
+          endpoint: rawSubscription.w3cEndpoint?.toString(),
+        }),
+      );
+      setCreateUserResponse({
+        externalId: 'some-external-id',
+      });
+
+      const onesignalId = IDManager._createLocalId();
+      updateIdentityModel('onesignal_id', onesignalId);
+      updateIdentityModel('external_id', 'some-external-id');
+
+      // Simulate what login() actually does: placeholder model with local id and EMPTY token
+      await setupSubModelStore({
+        id: IDManager._createLocalId(),
+        token: '',
+        onesignalId,
+      });
+
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
+
+      // The server request should include the real token from rawPushSubscription,
+      // NOT the empty string from the placeholder model
+      await vi.waitUntil(() => createUserFn.mock.calls.length > 0);
+      expect(createUserFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subscriptions: [
+            expect.objectContaining({
+              token: rawSubscription.w3cEndpoint?.toString(),
+            }),
+          ],
+        }),
+      );
+
+      // The local model should also be updated with the token
+      const pushModel = (await OneSignal._coreDirector._getPushSubscriptionModel())!;
+      expect(pushModel.token).toBe(rawSubscription.w3cEndpoint?.toString());
     });
 
     test('should update the push subscription model if it already exists', async () => {
