@@ -63,6 +63,17 @@ async function createSubscribedUser(pushModel: SubscriptionModel): Promise<void>
   );
 }
 
+function updateModelFromRawSubscription(
+  pushModel: SubscriptionModel,
+  rawPushSubscription: RawPushSubscription,
+): void {
+  const serialized = new FuturePushSubscriptionRecord(rawPushSubscription)._serialize();
+  for (const key in serialized) {
+    const modelKey = key as keyof typeof serialized;
+    pushModel._setProperty(modelKey, serialized[modelKey]);
+  }
+}
+
 export const updatePushSubscriptionModelWithRawSubscription = async (
   rawPushSubscription: RawPushSubscription,
 ) => {
@@ -78,17 +89,12 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
   }
   // for users with data failed to create a user or user + subscription on the server
   if (IDManager._isLocalId(pushModel.id)) {
+    updateModelFromRawSubscription(pushModel, rawPushSubscription);
     return createSubscribedUser(pushModel);
   }
 
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
-  const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
-    rawPushSubscription,
-  )._serialize();
-  for (const key in serializedSubscriptionRecord) {
-    const modelKey = key as keyof typeof serializedSubscriptionRecord;
-    pushModel._setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
-  }
+  updateModelFromRawSubscription(pushModel, rawPushSubscription);
 };
 
 export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInterface> {
