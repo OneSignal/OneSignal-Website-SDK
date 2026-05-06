@@ -78,7 +78,7 @@ jobs:
         if: steps.get_version.outputs.version != ''
         run: ./build/scripts/turbine.sh
         env:
-          GH_TURBINE_TOKEN: ${{ secrets.GH_TURBINE_TOKEN }}
+          GH_PUSH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           SDK_VERSION: ${{ steps.get_version.outputs.version }}
