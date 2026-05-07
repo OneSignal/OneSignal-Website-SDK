@@ -15,8 +15,8 @@ jobs:
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
         with:
-          node-version-file: '.nvmrc'
           cache: true
+          run-install: true
 
       - name: Check Build
         run: vp run build:prod
