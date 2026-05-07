@@ -340,7 +340,7 @@ export default class TestContext {
       };
     }
 
-    return deepMerge<ServerAppConfig>(remoteConfigMockDefaults, overrideServerConfig || {});
+    return deepMerge(remoteConfigMockDefaults, overrideServerConfig || {});
   }
 
   static getFakeAppUserConfig(appId: string = APP_ID): AppUserConfig {

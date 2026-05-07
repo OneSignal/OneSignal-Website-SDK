@@ -33,11 +33,11 @@ function deepMergeRecords(
 type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
 
 /** Recursively merges source into target. Plain objects merge, arrays concat, primitives overwrite. */
-export function deepMerge<T extends object>(target: DeepPartial<T>, source: DeepPartial<T>): T {
+export function deepMerge<T extends object>(target: T, source: DeepPartial<T>): T {
   if (isPlainObject(target) && isPlainObject(source)) {
     return deepMergeRecords(target, source) as T;
   }
-  return (isPlainObject(source) ? source : target) as T;
+  return target;
 }
 
 /**
