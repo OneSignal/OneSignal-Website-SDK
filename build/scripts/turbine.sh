@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-git clone "https://${GH_TURBINE_TOKEN}@github.com/OneSignal/turbine.git" turbine
+git clone "https://${GH_PUSH_TOKEN}@github.com/OneSignal/turbine.git" turbine
 cd turbine
 
 # Configure git identity
@@ -13,12 +13,12 @@ BRANCH_NAME="web-sdk-${SDK_VERSION}-release"
 
 # Close any existing PRs for this branch
 curl -s \
-  -H "Authorization: Bearer $GH_TURBINE_TOKEN" \
+  -H "Authorization: Bearer $GH_PUSH_TOKEN" \
   "https://api.github.com/repos/OneSignal/turbine/pulls?head=OneSignal:$BRANCH_NAME&state=open" |
   jq -r '.[].number' | while read PR_NUM; do
     echo "Closing existing PR #$PR_NUM"
     curl -sS -X PATCH \
-      -H "Authorization: Bearer $GH_TURBINE_TOKEN" \
+      -H "Authorization: Bearer $GH_PUSH_TOKEN" \
       -H "Content-Type: application/json" \
       -d '{"state": "closed"}' \
       "https://api.github.com/repos/OneSignal/turbine/pulls/$PR_NUM"
@@ -48,7 +48,7 @@ git push --force origin "$BRANCH_NAME"
 # Create pull request
 PR_NUMBER=$(
   curl -sS -X POST \
-    -H "Authorization: Bearer $GH_TURBINE_TOKEN" \
+    -H "Authorization: Bearer $GH_PUSH_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{
       \"title\": \"$RELEASE_MESSAGE\",
@@ -62,7 +62,7 @@ PR_NUMBER=$(
 
 # Request team reviewers
 curl -sS -X POST \
-  -H "Authorization: Bearer $GH_TURBINE_TOKEN" \
+  -H "Authorization: Bearer $GH_PUSH_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
     \"team_reviewers\": [\"eng-sdk-platform\"]
