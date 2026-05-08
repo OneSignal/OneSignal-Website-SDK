@@ -17,24 +17,16 @@ A Vite-based sandbox for exercising a built OneSignal Web SDK against a real bro
 
    This produces `build/releases/Dev-OneSignalSDK.page.js`, `Dev-OneSignalSDK.sw.js`, and friends. Use `vp run build:dev:watch` in another terminal if you want live rebuilds while iterating on SDK source.
 
-2. Generate the SSL cert if `certs/dev-ssl.crt` isn't already present:
+2. Start the preview server:
 
    ```
    cd preview
-   vp run certs
-   ```
-
-   Then trust the cert on your machine so the browser doesn't block the page:
-   - macOS: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain certs/dev-ssl.crt`
-   - Windows: `Import-Certificate -FilePath certs\dev-ssl.crt -CertStoreLocation cert:\CurrentUser\Root`
-
-3. Start the preview server:
-
-   ```
    vp run start
    ```
 
-4. Visit [https://localhost:4001?app_id=&lt;your-app-id&gt;](https://localhost:4001) and pass your OneSignal app id as a URL query parameter.
+   On first run, [vite-plugin-mkcert](https://github.com/liuweiGL/vite-plugin-mkcert) downloads the `mkcert` binary, installs a local root CA into your system trust store, and issues a cert for `localhost` (plus a few common hostname aliases). After that, every preview run reuses the same trusted cert with no manual steps. If you'd rather pre-install `mkcert` yourself: `brew install mkcert` on macOS, then `mkcert -install`.
+
+3. Visit [https://localhost:4001?app_id=&lt;your-app-id&gt;](https://localhost:4001) and pass your OneSignal app id as a URL query parameter.
 
 ### Build Instructions
 
