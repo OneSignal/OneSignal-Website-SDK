@@ -15,7 +15,15 @@ const SDK_PREFIX_BY_ENV: Record<string, string> = {
   production: '',
 };
 const sdkEnv = process.env.SDK_ENV ?? 'production';
-const desiredPrefix = SDK_PREFIX_BY_ENV[sdkEnv] ?? '';
+if (!Object.hasOwn(SDK_PREFIX_BY_ENV, sdkEnv)) {
+  // Fail at server startup so a typo like `SDK_ENV=devv` doesn't silently
+  // serve unprefixed filenames and produce opaque 404s for dev/staging
+  // builds. Mirrors `start.sh`'s validation for direct `vp dev` callers.
+  throw new Error(
+    `Unknown SDK_ENV='${sdkEnv}'. Expected one of: ${Object.keys(SDK_PREFIX_BY_ENV).join(', ')}.`,
+  );
+}
+const desiredPrefix = SDK_PREFIX_BY_ENV[sdkEnv];
 
 const useHttps = process.env.HTTPS !== 'false';
 
