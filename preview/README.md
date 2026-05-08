@@ -13,13 +13,14 @@ A Vite-based sandbox for exercising a built OneSignal Web SDK against a real bro
 
    ```
    cd preview
-   vp run start            # alias for start:dev-prod
-   vp run start:dev        # local SDK + dev API/origin (BUILD_TYPE=development)
-   vp run start:dev-stag   # local SDK + staging API (BUILD_TYPE=development, API_TYPE=staging)
-   vp run start:dev-prod   # local SDK + production API (BUILD_TYPE=development, API_TYPE=production)
+   vp run start            # alias for start:dev
+   vp run start:dev        # local SDK against the production OneSignal API
+   vp run start:dev-stag   # local SDK against staging (API_TYPE=staging, API_ORIGIN=onesignal.com)
    ```
 
-   All three scripts produce a `BUILD_TYPE=development` build (so the SDK shim loads its ES6 bundle from `localhost:4001` rather than `cdn.onesignal.com`); the `*-stag` and `*-prod` variants only differ in which OneSignal API origin the SDK talks to.
+   Both scripts produce a `BUILD_TYPE=development` build, so the SDK shim loads its ES6 bundle from `localhost:4001` rather than `cdn.onesignal.com`. They only differ in which OneSignal API origin the SDK talks to.
+
+   `start:dev` calls the production API even though it's labeled "dev". This is because `build:dev` doesn't set `API`, and `__API_TYPE__` falls back to `'production'` at runtime via `src/shared/utils/env.ts`. If you need to point the SDK at a locally-running OneSignal backend, you'll need to also set `API=development API_ORIGIN=<host>` at build time (see `build:dev-dev` in the root `package.json`).
 
    The sandbox's `index.html` and `OneSignalSDKWorker.js` always reference `Dev-OneSignalSDK.*` URLs; the dev server's middleware rewrites the prefix on the way through based on `SDK_ENV` so the same HTML works against any build flavor. (A true `BUILD_TYPE=production` build is not wired up here because the prod shim hardcodes `cdn.onesignal.com` as its source — running it locally would just smoke-test the shim while loading the deployed prod SDK from CDN. Use `vp run build:prod` from the repo root if you specifically need to verify the prod shim + `size-limit` gates.)
 
