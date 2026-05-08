@@ -31,7 +31,9 @@ export default defineConfig({
   publicDir: false,
   server: {
     host: true,
-    port: useHttps ? 4001 : 4002,
+    // Ports must match `src/page/utils/shimLoader.ts` so the shim's hardcoded
+    // SDK fetch URL (e.g. `http://localhost:4000/...` in HTTP mode) lands here.
+    port: useHttps ? 4001 : 4000,
     strictPort: true,
   },
   plugins: [

@@ -79,7 +79,7 @@ All builds default to `https` unless `HTTPS=false` is passed:
 HTTPS=false vp run build:dev-prod
 ```
 
-The preview server itself also accepts `HTTPS=false` to bind HTTP on port 4002 instead of HTTPS on 4001:
+The preview server itself also accepts `HTTPS=false` to bind HTTP on port 4000 instead of HTTPS on 4001:
 
 ```
 HTTPS=false vp run start
@@ -91,8 +91,10 @@ Note: the service worker import path in `push/onesignal/OneSignalSDKWorker.js` i
 
 **SDK:** SDK files are fetched from the 4000s ports depending on the HTTP/S setting:
 
-- HTTP: `4002`
+- HTTP: `4000`
 - HTTPS: `4001`
+
+These ports are hardcoded in `src/page/utils/shimLoader.ts`, so the preview server in `preview/vite.config.ts` is pinned to match. Changing one without the other will silently break the dev flow.
 
 Use `NO_DEV_PORT=true` at build time to omit the port number entirely. Useful with reverse proxies like [ngrok](https://ngrok.com/).
 
