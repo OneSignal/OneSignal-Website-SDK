@@ -6,6 +6,17 @@ import { defineConfig } from 'vite-plus';
 
 const SDK_FILES_DIR = path.resolve(import.meta.dirname, '../build/releases');
 
+// Maps `SDK_ENV` to the filename prefix that `vite.config.ts` at the repo
+// root applies based on `ENV`. Lets the sandbox load whichever flavor of
+// build is on disk without editing `index.html` or `OneSignalSDKWorker.js`.
+const SDK_PREFIX_BY_ENV: Record<string, string> = {
+  dev: 'Dev-',
+  staging: 'Staging-',
+  production: '',
+};
+const sdkEnv = process.env.SDK_ENV ?? 'production';
+const desiredPrefix = SDK_PREFIX_BY_ENV[sdkEnv] ?? '';
+
 const useHttps = process.env.HTTPS !== 'false';
 
 const contentTypeFor = (file: string) => {
@@ -53,12 +64,16 @@ export default defineConfig({
             next();
             return;
           }
-          const filePath = path.join(SDK_FILES_DIR, requestedFile);
+          // Rewrite any `Dev-` / `Staging-` / unprefixed request to whichever
+          // prefix matches the current SDK_ENV, so the same `index.html` works
+          // against dev, staging, and prod SDK builds without edits.
+          const rewrittenFile = requestedFile.replace(/^(?:Dev-|Staging-)?/, desiredPrefix);
+          const filePath = path.join(SDK_FILES_DIR, rewrittenFile);
           if (!filePath.startsWith(SDK_FILES_DIR + path.sep) || !fs.existsSync(filePath)) {
             next();
             return;
           }
-          const contentType = contentTypeFor(requestedFile);
+          const contentType = contentTypeFor(rewrittenFile);
           if (contentType) {
             res.setHeader('Content-Type', contentType);
           }

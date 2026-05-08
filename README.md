@@ -24,4 +24,4 @@ The code will use navigator register on OneSignalSDKWorker.js to register the co
 
 ## Preview
 
-To preview with the actual bundle, build the SDK first with `vp run build:dev`, then `cd preview && vp run start` to start the Vite-based sandbox server. See `preview/README.md` for the full setup.
+To preview with the actual bundle, `cd preview && vp run start` — the script builds the production SDK at the repo root and then starts the Vite-based sandbox server on `https://localhost:4001`. Use `start:dev` or `start:staging` for the dev / staging build flavors. See `preview/README.md` for the full setup.

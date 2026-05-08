@@ -5,28 +5,27 @@
 A Vite-based sandbox for exercising a built OneSignal Web SDK against a real browser. The dev server is configured in `preview/vite.config.ts` and serves:
 
 - `index.html`, `manifest.json`, `sw.js`, and the `/push/onesignal/` worker out of this folder
-- `/sdks/web/v16/<file>` mapped to the SDK build output at `../build/releases/<file>`
+- `/sdks/web/v16/<file>` mapped to the SDK build output at `../build/releases/<file>`, with the filename prefix (`Dev-` / `Staging-` / unprefixed) chosen at runtime via `SDK_ENV`
 
 ### Run Instructions
 
-1. From the repo root, build the SDK so the assets exist on disk:
-
-   ```
-   vp run build:dev
-   ```
-
-   This produces `build/releases/Dev-OneSignalSDK.page.js`, `Dev-OneSignalSDK.sw.js`, and friends. Use `vp run build:dev:watch` in another terminal if you want live rebuilds while iterating on SDK source.
-
-2. Start the preview server:
+1. From `preview/`, pick the script that matches the SDK build flavor you want to exercise. Each script builds the SDK at the repo root first, then starts the dev server:
 
    ```
    cd preview
-   vp run start
+   vp run start          # alias for start:prod
+   vp run start:dev      # build:dev → serve with Dev- prefix
+   vp run start:staging  # build:staging → serve with Staging- prefix
+   vp run start:prod     # build:prod → serve unprefixed production build
    ```
+
+   The sandbox's `index.html` and `OneSignalSDKWorker.js` always reference `Dev-OneSignalSDK.*` URLs; the dev server's middleware rewrites the prefix on the way through based on `SDK_ENV` so the same HTML works against any build flavor.
+
+   If you'd rather skip the rebuild (already-built bytes in `build/releases/`), invoke `SDK_ENV=<dev|staging|production> vp dev` directly from `preview/`. For live rebuilds during SDK iteration, run `vp run build:dev:watch` from the repo root in another terminal alongside `vp dev`.
 
    On first run, [vite-plugin-mkcert](https://github.com/liuweiGL/vite-plugin-mkcert) downloads the `mkcert` binary, installs a local root CA into your system trust store, and issues a cert for `localhost` (plus a few common hostname aliases). After that, every preview run reuses the same trusted cert with no manual steps. If you'd rather pre-install `mkcert` yourself: `brew install mkcert` on macOS, then `mkcert -install`.
 
-3. Visit [https://localhost:4001?app_id=&lt;your-app-id&gt;](https://localhost:4001) and pass your OneSignal app id as a URL query parameter.
+2. Visit [https://localhost:4001?app_id=&lt;your-app-id&gt;](https://localhost:4001) and pass your OneSignal app id as a URL query parameter.
 
 ### Build Instructions
 

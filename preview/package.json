@@ -5,7 +5,10 @@
   "description": "OneSignal WebSDK Sandbox preview server.",
   "license": "ISC",
   "scripts": {
-    "start": "vp dev"
+    "start": "vp run start:prod",
+    "start:dev": "./start.sh dev",
+    "start:staging": "./start.sh staging",
+    "start:prod": "./start.sh production"
   },
   "packageManager": "bun@1.3.13"
 }
