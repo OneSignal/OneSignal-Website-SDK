@@ -5,13 +5,10 @@ npm ci
 
 cd preview
 
-# Installs dependencies to run Sandbox for dev env
-npm ci
-
 # Sandbox cert generation
 npm run certs
 
-# Starts preview node server
+# Starts preview Vite dev server
 npm start
 
 # Run the below 2 commands to rebuild the sdk

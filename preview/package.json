@@ -1,32 +1,11 @@
 {
   "name": "preview",
   "version": "1.0.0",
-  "description": "",
-  "keywords": [],
+  "private": true,
+  "description": "OneSignal WebSDK Sandbox preview server.",
   "license": "ISC",
-  "author": "",
-  "main": "index.js",
   "scripts": {
     "certs": "./certs/gen-cert.sh",
-    "start": "node ./server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "express": "^4.17.3",
-    "express-rate-limit": "^7.1.2",
-    "fs": "0.0.1-security",
-    "https": "^1.0.0",
-    "nodemon": "^3.1.10",
-    "sanitize-filename": "^1.6.3"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.6.2",
-    "@babel/preset-env": "^7.6.2",
-    "babel-loader": "^8.0.6",
-    "html-loader": "^0.5.5",
-    "html-webpack-plugin": "^5.6.3",
-    "webpack": "^5.98.0",
-    "webpack-cli": "^4.10.0",
-    "webpack-node-externals": "^1.7.2"
+    "start": "vp dev"
   }
 }

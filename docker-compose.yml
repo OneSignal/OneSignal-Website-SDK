@@ -6,7 +6,6 @@ services:
     volumes:
       - .:/sdk:cached
       - /sdk/node_modules
-      - /sdk/preview/node_modules
       - ./build/releases:/sdk/build/releases
     ports:
       - published: 4001
