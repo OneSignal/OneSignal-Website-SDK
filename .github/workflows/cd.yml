@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read # Required by called github-release.yml
 
 jobs:
   check_release:
