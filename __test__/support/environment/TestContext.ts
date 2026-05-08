@@ -1,4 +1,3 @@
-import deepmerge from 'deepmerge';
 import { getMergedConfig } from 'src/shared/config/app';
 import {
   ConfigIntegrationKind,
@@ -15,6 +14,7 @@ import type { RecursivePartial } from 'src/shared/context/types';
 import { DelayedPromptType } from 'src/shared/prompts/constants';
 
 import { APP_ID } from '../../constants';
+import { deepMerge } from '../helpers/general';
 import type { TestEnvironmentConfig } from './TestEnvironment';
 
 export default class TestContext {
@@ -340,7 +340,7 @@ export default class TestContext {
       };
     }
 
-    return deepmerge(remoteConfigMockDefaults, overrideServerConfig || {});
+    return deepMerge(remoteConfigMockDefaults, overrideServerConfig || {});
   }
 
   static getFakeAppUserConfig(appId: string = APP_ID): AppUserConfig {

@@ -1,11 +1,12 @@
-import deepmerge from 'deepmerge';
 import type { OSMinifiedNotificationPayload } from 'src/sw/serviceWorker/types';
 import type { PartialDeep } from 'type-fest';
+
+import { deepMerge } from '../helpers/general';
 
 export const mockOSMinifiedNotificationPayload = (
   data: PartialDeep<OSMinifiedNotificationPayload> = {},
 ): OSMinifiedNotificationPayload => {
-  const defaultPayload = {
+  const defaultPayload: OSMinifiedNotificationPayload = {
     alert: 'This is a test notification',
     custom: {
       a: 'test-action',
@@ -15,5 +16,5 @@ export const mockOSMinifiedNotificationPayload = (
     title: 'Test Notification',
   };
 
-  return deepmerge(defaultPayload, data);
+  return deepMerge(defaultPayload, data);
 };
