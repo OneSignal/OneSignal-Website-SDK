@@ -9,17 +9,19 @@ A Vite-based sandbox for exercising a built OneSignal Web SDK against a real bro
 
 ### Run Instructions
 
-1. From `preview/`, pick the script that matches the SDK build flavor you want to exercise. Each script builds the SDK at the repo root first, then starts the dev server:
+1. From `preview/`, pick the script that matches what you want to test. Each script builds the SDK at the repo root first, then starts the dev server:
 
    ```
    cd preview
-   vp run start          # alias for start:prod
-   vp run start:dev      # build:dev → serve with Dev- prefix
-   vp run start:staging  # build:staging → serve with Staging- prefix
-   vp run start:prod     # build:prod → serve unprefixed production build
+   vp run start            # alias for start:dev-prod
+   vp run start:dev        # local SDK + dev API/origin (BUILD_TYPE=development)
+   vp run start:dev-stag   # local SDK + staging API (BUILD_TYPE=development, API_TYPE=staging)
+   vp run start:dev-prod   # local SDK + production API (BUILD_TYPE=development, API_TYPE=production)
    ```
 
-   The sandbox's `index.html` and `OneSignalSDKWorker.js` always reference `Dev-OneSignalSDK.*` URLs; the dev server's middleware rewrites the prefix on the way through based on `SDK_ENV` so the same HTML works against any build flavor.
+   All three scripts produce a `BUILD_TYPE=development` build (so the SDK shim loads its ES6 bundle from `localhost:4001` rather than `cdn.onesignal.com`); the `*-stag` and `*-prod` variants only differ in which OneSignal API origin the SDK talks to.
+
+   The sandbox's `index.html` and `OneSignalSDKWorker.js` always reference `Dev-OneSignalSDK.*` URLs; the dev server's middleware rewrites the prefix on the way through based on `SDK_ENV` so the same HTML works against any build flavor. (A true `BUILD_TYPE=production` build is not wired up here because the prod shim hardcodes `cdn.onesignal.com` as its source — running it locally would just smoke-test the shim while loading the deployed prod SDK from CDN. Use `vp run build:prod` from the repo root if you specifically need to verify the prod shim + `size-limit` gates.)
 
    If you'd rather skip the rebuild (already-built bytes in `build/releases/`), invoke `SDK_ENV=<dev|staging|production> vp dev` directly from `preview/`. For live rebuilds during SDK iteration, run `vp run build:dev:watch` from the repo root in another terminal alongside `vp dev`.
 
