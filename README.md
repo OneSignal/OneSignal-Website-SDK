@@ -19,9 +19,9 @@ Please reference the OneSignal SDK on your webpage via our CDN URL (listed in ou
 
 ## Local Development
 
-Install the dependencies `npm install` then you can `npm run dev`. This will start a dev server on port 4001.
+Install the dependencies `vp install` then you can `vp run dev`. This will start a dev server on port 4001.
 The code will use navigator register on OneSignalSDKWorker.js to register the code as service worker.
 
 ## Preview
 
-To preview with the actual bundle you can run the build first e.g. `npm run build:dev` then cd into the `preview` folder and follow the instructions in that folder. But generally you can run `docker-compose up` or `npm start`.
+To preview with the actual bundle, `cd preview && vp run start` — the script builds the SDK at the repo root and then starts the Vite-based sandbox server on `https://localhost:4001`. The default (`start:dev`) targets the production OneSignal API; `start:dev-stag` is also available for staging. See `preview/README.md` for the full setup.

@@ -2,105 +2,111 @@
 
 ## WebSDK Sandbox Environment
 
+A Vite-based sandbox for exercising a built OneSignal Web SDK against a real browser. The dev server is configured in `preview/vite.config.ts` and serves:
+
+- `index.html`, `manifest.json`, `sw.js`, and the `/push/onesignal/` worker out of this folder
+- `/sdks/web/v16/<file>` mapped to the SDK build output at `../build/releases/<file>`, with the filename prefix (`Dev-` / `Staging-` / unprefixed) chosen at runtime via `SDK_ENV`
+
 ### Run Instructions
 
-1. `docker-compose up`
-   - If SSL certs need to be created, this will be done for you automatically with the common name default setting `localhost` and alternative DNS names (this can be customized in `certs/gen-cert.sh`):
-     - texas
-     - california
-     - oregon
-     - washington
+1. From `preview/`, pick the script that matches what you want to test. Each script builds the SDK at the repo root first, then starts the dev server:
 
-2. Follow the following instructions (also logged in console)
-   - copy `dev-ssl.crt` from container to host with:
+   ```
+   cd preview
+   vp run start            # alias for start:dev
+   vp run start:dev        # local SDK against the production OneSignal API
+   vp run start:dev-stag   # local SDK against staging (API_TYPE=staging, API_ORIGIN=onesignal.com)
+   ```
 
-     ```
-     docker cp "$(docker-compose ps -q onesignal-web-sdk-dev)":sdk/preview/certs/dev-ssl.crt .
-     ```
+   Both scripts produce a `BUILD_TYPE=development` build, so the SDK shim loads its ES6 bundle from `localhost:4001` rather than `cdn.onesignal.com`. They only differ in which OneSignal API origin the SDK talks to.
 
-     - If you're running the container in a VM, get the cert file onto the VM's host (e.g: use `scp`)
+   `start:dev` calls the production API even though it's labeled "dev". This is because `build:dev` doesn't set `API`, and `__API_TYPE__` falls back to `'production'` at runtime via `src/shared/utils/env.ts`. If you need to point the SDK at a locally-running OneSignal backend, you'll need to also set `API=development API_ORIGIN=<host>` at build time (see `build:dev-dev` in the root `package.json`).
 
-   - Add cert to system's trusted store
-     - macOS: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain dev-ssl.crt`
-     - Windows: `Import-Certificate -FilePath dev-ssl.crt -CertStoreLocation cert:\CurrentUser\Root`
+   The sandbox's `index.html` and `OneSignalSDKWorker.js` always reference `Dev-OneSignalSDK.*` URLs; the dev server's middleware rewrites the prefix on the way through based on `SDK_ENV` so the same HTML works against any build flavor. (A true `BUILD_TYPE=production` build is not wired up here because the prod shim hardcodes `cdn.onesignal.com` as its source — running it locally would just smoke-test the shim while loading the deployed prod SDK from CDN. Use `vp run build:prod` from the repo root if you specifically need to verify the prod shim + `size-limit` gates.)
 
-3. Make sure the common name (e.g: localhost, texas, oregon, etc...) maps to the correct IP in your `/etc/hosts` file
-4. Visit [https://localhost:4001?app_id=](https://localhost:4001?app_id=) and insert your app id as a URL query parameter
+   If you'd rather skip the rebuild (already-built bytes in `build/releases/`), invoke `SDK_ENV=<dev|staging|production> vp dev` directly from `preview/`. For live rebuilds during SDK iteration, run `vp run build:dev:watch` from the repo root in another terminal alongside `vp dev`.
+
+   On first run, [vite-plugin-mkcert](https://github.com/liuweiGL/vite-plugin-mkcert) downloads the `mkcert` binary, installs a local root CA into your system trust store, and issues a cert for `localhost` (plus a few common hostname aliases). After that, every preview run reuses the same trusted cert with no manual steps. If you'd rather pre-install `mkcert` yourself: `brew install mkcert` on macOS, then `mkcert -install`.
+
+2. Visit [https://localhost:4001?app_id=&lt;your-app-id&gt;](https://localhost:4001) and pass your OneSignal app id as a URL query parameter.
 
 ### Build Instructions
 
-First: get a shell inside the container: `docker-compose exec onesignal-web-sdk-dev bash`
-
-From OneSignal-Website-SDK (root) directory, build the SDK by running one of the following:
-
-1. This will assign the environment type to both the BUILD and API environment types
+From the repo root, build the SDK with one of:
 
 ```
-npm run build:<type>
+vp run build:<env>
 ```
 
-- Options are:
-  - `dev`
-  - `staging`
-  - `prod`
-
-2. This will assign the environment type accordingly:
+Where `<env>` is `dev`, `staging`, or `prod`. Or set BUILD and API environments independently:
 
 ```
-npm run build:<type>-<type>
+vp run build:<build-env>-<api-env>
 ```
 
-**Example**: `npm run build:dev-prod` builds the SDK with the BUILD environment as "development" and the API environment as "production"
+**Example:** `vp run build:dev-prod` builds with the BUILD environment as `development` and the API environment as `production`.
 
-### CUSTOM ORIGIN PARAMS:
+### CUSTOM ORIGIN PARAMS
 
-You can pass two additional variables to the above command, the first being the origin of the build environment and the second being that of the api environment. These env vars are:
+You can override the build and API origins via environment variables:
 
-- BUILD_ORIGIN
-- API_ORIGIN
+- `BUILD_ORIGIN`
+- `API_ORIGIN`
 
-If no custom origins are set, defaults will be used: `localhost` for build and `onesignal.com` for api.
+Defaults are `localhost` for build and `onesignal.com` for api.
 
-**Note:** make sure custom origins make sense with respect to the build and api environments set (e.g: you cannot use a `prod` api environment and expect a custom api origin to be used).
+**Note:** make sure custom origins make sense with respect to the build and api environments set (e.g. you cannot use a `prod` api environment and expect a custom api origin to be used).
 
-**Examples**:
-
-```
-API_ORIGIN=texas npm run build:dev-prod
-```
-
-This sets the BUILD environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/web/v##/` and the API environment origin to production which will make all onesignal api calls to the production origin `https://api.onesignal.com/apps/<app>`
+**Examples:**
 
 ```
-BUILD_ORIGIN=localhost API_ORIGIN=texas npm run build:dev-dev
+API_ORIGIN=texas vp run build:dev-prod
 ```
 
-This sets the BUILD environment origin to `localhost` which will result in SDK files being fetched from `https://localhost:4001/sdks/web/v##/` and the API environment origin to the default `https://texas:3001/api/v1/apps/<app_id>`
+Sets the BUILD environment origin to `texas` (so SDK files are fetched from `https://texas:4001/sdks/web/v##/`) and the API environment origin to production (so all OneSignal API calls go to `https://api.onesignal.com/apps/<app>`).
+
+```
+BUILD_ORIGIN=localhost API_ORIGIN=texas vp run build:dev-dev
+```
+
+Sets the BUILD origin to `localhost` (SDK files from `https://localhost:4001/sdks/web/v##/`) and the API origin to `https://texas:3001/api/v1/apps/<app_id>`.
 
 ### HTTP
 
-All builds default to `https` unless `HTTPS=false` is passed to the build command...
+All builds default to `https` unless `HTTPS=false` is passed:
 
-**Example**: `HTTPS=false npm run build:dev-prod` or `HTTPS=false BUILD_ORIGIN=localhost npm run build:dev-prod`
+```
+HTTPS=false vp run build:dev-prod
+```
 
-### NOTE ON PORTS:
+The preview server itself also accepts `HTTPS=false` to bind HTTP on port 4000 instead of HTTPS on 4001:
 
-**SDK**: SDK files will automatically be fetched from the 4000s ports depending on the HTTP/S setting
+```
+HTTPS=false vp run start
+```
+
+Note: the service worker import path in `push/onesignal/OneSignalSDKWorker.js` is hard-coded to `https://localhost:4001/...`, so push subscription flows require HTTPS mode.
+
+### NOTE ON PORTS
+
+**SDK:** SDK files are fetched from the 4000s ports depending on the HTTP/S setting:
 
 - HTTP: `4000`
 - HTTPS: `4001`
 
-Use the **`NO_DEV_PORT=true`** build env var to build without a port number. This is useful when using a reverse proxy like [ngrok](https://ngrok.com/) to serve your localhost environment on the web.
+These ports are hardcoded in `src/page/utils/shimLoader.ts`, so the preview server in `preview/vite.config.ts` is pinned to match. Changing one without the other will silently break the dev flow.
 
-**API**: dev-environment API calls will be made to the `3001` port (e.g: `<custom-origin>:3001`)
+Use `NO_DEV_PORT=true` at build time to omit the port number entirely. Useful with reverse proxies like [ngrok](https://ngrok.com/).
 
-### Running in Combination with OneSignal Container (dev-dev)
+**API:** dev-environment API calls go to port `3001` (e.g. `<custom-origin>:3001`).
 
-You may want to run the Web SDK Sandbox with the configuration `dev-dev`. You will need to make sure to follow some steps first so that both the **Express Webpack** and **OneSignal** containers work in conjunction...
+### Running in combination with the OneSignal backend (dev-dev)
 
-1. Make sure your browser can make secure connections to wherever your OneSignal container is running, VM or otherwise. This may involve adding a cert to your keychain and/or visiting the container's frontend (Dashboard) and allowing the browser to proceed past the "unsafe" warning.
+To run the WebSDK sandbox against a local OneSignal backend with `dev-dev`:
 
-2. If you are running the OneSignal container on a machine with a different IP address, add an alias to your hosts file which you can then use easily in your API environment option at build time.
+1. Make sure your browser can make secure connections to wherever your OneSignal backend is running. This may involve adding a cert to your keychain and/or visiting the backend's frontend (Dashboard) and allowing the browser to proceed past the "unsafe" warning.
+
+2. If the OneSignal backend is on a different machine, add a hosts alias you can pass as the API environment option at build time:
 
    ```
    // file: /etc/hosts
@@ -108,33 +114,32 @@ You may want to run the Web SDK Sandbox with the configuration `dev-dev`. You wi
    192.168.40.21 texas
    ```
 
-   See above for example on using `texas` as the API environment option
+   See above for an example using `texas` as the API environment option.
 
-3. Make sure that the OneSignal container is using the URLs to your WebSDK container's build files. To do this,
-   - change the URLs in the file `development.rb` so that they point to the files' absolute paths (these are the files in the `build` directory after running `npm run build:<>-<>`)
+3. Make sure the OneSignal backend is using URLs to your locally-served WebSDK build files. Update the URLs in `development.rb` to point to the absolute paths in the `build` directory after running `vp run build:<>-<>`.
 
 ## Troubleshooting
 
 ### Custom origin mismatch
 
-Check the network tab in the browser dev tools to see what origin the SDK is using for network calls. If you set the `API_ORIGIN` var to something other than `onesignal.com` but it is still using that, make sure you are using the correct build command. For example, if you set the origin to `staging.onesignal.com` you should _not_ be using the `dev-prod` environment since the `prod` will result in the ignoring of the custom origin parameter. The fix in this case would be to use `dev-stag`.
+Check the network tab in browser dev tools to see which origin the SDK is using for network calls. If you set `API_ORIGIN` to something other than `onesignal.com` but the SDK is still using that, double-check the build command. For example, setting the origin to `staging.onesignal.com` requires `dev-stag`, not `dev-prod` (the `prod` environment ignores the custom api origin parameter).
 
 ## Debugging Tips for OneSignal WebSDK Sandbox
 
-### To clear your state:
+### To clear your state
 
-1. Inspect -> Application -> Clear Site Data button
+1. Inspect → Application → Clear Site Data button
 
-![image](https://github.com/user-attachments/assets/701e3da1-0c15-4940-a47b-feab55e2b953)
+   ![image](https://github.com/user-attachments/assets/701e3da1-0c15-4940-a47b-feab55e2b953)
 
-2. Click button left of URL, remove notification permission
+2. Click the button left of the URL, remove notification permission
 
-![image](https://github.com/user-attachments/assets/72d718a6-15da-4261-8919-2a2b565d1db3)
+   ![image](https://github.com/user-attachments/assets/72d718a6-15da-4261-8919-2a2b565d1db3)
 
-### In the event of weird errors (can not find your application, it is not configured correctly, etc):
+### In the event of weird errors (cannot find your application, it is not configured correctly, etc.)
 
-1. Inspect -> Network -> Disable Cache
+1. Inspect → Network → Disable Cache
 
-![image](https://github.com/user-attachments/assets/83950e91-7278-4f96-8c75-577797cc9697)
+   ![image](https://github.com/user-attachments/assets/83950e91-7278-4f96-8c75-577797cc9697)
 
 2. Refresh
