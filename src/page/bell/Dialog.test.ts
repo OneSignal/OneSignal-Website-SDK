@@ -163,50 +163,50 @@ describe('Dialog', () => {
 
   // SDK-4535
   describe('text rendering', () => {
-    const HTML_LIKE_INPUT = '<img src=a><strong>b</strong>';
+    const RAW_INPUT = 'Notifications &amp; Updates <img src=a>';
+    const EXPECTED_TEXT = 'Notifications & Updates ';
 
-    test('renders dialog.main.title as literal text', async () => {
+    test('renders dialog.main.title with entities decoded and tags stripped', async () => {
       isPushEnabledSpy.mockResolvedValue(false);
       const bell = new Bell({ enable: false });
       bell._state = BellState._Unsubscribed;
-      bell._options.text['dialog.main.title'] = HTML_LIKE_INPUT;
+      bell._options.text['dialog.main.title'] = RAW_INPUT;
       const dialog = new Dialog(bell);
 
       await dialog._updateContent();
 
       const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
-      expect(body.querySelector('h1')?.textContent).toBe(HTML_LIKE_INPUT);
+      expect(body.querySelector('h1')?.textContent).toBe(EXPECTED_TEXT);
       expect(body.querySelector('h1 img')).toBeNull();
-      expect(body.querySelector('h1 strong')).toBeNull();
     });
 
-    test('renders dialog.main.button.subscribe as literal text', async () => {
+    test('renders dialog.main.button.subscribe with entities decoded and tags stripped', async () => {
       isPushEnabledSpy.mockResolvedValue(false);
       const bell = new Bell({ enable: false });
       bell._state = BellState._Unsubscribed;
-      bell._options.text['dialog.main.button.subscribe'] = HTML_LIKE_INPUT;
+      bell._options.text['dialog.main.button.subscribe'] = RAW_INPUT;
       const dialog = new Dialog(bell);
 
       await dialog._updateContent();
 
-      expect(dialog._subscribeButton?.textContent).toBe(HTML_LIKE_INPUT);
+      expect(dialog._subscribeButton?.textContent).toBe(EXPECTED_TEXT);
       expect(dialog._subscribeButton?.querySelector('img')).toBeNull();
     });
 
-    test('renders dialog.blocked.title as literal text', async () => {
+    test('renders dialog.blocked.title with entities decoded and tags stripped', async () => {
       isPushEnabledSpy.mockResolvedValue(false);
       vi.spyOn(detect, 'getBrowserName').mockReturnValue(Browser._Chrome);
       vi.spyOn(detect, 'isMobileBrowser').mockReturnValue(false);
       vi.spyOn(detect, 'isTabletBrowser').mockReturnValue(false);
       const bell = new Bell({ enable: false });
       bell._state = BellState._Blocked;
-      bell._options.text['dialog.blocked.title'] = HTML_LIKE_INPUT;
+      bell._options.text['dialog.blocked.title'] = RAW_INPUT;
       const dialog = new Dialog(bell);
 
       await dialog._updateContent();
 
       const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
-      expect(body.querySelector('h1')?.textContent).toBe(HTML_LIKE_INPUT);
+      expect(body.querySelector('h1')?.textContent).toBe(EXPECTED_TEXT);
       expect(body.querySelector('h1 img')).toBeNull();
     });
 
@@ -224,20 +224,20 @@ describe('Dialog', () => {
       expect(img?.hasAttribute('extra')).toBe(false);
     });
 
-    test('renders dialog.blocked.message as literal text', async () => {
+    test('renders dialog.blocked.message with entities decoded and tags stripped', async () => {
       isPushEnabledSpy.mockResolvedValue(false);
       vi.spyOn(detect, 'getBrowserName').mockReturnValue(Browser._Chrome);
       vi.spyOn(detect, 'isMobileBrowser').mockReturnValue(false);
       vi.spyOn(detect, 'isTabletBrowser').mockReturnValue(false);
       const bell = new Bell({ enable: false });
       bell._state = BellState._Blocked;
-      bell._options.text['dialog.blocked.message'] = HTML_LIKE_INPUT;
+      bell._options.text['dialog.blocked.message'] = RAW_INPUT;
       const dialog = new Dialog(bell);
 
       await dialog._updateContent();
 
       const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
-      expect(body.querySelector('.instructions p')?.textContent).toBe(HTML_LIKE_INPUT);
+      expect(body.querySelector('.instructions p')?.textContent).toBe(EXPECTED_TEXT);
       expect(body.querySelector('.instructions p img')).toBeNull();
     });
   });

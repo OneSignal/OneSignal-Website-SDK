@@ -1,4 +1,4 @@
-import { addDomElement, clearDomElementChildren } from 'src/shared/helpers/dom';
+import { addDomElement, clearDomElementChildren, decodeHtmlEntities } from 'src/shared/helpers/dom';
 import type { NotificationIcons } from 'src/shared/notifications/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, isMobileBrowser, isTabletBrowser } from 'src/shared/useragent/detect';
@@ -108,8 +108,8 @@ export default class Dialog {
       `<h1></h1><div class="divider"></div><div class="push-notification">${iconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container"><button type="button" class="action" id="${buttonId}"></button></div>`,
     );
 
-    body.querySelector('h1')!.textContent = text['dialog.main.title'];
-    body.querySelector(`#${buttonId}`)!.textContent = buttonText;
+    body.querySelector('h1')!.textContent = decodeHtmlEntities(text['dialog.main.title']);
+    body.querySelector(`#${buttonId}`)!.textContent = decodeHtmlEntities(buttonText);
     if (imageUrl !== 'default-icon') {
       body.querySelector('.push-notification-icon img')!.setAttribute('src', imageUrl);
     }
@@ -139,7 +139,9 @@ export default class Dialog {
       `<h1></h1><div class="divider"></div><div class="instructions"><p></p>${instructionsHtml}</div>`,
     );
 
-    body.querySelector('h1')!.textContent = text['dialog.blocked.title'];
-    body.querySelector('.instructions p')!.textContent = text['dialog.blocked.message'];
+    body.querySelector('h1')!.textContent = decodeHtmlEntities(text['dialog.blocked.title']);
+    body.querySelector('.instructions p')!.textContent = decodeHtmlEntities(
+      text['dialog.blocked.message'],
+    );
   }
 }
