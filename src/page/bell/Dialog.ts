@@ -55,9 +55,7 @@ export default class Dialog {
   async _updateContent() {
     const isEnabled = await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
 
-    clearDomElementChildren(BODY_SELECTOR);
-    const body = document.querySelector(BODY_SELECTOR);
-    if (!body) return;
+    const body = clearDomElementChildren(BODY_SELECTOR);
 
     const text = this._bell._options.text;
     const state = this._bell._state;
