@@ -3,6 +3,10 @@ name: Create Release PR
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   bump-version:
     runs-on: ubuntu-latest
@@ -30,16 +34,20 @@ jobs:
 
       - name: Get last release commit
         id: last_commit
+        env:
+          CURRENT_VERSION: ${{ steps.current_version.outputs.current }}
         run: |
-          LAST_RELEASE_DATE=$(git show -s --format=%cI "${{ steps.current_version.outputs.current }}")
+          LAST_RELEASE_DATE=$(git show -s --format=%cI "$CURRENT_VERSION")
           echo "date=$LAST_RELEASE_DATE" >> $GITHUB_OUTPUT
 
       - name: Get merged PRs since last release
         id: get_prs
         uses: actions/github-script@v8
+        env:
+          LAST_RELEASE_DATE: ${{ steps.last_commit.outputs.date }}
         with:
           script: |
-            const lastReleaseDate = '${{ steps.last_commit.outputs.date }}';
+            const lastReleaseDate = process.env.LAST_RELEASE_DATE;
 
             // Get merged PRs
             const { data: prs } = await github.rest.pulls.list({
@@ -64,11 +72,10 @@ jobs:
 
       - name: Calculate new version
         id: new_version
+        env:
+          CURRENT: ${{ steps.current_version.outputs.current }}
+          IS_FEATURE: ${{ steps.get_prs.outputs.isFeature }}
         run: |
-          CURRENT="${{ steps.current_version.outputs.current }}"
-          PRS='${{ steps.get_prs.outputs.prs }}'
-          IS_FEATURE='${{ steps.get_prs.outputs.isFeature }}'
-
           MAJOR=${CURRENT:0:2}
           MINOR=${CURRENT:2:2}
           PATCH=${CURRENT:4:2}
@@ -84,13 +91,16 @@ jobs:
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create release branch on main
+        env:
+          NEW_VERSION: ${{ steps.new_version.outputs.version }}
         run: |
-          git checkout -b rel/${{ steps.new_version.outputs.version }}
-          git push -u origin rel/${{ steps.new_version.outputs.version }}
+          git checkout -b "rel/$NEW_VERSION"
+          git push -u origin "rel/$NEW_VERSION"
 
       - name: Update package.json sdk version
+        env:
+          NEW_VERSION: ${{ steps.new_version.outputs.version }}
         run: |
-          NEW_VERSION="${{ steps.new_version.outputs.version }}"
           npm pkg set config.sdkVersion="$NEW_VERSION"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -101,10 +111,12 @@ jobs:
       - name: Generate release notes
         id: release_notes
         uses: actions/github-script@v8
+        env:
+          PRS_JSON: ${{ steps.get_prs.outputs.prs }}
         with:
           script: |
             // Trim whitespace from PR titles
-            const prs = JSON.parse('${{ steps.get_prs.outputs.prs }}').map(pr => ({
+            const prs = JSON.parse(process.env.PRS_JSON).map(pr => ({
               ...pr,
               title: pr.title.trim()
             }));
@@ -132,10 +144,10 @@ jobs:
             core.setOutput('notes', releaseNotes);
 
       - name: Create release PR
+        env:
+          NEW_VERSION: ${{ steps.new_version.outputs.version }}
         run: |
-          NEW_VERSION="${{ steps.new_version.outputs.version }}"
-
-          # Write release notes to file to avoid shell interpretation
+          # Keep 'EOF' quoted to disable shell expansion on the interpolated notes.
           cat > release_notes.md << 'EOF'
           Channels: Current, Stable
 
