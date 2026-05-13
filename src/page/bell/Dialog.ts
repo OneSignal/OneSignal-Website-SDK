@@ -63,15 +63,18 @@ export default class Dialog {
       (state === BellState._Subscribed && isEnabled) ||
       (state === BellState._Unsubscribed && !isEnabled);
 
+    let rendered = false;
     if (stateMatchesSubscription) {
       this._renderSubscription(body, text);
+      rendered = true;
     } else if (state === BellState._Blocked) {
       this._renderBlocked(body, text);
+      rendered = true;
     } else {
       body.textContent = 'Nothing to show.';
     }
 
-    if (this._bell._options.showCredit) {
+    if (rendered && this._bell._options.showCredit) {
       addDomElement(
         body,
         'beforeend',

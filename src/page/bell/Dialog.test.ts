@@ -253,4 +253,17 @@ describe('Dialog', () => {
     const kickback = dialog._element!.querySelector('.kickback');
     expect(kickback).not.toBeNull();
   });
+
+  test('_updateContent omits credit footer for the fallback state even when showCredit is true', async () => {
+    isPushEnabledSpy.mockResolvedValue(false);
+    const bell = new Bell({ enable: false });
+    bell._state = BellState._Uninitialized;
+    bell._options.showCredit = true;
+    const dialog = new Dialog(bell);
+
+    await dialog._updateContent();
+    const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
+    expect(body.textContent).toBe('Nothing to show.');
+    expect(dialog._element!.querySelector('.kickback')).toBeNull();
+  });
 });
