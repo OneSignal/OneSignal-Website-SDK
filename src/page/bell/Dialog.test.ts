@@ -161,6 +161,87 @@ describe('Dialog', () => {
     expect(body.querySelector('img')).toBeNull();
   });
 
+  // SDK-4535
+  describe('text rendering', () => {
+    const HTML_LIKE_INPUT = '<img src=a><strong>b</strong>';
+
+    test('renders dialog.main.title as literal text', async () => {
+      isPushEnabledSpy.mockResolvedValue(false);
+      const bell = new Bell({ enable: false });
+      bell._state = BellState._Unsubscribed;
+      bell._options.text['dialog.main.title'] = HTML_LIKE_INPUT;
+      const dialog = new Dialog(bell);
+
+      await dialog._updateContent();
+
+      const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
+      expect(body.querySelector('h1')?.textContent).toBe(HTML_LIKE_INPUT);
+      expect(body.querySelector('h1 img')).toBeNull();
+      expect(body.querySelector('h1 strong')).toBeNull();
+    });
+
+    test('renders dialog.main.button.subscribe as literal text', async () => {
+      isPushEnabledSpy.mockResolvedValue(false);
+      const bell = new Bell({ enable: false });
+      bell._state = BellState._Unsubscribed;
+      bell._options.text['dialog.main.button.subscribe'] = HTML_LIKE_INPUT;
+      const dialog = new Dialog(bell);
+
+      await dialog._updateContent();
+
+      expect(dialog._subscribeButton?.textContent).toBe(HTML_LIKE_INPUT);
+      expect(dialog._subscribeButton?.querySelector('img')).toBeNull();
+    });
+
+    test('renders dialog.blocked.title as literal text', async () => {
+      isPushEnabledSpy.mockResolvedValue(false);
+      vi.spyOn(detect, 'getBrowserName').mockReturnValue(Browser._Chrome);
+      vi.spyOn(detect, 'isMobileBrowser').mockReturnValue(false);
+      vi.spyOn(detect, 'isTabletBrowser').mockReturnValue(false);
+      const bell = new Bell({ enable: false });
+      bell._state = BellState._Blocked;
+      bell._options.text['dialog.blocked.title'] = HTML_LIKE_INPUT;
+      const dialog = new Dialog(bell);
+
+      await dialog._updateContent();
+
+      const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
+      expect(body.querySelector('h1')?.textContent).toBe(HTML_LIKE_INPUT);
+      expect(body.querySelector('h1 img')).toBeNull();
+    });
+
+    test('icon URL with special chars stays inside src attribute', async () => {
+      isPushEnabledSpy.mockResolvedValue(false);
+      vi.spyOn(utils, 'getPlatformNotificationIcon').mockReturnValue('icon.png" extra="x');
+      const bell = new Bell({ enable: false });
+      bell._state = BellState._Unsubscribed;
+      const dialog = new Dialog(bell);
+
+      await dialog._updateContent();
+
+      const img = dialog._element!.querySelector('.push-notification-icon img');
+      expect(img?.getAttribute('src')).toBe('icon.png" extra="x');
+      expect(img?.hasAttribute('extra')).toBe(false);
+    });
+
+    test('renders dialog.blocked.message as literal text', async () => {
+      isPushEnabledSpy.mockResolvedValue(false);
+      vi.spyOn(detect, 'getBrowserName').mockReturnValue(Browser._Chrome);
+      vi.spyOn(detect, 'isMobileBrowser').mockReturnValue(false);
+      vi.spyOn(detect, 'isTabletBrowser').mockReturnValue(false);
+      const bell = new Bell({ enable: false });
+      bell._state = BellState._Blocked;
+      bell._options.text['dialog.blocked.message'] = HTML_LIKE_INPUT;
+      const dialog = new Dialog(bell);
+
+      await dialog._updateContent();
+
+      const body = dialog._element!.querySelector('.onesignal-bell-launcher-dialog-body')!;
+      expect(body.querySelector('.instructions p')?.textContent).toBe(HTML_LIKE_INPUT);
+      expect(body.querySelector('.instructions p img')).toBeNull();
+    });
+  });
+
   test('_updateContent includes credit footer when showCredit is true', async () => {
     isPushEnabledSpy.mockResolvedValue(false);
     const bell = new Bell({ enable: false });
