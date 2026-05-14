@@ -67,8 +67,6 @@ export default class Dialog {
       this._renderSubscription(body, text);
     } else if (state === BellState._Blocked) {
       this._renderBlocked(body, text);
-    } else {
-      return;
     }
 
     if (this._bell._options.showCredit) {
