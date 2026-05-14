@@ -1,4 +1,4 @@
-import { addDomElement, clearDomElementChildren } from 'src/shared/helpers/dom';
+import { addDomElement, clearDomElementChildren, decodeHtmlEntities } from 'src/shared/helpers/dom';
 import type { NotificationIcons } from 'src/shared/notifications/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, isMobileBrowser, isTabletBrowser } from 'src/shared/useragent/detect';
@@ -18,6 +18,8 @@ const UNBLOCK_IMAGES: Partial<Record<string, string>> = {
   [Browser._Safari]: '/bell/safari-unblock.jpg',
   [Browser._Edge]: '/bell/edge-unblock.png',
 };
+
+const BODY_SELECTOR = '.onesignal-bell-launcher-dialog-body';
 
 export default class Dialog {
   public _bell: Bell;
@@ -53,27 +55,27 @@ export default class Dialog {
   async _updateContent() {
     const isEnabled = await OneSignal._context._subscriptionManager._isPushNotificationsEnabled();
 
-    const bodySelector = '.onesignal-bell-launcher-dialog-body';
-    clearDomElementChildren(bodySelector);
+    const body = clearDomElementChildren(BODY_SELECTOR);
 
     const text = this._bell._options.text;
-    const footer = this._bell._options.showCredit
-      ? `<div class="divider"></div><div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>`
-      : '';
-
-    let contents = 'Nothing to show.';
     const state = this._bell._state;
     const stateMatchesSubscription =
       (state === BellState._Subscribed && isEnabled) ||
       (state === BellState._Unsubscribed && !isEnabled);
 
     if (stateMatchesSubscription) {
-      contents = this._buildSubscriptionContent(text, footer);
+      this._renderSubscription(body, text);
     } else if (state === BellState._Blocked) {
-      contents = this._buildBlockedContent(text, footer);
+      this._renderBlocked(body, text);
     }
 
-    addDomElement(bodySelector, 'beforeend', contents);
+    if (this._bell._options.showCredit) {
+      addDomElement(
+        body,
+        'beforeend',
+        `<div class="divider"></div><div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>`,
+      );
+    }
 
     this._subscribeButton?.addEventListener('click', () => {
       OneSignal._doNotShowWelcomeNotification = false;
@@ -82,11 +84,12 @@ export default class Dialog {
     this._unsubscribeButton?.addEventListener('click', () => this._bell._onUnsubscribeClick());
   }
 
-  private _buildSubscriptionContent(text: Bell['_options']['text'], footer: string): string {
+  private _renderSubscription(body: Element, text: Bell['_options']['text']): void {
     const imageUrl = getPlatformNotificationIcon(this._notificationIcons);
+
     const iconHtml =
       imageUrl !== 'default-icon'
-        ? `<div class="push-notification-icon"><img src="${imageUrl}"></div>`
+        ? `<div class="push-notification-icon"><img></div>`
         : `<div class="push-notification-icon push-notification-icon-default"></div>`;
 
     const isSubscribed = this._bell._state === BellState._Subscribed;
@@ -95,10 +98,20 @@ export default class Dialog {
       ? text['dialog.main.button.unsubscribe']
       : text['dialog.main.button.subscribe'];
 
-    return `<h1>${text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${iconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container"><button type="button" class="action" id="${buttonId}">${buttonText}</button></div>${footer}`;
+    addDomElement(
+      body,
+      'beforeend',
+      `<h1></h1><div class="divider"></div><div class="push-notification">${iconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container"><button type="button" class="action" id="${buttonId}"></button></div>`,
+    );
+
+    body.querySelector('h1')!.textContent = decodeHtmlEntities(text['dialog.main.title']);
+    body.querySelector(`#${buttonId}`)!.textContent = decodeHtmlEntities(buttonText);
+    if (imageUrl !== 'default-icon') {
+      body.querySelector('.push-notification-icon img')!.setAttribute('src', imageUrl);
+    }
   }
 
-  private _buildBlockedContent(text: Bell['_options']['text'], footer: string): string {
+  private _renderBlocked(body: Element, text: Bell['_options']['text']): void {
     const browserName = getBrowserName();
     const isMobileOrTablet = isMobileBrowser() || isTabletBrowser();
 
@@ -106,16 +119,22 @@ export default class Dialog {
     if (isMobileOrTablet && browserName === Browser._Chrome) {
       instructionsHtml = `<ol><li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li><li>Click <strong>Site settings</strong> under Advanced.</li><li>Click <strong>Notifications</strong>.</li><li>Find and click this entry for this website.</li><li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li></ol>`;
     } else {
-      const imagePath =
-        browserName === Browser._Chrome && isMobileOrTablet
-          ? undefined
-          : UNBLOCK_IMAGES[browserName];
+      const imagePath = UNBLOCK_IMAGES[browserName];
       if (imagePath) {
         const imageUrl = STATIC_RESOURCES_URL + imagePath;
         instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a>`;
       }
     }
 
-    return `<h1>${text['dialog.blocked.title']}</h1><div class="divider"></div><div class="instructions"><p>${text['dialog.blocked.message']}</p>${instructionsHtml}</div>${footer}`;
+    addDomElement(
+      body,
+      'beforeend',
+      `<h1></h1><div class="divider"></div><div class="instructions"><p></p>${instructionsHtml}</div>`,
+    );
+
+    body.querySelector('h1')!.textContent = decodeHtmlEntities(text['dialog.blocked.title']);
+    body.querySelector('.instructions p')!.textContent = decodeHtmlEntities(
+      text['dialog.blocked.message'],
+    );
   }
 }

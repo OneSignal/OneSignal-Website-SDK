@@ -21,8 +21,10 @@ export function removeDomElement(selector: string) {
   }
 }
 
-export function clearDomElementChildren(target: Element | string) {
-  resolveElement(target).replaceChildren();
+export function clearDomElementChildren(target: Element | string): Element {
+  const el = resolveElement(target);
+  el.replaceChildren();
+  return el;
 }
 
 export function getDomElementOrStub(selector: string): Element {
