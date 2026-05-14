@@ -119,10 +119,7 @@ export default class Dialog {
     if (isMobileOrTablet && browserName === Browser._Chrome) {
       instructionsHtml = `<ol><li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li><li>Click <strong>Site settings</strong> under Advanced.</li><li>Click <strong>Notifications</strong>.</li><li>Find and click this entry for this website.</li><li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li></ol>`;
     } else {
-      const imagePath =
-        browserName === Browser._Chrome && isMobileOrTablet
-          ? undefined
-          : UNBLOCK_IMAGES[browserName];
+      const imagePath = UNBLOCK_IMAGES[browserName];
       if (imagePath) {
         const imageUrl = STATIC_RESOURCES_URL + imagePath;
         instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a>`;
