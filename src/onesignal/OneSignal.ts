@@ -224,7 +224,10 @@ export default class OneSignal {
     if (consent && OneSignal._pendingInit) await OneSignal._delayedInit();
   }
 
-  static setConsentRequired(requiresConsent: boolean): void {
+  // TODO: Keeping this async due to api.json spec used by web shim codegen wrappers
+  // But ideally this should be sync.
+  // eslint-disable-next-line @typescript-eslint(require-await)
+  static async setConsentRequired(requiresConsent: boolean): Promise<void> {
     logMethodCall('setConsentRequired', { requiresConsent });
 
     if (typeof requiresConsent === 'undefined') {
