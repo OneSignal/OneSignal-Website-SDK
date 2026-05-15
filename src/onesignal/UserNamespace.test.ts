@@ -387,6 +387,18 @@ describe('Tag Management', () => {
     const userNamespace = new UserNamespace(true);
     expect(userNamespace.getTags()).toEqual({});
   });
+
+  test('removeTag accepts keys that addTag accepts (no alias-only restrictions on tag keys)', () => {
+    const userNamespace = new UserNamespace(true);
+    const punctuatedKeys = ['user/role', 'a?b', 'a#b', 'a..b', 'a b', 'k=v', 'a&b'];
+
+    for (const key of punctuatedKeys) {
+      userNamespace.addTag(key, 'v');
+      expect(() => userNamespace.removeTag(key)).not.toThrow();
+    }
+
+    expect(() => userNamespace.removeTags(punctuatedKeys)).not.toThrow();
+  });
 });
 
 describe('Language Management', () => {

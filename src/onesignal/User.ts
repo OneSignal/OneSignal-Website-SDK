@@ -192,7 +192,7 @@ export default class User {
     logMethodCall('removeTags', { tagKeys });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateArray(tagKeys, 'tagKeys');
+    validateArray(tagKeys, 'tagKeys', validateStringLabel);
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     const newTags = { ...propertiesModel._tags };
@@ -312,13 +312,17 @@ function validateStringLabel(label: string, labelName: string): void {
   if (!label) throw EmptyArgumentError(labelName);
 }
 
-function validateArray(array: string[], arrayName: string): void {
+function validateArray(
+  array: string[],
+  arrayName: string,
+  validateItem: (item: string, itemName: string) => void = validateLabel,
+): void {
   if (!Array.isArray(array)) throw WrongTypeArgumentError(arrayName);
 
   if (array.length === 0) throw EmptyArgumentError(arrayName);
 
   for (const label of array) {
-    validateLabel(label, 'label');
+    validateItem(label, 'label');
   }
 }
 
