@@ -69,7 +69,7 @@ export default class User {
     logMethodCall('addAlias', { label, id });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateLabel(label, 'label');
+    validateAliasLabel(label, 'label');
     validateAliasValue(id, 'id');
 
     this.addAliases({ [label]: id });
@@ -83,7 +83,7 @@ export default class User {
 
     for (const label of Object.keys(aliases)) {
       validateAliasValue(aliases[label], `key: ${label}`);
-      validateLabel(label, `key: ${label}`);
+      validateAliasLabel(label, `key: ${label}`);
     }
 
     this._updateIdentityModel(aliases);
@@ -315,7 +315,7 @@ function validateStringLabel(label: string, labelName: string): void {
 function validateArray(
   array: string[],
   arrayName: string,
-  validateItem: (item: string, itemName: string) => void = validateLabel,
+  validateItem: (item: string, itemName: string) => void = validateAliasLabel,
 ): void {
   if (!Array.isArray(array)) throw WrongTypeArgumentError(arrayName);
 
@@ -343,7 +343,7 @@ function validateAliasValue(value: string, valueName: string): void {
   }
 }
 
-function validateLabel(label: string, labelName: string): void {
+function validateAliasLabel(label: string, labelName: string): void {
   validateAliasValue(label, labelName);
 
   if (label === 'external_id' || label === 'onesignal_id') {
