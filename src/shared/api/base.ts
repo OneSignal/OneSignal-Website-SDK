@@ -6,6 +6,7 @@ import { delay } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';
 import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';
+import { encodeRFC3986URIComponent } from '../utils/encode';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/env';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -95,9 +96,10 @@ function call<T = unknown>(
   };
   if (data) contents.body = JSON.stringify(data);
 
+  const safeAction = action.split('/').map(encodeRFC3986URIComponent).join('/');
   const url = `${getOneSignalApiUrl({
     action,
-  }).toString()}${action}`;
+  }).toString()}${safeAction}`;
 
   return executeFetch(url, contents);
 }

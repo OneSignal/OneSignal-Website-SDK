@@ -69,8 +69,8 @@ export default class User {
     logMethodCall('addAlias', { label, id });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateStringLabel(label, 'label');
-    validateStringLabel(id, 'id');
+    validateAliasLabel(label, 'label');
+    validateAliasValue(id, 'id');
 
     this.addAliases({ [label]: id });
   }
@@ -82,8 +82,8 @@ export default class User {
     validateObject(aliases, 'aliases');
 
     for (const label of Object.keys(aliases)) {
-      validateStringLabel(aliases[label], `key: ${label}`);
-      validateLabel(label, `key: ${label}`);
+      validateAliasValue(aliases[label], `key: ${label}`);
+      validateAliasLabel(label, `key: ${label}`);
     }
 
     this._updateIdentityModel(aliases);
@@ -192,7 +192,7 @@ export default class User {
     logMethodCall('removeTags', { tagKeys });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateArray(tagKeys, 'tagKeys');
+    validateArray(tagKeys, 'tagKeys', validateStringLabel);
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     const newTags = { ...propertiesModel._tags };
@@ -312,13 +312,17 @@ function validateStringLabel(label: string, labelName: string): void {
   if (!label) throw EmptyArgumentError(labelName);
 }
 
-function validateArray(array: string[], arrayName: string): void {
+function validateArray(
+  array: string[],
+  arrayName: string,
+  validateItem: (item: string, itemName: string) => void = validateAliasLabel,
+): void {
   if (!Array.isArray(array)) throw WrongTypeArgumentError(arrayName);
 
   if (array.length === 0) throw EmptyArgumentError(arrayName);
 
   for (const label of array) {
-    validateLabel(label, 'label');
+    validateItem(label, 'label');
   }
 }
 
@@ -328,8 +332,19 @@ function validateObject(object: unknown, objectName: string): void {
   if (!object || Object.keys(object).length === 0) throw EmptyArgumentError(objectName);
 }
 
-function validateLabel(label: string, labelName: string): void {
-  validateStringLabel(label, labelName);
+// eslint-disable-next-line no-control-regex
+const INVALID_ALIAS_PATTERN = /[/?#&=\s\x00-\x1F\x7F]|\.\./;
+
+function validateAliasValue(value: string, valueName: string): void {
+  validateStringLabel(value, valueName);
+
+  if (value.length > 128 || INVALID_ALIAS_PATTERN.test(value)) {
+    throw MalformedArgumentError(valueName);
+  }
+}
+
+function validateAliasLabel(label: string, labelName: string): void {
+  validateAliasValue(label, labelName);
 
   if (label === 'external_id' || label === 'onesignal_id') {
     throw ReservedArgumentError(label);
