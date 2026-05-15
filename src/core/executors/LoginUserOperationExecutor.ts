@@ -181,9 +181,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         );
       }
 
-      // update other properties
+      // Guarded so a concurrent login() that swapped the model store mid-request
+      // doesn't hydrate this response onto the new user's properties model.
       const resultProperties = response.result.properties;
-      if (resultProperties) {
+      if (resultProperties && this._propertiesModelStore._model._onesignalId === opOneSignalId) {
         for (const [key, value] of Object.entries(resultProperties)) {
           this._propertiesModelStore._model._setProperty(
             key as IPropertiesModelKeys,

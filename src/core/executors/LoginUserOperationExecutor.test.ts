@@ -26,6 +26,8 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/tes
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
+import { IdentityModel } from '../models/IdentityModel';
+import { PropertiesModel } from '../models/PropertiesModel';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -186,6 +188,54 @@ describe('LoginUserOperationExecutor', () => {
           [SUB_ID]: SUB_ID_2,
         },
       });
+    });
+
+    // Regression: SDK-4509
+    // Concurrent OneSignal.login() calls swap the PropertiesModelStore's
+    // underlying model synchronously at login() invocation time. If a
+    // createNewUser request for User A is in flight when User B's login
+    // replaces the model, A's response handler must not hydrate A's
+    // server-returned properties (tags/language/timezone_id/country) onto
+    // B's freshly-replaced model.
+    test('does not hydrate properties onto a model that was swapped mid-request', async () => {
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
+
+      // Server returns User A's properties for the in-flight createNewUser.
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID,
+        properties: {
+          tags: { from: 'userA' },
+          language: 'fr',
+          timezone_id: 'Europe/Paris',
+          country: 'FR',
+        },
+      });
+
+      const executor = getExecutor();
+      const loginOpA = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
+
+      // Kick off A's createNewUser; do NOT await yet. While the request is in
+      // flight, simulate User B's login replacing the underlying models.
+      const resultPromise = executor._execute([loginOpA, createSubOp]);
+
+      const newIdentityModel = new IdentityModel();
+      newIdentityModel._onesignalId = ONESIGNAL_ID_2;
+      const newPropertiesModel = new PropertiesModel();
+      newPropertiesModel._onesignalId = ONESIGNAL_ID_2;
+      identityModelStore._replace(newIdentityModel);
+      propertiesModelStore._replace(newPropertiesModel);
+
+      await resultPromise;
+
+      // The post-swap model should belong to User B and must not be
+      // contaminated with User A's tags/language/timezone/country.
+      expect(propertiesModelStore._model._getProperty('onesignalId')).toEqual(ONESIGNAL_ID_2);
+      expect(propertiesModelStore._model._getProperty('tags')).toBeUndefined();
+      expect(propertiesModelStore._model._getProperty('language')).toBeUndefined();
+      expect(propertiesModelStore._model._getProperty('timezone_id')).toBeUndefined();
+      expect(propertiesModelStore._model._getProperty('country')).toBeUndefined();
     });
 
     test('should handle network errors', async () => {

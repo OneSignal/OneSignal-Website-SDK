@@ -300,10 +300,12 @@ export const setCreateUserResponse = ({
   onesignalId = ONESIGNAL_ID,
   subscriptions = [],
   externalId,
+  properties,
 }: {
   onesignalId?: string;
   subscriptions?: Partial<ISubscription>[];
   externalId?: string;
+  properties?: Partial<IUserProperties>;
 } = {}) =>
   getHandler({
     uri: getCreateUserUri(),
@@ -315,6 +317,7 @@ export const setCreateUserResponse = ({
         external_id: externalId,
       },
       subscriptions,
+      properties,
     },
     callback: createUserFn,
   });
