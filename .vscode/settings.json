@@ -1,10 +1,30 @@
 {
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "always",
+    "source.sortImports": "always",
     "source.fixAll.oxc": "explicit"
   },
-  "editor.rename.enablePreview": false,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/*.map": true
+  },
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "oxc.fmt.configPath": "./vite.config.ts",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
   "macros": {
     "rename_": [
       {
@@ -30,9 +50,5 @@
         ]
       }
     ]
-  },
-  "editor.defaultFormatter": "oxc.oxc-vscode",
-  "oxc.fmt.configPath": "./vite.config.ts",
-  "editor.formatOnSave": true,
-  "editor.formatOnSaveMode": "file"
+  }
 }
