@@ -3,7 +3,6 @@ import { isValidUuid } from 'src/shared/helpers/validators';
 
 import type { OneSignalApiBaseResponse } from '../../shared/api/base';
 import * as OneSignalApiBase from '../../shared/api/base';
-import { encodeRFC3986URIComponent } from '../../shared/utils/encode';
 import type {
   AliasPair,
   ICreateUser,
@@ -91,13 +90,8 @@ export async function updateUserByAlias(
     headers = { ...headers, ...requestMetadata.jwtHeader };
   }
 
-  const sanitizedAlias = {
-    label: encodeRFC3986URIComponent(alias.label),
-    id: encodeRFC3986URIComponent(alias.id),
-  };
-
   return OneSignalApiBase.patch<{ properties: IUserProperties }>(
-    `apps/${appId}/users/by/${sanitizedAlias.label}/${sanitizedAlias.id}`,
+    `apps/${appId}/users/by/${alias.label}/${alias.id}`,
     payload,
     headers,
   );

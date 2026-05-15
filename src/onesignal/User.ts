@@ -69,8 +69,8 @@ export default class User {
     logMethodCall('addAlias', { label, id });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateStringLabel(label, 'label');
-    validateStringLabel(id, 'id');
+    validateLabel(label, 'label');
+    validateAliasValue(id, 'id');
 
     this.addAliases({ [label]: id });
   }
@@ -82,7 +82,7 @@ export default class User {
     validateObject(aliases, 'aliases');
 
     for (const label of Object.keys(aliases)) {
-      validateStringLabel(aliases[label], `key: ${label}`);
+      validateAliasValue(aliases[label], `key: ${label}`);
       validateLabel(label, `key: ${label}`);
     }
 
@@ -328,8 +328,19 @@ function validateObject(object: unknown, objectName: string): void {
   if (!object || Object.keys(object).length === 0) throw EmptyArgumentError(objectName);
 }
 
+// eslint-disable-next-line no-control-regex
+const INVALID_ALIAS_PATTERN = /[/?#&=\s\x00-\x1F\x7F]|\.\./;
+
+function validateAliasValue(value: string, valueName: string): void {
+  validateStringLabel(value, valueName);
+
+  if (value.length > 128 || INVALID_ALIAS_PATTERN.test(value)) {
+    throw MalformedArgumentError(valueName);
+  }
+}
+
 function validateLabel(label: string, labelName: string): void {
-  validateStringLabel(label, labelName);
+  validateAliasValue(label, labelName);
 
   if (label === 'external_id' || label === 'onesignal_id') {
     throw ReservedArgumentError(label);

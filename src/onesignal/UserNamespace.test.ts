@@ -167,6 +167,72 @@ describe('Alias Management', () => {
     expect(() => userNamespace.removeAliases([])).toThrowError('"aliases" is empty');
     expect(() => userNamespace.removeAlias('')).toThrowError('"label" is empty');
   });
+
+  test('rejects malformed alias label and id values', () => {
+    const userNamespace = new UserNamespace(true);
+    const tooLong = 'a'.repeat(129);
+
+    // length cap (128 chars)
+    expect(() => userNamespace.addAlias(tooLong, 'some-id')).toThrowError('"label" is malformed');
+    expect(() => userNamespace.addAlias('some-label', tooLong)).toThrowError('"id" is malformed');
+
+    // path-traversal substring
+    expect(() => userNamespace.addAlias('foo..bar', 'some-id')).toThrowError(
+      '"label" is malformed',
+    );
+    expect(() => userNamespace.addAlias('some-label', '..')).toThrowError('"id" is malformed');
+
+    // disallowed url-meaningful characters
+    for (const ch of ['/', '?', '#', '&', '=']) {
+      expect(() => userNamespace.addAlias(`bad${ch}label`, 'some-id')).toThrowError(
+        '"label" is malformed',
+      );
+      expect(() => userNamespace.addAlias('some-label', `bad${ch}id`)).toThrowError(
+        '"id" is malformed',
+      );
+    }
+
+    // whitespace and control characters
+    expect(() => userNamespace.addAlias('with space', 'some-id')).toThrowError(
+      '"label" is malformed',
+    );
+    expect(() => userNamespace.addAlias('some-label', 'with\ttab')).toThrowError(
+      '"id" is malformed',
+    );
+    expect(() => userNamespace.addAlias('with\x00null', 'some-id')).toThrowError(
+      '"label" is malformed',
+    );
+    expect(() => userNamespace.addAlias('some-label', 'with\x7Fdel')).toThrowError(
+      '"id" is malformed',
+    );
+
+    // same checks flow through addAliases for both keys and values
+    expect(() =>
+      userNamespace.addAliases({
+        'bad/label': 'some-id',
+      }),
+    ).toThrowError('"key: bad/label" is malformed');
+    expect(() =>
+      userNamespace.addAliases({
+        someLabel: '../escape',
+      }),
+    ).toThrowError('"key: someLabel" is malformed');
+
+    // and through removeAliases
+    expect(() => userNamespace.removeAlias('bad/label')).toThrowError('"label" is malformed');
+    expect(() => userNamespace.removeAliases(['..'])).toThrowError('"label" is malformed');
+  });
+
+  test('accepts alias values at the 128 character length boundary', () => {
+    const userNamespace = new UserNamespace(true);
+    const maxLabel = 'a'.repeat(128);
+    const maxId = 'b'.repeat(128);
+
+    expect(() => userNamespace.addAlias(maxLabel, maxId)).not.toThrow();
+
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
+    expect(identityModel._getProperty(maxLabel)).toBe(maxId);
+  });
 });
 
 describe('Email Management', () => {
