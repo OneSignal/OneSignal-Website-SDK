@@ -23,8 +23,6 @@ jobs:
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
-        with:
-          node-version-file: '.nvmrc'
 
       - name: Get current SDK version
         id: current_version
