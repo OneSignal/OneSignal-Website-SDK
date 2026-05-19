@@ -238,6 +238,53 @@ describe('LoginUserOperationExecutor', () => {
       expect(propertiesModelStore._model._getProperty('country')).toBeUndefined();
     });
 
+    // Same race as above, but for the subscription hydration loop. The
+    // SubscriptionModelStore is not swapped by _resetAndGetIdentityModel
+    // (only identity + properties are), so subscription models persist across
+    // logins. A's response handler must not stamp A's backend ids onto a
+    // model that user B is now sharing. idTranslations must still be returned
+    // so the op-repo can rewrite local ids on B's pending subscription ops.
+    test('does not hydrate subscription onto a model after a mid-request user swap', async () => {
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
+
+      const subscriptionModel = new SubscriptionModel();
+      subscriptionModel._setProperty('id', SUB_ID, ModelChangeTags._NoPropogate);
+      subscriptionModel._setProperty('onesignalId', ONESIGNAL_ID, ModelChangeTags._NoPropogate);
+      subscriptionModelStore._add(subscriptionModel, ModelChangeTags._NoPropogate);
+
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID_2,
+        subscriptions: [{ id: SUB_ID_2 }],
+      });
+
+      const executor = getExecutor();
+      const loginOpA = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
+
+      const resultPromise = executor._execute([loginOpA, createSubOp]);
+
+      const newIdentityModel = new IdentityModel();
+      newIdentityModel._onesignalId = ONESIGNAL_ID_2;
+      const newPropertiesModel = new PropertiesModel();
+      newPropertiesModel._onesignalId = ONESIGNAL_ID_2;
+      identityModelStore._replace(newIdentityModel);
+      propertiesModelStore._replace(newPropertiesModel);
+
+      const res = await resultPromise;
+
+      // The persistent subscription model must not be stamped with A's
+      // backend ids while user B is the active user.
+      expect(subscriptionModel._getProperty('id')).toEqual(SUB_ID);
+      expect(subscriptionModel._getProperty('onesignalId')).toEqual(ONESIGNAL_ID);
+
+      // idTranslations must still be returned so pending ops can be rewritten.
+      expect(res._idTranslations).toEqual({
+        [ONESIGNAL_ID]: ONESIGNAL_ID_2,
+        [SUB_ID]: SUB_ID_2,
+      });
+    });
+
     test('should handle network errors', async () => {
       const executor = getExecutor();
 

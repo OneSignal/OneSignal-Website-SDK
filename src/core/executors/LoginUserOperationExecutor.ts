@@ -165,32 +165,39 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         [createUserOperation._onesignalId]: backendOneSignalId,
       };
 
-      if (this._identityModelStore._model._onesignalId === opOneSignalId) {
+      // Capture this BEFORE any local writes mutate the model stores. A
+      // concurrent OneSignal.login(...) may have replaced the identity and
+      // properties stores while this createNewUser was in flight; if so we
+      // must not hydrate any of this response onto the new user's models.
+      // Subscriptions persist across logins (the SubscriptionModelStore is
+      // not swapped), so this guard also prevents stamping A's backend
+      // onesignalId onto a subscription model that user B is now sharing.
+      // idTranslations is populated unconditionally so the op-repo can still
+      // rewrite local ids on any pending ops that referenced this user.
+      const stillCurrent = this._identityModelStore._model._onesignalId === opOneSignalId;
+
+      if (stillCurrent) {
         this._identityModelStore._model._setProperty(
           IdentityConstants._OneSignalID,
           backendOneSignalId,
           ModelChangeTags._Hydrate,
         );
-      }
 
-      if (this._propertiesModelStore._model._onesignalId === opOneSignalId) {
         this._propertiesModelStore._model._setProperty(
           'onesignalId',
           backendOneSignalId,
           ModelChangeTags._Hydrate,
         );
-      }
 
-      // Guarded so a concurrent login() that swapped the model store mid-request
-      // doesn't hydrate this response onto the new user's properties model.
-      const resultProperties = response.result.properties;
-      if (resultProperties && this._propertiesModelStore._model._onesignalId === opOneSignalId) {
-        for (const [key, value] of Object.entries(resultProperties)) {
-          this._propertiesModelStore._model._setProperty(
-            key as IPropertiesModelKeys,
-            value,
-            ModelChangeTags._Hydrate,
-          );
+        const resultProperties = response.result.properties;
+        if (resultProperties) {
+          for (const [key, value] of Object.entries(resultProperties)) {
+            this._propertiesModelStore._model._setProperty(
+              key as IPropertiesModelKeys,
+              value,
+              ModelChangeTags._Hydrate,
+            );
+          }
         }
       }
 
@@ -200,6 +207,8 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
         if (!backendSub || !('id' in backendSub)) continue;
         idTranslations[localId] = backendSub.id;
+
+        if (!stillCurrent) continue;
 
         const model = this._subscriptionsModelStore._getBySubscriptionId(localId);
         model?._setProperty('id', backendSub.id, ModelChangeTags._Hydrate);
