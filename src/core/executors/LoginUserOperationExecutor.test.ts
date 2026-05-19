@@ -26,6 +26,8 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/tes
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
+import { IdentityModel } from '../models/IdentityModel';
+import { PropertiesModel } from '../models/PropertiesModel';
 import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -185,6 +187,86 @@ describe('LoginUserOperationExecutor', () => {
           [ONESIGNAL_ID]: ONESIGNAL_ID_2,
           [SUB_ID]: SUB_ID_2,
         },
+      });
+    });
+
+    // A concurrent login() can swap the properties model while createNewUser
+    // is in flight; the response must not hydrate onto the new user's model.
+    test('does not hydrate properties onto a model that was swapped mid-request', async () => {
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
+
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID,
+        properties: {
+          tags: { from: 'userA' },
+          language: 'fr',
+          timezone_id: 'Europe/Paris',
+          country: 'FR',
+        },
+      });
+
+      const executor = getExecutor();
+      const loginOpA = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
+
+      const resultPromise = executor._execute([loginOpA, createSubOp]);
+
+      const newIdentityModel = new IdentityModel();
+      newIdentityModel._onesignalId = ONESIGNAL_ID_2;
+      const newPropertiesModel = new PropertiesModel();
+      newPropertiesModel._onesignalId = ONESIGNAL_ID_2;
+      identityModelStore._replace(newIdentityModel);
+      propertiesModelStore._replace(newPropertiesModel);
+
+      await resultPromise;
+
+      expect(propertiesModelStore._model._getProperty('onesignalId')).toEqual(ONESIGNAL_ID_2);
+      expect(propertiesModelStore._model._getProperty('tags')).toBeUndefined();
+      expect(propertiesModelStore._model._getProperty('language')).toBeUndefined();
+      expect(propertiesModelStore._model._getProperty('timezone_id')).toBeUndefined();
+      expect(propertiesModelStore._model._getProperty('country')).toBeUndefined();
+    });
+
+    // Subscription models persist across logins (only identity + properties
+    // are swapped), so a stale response must not stamp the prior user's
+    // backend ids onto a subscription the new user is now sharing.
+    // idTranslations must still be returned so pending ops can be rewritten.
+    test('does not hydrate subscription onto a model after a mid-request user swap', async () => {
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updatePropertiesModel('onesignalId', ONESIGNAL_ID);
+
+      const subscriptionModel = new SubscriptionModel();
+      subscriptionModel._setProperty('id', SUB_ID, ModelChangeTags._NoPropogate);
+      subscriptionModel._setProperty('onesignalId', ONESIGNAL_ID, ModelChangeTags._NoPropogate);
+      subscriptionModelStore._add(subscriptionModel, ModelChangeTags._NoPropogate);
+
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID_2,
+        subscriptions: [{ id: SUB_ID_2 }],
+      });
+
+      const executor = getExecutor();
+      const loginOpA = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
+
+      const resultPromise = executor._execute([loginOpA, createSubOp]);
+
+      const newIdentityModel = new IdentityModel();
+      newIdentityModel._onesignalId = ONESIGNAL_ID_2;
+      const newPropertiesModel = new PropertiesModel();
+      newPropertiesModel._onesignalId = ONESIGNAL_ID_2;
+      identityModelStore._replace(newIdentityModel);
+      propertiesModelStore._replace(newPropertiesModel);
+
+      const res = await resultPromise;
+
+      expect(subscriptionModel._getProperty('id')).toEqual(SUB_ID);
+      expect(subscriptionModel._getProperty('onesignalId')).toEqual(ONESIGNAL_ID);
+
+      expect(res._idTranslations).toEqual({
+        [ONESIGNAL_ID]: ONESIGNAL_ID_2,
+        [SUB_ID]: SUB_ID_2,
       });
     });
 

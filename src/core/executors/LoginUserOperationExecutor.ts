@@ -165,31 +165,34 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         [createUserOperation._onesignalId]: backendOneSignalId,
       };
 
-      if (this._identityModelStore._model._onesignalId === opOneSignalId) {
+      // Checked once before any writes so a concurrent login() that swapped
+      // the stores mid-request doesn't hydrate this response onto the new
+      // user. idTranslations is populated unconditionally so pending ops can
+      // still be rewritten.
+      const stillCurrent = this._identityModelStore._model._onesignalId === opOneSignalId;
+
+      if (stillCurrent) {
         this._identityModelStore._model._setProperty(
           IdentityConstants._OneSignalID,
           backendOneSignalId,
           ModelChangeTags._Hydrate,
         );
-      }
 
-      if (this._propertiesModelStore._model._onesignalId === opOneSignalId) {
         this._propertiesModelStore._model._setProperty(
           'onesignalId',
           backendOneSignalId,
           ModelChangeTags._Hydrate,
         );
-      }
 
-      // update other properties
-      const resultProperties = response.result.properties;
-      if (resultProperties) {
-        for (const [key, value] of Object.entries(resultProperties)) {
-          this._propertiesModelStore._model._setProperty(
-            key as IPropertiesModelKeys,
-            value,
-            ModelChangeTags._Hydrate,
-          );
+        const resultProperties = response.result.properties;
+        if (resultProperties) {
+          for (const [key, value] of Object.entries(resultProperties)) {
+            this._propertiesModelStore._model._setProperty(
+              key as IPropertiesModelKeys,
+              value,
+              ModelChangeTags._Hydrate,
+            );
+          }
         }
       }
 
@@ -199,6 +202,8 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
         if (!backendSub || !('id' in backendSub)) continue;
         idTranslations[localId] = backendSub.id;
+
+        if (!stillCurrent) continue;
 
         const model = this._subscriptionsModelStore._getBySubscriptionId(localId);
         model?._setProperty('id', backendSub.id, ModelChangeTags._Hydrate);
