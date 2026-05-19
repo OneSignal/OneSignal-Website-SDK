@@ -165,15 +165,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         [createUserOperation._onesignalId]: backendOneSignalId,
       };
 
-      // Capture this BEFORE any local writes mutate the model stores. A
-      // concurrent OneSignal.login(...) may have replaced the identity and
-      // properties stores while this createNewUser was in flight; if so we
-      // must not hydrate any of this response onto the new user's models.
-      // Subscriptions persist across logins (the SubscriptionModelStore is
-      // not swapped), so this guard also prevents stamping A's backend
-      // onesignalId onto a subscription model that user B is now sharing.
-      // idTranslations is populated unconditionally so the op-repo can still
-      // rewrite local ids on any pending ops that referenced this user.
+      // Checked once before any writes so a concurrent login() that swapped
+      // the stores mid-request doesn't hydrate this response onto the new
+      // user. idTranslations is populated unconditionally so pending ops can
+      // still be rewritten.
       const stillCurrent = this._identityModelStore._model._onesignalId === opOneSignalId;
 
       if (stillCurrent) {

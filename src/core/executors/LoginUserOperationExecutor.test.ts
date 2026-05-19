@@ -190,18 +190,12 @@ describe('LoginUserOperationExecutor', () => {
       });
     });
 
-    // Regression: SDK-4509
-    // Concurrent OneSignal.login() calls swap the PropertiesModelStore's
-    // underlying model synchronously at login() invocation time. If a
-    // createNewUser request for User A is in flight when User B's login
-    // replaces the model, A's response handler must not hydrate A's
-    // server-returned properties (tags/language/timezone_id/country) onto
-    // B's freshly-replaced model.
+    // A concurrent login() can swap the properties model while createNewUser
+    // is in flight; the response must not hydrate onto the new user's model.
     test('does not hydrate properties onto a model that was swapped mid-request', async () => {
       updateIdentityModel('onesignal_id', ONESIGNAL_ID);
       updatePropertiesModel('onesignalId', ONESIGNAL_ID);
 
-      // Server returns User A's properties for the in-flight createNewUser.
       setCreateUserResponse({
         onesignalId: ONESIGNAL_ID,
         properties: {
@@ -216,8 +210,6 @@ describe('LoginUserOperationExecutor', () => {
       const loginOpA = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
       const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
 
-      // Kick off A's createNewUser; do NOT await yet. While the request is in
-      // flight, simulate User B's login replacing the underlying models.
       const resultPromise = executor._execute([loginOpA, createSubOp]);
 
       const newIdentityModel = new IdentityModel();
@@ -229,8 +221,6 @@ describe('LoginUserOperationExecutor', () => {
 
       await resultPromise;
 
-      // The post-swap model should belong to User B and must not be
-      // contaminated with User A's tags/language/timezone/country.
       expect(propertiesModelStore._model._getProperty('onesignalId')).toEqual(ONESIGNAL_ID_2);
       expect(propertiesModelStore._model._getProperty('tags')).toBeUndefined();
       expect(propertiesModelStore._model._getProperty('language')).toBeUndefined();
@@ -238,12 +228,10 @@ describe('LoginUserOperationExecutor', () => {
       expect(propertiesModelStore._model._getProperty('country')).toBeUndefined();
     });
 
-    // Same race as above, but for the subscription hydration loop. The
-    // SubscriptionModelStore is not swapped by _resetAndGetIdentityModel
-    // (only identity + properties are), so subscription models persist across
-    // logins. A's response handler must not stamp A's backend ids onto a
-    // model that user B is now sharing. idTranslations must still be returned
-    // so the op-repo can rewrite local ids on B's pending subscription ops.
+    // Subscription models persist across logins (only identity + properties
+    // are swapped), so a stale response must not stamp the prior user's
+    // backend ids onto a subscription the new user is now sharing.
+    // idTranslations must still be returned so pending ops can be rewritten.
     test('does not hydrate subscription onto a model after a mid-request user swap', async () => {
       updateIdentityModel('onesignal_id', ONESIGNAL_ID);
       updatePropertiesModel('onesignalId', ONESIGNAL_ID);
@@ -273,12 +261,9 @@ describe('LoginUserOperationExecutor', () => {
 
       const res = await resultPromise;
 
-      // The persistent subscription model must not be stamped with A's
-      // backend ids while user B is the active user.
       expect(subscriptionModel._getProperty('id')).toEqual(SUB_ID);
       expect(subscriptionModel._getProperty('onesignalId')).toEqual(ONESIGNAL_ID);
 
-      // idTranslations must still be returned so pending ops can be rewritten.
       expect(res._idTranslations).toEqual({
         [ONESIGNAL_ID]: ONESIGNAL_ID_2,
         [SUB_ID]: SUB_ID_2,
