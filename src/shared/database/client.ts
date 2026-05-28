@@ -101,7 +101,7 @@ export const getDb = (version = VERSION) => {
 // writes with a short timeout, then trip a page-scoped circuit breaker so
 // subsequent writes short-circuit. The values that fail to persist are
 // session metadata the SW reads with sensible fallbacks. Remove if WebKit
-// ever fixes the underlying bug.
+// ever fixes the underlying bug: https://bugs.webkit.org/show_bug.cgi?id=315804
 const OPTIONS_WRITE_TIMEOUT_MS = 1500;
 let optionsWriteWedged = false;
 
