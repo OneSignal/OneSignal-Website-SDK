@@ -93,7 +93,58 @@ export const getDb = (version = VERSION) => {
   return dbPromise;
 };
 
-// Export db object with the same API as before
+// SDK-4336: iOS 26 Safari PWA, on the navigation back to a page after the
+// user has subscribed to push, leaves the `ONE_SIGNAL_SDK_DB` database in
+// a state where every `readwrite` request on the `Options` object store
+// stalls indefinitely (no `success`, no `error`, no transaction lifecycle
+// event). Fresh connections inherit the same per-store WebKit lock state,
+// so reopening doesn't help. Reads work, and `readwrite` on other stores
+// works — only `readwrite` on `Options` is poisoned.
+//
+// Without this guard, `OneSignal.init()` blocks on the very first Options
+// `put` in `initSaveState`/`saveInitOptions` and never returns, which the
+// support team has observed as init "hanging for ~30 minutes" (the time
+// it eventually takes WebKit's internal watchdog to abort the wedged
+// transaction).
+//
+// Workaround: cap `readwrite` operations on the `Options` store with a
+// short timeout. On timeout, we log a warning and resolve the promise as
+// a no-op so init proceeds. The values that didn't get persisted are
+// session metadata (`pageTitle`, `persistNotification`, webhook URLs,
+// click-handler config, `lastPushToken`, `isPushEnabled`, etc.) that the
+// service worker reads with sensible fallbacks if missing or stale.
+const OPTIONS_WRITE_TIMEOUT_MS = 1500;
+
+function withOptionsWriteTimeout<T>(label: string, op: () => Promise<T>): Promise<T | undefined> {
+  return new Promise<T | undefined>((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      Log._warn(
+        `[SDK-4336] db.${label} timed out after ${OPTIONS_WRITE_TIMEOUT_MS}ms; ` +
+          `IndexedDB Options store is wedged (likely iOS Safari PWA after push ` +
+          `subscription). Skipping write to avoid blocking init.`,
+      );
+      resolve(undefined);
+    }, OPTIONS_WRITE_TIMEOUT_MS);
+    op().then(
+      (v) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 export const db = {
   async get<K extends IDBStoreName>(
     storeName: K,
@@ -105,10 +156,18 @@ export const db = {
     return (await dbPromise).getAll(storeName);
   },
   async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
-    return (await dbPromise).put(storeName, value);
+    const op = async () => (await dbPromise).put(storeName, value);
+    if (storeName === 'Options') {
+      return withOptionsWriteTimeout(`put(${storeName})`, op);
+    }
+    return op();
   },
   async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
-    return (await dbPromise).delete(storeName, key);
+    const op = async () => (await dbPromise).delete(storeName, key);
+    if (storeName === 'Options') {
+      return withOptionsWriteTimeout(`delete(${storeName}/${String(key)})`, op);
+    }
+    return op();
   },
 };
 
