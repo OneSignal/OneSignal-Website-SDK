@@ -93,35 +93,26 @@ export const getDb = (version = VERSION) => {
   return dbPromise;
 };
 
-// SDK-4336: iOS 26 Safari PWA, on the navigation back to a page after the
-// user has subscribed to push, leaves the `ONE_SIGNAL_SDK_DB` database in
-// a state where every `readwrite` request on the `Options` object store
-// stalls indefinitely (no `success`, no `error`, no transaction lifecycle
-// event). Fresh connections inherit the same per-store WebKit lock state,
-// so reopening doesn't help. Reads work, and `readwrite` on other stores
-// works — only `readwrite` on `Options` is poisoned.
-//
-// Without this guard, `OneSignal.init()` blocks on the very first Options
-// `put` in `initSaveState`/`saveInitOptions` and never returns, which the
-// support team has observed as init "hanging for ~30 minutes" (the time
-// it eventually takes WebKit's internal watchdog to abort the wedged
-// transaction).
-//
-// Workaround: cap `readwrite` operations on the `Options` store with a
-// short timeout. On timeout, we log a warning, trip a circuit breaker
-// for the rest of the page's lifetime so subsequent Options writes
-// short-circuit instead of each paying the timeout, and resolve the
-// promise as a no-op so init proceeds. The values that didn't get
-// persisted are session metadata (`pageTitle`, `persistNotification`,
-// webhook URLs, click-handler config, `lastPushToken`, `isPushEnabled`,
-// etc.) that the service worker reads with sensible fallbacks if
-// missing or stale.
+// On iOS Safari PWA after a push subscription, `readwrite` requests on the
+// `Options` object store can stall indefinitely (no success/error/abort).
+// Other stores and reads are unaffected, and reopening the DB doesn't help.
+// Without this guard, `OneSignal.init()` hangs until WebKit's watchdog
+// eventually aborts the transaction (~30 minutes). Workaround: cap Options
+// writes with a short timeout, then trip a page-scoped circuit breaker so
+// subsequent writes short-circuit. The values that fail to persist are
+// session metadata the SW reads with sensible fallbacks. Remove if WebKit
+// ever fixes the underlying bug.
 const OPTIONS_WRITE_TIMEOUT_MS = 1500;
 let optionsWriteWedged = false;
 
-function withOptionsWriteTimeout<T>(label: string, op: () => Promise<T>): Promise<T | undefined> {
+function guardOptionsWrite<T>(
+  storeName: IDBStoreName,
+  label: string,
+  op: () => Promise<T>,
+): Promise<T | undefined> {
+  if (storeName !== 'Options') return op();
   if (optionsWriteWedged) {
-    Log._warn(`[SDK-4336] db.${label} skipped (wedged)`);
+    Log._warn(`db.${label} skipped (Options store wedged)`);
     return Promise.resolve(undefined);
   }
   return new Promise<T | undefined>((resolve, reject) => {
@@ -130,7 +121,7 @@ function withOptionsWriteTimeout<T>(label: string, op: () => Promise<T>): Promis
       if (settled) return;
       settled = true;
       optionsWriteWedged = true;
-      Log._warn(`[SDK-4336] db.${label} timed out; tripping circuit breaker`);
+      Log._warn(`db.${label} timed out; tripping Options-write circuit breaker`);
       resolve(undefined);
     }, OPTIONS_WRITE_TIMEOUT_MS);
     op().then(
@@ -161,18 +152,14 @@ export const db = {
     return (await dbPromise).getAll(storeName);
   },
   async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
-    const op = async () => (await dbPromise).put(storeName, value);
-    if (storeName === 'Options') {
-      return withOptionsWriteTimeout(`put(${storeName})`, op);
-    }
-    return op();
+    return guardOptionsWrite(storeName, `put(${storeName})`, async () =>
+      (await dbPromise).put(storeName, value),
+    );
   },
   async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
-    const op = async () => (await dbPromise).delete(storeName, key);
-    if (storeName === 'Options') {
-      return withOptionsWriteTimeout(`delete(${storeName}/${String(key)})`, op);
-    }
-    return op();
+    return guardOptionsWrite(storeName, `delete(${storeName}/${String(key)})`, async () =>
+      (await dbPromise).delete(storeName, key),
+    );
   },
 };
 
