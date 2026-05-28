@@ -121,7 +121,7 @@ let optionsWriteWedged = false;
 
 function withOptionsWriteTimeout<T>(label: string, op: () => Promise<T>): Promise<T | undefined> {
   if (optionsWriteWedged) {
-    Log._warn(`[SDK-4336] db.${label} skipped; Options store is known wedged for this page.`);
+    Log._warn(`[SDK-4336] db.${label} skipped (wedged)`);
     return Promise.resolve(undefined);
   }
   return new Promise<T | undefined>((resolve, reject) => {
@@ -130,12 +130,7 @@ function withOptionsWriteTimeout<T>(label: string, op: () => Promise<T>): Promis
       if (settled) return;
       settled = true;
       optionsWriteWedged = true;
-      Log._warn(
-        `[SDK-4336] db.${label} timed out after ${OPTIONS_WRITE_TIMEOUT_MS}ms; ` +
-          `IndexedDB Options store is wedged (likely iOS Safari PWA after push ` +
-          `subscription). Tripping circuit breaker; subsequent Options writes ` +
-          `on this page will be skipped immediately.`,
-      );
+      Log._warn(`[SDK-4336] db.${label} timed out; tripping circuit breaker`);
       resolve(undefined);
     }, OPTIONS_WRITE_TIMEOUT_MS);
     op().then(
