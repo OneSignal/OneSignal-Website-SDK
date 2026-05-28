@@ -43,8 +43,25 @@ export default defineConfig({
     // SDK fetch URL (e.g. `http://localhost:4000/...` in HTTP mode) lands here.
     port: useHttps ? 4001 : 4000,
     strictPort: true,
+    // HMR's WebSocket targets `wss://localhost:<port>`, which iOS devices on a
+    // tunnel (ngrok, etc.) can't reach. Disabling stops the runaway
+    // reconnect loop that floods the console with `ws.send` rejections.
+    hmr: false,
   },
   plugins: [
+    {
+      // Vite's dev server injects `<script src="/@vite/client">` into every
+      // HTML response, even when `server.hmr` is false. That client then
+      // retries a WebSocket forever, which on a tunneled iOS device floods
+      // the console with `ws.send` rejections and is heavy enough to
+      // skew our SDK timing. Strip it out for the preview server, where
+      // we don't need HMR.
+      name: 'strip-vite-client',
+      enforce: 'post',
+      transformIndexHtml(html) {
+        return html.replace(/<script[^>]*src="\/@vite\/client"[^>]*><\/script>\s*/g, '');
+      },
+    },
     ...(useHttps
       ? [
           mkcert({
@@ -87,7 +104,29 @@ export default defineConfig({
           if (contentType) {
             res.setHeader('Content-Type', contentType);
           }
+          // Avoid stale SDK bundles being served from the browser HTTP cache,
+          // which is especially aggressive on iOS Safari/PWA. Without this,
+          // rebuilding the SDK during a debug session won't take effect on the
+          // device until you fully wipe website data.
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
           fs.createReadStream(filePath).pipe(res);
+        });
+      },
+    },
+    {
+      // Same hygiene for the sandbox HTML (pageA/pageB/index) and root SW
+      // file. Vite's default dev-server cache policy is fine for source files
+      // but our HTML directly references the SDK and embeds repro state.
+      name: 'no-store-html',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const url = req.url ?? '';
+          if (/\.(html|json|js)(\?|$)/.test(url) && !url.startsWith('/sdks/')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+          }
+          next();
         });
       },
     },

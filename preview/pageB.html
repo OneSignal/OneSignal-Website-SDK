@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SDK-4336 Repro: Page B</title>
+    <link rel="shortcut icon" href="#" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="SDK4336" />
+  </head>
+  <body>
+    <h1>SDK-4336 Repro: Page B</h1>
+    <p>
+      <a href="./pageA.html">Go to Page A</a>
+    </p>
+    <p>
+      This page intentionally does <em>not</em> initialize the SDK. It just navigates back to Page A
+      so we can exercise the multi-page navigation flow described in SDK-4336.
+    </p>
+  </body>
+</html>
