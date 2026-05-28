@@ -108,23 +108,33 @@ export const getDb = (version = VERSION) => {
 // transaction).
 //
 // Workaround: cap `readwrite` operations on the `Options` store with a
-// short timeout. On timeout, we log a warning and resolve the promise as
-// a no-op so init proceeds. The values that didn't get persisted are
-// session metadata (`pageTitle`, `persistNotification`, webhook URLs,
-// click-handler config, `lastPushToken`, `isPushEnabled`, etc.) that the
-// service worker reads with sensible fallbacks if missing or stale.
+// short timeout. On timeout, we log a warning, trip a circuit breaker
+// for the rest of the page's lifetime so subsequent Options writes
+// short-circuit instead of each paying the timeout, and resolve the
+// promise as a no-op so init proceeds. The values that didn't get
+// persisted are session metadata (`pageTitle`, `persistNotification`,
+// webhook URLs, click-handler config, `lastPushToken`, `isPushEnabled`,
+// etc.) that the service worker reads with sensible fallbacks if
+// missing or stale.
 const OPTIONS_WRITE_TIMEOUT_MS = 1500;
+let optionsWriteWedged = false;
 
 function withOptionsWriteTimeout<T>(label: string, op: () => Promise<T>): Promise<T | undefined> {
+  if (optionsWriteWedged) {
+    Log._warn(`[SDK-4336] db.${label} skipped; Options store is known wedged for this page.`);
+    return Promise.resolve(undefined);
+  }
   return new Promise<T | undefined>((resolve, reject) => {
     let settled = false;
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
+      optionsWriteWedged = true;
       Log._warn(
         `[SDK-4336] db.${label} timed out after ${OPTIONS_WRITE_TIMEOUT_MS}ms; ` +
           `IndexedDB Options store is wedged (likely iOS Safari PWA after push ` +
-          `subscription). Skipping write to avoid blocking init.`,
+          `subscription). Tripping circuit breaker; subsequent Options writes ` +
+          `on this page will be skipped immediately.`,
       );
       resolve(undefined);
     }, OPTIONS_WRITE_TIMEOUT_MS);
