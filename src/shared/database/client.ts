@@ -94,34 +94,36 @@ export const getDb = (version = VERSION) => {
 };
 
 // SDK-4336: iOS 26 Safari PWA, on the navigation back to a page after the
-// user has subscribed to push, leaves the `ONE_SIGNAL_SDK_DB` database in
-// a state where every `readwrite` request on the `Options` object store
-// stalls indefinitely (no `success`, no `error`, no transaction lifecycle
-// event). Fresh connections inherit the same per-store WebKit lock state,
-// so reopening doesn't help. Reads work, and `readwrite` on other stores
-// works — only `readwrite` on `Options` is poisoned.
+// user has subscribed to push, leaves the `ONE_SIGNAL_SDK_DB` database
+// in a state where `readwrite` requests stall indefinitely (no
+// `success`, no `error`, no transaction lifecycle event). Fresh
+// connections inherit the same WebKit lock state, so reopening doesn't
+// help. Reads still work; only `readwrite` is poisoned.
 //
-// Without this guard, `OneSignal.init()` blocks on the very first Options
-// `put` in `initSaveState`/`saveInitOptions` and never returns, which the
-// support team has observed as init "hanging for ~30 minutes" (the time
-// it eventually takes WebKit's internal watchdog to abort the wedged
-// transaction).
+// Without this guard, `OneSignal.init()` blocks on the first `Options`
+// `put` in `initSaveState`/`saveInitOptions` and never returns, and
+// even after init the operation queue (`OperationRepo`) gets stuck
+// because `_executeOperations` awaits writes to the `operations` /
+// `identity` / `properties` / `pushSubscriptions` stores that never
+// settle. The support team has observed this as init "hanging for ~30
+// minutes" (the time it eventually takes WebKit's internal watchdog to
+// abort the wedged transaction) plus persistent failure to flush
+// queued user/subscription operations.
 //
-// Workaround: cap `readwrite` operations on the `Options` store with a
-// short timeout. On timeout, we log a warning, trip a circuit breaker
-// for the rest of the page's lifetime so subsequent Options writes
-// short-circuit instead of each paying the timeout, and resolve the
-// promise as a no-op so init proceeds. The values that didn't get
-// persisted are session metadata (`pageTitle`, `persistNotification`,
-// webhook URLs, click-handler config, `lastPushToken`, `isPushEnabled`,
-// etc.) that the service worker reads with sensible fallbacks if
-// missing or stale.
-const OPTIONS_WRITE_TIMEOUT_MS = 1500;
-let optionsWriteWedged = false;
+// Workaround: cap every `readwrite` op (`put` / `delete` / `clear`)
+// with a short timeout. On timeout, log a `[SDK-4336]` warning, trip a
+// page-scoped circuit breaker so subsequent readwrites short-circuit
+// instead of each paying the timeout, and resolve the promise as a
+// no-op so callers proceed. The values that don't get persisted are
+// either session metadata the SW re-derives from network state on the
+// next visit, or queued operations whose effects are idempotent and
+// will be re-attempted next session.
+const READWRITE_TIMEOUT_MS = 1500;
+let readwriteWedged = false;
 
-function withOptionsWriteTimeout<T>(label: string, op: () => Promise<T>): Promise<T | undefined> {
-  if (optionsWriteWedged) {
-    Log._warn(`[SDK-4336] db.${label} skipped; Options store is known wedged for this page.`);
+function withReadwriteTimeout<T>(label: string, op: () => Promise<T>): Promise<T | undefined> {
+  if (readwriteWedged) {
+    Log._warn(`[SDK-4336] db.${label} skipped; IndexedDB readwrite is wedged for this page.`);
     return Promise.resolve(undefined);
   }
   return new Promise<T | undefined>((resolve, reject) => {
@@ -129,15 +131,15 @@ function withOptionsWriteTimeout<T>(label: string, op: () => Promise<T>): Promis
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
-      optionsWriteWedged = true;
+      readwriteWedged = true;
       Log._warn(
-        `[SDK-4336] db.${label} timed out after ${OPTIONS_WRITE_TIMEOUT_MS}ms; ` +
-          `IndexedDB Options store is wedged (likely iOS Safari PWA after push ` +
-          `subscription). Tripping circuit breaker; subsequent Options writes ` +
-          `on this page will be skipped immediately.`,
+        `[SDK-4336] db.${label} timed out after ${READWRITE_TIMEOUT_MS}ms; ` +
+          `IndexedDB is wedged (likely iOS Safari PWA after push subscription). ` +
+          `Tripping circuit breaker; subsequent readwrites on this page will be ` +
+          `skipped immediately.`,
       );
       resolve(undefined);
-    }, OPTIONS_WRITE_TIMEOUT_MS);
+    }, READWRITE_TIMEOUT_MS);
     op().then(
       (v) => {
         if (settled) return;
@@ -166,23 +168,21 @@ export const db = {
     return (await dbPromise).getAll(storeName);
   },
   async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
-    const op = async () => (await dbPromise).put(storeName, value);
-    if (storeName === 'Options') {
-      return withOptionsWriteTimeout(`put(${storeName})`, op);
-    }
-    return op();
+    return withReadwriteTimeout(`put(${storeName})`, async () =>
+      (await dbPromise).put(storeName, value),
+    );
   },
   async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
-    const op = async () => (await dbPromise).delete(storeName, key);
-    if (storeName === 'Options') {
-      return withOptionsWriteTimeout(`delete(${storeName}/${String(key)})`, op);
-    }
-    return op();
+    return withReadwriteTimeout(`delete(${storeName}/${String(key)})`, async () =>
+      (await dbPromise).delete(storeName, key),
+    );
   },
 };
 
 export const clearStore = async <K extends IDBStoreName>(storeName: K) => {
-  return (await dbPromise).clear(storeName);
+  return withReadwriteTimeout(`clear(${storeName})`, async () =>
+    (await dbPromise).clear(storeName),
+  );
 };
 
 export const getObjectStoreNames = async () => {
