@@ -105,6 +105,12 @@ export const getDb = (version = VERSION) => {
 const OPTIONS_WRITE_TIMEOUT_MS = 1500;
 let optionsWriteWedged = false;
 
+export const isOptionsWriteWedged = () => optionsWriteWedged;
+
+// `op` is invoked synchronously so the timeout scopes only to the readwrite
+// request itself — DB open/upgrade time is awaited by callers before they
+// hand us a sync closure, so a slow `open()` (e.g. cross-tab `blocked` event,
+// schema migration on a slow device) won't false-trip the breaker.
 function guardOptionsWrite<T>(
   storeName: IDBStoreName,
   label: string,
@@ -152,13 +158,13 @@ export const db = {
     return (await dbPromise).getAll(storeName);
   },
   async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
-    return guardOptionsWrite(storeName, `put(${storeName})`, async () =>
-      (await dbPromise).put(storeName, value),
-    );
+    const _db = await dbPromise;
+    return guardOptionsWrite(storeName, `put(${storeName})`, () => _db.put(storeName, value));
   },
   async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
-    return guardOptionsWrite(storeName, `delete(${storeName}/${String(key)})`, async () =>
-      (await dbPromise).delete(storeName, key),
+    const _db = await dbPromise;
+    return guardOptionsWrite(storeName, `delete(${storeName}/${String(key)})`, () =>
+      _db.delete(storeName, key),
     );
   },
 };

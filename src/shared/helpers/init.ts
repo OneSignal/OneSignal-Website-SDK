@@ -3,7 +3,7 @@ import { ModelChangeTags } from 'src/core/types/models';
 import Bell from '../../page/bell/Bell';
 import type { AppConfig } from '../config/types';
 import type { ContextInterface } from '../context/types';
-import { db, getIdsValue } from '../database/client';
+import { db, getIdsValue, isOptionsWriteWedged } from '../database/client';
 import { getSubscription, setSubscription } from '../database/subscription';
 import type { OptionKey } from '../database/types';
 import Log from '../libraries/Log';
@@ -352,6 +352,15 @@ export async function initSaveState(overridingPageTitle?: string) {
     await db.put('Options', { key: 'lastPushId', value: null });
     await db.put('Options', { key: 'lastPushToken', value: null });
     await db.put('Options', { key: 'lastOptedIn', value: null });
+    // Bail out if the Options reset got circuit-broken. Committing the new
+    // appId now would strand the previous app's metadata under it, and the
+    // `previousAppId !== appId` gate above would keep us out of this branch
+    // on later loads — leaving the stale values permanent. Skipping the
+    // appId commit instead lets a future non-wedged load complete the reset.
+    if (isOptionsWriteWedged()) {
+      Log._warn('App ID change reset deferred; will retry on next non-wedged load');
+      return;
+    }
     await db.put('Ids', { type: 'registrationId', id: null });
     await db.put('Ids', { type: 'userId', id: null });
     OneSignal._coreDirector._subscriptionModelStore._clear(ModelChangeTags._Hydrate);
