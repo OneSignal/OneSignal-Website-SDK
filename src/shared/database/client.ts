@@ -93,6 +93,22 @@ export const getDb = (version = VERSION) => {
   return dbPromise;
 };
 
+// On iOS Safari PWA after a push subscription, `readwrite` requests on the
+// `Options` object store can stall indefinitely (no success/error/abort),
+// hanging `OneSignal.init()` until WebKit's watchdog aborts the transaction
+// (~30 min). Other stores and reads are unaffected, and reopening the DB
+// doesn't help. Cap Options writes with a short timeout and resolve undefined
+// on stall; the dropped values are session metadata the SW reads with sensible
+// fallbacks. Remove if WebKit ever fixes the underlying bug:
+// https://bugs.webkit.org/show_bug.cgi?id=315804
+function guardOptionsWrite<T>(
+  storeName: IDBStoreName,
+  op: () => Promise<T>,
+): Promise<T | undefined> {
+  if (storeName !== 'Options') return op();
+  return Promise.race([op(), new Promise<undefined>((r) => setTimeout(r, 2000))]);
+}
+
 // Export db object with the same API as before
 export const db = {
   async get<K extends IDBStoreName>(
@@ -105,10 +121,12 @@ export const db = {
     return (await dbPromise).getAll(storeName);
   },
   async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
-    return (await dbPromise).put(storeName, value);
+    const _db = await dbPromise;
+    return guardOptionsWrite(storeName, () => _db.put(storeName, value));
   },
   async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
-    return (await dbPromise).delete(storeName, key);
+    const _db = await dbPromise;
+    return guardOptionsWrite(storeName, () => _db.delete(storeName, key));
   },
 };
 
