@@ -107,44 +107,26 @@ let optionsWriteWedged = false;
 
 export const isOptionsWriteWedged = () => optionsWriteWedged;
 
-// `op` is invoked synchronously so the timeout scopes only to the readwrite
-// request itself — DB open/upgrade time is awaited by callers before they
-// hand us a sync closure, so a slow `open()` (e.g. cross-tab `blocked` event,
-// schema migration on a slow device) won't false-trip the breaker.
+// `op` is invoked synchronously (callers await `dbPromise` first), so the
+// timeout scopes only to the readwrite request, not DB open/upgrade. Once a
+// write times out we trip a page-scoped circuit breaker so the rest of init's
+// Options writes short-circuit instead of each paying the full timeout.
 function guardOptionsWrite<T>(
   storeName: IDBStoreName,
   label: string,
   op: () => Promise<T>,
 ): Promise<T | undefined> {
   if (storeName !== 'Options') return op();
-  if (optionsWriteWedged) {
-    Log._warn(`db.${label} skipped (Options store wedged)`);
-    return Promise.resolve(undefined);
-  }
-  return new Promise<T | undefined>((resolve, reject) => {
-    let settled = false;
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
+  if (optionsWriteWedged) return Promise.resolve(undefined);
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<undefined>((resolve) => {
+    timer = setTimeout(() => {
       optionsWriteWedged = true;
-      Log._warn(`db.${label} timed out; tripping Options-write circuit breaker`);
+      Log._warn(`db.${label} timed out`);
       resolve(undefined);
     }, OPTIONS_WRITE_TIMEOUT_MS);
-    op().then(
-      (v) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        resolve(v);
-      },
-      (e) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        reject(e);
-      },
-    );
   });
+  return Promise.race([op(), timeout]).finally(() => clearTimeout(timer));
 }
 
 export const db = {
@@ -163,7 +145,7 @@ export const db = {
   },
   async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
     const _db = await dbPromise;
-    return guardOptionsWrite(storeName, `delete(${storeName}/${String(key)})`, () =>
+    return guardOptionsWrite(storeName, `delete(${storeName}/${key})`, () =>
       _db.delete(storeName, key),
     );
   },

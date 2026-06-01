@@ -357,10 +357,7 @@ export async function initSaveState(overridingPageTitle?: string) {
     // `previousAppId !== appId` gate above would keep us out of this branch
     // on later loads — leaving the stale values permanent. Skipping the
     // appId commit instead lets a future non-wedged load complete the reset.
-    if (isOptionsWriteWedged()) {
-      Log._warn('App ID change reset deferred; will retry on next non-wedged load');
-      return;
-    }
+    if (isOptionsWriteWedged()) return;
     await db.put('Ids', { type: 'registrationId', id: null });
     await db.put('Ids', { type: 'userId', id: null });
     OneSignal._coreDirector._subscriptionModelStore._clear(ModelChangeTags._Hydrate);

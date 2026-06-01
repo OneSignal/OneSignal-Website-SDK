@@ -6,9 +6,18 @@ import Context from 'src/page/models/Context';
 import { type AppConfig } from 'src/shared/config/types';
 import { beforeEach, describe, expect, test, vi, type MockInstance } from 'vite-plus/test';
 
+import * as clientModule from '../database/client';
 import { db } from '../database/client';
 import { getAppState } from '../database/config';
 import * as InitHelper from './init';
+
+vi.mock('../database/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../database/client')>();
+  return {
+    ...actual,
+    isOptionsWriteWedged: vi.fn(() => false),
+  };
+});
 
 let isSubscriptionExpiringSpy: MockInstance;
 
@@ -190,5 +199,18 @@ describe('initSaveState: App ID migration', () => {
 
     const storedAppId = await db.get('Ids', 'appId');
     expect(storedAppId?.id).toBe(NEW_APP_ID);
+  });
+
+  test('defers App ID commit when Options write breaker is tripped', async () => {
+    await seedStaleState();
+    await db.put('Ids', { type: 'userId', id: 'old-user-id' });
+
+    vi.mocked(clientModule.isOptionsWriteWedged).mockReturnValueOnce(true);
+
+    await InitHelper.initSaveState();
+
+    expect((await db.get('Ids', 'appId'))?.id).toBe(OLD_APP_ID);
+    expect((await db.get('Ids', 'registrationId'))?.id).toBe('old-reg-token');
+    expect((await db.get('Ids', 'userId'))?.id).toBe('old-user-id');
   });
 });
