@@ -99,14 +99,28 @@ export const getDb = (version = VERSION) => {
 // (~30 min). Other stores and reads are unaffected, and reopening the DB
 // doesn't help. Cap Options writes with a short timeout and resolve undefined
 // on stall; the dropped values are session metadata the SW reads with sensible
-// fallbacks. Remove if WebKit ever fixes the underlying bug:
-// https://bugs.webkit.org/show_bug.cgi?id=315804
+// fallbacks. Once any write times out we trip a page-scoped circuit breaker
+// so the remaining ~7 Options writes during init short-circuit instead of
+// each paying the full timeout. Remove if WebKit ever fixes the underlying
+// bug: https://bugs.webkit.org/show_bug.cgi?id=315804
+let optionsWriteWedged = false;
+export const isOptionsWriteWedged = () => optionsWriteWedged;
+
 function guardOptionsWrite<T>(
   storeName: IDBStoreName,
   op: () => Promise<T>,
 ): Promise<T | undefined> {
   if (storeName !== 'Options') return op();
-  return Promise.race([op(), new Promise<undefined>((r) => setTimeout(r, 2000))]);
+  if (optionsWriteWedged) return Promise.resolve(undefined);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<undefined>((resolve) => {
+    timer = setTimeout(() => {
+      optionsWriteWedged = true;
+      Log._warn(`db.${storeName} timed out`);
+      resolve(undefined);
+    }, 2000);
+  });
+  return Promise.race([op(), timeout]).finally(() => clearTimeout(timer));
 }
 
 // Export db object with the same API as before
