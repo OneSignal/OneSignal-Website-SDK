@@ -93,7 +93,42 @@ export const getDb = (version = VERSION) => {
   return dbPromise;
 };
 
-// Export db object with the same API as before
+// On iOS Safari PWA after a push subscription, `readwrite` requests on the
+// `Options` object store can stall indefinitely (no success/error/abort).
+// Other stores and reads are unaffected, and reopening the DB doesn't help.
+// Without this guard, `OneSignal.init()` hangs until WebKit's watchdog
+// eventually aborts the transaction (~30 minutes). Workaround: cap Options
+// writes with a short timeout, then trip a page-scoped circuit breaker so
+// subsequent writes short-circuit. The values that fail to persist are
+// session metadata the SW reads with sensible fallbacks. Remove if WebKit
+// ever fixes the underlying bug: https://bugs.webkit.org/show_bug.cgi?id=315804
+const OPTIONS_WRITE_TIMEOUT_MS = 1500;
+let optionsWriteWedged = false;
+
+export const isOptionsWriteWedged = () => optionsWriteWedged;
+
+// `op` is invoked synchronously (callers await `dbPromise` first), so the
+// timeout scopes only to the readwrite request, not DB open/upgrade. Once a
+// write times out we trip a page-scoped circuit breaker so the rest of init's
+// Options writes short-circuit instead of each paying the full timeout.
+function guardOptionsWrite<T>(
+  storeName: IDBStoreName,
+  label: string,
+  op: () => Promise<T>,
+): Promise<T | undefined> {
+  if (storeName !== 'Options') return op();
+  if (optionsWriteWedged) return Promise.resolve(undefined);
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<undefined>((resolve) => {
+    timer = setTimeout(() => {
+      optionsWriteWedged = true;
+      Log._warn(`db.${label} timed out`);
+      resolve(undefined);
+    }, OPTIONS_WRITE_TIMEOUT_MS);
+  });
+  return Promise.race([op(), timeout]).finally(() => clearTimeout(timer));
+}
+
 export const db = {
   async get<K extends IDBStoreName>(
     storeName: K,
@@ -105,10 +140,14 @@ export const db = {
     return (await dbPromise).getAll(storeName);
   },
   async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
-    return (await dbPromise).put(storeName, value);
+    const _db = await dbPromise;
+    return guardOptionsWrite(storeName, `put(${storeName})`, () => _db.put(storeName, value));
   },
   async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
-    return (await dbPromise).delete(storeName, key);
+    const _db = await dbPromise;
+    return guardOptionsWrite(storeName, `delete(${storeName}/${key})`, () =>
+      _db.delete(storeName, key),
+    );
   },
 };
 

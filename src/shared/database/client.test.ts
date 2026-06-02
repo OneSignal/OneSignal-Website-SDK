@@ -1,8 +1,8 @@
 import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID } from '__test__/constants';
-import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { SubscriptionType } from '../subscriptions/constants';
-import { closeDb, getDb } from './client';
+import { closeDb, db, getDb, isOptionsWriteWedged } from './client';
 import { DATABASE_NAME } from './constants';
 import type * as idbLite from './idb-lite';
 import { wrapRequest } from './idb-lite';
@@ -320,6 +320,42 @@ describe('migrations', () => {
         },
       ]);
     });
+  });
+});
+
+describe('Options write timeout', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test('clears the timeout when an Options put resolves before it fires', async () => {
+    await getDb();
+    await db.put('Options', { key: 'userConsent', value: true });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  test('trips circuit breaker on Options put timeout, short-circuits subsequent writes', async () => {
+    expect(isOptionsWriteWedged()).toBe(false);
+
+    const _db = await getDb();
+    const realPut = _db.put.bind(_db);
+    vi.spyOn(_db, 'put').mockImplementation(((s: string, v: unknown) => {
+      if (s === 'Options') return new Promise(() => {});
+      return realPut(s as Parameters<typeof realPut>[0], v as never);
+    }) as typeof _db.put);
+
+    const first = db.put('Options', { key: 'isPushEnabled', value: true });
+    await vi.advanceTimersByTimeAsync(2001);
+    expect(await first).toBeUndefined();
+    expect(isOptionsWriteWedged()).toBe(true);
+
+    expect(await db.put('Options', { key: 'lastPushId', value: 'x' })).toBeUndefined();
+    await db.put('Ids', { type: 'appId', id: 'A' });
+    expect((await db.get('Ids', 'appId'))?.id).toBe('A');
   });
 });
 

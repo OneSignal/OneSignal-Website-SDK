@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SDK-4336 Repro: Page A</title>
+    <link rel="shortcut icon" href="#" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="SDK4336" />
+
+    <script src="sdks/web/v16/Dev-OneSignalSDK.page.js" defer></script>
+
+    <script>
+      console.log('!!!! [SDK-4336 PAGE A] OneSignal initialize');
+
+      function getUrlQueryParam(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+      }
+
+      // Resolve the app_id robustly. The in-page links to Page B/Page A don't
+      // carry the query string, and on an iOS standalone (home-screen) PWA the
+      // localStorage fallback isn't reliable across A->B->A navigations because
+      // storage is partitioned per context. Without a hardcoded fallback, the
+      // B->A load calls OneSignal.init with appId=null -> InvalidAppIdError.
+      const DEFAULT_APP_ID = 'b79087eb-8531-4d2d-a6f5-726f797891c7';
+      let appId = getUrlQueryParam('app_id');
+      try {
+        if (appId) localStorage.setItem('sdk4336_app_id', appId);
+        else appId = localStorage.getItem('sdk4336_app_id');
+      } catch (e) {}
+      appId = appId || DEFAULT_APP_ID;
+
+      const SERVICE_WORKER_PATH = 'push/onesignal/';
+
+      var OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function (OneSignal) {
+        const t0 = performance.now();
+        await OneSignal.init({
+          appId,
+          serviceWorkerParam: { scope: '/' + SERVICE_WORKER_PATH },
+          serviceWorkerPath: SERVICE_WORKER_PATH + 'OneSignalSDKWorker.js',
+        });
+        const elapsed = Math.round(performance.now() - t0);
+        console.log(`!!!! [SDK-4336 PAGE A] OneSignal initialized (${elapsed}ms)`);
+      });
+
+      async function requestNotificationPermission() {
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function (OneSignal) {
+          await OneSignal.Notifications.requestPermission();
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <h1>SDK-4336 Repro: Page A</h1>
+    <p>
+      <a href="./pageB.html">Go to Page B</a>
+    </p>
+    <p>
+      <button onclick="requestNotificationPermission()">Register</button>
+    </p>
+    <p>Repro steps (per the ticket):</p>
+    <ol>
+      <li>Add to Home Screen and open Page A.</li>
+      <li>Tap "Go to Page B".</li>
+      <li>Tap "Go to Page A".</li>
+      <li>Tap "Register" and accept the prompt.</li>
+      <li>Tap "Go to Page B".</li>
+      <li>Tap "Go to Page A" &mdash; <code>init()</code> should hang.</li>
+    </ol>
+  </body>
+</html>
