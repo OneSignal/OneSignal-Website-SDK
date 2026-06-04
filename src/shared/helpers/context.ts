@@ -17,9 +17,12 @@ export function getServiceWorkerManager(context: ContextInterface): ServiceWorke
 
   if (config.userConfig) {
     if (config.userConfig.path) {
-      serviceWorkerManagerConfig.workerPath = new Path(
-        `${config.userConfig.path}${config.userConfig.serviceWorkerPath}`,
-      );
+      // Join with exactly one slash. A leading "//" forms a protocol-relative
+      // URL, which the browser resolves to a different origin and rejects with a
+      // SecurityError when registering the worker.
+      const basePath = config.userConfig.path.replace(/\/+$/, '');
+      const workerPath = (config.userConfig.serviceWorkerPath ?? '').replace(/^\/+/, '');
+      serviceWorkerManagerConfig.workerPath = new Path(`${basePath}/${workerPath}`);
     }
     if (config.userConfig.serviceWorkerParam) {
       serviceWorkerManagerConfig.registrationOptions = config.userConfig.serviceWorkerParam;
