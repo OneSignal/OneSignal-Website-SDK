@@ -93,38 +93,32 @@ export const getDb = (version = VERSION) => {
   return dbPromise;
 };
 
-// On iOS Safari PWA after a push subscription, `readwrite` requests on the
-// `Options` object store can stall indefinitely (no success/error/abort).
-// Other stores and reads are unaffected, and reopening the DB doesn't help.
-// Without this guard, `OneSignal.init()` hangs until WebKit's watchdog
-// eventually aborts the transaction (~30 minutes). Workaround: cap Options
-// writes with a short timeout, then trip a page-scoped circuit breaker so
-// subsequent writes short-circuit. The values that fail to persist are
-// session metadata the SW reads with sensible fallbacks. Remove if WebKit
-// ever fixes the underlying bug: https://bugs.webkit.org/show_bug.cgi?id=315804
-const OPTIONS_WRITE_TIMEOUT_MS = 1500;
-let optionsWriteWedged = false;
+// On iOS Safari PWA after a push subscription, `readwrite` requests can stall
+// indefinitely (no success/error/abort) across the whole database, not just a
+// single store; reads are unaffected and reopening the DB doesn't help. Without
+// this guard, `OneSignal.init()` and the operation queue hang until WebKit's
+// watchdog eventually aborts the transaction (~30 minutes). Workaround: cap each
+// readwrite op with a short timeout, then trip a page-scoped circuit breaker so
+// subsequent writes short-circuit. Dropped values are either session metadata
+// the SW re-derives or queued operations whose server-side effects are
+// idempotent and retried on the next load. Remove if WebKit ever fixes the
+// underlying bug: https://bugs.webkit.org/show_bug.cgi?id=315804
+const READWRITE_TIMEOUT_MS = 1500;
+let readwriteWedged = false;
 
-export const isOptionsWriteWedged = () => optionsWriteWedged;
+export const isReadwriteWedged = () => readwriteWedged;
 
 // `op` is invoked synchronously (callers await `dbPromise` first), so the
-// timeout scopes only to the readwrite request, not DB open/upgrade. Once a
-// write times out we trip a page-scoped circuit breaker so the rest of init's
-// Options writes short-circuit instead of each paying the full timeout.
-function guardOptionsWrite<T>(
-  storeName: IDBStoreName,
-  label: string,
-  op: () => Promise<T>,
-): Promise<T | undefined> {
-  if (storeName !== 'Options') return op();
-  if (optionsWriteWedged) return Promise.resolve(undefined);
+// timeout scopes only to the readwrite request, not DB open/upgrade.
+function guardReadwrite<T>(label: string, op: () => Promise<T>): Promise<T | undefined> {
+  if (readwriteWedged) return Promise.resolve(undefined);
   let timer: ReturnType<typeof setTimeout>;
   const timeout = new Promise<undefined>((resolve) => {
     timer = setTimeout(() => {
-      optionsWriteWedged = true;
+      readwriteWedged = true;
       Log._warn(`db.${label} timed out`);
       resolve(undefined);
-    }, OPTIONS_WRITE_TIMEOUT_MS);
+    }, READWRITE_TIMEOUT_MS);
   });
   return Promise.race([op(), timeout]).finally(() => clearTimeout(timer));
 }
@@ -141,18 +135,17 @@ export const db = {
   },
   async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
     const _db = await dbPromise;
-    return guardOptionsWrite(storeName, `put(${storeName})`, () => _db.put(storeName, value));
+    return guardReadwrite(`put(${storeName})`, () => _db.put(storeName, value));
   },
   async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
     const _db = await dbPromise;
-    return guardOptionsWrite(storeName, `delete(${storeName}/${key})`, () =>
-      _db.delete(storeName, key),
-    );
+    return guardReadwrite(`delete(${storeName}/${key})`, () => _db.delete(storeName, key));
   },
 };
 
 export const clearStore = async <K extends IDBStoreName>(storeName: K) => {
-  return (await dbPromise).clear(storeName);
+  const _db = await dbPromise;
+  return guardReadwrite(`clear(${storeName})`, () => _db.clear(storeName));
 };
 
 export const getObjectStoreNames = async () => {

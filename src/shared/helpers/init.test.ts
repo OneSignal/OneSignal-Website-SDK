@@ -15,7 +15,7 @@ vi.mock('../database/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../database/client')>();
   return {
     ...actual,
-    isOptionsWriteWedged: vi.fn(() => false),
+    isReadwriteWedged: vi.fn(() => false),
   };
 });
 
@@ -201,11 +201,11 @@ describe('initSaveState: App ID migration', () => {
     expect(storedAppId?.id).toBe(NEW_APP_ID);
   });
 
-  test('defers App ID commit when Options write breaker is tripped', async () => {
+  test('defers App ID commit when readwrite breaker is tripped', async () => {
     await seedStaleState();
     await db.put('Ids', { type: 'userId', id: 'old-user-id' });
 
-    vi.mocked(clientModule.isOptionsWriteWedged).mockReturnValueOnce(true);
+    vi.mocked(clientModule.isReadwriteWedged).mockReturnValueOnce(true);
 
     await InitHelper.initSaveState();
 
