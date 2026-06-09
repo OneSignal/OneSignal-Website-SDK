@@ -45,6 +45,14 @@
         });
         const elapsed = Math.round(performance.now() - t0);
         console.log(`!!!! [SDK-4336 PAGE A] OneSignal initialized (${elapsed}ms)`);
+
+        try {
+          await OneSignal.login('sdk4336-user');
+          OneSignal.User.addTag('sdk4336_load', String(Date.now()));
+          console.log('!!!! [SDK-4336 PAGE A] login + addTag enqueued');
+        } catch (e) {
+          console.log('!!!! [SDK-4336 PAGE A] login/addTag error', e);
+        }
       });
 
       async function requestNotificationPermission() {
