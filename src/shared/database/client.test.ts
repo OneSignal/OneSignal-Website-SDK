@@ -2,7 +2,7 @@ import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID } from '__test__/constants';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { SubscriptionType } from '../subscriptions/constants';
-import { closeDb, db, getDb, isOptionsWriteWedged } from './client';
+import { closeDb, db, getDb, isReadwriteWedged } from './client';
 import { DATABASE_NAME } from './constants';
 import type * as idbLite from './idb-lite';
 import { wrapRequest } from './idb-lite';
@@ -323,7 +323,7 @@ describe('migrations', () => {
   });
 });
 
-describe('Options write timeout', () => {
+describe('db timeout', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   });
@@ -332,30 +332,41 @@ describe('Options write timeout', () => {
     vi.useRealTimers();
   });
 
-  test('clears the timeout when an Options put resolves before it fires', async () => {
+  test('clears the timeout when a write resolves before it fires', async () => {
     await getDb();
     await db.put('Options', { key: 'userConsent', value: true });
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  test('trips circuit breaker on Options put timeout, short-circuits subsequent writes', async () => {
-    expect(isOptionsWriteWedged()).toBe(false);
+  test('trips circuit breaker on a wedged write and short-circuits every op, reads included', async () => {
+    expect(isReadwriteWedged()).toBe(false);
 
     const _db = await getDb();
     const realPut = _db.put.bind(_db);
     vi.spyOn(_db, 'put').mockImplementation(((s: string, v: unknown) => {
-      if (s === 'Options') return new Promise(() => {});
+      if (s === 'operations') return new Promise(() => {});
       return realPut(s as Parameters<typeof realPut>[0], v as never);
     }) as typeof _db.put);
 
-    const first = db.put('Options', { key: 'isPushEnabled', value: true });
+    const first = db.put('operations', {
+      modelId: '1',
+      modelName: 'operations',
+      name: 'create-subscription',
+    });
     await vi.advanceTimersByTimeAsync(2001);
     expect(await first).toBeUndefined();
-    expect(isOptionsWriteWedged()).toBe(true);
+    expect(isReadwriteWedged()).toBe(true);
 
+    // Once wedged, writes to any store short-circuit to a no-op.
     expect(await db.put('Options', { key: 'lastPushId', value: 'x' })).toBeUndefined();
-    await db.put('Ids', { type: 'appId', id: 'A' });
-    expect((await db.get('Ids', 'appId'))?.id).toBe('A');
+    expect(await db.put('Ids', { type: 'appId', id: 'A' })).toBeUndefined();
+    expect(await db.delete('Options', 'lastPushId')).toBeUndefined();
+
+    // A wedged write leaves the IndexedDB txn open and blocks same-store reads,
+    // so reads must short-circuit too: get -> undefined, getAll -> []. Without
+    // this, init() hangs on the first post-wedge read of the wedged store.
+    expect(await db.get('Ids', 'appId')).toBeUndefined();
+    expect(await db.getAll('Options')).toEqual([]);
   });
 });
 
