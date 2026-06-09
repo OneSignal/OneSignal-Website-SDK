@@ -323,7 +323,7 @@ describe('migrations', () => {
   });
 });
 
-describe('readwrite timeout', () => {
+describe('db timeout', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   });
@@ -338,7 +338,7 @@ describe('readwrite timeout', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  test('trips circuit breaker on a wedged write and short-circuits writes to every store', async () => {
+  test('trips circuit breaker on a wedged write and short-circuits every op, reads included', async () => {
     expect(isReadwriteWedged()).toBe(false);
 
     const _db = await getDb();
@@ -357,14 +357,16 @@ describe('readwrite timeout', () => {
     expect(await first).toBeUndefined();
     expect(isReadwriteWedged()).toBe(true);
 
-    // Once wedged, writes to any store (not just the one that timed out)
-    // short-circuit to a no-op instead of hanging.
+    // Once wedged, writes to any store short-circuit to a no-op.
     expect(await db.put('Options', { key: 'lastPushId', value: 'x' })).toBeUndefined();
     expect(await db.put('Ids', { type: 'appId', id: 'A' })).toBeUndefined();
     expect(await db.delete('Options', 'lastPushId')).toBeUndefined();
 
-    // Reads are unaffected; the skipped writes never persisted.
+    // A wedged write leaves the IndexedDB txn open and blocks same-store reads,
+    // so reads must short-circuit too: get -> undefined, getAll -> []. Without
+    // this, init() hangs on the first post-wedge read of the wedged store.
     expect(await db.get('Ids', 'appId')).toBeUndefined();
+    expect(await db.getAll('Options')).toEqual([]);
   });
 });
 
