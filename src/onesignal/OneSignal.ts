@@ -1,7 +1,7 @@
 import type Bell from 'src/page/bell/Bell';
 import { getAppConfig } from 'src/shared/config/app';
 import type { AppConfig, AppUserConfig } from 'src/shared/config/types';
-import { db, dbPromise } from 'src/shared/database/client';
+import { dbPromise } from 'src/shared/database/client';
 import { getConsentGiven, isConsentRequiredButNotGiven } from 'src/shared/database/config';
 import { getSubscription } from 'src/shared/database/subscription';
 import { windowEnvString } from 'src/shared/environment/detect';
@@ -20,6 +20,7 @@ import {
 import {
   getConsentRequired,
   removeLegacySubscriptionOptions,
+  setConsentGiven as setStorageConsentGiven,
   setConsentRequired as setStorageConsentRequired,
 } from 'src/shared/helpers/localStorage';
 import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
@@ -219,7 +220,7 @@ export default class OneSignal {
 
     // for quick access as to not wait for async operations / loading from DB
     OneSignal._consentGiven = consent;
-    await db.put('Options', { key: 'userConsent', value: consent });
+    setStorageConsentGiven(consent);
 
     if (consent && OneSignal._pendingInit) await OneSignal._delayedInit();
   }

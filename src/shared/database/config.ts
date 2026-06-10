@@ -1,4 +1,8 @@
-import { getConsentRequired } from '../helpers/localStorage';
+import {
+  getConsentGiven as getStorageConsentGiven,
+  getConsentRequired,
+  setConsentGiven as setStorageConsentGiven,
+} from '../helpers/localStorage';
 import Log from '../libraries/Log';
 import { db, getIdsValue, getOptionsValue } from './client';
 import type { AppState } from './types';
@@ -69,9 +73,15 @@ export const setAppState = async (appState: AppState) => {
     });
 };
 
-// make sure to also set OneSignal._consentGiven when updating 'userConsent'
+// make sure to also set OneSignal._consentGiven when updating consent
 export const getConsentGiven = async () => {
-  return (await getOptionsValue<boolean>('userConsent')) ?? false;
+  const stored = getStorageConsentGiven();
+  if (stored !== null) return stored;
+
+  // Migrate consent persisted by older SDK versions that wrote it to IndexedDB.
+  const legacy = (await getOptionsValue<boolean>('userConsent')) ?? false;
+  setStorageConsentGiven(legacy);
+  return legacy;
 };
 
 export const isConsentRequiredButNotGiven = () => {
