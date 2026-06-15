@@ -227,7 +227,7 @@ export default class OneSignal {
 
   // TODO: Keeping this async due to api.json spec used by web shim codegen wrappers
   // But ideally this should be sync.
-  // eslint-disable-next-line @typescript-eslint(require-await)
+  // oxlint-disable-next-line typescript/require-await
   static async setConsentRequired(requiresConsent: boolean): Promise<void> {
     logMethodCall('setConsentRequired', { requiresConsent });
 
