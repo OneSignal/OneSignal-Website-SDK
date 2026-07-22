@@ -122,7 +122,7 @@ export default class Dialog {
       const imagePath = UNBLOCK_IMAGES[browserName];
       if (imagePath) {
         const imageUrl = STATIC_RESOURCES_URL + imagePath;
-        instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}" alt="How to unblock notifications"></a>`;
+        instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}" alt="Unblock notifications"></a>`;
       }
     }
 
