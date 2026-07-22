@@ -116,7 +116,7 @@ export type BellSize = 'small' | 'medium' | 'large';
 export type BellPosition = 'bottom-left' | 'bottom-right';
 
 export interface BellText {
-  'launcher.label'?: string;
+  'launcher.button.aria-label'?: string;
   'tip.state.unsubscribed': string;
   'tip.state.subscribed': string;
   'tip.state.blocked': string;

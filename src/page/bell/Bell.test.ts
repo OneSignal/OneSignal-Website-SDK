@@ -170,7 +170,7 @@ describe('Bell', () => {
         enable: true,
         showLauncherAfter: 0,
         // @ts-expect-error - partial text config
-        text: { 'launcher.label': 'Notification preferences' },
+        text: { 'launcher.button.aria-label': 'Notification preferences' },
       });
       await bell._create();
 

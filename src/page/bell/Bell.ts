@@ -34,7 +34,7 @@ const VALID_THEMES: readonly string[] = ['default', 'inverse'];
 const DEFAULT_LAUNCHER_LABEL = 'Manage notifications';
 
 const DEFAULT_TEXT: BellText = {
-  'launcher.label': DEFAULT_LAUNCHER_LABEL,
+  'launcher.button.aria-label': DEFAULT_LAUNCHER_LABEL,
   'tip.state.unsubscribed': 'Subscribe to notifications',
   'tip.state.subscribed': "You're subscribed to notifications",
   'tip.state.blocked': "You've blocked notifications",
@@ -218,7 +218,7 @@ export default class Bell {
     );
     this._button._element?.setAttribute(
       'aria-label',
-      this._options.text['launcher.label'] || DEFAULT_LAUNCHER_LABEL,
+      this._options.text['launcher.button.aria-label'] || DEFAULT_LAUNCHER_LABEL,
     );
     addDomElement(
       this._launcher._selector,
