@@ -170,11 +170,11 @@ describe('Bell', () => {
         enable: true,
         showLauncherAfter: 0,
         // @ts-expect-error - partial text config
-        text: { 'launcher.label': 'Διαχείριση ειδοποιήσεων' },
+        text: { 'launcher.label': 'Notification preferences' },
       });
       await bell._create();
 
-      expect(bell._button._element!.getAttribute('aria-label')).toBe('Διαχείριση ειδοποιήσεων');
+      expect(bell._button._element!.getAttribute('aria-label')).toBe('Notification preferences');
     });
 
     test('bell svg is hidden from the accessibility tree', async () => {
