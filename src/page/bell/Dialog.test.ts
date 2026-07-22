@@ -113,6 +113,7 @@ describe('Dialog', () => {
     await dialog._updateContent();
     const img = dialog._element!.querySelector('.push-notification-icon img');
     expect(img?.getAttribute('src')).toBe('https://example.com/icon.png');
+    expect(img?.getAttribute('alt')).toBe('');
   });
 
   test('_updateContent uses default icon class when no custom icon', async () => {
@@ -144,6 +145,8 @@ describe('Dialog', () => {
     );
     expect(body.querySelector('.instructions')).not.toBeNull();
     expect(body.querySelector('img')?.src).toContain('chrome-unblock.jpg');
+    // the alt gives the wrapping icon-only link its accessible name
+    expect(body.querySelector('a img')?.getAttribute('alt')).toBeTruthy();
   });
 
   test('blocked content shows mobile instructions for Chrome mobile', async () => {

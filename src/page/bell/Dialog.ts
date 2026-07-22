@@ -89,7 +89,7 @@ export default class Dialog {
 
     const iconHtml =
       imageUrl !== 'default-icon'
-        ? `<div class="push-notification-icon"><img></div>`
+        ? `<div class="push-notification-icon"><img alt=""></div>`
         : `<div class="push-notification-icon push-notification-icon-default"></div>`;
 
     const isSubscribed = this._bell._state === BellState._Subscribed;
@@ -122,7 +122,7 @@ export default class Dialog {
       const imagePath = UNBLOCK_IMAGES[browserName];
       if (imagePath) {
         const imageUrl = STATIC_RESOURCES_URL + imagePath;
-        instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a>`;
+        instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}" alt="Unblock notifications"></a>`;
       }
     }
 
