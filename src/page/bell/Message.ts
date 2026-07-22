@@ -64,6 +64,6 @@ export default class Message {
 
   _getTipForState(): string {
     const key = TIP_KEYS[this._bell._state];
-    return key ? this._bell._options.text[key] : '';
+    return key ? (this._bell._options.text[key] ?? '') : '';
   }
 }

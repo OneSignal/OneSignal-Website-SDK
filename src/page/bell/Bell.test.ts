@@ -156,6 +156,36 @@ describe('Bell', () => {
       );
     }
 
+    test('launcher button has a default accessible name', async () => {
+      mockCreateDeps();
+      const bell = new Bell({ enable: true, showLauncherAfter: 0 });
+      await bell._create();
+
+      expect(bell._button._element!.getAttribute('aria-label')).toBe('Manage notifications');
+    });
+
+    test('launcher button accessible name is configurable via text', async () => {
+      mockCreateDeps();
+      const bell = new Bell({
+        enable: true,
+        showLauncherAfter: 0,
+        // @ts-expect-error - partial text config
+        text: { 'launcher.label': 'Διαχείριση ειδοποιήσεων' },
+      });
+      await bell._create();
+
+      expect(bell._button._element!.getAttribute('aria-label')).toBe('Διαχείριση ειδοποιήσεων');
+    });
+
+    test('bell svg is hidden from the accessibility tree', async () => {
+      mockCreateDeps();
+      const bell = new Bell({ enable: true, showLauncherAfter: 0 });
+      await bell._create();
+
+      const svg = bell._button._element!.querySelector('svg')!;
+      expect(svg.getAttribute('aria-hidden')).toBe('true');
+    });
+
     test('mouseleave on launcher blurs the button', async () => {
       mockCreateDeps();
       const bell = new Bell({ enable: true, showLauncherAfter: 0 });
