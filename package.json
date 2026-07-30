@@ -67,7 +67,7 @@
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.5"
   },
   "config": {
-    "sdkVersion": "160608"
+    "sdkVersion": "160609"
   },
   "size-limit": [
     {
