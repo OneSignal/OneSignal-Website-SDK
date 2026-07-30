@@ -10,9 +10,9 @@ import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import type { OutcomesConfig } from '../outcomes/types';
-import { SessionOrigin, SessionStatus } from '../session/constants';
+import { SessionStatus } from '../session/constants';
 import { initializeNewSession } from '../session/helpers';
-import type { Session, SessionOriginValue } from '../session/types';
+import type { Session } from '../session/types';
 import { getBaseUrl } from './general';
 import { getConfigAttribution } from './OutcomesHelper';
 
@@ -43,7 +43,6 @@ export async function upsertSession(
   subscriptionId: string,
   sessionThresholdInSeconds: number,
   sendOnFocusEnabled: boolean,
-  sessionOrigin: SessionOriginValue,
   outcomesConfig: OutcomesConfig,
 ): Promise<void> {
   const existingSession = await getCurrentSession();
@@ -59,13 +58,7 @@ export async function upsertSession(
     }
 
     await db.put('Sessions', session);
-    await sendOnSessionCallIfNotPlayerCreate(
-      appId,
-      onesignalId,
-      subscriptionId,
-      sessionOrigin,
-      session,
-    );
+    await sendOnSessionCall(appId, onesignalId, subscriptionId, session);
     return;
   }
 
@@ -107,13 +100,7 @@ export async function upsertSession(
   );
   const session: Session = initializeNewSession({ appId });
   await db.put('Sessions', session);
-  await sendOnSessionCallIfNotPlayerCreate(
-    appId,
-    onesignalId,
-    subscriptionId,
-    sessionOrigin,
-    session,
-  );
+  await sendOnSessionCall(appId, onesignalId, subscriptionId, session);
 }
 
 export async function deactivateSession(
@@ -176,21 +163,12 @@ export async function deactivateSession(
   return cancelableFinalize;
 }
 
-/**
- * Updates session only if it isn't from the result of a user create,
- * as it already initializes it with the first session.
- */
-async function sendOnSessionCallIfNotPlayerCreate(
+async function sendOnSessionCall(
   appId: string,
   onesignalId: string,
   subscriptionId: string,
-  sessionOrigin: SessionOriginValue,
   session: Session,
 ) {
-  if (sessionOrigin === SessionOrigin._UserCreate) {
-    return;
-  }
-
   void db.put('Sessions', session);
   void resetSentUniqueOutcomes();
 

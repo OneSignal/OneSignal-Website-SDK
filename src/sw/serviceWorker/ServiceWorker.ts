@@ -402,7 +402,6 @@ async function updateSessionBasedOnHasActive(
       options.subscriptionId,
       options.sessionThreshold,
       options.enableSessionDuration,
-      options.sessionOrigin,
       options.outcomesConfig,
     );
   } else {

@@ -246,7 +246,6 @@ export class SessionManager implements ISessionManager {
     if (supportsServiceWorkers()) {
       this._setupSessionEventListeners();
     } else {
-      this._onSessionSent = sessionOrigin === SessionOrigin._UserCreate;
       void OneSignal._emitter._emit(OneSignal.EVENTS.SESSION_STARTED);
     }
   }
