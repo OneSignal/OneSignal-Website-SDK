@@ -1,6 +1,7 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
+import { setUpdateUserResponse, updateUserFn } from '__test__/support/helpers/requests';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
@@ -614,6 +615,7 @@ describe('ServiceWorker', () => {
 
       test('with non-safari client', async () => {
         await putNotificationClickedForOutcomes(appId, clickOutcome);
+        setUpdateUserResponse();
 
         const event = new ExtendableMessageEvent('message', {
           command: WorkerMessengerCommand._SessionUpsert,
@@ -638,7 +640,37 @@ describe('ServiceWorker', () => {
             status: SessionStatus._Active,
           }),
         );
+
+        expect(updateUserFn).toHaveBeenCalledWith({
+          refresh_device_metadata: true,
+          deltas: { session_count: 1 },
+        });
       });
+
+      // Creating a user does not seed session_count, so a newly created user needs this
+      // increment just as much as a returning one.
+      test.each([SessionOrigin._UserCreate, SessionOrigin._UserNewSession])(
+        'sends the on_session increment for session origin %i',
+        async (sessionOrigin) => {
+          setUpdateUserResponse();
+
+          const event = new ExtendableMessageEvent('message', {
+            command: WorkerMessengerCommand._SessionUpsert,
+            payload: {
+              ...baseMessagePayload,
+              isSafari: false,
+              sessionOrigin,
+            } satisfies UpsertOrDeactivateSessionPayload,
+          });
+          await dispatchEvent(event);
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect(updateUserFn).toHaveBeenCalledWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
+        },
+      );
     });
 
     describe('session deactivate event', () => {
