@@ -21,6 +21,7 @@ import {
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel, updatePropertiesModel } from '__test__/support/helpers/setup';
 import { getPushToken, setPushToken } from 'src/shared/database/subscription';
+import { IDManager } from 'src/shared/managers/IDManager';
 import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
@@ -489,6 +490,61 @@ describe('LoginUserOperationExecutor', () => {
               device_model: '',
               device_os: DEVICE_OS,
               id: SUB_ID,
+              sdk: __VERSION__,
+              type: mockSubscriptionOpInfo.type,
+              token: mockSubscriptionOpInfo.token,
+            },
+          ],
+        }),
+      );
+    });
+
+    // The backend rejects local IDs as invalid UUIDs, so a transfer op whose
+    // subscription ID was not translated yet must not add it to the payload.
+    test('does not send a subscription with only a local ID when transferring', async () => {
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID,
+      });
+      const executor = getExecutor();
+
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
+
+      const transferSubOp = new TransferSubscriptionOperation(
+        APP_ID,
+        ONESIGNAL_ID,
+        IDManager._createLocalId(),
+      );
+
+      await executor._execute([loginOp, transferSubOp]);
+
+      expect(createUserFn).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: [] }));
+    });
+
+    test('omits the id but keeps the subscription data when the transfer ID is local', async () => {
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID,
+      });
+      const executor = getExecutor();
+
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
+
+      const localSubId = IDManager._createLocalId();
+      const createSubOp = new CreateSubscriptionOperation({
+        ...mockSubscriptionOpInfo,
+        subscriptionId: localSubId,
+      });
+      const transferSubOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, localSubId);
+
+      await executor._execute([loginOp, createSubOp, transferSubOp]);
+
+      expect(createUserFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subscriptions: [
+            {
+              device_model: '',
+              device_os: DEVICE_OS,
               sdk: __VERSION__,
               type: mockSubscriptionOpInfo.type,
               token: mockSubscriptionOpInfo.token,

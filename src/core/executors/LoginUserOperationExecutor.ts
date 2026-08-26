@@ -3,6 +3,7 @@ import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operati
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
+import { IDManager } from 'src/shared/managers/IDManager';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
@@ -289,6 +290,11 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       case operation instanceof TransferSubscriptionOperation: {
         const subscriptionId = operation._subscriptionId;
+
+        // A local ID means the subscription does not exist on the backend yet,
+        // so there is nothing to transfer and the backend rejects local IDs as
+        // invalid UUIDs. A grouped create operation still creates it.
+        if (IDManager._isLocalId(subscriptionId)) return currentSubs;
 
         return {
           ...currentSubs,
