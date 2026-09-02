@@ -4,22 +4,8 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OneSignal Dev — SDK-4180 Safari VAPID Test</title>
+    <title>OneSignal Dev — SDK-5014 Local Subscription ID Repro</title>
     <style>
-      .in-app-notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 16px 24px;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        max-width: 350px;
-        z-index: 10000;
-        animation: slideIn 0.3s ease-out;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      }
       * {
         box-sizing: border-box;
       }
@@ -78,7 +64,7 @@
         font-size: 12px;
         padding: 16px;
         border-radius: 8px;
-        max-height: 300px;
+        max-height: 340px;
         overflow-y: auto;
         white-space: pre-wrap;
         word-break: break-all;
@@ -111,11 +97,11 @@
         font-size: 12px;
         font-weight: 600;
       }
-      .tag-legacy {
+      .tag-local {
         background: #ffc9c9;
         color: #c92a2a;
       }
-      .tag-vapid {
+      .tag-real {
         background: #b2f2bb;
         color: #2b8a3e;
       }
@@ -125,18 +111,36 @@
       }
     </style>
     <script>
-      // set can a query param ?app_id=your_app_id OR
+      // set a query param ?app_id=your_app_id OR
       // create an .env file and set VITE_APP_ID to your app id
       const appId = new URLSearchParams(window.location.search).get('app_id') || '%VITE_APP_ID%';
+
+      // Log every Create User request and response before the SDK loads,
+      // so the payload with the subscription IDs is visible on the page.
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = async (input, init) => {
+        const url = typeof input === 'string' ? input : input.url;
+        const isCreateUser = /\/apps\/[^/]+\/users$/.test(url) && init?.method === 'POST';
+        if (isCreateUser) {
+          window.__logToPage?.('POST ' + url, 'info');
+          window.__logToPage?.('request body: ' + init.body, 'info');
+        }
+        const response = await originalFetch(input, init);
+        if (isCreateUser) {
+          const clone = response.clone();
+          const text = await clone.text();
+          const cls = response.ok ? 'success' : 'error';
+          window.__logToPage?.('response ' + response.status + ': ' + text, cls);
+        }
+        return response;
+      };
 
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function (OneSignal) {
         OneSignal.Debug.setLogLevel('trace');
-        OneSignal._isNewVisitor = true;
 
         OneSignal.init({
           appId,
-          safari_web_id: 'web.onesignal.auto.6187ce57-f346-4a86-93e4-7d70d494c000',
           notifyButton: {
             enable: true,
             prenotify: true,
@@ -147,44 +151,46 @@
     </script>
   </head>
   <body>
+    <h1>SDK-5014 — local subscription ID in Create User</h1>
+    <p class="subtitle">
+      Repro for the bug where a <code>local-*</code> placeholder subscription ID reaches the backend
+      and gets a 400 response.
+    </p>
+
     <div class="card">
-      <h3>Browser & Safari Push Info</h3>
+      <h3>SDK State</h3>
       <table>
         <tr>
-          <td>User Agent</td>
-          <td id="ua">—</td>
+          <td>Push subscription ID</td>
+          <td id="sub-id">—</td>
         </tr>
         <tr>
-          <td>window.safari exists</td>
-          <td id="safari-exists">—</td>
+          <td>ID type</td>
+          <td id="sub-id-type"><span class="tag tag-unknown">unknown</span></td>
         </tr>
         <tr>
-          <td>Legacy permission state</td>
-          <td id="legacy-perm">—</td>
+          <td>External ID</td>
+          <td id="external-id">—</td>
         </tr>
         <tr>
-          <td>Legacy deviceToken</td>
-          <td id="legacy-token">—</td>
+          <td>OneSignal ID</td>
+          <td id="onesignal-id">—</td>
         </tr>
         <tr>
           <td>Notification.permission</td>
           <td id="notif-perm">—</td>
         </tr>
-        <tr>
-          <td>PushSubscriptionOptions</td>
-          <td id="vapid-support">—</td>
-        </tr>
-        <tr>
-          <td>Expected push path</td>
-          <td id="push-path">—</td>
-        </tr>
       </table>
     </div>
 
     <div class="card">
-      <h3>Actions</h3>
-      <button class="btn-primary" id="request-perm">Request Permission</button>
-      <button class="btn-secondary" id="refresh-info">Refresh Info</button>
+      <h3>Repro Steps (run in order)</h3>
+      <button class="btn-primary" id="step-subscribe">1. Subscribe</button>
+      <button class="btn-primary" id="step-seed">2. Seed stuck local ID</button>
+      <button class="btn-primary" id="step-login">3. Login</button>
+      <br />
+      <button class="btn-secondary" id="refresh-state">Refresh state</button>
+      <button class="btn-secondary" id="reset-sdk">Reset SDK state</button>
     </div>
 
     <div class="card">
@@ -203,71 +209,100 @@
         el.appendChild(span);
         el.scrollTop = el.scrollHeight;
       };
+      window.__logToPage = log;
 
-      function refreshInfo() {
-        $('ua').textContent = navigator.userAgent;
+      // ModelChangeTags._NoPropogate: the change enqueues no operation, which
+      // simulates a subscription whose create operation was dropped.
+      const NO_PROPOGATE = 1;
 
-        const hasSafari =
-          typeof window.safari !== 'undefined' &&
-          typeof window.safari.pushNotification !== 'undefined';
-        $('safari-exists').textContent = hasSafari ? 'Yes' : 'No';
+      const getPushModel = () => OneSignal._coreDirector._getPushSubscriptionModel();
 
-        if (hasSafari) {
-          try {
-            const safariWebId =
-              OneSignal?.config?.safariWebId ||
-              'web.onesignal.auto.6187ce57-f346-4a86-93e4-7d70d494c000';
-            const perm = window.safari.pushNotification.permission(safariWebId);
-            $('legacy-perm').textContent = perm.permission;
-            $('legacy-token').textContent = perm.deviceToken || '(null)';
-
-            if (perm.permission === 'granted' && perm.deviceToken) {
-              $('push-path').innerHTML =
-                '<span class="tag tag-legacy">Legacy Safari Push</span> (existing subscriber)';
-            } else {
-              $('push-path').innerHTML =
-                '<span class="tag tag-vapid">Standard VAPID Push</span> (new user)';
-            }
-          } catch (e) {
-            $('legacy-perm').textContent = 'Error: ' + e.message;
-            $('legacy-token').textContent = '—';
+      async function refreshState() {
+        try {
+          const model = await getPushModel();
+          const subId = model?.id;
+          $('sub-id').textContent = subId || '(no push subscription model)';
+          if (subId) {
+            $('sub-id-type').innerHTML = subId.startsWith('local-')
+              ? '<span class="tag tag-local">local placeholder</span>'
+              : '<span class="tag tag-real">server-assigned</span>';
+          } else {
+            $('sub-id-type').innerHTML = '<span class="tag tag-unknown">unknown</span>';
           }
-        } else {
-          $('legacy-perm').textContent = 'N/A (not Safari)';
-          $('legacy-token').textContent = 'N/A';
-          const isVapid = typeof PushSubscriptionOptions !== 'undefined';
-          $('push-path').innerHTML = isVapid
-            ? '<span class="tag tag-vapid">Standard VAPID Push</span>'
-            : '<span class="tag tag-unknown">Push not supported</span>';
+          const identity = OneSignal._coreDirector._getIdentityModel();
+          $('external-id').textContent = identity._externalId || '(anonymous)';
+          $('onesignal-id').textContent = identity._onesignalId || '—';
+        } catch (e) {
+          log('State read failed: ' + e.message, 'error');
         }
-
-        const vapidSupport = typeof PushSubscriptionOptions !== 'undefined';
-        $('vapid-support').textContent = vapidSupport ? 'Supported' : 'Not available';
         $('notif-perm').textContent =
           typeof Notification !== 'undefined' ? Notification.permission : 'N/A';
       }
 
-      $('request-perm').addEventListener('click', async () => {
-        log('Requesting push permission...', 'info');
+      $('step-subscribe').addEventListener('click', async () => {
+        log('Step 1: request push permission...', 'info');
         try {
           await OneSignal.Notifications.requestPermission();
-          log('Permission granted!', 'success');
+          log('Permission result: ' + Notification.permission, 'success');
+          log('Wait for the subscription ID to become server-assigned, then run step 2.', 'info');
         } catch (e) {
           log('Error: ' + e.message, 'error');
         }
-        refreshInfo();
+        refreshState();
       });
 
-      $('refresh-info').addEventListener('click', refreshInfo);
+      $('step-seed').addEventListener('click', async () => {
+        log('Step 2: seed a stuck local subscription ID...', 'info');
+        try {
+          const model = await getPushModel();
+          if (!model) {
+            log('No push subscription model. Run step 1 first.', 'error');
+            return;
+          }
+          const localId = 'local-' + crypto.randomUUID();
+          model._setProperty('id', localId, NO_PROPOGATE);
+          log('Subscription ID is now: ' + localId, 'success');
+          log('No pending operation can translate this ID. Run step 3.', 'info');
+        } catch (e) {
+          log('Error: ' + e.message, 'error');
+        }
+        refreshState();
+      });
+
+      $('step-login').addEventListener('click', async () => {
+        const externalId = 'sdk5014-repro-' + Math.random().toString(36).slice(2, 8);
+        log('Step 3: OneSignal.login("' + externalId + '")...', 'info');
+        log('Watch the Create User request below for the subscriptions array.', 'info');
+        try {
+          await OneSignal.login(externalId);
+          log('login() resolved', 'success');
+        } catch (e) {
+          log('login() rejected: ' + e.message, 'error');
+        }
+        refreshState();
+      });
+
+      $('refresh-state').addEventListener('click', refreshState);
+
+      $('reset-sdk').addEventListener('click', async () => {
+        log('Reset: unregister service workers and delete the SDK database...', 'info');
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((r) => r.unregister()));
+        await new Promise((resolve) => {
+          const req = indexedDB.deleteDatabase('ONE_SIGNAL_SDK_DB');
+          req.onsuccess = req.onerror = req.onblocked = resolve;
+        });
+        log('Done. The page will reload.', 'success');
+        setTimeout(() => location.reload(), 500);
+      });
 
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(() => {
         log('OneSignal initialized', 'success');
-        refreshInfo();
+        refreshState();
       });
 
-      // Initial info on page load
-      setTimeout(refreshInfo, 500);
+      setTimeout(refreshState, 500);
     </script>
   </body>
 </html>
