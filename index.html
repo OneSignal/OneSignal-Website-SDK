@@ -316,9 +316,21 @@
       });
 
       window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(() => {
+      OneSignalDeferred.push((OneSignal) => {
         log('OneSignal initialized', 'success');
         refreshState();
+
+        // Refresh the state card when a subscription or a user change happens outside
+        // the repro buttons (for example, the slidedown or the bell).
+        OneSignal.User.PushSubscription.addEventListener('change', (event) => {
+          log('PushSubscription change: id=' + (event.current.id ?? '(none)'), 'info');
+          refreshState();
+        });
+        OneSignal.Notifications.addEventListener('permissionChange', (granted) => {
+          log('permissionChange: ' + granted, 'info');
+          refreshState();
+        });
+        OneSignal.User.addEventListener('change', () => refreshState());
       });
 
       setTimeout(refreshState, 500);
