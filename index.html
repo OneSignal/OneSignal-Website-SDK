@@ -216,11 +216,18 @@
       // simulates a subscription whose create operation was dropped.
       const NO_PROPOGATE = 1;
 
-      const getPushModel = () => OneSignal._coreDirector._getPushSubscriptionModel();
+      // _coreDirector is undefined until init finishes, so callers must handle that.
+      const getCoreDirector = () => OneSignal?._coreDirector;
+      const getPushModel = () => getCoreDirector()?._getPushSubscriptionModel();
 
       async function refreshState() {
         try {
-          const model = await getPushModel();
+          const core = getCoreDirector();
+          if (!core) {
+            $('sub-id').textContent = '(SDK not ready)';
+            return;
+          }
+          const model = await core._getPushSubscriptionModel();
           const subId = model?.id;
           $('sub-id').textContent = subId || '(no push subscription model)';
           if (subId) {
@@ -230,7 +237,7 @@
           } else {
             $('sub-id-type').innerHTML = '<span class="tag tag-unknown">unknown</span>';
           }
-          const identity = OneSignal._coreDirector._getIdentityModel();
+          const identity = core._getIdentityModel();
           $('external-id').textContent = identity._externalId || '(anonymous)';
           $('onesignal-id').textContent = identity._onesignalId || '—';
         } catch (e) {
