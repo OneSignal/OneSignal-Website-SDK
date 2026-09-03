@@ -21,6 +21,7 @@ import {
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel, updatePropertiesModel } from '__test__/support/helpers/setup';
 import { getPushToken, setPushToken } from 'src/shared/database/subscription';
+import { IDManager } from 'src/shared/managers/IDManager';
 import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
@@ -494,6 +495,152 @@ describe('LoginUserOperationExecutor', () => {
               token: mockSubscriptionOpInfo.token,
             },
           ],
+        }),
+      );
+    });
+
+    // The backend rejects local IDs as invalid UUIDs, so a transfer op whose
+    // subscription ID was not translated yet must not add it to the payload.
+    test('does not send a subscription with only a local ID when transferring', async () => {
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID,
+      });
+      const executor = getExecutor();
+
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
+
+      const transferSubOp = new TransferSubscriptionOperation(
+        APP_ID,
+        ONESIGNAL_ID,
+        IDManager._createLocalId(),
+      );
+
+      await executor._execute([loginOp, transferSubOp]);
+
+      expect(createUserFn).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: [] }));
+    });
+
+    test('omits the id but keeps the subscription data when the transfer ID is local', async () => {
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID,
+      });
+      const executor = getExecutor();
+
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
+
+      const localSubId = IDManager._createLocalId();
+      const createSubOp = new CreateSubscriptionOperation({
+        ...mockSubscriptionOpInfo,
+        subscriptionId: localSubId,
+      });
+      const transferSubOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, localSubId);
+
+      await executor._execute([loginOp, createSubOp, transferSubOp]);
+
+      expect(createUserFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subscriptions: [
+            {
+              device_model: '',
+              device_os: DEVICE_OS,
+              sdk: __VERSION__,
+              type: mockSubscriptionOpInfo.type,
+              token: mockSubscriptionOpInfo.token,
+            },
+          ],
+        }),
+      );
+    });
+
+    // logout shape: a login op with no externalId grouped with a transfer op.
+    // The payload must carry the subscription data so the backend accepts the
+    // request and creates the subscription for the new anonymous user.
+    test('rebuilds subscription data from the model when transferring with a local ID', async () => {
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID,
+      });
+      const executor = getExecutor();
+
+      const localSubId = IDManager._createLocalId();
+      const subscriptionModel = new SubscriptionModel();
+      subscriptionModel._mergeData({
+        id: localSubId,
+        enabled: true,
+        notification_types: NotificationType._Subscribed,
+        token: PUSH_TOKEN,
+        type: SubscriptionType._ChromePush,
+      });
+      subscriptionModelStore._add(subscriptionModel, ModelChangeTags._NoPropogate);
+
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const transferSubOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, localSubId);
+
+      await executor._execute([loginOp, transferSubOp]);
+
+      expect(createUserFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          identity: {},
+          subscriptions: [
+            {
+              enabled: true,
+              device_model: '',
+              device_os: DEVICE_OS,
+              notification_types: NotificationType._Subscribed,
+              sdk: __VERSION__,
+              token: PUSH_TOKEN,
+              type: SubscriptionType._ChromePush,
+            },
+          ],
+        }),
+      );
+    });
+
+    test('drops an anonymous create user instead of an empty payload', async () => {
+      createUserFn.mockClear();
+      const executor = getExecutor();
+
+      // transfer op with a local ID and no subscription model to rebuild from
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const transferSubOp = new TransferSubscriptionOperation(
+        APP_ID,
+        ONESIGNAL_ID,
+        IDManager._createLocalId(),
+      );
+
+      const res = await executor._execute([loginOp, transferSubOp]);
+
+      expect(createUserFn).not.toHaveBeenCalled();
+      expect(res).toEqual({ _result: ExecutionResult._FailNoretry });
+    });
+
+    test('skips a local subscription with no token when transferring', async () => {
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID,
+      });
+      const executor = getExecutor();
+
+      const localSubId = IDManager._createLocalId();
+      const subscriptionModel = new SubscriptionModel();
+      subscriptionModel._mergeData({
+        id: localSubId,
+        enabled: true,
+        token: '',
+        type: SubscriptionType._ChromePush,
+      });
+      subscriptionModelStore._add(subscriptionModel, ModelChangeTags._NoPropogate);
+
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
+      const transferSubOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, localSubId);
+
+      await executor._execute([loginOp, transferSubOp]);
+
+      expect(createUserFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          identity: { external_id: EXTERNAL_ID },
+          subscriptions: [],
         }),
       );
     });
