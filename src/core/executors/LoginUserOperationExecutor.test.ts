@@ -615,6 +615,36 @@ describe('LoginUserOperationExecutor', () => {
       expect(res).toEqual({ _result: ExecutionResult._FailNoretry });
     });
 
+    test('skips a local subscription with no token when transferring', async () => {
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID,
+      });
+      const executor = getExecutor();
+
+      const localSubId = IDManager._createLocalId();
+      const subscriptionModel = new SubscriptionModel();
+      subscriptionModel._mergeData({
+        id: localSubId,
+        enabled: true,
+        token: '',
+        type: SubscriptionType._ChromePush,
+      });
+      subscriptionModelStore._add(subscriptionModel, ModelChangeTags._NoPropogate);
+
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
+      const transferSubOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, localSubId);
+
+      await executor._execute([loginOp, transferSubOp]);
+
+      expect(createUserFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          identity: { external_id: EXTERNAL_ID },
+          subscriptions: [],
+        }),
+      );
+    });
+
     test('can delete a subscription', async () => {
       setCreateUserResponse({
         onesignalId: ONESIGNAL_ID,

@@ -308,7 +308,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           if (currentSubs[subscriptionId]) return currentSubs;
 
           const model = this._subscriptionsModelStore._getBySubscriptionId(subscriptionId);
-          if (!model) return currentSubs;
+          if (!model?.token) return currentSubs;
 
           return {
             ...currentSubs,
