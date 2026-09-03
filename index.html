@@ -186,8 +186,9 @@
     <div class="card">
       <h3>Repro Steps (run in order)</h3>
       <button class="btn-primary" id="step-subscribe">1. Subscribe</button>
-      <button class="btn-primary" id="step-seed">2. Seed stuck local ID</button>
-      <button class="btn-primary" id="step-login">3. Login</button>
+      <button class="btn-primary" id="step-login">2. Login</button>
+      <button class="btn-primary" id="step-seed">3. Seed stuck local ID</button>
+      <button class="btn-primary" id="step-logout">4. Logout</button>
       <br />
       <button class="btn-secondary" id="refresh-state">Refresh state</button>
       <button class="btn-secondary" id="reset-sdk">Reset SDK state</button>
@@ -251,8 +252,20 @@
         refreshState();
       });
 
+      $('step-login').addEventListener('click', async () => {
+        const externalId = 'sdk5014-repro-' + Math.random().toString(36).slice(2, 8);
+        log('Step 2: OneSignal.login("' + externalId + '")...', 'info');
+        try {
+          await OneSignal.login(externalId);
+          log('login() resolved', 'success');
+        } catch (e) {
+          log('login() rejected: ' + e.message, 'error');
+        }
+        refreshState();
+      });
+
       $('step-seed').addEventListener('click', async () => {
-        log('Step 2: seed a stuck local subscription ID...', 'info');
+        log('Step 3: seed a stuck local subscription ID...', 'info');
         try {
           const model = await getPushModel();
           if (!model) {
@@ -262,22 +275,21 @@
           const localId = 'local-' + crypto.randomUUID();
           model._setProperty('id', localId, NO_PROPOGATE);
           log('Subscription ID is now: ' + localId, 'success');
-          log('No pending operation can translate this ID. Run step 3.', 'info');
+          log('No pending operation can translate this ID. Run step 4.', 'info');
         } catch (e) {
           log('Error: ' + e.message, 'error');
         }
         refreshState();
       });
 
-      $('step-login').addEventListener('click', async () => {
-        const externalId = 'sdk5014-repro-' + Math.random().toString(36).slice(2, 8);
-        log('Step 3: OneSignal.login("' + externalId + '")...', 'info');
+      $('step-logout').addEventListener('click', async () => {
+        log('Step 4: OneSignal.logout()...', 'info');
         log('Watch the Create User request below for the subscriptions array.', 'info');
         try {
-          await OneSignal.login(externalId);
-          log('login() resolved', 'success');
+          await OneSignal.logout();
+          log('logout() resolved', 'success');
         } catch (e) {
-          log('login() rejected: ' + e.message, 'error');
+          log('logout() rejected: ' + (e?.message ?? e), 'error');
         }
         refreshState();
       });
