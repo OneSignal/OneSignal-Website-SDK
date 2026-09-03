@@ -149,6 +149,15 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     }
 
     const subscriptionList = Object.entries(subscriptions);
+
+    // The backend rejects a create user request that has no identity and no
+    // subscriptions, so drop the operation instead of a request that always
+    // fails. The Android SDK has the same guard.
+    if (Object.keys(identity).length === 0 && subscriptionList.length === 0) {
+      Log._debug('CreateUser: skipped, no identity and no subscriptions');
+      return { _result: ExecutionResult._FailNoretry };
+    }
+
     const response = await createNewUser(
       { appId: createUserOperation._appId },
       {
@@ -293,8 +302,29 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
         // A local ID means the subscription does not exist on the backend yet,
         // so there is nothing to transfer and the backend rejects local IDs as
-        // invalid UUIDs. A grouped create operation still creates it.
-        if (IDManager._isLocalId(subscriptionId)) return currentSubs;
+        // invalid UUIDs. Send the subscription data from its model instead so
+        // the backend creates it. A grouped create operation already has it.
+        if (IDManager._isLocalId(subscriptionId)) {
+          if (currentSubs[subscriptionId]) return currentSubs;
+
+          const model = this._subscriptionsModelStore._getBySubscriptionId(subscriptionId);
+          if (!model) return currentSubs;
+
+          return {
+            ...currentSubs,
+            [subscriptionId]: {
+              enabled: model.enabled,
+              device_model: model.device_model,
+              device_os: model.device_os,
+              notification_types: model._notification_types,
+              sdk: model.sdk,
+              token: model.token,
+              type: model.type,
+              web_auth: model.web_auth,
+              web_p256: model.web_p256,
+            },
+          };
+        }
 
         return {
           ...currentSubs,
