@@ -15,6 +15,7 @@ const mockFeatures = (body: Record<string, unknown>, status = 200) =>
 
 describe('featureFlags', () => {
   const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => '');
+  const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
   beforeEach(() => {
     localStorage.clear();
@@ -22,6 +23,7 @@ describe('featureFlags', () => {
 
   afterEach(() => {
     warnSpy.mockClear();
+    consoleWarnSpy.mockClear();
   });
 
   describe('isFeatureEnabled', () => {
@@ -112,13 +114,15 @@ describe('featureFlags', () => {
       expect(warnSpy).toHaveBeenCalledWith('Feature flags fetch failed', expect.anything());
     });
 
-    test('warns when local overrides are set', async () => {
+    test('warns on the console when local overrides are set', async () => {
       localStorage.setItem('os_feature_overrides', FLAG);
       mockFeatures({ features: [] });
 
       await refreshFeatureFlags(APP_ID);
 
-      expect(warnSpy).toHaveBeenCalledWith('Feature flag overrides are active:', [FLAG]);
+      expect(consoleWarnSpy).toHaveBeenCalledWith('OneSignal: feature flag overrides are active:', [
+        FLAG,
+      ]);
       expect(isFeatureEnabled(FLAG)).toBe(true);
     });
 
@@ -127,6 +131,7 @@ describe('featureFlags', () => {
 
       await refreshFeatureFlags(APP_ID);
 
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
       expect(warnSpy).not.toHaveBeenCalled();
     });
   });
