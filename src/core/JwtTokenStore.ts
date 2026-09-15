@@ -19,7 +19,7 @@ export type UserJwtInvalidatedListener = (event: UserJwtInvalidatedEvent) => voi
  * invalidate; the developer would read that as "refresh your token".
  */
 export class JwtTokenStore {
-  private _tokens?: Record<string, string>;
+  private _tokens?: Map<string, string>;
   private _updateListeners = new EventProducer<JwtUpdatedListener>();
   private _invalidatedListeners = new EventProducer<UserJwtInvalidatedListener>();
 
@@ -40,24 +40,23 @@ export class JwtTokenStore {
   }
 
   _getJwt(externalId: string): string | undefined {
-    return this._load()[externalId];
+    return this._load().get(externalId);
   }
 
   // A missing token is a no-op. Use _invalidateJwt to remove one.
   _putJwt(externalId: string, jwt: string | null | undefined): void {
     if (!jwt) return;
     const tokens = this._load();
-    if (tokens[externalId] === jwt) return;
-    tokens[externalId] = jwt;
-    setJwtTokens(tokens);
+    if (tokens.get(externalId) === jwt) return;
+    tokens.set(externalId, jwt);
+    this._persist(tokens);
     this._updateListeners._fire((l) => l(externalId));
   }
 
   _invalidateJwt(externalId: string): void {
     const tokens = this._load();
-    if (!(externalId in tokens)) return;
-    delete tokens[externalId];
-    setJwtTokens(tokens);
+    if (!tokens.delete(externalId)) return;
+    this._persist(tokens);
     // Per-listener try/catch so one throwing listener cannot break the others
     // or propagate into the operation queue and drop the failing operation.
     this._invalidatedListeners._fire((l) => {
@@ -73,15 +72,21 @@ export class JwtTokenStore {
   _pruneToExternalIds(activeIds: Iterable<string>): void {
     const keep = new Set(activeIds);
     const tokens = this._load();
-    const removed = Object.keys(tokens).filter((id) => !keep.has(id));
+    const removed = [...tokens.keys()].filter((id) => !keep.has(id));
     if (!removed.length) return;
-    removed.forEach((id) => delete tokens[id]);
-    setJwtTokens(tokens);
+    removed.forEach((id) => tokens.delete(id));
+    this._persist(tokens);
     removed.forEach((id) => this._updateListeners._fire((l) => l(id)));
   }
 
-  private _load(): Record<string, string> {
-    this._tokens ??= getJwtTokens();
+  // A Map so externalIds like "constructor" or "__proto__" cannot collide with
+  // Object.prototype. Object.entries reads own keys only, so the parsed JSON is safe.
+  private _load(): Map<string, string> {
+    this._tokens ??= new Map(Object.entries(getJwtTokens()));
     return this._tokens;
+  }
+
+  private _persist(tokens: Map<string, string>): void {
+    setJwtTokens(Object.fromEntries(tokens));
   }
 }

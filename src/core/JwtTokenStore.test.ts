@@ -55,6 +55,23 @@ describe('JwtTokenStore', () => {
       expect(() => store._invalidateJwt('nobody')).not.toThrow();
       expect(readPersisted()).toBeNull();
     });
+
+    test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])(
+      'externalId %s does not collide with Object.prototype',
+      (externalId) => {
+        const listener = vi.fn();
+        store._addUserJwtInvalidatedListener(listener);
+
+        expect(store._getJwt(externalId)).toBeUndefined();
+        store._invalidateJwt(externalId);
+        expect(listener).not.toHaveBeenCalled();
+
+        store._putJwt(externalId, 'jwt-x');
+        expect(store._getJwt(externalId)).toBe('jwt-x');
+        expect(new JwtTokenStore()._getJwt(externalId)).toBe('jwt-x');
+        expect(new JwtTokenStore()._getJwt('other')).toBeUndefined();
+      },
+    );
   });
 
   describe('persistence', () => {
@@ -233,6 +250,19 @@ describe('JwtTokenStore', () => {
       store._invalidateJwt('bob');
 
       expect(listener).toHaveBeenCalledExactlyOnceWith({ externalId: 'alice' });
+    });
+
+    test('a listener that removes itself during the event does not skip the next listener', () => {
+      store._putJwt('alice', 'jwt-a');
+      const once = vi.fn(() => store._removeUserJwtInvalidatedListener(once));
+      const second = vi.fn();
+      store._addUserJwtInvalidatedListener(once);
+      store._addUserJwtInvalidatedListener(second);
+
+      store._invalidateJwt('alice');
+
+      expect(once).toHaveBeenCalledOnce();
+      expect(second).toHaveBeenCalledExactlyOnceWith({ externalId: 'alice' });
     });
 
     test('a listener that puts a new token during the event sees the removal first', () => {
