@@ -3,12 +3,14 @@ import {
   JwtRequirement,
   type JwtRequirementValue,
 } from '../config/jwtRequirement';
+import Log from '../libraries/Log';
 
 const FEATURE_FLAGS = 'os_feature_flags';
 const FEATURE_OVERRIDES = 'os_feature_overrides';
 const IS_OPTED_OUT = 'isOptedOut';
 const IS_PUSH_NOTIFICATIONS_ENABLED = 'isPushNotificationsEnabled';
 const JWT_REQUIRED = 'os_jwt_required';
+const JWT_TOKENS = 'os_jwt_tokens';
 const PAGE_VIEWS = 'os_pageViews';
 const REQUIRES_PRIVACY_CONSENT = 'requiresPrivacyConsent';
 const USER_CONSENT = 'userConsent';
@@ -55,6 +57,27 @@ export function setJwtRequirement(value: JwtRequirementValue): void {
 export function getJwtRequirement(): JwtRequirementValue {
   const value = localStorage.getItem(JWT_REQUIRED);
   return isJwtRequirementValue(value) ? value : JwtRequirement._Unknown;
+}
+
+// One JSON object { externalId: jwt } for every user, so operations queued
+// under a previous user can still find their token.
+export function setJwtTokens(tokens: Record<string, string>): void {
+  localStorage.setItem(JWT_TOKENS, JSON.stringify(tokens));
+}
+
+export function getJwtTokens(): Record<string, string> {
+  const json = localStorage.getItem(JWT_TOKENS);
+  if (json === null) return {};
+  try {
+    const parsed: unknown = JSON.parse(json);
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([, v]) => typeof v === 'string'),
+    ) as Record<string, string>;
+  } catch {
+    Log._warn('JwtTokenStore: failed to parse persisted tokens, starting fresh');
+    return {};
+  }
 }
 
 // The last feature list the server returned, stored as sent. The reader

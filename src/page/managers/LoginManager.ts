@@ -5,7 +5,6 @@ import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
-import { db } from 'src/shared/database/client';
 import { getSubscriptionType } from 'src/shared/environment/detect';
 import { getAppId } from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
@@ -21,9 +20,7 @@ export default class LoginManager {
   }
 
   private static async _login(externalId: string, token?: string): Promise<void> {
-    if (token) {
-      void db.put('Ids', { id: token, type: 'jwtToken' });
-    }
+    OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     const currentOneSignalId = !IDManager._isLocalId(identityModel._onesignalId)

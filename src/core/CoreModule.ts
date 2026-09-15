@@ -7,6 +7,7 @@ import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecut
 import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
 import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
 import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
+import { JwtTokenStore } from './JwtTokenStore';
 import { IdentityModelStoreListener } from './listeners/IdentityModelStoreListener';
 import { PropertiesModelStoreListener } from './listeners/PropertiesModelStoreListener';
 import { SubscriptionModelStoreListener } from './listeners/SubscriptionModelStoreListener';
@@ -27,6 +28,7 @@ export default class CoreModule {
   public _identityModelStore: IdentityModelStore;
   public _propertiesModelStore: PropertiesModelStore;
   public _customEventController: CustomEventController;
+  public _jwtTokenStore: JwtTokenStore;
 
   private _initPromise: Promise<void>;
 
@@ -34,6 +36,7 @@ export default class CoreModule {
   private _executors?: IOperationExecutor[];
 
   constructor() {
+    this._jwtTokenStore = new JwtTokenStore();
     this._newRecordsState = new NewRecordsState();
     this._operationModelStore = new OperationModelStore();
     this._identityModelStore = new IdentityModelStore();
