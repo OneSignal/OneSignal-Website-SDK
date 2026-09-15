@@ -1,5 +1,6 @@
 import { downloadServerAppConfig } from '../api/page';
 import { InvalidAppIdError } from '../errors/common';
+import { setJwtRequirement } from '../helpers/localStorage';
 import { isValidUuid } from '../helpers/validators';
 import { checkRestrictedOrigin, checkUnsupportedSubdomain } from './domain';
 import {
@@ -7,6 +8,7 @@ import {
   getUserConfigForConfigIntegrationKind,
   hasUnsupportedSubdomainForConfigIntegrationKind,
 } from './integration';
+import { jwtRequirementFromBoolean } from './jwtRequirement';
 import { type AppConfig, type AppUserConfig, type ServerAppConfig } from './types';
 import { upgradeConfigToVersionTwo } from './version';
 
@@ -19,7 +21,9 @@ const SERVER_CONFIG_DEFAULTS_SESSION = {
 
 // helpers
 export async function getAppConfig(userConfig: AppUserConfig): Promise<AppConfig> {
-  return getServerAppConfig(userConfig, downloadServerAppConfig);
+  const appConfig = await getServerAppConfig(userConfig, downloadServerAppConfig);
+  setJwtRequirement(appConfig.jwtRequired);
+  return appConfig;
 }
 
 export async function getServerAppConfig(
@@ -77,6 +81,8 @@ export function getMergedConfig(
     safariWebId: serverConfig.config.safari_web_id,
     vapidPublicKey: serverConfig.config.vapid_public_key,
     onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
+    // A successful fetch with no key means the app does not require a JWT.
+    jwtRequired: jwtRequirementFromBoolean(serverConfig.config.jwt_required ?? false),
     userConfig: mergedUserConfig,
     enableOnSession:
       serverConfig.features.enable_on_session ??
