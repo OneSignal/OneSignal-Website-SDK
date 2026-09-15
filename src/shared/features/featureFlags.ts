@@ -19,7 +19,8 @@ export function isFeatureEnabled(flag: FeatureFlagValue): boolean {
 // Fetches the flag list once per page load. A failure keeps the cached list.
 export async function refreshFeatureFlags(appId: string): Promise<void> {
   const overrides = getFeatureOverrides();
-  if (overrides.length) Log._warn('Feature flag overrides are active:', overrides);
+  // Bypasses Log so the warning shows in production builds, where Log is silent below trace.
+  if (overrides.length) console.warn('OneSignal: feature flag overrides are active:', overrides);
 
   try {
     const { ok, result } = await get<FeaturesResponse>(`apps/${appId}/sdk/features/web/${VERSION}`);
