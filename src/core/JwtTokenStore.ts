@@ -11,10 +11,10 @@ export type UserJwtInvalidatedListener = (event: UserJwtInvalidatedEvent) => voi
 
 /**
  * Multi-user map externalId -> JWT, persisted as one JSON object. Storage is
- * unconditional; use of the tokens is gated by IdentityVerificationService.
+ * unconditional; use of the tokens is gated by the identityVerification gates.
  *
- * Two listener audiences. Internal listeners fire on put-with-change and on
- * prune. The public invalidated listener fires on invalidate only, and only
+ * Two listener audiences. Update listeners are SDK-internal and fire on
+ * put-with-change and on prune. The public invalidated listener fires on invalidate only, and only
  * for subscribers present at that time. Logout and user switch must not call
  * invalidate; the developer would read that as "refresh your token".
  */
@@ -23,11 +23,11 @@ export class JwtTokenStore {
   private _updateListeners = new EventProducer<JwtUpdatedListener>();
   private _invalidatedListeners = new EventProducer<UserJwtInvalidatedListener>();
 
-  _addInternalUpdateListener(listener: JwtUpdatedListener): void {
+  _addUpdateListener(listener: JwtUpdatedListener): void {
     this._updateListeners._subscribe(listener);
   }
 
-  _removeInternalUpdateListener(listener: JwtUpdatedListener): void {
+  _removeUpdateListener(listener: JwtUpdatedListener): void {
     this._updateListeners._unsubscribe(listener);
   }
 
@@ -86,7 +86,14 @@ export class JwtTokenStore {
     return this._tokens;
   }
 
+  // The in-memory map stays authoritative for this session if the write fails
+  // (quota, restricted profile), so login does not reject and the token is
+  // still usable until the next page load.
   private _persist(tokens: Map<string, string>): void {
-    setJwtTokens(Object.fromEntries(tokens));
+    try {
+      setJwtTokens(Object.fromEntries(tokens));
+    } catch (e) {
+      Log._warn('JwtTokenStore: failed to persist tokens', e);
+    }
   }
 }

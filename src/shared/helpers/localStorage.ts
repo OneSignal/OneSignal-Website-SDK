@@ -76,6 +76,7 @@ export function getJwtTokens(): Record<string, string> {
     ) as Record<string, string>;
   } catch {
     Log._warn('JwtTokenStore: failed to parse persisted tokens, starting fresh');
+    localStorage.removeItem(JWT_TOKENS);
     return {};
   }
 }

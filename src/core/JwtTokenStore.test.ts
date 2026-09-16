@@ -92,15 +92,35 @@ describe('JwtTokenStore', () => {
       expect(readPersisted()).toEqual({ alice: 'jwt-a', bob: 'jwt-b' });
     });
 
-    test('malformed persisted JSON warns and starts fresh', () => {
+    test('malformed persisted JSON warns, deletes the value, and starts fresh', () => {
       localStorage.setItem(KEY, '{not json');
       const fresh = new JwtTokenStore();
 
       expect(fresh._getJwt('alice')).toBeUndefined();
       expect(warnSpy).toHaveBeenCalledOnce();
+      expect(localStorage.getItem(KEY)).toBeNull();
 
       fresh._putJwt('alice', 'jwt-a');
       expect(readPersisted()).toEqual({ alice: 'jwt-a' });
+    });
+
+    test('a failed write warns and keeps the token in memory for this session', () => {
+      const listener = vi.fn();
+      store._addUpdateListener(listener);
+      const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('quota', 'QuotaExceededError');
+      });
+
+      expect(() => store._putJwt('alice', 'jwt-a')).not.toThrow();
+      setItem.mockRestore();
+
+      expect(store._getJwt('alice')).toBe('jwt-a');
+      expect(listener).toHaveBeenCalledExactlyOnceWith('alice');
+      expect(warnSpy).toHaveBeenCalledWith(
+        'JwtTokenStore: failed to persist tokens',
+        expect.anything(),
+      );
+      expect(readPersisted()).toBeNull();
     });
 
     test('non-object or non-string entries are dropped on load', () => {
@@ -132,7 +152,7 @@ describe('JwtTokenStore', () => {
       store._putJwt('alice', 'jwt-a');
       store._putJwt('bob', 'jwt-b');
       const removed: string[] = [];
-      store._addInternalUpdateListener((id) => removed.push(id));
+      store._addUpdateListener((id) => removed.push(id));
 
       store._pruneToExternalIds(new Set<string>());
 
@@ -142,7 +162,7 @@ describe('JwtTokenStore', () => {
     test('pruneToExternalIds with nothing to remove does not persist or notify', () => {
       store._putJwt('alice', 'jwt-a');
       const listener = vi.fn();
-      store._addInternalUpdateListener(listener);
+      store._addUpdateListener(listener);
       const before = localStorage.getItem(KEY);
 
       store._pruneToExternalIds(['alice']);
@@ -155,7 +175,7 @@ describe('JwtTokenStore', () => {
   describe('internal update listeners', () => {
     test('fire when a new JWT is put', () => {
       const listener = vi.fn();
-      store._addInternalUpdateListener(listener);
+      store._addUpdateListener(listener);
 
       store._putJwt('alice', 'jwt-a');
 
@@ -165,7 +185,7 @@ describe('JwtTokenStore', () => {
     test('do not fire when putJwt does not change the stored token', () => {
       store._putJwt('alice', 'jwt-a');
       const listener = vi.fn();
-      store._addInternalUpdateListener(listener);
+      store._addUpdateListener(listener);
 
       store._putJwt('alice', 'jwt-a');
 
@@ -175,7 +195,7 @@ describe('JwtTokenStore', () => {
     test('do not fire on invalidateJwt', () => {
       store._putJwt('alice', 'jwt-a');
       const listener = vi.fn();
-      store._addInternalUpdateListener(listener);
+      store._addUpdateListener(listener);
 
       store._invalidateJwt('alice');
 
@@ -184,8 +204,8 @@ describe('JwtTokenStore', () => {
 
     test('an unsubscribed listener is not notified', () => {
       const listener = vi.fn();
-      store._addInternalUpdateListener(listener);
-      store._removeInternalUpdateListener(listener);
+      store._addUpdateListener(listener);
+      store._removeUpdateListener(listener);
 
       store._putJwt('alice', 'jwt-a');
 
