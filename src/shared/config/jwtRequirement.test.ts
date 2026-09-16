@@ -72,6 +72,7 @@ describe('JwtRequirement', () => {
     });
 
     test('reads unknown when nothing is stored', () => {
+      localStorage.removeItem('os_jwt_required');
       expect(getJwtRequirement()).toBe(JwtRequirement._Unknown);
     });
 
@@ -114,6 +115,7 @@ describe('JwtRequirement', () => {
     });
 
     test('a failed fetch with no cached value stays unknown', async () => {
+      localStorage.removeItem('os_jwt_required');
       vi.spyOn(OneSignalApi, 'downloadServerAppConfig').mockRejectedValue(new Error('timeout'));
 
       await expect(getAppConfig(userConfig)).rejects.toThrow('timeout');

@@ -2,6 +2,7 @@ import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
 import { setPushToken } from 'src/shared/database/subscription';
+import { setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
@@ -26,6 +27,8 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal = OneSignal;
   global.OneSignal.EVENTS = ONESIGNAL_EVENTS;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
+  // Mirror getAppConfig so the persisted requirement matches the fake config.
+  setJwtRequirement(global.OneSignal.config.jwtRequired);
   global.OneSignal._context = new Context(global.OneSignal.config);
   global.OneSignal._initialized = true;
   global.OneSignal._emitter = new Emitter();
