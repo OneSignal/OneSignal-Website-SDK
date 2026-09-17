@@ -325,6 +325,112 @@ describe('OperationRepo', () => {
       });
     });
 
+    describe('FailUnauthorized', () => {
+      const invalidated = vi.fn();
+      const failUnauthorized = () =>
+        executeFn.mockResolvedValueOnce({ _result: ExecutionResult._FailUnauthorized });
+      const rejectionOf = (p: Promise<void>): Promise<OperationFailedError> =>
+        p.then(
+          () => Promise.reject(new Error('expected a rejection')),
+          (e: unknown) => e as OperationFailedError,
+        );
+
+      beforeEach(() => {
+        invalidated.mockClear();
+        jwtTokenStore._addUserJwtInvalidatedListener(invalidated);
+      });
+
+      test('IV active: invalidates the token, fires the event, wakes waiters, re-queues at head', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'stale');
+        failUnauthorized();
+
+        const op = identifiedOp();
+        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
+        await executeOps(opRepo);
+
+        const error = await waiter;
+        expect(error).toBeInstanceOf(OperationFailedError);
+        expect(error._result).toBe(ExecutionResult._FailUnauthorized);
+
+        expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBeUndefined();
+        expect(invalidated).toHaveBeenCalledExactlyOnceWith({ externalId: EXTERNAL_ID });
+
+        // Re-queued with no resolver and still persisted.
+        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        expect(mockOperationModelStore._list()).toEqual([op]);
+      });
+
+      test('IV active: a token stored while the request was in flight is kept', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'stale');
+        executeFn.mockImplementationOnce(() => {
+          jwtTokenStore._putJwt(EXTERNAL_ID, 'fresh');
+          return Promise.resolve({ _result: ExecutionResult._FailUnauthorized });
+        });
+
+        const op = identifiedOp();
+        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
+        await executeOps(opRepo);
+
+        expect((await waiter)._result).toBe(ExecutionResult._FailUnauthorized);
+        expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBe('fresh');
+        expect(invalidated).not.toHaveBeenCalled();
+
+        // Re-queued and eligible right away with the new token.
+        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+      });
+
+      test('IV active: the re-queued operation waits for a new token instead of spinning', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'stale');
+        failUnauthorized();
+
+        opRepo._enqueue(identifiedOp());
+        await executeOps(opRepo);
+        expect(executeFn).toHaveBeenCalledOnce();
+
+        expect(opRepo._getNextOps(0)).toBeNull();
+
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'fresh');
+        await executeOps(opRepo);
+        expect(executeFn).toHaveBeenCalledTimes(2);
+        expect(opRepo._queue).toEqual([]);
+      });
+
+      test('IV active: an anonymous operation is dropped and fires no event', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        failUnauthorized();
+
+        // Anonymous operations never dispatch under IV, so drive the executor directly.
+        const op = anonymousOp();
+        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
+        await opRepo._executeOperations([opRepo._queue[0]]);
+
+        expect((await waiter)._result).toBe(ExecutionResult._FailUnauthorized);
+        expect(invalidated).not.toHaveBeenCalled();
+        expect(mockOperationModelStore._list()).toEqual([]);
+      });
+
+      test('IV inactive with the new code path on: drops the operation and fires no event', async () => {
+        setJwtRequirement(JwtRequirement._NotRequired);
+        localStorage.setItem('os_feature_overrides', 'sdk_identity_verification');
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'kept');
+        failUnauthorized();
+
+        const op = identifiedOp();
+        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
+        await executeOps(opRepo);
+
+        expect((await waiter)._result).toBe(ExecutionResult._FailUnauthorized);
+        expect(invalidated).not.toHaveBeenCalled();
+        expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBe('kept');
+        expect(opRepo._queue).toEqual([]);
+        expect(mockOperationModelStore._list()).toEqual([]);
+      });
+    });
+
     describe('IV behavior inactive', () => {
       test('no gate applies, even with the new code path enabled', () => {
         setJwtRequirement(JwtRequirement._NotRequired);
