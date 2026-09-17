@@ -58,6 +58,7 @@ async function createSubscribedUser(pushModel: SubscriptionModel): Promise<void>
       ...pushModel.toJSON(),
       appId,
       onesignalId: identityModel._onesignalId,
+      externalId: identityModel._externalId,
       subscriptionId: pushModel.id!,
     }),
   );

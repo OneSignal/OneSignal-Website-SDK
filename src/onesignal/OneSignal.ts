@@ -100,7 +100,7 @@ export default class OneSignal {
     logMethodCall('login', { externalId, jwtToken });
     if (isConsentRequiredButNotGiven()) return;
 
-    if (typeof externalId === 'undefined') {
+    if (!externalId) {
       throw EmptyArgumentError('externalId');
     }
 

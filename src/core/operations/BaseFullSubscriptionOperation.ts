@@ -12,6 +12,7 @@ type SubscriptionOp = ICreateUserSubscription & {
 export type SubscriptionWithAppId = SubscriptionOp & {
   appId: string;
   onesignalId: string;
+  externalId?: string;
 };
 
 /**
@@ -23,8 +24,9 @@ export abstract class BaseFullSubscriptionOperation extends BaseSubscriptionOper
     appId?: string,
     onesignalId?: string,
     subscription?: SubscriptionOp,
+    externalId?: string,
   ) {
-    super(operationName, appId, onesignalId);
+    super(operationName, appId, onesignalId, undefined, externalId);
 
     if (subscription) {
       this.sdk = VERSION;

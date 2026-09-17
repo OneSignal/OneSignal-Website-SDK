@@ -126,7 +126,13 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       return {
         _result: ExecutionResult._Success,
         _operations: !backendSubscriptionId
-          ? [new RefreshUserOperation(createOperation._appId, createOperation._onesignalId)]
+          ? [
+              new RefreshUserOperation(
+                createOperation._appId,
+                createOperation._onesignalId,
+                createOperation._externalId,
+              ),
+            ]
           : undefined,
         _idTranslations: backendSubscriptionId
           ? {
@@ -232,6 +238,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
               enabled: lastOp.enabled,
               notification_types: lastOp.notification_types,
               onesignalId: lastOp._onesignalId,
+              externalId: lastOp._externalId,
               subscriptionId: lastOp._subscriptionId,
               token: lastOp.token,
               type: lastOp.type,

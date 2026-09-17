@@ -4,7 +4,6 @@ import { OPERATION_NAME } from '../constants';
 import { GroupComparisonType, type GroupComparisonValue, Operation } from './Operation';
 
 type ILoginOp = {
-  externalId?: string;
   existingOnesignalId?: string;
 };
 
@@ -29,19 +28,8 @@ export class LoginUserOperation extends Operation<ILoginOp> {
     externalId?: string,
     existingOneSignalId?: string,
   ) {
-    super(OPERATION_NAME._LoginUser, appId, onesignalId);
-    if (externalId) this._externalId = externalId;
+    super(OPERATION_NAME._LoginUser, appId, onesignalId, externalId);
     if (existingOneSignalId) this._existingOnesignalId = existingOneSignalId;
-  }
-
-  /**
-   * The optional external ID of this newly logged-in user. Must be unique for the appId.
-   */
-  get _externalId(): string | undefined {
-    return this._getProperty('externalId');
-  }
-  private set _externalId(value: string) {
-    this._setProperty('externalId', value);
   }
 
   /**

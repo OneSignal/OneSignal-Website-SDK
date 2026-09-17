@@ -178,8 +178,8 @@ describe('LoginUserOperationExecutor', () => {
       expect(await getPushToken()).toEqual(PUSH_TOKEN);
       expect(subscriptionModel._getProperty('id')).toEqual(SUB_ID_2);
 
-      // should have a refresh user operation
-      const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2);
+      // should have a refresh user operation that carries the owner
+      const refreshOp = new RefreshUserOperation(APP_ID, ONESIGNAL_ID_2, EXTERNAL_ID);
       refreshOp._modelId = res._operations![0]._modelId;
       expect(res).toEqual({
         _result: ExecutionResult._Success,

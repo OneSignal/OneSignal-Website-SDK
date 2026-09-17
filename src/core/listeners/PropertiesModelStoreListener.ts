@@ -1,6 +1,7 @@
 import { getAppId } from 'src/shared/helpers/main';
 
 import { PropertiesModel } from '../models/PropertiesModel';
+import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type PropertiesModelStore } from '../modelStores/PropertiesModelStore';
 import { type Operation } from '../operations/Operation';
 import { SetPropertyOperation, type PropertyValue } from '../operations/SetPropertyOperation';
@@ -10,8 +11,15 @@ import { SingletonModelStoreListener } from './SingletonModelStoreListener';
 // Implements logic similar to Android SDK's PropertiesModelStoreListener
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/listeners/PropertiesModelStoreListener.kt
 export class PropertiesModelStoreListener extends SingletonModelStoreListener<PropertiesModel> {
-  constructor(store: PropertiesModelStore, opRepo: IOperationRepo) {
+  private _identityModelStore: IdentityModelStore;
+
+  constructor(
+    store: PropertiesModelStore,
+    opRepo: IOperationRepo,
+    identityModelStore: IdentityModelStore,
+  ) {
     super(store, opRepo);
+    this._identityModelStore = identityModelStore;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -33,6 +41,7 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
       model._onesignalId,
       property,
       newValue as PropertyValue[string],
+      this._identityModelStore._model._externalId,
     );
   }
 }
