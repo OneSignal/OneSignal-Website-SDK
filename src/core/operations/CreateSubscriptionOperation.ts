@@ -17,6 +17,7 @@ export class CreateSubscriptionOperation extends BaseFullSubscriptionOperation {
       subscription?.appId,
       subscription?.onesignalId,
       subscription,
+      subscription?.externalId,
     );
   }
 

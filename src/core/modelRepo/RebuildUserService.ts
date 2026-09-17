@@ -48,8 +48,9 @@ export class RebuildUserService implements IRebuildUserService {
       return null;
     }
 
+    const externalId = identityModel._externalId;
     const operations: Operation[] = [];
-    operations.push(new LoginUserOperation(appId, onesignalId, identityModel._externalId));
+    operations.push(new LoginUserOperation(appId, onesignalId, externalId));
 
     const pushSubscription = await OneSignal._coreDirector._getPushSubscriptionModel();
     if (pushSubscription) {
@@ -57,6 +58,7 @@ export class RebuildUserService implements IRebuildUserService {
         new CreateSubscriptionOperation({
           appId,
           onesignalId,
+          externalId,
           subscriptionId: pushSubscription.id,
           type: pushSubscription.type,
           enabled: pushSubscription.enabled,
@@ -66,7 +68,7 @@ export class RebuildUserService implements IRebuildUserService {
       );
     }
 
-    operations.push(new RefreshUserOperation(appId, onesignalId));
+    operations.push(new RefreshUserOperation(appId, onesignalId, externalId));
     return operations;
   }
 }

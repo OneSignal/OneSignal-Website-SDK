@@ -14,17 +14,19 @@ type BaseOperation = {
   name: string;
   appId: string;
   onesignalId: string;
+  externalId?: string;
 };
 
 export abstract class Operation<
   B extends object = BaseOperation,
   T extends B & BaseOperation = B & BaseOperation,
 > extends Model<T> {
-  constructor(name: string, appId?: string, onesignalId?: string) {
+  constructor(name: string, appId?: string, onesignalId?: string, externalId?: string) {
     super();
     this._name = name;
     if (appId) this._appId = appId;
     if (onesignalId) this._onesignalId = onesignalId;
+    if (externalId) this._externalId = externalId;
   }
 
   get _name(): string {
@@ -49,6 +51,26 @@ export abstract class Operation<
   }
   protected set _onesignalId(value: string) {
     this._setProperty('onesignalId', value);
+  }
+
+  /**
+   * The externalId of the user this operation was enqueued for. Captured at construction
+   * so the operation stays bound to its original user if the current user changes before
+   * it runs. Undefined for anonymous users, and for operations persisted before this field existed.
+   */
+  get _externalId(): string | undefined {
+    return this._getProperty('externalId');
+  }
+  protected set _externalId(value: string | undefined) {
+    this._setProperty('externalId', value);
+  }
+
+  /**
+   * Whether this operation needs a valid JWT when Identity Verification is active.
+   * Subclasses may override to false for endpoints that do not check auth.
+   */
+  get _requiresJwt(): boolean {
+    return true;
   }
 
   /**

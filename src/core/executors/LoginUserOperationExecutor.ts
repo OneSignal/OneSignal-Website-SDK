@@ -76,6 +76,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         loginUserOp._existingOnesignalId,
         IdentityConstants._ExternalID,
         loginUserOp._externalId,
+        loginUserOp._externalId,
       ),
     ]);
 
@@ -224,7 +225,13 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       const followUp =
         Object.keys(identity).length > 0
-          ? [new RefreshUserOperation(createUserOperation._appId, backendOneSignalId)]
+          ? [
+              new RefreshUserOperation(
+                createUserOperation._appId,
+                backendOneSignalId,
+                createUserOperation._externalId,
+              ),
+            ]
           : undefined;
 
       return {

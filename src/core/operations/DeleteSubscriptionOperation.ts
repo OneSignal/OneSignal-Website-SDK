@@ -7,10 +7,9 @@ import { GroupComparisonType, type GroupComparisonValue } from './Operation';
  */
 export class DeleteSubscriptionOperation extends BaseSubscriptionOperation {
   constructor();
-  constructor(appId: string, onesignalId: string, subscriptionId: string);
-  constructor(appId?: string, onesignalId?: string, subscriptionId?: string) {
-    super(OPERATION_NAME._DeleteSubscription, appId, onesignalId);
-    if (subscriptionId) this._subscriptionId = subscriptionId;
+  constructor(appId: string, onesignalId: string, subscriptionId: string, externalId?: string);
+  constructor(appId?: string, onesignalId?: string, subscriptionId?: string, externalId?: string) {
+    super(OPERATION_NAME._DeleteSubscription, appId, onesignalId, subscriptionId, externalId);
   }
 
   override get _groupComparisonType(): GroupComparisonValue {
