@@ -17,6 +17,7 @@ import {
 } from '../identityVerification';
 import { type JwtTokenStore } from '../JwtTokenStore';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
+import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
@@ -96,6 +97,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public _enqueue(operation: Operation): void {
+    if (this._shouldSuppressAnonymousOp(operation)) return;
     Log._debug(`OpRepo.enqueue: ${JSON.stringify(operation)}`);
 
     this._internalEnqueue(
@@ -113,6 +115,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
    * that carries the ExecutionResult that stopped the operation.
    */
   public async _enqueueAndWait(operation: Operation): Promise<void> {
+    if (this._shouldSuppressAnonymousOp(operation)) {
+      throw new OperationFailedError(ExecutionResult._Suppressed);
+    }
     Log._debug(`OpRepo.enqueueAndWait: ${JSON.stringify(operation)}`);
 
     await new Promise<void>((resolve, reject) => {
@@ -127,6 +132,26 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         true,
       );
     });
+  }
+
+  /**
+   * An anonymous operation can never dispatch while IV behavior is active: the gate
+   * needs a token and an anonymous user has none. Drop it at enqueue instead of
+   * holding it forever. LoginUserOperation is exempt; login and the push grant
+   * enqueue it on purpose, and the load-time purge removes a stale one.
+   * Outer gate isIvCodePathEnabled keeps the legacy enqueue path unchanged when
+   * the flag is off.
+   */
+  private _shouldSuppressAnonymousOp(op: Operation): boolean {
+    if (!isIvCodePathEnabled()) return false;
+    if (op instanceof LoginUserOperation) return false;
+    if (!isIvBehaviorActive() || op._externalId) return false;
+
+    // Bypasses Log so the developer sees this in production builds.
+    console.warn(
+      `OneSignal: ${op._name} was dropped. Identity Verification is on and no user is logged in. Call login(externalId, jwt) first.`,
+    );
+    return true;
   }
 
   private _internalEnqueue(

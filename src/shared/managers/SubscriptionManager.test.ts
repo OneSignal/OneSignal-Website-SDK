@@ -71,6 +71,31 @@ describe('SubscriptionManager', () => {
       });
     });
 
+    test('under Identity Verification, an anonymous push grant keeps the model local and sends nothing', async () => {
+      TestEnvironment.initialize({ overrideServerConfig: { config: { jwt_required: true } } });
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const rawSubscription = getRawPushSubscription();
+      await setPushToken(rawSubscription.w3cEndpoint?.toString());
+
+      // Lenient: the grant does not reject.
+      await expect(
+        updatePushSubscriptionModelWithRawSubscription(rawSubscription),
+      ).resolves.toBeUndefined();
+
+      const subModels = OneSignal._coreDirector._subscriptionModelStore._list();
+      expect(subModels.length).toBe(1);
+      expect(IDManager._isLocalId(subModels[0].id)).toBe(true);
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('create-subscription was dropped. Identity Verification is on'),
+      );
+
+      // The anonymous login operation is exempt and waits for login; no request is sent.
+      const queue = OneSignal._coreDirector._operationRepo._queue;
+      expect(queue.map((item) => item.operation._name)).toEqual(['login-user']);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(createUserFn).not.toHaveBeenCalled();
+    });
+
     test('should create user if push subscription model has a local id', async () => {
       const generatePushSubscriptionModelSpy = vi.spyOn(
         OneSignal._coreDirector,

@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vi
 import { JwtTokenStore } from '../JwtTokenStore';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
+import { LoginUserOperation } from '../operations/LoginUserOperation';
 import {
   GroupComparisonType,
   type GroupComparisonValue,
@@ -21,7 +22,7 @@ import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
-import { OperationRepo } from './OperationRepo';
+import { OperationRepo, type OperationQueueItem } from './OperationRepo';
 
 vi.mock('src/shared/helpers/general', async (importOriginal) => {
   const mod = await importOriginal<typeof import('src/shared/helpers/general')>();
@@ -259,16 +260,24 @@ describe('OperationRepo', () => {
     };
     const anonymousOp = () => new Operation('anon');
     const identifiedOp = (externalId = EXTERNAL_ID) => ownedBy(new Operation('owned'), externalId);
+    // Places an operation in the queue the way _loadSavedOperations does, past the
+    // enqueue-time suppression, to model a row persisted before IV was turned on.
+    const loadIntoQueue = (op: Operation, resolver?: OperationQueueItem['resolver']) => {
+      const item: OperationQueueItem = { operation: op, bucket: 0, retries: 0 };
+      if (resolver) item.resolver = resolver;
+      opRepo._queue.push(item);
+      mockOperationModelStore._add(op);
+      return item;
+    };
 
     describe('IV behavior active', () => {
       beforeEach(() => setJwtRequirement(JwtRequirement._Required));
 
-      test('an anonymous operation is skipped and stays queued', () => {
-        const op = anonymousOp();
-        opRepo._enqueue(op);
+      test('a loaded anonymous operation is skipped and stays queued', () => {
+        const item = loadIntoQueue(anonymousOp());
 
         expect(opRepo._getNextOps(0)).toBeNull();
-        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        expect(opRepo._queue).toEqual([item]);
       });
 
       test('an identified operation with no stored token is skipped, not dropped', () => {
@@ -306,7 +315,7 @@ describe('OperationRepo', () => {
             return false;
           }
         }
-        const op = new NoJwtOperation('no-jwt');
+        const op = ownedBy(new NoJwtOperation('no-jwt'), EXTERNAL_ID);
         opRepo._enqueue(op);
 
         expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
@@ -322,6 +331,58 @@ describe('OperationRepo', () => {
         jwtTokenStore._putJwt(EXTERNAL_ID, 'jwt');
         await vi.waitUntil(() => opRepo._queue.length === 0, { timeout: 3000 });
         expect(executeFn).toHaveBeenCalledOnce();
+      });
+    });
+
+    describe('anonymous operation suppression at enqueue', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      describe('IV behavior active', () => {
+        beforeEach(() => setJwtRequirement(JwtRequirement._Required));
+
+        test('_enqueue drops an anonymous operation and warns', () => {
+          opRepo._enqueue(anonymousOp());
+
+          expect(opRepo._queue).toEqual([]);
+          expect(mockOperationModelStore._list()).toEqual([]);
+          expect(warn).toHaveBeenCalledExactlyOnceWith(
+            expect.stringContaining('mock-op was dropped. Identity Verification is on'),
+          );
+        });
+
+        test('_enqueueAndWait rejects an anonymous operation as suppressed', async () => {
+          const error = await opRepo._enqueueAndWait(anonymousOp()).catch((e: unknown) => e);
+
+          expect(error).toBeInstanceOf(OperationFailedError);
+          expect((error as OperationFailedError)._result).toBe(ExecutionResult._Suppressed);
+          expect(opRepo._queue).toEqual([]);
+        });
+
+        test('an anonymous LoginUserOperation is exempt', () => {
+          const op = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+          opRepo._enqueue(op);
+
+          expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+          expect(warn).not.toHaveBeenCalled();
+        });
+
+        test('an identified operation is queued', () => {
+          const op = identifiedOp();
+          opRepo._enqueue(op);
+
+          expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+          expect(warn).not.toHaveBeenCalled();
+        });
+      });
+
+      test('IV behavior inactive with the new code path on: anonymous operations are queued', () => {
+        setJwtRequirement(JwtRequirement._NotRequired);
+        localStorage.setItem('os_feature_overrides', 'sdk_identity_verification');
+        const op = anonymousOp();
+        opRepo._enqueue(op);
+
+        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        expect(warn).not.toHaveBeenCalled();
       });
     });
 
@@ -403,13 +464,15 @@ describe('OperationRepo', () => {
         setJwtRequirement(JwtRequirement._Required);
         failUnauthorized();
 
-        // Anonymous operations never dispatch under IV, so drive the executor directly.
-        const op = anonymousOp();
-        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
-        await opRepo._executeOperations([opRepo._queue[0]]);
+        // A loaded anonymous operation never passes the gate, so drive the executor directly.
+        const resolver = vi.fn();
+        const item = loadIntoQueue(anonymousOp(), resolver);
+        opRepo._queue.length = 0;
+        await opRepo._executeOperations([item]);
 
-        expect((await waiter)._result).toBe(ExecutionResult._FailUnauthorized);
+        expect(resolver).toHaveBeenCalledExactlyOnceWith(false, ExecutionResult._FailUnauthorized);
         expect(invalidated).not.toHaveBeenCalled();
+        expect(opRepo._queue).toEqual([]);
         expect(mockOperationModelStore._list()).toEqual([]);
       });
 
