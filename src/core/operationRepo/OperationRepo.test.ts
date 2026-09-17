@@ -2,6 +2,7 @@ import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { clearAll, db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
+import { OperationFailedError } from 'src/shared/errors/common';
 import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
@@ -17,7 +18,11 @@ import {
   Operation as OperationBase,
 } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
-import { ExecutionResult, type IOperationExecutor } from '../types/operation';
+import {
+  ExecutionResult,
+  OperationFailureReason,
+  type IOperationExecutor,
+} from '../types/operation';
 import { OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo } from './OperationRepo';
@@ -458,6 +463,44 @@ describe('OperationRepo', () => {
 
       // operation should be removed from the model store
       expect(mockOperationModelStore._list()).toEqual([]);
+    });
+
+    describe('enqueueAndWait', () => {
+      // Runs the queued operation once the waiter has registered it.
+      const waitFor = (op: OperationBase) => {
+        const waiter = opRepo._enqueueAndWait(op);
+        void executeOps(opRepo);
+        return waiter;
+      };
+
+      test('resolves on success', async () => {
+        await expect(waitFor(mockOperation)).resolves.toBeUndefined();
+      });
+
+      test.each([
+        [
+          'FailUnauthorized',
+          ExecutionResult._FailUnauthorized,
+          OperationFailureReason._Unauthorized,
+        ],
+        ['FailNoRetry', ExecutionResult._FailNoretry, OperationFailureReason._Dropped],
+        ['FailConflict', ExecutionResult._FailConflict, OperationFailureReason._Conflict],
+        ['FailPauseOpRepo', ExecutionResult._FailPauseOpRepo, OperationFailureReason._Paused],
+      ])('rejects with the reason for %s', async (_, failResult, reason) => {
+        executeFn.mockResolvedValueOnce({ _result: failResult });
+
+        const error = await waitFor(mockOperation).catch((e: unknown) => e);
+        expect(error).toBeInstanceOf(OperationFailedError);
+        expect((error as OperationFailedError).reason).toBe(reason);
+      });
+
+      test('rejects as dropped when the executor throws', async () => {
+        executeFn.mockRejectedValueOnce(new Error('boom'));
+
+        const error = await waitFor(mockOperation).catch((e: unknown) => e);
+        expect(error).toBeInstanceOf(OperationFailedError);
+        expect((error as OperationFailedError).reason).toBe(OperationFailureReason._Dropped);
+      });
     });
 
     test('can handle success starting only operation', async () => {

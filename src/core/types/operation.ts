@@ -52,6 +52,23 @@ export const ExecutionResult = {
 
 export type ExecutionResultValue = (typeof ExecutionResult)[keyof typeof ExecutionResult];
 
+/** Why an operation passed to _enqueueAndWait did not complete. */
+export const OperationFailureReason = {
+  /** The server rejected the request as unauthorized. */
+  _Unauthorized: 'unauthorized',
+  /** The operation was never queued because it cannot run under Identity Verification. */
+  _Suppressed: 'suppressed',
+  /** The operation failed and will not be retried. */
+  _Dropped: 'dropped',
+  /** The server reported a conflict. */
+  _Conflict: 'conflict',
+  /** The queue paused and kept the operation for the next session. */
+  _Paused: 'paused',
+} as const;
+
+export type OperationFailureReasonValue =
+  (typeof OperationFailureReason)[keyof typeof OperationFailureReason];
+
 // Interfaces
 export interface IOperationExecutor {
   _operations: string[];

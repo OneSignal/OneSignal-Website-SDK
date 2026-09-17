@@ -1,3 +1,5 @@
+import type { OperationFailureReasonValue } from 'src/core/types/operation';
+
 import type { DelayedPromptTypeValue } from '../prompts/types';
 import { InvalidChannelInputField } from './constants';
 import type { InvalidChannelInputFieldValue } from './types';
@@ -31,6 +33,15 @@ export class ChannelCaptureError extends Error {
     }
     super(errorMessage);
     this.reason = invalidChannelInput;
+  }
+}
+
+export class OperationFailedError extends Error {
+  reason: OperationFailureReasonValue;
+
+  constructor(reason: OperationFailureReasonValue) {
+    super(`Operation failed: ${reason}`);
+    this.reason = reason;
   }
 }
 
