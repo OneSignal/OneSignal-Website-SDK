@@ -10,6 +10,7 @@ import {
   MissingSafariWebIdError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
+import { refreshFeatureFlags } from 'src/shared/features/featureFlags';
 import {
   errorIfInitAlreadyCalled,
   initSaveState,
@@ -24,6 +25,7 @@ import {
   setConsentRequired as setStorageConsentRequired,
 } from 'src/shared/helpers/localStorage';
 import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
+import { isValidUuid } from 'src/shared/helpers/validators';
 import { _onSubscriptionChanged, checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
@@ -130,6 +132,8 @@ export default class OneSignal {
     removeLegacySubscriptionOptions();
 
     errorIfInitAlreadyCalled();
+    // Runs alongside the config fetch. A failure keeps the cached flags and never blocks init.
+    if (options?.appId && isValidUuid(options.appId)) void refreshFeatureFlags(options.appId);
     await OneSignal._initializeConfig(options);
     if (!OneSignal.config) {
       throw new Error('OneSignal config not initialized!');

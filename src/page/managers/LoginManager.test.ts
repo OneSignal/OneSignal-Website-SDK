@@ -2,7 +2,6 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { BaseSubscriptionOperation } from 'src/core/operations/BaseSubscriptionOperation';
-import { db } from 'src/shared/database/client';
 import Log from 'src/shared/libraries/Log';
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
 
@@ -10,6 +9,7 @@ import LoginManager from './LoginManager';
 
 describe('LoginManager', () => {
   beforeEach(() => {
+    localStorage.clear();
     TestEnvironment.initialize();
   });
 
@@ -22,7 +22,7 @@ describe('LoginManager', () => {
   });
 
   test('login: stores token when provided and enqueues operations', async () => {
-    const dbSpy = vi.spyOn(db, 'put');
+    const putJwtSpy = vi.spyOn(OneSignal._coreDirector._jwtTokenStore, '_putJwt');
     // mock push subscription exists so transfer op enqueues
     const createPushSub = () => ({
       id: 'push-sub-id',
@@ -36,12 +36,18 @@ describe('LoginManager', () => {
       .mockResolvedValue(undefined);
 
     await LoginManager.login('new-external-id', 'jwt-token-123');
-    expect(dbSpy).toHaveBeenCalledWith('Ids', {
-      id: 'jwt-token-123',
-      type: 'jwtToken',
-    });
+    expect(putJwtSpy).toHaveBeenCalledExactlyOnceWith('new-external-id', 'jwt-token-123');
+    expect(OneSignal._coreDirector._jwtTokenStore._getJwt('new-external-id')).toBe('jwt-token-123');
     expect(enqueueSpy).toHaveBeenCalled();
     expect(enqueueAndWaitSpy).toHaveBeenCalled();
+  });
+
+  test('login: same externalId with a new token stores the token before it returns', async () => {
+    updateIdentityModel('external_id', 'same-id');
+
+    await LoginManager.login('same-id', 'fresh-token');
+
+    expect(OneSignal._coreDirector._jwtTokenStore._getJwt('same-id')).toBe('fresh-token');
   });
 
   test('login: with existing push sub enqueues transfer operation', async () => {

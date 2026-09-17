@@ -11,6 +11,7 @@ import type {
   NotificationClickActionBehavior,
   NotificationClickMatchBehavior,
 } from './constants';
+import type { JwtRequirementValue } from './jwtRequirement';
 
 type NotificationClickMatchBehaviorValue =
   (typeof NotificationClickMatchBehavior)[keyof typeof NotificationClickMatchBehavior];
@@ -56,6 +57,12 @@ export interface AppConfig {
    * authentication, and so all apps share an identification key.
    */
   onesignalVapidPublicKey?: string;
+
+  /**
+   * Whether the app requires a JWT on user requests (Identity Verification).
+   * Absent from the server response means not required.
+   */
+  jwtRequired: JwtRequirementValue;
 
   userConfig: AppUserConfig;
   // TODO: Cleanup: pageUrl is also on AppUserConfig
@@ -199,6 +206,8 @@ export interface ServerAppConfig {
     http_use_onesignal_com?: boolean;
     safari_web_id?: string;
     subdomain: string | undefined;
+    // The server sends this key only when the value is true.
+    jwt_required?: boolean;
   };
 
   generated_at: number;

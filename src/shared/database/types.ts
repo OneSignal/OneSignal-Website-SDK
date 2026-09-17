@@ -6,7 +6,7 @@ import type {
 import type { SentUniqueOutcome } from '../models/Outcomes';
 import type { Session } from '../session/types';
 
-export type IdKey = 'appId' | 'registrationId' | 'userId' | 'jwtToken';
+export type IdKey = 'appId' | 'registrationId' | 'userId';
 
 export type OptionKey =
   | 'appState'

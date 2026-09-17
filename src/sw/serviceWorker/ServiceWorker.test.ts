@@ -9,6 +9,7 @@ import { http, HttpResponse } from 'msw';
 import { OperationRepo } from 'src/core/operationRepo/OperationRepo';
 import * as OneSignalApiBase from 'src/shared/api/base';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
+import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import type { AppConfig } from 'src/shared/config/types';
 import { db, getCurrentSession } from 'src/shared/database/client';
 import {
@@ -734,6 +735,7 @@ describe('ServiceWorker', () => {
       origin: 'https://some-origin.com',
       siteName: 'Example',
       vapidPublicKey: '1234567890',
+      jwtRequired: JwtRequirement._NotRequired,
       userConfig: TestContext.getFakeAppUserConfig(),
     };
     const serializedSubscription = {

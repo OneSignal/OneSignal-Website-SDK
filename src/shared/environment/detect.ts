@@ -81,7 +81,7 @@ export const getOneSignalApiUrl = ({
   throw new Error('Invalid API type');
 };
 
-const TURBINE_ENDPOINTS = ['outcomes', 'on_focus'];
+const TURBINE_ENDPOINTS = ['outcomes', 'on_focus', 'sdk/features'];
 const isTurbineEndpoint = (action?: string): boolean => {
   if (!action) {
     return false;
