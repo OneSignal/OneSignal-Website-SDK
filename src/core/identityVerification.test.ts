@@ -4,7 +4,11 @@ import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { beforeEach, describe, expect, test } from 'vite-plus/test';
 
-import { isIvBehaviorActive, isIvCodePathEnabled } from './identityVerification';
+import {
+  isIvBehaviorActive,
+  isIvCodePathEnabled,
+  isJwtRequirementUnknown,
+} from './identityVerification';
 
 const setGates = (flagOn: boolean, requirement: JwtRequirementValue) => {
   setFeatureFlags(flagOn ? [FeatureFlag._IdentityVerification] : []);
@@ -65,6 +69,18 @@ describe('identityVerification gates', () => {
       localStorage.setItem('os_feature_overrides', FeatureFlag._IdentityVerification);
 
       expect(readGates()).toEqual([true, false]);
+    });
+  });
+
+  describe('isJwtRequirementUnknown', () => {
+    test('true only before the first successful config fetch', () => {
+      expect(isJwtRequirementUnknown()).toBe(true);
+
+      setJwtRequirement(JwtRequirement._NotRequired);
+      expect(isJwtRequirementUnknown()).toBe(false);
+
+      setJwtRequirement(JwtRequirement._Required);
+      expect(isJwtRequirementUnknown()).toBe(false);
     });
   });
 

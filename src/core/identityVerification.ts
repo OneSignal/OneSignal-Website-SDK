@@ -17,6 +17,11 @@ export function isIvBehaviorActive(): boolean {
   return getJwtRequirement() === JwtRequirement._Required;
 }
 
+/** No successful config fetch yet, so the SDK cannot tell whether IV applies. */
+export function isJwtRequirementUnknown(): boolean {
+  return getJwtRequirement() === JwtRequirement._Unknown;
+}
+
 /** The new IV code paths run at all: `flag || isIvBehaviorActive()`. */
 export function isIvCodePathEnabled(): boolean {
   return isFeatureEnabled(FeatureFlag._IdentityVerification) || isIvBehaviorActive();
