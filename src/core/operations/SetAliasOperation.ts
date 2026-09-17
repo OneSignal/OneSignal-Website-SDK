@@ -9,9 +9,21 @@ type AliasOp = {
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/SetAliasOperation.kt
 export class SetAliasOperation extends BaseAliasOperation<AliasOp> {
   constructor();
-  constructor(appId: string, onesignalId: string, label: string, value: string);
-  constructor(appId?: string, onesignalId?: string, label?: string, value?: string) {
-    super(OPERATION_NAME._SetAlias, appId, onesignalId, label);
+  constructor(
+    appId: string,
+    onesignalId: string,
+    label: string,
+    value: string,
+    externalId?: string,
+  );
+  constructor(
+    appId?: string,
+    onesignalId?: string,
+    label?: string,
+    value?: string,
+    externalId?: string,
+  ) {
+    super(OPERATION_NAME._SetAlias, appId, onesignalId, label, externalId);
     if (value) this.value = value;
   }
 

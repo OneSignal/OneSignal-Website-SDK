@@ -29,9 +29,15 @@ export class IdentityModelStoreListener extends SingletonModelStoreListener<Iden
   ): Operation {
     const appId = getAppId();
     if (newValue != null && typeof newValue === 'string') {
-      return new SetAliasOperation(appId, model._onesignalId, property, newValue);
+      return new SetAliasOperation(
+        appId,
+        model._onesignalId,
+        property,
+        newValue,
+        model._externalId,
+      );
     } else {
-      return new DeleteAliasOperation(appId, model._onesignalId, property);
+      return new DeleteAliasOperation(appId, model._onesignalId, property, model._externalId);
     }
   }
 }

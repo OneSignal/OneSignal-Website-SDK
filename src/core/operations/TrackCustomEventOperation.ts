@@ -15,7 +15,7 @@ type OperationProps = {
   event: ICustomEvent;
 };
 
-type ITrackEventOp = Pick<OperationProps, 'externalId' | 'timestamp' | 'event'>;
+type ITrackEventOp = Pick<OperationProps, 'timestamp' | 'event'>;
 
 /**
  * An Operation to track a custom event for a specific user.
@@ -23,20 +23,9 @@ type ITrackEventOp = Pick<OperationProps, 'externalId' | 'timestamp' | 'event'>;
 export class TrackCustomEventOperation extends Operation<ITrackEventOp> {
   constructor(props?: OperationProps);
   constructor(props: OperationProps) {
-    super(OPERATION_NAME._CustomEvent, props?.appId, props?.onesignalId);
-    if (props?.externalId) this._externalId = props.externalId;
+    super(OPERATION_NAME._CustomEvent, props?.appId, props?.onesignalId, props?.externalId);
     if (props?.timestamp) this._timestamp = props.timestamp;
     if (props?.event) this._event = props.event;
-  }
-
-  /**
-   * The external ID for the user, if available.
-   */
-  get _externalId(): string | undefined {
-    return this._getProperty('externalId');
-  }
-  private set _externalId(value: string | undefined) {
-    this._setProperty('externalId', value);
   }
 
   /**

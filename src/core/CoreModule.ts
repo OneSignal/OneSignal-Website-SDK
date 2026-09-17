@@ -72,7 +72,11 @@ export default class CoreModule {
     if (!this._operationRepo) return [];
     return [
       new IdentityModelStoreListener(this._identityModelStore, this._operationRepo),
-      new PropertiesModelStoreListener(this._propertiesModelStore, this._operationRepo),
+      new PropertiesModelStoreListener(
+        this._propertiesModelStore,
+        this._operationRepo,
+        this._identityModelStore,
+      ),
       new SubscriptionModelStoreListener(
         this._subscriptionModelStore,
         this._operationRepo,

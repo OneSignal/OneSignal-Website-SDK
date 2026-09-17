@@ -89,7 +89,7 @@ export default class LoginManager {
       OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
           OneSignal._coreDirector._operationRepo._enqueue(
-            new TransferSubscriptionOperation(appId, newOneSignalId, pushOp.id),
+            new TransferSubscriptionOperation(appId, newOneSignalId, pushOp.id, externalId),
           );
         } else if (createSubIfMissing) {
           const newSub = new SubscriptionModel();
