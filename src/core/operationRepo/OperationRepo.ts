@@ -8,6 +8,7 @@ import { db } from 'src/shared/database/client';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 
+import { isJwtRequirementUnknown } from '../identityVerification';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
@@ -38,6 +39,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   private _enqueueIntoBucket = 0;
   private _operationModelStore: OperationModelStore;
   private _newRecordState: NewRecordsState;
+  private _loggedUnknownDeferral = false;
 
   constructor(
     executors: IOperationExecutor[],
@@ -277,6 +279,22 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
+    if (!this._queue.length) return null;
+
+    // Until the requirement is known, an unsigned request could reach an app that
+    // needs a JWT. Operations stay queued; the next tick re-reads the requirement.
+    // On the page, init awaits the config before the repo starts, so this guard
+    // makes the deferral explicit instead of implicit in init order.
+    if (isJwtRequirementUnknown()) {
+      // Logged once so a queue stalled on a localStorage that does not read back is diagnosable.
+      if (!this._loggedUnknownDeferral) {
+        this._loggedUnknownDeferral = true;
+        Log._debug('OpRepo: JWT requirement unknown');
+      }
+      return null;
+    }
+    this._loggedUnknownDeferral = false;
+
     const startingOpIndex = this._queue.findIndex(
       (item) =>
         item.operation._canStartExecute &&

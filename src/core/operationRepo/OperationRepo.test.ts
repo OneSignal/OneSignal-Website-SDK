@@ -1,8 +1,9 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
+import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { clearAll, db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
 import { delay as delaySpy } from 'src/shared/helpers/general';
-import { setConsentRequired } from 'src/shared/helpers/localStorage';
+import { setConsentRequired, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vite-plus/test';
@@ -59,6 +60,7 @@ describe('OperationRepo', () => {
 
   beforeEach(() => {
     setConsentRequired(false);
+    setJwtRequirement(JwtRequirement._NotRequired);
 
     mockOperationModelStore = new OperationModelStore();
     opRepo = new OperationRepo([mockExecutor], mockOperationModelStore, new NewRecordsState());
@@ -200,6 +202,44 @@ describe('OperationRepo', () => {
 
     await vi.waitUntil(() => opRepo._queue.length === 0, { timeout: 3000 });
     expect(opRepo._queue.length).toBe(0);
+  });
+
+  describe('JWT requirement UNKNOWN', () => {
+    test('defers dispatch and keeps the operation queued', () => {
+      setJwtRequirement(JwtRequirement._Unknown);
+      opRepo._enqueue(mockOperation);
+
+      expect(opRepo._getNextOps(0)).toBeNull();
+      expect(opRepo._queue).toEqual([{ operation: mockOperation, bucket: 0, retries: 0 }]);
+    });
+
+    test('logs the deferral once, not on every pass', () => {
+      const debug = vi.spyOn(Log, '_debug').mockImplementation(() => {});
+      setJwtRequirement(JwtRequirement._Unknown);
+      opRepo._enqueue(mockOperation);
+      debug.mockClear();
+
+      opRepo._getNextOps(0);
+      opRepo._getNextOps(0);
+      opRepo._getNextOps(0);
+
+      expect(debug).toHaveBeenCalledExactlyOnceWith('OpRepo: JWT requirement unknown');
+    });
+
+    test('dispatches on the next pass once the requirement is known', async () => {
+      setJwtRequirement(JwtRequirement._Unknown);
+      await opRepo._start();
+      opRepo._enqueue(mockOperation);
+
+      // Several ticks pass with nothing executed.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(executeFn).not.toHaveBeenCalled();
+      expect(opRepo._queue.length).toBe(1);
+
+      setJwtRequirement(JwtRequirement._NotRequired);
+      await vi.waitUntil(() => opRepo._queue.length === 0, { timeout: 3000 });
+      expect(executeFn).toHaveBeenCalledOnce();
+    });
   });
 
   test('can get grouped operations', () => {
