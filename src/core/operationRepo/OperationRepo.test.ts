@@ -6,6 +6,7 @@ import { OperationFailedError } from 'src/shared/errors/common';
 import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
+import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vite-plus/test';
 
@@ -219,6 +220,73 @@ describe('OperationRepo', () => {
     expect(opRepo._queue.length).toBe(0);
   });
 
+  const ownedBy = (op: Operation, externalId: string) => {
+    op._setProperty('externalId', externalId);
+    return op;
+  };
+
+  describe('anonymous operation purge on start', () => {
+    // Seeds the store before _start so _loadSavedOperations picks the operations up,
+    // the same as rows persisted by an earlier session.
+    const seedSaved = (...ops: OperationBase[]) =>
+      ops.forEach((op) => mockOperationModelStore._add(op));
+    const queued = () => opRepo._queue.map((item) => item.operation);
+
+    test('IV active: drops anonymous operations from the queue and the store, spares identified ones', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const anonymous = new Operation('anon');
+      const anonymousLogin = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const identified = ownedBy(new Operation('owned'), EXTERNAL_ID);
+      seedSaved(anonymous, anonymousLogin, identified);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([identified]);
+      expect(mockOperationModelStore._list()).toEqual([identified]);
+    });
+
+    test('IV active: clears existingOnesignalId on a surviving LoginUserOperation', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const localId = IDManager._createLocalId();
+      const login = new LoginUserOperation(APP_ID, ONESIGNAL_ID, EXTERNAL_ID, localId);
+      seedSaved(login);
+      expect(login._canStartExecute).toBe(false);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([login]);
+      expect(login._existingOnesignalId).toBeUndefined();
+      expect(login._canStartExecute).toBe(true);
+      expect(login.toJSON()).not.toHaveProperty('existingOnesignalId');
+    });
+
+    test('IV active: the purge runs after saved operations load', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const loadSpy = vi.spyOn(opRepo, '_loadSavedOperations');
+      const removeSpy = vi.spyOn(mockOperationModelStore, '_remove');
+      seedSaved(new Operation('anon'));
+
+      await opRepo._start();
+
+      expect(removeSpy).toHaveBeenCalledOnce();
+      expect(loadSpy.mock.invocationCallOrder[0]).toBeLessThan(
+        removeSpy.mock.invocationCallOrder[0],
+      );
+    });
+
+    test('IV inactive: nothing is purged and existingOnesignalId is kept', async () => {
+      const localId = IDManager._createLocalId();
+      const anonymous = new Operation('anon');
+      const login = new LoginUserOperation(APP_ID, ONESIGNAL_ID, EXTERNAL_ID, localId);
+      seedSaved(anonymous, login);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([anonymous, login]);
+      expect(login._existingOnesignalId).toBe(localId);
+    });
+  });
+
   describe('JWT requirement UNKNOWN', () => {
     test('defers dispatch and keeps the operation queued', () => {
       setJwtRequirement(JwtRequirement._Unknown);
@@ -260,10 +328,6 @@ describe('OperationRepo', () => {
   });
 
   describe('JWT dispatch gate', () => {
-    const ownedBy = (op: Operation, externalId: string) => {
-      op._setProperty('externalId', externalId);
-      return op;
-    };
     const anonymousOp = () => new Operation('anon');
     const identifiedOp = (externalId = EXTERNAL_ID) => ownedBy(new Operation('owned'), externalId);
     // Places an operation in the queue the way _loadSavedOperations does, past the

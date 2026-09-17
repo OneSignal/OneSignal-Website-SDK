@@ -102,6 +102,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public async _start(): Promise<void> {
     await this._loadSavedOperations();
+    // The page fetches the config before the repo starts, so the requirement is
+    // already hydrated here. This is the web equivalent of Android's hydrate hook.
+    if (isIvBehaviorActive()) this._purgeAnonymousOperations();
     this._processQueueForever();
   }
 
@@ -167,6 +170,35 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       `OneSignal: ${op._name} was dropped. Identity Verification is on and no user is logged in. Call login(externalId, jwt) first.`,
     );
     return true;
+  }
+
+  /**
+   * Removes every queued operation with no externalId. These were persisted while
+   * the requirement was off or unknown, and an anonymous user has no JWT, so they
+   * can never pass the dispatch gate. Models are untouched; only operations go.
+   * Surviving LoginUserOperations lose existingOnesignalId because the anonymous
+   * login that would have resolved a local id is gone.
+   */
+  private _purgeAnonymousOperations(): void {
+    const total = this._queue.length;
+    const removed = this._queue.filter((item) => !item.operation._externalId);
+    this._queue = this._queue.filter((item) => item.operation._externalId);
+
+    for (const item of removed) {
+      this._operationModelStore._remove(item.operation._modelId);
+      item.resolver?.(false, OperationFailureReason._Suppressed);
+    }
+
+    for (const { operation } of this._queue) {
+      if (operation instanceof LoginUserOperation && operation._existingOnesignalId) {
+        Log._debug(
+          `OpRepo: cleared existingOnesignalId on LoginUserOperation (was ${operation._existingOnesignalId})`,
+        );
+        operation._clearExistingOnesignalId();
+      }
+    }
+
+    Log._debug(`OpRepo: purge removed ${removed.length} of ${total} anonymous operations`);
   }
 
   private _internalEnqueue(
