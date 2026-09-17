@@ -53,6 +53,7 @@ export default class CoreModule {
       this._executors,
       this._operationModelStore,
       this._newRecordsState,
+      this._jwtTokenStore,
     );
     this._customEventController = new CustomEventController(
       this._identityModelStore,

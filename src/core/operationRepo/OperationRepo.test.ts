@@ -1,4 +1,4 @@
-import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
+import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { clearAll, db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
@@ -8,6 +8,7 @@ import Log from 'src/shared/libraries/Log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vite-plus/test';
 
+import { JwtTokenStore } from '../JwtTokenStore';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import {
@@ -37,6 +38,7 @@ vi.spyOn(OperationModelStore.prototype, '_create').mockImplementation(() => {
 });
 
 let mockOperationModelStore: OperationModelStore;
+let jwtTokenStore: JwtTokenStore;
 
 const executeOps = async (opRepo: OperationRepo) => {
   await opRepo._loadSavedOperations();
@@ -59,11 +61,18 @@ describe('OperationRepo', () => {
   ];
 
   beforeEach(() => {
+    localStorage.clear();
     setConsentRequired(false);
     setJwtRequirement(JwtRequirement._NotRequired);
 
     mockOperationModelStore = new OperationModelStore();
-    opRepo = new OperationRepo([mockExecutor], mockOperationModelStore, new NewRecordsState());
+    jwtTokenStore = new JwtTokenStore();
+    opRepo = new OperationRepo(
+      [mockExecutor],
+      mockOperationModelStore,
+      new NewRecordsState(),
+      jwtTokenStore,
+    );
   });
 
   afterEach(async () => {
@@ -239,6 +248,91 @@ describe('OperationRepo', () => {
       setJwtRequirement(JwtRequirement._NotRequired);
       await vi.waitUntil(() => opRepo._queue.length === 0, { timeout: 3000 });
       expect(executeFn).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('JWT dispatch gate', () => {
+    const ownedBy = (op: Operation, externalId: string) => {
+      op._setProperty('externalId', externalId);
+      return op;
+    };
+    const anonymousOp = () => new Operation('anon');
+    const identifiedOp = (externalId = EXTERNAL_ID) => ownedBy(new Operation('owned'), externalId);
+
+    describe('IV behavior active', () => {
+      beforeEach(() => setJwtRequirement(JwtRequirement._Required));
+
+      test('an anonymous operation is skipped and stays queued', () => {
+        const op = anonymousOp();
+        opRepo._enqueue(op);
+
+        expect(opRepo._getNextOps(0)).toBeNull();
+        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+      });
+
+      test('an identified operation with no stored token is skipped, not dropped', () => {
+        const op = identifiedOp();
+        opRepo._enqueue(op);
+
+        expect(opRepo._getNextOps(0)).toBeNull();
+        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        expect(mockOperationModelStore._list()).toEqual([op]);
+      });
+
+      test('a later operation for a user with a token runs ahead of a blocked one', () => {
+        const blocked = identifiedOp('no-token-user');
+        const ready = identifiedOp(EXTERNAL_ID);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'jwt');
+        opRepo._enqueue(blocked);
+        opRepo._enqueue(ready);
+
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: ready, bucket: 0, retries: 0 }]);
+        expect(opRepo._queue).toEqual([{ operation: blocked, bucket: 0, retries: 0 }]);
+      });
+
+      test('storing the token releases the blocked operation on the next pass', () => {
+        const op = identifiedOp();
+        opRepo._enqueue(op);
+        expect(opRepo._getNextOps(0)).toBeNull();
+
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'jwt');
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+      });
+
+      test('an operation that does not require a JWT runs without a token', () => {
+        class NoJwtOperation extends Operation {
+          override get _requiresJwt() {
+            return false;
+          }
+        }
+        const op = new NoJwtOperation('no-jwt');
+        opRepo._enqueue(op);
+
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+      });
+
+      test('a token stored after start is picked up by the interval without a wake-up', async () => {
+        await opRepo._start();
+        opRepo._enqueue(identifiedOp());
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        expect(executeFn).not.toHaveBeenCalled();
+
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'jwt');
+        await vi.waitUntil(() => opRepo._queue.length === 0, { timeout: 3000 });
+        expect(executeFn).toHaveBeenCalledOnce();
+      });
+    });
+
+    describe('IV behavior inactive', () => {
+      test('no gate applies, even with the new code path enabled', () => {
+        setJwtRequirement(JwtRequirement._NotRequired);
+        localStorage.setItem('os_feature_overrides', 'sdk_identity_verification');
+        const op = anonymousOp();
+        opRepo._enqueue(op);
+
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+      });
     });
   });
 
