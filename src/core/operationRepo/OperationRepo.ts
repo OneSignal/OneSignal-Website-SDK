@@ -8,7 +8,12 @@ import { db } from 'src/shared/database/client';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 
-import { isJwtRequirementUnknown } from '../identityVerification';
+import {
+  isIvBehaviorActive,
+  isIvCodePathEnabled,
+  isJwtRequirementUnknown,
+} from '../identityVerification';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
@@ -39,15 +44,18 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   private _enqueueIntoBucket = 0;
   private _operationModelStore: OperationModelStore;
   private _newRecordState: NewRecordsState;
+  private _jwtTokenStore: JwtTokenStore;
   private _loggedUnknownDeferral = false;
 
   constructor(
     executors: IOperationExecutor[],
     operationModelStore: OperationModelStore,
     newRecordState: NewRecordsState,
+    jwtTokenStore: JwtTokenStore,
   ) {
     this._operationModelStore = operationModelStore;
     this._newRecordState = newRecordState;
+    this._jwtTokenStore = jwtTokenStore;
 
     this._executorsMap = new Map<string, IOperationExecutor>();
     for (const executor of executors) {
@@ -295,11 +303,16 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
     this._loggedUnknownDeferral = false;
 
+    // Snapshot both gates once per pass so every queue item sees the same IV view.
+    const ivCodePathEnabled = isIvCodePathEnabled();
+    const ivBehaviorActive = isIvBehaviorActive();
+
     const startingOpIndex = this._queue.findIndex(
       (item) =>
         item.operation._canStartExecute &&
         this._newRecordState._canAccess(item.operation._applyToRecordId) &&
-        item.bucket <= bucketFilter,
+        item.bucket <= bucketFilter &&
+        (!ivCodePathEnabled || this._hasValidJwtIfRequired(item.operation, ivBehaviorActive)),
     );
 
     if (startingOpIndex !== -1) {
@@ -309,6 +322,19 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
 
     return null;
+  }
+
+  /**
+   * Whether the operation may dispatch under the current IV state. A blocked operation
+   * is skipped, not dropped; it dispatches on a later pass once a token is stored.
+   * The store re-reads on each pass, so a token stored by updateUserJwt or login,
+   * or by another tab, is picked up on the next tick without a wake-up.
+   */
+  private _hasValidJwtIfRequired(op: Operation, ivBehaviorActive: boolean): boolean {
+    if (!ivBehaviorActive || !op._requiresJwt) return true;
+    const externalId = op._externalId;
+    if (!externalId) return false;
+    return this._jwtTokenStore._getJwt(externalId) !== undefined;
   }
 
   public _getGroupableOperations(startingOp: OperationQueueItem): OperationQueueItem[] {
