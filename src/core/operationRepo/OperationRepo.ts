@@ -197,6 +197,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
 
       const operations = ops.map((op) => op.operation);
+      // The token the request goes out with. A 401 must not invalidate a newer
+      // token that login or updateUserJwt stored while the request was in flight.
+      const externalId = startingOp.operation._externalId;
+      const jwtAtDispatch = externalId ? this._jwtTokenStore._getJwt(externalId) : undefined;
       const response = await executor._execute(operations);
       const idTranslations = response._idTranslations;
 
@@ -221,13 +225,20 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult._FailUnauthorized:
+          // Outer gate: the IV handler runs only on the new code path.
+          if (
+            isIvCodePathEnabled() &&
+            this._handleFailUnauthorized(ops, isIvBehaviorActive(), jwtAtDispatch)
+          ) {
+            break;
+          }
+          // IV inactive or an anonymous operation: drop, the same as FailNoretry.
+          this._dropAndWake(ops, operations, response._result);
+          break;
+
         case ExecutionResult._FailNoretry:
         case ExecutionResult._FailConflict:
-          Log._error(`Op failed (no retry): ${JSON.stringify(operations)}`);
-          ops.forEach((op) => {
-            this._operationModelStore._remove(op.operation._modelId);
-          });
-          ops.forEach((op) => op.resolver?.(false, failureReason(response._result)));
+          this._dropAndWake(ops, operations, response._result);
           break;
 
         case ExecutionResult._SuccessStartingOnly:
@@ -292,6 +303,54 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       });
       ops.forEach((op) => op.resolver?.(false, OperationFailureReason._Dropped));
     }
+  }
+
+  private _dropAndWake(
+    ops: OperationQueueItem[],
+    operations: Operation[],
+    result: ExecutionResultValue,
+  ): void {
+    Log._error(`Op failed (no retry): ${JSON.stringify(operations)}`);
+    ops.forEach((op) => {
+      this._operationModelStore._remove(op.operation._modelId);
+    });
+    ops.forEach((op) => op.resolver?.(false, failureReason(result)));
+  }
+
+  /**
+   * Handles a 401 while IV behavior is active. Removes the token the request went
+   * out with, which fires userJwtInvalidated so the app can supply a fresh one,
+   * wakes the waiters, and re-queues the operations at the head with no resolver.
+   * The dispatch gate then holds them until a new token is stored, so there is no
+   * retry loop. If a newer token is already stored, it is kept and the re-queued
+   * operations retry with it. Returns false when IV is inactive or the operation
+   * is anonymous; the caller then drops the operations.
+   */
+  private _handleFailUnauthorized(
+    ops: OperationQueueItem[],
+    ivBehaviorActive: boolean,
+    jwtAtDispatch: string | undefined,
+  ): boolean {
+    if (!ivBehaviorActive) return false;
+    const externalId = ops[0].operation._externalId;
+    if (!externalId) return false;
+
+    if (this._jwtTokenStore._getJwt(externalId) === jwtAtDispatch) {
+      this._jwtTokenStore._invalidateJwt(externalId);
+      Log._info(
+        `OpRepo: 401 Unauthorized, JWT invalidated for externalId=${externalId}. Ops re-queued.`,
+      );
+    } else {
+      Log._info(
+        `OpRepo: 401 Unauthorized for externalId=${externalId}, a newer JWT is stored. Ops re-queued.`,
+      );
+    }
+
+    ops.forEach((op) => op.resolver?.(false, OperationFailureReason._Unauthorized));
+    [...ops].reverse().forEach((op) => {
+      this._queue.unshift({ operation: op.operation, bucket: op.bucket, retries: op.retries });
+    });
+    return true;
   }
 
   public async _delayBeforeNextExecution(
