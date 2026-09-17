@@ -1,10 +1,14 @@
 import {
   ExecutionResult,
+  OperationFailureReason,
   type IOperationExecutor,
   type IOperationRepo,
+  type ExecutionResultValue,
   type IStartableService,
+  type OperationFailureReasonValue,
 } from 'src/core/types/operation';
 import { db } from 'src/shared/database/client';
+import { OperationFailedError } from 'src/shared/errors/common';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 
@@ -27,13 +31,27 @@ const removeOpFromDB = (op: Operation) => {
   void db.delete('operations', op._modelId);
 };
 
+const failureReason = (result: ExecutionResultValue): OperationFailureReasonValue => {
+  switch (result) {
+    case ExecutionResult._FailUnauthorized:
+      return OperationFailureReason._Unauthorized;
+    case ExecutionResult._FailConflict:
+      return OperationFailureReason._Conflict;
+    case ExecutionResult._FailPauseOpRepo:
+      return OperationFailureReason._Paused;
+    default:
+      return OperationFailureReason._Dropped;
+  }
+};
+
 // Implements logic similar to Android SDK's OperationRepo & OperationQueueItem
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/operations/impl/OperationRepo.kt
 export interface OperationQueueItem {
   operation: Operation;
   bucket: number;
   retries: number;
-  resolver?: (value: boolean) => void;
+  /** Wakes an _enqueueAndWait caller. A false value must carry the reason. */
+  resolver?: (value: boolean, reason?: OperationFailureReasonValue) => void;
 }
 
 // OperationRepo Class
@@ -105,6 +123,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     );
   }
 
+  /**
+   * Resolves when the operation succeeds. Rejects with an OperationFailedError
+   * whose reason says why the operation did not complete.
+   */
   public async _enqueueAndWait(operation: Operation): Promise<void> {
     Log._debug(`OpRepo.enqueueAndWait: ${JSON.stringify(operation)}`);
 
@@ -114,7 +136,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           operation,
           bucket: this._enqueueIntoBucket,
           retries: 0,
-          resolver: (value) => (value ? resolve() : reject()),
+          resolver: (value, reason = OperationFailureReason._Dropped) =>
+            value ? resolve() : reject(new OperationFailedError(reason)),
         },
         true,
       );
@@ -204,7 +227,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ops.forEach((op) => {
             this._operationModelStore._remove(op.operation._modelId);
           });
-          ops.forEach((op) => op.resolver?.(false));
+          ops.forEach((op) => op.resolver?.(false, failureReason(response._result)));
           break;
 
         case ExecutionResult._SuccessStartingOnly:
@@ -234,7 +257,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult._FailPauseOpRepo:
           Log._error(`Op failed, pausing: ${JSON.stringify(operations)}`);
           this._pause();
-          ops.forEach((op) => op.resolver?.(false));
+          ops.forEach((op) => op.resolver?.(false, failureReason(response._result)));
           [...ops].reverse().forEach((op) => {
             removeOpFromDB(op.operation);
             this._queue.unshift(op);
@@ -267,7 +290,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       ops.forEach((op) => {
         this._operationModelStore._remove(op.operation._modelId);
       });
-      ops.forEach((op) => op.resolver?.(false));
+      ops.forEach((op) => op.resolver?.(false, OperationFailureReason._Dropped));
     }
   }
 
