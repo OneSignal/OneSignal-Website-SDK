@@ -2,6 +2,7 @@ import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { clearAll, db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
+import { OperationFailedError } from 'src/shared/errors/common';
 import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
@@ -456,6 +457,40 @@ describe('OperationRepo', () => {
 
       // operation should be removed from the model store
       expect(mockOperationModelStore._list()).toEqual([]);
+    });
+
+    describe('enqueueAndWait', () => {
+      // Runs the queued operation once the waiter has registered it.
+      const waitFor = (op: OperationBase) => {
+        const waiter = opRepo._enqueueAndWait(op);
+        void executeOps(opRepo);
+        return waiter;
+      };
+
+      test('resolves on success', async () => {
+        await expect(waitFor(mockOperation)).resolves.toBeUndefined();
+      });
+
+      test.each([
+        ['FailUnauthorized', ExecutionResult._FailUnauthorized],
+        ['FailNoRetry', ExecutionResult._FailNoretry],
+        ['FailConflict', ExecutionResult._FailConflict],
+        ['FailPauseOpRepo', ExecutionResult._FailPauseOpRepo],
+      ])('rejects with the result for %s', async (_, failResult) => {
+        executeFn.mockResolvedValueOnce({ _result: failResult });
+
+        const error = await waitFor(mockOperation).catch((e: unknown) => e);
+        expect(error).toBeInstanceOf(OperationFailedError);
+        expect((error as OperationFailedError)._result).toBe(failResult);
+      });
+
+      test('rejects with FailNoretry when the executor throws', async () => {
+        executeFn.mockRejectedValueOnce(new Error('boom'));
+
+        const error = await waitFor(mockOperation).catch((e: unknown) => e);
+        expect(error).toBeInstanceOf(OperationFailedError);
+        expect((error as OperationFailedError)._result).toBe(ExecutionResult._FailNoretry);
+      });
     });
 
     test('can handle success starting only operation', async () => {

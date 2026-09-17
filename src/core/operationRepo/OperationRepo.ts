@@ -2,9 +2,11 @@ import {
   ExecutionResult,
   type IOperationExecutor,
   type IOperationRepo,
+  type ExecutionResultValue,
   type IStartableService,
 } from 'src/core/types/operation';
 import { db } from 'src/shared/database/client';
+import { OperationFailedError } from 'src/shared/errors/common';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 
@@ -33,7 +35,8 @@ export interface OperationQueueItem {
   operation: Operation;
   bucket: number;
   retries: number;
-  resolver?: (value: boolean) => void;
+  /** Wakes an _enqueueAndWait caller. A false value must carry the result. */
+  resolver?: (value: boolean, result?: ExecutionResultValue) => void;
 }
 
 // OperationRepo Class
@@ -105,6 +108,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     );
   }
 
+  /**
+   * Resolves when the operation succeeds. Rejects with an OperationFailedError
+   * that carries the ExecutionResult that stopped the operation.
+   */
   public async _enqueueAndWait(operation: Operation): Promise<void> {
     Log._debug(`OpRepo.enqueueAndWait: ${JSON.stringify(operation)}`);
 
@@ -114,7 +121,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           operation,
           bucket: this._enqueueIntoBucket,
           retries: 0,
-          resolver: (value) => (value ? resolve() : reject()),
+          resolver: (value, result = ExecutionResult._FailNoretry) =>
+            value ? resolve() : reject(new OperationFailedError(result)),
         },
         true,
       );
@@ -204,7 +212,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           ops.forEach((op) => {
             this._operationModelStore._remove(op.operation._modelId);
           });
-          ops.forEach((op) => op.resolver?.(false));
+          ops.forEach((op) => op.resolver?.(false, response._result));
           break;
 
         case ExecutionResult._SuccessStartingOnly:
@@ -234,7 +242,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult._FailPauseOpRepo:
           Log._error(`Op failed, pausing: ${JSON.stringify(operations)}`);
           this._pause();
-          ops.forEach((op) => op.resolver?.(false));
+          ops.forEach((op) => op.resolver?.(false, response._result));
           [...ops].reverse().forEach((op) => {
             removeOpFromDB(op.operation);
             this._queue.unshift(op);
@@ -267,7 +275,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       ops.forEach((op) => {
         this._operationModelStore._remove(op.operation._modelId);
       });
-      ops.forEach((op) => op.resolver?.(false));
+      ops.forEach((op) => op.resolver?.(false, ExecutionResult._FailNoretry));
     }
   }
 
