@@ -44,6 +44,14 @@ export class LoginUserOperation extends Operation<ILoginOp> {
     this._setProperty('existingOnesignalId', value);
   }
 
+  /**
+   * Identity Verification never transfers anonymous state, so the login must create.
+   * A stale local id would also keep _canStartExecute false forever.
+   */
+  _clearExistingOnesignalId(): void {
+    this._setProperty('existingOnesignalId', undefined);
+  }
+
   override get _createComparisonKey(): string {
     return `${this._appId}.User.${this._onesignalId}`;
   }
