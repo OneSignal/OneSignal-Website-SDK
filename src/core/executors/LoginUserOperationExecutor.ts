@@ -349,13 +349,16 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
 export const getLanguage = () => {
   const languageTag = (navigator.language || 'en').toLowerCase();
-  const languageSubtags = languageTag.split('-');
+  const languageSubtags = languageTag.replace(/-[a-z0-9]-.*/, '').split('-');
   if (languageSubtags[0] == 'zh') {
     if (languageSubtags.includes('hans')) return 'zh-Hans';
     if (languageSubtags.includes('hant')) return 'zh-Hant';
 
-    const region = languageSubtags[1];
-    return region === 'hk' || region === 'mo' || region === 'tw' ? 'zh-Hant' : 'zh-Hans';
+    return languageSubtags.includes('hk') ||
+      languageSubtags.includes('mo') ||
+      languageSubtags.includes('tw')
+      ? 'zh-Hant'
+      : 'zh-Hans';
   }
 
   // Return the language subtag (it can be three characters, so truncate it down to 2 just to be sure)

@@ -23,7 +23,7 @@ import { updateIdentityModel, updatePropertiesModel } from '__test__/support/hel
 import { getPushToken, setPushToken } from 'src/shared/database/subscription';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
@@ -672,20 +672,31 @@ describe('LoginUserOperationExecutor', () => {
 });
 
 describe('getLanguage', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   test.each([
+    ['zh-Hans', 'zh-Hans'],
+    ['zh-Hant', 'zh-Hant'],
     ['zh-Hans-HK', 'zh-Hans'],
     ['zh-Hant-CN', 'zh-Hant'],
     ['zh-CN', 'zh-Hans'],
+    ['zh-SG', 'zh-Hans'],
+    ['zh-MY', 'zh-Hans'],
     ['zh-TW', 'zh-Hant'],
     ['zh-HK', 'zh-Hant'],
     ['zh-MO', 'zh-Hant'],
+    ['zh-Latn-TW', 'zh-Hant'],
+    ['zh-TW-x-hans', 'zh-Hant'],
+    ['zh-CN-x-tw', 'zh-Hans'],
     ['zh', 'zh-Hans'],
+    ['en-US', 'en'],
+    ['', 'en'],
   ])('normalizes %s to %s', (languageTag, expectedLanguage) => {
-    const languageSpy = vi.spyOn(navigator, 'language', 'get').mockReturnValue(languageTag);
+    vi.spyOn(navigator, 'language', 'get').mockReturnValue(languageTag);
 
     expect(getLanguage()).toBe(expectedLanguage);
-
-    languageSpy.mockRestore();
   });
 });
 
