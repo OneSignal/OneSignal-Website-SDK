@@ -44,7 +44,7 @@ import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOpe
 import { ModelChangeTags } from '../types/models';
 import { ExecutionResult } from '../types/operation';
 import { IdentityOperationExecutor } from './IdentityOperationExecutor';
-import { LoginUserOperationExecutor } from './LoginUserOperationExecutor';
+import { getLanguage, LoginUserOperationExecutor } from './LoginUserOperationExecutor';
 
 let identityModelStore: IdentityModelStore;
 let propertiesModelStore: PropertiesModelStore;
@@ -668,6 +668,24 @@ describe('LoginUserOperationExecutor', () => {
 
       expect(createUserFn).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: [] }));
     });
+  });
+});
+
+describe('getLanguage', () => {
+  test.each([
+    ['zh-Hans-HK', 'zh-Hans'],
+    ['zh-Hant-CN', 'zh-Hant'],
+    ['zh-CN', 'zh-Hans'],
+    ['zh-TW', 'zh-Hant'],
+    ['zh-HK', 'zh-Hant'],
+    ['zh-MO', 'zh-Hant'],
+    ['zh', 'zh-Hans'],
+  ])('normalizes %s to %s', (languageTag, expectedLanguage) => {
+    const languageSpy = vi.spyOn(navigator, 'language', 'get').mockReturnValue(languageTag);
+
+    expect(getLanguage()).toBe(expectedLanguage);
+
+    languageSpy.mockRestore();
   });
 });
 
