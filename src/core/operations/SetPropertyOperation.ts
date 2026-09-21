@@ -1,10 +1,15 @@
 import { OPERATION_NAME } from '../constants';
-import { Operation } from './Operation';
+import { Operation, type OperationOpts } from './Operation';
 
 type Property = string;
 export type PropertyValue = {
   tags: Record<string, string>;
   [key: string]: string | Record<string, string>;
+};
+
+export type SetPropertyOpts<P extends Property = string> = OperationOpts & {
+  property: P;
+  value: PropertyValue[P];
 };
 
 /**
@@ -14,25 +19,11 @@ export class SetPropertyOperation<P extends Property = string> extends Operation
   property: P;
   value: PropertyValue[P];
 }> {
-  constructor();
-  constructor(
-    appId: string,
-    onesignalId: string,
-    property: P,
-    value: PropertyValue[P],
-    externalId?: string,
-  );
-  constructor(
-    appId?: string,
-    onesignalId?: string,
-    property?: P,
-    value?: PropertyValue[P],
-    externalId?: string,
-  ) {
-    super(OPERATION_NAME._SetProperty, appId, onesignalId, externalId);
-    if (property && value) {
-      this._property = property;
-      this.value = value;
+  constructor(opts?: SetPropertyOpts<P>) {
+    super(OPERATION_NAME._SetProperty, opts?.appId, opts?.onesignalId, opts?.externalId);
+    if (opts?.property && opts.value) {
+      this._property = opts.property;
+      this.value = opts.value;
     }
   }
 

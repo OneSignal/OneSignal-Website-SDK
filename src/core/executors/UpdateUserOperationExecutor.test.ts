@@ -83,7 +83,12 @@ describe('UpdateUserOperationExecutor', () => {
 
     test('should update property in properties model on success', async () => {
       const executor = getExecutor();
-      const setPropertyOp = new SetPropertyOperation(APP_ID, ONESIGNAL_ID, 'language', 'fr');
+      const setPropertyOp = new SetPropertyOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        property: 'language',
+        value: 'fr',
+      });
 
       const result = await executor._execute([setPropertyOp]);
       expect(result._result).toBe(ExecutionResult._Success);
@@ -92,9 +97,11 @@ describe('UpdateUserOperationExecutor', () => {
 
     test('can set tags', async () => {
       const executor = getExecutor();
-      const setPropertyOp = new SetPropertyOperation(APP_ID, ONESIGNAL_ID, 'tags', {
-        tagA: 'valueA',
-        tagB: 'valueB',
+      const setPropertyOp = new SetPropertyOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        property: 'tags',
+        value: { tagA: 'valueA', tagB: 'valueB' },
       });
 
       const result = await executor._execute([setPropertyOp]);
@@ -109,8 +116,11 @@ describe('UpdateUserOperationExecutor', () => {
   describe('Error Handling', () => {
     test('should handle network errors', async () => {
       const executor = getExecutor();
-      const setTagOp = new SetPropertyOperation(APP_ID, ONESIGNAL_ID, 'tags', {
-        test_tag: 'test_value',
+      const setTagOp = new SetPropertyOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        property: 'tags',
+        value: { test_tag: 'test_value' },
       });
 
       // Retryable error

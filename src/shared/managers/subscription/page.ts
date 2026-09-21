@@ -53,7 +53,11 @@ async function createSubscribedUser(pushModel: SubscriptionModel): Promise<void>
   const appId = getAppId();
 
   OneSignal._coreDirector._operationRepo._enqueue(
-    new LoginUserOperation(appId, identityModel._onesignalId, identityModel._externalId),
+    new LoginUserOperation({
+      appId,
+      onesignalId: identityModel._onesignalId,
+      externalId: identityModel._externalId,
+    }),
   );
   try {
     await OneSignal._coreDirector._operationRepo._enqueueAndWait(

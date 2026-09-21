@@ -1,15 +1,13 @@
 import { OPERATION_NAME } from '../constants';
-import { BaseSubscriptionOperation } from './BaseSubscriptionOperation';
+import { BaseSubscriptionOperation, type SubscriptionOpts } from './BaseSubscriptionOperation';
 import { GroupComparisonType, type GroupComparisonValue } from './Operation';
 
 /**
  * An Operation to transfer a subscription to a new owner on the OneSignal backend.
  */
 export class TransferSubscriptionOperation extends BaseSubscriptionOperation {
-  constructor();
-  constructor(appId: string, onesignalId: string, subscriptionId: string, externalId?: string);
-  constructor(appId?: string, onesignalId?: string, subscriptionId?: string, externalId?: string) {
-    super(OPERATION_NAME._TransferSubscription, appId, onesignalId, subscriptionId, externalId);
+  constructor(opts?: SubscriptionOpts) {
+    super(OPERATION_NAME._TransferSubscription, opts);
   }
 
   override get _groupComparisonType(): GroupComparisonValue {

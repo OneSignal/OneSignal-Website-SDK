@@ -9,12 +9,6 @@ import {
  */
 export class UpdateSubscriptionOperation extends BaseFullSubscriptionOperation {
   constructor(subscription?: SubscriptionWithAppId) {
-    super(
-      OPERATION_NAME._UpdateSubscription,
-      subscription?.appId,
-      subscription?.onesignalId,
-      subscription,
-      subscription?.externalId,
-    );
+    super(OPERATION_NAME._UpdateSubscription, subscription);
   }
 }

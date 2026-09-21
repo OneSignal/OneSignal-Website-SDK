@@ -89,7 +89,12 @@ export default class LoginManager {
       OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
           OneSignal._coreDirector._operationRepo._enqueue(
-            new TransferSubscriptionOperation(appId, newOneSignalId, pushOp.id, externalId),
+            new TransferSubscriptionOperation({
+              appId,
+              onesignalId: newOneSignalId,
+              subscriptionId: pushOp.id,
+              externalId,
+            }),
           );
         } else if (createSubIfMissing) {
           const newSub = new SubscriptionModel();
@@ -104,7 +109,12 @@ export default class LoginManager {
         }
       }),
       OneSignal._coreDirector._operationRepo._enqueueAndWait(
-        new LoginUserOperation(appId, newOneSignalId, externalId, existingOneSignalId),
+        new LoginUserOperation({
+          appId,
+          onesignalId: newOneSignalId,
+          externalId,
+          existingOnesignalId: existingOneSignalId,
+        }),
       ),
     ]);
   }

@@ -31,8 +31,13 @@ import { IdentityOperationExecutor } from './IdentityOperationExecutor';
 
 const label = 'test-label';
 const value = 'test-value';
-const setAliasOp = new SetAliasOperation(APP_ID, ONESIGNAL_ID, label, value);
-const deleteAliasOp = new DeleteAliasOperation(APP_ID, ONESIGNAL_ID, label);
+const setAliasOp = new SetAliasOperation({
+  appId: APP_ID,
+  onesignalId: ONESIGNAL_ID,
+  label,
+  value,
+});
+const deleteAliasOp = new DeleteAliasOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID, label });
 
 let identityModelStore: IdentityModelStore;
 let newRecordsState: NewRecordsState;

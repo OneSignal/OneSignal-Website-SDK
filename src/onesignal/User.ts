@@ -274,7 +274,7 @@ function addSubscriptionToModels({
 
     if (!hasLoginOp(onesignalId)) {
       OneSignal._coreDirector._operationRepo._enqueue(
-        new LoginUserOperation(appId, onesignalId, identityModel._externalId),
+        new LoginUserOperation({ appId, onesignalId, externalId: identityModel._externalId }),
       );
     }
   }

@@ -10,11 +10,14 @@ export const GroupComparisonType = {
 
 export type GroupComparisonValue = (typeof GroupComparisonType)[keyof typeof GroupComparisonType];
 
-type BaseOperation = {
-  name: string;
+export type OperationOpts = {
   appId: string;
   onesignalId: string;
   externalId?: string;
+};
+
+type BaseOperation = OperationOpts & {
+  name: string;
 };
 
 export abstract class Operation<

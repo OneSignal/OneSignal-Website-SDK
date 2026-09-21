@@ -66,18 +66,19 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.
-    if (!loginUserOp._existingOnesignalId || !loginUserOp._externalId) {
+    const externalId = loginUserOp._externalId;
+    if (!loginUserOp._existingOnesignalId || !externalId) {
       return this._createUser(loginUserOp, operations);
     }
 
     const result = await this._identityOperationExecutor._execute([
-      new SetAliasOperation(
-        loginUserOp._appId,
-        loginUserOp._existingOnesignalId,
-        IdentityConstants._ExternalID,
-        loginUserOp._externalId,
-        loginUserOp._externalId,
-      ),
+      new SetAliasOperation({
+        appId: loginUserOp._appId,
+        onesignalId: loginUserOp._existingOnesignalId,
+        label: IdentityConstants._ExternalID,
+        value: externalId,
+        externalId,
+      }),
     ]);
 
     switch (result._result) {

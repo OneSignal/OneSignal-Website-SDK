@@ -45,12 +45,12 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
 
   _getRemoveOperation(model: SubscriptionModel): Operation {
     const appId = getAppId();
-    return new DeleteSubscriptionOperation(
+    return new DeleteSubscriptionOperation({
       appId,
-      this._identityModelStore._model._onesignalId,
-      model.id,
-      this._identityModelStore._model._externalId,
-    );
+      onesignalId: this._identityModelStore._model._onesignalId,
+      subscriptionId: model.id,
+      externalId: this._identityModelStore._model._externalId,
+    });
   }
 
   _getUpdateOperation(model: SubscriptionModel): Operation {

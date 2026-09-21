@@ -122,7 +122,12 @@ describe('OperationRepo', () => {
     test('enqueue should persist operations in IndexedDb', async () => {
       await opRepo._loadSavedOperations();
 
-      const op1 = new SetAliasOperation(APP_ID, ONESIGNAL_ID, 'some-label', 'some-value');
+      const op1 = new SetAliasOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        label: 'some-label',
+        value: 'some-value',
+      });
       opRepo._enqueue(op1);
 
       const op2 = new CreateSubscriptionOperation({
@@ -231,7 +236,7 @@ describe('OperationRepo', () => {
     test('IV active: drops anonymous operations from the queue and the store, spares identified ones', async () => {
       setJwtRequirement(JwtRequirement._Required);
       const anonymous = new Operation('anon');
-      const anonymousLogin = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const anonymousLogin = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       const identified = ownedBy(new Operation('owned'), EXTERNAL_ID);
       seedSaved(anonymous, anonymousLogin, identified);
 
@@ -244,7 +249,12 @@ describe('OperationRepo', () => {
     test('IV active: clears existingOnesignalId on a surviving LoginUserOperation', async () => {
       setJwtRequirement(JwtRequirement._Required);
       const localId = IDManager._createLocalId();
-      const login = new LoginUserOperation(APP_ID, ONESIGNAL_ID, EXTERNAL_ID, localId);
+      const login = new LoginUserOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        externalId: EXTERNAL_ID,
+        existingOnesignalId: localId,
+      });
       seedSaved(login);
       expect(login._canStartExecute).toBe(false);
 
@@ -273,7 +283,12 @@ describe('OperationRepo', () => {
     test('IV inactive: nothing is purged and existingOnesignalId is kept', async () => {
       const localId = IDManager._createLocalId();
       const anonymous = new Operation('anon');
-      const login = new LoginUserOperation(APP_ID, ONESIGNAL_ID, EXTERNAL_ID, localId);
+      const login = new LoginUserOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        externalId: EXTERNAL_ID,
+        existingOnesignalId: localId,
+      });
       seedSaved(anonymous, login);
 
       await opRepo._start();
@@ -423,7 +438,7 @@ describe('OperationRepo', () => {
         });
 
         test('an anonymous LoginUserOperation is exempt', () => {
-          const op = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+          const op = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
           opRepo._enqueue(op);
 
           expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);

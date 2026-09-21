@@ -12,13 +12,7 @@ import {
  */
 export class CreateSubscriptionOperation extends BaseFullSubscriptionOperation {
   constructor(subscription?: SubscriptionWithAppId) {
-    super(
-      OPERATION_NAME._CreateSubscription,
-      subscription?.appId,
-      subscription?.onesignalId,
-      subscription,
-      subscription?.externalId,
-    );
+    super(OPERATION_NAME._CreateSubscription, subscription);
   }
 
   override get _canStartExecute(): boolean {

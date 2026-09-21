@@ -1,30 +1,18 @@
 import { OPERATION_NAME } from '../constants';
-import { BaseAliasOperation } from './BaseAliasOperation';
+import { type AliasOpts, BaseAliasOperation } from './BaseAliasOperation';
 
 type AliasOp = {
   value: string;
 };
 
+export type SetAliasOpts = AliasOpts & AliasOp;
+
 // Implements logic similar to Android SDK's SetAliasOperation
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/SetAliasOperation.kt
 export class SetAliasOperation extends BaseAliasOperation<AliasOp> {
-  constructor();
-  constructor(
-    appId: string,
-    onesignalId: string,
-    label: string,
-    value: string,
-    externalId?: string,
-  );
-  constructor(
-    appId?: string,
-    onesignalId?: string,
-    label?: string,
-    value?: string,
-    externalId?: string,
-  ) {
-    super(OPERATION_NAME._SetAlias, appId, onesignalId, label, externalId);
-    if (value) this.value = value;
+  constructor(opts?: SetAliasOpts) {
+    super(OPERATION_NAME._SetAlias, opts);
+    if (opts?.value) this.value = opts.value;
   }
 
   get value(): string {
