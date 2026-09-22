@@ -9,9 +9,11 @@ import {
 import { JwtRequirement, type JwtRequirementValue } from 'src/shared/config/jwtRequirement';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
+import Log from 'src/shared/libraries/Log';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
+import { JwtTokenStore } from '../JwtTokenStore';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
 import { NewRecordsState } from '../operationRepo/NewRecordsState';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -55,6 +57,7 @@ let refresh: RefreshUserOperationExecutor;
 let subscription: SubscriptionOperationExecutor;
 let updateUser: UpdateUserOperationExecutor;
 let customEvent: CustomEventsOperationExecutor;
+let tokens: JwtTokenStore;
 
 // One entry per request path that resolves the alias, the token, or both.
 // `path` is the URL tail for the given alias; `null` means the path has no alias.
@@ -132,7 +135,9 @@ describe('executors under Identity Verification', () => {
       director._subscriptionModelStore,
     );
     const newRecords = new NewRecordsState();
-    const tokens = director._jwtTokenStore;
+    // A new store per test: the store caches tokens in memory, so
+    // localStorage.clear() alone would leak a token into the next test.
+    tokens = new JwtTokenStore();
 
     identity = new IdentityOperationExecutor(
       director._identityModelStore,
@@ -189,7 +194,7 @@ describe('executors under Identity Verification', () => {
   describe.each(paths)('$name', ({ run, path }) => {
     test('IV active: external_id alias and Authorization: Bearer', async () => {
       setGates(true, JwtRequirement._Required);
-      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      tokens._putJwt(EXTERNAL_ID, JWT);
 
       const response = await run();
 
@@ -199,9 +204,19 @@ describe('executors under Identity Verification', () => {
       if (path) expect(url.endsWith(path(`external_id/${EXTERNAL_ID}`))).toBe(true);
     });
 
+    test('IV active with no stored token: external_id alias and no Authorization header', async () => {
+      setGates(true, JwtRequirement._Required);
+
+      await run();
+
+      const { headers, url } = lastRequest();
+      expect(headers).not.toHaveProperty('authorization');
+      if (path) expect(url.endsWith(path(`external_id/${EXTERNAL_ID}`))).toBe(true);
+    });
+
     test('IV inactive: onesignal_id alias and no Authorization header', async () => {
       setGates(false, JwtRequirement._NotRequired);
-      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      tokens._putJwt(EXTERNAL_ID, JWT);
 
       const response = await run();
 
@@ -213,7 +228,7 @@ describe('executors under Identity Verification', () => {
 
     test('flag on, requirement off: request identical to legacy', async () => {
       setGates(true, JwtRequirement._NotRequired);
-      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      tokens._putJwt(EXTERNAL_ID, JWT);
 
       await run();
 
@@ -240,44 +255,42 @@ describe('executors under Identity Verification', () => {
     });
   });
 
-  describe('401 maps to _FailUnauthorized', () => {
+  test('IV active with an anonymous op: onesignal_id alias, no header, and an error log', async () => {
+    setGates(true, JwtRequirement._Required);
+    tokens._putJwt(EXTERNAL_ID, JWT);
+
+    await identity._execute([
+      new SetAliasOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID, label: 'l', value: 'v' }),
+    ]);
+
+    const { headers, url } = lastRequest();
+    expect(headers).not.toHaveProperty('authorization');
+    expect(url.endsWith(`${users}/by/onesignal_id/${ONESIGNAL_ID}/identity`)).toBe(true);
+    expect(Log._error).toHaveBeenCalledWith(expect.stringContaining('no externalId'));
+  });
+
+  describe('401 under IV', () => {
     const unauthorized = (method: 'post' | 'patch' | 'delete') =>
       getHandler({ uri: '*', method, status: 401, retryAfter: 15 });
 
-    test('update subscription', async () => {
-      unauthorized('patch');
-      const response = await subscription._execute([
-        new UpdateSubscriptionOperation({ ...owner, ...sub }),
-      ]);
-      expect(response).toEqual({
-        _result: ExecutionResult._FailUnauthorized,
-        _retryAfterSeconds: 15,
-      });
+    beforeEach(() => {
+      setGates(true, JwtRequirement._Required);
+      tokens._putJwt(EXTERNAL_ID, JWT);
     });
 
-    test('transfer subscription', async () => {
+    test('signed transfer subscription maps to _FailUnauthorized', async () => {
       unauthorized('patch');
       const response = await subscription._execute([
         new TransferSubscriptionOperation({ ...owner, subscriptionId: SUB_ID }),
       ]);
+      expect(lastRequest().headers.authorization).toBe(`Bearer ${JWT}`);
       expect(response).toEqual({
         _result: ExecutionResult._FailUnauthorized,
         _retryAfterSeconds: 15,
       });
     });
 
-    test('delete subscription', async () => {
-      unauthorized('delete');
-      const response = await subscription._execute([
-        new DeleteSubscriptionOperation({ ...owner, subscriptionId: SUB_ID }),
-      ]);
-      expect(response).toEqual({
-        _result: ExecutionResult._FailUnauthorized,
-        _retryAfterSeconds: 15,
-      });
-    });
-
-    test('custom event', async () => {
+    test('signed custom event maps to _FailUnauthorized', async () => {
       unauthorized('post');
       const response = await customEvent._execute([
         new TrackCustomEventOperation({
@@ -286,7 +299,31 @@ describe('executors under Identity Verification', () => {
           event: { name: 'purchase' },
         }),
       ]);
-      expect(response).toEqual({ _result: ExecutionResult._FailUnauthorized });
+      expect(lastRequest().headers.authorization).toBe(`Bearer ${JWT}`);
+      expect(response).toEqual({
+        _result: ExecutionResult._FailUnauthorized,
+        _retryAfterSeconds: 15,
+      });
+    });
+
+    // These routes carry no token, so a 401 says nothing about the stored JWT
+    // and must not reach the unauthorized handler that invalidates it.
+    test('unsigned update subscription stays _FailNoretry', async () => {
+      unauthorized('patch');
+      const response = await subscription._execute([
+        new UpdateSubscriptionOperation({ ...owner, ...sub }),
+      ]);
+      expect(lastRequest().headers).not.toHaveProperty('authorization');
+      expect(response).toEqual({ _result: ExecutionResult._FailNoretry });
+    });
+
+    test('unsigned delete subscription stays _FailNoretry', async () => {
+      unauthorized('delete');
+      const response = await subscription._execute([
+        new DeleteSubscriptionOperation({ ...owner, subscriptionId: SUB_ID }),
+      ]);
+      expect(lastRequest().headers).not.toHaveProperty('authorization');
+      expect(response).toEqual({ _result: ExecutionResult._FailNoretry });
     });
   });
 });

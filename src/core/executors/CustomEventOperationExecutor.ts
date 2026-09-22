@@ -63,7 +63,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
       },
     );
 
-    const { ok, status } = response;
+    const { ok, status, retryAfterSeconds } = response;
     const responseType = getResponseStatusType(status);
 
     if (ok) return { _result: ExecutionResult._Success };
@@ -72,7 +72,10 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
       case ResponseStatusType._Retryable:
         return { _result: ExecutionResult._FailRetry };
       case ResponseStatusType._Unauthorized:
-        return { _result: ExecutionResult._FailUnauthorized };
+        return {
+          _result: ExecutionResult._FailUnauthorized,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
       default:
         return { _result: ExecutionResult._FailNoretry };
     }

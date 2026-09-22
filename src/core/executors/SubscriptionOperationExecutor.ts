@@ -227,11 +227,6 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           _result: ExecutionResult._FailRetry,
           _retryAfterSeconds: retryAfterSeconds,
         };
-      case ResponseStatusType._Unauthorized:
-        return {
-          _result: ExecutionResult._FailUnauthorized,
-          _retryAfterSeconds: retryAfterSeconds,
-        };
       case ResponseStatusType._Missing:
         if (
           status === 404 &&
@@ -325,11 +320,6 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       case ResponseStatusType._Retryable:
         return {
           _result: ExecutionResult._FailRetry,
-          _retryAfterSeconds: retryAfterSeconds,
-        };
-      case ResponseStatusType._Unauthorized:
-        return {
-          _result: ExecutionResult._FailUnauthorized,
           _retryAfterSeconds: retryAfterSeconds,
         };
 
