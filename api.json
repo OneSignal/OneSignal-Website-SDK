@@ -25,6 +25,23 @@
         "returnType": "Promise<void>"
       },
       {
+        "name": "updateUserJwt",
+        "isAsync": true,
+        "args": [
+          {
+            "name": "externalId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "token",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "Promise<void>"
+      },
+      {
         "name": "init",
         "isAsync": true,
         "args": [
