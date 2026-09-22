@@ -1,7 +1,7 @@
 import { InvalidAppIdError } from 'src/shared/errors/common';
 import { isValidUuid } from 'src/shared/helpers/validators';
 
-import type { OneSignalApiBaseResponse } from '../../shared/api/base';
+import type { OneSignalApiBaseResponse, RequestOptions } from '../../shared/api/base';
 import * as OneSignalApiBase from '../../shared/api/base';
 import type {
   AliasPair,
@@ -17,31 +17,28 @@ import type {
 } from '../types/api';
 import type { ICreateEvent } from '../types/customEvents';
 
+function requestOptions({ subscriptionId, jwt }: RequestMetadata): RequestOptions {
+  return {
+    headers: subscriptionId ? { 'OneSignal-Subscription-Id': subscriptionId } : undefined,
+    jwt,
+  };
+}
+
 /**
  * Creates a new user
  * @param requestMetadata - { appId }
  * @param requestBody - The user's properties, identity, and subscriptions
  */
 export async function createNewUser(requestMetadata: RequestMetadata, requestBody: ICreateUser) {
-  const { appId, subscriptionId } = requestMetadata;
-
-  const subscriptionHeader = subscriptionId
-    ? { 'OneSignal-Subscription-Id': subscriptionId }
-    : undefined;
-
-  let headers = {};
-
-  if (subscriptionHeader) {
-    headers = { ...headers, ...subscriptionHeader };
-  }
-
-  if (requestMetadata.jwtHeader) {
-    headers = { ...headers, ...requestMetadata.jwtHeader };
-  }
+  const { appId } = requestMetadata;
 
   requestBody['refresh_device_metadata'] = true;
 
-  return OneSignalApiBase.post<UserData>(`apps/${appId}/users`, requestBody, headers);
+  return OneSignalApiBase.post<UserData>(
+    `apps/${appId}/users`,
+    requestBody,
+    requestOptions(requestMetadata),
+  );
 }
 
 /**
@@ -54,7 +51,8 @@ export async function getUserByAlias(requestMetadata: RequestMetadata, alias: Al
   const { appId } = requestMetadata;
   return OneSignalApiBase.get<UserData>(
     `apps/${appId}/users/by/${alias.label}/${alias.id}`,
-    requestMetadata.jwtHeader,
+    undefined,
+    requestOptions(requestMetadata),
   );
 }
 
@@ -71,29 +69,15 @@ export async function updateUserByAlias(
   alias: AliasPair,
   payload: IUpdateUser,
 ) {
-  const { appId, subscriptionId } = requestMetadata;
+  const { appId } = requestMetadata;
   if (!isValidUuid(appId)) {
     throw InvalidAppIdError;
-  }
-
-  const subscriptionHeader = subscriptionId
-    ? { 'OneSignal-Subscription-Id': subscriptionId }
-    : undefined;
-
-  let headers = {};
-
-  if (subscriptionHeader) {
-    headers = { ...headers, ...subscriptionHeader };
-  }
-
-  if (requestMetadata.jwtHeader) {
-    headers = { ...headers, ...requestMetadata.jwtHeader };
   }
 
   return OneSignalApiBase.patch<{ properties: IUserProperties }>(
     `apps/${appId}/users/by/${alias.label}/${alias.id}`,
     payload,
-    headers,
+    requestOptions(requestMetadata),
   );
 }
 
@@ -109,7 +93,8 @@ export async function deleteUserByAlias(
   const { appId } = requestMetadata;
   return OneSignalApiBase.delete(
     `apps/${appId}/users/by/${alias.label}/${alias.id}`,
-    requestMetadata.jwtHeader,
+    undefined,
+    requestOptions(requestMetadata),
   );
 }
 
@@ -130,7 +115,7 @@ export async function addAlias(
   return OneSignalApiBase.patch<{ identity: IUserIdentity }>(
     `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
     { identity },
-    requestMetadata.jwtHeader,
+    requestOptions(requestMetadata),
   );
 }
 
@@ -146,7 +131,8 @@ export async function getUserIdentity(
   const { appId } = requestMetadata;
   return OneSignalApiBase.get<{ identity: IUserIdentity }>(
     `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
-    requestMetadata.jwtHeader,
+    undefined,
+    requestOptions(requestMetadata),
   );
 }
 
@@ -164,7 +150,8 @@ export async function deleteAlias(
   const { appId } = requestMetadata;
   return OneSignalApiBase.delete<{ identity: IUserIdentity }>(
     `apps/${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
-    requestMetadata.jwtHeader,
+    undefined,
+    requestOptions(requestMetadata),
   );
 }
 
@@ -186,7 +173,7 @@ export async function createSubscriptionByAlias(
   return OneSignalApiBase.post<{ subscription?: ISubscription }>(
     `apps/${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
     subscription,
-    requestMetadata.jwtHeader,
+    requestOptions(requestMetadata),
   );
 }
 
@@ -244,7 +231,7 @@ export async function transferSubscriptionById(
     {
       identity: { ...identity },
     },
-    requestMetadata.jwtHeader,
+    requestOptions(requestMetadata),
   );
 }
 
@@ -256,6 +243,6 @@ export async function sendCustomEvent(requestMetadata: RequestMetadata, event: I
     {
       events: [event],
     },
-    requestMetadata.jwtHeader,
+    requestOptions(requestMetadata),
   );
 }
