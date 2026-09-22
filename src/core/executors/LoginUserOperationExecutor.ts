@@ -6,6 +6,7 @@ import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { isIvBehaviorActive } from '../identityVerification';
 import { type JwtTokenStore } from '../JwtTokenStore';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -71,8 +72,13 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.
+    //
+    // Under IV the identify step is skipped too: it addresses the user by
+    // onesignal_id, and the IV alias switch would rewrite that to an external_id
+    // the server does not know yet. Create-user with external_id in the
+    // identity map is an upsert on the server, so it covers both cases.
     const externalId = loginUserOp._externalId;
-    if (!loginUserOp._existingOnesignalId || !externalId) {
+    if (!loginUserOp._existingOnesignalId || !externalId || isIvBehaviorActive()) {
       return this._createUser(loginUserOp, operations);
     }
 
