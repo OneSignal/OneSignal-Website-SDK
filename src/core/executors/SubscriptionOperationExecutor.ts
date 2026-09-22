@@ -248,6 +248,8 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
             }),
           ],
         };
+      case ResponseStatusType._Unauthorized:
+        return this._unsignedRouteRejected('update');
       default:
         return { _result: ExecutionResult._FailNoretry };
     }
@@ -315,9 +317,18 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           _result: ExecutionResult._FailRetry,
           _retryAfterSeconds: retryAfterSeconds,
         };
+      case ResponseStatusType._Unauthorized:
+        return this._unsignedRouteRejected('delete');
 
       default:
         return { _result: ExecutionResult._FailNoretry };
     }
+  }
+
+  // The SDK never signs PATCH or DELETE subscriptions/{id}, so a 401 here means the
+  // server contract changed. The operation is dropped; make the loss visible.
+  private _unsignedRouteRejected(route: 'update' | 'delete'): ExecutionResponse {
+    Log._error(`SubOpExec: 401 on unsigned ${route}`);
+    return { _result: ExecutionResult._FailNoretry };
   }
 }

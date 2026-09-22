@@ -338,22 +338,24 @@ describe('executors under Identity Verification', () => {
 
     // These routes carry no token, so a 401 says nothing about the stored JWT
     // and must not reach the unauthorized handler that invalidates it.
-    test('unsigned update subscription stays _FailNoretry', async () => {
+    test('unsigned update subscription stays _FailNoretry and logs an error', async () => {
       unauthorized('patch');
       const response = await subscription._execute([
         new UpdateSubscriptionOperation({ ...owner, ...sub }),
       ]);
       expect(lastRequest().headers).not.toHaveProperty('authorization');
       expect(response).toEqual({ _result: ExecutionResult._FailNoretry });
+      expect(Log._error).toHaveBeenCalledWith(expect.stringContaining('401 on unsigned update'));
     });
 
-    test('unsigned delete subscription stays _FailNoretry', async () => {
+    test('unsigned delete subscription stays _FailNoretry and logs an error', async () => {
       unauthorized('delete');
       const response = await subscription._execute([
         new DeleteSubscriptionOperation({ ...owner, subscriptionId: SUB_ID }),
       ]);
       expect(lastRequest().headers).not.toHaveProperty('authorization');
       expect(response).toEqual({ _result: ExecutionResult._FailNoretry });
+      expect(Log._error).toHaveBeenCalledWith(expect.stringContaining('401 on unsigned delete'));
     });
   });
 });
