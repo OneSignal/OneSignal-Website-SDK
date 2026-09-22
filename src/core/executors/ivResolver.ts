@@ -16,30 +16,26 @@ export type IvBackendParams = {
   jwt?: string;
 };
 
-export function legacyBackendParams(onesignalId: string): IvBackendParams {
-  return { alias: { label: IdentityConstants._OneSignalID, id: onesignalId } };
+function legacyBackendParams(op: Operation): IvBackendParams {
+  return { alias: { label: IdentityConstants._OneSignalID, id: op._onesignalId } };
 }
 
 /*
- * Call sites gate on isIvCodePathEnabled. Inside, isIvBehaviorActive decides
- * between the IV values and the legacy values, so with the flag on and the
- * requirement off the request is identical to the legacy path.
+ * Both resolvers gate on isIvBehaviorActive themselves. isIvBehaviorActive
+ * implies isIvCodePathEnabled, so a call site needs no outer gate: with the
+ * flag on and the requirement off the result is identical to the legacy path.
  */
 
 /** Alias switch plus token, for endpoints that address the user by alias. */
-export function resolveBackendParams(
-  op: Operation,
-  onesignalId: string,
-  jwtTokenStore: JwtTokenStore,
-): IvBackendParams {
-  if (!isIvBehaviorActive()) return legacyBackendParams(onesignalId);
+export function resolveBackendParams(op: Operation, jwtTokenStore: JwtTokenStore): IvBackendParams {
+  if (!isIvBehaviorActive()) return legacyBackendParams(op);
 
   const externalId = op._externalId;
   if (!externalId) {
     // The enqueue and start-up purges should keep anonymous operations out of the
     // queue under IV. Address the user by onesignal_id so the request still goes out.
     Log._error(`IV active but ${op._name} has no externalId, so the request uses onesignal_id`);
-    return legacyBackendParams(onesignalId);
+    return legacyBackendParams(op);
   }
 
   return {

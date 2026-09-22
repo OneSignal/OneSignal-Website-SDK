@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 import { IdentityConstants } from '../constants';
 import { JwtTokenStore } from '../JwtTokenStore';
 import { RefreshUserOperation } from '../operations/RefreshUserOperation';
-import { legacyBackendParams, resolveBackendParams, resolveJwt } from './ivResolver';
+import { resolveBackendParams, resolveJwt } from './ivResolver';
 
 const JWT = 'header.payload.signature';
 const legacy = { alias: { label: IdentityConstants._OneSignalID, id: ONESIGNAL_ID } };
@@ -32,30 +32,26 @@ describe('ivResolver', () => {
     tokens = new JwtTokenStore();
   });
 
-  test('legacyBackendParams addresses the user by onesignal_id with no token', () => {
-    expect(legacyBackendParams(ONESIGNAL_ID)).toEqual(legacy);
-  });
-
   describe('resolveBackendParams', () => {
     test('IV inactive: legacy values, even for an owned operation with a stored token', () => {
       setGates(false, JwtRequirement._NotRequired);
       tokens._putJwt(EXTERNAL_ID, JWT);
 
-      expect(resolveBackendParams(ownedOp(), ONESIGNAL_ID, tokens)).toEqual(legacy);
+      expect(resolveBackendParams(ownedOp(), tokens)).toEqual(legacy);
     });
 
     test('Phase 3 (flag on, requirement off): values identical to legacy', () => {
       setGates(true, JwtRequirement._NotRequired);
       tokens._putJwt(EXTERNAL_ID, JWT);
 
-      expect(resolveBackendParams(ownedOp(), ONESIGNAL_ID, tokens)).toEqual(legacy);
+      expect(resolveBackendParams(ownedOp(), tokens)).toEqual(legacy);
     });
 
     test('IV active: external_id alias plus the stored token', () => {
       setGates(true, JwtRequirement._Required);
       tokens._putJwt(EXTERNAL_ID, JWT);
 
-      expect(resolveBackendParams(ownedOp(), ONESIGNAL_ID, tokens)).toEqual({
+      expect(resolveBackendParams(ownedOp(), tokens)).toEqual({
         ...identified,
         jwt: JWT,
       });
@@ -64,13 +60,13 @@ describe('ivResolver', () => {
     test('IV active without a stored token: external_id alias and no token', () => {
       setGates(true, JwtRequirement._Required);
 
-      expect(resolveBackendParams(ownedOp(), ONESIGNAL_ID, tokens)).toEqual(identified);
+      expect(resolveBackendParams(ownedOp(), tokens)).toEqual(identified);
     });
 
     test('IV active with an anonymous operation: legacy values and an error log', () => {
       setGates(true, JwtRequirement._Required);
 
-      expect(resolveBackendParams(anonymousOp(), ONESIGNAL_ID, tokens)).toEqual(legacy);
+      expect(resolveBackendParams(anonymousOp(), tokens)).toEqual(legacy);
       expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining('refresh-user has no externalId'),
       );
@@ -80,7 +76,7 @@ describe('ivResolver', () => {
       setGates(false, JwtRequirement._Required);
       tokens._putJwt(EXTERNAL_ID, JWT);
 
-      expect(resolveBackendParams(ownedOp(), ONESIGNAL_ID, tokens)).toEqual({
+      expect(resolveBackendParams(ownedOp(), tokens)).toEqual({
         ...identified,
         jwt: JWT,
       });
