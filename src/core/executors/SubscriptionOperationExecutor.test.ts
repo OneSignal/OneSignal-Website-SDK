@@ -84,6 +84,7 @@ describe('SubscriptionOperationExecutor', () => {
       subscriptionModelStore,
       buildUserService,
       newRecordsState,
+      OneSignal._coreDirector._jwtTokenStore,
     );
   };
 

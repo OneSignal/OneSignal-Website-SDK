@@ -6,6 +6,8 @@ import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { isIvCodePathEnabled } from '../identityVerification';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -22,6 +24,7 @@ import { createNewUser } from '../requests/api';
 import type { ICreateUserIdentity, ICreateUserSubscription, IUserProperties } from '../types/api';
 import type { ExecutionResponse } from '../types/operation';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
+import { resolveJwt } from './ivResolver';
 
 type SubscriptionMap = Record<string, ICreateUserSubscription & { id?: string }>;
 
@@ -32,17 +35,20 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   private _identityModelStore: IdentityModelStore;
   private _propertiesModelStore: PropertiesModelStore;
   private _subscriptionsModelStore: SubscriptionModelStore;
+  private _jwtTokenStore: JwtTokenStore;
 
   constructor(
     _identityOperationExecutor: IdentityOperationExecutor,
     _identityModelStore: IdentityModelStore,
     _propertiesModelStore: PropertiesModelStore,
     _subscriptionsModelStore: SubscriptionModelStore,
+    _jwtTokenStore: JwtTokenStore,
   ) {
     this._identityOperationExecutor = _identityOperationExecutor;
     this._identityModelStore = _identityModelStore;
     this._propertiesModelStore = _propertiesModelStore;
     this._subscriptionsModelStore = _subscriptionsModelStore;
+    this._jwtTokenStore = _jwtTokenStore;
   }
 
   get _operations(): string[] {
@@ -160,8 +166,12 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       return { _result: ExecutionResult._FailNoretry };
     }
 
+    // POST /users has no alias in the path, so only the token applies.
+    const jwt = isIvCodePathEnabled()
+      ? resolveJwt(createUserOperation, this._jwtTokenStore)
+      : undefined;
     const response = await createNewUser(
-      { appId: createUserOperation._appId },
+      { appId: createUserOperation._appId, jwt },
       {
         identity,
         subscriptions: subscriptionList.map(([, sub]) => sub),

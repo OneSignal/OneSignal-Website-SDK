@@ -214,7 +214,7 @@ export async function deleteSubscriptionById(
  * Transfers this Subscription to the User identified by the identity in the payload.
  * @param requestMetadata - { appId }
  * @param subscriptionId - subscription id
- * @param identity - identity label & id
+ * @param identity - one alias label & id that names the new owner
  * @param retainPreviousOwner - if true *AND* subscription is last subscription for the previous
  * user, an orphan user will be created. Otherwise, the previous user will be deleted. Useful when going
  * from a guest (anonymous) user to an identified user. If the previous owner had other subscriptions,
@@ -223,7 +223,7 @@ export async function deleteSubscriptionById(
 export async function transferSubscriptionById(
   requestMetadata: RequestMetadata,
   subscriptionId: string,
-  identity: IUserIdentity,
+  identity: ICreateUserIdentity,
 ) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.patch<{ identity: IUserIdentity }>(

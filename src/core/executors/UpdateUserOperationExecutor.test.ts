@@ -59,6 +59,7 @@ describe('UpdateUserOperationExecutor', () => {
       propertiesModelStore,
       buildUserService,
       newRecordsState,
+      OneSignal._coreDirector._jwtTokenStore,
     );
   };
 

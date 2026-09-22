@@ -3,7 +3,9 @@ import type { IRebuildUserService } from 'src/core/types/user';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 
-import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { OPERATION_NAME } from '../constants';
+import { isIvCodePathEnabled } from '../identityVerification';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -20,6 +22,7 @@ import {
 } from '../requests/api';
 import { ModelChangeTags } from '../types/models';
 import type { ExecutionResponse } from '../types/operation';
+import { legacyBackendParams, resolveBackendParams } from './ivResolver';
 
 // Implements logic similar to Android SDK's SubscriptionOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/SubscriptionOperationExecutor.kt
@@ -27,15 +30,24 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   private _subscriptionModelStore: SubscriptionModelStore;
   private _buildUserService: IRebuildUserService;
   private _newRecordState: NewRecordsState;
+  private _jwtTokenStore: JwtTokenStore;
 
   constructor(
     _subscriptionModelStore: SubscriptionModelStore,
     _buildUserService: IRebuildUserService,
     _newRecordState: NewRecordsState,
+    _jwtTokenStore: JwtTokenStore,
   ) {
     this._subscriptionModelStore = _subscriptionModelStore;
     this._buildUserService = _buildUserService;
     this._newRecordState = _newRecordState;
+    this._jwtTokenStore = _jwtTokenStore;
+  }
+
+  private _backendParams(op: Operation, onesignalId: string) {
+    return isIvCodePathEnabled()
+      ? resolveBackendParams(op, onesignalId, this._jwtTokenStore)
+      : legacyBackendParams(onesignalId);
   }
 
   get _operations(): string[] {
@@ -98,12 +110,10 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       notification_types,
     };
 
+    const { alias, jwt } = this._backendParams(createOperation, createOperation._onesignalId);
     const response = await createSubscriptionByAlias(
-      { appId: createOperation._appId },
-      {
-        label: IdentityConstants._OneSignalID,
-        id: createOperation._onesignalId,
-      },
+      { appId: createOperation._appId, jwt },
+      alias,
       { subscription },
     );
 
@@ -217,6 +227,11 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           _result: ExecutionResult._FailRetry,
           _retryAfterSeconds: retryAfterSeconds,
         };
+      case ResponseStatusType._Unauthorized:
+        return {
+          _result: ExecutionResult._FailUnauthorized,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
       case ResponseStatusType._Missing:
         if (
           status === 404 &&
@@ -253,8 +268,9 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   private async _transferSubscription(
     op: TransferSubscriptionOperation,
   ): Promise<ExecutionResponse> {
-    const response = await transferSubscriptionById({ appId: op._appId }, op._subscriptionId, {
-      onesignal_id: op._onesignalId,
+    const { alias, jwt } = this._backendParams(op, op._onesignalId);
+    const response = await transferSubscriptionById({ appId: op._appId, jwt }, op._subscriptionId, {
+      [alias.label]: alias.id,
     });
 
     if (response.ok) {
@@ -268,6 +284,11 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       case ResponseStatusType._Retryable:
         return {
           _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
+      case ResponseStatusType._Unauthorized:
+        return {
+          _result: ExecutionResult._FailUnauthorized,
           _retryAfterSeconds: retryAfterSeconds,
         };
 
@@ -304,6 +325,11 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       case ResponseStatusType._Retryable:
         return {
           _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
+      case ResponseStatusType._Unauthorized:
+        return {
+          _result: ExecutionResult._FailUnauthorized,
           _retryAfterSeconds: retryAfterSeconds,
         };
 

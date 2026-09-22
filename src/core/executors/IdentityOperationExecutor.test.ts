@@ -48,7 +48,12 @@ let getRebuildOpsSpy: MockInstance;
 
 describe('IdentityOperationExecutor', () => {
   const getExecutor = () => {
-    return new IdentityOperationExecutor(identityModelStore, rebuildUserService, newRecordsState);
+    return new IdentityOperationExecutor(
+      identityModelStore,
+      rebuildUserService,
+      newRecordsState,
+      OneSignal._coreDirector._jwtTokenStore,
+    );
   };
 
   beforeAll(() => {

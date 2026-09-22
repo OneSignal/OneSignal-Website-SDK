@@ -70,11 +70,18 @@ describe('LoginUserOperationExecutor', () => {
   });
 
   const getExecutor = () => {
+    const jwtTokenStore = OneSignal._coreDirector._jwtTokenStore;
     return new LoginUserOperationExecutor(
-      new IdentityOperationExecutor(identityModelStore, rebuildUserService, new NewRecordsState()),
+      new IdentityOperationExecutor(
+        identityModelStore,
+        rebuildUserService,
+        new NewRecordsState(),
+        jwtTokenStore,
+      ),
       identityModelStore,
       propertiesModelStore,
       subscriptionModelStore,
+      jwtTokenStore,
     );
   };
 
