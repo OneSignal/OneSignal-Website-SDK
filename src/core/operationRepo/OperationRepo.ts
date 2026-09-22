@@ -366,8 +366,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
    * wakes the waiters, and re-queues the operations at the head with no resolver.
    * The dispatch gate then holds them until a new token is stored, so there is no
    * retry loop. If a newer token is already stored, it is kept and the re-queued
-   * operations retry with it. Returns false when IV is inactive or the operation
-   * is anonymous; the caller then drops the operations.
+   * operations retry with it. Returns false when IV is inactive, the operation
+   * is anonymous, or the operation sent no token (a 401 on an unsigned request
+   * says nothing about the stored token); the caller then drops the operations.
    */
   private _handleFailUnauthorized(
     ops: OperationQueueItem[],
@@ -375,8 +376,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     jwtAtDispatch: string | undefined,
   ): boolean {
     if (!ivBehaviorActive) return false;
-    const externalId = ops[0].operation._externalId;
-    if (!externalId) return false;
+    const { _externalId: externalId, _requiresJwt: requiresJwt } = ops[0].operation;
+    if (!externalId || !requiresJwt) return false;
 
     if (this._jwtTokenStore._getJwt(externalId) === jwtAtDispatch) {
       this._jwtTokenStore._invalidateJwt(externalId);

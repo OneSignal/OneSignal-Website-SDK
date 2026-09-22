@@ -584,6 +584,27 @@ describe('OperationRepo', () => {
         expect(mockOperationModelStore._list()).toEqual([]);
       });
 
+      test('IV active: an operation that needs no JWT is dropped and keeps the token', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'kept');
+        failUnauthorized();
+
+        class NoJwtOperation extends Operation {
+          override get _requiresJwt() {
+            return false;
+          }
+        }
+        const op = ownedBy(new NoJwtOperation('no-jwt'), EXTERNAL_ID);
+        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
+        await executeOps(opRepo);
+
+        expect((await waiter)._result).toBe(ExecutionResult._FailUnauthorized);
+        expect(invalidated).not.toHaveBeenCalled();
+        expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBe('kept');
+        expect(opRepo._queue).toEqual([]);
+        expect(mockOperationModelStore._list()).toEqual([]);
+      });
+
       test('IV inactive with the new code path on: drops the operation and fires no event', async () => {
         setJwtRequirement(JwtRequirement._NotRequired);
         localStorage.setItem('os_feature_overrides', 'sdk_identity_verification');
