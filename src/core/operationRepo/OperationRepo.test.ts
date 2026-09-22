@@ -1,14 +1,19 @@
-import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
+import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
+import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { clearAll, db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
+import { OperationFailedError } from 'src/shared/errors/common';
 import { delay as delaySpy } from 'src/shared/helpers/general';
-import { setConsentRequired } from 'src/shared/helpers/localStorage';
+import { setConsentRequired, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
+import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vite-plus/test';
 
+import { JwtTokenStore } from '../JwtTokenStore';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
+import { LoginUserOperation } from '../operations/LoginUserOperation';
 import {
   GroupComparisonType,
   type GroupComparisonValue,
@@ -18,7 +23,7 @@ import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
-import { OperationRepo } from './OperationRepo';
+import { OperationRepo, type OperationQueueItem } from './OperationRepo';
 
 vi.mock('src/shared/helpers/general', async (importOriginal) => {
   const mod = await importOriginal<typeof import('src/shared/helpers/general')>();
@@ -36,6 +41,7 @@ vi.spyOn(OperationModelStore.prototype, '_create').mockImplementation(() => {
 });
 
 let mockOperationModelStore: OperationModelStore;
+let jwtTokenStore: JwtTokenStore;
 
 const executeOps = async (opRepo: OperationRepo) => {
   await opRepo._loadSavedOperations();
@@ -58,10 +64,18 @@ describe('OperationRepo', () => {
   ];
 
   beforeEach(() => {
+    localStorage.clear();
     setConsentRequired(false);
+    setJwtRequirement(JwtRequirement._NotRequired);
 
     mockOperationModelStore = new OperationModelStore();
-    opRepo = new OperationRepo([mockExecutor], mockOperationModelStore, new NewRecordsState());
+    jwtTokenStore = new JwtTokenStore();
+    opRepo = new OperationRepo(
+      [mockExecutor],
+      mockOperationModelStore,
+      new NewRecordsState(),
+      jwtTokenStore,
+    );
   });
 
   afterEach(async () => {
@@ -202,6 +216,360 @@ describe('OperationRepo', () => {
     expect(opRepo._queue.length).toBe(0);
   });
 
+  const ownedBy = (op: Operation, externalId: string) => {
+    op._setProperty('externalId', externalId);
+    return op;
+  };
+
+  describe('anonymous operation purge on start', () => {
+    // Seeds the store before _start so _loadSavedOperations picks the operations up,
+    // the same as rows persisted by an earlier session.
+    const seedSaved = (...ops: OperationBase[]) =>
+      ops.forEach((op) => mockOperationModelStore._add(op));
+    const queued = () => opRepo._queue.map((item) => item.operation);
+
+    test('IV active: drops anonymous operations from the queue and the store, spares identified ones', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const anonymous = new Operation('anon');
+      const anonymousLogin = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const identified = ownedBy(new Operation('owned'), EXTERNAL_ID);
+      seedSaved(anonymous, anonymousLogin, identified);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([identified]);
+      expect(mockOperationModelStore._list()).toEqual([identified]);
+    });
+
+    test('IV active: clears existingOnesignalId on a surviving LoginUserOperation', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const localId = IDManager._createLocalId();
+      const login = new LoginUserOperation(APP_ID, ONESIGNAL_ID, EXTERNAL_ID, localId);
+      seedSaved(login);
+      expect(login._canStartExecute).toBe(false);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([login]);
+      expect(login._existingOnesignalId).toBeUndefined();
+      expect(login._canStartExecute).toBe(true);
+      expect(login.toJSON()).not.toHaveProperty('existingOnesignalId');
+    });
+
+    test('IV active: the purge runs after saved operations load', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const loadSpy = vi.spyOn(opRepo, '_loadSavedOperations');
+      const removeSpy = vi.spyOn(mockOperationModelStore, '_remove');
+      seedSaved(new Operation('anon'));
+
+      await opRepo._start();
+
+      expect(removeSpy).toHaveBeenCalledOnce();
+      expect(loadSpy.mock.invocationCallOrder[0]).toBeLessThan(
+        removeSpy.mock.invocationCallOrder[0],
+      );
+    });
+
+    test('IV inactive: nothing is purged and existingOnesignalId is kept', async () => {
+      const localId = IDManager._createLocalId();
+      const anonymous = new Operation('anon');
+      const login = new LoginUserOperation(APP_ID, ONESIGNAL_ID, EXTERNAL_ID, localId);
+      seedSaved(anonymous, login);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([anonymous, login]);
+      expect(login._existingOnesignalId).toBe(localId);
+    });
+  });
+
+  describe('JWT requirement UNKNOWN', () => {
+    test('defers dispatch and keeps the operation queued', () => {
+      setJwtRequirement(JwtRequirement._Unknown);
+      opRepo._enqueue(mockOperation);
+
+      expect(opRepo._getNextOps(0)).toBeNull();
+      expect(opRepo._queue).toEqual([{ operation: mockOperation, bucket: 0, retries: 0 }]);
+    });
+
+    test('logs the deferral once, not on every pass', () => {
+      const debug = vi.spyOn(Log, '_debug').mockImplementation(() => {});
+      setJwtRequirement(JwtRequirement._Unknown);
+      opRepo._enqueue(mockOperation);
+      debug.mockClear();
+
+      opRepo._getNextOps(0);
+      opRepo._getNextOps(0);
+      opRepo._getNextOps(0);
+
+      expect(debug).toHaveBeenCalledExactlyOnceWith('OpRepo: JWT requirement unknown');
+    });
+
+    test('dispatches on the next pass once the requirement is known', async () => {
+      setJwtRequirement(JwtRequirement._Unknown);
+      await opRepo._start();
+      opRepo._enqueue(mockOperation);
+
+      // Several ticks pass with nothing executed.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(executeFn).not.toHaveBeenCalled();
+      expect(opRepo._queue.length).toBe(1);
+
+      setJwtRequirement(JwtRequirement._NotRequired);
+      await vi.waitUntil(() => opRepo._queue.length === 0, { timeout: 3000 });
+      expect(executeFn).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('JWT dispatch gate', () => {
+    const anonymousOp = () => new Operation('anon');
+    const identifiedOp = (externalId = EXTERNAL_ID) => ownedBy(new Operation('owned'), externalId);
+    // Places an operation in the queue the way _loadSavedOperations does, past the
+    // enqueue-time suppression, to model a row persisted before IV was turned on.
+    const loadIntoQueue = (op: Operation, resolver?: OperationQueueItem['resolver']) => {
+      const item: OperationQueueItem = { operation: op, bucket: 0, retries: 0 };
+      if (resolver) item.resolver = resolver;
+      opRepo._queue.push(item);
+      mockOperationModelStore._add(op);
+      return item;
+    };
+
+    describe('IV behavior active', () => {
+      beforeEach(() => setJwtRequirement(JwtRequirement._Required));
+
+      test('a loaded anonymous operation is skipped and stays queued', () => {
+        const item = loadIntoQueue(anonymousOp());
+
+        expect(opRepo._getNextOps(0)).toBeNull();
+        expect(opRepo._queue).toEqual([item]);
+      });
+
+      test('an identified operation with no stored token is skipped, not dropped', () => {
+        const op = identifiedOp();
+        opRepo._enqueue(op);
+
+        expect(opRepo._getNextOps(0)).toBeNull();
+        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        expect(mockOperationModelStore._list()).toEqual([op]);
+      });
+
+      test('a later operation for a user with a token runs ahead of a blocked one', () => {
+        const blocked = identifiedOp('no-token-user');
+        const ready = identifiedOp(EXTERNAL_ID);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'jwt');
+        opRepo._enqueue(blocked);
+        opRepo._enqueue(ready);
+
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: ready, bucket: 0, retries: 0 }]);
+        expect(opRepo._queue).toEqual([{ operation: blocked, bucket: 0, retries: 0 }]);
+      });
+
+      test('storing the token releases the blocked operation on the next pass', () => {
+        const op = identifiedOp();
+        opRepo._enqueue(op);
+        expect(opRepo._getNextOps(0)).toBeNull();
+
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'jwt');
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+      });
+
+      test('an operation that does not require a JWT runs without a token', () => {
+        class NoJwtOperation extends Operation {
+          override get _requiresJwt() {
+            return false;
+          }
+        }
+        const op = ownedBy(new NoJwtOperation('no-jwt'), EXTERNAL_ID);
+        opRepo._enqueue(op);
+
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+      });
+
+      test('a token stored after start is picked up by the interval without a wake-up', async () => {
+        await opRepo._start();
+        opRepo._enqueue(identifiedOp());
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        expect(executeFn).not.toHaveBeenCalled();
+
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'jwt');
+        await vi.waitUntil(() => opRepo._queue.length === 0, { timeout: 3000 });
+        expect(executeFn).toHaveBeenCalledOnce();
+      });
+    });
+
+    describe('anonymous operation suppression at enqueue', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      describe('IV behavior active', () => {
+        beforeEach(() => setJwtRequirement(JwtRequirement._Required));
+
+        test('_enqueue drops an anonymous operation and warns', () => {
+          opRepo._enqueue(anonymousOp());
+
+          expect(opRepo._queue).toEqual([]);
+          expect(mockOperationModelStore._list()).toEqual([]);
+          expect(warn).toHaveBeenCalledExactlyOnceWith(
+            expect.stringContaining('mock-op was dropped. Identity Verification is on'),
+          );
+        });
+
+        test('_enqueueAndWait rejects an anonymous operation as suppressed', async () => {
+          const error = await opRepo._enqueueAndWait(anonymousOp()).catch((e: unknown) => e);
+
+          expect(error).toBeInstanceOf(OperationFailedError);
+          expect((error as OperationFailedError)._result).toBe(ExecutionResult._Suppressed);
+          expect(opRepo._queue).toEqual([]);
+        });
+
+        test('an anonymous LoginUserOperation is exempt', () => {
+          const op = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+          opRepo._enqueue(op);
+
+          expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+          expect(warn).not.toHaveBeenCalled();
+        });
+
+        test('an identified operation is queued', () => {
+          const op = identifiedOp();
+          opRepo._enqueue(op);
+
+          expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+          expect(warn).not.toHaveBeenCalled();
+        });
+      });
+
+      test('IV behavior inactive with the new code path on: anonymous operations are queued', () => {
+        setJwtRequirement(JwtRequirement._NotRequired);
+        localStorage.setItem('os_feature_overrides', 'sdk_identity_verification');
+        const op = anonymousOp();
+        opRepo._enqueue(op);
+
+        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        expect(warn).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('FailUnauthorized', () => {
+      const invalidated = vi.fn();
+      const failUnauthorized = () =>
+        executeFn.mockResolvedValueOnce({ _result: ExecutionResult._FailUnauthorized });
+      const rejectionOf = (p: Promise<void>): Promise<OperationFailedError> =>
+        p.then(
+          () => Promise.reject(new Error('expected a rejection')),
+          (e: unknown) => e as OperationFailedError,
+        );
+
+      beforeEach(() => {
+        invalidated.mockClear();
+        jwtTokenStore._addUserJwtInvalidatedListener(invalidated);
+      });
+
+      test('IV active: invalidates the token, fires the event, wakes waiters, re-queues at head', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'stale');
+        failUnauthorized();
+
+        const op = identifiedOp();
+        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
+        await executeOps(opRepo);
+
+        const error = await waiter;
+        expect(error).toBeInstanceOf(OperationFailedError);
+        expect(error._result).toBe(ExecutionResult._FailUnauthorized);
+
+        expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBeUndefined();
+        expect(invalidated).toHaveBeenCalledExactlyOnceWith({ externalId: EXTERNAL_ID });
+
+        // Re-queued with no resolver and still persisted.
+        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        expect(mockOperationModelStore._list()).toEqual([op]);
+      });
+
+      test('IV active: a token stored while the request was in flight is kept', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'stale');
+        executeFn.mockImplementationOnce(() => {
+          jwtTokenStore._putJwt(EXTERNAL_ID, 'fresh');
+          return Promise.resolve({ _result: ExecutionResult._FailUnauthorized });
+        });
+
+        const op = identifiedOp();
+        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
+        await executeOps(opRepo);
+
+        expect((await waiter)._result).toBe(ExecutionResult._FailUnauthorized);
+        expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBe('fresh');
+        expect(invalidated).not.toHaveBeenCalled();
+
+        // Re-queued and eligible right away with the new token.
+        expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+      });
+
+      test('IV active: the re-queued operation waits for a new token instead of spinning', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'stale');
+        failUnauthorized();
+
+        opRepo._enqueue(identifiedOp());
+        await executeOps(opRepo);
+        expect(executeFn).toHaveBeenCalledOnce();
+
+        expect(opRepo._getNextOps(0)).toBeNull();
+
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'fresh');
+        await executeOps(opRepo);
+        expect(executeFn).toHaveBeenCalledTimes(2);
+        expect(opRepo._queue).toEqual([]);
+      });
+
+      test('IV active: an anonymous operation is dropped and fires no event', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        failUnauthorized();
+
+        // A loaded anonymous operation never passes the gate, so drive the executor directly.
+        const resolver = vi.fn();
+        const item = loadIntoQueue(anonymousOp(), resolver);
+        opRepo._queue.length = 0;
+        await opRepo._executeOperations([item]);
+
+        expect(resolver).toHaveBeenCalledExactlyOnceWith(false, ExecutionResult._FailUnauthorized);
+        expect(invalidated).not.toHaveBeenCalled();
+        expect(opRepo._queue).toEqual([]);
+        expect(mockOperationModelStore._list()).toEqual([]);
+      });
+
+      test('IV inactive with the new code path on: drops the operation and fires no event', async () => {
+        setJwtRequirement(JwtRequirement._NotRequired);
+        localStorage.setItem('os_feature_overrides', 'sdk_identity_verification');
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'kept');
+        failUnauthorized();
+
+        const op = identifiedOp();
+        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
+        await executeOps(opRepo);
+
+        expect((await waiter)._result).toBe(ExecutionResult._FailUnauthorized);
+        expect(invalidated).not.toHaveBeenCalled();
+        expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBe('kept');
+        expect(opRepo._queue).toEqual([]);
+        expect(mockOperationModelStore._list()).toEqual([]);
+      });
+    });
+
+    describe('IV behavior inactive', () => {
+      test('no gate applies, even with the new code path enabled', () => {
+        setJwtRequirement(JwtRequirement._NotRequired);
+        localStorage.setItem('os_feature_overrides', 'sdk_identity_verification');
+        const op = anonymousOp();
+        opRepo._enqueue(op);
+
+        expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+      });
+    });
+  });
+
   test('can get grouped operations', () => {
     const singleOp = new Operation('1', GroupComparisonType._None);
     const groupedOps = getGroupedOp();
@@ -322,6 +690,40 @@ describe('OperationRepo', () => {
 
       // operation should be removed from the model store
       expect(mockOperationModelStore._list()).toEqual([]);
+    });
+
+    describe('enqueueAndWait', () => {
+      // Runs the queued operation once the waiter has registered it.
+      const waitFor = (op: OperationBase) => {
+        const waiter = opRepo._enqueueAndWait(op);
+        void executeOps(opRepo);
+        return waiter;
+      };
+
+      test('resolves on success', async () => {
+        await expect(waitFor(mockOperation)).resolves.toBeUndefined();
+      });
+
+      test.each([
+        ['FailUnauthorized', ExecutionResult._FailUnauthorized],
+        ['FailNoRetry', ExecutionResult._FailNoretry],
+        ['FailConflict', ExecutionResult._FailConflict],
+        ['FailPauseOpRepo', ExecutionResult._FailPauseOpRepo],
+      ])('rejects with the result for %s', async (_, failResult) => {
+        executeFn.mockResolvedValueOnce({ _result: failResult });
+
+        const error = await waitFor(mockOperation).catch((e: unknown) => e);
+        expect(error).toBeInstanceOf(OperationFailedError);
+        expect((error as OperationFailedError)._result).toBe(failResult);
+      });
+
+      test('rejects with FailNoretry when the executor throws', async () => {
+        executeFn.mockRejectedValueOnce(new Error('boom'));
+
+        const error = await waitFor(mockOperation).catch((e: unknown) => e);
+        expect(error).toBeInstanceOf(OperationFailedError);
+        expect((error as OperationFailedError)._result).toBe(ExecutionResult._FailNoretry);
+      });
     });
 
     test('can handle success starting only operation', async () => {

@@ -404,12 +404,19 @@ describe('OneSignal - No Consent Required', () => {
           await expect(OneSignal.login()).rejects.toThrowError('"externalId" is empty');
 
           // @ts-expect-error - testing invalid argument
-          await expect(OneSignal.login(null)).rejects.toThrowError(
-            '"externalId" is the wrong type',
-          );
+          await expect(OneSignal.login(null)).rejects.toThrowError('"externalId" is empty');
+
+          // An empty external id would write external_id: '' to the identity model while
+          // every operation reads as anonymous.
+          await expect(OneSignal.login('')).rejects.toThrowError('"externalId" is empty');
 
           // @ts-expect-error - testing invalid argument
-          await expect(OneSignal.login('', 1)).rejects.toThrowError('"jwtToken" is the wrong type');
+          await expect(OneSignal.login(1)).rejects.toThrowError('"externalId" is the wrong type');
+
+          // @ts-expect-error - testing invalid argument
+          await expect(OneSignal.login('some-id', 1)).rejects.toThrowError(
+            '"jwtToken" is the wrong type',
+          );
         });
 
         test('can login with a new external id', async () => {

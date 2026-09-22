@@ -34,6 +34,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     return new CreateSubscriptionOperation({
       appId,
       onesignalId: this._identityModelStore._model._onesignalId,
+      externalId: this._identityModelStore._model._externalId,
       subscriptionId: model.id,
       type: model.type,
       enabled,
@@ -48,6 +49,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
       appId,
       this._identityModelStore._model._onesignalId,
       model.id,
+      this._identityModelStore._model._externalId,
     );
   }
 
@@ -59,6 +61,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     return new UpdateSubscriptionOperation({
       appId,
       onesignalId: this._identityModelStore._model._onesignalId,
+      externalId: this._identityModelStore._model._externalId,
       subscriptionId: model.id,
       type: model.type,
       enabled,

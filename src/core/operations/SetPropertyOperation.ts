@@ -15,9 +15,21 @@ export class SetPropertyOperation<P extends Property = string> extends Operation
   value: PropertyValue[P];
 }> {
   constructor();
-  constructor(appId: string, onesignalId: string, property: P, value: PropertyValue[P]);
-  constructor(appId?: string, onesignalId?: string, property?: P, value?: PropertyValue[P]) {
-    super(OPERATION_NAME._SetProperty, appId, onesignalId);
+  constructor(
+    appId: string,
+    onesignalId: string,
+    property: P,
+    value: PropertyValue[P],
+    externalId?: string,
+  );
+  constructor(
+    appId?: string,
+    onesignalId?: string,
+    property?: P,
+    value?: PropertyValue[P],
+    externalId?: string,
+  ) {
+    super(OPERATION_NAME._SetProperty, appId, onesignalId, externalId);
     if (property && value) {
       this._property = property;
       this.value = value;

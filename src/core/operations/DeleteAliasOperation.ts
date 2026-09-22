@@ -6,9 +6,9 @@ import { GroupComparisonType, type GroupComparisonValue } from './Operation';
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/DeleteAliasOperation.kt
 export class DeleteAliasOperation extends BaseAliasOperation {
   constructor();
-  constructor(appId: string, onesignalId: string, label: string);
-  constructor(appId?: string, onesignalId?: string, label?: string) {
-    super(OPERATION_NAME._DeleteAlias, appId, onesignalId, label);
+  constructor(appId: string, onesignalId: string, label: string, externalId?: string);
+  constructor(appId?: string, onesignalId?: string, label?: string, externalId?: string) {
+    super(OPERATION_NAME._DeleteAlias, appId, onesignalId, label, externalId);
   }
 
   override get _modifyComparisonKey(): string {

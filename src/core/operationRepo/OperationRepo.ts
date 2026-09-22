@@ -2,13 +2,22 @@ import {
   ExecutionResult,
   type IOperationExecutor,
   type IOperationRepo,
+  type ExecutionResultValue,
   type IStartableService,
 } from 'src/core/types/operation';
 import { db } from 'src/shared/database/client';
+import { OperationFailedError } from 'src/shared/errors/common';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 
+import {
+  isIvBehaviorActive,
+  isIvCodePathEnabled,
+  isJwtRequirementUnknown,
+} from '../identityVerification';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
+import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
@@ -27,7 +36,8 @@ export interface OperationQueueItem {
   operation: Operation;
   bucket: number;
   retries: number;
-  resolver?: (value: boolean) => void;
+  /** Wakes an _enqueueAndWait caller. A false value must carry the result. */
+  resolver?: (value: boolean, result?: ExecutionResultValue) => void;
 }
 
 // OperationRepo Class
@@ -38,14 +48,18 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   private _enqueueIntoBucket = 0;
   private _operationModelStore: OperationModelStore;
   private _newRecordState: NewRecordsState;
+  private _jwtTokenStore: JwtTokenStore;
+  private _loggedUnknownDeferral = false;
 
   constructor(
     executors: IOperationExecutor[],
     operationModelStore: OperationModelStore,
     newRecordState: NewRecordsState,
+    jwtTokenStore: JwtTokenStore,
   ) {
     this._operationModelStore = operationModelStore;
     this._newRecordState = newRecordState;
+    this._jwtTokenStore = jwtTokenStore;
 
     this._executorsMap = new Map<string, IOperationExecutor>();
     for (const executor of executors) {
@@ -73,6 +87,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public async _start(): Promise<void> {
     await this._loadSavedOperations();
+    // The page fetches the config before the repo starts, so the requirement is
+    // already hydrated here. This is the web equivalent of Android's hydrate hook.
+    if (isIvBehaviorActive()) this._purgeAnonymousOperations();
     this._processQueueForever();
   }
 
@@ -83,6 +100,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public _enqueue(operation: Operation): void {
+    if (this._shouldSuppressAnonymousOp(operation)) return;
     Log._debug(`OpRepo.enqueue: ${JSON.stringify(operation)}`);
 
     this._internalEnqueue(
@@ -95,7 +113,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     );
   }
 
+  /**
+   * Resolves when the operation succeeds. Rejects with an OperationFailedError
+   * that carries the ExecutionResult that stopped the operation.
+   */
   public async _enqueueAndWait(operation: Operation): Promise<void> {
+    if (this._shouldSuppressAnonymousOp(operation)) {
+      throw new OperationFailedError(ExecutionResult._Suppressed);
+    }
     Log._debug(`OpRepo.enqueueAndWait: ${JSON.stringify(operation)}`);
 
     await new Promise<void>((resolve, reject) => {
@@ -104,11 +129,59 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           operation,
           bucket: this._enqueueIntoBucket,
           retries: 0,
-          resolver: (value) => (value ? resolve() : reject()),
+          resolver: (value, result = ExecutionResult._FailNoretry) =>
+            value ? resolve() : reject(new OperationFailedError(result)),
         },
         true,
       );
     });
+  }
+
+  /**
+   * An anonymous operation can never dispatch while IV behavior is active: the gate
+   * needs a token and an anonymous user has none. Drop it at enqueue instead of
+   * holding it forever. LoginUserOperation is exempt; login and the push grant
+   * enqueue it on purpose, and the load-time purge removes a stale one.
+   * Outer gate isIvCodePathEnabled keeps the legacy enqueue path unchanged when
+   * the flag is off.
+   */
+  private _shouldSuppressAnonymousOp(op: Operation): boolean {
+    if (!isIvCodePathEnabled()) return false;
+    if (op instanceof LoginUserOperation) return false;
+    if (!isIvBehaviorActive() || op._externalId) return false;
+
+    // Bypasses Log so the developer sees this in production builds.
+    console.warn(
+      `OneSignal: ${op._name} was dropped. Identity Verification is on and no user is logged in. Call login(externalId, jwt) first.`,
+    );
+    return true;
+  }
+
+  /**
+   * Removes every queued operation with no externalId. These were persisted while
+   * the requirement was off or unknown, and an anonymous user has no JWT, so they
+   * can never pass the dispatch gate. Models are untouched; only operations go.
+   * Surviving LoginUserOperations lose existingOnesignalId because the anonymous
+   * login that would have resolved a local id is gone.
+   */
+  private _purgeAnonymousOperations(): void {
+    const total = this._queue.length;
+    const removed = this._queue.filter((item) => !item.operation._externalId);
+    this._queue = this._queue.filter((item) => item.operation._externalId);
+
+    for (const item of removed) {
+      this._operationModelStore._remove(item.operation._modelId);
+      item.resolver?.(false, ExecutionResult._Suppressed);
+    }
+
+    for (const { operation } of this._queue) {
+      if (operation instanceof LoginUserOperation && operation._existingOnesignalId) {
+        Log._debug('OpRepo: purge cleared existingOnesignalId');
+        operation._clearExistingOnesignalId();
+      }
+    }
+
+    Log._debug(`OpRepo: purged ${removed.length}/${total} anonymous ops`);
   }
 
   private _internalEnqueue(
@@ -164,6 +237,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
 
       const operations = ops.map((op) => op.operation);
+      // The token the request goes out with. A 401 must not invalidate a newer
+      // token that login or updateUserJwt stored while the request was in flight.
+      const externalId = startingOp.operation._externalId;
+      const jwtAtDispatch = externalId ? this._jwtTokenStore._getJwt(externalId) : undefined;
       const response = await executor._execute(operations);
       const idTranslations = response._idTranslations;
 
@@ -188,13 +265,20 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           break;
 
         case ExecutionResult._FailUnauthorized:
+          // Outer gate: the IV handler runs only on the new code path.
+          if (
+            isIvCodePathEnabled() &&
+            this._handleFailUnauthorized(ops, isIvBehaviorActive(), jwtAtDispatch)
+          ) {
+            break;
+          }
+          // IV inactive or an anonymous operation: drop, the same as FailNoretry.
+          this._dropAndWake(ops, operations, response._result);
+          break;
+
         case ExecutionResult._FailNoretry:
         case ExecutionResult._FailConflict:
-          Log._error(`Op failed (no retry): ${JSON.stringify(operations)}`);
-          ops.forEach((op) => {
-            this._operationModelStore._remove(op.operation._modelId);
-          });
-          ops.forEach((op) => op.resolver?.(false));
+          this._dropAndWake(ops, operations, response._result);
           break;
 
         case ExecutionResult._SuccessStartingOnly:
@@ -224,7 +308,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         case ExecutionResult._FailPauseOpRepo:
           Log._error(`Op failed, pausing: ${JSON.stringify(operations)}`);
           this._pause();
-          ops.forEach((op) => op.resolver?.(false));
+          ops.forEach((op) => op.resolver?.(false, response._result));
           [...ops].reverse().forEach((op) => {
             removeOpFromDB(op.operation);
             this._queue.unshift(op);
@@ -257,8 +341,52 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       ops.forEach((op) => {
         this._operationModelStore._remove(op.operation._modelId);
       });
-      ops.forEach((op) => op.resolver?.(false));
+      ops.forEach((op) => op.resolver?.(false, ExecutionResult._FailNoretry));
     }
+  }
+
+  private _dropAndWake(
+    ops: OperationQueueItem[],
+    operations: Operation[],
+    result: ExecutionResultValue,
+  ): void {
+    Log._error(`Op failed (no retry): ${JSON.stringify(operations)}`);
+    ops.forEach((op) => {
+      this._operationModelStore._remove(op.operation._modelId);
+    });
+    ops.forEach((op) => op.resolver?.(false, result));
+  }
+
+  /**
+   * Handles a 401 while IV behavior is active. Removes the token the request went
+   * out with, which fires userJwtInvalidated so the app can supply a fresh one,
+   * wakes the waiters, and re-queues the operations at the head with no resolver.
+   * The dispatch gate then holds them until a new token is stored, so there is no
+   * retry loop. If a newer token is already stored, it is kept and the re-queued
+   * operations retry with it. Returns false when IV is inactive or the operation
+   * is anonymous; the caller then drops the operations.
+   */
+  private _handleFailUnauthorized(
+    ops: OperationQueueItem[],
+    ivBehaviorActive: boolean,
+    jwtAtDispatch: string | undefined,
+  ): boolean {
+    if (!ivBehaviorActive) return false;
+    const externalId = ops[0].operation._externalId;
+    if (!externalId) return false;
+
+    if (this._jwtTokenStore._getJwt(externalId) === jwtAtDispatch) {
+      this._jwtTokenStore._invalidateJwt(externalId);
+      Log._debug('OpRepo: 401, JWT invalidated');
+    } else {
+      Log._debug('OpRepo: 401, newer JWT kept');
+    }
+
+    ops.forEach((op) => op.resolver?.(false, ExecutionResult._FailUnauthorized));
+    [...ops].reverse().forEach((op) => {
+      this._queue.unshift({ operation: op.operation, bucket: op.bucket, retries: op.retries });
+    });
+    return true;
   }
 
   public async _delayBeforeNextExecution(
@@ -277,11 +405,32 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
+    if (!this._queue.length) return null;
+
+    // Until the requirement is known, an unsigned request could reach an app that
+    // needs a JWT. Operations stay queued; the next tick re-reads the requirement.
+    // On the page, init awaits the config before the repo starts, so this guard
+    // makes the deferral explicit instead of implicit in init order.
+    if (isJwtRequirementUnknown()) {
+      // Logged once so a queue stalled on a localStorage that does not read back is diagnosable.
+      if (!this._loggedUnknownDeferral) {
+        this._loggedUnknownDeferral = true;
+        Log._debug('OpRepo: JWT requirement unknown');
+      }
+      return null;
+    }
+    this._loggedUnknownDeferral = false;
+
+    // Snapshot both gates once per pass so every queue item sees the same IV view.
+    const ivCodePathEnabled = isIvCodePathEnabled();
+    const ivBehaviorActive = isIvBehaviorActive();
+
     const startingOpIndex = this._queue.findIndex(
       (item) =>
         item.operation._canStartExecute &&
         this._newRecordState._canAccess(item.operation._applyToRecordId) &&
-        item.bucket <= bucketFilter,
+        item.bucket <= bucketFilter &&
+        (!ivCodePathEnabled || this._hasValidJwtIfRequired(item.operation, ivBehaviorActive)),
     );
 
     if (startingOpIndex !== -1) {
@@ -291,6 +440,19 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
 
     return null;
+  }
+
+  /**
+   * Whether the operation may dispatch under the current IV state. A blocked operation
+   * is skipped, not dropped; it dispatches on a later pass once a token is stored.
+   * The store re-reads on each pass, so a token stored by updateUserJwt or login,
+   * or by another tab, is picked up on the next tick without a wake-up.
+   */
+  private _hasValidJwtIfRequired(op: Operation, ivBehaviorActive: boolean): boolean {
+    if (!ivBehaviorActive || !op._requiresJwt) return true;
+    const externalId = op._externalId;
+    if (!externalId) return false;
+    return this._jwtTokenStore._getJwt(externalId) !== undefined;
   }
 
   public _getGroupableOperations(startingOp: OperationQueueItem): OperationQueueItem[] {

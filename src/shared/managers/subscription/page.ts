@@ -1,6 +1,7 @@
 import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { ExecutionResult } from 'src/core/types/operation';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
@@ -8,6 +9,7 @@ import { getSubscription } from 'src/shared/database/subscription';
 import { getOneSignalApiUrl, useSafariLegacyPush } from 'src/shared/environment/detect';
 import {
   MissingSafariWebIdError,
+  OperationFailedError,
   PermissionBlockedError,
   SWRegistrationError,
 } from 'src/shared/errors/common';
@@ -53,14 +55,24 @@ async function createSubscribedUser(pushModel: SubscriptionModel): Promise<void>
   OneSignal._coreDirector._operationRepo._enqueue(
     new LoginUserOperation(appId, identityModel._onesignalId, identityModel._externalId),
   );
-  await OneSignal._coreDirector._operationRepo._enqueueAndWait(
-    new CreateSubscriptionOperation({
-      ...pushModel.toJSON(),
-      appId,
-      onesignalId: identityModel._onesignalId,
-      subscriptionId: pushModel.id!,
-    }),
-  );
+  try {
+    await OneSignal._coreDirector._operationRepo._enqueueAndWait(
+      new CreateSubscriptionOperation({
+        ...pushModel.toJSON(),
+        appId,
+        onesignalId: identityModel._onesignalId,
+        externalId: identityModel._externalId,
+        subscriptionId: pushModel.id!,
+      }),
+    );
+  } catch (e) {
+    // Under Identity Verification an anonymous visitor has no backend user yet. The
+    // push model stays local and folds into the create-user request at login.
+    if (e instanceof OperationFailedError && e._result === ExecutionResult._Suppressed) {
+      return;
+    }
+    throw e;
+  }
 }
 
 export const updatePushSubscriptionModelWithRawSubscription = async (

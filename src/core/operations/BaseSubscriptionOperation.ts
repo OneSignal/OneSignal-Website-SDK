@@ -18,8 +18,9 @@ export abstract class BaseSubscriptionOperation<
     appId?: string,
     onesignalId?: string,
     subscriptionId?: string,
+    externalId?: string,
   ) {
-    super(operationName, appId, onesignalId);
+    super(operationName, appId, onesignalId, externalId);
     if (subscriptionId) this._subscriptionId = subscriptionId;
   }
 
