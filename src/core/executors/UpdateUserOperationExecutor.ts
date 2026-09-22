@@ -2,7 +2,6 @@ import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/ne
 import Log from 'src/shared/libraries/Log';
 
 import { OPERATION_NAME } from '../constants';
-import { isIvCodePathEnabled } from '../identityVerification';
 import { type JwtTokenStore } from '../JwtTokenStore';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -15,7 +14,7 @@ import { ModelChangeTags } from '../types/models';
 import type { ExecutionResponse } from '../types/operation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';
-import { legacyBackendParams, resolveBackendParams } from './ivResolver';
+import { resolveBackendParams } from './ivResolver';
 
 type PropertiesObject = {
   ip?: string;
@@ -85,9 +84,7 @@ export class UpdateUserOperationExecutor implements IOperationExecutor {
     // batch belongs to the same user and the first one can speak for all of them.
     const appId = firstOperation._appId;
     const onesignalId = firstOperation._onesignalId;
-    const { alias, jwt } = isIvCodePathEnabled()
-      ? resolveBackendParams(firstOperation, onesignalId, this._jwtTokenStore)
-      : legacyBackendParams(onesignalId);
+    const { alias, jwt } = resolveBackendParams(firstOperation, this._jwtTokenStore);
 
     const response = await updateUserByAlias({ appId, jwt }, alias, {
       properties: propertiesObject,

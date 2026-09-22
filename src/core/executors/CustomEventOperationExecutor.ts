@@ -4,7 +4,6 @@ import Log from 'src/shared/libraries/Log';
 import { VERSION } from 'src/shared/utils/env';
 
 import { OPERATION_NAME } from '../constants';
-import { isIvCodePathEnabled } from '../identityVerification';
 import { type JwtTokenStore } from '../JwtTokenStore';
 import { Operation } from '../operations/Operation';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
@@ -48,7 +47,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
       );
     }
 
-    const jwt = isIvCodePathEnabled() ? resolveJwt(operation, this._jwtTokenStore) : undefined;
+    const jwt = resolveJwt(operation, this._jwtTokenStore);
     const response = await sendCustomEvent(
       { appId: operation._appId, jwt },
       {

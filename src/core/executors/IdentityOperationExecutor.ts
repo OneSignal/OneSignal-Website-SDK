@@ -5,7 +5,6 @@ import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/ne
 import Log from 'src/shared/libraries/Log';
 
 import { OPERATION_NAME } from '../constants';
-import { isIvCodePathEnabled } from '../identityVerification';
 import { type JwtTokenStore } from '../JwtTokenStore';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
@@ -14,7 +13,7 @@ import { type Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { addAlias, deleteAlias } from '../requests/api';
 import type { ExecutionResponse } from '../types/operation';
-import { legacyBackendParams, resolveBackendParams } from './ivResolver';
+import { resolveBackendParams } from './ivResolver';
 
 // Implements logic similar to Android SDK's IdentityOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/IdentityOperationExecutor.kt
@@ -62,9 +61,7 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       | SetAliasOperation
       | DeleteAliasOperation;
 
-    const { alias, jwt } = isIvCodePathEnabled()
-      ? resolveBackendParams(lastOperation, lastOperation._onesignalId, this._jwtTokenStore)
-      : legacyBackendParams(lastOperation._onesignalId);
+    const { alias, jwt } = resolveBackendParams(lastOperation, this._jwtTokenStore);
     const metadata = { appId: lastOperation._appId, jwt };
 
     const isSetAlias = lastOperation instanceof SetAliasOperation;

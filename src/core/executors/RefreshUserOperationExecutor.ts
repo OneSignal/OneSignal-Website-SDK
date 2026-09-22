@@ -4,7 +4,6 @@ import Log from 'src/shared/libraries/Log';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 
 import { OPERATION_NAME } from '../constants';
-import { isIvCodePathEnabled } from '../identityVerification';
 import { type JwtTokenStore } from '../JwtTokenStore';
 import { IdentityModel } from '../models/IdentityModel';
 import { type IPropertiesModelKeys, PropertiesModel } from '../models/PropertiesModel';
@@ -20,7 +19,7 @@ import { ModelChangeTags } from '../types/models';
 import type { ExecutionResponse } from '../types/operation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';
-import { legacyBackendParams, resolveBackendParams } from './ivResolver';
+import { resolveBackendParams } from './ivResolver';
 
 // Implements logic similar to Android SDK's RefreshUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/RefreshUserOperationExecutor.kt
@@ -65,9 +64,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   private async _getUser(op: RefreshUserOperation): Promise<ExecutionResponse> {
-    const { alias, jwt } = isIvCodePathEnabled()
-      ? resolveBackendParams(op, op._onesignalId, this._jwtTokenStore)
-      : legacyBackendParams(op._onesignalId);
+    const { alias, jwt } = resolveBackendParams(op, this._jwtTokenStore);
     const response = await getUserByAlias({ appId: op._appId, jwt }, alias);
 
     const { ok, result, retryAfterSeconds, status } = response;

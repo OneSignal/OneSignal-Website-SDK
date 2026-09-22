@@ -6,7 +6,6 @@ import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
-import { isIvCodePathEnabled } from '../identityVerification';
 import { type JwtTokenStore } from '../JwtTokenStore';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
@@ -167,9 +166,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     }
 
     // POST /users has no alias in the path, so only the token applies.
-    const jwt = isIvCodePathEnabled()
-      ? resolveJwt(createUserOperation, this._jwtTokenStore)
-      : undefined;
+    const jwt = resolveJwt(createUserOperation, this._jwtTokenStore);
     const response = await createNewUser(
       { appId: createUserOperation._appId, jwt },
       {
