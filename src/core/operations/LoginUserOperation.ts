@@ -1,11 +1,18 @@
 import { IDManager } from 'src/shared/managers/IDManager';
 
 import { OPERATION_NAME } from '../constants';
-import { GroupComparisonType, type GroupComparisonValue, Operation } from './Operation';
+import {
+  GroupComparisonType,
+  type GroupComparisonValue,
+  Operation,
+  type OperationOpts,
+} from './Operation';
 
 type ILoginOp = {
   existingOnesignalId?: string;
 };
+
+export type LoginUserOpts = OperationOpts & ILoginOp;
 
 /**
  * An Operation to login the user with the externalId provided. Logging in a user will do the
@@ -15,21 +22,9 @@ type ILoginOp = {
  *    this succeeds the existing user becomes
  */
 export class LoginUserOperation extends Operation<ILoginOp> {
-  constructor();
-  constructor(
-    appId: string,
-    onesignalId: string | undefined,
-    externalId?: string,
-    existingOneSignalId?: string,
-  );
-  constructor(
-    appId?: string,
-    onesignalId?: string,
-    externalId?: string,
-    existingOneSignalId?: string,
-  ) {
-    super(OPERATION_NAME._LoginUser, appId, onesignalId, externalId);
-    if (existingOneSignalId) this._existingOnesignalId = existingOneSignalId;
+  constructor(opts?: LoginUserOpts) {
+    super(OPERATION_NAME._LoginUser, opts?.appId, opts?.onesignalId, opts?.externalId);
+    if (opts?.existingOnesignalId) this._existingOnesignalId = opts.existingOnesignalId;
   }
 
   /**

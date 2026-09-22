@@ -1,10 +1,12 @@
 import { IDManager } from 'src/shared/managers/IDManager';
 
-import { Operation } from './Operation';
+import { Operation, type OperationOpts } from './Operation';
 
 export type BaseSubOp = {
   subscriptionId: string;
 };
+
+export type SubscriptionOpts = OperationOpts & BaseSubOp;
 
 /**
  * Base class for subscription-related operations that just need a subscriptionId
@@ -13,15 +15,9 @@ export abstract class BaseSubscriptionOperation<
   U extends object = BaseSubOp,
   T extends U & BaseSubOp = U & BaseSubOp,
 > extends Operation<T> {
-  constructor(
-    operationName: string,
-    appId?: string,
-    onesignalId?: string,
-    subscriptionId?: string,
-    externalId?: string,
-  ) {
-    super(operationName, appId, onesignalId, externalId);
-    if (subscriptionId) this._subscriptionId = subscriptionId;
+  constructor(operationName: string, opts?: SubscriptionOpts) {
+    super(operationName, opts?.appId, opts?.onesignalId, opts?.externalId);
+    if (opts?.subscriptionId) this._subscriptionId = opts.subscriptionId;
   }
 
   /**

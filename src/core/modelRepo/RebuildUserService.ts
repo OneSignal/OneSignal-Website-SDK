@@ -50,7 +50,7 @@ export class RebuildUserService implements IRebuildUserService {
 
     const externalId = identityModel._externalId;
     const operations: Operation[] = [];
-    operations.push(new LoginUserOperation(appId, onesignalId, externalId));
+    operations.push(new LoginUserOperation({ appId, onesignalId, externalId }));
 
     const pushSubscription = await OneSignal._coreDirector._getPushSubscriptionModel();
     if (pushSubscription) {

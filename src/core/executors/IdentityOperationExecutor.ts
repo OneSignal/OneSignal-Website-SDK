@@ -4,7 +4,8 @@ import type { IRebuildUserService } from 'src/core/types/user';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 
-import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { OPERATION_NAME } from '../constants';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { DeleteAliasOperation } from '../operations/DeleteAliasOperation';
@@ -12,6 +13,7 @@ import { type Operation } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { addAlias, deleteAlias } from '../requests/api';
 import type { ExecutionResponse } from '../types/operation';
+import { resolveBackendParams } from './ivResolver';
 
 // Implements logic similar to Android SDK's IdentityOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/IdentityOperationExecutor.kt
@@ -19,15 +21,18 @@ export class IdentityOperationExecutor implements IOperationExecutor {
   private readonly _identityModelStore: IdentityModelStore;
   private readonly _buildUserService: IRebuildUserService;
   private readonly _newRecordState: NewRecordsState;
+  private readonly _jwtTokenStore: JwtTokenStore;
 
   constructor(
     identityModelStore: IdentityModelStore,
     buildUserService: IRebuildUserService,
     newRecordState: NewRecordsState,
+    jwtTokenStore: JwtTokenStore,
   ) {
     this._identityModelStore = identityModelStore;
     this._buildUserService = buildUserService;
     this._newRecordState = newRecordState;
+    this._jwtTokenStore = jwtTokenStore;
   }
 
   get _operations(): string[] {
@@ -56,24 +61,13 @@ export class IdentityOperationExecutor implements IOperationExecutor {
       | SetAliasOperation
       | DeleteAliasOperation;
 
+    const { alias, jwt } = resolveBackendParams(lastOperation, this._jwtTokenStore);
+    const metadata = { appId: lastOperation._appId, jwt };
+
     const isSetAlias = lastOperation instanceof SetAliasOperation;
     const request = isSetAlias
-      ? addAlias(
-          { appId: lastOperation._appId },
-          {
-            label: IdentityConstants._OneSignalID,
-            id: lastOperation._onesignalId,
-          },
-          { [lastOperation.label]: lastOperation.value },
-        )
-      : deleteAlias(
-          { appId: lastOperation._appId },
-          {
-            label: IdentityConstants._OneSignalID,
-            id: lastOperation._onesignalId,
-          },
-          lastOperation.label,
-        );
+      ? addAlias(metadata, alias, { [lastOperation.label]: lastOperation.value })
+      : deleteAlias(metadata, alias, lastOperation.label);
 
     const { ok, status, retryAfterSeconds } = await request;
     if (ok) {

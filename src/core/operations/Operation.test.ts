@@ -16,9 +16,10 @@ import { TrackCustomEventOperation } from './TrackCustomEventOperation';
 import { TransferSubscriptionOperation } from './TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from './UpdateSubscriptionOperation';
 
+const user = { appId: APP_ID, onesignalId: ONESIGNAL_ID };
+
 const subscription = {
-  appId: APP_ID,
-  onesignalId: ONESIGNAL_ID,
+  ...user,
   subscriptionId: SUB_ID,
   token: 'token',
   type: SubscriptionType._ChromePush,
@@ -30,18 +31,23 @@ const event = { name: 'purchase', properties: {} };
 const cases: [string, Operation, Operation][] = [
   [
     OPERATION_NAME._SetAlias,
-    new SetAliasOperation(APP_ID, ONESIGNAL_ID, 'label', 'value', EXTERNAL_ID),
-    new SetAliasOperation(APP_ID, ONESIGNAL_ID, 'label', 'value'),
+    new SetAliasOperation({ ...user, label: 'label', value: 'value', externalId: EXTERNAL_ID }),
+    new SetAliasOperation({ ...user, label: 'label', value: 'value' }),
   ],
   [
     OPERATION_NAME._DeleteAlias,
-    new DeleteAliasOperation(APP_ID, ONESIGNAL_ID, 'label', EXTERNAL_ID),
-    new DeleteAliasOperation(APP_ID, ONESIGNAL_ID, 'label'),
+    new DeleteAliasOperation({ ...user, label: 'label', externalId: EXTERNAL_ID }),
+    new DeleteAliasOperation({ ...user, label: 'label' }),
   ],
   [
     OPERATION_NAME._SetProperty,
-    new SetPropertyOperation(APP_ID, ONESIGNAL_ID, 'language', 'en', EXTERNAL_ID),
-    new SetPropertyOperation(APP_ID, ONESIGNAL_ID, 'language', 'en'),
+    new SetPropertyOperation({
+      ...user,
+      property: 'language',
+      value: 'en',
+      externalId: EXTERNAL_ID,
+    }),
+    new SetPropertyOperation({ ...user, property: 'language', value: 'en' }),
   ],
   [
     OPERATION_NAME._RefreshUser,
@@ -50,8 +56,8 @@ const cases: [string, Operation, Operation][] = [
   ],
   [
     OPERATION_NAME._LoginUser,
-    new LoginUserOperation(APP_ID, ONESIGNAL_ID, EXTERNAL_ID),
-    new LoginUserOperation(APP_ID, ONESIGNAL_ID),
+    new LoginUserOperation({ ...user, externalId: EXTERNAL_ID }),
+    new LoginUserOperation(user),
   ],
   [
     OPERATION_NAME._CreateSubscription,
@@ -65,31 +71,31 @@ const cases: [string, Operation, Operation][] = [
   ],
   [
     OPERATION_NAME._DeleteSubscription,
-    new DeleteSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID, EXTERNAL_ID),
-    new DeleteSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID),
+    new DeleteSubscriptionOperation({ ...user, subscriptionId: SUB_ID, externalId: EXTERNAL_ID }),
+    new DeleteSubscriptionOperation({ ...user, subscriptionId: SUB_ID }),
   ],
   [
     OPERATION_NAME._TransferSubscription,
-    new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID, EXTERNAL_ID),
-    new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, SUB_ID),
+    new TransferSubscriptionOperation({ ...user, subscriptionId: SUB_ID, externalId: EXTERNAL_ID }),
+    new TransferSubscriptionOperation({ ...user, subscriptionId: SUB_ID }),
   ],
   [
     OPERATION_NAME._CustomEvent,
     new TrackCustomEventOperation({
-      appId: APP_ID,
-      onesignalId: ONESIGNAL_ID,
+      ...user,
       externalId: EXTERNAL_ID,
       timestamp: '2026-01-01T00:00:00.000Z',
       event,
     }),
-    new TrackCustomEventOperation({
-      appId: APP_ID,
-      onesignalId: ONESIGNAL_ID,
-      timestamp: '2026-01-01T00:00:00.000Z',
-      event,
-    }),
+    new TrackCustomEventOperation({ ...user, timestamp: '2026-01-01T00:00:00.000Z', event }),
   ],
 ];
+
+// PATCH and DELETE subscriptions/{id} take no user JWT on the server.
+const unsignedRoutes = new Set<string>([
+  OPERATION_NAME._UpdateSubscription,
+  OPERATION_NAME._DeleteSubscription,
+]);
 
 describe('Operation owner', () => {
   describe.each(cases)('%s', (name, identified, anonymous) => {
@@ -104,9 +110,10 @@ describe('Operation owner', () => {
       expect(anonymous.toJSON()).not.toHaveProperty('externalId');
     });
 
-    test('requires a JWT by default', () => {
-      expect(identified._requiresJwt).toBe(true);
-      expect(anonymous._requiresJwt).toBe(true);
+    test('requires a JWT unless the server does not check one on its route', () => {
+      const expected = !unsignedRoutes.has(name);
+      expect(identified._requiresJwt).toBe(expected);
+      expect(anonymous._requiresJwt).toBe(expected);
     });
 
     test('round-trips the externalId through the operation store', () => {

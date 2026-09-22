@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vi
 import { JwtTokenStore } from '../JwtTokenStore';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
+import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import {
   GroupComparisonType,
@@ -122,7 +123,12 @@ describe('OperationRepo', () => {
     test('enqueue should persist operations in IndexedDb', async () => {
       await opRepo._loadSavedOperations();
 
-      const op1 = new SetAliasOperation(APP_ID, ONESIGNAL_ID, 'some-label', 'some-value');
+      const op1 = new SetAliasOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        label: 'some-label',
+        value: 'some-value',
+      });
       opRepo._enqueue(op1);
 
       const op2 = new CreateSubscriptionOperation({
@@ -231,7 +237,7 @@ describe('OperationRepo', () => {
     test('IV active: drops anonymous operations from the queue and the store, spares identified ones', async () => {
       setJwtRequirement(JwtRequirement._Required);
       const anonymous = new Operation('anon');
-      const anonymousLogin = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const anonymousLogin = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       const identified = ownedBy(new Operation('owned'), EXTERNAL_ID);
       seedSaved(anonymous, anonymousLogin, identified);
 
@@ -241,10 +247,30 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore._list()).toEqual([identified]);
     });
 
+    test('IV active: keeps an anonymous operation that needs no JWT', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const remove = new DeleteSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
+      });
+      seedSaved(new Operation('anon'), remove);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([remove]);
+      expect(mockOperationModelStore._list()).toEqual([remove]);
+    });
+
     test('IV active: clears existingOnesignalId on a surviving LoginUserOperation', async () => {
       setJwtRequirement(JwtRequirement._Required);
       const localId = IDManager._createLocalId();
-      const login = new LoginUserOperation(APP_ID, ONESIGNAL_ID, EXTERNAL_ID, localId);
+      const login = new LoginUserOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        externalId: EXTERNAL_ID,
+        existingOnesignalId: localId,
+      });
       seedSaved(login);
       expect(login._canStartExecute).toBe(false);
 
@@ -273,7 +299,12 @@ describe('OperationRepo', () => {
     test('IV inactive: nothing is purged and existingOnesignalId is kept', async () => {
       const localId = IDManager._createLocalId();
       const anonymous = new Operation('anon');
-      const login = new LoginUserOperation(APP_ID, ONESIGNAL_ID, EXTERNAL_ID, localId);
+      const login = new LoginUserOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        externalId: EXTERNAL_ID,
+        existingOnesignalId: localId,
+      });
       seedSaved(anonymous, login);
 
       await opRepo._start();
@@ -423,11 +454,24 @@ describe('OperationRepo', () => {
         });
 
         test('an anonymous LoginUserOperation is exempt', () => {
-          const op = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+          const op = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
           opRepo._enqueue(op);
 
           expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
           expect(warn).not.toHaveBeenCalled();
+        });
+
+        test('an anonymous operation that needs no JWT is queued and dispatches', () => {
+          const op = new DeleteSubscriptionOperation({
+            appId: APP_ID,
+            onesignalId: ONESIGNAL_ID,
+            subscriptionId: SUB_ID,
+          });
+          opRepo._enqueue(op);
+
+          expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+          expect(warn).not.toHaveBeenCalled();
+          expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
         });
 
         test('an identified operation is queued', () => {
@@ -536,6 +580,27 @@ describe('OperationRepo', () => {
 
         expect(resolver).toHaveBeenCalledExactlyOnceWith(false, ExecutionResult._FailUnauthorized);
         expect(invalidated).not.toHaveBeenCalled();
+        expect(opRepo._queue).toEqual([]);
+        expect(mockOperationModelStore._list()).toEqual([]);
+      });
+
+      test('IV active: an operation that needs no JWT is dropped and keeps the token', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        jwtTokenStore._putJwt(EXTERNAL_ID, 'kept');
+        failUnauthorized();
+
+        class NoJwtOperation extends Operation {
+          override get _requiresJwt() {
+            return false;
+          }
+        }
+        const op = ownedBy(new NoJwtOperation('no-jwt'), EXTERNAL_ID);
+        const waiter = rejectionOf(opRepo._enqueueAndWait(op));
+        await executeOps(opRepo);
+
+        expect((await waiter)._result).toBe(ExecutionResult._FailUnauthorized);
+        expect(invalidated).not.toHaveBeenCalled();
+        expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBe('kept');
         expect(opRepo._queue).toEqual([]);
         expect(mockOperationModelStore._list()).toEqual([]);
       });

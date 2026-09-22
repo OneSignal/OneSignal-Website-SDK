@@ -13,6 +13,7 @@ import {
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { SomeOperation } from '__test__/support/helpers/executors';
 import {
+  addAliasFn,
   createUserFn,
   setAddAliasError,
   setAddAliasResponse,
@@ -20,10 +21,12 @@ import {
   setCreateUserResponse,
 } from '__test__/support/helpers/requests';
 import { updateIdentityModel, updatePropertiesModel } from '__test__/support/helpers/setup';
+import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { getPushToken, setPushToken } from 'src/shared/database/subscription';
+import { setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { RebuildUserService } from '../modelRepo/RebuildUserService';
@@ -70,11 +73,18 @@ describe('LoginUserOperationExecutor', () => {
   });
 
   const getExecutor = () => {
+    const jwtTokenStore = OneSignal._coreDirector._jwtTokenStore;
     return new LoginUserOperationExecutor(
-      new IdentityOperationExecutor(identityModelStore, rebuildUserService, new NewRecordsState()),
+      new IdentityOperationExecutor(
+        identityModelStore,
+        rebuildUserService,
+        new NewRecordsState(),
+        jwtTokenStore,
+      ),
       identityModelStore,
       propertiesModelStore,
       subscriptionModelStore,
+      jwtTokenStore,
     );
   };
 
@@ -106,14 +116,14 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       // login op with create subscription op and no externalId
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
 
       // login op with subscription op and random operation
-      const transferSubOp = new TransferSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        mockSubscriptionOpInfo.subscriptionId,
-      );
+      const transferSubOp = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: mockSubscriptionOpInfo.subscriptionId,
+      });
       const someOp = new SomeOperation();
       const ops2 = [loginOp, transferSubOp, someOp];
       const res2 = executor._execute(ops2);
@@ -123,7 +133,7 @@ describe('LoginUserOperationExecutor', () => {
     test('can create user if there is no onesignal id or externalId', async () => {
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID_2);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID_2 });
       const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
 
       const ops = [loginOp, createSubOp];
@@ -162,7 +172,7 @@ describe('LoginUserOperationExecutor', () => {
       // perform operations with old onesignal id
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
 
       const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
@@ -208,7 +218,7 @@ describe('LoginUserOperationExecutor', () => {
       });
 
       const executor = getExecutor();
-      const loginOpA = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOpA = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
 
       const resultPromise = executor._execute([loginOpA, createSubOp]);
@@ -248,7 +258,7 @@ describe('LoginUserOperationExecutor', () => {
       });
 
       const executor = getExecutor();
-      const loginOpA = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOpA = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
 
       const resultPromise = executor._execute([loginOpA, createSubOp]);
@@ -274,7 +284,7 @@ describe('LoginUserOperationExecutor', () => {
     test('should handle network errors', async () => {
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
 
       const ops = [loginOp, createSubOp];
@@ -312,7 +322,7 @@ describe('LoginUserOperationExecutor', () => {
 
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
 
       // different id for testing id translations
@@ -339,7 +349,7 @@ describe('LoginUserOperationExecutor', () => {
     test('can handle network errors', async () => {
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
       loginOp._setProperty('existingOnesignalId', ONESIGNAL_ID);
 
@@ -379,6 +389,52 @@ describe('LoginUserOperationExecutor', () => {
         _result: ExecutionResult._FailUnauthorized,
       });
     });
+
+    describe('under Identity Verification', () => {
+      beforeEach(() => setJwtRequirement(JwtRequirement._Required));
+      afterEach(() => setJwtRequirement(JwtRequirement._NotRequired));
+
+      test('goes straight to create-user, even with an existing onesignal id', async () => {
+        setAddAliasResponse({ onesignalId: ONESIGNAL_ID_2 });
+        setCreateUserResponse({ onesignalId: ONESIGNAL_ID_2, externalId: EXTERNAL_ID });
+        const executor = getExecutor();
+        const loginOp = new LoginUserOperation({
+          appId: APP_ID,
+          onesignalId: ONESIGNAL_ID,
+          externalId: EXTERNAL_ID,
+          existingOnesignalId: ONESIGNAL_ID_2,
+        });
+
+        const res = await executor._execute([loginOp]);
+
+        expect(addAliasFn).not.toHaveBeenCalled();
+        expect(createUserFn).toHaveBeenCalledWith(
+          expect.objectContaining({ identity: { external_id: EXTERNAL_ID } }),
+        );
+        expect(res).toMatchObject({
+          _result: ExecutionResult._Success,
+          _idTranslations: { [ONESIGNAL_ID]: ONESIGNAL_ID_2 },
+        });
+      });
+
+      test('the follow-up RefreshUserOperation carries externalId so it can be signed', async () => {
+        setCreateUserResponse({ onesignalId: ONESIGNAL_ID_2, externalId: EXTERNAL_ID });
+        const executor = getExecutor();
+        const loginOp = new LoginUserOperation({
+          appId: APP_ID,
+          onesignalId: ONESIGNAL_ID,
+          externalId: EXTERNAL_ID,
+          existingOnesignalId: ONESIGNAL_ID_2,
+        });
+
+        const res = await executor._execute([loginOp]);
+
+        const [refreshOp] = res._operations ?? [];
+        expect(refreshOp).toBeInstanceOf(RefreshUserOperation);
+        expect(refreshOp._onesignalId).toBe(ONESIGNAL_ID_2);
+        expect(refreshOp._externalId).toBe(EXTERNAL_ID);
+      });
+    });
   });
 
   describe('create subscriptions', () => {
@@ -388,7 +444,7 @@ describe('LoginUserOperationExecutor', () => {
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
 
       const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
@@ -419,7 +475,7 @@ describe('LoginUserOperationExecutor', () => {
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
 
       // needs to be created first for update to do anything
@@ -468,16 +524,16 @@ describe('LoginUserOperationExecutor', () => {
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
 
       // need to create subscription first to test transfer
       const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
-      const transferSubOp = new TransferSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        createSubOp._subscriptionId,
-      );
+      const transferSubOp = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: createSubOp._subscriptionId,
+      });
 
       const ops = [loginOp, createSubOp, transferSubOp];
       await executor._execute(ops);
@@ -507,14 +563,14 @@ describe('LoginUserOperationExecutor', () => {
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
 
-      const transferSubOp = new TransferSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        IDManager._createLocalId(),
-      );
+      const transferSubOp = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: IDManager._createLocalId(),
+      });
 
       await executor._execute([loginOp, transferSubOp]);
 
@@ -527,7 +583,7 @@ describe('LoginUserOperationExecutor', () => {
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
 
       const localSubId = IDManager._createLocalId();
@@ -535,7 +591,11 @@ describe('LoginUserOperationExecutor', () => {
         ...mockSubscriptionOpInfo,
         subscriptionId: localSubId,
       });
-      const transferSubOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, localSubId);
+      const transferSubOp = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: localSubId,
+      });
 
       await executor._execute([loginOp, createSubOp, transferSubOp]);
 
@@ -574,8 +634,12 @@ describe('LoginUserOperationExecutor', () => {
       });
       subscriptionModelStore._add(subscriptionModel, ModelChangeTags._NoPropogate);
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
-      const transferSubOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, localSubId);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
+      const transferSubOp = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: localSubId,
+      });
 
       await executor._execute([loginOp, transferSubOp]);
 
@@ -602,12 +666,12 @@ describe('LoginUserOperationExecutor', () => {
       const executor = getExecutor();
 
       // transfer op with a local ID and no subscription model to rebuild from
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
-      const transferSubOp = new TransferSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        IDManager._createLocalId(),
-      );
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
+      const transferSubOp = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: IDManager._createLocalId(),
+      });
 
       const res = await executor._execute([loginOp, transferSubOp]);
 
@@ -631,9 +695,13 @@ describe('LoginUserOperationExecutor', () => {
       });
       subscriptionModelStore._add(subscriptionModel, ModelChangeTags._NoPropogate);
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
-      const transferSubOp = new TransferSubscriptionOperation(APP_ID, ONESIGNAL_ID, localSubId);
+      const transferSubOp = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: localSubId,
+      });
 
       await executor._execute([loginOp, transferSubOp]);
 
@@ -652,16 +720,16 @@ describe('LoginUserOperationExecutor', () => {
       });
       const executor = getExecutor();
 
-      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
       loginOp._setProperty('externalId', EXTERNAL_ID);
 
       // need to create subscription first to test delete
       const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
-      const deleteSubOp = new DeleteSubscriptionOperation(
-        APP_ID,
-        ONESIGNAL_ID,
-        createSubOp._subscriptionId,
-      );
+      const deleteSubOp = new DeleteSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: createSubOp._subscriptionId,
+      });
 
       const ops = [loginOp, createSubOp, deleteSubOp];
       await executor._execute(ops);

@@ -36,12 +36,12 @@ export class PropertiesModelStoreListener extends SingletonModelStoreListener<Pr
   ): Operation | null {
     const appId = getAppId();
 
-    return new SetPropertyOperation(
+    return new SetPropertyOperation({
       appId,
-      model._onesignalId,
+      onesignalId: model._onesignalId,
       property,
-      newValue as PropertyValue[string],
-      this._identityModelStore._model._externalId,
-    );
+      value: newValue as PropertyValue[string],
+      externalId: this._identityModelStore._model._externalId,
+    });
   }
 }

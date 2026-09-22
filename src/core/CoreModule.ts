@@ -91,12 +91,14 @@ export default class CoreModule {
       this._identityModelStore,
       this._rebuildUserService,
       this._newRecordsState,
+      this._jwtTokenStore,
     );
     const loginOpExecutor = new LoginUserOperationExecutor(
       identityOpExecutor,
       this._identityModelStore,
       this._propertiesModelStore,
       this._subscriptionModelStore,
+      this._jwtTokenStore,
     );
     const refreshOpExecutor = new RefreshUserOperationExecutor(
       this._identityModelStore,
@@ -104,19 +106,22 @@ export default class CoreModule {
       this._subscriptionModelStore,
       this._rebuildUserService,
       this._newRecordsState,
+      this._jwtTokenStore,
     );
     const subscriptionOpExecutor = new SubscriptionOperationExecutor(
       this._subscriptionModelStore,
       this._rebuildUserService,
       this._newRecordsState,
+      this._jwtTokenStore,
     );
     const updateSubOpExecutor = new UpdateUserOperationExecutor(
       this._identityModelStore,
       this._propertiesModelStore,
       this._rebuildUserService,
       this._newRecordsState,
+      this._jwtTokenStore,
     );
-    const customEventOpExecutor = new CustomEventsOperationExecutor();
+    const customEventOpExecutor = new CustomEventsOperationExecutor(this._jwtTokenStore);
 
     return [
       identityOpExecutor,

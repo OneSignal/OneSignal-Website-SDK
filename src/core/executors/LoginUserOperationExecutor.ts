@@ -6,6 +6,8 @@ import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { isIvBehaviorActive } from '../identityVerification';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -22,6 +24,7 @@ import { createNewUser } from '../requests/api';
 import type { ICreateUserIdentity, ICreateUserSubscription, IUserProperties } from '../types/api';
 import type { ExecutionResponse } from '../types/operation';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
+import { resolveJwt } from './ivResolver';
 
 type SubscriptionMap = Record<string, ICreateUserSubscription & { id?: string }>;
 
@@ -32,17 +35,20 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   private _identityModelStore: IdentityModelStore;
   private _propertiesModelStore: PropertiesModelStore;
   private _subscriptionsModelStore: SubscriptionModelStore;
+  private _jwtTokenStore: JwtTokenStore;
 
   constructor(
     _identityOperationExecutor: IdentityOperationExecutor,
     _identityModelStore: IdentityModelStore,
     _propertiesModelStore: PropertiesModelStore,
     _subscriptionsModelStore: SubscriptionModelStore,
+    _jwtTokenStore: JwtTokenStore,
   ) {
     this._identityOperationExecutor = _identityOperationExecutor;
     this._identityModelStore = _identityModelStore;
     this._propertiesModelStore = _propertiesModelStore;
     this._subscriptionsModelStore = _subscriptionsModelStore;
+    this._jwtTokenStore = _jwtTokenStore;
   }
 
   get _operations(): string[] {
@@ -66,18 +72,24 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.
-    if (!loginUserOp._existingOnesignalId || !loginUserOp._externalId) {
+    //
+    // Under IV the identify step is skipped too: it addresses the user by
+    // onesignal_id, and the IV alias switch would rewrite that to an external_id
+    // the server does not know yet. Create-user with external_id in the
+    // identity map is an upsert on the server, so it covers both cases.
+    const externalId = loginUserOp._externalId;
+    if (!loginUserOp._existingOnesignalId || !externalId || isIvBehaviorActive()) {
       return this._createUser(loginUserOp, operations);
     }
 
     const result = await this._identityOperationExecutor._execute([
-      new SetAliasOperation(
-        loginUserOp._appId,
-        loginUserOp._existingOnesignalId,
-        IdentityConstants._ExternalID,
-        loginUserOp._externalId,
-        loginUserOp._externalId,
-      ),
+      new SetAliasOperation({
+        appId: loginUserOp._appId,
+        onesignalId: loginUserOp._existingOnesignalId,
+        label: IdentityConstants._ExternalID,
+        value: externalId,
+        externalId,
+      }),
     ]);
 
     switch (result._result) {
@@ -159,8 +171,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       return { _result: ExecutionResult._FailNoretry };
     }
 
+    // POST /users has no alias in the path, so only the token applies.
+    const jwt = resolveJwt(createUserOperation, this._jwtTokenStore);
     const response = await createNewUser(
-      { appId: createUserOperation._appId },
+      { appId: createUserOperation._appId, jwt },
       {
         identity,
         subscriptions: subscriptionList.map(([, sub]) => sub),

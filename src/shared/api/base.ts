@@ -18,6 +18,15 @@ export interface OneSignalApiBaseResponse<T = unknown> {
   retryAfterSeconds?: number;
 }
 
+export interface RequestOptions {
+  headers?: APIHeaders;
+  /**
+   * Sent as `Authorization: Bearer <jwt>`. Only this path sets the header, so the
+   * token never lands in `headers` where a log line could print it.
+   */
+  jwt?: string;
+}
+
 const getOrigin = () => {
   if (IS_SERVICE_WORKER) {
     return self.location.origin;
@@ -28,33 +37,33 @@ const getOrigin = () => {
 export function get<T>(
   action: string,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('GET', action, data, headers);
+  return call('GET', action, data, options);
 }
 
 export function post<T>(
   action: string,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('POST', action, data, headers);
+  return call('POST', action, data, options);
 }
 
 export function put<T>(
   action: string,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('PUT', action, data, headers);
+  return call('PUT', action, data, options);
 }
 
 function del<T>(
   action: string,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('DELETE', action, data, headers);
+  return call('DELETE', action, data, options);
 }
 
 // since delete is a keyword, cant name function delete
@@ -63,16 +72,16 @@ export { del as delete };
 export function patch<T = unknown>(
   action: string,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('PATCH', action, data, headers);
+  return call('PATCH', action, data, options);
 }
 
 function call<T = unknown>(
   method: SupportedMethods,
   action: string,
   data: any,
-  headers: APIHeaders | undefined,
+  options: RequestOptions | undefined,
 ): Promise<OneSignalApiBaseResponse<T>> {
   if (!requestHasAppId(action, data)) {
     return Promise.reject(AppIDMissingError);
@@ -83,10 +92,14 @@ function call<T = unknown>(
   callHeaders.append('SDK-Version', `onesignal/web/${VERSION}`);
   callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
   callHeaders.append('Accept', 'application/vnd.onesignal.v1+json');
+  const headers = options?.headers;
   if (headers) {
     for (const key of Object.keys(headers)) {
       callHeaders.append(key, headers[key]);
     }
+  }
+  if (options?.jwt) {
+    callHeaders.append('Authorization', `Bearer ${options.jwt}`);
   }
 
   const contents: RequestInit = {

@@ -1,4 +1,5 @@
 import { IdentityConstants } from 'src/core/constants';
+import { isIvBehaviorActive } from 'src/core/identityVerification';
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
@@ -41,10 +42,16 @@ export default class LoginManager {
       ModelChangeTags._Hydrate,
     );
 
+    // Under IV the anonymous user was never created on the server, so a
+    // reference to it would only send the identify step to a user that does
+    // not exist. Go straight to create-user instead.
+    const existingOneSignalId =
+      !currentExternalId && !isIvBehaviorActive() ? currentOneSignalId : undefined;
+
     await LoginManager._switchUser(
       newIdentityModel._onesignalId,
       externalId,
-      !currentExternalId ? currentOneSignalId : undefined,
+      existingOneSignalId,
       true,
     );
   }
@@ -89,7 +96,12 @@ export default class LoginManager {
       OneSignal._coreDirector._getPushSubscriptionModel().then((pushOp) => {
         if (pushOp) {
           OneSignal._coreDirector._operationRepo._enqueue(
-            new TransferSubscriptionOperation(appId, newOneSignalId, pushOp.id, externalId),
+            new TransferSubscriptionOperation({
+              appId,
+              onesignalId: newOneSignalId,
+              subscriptionId: pushOp.id,
+              externalId,
+            }),
           );
         } else if (createSubIfMissing) {
           const newSub = new SubscriptionModel();
@@ -104,7 +116,12 @@ export default class LoginManager {
         }
       }),
       OneSignal._coreDirector._operationRepo._enqueueAndWait(
-        new LoginUserOperation(appId, newOneSignalId, externalId, existingOneSignalId),
+        new LoginUserOperation({
+          appId,
+          onesignalId: newOneSignalId,
+          externalId,
+          existingOnesignalId: existingOneSignalId,
+        }),
       ),
     ]);
   }

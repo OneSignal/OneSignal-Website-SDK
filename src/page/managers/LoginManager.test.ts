@@ -1,7 +1,11 @@
+import { ONESIGNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { BaseSubscriptionOperation } from 'src/core/operations/BaseSubscriptionOperation';
+import type { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { JwtRequirement } from 'src/shared/config/jwtRequirement';
+import { setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test';
 
@@ -76,6 +80,41 @@ describe('LoginManager', () => {
 
     expect(addSpy).toHaveBeenCalled();
     expect(addSpy.mock.calls[0][0].token).toBe('');
+  });
+
+  describe('login: existingOnesignalId on the LoginUserOperation', () => {
+    const loginAndGetOp = async () => {
+      vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(undefined);
+      const enqueueAndWaitSpy = vi
+        .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
+        .mockResolvedValue(undefined);
+
+      await LoginManager.login('new-id');
+
+      return enqueueAndWaitSpy.mock.calls[0][0] as LoginUserOperation;
+    };
+
+    test('IV inactive, anonymous user: carries the current onesignal id', async () => {
+      setJwtRequirement(JwtRequirement._NotRequired);
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+
+      expect((await loginAndGetOp())._existingOnesignalId).toBe(ONESIGNAL_ID);
+    });
+
+    test('IV inactive, identified user: carries no onesignal id', async () => {
+      setJwtRequirement(JwtRequirement._NotRequired);
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      updateIdentityModel('external_id', 'old-id');
+
+      expect((await loginAndGetOp())._existingOnesignalId).toBeUndefined();
+    });
+
+    test('IV active, anonymous user: carries no onesignal id', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+
+      expect((await loginAndGetOp())._existingOnesignalId).toBeUndefined();
+    });
   });
 
   test('logout: no external id logs debug and returns', async () => {
