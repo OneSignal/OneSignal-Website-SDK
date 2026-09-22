@@ -1233,6 +1233,10 @@ describe('OneSignal - No Consent Required', () => {
 describe('OneSignal - Consent Required', () => {
   beforeEach(() => {
     setupEnv(true);
+    // Stop setConsentGiven(true) from running the real init. The tests below never
+    // await it, so it would still be running when Vitest tears down the DOM.
+    // @ts-expect-error - _delayedInit is private
+    vi.spyOn(OneSignal, '_delayedInit').mockResolvedValue(undefined);
     void OneSignal.setConsentGiven(false);
   });
 
