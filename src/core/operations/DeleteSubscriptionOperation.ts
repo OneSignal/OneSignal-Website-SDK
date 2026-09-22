@@ -13,4 +13,10 @@ export class DeleteSubscriptionOperation extends BaseSubscriptionOperation {
   override get _groupComparisonType(): GroupComparisonValue {
     return GroupComparisonType._None;
   }
+
+  // The server ignores a bearer on DELETE subscriptions/{id}, so a pending
+  // remove must not wait for a token, for example after logout.
+  override get _requiresJwt(): boolean {
+    return false;
+  }
 }

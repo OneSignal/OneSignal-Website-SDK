@@ -141,13 +141,14 @@ export class OperationRepo implements IOperationRepo, IStartableService {
    * An anonymous operation can never dispatch while IV behavior is active: the gate
    * needs a token and an anonymous user has none. Drop it at enqueue instead of
    * holding it forever. LoginUserOperation is exempt; login and the push grant
-   * enqueue it on purpose, and the load-time purge removes a stale one.
+   * enqueue it on purpose, and the load-time purge removes a stale one. An
+   * operation that needs no JWT is exempt too; the gate lets it through.
    * Outer gate isIvCodePathEnabled keeps the legacy enqueue path unchanged when
    * the flag is off.
    */
   private _shouldSuppressAnonymousOp(op: Operation): boolean {
     if (!isIvCodePathEnabled()) return false;
-    if (op instanceof LoginUserOperation) return false;
+    if (op instanceof LoginUserOperation || !op._requiresJwt) return false;
     if (!isIvBehaviorActive() || op._externalId) return false;
 
     // Bypasses Log so the developer sees this in production builds.
@@ -158,16 +159,18 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   /**
-   * Removes every queued operation with no externalId. These were persisted while
-   * the requirement was off or unknown, and an anonymous user has no JWT, so they
-   * can never pass the dispatch gate. Models are untouched; only operations go.
+   * Removes every queued operation with no externalId that needs a JWT. These were
+   * persisted while the requirement was off or unknown, and an anonymous user has
+   * no JWT, so they can never pass the dispatch gate. An operation that needs no
+   * JWT stays; the gate lets it through. Models are untouched; only operations go.
    * Surviving LoginUserOperations lose existingOnesignalId because the anonymous
    * login that would have resolved a local id is gone.
    */
   private _purgeAnonymousOperations(): void {
     const total = this._queue.length;
-    const removed = this._queue.filter((item) => !item.operation._externalId);
-    this._queue = this._queue.filter((item) => item.operation._externalId);
+    const isPurged = (op: Operation) => !op._externalId && op._requiresJwt;
+    const removed = this._queue.filter((item) => isPurged(item.operation));
+    this._queue = this._queue.filter((item) => !isPurged(item.operation));
 
     for (const item of removed) {
       this._operationModelStore._remove(item.operation._modelId);

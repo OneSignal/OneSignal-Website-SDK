@@ -179,12 +179,14 @@ export async function createSubscriptionByAlias(
 
 /**
  * Updates an existing Subscription’s properties.
+ * Never signed: the server rejects a bearer on this route with 401 and
+ * accepts the request without one.
  * @param requestMetadata - { appId }
  * @param subscriptionId - subscription id
  * @param subscription - subscription object
  */
 export async function updateSubscriptionById(
-  requestMetadata: RequestMetadata,
+  requestMetadata: Omit<RequestMetadata, 'jwt'>,
   subscriptionId: string,
   subscription: ICreateUserSubscription,
 ) {
@@ -197,11 +199,12 @@ export async function updateSubscriptionById(
 /**
  * Deletes the subscription.
  * Creates an "orphan" user record if the user has no other subscriptions.
+ * Never signed: the server ignores a bearer on this route.
  * @param requestMetadata - { appId }
  * @param subscriptionId - subscription id
  */
 export async function deleteSubscriptionById(
-  requestMetadata: RequestMetadata,
+  requestMetadata: Omit<RequestMetadata, 'jwt'>,
   subscriptionId: string,
 ) {
   const { appId } = requestMetadata;

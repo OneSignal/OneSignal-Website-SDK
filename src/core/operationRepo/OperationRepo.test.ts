@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vi
 import { JwtTokenStore } from '../JwtTokenStore';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
+import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import {
   GroupComparisonType,
@@ -246,6 +247,21 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore._list()).toEqual([identified]);
     });
 
+    test('IV active: keeps an anonymous operation that needs no JWT', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const remove = new DeleteSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
+      });
+      seedSaved(new Operation('anon'), remove);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([remove]);
+      expect(mockOperationModelStore._list()).toEqual([remove]);
+    });
+
     test('IV active: clears existingOnesignalId on a surviving LoginUserOperation', async () => {
       setJwtRequirement(JwtRequirement._Required);
       const localId = IDManager._createLocalId();
@@ -443,6 +459,19 @@ describe('OperationRepo', () => {
 
           expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
           expect(warn).not.toHaveBeenCalled();
+        });
+
+        test('an anonymous operation that needs no JWT is queued and dispatches', () => {
+          const op = new DeleteSubscriptionOperation({
+            appId: APP_ID,
+            onesignalId: ONESIGNAL_ID,
+            subscriptionId: SUB_ID,
+          });
+          opRepo._enqueue(op);
+
+          expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+          expect(warn).not.toHaveBeenCalled();
+          expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
         });
 
         test('an identified operation is queued', () => {

@@ -269,6 +269,36 @@ describe('executors under Identity Verification', () => {
     expect(Log._error).toHaveBeenCalledWith(expect.stringContaining('no externalId'));
   });
 
+  describe('routes the server does not sign', () => {
+    // PATCH subscriptions/{id} rejects a bearer; DELETE subscriptions/{id} ignores it.
+    beforeEach(() => {
+      setGates(true, JwtRequirement._Required);
+      tokens._putJwt(EXTERNAL_ID, JWT);
+    });
+
+    test('update subscription sends no Authorization header', async () => {
+      const response = await subscription._execute([
+        new UpdateSubscriptionOperation({ ...owner, ...sub }),
+      ]);
+
+      expect(response._result).toBe(ExecutionResult._Success);
+      const { headers, url } = lastRequest();
+      expect(headers).not.toHaveProperty('authorization');
+      expect(url.endsWith(`/apps/${APP_ID}/subscriptions/${SUB_ID}`)).toBe(true);
+    });
+
+    test('delete subscription sends no Authorization header', async () => {
+      const response = await subscription._execute([
+        new DeleteSubscriptionOperation({ ...owner, subscriptionId: SUB_ID }),
+      ]);
+
+      expect(response._result).toBe(ExecutionResult._Success);
+      const { headers, url } = lastRequest();
+      expect(headers).not.toHaveProperty('authorization');
+      expect(url.endsWith(`/apps/${APP_ID}/subscriptions/${SUB_ID}`)).toBe(true);
+    });
+  });
+
   describe('401 under IV', () => {
     const unauthorized = (method: 'post' | 'patch' | 'delete') =>
       getHandler({ uri: '*', method, status: 401, retryAfter: 15 });

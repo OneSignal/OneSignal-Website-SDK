@@ -91,6 +91,12 @@ const cases: [string, Operation, Operation][] = [
   ],
 ];
 
+// PATCH and DELETE subscriptions/{id} take no user JWT on the server.
+const unsignedRoutes = new Set<string>([
+  OPERATION_NAME._UpdateSubscription,
+  OPERATION_NAME._DeleteSubscription,
+]);
+
 describe('Operation owner', () => {
   describe.each(cases)('%s', (name, identified, anonymous) => {
     test('carries the externalId it was built with', () => {
@@ -104,9 +110,10 @@ describe('Operation owner', () => {
       expect(anonymous.toJSON()).not.toHaveProperty('externalId');
     });
 
-    test('requires a JWT by default', () => {
-      expect(identified._requiresJwt).toBe(true);
-      expect(anonymous._requiresJwt).toBe(true);
+    test('requires a JWT unless the server does not check one on its route', () => {
+      const expected = !unsignedRoutes.has(name);
+      expect(identified._requiresJwt).toBe(expected);
+      expect(anonymous._requiresJwt).toBe(expected);
     });
 
     test('round-trips the externalId through the operation store', () => {
