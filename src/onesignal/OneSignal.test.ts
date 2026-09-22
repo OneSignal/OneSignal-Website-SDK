@@ -1233,6 +1233,9 @@ describe('OneSignal - No Consent Required', () => {
 describe('OneSignal - Consent Required', () => {
   beforeEach(() => {
     setupEnv(true);
+    // setConsentGiven(true) starts the full init chain, which must not outlive the test.
+    // @ts-expect-error - _delayedInit is private
+    vi.spyOn(OneSignal, '_delayedInit').mockResolvedValue(undefined);
     void OneSignal.setConsentGiven(false);
   });
 
