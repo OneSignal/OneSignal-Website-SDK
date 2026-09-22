@@ -46,12 +46,56 @@ describe('LoginManager', () => {
     expect(enqueueAndWaitSpy).toHaveBeenCalled();
   });
 
-  test('login: same externalId with a new token stores the token before it returns', async () => {
-    updateIdentityModel('external_id', 'same-id');
+  describe('login: same externalId', () => {
+    const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => undefined);
 
-    await LoginManager.login('same-id', 'fresh-token');
+    beforeEach(() => {
+      updateIdentityModel('external_id', 'same-id');
+    });
 
-    expect(OneSignal._coreDirector._jwtTokenStore._getJwt('same-id')).toBe('fresh-token');
+    test('with a new token: updates the token and does not switch users', async () => {
+      OneSignal._coreDirector._jwtTokenStore._putJwt('same-id', 'old-token');
+      const identityModel = OneSignal._coreDirector._getIdentityModel();
+      const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+      const enqueueAndWaitSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait');
+
+      await LoginManager.login('same-id', 'fresh-token');
+
+      expect(OneSignal._coreDirector._jwtTokenStore._getJwt('same-id')).toBe('fresh-token');
+      expect(OneSignal._coreDirector._getIdentityModel()).toBe(identityModel);
+      expect(enqueueSpy).not.toHaveBeenCalled();
+      expect(enqueueAndWaitSpy).not.toHaveBeenCalled();
+      expect(debugSpy).toHaveBeenCalledWith('Login: externalId already set, JWT updated');
+    });
+
+    test('with no token: does nothing', async () => {
+      const identityModel = OneSignal._coreDirector._getIdentityModel();
+      const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+      const enqueueAndWaitSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait');
+
+      await LoginManager.login('same-id');
+
+      expect(OneSignal._coreDirector._jwtTokenStore._getJwt('same-id')).toBeUndefined();
+      expect(OneSignal._coreDirector._getIdentityModel()).toBe(identityModel);
+      expect(enqueueSpy).not.toHaveBeenCalled();
+      expect(enqueueAndWaitSpy).not.toHaveBeenCalled();
+      expect(debugSpy).toHaveBeenCalledWith('Login: externalId already set');
+    });
+  });
+
+  test('login: different externalId stores the token before the login operation is enqueued', async () => {
+    updateIdentityModel('external_id', 'old-id');
+    vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(undefined);
+    let tokenAtEnqueue: string | undefined;
+    vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockImplementation((op) => {
+      tokenAtEnqueue = OneSignal._coreDirector._jwtTokenStore._getJwt(op._externalId ?? '');
+      return Promise.resolve();
+    });
+
+    await LoginManager.login('new-id', 'new-token');
+
+    expect(tokenAtEnqueue).toBe('new-token');
+    expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('new-id');
   });
 
   test('login: with existing push sub enqueues transfer operation', async () => {
