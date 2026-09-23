@@ -55,6 +55,11 @@ export const ONESIGNAL_EVENTS = {
    */
   PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplay',
   /**
+   * Occurs when the server rejects the stored JWT of a user and the SDK removes it.
+   * Fired to the public API OneSignal.User.addEventListener("userJwtInvalidated", function....)
+   */
+  USER_JWT_INVALIDATED: 'userJwtInvalidated',
+  /**
    * For internal testing only. Used for all sorts of things.
    */
   TEST_FINISHED_ALLOW_CLICK_HANDLING: 'testFinishedAllowClickHandling',

@@ -1,8 +1,7 @@
+import type { UserJwtInvalidatedEvent } from 'src/page/models/UserJwtInvalidatedEvent';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
 import { getJwtTokens, setJwtTokens } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
-
-export type UserJwtInvalidatedEvent = { externalId: string };
 
 /** SDK-internal: fires when a stored token changes through put or prune. */
 export type JwtUpdatedListener = (externalId: string) => void;
