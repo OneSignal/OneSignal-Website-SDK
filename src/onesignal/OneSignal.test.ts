@@ -62,7 +62,9 @@ import * as MainHelper from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
-import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+
+import LoginManager from '../page/managers/LoginManager';
 
 mockPageStylesCss();
 
@@ -1379,6 +1381,72 @@ describe('OneSignal - Consent Required', () => {
     await OneSignal.updateUserJwt('some-id', 'jwt');
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
     expect(OneSignal._coreDirector._jwtTokenStore._getJwt('some-id')).toBeUndefined();
+  });
+});
+
+describe('OneSignal - Before Init', () => {
+  const externalId = 'jd-1';
+
+  // Puts the SDK back to the state before init created the user model.
+  beforeEach(() => {
+    setupEnv(false);
+    setJwtTokens({});
+    // @ts-expect-error - _coreDirector is unset before init
+    OneSignal._coreDirector = undefined;
+    OneSignal._coreReady = new Promise<void>((resolve) => {
+      OneSignal._settleCoreReady = resolve;
+    });
+  });
+
+  afterEach(() => {
+    setupEnv(false);
+  });
+
+  test('updateUserJwt waits for init, then stores the token', async () => {
+    const pending = OneSignal.updateUserJwt(externalId, 'jwt');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(debugSpy).toHaveBeenCalledWith('updateUserJwt: waiting for init');
+
+    setupEnv(false);
+    await pending;
+
+    expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBe('jwt');
+  });
+
+  test('login waits for init, then logs the user in', async () => {
+    const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
+
+    const pending = OneSignal.login(externalId, 'jwt');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(loginSpy).not.toHaveBeenCalled();
+
+    setupEnv(false);
+    await pending;
+
+    expect(loginSpy).toHaveBeenCalledExactlyOnceWith(externalId, 'jwt');
+  });
+
+  test('logout waits for init', async () => {
+    const logoutSpy = vi.spyOn(LoginManager, 'logout').mockResolvedValue(undefined);
+
+    const pending = OneSignal.logout();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(logoutSpy).not.toHaveBeenCalled();
+
+    setupEnv(false);
+    await pending;
+
+    expect(logoutSpy).toHaveBeenCalledOnce();
+  });
+
+  test('login is skipped with a warning when init stopped before the user model', async () => {
+    const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
+
+    OneSignal._settleCoreReady();
+    await OneSignal.login(externalId);
+
+    expect(loginSpy).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith('login skipped: init did not complete');
   });
 });
 
