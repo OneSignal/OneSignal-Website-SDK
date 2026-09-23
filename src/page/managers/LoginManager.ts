@@ -5,11 +5,13 @@ import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
+import { UpdateSubscriptionOperation } from 'src/core/operations/UpdateSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import { getSubscriptionType } from 'src/shared/environment/detect';
 import { getAppId } from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
+import { NotificationType } from 'src/shared/subscriptions/constants';
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users
@@ -72,8 +74,38 @@ export default class LoginManager {
 
     if (!identityModel._externalId) return Log._debug('Logout: not logged in');
 
+    if (isIvBehaviorActive()) return LoginManager._logoutUnderIv(identityModel);
+
     const newIdentityModel = LoginManager._resetAndGetIdentityModel();
     await LoginManager._switchUser(newIdentityModel._onesignalId);
+  }
+
+  /**
+   * Under IV the anonymous user that follows a logout has no JWT, so the server
+   * would reject a transfer of the subscription to it. Instead, disable push on
+   * the user that logs out while the identity is still theirs, then switch to a
+   * local anonymous user with no server operation. The next login moves the
+   * subscription to that user.
+   */
+  private static async _logoutUnderIv(identityModel: IdentityModel): Promise<void> {
+    const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
+    if (pushModel) {
+      OneSignal._coreDirector._operationRepo._enqueue(
+        new UpdateSubscriptionOperation({
+          appId: getAppId(),
+          onesignalId: identityModel._onesignalId,
+          externalId: identityModel._externalId,
+          subscriptionId: pushModel.id,
+          type: pushModel.type,
+          token: pushModel.token,
+          enabled: false,
+          notification_types: NotificationType._UserOptedOut,
+          web_auth: pushModel.web_auth,
+          web_p256: pushModel.web_p256,
+        }),
+      );
+    }
+    LoginManager._resetAndGetIdentityModel();
   }
 
   private static _resetAndGetIdentityModel() {

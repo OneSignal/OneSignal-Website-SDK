@@ -964,6 +964,41 @@ describe('OneSignal - No Consent Required', () => {
           },
         ]);
       });
+
+      test('under Identity Verification: disables push on the old user and creates no user', async () => {
+        const externalId = 'jd-1';
+        setJwtTokens({});
+        setJwtRequirement(JwtRequirement._Required);
+        await setupSubModelStore({ id: SUB_ID, token: 'abc123' });
+        updateIdentityModel('external_id', externalId);
+        OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, 'jwt');
+        setUpdateSubscriptionResponse({});
+        setTransferSubscriptionResponse({});
+        setCreateUserResponse({});
+
+        await OneSignal.logout();
+
+        const identityModel = OneSignal._coreDirector._getIdentityModel();
+        expect(identityModel._externalId).toBeUndefined();
+        expect(IDManager._isLocalId(identityModel._onesignalId)).toBe(true);
+
+        await vi.waitUntil(() => updateSubscriptionFn.mock.calls.length === 1, { interval: 1 });
+        expect(updateSubscriptionFn).toHaveBeenCalledWith({
+          subscription: expect.objectContaining({
+            enabled: false,
+            notification_types: -2,
+            token: 'abc123',
+            type: 'ChromePush',
+          }),
+        });
+        const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+        expect(url).toContain(`/subscriptions/${SUB_ID}`);
+        expect(headers.authorization).toBeUndefined();
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        expect(transferSubscriptionFn).not.toHaveBeenCalled();
+        expect(createUserFn).not.toHaveBeenCalled();
+      });
     });
 
     describe('updateUserJwt', () => {
