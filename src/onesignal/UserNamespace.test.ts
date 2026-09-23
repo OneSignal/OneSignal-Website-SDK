@@ -8,6 +8,7 @@ import { IDManager } from 'src/shared/managers/IDManager';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
+import type { UserJwtInvalidatedEvent } from '../page/models/UserJwtInvalidatedEvent';
 import { Subscription } from '../shared/models/Subscription';
 import User from './User';
 import UserNamespace from './UserNamespace';
@@ -463,6 +464,71 @@ describe('Event Handling', () => {
     void UserNamespace._emitter._emit('change', event);
 
     expect(mockListener).not.toHaveBeenCalled();
+  });
+
+  describe('userJwtInvalidated', () => {
+    const externalId = 'alice';
+    const flushMicrotasks = () => new Promise<void>((resolve) => queueMicrotask(resolve));
+    const invalidate = () => {
+      const store = OneSignal._coreDirector._jwtTokenStore;
+      store._putJwt(externalId, 'jwt');
+      store._invalidateJwt(externalId);
+    };
+
+    test('fires with the external id after the store removes the token', async () => {
+      const userNamespace = new UserNamespace(true);
+      const listener = vi.fn<(event: UserJwtInvalidatedEvent) => void>();
+      userNamespace.addEventListener('userJwtInvalidated', listener);
+
+      invalidate();
+      expect(listener).not.toHaveBeenCalled();
+      await flushMicrotasks();
+
+      expect(listener).toHaveBeenCalledExactlyOnceWith({ externalId });
+    });
+
+    test('a late listener gets nothing', async () => {
+      const userNamespace = new UserNamespace(true);
+      const listener = vi.fn();
+
+      invalidate();
+      userNamespace.addEventListener('userJwtInvalidated', listener);
+      await flushMicrotasks();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    test('a listener that throws does not stop the next listener', async () => {
+      const userNamespace = new UserNamespace(true);
+      const throwing = vi.fn(() => {
+        throw new Error('listener bug');
+      });
+      const next = vi.fn();
+      userNamespace.addEventListener('userJwtInvalidated', throwing);
+      userNamespace.addEventListener('userJwtInvalidated', next);
+
+      invalidate();
+      await flushMicrotasks();
+
+      expect(throwing).toHaveBeenCalledOnce();
+      expect(next).toHaveBeenCalledExactlyOnceWith({ externalId });
+      expect(warnSpy).toHaveBeenCalledWith(
+        `userJwtInvalidated listener threw for externalId=${externalId}`,
+        expect.any(Error),
+      );
+    });
+
+    test('a removed listener gets nothing', async () => {
+      const userNamespace = new UserNamespace(true);
+      const listener = vi.fn();
+      userNamespace.addEventListener('userJwtInvalidated', listener);
+      userNamespace.removeEventListener('userJwtInvalidated', listener);
+
+      invalidate();
+      await flushMicrotasks();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
   });
 });
 

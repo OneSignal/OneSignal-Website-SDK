@@ -26,7 +26,11 @@ import {
 } from 'src/shared/helpers/localStorage';
 import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
 import { isValidUuid } from 'src/shared/helpers/validators';
-import { _onSubscriptionChanged, checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
+import {
+  _onSubscriptionChanged,
+  checkAndTriggerSubscriptionChanged,
+  onUserJwtInvalidated,
+} from 'src/shared/listeners';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
@@ -55,6 +59,7 @@ export default class OneSignal {
     const core = new CoreModule();
     await core._init();
     OneSignal._coreDirector = new CoreModuleDirector(core);
+    OneSignal._coreDirector._jwtTokenStore._addUserJwtInvalidatedListener(onUserJwtInvalidated);
     const subscription = await getSubscription();
     const permission = await OneSignal._context._permissionManager._getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);

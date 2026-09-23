@@ -605,6 +605,18 @@ describe('OneSignal - No Consent Required', () => {
           expect(createUserFn).not.toHaveBeenCalled();
           expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe(externalId);
         });
+
+        test('a 401 fires userJwtInvalidated with the external id', async () => {
+          OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, 'old-jwt');
+          getHandler({ uri: updateUserUri, method: 'patch', status: 401 });
+          const listener = vi.fn();
+          OneSignal.User.addEventListener('userJwtInvalidated', listener);
+
+          OneSignal.User.addTag('some-tag', 'some-value');
+
+          await vi.waitUntil(() => listener.mock.calls.length === 1, { interval: 1 });
+          expect(listener).toHaveBeenCalledWith({ externalId });
+        });
       });
 
       describe('subscription after login', () => {
