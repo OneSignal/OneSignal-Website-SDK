@@ -40,6 +40,7 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal._coreDirector._jwtTokenStore._addUserJwtInvalidatedListener(
     onUserJwtInvalidated,
   );
+  global.OneSignal._settleCoreReady();
 
   // Clear the User singleton before creating new instance
   User._singletonInstance = undefined;
