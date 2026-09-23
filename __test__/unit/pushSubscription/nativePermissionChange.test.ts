@@ -1,18 +1,17 @@
 import { PUSH_TOKEN, PUSH_TOKEN_2, SUB_ID, SUB_ID_2, SUB_ID_3 } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { createPushSub } from '__test__/support/environment/TestEnvironmentHelpers';
+import MockNotification from '__test__/support/mocks/MockNotification';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { clearStore, db, getOptionsValue } from 'src/shared/database/client';
 import { setAppState as setDBAppState } from 'src/shared/database/config';
 import type { AppState } from 'src/shared/database/types';
-import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
-import * as PermissionUtils from 'src/shared/helpers/permissions';
+import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
 import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test';
 
 vi.mock('src/shared/libraries/Log');
-const triggerNotificationSpy = vi.spyOn(PermissionUtils, 'triggerNotificationPermissionChanged');
 
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(() => {
@@ -21,6 +20,7 @@ describe('Notification Types are set correctly on subscription change', () => {
   });
 
   afterEach(async () => {
+    MockNotification.permission = 'default';
     await clearStore('subscriptions');
     await clearStore('Options');
   });
@@ -32,16 +32,16 @@ describe('Notification Types are set correctly on subscription change', () => {
     });
   };
 
-  describe('checkAndTriggerNotificationPermissionChanged', () => {
+  describe('triggerNotificationPermissionChanged', () => {
     test('should not trigger change if permission status is the same', async () => {
-      vi.stubGlobal('Notification', {
-        ...global.Notification,
-        permission: 'granted',
-      });
+      TestEnvironment.initialize({ permission: 'granted' });
       await setDbPermission('granted');
 
-      await checkAndTriggerNotificationPermissionChanged();
-      expect(triggerNotificationSpy).not.toHaveBeenCalled();
+      const permChangeListener = vi.fn();
+      OneSignal.Notifications.addEventListener('permissionChange', permChangeListener);
+
+      await triggerNotificationPermissionChanged();
+      expect(permChangeListener).not.toHaveBeenCalled();
     });
 
     test('should trigger change if permission status is different', async () => {
@@ -61,7 +61,7 @@ describe('Notification Types are set correctly on subscription change', () => {
         permChangeStringListener,
       );
 
-      await checkAndTriggerNotificationPermissionChanged();
+      await triggerNotificationPermissionChanged();
 
       // should update the db
       const dbPermission = await getOptionsValue<NotificationPermission>('notificationPermission');

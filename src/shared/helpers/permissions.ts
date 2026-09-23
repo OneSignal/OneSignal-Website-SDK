@@ -24,10 +24,14 @@ export const triggerNotificationPermissionChanged = async (force = false) => {
 const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
   const newPermission: NotificationPermission =
     await OneSignal._context._permissionManager._getPermissionStatus();
-  const previousPermission =
-    await getOptionsValue<NotificationPermission>('notificationPermission');
+  const storedPermission = await getOptionsValue<NotificationPermission>('notificationPermission');
+  // IndexedDB is shared by every same-origin context (tabs, installed PWA). Another
+  // context can update the stored value first, so this context must also compare
+  // against its own in-memory permission or its caches never refresh.
+  const cachedPermission = OneSignal.Notifications.permissionNative;
 
-  const triggerEvent = newPermission !== previousPermission || force;
+  const triggerEvent =
+    force || newPermission !== storedPermission || newPermission !== cachedPermission;
   if (!triggerEvent) {
     return;
   }
@@ -41,21 +45,8 @@ const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
     newPermission,
   );
-  triggerBooleanPermissionChangeEvent(previousPermission, newPermission, force);
-};
-
-const triggerBooleanPermissionChangeEvent = (
-  previousPermission: NotificationPermission | null,
-  newPermission: NotificationPermission,
-  force: boolean,
-): void => {
-  const newPermissionBoolean = newPermission === 'granted';
-
-  const triggerEvent = newPermission !== previousPermission || force;
-  if (!triggerEvent) return;
-
   OneSignalEvent._trigger(
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN,
-    newPermissionBoolean,
+    newPermission === 'granted',
   );
 };
