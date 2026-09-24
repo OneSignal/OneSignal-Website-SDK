@@ -164,19 +164,29 @@ export default class OneSignal {
   /**
    * login, logout, and updateUserJwt need the user model that init creates. The
    * OneSignalDeferred array runs init before later calls, but a direct call can
-   * come first. As on Android, the call waits for init. Returns false, with a
-   * warning, when init stopped before the user model existed.
+   * come first. The call waits for init, then checks consent again, because the
+   * init config can require consent that the check before the wait could not
+   * see. Returns false when the call must stop: init stopped before the user
+   * model existed, or consent is required but not given.
+   *
+   * Android throws when init was never started. Web waits instead, with a
+   * warning, because the wait is the only safe choice in a page that loads the
+   * SDK and the app code in any order.
    *
    * Callers check _coreDirector before they call this. A call after init then
    * stays synchronous, so the operations of the calls that follow it without an
    * await keep their order in the queue.
    */
   private static async _awaitCore(method: string): Promise<boolean> {
-    Log._debug(`${method}: waiting for init`);
+    if (OneSignal._initCalled) Log._debug(`${method}: waiting for init`);
+    else Log._warn(`${method} waits for init, which was not called yet`);
+
     await OneSignal._coreReady;
-    if (OneSignal._coreDirector) return true;
-    Log._warn(`${method} skipped: init did not complete`);
-    return false;
+    if (!OneSignal._coreDirector) {
+      Log._warn(`${method} skipped: init did not complete`);
+      return false;
+    }
+    return !isConsentRequiredButNotGiven();
   }
 
   /**
@@ -345,10 +355,14 @@ export default class OneSignal {
   /* NEW USER MODEL CHANGES */
   static _coreDirector: CoreModuleDirector;
   /** Settles once init created _coreDirector, or once init stopped before it. */
-  static _settleCoreReady: () => void;
-  static _coreReady = new Promise<void>((resolve) => {
-    OneSignal._settleCoreReady = resolve;
-  });
+  // `declare` emits no field define, so nothing can run after the block and reset these.
+  declare static _coreReady: Promise<void>;
+  declare static _settleCoreReady: () => void;
+  static {
+    OneSignal._coreReady = new Promise<void>((resolve) => {
+      OneSignal._settleCoreReady = resolve;
+    });
+  }
 
   static Notifications = new NotificationsNamespace();
   static Slidedown = new SlidedownNamespace();

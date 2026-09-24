@@ -1405,12 +1405,52 @@ describe('OneSignal - Before Init', () => {
   test('updateUserJwt waits for init, then stores the token', async () => {
     const pending = OneSignal.updateUserJwt(externalId, 'jwt');
     await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(debugSpy).toHaveBeenCalledWith('updateUserJwt: waiting for init');
+    expect(warnSpy).toHaveBeenCalledWith('updateUserJwt waits for init, which was not called yet');
 
     setupEnv(false);
     await pending;
 
     expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBe('jwt');
+  });
+
+  test('logs at debug level when init is in progress', async () => {
+    OneSignal._initCalled = true;
+    const pending = OneSignal.updateUserJwt(externalId, 'jwt');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(debugSpy).toHaveBeenCalledWith('updateUserJwt: waiting for init');
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      'updateUserJwt waits for init, which was not called yet',
+    );
+
+    setupEnv(false);
+    await pending;
+    OneSignal._initCalled = false;
+  });
+
+  test('login obeys the consent the init config requires', async () => {
+    const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
+
+    const pending = OneSignal.login(externalId, 'jwt');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    setupEnv(true);
+    void OneSignal.setConsentGiven(false);
+    await pending;
+
+    expect(loginSpy).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
+  });
+
+  test('updateUserJwt obeys the consent the init config requires', async () => {
+    const pending = OneSignal.updateUserJwt(externalId, 'jwt');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    setupEnv(true);
+    void OneSignal.setConsentGiven(false);
+    await pending;
+
+    expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
   });
 
   test('login waits for init, then logs the user in', async () => {
