@@ -122,6 +122,40 @@ export default class OneSignal {
   }
 
   /**
+   * Stores a fresh JWT for a user under Identity Verification. Accepts any
+   * external ID, not only the current user. The operation queue re-reads the
+   * token store on its next pass, so operations held for this user dispatch
+   * with the new token; nothing waits on a request here.
+   * @PublicApi
+   * @param externalId - The external user ID the token belongs to
+   * @param token - The JWT auth token
+   */
+  // Async for the api.json contract that the wrappers are generated from.
+  // oxlint-disable-next-line typescript/require-await
+  static async updateUserJwt(externalId: string, token: string): Promise<void> {
+    logMethodCall('updateUserJwt', { externalId });
+    if (isConsentRequiredButNotGiven()) return;
+
+    if (!externalId) {
+      throw EmptyArgumentError('externalId');
+    }
+
+    if (typeof externalId !== 'string') {
+      throw WrongTypeArgumentError('externalId');
+    }
+
+    if (!token) {
+      throw EmptyArgumentError('token');
+    }
+
+    if (typeof token !== 'string') {
+      throw WrongTypeArgumentError('token');
+    }
+
+    OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
+  }
+
+  /**
    * Initializes the SDK, called by the developer.
    * @PublicApi
    */
