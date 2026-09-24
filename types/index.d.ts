@@ -244,7 +244,9 @@ interface AppUserConfig {
   autoResubscribe?: boolean;
   path?: string;
   serviceWorkerPath?: string;
-  serviceWorkerParam?: any;
+  serviceWorkerParam?: {
+    scope: string;
+  };
   subdomainName?: string;
   promptOptions?: AppUserConfigPromptOptions;
   welcomeNotification?: AppUserConfigWelcomeNotification;

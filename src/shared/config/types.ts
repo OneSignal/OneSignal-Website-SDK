@@ -66,7 +66,7 @@ export interface AppUserConfig {
   autoResubscribe?: boolean;
   path?: string;
   serviceWorkerPath?: string;
-  serviceWorkerParam?: any;
+  serviceWorkerParam?: { scope: string };
   subdomainName?: string;
   promptOptions?: AppUserConfigPromptOptions;
   welcomeNotification?: AppUserConfigWelcomeNotification;
@@ -168,7 +168,7 @@ export interface ServerAppConfig {
     serviceWorker: {
       path?: string;
       workerName?: string;
-      registrationScope?: string;
+      registrationScope: string;
     };
     setupBehavior?: Record<string, unknown>;
     welcomeNotification: {
@@ -200,6 +200,6 @@ export interface ServerAppConfig {
 
 export type ServiceWorkerConfigParams = {
   path?: string;
-  serviceWorkerParam?: { scope: string };
+  serviceWorkerParam: { scope: string };
   serviceWorkerPath?: string;
 };
