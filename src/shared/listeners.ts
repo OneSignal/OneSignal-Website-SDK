@@ -1,11 +1,13 @@
 import UserNamespace from 'src/onesignal/UserNamespace';
 import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import type { UserChangeEvent } from 'src/page/models/UserChangeEvent';
+import type { UserJwtInvalidatedEvent } from 'src/page/models/UserJwtInvalidatedEvent';
 
 import { db, getOptionsValue } from './database/client';
 import { getAppState, setAppState } from './database/config';
 import { decodeHtmlEntities } from './helpers/dom';
 import { getCurrentPushToken, showLocalNotification } from './helpers/main';
+import type { EventHandler } from './libraries/Emitter';
 import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
 import { UserState } from './models/UserState';
@@ -132,6 +134,26 @@ export async function checkAndTriggerUserChanged() {
 
 function triggerUserChanged(change: UserChangeEvent) {
   OneSignalEvent._trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change, UserNamespace._emitter);
+}
+
+/**
+ * Forwards a token store invalidation to the OneSignal.User listeners. As on Android,
+ * delivery is asynchronous and isolated per listener: app code never runs inside the
+ * operation queue that removed the token, and a listener that throws does not stop
+ * the listeners after it.
+ */
+export function onUserJwtInvalidated(event: UserJwtInvalidatedEvent): void {
+  const eventName = OneSignal.EVENTS.USER_JWT_INVALIDATED;
+  Log._debug(`» ${eventName}:`, event);
+  UserNamespace._emitter._listeners(eventName)?.forEach((listener) => {
+    queueMicrotask(() => {
+      try {
+        (listener as EventHandler)(event);
+      } catch (e) {
+        Log._warn(`${eventName} listener threw for externalId=${event.externalId}`, e);
+      }
+    });
+  });
 }
 
 function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
