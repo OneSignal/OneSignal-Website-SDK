@@ -964,6 +964,65 @@ describe('OneSignal - No Consent Required', () => {
           },
         ]);
       });
+
+      test('under Identity Verification: disables push on the old user and creates no user', async () => {
+        const externalId = 'jd-1';
+        setJwtTokens({});
+        setJwtRequirement(JwtRequirement._Required);
+        await setupSubModelStore({ id: SUB_ID, token: 'abc123' });
+        updateIdentityModel('external_id', externalId);
+        OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, 'jwt');
+        setUpdateSubscriptionResponse({});
+        setTransferSubscriptionResponse({});
+        setCreateUserResponse({});
+
+        await OneSignal.logout();
+
+        const identityModel = OneSignal._coreDirector._getIdentityModel();
+        expect(identityModel._externalId).toBeUndefined();
+        expect(IDManager._isLocalId(identityModel._onesignalId)).toBe(true);
+
+        await vi.waitUntil(() => updateSubscriptionFn.mock.calls.length === 1, { interval: 1 });
+        expect(updateSubscriptionFn).toHaveBeenCalledWith({
+          subscription: expect.objectContaining({
+            enabled: false,
+            notification_types: -2,
+            token: 'abc123',
+            type: 'ChromePush',
+          }),
+        });
+        const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+        expect(url).toContain(`/subscriptions/${SUB_ID}`);
+        expect(headers.authorization).toBeUndefined();
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        expect(transferSubscriptionFn).not.toHaveBeenCalled();
+        expect(createUserFn).not.toHaveBeenCalled();
+
+        // The next login moves the subscription and turns push back on. The
+        // transfer and the update fold into the create-user payload.
+        getHandler({
+          uri: `**/apps/${APP_ID}/users/by/external_id/jd-2`,
+          method: 'get',
+          status: 200,
+          response: { identity: { onesignal_id: ONESIGNAL_ID_2, external_id: 'jd-2' } },
+        });
+        await OneSignal.login('jd-2', 'jwt-2');
+
+        expect(createUserFn).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({
+            identity: { external_id: 'jd-2' },
+            subscriptions: [
+              expect.objectContaining({
+                id: SUB_ID,
+                enabled: true,
+                notification_types: 1,
+                token: 'abc123',
+              }),
+            ],
+          }),
+        );
+      });
     });
 
     describe('updateUserJwt', () => {
