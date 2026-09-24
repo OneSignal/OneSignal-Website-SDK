@@ -6,17 +6,11 @@ import type {
   BellText,
   ServerAppPromptConfig,
 } from '../prompts/types';
-import type {
-  ConfigIntegrationKind,
-  NotificationClickActionBehavior,
-  NotificationClickMatchBehavior,
-} from './constants';
+import type { ConfigIntegrationKind } from './constants';
 
-type NotificationClickMatchBehaviorValue =
-  (typeof NotificationClickMatchBehavior)[keyof typeof NotificationClickMatchBehavior];
+export type NotificationClickMatchBehaviorValue = 'exact' | 'origin';
 
-type NotificationClickActionBehaviorValue =
-  (typeof NotificationClickActionBehavior)[keyof typeof NotificationClickActionBehavior];
+export type NotificationClickActionBehaviorValue = 'navigate' | 'focus';
 
 export type ConfigIntegrationKindValue =
   (typeof ConfigIntegrationKind)[keyof typeof ConfigIntegrationKind];

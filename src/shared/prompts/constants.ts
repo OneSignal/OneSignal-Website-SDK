@@ -1,4 +1,4 @@
-import type { SlidedownPromptOptions } from './types';
+import type { DelayedPromptTypeValue, SlidedownPromptOptions } from './types';
 
 export const DelayedPromptType = {
   _Native: 'native', // native push
@@ -7,7 +7,7 @@ export const DelayedPromptType = {
   _Sms: 'sms', // sms only
   _Email: 'email', // email only
   _SmsAndEmail: 'smsAndEmail', // sms and email only
-} as const;
+} as const satisfies Record<string, DelayedPromptTypeValue>;
 
 // DO NOT prefix these as these constant names are explicit
 export const SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS = {

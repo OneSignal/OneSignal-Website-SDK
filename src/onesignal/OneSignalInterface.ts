@@ -1,107 +1,22 @@
-interface OneSignalInitOptions {
-  appId: string;
-  autoRegister?: boolean;
-  autoResubscribe?: boolean;
-  notificationClickHandlerAction?: 'navigate' | 'focus';
-  notificationClickHandlerMatch?: 'exact' | 'origin';
-  path?: string;
-  persistNotification?: boolean;
-  requiresUserPrivacyConsent?: boolean;
-  safari_web_id?: string;
-  serviceWorkerOverrideForTypical?: boolean;
-  serviceWorkerParam?: { scope: string };
-  serviceWorkerPath?: string;
-  subdomainName?: string;
-}
-
-interface Notification {
-  readonly actionButtons?: {
-    readonly actionId: string;
-    readonly icon?: string;
-    readonly launchURL?: string;
-    readonly text: string;
-  }[];
-  readonly additionalData?: object;
-  readonly badgeIcon?: string;
-  readonly body: string;
-  readonly confirmDelivery: boolean;
-  readonly icon?: string;
-  readonly image?: string;
-  readonly launchURL?: string;
-  readonly notificationId: string;
-  readonly title?: string;
-  readonly topic?: string;
-}
-
-interface NotificationEventMap {
-  click: {
-    readonly notification: Notification;
-    readonly result: {
-      readonly actionId?: string;
-      readonly url?: string;
-    };
-  };
-  dismiss: {
-    notification: Notification;
-  };
-  foregroundWillDisplay: {
-    readonly notification: Notification & {
-      display(): void;
-    };
-    preventDefault(): void;
-  };
-  permissionChange: boolean;
-  permissionPromptDisplay: void;
-}
+import type { AutoPromptOptions } from 'src/page/managers/PromptsManager';
+import type { AppUserConfig } from 'src/shared/config/types';
+import type { NotificationEventTypeMap } from 'src/shared/notifications/types';
 
 export interface OneSignalNotifications {
   readonly permission: boolean;
   readonly permissionNative: NotificationPermission | undefined;
-  addEventListener<K extends keyof NotificationEventMap>(
+  addEventListener<K extends keyof NotificationEventTypeMap>(
     event: K,
-    listener: (event: NotificationEventMap[K]) => void,
+    listener: (event: NotificationEventTypeMap[K]) => void,
   ): void;
   isPushSupported(): boolean;
-  removeEventListener<K extends keyof NotificationEventMap>(
+  removeEventListener<K extends keyof NotificationEventTypeMap>(
     event: K,
-    listener: (event: NotificationEventMap[K]) => void,
+    listener: (event: NotificationEventTypeMap[K]) => void,
   ): void;
   requestPermission(): Promise<boolean>;
   setDefaultTitle(title: string): Promise<void>;
   setDefaultUrl(url: string): Promise<void>;
-}
-
-interface SlidedownPromptOptions {
-  autoPrompt: boolean;
-  categories?: {
-    checked?: boolean;
-    label: string;
-    tag: string;
-  }[];
-  delay?: {
-    pageViews: number;
-    timeDelay: number;
-  };
-  icon?: string | null;
-  text: {
-    acceptButton: string;
-    actionMessage: string;
-    cancelButton: string;
-    confirmMessage?: string;
-    emailLabel?: string;
-    negativeUpdateButton?: string;
-    positiveUpdateButton?: string;
-    smsLabel?: string;
-    updateMessage?: string;
-  };
-  type: 'push' | 'category' | 'sms' | 'email' | 'smsAndEmail';
-}
-
-interface AutoPromptOptions {
-  force?: boolean;
-  forceSlidedownOverNative?: boolean;
-  isInUpdateMode?: boolean;
-  slidedownPromptOptions?: SlidedownPromptOptions;
 }
 
 export interface OneSignalSlidedown {
@@ -181,7 +96,7 @@ export interface OneSignal {
   readonly Session: OneSignalSession;
   readonly Slidedown: OneSignalSlidedown;
   readonly User: OneSignalUser;
-  init(options: OneSignalInitOptions): Promise<void>;
+  init(options: AppUserConfig & { appId: string }): Promise<void>;
   login(externalId: string, jwtToken?: string): Promise<void>;
   logout(): Promise<void>;
   setConsentGiven(consent: boolean): Promise<void>;
