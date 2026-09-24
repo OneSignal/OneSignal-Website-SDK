@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
   pull-requests: read # Required by called github-release.yml
 
 jobs:
@@ -51,6 +52,17 @@ jobs:
 
       - name: Build for Production
         run: vp run build:prod
+
+      - name: Publish TypeScript declarations to npm
+        working-directory: types
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version >/dev/null 2>&1; then
+            echo "$PACKAGE_NAME@$PACKAGE_VERSION is already published"
+          else
+            npm publish --provenance --access public
+          fi
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1

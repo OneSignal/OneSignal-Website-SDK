@@ -1,0 +1,25 @@
+{
+  "name": "@onesignal/web-sdk-types",
+  "version": "16.6.10",
+  "description": "TypeScript declarations for the OneSignal Web SDK.",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "OneSignal",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OneSignal/OneSignal-Website-SDK.git",
+    "directory": "types"
+  },
+  "files": [
+    "index.d.ts"
+  ],
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts"
+    }
+  },
+  "scripts": {
+    "prepack": "cp ../LICENSE LICENSE",
+    "postpack": "rm LICENSE"
+  }
+}

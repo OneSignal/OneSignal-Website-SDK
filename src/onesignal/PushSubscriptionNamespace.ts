@@ -13,8 +13,12 @@ import Log from '../shared/libraries/Log';
 import { isCompleteSubscriptionObject } from '../shared/managers/utils';
 import { Subscription } from '../shared/models/Subscription';
 import { awaitOneSignalInitAndSupported, logMethodCall } from '../shared/utils/utils';
+import type { OneSignalPushSubscription } from './OneSignalInterface';
 
-export default class PushSubscriptionNamespace extends EventListenerBase {
+export default class PushSubscriptionNamespace
+  extends EventListenerBase
+  implements OneSignalPushSubscription
+{
   private _id?: string | null;
   private _token?: string | null;
   private _optedIn?: boolean;

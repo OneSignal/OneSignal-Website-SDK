@@ -2,10 +2,11 @@ import type { UserChangeEvent } from '../page/models/UserChangeEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
 import { Subscription } from '../shared/models/Subscription';
+import type { OneSignalUser } from './OneSignalInterface';
 import PushSubscriptionNamespace from './PushSubscriptionNamespace';
 import User from './User';
 
-export default class UserNamespace extends EventListenerBase {
+export default class UserNamespace extends EventListenerBase implements OneSignalUser {
   private _currentUser?: User;
 
   readonly PushSubscription = new PushSubscriptionNamespace(false);

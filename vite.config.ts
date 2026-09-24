@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import path from 'path';
 
 import { analyzer } from 'vite-bundle-analyzer';
@@ -48,16 +48,30 @@ const isBuild = process.env.NODE_ENV === 'production';
 const lib = process.env.LIB as Lib;
 
 export default defineConfig({
+  pack: {
+    clean: false,
+    dts: true,
+    entry: { index: './types/entry.ts' },
+    format: ['esm'],
+    onSuccess: () => {
+      rmSync(path.resolve(import.meta.dirname, 'types/index.js'), { force: true });
+    },
+    outDir: 'types',
+    platform: 'neutral',
+    report: false,
+  },
   staged: {
     '*': 'vp check --fix',
   },
   fmt: {
+    ignorePatterns: ['types/index.d.ts'],
     singleQuote: true,
     sortImports: {
       enabled: true,
     },
   },
   lint: {
+    ignorePatterns: ['types/index.d.ts'],
     jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
     rules: {
       'vite-plus/prefer-vite-plus-imports': 'error',

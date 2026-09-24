@@ -1,8 +1,9 @@
 import OutcomesHelper from '../shared/helpers/OutcomesHelper';
 import Log from '../shared/libraries/Log';
 import { OutcomeAttributionType } from '../shared/models/Outcomes';
+import type { OneSignalSession } from './OneSignalInterface';
 
-export class SessionNamespace {
+export class SessionNamespace implements OneSignalSession {
   async sendOutcome(outcomeName: string, outcomeWeight?: number): Promise<void> {
     const config = OneSignal.config?.userConfig.outcomes;
     if (!config) {

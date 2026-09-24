@@ -12,8 +12,12 @@ import type {
 
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import { awaitOneSignalInitAndSupported, logMethodCall } from '../shared/utils/utils';
+import type { OneSignalNotifications } from './OneSignalInterface';
 
-export default class NotificationsNamespace extends EventListenerBase {
+export default class NotificationsNamespace
+  extends EventListenerBase
+  implements OneSignalNotifications
+{
   private _permission: boolean;
   private _permissionNative?: NotificationPermission;
 

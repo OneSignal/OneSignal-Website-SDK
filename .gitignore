@@ -19,6 +19,7 @@ ngrok.log
 !.cursor/rules/
 
 coverage
+types/LICENSE
 
 !.env.example
 .env

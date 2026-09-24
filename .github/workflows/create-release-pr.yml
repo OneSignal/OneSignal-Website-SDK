@@ -86,7 +86,9 @@ jobs:
           fi
 
           NEW_VERSION="${MAJOR}${MINOR}${PATCH}"
+          PACKAGE_VERSION="$((10#$MAJOR)).$((10#$MINOR)).$((10#$PATCH))"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create release branch on main
         env:
@@ -95,14 +97,16 @@ jobs:
           git checkout -b "rel/$NEW_VERSION"
           git push -u origin "rel/$NEW_VERSION"
 
-      - name: Update package.json sdk version
+      - name: Update package versions
         env:
           NEW_VERSION: ${{ steps.new_version.outputs.version }}
+          PACKAGE_VERSION: ${{ steps.new_version.outputs.package_version }}
         run: |
           npm pkg set config.sdkVersion="$NEW_VERSION"
+          (cd types && npm pkg set version="$PACKAGE_VERSION")
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json
+          git add package.json types/package.json
           git commit -m "Release $NEW_VERSION"
           git push
 

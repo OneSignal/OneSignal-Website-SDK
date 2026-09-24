@@ -17,6 +17,29 @@ View our [documentation](https://documentation.onesignal.com/docs/web-push-quick
 
 Please reference the OneSignal SDK on your webpage via our CDN URL (listed in our setup documentation) instead of copying the source into another file. This is because our SDK updates frequently for new features and bug fixes.
 
+## TypeScript
+
+Install `@onesignal/web-sdk-types` as a development dependency to use the public API declarations:
+
+```sh
+vp add --save-dev @onesignal/web-sdk-types
+```
+
+Import the exported `OneSignal` interface to add declarations for `window.OneSignal` and `window.OneSignalDeferred`:
+
+```ts
+import type { OneSignal } from '@onesignal/web-sdk-types';
+
+const initialize = async (oneSignal: OneSignal) => {
+  await oneSignal.init({ appId: 'YOUR_APP_ID' });
+};
+
+window.OneSignalDeferred = window.OneSignalDeferred ?? [];
+window.OneSignalDeferred.push(initialize);
+```
+
+The npm package provides declarations only. Continue loading the SDK runtime from the OneSignal CDN.
+
 ## Local Development
 
 Install the dependencies `vp install` then you can `vp run dev`. This will start a dev server on port 4001.
