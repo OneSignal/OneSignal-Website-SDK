@@ -47,6 +47,8 @@ import {
   updateIdentityModel,
 } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
+import { server } from '__test__/support/mocks/server';
+import { http, HttpResponse } from 'msw';
 import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
@@ -561,6 +563,47 @@ describe('OneSignal - No Consent Required', () => {
             modelName: 'identity',
             onesignal_id: ONESIGNAL_ID_2,
           });
+        });
+      });
+
+      describe('same user under Identity Verification', () => {
+        const updateUserUri = `**/apps/${APP_ID}/users/by/external_id/${externalId}`;
+
+        beforeEach(() => {
+          setJwtTokens({});
+          setJwtRequirement(JwtRequirement._Required);
+          updateIdentityModel('external_id', externalId);
+        });
+
+        test('login with a fresh token releases an operation the server rejected with 401', async () => {
+          OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, 'old-jwt');
+          server.use(
+            http.patch(updateUserUri, ({ request }) => {
+              requestHeadersFn(Object.fromEntries(request.headers), request.url);
+              const status = request.headers.get('authorization') === 'Bearer old-jwt' ? 401 : 200;
+              return HttpResponse.json({}, { status });
+            }),
+          );
+
+          OneSignal.User.addTag('some-tag', 'some-value');
+
+          // The 401 removes the token and re-queues the operation, where the dispatch gate holds it.
+          await vi.waitUntil(() => requestHeadersFn.mock.calls.length === 1, { interval: 1 });
+          await vi.waitUntil(
+            () => OneSignal._coreDirector._jwtTokenStore._getJwt(externalId) === undefined,
+            { interval: 1 },
+          );
+          expect(OneSignal._coreDirector._operationRepo._queue).toHaveLength(1);
+
+          await OneSignal.login(externalId, 'fresh-jwt');
+
+          await vi.waitUntil(() => requestHeadersFn.mock.calls.length === 2, { interval: 1 });
+          const [headers] = requestHeadersFn.mock.calls[1];
+          expect(headers.authorization).toBe('Bearer fresh-jwt');
+          // No user switch: no identify or create-user request.
+          expect(addAliasFn).not.toHaveBeenCalled();
+          expect(createUserFn).not.toHaveBeenCalled();
+          expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe(externalId);
         });
       });
 
