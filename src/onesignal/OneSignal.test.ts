@@ -998,6 +998,30 @@ describe('OneSignal - No Consent Required', () => {
         await new Promise((resolve) => setTimeout(resolve, 50));
         expect(transferSubscriptionFn).not.toHaveBeenCalled();
         expect(createUserFn).not.toHaveBeenCalled();
+
+        // The next login moves the subscription and turns push back on. The
+        // transfer and the update fold into the create-user payload.
+        getHandler({
+          uri: `**/apps/${APP_ID}/users/by/external_id/jd-2`,
+          method: 'get',
+          status: 200,
+          response: { identity: { onesignal_id: ONESIGNAL_ID_2, external_id: 'jd-2' } },
+        });
+        await OneSignal.login('jd-2', 'jwt-2');
+
+        expect(createUserFn).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({
+            identity: { external_id: 'jd-2' },
+            subscriptions: [
+              expect.objectContaining({
+                id: SUB_ID,
+                enabled: true,
+                notification_types: 1,
+                token: 'abc123',
+              }),
+            ],
+          }),
+        );
       });
     });
 

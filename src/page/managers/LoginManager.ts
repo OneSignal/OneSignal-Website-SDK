@@ -1,5 +1,6 @@
 import { IdentityConstants } from 'src/core/constants';
 import { isIvBehaviorActive } from 'src/core/identityVerification';
+import { SubscriptionModelStoreListener } from 'src/core/listeners/SubscriptionModelStoreListener';
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
@@ -85,7 +86,7 @@ export default class LoginManager {
    * would reject a transfer of the subscription to it. Instead, disable push on
    * the user that logs out while the identity is still theirs, then switch to a
    * local anonymous user with no server operation. The next login moves the
-   * subscription to that user.
+   * subscription to that user and sends the local push state again.
    */
   private static async _logoutUnderIv(identityModel: IdentityModel): Promise<void> {
     const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
@@ -106,6 +107,35 @@ export default class LoginManager {
       );
     }
     LoginManager._resetAndGetIdentityModel();
+  }
+
+  /**
+   * A logout under IV disabled push on the server, and a transfer does not
+   * change that. Send the local push state after the transfer, so the user
+   * that logs in gets push again when the device still opts in.
+   */
+  private static _enqueuePushStateSync(
+    appId: string,
+    onesignalId: string,
+    externalId: string,
+    pushModel: SubscriptionModel,
+  ): void {
+    const { enabled, notification_types } =
+      SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(pushModel);
+    OneSignal._coreDirector._operationRepo._enqueue(
+      new UpdateSubscriptionOperation({
+        appId,
+        onesignalId,
+        externalId,
+        subscriptionId: pushModel.id,
+        type: pushModel.type,
+        token: pushModel.token,
+        enabled,
+        notification_types,
+        web_auth: pushModel.web_auth,
+        web_p256: pushModel.web_p256,
+      }),
+    );
   }
 
   private static _resetAndGetIdentityModel() {
@@ -141,6 +171,9 @@ export default class LoginManager {
               externalId,
             }),
           );
+          if (externalId && isIvBehaviorActive()) {
+            LoginManager._enqueuePushStateSync(appId, newOneSignalId, externalId, pushOp);
+          }
         } else if (createSubIfMissing) {
           const newSub = new SubscriptionModel();
           newSub._mergeData({

@@ -113,9 +113,59 @@ describe('LoginManager', () => {
 
     await LoginManager.login('new-id');
 
-    expect(enqueueSpy).toHaveBeenCalled();
+    expect(enqueueSpy).toHaveBeenCalledOnce();
     const transferOp = enqueueSpy.mock.calls[0][0] as BaseSubscriptionOperation;
+    expect(transferOp).toBeInstanceOf(TransferSubscriptionOperation);
     expect(transferOp._subscriptionId).toBe('push-sub-id');
+  });
+
+  describe('login under Identity Verification with a push sub', () => {
+    const pushSub = {
+      id: 'push-sub-id',
+      type: 'ChromePush',
+      token: 'push-token',
+      enabled: true,
+      _notification_types: NotificationType._Subscribed,
+      web_auth: 'auth',
+      web_p256: 'p256',
+    } as SubscriptionModel;
+
+    beforeEach(() => {
+      setJwtRequirement(JwtRequirement._Required);
+      vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(pushSub);
+      vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockResolvedValue(
+        undefined,
+      );
+    });
+
+    test('sends the local push state after the transfer, so a logout that disabled push is undone', async () => {
+      const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+
+      await LoginManager.login('new-id', 'jwt');
+
+      expect(enqueueSpy).toHaveBeenCalledTimes(2);
+      expect(enqueueSpy.mock.calls[0][0]).toBeInstanceOf(TransferSubscriptionOperation);
+      const op = enqueueSpy.mock.calls[1][0] as UpdateSubscriptionOperation;
+      expect(op).toBeInstanceOf(UpdateSubscriptionOperation);
+      expect(op._onesignalId).toBe(OneSignal._coreDirector._getIdentityModel()._onesignalId);
+      expect(op._externalId).toBe('new-id');
+      expect(op._subscriptionId).toBe('push-sub-id');
+      expect(op.enabled).toBe(true);
+      expect(op.notification_types).toBe(NotificationType._Subscribed);
+      expect(op.token).toBe('push-token');
+    });
+
+    test('reports the device opt-out as is', async () => {
+      pushSub.enabled = false;
+      const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+
+      await LoginManager.login('new-id', 'jwt');
+
+      const op = enqueueSpy.mock.calls[1][0] as UpdateSubscriptionOperation;
+      expect(op.enabled).toBe(false);
+      expect(op.notification_types).toBe(NotificationType._UserOptedOut);
+      pushSub.enabled = true;
+    });
   });
 
   test('login: without push sub creates new subscription model', async () => {
