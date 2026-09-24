@@ -117,12 +117,14 @@ export default class OneSignal {
       throw WrongTypeArgumentError('jwtToken');
     }
 
+    if (!OneSignal._coreDirector && !(await OneSignal._awaitCore('login'))) return;
     await LoginManager.login(externalId, jwtToken);
   }
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
     if (isConsentRequiredButNotGiven()) return;
+    if (!OneSignal._coreDirector && !(await OneSignal._awaitCore('logout'))) return;
     await LoginManager.logout();
   }
 
@@ -135,8 +137,6 @@ export default class OneSignal {
    * @param externalId - The external user ID the token belongs to
    * @param token - The JWT auth token
    */
-  // Async for the api.json contract that the wrappers are generated from.
-  // oxlint-disable-next-line typescript/require-await
   static async updateUserJwt(externalId: string, token: string): Promise<void> {
     logMethodCall('updateUserJwt', { externalId });
     if (isConsentRequiredButNotGiven()) return;
@@ -157,7 +157,36 @@ export default class OneSignal {
       throw WrongTypeArgumentError('token');
     }
 
+    if (!OneSignal._coreDirector && !(await OneSignal._awaitCore('updateUserJwt'))) return;
     OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
+  }
+
+  /**
+   * login, logout, and updateUserJwt need the user model that init creates. The
+   * OneSignalDeferred array runs init before later calls, but a direct call can
+   * come first. The call waits for init, then checks consent again, because the
+   * init config can require consent that the check before the wait could not
+   * see. Returns false when the call must stop: init stopped before the user
+   * model existed, or consent is required but not given.
+   *
+   * Android throws when init was never started. Web waits instead, with a
+   * warning, because the wait is the only safe choice in a page that loads the
+   * SDK and the app code in any order.
+   *
+   * Callers check _coreDirector before they call this. A call after init then
+   * stays synchronous, so the operations of the calls that follow it without an
+   * await keep their order in the queue.
+   */
+  private static async _awaitCore(method: string): Promise<boolean> {
+    if (OneSignal._initCalled) Log._debug(`${method}: waiting for init`);
+    else Log._warn(`${method} waits for init, which was not called yet`);
+
+    await OneSignal._coreReady;
+    if (!OneSignal._coreDirector) {
+      Log._warn(`${method} skipped: init did not complete`);
+      return false;
+    }
+    return !isConsentRequiredButNotGiven();
   }
 
   /**
@@ -171,6 +200,16 @@ export default class OneSignal {
     removeLegacySubscriptionOptions();
 
     errorIfInitAlreadyCalled();
+    try {
+      await OneSignal._init(options);
+    } finally {
+      // Wakes the callers of _awaitCore when init stopped or threw before the user
+      // model. A settled promise ignores this second call.
+      OneSignal._settleCoreReady();
+    }
+  }
+
+  private static async _init(options: AppUserConfig): Promise<void> {
     // Runs alongside the config fetch. A failure keeps the cached flags and never blocks init.
     if (options?.appId && isValidUuid(options.appId)) void refreshFeatureFlags(options.appId);
     await OneSignal._initializeConfig(options);
@@ -194,6 +233,7 @@ export default class OneSignal {
     if (!idb) return;
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
+    OneSignal._settleCoreReady();
 
     OneSignal._consentGiven = await getConsentGiven();
     if (getConsentRequired()) {
@@ -314,6 +354,15 @@ export default class OneSignal {
 
   /* NEW USER MODEL CHANGES */
   static _coreDirector: CoreModuleDirector;
+  /** Settles once init created _coreDirector, or once init stopped before it. */
+  // `declare` emits no field define, so nothing can run after the block and reset these.
+  declare static _coreReady: Promise<void>;
+  declare static _settleCoreReady: () => void;
+  static {
+    OneSignal._coreReady = new Promise<void>((resolve) => {
+      OneSignal._settleCoreReady = resolve;
+    });
+  }
 
   static Notifications = new NotificationsNamespace();
   static Slidedown = new SlidedownNamespace();
