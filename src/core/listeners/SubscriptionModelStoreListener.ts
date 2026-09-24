@@ -72,7 +72,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     });
   }
 
-  private static _getSubscriptionEnabledAndStatus(model: SubscriptionModel): {
+  static _getSubscriptionEnabledAndStatus(model: SubscriptionModel): {
     enabled: boolean;
     notification_types: NotificationTypeValue | undefined;
   } {
