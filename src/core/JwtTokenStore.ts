@@ -1,7 +1,8 @@
 import type { UserJwtInvalidatedEvent } from 'src/page/models/UserJwtInvalidatedEvent';
 import { EventProducer } from 'src/shared/helpers/EventProducer';
-import { getJwtTokens, setJwtTokens } from 'src/shared/helpers/localStorage';
+import { getJwtTokens, JWT_TOKENS, setJwtTokens } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
+import { IS_SERVICE_WORKER } from 'src/shared/utils/env';
 
 /** SDK-internal: fires when a stored token changes through put or prune. */
 export type JwtUpdatedListener = (externalId: string) => void;
@@ -16,11 +17,28 @@ export type UserJwtInvalidatedListener = (event: UserJwtInvalidatedEvent) => voi
  * put-with-change and on prune. The public invalidated listener fires on invalidate only, and only
  * for subscribers present at that time. Logout and user switch must not call
  * invalidate; the developer would read that as "refresh your token".
+ *
+ * Tabs share the persisted map but not the in-memory copy. A `storage` event
+ * from another tab drops this tab's copy so the next read sees the change. No
+ * listener fires for a remote change: the tab that saw the 401 already asked
+ * the app for a token, and the queue re-reads the store on every tick.
  */
 export class JwtTokenStore {
   private _tokens?: Map<string, string>;
   private _updateListeners = new EventProducer<JwtUpdatedListener>();
   private _invalidatedListeners = new EventProducer<UserJwtInvalidatedListener>();
+
+  constructor() {
+    if (!IS_SERVICE_WORKER) {
+      window.addEventListener('storage', this._onRemoteStorageChange);
+    }
+  }
+
+  // A null key means localStorage.clear() ran in another tab.
+  private _onRemoteStorageChange = (event: StorageEvent): void => {
+    if (event.key !== null && event.key !== JWT_TOKENS) return;
+    this._tokens = undefined;
+  };
 
   _addUpdateListener(listener: JwtUpdatedListener): void {
     this._updateListeners._subscribe(listener);
