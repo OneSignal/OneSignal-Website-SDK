@@ -16,32 +16,53 @@ export type IvBackendParams = {
   jwt?: string;
 };
 
-function legacyBackendParams(op: Operation): IvBackendParams {
-  return { alias: { label: IdentityConstants._OneSignalID, id: op._onesignalId } };
+/** The ids that name a user. An operation carries them, and so does the identity model. */
+export type UserIds = {
+  onesignalId: string;
+  externalId?: string;
+};
+
+function legacyBackendParams(onesignalId: string): IvBackendParams {
+  return { alias: { label: IdentityConstants._OneSignalID, id: onesignalId } };
 }
 
 /*
- * Both resolvers gate on isIvBehaviorActive themselves. isIvBehaviorActive
+ * All resolvers gate on isIvBehaviorActive themselves. isIvBehaviorActive
  * implies isIvCodePathEnabled, so a call site needs no outer gate: with the
  * flag on and the requirement off the result is identical to the legacy path.
  */
 
-/** Alias switch plus token, for endpoints that address the user by alias. */
-export function resolveBackendParams(op: Operation, jwtTokenStore: JwtTokenStore): IvBackendParams {
-  if (!isIvBehaviorActive()) return legacyBackendParams(op);
+/**
+ * Alias switch plus token for a user named by ids. `source` names the caller in
+ * the log line when IV is active and the user is anonymous.
+ */
+export function resolveUserBackendParams(
+  { onesignalId, externalId }: UserIds,
+  source: string,
+  jwtTokenStore: JwtTokenStore,
+): IvBackendParams {
+  if (!isIvBehaviorActive()) return legacyBackendParams(onesignalId);
 
-  const externalId = op._externalId;
   if (!externalId) {
     // The enqueue and start-up purges should keep anonymous operations out of the
     // queue under IV. Address the user by onesignal_id so the request still goes out.
-    Log._error(`IV active but ${op._name} has no externalId, so the request uses onesignal_id`);
-    return legacyBackendParams(op);
+    Log._error(`IV active but ${source} has no externalId, so the request uses onesignal_id`);
+    return legacyBackendParams(onesignalId);
   }
 
   return {
     alias: { label: IdentityConstants._ExternalID, id: externalId },
     jwt: jwtTokenStore._getJwt(externalId),
   };
+}
+
+/** Alias switch plus token, for endpoints that address the user by alias. */
+export function resolveBackendParams(op: Operation, jwtTokenStore: JwtTokenStore): IvBackendParams {
+  return resolveUserBackendParams(
+    { onesignalId: op._onesignalId, externalId: op._externalId },
+    op._name,
+    jwtTokenStore,
+  );
 }
 
 /** Token only, no alias switch, for endpoints that address a subscription by id. */

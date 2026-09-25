@@ -1,9 +1,11 @@
-import { IdentityConstants } from 'src/core/constants';
+import { resolveUserBackendParams } from 'src/core/executors/ivResolver';
+import { isIvBehaviorActive } from 'src/core/identityVerification';
 import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
 import { enforceAlias, enforceAppId } from 'src/shared/context/helpers';
 import type { ContextInterface } from 'src/shared/context/types';
 import { hasSafariWindow, supportsServiceWorkers } from 'src/shared/environment/detect';
+import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import { isFirstPageView } from 'src/shared/helpers/pageview';
 import { SessionOrigin } from 'src/shared/session/constants';
 import type {
@@ -319,6 +321,21 @@ export class SessionManager implements ISessionManager {
       return;
     }
 
+    // An anonymous user has no backend user under IV, and a request without a
+    // token can only get a 401, so neither is worth a request.
+    const externalId = identityModel._externalId;
+    const jwtTokenStore = OneSignal._coreDirector._jwtTokenStore;
+    if (isIvBehaviorActive()) {
+      if (!externalId) {
+        Log._debug('No external id under Identity Verification, skipping on_session');
+        return;
+      }
+      if (!jwtTokenStore._getJwt(externalId)) {
+        Log._debug('No JWT under Identity Verification, skipping on_session');
+        return;
+      }
+    }
+
     const pushSubscription = await OneSignal._coreDirector._getPushSubscriptionModel();
     if (
       pushSubscription?._notification_types !== NotificationType._Subscribed &&
@@ -333,10 +350,11 @@ export class SessionManager implements ISessionManager {
     }
 
     try {
-      const aliasPair = {
-        label: IdentityConstants._OneSignalID,
-        id: onesignalId,
-      };
+      const { alias, jwt } = resolveUserBackendParams(
+        { onesignalId, externalId },
+        'on_session',
+        jwtTokenStore,
+      );
       // TO DO: in future, we should aggregate session count in case network call fails
       const updateUserPayload: IUpdateUser = {
         refresh_device_metadata: true,
@@ -347,10 +365,21 @@ export class SessionManager implements ISessionManager {
 
       const appId = getAppId();
       enforceAppId(appId);
-      enforceAlias(aliasPair);
+      enforceAlias(alias);
       try {
-        await updateUserByAlias({ appId, subscriptionId }, aliasPair, updateUserPayload);
+        const response = await updateUserByAlias(
+          { appId, subscriptionId, jwt },
+          alias,
+          updateUserPayload,
+        );
         this._onSessionSent = true;
+        if (
+          jwt &&
+          externalId &&
+          getResponseStatusType(response.status) === ResponseStatusType._Unauthorized
+        ) {
+          this._invalidateJwtAfterUnauthorized(externalId, jwt);
+        }
       } catch (e) {
         Log._debug('Session update error:', e);
       }
@@ -358,6 +387,18 @@ export class SessionManager implements ISessionManager {
       if (e instanceof Error) {
         Log._error(`Session update failed: "${e.message}" ${e.stack}`);
       }
+    }
+  }
+
+  // Same rule as the operation queue: a 401 only says the token the request went
+  // out with is bad. A newer stored token is kept.
+  private _invalidateJwtAfterUnauthorized(externalId: string, jwtAtRequest: string): void {
+    const jwtTokenStore = OneSignal._coreDirector._jwtTokenStore;
+    if (jwtTokenStore._getJwt(externalId) === jwtAtRequest) {
+      jwtTokenStore._invalidateJwt(externalId);
+      Log._debug('on_session: 401, JWT invalidated');
+    } else {
+      Log._debug('on_session: 401, newer JWT kept');
     }
   }
 }
