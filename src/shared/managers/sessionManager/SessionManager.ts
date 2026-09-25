@@ -10,6 +10,7 @@ import { isFirstPageView } from 'src/shared/helpers/pageview';
 import { SessionOrigin } from 'src/shared/session/constants';
 import type {
   SessionOriginValue,
+  SessionUser,
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
@@ -30,11 +31,35 @@ export class SessionManager implements ISessionManager {
     this._context = context;
   }
 
+  /**
+   * The ids the worker needs to sign a session request. Under IV an anonymous
+   * user has no backend user, and a missing token would only produce a 401, so
+   * both return null and the caller skips the message.
+   */
+  private _ivSessionCredentials(): Pick<SessionUser, 'externalId' | 'jwt'> | null {
+    if (!isIvBehaviorActive()) return {};
+
+    const externalId = OneSignal._coreDirector._getIdentityModel()._externalId;
+    if (!externalId) {
+      Log._debug('No external id under Identity Verification, skipping session message');
+      return null;
+    }
+    const jwt = OneSignal._coreDirector._jwtTokenStore._getJwt(externalId);
+    if (!jwt) {
+      Log._debug('No JWT under Identity Verification, skipping session message');
+      return null;
+    }
+    return { externalId, jwt };
+  }
+
   _notifySWToUpsertSession(
     onesignalId: string,
     subscriptionId: string,
     sessionOrigin: SessionOriginValue,
   ): Promise<void> {
+    const credentials = this._ivSessionCredentials();
+    if (!credentials) return Promise.resolve();
+
     const payload: UpsertOrDeactivateSessionPayload = {
       onesignalId,
       subscriptionId,
@@ -44,6 +69,7 @@ export class SessionManager implements ISessionManager {
       sessionOrigin,
       isSafari: hasSafariWindow(),
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+      ...credentials,
     };
     if (supportsServiceWorkers()) {
       Log._debug('SW upsert session');
@@ -61,6 +87,9 @@ export class SessionManager implements ISessionManager {
     subscriptionId: string,
     sessionOrigin: SessionOriginValue,
   ): Promise<void> {
+    const credentials = this._ivSessionCredentials();
+    if (!credentials) return Promise.resolve();
+
     const payload: UpsertOrDeactivateSessionPayload = {
       appId: this._context._appConfig.appId,
       subscriptionId,
@@ -70,6 +99,7 @@ export class SessionManager implements ISessionManager {
       sessionOrigin,
       isSafari: hasSafariWindow(),
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+      ...credentials,
     };
     if (supportsServiceWorkers()) {
       Log._debug('SW deactivate session');
@@ -166,6 +196,9 @@ export class SessionManager implements ISessionManager {
       // don't have much time on before unload
       // have to skip adding device record to the payload
       const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+      const credentials = this._ivSessionCredentials();
+      if (!credentials) return;
+
       const payload: UpsertOrDeactivateSessionPayload = {
         appId: this._context._appConfig.appId,
         onesignalId,
@@ -175,6 +208,7 @@ export class SessionManager implements ISessionManager {
         sessionOrigin: SessionOrigin._BeforeUnload,
         isSafari: hasSafariWindow(),
         outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+        ...credentials,
       };
 
       Log._debug('SW deactivate (beforeunload)');
