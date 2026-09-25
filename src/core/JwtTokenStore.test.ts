@@ -300,6 +300,56 @@ describe('JwtTokenStore', () => {
     });
   });
 
+  // jsdom does not deliver storage events between windows, so a synthetic event
+  // stands in for the one the browser fires in every other tab after a write.
+  describe('cross-tab sync', () => {
+    const remoteChange = (key: string | null = KEY) =>
+      window.dispatchEvent(new StorageEvent('storage', { key, storageArea: localStorage }));
+
+    test('a token put in another tab is visible after the storage event', () => {
+      const otherTab = new JwtTokenStore();
+      expect(store._getJwt('alice')).toBeUndefined();
+
+      otherTab._putJwt('alice', 'jwt-a');
+      remoteChange();
+
+      expect(store._getJwt('alice')).toBe('jwt-a');
+    });
+
+    test('a token invalidated in another tab is removed without a second invalidated event', () => {
+      store._putJwt('alice', 'jwt-a');
+      const otherTab = new JwtTokenStore();
+      const invalidated = vi.fn();
+      store._addUserJwtInvalidatedListener(invalidated);
+
+      otherTab._invalidateJwt('alice');
+      remoteChange();
+
+      expect(store._getJwt('alice')).toBeUndefined();
+      expect(invalidated).not.toHaveBeenCalled();
+    });
+
+    test('a storage event for another key leaves the in-memory copy alone', () => {
+      store._putJwt('alice', 'jwt-a');
+      localStorage.setItem(KEY, JSON.stringify({ alice: 'jwt-remote' }));
+
+      remoteChange('some_other_key');
+      expect(store._getJwt('alice')).toBe('jwt-a');
+
+      remoteChange();
+      expect(store._getJwt('alice')).toBe('jwt-remote');
+    });
+
+    test('localStorage.clear() in another tab drops the in-memory copy', () => {
+      store._putJwt('alice', 'jwt-a');
+      localStorage.clear();
+
+      remoteChange(null);
+
+      expect(store._getJwt('alice')).toBeUndefined();
+    });
+  });
+
   describe('CoreModule wiring', () => {
     beforeEach(() => {
       TestEnvironment.initialize();
