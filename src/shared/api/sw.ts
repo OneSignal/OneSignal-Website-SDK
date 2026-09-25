@@ -1,16 +1,19 @@
 import { IdentityConstants } from 'src/core/constants';
 import { updateUserByAlias } from 'src/core/requests/api';
-import type { IUpdateUser } from 'src/core/types/api';
+import type { AliasPair, IUpdateUser } from 'src/core/types/api';
 
 import type { ServerAppConfig } from '../config/types';
 import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
+import { getResponseStatusType, ResponseStatusType } from '../helpers/network';
 import Log from '../libraries/Log';
 import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import { OutcomeAttributionType, type OutcomeAttribution } from '../models/Outcomes';
 import type { OutcomeRequestData } from '../outcomes/types';
+import type { SessionUser } from '../session/types';
 import { NotificationType } from '../subscriptions/constants';
 import * as OneSignalApiBase from './base';
+import type { OneSignalApiBaseResponse } from './base';
 import { sendOutcome } from './shared';
 
 export async function downloadSWServerAppConfig(appId: string): Promise<ServerAppConfig> {
@@ -50,18 +53,34 @@ export async function getUserIdFromSubscriptionIdentifier(
 }
 
 /**
+ * The page only sends both ids when Identity Verification is on and it holds a
+ * token for this user, so their presence is the worker's IV signal.
+ */
+function sessionBackendParams({ onesignalId, externalId, jwt }: SessionUser): {
+  alias: AliasPair;
+  jwt?: string;
+} {
+  if (externalId && jwt) {
+    return { alias: { label: IdentityConstants._ExternalID, id: externalId }, jwt };
+  }
+  return { alias: { label: IdentityConstants._OneSignalID, id: onesignalId } };
+}
+
+// The worker cannot reach the page token store. The page removes the token on
+// its own next 401, so the worker only reports the rejection.
+function logIfUnauthorized(response: OneSignalApiBaseResponse, jwt: string | undefined): void {
+  if (jwt && getResponseStatusType(response.status) === ResponseStatusType._Unauthorized) {
+    Log._error('[SW] The server rejected the session request: the JWT is invalid');
+  }
+}
+
+/**
  *  Main on_session call
  * @returns
  */
-export async function updateUserSession(
-  appId: string,
-  onesignalId: string,
-  subscriptionId: string,
-): Promise<void> {
-  const aliasPair = {
-    label: IdentityConstants._OneSignalID,
-    id: onesignalId,
-  };
+export async function updateUserSession(user: SessionUser): Promise<void> {
+  const { appId, subscriptionId } = user;
+  const { alias, jwt } = sessionBackendParams(user);
   // TO DO: in future, we should aggregate session count in case network call fails
   const updateUserPayload: IUpdateUser = {
     refresh_device_metadata: true,
@@ -71,31 +90,31 @@ export async function updateUserSession(
   };
 
   enforceAppId(appId);
-  enforceAlias(aliasPair);
+  enforceAlias(alias);
   try {
-    await updateUserByAlias({ appId, subscriptionId }, aliasPair, updateUserPayload);
+    const response = await updateUserByAlias(
+      { appId, subscriptionId, jwt },
+      alias,
+      updateUserPayload,
+    );
+    logIfUnauthorized(response, jwt);
   } catch (e) {
     Log._debug('Session update error:', e);
   }
 }
 
 export async function sendSessionDuration(
-  appId: string,
-  onesignalId: string,
-  subscriptionId: string,
+  user: SessionUser,
   sessionDuration: number,
   attribution: OutcomeAttribution,
 ): Promise<void> {
+  const { appId, onesignalId, subscriptionId } = user;
+  const { alias, jwt } = sessionBackendParams(user);
   const updateUserPayload: IUpdateUser = {
     refresh_device_metadata: true,
     deltas: {
       session_time: sessionDuration,
     },
-  };
-
-  const aliasPair = {
-    label: IdentityConstants._OneSignalID,
-    id: onesignalId,
   };
 
   const outcomePayload: OutcomeRequestData = {
@@ -113,7 +132,12 @@ export async function sendSessionDuration(
   outcomePayload.direct = attribution.type === OutcomeAttributionType._Direct ? true : false;
 
   try {
-    await updateUserByAlias({ appId, subscriptionId }, aliasPair, updateUserPayload);
+    const response = await updateUserByAlias(
+      { appId, subscriptionId, jwt },
+      alias,
+      updateUserPayload,
+    );
+    logIfUnauthorized(response, jwt);
 
     if (outcomePayload.notification_ids && outcomePayload.notification_ids.length > 0) {
       await sendOutcome(outcomePayload);

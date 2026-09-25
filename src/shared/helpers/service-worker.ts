@@ -9,10 +9,9 @@ import { getAllNotificationClickedForOutcomes } from '../database/notifications'
 import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
-import type { OutcomesConfig } from '../outcomes/types';
 import { SessionStatus } from '../session/constants';
 import { initializeNewSession } from '../session/helpers';
-import type { Session } from '../session/types';
+import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
 import { getBaseUrl } from './general';
 import { getConfigAttribution } from './OutcomesHelper';
 
@@ -37,14 +36,8 @@ function appendServiceWorkerParams(
   return `${fullPath}?${appIdAsQueryParam}&${sdkVersionAsQueryParam}`;
 }
 
-export async function upsertSession(
-  appId: string,
-  onesignalId: string,
-  subscriptionId: string,
-  sessionThresholdInSeconds: number,
-  sendOnFocusEnabled: boolean,
-  outcomesConfig: OutcomesConfig,
-): Promise<void> {
+export async function upsertSession(options: UpsertOrDeactivateSessionPayload): Promise<void> {
+  const { appId, sessionThreshold: sessionThresholdInSeconds } = options;
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
@@ -58,7 +51,7 @@ export async function upsertSession(
     }
 
     await db.put('Sessions', session);
-    await sendOnSessionCall(appId, onesignalId, subscriptionId, session);
+    await sendOnSessionCall(options, session);
     return;
   }
 
@@ -90,27 +83,16 @@ export async function upsertSession(
   // If failed to report/clean-up last time, we can attempt to try again here.
   // TODO: Possibly check that it's not unreasonably long.
   // TODO: Or couple with periodic ping for better results.
-  await finalizeSession(
-    appId,
-    onesignalId,
-    subscriptionId,
-    existingSession,
-    sendOnFocusEnabled,
-    outcomesConfig,
-  );
+  await finalizeSession(options, existingSession);
   const session: Session = initializeNewSession({ appId });
   await db.put('Sessions', session);
-  await sendOnSessionCall(appId, onesignalId, subscriptionId, session);
+  await sendOnSessionCall(options, session);
 }
 
 export async function deactivateSession(
-  appId: string,
-  onesignalId: string,
-  subscriptionId: string,
-  thresholdInSeconds: number,
-  sendOnFocusEnabled: boolean,
-  outcomesConfig: OutcomesConfig,
+  options: UpsertOrDeactivateSessionPayload,
 ): Promise<CancelableTimeoutPromise | undefined> {
+  const { sessionThreshold: thresholdInSeconds } = options;
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
@@ -118,15 +100,7 @@ export async function deactivateSession(
     return undefined;
   }
 
-  const finalizeSWSession = () =>
-    finalizeSession(
-      appId,
-      onesignalId,
-      subscriptionId,
-      existingSession,
-      sendOnFocusEnabled,
-      outcomesConfig,
-    );
+  const finalizeSWSession = () => finalizeSession(options, existingSession);
 
   /**
    * For 2 subsequent deactivate requests we need to make sure there is an active finalization timeout.
@@ -163,39 +137,25 @@ export async function deactivateSession(
   return cancelableFinalize;
 }
 
-async function sendOnSessionCall(
-  appId: string,
-  onesignalId: string,
-  subscriptionId: string,
-  session: Session,
-) {
+async function sendOnSessionCall(user: SessionUser, session: Session) {
   void db.put('Sessions', session);
   void resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
-  await updateUserSession(appId, onesignalId, subscriptionId);
+  await updateUserSession(user);
 }
 
 async function finalizeSession(
-  appId: string,
-  onesignalId: string,
-  subscriptionId: string,
+  options: UpsertOrDeactivateSessionPayload,
   session: Session,
-  sendOnFocusEnabled: boolean,
-  outcomesConfig: OutcomesConfig,
 ): Promise<void> {
+  const { enableSessionDuration: sendOnFocusEnabled, outcomesConfig } = options;
   Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
   if (sendOnFocusEnabled) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
     Log._debug('on_focus attribution', attribution);
-    await sendSessionDuration(
-      appId,
-      onesignalId,
-      subscriptionId,
-      session.accumulatedDuration,
-      attribution,
-    );
+    await sendSessionDuration(options, session.accumulatedDuration, attribution);
   }
 
   await Promise.all([cleanupCurrentSession(), clearStore('Outcomes.NotificationClicked')]);

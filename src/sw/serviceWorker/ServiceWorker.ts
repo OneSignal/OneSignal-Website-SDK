@@ -396,23 +396,9 @@ async function updateSessionBasedOnHasActive(
   options: UpsertOrDeactivateSessionPayload,
 ) {
   if (hasAnyActiveSessions) {
-    await upsertSession(
-      options.appId,
-      options.onesignalId,
-      options.subscriptionId,
-      options.sessionThreshold,
-      options.enableSessionDuration,
-      options.outcomesConfig,
-    );
+    await upsertSession(options);
   } else {
-    const cancelableFinalize = await deactivateSession(
-      options.appId,
-      options.onesignalId,
-      options.subscriptionId,
-      options.sessionThreshold,
-      options.enableSessionDuration,
-      options.outcomesConfig,
-    );
+    const cancelableFinalize = await deactivateSession(options);
     if (cancelableFinalize) {
       self.cancel = cancelableFinalize.cancel;
       event.waitUntil(cancelableFinalize.promise);
