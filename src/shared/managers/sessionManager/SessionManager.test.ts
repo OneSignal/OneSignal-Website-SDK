@@ -233,6 +233,90 @@ describe('SessionManager', () => {
     });
   });
 
+  describe('worker session payload under Identity Verification', () => {
+    const JWT = 'header.payload.signature';
+    let sm: SessionManager;
+    let unicastSpy: MockInstance;
+
+    beforeEach(() => {
+      localStorage.clear();
+      TestEnvironment.initialize();
+      supportsServiceWorkersSpy.mockReturnValue(true);
+      updateIdentityModel('external_id', EXTERNAL_ID);
+      sm = new SessionManager(OneSignal._context);
+      unicastSpy = vi
+        .spyOn(OneSignal._context._workerMessenger, '_unicast')
+        .mockResolvedValue(undefined);
+    });
+
+    const lastPayload = () => unicastSpy.mock.calls.at(-1)![1];
+
+    test('IV inactive: the payload carries no externalId or jwt, even with a stored token', async () => {
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+
+      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+
+      expect(lastPayload()).not.toHaveProperty('externalId');
+      expect(lastPayload()).not.toHaveProperty('jwt');
+    });
+
+    test('IV active: upsert and deactivate carry externalId and jwt', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+
+      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+      expect(lastPayload()).toMatchObject({
+        onesignalId: ONESIGNAL_ID,
+        externalId: EXTERNAL_ID,
+        jwt: JWT,
+      });
+
+      await sm._notifySWToDeactivateSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Blur);
+      expect(lastPayload()).toMatchObject({ externalId: EXTERNAL_ID, jwt: JWT });
+      expect(unicastSpy).toHaveBeenCalledTimes(2);
+    });
+
+    test('IV active with an anonymous user: no message', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      updateIdentityModel('external_id', undefined);
+
+      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+      await sm._notifySWToDeactivateSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Blur);
+
+      expect(unicastSpy).not.toHaveBeenCalled();
+    });
+
+    test('IV active without a stored token: no message', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+
+      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+
+      expect(unicastSpy).not.toHaveBeenCalled();
+    });
+
+    test('beforeunload carries externalId and jwt under IV and is skipped without a token', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      User._createOrGetInstance();
+      vi.spyOn(sm, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
+      });
+      const directPostSpy = vi
+        .spyOn(OneSignal._context._workerMessenger, '_directPostMessageToSW')
+        .mockResolvedValue(undefined);
+
+      await sm._handleOnBeforeUnload();
+      expect(directPostSpy).not.toHaveBeenCalled();
+
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      await sm._handleOnBeforeUnload();
+      expect(directPostSpy).toHaveBeenCalledExactlyOnceWith(
+        expect.anything(),
+        expect.objectContaining({ externalId: EXTERNAL_ID, jwt: JWT }),
+      );
+    });
+  });
+
   describe('_sendOnSessionUpdateFromPage', () => {
     const JWT = 'header.payload.signature';
     const externalIdUri = `**/apps/${APP_ID}/users/by/external_id/${EXTERNAL_ID}`;

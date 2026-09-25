@@ -1,7 +1,12 @@
-import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
+import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { setUpdateUserResponse, updateUserFn } from '__test__/support/helpers/requests';
+import {
+  getHandler,
+  requestHeadersFn,
+  setUpdateUserResponse,
+  updateUserFn,
+} from '__test__/support/helpers/requests';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
@@ -672,6 +677,89 @@ describe('ServiceWorker', () => {
           });
         },
       );
+
+      describe('under Identity Verification', () => {
+        const JWT = 'header.payload.signature';
+        const externalIdUri = `**/apps/${appId}/users/by/external_id/${EXTERNAL_ID}`;
+
+        const upsertWith = (user: Partial<UpsertOrDeactivateSessionPayload>) =>
+          dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionUpsert,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                ...user,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+        test('addresses the user by external_id with the bearer when the payload carries both', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+
+          await upsertWith({ externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
+          const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+          expect(url).toContain(`/users/by/external_id/${EXTERNAL_ID}`);
+          expect(headers.authorization).toBe(`Bearer ${JWT}`);
+        });
+
+        test('keeps the legacy shape when the payload has an externalId but no jwt', async () => {
+          setUpdateUserResponse();
+
+          await upsertWith({ externalId: EXTERNAL_ID });
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+          expect(url).toContain(`/users/by/onesignal_id/${ONESIGNAL_ID}`);
+          expect(headers.authorization).toBeUndefined();
+        });
+
+        test('a 401 on a signed request logs an error', async () => {
+          const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+
+          await upsertWith({ externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('the JWT is invalid'));
+        });
+
+        test('the session duration update is signed and the outcome stays unsigned', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          getHandler({ uri: `**/outcomes/measure`, method: 'post', status: 200 });
+          matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+          await putNotificationClickedForOutcomes(appId, clickOutcome);
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          const requests = requestHeadersFn.mock.calls.map(([headers, url]) => ({
+            url,
+            authorization: headers.authorization,
+          }));
+          expect(requests).toEqual([
+            {
+              url: expect.stringContaining(`/users/by/external_id/${EXTERNAL_ID}`),
+              authorization: `Bearer ${JWT}`,
+            },
+            { url: expect.stringContaining('/outcomes/measure'), authorization: undefined },
+          ]);
+        });
+      });
     });
 
     describe('session deactivate event', () => {
