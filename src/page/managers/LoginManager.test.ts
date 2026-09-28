@@ -68,6 +68,16 @@ describe('LoginManager', () => {
       expect(debugSpy).toHaveBeenCalledWith('Login: externalId already set, JWT updated');
     });
 
+    test('with the same token: does not claim an update', async () => {
+      OneSignal._coreDirector._jwtTokenStore._putJwt('same-id', 'same-token');
+      debugSpy.mockClear();
+
+      await LoginManager.login('same-id', 'same-token');
+
+      expect(debugSpy).toHaveBeenCalledWith('Login: externalId already set');
+      expect(debugSpy).not.toHaveBeenCalledWith('Login: externalId already set, JWT updated');
+    });
+
     test('with no token: does nothing', async () => {
       const identityModel = OneSignal._coreDirector._getIdentityModel();
       const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
