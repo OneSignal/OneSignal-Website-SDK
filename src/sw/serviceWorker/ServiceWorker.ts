@@ -10,7 +10,7 @@ import {
 } from 'src/shared/database/notifications';
 import { getSubscription, setSubscription } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
-import { delay } from 'src/shared/helpers/general';
+import { delay, redactJwt } from 'src/shared/helpers/general';
 import { deactivateSession, upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import {
@@ -94,11 +94,11 @@ export function run() {
 
     switch (data?.command) {
       case WorkerMessengerCommand._SessionUpsert:
-        Log._debug('[SW] SessionUpsert', payload);
+        Log._debug('[SW] SessionUpsert');
         debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
         break;
       case WorkerMessengerCommand._SessionDeactivate:
-        Log._debug('[SW] SessionDeactivate', payload);
+        Log._debug('[SW] SessionDeactivate');
         debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
         break;
       default:
@@ -396,23 +396,9 @@ async function updateSessionBasedOnHasActive(
   options: UpsertOrDeactivateSessionPayload,
 ) {
   if (hasAnyActiveSessions) {
-    await upsertSession(
-      options.appId,
-      options.onesignalId,
-      options.subscriptionId,
-      options.sessionThreshold,
-      options.enableSessionDuration,
-      options.outcomesConfig,
-    );
+    await upsertSession(options);
   } else {
-    const cancelableFinalize = await deactivateSession(
-      options.appId,
-      options.onesignalId,
-      options.subscriptionId,
-      options.sessionThreshold,
-      options.enableSessionDuration,
-      options.outcomesConfig,
-    );
+    const cancelableFinalize = await deactivateSession(options);
     if (cancelableFinalize) {
       self.cancel = cancelableFinalize.cancel;
       event.waitUntil(cancelableFinalize.promise);
@@ -477,7 +463,7 @@ function debounceRefreshSession(
   event: ExtendableMessageEvent,
   options: UpsertOrDeactivateSessionPayload,
 ) {
-  Log._debug('[SW] debounceRefresh', options);
+  Log._debug('[SW] debounceRefresh', redactJwt(options));
 
   if (self.cancel) {
     self.cancel();

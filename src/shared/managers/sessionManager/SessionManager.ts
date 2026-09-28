@@ -10,6 +10,7 @@ import { isFirstPageView } from 'src/shared/helpers/pageview';
 import { SessionOrigin } from 'src/shared/session/constants';
 import type {
   SessionOriginValue,
+  SessionUser,
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
@@ -30,6 +31,19 @@ export class SessionManager implements ISessionManager {
     this._context = context;
   }
 
+  /**
+   * The ids the worker needs to sign a session request. The message always goes
+   * out so the worker session state stays correct; the worker skips the network
+   * request when jwtRequired is set and a token is missing.
+   */
+  private _ivSessionCredentials(): Pick<SessionUser, 'jwtRequired' | 'externalId' | 'jwt'> {
+    if (!isIvBehaviorActive()) return {};
+
+    const externalId = OneSignal._coreDirector._getIdentityModel()._externalId;
+    const jwt = externalId ? OneSignal._coreDirector._jwtTokenStore._getJwt(externalId) : undefined;
+    return { jwtRequired: true, externalId, jwt };
+  }
+
   _notifySWToUpsertSession(
     onesignalId: string,
     subscriptionId: string,
@@ -44,6 +58,7 @@ export class SessionManager implements ISessionManager {
       sessionOrigin,
       isSafari: hasSafariWindow(),
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+      ...this._ivSessionCredentials(),
     };
     if (supportsServiceWorkers()) {
       Log._debug('SW upsert session');
@@ -70,6 +85,7 @@ export class SessionManager implements ISessionManager {
       sessionOrigin,
       isSafari: hasSafariWindow(),
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+      ...this._ivSessionCredentials(),
     };
     if (supportsServiceWorkers()) {
       Log._debug('SW deactivate session');
@@ -175,6 +191,7 @@ export class SessionManager implements ISessionManager {
         sessionOrigin: SessionOrigin._BeforeUnload,
         isSafari: hasSafariWindow(),
         outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+        ...this._ivSessionCredentials(),
       };
 
       Log._debug('SW deactivate (beforeunload)');

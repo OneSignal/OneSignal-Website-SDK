@@ -24,11 +24,22 @@ interface BaseSessionPayload {
   outcomesConfig: OutcomesConfig;
 }
 
-export interface UpsertOrDeactivateSessionPayload extends BaseSessionPayload {
+/**
+ * Names the user a worker request is for. The worker has no config and no token
+ * store, so the page sets jwtRequired when Identity Verification is on and adds
+ * externalId and jwt when it has them. Without both, the worker skips only the
+ * network request and still updates the local session state.
+ */
+export interface SessionUser {
   appId: string;
   onesignalId: string;
   subscriptionId: string;
+  jwtRequired?: boolean;
+  externalId?: string;
+  jwt?: string;
 }
+
+export interface UpsertOrDeactivateSessionPayload extends BaseSessionPayload, SessionUser {}
 
 export interface PageVisibilityRequest {
   timestamp: number;

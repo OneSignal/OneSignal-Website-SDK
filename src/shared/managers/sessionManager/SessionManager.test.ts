@@ -233,6 +233,105 @@ describe('SessionManager', () => {
     });
   });
 
+  describe('worker session payload under Identity Verification', () => {
+    const JWT = 'header.payload.signature';
+    let sm: SessionManager;
+    let unicastSpy: MockInstance;
+
+    beforeEach(() => {
+      localStorage.clear();
+      TestEnvironment.initialize();
+      supportsServiceWorkersSpy.mockReturnValue(true);
+      updateIdentityModel('external_id', EXTERNAL_ID);
+      sm = new SessionManager(OneSignal._context);
+      unicastSpy = vi
+        .spyOn(OneSignal._context._workerMessenger, '_unicast')
+        .mockResolvedValue(undefined);
+    });
+
+    const lastPayload = () => unicastSpy.mock.calls.at(-1)![1];
+
+    test('IV inactive: the payload carries no externalId or jwt, even with a stored token', async () => {
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+
+      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+
+      expect(lastPayload()).not.toHaveProperty('jwtRequired');
+      expect(lastPayload()).not.toHaveProperty('externalId');
+      expect(lastPayload()).not.toHaveProperty('jwt');
+    });
+
+    test('IV active: upsert and deactivate carry jwtRequired, externalId, and jwt', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+
+      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+      expect(lastPayload()).toMatchObject({
+        onesignalId: ONESIGNAL_ID,
+        jwtRequired: true,
+        externalId: EXTERNAL_ID,
+        jwt: JWT,
+      });
+
+      await sm._notifySWToDeactivateSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Blur);
+      expect(lastPayload()).toMatchObject({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+      expect(unicastSpy).toHaveBeenCalledTimes(2);
+    });
+
+    // The worker must still update its session state, so the message goes out
+    // and the worker decides whether a request can be signed.
+    test('IV active with an anonymous user: the message carries jwtRequired and no ids', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      updateIdentityModel('external_id', undefined);
+
+      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+      await sm._notifySWToDeactivateSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Blur);
+
+      expect(unicastSpy).toHaveBeenCalledTimes(2);
+      for (const [, payload] of unicastSpy.mock.calls) {
+        expect(payload).toMatchObject({ jwtRequired: true, externalId: undefined, jwt: undefined });
+      }
+    });
+
+    test('IV active without a stored token: the message carries externalId and no jwt', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+
+      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+
+      expect(lastPayload()).toMatchObject({
+        jwtRequired: true,
+        externalId: EXTERNAL_ID,
+        jwt: undefined,
+      });
+    });
+
+    test('beforeunload carries externalId and jwt under IV, and only externalId without a token', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      User._createOrGetInstance();
+      vi.spyOn(sm, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
+      });
+      const directPostSpy = vi
+        .spyOn(OneSignal._context._workerMessenger, '_directPostMessageToSW')
+        .mockResolvedValue(undefined);
+
+      await sm._handleOnBeforeUnload();
+      expect(directPostSpy).toHaveBeenCalledExactlyOnceWith(
+        expect.anything(),
+        expect.objectContaining({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: undefined }),
+      );
+
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      await sm._handleOnBeforeUnload();
+      expect(directPostSpy).toHaveBeenCalledTimes(2);
+      expect(directPostSpy).toHaveBeenLastCalledWith(
+        expect.anything(),
+        expect.objectContaining({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT }),
+      );
+    });
+  });
+
   describe('_sendOnSessionUpdateFromPage', () => {
     const JWT = 'header.payload.signature';
     const externalIdUri = `**/apps/${APP_ID}/users/by/external_id/${EXTERNAL_ID}`;
