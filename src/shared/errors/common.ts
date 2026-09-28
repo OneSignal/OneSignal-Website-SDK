@@ -57,6 +57,9 @@ export const SdkAlreadyInitializedError = new Error('SDK already initialized');
 
 export const MissingSafariWebIdError = new Error('Safari web platform must be enabled');
 
+export const InitNotCalledError = (method: string) =>
+  new Error(`Must call 'init' before '${method}'`);
+
 export const ExistingChannelError = (type: DelayedPromptTypeValue) =>
   new Error(`Channel '${type}' already exists`);
 

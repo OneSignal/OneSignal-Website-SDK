@@ -7,6 +7,7 @@ import { getSubscription } from 'src/shared/database/subscription';
 import { windowEnvString } from 'src/shared/environment/detect';
 import {
   EmptyArgumentError,
+  InitNotCalledError,
   MissingSafariWebIdError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
@@ -103,7 +104,7 @@ export default class OneSignal {
    */
   static async login(externalId: string, jwtToken?: string): Promise<void> {
     logMethodCall('login', { externalId, jwtToken });
-    if (isConsentRequiredButNotGiven()) return;
+    if (OneSignal._coreDirector && isConsentRequiredButNotGiven()) return;
 
     if (!externalId) {
       throw EmptyArgumentError('externalId');
@@ -123,7 +124,7 @@ export default class OneSignal {
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
-    if (isConsentRequiredButNotGiven()) return;
+    if (OneSignal._coreDirector && isConsentRequiredButNotGiven()) return;
     if (!OneSignal._coreDirector && !(await OneSignal._awaitCore('logout'))) return;
     await LoginManager.logout();
   }
@@ -139,7 +140,7 @@ export default class OneSignal {
    */
   static async updateUserJwt(externalId: string, token: string): Promise<void> {
     logMethodCall('updateUserJwt', { externalId });
-    if (isConsentRequiredButNotGiven()) return;
+    if (OneSignal._coreDirector && isConsentRequiredButNotGiven()) return;
 
     if (!externalId) {
       throw EmptyArgumentError('externalId');
@@ -162,24 +163,23 @@ export default class OneSignal {
   }
 
   /**
-   * login, logout, and updateUserJwt need the user model that init creates. The
-   * OneSignalDeferred array runs init before later calls, but a direct call can
-   * come first. The call waits for init, then checks consent again, because the
-   * init config can require consent that the check before the wait could not
-   * see. Returns false when the call must stop: init stopped before the user
-   * model existed, or consent is required but not given.
+   * login, logout, and updateUserJwt need the user model and the consent state
+   * that init loads. A call that starts while init runs waits for init, then
+   * checks consent, because the check before the wait cannot see the init
+   * config or the stored consent. Returns false when the call must stop: init
+   * stopped before the user model existed, or consent is required but not given.
    *
-   * Android throws when init was never started. Web waits instead, with a
-   * warning, because the wait is the only safe choice in a page that loads the
-   * SDK and the app code in any order.
+   * A call before init starts throws, as on Android. A wait would never end
+   * when the call runs inside the OneSignalDeferred array ahead of init,
+   * because the array runs its callbacks one at a time.
    *
    * Callers check _coreDirector before they call this. A call after init then
    * stays synchronous, so the operations of the calls that follow it without an
    * await keep their order in the queue.
    */
   private static async _awaitCore(method: string): Promise<boolean> {
-    if (OneSignal._initCalled) Log._debug(`${method}: waiting for init`);
-    else Log._warn(`${method} waits for init, which was not called yet`);
+    if (!OneSignal._initCalled) throw InitNotCalledError(method);
+    Log._debug(`${method}: waiting for init`);
 
     await OneSignal._coreReady;
     if (!OneSignal._coreDirector) {
@@ -233,9 +233,10 @@ export default class OneSignal {
     if (!idb) return;
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
+    OneSignal._consentGiven = await getConsentGiven();
+    // After the consent load, so a call that waited on init sees the stored consent.
     OneSignal._settleCoreReady();
 
-    OneSignal._consentGiven = await getConsentGiven();
     if (getConsentRequired()) {
       if (!OneSignal._consentGiven) {
         OneSignal._pendingInit = true;
