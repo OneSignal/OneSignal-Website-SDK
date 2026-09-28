@@ -7,6 +7,7 @@ import { getSubscription } from 'src/shared/database/subscription';
 import { windowEnvString } from 'src/shared/environment/detect';
 import {
   EmptyArgumentError,
+  InitNotCalledError,
   MissingSafariWebIdError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
@@ -103,7 +104,7 @@ export default class OneSignal {
    */
   static async login(externalId: string, jwtToken?: string): Promise<void> {
     logMethodCall('login', { externalId, jwtToken });
-    if (isConsentRequiredButNotGiven()) return;
+    if (OneSignal._coreDirector && isConsentRequiredButNotGiven()) return;
 
     if (!externalId) {
       throw EmptyArgumentError('externalId');
@@ -117,12 +118,14 @@ export default class OneSignal {
       throw WrongTypeArgumentError('jwtToken');
     }
 
+    if (!OneSignal._coreDirector && !(await OneSignal._awaitCore('login'))) return;
     await LoginManager.login(externalId, jwtToken);
   }
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
-    if (isConsentRequiredButNotGiven()) return;
+    if (OneSignal._coreDirector && isConsentRequiredButNotGiven()) return;
+    if (!OneSignal._coreDirector && !(await OneSignal._awaitCore('logout'))) return;
     await LoginManager.logout();
   }
 
@@ -135,11 +138,9 @@ export default class OneSignal {
    * @param externalId - The external user ID the token belongs to
    * @param token - The JWT auth token
    */
-  // Async for the api.json contract that the wrappers are generated from.
-  // oxlint-disable-next-line typescript/require-await
   static async updateUserJwt(externalId: string, token: string): Promise<void> {
     logMethodCall('updateUserJwt', { externalId });
-    if (isConsentRequiredButNotGiven()) return;
+    if (OneSignal._coreDirector && isConsentRequiredButNotGiven()) return;
 
     if (!externalId) {
       throw EmptyArgumentError('externalId');
@@ -157,7 +158,35 @@ export default class OneSignal {
       throw WrongTypeArgumentError('token');
     }
 
+    if (!OneSignal._coreDirector && !(await OneSignal._awaitCore('updateUserJwt'))) return;
     OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
+  }
+
+  /**
+   * login, logout, and updateUserJwt need the user model and the consent state
+   * that init loads. A call that starts while init runs waits for init, then
+   * checks consent, because the check before the wait cannot see the init
+   * config or the stored consent. Returns false when the call must stop: init
+   * stopped before the user model existed, or consent is required but not given.
+   *
+   * A call before init starts throws, as on Android. A wait would never end
+   * when the call runs inside the OneSignalDeferred array ahead of init,
+   * because the array runs its callbacks one at a time.
+   *
+   * Callers check _coreDirector before they call this. A call after init then
+   * stays synchronous, so the operations of the calls that follow it without an
+   * await keep their order in the queue.
+   */
+  private static async _awaitCore(method: string): Promise<boolean> {
+    if (!OneSignal._initCalled) throw InitNotCalledError(method);
+    Log._debug(`${method}: waiting for init`);
+
+    await OneSignal._coreReady;
+    if (!OneSignal._coreDirector) {
+      Log._warn(`${method} skipped: init did not complete`);
+      return false;
+    }
+    return !isConsentRequiredButNotGiven();
   }
 
   /**
@@ -171,6 +200,16 @@ export default class OneSignal {
     removeLegacySubscriptionOptions();
 
     errorIfInitAlreadyCalled();
+    try {
+      await OneSignal._init(options);
+    } finally {
+      // Wakes the callers of _awaitCore when init stopped or threw before the user
+      // model. A settled promise ignores this second call.
+      OneSignal._settleCoreReady();
+    }
+  }
+
+  private static async _init(options: AppUserConfig): Promise<void> {
     // Runs alongside the config fetch. A failure keeps the cached flags and never blocks init.
     if (options?.appId && isValidUuid(options.appId)) void refreshFeatureFlags(options.appId);
     await OneSignal._initializeConfig(options);
@@ -194,8 +233,10 @@ export default class OneSignal {
     if (!idb) return;
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
-
     OneSignal._consentGiven = await getConsentGiven();
+    // After the consent load, so a call that waited on init sees the stored consent.
+    OneSignal._settleCoreReady();
+
     if (getConsentRequired()) {
       if (!OneSignal._consentGiven) {
         OneSignal._pendingInit = true;
@@ -314,6 +355,15 @@ export default class OneSignal {
 
   /* NEW USER MODEL CHANGES */
   static _coreDirector: CoreModuleDirector;
+  /** Settles once init created _coreDirector, or once init stopped before it. */
+  // `declare` emits no field define, so nothing can run after the block and reset these.
+  declare static _coreReady: Promise<void>;
+  declare static _settleCoreReady: () => void;
+  static {
+    OneSignal._coreReady = new Promise<void>((resolve) => {
+      OneSignal._settleCoreReady = resolve;
+    });
+  }
 
   static Notifications = new NotificationsNamespace();
   static Slidedown = new SlidedownNamespace();
