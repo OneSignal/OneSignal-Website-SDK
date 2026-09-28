@@ -1,4 +1,5 @@
 import { EmptyArgumentError } from 'src/shared/errors/common';
+import { redactJwt } from 'src/shared/helpers/general';
 import type ContextSW from 'src/shared/models/ContextSW';
 
 import Log from '../Log';
@@ -36,7 +37,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    Log._debug('[WM] SW received:', event.data);
+    Log._debug('[WM] SW received:', { ...data, payload: redactJwt(data.payload) });
 
     for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {

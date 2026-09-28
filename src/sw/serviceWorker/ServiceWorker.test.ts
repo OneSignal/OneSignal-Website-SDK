@@ -697,7 +697,7 @@ describe('ServiceWorker', () => {
         test('addresses the user by external_id with the bearer when the payload carries both', async () => {
           getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
 
-          await upsertWith({ externalId: EXTERNAL_ID, jwt: JWT });
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
 
           expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
             refresh_device_metadata: true,
@@ -708,7 +708,7 @@ describe('ServiceWorker', () => {
           expect(headers.authorization).toBe(`Bearer ${JWT}`);
         });
 
-        test('keeps the legacy shape when the payload has an externalId but no jwt', async () => {
+        test('without jwtRequired the request uses onesignal_id even with an externalId', async () => {
           setUpdateUserResponse();
 
           await upsertWith({ externalId: EXTERNAL_ID });
@@ -719,11 +719,38 @@ describe('ServiceWorker', () => {
           expect(headers.authorization).toBeUndefined();
         });
 
+        test('jwtRequired without a jwt: the session is stored and no request is sent', async () => {
+          setUpdateUserResponse();
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect(requestHeadersFn).not.toHaveBeenCalled();
+          const storedSession = await db.get('Sessions', ONESIGNAL_SESSION_KEY);
+          expect(storedSession).toMatchObject({ status: SessionStatus._Active });
+        });
+
+        test('the jwt never reaches a log line', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(Log._debug).toHaveBeenCalledWith(
+            '[SW] debounceRefresh',
+            expect.objectContaining({ jwt: '[redacted]' }),
+          );
+          const loggedText = vi
+            .mocked(Log._debug)
+            .mock.calls.map((args) => JSON.stringify(args))
+            .join('\n');
+          expect(loggedText).not.toContain(JWT);
+        });
+
         test('a 401 on a signed request logs an error', async () => {
           const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
           getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
 
-          await upsertWith({ externalId: EXTERNAL_ID, jwt: JWT });
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
 
           expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('the JWT is invalid'));
         });
@@ -741,6 +768,7 @@ describe('ServiceWorker', () => {
               payload: {
                 ...baseMessagePayload,
                 isSafari: false,
+                jwtRequired: true,
                 externalId: EXTERNAL_ID,
                 jwt: JWT,
               } satisfies UpsertOrDeactivateSessionPayload,

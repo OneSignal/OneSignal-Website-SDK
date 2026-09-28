@@ -53,17 +53,22 @@ export async function getUserIdFromSubscriptionIdentifier(
 }
 
 /**
- * The page only sends both ids when Identity Verification is on and it holds a
- * token for this user, so their presence is the worker's IV signal.
+ * Under Identity Verification an anonymous user has no backend user, and a
+ * request without a token can only get a 401, so both return null and the
+ * caller skips the user request. The unsigned outcome request is not affected.
  */
-function sessionBackendParams({ onesignalId, externalId, jwt }: SessionUser): {
+function sessionBackendParams({ onesignalId, jwtRequired, externalId, jwt }: SessionUser): {
   alias: AliasPair;
   jwt?: string;
-} {
+} | null {
+  if (!jwtRequired) {
+    return { alias: { label: IdentityConstants._OneSignalID, id: onesignalId } };
+  }
   if (externalId && jwt) {
     return { alias: { label: IdentityConstants._ExternalID, id: externalId }, jwt };
   }
-  return { alias: { label: IdentityConstants._OneSignalID, id: onesignalId } };
+  Log._debug('[SW] No JWT under Identity Verification, skipping the session request');
+  return null;
 }
 
 // The worker cannot reach the page token store. The page removes the token on
@@ -80,7 +85,9 @@ function logIfUnauthorized(response: OneSignalApiBaseResponse, jwt: string | und
  */
 export async function updateUserSession(user: SessionUser): Promise<void> {
   const { appId, subscriptionId } = user;
-  const { alias, jwt } = sessionBackendParams(user);
+  const params = sessionBackendParams(user);
+  if (!params) return;
+  const { alias, jwt } = params;
   // TO DO: in future, we should aggregate session count in case network call fails
   const updateUserPayload: IUpdateUser = {
     refresh_device_metadata: true,
@@ -109,7 +116,7 @@ export async function sendSessionDuration(
   attribution: OutcomeAttribution,
 ): Promise<void> {
   const { appId, onesignalId, subscriptionId } = user;
-  const { alias, jwt } = sessionBackendParams(user);
+  const params = sessionBackendParams(user);
   const updateUserPayload: IUpdateUser = {
     refresh_device_metadata: true,
     deltas: {
@@ -132,12 +139,15 @@ export async function sendSessionDuration(
   outcomePayload.direct = attribution.type === OutcomeAttributionType._Direct ? true : false;
 
   try {
-    const response = await updateUserByAlias(
-      { appId, subscriptionId, jwt },
-      alias,
-      updateUserPayload,
-    );
-    logIfUnauthorized(response, jwt);
+    if (params) {
+      const { alias, jwt } = params;
+      const response = await updateUserByAlias(
+        { appId, subscriptionId, jwt },
+        alias,
+        updateUserPayload,
+      );
+      logIfUnauthorized(response, jwt);
+    }
 
     if (outcomePayload.notification_ids && outcomePayload.notification_ids.length > 0) {
       await sendOutcome(outcomePayload);
