@@ -23,7 +23,7 @@ export default class LoginManager {
   private static async _login(externalId: string, token?: string): Promise<void> {
     // Stored before any early return and before the login operation is enqueued,
     // so the dispatch gate finds the token on its first pass. No token is a no-op.
-    OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
+    const jwtUpdated = OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     const currentOneSignalId = !IDManager._isLocalId(identityModel._onesignalId)
@@ -32,11 +32,9 @@ export default class LoginManager {
     const currentExternalId = identityModel._externalId;
 
     if (currentExternalId === externalId) {
-      // Same user, no switch. With a token this is the refresh path after a 401,
+      // Same user, no switch. With a new token this is the refresh path after a 401,
       // symmetric with updateUserJwt: the queue picks the token up on its next pass.
-      Log._debug(
-        token ? 'Login: externalId already set, JWT updated' : 'Login: externalId already set',
-      );
+      Log._debug(`Login: externalId already set${jwtUpdated ? ', JWT updated' : ''}`);
       return;
     }
 

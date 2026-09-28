@@ -43,14 +43,18 @@ export class JwtTokenStore {
     return this._load().get(externalId);
   }
 
-  // A missing token is a no-op. Use _invalidateJwt to remove one.
-  _putJwt(externalId: string, jwt: string | null | undefined): void {
-    if (!jwt) return;
+  /**
+   * A missing token is a no-op. Use _invalidateJwt to remove one.
+   * @returns true when the stored value changed
+   */
+  _putJwt(externalId: string, jwt: string | null | undefined): boolean {
+    if (!jwt) return false;
     const tokens = this._load();
-    if (tokens.get(externalId) === jwt) return;
+    if (tokens.get(externalId) === jwt) return false;
     tokens.set(externalId, jwt);
     this._persist(tokens);
     this._updateListeners._fire((l) => l(externalId));
+    return true;
   }
 
   _invalidateJwt(externalId: string): void {
