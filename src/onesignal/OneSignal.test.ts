@@ -1303,6 +1303,8 @@ describe('OneSignal - Consent Required', () => {
     // @ts-expect-error - _delayedInit is private
     vi.spyOn(OneSignal, '_delayedInit').mockResolvedValue(undefined);
     void OneSignal.setConsentGiven(false);
+    // The token store persists to localStorage, which outlives the test environment.
+    setJwtTokens({});
   });
 
   test('cannot call login if consent is required but not given', () => {
