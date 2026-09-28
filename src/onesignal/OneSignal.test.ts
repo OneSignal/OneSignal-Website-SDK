@@ -57,7 +57,11 @@ import { db } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
 import type { SubscriptionSchema } from 'src/shared/database/types';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
-import { setJwtRequirement, setJwtTokens } from 'src/shared/helpers/localStorage';
+import {
+  setConsentRequired,
+  setJwtRequirement,
+  setJwtTokens,
+} from 'src/shared/helpers/localStorage';
 import * as MainHelper from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -1401,94 +1405,120 @@ describe('OneSignal - Before Init', () => {
   });
 
   afterEach(() => {
-    setupEnv(false);
-  });
-
-  test('updateUserJwt waits for init, then stores the token', async () => {
-    const pending = OneSignal.updateUserJwt(externalId, 'jwt');
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(warnSpy).toHaveBeenCalledWith('updateUserJwt waits for init, which was not called yet');
-
-    setupEnv(false);
-    await pending;
-
-    expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBe('jwt');
-  });
-
-  test('logs at debug level when init is in progress', async () => {
-    OneSignal._initCalled = true;
-    const pending = OneSignal.updateUserJwt(externalId, 'jwt');
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(debugSpy).toHaveBeenCalledWith('updateUserJwt: waiting for init');
-    expect(warnSpy).not.toHaveBeenCalledWith(
-      'updateUserJwt waits for init, which was not called yet',
-    );
-
-    setupEnv(false);
-    await pending;
     OneSignal._initCalled = false;
-  });
-
-  test('login obeys the consent the init config requires', async () => {
-    const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
-
-    const pending = OneSignal.login(externalId, 'jwt');
-    await new Promise((resolve) => setTimeout(resolve, 10));
-
-    setupEnv(true);
-    void OneSignal.setConsentGiven(false);
-    await pending;
-
-    expect(loginSpy).not.toHaveBeenCalled();
-    expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
-  });
-
-  test('updateUserJwt obeys the consent the init config requires', async () => {
-    const pending = OneSignal.updateUserJwt(externalId, 'jwt');
-    await new Promise((resolve) => setTimeout(resolve, 10));
-
-    setupEnv(true);
-    void OneSignal.setConsentGiven(false);
-    await pending;
-
-    expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBeUndefined();
-    expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
-  });
-
-  test('login waits for init, then logs the user in', async () => {
-    const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
-
-    const pending = OneSignal.login(externalId, 'jwt');
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(loginSpy).not.toHaveBeenCalled();
-
     setupEnv(false);
-    await pending;
-
-    expect(loginSpy).toHaveBeenCalledExactlyOnceWith(externalId, 'jwt');
   });
 
-  test('logout waits for init', async () => {
-    const logoutSpy = vi.spyOn(LoginManager, 'logout').mockResolvedValue(undefined);
-
-    const pending = OneSignal.logout();
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(logoutSpy).not.toHaveBeenCalled();
-
-    setupEnv(false);
-    await pending;
-
-    expect(logoutSpy).toHaveBeenCalledOnce();
+  test('login throws when init was not called', async () => {
+    await expect(OneSignal.login(externalId)).rejects.toThrow("Must call 'init' before 'login'");
   });
 
-  test('login is skipped with a warning when init stopped before the user model', async () => {
-    const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
+  test('logout throws when init was not called', async () => {
+    await expect(OneSignal.logout()).rejects.toThrow("Must call 'init' before 'logout'");
+  });
 
-    OneSignal._settleCoreReady();
-    await OneSignal.login(externalId);
+  test('updateUserJwt throws when init was not called', async () => {
+    await expect(OneSignal.updateUserJwt(externalId, 'jwt')).rejects.toThrow(
+      "Must call 'init' before 'updateUserJwt'",
+    );
+  });
 
-    expect(loginSpy).not.toHaveBeenCalled();
-    expect(warnSpy).toHaveBeenCalledWith('login skipped: init did not complete');
+  describe('while init is in progress', () => {
+    beforeEach(() => {
+      OneSignal._initCalled = true;
+    });
+
+    test('updateUserJwt waits for init, then stores the token', async () => {
+      const pending = OneSignal.updateUserJwt(externalId, 'jwt');
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(debugSpy).toHaveBeenCalledWith('updateUserJwt: waiting for init');
+
+      setupEnv(false);
+      await pending;
+
+      expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBe('jwt');
+    });
+
+    test('login obeys the consent the init config requires', async () => {
+      const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
+
+      const pending = OneSignal.login(externalId, 'jwt');
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      setupEnv(true);
+      void OneSignal.setConsentGiven(false);
+      await pending;
+
+      expect(loginSpy).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
+    });
+
+    test('updateUserJwt obeys the consent the init config requires', async () => {
+      const pending = OneSignal.updateUserJwt(externalId, 'jwt');
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      setupEnv(true);
+      void OneSignal.setConsentGiven(false);
+      await pending;
+
+      expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBeUndefined();
+      expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
+    });
+
+    test('login does not read the consent state before init loads it', async () => {
+      const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
+      // The stored flag says consent is required, and the user gave consent on an
+      // earlier visit. Init did not load that consent into OneSignal._consentGiven yet.
+      setConsentRequired(true);
+      OneSignal._consentGiven = false;
+
+      const pending = OneSignal.login(externalId, 'jwt');
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(warnSpy).not.toHaveBeenCalledWith('Consent required but not given');
+
+      OneSignal._consentGiven = true;
+      setupEnv(false);
+      await pending;
+      setConsentRequired(false);
+
+      expect(loginSpy).toHaveBeenCalledExactlyOnceWith(externalId, 'jwt');
+    });
+
+    test('login waits for init, then logs the user in', async () => {
+      const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
+
+      const pending = OneSignal.login(externalId, 'jwt');
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(loginSpy).not.toHaveBeenCalled();
+
+      setupEnv(false);
+      await pending;
+
+      expect(loginSpy).toHaveBeenCalledExactlyOnceWith(externalId, 'jwt');
+    });
+
+    test('logout waits for init', async () => {
+      const logoutSpy = vi.spyOn(LoginManager, 'logout').mockResolvedValue(undefined);
+
+      const pending = OneSignal.logout();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(logoutSpy).not.toHaveBeenCalled();
+
+      setupEnv(false);
+      await pending;
+
+      expect(logoutSpy).toHaveBeenCalledOnce();
+    });
+
+    test('login is skipped with a warning when init stopped before the user model', async () => {
+      const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue(undefined);
+
+      OneSignal._settleCoreReady();
+      await OneSignal.login(externalId);
+
+      expect(loginSpy).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith('login skipped: init did not complete');
+    });
   });
 });
 
