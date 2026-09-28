@@ -1,6 +1,7 @@
 import * as OneSignalApiBase from 'src/shared/api/base';
 import { downloadSWServerAppConfig, getUserIdFromSubscriptionIdentifier } from 'src/shared/api/sw';
 import { getServerAppConfig } from 'src/shared/config/app';
+import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import type { AppConfig } from 'src/shared/config/types';
 import { db, getCurrentSession, getOptionsValue } from 'src/shared/database/client';
 import { getAppState, getDBAppConfig } from 'src/shared/database/config';
@@ -930,17 +931,25 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
 
     deviceIdExists = !!deviceId;
     if (!deviceIdExists && event.oldSubscription) {
-      // We don't have the device ID stored, but we can look it up from our old subscription
-      deviceId = await getUserIdFromSubscriptionIdentifier(
-        appId,
-        getDeviceType(),
-        event.oldSubscription.endpoint,
-      );
+      if (appConfig.jwtRequired === JwtRequirement._Required) {
+        // The legacy players route is not allowed when the app requires a JWT.
+        // The next login(externalId, jwt) creates the user instead.
+        Log._warn(
+          'The legacy player lookup is not supported when identity verification is enabled. Skipping.',
+        );
+      } else {
+        // We don't have the device ID stored, but we can look it up from our old subscription
+        deviceId = await getUserIdFromSubscriptionIdentifier(
+          appId,
+          getDeviceType(),
+          event.oldSubscription.endpoint,
+        );
 
-      // Store the device ID, so it can be looked up when subscribing
-      const subscription = await getSubscription();
-      subscription.deviceId = deviceId;
-      await setSubscription(subscription);
+        // Store the device ID, so it can be looked up when subscribing
+        const subscription = await getSubscription();
+        subscription.deviceId = deviceId;
+        await setSubscription(subscription);
+      }
     }
     deviceIdExists = !!deviceId;
   }

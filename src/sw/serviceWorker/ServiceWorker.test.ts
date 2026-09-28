@@ -521,6 +521,41 @@ describe('ServiceWorker', () => {
       expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
     });
 
+    test('with old subscription under Identity Verification: skips the legacy lookup with a warning', async () => {
+      const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => {});
+      const playersFn = vi.fn();
+      server.use(
+        http.get(`**/sync/*/web`, () =>
+          HttpResponse.json({
+            ...serverConfig,
+            config: { ...serverConfig.config, jwt_required: true },
+          }),
+        ),
+        http.post(`**/players`, () => {
+          playersFn();
+          return HttpResponse.json({ id: someDeviceId });
+        }),
+      );
+      subscribeCall.mockImplementationOnce(() => {
+        throw new Error('cant get raw sub');
+      });
+      await db.put('Ids', { type: 'userId', id: null });
+      await db.put('Ids', { type: 'registrationId', id: '456' });
+
+      const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
+        oldSubscription: {},
+      });
+      await dispatchEvent(event);
+
+      expect(playersFn).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        'The legacy player lookup is not supported when identity verification is enabled. Skipping.',
+      );
+      // Without a device id or a new subscription the SDK holds no user; the next login creates one.
+      const ids = await db.getAll('Ids');
+      expect(ids).toEqual([{ type: 'appId', id: appId }]);
+    });
+
     test('with new subscription ', async () => {
       server.use(http.post(`**/players`, () => HttpResponse.json({ id: null })));
 
