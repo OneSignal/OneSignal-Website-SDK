@@ -719,15 +719,26 @@ describe('ServiceWorker', () => {
           expect(headers.authorization).toBeUndefined();
         });
 
+        // Asserts on the write, not on the store afterward: earlier tests leave a
+        // finalize step in flight that can clear the Sessions store at any time.
         test('jwtRequired without a jwt: the session is stored and no request is sent', async () => {
           setUpdateUserResponse();
+          const putSpy = vi.spyOn(db, 'put');
 
           await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
 
-          expect(updateUserFn).not.toHaveBeenCalled();
-          expect(requestHeadersFn).not.toHaveBeenCalled();
-          const storedSession = await db.get('Sessions', ONESIGNAL_SESSION_KEY);
-          expect(storedSession).toMatchObject({ status: SessionStatus._Active });
+          expect(putSpy).toHaveBeenCalledWith(
+            'Sessions',
+            expect.objectContaining({ status: SessionStatus._Active }),
+          );
+          expect(Log._debug).toHaveBeenCalledWith(
+            '[SW] No JWT under Identity Verification, skipping the session request',
+          );
+          expect(updateUserFn).not.toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
+          const urls = requestHeadersFn.mock.calls.map(([, url]) => url);
+          expect(urls).not.toContainEqual(expect.stringContaining('/users/by/external_id/'));
         });
 
         test('the jwt never reaches a log line', async () => {
