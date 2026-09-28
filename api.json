@@ -478,15 +478,16 @@
       {
         "name": "addEventListener",
         "isAsync": false,
+        "genericTypeParameter": "<K extends UserEventName>",
         "args": [
           {
             "name": "event",
-            "type": "'change'",
+            "type": "K",
             "optional": false
           },
           {
             "name": "listener",
-            "type": "(change: UserChangeEvent) => void",
+            "type": "(obj: UserEventTypeMap[K]) => void",
             "optional": false
           }
         ],
@@ -495,15 +496,16 @@
       {
         "name": "removeEventListener",
         "isAsync": false,
+        "genericTypeParameter": "<K extends UserEventName>",
         "args": [
           {
             "name": "event",
-            "type": "'change'",
+            "type": "K",
             "optional": false
           },
           {
             "name": "listener",
-            "type": "(change: UserChangeEvent) => void",
+            "type": "(obj: UserEventTypeMap[K]) => void",
             "optional": false
           }
         ],

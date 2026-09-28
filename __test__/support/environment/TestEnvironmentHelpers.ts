@@ -3,6 +3,7 @@ import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
 import { setPushToken } from 'src/shared/database/subscription';
 import { setJwtRequirement } from 'src/shared/helpers/localStorage';
+import { onUserJwtInvalidated } from 'src/shared/listeners';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
@@ -34,6 +35,9 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal._emitter = new Emitter();
   const core = new CoreModule();
   global.OneSignal._coreDirector = new CoreModuleDirector(core);
+  global.OneSignal._coreDirector._jwtTokenStore._addUserJwtInvalidatedListener(
+    onUserJwtInvalidated,
+  );
 
   // Clear the User singleton before creating new instance
   User._singletonInstance = undefined;
