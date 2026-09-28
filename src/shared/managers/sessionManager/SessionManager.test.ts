@@ -256,45 +256,56 @@ describe('SessionManager', () => {
 
       await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
 
+      expect(lastPayload()).not.toHaveProperty('jwtRequired');
       expect(lastPayload()).not.toHaveProperty('externalId');
       expect(lastPayload()).not.toHaveProperty('jwt');
     });
 
-    test('IV active: upsert and deactivate carry externalId and jwt', async () => {
+    test('IV active: upsert and deactivate carry jwtRequired, externalId, and jwt', async () => {
       setJwtRequirement(JwtRequirement._Required);
       OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
 
       await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
       expect(lastPayload()).toMatchObject({
         onesignalId: ONESIGNAL_ID,
+        jwtRequired: true,
         externalId: EXTERNAL_ID,
         jwt: JWT,
       });
 
       await sm._notifySWToDeactivateSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Blur);
-      expect(lastPayload()).toMatchObject({ externalId: EXTERNAL_ID, jwt: JWT });
+      expect(lastPayload()).toMatchObject({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
       expect(unicastSpy).toHaveBeenCalledTimes(2);
     });
 
-    test('IV active with an anonymous user: no message', async () => {
+    // The worker must still update its session state, so the message goes out
+    // and the worker decides whether a request can be signed.
+    test('IV active with an anonymous user: the message carries jwtRequired and no ids', async () => {
       setJwtRequirement(JwtRequirement._Required);
       updateIdentityModel('external_id', undefined);
 
       await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
       await sm._notifySWToDeactivateSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Blur);
 
-      expect(unicastSpy).not.toHaveBeenCalled();
+      expect(unicastSpy).toHaveBeenCalledTimes(2);
+      for (const [, payload] of unicastSpy.mock.calls) {
+        expect(payload).toMatchObject({ jwtRequired: true, externalId: undefined, jwt: undefined });
+      }
     });
 
-    test('IV active without a stored token: no message', async () => {
+    test('IV active without a stored token: the message carries externalId and no jwt', async () => {
       setJwtRequirement(JwtRequirement._Required);
 
       await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
 
-      expect(unicastSpy).not.toHaveBeenCalled();
+      expect(lastPayload()).toMatchObject({
+        jwtRequired: true,
+        externalId: EXTERNAL_ID,
+        jwt: undefined,
+      });
     });
 
-    test('beforeunload carries externalId and jwt under IV and is skipped without a token', async () => {
+    test('beforeunload carries externalId and jwt under IV, and only externalId without a token', async () => {
       setJwtRequirement(JwtRequirement._Required);
       User._createOrGetInstance();
       vi.spyOn(sm, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
@@ -306,13 +317,17 @@ describe('SessionManager', () => {
         .mockResolvedValue(undefined);
 
       await sm._handleOnBeforeUnload();
-      expect(directPostSpy).not.toHaveBeenCalled();
+      expect(directPostSpy).toHaveBeenCalledExactlyOnceWith(
+        expect.anything(),
+        expect.objectContaining({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: undefined }),
+      );
 
       OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
       await sm._handleOnBeforeUnload();
-      expect(directPostSpy).toHaveBeenCalledExactlyOnceWith(
+      expect(directPostSpy).toHaveBeenCalledTimes(2);
+      expect(directPostSpy).toHaveBeenLastCalledWith(
         expect.anything(),
-        expect.objectContaining({ externalId: EXTERNAL_ID, jwt: JWT }),
+        expect.objectContaining({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT }),
       );
     });
   });
