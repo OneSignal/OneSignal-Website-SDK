@@ -1,3 +1,1 @@
-export type UserJwtInvalidatedEvent = {
-  externalId: string;
-};
+export type { UserJwtInvalidatedEvent } from 'src/core/JwtTokenStore';
