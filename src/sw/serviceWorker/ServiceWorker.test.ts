@@ -629,6 +629,12 @@ describe('ServiceWorker', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
         const cancel = vi.fn();
         self.cancel = cancel;
+        // The deactivate starts a finalize step that sends these requests. With no
+        // handler they go to the network, retry for a long time, and the late
+        // cleanupCurrentSession() deletes the Sessions store of a later test.
+        setUpdateUserResponse();
+        getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+        const putSpy = vi.spyOn(db, 'put');
 
         await db.put('Sessions', session);
 
@@ -648,10 +654,17 @@ describe('ServiceWorker', () => {
         });
 
         // should de-active session since can't determine focused window for Safari
-        const updatedSession = (await getCurrentSession())!;
-        expect(updatedSession.status).toBe(SessionStatus._Inactive);
-        expect(updatedSession.lastDeactivatedTimestamp).not.toBeNull();
-        expect(updatedSession.accumulatedDuration).not.toBe(0);
+        const deactivated = putSpy.mock.calls
+          .map(([, value]) => value as Session)
+          .find((value) => value.status === SessionStatus._Inactive);
+        expect(deactivated?.lastDeactivatedTimestamp).toEqual(expect.any(Number));
+        expect(deactivated?.accumulatedDuration).toBeGreaterThan(0);
+
+        // the finalize step must finish inside this test
+        await vi.waitFor(async () => expect(await getCurrentSession()).toBeNull());
+        expect(updateUserFn).toHaveBeenCalledWith(
+          expect.objectContaining({ deltas: { session_time: deactivated!.accumulatedDuration } }),
+        );
       });
 
       test('with non-safari client', async () => {
@@ -754,8 +767,6 @@ describe('ServiceWorker', () => {
           expect(headers.authorization).toBeUndefined();
         });
 
-        // Asserts on the write, not on the store afterward: earlier tests leave a
-        // finalize step in flight that can clear the Sessions store at any time.
         test('jwtRequired without a jwt: the session is stored and no request is sent', async () => {
           setUpdateUserResponse();
           const putSpy = vi.spyOn(db, 'put');
