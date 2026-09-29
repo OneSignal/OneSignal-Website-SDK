@@ -20,6 +20,9 @@ beforeEach(async () => {
 afterEach(() => {
   server.resetHandlers();
   if (typeof OneSignal !== 'undefined') {
+    // The poll interval must not outlive the test: after jsdom teardown a tick
+    // that reads localStorage throws as an unhandled rejection.
+    OneSignal._coreDirector?._operationRepo._pause();
     OneSignal._coreDirector?._operationRepo._clear();
     OneSignal._emitter?._removeAllListeners();
   }
