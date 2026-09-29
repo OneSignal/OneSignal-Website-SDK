@@ -26,6 +26,8 @@ declare const global: {
 };
 
 export function initOSGlobals(config: TestEnvironmentConfig = {}) {
+  // Stop the poll interval of the instance this call replaces.
+  global.OneSignal?._coreDirector?._operationRepo._pause();
   global.OneSignal = OneSignal;
   global.OneSignal.EVENTS = ONESIGNAL_EVENTS;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
