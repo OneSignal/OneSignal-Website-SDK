@@ -574,6 +574,9 @@ describe('OneSignal - No Consent Required', () => {
           setJwtTokens({});
           setJwtRequirement(JwtRequirement._Required);
           updateIdentityModel('external_id', externalId);
+          // Registered so the "no user switch" assertions below can fail.
+          setAddAliasResponse();
+          setCreateUserResponse({});
         });
 
         test('login with a fresh token releases an operation the server rejected with 401', async () => {
