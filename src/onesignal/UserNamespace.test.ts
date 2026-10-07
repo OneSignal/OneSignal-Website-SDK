@@ -472,12 +472,14 @@ describe('Language Management', () => {
     userNamespace.setLanguage(language);
     expect(userNamespace.getLanguage()).toBe(language);
 
-    errorSpy.mockClear();
-    userNamespace.setLanguage('');
     userNamespace.setLanguage('en\u0000');
     expect(userNamespace.getLanguage()).toBe(language);
-    expect(errorSpy).toHaveBeenCalledWith('setLanguage: language is required');
     expect(errorSpy).toHaveBeenCalledWith('setLanguage: language contains a null byte');
+
+    const languageSpy = vi.spyOn(navigator, 'language', 'get').mockReturnValue('de-DE');
+    userNamespace.setLanguage('');
+    expect(userNamespace.getLanguage()).toBe('de');
+    languageSpy.mockRestore();
   });
 
   test('should get language', () => {

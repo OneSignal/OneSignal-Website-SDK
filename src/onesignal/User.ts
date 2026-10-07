@@ -9,6 +9,7 @@ import {
   ReservedArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
+import { getBrowserLanguage } from 'src/shared/helpers/general';
 import { hasMissingEntries, hasMissingItems, isMissing } from 'src/shared/helpers/inputGuard';
 import { getAppId } from 'src/shared/helpers/main';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
@@ -231,10 +232,10 @@ export default class User {
     if (isConsentRequiredButNotGiven()) return;
 
     validateString(language, 'language');
-    if (isMissing(language, 'setLanguage: language')) return;
+    if (language && isMissing(language, 'setLanguage: language')) return;
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    propertiesModel._language = language;
+    propertiesModel._language = language || getBrowserLanguage();
   }
 
   public getLanguage(): string | undefined {
