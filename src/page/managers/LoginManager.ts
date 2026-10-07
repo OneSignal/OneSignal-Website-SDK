@@ -17,10 +17,33 @@ import { NotificationType } from 'src/shared/subscriptions/constants';
 export default class LoginManager {
   // Other internal classes should await on this if they access users
   static _switchingUsersPromise: Promise<void> = Promise.resolve();
+  static _switchInProgress = false;
 
   // public api
-  static async login(externalId: string, token?: string): Promise<void> {
-    await (this._switchingUsersPromise = LoginManager._login(externalId, token));
+  static login(externalId: string, token?: string): Promise<void> {
+    return LoginManager._runSwitch(() => LoginManager._login(externalId, token));
+  }
+
+  /**
+   * Runs login and logout one at a time. The identity model store replaces its
+   * model in place, so a switch that starts during another one would change the
+   * identity the first one still reads. A switch that starts while none is in
+   * progress runs synchronously up to its first await, so the operations of the
+   * calls that follow it without an await keep their order in the queue.
+   */
+  private static _runSwitch(run: () => Promise<void>): Promise<void> {
+    const previous = LoginManager._switchingUsersPromise;
+    const current = LoginManager._switchInProgress
+      ? previous.catch(() => undefined).then(run)
+      : run();
+    LoginManager._switchInProgress = true;
+    const tracked: Promise<void> = current.finally(() => {
+      if (LoginManager._switchingUsersPromise === tracked) {
+        LoginManager._switchInProgress = false;
+      }
+    });
+    LoginManager._switchingUsersPromise = tracked;
+    return tracked;
   }
 
   private static async _login(externalId: string, token?: string): Promise<void> {
@@ -64,8 +87,8 @@ export default class LoginManager {
   }
 
   // public api
-  static async logout(): Promise<void> {
-    await (this._switchingUsersPromise = LoginManager._logout());
+  static logout(): Promise<void> {
+    return LoginManager._runSwitch(() => LoginManager._logout());
   }
 
   private static async _logout(): Promise<void> {
@@ -85,15 +108,20 @@ export default class LoginManager {
    * the user that logs out while the identity is still theirs, then switch to a
    * local anonymous user with no server operation. The next login moves the
    * subscription to that user and sends the local push state again.
+   *
+   * The ids are copied before the await: the store replaces the identity model
+   * in place, so the model object would show a later login's user.
    */
   private static async _logoutUnderIv(identityModel: IdentityModel): Promise<void> {
+    const { _onesignalId: onesignalId, _externalId: externalId } = identityModel;
     const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
-    if (pushModel) {
+    // A subscription with a local id never reached the server, so there is nothing to disable.
+    if (pushModel && !IDManager._isLocalId(pushModel.id)) {
       OneSignal._coreDirector._operationRepo._enqueue(
         new UpdateSubscriptionOperation({
           appId: getAppId(),
-          onesignalId: identityModel._onesignalId,
-          externalId: identityModel._externalId,
+          onesignalId,
+          externalId,
           subscriptionId: pushModel.id,
           type: pushModel.type,
           token: pushModel.token,

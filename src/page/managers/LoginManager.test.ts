@@ -142,6 +142,7 @@ describe('LoginManager', () => {
     } as SubscriptionModel;
 
     beforeEach(() => {
+      pushSub.enabled = true;
       setJwtRequirement(JwtRequirement._Required);
       vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(pushSub);
       vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockResolvedValue(
@@ -175,7 +176,6 @@ describe('LoginManager', () => {
       const op = enqueueSpy.mock.calls[1][0] as UpdateSubscriptionOperation;
       expect(op.enabled).toBe(false);
       expect(op.notification_types).toBe(NotificationType._UserOptedOut);
-      pushSub.enabled = true;
     });
   });
 
@@ -302,6 +302,63 @@ describe('LoginManager', () => {
 
       expect(enqueueSpy).not.toHaveBeenCalled();
       expect(enqueueAndWaitSpy).not.toHaveBeenCalled();
+      expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBeUndefined();
+    });
+
+    test('with a push subscription the server never got: no disable operation', async () => {
+      vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue({
+        id: IDManager._createLocalId(),
+        type: 'ChromePush',
+        token: 'push-token',
+      } as SubscriptionModel);
+      const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+
+      await LoginManager.logout();
+
+      expect(enqueueSpy).not.toHaveBeenCalled();
+      expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBeUndefined();
+    });
+
+    test('a login during the logout waits, and the disable keeps the ids of the user that logged out', async () => {
+      vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(pushSub);
+      vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockResolvedValue(
+        undefined,
+      );
+      const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+
+      const logout = LoginManager.logout();
+      await LoginManager.login('B', 'jwt-b');
+      await logout;
+
+      const disable = enqueueSpy.mock.calls[0][0] as UpdateSubscriptionOperation;
+      expect(disable).toBeInstanceOf(UpdateSubscriptionOperation);
+      expect(disable._onesignalId).toBe(ONESIGNAL_ID);
+      expect(disable._externalId).toBe(externalId);
+      expect(disable.enabled).toBe(false);
+      expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('B');
+    });
+
+    test('a logout during the login waits for it', async () => {
+      updateIdentityModel('external_id', undefined);
+      vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(pushSub);
+      vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockResolvedValue(
+        undefined,
+      );
+      const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+
+      const login = LoginManager.login('B', 'jwt-b');
+      await LoginManager.logout();
+      await login;
+
+      const kinds = enqueueSpy.mock.calls.map(([op]) => op.constructor);
+      expect(kinds).toEqual([
+        TransferSubscriptionOperation,
+        UpdateSubscriptionOperation,
+        UpdateSubscriptionOperation,
+      ]);
+      const disable = enqueueSpy.mock.calls[2][0] as UpdateSubscriptionOperation;
+      expect(disable._externalId).toBe('B');
+      expect(disable.enabled).toBe(false);
       expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBeUndefined();
     });
 

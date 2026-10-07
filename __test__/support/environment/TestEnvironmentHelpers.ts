@@ -1,6 +1,7 @@
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
+import LoginManager from 'src/page/managers/LoginManager';
 import { setPushToken } from 'src/shared/database/subscription';
 import { setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { onUserJwtInvalidated } from 'src/shared/listeners';
@@ -37,6 +38,9 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   UserNamespace._emitter = new Emitter();
   const core = new CoreModule();
   global.OneSignal._coreDirector = new CoreModuleDirector(core);
+  // A switch left pending by an earlier test must not hold up this test's login.
+  LoginManager._switchingUsersPromise = Promise.resolve();
+  LoginManager._switchInProgress = false;
   global.OneSignal._coreDirector._jwtTokenStore._addUserJwtInvalidatedListener(
     onUserJwtInvalidated,
   );
