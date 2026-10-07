@@ -472,12 +472,11 @@ describe('Language Management', () => {
     userNamespace.setLanguage(language);
     expect(userNamespace.getLanguage()).toBe(language);
 
-    userNamespace.setLanguage('');
-    expect(userNamespace.getLanguage()).toBe('');
-
     errorSpy.mockClear();
+    userNamespace.setLanguage('');
     userNamespace.setLanguage('en\u0000');
-    expect(userNamespace.getLanguage()).toBe('');
+    expect(userNamespace.getLanguage()).toBe(language);
+    expect(errorSpy).toHaveBeenCalledWith('setLanguage: language is required');
     expect(errorSpy).toHaveBeenCalledWith('setLanguage: language contains a null byte');
   });
 

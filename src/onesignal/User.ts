@@ -231,8 +231,7 @@ export default class User {
     if (isConsentRequiredButNotGiven()) return;
 
     validateString(language, 'language');
-    // "" resets the language, so only a non-empty value can be missing.
-    if (language && isMissing(language, 'setLanguage: language')) return;
+    if (isMissing(language, 'setLanguage: language')) return;
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     propertiesModel._language = language;
