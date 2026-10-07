@@ -47,6 +47,7 @@ import {
   updateIdentityModel,
 } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
+import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
@@ -956,8 +957,8 @@ describe('OneSignal - No Consent Required', () => {
         });
 
         OneSignal.User.addTag('some-tag', 'some-value');
-        // Several queue passes go by with no token; the operation stays held.
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        // 5 queue passes go by with no token; the operation stays held.
+        await new Promise((resolve) => setTimeout(resolve, OP_REPO_EXECUTION_INTERVAL * 5));
         expect(updateUserFn).not.toHaveBeenCalled();
         expect(OneSignal._coreDirector._operationRepo._queue).toHaveLength(1);
 
