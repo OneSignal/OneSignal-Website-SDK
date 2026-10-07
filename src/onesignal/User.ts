@@ -9,7 +9,7 @@ import {
   ReservedArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
-import { hasMissingEntries, isMissing } from 'src/shared/helpers/inputGuard';
+import { hasMissingEntries, hasMissingItems, isMissing } from 'src/shared/helpers/inputGuard';
 import { getAppId } from 'src/shared/helpers/main';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
 import Log from 'src/shared/libraries/Log';
@@ -101,7 +101,9 @@ export default class User {
     logMethodCall('removeAliases', { aliases });
     if (isConsentRequiredButNotGiven()) return;
 
-    if (!validateArray(aliases, 'aliases')) return;
+    assertStringArray(aliases, 'aliases');
+    if (hasMissingItems(aliases, 'removeAliases: label')) return;
+    for (const label of aliases) validateAliasLabel(label, 'label');
 
     const newAliases = Object.fromEntries(aliases.map((key) => [key, undefined]));
     this._updateIdentityModel(newAliases);
@@ -194,7 +196,8 @@ export default class User {
     logMethodCall('removeTags', { tagKeys });
     if (isConsentRequiredButNotGiven()) return;
 
-    if (!validateArray(tagKeys, 'tagKeys', validateStringLabel)) return;
+    assertStringArray(tagKeys, 'tagKeys');
+    if (hasMissingItems(tagKeys, 'removeTags: key')) return;
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     const newTags = { ...propertiesModel._tags };
@@ -320,14 +323,10 @@ function validateStringLabel(
   return !isMissing(label, labelName);
 }
 
-function validateArray(
-  array: unknown,
-  arrayName: string,
-  validateItem: (item: unknown, itemName: string) => boolean = validateAliasLabel,
-): boolean {
+function assertStringArray(array: unknown, arrayName: string): asserts array is string[] {
   if (!Array.isArray(array)) throw WrongTypeArgumentError(arrayName);
   if (array.length === 0) throw EmptyArgumentError(arrayName);
-  return array.every((label) => validateItem(label, 'label'));
+  if (array.some((item) => typeof item !== 'string')) throw WrongTypeArgumentError('label');
 }
 
 function validateObject(object: unknown, objectName: string): void {

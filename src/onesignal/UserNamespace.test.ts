@@ -171,7 +171,24 @@ describe('Alias Management', () => {
     expect(() => userNamespace.removeAliases([])).toThrowError('"aliases" is empty');
     errorSpy.mockClear();
     userNamespace.removeAlias('');
-    expect(errorSpy).toHaveBeenCalledWith('label is required');
+    expect(errorSpy).toHaveBeenCalledWith('removeAliases: label is required');
+    // @ts-expect-error - mock invalid argument
+    expect(() => userNamespace.removeAliases(['ok', 1234])).toThrowError(
+      '"label" is the wrong type',
+    );
+  });
+
+  test('removeAliases does not write when any label is missing', () => {
+    const userNamespace = new UserNamespace(true);
+    userNamespace.addAlias('ok', 'some-id');
+    const identityModel = OneSignal._coreDirector._getIdentityModel();
+
+    errorSpy.mockClear();
+    userNamespace.removeAliases(['ok', '']);
+    userNamespace.removeAliases(['ok', 'a\u0000b']);
+    expect(identityModel._getProperty('ok')).toBe('some-id');
+    expect(errorSpy).toHaveBeenCalledWith('removeAliases: label is required');
+    expect(errorSpy).toHaveBeenCalledWith('removeAliases: label contains a null byte');
   });
 
   test('rejects malformed alias label and id values', () => {
@@ -407,6 +424,24 @@ describe('Tag Management', () => {
     }
 
     expect(() => userNamespace.removeTags(punctuatedKeys)).not.toThrow();
+  });
+
+  test('removeTags does not write when any key is missing', () => {
+    const userNamespace = new UserNamespace(true);
+    userNamespace.addTags({ ok: 'v' });
+
+    errorSpy.mockClear();
+    userNamespace.removeTags(['ok', '']);
+    userNamespace.removeTags(['ok', 'a\u0000b']);
+    expect(userNamespace.getTags()).toEqual({ ok: 'v' });
+    expect(errorSpy).toHaveBeenCalledWith('removeTags: key is required');
+    expect(errorSpy).toHaveBeenCalledWith('removeTags: key contains a null byte');
+
+    // @ts-expect-error - mock invalid argument
+    expect(() => userNamespace.removeTags('ok')).toThrowError('"tagKeys" is the wrong type');
+    expect(() => userNamespace.removeTags([])).toThrowError('"tagKeys" is empty');
+    // @ts-expect-error - mock invalid argument
+    expect(() => userNamespace.removeTags([1])).toThrowError('"label" is the wrong type');
   });
 
   test('allows an empty tag value and rejects a blank or null-byte key', () => {
