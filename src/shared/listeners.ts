@@ -139,21 +139,22 @@ function triggerUserChanged(change: UserChangeEvent) {
 /**
  * Forwards a token store invalidation to the OneSignal.User listeners. As on Android,
  * delivery is asynchronous and isolated per listener: app code never runs inside the
- * operation queue that removed the token, and a listener that throws does not stop
- * the listeners after it.
+ * operation queue that removed the token, and a listener that throws or rejects does
+ * not stop the listeners after it. Each listener gets its own event object.
  */
 export function onUserJwtInvalidated(event: UserJwtInvalidatedEvent): void {
   const eventName = OneSignal.EVENTS.USER_JWT_INVALIDATED;
   Log._debug(`» ${eventName}:`, event);
-  UserNamespace._emitter._listeners(eventName)?.forEach((listener) => {
-    queueMicrotask(() => {
-      try {
-        (listener as EventHandler)(event);
-      } catch (e) {
-        Log._warn(`${eventName} listener threw for externalId=${event.externalId}`, e);
-      }
-    });
-  });
+  const listeners = UserNamespace._emitter._listeners(eventName)?.slice() ?? [];
+  for (const listener of listeners) {
+    Promise.resolve()
+      .then(() => {
+        // Skip a listener that app code removed before this microtask ran.
+        if (!UserNamespace._emitter._listeners(eventName)?.includes(listener)) return;
+        return (listener as EventHandler)({ externalId: event.externalId });
+      })
+      .catch((e) => Log._warn(`${eventName} listener threw for externalId=${event.externalId}`, e));
+  }
 }
 
 function onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {

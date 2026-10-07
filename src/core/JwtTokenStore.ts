@@ -63,8 +63,8 @@ export class JwtTokenStore {
     const tokens = this._load();
     if (!tokens.delete(externalId)) return;
     this._persist(tokens);
-    // Per-listener try/catch so one throwing listener cannot break the others
-    // or propagate into the operation queue and drop the failing operation.
+    // These listeners are SDK internals; onUserJwtInvalidated defers app code to a
+    // microtask. The try/catch keeps one throwing listener from stopping the others.
     this._invalidatedListeners._fire((l) => {
       try {
         l({ externalId });

@@ -529,6 +529,58 @@ describe('Event Handling', () => {
 
       expect(listener).not.toHaveBeenCalled();
     });
+
+    test('a listener removed after the invalidation but before delivery gets nothing', async () => {
+      const userNamespace = new UserNamespace(true);
+      const removed = vi.fn();
+      const kept = vi.fn();
+      userNamespace.addEventListener('userJwtInvalidated', removed);
+      userNamespace.addEventListener('userJwtInvalidated', kept);
+
+      invalidate();
+      userNamespace.removeEventListener('userJwtInvalidated', removed);
+      await flushMicrotasks();
+
+      expect(removed).not.toHaveBeenCalled();
+      expect(kept).toHaveBeenCalledExactlyOnceWith({ externalId });
+    });
+
+    test('a listener that rejects is logged and does not stop the next listener', async () => {
+      const userNamespace = new UserNamespace(true);
+      const rejecting = vi.fn(() => Promise.reject(new Error('async listener bug')));
+      const next = vi.fn();
+      userNamespace.addEventListener('userJwtInvalidated', rejecting);
+      userNamespace.addEventListener('userJwtInvalidated', next);
+
+      invalidate();
+
+      await vi.waitFor(() =>
+        expect(warnSpy).toHaveBeenCalledWith(
+          `userJwtInvalidated listener threw for externalId=${externalId}`,
+          expect.any(Error),
+        ),
+      );
+      expect(next).toHaveBeenCalledExactlyOnceWith({ externalId });
+    });
+
+    test('each listener gets its own event object', async () => {
+      const userNamespace = new UserNamespace(true);
+      const first = vi.fn((event: UserJwtInvalidatedEvent) => {
+        (event as { externalId: string }).externalId = 'mutated';
+      });
+      const second = vi.fn();
+      userNamespace.addEventListener('userJwtInvalidated', first);
+      userNamespace.addEventListener('userJwtInvalidated', second);
+
+      invalidate();
+      await flushMicrotasks();
+
+      expect(second).toHaveBeenCalledExactlyOnceWith({ externalId });
+    });
+  });
+
+  test('initOSGlobals drops the listeners of the previous test', () => {
+    expect(UserNamespace._emitter._numberOfListeners('userJwtInvalidated')).toBe(0);
   });
 });
 
