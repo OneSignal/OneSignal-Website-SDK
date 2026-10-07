@@ -1,5 +1,6 @@
 import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operation';
+import { getBrowserLanguage } from 'src/shared/helpers/general';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
@@ -128,7 +129,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     let subscriptions: SubscriptionMap = {};
     const properties: IUserProperties = {
       timezone_id: getTimeZoneId(),
-      language: getLanguage(),
+      language: getBrowserLanguage(),
     };
 
     if (createUserOperation._externalId) {
@@ -346,23 +347,5 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     }
   }
 }
-
-export const getLanguage = () => {
-  const languageTag = (navigator.language || 'en').toLowerCase();
-  const languageSubtags = languageTag.replace(/-[a-z0-9]-.*/, '').split('-');
-  if (languageSubtags[0] == 'zh') {
-    if (languageSubtags.includes('hans')) return 'zh-Hans';
-    if (languageSubtags.includes('hant')) return 'zh-Hant';
-
-    return languageSubtags.includes('hk') ||
-      languageSubtags.includes('mo') ||
-      languageSubtags.includes('tw')
-      ? 'zh-Hant'
-      : 'zh-Hans';
-  }
-
-  // Return the language subtag (it can be three characters, so truncate it down to 2 just to be sure)
-  return languageSubtags[0].substring(0, 2);
-};
 
 const getTimeZoneId = () => Intl.DateTimeFormat().resolvedOptions().timeZone;

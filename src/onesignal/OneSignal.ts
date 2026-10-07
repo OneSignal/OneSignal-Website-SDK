@@ -17,6 +17,7 @@ import {
   onSdkInitialized,
   saveInitOptions,
 } from 'src/shared/helpers/init';
+import { isMissing } from 'src/shared/helpers/inputGuard';
 import {
   getConsentRequired,
   removeLegacySubscriptionOptions,
@@ -109,6 +110,8 @@ export default class OneSignal {
     if (jwtToken !== undefined && typeof jwtToken !== 'string') {
       throw WrongTypeArgumentError('jwtToken');
     }
+
+    if (isMissing(externalId, 'login: externalId')) return;
 
     await LoginManager.login(externalId, jwtToken);
   }

@@ -47,6 +47,7 @@ import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
+import LoginManager from 'src/page/managers/LoginManager';
 import { db } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
 import type { SubscriptionSchema } from 'src/shared/database/types';
@@ -410,6 +411,21 @@ describe('OneSignal - No Consent Required', () => {
 
           // @ts-expect-error - testing invalid argument
           await expect(OneSignal.login('', 1)).rejects.toThrowError('"jwtToken" is the wrong type');
+        });
+
+        test('rejects an empty or null-byte external id and keeps whitespace', async () => {
+          const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue();
+          const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
+
+          await OneSignal.login('');
+          await OneSignal.login('ab\u0000c');
+          await OneSignal.login(' ');
+
+          expect(loginSpy).toHaveBeenCalledTimes(1);
+          expect(loginSpy).toHaveBeenCalledWith(' ', undefined);
+          expect(errorSpy).toHaveBeenCalledWith('login: externalId is required');
+          expect(errorSpy).toHaveBeenCalledWith('login: externalId contains a null byte');
+          loginSpy.mockRestore();
         });
 
         test('can login with a new external id', async () => {
