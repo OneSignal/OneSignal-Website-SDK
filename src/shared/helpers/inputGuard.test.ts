@@ -27,18 +27,21 @@ describe('inputGuard', () => {
   });
 
   test('hasMissingItems rejects a blank entry and a non-array', () => {
-    expect(hasMissingItems(null, 'removeTags: key')).toBe(true);
-    expect(hasMissingItems(['ok', ''], 'removeTags: key')).toBe(true);
-    expect(hasMissingItems(['ok', ' '], 'removeTags: key')).toBe(false);
+    expect(hasMissingItems(null, 'removeTags', 'key')).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('removeTags: keys must be an array of strings');
+    expect(hasMissingItems(['ok', ''], 'removeTags', 'key')).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('removeTags: key is required');
+    expect(hasMissingItems(['ok', ' '], 'removeTags', 'key')).toBe(false);
   });
 
-  test('hasMissingEntries rejects blank keys and blank alias ids', () => {
-    expect(hasMissingEntries(null, 'addAliases', false)).toBe(true);
-    expect(hasMissingEntries({ '': 'id' }, 'addAliases', false)).toBe(true);
-    expect(hasMissingEntries({ label: '' }, 'addAliases', false)).toBe(true);
-    expect(hasMissingEntries({ label: 'id' }, 'addAliases', false)).toBe(false);
-    expect(hasMissingEntries({ label: ' ' }, 'addAliases', false)).toBe(false);
-    expect(hasMissingEntries({ external_id: '\u0000: 1' }, 'addAliases', false)).toBe(true);
+  test('hasMissingEntries rejects blank keys and blank values', () => {
+    expect(hasMissingEntries(null, 'addAliases')).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('addAliases: argument must be an object');
+    expect(hasMissingEntries({ '': 'id' }, 'addAliases')).toBe(true);
+    expect(hasMissingEntries({ label: '' }, 'addAliases')).toBe(true);
+    expect(hasMissingEntries({ label: 'id' }, 'addAliases')).toBe(false);
+    expect(hasMissingEntries({ label: ' ' }, 'addAliases')).toBe(false);
+    expect(hasMissingEntries({ external_id: '\u0000: 1' }, 'addAliases')).toBe(true);
   });
 
   test('hasMissingEntries allows an empty tag value and a null byte in the value', () => {

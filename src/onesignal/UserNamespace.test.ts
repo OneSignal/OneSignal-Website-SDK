@@ -136,8 +136,8 @@ describe('Alias Management', () => {
     errorSpy.mockClear();
     userNamespace.addAlias('', 'some-id');
     userNamespace.addAlias('some-label', '');
-    expect(errorSpy).toHaveBeenCalledWith('label is required');
-    expect(errorSpy).toHaveBeenCalledWith('id is required');
+    expect(errorSpy).toHaveBeenCalledWith('addAlias: label is required');
+    expect(errorSpy).toHaveBeenCalledWith('addAlias: id is required');
     expect(OneSignal._coreDirector._getIdentityModel()._getProperty('some-label')).toBeUndefined();
 
     // reserved aliases
@@ -224,7 +224,7 @@ describe('Alias Management', () => {
     );
     errorSpy.mockClear();
     expect(() => userNamespace.addAlias('with\x00null', 'some-id')).not.toThrow();
-    expect(errorSpy).toHaveBeenCalledWith('label contains a null byte');
+    expect(errorSpy).toHaveBeenCalledWith('addAlias: label contains a null byte');
     expect(
       OneSignal._coreDirector._getIdentityModel()._getProperty('with\x00null'),
     ).toBeUndefined();
@@ -441,7 +441,7 @@ describe('Tag Management', () => {
     expect(() => userNamespace.removeTags('ok')).toThrowError('"tagKeys" is the wrong type');
     expect(() => userNamespace.removeTags([])).toThrowError('"tagKeys" is empty');
     // @ts-expect-error - mock invalid argument
-    expect(() => userNamespace.removeTags([1])).toThrowError('"label" is the wrong type');
+    expect(() => userNamespace.removeTags([1])).toThrowError('"tagKey" is the wrong type');
   });
 
   test('allows an empty tag value and rejects a blank or null-byte key', () => {
@@ -455,7 +455,7 @@ describe('Tag Management', () => {
     userNamespace.addTags({ '\u0000': 'nope', sibling: 'nope' });
     userNamespace.addTags({ ok: null as unknown as string });
     expect(userNamespace.getTags()).toEqual({ kept: '', 'nul-value': 'a\u0000b' });
-    expect(errorSpy).toHaveBeenCalledWith('key is required');
+    expect(errorSpy).toHaveBeenCalledWith('addTags: key is required');
     expect(errorSpy).toHaveBeenCalledWith('addTags: key contains a null byte');
     expect(errorSpy).toHaveBeenCalledWith('addTags: value is required');
   });
@@ -478,7 +478,7 @@ describe('Language Management', () => {
     errorSpy.mockClear();
     userNamespace.setLanguage('en\u0000');
     expect(userNamespace.getLanguage()).toBe('');
-    expect(errorSpy).toHaveBeenCalledWith('language contains a null byte');
+    expect(errorSpy).toHaveBeenCalledWith('setLanguage: language contains a null byte');
   });
 
   test('should get language', () => {
@@ -624,8 +624,8 @@ describe('Custom Events', () => {
     errorSpy.mockClear();
     userNamespace.trackEvent('');
     userNamespace.trackEvent('a\u0000b');
-    expect(errorSpy).toHaveBeenCalledWith('name is required');
-    expect(errorSpy).toHaveBeenCalledWith('name contains a null byte');
+    expect(errorSpy).toHaveBeenCalledWith('trackEvent: name is required');
+    expect(errorSpy).toHaveBeenCalledWith('trackEvent: name contains a null byte');
     expect(errorSpy).not.toHaveBeenCalledWith('User not logged in');
   });
 });

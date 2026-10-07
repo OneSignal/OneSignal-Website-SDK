@@ -3,8 +3,7 @@ import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { getFinalAppConfig } from '__test__/support/helpers/configHelper';
 import type { TagCategory } from 'src/page/tags/types';
-import Log from 'src/shared/libraries/Log';
-import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+import { beforeEach, describe, expect, test } from 'vite-plus/test';
 
 import { getAppConfig, getMergedConfig } from './app';
 import { ConfigIntegrationKind } from './constants';
@@ -18,14 +17,6 @@ const serverConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind._C
 describe('Config Helpers', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
-  });
-
-  test('rejects an app id that contains a null byte', async () => {
-    const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
-    await expect(getAppConfig({ appId: 'abc\u0000' })).rejects.toThrow(
-      "AppID doesn't match existing apps",
-    );
-    expect(errorSpy).toHaveBeenCalledWith('init: appId contains a null byte');
   });
 
   describe('promptOptions', () => {

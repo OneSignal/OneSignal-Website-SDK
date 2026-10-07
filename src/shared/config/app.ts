@@ -1,7 +1,6 @@
 import { downloadServerAppConfig } from '../api/page';
 import { InvalidAppIdError } from '../errors/common';
 import { isValidUuid } from '../helpers/validators';
-import Log from '../libraries/Log';
 import { checkRestrictedOrigin, checkUnsupportedSubdomain } from './domain';
 import {
   getConfigIntegrationKind,
@@ -28,10 +27,6 @@ export async function getServerAppConfig(
   downloadConfig: (appId: string) => Promise<ServerAppConfig>,
 ): Promise<AppConfig> {
   try {
-    if (typeof userConfig?.appId === 'string' && userConfig.appId.includes('\u0000')) {
-      Log._error('init: appId contains a null byte');
-      throw InvalidAppIdError;
-    }
     if (!userConfig || !userConfig.appId || !isValidUuid(userConfig.appId)) throw InvalidAppIdError;
 
     const serverConfig = await downloadConfig(userConfig.appId);
