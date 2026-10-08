@@ -459,21 +459,24 @@ describe('ServiceWorker', () => {
       SubscriptionManagerSW.prototype,
       '_registerSubscription',
     );
-
-    const someDeviceId = '123';
+    const playersFn = vi.fn();
 
     beforeEach(() => {
-      server.use(http.post(`**/players`, () => HttpResponse.json({ id: someDeviceId })));
+      server.use(
+        http.post(`**/players`, () => {
+          playersFn();
+          return HttpResponse.json({ id: '123' });
+        }),
+      );
 
       // @ts-expect-error - for setting sdk env
       global.ServiceWorkerGlobalScope = undefined;
     });
 
-    test('with old subscription and no device id', async () => {
+    test('with old subscription and no device id: removes the ids without a legacy player lookup', async () => {
       subscribeCall.mockImplementationOnce(() => {
         throw new Error('cant get raw sub');
       });
-      server.use(http.post(`**/players`, () => HttpResponse.json({ id: null })));
 
       await db.put('Ids', {
         type: 'userId',
@@ -489,6 +492,8 @@ describe('ServiceWorker', () => {
       });
       await dispatchEvent(event);
 
+      expect(playersFn).not.toHaveBeenCalled();
+      expect(registerSubscriptionCall).not.toHaveBeenCalled();
       // should remove previous ids
       const ids = await db.getAll('Ids');
       expect(ids).toEqual([
@@ -499,10 +504,11 @@ describe('ServiceWorker', () => {
       ]);
     });
 
-    test('with old subscription and a device id', async () => {
+    test('with old subscription and a stored device id', async () => {
       subscribeCall.mockImplementationOnce(() => {
         throw new Error('cant get raw sub');
       });
+      await db.put('Ids', { type: 'userId', id: '123' });
 
       const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
         oldSubscription: {},
@@ -510,6 +516,7 @@ describe('ServiceWorker', () => {
 
       await dispatchEvent(event);
 
+      expect(playersFn).not.toHaveBeenCalled();
       expect(subscribeCall).toHaveBeenCalledWith(SubscriptionStrategyKind._SubscribeNew);
       expect(registerSubscriptionCall).toHaveBeenCalledWith(
         undefined,
@@ -521,9 +528,25 @@ describe('ServiceWorker', () => {
       expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
     });
 
-    test('with new subscription ', async () => {
-      server.use(http.post(`**/players`, () => HttpResponse.json({ id: null })));
+    test('with old and new subscription and no device id: registers the new subscription', async () => {
+      await db.put('Ids', { type: 'userId', id: null });
 
+      const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
+        oldSubscription: {},
+        newSubscription: {},
+      });
+      await dispatchEvent(event);
+
+      expect(playersFn).not.toHaveBeenCalled();
+      expect(subscribeCall).not.toHaveBeenCalled();
+      const [rawSubscription, subscriptionState] = registerSubscriptionCall.mock.calls[0];
+      expect(rawSubscription).toBeInstanceOf(RawPushSubscription);
+      expect(subscriptionState).toBeNull();
+      const subscription = await getSubscription();
+      expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
+    });
+
+    test('with new subscription ', async () => {
       // @ts-expect-error - normally readonly but doing this for testing
       global.Notification.permission = 'revoked';
 

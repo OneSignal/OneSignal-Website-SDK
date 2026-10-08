@@ -1,5 +1,5 @@
 import * as OneSignalApiBase from 'src/shared/api/base';
-import { downloadSWServerAppConfig, getUserIdFromSubscriptionIdentifier } from 'src/shared/api/sw';
+import { downloadSWServerAppConfig } from 'src/shared/api/sw';
 import { getServerAppConfig } from 'src/shared/config/app';
 import type { AppConfig } from 'src/shared/config/types';
 import { db, getCurrentSession, getOptionsValue } from 'src/shared/database/client';
@@ -8,7 +8,7 @@ import {
   putNotificationClickedForOutcomes,
   putNotificationReceivedForOutcomes,
 } from 'src/shared/database/notifications';
-import { getSubscription, setSubscription } from 'src/shared/database/subscription';
+import { getSubscription } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
 import { delay, redactJwt } from 'src/shared/helpers/general';
 import { deactivateSession, upsertSession } from 'src/shared/helpers/service-worker';
@@ -923,27 +923,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
   }
   const context = new ContextSW(appConfig);
 
-  // Get our current device ID
-  let deviceIdExists: boolean;
-  {
-    let deviceId: string | null | undefined = (await getSubscription()).deviceId;
-
-    deviceIdExists = !!deviceId;
-    if (!deviceIdExists && event.oldSubscription) {
-      // We don't have the device ID stored, but we can look it up from our old subscription
-      deviceId = await getUserIdFromSubscriptionIdentifier(
-        appId,
-        getDeviceType(),
-        event.oldSubscription.endpoint,
-      );
-
-      // Store the device ID, so it can be looked up when subscribing
-      const subscription = await getSubscription();
-      subscription.deviceId = deviceId;
-      await setSubscription(subscription);
-    }
-    deviceIdExists = !!deviceId;
-  }
+  const deviceIdExists = !!(await getSubscription()).deviceId;
 
   // Get our new push subscription
   let rawPushSubscription: RawPushSubscription | undefined;

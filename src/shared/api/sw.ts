@@ -7,11 +7,9 @@ import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
 import { getResponseStatusType, ResponseStatusType } from '../helpers/network';
 import Log from '../libraries/Log';
-import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
 import { OutcomeAttributionType, type OutcomeAttribution } from '../models/Outcomes';
 import type { OutcomeRequestData } from '../outcomes/types';
 import type { SessionUser } from '../session/types';
-import { NotificationType } from '../subscriptions/constants';
 import * as OneSignalApiBase from './base';
 import type { OneSignalApiBaseResponse } from './base';
 import { sendOutcome } from './shared';
@@ -20,36 +18,6 @@ export async function downloadSWServerAppConfig(appId: string): Promise<ServerAp
   enforceAppId(appId);
   const response = await OneSignalApiBase.get<ServerAppConfig>(`sync/${appId}/web`, null);
   return response?.result;
-}
-
-/**
- * Given a GCM or Firefox subscription endpoint or Safari device token, returns the user ID from OneSignal's server.
- * Used if the user clears his or her IndexedDB database and we need the user ID again.
- */
-export async function getUserIdFromSubscriptionIdentifier(
-  appId: string,
-  deviceType: DeliveryPlatformKindValue,
-  identifier: string,
-): Promise<string | null> {
-  // Calling POST /players with an existing identifier returns us that player ID
-  enforceAppId(appId);
-  return OneSignalApiBase.post<{ id: string }>('players', {
-    app_id: appId,
-    device_type: deviceType,
-    identifier: identifier,
-    notification_types: NotificationType._TemporaryWebRecord,
-  })
-    .then((response) => {
-      if (response?.result?.id) {
-        return response.result.id;
-      } else {
-        return null;
-      }
-    })
-    .catch((e) => {
-      Log._debug('Error getting user ID:', e);
-      return null;
-    });
 }
 
 /**
