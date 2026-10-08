@@ -75,7 +75,7 @@ function sessionBackendParams({ onesignalId, jwtRequired, externalId, jwt }: Ses
 // its own next 401, so the worker only reports the rejection.
 function logIfUnauthorized(response: OneSignalApiBaseResponse, jwt: string | undefined): void {
   if (jwt && getResponseStatusType(response.status) === ResponseStatusType._Unauthorized) {
-    Log._error('[SW] The server rejected the session request: the JWT is invalid');
+    Log._error(`[SW] The server rejected the JWT on the session request (${response.status})`);
   }
 }
 

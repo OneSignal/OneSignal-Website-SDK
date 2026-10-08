@@ -741,29 +741,37 @@ describe('ServiceWorker', () => {
           expect(urls).not.toContainEqual(expect.stringContaining('/users/by/external_id/'));
         });
 
-        test('the jwt never reaches a log line', async () => {
-          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+        test.each([200, 401])(
+          'the jwt never reaches a log line of any level (status %i)',
+          async (status) => {
+            const logSpies = (['_debug', '_info', '_warn', '_error'] as const).map((level) =>
+              vi.spyOn(Log, level).mockImplementation(() => {}),
+            );
+            getHandler({ uri: externalIdUri, method: 'patch', status, callback: updateUserFn });
 
-          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+            await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
 
-          expect(Log._debug).toHaveBeenCalledWith(
-            '[SW] debounceRefresh',
-            expect.objectContaining({ jwt: '[redacted]' }),
-          );
-          const loggedText = vi
-            .mocked(Log._debug)
-            .mock.calls.map((args) => JSON.stringify(args))
-            .join('\n');
-          expect(loggedText).not.toContain(JWT);
-        });
+            expect(Log._debug).toHaveBeenCalledWith(
+              '[SW] debounceRefresh',
+              expect.objectContaining({ jwt: '[redacted]' }),
+            );
+            const loggedText = logSpies
+              .flatMap((spy) => spy.mock.calls)
+              .map((args) => JSON.stringify(args))
+              .join('\n');
+            expect(loggedText).not.toContain(JWT);
+          },
+        );
 
-        test('a 401 on a signed request logs an error', async () => {
+        test('a 401 on a signed request logs an error with the status', async () => {
           const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
           getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
 
           await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
 
-          expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('the JWT is invalid'));
+          expect(errorSpy).toHaveBeenCalledWith(
+            '[SW] The server rejected the JWT on the session request (401)',
+          );
         });
 
         test('the session duration update is signed and the outcome stays unsigned', async () => {

@@ -100,6 +100,8 @@ export async function deactivateSession(
     return undefined;
   }
 
+  // The finalize step reuses this payload after the threshold, so a token the
+  // page refreshes in that window is not used for the session_time request.
   const finalizeSWSession = () => finalizeSession(options, existingSession);
 
   /**
