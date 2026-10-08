@@ -26,7 +26,11 @@ import {
 } from 'src/shared/helpers/localStorage';
 import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
 import { isValidUuid } from 'src/shared/helpers/validators';
-import { _onSubscriptionChanged, checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
+import {
+  _onSubscriptionChanged,
+  checkAndTriggerSubscriptionChanged,
+  onUserJwtInvalidated,
+} from 'src/shared/listeners';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
@@ -55,6 +59,7 @@ export default class OneSignal {
     const core = new CoreModule();
     await core._init();
     OneSignal._coreDirector = new CoreModuleDirector(core);
+    OneSignal._coreDirector._jwtTokenStore._addUserJwtInvalidatedListener(onUserJwtInvalidated);
     const subscription = await getSubscription();
     const permission = await OneSignal._context._permissionManager._getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);
@@ -119,6 +124,40 @@ export default class OneSignal {
     logMethodCall('logout');
     if (isConsentRequiredButNotGiven()) return;
     await LoginManager.logout();
+  }
+
+  /**
+   * Stores a fresh JWT for a user under Identity Verification. Accepts any
+   * external ID, not only the current user. The operation queue re-reads the
+   * token store on its next pass, so operations held for this user dispatch
+   * with the new token; nothing waits on a request here.
+   * @PublicApi
+   * @param externalId - The external user ID the token belongs to
+   * @param token - The JWT auth token
+   */
+  // Async for the api.json contract that the wrappers are generated from.
+  // oxlint-disable-next-line typescript/require-await
+  static async updateUserJwt(externalId: string, token: string): Promise<void> {
+    logMethodCall('updateUserJwt', { externalId });
+    if (isConsentRequiredButNotGiven()) return;
+
+    if (!externalId) {
+      throw EmptyArgumentError('externalId');
+    }
+
+    if (typeof externalId !== 'string') {
+      throw WrongTypeArgumentError('externalId');
+    }
+
+    if (!token) {
+      throw EmptyArgumentError('token');
+    }
+
+    if (typeof token !== 'string') {
+      throw WrongTypeArgumentError('token');
+    }
+
+    OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
   }
 
   /**

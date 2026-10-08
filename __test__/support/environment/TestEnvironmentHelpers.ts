@@ -1,8 +1,10 @@
 import CoreModule from 'src/core/CoreModule';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { ModelChangeTags } from 'src/core/types/models';
+import LoginManager from 'src/page/managers/LoginManager';
 import { setPushToken } from 'src/shared/database/subscription';
 import { setJwtRequirement } from 'src/shared/helpers/localStorage';
+import { onUserJwtInvalidated } from 'src/shared/listeners';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 
 import { CoreModuleDirector } from '../../../src/core/CoreModuleDirector';
@@ -24,6 +26,8 @@ declare const global: {
 };
 
 export function initOSGlobals(config: TestEnvironmentConfig = {}) {
+  // Stop the poll interval of the instance this call replaces.
+  global.OneSignal?._coreDirector?._operationRepo._pause();
   global.OneSignal = OneSignal;
   global.OneSignal.EVENTS = ONESIGNAL_EVENTS;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
@@ -32,8 +36,16 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal._context = new Context(global.OneSignal.config);
   global.OneSignal._initialized = true;
   global.OneSignal._emitter = new Emitter();
+  // Static, so listeners from an earlier test would otherwise stay registered.
+  UserNamespace._emitter = new Emitter();
   const core = new CoreModule();
   global.OneSignal._coreDirector = new CoreModuleDirector(core);
+  // A switch left pending by an earlier test must not hold up this test's login.
+  LoginManager._switchingUsersPromise = Promise.resolve();
+  LoginManager._switchInProgress = false;
+  global.OneSignal._coreDirector._jwtTokenStore._addUserJwtInvalidatedListener(
+    onUserJwtInvalidated,
+  );
 
   // Clear the User singleton before creating new instance
   User._singletonInstance = undefined;

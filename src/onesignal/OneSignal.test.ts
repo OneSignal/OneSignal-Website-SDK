@@ -1,4 +1,5 @@
 import {
+  APP_ID,
   BASE_IDENTITY,
   BASE_SUB,
   DEVICE_OS,
@@ -17,8 +18,10 @@ import {
   createUserFn,
   deleteAliasFn,
   deleteSubscriptionFn,
+  getHandler,
   getUserFn,
   mockPageStylesCss,
+  requestHeadersFn,
   sendCustomEventFn,
   setAddAliasError,
   setAddAliasResponse,
@@ -44,13 +47,18 @@ import {
   updateIdentityModel,
 } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
+import { server } from '__test__/support/mocks/server';
+import { http, HttpResponse } from 'msw';
+import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
+import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { db } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
 import type { SubscriptionSchema } from 'src/shared/database/types';
 import { registerForPushNotifications } from 'src/shared/helpers/init';
+import { setJwtRequirement, setJwtTokens } from 'src/shared/helpers/localStorage';
 import * as MainHelper from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -559,6 +567,62 @@ describe('OneSignal - No Consent Required', () => {
         });
       });
 
+      describe('same user under Identity Verification', () => {
+        const updateUserUri = `**/apps/${APP_ID}/users/by/external_id/${externalId}`;
+
+        beforeEach(() => {
+          setJwtTokens({});
+          setJwtRequirement(JwtRequirement._Required);
+          updateIdentityModel('external_id', externalId);
+          // Registered so the "no user switch" assertions below can fail.
+          setAddAliasResponse();
+          setCreateUserResponse({});
+        });
+
+        test('login with a fresh token releases an operation the server rejected with 401', async () => {
+          OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, 'old-jwt');
+          server.use(
+            http.patch(updateUserUri, ({ request }) => {
+              requestHeadersFn(Object.fromEntries(request.headers), request.url);
+              const status = request.headers.get('authorization') === 'Bearer old-jwt' ? 401 : 200;
+              return HttpResponse.json({}, { status });
+            }),
+          );
+
+          OneSignal.User.addTag('some-tag', 'some-value');
+
+          // The 401 removes the token and re-queues the operation, where the dispatch gate holds it.
+          await vi.waitUntil(() => requestHeadersFn.mock.calls.length === 1, { interval: 1 });
+          await vi.waitUntil(
+            () => OneSignal._coreDirector._jwtTokenStore._getJwt(externalId) === undefined,
+            { interval: 1 },
+          );
+          expect(OneSignal._coreDirector._operationRepo._queue).toHaveLength(1);
+
+          await OneSignal.login(externalId, 'fresh-jwt');
+
+          await vi.waitUntil(() => requestHeadersFn.mock.calls.length === 2, { interval: 1 });
+          const [headers] = requestHeadersFn.mock.calls[1];
+          expect(headers.authorization).toBe('Bearer fresh-jwt');
+          // No user switch: no identify or create-user request.
+          expect(addAliasFn).not.toHaveBeenCalled();
+          expect(createUserFn).not.toHaveBeenCalled();
+          expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe(externalId);
+        });
+
+        test('a 401 fires userJwtInvalidated with the external id', async () => {
+          OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, 'old-jwt');
+          getHandler({ uri: updateUserUri, method: 'patch', status: 401 });
+          const listener = vi.fn();
+          OneSignal.User.addEventListener('userJwtInvalidated', listener);
+
+          OneSignal.User.addTag('some-tag', 'some-value');
+
+          await vi.waitUntil(() => listener.mock.calls.length === 1, { interval: 1 });
+          expect(listener).toHaveBeenCalledWith({ externalId });
+        });
+      });
+
       describe('subscription after login', () => {
         const email = 'test@example.com';
         const sms = '+1234567890';
@@ -902,6 +966,125 @@ describe('OneSignal - No Consent Required', () => {
           },
         ]);
       });
+
+      test('under Identity Verification: disables push on the old user and creates no user', async () => {
+        const externalId = 'jd-1';
+        setJwtTokens({});
+        setJwtRequirement(JwtRequirement._Required);
+        await setupSubModelStore({ id: SUB_ID, token: 'abc123' });
+        updateIdentityModel('external_id', externalId);
+        OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, 'jwt');
+        setUpdateSubscriptionResponse({});
+        setTransferSubscriptionResponse({});
+        setCreateUserResponse({});
+
+        await OneSignal.logout();
+
+        const identityModel = OneSignal._coreDirector._getIdentityModel();
+        expect(identityModel._externalId).toBeUndefined();
+        expect(IDManager._isLocalId(identityModel._onesignalId)).toBe(true);
+
+        await vi.waitUntil(() => updateSubscriptionFn.mock.calls.length === 1, { interval: 1 });
+        expect(updateSubscriptionFn).toHaveBeenCalledWith({
+          subscription: expect.objectContaining({
+            enabled: false,
+            notification_types: -2,
+            token: 'abc123',
+            type: 'ChromePush',
+          }),
+        });
+        const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+        expect(url).toContain(`/subscriptions/${SUB_ID}`);
+        expect(headers.authorization).toBeUndefined();
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        expect(transferSubscriptionFn).not.toHaveBeenCalled();
+        expect(createUserFn).not.toHaveBeenCalled();
+
+        // The next login moves the subscription and turns push back on. The
+        // transfer and the update fold into the create-user payload.
+        getHandler({
+          uri: `**/apps/${APP_ID}/users/by/external_id/jd-2`,
+          method: 'get',
+          status: 200,
+          response: { identity: { onesignal_id: ONESIGNAL_ID_2, external_id: 'jd-2' } },
+        });
+        await OneSignal.login('jd-2', 'jwt-2');
+
+        expect(createUserFn).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({
+            identity: { external_id: 'jd-2' },
+            subscriptions: [
+              expect.objectContaining({
+                id: SUB_ID,
+                enabled: true,
+                notification_types: 1,
+                token: 'abc123',
+              }),
+            ],
+          }),
+        );
+      });
+    });
+
+    describe('updateUserJwt', () => {
+      const externalId = 'jd-1';
+
+      // The token store persists to localStorage, which outlives the test environment.
+      beforeEach(() => setJwtTokens({}));
+
+      test('should validate the arguments', async () => {
+        // @ts-expect-error - testing invalid argument
+        await expect(OneSignal.updateUserJwt()).rejects.toThrowError('"externalId" is empty');
+
+        // @ts-expect-error - testing invalid argument
+        await expect(OneSignal.updateUserJwt(1, 'jwt')).rejects.toThrowError(
+          '"externalId" is the wrong type',
+        );
+
+        // @ts-expect-error - testing invalid argument
+        await expect(OneSignal.updateUserJwt(externalId)).rejects.toThrowError('"token" is empty');
+
+        // @ts-expect-error - testing invalid argument
+        await expect(OneSignal.updateUserJwt(externalId, 1)).rejects.toThrowError(
+          '"token" is the wrong type',
+        );
+      });
+
+      test('stores the token for any external id and enqueues nothing', async () => {
+        updateIdentityModel('external_id', externalId);
+
+        await OneSignal.updateUserJwt(externalId, 'jwt-current-user');
+        await OneSignal.updateUserJwt('jd-2', 'jwt-other-user');
+
+        const store = OneSignal._coreDirector._jwtTokenStore;
+        expect(store._getJwt(externalId)).toBe('jwt-current-user');
+        expect(store._getJwt('jd-2')).toBe('jwt-other-user');
+        expect(OneSignal._coreDirector._operationRepo._queue).toEqual([]);
+      });
+
+      test('releases an operation held for a token under Identity Verification', async () => {
+        setJwtRequirement(JwtRequirement._Required);
+        updateIdentityModel('external_id', externalId);
+        getHandler({
+          uri: `**/apps/${APP_ID}/users/by/external_id/${externalId}`,
+          method: 'patch',
+          status: 200,
+          callback: updateUserFn,
+        });
+
+        OneSignal.User.addTag('some-tag', 'some-value');
+        // 5 queue passes go by with no token; the operation stays held.
+        await new Promise((resolve) => setTimeout(resolve, OP_REPO_EXECUTION_INTERVAL * 5));
+        expect(updateUserFn).not.toHaveBeenCalled();
+        expect(OneSignal._coreDirector._operationRepo._queue).toHaveLength(1);
+
+        await OneSignal.updateUserJwt(externalId, 'fresh-jwt');
+
+        await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, { interval: 1 });
+        const [headers] = requestHeadersFn.mock.calls.at(-1)!;
+        expect(headers.authorization).toBe('Bearer fresh-jwt');
+      });
     });
   });
 
@@ -1238,6 +1421,8 @@ describe('OneSignal - Consent Required', () => {
     // @ts-expect-error - _delayedInit is private
     vi.spyOn(OneSignal, '_delayedInit').mockResolvedValue(undefined);
     void OneSignal.setConsentGiven(false);
+    // The token store persists to localStorage, which outlives the test environment.
+    setJwtTokens({});
   });
 
   test('cannot call login if consent is required but not given', () => {
@@ -1253,6 +1438,12 @@ describe('OneSignal - Consent Required', () => {
   test('cannot call logout if consent is required but not given', () => {
     void OneSignal.logout();
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
+  });
+
+  test('cannot call updateUserJwt if consent is required but not given', async () => {
+    await OneSignal.updateUserJwt('some-id', 'jwt');
+    expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
+    expect(OneSignal._coreDirector._jwtTokenStore._getJwt('some-id')).toBeUndefined();
   });
 });
 

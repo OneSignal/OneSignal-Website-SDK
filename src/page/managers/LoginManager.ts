@@ -1,27 +1,55 @@
 import { IdentityConstants } from 'src/core/constants';
 import { isIvBehaviorActive } from 'src/core/identityVerification';
+import { SubscriptionModelStoreListener } from 'src/core/listeners/SubscriptionModelStoreListener';
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
+import { UpdateSubscriptionOperation } from 'src/core/operations/UpdateSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
 import { getSubscriptionType } from 'src/shared/environment/detect';
 import { getAppId } from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
+import { NotificationType } from 'src/shared/subscriptions/constants';
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users
   static _switchingUsersPromise: Promise<void> = Promise.resolve();
+  static _switchInProgress = false;
 
   // public api
-  static async login(externalId: string, token?: string): Promise<void> {
-    await (this._switchingUsersPromise = LoginManager._login(externalId, token));
+  static login(externalId: string, token?: string): Promise<void> {
+    return LoginManager._runSwitch(() => LoginManager._login(externalId, token));
+  }
+
+  /**
+   * Runs login and logout one at a time. The identity model store replaces its
+   * model in place, so a switch that starts during another one would change the
+   * identity the first one still reads. A switch that starts while none is in
+   * progress runs synchronously up to its first await, so the operations of the
+   * calls that follow it without an await keep their order in the queue.
+   */
+  private static _runSwitch(run: () => Promise<void>): Promise<void> {
+    const previous = LoginManager._switchingUsersPromise;
+    const current = LoginManager._switchInProgress
+      ? previous.catch(() => undefined).then(run)
+      : run();
+    LoginManager._switchInProgress = true;
+    const tracked: Promise<void> = current.finally(() => {
+      if (LoginManager._switchingUsersPromise === tracked) {
+        LoginManager._switchInProgress = false;
+      }
+    });
+    LoginManager._switchingUsersPromise = tracked;
+    return tracked;
   }
 
   private static async _login(externalId: string, token?: string): Promise<void> {
-    OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
+    // Stored before any early return and before the login operation is enqueued,
+    // so the dispatch gate finds the token on its first pass. No token is a no-op.
+    const jwtUpdated = OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
 
     const identityModel = OneSignal._coreDirector._getIdentityModel();
     const currentOneSignalId = !IDManager._isLocalId(identityModel._onesignalId)
@@ -30,7 +58,9 @@ export default class LoginManager {
     const currentExternalId = identityModel._externalId;
 
     if (currentExternalId === externalId) {
-      Log._debug('Login: externalId already set');
+      // Same user, no switch. With a new token this is the refresh path after a 401,
+      // symmetric with updateUserJwt: the queue picks the token up on its next pass.
+      Log._debug(`Login: externalId already set${jwtUpdated ? ', JWT updated' : ''}`);
       return;
     }
 
@@ -57,8 +87,8 @@ export default class LoginManager {
   }
 
   // public api
-  static async logout(): Promise<void> {
-    await (this._switchingUsersPromise = LoginManager._logout());
+  static logout(): Promise<void> {
+    return LoginManager._runSwitch(() => LoginManager._logout());
   }
 
   private static async _logout(): Promise<void> {
@@ -66,8 +96,72 @@ export default class LoginManager {
 
     if (!identityModel._externalId) return Log._debug('Logout: not logged in');
 
+    if (isIvBehaviorActive()) return LoginManager._logoutUnderIv(identityModel);
+
     const newIdentityModel = LoginManager._resetAndGetIdentityModel();
     await LoginManager._switchUser(newIdentityModel._onesignalId);
+  }
+
+  /**
+   * Under IV the anonymous user that follows a logout has no JWT, so the server
+   * would reject a transfer of the subscription to it. Instead, disable push on
+   * the user that logs out while the identity is still theirs, then switch to a
+   * local anonymous user with no server operation. The next login moves the
+   * subscription to that user and sends the local push state again.
+   *
+   * The ids are copied before the await: the store replaces the identity model
+   * in place, so the model object would show a later login's user.
+   */
+  private static async _logoutUnderIv(identityModel: IdentityModel): Promise<void> {
+    const { _onesignalId: onesignalId, _externalId: externalId } = identityModel;
+    const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
+    // A subscription with a local id never reached the server, so there is nothing to disable.
+    if (pushModel && !IDManager._isLocalId(pushModel.id)) {
+      OneSignal._coreDirector._operationRepo._enqueue(
+        new UpdateSubscriptionOperation({
+          appId: getAppId(),
+          onesignalId,
+          externalId,
+          subscriptionId: pushModel.id,
+          type: pushModel.type,
+          token: pushModel.token,
+          enabled: false,
+          notification_types: NotificationType._UserOptedOut,
+          web_auth: pushModel.web_auth,
+          web_p256: pushModel.web_p256,
+        }),
+      );
+    }
+    LoginManager._resetAndGetIdentityModel();
+  }
+
+  /**
+   * A logout under IV disabled push on the server, and a transfer does not
+   * change that. Send the local push state after the transfer, so the user
+   * that logs in gets push again when the device still opts in.
+   */
+  private static _enqueuePushStateSync(
+    appId: string,
+    onesignalId: string,
+    externalId: string,
+    pushModel: SubscriptionModel,
+  ): void {
+    const { enabled, notification_types } =
+      SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(pushModel);
+    OneSignal._coreDirector._operationRepo._enqueue(
+      new UpdateSubscriptionOperation({
+        appId,
+        onesignalId,
+        externalId,
+        subscriptionId: pushModel.id,
+        type: pushModel.type,
+        token: pushModel.token,
+        enabled,
+        notification_types,
+        web_auth: pushModel.web_auth,
+        web_p256: pushModel.web_p256,
+      }),
+    );
   }
 
   private static _resetAndGetIdentityModel() {
@@ -103,6 +197,9 @@ export default class LoginManager {
               externalId,
             }),
           );
+          if (externalId && isIvBehaviorActive()) {
+            LoginManager._enqueuePushStateSync(appId, newOneSignalId, externalId, pushOp);
+          }
         } else if (createSubIfMissing) {
           const newSub = new SubscriptionModel();
           newSub._mergeData({

@@ -1,5 +1,5 @@
 import * as OneSignalApiBase from 'src/shared/api/base';
-import { downloadSWServerAppConfig, getUserIdFromSubscriptionIdentifier } from 'src/shared/api/sw';
+import { downloadSWServerAppConfig } from 'src/shared/api/sw';
 import { getServerAppConfig } from 'src/shared/config/app';
 import type { AppConfig } from 'src/shared/config/types';
 import { db, getCurrentSession, getOptionsValue } from 'src/shared/database/client';
@@ -8,9 +8,9 @@ import {
   putNotificationClickedForOutcomes,
   putNotificationReceivedForOutcomes,
 } from 'src/shared/database/notifications';
-import { getSubscription, setSubscription } from 'src/shared/database/subscription';
+import { getSubscription } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
-import { delay } from 'src/shared/helpers/general';
+import { delay, redactJwt } from 'src/shared/helpers/general';
 import { deactivateSession, upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import {
@@ -94,11 +94,11 @@ export function run() {
 
     switch (data?.command) {
       case WorkerMessengerCommand._SessionUpsert:
-        Log._debug('[SW] SessionUpsert', payload);
+        Log._debug('[SW] SessionUpsert');
         debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
         break;
       case WorkerMessengerCommand._SessionDeactivate:
-        Log._debug('[SW] SessionDeactivate', payload);
+        Log._debug('[SW] SessionDeactivate');
         debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
         break;
       default:
@@ -396,23 +396,9 @@ async function updateSessionBasedOnHasActive(
   options: UpsertOrDeactivateSessionPayload,
 ) {
   if (hasAnyActiveSessions) {
-    await upsertSession(
-      options.appId,
-      options.onesignalId,
-      options.subscriptionId,
-      options.sessionThreshold,
-      options.enableSessionDuration,
-      options.outcomesConfig,
-    );
+    await upsertSession(options);
   } else {
-    const cancelableFinalize = await deactivateSession(
-      options.appId,
-      options.onesignalId,
-      options.subscriptionId,
-      options.sessionThreshold,
-      options.enableSessionDuration,
-      options.outcomesConfig,
-    );
+    const cancelableFinalize = await deactivateSession(options);
     if (cancelableFinalize) {
       self.cancel = cancelableFinalize.cancel;
       event.waitUntil(cancelableFinalize.promise);
@@ -477,7 +463,7 @@ function debounceRefreshSession(
   event: ExtendableMessageEvent,
   options: UpsertOrDeactivateSessionPayload,
 ) {
-  Log._debug('[SW] debounceRefresh', options);
+  Log._debug('[SW] debounceRefresh', redactJwt(options));
 
   if (self.cancel) {
     self.cancel();
@@ -937,27 +923,7 @@ async function onPushSubscriptionChange(event: SubscriptionChangeEvent) {
   }
   const context = new ContextSW(appConfig);
 
-  // Get our current device ID
-  let deviceIdExists: boolean;
-  {
-    let deviceId: string | null | undefined = (await getSubscription()).deviceId;
-
-    deviceIdExists = !!deviceId;
-    if (!deviceIdExists && event.oldSubscription) {
-      // We don't have the device ID stored, but we can look it up from our old subscription
-      deviceId = await getUserIdFromSubscriptionIdentifier(
-        appId,
-        getDeviceType(),
-        event.oldSubscription.endpoint,
-      );
-
-      // Store the device ID, so it can be looked up when subscribing
-      const subscription = await getSubscription();
-      subscription.deviceId = deviceId;
-      await setSubscription(subscription);
-    }
-    deviceIdExists = !!deviceId;
-  }
+  const deviceIdExists = !!(await getSubscription()).deviceId;
 
   // Get our new push subscription
   let rawPushSubscription: RawPushSubscription | undefined;

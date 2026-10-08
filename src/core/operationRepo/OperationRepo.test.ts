@@ -262,6 +262,21 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore._list()).toEqual([remove]);
     });
 
+    test('IV active: drops an anonymous operation that needs no JWT when its user id is local', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const remove = new DeleteSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: IDManager._createLocalId(),
+        subscriptionId: SUB_ID,
+      });
+      seedSaved(remove);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+    });
+
     test('IV active: clears existingOnesignalId on a surviving LoginUserOperation', async () => {
       setJwtRequirement(JwtRequirement._Required);
       const localId = IDManager._createLocalId();
@@ -472,6 +487,20 @@ describe('OperationRepo', () => {
           expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
           expect(warn).not.toHaveBeenCalled();
           expect(opRepo._getNextOps(0)).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
+        });
+
+        test('an anonymous operation that needs no JWT is dropped when its user id is local', () => {
+          const op = new DeleteSubscriptionOperation({
+            appId: APP_ID,
+            onesignalId: IDManager._createLocalId(),
+            subscriptionId: SUB_ID,
+          });
+          opRepo._enqueue(op);
+
+          expect(opRepo._queue).toEqual([]);
+          expect(warn).toHaveBeenCalledExactlyOnceWith(
+            expect.stringContaining('delete-subscription was dropped. Identity Verification is on'),
+          );
         });
 
         test('an identified operation is queued', () => {

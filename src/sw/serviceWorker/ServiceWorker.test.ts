@@ -1,7 +1,12 @@
-import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
+import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { setUpdateUserResponse, updateUserFn } from '__test__/support/helpers/requests';
+import {
+  getHandler,
+  requestHeadersFn,
+  setUpdateUserResponse,
+  updateUserFn,
+} from '__test__/support/helpers/requests';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
@@ -454,21 +459,24 @@ describe('ServiceWorker', () => {
       SubscriptionManagerSW.prototype,
       '_registerSubscription',
     );
-
-    const someDeviceId = '123';
+    const playersFn = vi.fn();
 
     beforeEach(() => {
-      server.use(http.post(`**/players`, () => HttpResponse.json({ id: someDeviceId })));
+      server.use(
+        http.post(`**/players`, () => {
+          playersFn();
+          return HttpResponse.json({ id: '123' });
+        }),
+      );
 
       // @ts-expect-error - for setting sdk env
       global.ServiceWorkerGlobalScope = undefined;
     });
 
-    test('with old subscription and no device id', async () => {
+    test('with old subscription and no device id: removes the ids without a legacy player lookup', async () => {
       subscribeCall.mockImplementationOnce(() => {
         throw new Error('cant get raw sub');
       });
-      server.use(http.post(`**/players`, () => HttpResponse.json({ id: null })));
 
       await db.put('Ids', {
         type: 'userId',
@@ -484,6 +492,8 @@ describe('ServiceWorker', () => {
       });
       await dispatchEvent(event);
 
+      expect(playersFn).not.toHaveBeenCalled();
+      expect(registerSubscriptionCall).not.toHaveBeenCalled();
       // should remove previous ids
       const ids = await db.getAll('Ids');
       expect(ids).toEqual([
@@ -494,10 +504,11 @@ describe('ServiceWorker', () => {
       ]);
     });
 
-    test('with old subscription and a device id', async () => {
+    test('with old subscription and a stored device id', async () => {
       subscribeCall.mockImplementationOnce(() => {
         throw new Error('cant get raw sub');
       });
+      await db.put('Ids', { type: 'userId', id: '123' });
 
       const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
         oldSubscription: {},
@@ -505,6 +516,7 @@ describe('ServiceWorker', () => {
 
       await dispatchEvent(event);
 
+      expect(playersFn).not.toHaveBeenCalled();
       expect(subscribeCall).toHaveBeenCalledWith(SubscriptionStrategyKind._SubscribeNew);
       expect(registerSubscriptionCall).toHaveBeenCalledWith(
         undefined,
@@ -516,9 +528,25 @@ describe('ServiceWorker', () => {
       expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
     });
 
-    test('with new subscription ', async () => {
-      server.use(http.post(`**/players`, () => HttpResponse.json({ id: null })));
+    test('with old and new subscription and no device id: registers the new subscription', async () => {
+      await db.put('Ids', { type: 'userId', id: null });
 
+      const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
+        oldSubscription: {},
+        newSubscription: {},
+      });
+      await dispatchEvent(event);
+
+      expect(playersFn).not.toHaveBeenCalled();
+      expect(subscribeCall).not.toHaveBeenCalled();
+      const [rawSubscription, subscriptionState] = registerSubscriptionCall.mock.calls[0];
+      expect(rawSubscription).toBeInstanceOf(RawPushSubscription);
+      expect(subscriptionState).toBeNull();
+      const subscription = await getSubscription();
+      expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
+    });
+
+    test('with new subscription ', async () => {
       // @ts-expect-error - normally readonly but doing this for testing
       global.Notification.permission = 'revoked';
 
@@ -589,6 +617,12 @@ describe('ServiceWorker', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
         const cancel = vi.fn();
         self.cancel = cancel;
+        // The deactivate starts a finalize step that sends these requests. With no
+        // handler they go to the network, retry for a long time, and the late
+        // cleanupCurrentSession() deletes the Sessions store of a later test.
+        setUpdateUserResponse();
+        getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+        const putSpy = vi.spyOn(db, 'put');
 
         await db.put('Sessions', session);
 
@@ -608,10 +642,17 @@ describe('ServiceWorker', () => {
         });
 
         // should de-active session since can't determine focused window for Safari
-        const updatedSession = (await getCurrentSession())!;
-        expect(updatedSession.status).toBe(SessionStatus._Inactive);
-        expect(updatedSession.lastDeactivatedTimestamp).not.toBeNull();
-        expect(updatedSession.accumulatedDuration).not.toBe(0);
+        const deactivated = putSpy.mock.calls
+          .map(([, value]) => value as Session)
+          .find((value) => value.status === SessionStatus._Inactive);
+        expect(deactivated?.lastDeactivatedTimestamp).toEqual(expect.any(Number));
+        expect(deactivated?.accumulatedDuration).toBeGreaterThan(0);
+
+        // the finalize step must finish inside this test
+        await vi.waitFor(async () => expect(await getCurrentSession()).toBeNull());
+        expect(updateUserFn).toHaveBeenCalledWith(
+          expect.objectContaining({ deltas: { session_time: deactivated!.accumulatedDuration } }),
+        );
       });
 
       test('with non-safari client', async () => {
@@ -672,6 +713,131 @@ describe('ServiceWorker', () => {
           });
         },
       );
+
+      describe('under Identity Verification', () => {
+        const JWT = 'header.payload.signature';
+        const externalIdUri = `**/apps/${appId}/users/by/external_id/${EXTERNAL_ID}`;
+
+        const upsertWith = (user: Partial<UpsertOrDeactivateSessionPayload>) =>
+          dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionUpsert,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                ...user,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+        test('addresses the user by external_id with the bearer when the payload carries both', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
+          const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+          expect(url).toContain(`/users/by/external_id/${EXTERNAL_ID}`);
+          expect(headers.authorization).toBe(`Bearer ${JWT}`);
+        });
+
+        test('without jwtRequired the request uses onesignal_id even with an externalId', async () => {
+          setUpdateUserResponse();
+
+          await upsertWith({ externalId: EXTERNAL_ID });
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+          expect(url).toContain(`/users/by/onesignal_id/${ONESIGNAL_ID}`);
+          expect(headers.authorization).toBeUndefined();
+        });
+
+        test('jwtRequired without a jwt: the session is stored and no request is sent', async () => {
+          setUpdateUserResponse();
+          const putSpy = vi.spyOn(db, 'put');
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+
+          expect(putSpy).toHaveBeenCalledWith(
+            'Sessions',
+            expect.objectContaining({ status: SessionStatus._Active }),
+          );
+          expect(Log._debug).toHaveBeenCalledWith(
+            '[SW] No JWT under Identity Verification, skipping the session request',
+          );
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect(requestHeadersFn).not.toHaveBeenCalled();
+        });
+
+        test.each([200, 401])(
+          'the jwt never reaches a log line of any level (status %i)',
+          async (status) => {
+            const logSpies = (['_debug', '_info', '_warn', '_error'] as const).map((level) =>
+              vi.spyOn(Log, level).mockImplementation(() => {}),
+            );
+            getHandler({ uri: externalIdUri, method: 'patch', status, callback: updateUserFn });
+
+            await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+            expect(Log._debug).toHaveBeenCalledWith(
+              '[SW] debounceRefresh',
+              expect.objectContaining({ jwt: '[redacted]' }),
+            );
+            const loggedText = logSpies
+              .flatMap((spy) => spy.mock.calls)
+              .map((args) => JSON.stringify(args))
+              .join('\n');
+            expect(loggedText).not.toContain(JWT);
+          },
+        );
+
+        test('a 401 on a signed request logs an error with the status', async () => {
+          const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(errorSpy).toHaveBeenCalledWith(
+            '[SW] The server rejected the JWT on the session request (401)',
+          );
+        });
+
+        test('the session duration update is signed and the outcome stays unsigned', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          getHandler({ uri: `**/outcomes/measure`, method: 'post', status: 200 });
+          matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+          await putNotificationClickedForOutcomes(appId, clickOutcome);
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                jwtRequired: true,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          const requests = requestHeadersFn.mock.calls.map(([headers, url]) => ({
+            url,
+            authorization: headers.authorization,
+          }));
+          expect(requests).toEqual([
+            {
+              url: expect.stringContaining(`/users/by/external_id/${EXTERNAL_ID}`),
+              authorization: `Bearer ${JWT}`,
+            },
+            { url: expect.stringContaining('/outcomes/measure'), authorization: undefined },
+          ]);
+        });
+      });
     });
 
     describe('session deactivate event', () => {
