@@ -298,6 +298,22 @@ describe('SessionManager', () => {
       expect(requestHeadersFn).not.toHaveBeenCalled();
     });
 
+    test('IV active with a token removed while the push model loads: no request', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const store = OneSignal._coreDirector._jwtTokenStore;
+      store._putJwt(EXTERNAL_ID, JWT);
+      const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
+      vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockImplementation(() => {
+        store._invalidateJwt(EXTERNAL_ID);
+        return Promise.resolve(pushModel);
+      });
+      getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+
+      await sm._sendOnSessionUpdateFromPage();
+
+      expect(requestHeadersFn).not.toHaveBeenCalled();
+    });
+
     test('a 401 removes the token that was sent and fires userJwtInvalidated', async () => {
       setJwtRequirement(JwtRequirement._Required);
       const store = OneSignal._coreDirector._jwtTokenStore;

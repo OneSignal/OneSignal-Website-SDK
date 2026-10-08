@@ -321,19 +321,11 @@ export class SessionManager implements ISessionManager {
       return;
     }
 
-    // An anonymous user has no backend user under IV, and a request without a
-    // token can only get a 401, so neither is worth a request.
+    // An anonymous user has no backend user under IV, so there is nothing to update.
     const externalId = identityModel._externalId;
-    const jwtTokenStore = OneSignal._coreDirector._jwtTokenStore;
-    if (isIvBehaviorActive()) {
-      if (!externalId) {
-        Log._debug('No external id under Identity Verification, skipping on_session');
-        return;
-      }
-      if (!jwtTokenStore._getJwt(externalId)) {
-        Log._debug('No JWT under Identity Verification, skipping on_session');
-        return;
-      }
+    if (isIvBehaviorActive() && !externalId) {
+      Log._debug('No external id under Identity Verification, skipping on_session');
+      return;
     }
 
     const pushSubscription = await OneSignal._coreDirector._getPushSubscriptionModel();
@@ -353,8 +345,14 @@ export class SessionManager implements ISessionManager {
       const { alias, jwt } = resolveUserBackendParams(
         { onesignalId, externalId },
         'on_session',
-        jwtTokenStore,
+        OneSignal._coreDirector._jwtTokenStore,
       );
+      // Checked after the await above, so a token removed in the meantime is seen.
+      // A request without a token can only get a 401.
+      if (isIvBehaviorActive() && !jwt) {
+        Log._debug('No JWT under Identity Verification, skipping on_session');
+        return;
+      }
       // TO DO: in future, we should aggregate session count in case network call fails
       const updateUserPayload: IUpdateUser = {
         refresh_device_metadata: true,
