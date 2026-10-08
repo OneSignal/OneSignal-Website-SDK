@@ -300,6 +300,76 @@ describe('JwtTokenStore', () => {
     });
   });
 
+  // jsdom does not deliver storage events between windows, so no test waits for
+  // one. Every read and write goes to localStorage, so none is needed.
+  describe('cross-tab sync', () => {
+    test('a token put in another tab is visible on the next read', () => {
+      const otherTab = new JwtTokenStore();
+      expect(store._getJwt('alice')).toBeUndefined();
+
+      otherTab._putJwt('alice', 'jwt-a');
+
+      expect(store._getJwt('alice')).toBe('jwt-a');
+    });
+
+    test('a token invalidated in another tab is removed without a second invalidated event', () => {
+      store._putJwt('alice', 'jwt-a');
+      const otherTab = new JwtTokenStore();
+      const invalidated = vi.fn();
+      store._addUserJwtInvalidatedListener(invalidated);
+      const otherTabInvalidated = vi.fn();
+      otherTab._addUserJwtInvalidatedListener(otherTabInvalidated);
+
+      otherTab._invalidateJwt('alice');
+
+      expect(store._getJwt('alice')).toBeUndefined();
+      expect(otherTabInvalidated).toHaveBeenCalledOnce();
+      expect(invalidated).not.toHaveBeenCalled();
+    });
+
+    test('a write in this tab keeps a token another tab stored since the last read', () => {
+      store._putJwt('alice', 'jwt-a');
+      new JwtTokenStore()._putJwt('bob', 'jwt-b');
+
+      store._putJwt('carol', 'jwt-c');
+      expect(readPersisted()).toEqual({ alice: 'jwt-a', bob: 'jwt-b', carol: 'jwt-c' });
+
+      store._invalidateJwt('alice');
+      expect(readPersisted()).toEqual({ bob: 'jwt-b', carol: 'jwt-c' });
+    });
+
+    test('a token another tab replaced is seen before a 401 invalidates it', () => {
+      store._putJwt('alice', 'jwt-old');
+      const jwtAtDispatch = store._getJwt('alice');
+
+      new JwtTokenStore()._putJwt('alice', 'jwt-fresh');
+
+      expect(store._getJwt('alice')).not.toBe(jwtAtDispatch);
+      expect(store._getJwt('alice')).toBe('jwt-fresh');
+    });
+
+    test('localStorage.clear() in another tab is seen on the next read', () => {
+      store._putJwt('alice', 'jwt-a');
+      localStorage.clear();
+
+      expect(store._getJwt('alice')).toBeUndefined();
+    });
+
+    test('a token kept after a failed write is persisted by the next write that succeeds', () => {
+      const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('quota', 'QuotaExceededError');
+      });
+      store._putJwt('alice', 'jwt-a');
+      setItem.mockRestore();
+      expect(readPersisted()).toBeNull();
+
+      store._putJwt('bob', 'jwt-b');
+
+      expect(readPersisted()).toEqual({ alice: 'jwt-a', bob: 'jwt-b' });
+      expect(new JwtTokenStore()._getJwt('alice')).toBe('jwt-a');
+    });
+  });
+
   describe('CoreModule wiring', () => {
     beforeEach(() => {
       TestEnvironment.initialize();

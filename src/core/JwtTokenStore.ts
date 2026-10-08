@@ -19,9 +19,16 @@ export type UserJwtInvalidatedListener = (event: UserJwtInvalidatedEvent) => voi
  * put-with-change and on prune. The public invalidated listener fires on invalidate only, and only
  * for subscribers present at that time. Logout and user switch must not call
  * invalidate; the developer would read that as "refresh your token".
+ *
+ * Tabs share the persisted map. Every read and every write starts from
+ * localStorage, so a token another tab stored or removed is visible at once and
+ * a write in this tab never overwrites it. No listener fires for a remote change:
+ * the tab that saw the 401 already asked the app for a token, and the queue
+ * re-reads the store on every tick.
  */
 export class JwtTokenStore {
-  private _tokens?: Map<string, string>;
+  // Set only after a failed write. See _persist.
+  private _unpersisted?: Map<string, string>;
   private _updateListeners = new EventProducer<JwtUpdatedListener>();
   private _invalidatedListeners = new EventProducer<UserJwtInvalidatedListener>();
 
@@ -88,18 +95,19 @@ export class JwtTokenStore {
   // A Map so externalIds like "constructor" or "__proto__" cannot collide with
   // Object.prototype. Object.entries reads own keys only, so the parsed JSON is safe.
   private _load(): Map<string, string> {
-    this._tokens ??= new Map(Object.entries(getJwtTokens()));
-    return this._tokens;
+    return this._unpersisted ?? new Map(Object.entries(getJwtTokens()));
   }
 
   // The in-memory map stays authoritative for this session if the write fails
   // (quota, restricted profile), so login does not reject and the token is
-  // still usable until the next page load.
+  // still usable until the next page load or the next write that succeeds.
   private _persist(tokens: Map<string, string>): void {
     try {
       setJwtTokens(Object.fromEntries(tokens));
+      this._unpersisted = undefined;
     } catch (e) {
       Log._warn('JwtTokenStore: failed to persist tokens', e);
+      this._unpersisted = tokens;
     }
   }
 }
