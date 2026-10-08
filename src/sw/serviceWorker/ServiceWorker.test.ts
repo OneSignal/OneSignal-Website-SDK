@@ -768,11 +768,8 @@ describe('ServiceWorker', () => {
           expect(Log._debug).toHaveBeenCalledWith(
             '[SW] No JWT under Identity Verification, skipping the session request',
           );
-          expect(updateUserFn).not.toHaveBeenCalledWith(
-            expect.objectContaining({ deltas: { session_count: 1 } }),
-          );
-          const urls = requestHeadersFn.mock.calls.map(([, url]) => url);
-          expect(urls).not.toContainEqual(expect.stringContaining('/users/by/external_id/'));
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect(requestHeadersFn).not.toHaveBeenCalled();
         });
 
         test.each([200, 401])(
