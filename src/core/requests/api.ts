@@ -1,7 +1,7 @@
 import { InvalidAppIdError } from 'src/shared/errors/common';
 import { isValidUuid } from 'src/shared/helpers/validators';
 
-import type { OneSignalApiBaseResponse, RequestOptions } from '../../shared/api/base';
+import type { ApiPath, OneSignalApiBaseResponse, RequestOptions } from '../../shared/api/base';
 import * as OneSignalApiBase from '../../shared/api/base';
 import type {
   AliasPair,
@@ -24,6 +24,10 @@ function requestOptions({ subscriptionId, jwt }: RequestMetadata): RequestOption
   };
 }
 
+function userByAliasPath(appId: string, alias: AliasPair): ApiPath {
+  return ['apps', appId, 'users', 'by', alias.label, alias.id];
+}
+
 /**
  * Creates a new user
  * @param requestMetadata - { appId }
@@ -35,7 +39,7 @@ export async function createNewUser(requestMetadata: RequestMetadata, requestBod
   requestBody['refresh_device_metadata'] = true;
 
   return OneSignalApiBase.post<UserData>(
-    `apps/${appId}/users`,
+    ['apps', appId, 'users'],
     requestBody,
     requestOptions(requestMetadata),
   );
@@ -50,7 +54,7 @@ export async function createNewUser(requestMetadata: RequestMetadata, requestBod
 export async function getUserByAlias(requestMetadata: RequestMetadata, alias: AliasPair) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.get<UserData>(
-    `apps/${appId}/users/by/${alias.label}/${alias.id}`,
+    userByAliasPath(appId, alias),
     undefined,
     requestOptions(requestMetadata),
   );
@@ -75,7 +79,7 @@ export async function updateUserByAlias(
   }
 
   return OneSignalApiBase.patch<{ properties: IUserProperties }>(
-    `apps/${appId}/users/by/${alias.label}/${alias.id}`,
+    userByAliasPath(appId, alias),
     payload,
     requestOptions(requestMetadata),
   );
@@ -92,7 +96,7 @@ export async function deleteUserByAlias(
 ): Promise<OneSignalApiBaseResponse> {
   const { appId } = requestMetadata;
   return OneSignalApiBase.delete(
-    `apps/${appId}/users/by/${alias.label}/${alias.id}`,
+    userByAliasPath(appId, alias),
     undefined,
     requestOptions(requestMetadata),
   );
@@ -113,7 +117,7 @@ export async function addAlias(
 ) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.patch<{ identity: IUserIdentity }>(
-    `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
+    [...userByAliasPath(appId, alias), 'identity'],
     { identity },
     requestOptions(requestMetadata),
   );
@@ -130,7 +134,7 @@ export async function getUserIdentity(
 ): Promise<OneSignalApiBaseResponse> {
   const { appId } = requestMetadata;
   return OneSignalApiBase.get<{ identity: IUserIdentity }>(
-    `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
+    [...userByAliasPath(appId, alias), 'identity'],
     undefined,
     requestOptions(requestMetadata),
   );
@@ -149,7 +153,7 @@ export async function deleteAlias(
 ) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.delete<{ identity: IUserIdentity }>(
-    `apps/${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
+    [...userByAliasPath(appId, alias), 'identity', labelToRemove],
     undefined,
     requestOptions(requestMetadata),
   );
@@ -171,7 +175,7 @@ export async function createSubscriptionByAlias(
 ) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.post<{ subscription?: ISubscription }>(
-    `apps/${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
+    [...userByAliasPath(appId, alias), 'subscriptions'],
     subscription,
     requestOptions(requestMetadata),
   );
@@ -193,7 +197,7 @@ export async function updateSubscriptionById(
   const { appId } = requestMetadata;
   return OneSignalApiBase.patch<{
     subscription: ISubscription;
-  }>(`apps/${appId}/subscriptions/${subscriptionId}`, { subscription });
+  }>(['apps', appId, 'subscriptions', subscriptionId], { subscription });
 }
 
 /**
@@ -208,9 +212,12 @@ export async function deleteSubscriptionById(
   subscriptionId: string,
 ) {
   const { appId } = requestMetadata;
-  return OneSignalApiBase.delete<{ subscription: ISubscription }>(
-    `apps/${appId}/subscriptions/${subscriptionId}`,
-  );
+  return OneSignalApiBase.delete<{ subscription: ISubscription }>([
+    'apps',
+    appId,
+    'subscriptions',
+    subscriptionId,
+  ]);
 }
 
 /**
@@ -230,7 +237,7 @@ export async function transferSubscriptionById(
 ) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.patch<{ identity: IUserIdentity }>(
-    `apps/${appId}/subscriptions/${subscriptionId}/owner`,
+    ['apps', appId, 'subscriptions', subscriptionId, 'owner'],
     {
       identity: { ...identity },
     },
@@ -242,7 +249,7 @@ export async function transferSubscriptionById(
 export async function sendCustomEvent(requestMetadata: RequestMetadata, event: ICreateEvent) {
   const { appId } = requestMetadata;
   return OneSignalApiBase.post(
-    `apps/${appId}/custom_events`,
+    ['apps', appId, 'custom_events'],
     {
       events: [event],
     },

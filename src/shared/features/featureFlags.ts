@@ -23,7 +23,14 @@ export async function refreshFeatureFlags(appId: string): Promise<void> {
   if (overrides.length) console.warn('OneSignal: feature flag overrides are active:', overrides);
 
   try {
-    const { ok, result } = await get<FeaturesResponse>(`apps/${appId}/sdk/features/web/${VERSION}`);
+    const { ok, result } = await get<FeaturesResponse>([
+      'apps',
+      appId,
+      'sdk',
+      'features',
+      'web',
+      VERSION,
+    ]);
     if (!ok || !Array.isArray(result?.features)) return;
     setFeatureFlags(result.features);
   } catch (e) {

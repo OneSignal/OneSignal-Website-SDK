@@ -16,7 +16,7 @@ import { sendOutcome } from './shared';
 
 export async function downloadSWServerAppConfig(appId: string): Promise<ServerAppConfig> {
   enforceAppId(appId);
-  const response = await OneSignalApiBase.get<ServerAppConfig>(`sync/${appId}/web`, null);
+  const response = await OneSignalApiBase.get<ServerAppConfig>(['sync', appId, 'web'], null);
   return response?.result;
 }
 

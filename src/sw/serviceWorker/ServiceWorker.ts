@@ -374,7 +374,7 @@ async function sendConfirmedDelivery(notification: IOSNotification): Promise<voi
 
   await delay(Math.floor(Math.random() * MAX_CONFIRMED_DELIVERY_DELAY * 1_000));
   await OneSignalApiBase.put(
-    `notifications/${notification.notificationId}/report_received`,
+    ['notifications', notification.notificationId, 'report_received'],
     postData,
   );
 }
@@ -869,7 +869,7 @@ async function sendConvertedAPIRequests(
 
   if (appId) {
     onesignalRestPromise = OneSignalApiBase.put(
-      `notifications/${notificationData.notificationId}`,
+      ['notifications', notificationData.notificationId],
       {
         app_id: appId,
         player_id: pushSubscriptionId,
