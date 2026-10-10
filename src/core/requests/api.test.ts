@@ -82,7 +82,8 @@ describe('alias id as one path segment', () => {
     });
   });
 
-  test('deleteAlias encodes the label to remove as one segment', async () => {
+  // The public removeAlias rejects a / before this layer; this checks the request layer alone.
+  test('deleteAlias encodes a label with / as one segment', async () => {
     await deleteAlias({ appId: APP_ID }, alias, 'a/b');
 
     expect(sentUrl().endsWith(`/users/by/external_id/${EXTERNAL_ID}/identity/a%2Fb`)).toBe(true);
