@@ -4,7 +4,7 @@ import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { beforeEach, describe, expect, test } from 'vite-plus/test';
 
 import { IdentityConstants } from '../constants';
-import type { RequestMetadata } from '../types/api';
+import type { AliasPair, RequestMetadata } from '../types/api';
 import {
   addAlias,
   createNewUser,
@@ -41,13 +41,57 @@ const endpoints: [string, (metadata: RequestMetadata) => Promise<unknown>][] = [
 ];
 
 const sentHeaders = () => requestHeadersFn.mock.calls[0][0];
+const sentUrl = () => requestHeadersFn.mock.calls[0][1];
+
+const mockAllMethods = () => {
+  for (const method of ['get', 'post', 'patch', 'delete'] as const) {
+    getHandler({ uri: '*', method, status: 200 });
+  }
+};
+
+// [name, call, path after the alias id] for every endpoint that addresses the user by alias.
+const aliasEndpoints: [string, (alias: AliasPair) => Promise<unknown>, string][] = [
+  ['getUserByAlias', (a) => getUserByAlias({ appId: APP_ID }, a), ''],
+  ['updateUserByAlias', (a) => updateUserByAlias({ appId: APP_ID }, a, {}), ''],
+  ['deleteUserByAlias', (a) => deleteUserByAlias({ appId: APP_ID }, a), ''],
+  ['addAlias', (a) => addAlias({ appId: APP_ID }, a, { external_id: EXTERNAL_ID }), '/identity'],
+  ['getUserIdentity', (a) => getUserIdentity({ appId: APP_ID }, a), '/identity'],
+  ['deleteAlias', (a) => deleteAlias({ appId: APP_ID }, a, 'label'), '/identity/label'],
+  [
+    'createSubscriptionByAlias',
+    (a) => createSubscriptionByAlias({ appId: APP_ID }, a, { subscription }),
+    '/subscriptions',
+  ],
+];
+
+describe('alias id as one path segment', () => {
+  beforeEach(mockAllMethods);
+
+  describe.each(aliasEndpoints)('%s', (_, call, suffix) => {
+    test.each([
+      ['org/123', 'org%2F123'],
+      ['a?b', 'a%3Fb'],
+      ['a#b', 'a%23b'],
+    ])('an externalId of %s addresses external_id/%s', async (externalId, encoded) => {
+      await call({ label: IdentityConstants._ExternalID, id: externalId });
+
+      expect(requestHeadersFn).toHaveBeenCalledTimes(1);
+      expect(sentUrl().endsWith(`/apps/${APP_ID}/users/by/external_id/${encoded}${suffix}`)).toBe(
+        true,
+      );
+    });
+  });
+
+  // The public removeAlias rejects a / before this layer; this checks the request layer alone.
+  test('deleteAlias encodes a label with / as one segment', async () => {
+    await deleteAlias({ appId: APP_ID }, alias, 'a/b');
+
+    expect(sentUrl().endsWith(`/users/by/external_id/${EXTERNAL_ID}/identity/a%2Fb`)).toBe(true);
+  });
+});
 
 describe('request metadata to headers', () => {
-  beforeEach(() => {
-    for (const method of ['get', 'post', 'patch', 'delete'] as const) {
-      getHandler({ uri: '*', method, status: 200 });
-    }
-  });
+  beforeEach(mockAllMethods);
 
   describe.each(endpoints)('%s', (_, call) => {
     test('sets Authorization: Bearer when a jwt is given', async () => {
