@@ -12,6 +12,27 @@ import type {
 
 declare let self: ServiceWorkerGlobalScope;
 
+/**
+ * Posts a message from the service worker to all window clients, including
+ * uncontrolled ones. Standalone so code without a messenger instance can call it.
+ */
+export async function broadcastToPages(
+  command: WorkerMessengerCommandValue,
+  payload: WorkerMessengerPayload,
+): Promise<void> {
+  const clients = await self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  });
+  for (const client of clients) {
+    Log._debug(`[WM] SW->Page broadcast '${command}' ${client.url}`);
+    client.postMessage({
+      command: command,
+      payload: payload,
+    });
+  }
+}
+
 export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
   /**
    * Due to https://github.com/w3c/ServiceWorker/issues/1156, listen() must
@@ -58,17 +79,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
    * Broadcasts a message from a service worker to all clients, including uncontrolled clients.
    */
   async _broadcast(command: WorkerMessengerCommandValue, payload: WorkerMessengerPayload) {
-    const clients = await self.clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true,
-    });
-    for (const client of clients) {
-      Log._debug(`[WM] SW->Page broadcast '${command}' ${client.url}`);
-      client.postMessage({
-        command: command,
-        payload: payload,
-      });
-    }
+    await broadcastToPages(command, payload);
   }
 
   /**

@@ -14,7 +14,10 @@ import {
   type ServiceWorkerManagerConfig,
 } from '../helpers/service-worker';
 import Log from '../libraries/Log';
-import { WorkerMessengerCommand } from '../libraries/workerMessenger/constants';
+import {
+  type JwtUnauthorizedPayload,
+  WorkerMessengerCommand,
+} from '../libraries/workerMessenger/constants';
 import { triggerNotificationClick } from '../listeners';
 import Path from '../models/Path';
 import type {
@@ -297,6 +300,18 @@ export class ServiceWorkerManager {
     workerMessenger._on(WorkerMessengerCommand._NotificationDismissed, (data) => {
       OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
+
+    // Same rule as the page paths: a 401 only says the token the request went
+    // out with is bad. A newer stored token is kept.
+    workerMessenger._on(
+      WorkerMessengerCommand._JwtUnauthorized,
+      ({ externalId, jwt }: JwtUnauthorizedPayload) => {
+        const jwtTokenStore = OneSignal._coreDirector._jwtTokenStore;
+        if (jwtTokenStore._getJwt(externalId) !== jwt) return;
+        jwtTokenStore._invalidateJwt(externalId);
+        Log._debug('Worker session request: 401, JWT invalidated');
+      },
+    );
 
     const isSafari = hasSafariWindow();
 
