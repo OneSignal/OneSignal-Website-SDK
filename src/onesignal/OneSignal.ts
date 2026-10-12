@@ -7,6 +7,7 @@ import { getSubscription } from 'src/shared/database/subscription';
 import { windowEnvString } from 'src/shared/environment/detect';
 import {
   EmptyArgumentError,
+  InitNotCalledError,
   MissingSafariWebIdError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
@@ -97,7 +98,7 @@ export default class OneSignal {
    */
   static async login(externalId: string, jwtToken?: string): Promise<void> {
     logMethodCall('login', { externalId, jwtToken });
-    if (isConsentRequiredButNotGiven()) return;
+    if (OneSignal._coreReady && isConsentRequiredButNotGiven()) return;
 
     if (typeof externalId === 'undefined') {
       throw EmptyArgumentError('externalId');
@@ -113,13 +114,43 @@ export default class OneSignal {
 
     if (isMissing(externalId, 'login: externalId')) return;
 
+    if (!OneSignal._coreReady && !(await OneSignal._awaitCore('login'))) return;
     await LoginManager.login(externalId, jwtToken);
   }
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
-    if (isConsentRequiredButNotGiven()) return;
+    if (OneSignal._coreReady && isConsentRequiredButNotGiven()) return;
+    if (!OneSignal._coreReady && !(await OneSignal._awaitCore('logout'))) return;
     await LoginManager.logout();
+  }
+
+  /**
+   * login and logout need the user model and the consent state that init
+   * loads. A call that starts while init runs waits for init, then checks
+   * consent, because the check before the wait cannot see the init config or
+   * the stored consent. Returns false when the call must stop: init stopped
+   * before the user model existed, or consent is required but not given.
+   *
+   * A call before init starts throws, as on Android. A wait would never end
+   * when the call runs inside the OneSignalDeferred array ahead of init,
+   * because the array runs its callbacks one at a time.
+   *
+   * Callers check _coreReady before they call this. A call after init then
+   * stays synchronous, so the operations of the calls that follow it without an
+   * await keep their order in the queue. Calls that wait resume in call order,
+   * because each one takes the same number of microtask hops.
+   */
+  private static async _awaitCore(method: string): Promise<boolean> {
+    if (!OneSignal._initCalled) throw InitNotCalledError(method);
+    Log._debug(`${method}: waiting for init`);
+
+    await OneSignal._coreReadyPromise;
+    if (!OneSignal._coreReady) {
+      Log._warn(`${method} skipped: init did not complete`);
+      return false;
+    }
+    return !isConsentRequiredButNotGiven();
   }
 
   /**
@@ -133,6 +164,16 @@ export default class OneSignal {
     removeLegacySubscriptionOptions();
 
     errorIfInitAlreadyCalled();
+    try {
+      await OneSignal._init(options);
+    } finally {
+      // Wakes the callers of _awaitCore when init stopped or threw before the user
+      // model. _coreReady stays false on that path. A settled promise ignores a second call.
+      OneSignal._resolveCoreReady();
+    }
+  }
+
+  private static async _init(options: AppUserConfig): Promise<void> {
     await OneSignal._initializeConfig(options);
     if (!OneSignal.config) {
       throw new Error('OneSignal config not initialized!');
@@ -154,8 +195,10 @@ export default class OneSignal {
     if (!idb) return;
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
-
     OneSignal._consentGiven = await getConsentGiven();
+    // After the consent load, so a call that waited on init sees the stored consent.
+    OneSignal._settleCoreReady();
+
     if (getConsentRequired()) {
       if (!OneSignal._consentGiven) {
         OneSignal._pendingInit = true;
@@ -274,6 +317,21 @@ export default class OneSignal {
 
   /* NEW USER MODEL CHANGES */
   static _coreDirector: CoreModuleDirector;
+  /** True once init created the user model and loaded the stored consent. */
+  static _coreReady = false;
+  /** Settles when _coreReady turns true, or when init stopped or threw before that. */
+  // `declare` emits no field define, so nothing can run after the block and reset these.
+  declare static _coreReadyPromise: Promise<void>;
+  declare static _resolveCoreReady: () => void;
+  static {
+    OneSignal._coreReadyPromise = new Promise<void>((resolve) => {
+      OneSignal._resolveCoreReady = resolve;
+    });
+  }
+  static _settleCoreReady(): void {
+    OneSignal._coreReady = true;
+    OneSignal._resolveCoreReady();
+  }
 
   static Notifications = new NotificationsNamespace();
   static Slidedown = new SlidedownNamespace();
