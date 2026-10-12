@@ -49,12 +49,12 @@ function logIfUnauthorized(response: OneSignalApiBaseResponse, jwt: string | und
 
 /**
  *  Main on_session call
- * @returns
+ * @returns false when the request was skipped because the user cannot be addressed
  */
-export async function updateUserSession(user: SessionUser): Promise<void> {
+export async function updateUserSession(user: SessionUser): Promise<boolean> {
   const { appId, subscriptionId } = user;
   const params = sessionBackendParams(user);
-  if (!params) return;
+  if (!params) return false;
   const { alias, jwt } = params;
   // TO DO: in future, we should aggregate session count in case network call fails
   const updateUserPayload: IUpdateUser = {
@@ -76,6 +76,7 @@ export async function updateUserSession(user: SessionUser): Promise<void> {
   } catch (e) {
     Log._debug('Session update error:', e);
   }
+  return true;
 }
 
 export async function sendSessionDuration(

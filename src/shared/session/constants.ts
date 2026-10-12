@@ -13,4 +13,5 @@ export const SessionOrigin = {
   _BeforeUnload: 5,
   _Focus: 7,
   _Blur: 8,
+  _JwtUpdated: 9,
 } as const;

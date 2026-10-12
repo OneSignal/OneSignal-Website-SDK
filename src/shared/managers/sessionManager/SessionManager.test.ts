@@ -446,6 +446,31 @@ describe('SessionManager', () => {
       expect(invalidated).not.toHaveBeenCalled();
     });
 
+    test('a 401 does not count as sent: a fresh token sends this page view again', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const store = OneSignal._coreDirector._jwtTokenStore;
+      store._putJwt(EXTERNAL_ID, JWT);
+      server.use(
+        http.patch(externalIdUri, ({ request }) => {
+          requestHeadersFn(Object.fromEntries(request.headers), request.url);
+          const status = request.headers.get('authorization') === `Bearer ${JWT}` ? 401 : 200;
+          return HttpResponse.json({}, { status });
+        }),
+      );
+
+      await sm._sendOnSessionUpdateFromPage();
+      expect(requestHeadersFn).toHaveBeenCalledTimes(1);
+
+      store._putJwt(EXTERNAL_ID, 'fresh-jwt');
+      await sm._sendOnSessionUpdateFromPage();
+      expect(requestHeadersFn).toHaveBeenCalledTimes(2);
+      expect(lastRequest().headers.authorization).toBe('Bearer fresh-jwt');
+
+      // A 200 counts as sent.
+      await sm._sendOnSessionUpdateFromPage();
+      expect(requestHeadersFn).toHaveBeenCalledTimes(2);
+    });
+
     test('a 401 while IV is inactive leaves the store alone', async () => {
       const store = OneSignal._coreDirector._jwtTokenStore;
       store._putJwt(EXTERNAL_ID, JWT);
@@ -458,6 +483,91 @@ describe('SessionManager', () => {
       await sm._sendOnSessionUpdateFromPage();
 
       expect(store._getJwt(EXTERNAL_ID)).toBe(JWT);
+    });
+  });
+
+  describe('_handleJwtUpdated', () => {
+    const JWT = 'header.payload.signature';
+    const externalIdUri = `**/apps/${APP_ID}/users/by/external_id/${EXTERNAL_ID}`;
+    let sm: SessionManager;
+
+    beforeEach(async () => {
+      localStorage.clear();
+      TestEnvironment.initialize();
+      setPageViewCount(1);
+      setJwtRequirement(JwtRequirement._Required);
+      await setupSubModelStore({ id: SUB_ID });
+      updateIdentityModel('external_id', EXTERNAL_ID);
+      sm = new SessionManager(OneSignal._context);
+      getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+    });
+
+    test('no worker: sends the on_session the page skipped for a missing token, once', async () => {
+      supportsServiceWorkersSpy.mockReturnValue(false);
+      await sm._upsertSession(SessionOrigin._UserNewSession);
+      await sm._sendOnSessionUpdateFromPage();
+      expect(updateUserFn).not.toHaveBeenCalled();
+
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      await sm._handleJwtUpdated(EXTERNAL_ID);
+
+      expect(updateUserFn).toHaveBeenCalledTimes(1);
+      const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+      expect(url).toContain(`/users/by/external_id/${EXTERNAL_ID}`);
+      expect(headers.authorization).toBe(`Bearer ${JWT}`);
+
+      await sm._handleJwtUpdated(EXTERNAL_ID);
+      expect(updateUserFn).toHaveBeenCalledTimes(1);
+    });
+
+    test('with a worker: asks for an upsert that carries the new token', async () => {
+      supportsServiceWorkersSpy.mockReturnValue(true);
+      User._createOrGetInstance();
+      vi.spyOn(sm, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
+      });
+      const unicastSpy = vi
+        .spyOn(OneSignal._context._workerMessenger, '_unicast')
+        .mockResolvedValue(undefined);
+      await sm._upsertSession(SessionOrigin._UserNewSession);
+      expect(unicastSpy).toHaveBeenCalledTimes(1);
+
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      await sm._handleJwtUpdated(EXTERNAL_ID);
+
+      expect(unicastSpy).toHaveBeenCalledTimes(2);
+      expect(unicastSpy.mock.calls.at(-1)![1]).toMatchObject({
+        sessionOrigin: SessionOrigin._JwtUpdated,
+        jwtRequired: true,
+        externalId: EXTERNAL_ID,
+        jwt: JWT,
+      });
+      expect(updateUserFn).not.toHaveBeenCalled();
+    });
+
+    test('before the session start: nothing, the normal flow carries the token', async () => {
+      supportsServiceWorkersSpy.mockReturnValue(false);
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+
+      await sm._handleJwtUpdated(EXTERNAL_ID);
+
+      expect(updateUserFn).not.toHaveBeenCalled();
+    });
+
+    test('IV inactive or a token for another user: nothing', async () => {
+      supportsServiceWorkersSpy.mockReturnValue(false);
+      await sm._upsertSession(SessionOrigin._UserNewSession);
+      const store = OneSignal._coreDirector._jwtTokenStore;
+
+      store._putJwt('someone-else', JWT);
+      await sm._handleJwtUpdated('someone-else');
+      expect(updateUserFn).not.toHaveBeenCalled();
+
+      setJwtRequirement(JwtRequirement._NotRequired);
+      store._putJwt(EXTERNAL_ID, JWT);
+      await sm._handleJwtUpdated(EXTERNAL_ID);
+      expect(updateUserFn).not.toHaveBeenCalled();
     });
   });
 });
