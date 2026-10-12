@@ -31,6 +31,7 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal._emitter = new Emitter();
   const core = new CoreModule();
   global.OneSignal._coreDirector = new CoreModuleDirector(core);
+  global.OneSignal._settleCoreReady();
 
   // Clear the User singleton before creating new instance
   User._singletonInstance = undefined;
