@@ -14,6 +14,11 @@ export interface Session {
   status: SessionStatusValue;
   lastDeactivatedTimestamp: number | null;
   lastActivatedTimestamp: number;
+  /**
+   * The on_session request was skipped because the token was missing. The next
+   * upsert that brings a token sends it once.
+   */
+  onSessionPending?: boolean;
 }
 
 interface BaseSessionPayload {
