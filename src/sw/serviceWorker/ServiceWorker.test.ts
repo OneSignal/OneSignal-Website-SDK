@@ -755,7 +755,7 @@ describe('ServiceWorker', () => {
           expect(headers.authorization).toBeUndefined();
         });
 
-        test('jwtRequired without a jwt: the session is stored and no request is sent', async () => {
+        test('jwtRequired without a jwt: the session is stored as pending and no request is sent', async () => {
           setUpdateUserResponse();
           const putSpy = vi.spyOn(db, 'put');
 
@@ -770,6 +770,77 @@ describe('ServiceWorker', () => {
           );
           expect(updateUserFn).not.toHaveBeenCalled();
           expect(requestHeadersFn).not.toHaveBeenCalled();
+          expect(await getCurrentSession()).toMatchObject({
+            status: SessionStatus._Active,
+            onSessionPending: true,
+          });
+        });
+
+        test('a later upsert with a jwt sends the pending on_session once', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+          // Still no token: the session stays pending.
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect(await getCurrentSession()).toMatchObject({ onSessionPending: true });
+
+          await upsertWith({
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+            sessionOrigin: SessionOrigin._JwtUpdated,
+          });
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
+          const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+          expect(url).toContain(`/users/by/external_id/${EXTERNAL_ID}`);
+          expect(headers.authorization).toBe(`Bearer ${JWT}`);
+          expect(await getCurrentSession()).toMatchObject({
+            status: SessionStatus._Active,
+            onSessionPending: false,
+          });
+
+          // The session is active and no longer pending, so a focus upsert sends nothing.
+          await upsertWith({
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+            sessionOrigin: SessionOrigin._Focus,
+          });
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+        });
+
+        test('a pending session reactivated within the threshold sends on_session with the jwt', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          await db.put('Sessions', {
+            ...session,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now(),
+            onSessionPending: true,
+          });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect(await getCurrentSession()).toMatchObject({
+            status: SessionStatus._Active,
+            onSessionPending: false,
+          });
+        });
+
+        // An anonymous user has no backend user under IV, so no token can complete this request later.
+        test('an anonymous user does not leave the session pending', async () => {
+          setUpdateUserResponse();
+
+          await upsertWith({ jwtRequired: true });
+
+          expect(updateUserFn).not.toHaveBeenCalled();
+          const current = await getCurrentSession();
+          expect(current).toMatchObject({ status: SessionStatus._Active });
+          expect(current!.onSessionPending).toBeUndefined();
         });
 
         test.each([200, 401])(

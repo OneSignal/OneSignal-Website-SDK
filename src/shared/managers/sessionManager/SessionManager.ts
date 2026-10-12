@@ -26,6 +26,7 @@ import type { ISessionManager } from './types';
 export class SessionManager implements ISessionManager {
   private _context: ContextInterface;
   private _onSessionSent = false;
+  private _sessionStarted = false;
 
   constructor(context: ContextInterface) {
     this._context = context;
@@ -256,6 +257,7 @@ export class SessionManager implements ISessionManager {
 
   async _upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
     await LoginManager._switchingUsersPromise;
+    this._sessionStarted = true;
 
     if (User._singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
@@ -387,12 +389,11 @@ export class SessionManager implements ISessionManager {
           alias,
           updateUserPayload,
         );
-        this._onSessionSent = true;
-        if (
-          jwt &&
-          externalId &&
-          getResponseStatusType(response.status) === ResponseStatusType._Unauthorized
-        ) {
+        const unauthorized =
+          getResponseStatusType(response.status) === ResponseStatusType._Unauthorized;
+        // After a 401 the flag stays clear, so a fresh token can send this page view's on_session.
+        if (!unauthorized) this._onSessionSent = true;
+        if (unauthorized && jwt && externalId) {
           this._invalidateJwtAfterUnauthorized(externalId, jwt);
         }
       } catch (e) {
@@ -402,6 +403,31 @@ export class SessionManager implements ISessionManager {
       if (e instanceof Error) {
         Log._error(`Session update failed: "${e.message}" ${e.stack}`);
       }
+    }
+  }
+
+  /**
+   * A token stored after the session started. Without a worker the page sends the
+   * on_session it skipped or that got a 401. With a worker the page asks for an
+   * upsert, and the worker sends on_session only if its session still waits for
+   * a token. Before the session start the normal flow carries the token.
+   */
+  async _handleJwtUpdated(externalId: string): Promise<void> {
+    if (!this._sessionStarted || !isIvBehaviorActive()) return;
+    if (OneSignal._coreDirector._getIdentityModel()._externalId !== externalId) return;
+
+    if (!supportsServiceWorkers()) {
+      await this._sendOnSessionUpdateFromPage();
+      return;
+    }
+
+    await LoginManager._switchingUsersPromise;
+    if (!User._singletonInstance?.onesignalId) return;
+    try {
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+      await this._notifySWToUpsertSession(onesignalId, subscriptionId, SessionOrigin._JwtUpdated);
+    } catch (e) {
+      Log._error('JWT update session error:', e);
     }
   }
 
