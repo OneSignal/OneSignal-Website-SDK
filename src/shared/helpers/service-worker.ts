@@ -56,6 +56,10 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
   }
 
   if (existingSession.status === SessionStatus._Active) {
+    if (existingSession.onSessionPending) {
+      await sendPendingOnSession(options, existingSession);
+      return;
+    }
     Log._debug('Session already active', existingSession);
     return;
   }
@@ -77,6 +81,7 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
     existingSession.lastActivatedTimestamp = currentTimestamp;
     existingSession.lastDeactivatedTimestamp = null;
     await db.put('Sessions', existingSession);
+    if (existingSession.onSessionPending) await sendPendingOnSession(options, existingSession);
     return;
   }
 
@@ -144,7 +149,21 @@ async function sendOnSessionCall(user: SessionUser, session: Session) {
   void resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
-  await updateUserSession(user);
+  const sent = await updateUserSession(user);
+  // Only a missing token can arrive later. An anonymous user under Identity
+  // Verification has no backend user, so that skip does not leave the session pending.
+  if (!sent && user.externalId) {
+    session.onSessionPending = true;
+    await db.put('Sessions', session);
+  }
+}
+
+// Still no token: the request is skipped again and the session stays pending.
+async function sendPendingOnSession(user: SessionUser, session: Session): Promise<void> {
+  const sent = await updateUserSession(user);
+  if (!sent) return;
+  session.onSessionPending = false;
+  await db.put('Sessions', session);
 }
 
 async function finalizeSession(
