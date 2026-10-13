@@ -2,6 +2,7 @@ import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setUpdateUserResponse, updateUserFn } from '__test__/support/helpers/requests';
+import { installMockCacheStorage } from '__test__/support/mocks/MockCacheStorage';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
@@ -16,6 +17,7 @@ import {
   putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
+import { FeatureFlag } from 'src/shared/features/featureFlags';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
@@ -26,7 +28,7 @@ import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategy
 import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from 'src/shared/session/constants';
 import type { Session, UpsertOrDeactivateSessionPayload } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { getAppId, run } from './ServiceWorker';
 
@@ -370,6 +372,81 @@ describe('ServiceWorker', () => {
             body: payload.alert,
           }),
         );
+      });
+    });
+
+    describe('notification images', () => {
+      const badge = 'https://example.com/badge.png';
+      const pngDataUrl = `data:image/png;base64,${btoa('\x89PNG')}`;
+      const fetchMock = vi.fn<typeof fetch>();
+
+      const enableInlineImages = () =>
+        db.put('Options', {
+          key: 'featureFlags',
+          value: JSON.stringify([FeatureFlag._InlineNotificationImages]),
+        });
+
+      const displayPush = async (payload = mockOSMinifiedNotificationPayload({ badge })) => {
+        matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
+        await dispatchEvent(new PushEvent('push', payload));
+        return showNotificationSpy.mock.calls[0]?.[1] as NotificationOptions;
+      };
+
+      beforeEach(() => {
+        installMockCacheStorage();
+        fetchMock.mockReset();
+        fetchMock.mockImplementation(() =>
+          Promise.resolve(
+            new Response(Uint8Array.from([0x89, 0x50, 0x4e, 0x47]), {
+              headers: { 'content-type': 'image/png' },
+            }),
+          ),
+        );
+        vi.stubGlobal('fetch', fetchMock);
+      });
+
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      test('without the flag, passes the remote URLs through and fetches nothing', async () => {
+        const options = await displayPush();
+
+        expect(options.icon).toBe('https://example.com/icon.png');
+        expect(options.badge).toBe(badge);
+        expect(fetchMock).not.toHaveBeenCalled();
+      });
+
+      test('with the flag, passes the icon and badge as data URLs and keeps the URLs in data', async () => {
+        await enableInlineImages();
+
+        const options = await displayPush();
+
+        expect(options.icon).toBe(pngDataUrl);
+        expect(options.badge).toBe(pngDataUrl);
+        expect(options.data).toEqual(
+          expect.objectContaining({ icon: 'https://example.com/icon.png', badgeIcon: badge }),
+        );
+      });
+
+      test('with the flag, falls back to the remote URL when the fetch fails', async () => {
+        await enableInlineImages();
+        fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+        const options = await displayPush();
+
+        expect(options.icon).toBe('https://example.com/icon.png');
+        expect(options.badge).toBe(badge);
+      });
+
+      test('keeps an icon URL that the URL parser rejects', async () => {
+        const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
+
+        const options = await displayPush(mockOSMinifiedNotificationPayload({ icon: 'not a url' }));
+
+        expect(options.icon).toBe('not a url');
+        expect(errorSpy).toHaveBeenCalledWith('ensureImageHttps:', expect.any(TypeError));
       });
     });
   });

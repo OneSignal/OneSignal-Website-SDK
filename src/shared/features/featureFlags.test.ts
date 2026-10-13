@@ -3,9 +3,15 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
+import { db, getOptionsValue } from '../database/client';
 import { getFeatureFlags, getFeatureOverrides, setFeatureFlags } from '../helpers/localStorage';
 import Log from '../libraries/Log';
-import { FeatureFlag, isFeatureEnabled, refreshFeatureFlags } from './featureFlags';
+import {
+  FeatureFlag,
+  isFeatureEnabled,
+  isFeatureEnabledInWorker,
+  refreshFeatureFlags,
+} from './featureFlags';
 
 const FLAG = FeatureFlag._IdentityVerification;
 const FEATURES_PATH = `**/apps/${APP_ID}/sdk/features/web/*`;
@@ -133,6 +139,45 @@ describe('featureFlags', () => {
 
       expect(consoleWarnSpy).not.toHaveBeenCalled();
       expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    test('mirrors the server list and the overrides into IndexedDB for the worker', async () => {
+      localStorage.setItem('os_feature_overrides', 'other_flag');
+      mockFeatures({ features: [FLAG, 7] });
+
+      await refreshFeatureFlags(APP_ID);
+
+      expect(await getOptionsValue<string>('featureFlags')).toBe(
+        JSON.stringify(['other_flag', FLAG]),
+      );
+    });
+
+    test('a failed fetch keeps the mirrored list', async () => {
+      await db.put('Options', { key: 'featureFlags', value: JSON.stringify([FLAG]) });
+      mockFeatures({ errors: ['nope'] }, 500);
+
+      await refreshFeatureFlags(APP_ID);
+
+      expect(await isFeatureEnabledInWorker(FLAG)).toBe(true);
+    });
+  });
+
+  describe('isFeatureEnabledInWorker', () => {
+    test('is false when nothing is mirrored', async () => {
+      expect(await isFeatureEnabledInWorker(FLAG)).toBe(false);
+    });
+
+    test('reads the mirrored list', async () => {
+      await db.put('Options', { key: 'featureFlags', value: JSON.stringify(['a', FLAG]) });
+      expect(await isFeatureEnabledInWorker(FLAG)).toBe(true);
+    });
+
+    test('is false when the mirrored value is malformed', async () => {
+      await db.put('Options', { key: 'featureFlags', value: '{not json' });
+      expect(await isFeatureEnabledInWorker(FLAG)).toBe(false);
+
+      await db.put('Options', { key: 'featureFlags', value: JSON.stringify({ features: [FLAG] }) });
+      expect(await isFeatureEnabledInWorker(FLAG)).toBe(false);
     });
   });
 });
