@@ -22,7 +22,7 @@ jobs:
           fetch-tags: true
 
       - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
+        uses: voidzero-dev/setup-vp@v1.21.1
 
       - name: Get current SDK version
         id: current_version

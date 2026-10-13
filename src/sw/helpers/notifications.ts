@@ -28,14 +28,12 @@ export function toOSNotification(payload: OSMinifiedNotificationPayload): IOSNot
 function convertButtons(
   payloadButtons?: OSMinifiedButtonsPayload[],
 ): IOSNotificationActionButton[] | undefined {
-  return payloadButtons?.map(
-    (button): IOSNotificationActionButton => ({
-      actionId: button.i,
-      text: button.n,
-      icon: button.p,
-      launchURL: button.u,
-    }),
-  );
+  return payloadButtons?.map((button): IOSNotificationActionButton => ({
+    actionId: button.i,
+    text: button.n,
+    icon: button.p,
+    launchURL: button.u,
+  }));
 }
 
 export function isValidPayload(payload: any): boolean {
@@ -45,14 +43,12 @@ export function isValidPayload(payload: any): boolean {
 export function toNativeNotificationAction(
   actionPayload?: IOSNotificationActionButton[],
 ): NotificationAction[] | undefined {
-  return actionPayload?.map(
-    (payload): NotificationAction => ({
-      action: payload.actionId,
-      title: payload.text,
-      icon: payload.icon,
-      // launchURL not a native browser feature.
-      // When clicked, we get the action to map it back to the specific
-      // IOSNotificationActionButton
-    }),
-  );
+  return actionPayload?.map((payload): NotificationAction => ({
+    action: payload.actionId,
+    title: payload.text,
+    icon: payload.icon,
+    // launchURL not a native browser feature.
+    // When clicked, we get the action to map it back to the specific
+    // IOSNotificationActionButton
+  }));
 }
