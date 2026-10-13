@@ -10,6 +10,7 @@ import { VERSION } from '../utils/env';
 
 export const FeatureFlag = {
   _IdentityVerification: 'sdk_identity_verification',
+  _InlineNotificationImages: 'sdk_web_inline_notification_images',
 } as const;
 
 export type FeatureFlagValue = (typeof FeatureFlag)[keyof typeof FeatureFlag];
