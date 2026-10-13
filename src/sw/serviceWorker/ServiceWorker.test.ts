@@ -430,6 +430,22 @@ describe('ServiceWorker', () => {
         );
       });
 
+      test('with the flag, leaves the icon as a remote URL when it is the large image', async () => {
+        await enableInlineImages();
+        const image = 'https://example.com/article.jpg';
+
+        const options = await displayPush(
+          mockOSMinifiedNotificationPayload({ badge, icon: image, image }),
+        );
+
+        expect(options.icon).toBe(image);
+        expect(options.badge).toBe(pngDataUrl);
+        // @ts-expect-error - image is not in the NotificationOptions type
+        expect(options.image).toBe(image);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledWith(badge, expect.anything());
+      });
+
       test('with the flag, falls back to the remote URL when the fetch fails', async () => {
         await enableInlineImages();
         fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));

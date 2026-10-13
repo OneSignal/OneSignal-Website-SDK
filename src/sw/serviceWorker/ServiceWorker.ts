@@ -593,9 +593,15 @@ async function displayNotification(notification: IMutableOSNotification) {
 
   // The notification object stays as received so `data` and the click
   // handlers keep the original URLs; only the display options get the bytes.
+  // The server sets the icon to the large image on Chrome for macOS; that
+  // per-notification image is left as a remote URL and never cached.
   const inline = await isFeatureEnabledInWorker(FeatureFlag._InlineNotificationImages);
+  const iconIsImage = !!notification.image && notification.icon === notification.image;
   const [icon, badge] = inline
-    ? await Promise.all([inlineImage(notification.icon), inlineImage(notification.badgeIcon)])
+    ? await Promise.all([
+        iconIsImage ? notification.icon : inlineImage(notification.icon),
+        inlineImage(notification.badgeIcon),
+      ])
     : [notification.icon, notification.badgeIcon];
 
   const notificationOptions: NotificationOptions = {
