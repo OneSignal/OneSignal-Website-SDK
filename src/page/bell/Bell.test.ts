@@ -13,7 +13,6 @@ describe('Bell', () => {
   });
 
   test('constructor early-returns when enable=false and applies defaults', () => {
-    // @ts-expect-error - private method
     const installSpy = vi.spyOn(Bell.prototype, '_installEventHooks');
     const updateSpy = vi.spyOn(Bell.prototype, '_updateState');
 
@@ -26,7 +25,6 @@ describe('Bell', () => {
   });
 
   test('constructor validates and installs hooks when enable=true', () => {
-    // @ts-expect-error - private method
     const installSpy = vi.spyOn(Bell.prototype, '_installEventHooks');
     const updateSpy = vi.spyOn(Bell.prototype, '_updateState');
 
