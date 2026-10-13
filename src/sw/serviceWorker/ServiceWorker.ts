@@ -10,6 +10,7 @@ import {
 } from 'src/shared/database/notifications';
 import { getSubscription, setSubscription } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
+import { FeatureFlag, isFeatureEnabledInWorker } from 'src/shared/features/featureFlags';
 import { delay } from 'src/shared/helpers/general';
 import { deactivateSession, upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
@@ -41,6 +42,7 @@ import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
 
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
+import { inlineImage } from '../helpers/inlineImage';
 import {
   isValidPayload,
   toNativeNotificationAction,
@@ -589,9 +591,16 @@ async function displayNotification(notification: IMutableOSNotification) {
 
   ensureNotificationResourcesHttps(notification);
 
+  // The notification object stays as received so `data` and the click
+  // handlers keep the original URLs; only the display options get the bytes.
+  const inline = await isFeatureEnabledInWorker(FeatureFlag._InlineNotificationImages);
+  const [icon, badge] = inline
+    ? await Promise.all([inlineImage(notification.icon), inlineImage(notification.badgeIcon)])
+    : [notification.icon, notification.badgeIcon];
+
   const notificationOptions: NotificationOptions = {
     body: notification.body,
-    icon: notification.icon,
+    icon,
     /*
      On Chrome 56, a large image can be displayed:
      https://bugs.chromium.org/p/chromium/issues/detail?id=614456
@@ -643,7 +652,7 @@ async function displayNotification(notification: IMutableOSNotification) {
      badge should accommodate devices up to 4x resolution, about 96 by
      96 px, and the image will be automatically masked.
      */
-    badge: notification.badgeIcon,
+    badge,
   };
 
   await self.registration.showNotification(notification.title, notificationOptions);
