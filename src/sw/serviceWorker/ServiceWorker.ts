@@ -524,7 +524,9 @@ function ensureImageResourceHttps(imageUrl?: string) {
       const replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;
       return `https://i0.wp.com/${replacedImageUrl}`;
     } catch (e) {
+      // A URL the parser rejects may still load in the browser, so keep it.
       Log._error('ensureImageHttps:', e);
+      return imageUrl;
     }
   }
   return undefined;
