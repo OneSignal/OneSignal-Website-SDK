@@ -430,20 +430,57 @@ describe('ServiceWorker', () => {
         );
       });
 
-      test('with the flag, leaves the icon as a remote URL when it is the large image', async () => {
-        await enableInlineImages();
+      describe('with the flag and a large image', () => {
+        const defaultIcon = 'https://example.com/default-icon.png';
         const image = 'https://example.com/article.jpg';
 
-        const options = await displayPush(
-          mockOSMinifiedNotificationPayload({ badge, icon: image, image }),
-        );
+        beforeEach(async () => {
+          await enableInlineImages();
+          await db.put('Options', { key: 'defaultIcon', value: defaultIcon });
+        });
 
-        expect(options.icon).toBe(image);
-        expect(options.badge).toBe(pngDataUrl);
-        // @ts-expect-error - image is not in the NotificationOptions type
-        expect(options.image).toBe(image);
-        expect(fetchMock).toHaveBeenCalledTimes(1);
-        expect(fetchMock).toHaveBeenCalledWith(badge, expect.anything());
+        test('inlines the app default icon when the payload has no icon', async () => {
+          const { icon: _icon, ...payload } = mockOSMinifiedNotificationPayload({ badge, image });
+
+          const options = await displayPush(payload);
+
+          expect(options.icon).toBe(pngDataUrl);
+          // @ts-expect-error - image is not in the NotificationOptions type
+          expect(options.image).toBe(image);
+          expect(fetchMock).toHaveBeenCalledWith(defaultIcon, expect.anything());
+        });
+
+        test('inlines the icon when the payload icon is the app default icon', async () => {
+          const options = await displayPush(
+            mockOSMinifiedNotificationPayload({ badge, icon: defaultIcon, image }),
+          );
+
+          expect(options.icon).toBe(pngDataUrl);
+        });
+
+        test('leaves a per-notification icon as a remote URL', async () => {
+          const icon = 'https://example.com/other-image.jpg';
+
+          const options = await displayPush(
+            mockOSMinifiedNotificationPayload({ badge, icon, image }),
+          );
+
+          expect(options.icon).toBe(icon);
+          expect(options.badge).toBe(pngDataUrl);
+          expect(fetchMock).toHaveBeenCalledTimes(1);
+          expect(fetchMock).toHaveBeenCalledWith(badge, expect.anything());
+        });
+
+        test('leaves the icon as a remote URL when it is the image itself', async () => {
+          const options = await displayPush(
+            mockOSMinifiedNotificationPayload({ badge, icon: image, image }),
+          );
+
+          expect(options.icon).toBe(image);
+          // @ts-expect-error - image is not in the NotificationOptions type
+          expect(options.image).toBe(image);
+          expect(fetchMock).toHaveBeenCalledTimes(1);
+        });
       });
 
       test('with the flag, falls back to the remote URL when the fetch fails', async () => {
