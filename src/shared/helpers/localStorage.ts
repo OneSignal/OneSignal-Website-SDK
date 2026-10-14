@@ -1,3 +1,5 @@
+const FEATURE_FLAGS = 'os_feature_flags';
+const FEATURE_OVERRIDES = 'os_feature_overrides';
 const IS_OPTED_OUT = 'isOptedOut';
 const IS_PUSH_NOTIFICATIONS_ENABLED = 'isPushNotificationsEnabled';
 const PAGE_VIEWS = 'os_pageViews';
@@ -35,6 +37,29 @@ export function setConsentGiven(value: boolean): void {
 export function getConsentGiven(): boolean | null {
   const value = localStorage.getItem(USER_CONSENT);
   return value === null ? null : value === 'true';
+}
+
+// The last feature list the server returned, stored as sent. The reader
+// drops non-string entries, and malformed JSON reads as empty.
+export function setFeatureFlags(flags: unknown[]): void {
+  localStorage.setItem(FEATURE_FLAGS, JSON.stringify(flags));
+}
+
+export function getFeatureFlags(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(FEATURE_FLAGS) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((f) => typeof f === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+// Comma-separated flag keys forced on for local testing.
+export function getFeatureOverrides(): string[] {
+  return (localStorage.getItem(FEATURE_OVERRIDES) ?? '')
+    .split(',')
+    .map((f) => f.trim())
+    .filter(Boolean);
 }
 
 export function setLocalPageViewCount(count: number): void {
