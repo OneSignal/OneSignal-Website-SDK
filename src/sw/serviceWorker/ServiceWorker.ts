@@ -588,18 +588,19 @@ async function displayNotification(notification: IMutableOSNotification) {
 
   notification.title = notification.title ? notification.title : defaultTitle;
   notification.icon = notification.icon ? notification.icon : defaultIcon ? defaultIcon : undefined;
+  const iconIsAppDefault = notification.icon === defaultIcon;
 
   ensureNotificationResourcesHttps(notification);
 
   // The notification object stays as received so `data` and the click
   // handlers keep the original URLs; only the display options get the bytes.
-  // The server sets the icon to the large image on Chrome for macOS; that
-  // per-notification image is left as a remote URL and never cached.
+  // On Chrome for macOS the server sets the icon to a per-notification image
+  // when one is present, so only the app default icon is inlined in that case.
   const inline = await isFeatureEnabledInWorker(FeatureFlag._InlineNotificationImages);
-  const iconIsImage = !!notification.image && notification.icon === notification.image;
+  const iconMayBeImage = !!notification.image && !iconIsAppDefault;
   const [icon, badge] = inline
     ? await Promise.all([
-        iconIsImage ? notification.icon : inlineImage(notification.icon),
+        iconMayBeImage ? notification.icon : inlineImage(notification.icon),
         inlineImage(notification.badgeIcon),
       ])
     : [notification.icon, notification.badgeIcon];
