@@ -110,6 +110,25 @@ test('correct degree of persistNotification setting should be stored', async () 
   expect(persistNotification).toBe(true);
 });
 
+describe('initSaveState: default icon', () => {
+  test('stores the site default icon url for the worker', async () => {
+    OneSignal.config!.defaultIconUrl = 'https://example.com/icon.png';
+
+    await InitHelper.initSaveState();
+
+    expect((await db.get('Options', 'defaultIcon'))?.value).toBe('https://example.com/icon.png');
+  });
+
+  test('clears a stale default icon when the app has none', async () => {
+    await db.put('Options', { key: 'defaultIcon', value: 'https://example.com/old.png' });
+    OneSignal.config!.defaultIconUrl = null;
+
+    await InitHelper.initSaveState();
+
+    expect((await db.get('Options', 'defaultIcon'))?.value).toBeNull();
+  });
+});
+
 /** initSaveState – App ID migration */
 describe('initSaveState: App ID migration', () => {
   const OLD_APP_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
