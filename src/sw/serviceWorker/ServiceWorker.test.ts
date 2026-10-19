@@ -863,6 +863,7 @@ describe('ServiceWorker', () => {
       hasUnsupportedSubdomain: false,
       origin: 'https://some-origin.com',
       siteName: 'Example',
+      defaultIconUrl: null,
       vapidPublicKey: '1234567890',
       userConfig: TestContext.getFakeAppUserConfig(),
     };

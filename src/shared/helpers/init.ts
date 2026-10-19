@@ -368,6 +368,7 @@ export async function initSaveState(overridingPageTitle?: string) {
     overridingPageTitle || config.siteName || document.title || 'Notification';
   await db.put('Options', { key: 'pageTitle', value: pageTitle });
   Log._info(`Set pageTitle to be '${pageTitle}'.`);
+  await db.put('Options', { key: 'defaultIcon', value: config.defaultIconUrl ?? null });
 }
 
 async function handleAutoResubscribe(isOptedOut: boolean) {
