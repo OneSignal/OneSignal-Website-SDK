@@ -18,6 +18,7 @@ import {
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { server } from '__test__/support/mocks/server';
 import { isIvBehaviorActive, isIvCodePathEnabled } from 'src/core/identityVerification';
+import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { clearAll } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
@@ -68,13 +69,13 @@ const recordRequest = async ({ request }: { request: Request }) => {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // The queue is empty while a group is in flight, and a response can enqueue a
-// follow-up. Wait for an empty queue that stays empty with no new request.
+// follow-up. Wait for an empty queue that stays empty for 5 passes with no new request.
 async function drainQueue(): Promise<void> {
   const repo = OneSignal._coreDirector._operationRepo;
   for (;;) {
     const before = recorded.length;
     await expect.poll(() => repo._queue.length, { interval: 5 }).toBe(0);
-    await delay(100);
+    await delay(OP_REPO_EXECUTION_INTERVAL * 5);
     if (repo._queue.length === 0 && recorded.length === before) return;
   }
 }
@@ -169,7 +170,8 @@ describe('Identity Verification phase 3 parity', () => {
     const login = OneSignal.login('jd-1');
     OneSignal.User.addTag('plan', 'pro');
     OneSignal.User.addEmail('jd-1@example.com');
-    await delay(200);
+    // 5 queue passes go by with the requirement unknown; every operation stays held.
+    await delay(OP_REPO_EXECUTION_INTERVAL * 5);
     expect(recorded).toEqual([]);
     expect(OneSignal._coreDirector._operationRepo._queue.length).toBeGreaterThan(0);
 
