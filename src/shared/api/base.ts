@@ -116,7 +116,7 @@ function call<T = unknown>(
   if (data) contents.body = JSON.stringify(data);
 
   const action = path.map(encodeRFC3986URIComponent).join('/');
-  // getOneSignalApiUrl matches the encoded path against the Turbine endpoint names.
+  // getOneSignalApiUrl picks the API origin from the encoded path.
   const url = `${getOneSignalApiUrl({ action }).toString()}${action}`;
 
   return executeFetch(url, contents);
