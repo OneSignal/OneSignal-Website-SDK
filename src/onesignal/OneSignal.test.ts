@@ -682,7 +682,8 @@ describe('OneSignal - No Consent Required', () => {
 
           expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBe('token-a');
           expect(OneSignal._coreDirector._operationRepo._timerID).toBeUndefined();
-          await new Promise((resolve) => setTimeout(resolve, 10));
+          // 5 queue passes go by with the repo paused; no user change event fires.
+          await new Promise((resolve) => setTimeout(resolve, OP_REPO_EXECUTION_INTERVAL * 5));
           expect(listener).not.toHaveBeenCalled();
         });
       });
