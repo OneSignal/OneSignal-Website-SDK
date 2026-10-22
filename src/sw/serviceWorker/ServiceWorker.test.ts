@@ -377,7 +377,8 @@ describe('ServiceWorker', () => {
 
     describe('notification images', () => {
       const badge = 'https://example.com/badge.png';
-      const pngDataUrl = `data:image/png;base64,${btoa('\x89PNG')}`;
+      // Each URL gets its own bytes so a swapped icon and badge would fail.
+      const dataUrlFor = (url: string) => `data:image/png;base64,${btoa(url)}`;
       const fetchMock = vi.fn<typeof fetch>();
 
       const enableInlineImages = () =>
@@ -396,9 +397,9 @@ describe('ServiceWorker', () => {
       beforeEach(() => {
         installMockCacheStorage();
         fetchMock.mockReset();
-        fetchMock.mockImplementation(() =>
+        fetchMock.mockImplementation((input) =>
           Promise.resolve(
-            new Response(Uint8Array.from([0x89, 0x50, 0x4e, 0x47]), {
+            new Response(new TextEncoder().encode(input as string), {
               headers: { 'content-type': 'image/png' },
             }),
           ),
@@ -423,8 +424,8 @@ describe('ServiceWorker', () => {
 
         const options = await displayPush();
 
-        expect(options.icon).toBe(pngDataUrl);
-        expect(options.badge).toBe(pngDataUrl);
+        expect(options.icon).toBe(dataUrlFor('https://example.com/icon.png'));
+        expect(options.badge).toBe(dataUrlFor(badge));
         expect(options.data).toEqual(
           expect.objectContaining({ icon: 'https://example.com/icon.png', badgeIcon: badge }),
         );
@@ -444,7 +445,7 @@ describe('ServiceWorker', () => {
 
           const options = await displayPush(payload);
 
-          expect(options.icon).toBe(pngDataUrl);
+          expect(options.icon).toBe(dataUrlFor(defaultIcon));
           // @ts-expect-error - image is not in the NotificationOptions type
           expect(options.image).toBe(image);
           expect(fetchMock).toHaveBeenCalledWith(defaultIcon, expect.anything());
@@ -455,7 +456,7 @@ describe('ServiceWorker', () => {
             mockOSMinifiedNotificationPayload({ badge, icon: defaultIcon, image }),
           );
 
-          expect(options.icon).toBe(pngDataUrl);
+          expect(options.icon).toBe(dataUrlFor(defaultIcon));
         });
 
         test('leaves a per-notification icon as a remote URL', async () => {
@@ -466,7 +467,7 @@ describe('ServiceWorker', () => {
           );
 
           expect(options.icon).toBe(icon);
-          expect(options.badge).toBe(pngDataUrl);
+          expect(options.badge).toBe(dataUrlFor(badge));
           expect(fetchMock).toHaveBeenCalledTimes(1);
           expect(fetchMock).toHaveBeenCalledWith(badge, expect.anything());
         });

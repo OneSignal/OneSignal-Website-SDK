@@ -50,9 +50,38 @@ describe('inlineImage', () => {
     expect(await inlineImage(ICON_URL)).toBe(`data:image/webp;base64,${btoa('\x89PNG')}`);
   });
 
-  test('falls back to image/png when the response has no content-type', async () => {
+  test('accepts an upper-case content-type', async () => {
+    fetchMock.mockResolvedValue(imageResponse(PNG_BYTES, 'IMAGE/PNG'));
+
+    expect(await inlineImage(ICON_URL)).toBe(PNG_DATA_URL);
+  });
+
+  test('returns the remote URL when the response has no content-type and caches nothing', async () => {
     fetchMock.mockResolvedValue(new Response(PNG_BYTES, { status: 200 }));
 
+    expect(await inlineImage(ICON_URL)).toBe(ICON_URL);
+    expect((await openCache()).entries.size).toBe(0);
+  });
+
+  test('returns the remote URL for a non-image content type and caches nothing', async () => {
+    const cancel = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(new ReadableStream({ cancel }), {
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+      }),
+    );
+
+    expect(await inlineImage(ICON_URL)).toBe(ICON_URL);
+    expect((await openCache()).entries.size).toBe(0);
+    expect(cancel).toHaveBeenCalled();
+  });
+
+  test('uses the cached copy when the response is not an image', async () => {
+    fetchMock.mockResolvedValueOnce(imageResponse());
+    await inlineImage(ICON_URL);
+
+    fetchMock.mockResolvedValueOnce(imageResponse(PNG_BYTES, 'text/html'));
     expect(await inlineImage(ICON_URL)).toBe(PNG_DATA_URL);
   });
 
@@ -86,11 +115,57 @@ describe('inlineImage', () => {
     expect((await openCache()).entries.size).toBe(0);
   });
 
-  test('returns the remote URL when Cache Storage throws', async () => {
+  test('skips the body when Content-Length is over the inline limit', async () => {
+    const cancel = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(new ReadableStream({ cancel }), {
+        status: 200,
+        headers: { 'content-type': 'image/png', 'content-length': String(128 * 1024 + 1) },
+      }),
+    );
+
+    expect(await inlineImage(ICON_URL)).toBe(ICON_URL);
+    expect(cancel).toHaveBeenCalled();
+    expect((await openCache()).entries.size).toBe(0);
+  });
+
+  test('stops reading a stream once it passes the inline limit', async () => {
+    const chunk = new Uint8Array(64 * 1024);
+    let pulls = 0;
+    const cancel = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(
+        new ReadableStream<Uint8Array<ArrayBuffer>>({
+          pull(controller) {
+            pulls++;
+            controller.enqueue(chunk);
+          },
+          cancel,
+        }),
+        { status: 200, headers: { 'content-type': 'image/png' } },
+      ),
+    );
+
+    expect(await inlineImage(ICON_URL)).toBe(ICON_URL);
+    expect(cancel).toHaveBeenCalled();
+    expect(pulls).toBeLessThan(6);
+    expect((await openCache()).entries.size).toBe(0);
+  });
+
+  test('returns the fetched bytes when Cache Storage cannot be opened', async () => {
     vi.stubGlobal('caches', { open: () => Promise.reject(new Error('quota')) });
     fetchMock.mockResolvedValue(imageResponse());
 
-    expect(await inlineImage(ICON_URL)).toBe(ICON_URL);
+    expect(await inlineImage(ICON_URL)).toBe(PNG_DATA_URL);
+  });
+
+  test('returns the fetched bytes when the cache write throws', async () => {
+    const cache = await openCache();
+    vi.spyOn(cache, 'put').mockRejectedValue(new DOMException('quota', 'QuotaExceededError'));
+    fetchMock.mockResolvedValue(imageResponse());
+
+    expect(await inlineImage(ICON_URL)).toBe(PNG_DATA_URL);
+    expect(cache.entries.size).toBe(0);
   });
 
   test('keeps only the 10 most recent images in the cache', async () => {
