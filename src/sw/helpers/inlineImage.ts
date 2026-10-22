@@ -4,9 +4,10 @@ const CACHE_NAME = 'onesignal-notification-images';
 const FETCH_TIMEOUT_MS = 5_000;
 const MAX_INLINE_BYTES = 128 * 1024;
 const MAX_CACHED_IMAGES = 10;
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 
 interface ImageBytes {
-  bytes: ArrayBuffer;
+  bytes: Uint8Array<ArrayBuffer>;
   type: string;
 }
 
@@ -17,36 +18,83 @@ interface ImageBytes {
 // to read the bytes; otherwise the remote URL is used as before.
 export async function inlineImage(url: string | undefined): Promise<string | undefined> {
   if (!url || url.startsWith('data:')) return url;
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    const fresh = await fetchImage(url);
-    if (fresh) {
-      if (fresh.bytes.byteLength > MAX_INLINE_BYTES) return url;
-      await cache.put(url, new Response(fresh.bytes, { headers: { 'content-type': fresh.type } }));
-      await pruneCache(cache);
-      return toDataUrl(fresh);
-    }
-    const cached = await cache.match(url);
-    if (!cached) return url;
-    return toDataUrl({ bytes: await cached.arrayBuffer(), type: contentType(cached) });
-  } catch (e) {
-    Log._debug('inlineImage failed, using the remote URL:', e);
-    return url;
+  const fresh = await fetchImage(url);
+  if (fresh) {
+    await cacheImage(url, fresh);
+    return toDataUrl(fresh);
   }
+  const cached = await readCachedImage(url);
+  return cached ? toDataUrl(cached) : url;
 }
 
+// Resolves to undefined for a failed fetch, a non-image response, or a body
+// over the inline limit, so the caller falls back to the cached copy.
 async function fetchImage(url: string): Promise<ImageBytes | undefined> {
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
-    if (!response.ok) return undefined;
-    return { bytes: await response.arrayBuffer(), type: contentType(response) };
+    const type = imageType(response);
+    const declaredLength = Number(response.headers.get('content-length'));
+    if (!response.ok || !type || !response.body || declaredLength > MAX_INLINE_BYTES) {
+      void response.body?.cancel();
+      return undefined;
+    }
+    const bytes = await readUpTo(response.body, MAX_INLINE_BYTES);
+    return bytes && { bytes, type };
   } catch {
     return undefined;
   }
 }
 
-function contentType(response: Response): string {
-  return response.headers.get('content-type')?.split(';')[0].trim() || 'image/png';
+async function readUpTo(
+  body: ReadableStream<Uint8Array<ArrayBuffer>>,
+  limit: number,
+): Promise<Uint8Array<ArrayBuffer> | undefined> {
+  const reader = body.getReader();
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      void reader.cancel();
+      return undefined;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  chunks.forEach((chunk) => {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  });
+  return bytes;
+}
+
+function imageType(response: Response): string | undefined {
+  const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
+  return type && IMAGE_TYPES.includes(type) ? type : undefined;
+}
+
+async function cacheImage(url: string, image: ImageBytes): Promise<void> {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(url, new Response(image.bytes, { headers: { 'content-type': image.type } }));
+    await pruneCache(cache);
+  } catch (e) {
+    Log._debug('notification image cache write failed:', e);
+  }
+}
+
+async function readCachedImage(url: string): Promise<ImageBytes | undefined> {
+  try {
+    const cached = await (await caches.open(CACHE_NAME)).match(url);
+    const type = cached && imageType(cached);
+    return type ? { bytes: new Uint8Array(await cached.arrayBuffer()), type } : undefined;
+  } catch (e) {
+    Log._debug('notification image cache read failed:', e);
+    return undefined;
+  }
 }
 
 // Cache keys come back in insertion order, so the first keys are the oldest.
@@ -57,10 +105,9 @@ async function pruneCache(cache: Cache): Promise<void> {
 }
 
 function toDataUrl({ bytes, type }: ImageBytes): string {
-  const view = new Uint8Array(bytes);
   let binary = '';
-  for (let i = 0; i < view.length; i += 0x8000) {
-    binary += String.fromCharCode(...view.subarray(i, i + 0x8000));
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   }
   return `data:${type};base64,${btoa(binary)}`;
 }
