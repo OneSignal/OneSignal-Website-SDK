@@ -1054,17 +1054,57 @@ describe('ServiceWorker', () => {
           vi.spyOn(Log, '_error').mockImplementation(() => {});
           getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
           const closingClient = new Client({ url: 'http://closing-tab.com' });
-          vi.spyOn(closingClient, 'postMessage').mockImplementation(() => {
-            throw new DOMException('closing', 'InvalidStateError');
-          });
-          matchAllFn.mockResolvedValueOnce([closingClient, mockClient]);
+          const closingPostMessage = vi
+            .spyOn(closingClient, 'postMessage')
+            .mockImplementation(() => {
+              throw new DOMException('closing', 'InvalidStateError');
+            });
+          // The first list goes to the focus check in refreshSession, the second to the broadcast.
+          matchAllFn
+            .mockResolvedValueOnce([mockClient])
+            .mockResolvedValueOnce([closingClient, mockClient]);
 
           await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
 
+          expect(closingPostMessage).toHaveBeenCalledOnce();
           expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
             command: WorkerMessengerCommand._JwtUnauthorized,
             payload: { externalId: EXTERNAL_ID, jwt: JWT },
           });
+        });
+
+        test('a matchAll rejection on the duration path does not skip the outcome', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          const outcomeFn = vi.fn();
+          getHandler({
+            uri: `**/outcomes/measure`,
+            method: 'post',
+            status: 200,
+            callback: outcomeFn,
+          });
+          // The first list goes to the focus check, then the broadcast's matchAll rejects.
+          matchAllFn
+            .mockResolvedValueOnce([unfocusedClient])
+            .mockRejectedValueOnce(new DOMException('gone', 'InvalidStateError'));
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+          await putNotificationClickedForOutcomes(appId, clickOutcome);
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                jwtRequired: true,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          expect(postMessageFn).not.toHaveBeenCalled();
+          expect(outcomeFn).toHaveBeenCalledOnce();
         });
 
         test('a 200 on a signed request and a 401 on an unsigned request send nothing to the pages', async () => {
