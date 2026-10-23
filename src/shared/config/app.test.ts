@@ -290,6 +290,22 @@ describe('Config Helpers', () => {
     expect(config).toEqual(mergedConfig);
   });
 
+  test('copies the site default icon url into the app config', () => {
+    const userConfig = TestContext.getFakeAppUserConfig();
+    const withIcon = { ...serverConfig, config: { ...serverConfig.config } };
+    withIcon.config.siteInfo = {
+      ...serverConfig.config.siteInfo,
+      defaultIconUrl: 'https://example.com/icon.png',
+    };
+
+    expect(getMergedConfig(userConfig, withIcon).defaultIconUrl).toBe(
+      'https://example.com/icon.png',
+    );
+
+    withIcon.config.siteInfo = { ...serverConfig.config.siteInfo, defaultIconUrl: null };
+    expect(getMergedConfig(userConfig, withIcon).defaultIconUrl).toBeNull();
+  });
+
   test('should limit categories to max count', () => {
     const categories: TagCategory[] = [
       { tag: 'tag1', label: 'label1' },
