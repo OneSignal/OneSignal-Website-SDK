@@ -26,6 +26,7 @@ import type { ISessionManager } from './types';
 export class SessionManager implements ISessionManager {
   private _context: ContextInterface;
   private _onSessionSent = false;
+  private _onSessionChain: Promise<void> = Promise.resolve();
   private _sessionStarted = false;
 
   constructor(context: ContextInterface) {
@@ -325,7 +326,15 @@ export class SessionManager implements ISessionManager {
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
-  async _sendOnSessionUpdateFromPage(): Promise<void> {
+  // Sends run one at a time, so a token update during a request re-checks the
+  // flag after that request settles instead of sending a second on_session.
+  _sendOnSessionUpdateFromPage(): Promise<void> {
+    const run = this._onSessionChain.then(() => this._sendOnSessionUpdate());
+    this._onSessionChain = run.catch(() => undefined);
+    return run;
+  }
+
+  private async _sendOnSessionUpdate(): Promise<void> {
     const earlyReturn = this._onSessionSent || !isFirstPageView();
 
     if (earlyReturn) {
@@ -389,10 +398,11 @@ export class SessionManager implements ISessionManager {
           alias,
           updateUserPayload,
         );
+        // After a 401 or a failed request the flag stays clear, so a fresh token
+        // can send this page view's on_session. A 403 counts as sent.
+        if (response.status !== 401) this._onSessionSent = true;
         const unauthorized =
           getResponseStatusType(response.status) === ResponseStatusType._Unauthorized;
-        // After a 401 the flag stays clear, so a fresh token can send this page view's on_session.
-        if (!unauthorized) this._onSessionSent = true;
         if (unauthorized && jwt && externalId) {
           this._invalidateJwtAfterUnauthorized(externalId, jwt);
         }
@@ -420,6 +430,11 @@ export class SessionManager implements ISessionManager {
       await this._sendOnSessionUpdateFromPage();
       return;
     }
+
+    // An upsert from a hidden tab resets the worker's finalize timer, so the
+    // session_time would move out on every token refresh. The next focus upsert
+    // carries the token anyway.
+    if (document.visibilityState !== 'visible' || !document.hasFocus()) return;
 
     await LoginManager._switchingUsersPromise;
     if (!User._singletonInstance?.onesignalId) return;

@@ -56,7 +56,7 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
   }
 
   if (existingSession.status === SessionStatus._Active) {
-    if (existingSession.onSessionPending) {
+    if (existingSession.onSessionPendingFor) {
       await sendPendingOnSession(options, existingSession);
       return;
     }
@@ -81,7 +81,7 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
     existingSession.lastActivatedTimestamp = currentTimestamp;
     existingSession.lastDeactivatedTimestamp = null;
     await db.put('Sessions', existingSession);
-    if (existingSession.onSessionPending) await sendPendingOnSession(options, existingSession);
+    if (existingSession.onSessionPendingFor) await sendPendingOnSession(options, existingSession);
     return;
   }
 
@@ -150,19 +150,25 @@ async function sendOnSessionCall(user: SessionUser, session: Session) {
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
   const sent = await updateUserSession(user);
-  // Only a missing token can arrive later. An anonymous user under Identity
-  // Verification has no backend user, so that skip does not leave the session pending.
-  if (!sent && user.externalId) {
-    session.onSessionPending = true;
+  // Only a token can arrive later. An anonymous user under Identity Verification
+  // has no backend user, so that skip does not leave the session pending.
+  if (!sent && user.jwtRequired && user.externalId) {
+    session.onSessionPendingFor = user.externalId;
     await db.put('Sessions', session);
   }
 }
 
-// Still no token: the request is skipped again and the session stays pending.
+// The flag is cleared before the request, so an upsert that overlaps this one
+// finds nothing pending. A skipped or rejected request sets it back.
 async function sendPendingOnSession(user: SessionUser, session: Session): Promise<void> {
+  const pendingFor = session.onSessionPendingFor;
+  session.onSessionPendingFor = undefined;
+  await db.put('Sessions', session);
+  // The count belongs to the user who started the session.
+  if (pendingFor !== user.externalId) return;
   const sent = await updateUserSession(user);
-  if (!sent) return;
-  session.onSessionPending = false;
+  if (sent) return;
+  session.onSessionPendingFor = pendingFor;
   await db.put('Sessions', session);
 }
 

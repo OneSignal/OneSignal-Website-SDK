@@ -471,6 +471,50 @@ describe('SessionManager', () => {
       expect(requestHeadersFn).toHaveBeenCalledTimes(2);
     });
 
+    test('a 403 counts as sent: a fresh token does not send again', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const store = OneSignal._coreDirector._jwtTokenStore;
+      store._putJwt(EXTERNAL_ID, JWT);
+      getHandler({ uri: externalIdUri, method: 'patch', status: 403 });
+
+      await sm._sendOnSessionUpdateFromPage();
+      expect(requestHeadersFn).toHaveBeenCalledTimes(1);
+
+      store._putJwt(EXTERNAL_ID, 'fresh-jwt');
+      await sm._sendOnSessionUpdateFromPage();
+      expect(requestHeadersFn).toHaveBeenCalledTimes(1);
+    });
+
+    test('a request that does not reach the server does not count as sent', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+
+      // Every retry fails, so the request gives up.
+      await sm._sendOnSessionUpdateFromPage();
+      expect(updateUserFn).not.toHaveBeenCalled();
+
+      getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+      await sm._sendOnSessionUpdateFromPage();
+      expect(updateUserFn).toHaveBeenCalledTimes(1);
+    });
+
+    test('a send that starts while one is in flight does not send a second on_session', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      server.use(
+        http.patch(externalIdUri, async ({ request }) => {
+          updateUserFn(await request.json());
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          return HttpResponse.json({});
+        }),
+      );
+
+      await Promise.all([sm._sendOnSessionUpdateFromPage(), sm._sendOnSessionUpdateFromPage()]);
+
+      expect(updateUserFn).toHaveBeenCalledTimes(1);
+    });
+
     test('a 401 while IV is inactive leaves the store alone', async () => {
       const store = OneSignal._coreDirector._jwtTokenStore;
       store._putJwt(EXTERNAL_ID, JWT);
@@ -520,7 +564,7 @@ describe('SessionManager', () => {
       expect(updateUserFn).toHaveBeenCalledTimes(1);
     });
 
-    test('with a worker: asks for an upsert that carries the new token', async () => {
+    const setupWorkerPath = async () => {
       supportsServiceWorkersSpy.mockReturnValue(true);
       User._createOrGetInstance();
       vi.spyOn(sm, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
@@ -532,8 +576,15 @@ describe('SessionManager', () => {
         .mockResolvedValue(undefined);
       await sm._upsertSession(SessionOrigin._UserNewSession);
       expect(unicastSpy).toHaveBeenCalledTimes(1);
-
       OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
+      return unicastSpy;
+    };
+
+    test('with a worker: a visible focused page asks for an upsert that carries the new token', async () => {
+      vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+      vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+      const unicastSpy = await setupWorkerPath();
+
       await sm._handleJwtUpdated(EXTERNAL_ID);
 
       expect(unicastSpy).toHaveBeenCalledTimes(2);
@@ -545,6 +596,23 @@ describe('SessionManager', () => {
       });
       expect(updateUserFn).not.toHaveBeenCalled();
     });
+
+    // An upsert from a hidden tab resets the worker's finalize timer; the next focus upsert carries the token.
+    test.each([
+      ['hidden', true],
+      ['visible', false],
+    ] as const)(
+      'with a worker: a %s page with focus=%s posts nothing',
+      async (visibilityState, hasFocus) => {
+        vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(visibilityState);
+        vi.spyOn(document, 'hasFocus').mockReturnValue(hasFocus);
+        const unicastSpy = await setupWorkerPath();
+
+        await sm._handleJwtUpdated(EXTERNAL_ID);
+
+        expect(unicastSpy).toHaveBeenCalledTimes(1);
+      },
+    );
 
     test('before the session start: nothing, the normal flow carries the token', async () => {
       supportsServiceWorkersSpy.mockReturnValue(false);
