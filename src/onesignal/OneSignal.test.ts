@@ -654,9 +654,11 @@ describe('OneSignal - No Consent Required', () => {
           await vi.waitUntil(() => listener.mock.calls.length === 1, { interval: 1 });
           expect(listener).toHaveBeenCalledWith({ externalId });
           expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBeUndefined();
+
           // The identity already points at the new user; the operation waits for a token.
           expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe(externalId);
           expect(OneSignal._coreDirector._operationRepo._queue.length).toBeGreaterThan(0);
+
           // 5 queue passes go by with no token; the operation stays held.
           await new Promise((resolve) => setTimeout(resolve, OP_REPO_EXECUTION_INTERVAL * 5));
           expect(requestHeadersFn).toHaveBeenCalledOnce();
