@@ -1,0 +1,58 @@
+import { get } from '../api/base';
+import { db, getOptionsValue, isReadwriteWedged } from '../database/client';
+import { getFeatureFlags, getFeatureOverrides, setFeatureFlags } from '../helpers/localStorage';
+import Log from '../libraries/Log';
+import { VERSION } from '../utils/env';
+
+export const FeatureFlag = {
+  _IdentityVerification: 'sdk_identity_verification',
+} as const;
+
+export type FeatureFlagValue = (typeof FeatureFlag)[keyof typeof FeatureFlag];
+
+type FeaturesResponse = { features?: unknown };
+
+// Reads storage on every call so a refresh applies at once, without a cold start.
+export function isFeatureEnabled(flag: FeatureFlagValue): boolean {
+  return getFeatureOverrides().includes(flag) || getFeatureFlags().includes(flag);
+}
+
+// The worker has no localStorage, so the page mirrors the active list into IndexedDB.
+export async function isFeatureEnabledInWorker(flag: FeatureFlagValue): Promise<boolean> {
+  return parseFlagList(await getOptionsValue<string>('featureFlags')).includes(flag);
+}
+
+function parseFlagList(json: string | null): string[] {
+  try {
+    const parsed: unknown = JSON.parse(json ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((f) => typeof f === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+// Fetches the flag list once per page load. A failure keeps the cached list.
+// The worker mirror is written first; when that write is dropped, the page
+// list is left as is so the page and the worker keep the same flags.
+export async function refreshFeatureFlags(appId: string): Promise<void> {
+  const overrides = getFeatureOverrides();
+  // Bypasses Log so the warning shows in production builds, where Log is silent below trace.
+  if (overrides.length) console.warn('OneSignal: feature flag overrides are active:', overrides);
+
+  try {
+    const { ok, result } = await get<FeaturesResponse>(`apps/${appId}/sdk/features/web/${VERSION}`);
+    if (!ok || !Array.isArray(result?.features)) return;
+    const flags = result.features.filter((f) => typeof f === 'string');
+    await db.put('Options', {
+      key: 'featureFlags',
+      value: JSON.stringify([...overrides, ...flags]),
+    });
+    if (isReadwriteWedged()) {
+      Log._warn('Feature flags not mirrored to the worker, keeping the cached list');
+      return;
+    }
+    setFeatureFlags(flags);
+  } catch (e) {
+    Log._warn('Feature flags fetch failed', e);
+  }
+}
