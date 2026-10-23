@@ -26,6 +26,7 @@ import {
   setAddAliasError,
   setAddAliasResponse,
   setCreateSubscriptionResponse,
+  setCreateUserError,
   setCreateUserResponse,
   setDeleteAliasResponse,
   setDeleteSubscriptionResponse,
@@ -51,8 +52,10 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
+import { ExecutionResult } from 'src/core/types/operation';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { db } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
@@ -620,6 +623,92 @@ describe('OneSignal - No Consent Required', () => {
 
           await vi.waitUntil(() => listener.mock.calls.length === 1, { interval: 1 });
           expect(listener).toHaveBeenCalledWith({ externalId });
+        });
+      });
+
+      describe('a new user under Identity Verification', () => {
+        // The create-subscription operation from createSubIfMissing stays queued
+        // with a local id, so a bare length check cannot tell a held login from a dropped one.
+        const queueHoldsLogin = () =>
+          OneSignal._coreDirector._operationRepo._queue.some(
+            (item) => item.operation instanceof LoginUserOperation,
+          );
+
+        beforeEach(() => {
+          setJwtTokens({});
+          setJwtRequirement(JwtRequirement._Required);
+        });
+
+        test('login(A, tokenA), 401, event, updateUserJwt(A, tokenB): create-user goes out again with the new token', async () => {
+          const listener = vi.fn();
+          OneSignal.User.addEventListener('userJwtInvalidated', listener);
+          server.use(
+            http.post(`**/apps/${APP_ID}/users`, ({ request }) => {
+              requestHeadersFn(Object.fromEntries(request.headers), request.url);
+              if (request.headers.get('authorization') === 'Bearer token-a') {
+                return HttpResponse.json({}, { status: 401 });
+              }
+              return HttpResponse.json({
+                identity: { onesignal_id: ONESIGNAL_ID_2, external_id: externalId },
+              });
+            }),
+          );
+
+          // The login operation itself is the request the server rejects.
+          await expect(OneSignal.login(externalId, 'token-a')).rejects.toThrow(
+            `Operation failed: ${ExecutionResult._FailUnauthorized}`,
+          );
+          expect(requestHeadersFn.mock.calls[0][0].authorization).toBe('Bearer token-a');
+          await vi.waitUntil(() => listener.mock.calls.length === 1, { interval: 1 });
+          expect(listener).toHaveBeenCalledWith({ externalId });
+          expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBeUndefined();
+
+          // The identity already points at the new user; the operation waits for a token.
+          expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe(externalId);
+          expect(queueHoldsLogin()).toBe(true);
+
+          // 5 queue passes go by with no token; the operation stays held.
+          await new Promise((resolve) => setTimeout(resolve, OP_REPO_EXECUTION_INTERVAL * 5));
+          expect(requestHeadersFn).toHaveBeenCalledOnce();
+          expect(queueHoldsLogin()).toBe(true);
+
+          await OneSignal.updateUserJwt(externalId, 'token-b');
+
+          await vi.waitUntil(() => requestHeadersFn.mock.calls.length === 2, { interval: 1 });
+          expect(requestHeadersFn.mock.calls[1][0].authorization).toBe('Bearer token-b');
+          await vi.waitUntil(
+            () => OneSignal._coreDirector._getIdentityModel()._onesignalId === ONESIGNAL_ID_2,
+            { interval: 1 },
+          );
+          expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe(externalId);
+          expect(listener).toHaveBeenCalledOnce();
+        });
+
+        test('a login the server rejects for another reason rejects and keeps the token', async () => {
+          const listener = vi.fn();
+          OneSignal.User.addEventListener('userJwtInvalidated', listener);
+          setCreateUserError({ status: 400 });
+
+          // A 400 on create-user pauses the queue; the login call reports that result.
+          await expect(OneSignal.login(externalId, 'token-a')).rejects.toThrow(
+            `Operation failed: ${ExecutionResult._FailPauseOpRepo}`,
+          );
+
+          expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBe('token-a');
+          const repo = OneSignal._coreDirector._operationRepo;
+          expect(repo._timerID).toBeUndefined();
+          expect(repo._queue[0]?.operation).toBeInstanceOf(LoginUserOperation);
+
+          // 5 queue passes go by with the repo paused: one create-user request in
+          // total, the login still at the head, and no userJwtInvalidated event.
+          await new Promise((resolve) => setTimeout(resolve, OP_REPO_EXECUTION_INTERVAL * 5));
+          const createUserCalls = requestHeadersFn.mock.calls.filter(([, url]) =>
+            String(url).endsWith('/users'),
+          );
+          expect(createUserCalls).toHaveLength(1);
+          expect(repo._timerID).toBeUndefined();
+          expect(repo._queue[0]?.operation).toBeInstanceOf(LoginUserOperation);
+          expect(listener).not.toHaveBeenCalled();
         });
       });
 
