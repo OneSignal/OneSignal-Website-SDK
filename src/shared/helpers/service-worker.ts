@@ -153,8 +153,7 @@ async function sendOnSessionCall(user: SessionUser, session: Session) {
   // Only a token can arrive later. An anonymous user under Identity Verification
   // has no backend user, so that skip does not leave the session pending.
   if (!sent && user.jwtRequired && user.externalId) {
-    session.onSessionPendingFor = user.externalId;
-    await db.put('Sessions', session);
+    await markOnSessionPending(session, user.externalId);
   }
 }
 
@@ -165,11 +164,21 @@ async function sendPendingOnSession(user: SessionUser, session: Session): Promis
   session.onSessionPendingFor = undefined;
   await db.put('Sessions', session);
   // The count belongs to the user who started the session.
-  if (pendingFor !== user.externalId) return;
+  if (!pendingFor || pendingFor !== user.externalId) return;
   const sent = await updateUserSession(user);
   if (sent) return;
-  session.onSessionPendingFor = pendingFor;
-  await db.put('Sessions', session);
+  await markOnSessionPending(session, pendingFor);
+}
+
+// The request can wait through 120 s of retries, past the session threshold, so
+// the row may be gone or replaced by then. The flag goes on the stored row only
+// if it is still the same session; a write of the captured object could
+// recreate a row finalizeSession deleted.
+async function markOnSessionPending(session: Session, externalId: string): Promise<void> {
+  const current = await getCurrentSession();
+  if (!current || current.startTimestamp !== session.startTimestamp) return;
+  current.onSessionPendingFor = externalId;
+  await db.put('Sessions', current);
 }
 
 async function finalizeSession(
