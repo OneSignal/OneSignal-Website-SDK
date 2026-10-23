@@ -255,6 +255,22 @@ describe('executors under Identity Verification', () => {
     });
   });
 
+  test('IV active: an externalId with / is one path segment', async () => {
+    setGates(true, JwtRequirement._Required);
+    const externalId = 'org/123';
+    tokens._putJwt(externalId, JWT);
+    const expectedPath = `${users}/by/external_id/org%2F123`;
+
+    await refresh._execute([new RefreshUserOperation(APP_ID, ONESIGNAL_ID, externalId)]);
+    expect(lastRequest().url.endsWith(expectedPath)).toBe(true);
+
+    await updateUser._execute([
+      new SetPropertyOperation({ ...owner, externalId, property: 'language', value: 'fr' }),
+    ]);
+    expect(lastRequest().url.endsWith(expectedPath)).toBe(true);
+    expect(lastRequest().headers.authorization).toBe(`Bearer ${JWT}`);
+  });
+
   test('IV active with an anonymous op: onesignal_id alias, no header, and an error log', async () => {
     setGates(true, JwtRequirement._Required);
     tokens._putJwt(EXTERNAL_ID, JWT);

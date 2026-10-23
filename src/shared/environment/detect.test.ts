@@ -1,7 +1,9 @@
+import { APP_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { SubscriptionType } from '../subscriptions/constants';
+import { encodeRFC3986URIComponent } from '../utils/encode';
 import { getSubscriptionType, useSafariLegacyPush } from './detect';
 
 let getOneSignalApiUrl: typeof import('src/shared/environment/detect').getOneSignalApiUrl;
@@ -67,6 +69,13 @@ describe('Environment Helper', () => {
         action: 'outcomes',
       }).toString(),
     ).toBe('http://localhost:18080/api/v1/');
+    // base.ts passes the percent-encoded path, so the match has to survive the encoder.
+    const featuresAction = ['apps', APP_ID, 'sdk', 'features', 'web', '160610']
+      .map(encodeRFC3986URIComponent)
+      .join('/');
+    expect(getOneSignalApiUrl({ action: featuresAction }).toString()).toBe(
+      'http://localhost:18080/api/v1/',
+    );
 
     // production
     (global as any).__API_TYPE__ = 'production';

@@ -262,11 +262,14 @@ describe('ServiceWorker', () => {
 
       await flush();
 
-      expect(apiPutSpy).toHaveBeenCalledWith(`notifications/${payload.custom.i}/report_received`, {
-        app_id: appId,
-        device_type: DeliveryPlatformKind._ChromeLike,
-        player_id: pushSubscriptionId,
-      });
+      expect(apiPutSpy).toHaveBeenCalledWith(
+        ['notifications', payload.custom.i, 'report_received'],
+        {
+          app_id: appId,
+          device_type: DeliveryPlatformKind._ChromeLike,
+          player_id: pushSubscriptionId,
+        },
+      );
     });
 
     describe('foregroundWillDisplay preventDefault', () => {
@@ -307,11 +310,14 @@ describe('ServiceWorker', () => {
         // Notification should NOT be displayed
         expect(showNotificationSpy).not.toHaveBeenCalled();
 
-        expect(apiPutSpy).toHaveBeenCalledWith(`notifications/${notificationId}/report_received`, {
-          app_id: appId,
-          device_type: expect.any(Number),
-          player_id: pushSubscriptionId,
-        });
+        expect(apiPutSpy).toHaveBeenCalledWith(
+          ['notifications', notificationId, 'report_received'],
+          {
+            app_id: appId,
+            device_type: expect.any(Number),
+            player_id: pushSubscriptionId,
+          },
+        );
       });
 
       test('should display notification when page responds with preventDefault=false', async () => {
@@ -426,7 +432,7 @@ describe('ServiceWorker', () => {
       );
 
       // should call api to report opened
-      expect(apiPutSpy).toHaveBeenCalledWith(`notifications/${notificationId}`, {
+      expect(apiPutSpy).toHaveBeenCalledWith(['notifications', notificationId], {
         app_id: appId,
         device_type: DeliveryPlatformKind._ChromeLike,
         opened: true,

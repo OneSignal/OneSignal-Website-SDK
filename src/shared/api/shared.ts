@@ -10,7 +10,7 @@ import * as OneSignalApiBase from './base';
 export async function sendOutcome(data: OutcomeRequestData): Promise<void> {
   Log._info('Outcome payload:', data);
   try {
-    await OneSignalApiBase.post('outcomes/measure', data);
+    await OneSignalApiBase.post(['outcomes', 'measure'], data);
   } catch (e) {
     Log._error('sendOutcome', e);
   }
