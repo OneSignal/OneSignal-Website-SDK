@@ -1,5 +1,5 @@
 import { get } from '../api/base';
-import { db, getOptionsValue } from '../database/client';
+import { db, getOptionsValue, isReadwriteWedged } from '../database/client';
 import { getFeatureFlags, getFeatureOverrides, setFeatureFlags } from '../helpers/localStorage';
 import Log from '../libraries/Log';
 import { VERSION } from '../utils/env';
@@ -32,6 +32,8 @@ function parseFlagList(json: string | null): string[] {
 }
 
 // Fetches the flag list once per page load. A failure keeps the cached list.
+// The worker mirror is written first; when that write is dropped, the page
+// list is left as is so the page and the worker keep the same flags.
 export async function refreshFeatureFlags(appId: string): Promise<void> {
   const overrides = getFeatureOverrides();
   // Bypasses Log so the warning shows in production builds, where Log is silent below trace.
@@ -40,11 +42,16 @@ export async function refreshFeatureFlags(appId: string): Promise<void> {
   try {
     const { ok, result } = await get<FeaturesResponse>(`apps/${appId}/sdk/features/web/${VERSION}`);
     if (!ok || !Array.isArray(result?.features)) return;
-    setFeatureFlags(result.features);
+    const flags = result.features.filter((f) => typeof f === 'string');
     await db.put('Options', {
       key: 'featureFlags',
-      value: JSON.stringify([...overrides, ...getFeatureFlags()]),
+      value: JSON.stringify([...overrides, ...flags]),
     });
+    if (isReadwriteWedged()) {
+      Log._warn('Feature flags not mirrored to the worker, keeping the cached list');
+      return;
+    }
+    setFeatureFlags(flags);
   } catch (e) {
     Log._warn('Feature flags fetch failed', e);
   }

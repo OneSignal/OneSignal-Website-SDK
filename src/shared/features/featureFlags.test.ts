@@ -3,6 +3,7 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
+import * as clientModule from '../database/client';
 import { db, getOptionsValue } from '../database/client';
 import { getFeatureFlags, getFeatureOverrides, setFeatureFlags } from '../helpers/localStorage';
 import Log from '../libraries/Log';
@@ -12,6 +13,14 @@ import {
   isFeatureEnabledInWorker,
   refreshFeatureFlags,
 } from './featureFlags';
+
+vi.mock('../database/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../database/client')>();
+  return {
+    ...actual,
+    isReadwriteWedged: vi.fn(() => false),
+  };
+});
 
 const FLAG = FeatureFlag._IdentityVerification;
 const FEATURES_PATH = `**/apps/${APP_ID}/sdk/features/web/*`;
@@ -149,6 +158,19 @@ describe('featureFlags', () => {
 
       expect(await getOptionsValue<string>('featureFlags')).toBe(
         JSON.stringify(['other_flag', FLAG]),
+      );
+    });
+
+    test('keeps the page list when the worker mirror write is dropped', async () => {
+      setFeatureFlags([FLAG]);
+      mockFeatures({ features: [] });
+      vi.mocked(clientModule.isReadwriteWedged).mockReturnValueOnce(true);
+
+      await refreshFeatureFlags(APP_ID);
+
+      expect(isFeatureEnabled(FLAG)).toBe(true);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Feature flags not mirrored to the worker, keeping the cached list',
       );
     });
 
