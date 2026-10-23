@@ -49,12 +49,13 @@ function logIfUnauthorized(response: OneSignalApiBaseResponse, jwt: string | und
 
 /**
  *  Main on_session call
- * @returns
+ * @returns false when the request was skipped, got a 401, or did not reach the
+ * server, so a later token can send it again. Any other response counts as sent.
  */
-export async function updateUserSession(user: SessionUser): Promise<void> {
+export async function updateUserSession(user: SessionUser): Promise<boolean> {
   const { appId, subscriptionId } = user;
   const params = sessionBackendParams(user);
-  if (!params) return;
+  if (!params) return false;
   const { alias, jwt } = params;
   // TO DO: in future, we should aggregate session count in case network call fails
   const updateUserPayload: IUpdateUser = {
@@ -73,8 +74,10 @@ export async function updateUserSession(user: SessionUser): Promise<void> {
       updateUserPayload,
     );
     logIfUnauthorized(response, jwt);
+    return response.status !== 401;
   } catch (e) {
     Log._debug('Session update error:', e);
+    return false;
   }
 }
 
