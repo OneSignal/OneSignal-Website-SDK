@@ -52,9 +52,16 @@ describe('OneSignalApiBase URL encoding', () => {
     expect(lastFetchUrl()).toBe(userUrl('org%2F123'));
   });
 
-  test('a /../ inside a segment cannot climb out of the segment', async () => {
+  test('encodes the slashes around .. so a/../b stays one segment', async () => {
     await OneSignalApiBase.get([...userPath('a/../b'), 'identity']);
     expect(lastFetchUrl()).toBe(`${userUrl('a%2F..%2Fb')}/identity`);
+  });
+
+  // A dot is unreserved, so a value of exactly .. is still a dot-segment and the
+  // URL parser in fetch folds it into the parent path. Encoding does not change that.
+  test('leaves a segment that is exactly .. unchanged', async () => {
+    await OneSignalApiBase.get([...userPath('..'), 'identity']);
+    expect(lastFetchUrl()).toBe(`${userUrl('..')}/identity`);
   });
 
   test('encodes percent signs so callers cannot smuggle in pre-encoded sequences', async () => {
