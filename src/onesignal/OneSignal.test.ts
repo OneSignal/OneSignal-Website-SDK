@@ -52,6 +52,7 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult } from 'src/core/types/operation';
@@ -626,6 +627,13 @@ describe('OneSignal - No Consent Required', () => {
       });
 
       describe('a new user under Identity Verification', () => {
+        // The create-subscription operation from createSubIfMissing stays queued
+        // with a local id, so a bare length check cannot tell a held login from a dropped one.
+        const queueHoldsLogin = () =>
+          OneSignal._coreDirector._operationRepo._queue.some(
+            (item) => item.operation instanceof LoginUserOperation,
+          );
+
         beforeEach(() => {
           setJwtTokens({});
           setJwtRequirement(JwtRequirement._Required);
@@ -657,12 +665,12 @@ describe('OneSignal - No Consent Required', () => {
 
           // The identity already points at the new user; the operation waits for a token.
           expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe(externalId);
-          expect(OneSignal._coreDirector._operationRepo._queue.length).toBeGreaterThan(0);
+          expect(queueHoldsLogin()).toBe(true);
 
           // 5 queue passes go by with no token; the operation stays held.
           await new Promise((resolve) => setTimeout(resolve, OP_REPO_EXECUTION_INTERVAL * 5));
           expect(requestHeadersFn).toHaveBeenCalledOnce();
-          expect(OneSignal._coreDirector._operationRepo._queue.length).toBeGreaterThan(0);
+          expect(queueHoldsLogin()).toBe(true);
 
           await OneSignal.updateUserJwt(externalId, 'token-b');
 
@@ -687,9 +695,19 @@ describe('OneSignal - No Consent Required', () => {
           );
 
           expect(OneSignal._coreDirector._jwtTokenStore._getJwt(externalId)).toBe('token-a');
-          expect(OneSignal._coreDirector._operationRepo._timerID).toBeUndefined();
-          // 5 queue passes go by with the repo paused; no user change event fires.
+          const repo = OneSignal._coreDirector._operationRepo;
+          expect(repo._timerID).toBeUndefined();
+          expect(repo._queue[0]?.operation).toBeInstanceOf(LoginUserOperation);
+
+          // 5 queue passes go by with the repo paused: one create-user request in
+          // total, the login still at the head, and no userJwtInvalidated event.
           await new Promise((resolve) => setTimeout(resolve, OP_REPO_EXECUTION_INTERVAL * 5));
+          const createUserCalls = requestHeadersFn.mock.calls.filter(([, url]) =>
+            String(url).endsWith('/users'),
+          );
+          expect(createUserCalls).toHaveLength(1);
+          expect(repo._timerID).toBeUndefined();
+          expect(repo._queue[0]?.operation).toBeInstanceOf(LoginUserOperation);
           expect(listener).not.toHaveBeenCalled();
         });
       });
