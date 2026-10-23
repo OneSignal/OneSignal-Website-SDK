@@ -13,6 +13,7 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { OperationRepo } from 'src/core/operationRepo/OperationRepo';
 import * as OneSignalApiBase from 'src/shared/api/base';
+import { updateUserSession } from 'src/shared/api/sw';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import type { AppConfig } from 'src/shared/config/types';
@@ -1018,6 +1019,48 @@ describe('ServiceWorker', () => {
           expect(errorSpy).toHaveBeenCalledWith(
             '[SW] The server rejected the JWT on the session request (401)',
           );
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        // The broadcast runs inside the promise the event holds open, so the
+        // browser does not stop the worker before postMessage.
+        test('the session request does not settle before the pages get the 401 report', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          matchAllFn.mockImplementationOnce(
+            () => new Promise((resolve) => setTimeout(() => resolve([mockClient]), 30)),
+          );
+
+          const sent = await updateUserSession({
+            appId,
+            onesignalId: ONESIGNAL_ID,
+            subscriptionId: SUB_ID,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          });
+
+          expect(sent).toBe(false);
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        test('a client that throws on postMessage does not stop the report to the other tabs', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          const closingClient = new Client({ url: 'http://closing-tab.com' });
+          vi.spyOn(closingClient, 'postMessage').mockImplementation(() => {
+            throw new DOMException('closing', 'InvalidStateError');
+          });
+          matchAllFn.mockResolvedValueOnce([closingClient, mockClient]);
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
           expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
             command: WorkerMessengerCommand._JwtUnauthorized,
             payload: { externalId: EXTERNAL_ID, jwt: JWT },

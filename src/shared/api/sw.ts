@@ -46,15 +46,17 @@ function sessionBackendParams({ onesignalId, jwtRequired, externalId, jwt }: Ses
 
 // The worker cannot reach the page token store, so it tells the pages which
 // token the server rejected. The page removes it only if it is still the stored one.
-function notifyPagesIfUnauthorized(
+// Awaited so the broadcast finishes inside the event's waitUntil, before the
+// browser can stop the worker.
+async function notifyPagesIfUnauthorized(
   response: OneSignalApiBaseResponse,
   { externalId, jwt }: Pick<SessionUser, 'externalId' | 'jwt'>,
-): void {
+): Promise<void> {
   if (!jwt || !externalId) return;
   if (getResponseStatusType(response.status) !== ResponseStatusType._Unauthorized) return;
   Log._error(`[SW] The server rejected the JWT on the session request (${response.status})`);
   const payload: JwtUnauthorizedPayload = { externalId, jwt };
-  void broadcastToPages(WorkerMessengerCommand._JwtUnauthorized, payload);
+  await broadcastToPages(WorkerMessengerCommand._JwtUnauthorized, payload);
 }
 
 /**
@@ -83,7 +85,7 @@ export async function updateUserSession(user: SessionUser): Promise<boolean> {
       alias,
       updateUserPayload,
     );
-    notifyPagesIfUnauthorized(response, user);
+    await notifyPagesIfUnauthorized(response, user);
     return response.status !== 401;
   } catch (e) {
     Log._debug('Session update error:', e);
@@ -127,7 +129,7 @@ export async function sendSessionDuration(
         alias,
         updateUserPayload,
       );
-      notifyPagesIfUnauthorized(response, user);
+      await notifyPagesIfUnauthorized(response, user);
     }
 
     if (outcomePayload.notification_ids && outcomePayload.notification_ids.length > 0) {

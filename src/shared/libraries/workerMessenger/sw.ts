@@ -26,10 +26,15 @@ export async function broadcastToPages(
   });
   for (const client of clients) {
     Log._debug(`[WM] SW->Page broadcast '${command}' ${client.url}`);
-    client.postMessage({
-      command: command,
-      payload: payload,
-    });
+    // A client in the middle of closing throws; the other tabs still get the message.
+    try {
+      client.postMessage({
+        command: command,
+        payload: payload,
+      });
+    } catch (e) {
+      Log._debug(`[WM] SW->Page broadcast to ${client.url} failed:`, e);
+    }
   }
 }
 
