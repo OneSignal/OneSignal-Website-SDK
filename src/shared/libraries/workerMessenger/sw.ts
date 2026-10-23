@@ -12,6 +12,37 @@ import type {
 
 declare let self: ServiceWorkerGlobalScope;
 
+/**
+ * Posts a message from the service worker to all window clients, including
+ * uncontrolled ones. Standalone so code without a messenger instance can call it.
+ */
+export async function broadcastToPages(
+  command: WorkerMessengerCommandValue,
+  payload: WorkerMessengerPayload,
+): Promise<void> {
+  // A rejection stays here, so a caller that awaits inside a try with other
+  // requests does not lose them.
+  let clients: readonly Client[];
+  try {
+    clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  } catch (e) {
+    Log._debug(`[WM] SW->Page broadcast '${command}' failed to list the clients:`, e);
+    return;
+  }
+  for (const client of clients) {
+    Log._debug(`[WM] SW->Page broadcast '${command}' ${client.url}`);
+    // A client in the middle of closing throws; the other tabs still get the message.
+    try {
+      client.postMessage({
+        command: command,
+        payload: payload,
+      });
+    } catch (e) {
+      Log._debug(`[WM] SW->Page broadcast to ${client.url} failed:`, e);
+    }
+  }
+}
+
 export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
   /**
    * Due to https://github.com/w3c/ServiceWorker/issues/1156, listen() must
@@ -58,17 +89,7 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
    * Broadcasts a message from a service worker to all clients, including uncontrolled clients.
    */
   async _broadcast(command: WorkerMessengerCommandValue, payload: WorkerMessengerPayload) {
-    const clients = await self.clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true,
-    });
-    for (const client of clients) {
-      Log._debug(`[WM] SW->Page broadcast '${command}' ${client.url}`);
-      client.postMessage({
-        command: command,
-        payload: payload,
-      });
-    }
+    await broadcastToPages(command, payload);
   }
 
   /**

@@ -13,6 +13,7 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { OperationRepo } from 'src/core/operationRepo/OperationRepo';
 import * as OneSignalApiBase from 'src/shared/api/base';
+import { updateUserSession } from 'src/shared/api/sw';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import type { AppConfig } from 'src/shared/config/types';
@@ -1009,7 +1010,7 @@ describe('ServiceWorker', () => {
           },
         );
 
-        test('a 401 on a signed request logs an error with the status', async () => {
+        test('a 401 on a signed request logs an error and tells the pages which token was rejected', async () => {
           const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
           getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
 
@@ -1018,6 +1019,134 @@ describe('ServiceWorker', () => {
           expect(errorSpy).toHaveBeenCalledWith(
             '[SW] The server rejected the JWT on the session request (401)',
           );
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        // The broadcast runs inside the promise the event holds open, so the
+        // browser does not stop the worker before postMessage.
+        test('the session request does not settle before the pages get the 401 report', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          matchAllFn.mockImplementationOnce(
+            () => new Promise((resolve) => setTimeout(() => resolve([mockClient]), 30)),
+          );
+
+          const sent = await updateUserSession({
+            appId,
+            onesignalId: ONESIGNAL_ID,
+            subscriptionId: SUB_ID,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          });
+
+          expect(sent).toBe(false);
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        test('a client that throws on postMessage does not stop the report to the other tabs', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          const closingClient = new Client({ url: 'http://closing-tab.com' });
+          const closingPostMessage = vi
+            .spyOn(closingClient, 'postMessage')
+            .mockImplementation(() => {
+              throw new DOMException('closing', 'InvalidStateError');
+            });
+          // The first list goes to the focus check in refreshSession, the second to the broadcast.
+          matchAllFn
+            .mockResolvedValueOnce([mockClient])
+            .mockResolvedValueOnce([closingClient, mockClient]);
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(closingPostMessage).toHaveBeenCalledOnce();
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        test('a matchAll rejection on the duration path does not skip the outcome', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          const outcomeFn = vi.fn();
+          getHandler({
+            uri: `**/outcomes/measure`,
+            method: 'post',
+            status: 200,
+            callback: outcomeFn,
+          });
+          // The first list goes to the focus check, then the broadcast's matchAll rejects.
+          matchAllFn
+            .mockResolvedValueOnce([unfocusedClient])
+            .mockRejectedValueOnce(new DOMException('gone', 'InvalidStateError'));
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+          await putNotificationClickedForOutcomes(appId, clickOutcome);
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                jwtRequired: true,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          expect(postMessageFn).not.toHaveBeenCalled();
+          expect(outcomeFn).toHaveBeenCalledOnce();
+        });
+
+        test('a 200 on a signed request and a 401 on an unsigned request send nothing to the pages', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200 });
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
+          getHandler({
+            uri: `**/apps/${appId}/users/by/onesignal_id/${ONESIGNAL_ID}`,
+            method: 'patch',
+            status: 401,
+          });
+          await upsertWith({ externalId: EXTERNAL_ID });
+
+          expect(postMessageFn).not.toHaveBeenCalledWith(
+            expect.objectContaining({ command: WorkerMessengerCommand._JwtUnauthorized }),
+          );
+        });
+
+        test('a 401 on the signed session duration update also tells the pages', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                jwtRequired: true,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
         });
 
         test('the session duration update is signed and the outcome stays unsigned', async () => {
