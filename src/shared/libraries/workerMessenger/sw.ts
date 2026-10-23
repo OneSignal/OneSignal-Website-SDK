@@ -20,10 +20,15 @@ export async function broadcastToPages(
   command: WorkerMessengerCommandValue,
   payload: WorkerMessengerPayload,
 ): Promise<void> {
-  const clients = await self.clients.matchAll({
-    type: 'window',
-    includeUncontrolled: true,
-  });
+  // A rejection stays here, so a caller that awaits inside a try with other
+  // requests does not lose them.
+  let clients: readonly Client[];
+  try {
+    clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  } catch (e) {
+    Log._debug(`[WM] SW->Page broadcast '${command}' failed to list the clients:`, e);
+    return;
+  }
   for (const client of clients) {
     Log._debug(`[WM] SW->Page broadcast '${command}' ${client.url}`);
     // A client in the middle of closing throws; the other tabs still get the message.
