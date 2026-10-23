@@ -2,7 +2,6 @@ import { ONESIGNAL_ID, SUB_ID, SUB_ID_2 } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
-  mockPageStylesCss,
   setAddAliasResponse,
   setCreateSubscriptionResponse,
   setCreateUserResponse,
@@ -37,8 +36,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/tes
  * The recorder reads MSW's life-cycle events, so it sees every request the SDK
  * sends, not only the ones a handler answers.
  */
-
-mockPageStylesCss();
 
 Object.defineProperty(global.navigator, 'serviceWorker', {
   value: new MockServiceWorker(),
@@ -87,10 +84,11 @@ async function setupSession({ flagOn }: { flagOn: boolean }): Promise<void> {
   recorded.length = 0;
 
   TestEnvironment.initialize({ initUserAndPushSubscription: true, permission: 'granted' });
-  void setupPropertiesModel();
+  await setupPropertiesModel();
   setupIdentityModel(IDManager._createLocalId());
   await setPushToken('');
   setFeatureFlags(flagOn ? [FeatureFlag._IdentityVerification] : []);
+  setJwtRequirement(JwtRequirement._NotRequired);
 
   setCreateUserResponse({ onesignalId: ONESIGNAL_ID, subscriptions: [{ id: SUB_ID }] });
   setUpdateSubscriptionResponse({ subscriptionId: SUB_ID });
