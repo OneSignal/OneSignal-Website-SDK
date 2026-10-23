@@ -49,7 +49,8 @@ function logIfUnauthorized(response: OneSignalApiBaseResponse, jwt: string | und
 
 /**
  *  Main on_session call
- * @returns false when the request was skipped because the user cannot be addressed
+ * @returns false when the request was skipped, got a 401, or did not reach the
+ * server, so a later token can send it again. Any other response counts as sent.
  */
 export async function updateUserSession(user: SessionUser): Promise<boolean> {
   const { appId, subscriptionId } = user;
@@ -73,10 +74,11 @@ export async function updateUserSession(user: SessionUser): Promise<boolean> {
       updateUserPayload,
     );
     logIfUnauthorized(response, jwt);
+    return response.status !== 401;
   } catch (e) {
     Log._debug('Session update error:', e);
+    return false;
   }
-  return true;
 }
 
 export async function sendSessionDuration(

@@ -22,6 +22,7 @@ import {
   putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
+import { upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
@@ -778,7 +779,7 @@ describe('ServiceWorker', () => {
           expect(requestHeadersFn).not.toHaveBeenCalled();
           expect(await getCurrentSession()).toMatchObject({
             status: SessionStatus._Active,
-            onSessionPending: true,
+            onSessionPendingFor: EXTERNAL_ID,
           });
         });
 
@@ -789,7 +790,7 @@ describe('ServiceWorker', () => {
           // Still no token: the session stays pending.
           await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
           expect(updateUserFn).not.toHaveBeenCalled();
-          expect(await getCurrentSession()).toMatchObject({ onSessionPending: true });
+          expect(await getCurrentSession()).toMatchObject({ onSessionPendingFor: EXTERNAL_ID });
 
           await upsertWith({
             jwtRequired: true,
@@ -804,10 +805,9 @@ describe('ServiceWorker', () => {
           const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
           expect(url).toContain(`/users/by/external_id/${EXTERNAL_ID}`);
           expect(headers.authorization).toBe(`Bearer ${JWT}`);
-          expect(await getCurrentSession()).toMatchObject({
-            status: SessionStatus._Active,
-            onSessionPending: false,
-          });
+          const afterSend = await getCurrentSession();
+          expect(afterSend).toMatchObject({ status: SessionStatus._Active });
+          expect(afterSend!.onSessionPendingFor).toBeUndefined();
 
           // The session is active and no longer pending, so a focus upsert sends nothing.
           await upsertWith({
@@ -825,16 +825,15 @@ describe('ServiceWorker', () => {
             ...session,
             status: SessionStatus._Inactive,
             lastDeactivatedTimestamp: Date.now(),
-            onSessionPending: true,
+            onSessionPendingFor: EXTERNAL_ID,
           });
 
           await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
 
           expect(updateUserFn).toHaveBeenCalledTimes(1);
-          expect(await getCurrentSession()).toMatchObject({
-            status: SessionStatus._Active,
-            onSessionPending: false,
-          });
+          const current = await getCurrentSession();
+          expect(current).toMatchObject({ status: SessionStatus._Active });
+          expect(current!.onSessionPendingFor).toBeUndefined();
         });
 
         // An anonymous user has no backend user under IV, so no token can complete this request later.
@@ -846,7 +845,105 @@ describe('ServiceWorker', () => {
           expect(updateUserFn).not.toHaveBeenCalled();
           const current = await getCurrentSession();
           expect(current).toMatchObject({ status: SessionStatus._Active });
-          expect(current!.onSessionPending).toBeUndefined();
+          expect(current!.onSessionPendingFor).toBeUndefined();
+        });
+
+        test('a 401 leaves the session pending and the next token sends on_session once', async () => {
+          server.use(
+            http.patch(externalIdUri, async ({ request }) => {
+              requestHeadersFn(Object.fromEntries(request.headers), request.url);
+              updateUserFn(await request.json());
+              const rejected = request.headers.get('authorization') === `Bearer ${JWT}`;
+              return HttpResponse.json({}, { status: rejected ? 401 : 200 });
+            }),
+          );
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect(await getCurrentSession()).toMatchObject({
+            status: SessionStatus._Active,
+            onSessionPendingFor: EXTERNAL_ID,
+          });
+
+          await upsertWith({
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: 'fresh.jwt.value',
+            sessionOrigin: SessionOrigin._JwtUpdated,
+          });
+          expect(updateUserFn).toHaveBeenCalledTimes(2);
+          expect(requestHeadersFn.mock.calls.at(-1)![0].authorization).toBe(
+            'Bearer fresh.jwt.value',
+          );
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: 'fresh.jwt.value' });
+          expect(updateUserFn).toHaveBeenCalledTimes(2);
+        });
+
+        test('a request that does not reach the server leaves the session pending', async () => {
+          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          // Every retry fails, so the request gives up.
+          await expect
+            .poll(async () => (await getCurrentSession())?.onSessionPendingFor)
+            .toBe(EXTERNAL_ID);
+          expect(await getCurrentSession()).toMatchObject({ status: SessionStatus._Active });
+        });
+
+        test('a 4xx other than 401 counts as sent', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 400, callback: updateUserFn });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+        });
+
+        test('the pending on_session is not sent to a different user', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          getHandler({
+            uri: `**/apps/${appId}/users/by/external_id/someone-else`,
+            method: 'patch',
+            status: 200,
+            callback: updateUserFn,
+          });
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+          expect(await getCurrentSession()).toMatchObject({ onSessionPendingFor: EXTERNAL_ID });
+
+          await upsertWith({ jwtRequired: true, externalId: 'someone-else', jwt: JWT });
+
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+        });
+
+        // The debounce only cancels a refresh that has not started, so a request
+        // slower than the debounce can overlap the next upsert.
+        test('two overlapping upserts send the pending on_session once', async () => {
+          server.use(
+            http.patch(externalIdUri, async ({ request }) => {
+              updateUserFn(await request.json());
+              await new Promise((resolve) => setTimeout(resolve, 50));
+              return HttpResponse.json({});
+            }),
+          );
+          await db.put('Sessions', { ...session, onSessionPendingFor: EXTERNAL_ID });
+          const user = {
+            ...baseMessagePayload,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          };
+
+          const first = upsertSession(user);
+          await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, { interval: 1 });
+          await upsertSession(user);
+          await first;
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
         });
 
         test.each([200, 401])(

@@ -15,10 +15,11 @@ export interface Session {
   lastDeactivatedTimestamp: number | null;
   lastActivatedTimestamp: number;
   /**
-   * The on_session request was skipped because the token was missing. The next
-   * upsert that brings a token sends it once.
+   * The external id of the user whose on_session request was skipped for a
+   * missing token, got a 401, or did not reach the server. The next upsert for
+   * the same user that brings a token sends it once.
    */
-  onSessionPending?: boolean;
+  onSessionPendingFor?: string;
 }
 
 interface BaseSessionPayload {
