@@ -175,6 +175,8 @@ describe('Identity Verification phase 3 parity', () => {
     expect(recorded).toEqual([]);
     expect(OneSignal._coreDirector._operationRepo._queue.length).toBeGreaterThan(0);
 
+    // A stored token must not reach a request while the requirement is not required.
+    OneSignal._coreDirector._jwtTokenStore._putJwt('jd-1', 'stored-token');
     setJwtRequirement(JwtRequirement._NotRequired);
     await login;
     await drainQueue();
@@ -191,5 +193,6 @@ describe('Identity Verification phase 3 parity', () => {
       ]),
     );
     recorded.forEach((request) => expect(request.headers.authorization).toBeUndefined());
+    expect(OneSignal._coreDirector._jwtTokenStore._getJwt('jd-1')).toBe('stored-token');
   });
 });
