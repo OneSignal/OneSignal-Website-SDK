@@ -893,6 +893,47 @@ describe('ServiceWorker', () => {
           expect(await getCurrentSession()).toMatchObject({ status: SessionStatus._Active });
         });
 
+        // The retries can outlast the session threshold, so the row the request
+        // started with may be gone by the time the request gives up.
+        test('a session finalized while the request retries is not recreated', async () => {
+          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+          const user = {
+            ...baseMessagePayload,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          };
+
+          const upsert = upsertSession(user);
+          await vi.waitUntil(async () => (await getCurrentSession()) !== null, { interval: 1 });
+          await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
+          await upsert;
+
+          expect(await getCurrentSession()).toBeNull();
+        });
+
+        test('a pending restore after a failed retry goes on the current session only', async () => {
+          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+          await db.put('Sessions', { ...session, onSessionPendingFor: EXTERNAL_ID });
+          const user = {
+            ...baseMessagePayload,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          };
+
+          const upsert = upsertSession(user);
+          await vi.waitUntil(
+            async () => (await getCurrentSession())?.onSessionPendingFor === undefined,
+            { interval: 1 },
+          );
+          const replacement = { ...session, startTimestamp: session.startTimestamp + 1 };
+          await db.put('Sessions', replacement);
+          await upsert;
+
+          expect(await getCurrentSession()).toEqual(replacement);
+        });
+
         test('a 4xx other than 401 counts as sent', async () => {
           getHandler({ uri: externalIdUri, method: 'patch', status: 400, callback: updateUserFn });
 
