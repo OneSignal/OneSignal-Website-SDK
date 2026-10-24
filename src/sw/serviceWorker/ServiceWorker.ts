@@ -61,6 +61,9 @@ import type {
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 const MAX_CONFIRMED_DELIVERY_DELAY = 25;
+// How long to wait for a visible page to answer the NotificationWillDisplay broadcast.
+// A visible page that does not run the SDK never answers.
+const NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS = 2_000;
 const workerMessenger = new WorkerMessengerSW(undefined);
 
 async function getPushSubscriptionId(): Promise<string | undefined> {
@@ -227,7 +230,8 @@ function setupMessageListeners() {
  * are present, skipping the broadcast entirely.
  *
  * Since preventDefault() is synchronous, the page responds immediately
- * after receiving the broadcast -- no polling or timeout needed.
+ * after receiving the broadcast. If no page responds in time (e.g. the
+ * visible page does not load the SDK), the notification is shown.
  */
 async function shouldPreventNotificationDisplay(notif: IOSNotification): Promise<boolean> {
   const clients = await self.clients.matchAll({
@@ -259,6 +263,8 @@ async function shouldPreventNotificationDisplay(notif: IOSNotification): Promise
       notificationId: notif.notificationId,
       resolve,
     };
+    // Show the notification if no page responds in time
+    setTimeout(() => resolve(false), NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS);
   });
 
   await workerMessenger
