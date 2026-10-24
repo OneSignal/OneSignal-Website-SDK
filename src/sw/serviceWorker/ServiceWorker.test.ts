@@ -330,6 +330,25 @@ describe('ServiceWorker', () => {
         );
       });
 
+      test('should display notification when a visible page never responds', async () => {
+        // e.g. a visible page in the service worker scope that does not load the SDK
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
+        vi.useFakeTimers();
+
+        const payload = mockOSMinifiedNotificationPayload();
+        self.dispatchEvent(new PushEvent('push', payload));
+        await vi.advanceTimersByTimeAsync(5_000);
+        vi.useRealTimers();
+        await flush();
+
+        expect(showNotificationSpy).toHaveBeenCalledWith(
+          payload.title,
+          expect.objectContaining({
+            body: payload.alert,
+          }),
+        );
+      });
+
       test('should display notification via display() after preventDefault', async () => {
         const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
 
