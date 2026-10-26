@@ -11,7 +11,7 @@ import {
   type JwtUnauthorizedPayload,
   WorkerMessengerCommand,
 } from '../libraries/workerMessenger/constants';
-import { broadcastToPages } from '../libraries/workerMessenger/sw';
+import { postToOnePage } from '../libraries/workerMessenger/sw';
 import { OutcomeAttributionType, type OutcomeAttribution } from '../models/Outcomes';
 import type { OutcomeRequestData } from '../outcomes/types';
 import type { SessionUser } from '../session/types';
@@ -44,11 +44,12 @@ function sessionBackendParams({ onesignalId, jwtRequired, externalId, jwt }: Ses
   return null;
 }
 
-// The worker cannot reach the page token store, so it tells the pages which
+// The worker cannot reach the page token store, so it tells one page which
 // token the server rejected. The page removes it only if it is still the stored one.
-// Awaited so the broadcast finishes inside the event's waitUntil, before the
+// One page only: each tab that got the report would fire userJwtInvalidated.
+// Awaited so the post finishes inside the event's waitUntil, before the
 // browser can stop the worker.
-async function notifyPagesIfUnauthorized(
+async function notifyPageIfUnauthorized(
   response: OneSignalApiBaseResponse,
   { externalId, jwt }: Pick<SessionUser, 'externalId' | 'jwt'>,
 ): Promise<void> {
@@ -56,7 +57,7 @@ async function notifyPagesIfUnauthorized(
   if (getResponseStatusType(response.status) !== ResponseStatusType._Unauthorized) return;
   Log._error(`[SW] The server rejected the JWT on the session request (${response.status})`);
   const payload: JwtUnauthorizedPayload = { externalId, jwt };
-  await broadcastToPages(WorkerMessengerCommand._JwtUnauthorized, payload);
+  await postToOnePage(WorkerMessengerCommand._JwtUnauthorized, payload);
 }
 
 /**
@@ -85,7 +86,7 @@ export async function updateUserSession(user: SessionUser): Promise<boolean> {
       alias,
       updateUserPayload,
     );
-    await notifyPagesIfUnauthorized(response, user);
+    await notifyPageIfUnauthorized(response, user);
     return response.status !== 401;
   } catch (e) {
     Log._debug('Session update error:', e);
@@ -129,7 +130,7 @@ export async function sendSessionDuration(
         alias,
         updateUserPayload,
       );
-      await notifyPagesIfUnauthorized(response, user);
+      await notifyPageIfUnauthorized(response, user);
     }
 
     if (outcomePayload.notification_ids && outcomePayload.notification_ids.length > 0) {

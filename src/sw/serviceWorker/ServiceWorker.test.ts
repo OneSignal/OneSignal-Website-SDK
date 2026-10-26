@@ -1050,26 +1050,66 @@ describe('ServiceWorker', () => {
           });
         });
 
-        test('a client that throws on postMessage does not stop the report to the other tabs', async () => {
-          vi.spyOn(Log, '_error').mockImplementation(() => {});
-          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
-          const closingClient = new Client({ url: 'http://closing-tab.com' });
-          const closingPostMessage = vi
-            .spyOn(closingClient, 'postMessage')
-            .mockImplementation(() => {
-              throw new DOMException('closing', 'InvalidStateError');
+        describe('the 401 report goes to one tab only', () => {
+          const focusedTab = () => new Client({ url: 'http://focused-tab.com' });
+          const visibleTab = () =>
+            new Client({
+              url: 'http://visible-tab.com',
+              focused: false,
+              visibilityState: 'visible',
             });
-          // The first list goes to the focus check in refreshSession, the second to the broadcast.
-          matchAllFn
-            .mockResolvedValueOnce([mockClient])
-            .mockResolvedValueOnce([closingClient, mockClient]);
+          const hiddenTab = (url = 'http://hidden-tab.com') =>
+            new Client({ url, focused: false, visibilityState: 'hidden' });
 
-          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
-
-          expect(closingPostMessage).toHaveBeenCalledOnce();
-          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+          // Returns the postMessage spy of each tab, in the order given.
+          const reportTo = async (tabs: Client[]) => {
+            vi.spyOn(Log, '_error').mockImplementation(() => {});
+            getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+            const spies = tabs.map((tab) => vi.spyOn(tab, 'postMessage'));
+            // The first list goes to the focus check in refreshSession, the second to the report.
+            matchAllFn.mockResolvedValueOnce([mockClient]).mockResolvedValueOnce(tabs);
+            await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+            return spies;
+          };
+          const report = {
             command: WorkerMessengerCommand._JwtUnauthorized,
             payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          };
+
+          test('the focused tab gets it before a visible or a hidden tab', async () => {
+            const [hidden, visible, focused] = await reportTo([
+              hiddenTab(),
+              visibleTab(),
+              focusedTab(),
+            ]);
+            expect(focused).toHaveBeenCalledExactlyOnceWith(report);
+            expect(visible).not.toHaveBeenCalled();
+            expect(hidden).not.toHaveBeenCalled();
+          });
+
+          test('with no focused tab, a visible tab gets it', async () => {
+            const [hidden, visible] = await reportTo([hiddenTab(), visibleTab()]);
+            expect(visible).toHaveBeenCalledExactlyOnceWith(report);
+            expect(hidden).not.toHaveBeenCalled();
+          });
+
+          test('with only hidden tabs, the first tab gets it', async () => {
+            const [first, second] = await reportTo([
+              hiddenTab('http://hidden-1.com'),
+              hiddenTab('http://hidden-2.com'),
+            ]);
+            expect(first).toHaveBeenCalledExactlyOnceWith(report);
+            expect(second).not.toHaveBeenCalled();
+          });
+
+          test('if the chosen tab throws on postMessage, the next tab gets it', async () => {
+            const closing = focusedTab();
+            vi.spyOn(closing, 'postMessage').mockImplementation(() => {
+              throw new DOMException('closing', 'InvalidStateError');
+            });
+            const [closingSpy, hidden] = await reportTo([closing, hiddenTab()]);
+            expect(closingSpy).toHaveBeenCalledOnce();
+            expect(hidden).toHaveBeenCalledExactlyOnceWith(report);
           });
         });
 
