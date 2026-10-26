@@ -39,33 +39,22 @@ export function getConsentGiven(): boolean | null {
   return value === null ? null : value === 'true';
 }
 
-// The last feature list the server returned and the app it belongs to. The
-// reader drops non-string entries, and malformed JSON reads as empty.
-export function setFeatureFlags(appId: string, flags: unknown[]): void {
-  localStorage.setItem(FEATURE_FLAGS, JSON.stringify({ appId, flags }));
+export function getFeatureFlags(): unknown[] {
+  return parseList(localStorage.getItem(FEATURE_FLAGS));
 }
 
-export function clearFeatureFlags(): void {
-  localStorage.removeItem(FEATURE_FLAGS);
+export function setFeatureFlags(flags: unknown[]): void {
+  localStorage.setItem(FEATURE_FLAGS, JSON.stringify(flags));
 }
 
-function readFeatureFlags(): Record<string, unknown> {
+// Only the SDK writes these lists, so anything that isn't an array reads as empty.
+export function parseList(json: string | null | undefined): unknown[] {
   try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(FEATURE_FLAGS) ?? '{}');
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+    const list: unknown = JSON.parse(json || '[]');
+    return Array.isArray(list) ? list : [];
   } catch {
-    return {};
+    return [];
   }
-}
-
-export function getFeatureFlags(): string[] {
-  const { flags } = readFeatureFlags();
-  return Array.isArray(flags) ? flags.filter((f) => typeof f === 'string') : [];
-}
-
-export function getFeatureFlagsAppId(): string | null {
-  const { appId } = readFeatureFlags();
-  return typeof appId === 'string' ? appId : null;
 }
 
 // Comma-separated flag keys forced on for local testing.
