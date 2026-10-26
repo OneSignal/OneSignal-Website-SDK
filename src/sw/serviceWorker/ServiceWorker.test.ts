@@ -13,6 +13,7 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { OperationRepo } from 'src/core/operationRepo/OperationRepo';
 import * as OneSignalApiBase from 'src/shared/api/base';
+import { updateUserSession } from 'src/shared/api/sw';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import type { AppConfig } from 'src/shared/config/types';
@@ -22,6 +23,7 @@ import {
   putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
+import { upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
@@ -761,7 +763,7 @@ describe('ServiceWorker', () => {
           expect(headers.authorization).toBeUndefined();
         });
 
-        test('jwtRequired without a jwt: the session is stored and no request is sent', async () => {
+        test('jwtRequired without a jwt: the session is stored as pending and no request is sent', async () => {
           setUpdateUserResponse();
           const putSpy = vi.spyOn(db, 'put');
 
@@ -776,6 +778,214 @@ describe('ServiceWorker', () => {
           );
           expect(updateUserFn).not.toHaveBeenCalled();
           expect(requestHeadersFn).not.toHaveBeenCalled();
+          expect(await getCurrentSession()).toMatchObject({
+            status: SessionStatus._Active,
+            onSessionPendingFor: EXTERNAL_ID,
+          });
+        });
+
+        test('a later upsert with a jwt sends the pending on_session once', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+          // Still no token: the session stays pending.
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect(await getCurrentSession()).toMatchObject({ onSessionPendingFor: EXTERNAL_ID });
+
+          await upsertWith({
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+            sessionOrigin: SessionOrigin._JwtUpdated,
+          });
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
+          const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+          expect(url).toContain(`/users/by/external_id/${EXTERNAL_ID}`);
+          expect(headers.authorization).toBe(`Bearer ${JWT}`);
+          const afterSend = await getCurrentSession();
+          expect(afterSend).toMatchObject({ status: SessionStatus._Active });
+          expect(afterSend!.onSessionPendingFor).toBeUndefined();
+
+          // The session is active and no longer pending, so a focus upsert sends nothing.
+          await upsertWith({
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+            sessionOrigin: SessionOrigin._Focus,
+          });
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+        });
+
+        test('a pending session reactivated within the threshold sends on_session with the jwt', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          await db.put('Sessions', {
+            ...session,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now(),
+            onSessionPendingFor: EXTERNAL_ID,
+          });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          const current = await getCurrentSession();
+          expect(current).toMatchObject({ status: SessionStatus._Active });
+          expect(current!.onSessionPendingFor).toBeUndefined();
+        });
+
+        // An anonymous user has no backend user under IV, so no token can complete this request later.
+        test('an anonymous user does not leave the session pending', async () => {
+          setUpdateUserResponse();
+
+          await upsertWith({ jwtRequired: true });
+
+          expect(updateUserFn).not.toHaveBeenCalled();
+          const current = await getCurrentSession();
+          expect(current).toMatchObject({ status: SessionStatus._Active });
+          expect(current!.onSessionPendingFor).toBeUndefined();
+        });
+
+        test('a 401 leaves the session pending and the next token sends on_session once', async () => {
+          server.use(
+            http.patch(externalIdUri, async ({ request }) => {
+              requestHeadersFn(Object.fromEntries(request.headers), request.url);
+              updateUserFn(await request.json());
+              const rejected = request.headers.get('authorization') === `Bearer ${JWT}`;
+              return HttpResponse.json({}, { status: rejected ? 401 : 200 });
+            }),
+          );
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect(await getCurrentSession()).toMatchObject({
+            status: SessionStatus._Active,
+            onSessionPendingFor: EXTERNAL_ID,
+          });
+
+          await upsertWith({
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: 'fresh.jwt.value',
+            sessionOrigin: SessionOrigin._JwtUpdated,
+          });
+          expect(updateUserFn).toHaveBeenCalledTimes(2);
+          expect(requestHeadersFn.mock.calls.at(-1)![0].authorization).toBe(
+            'Bearer fresh.jwt.value',
+          );
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: 'fresh.jwt.value' });
+          expect(updateUserFn).toHaveBeenCalledTimes(2);
+        });
+
+        test('a request that does not reach the server leaves the session pending', async () => {
+          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          // Every retry fails, so the request gives up.
+          await expect
+            .poll(async () => (await getCurrentSession())?.onSessionPendingFor)
+            .toBe(EXTERNAL_ID);
+          expect(await getCurrentSession()).toMatchObject({ status: SessionStatus._Active });
+        });
+
+        // The retries can outlast the session threshold, so the row the request
+        // started with may be gone by the time the request gives up.
+        test('a session finalized while the request retries is not recreated', async () => {
+          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+          const user = {
+            ...baseMessagePayload,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          };
+
+          const upsert = upsertSession(user);
+          await vi.waitUntil(async () => (await getCurrentSession()) !== null, { interval: 1 });
+          await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
+          await upsert;
+
+          expect(await getCurrentSession()).toBeNull();
+        });
+
+        test('a pending restore after a failed retry goes on the current session only', async () => {
+          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+          await db.put('Sessions', { ...session, onSessionPendingFor: EXTERNAL_ID });
+          const user = {
+            ...baseMessagePayload,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          };
+
+          const upsert = upsertSession(user);
+          await vi.waitUntil(
+            async () => (await getCurrentSession())?.onSessionPendingFor === undefined,
+            { interval: 1 },
+          );
+          const replacement = { ...session, startTimestamp: session.startTimestamp + 1 };
+          await db.put('Sessions', replacement);
+          await upsert;
+
+          expect(await getCurrentSession()).toEqual(replacement);
+        });
+
+        test('a 4xx other than 401 counts as sent', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 400, callback: updateUserFn });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+        });
+
+        test('the pending on_session is not sent to a different user', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          getHandler({
+            uri: `**/apps/${appId}/users/by/external_id/someone-else`,
+            method: 'patch',
+            status: 200,
+            callback: updateUserFn,
+          });
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+          expect(await getCurrentSession()).toMatchObject({ onSessionPendingFor: EXTERNAL_ID });
+
+          await upsertWith({ jwtRequired: true, externalId: 'someone-else', jwt: JWT });
+
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+        });
+
+        // The debounce only cancels a refresh that has not started, so a request
+        // slower than the debounce can overlap the next upsert.
+        test('two overlapping upserts send the pending on_session once', async () => {
+          server.use(
+            http.patch(externalIdUri, async ({ request }) => {
+              updateUserFn(await request.json());
+              await new Promise((resolve) => setTimeout(resolve, 50));
+              return HttpResponse.json({});
+            }),
+          );
+          await db.put('Sessions', { ...session, onSessionPendingFor: EXTERNAL_ID });
+          const user = {
+            ...baseMessagePayload,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          };
+
+          const first = upsertSession(user);
+          await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, { interval: 1 });
+          await upsertSession(user);
+          await first;
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
         });
 
         test.each([200, 401])(
@@ -800,7 +1010,7 @@ describe('ServiceWorker', () => {
           },
         );
 
-        test('a 401 on a signed request logs an error with the status', async () => {
+        test('a 401 on a signed request logs an error and tells the pages which token was rejected', async () => {
           const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
           getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
 
@@ -809,6 +1019,174 @@ describe('ServiceWorker', () => {
           expect(errorSpy).toHaveBeenCalledWith(
             '[SW] The server rejected the JWT on the session request (401)',
           );
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        // The broadcast runs inside the promise the event holds open, so the
+        // browser does not stop the worker before postMessage.
+        test('the session request does not settle before the pages get the 401 report', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          matchAllFn.mockImplementationOnce(
+            () => new Promise((resolve) => setTimeout(() => resolve([mockClient]), 30)),
+          );
+
+          const sent = await updateUserSession({
+            appId,
+            onesignalId: ONESIGNAL_ID,
+            subscriptionId: SUB_ID,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          });
+
+          expect(sent).toBe(false);
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        describe('the 401 report goes to one tab only', () => {
+          const focusedTab = () => new Client({ url: 'http://focused-tab.com' });
+          const visibleTab = () =>
+            new Client({
+              url: 'http://visible-tab.com',
+              focused: false,
+              visibilityState: 'visible',
+            });
+          const hiddenTab = (url = 'http://hidden-tab.com') =>
+            new Client({ url, focused: false, visibilityState: 'hidden' });
+
+          // Returns the postMessage spy of each tab, in the order given.
+          const reportTo = async (tabs: Client[]) => {
+            vi.spyOn(Log, '_error').mockImplementation(() => {});
+            getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+            const spies = tabs.map((tab) => vi.spyOn(tab, 'postMessage'));
+            // The first list goes to the focus check in refreshSession, the second to the report.
+            matchAllFn.mockResolvedValueOnce([mockClient]).mockResolvedValueOnce(tabs);
+            await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+            return spies;
+          };
+          const report = {
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          };
+
+          test('the focused tab gets it before a visible or a hidden tab', async () => {
+            const [hidden, visible, focused] = await reportTo([
+              hiddenTab(),
+              visibleTab(),
+              focusedTab(),
+            ]);
+            expect(focused).toHaveBeenCalledExactlyOnceWith(report);
+            expect(visible).not.toHaveBeenCalled();
+            expect(hidden).not.toHaveBeenCalled();
+          });
+
+          test('with no focused tab, a visible tab gets it', async () => {
+            const [hidden, visible] = await reportTo([hiddenTab(), visibleTab()]);
+            expect(visible).toHaveBeenCalledExactlyOnceWith(report);
+            expect(hidden).not.toHaveBeenCalled();
+          });
+
+          test('with only hidden tabs, the first tab gets it', async () => {
+            const [first, second] = await reportTo([
+              hiddenTab('http://hidden-1.com'),
+              hiddenTab('http://hidden-2.com'),
+            ]);
+            expect(first).toHaveBeenCalledExactlyOnceWith(report);
+            expect(second).not.toHaveBeenCalled();
+          });
+
+          test('if the chosen tab throws on postMessage, the next tab gets it', async () => {
+            const closing = focusedTab();
+            vi.spyOn(closing, 'postMessage').mockImplementation(() => {
+              throw new DOMException('closing', 'InvalidStateError');
+            });
+            const [closingSpy, hidden] = await reportTo([closing, hiddenTab()]);
+            expect(closingSpy).toHaveBeenCalledOnce();
+            expect(hidden).toHaveBeenCalledExactlyOnceWith(report);
+          });
+        });
+
+        test('a matchAll rejection on the duration path does not skip the outcome', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          const outcomeFn = vi.fn();
+          getHandler({
+            uri: `**/outcomes/measure`,
+            method: 'post',
+            status: 200,
+            callback: outcomeFn,
+          });
+          // The first list goes to the focus check, then the broadcast's matchAll rejects.
+          matchAllFn
+            .mockResolvedValueOnce([unfocusedClient])
+            .mockRejectedValueOnce(new DOMException('gone', 'InvalidStateError'));
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+          await putNotificationClickedForOutcomes(appId, clickOutcome);
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                jwtRequired: true,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          expect(postMessageFn).not.toHaveBeenCalled();
+          expect(outcomeFn).toHaveBeenCalledOnce();
+        });
+
+        test('a 200 on a signed request and a 401 on an unsigned request send nothing to the pages', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200 });
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
+          getHandler({
+            uri: `**/apps/${appId}/users/by/onesignal_id/${ONESIGNAL_ID}`,
+            method: 'patch',
+            status: 401,
+          });
+          await upsertWith({ externalId: EXTERNAL_ID });
+
+          expect(postMessageFn).not.toHaveBeenCalledWith(
+            expect.objectContaining({ command: WorkerMessengerCommand._JwtUnauthorized }),
+          );
+        });
+
+        test('a 401 on the signed session duration update also tells the pages', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                jwtRequired: true,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
         });
 
         test('the session duration update is signed and the outcome stays unsigned', async () => {

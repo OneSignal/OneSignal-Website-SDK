@@ -56,6 +56,10 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
   }
 
   if (existingSession.status === SessionStatus._Active) {
+    if (existingSession.onSessionPendingFor) {
+      await sendPendingOnSession(options, existingSession);
+      return;
+    }
     Log._debug('Session already active', existingSession);
     return;
   }
@@ -77,6 +81,7 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
     existingSession.lastActivatedTimestamp = currentTimestamp;
     existingSession.lastDeactivatedTimestamp = null;
     await db.put('Sessions', existingSession);
+    if (existingSession.onSessionPendingFor) await sendPendingOnSession(options, existingSession);
     return;
   }
 
@@ -144,7 +149,36 @@ async function sendOnSessionCall(user: SessionUser, session: Session) {
   void resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
-  await updateUserSession(user);
+  const sent = await updateUserSession(user);
+  // Only a token can arrive later. An anonymous user under Identity Verification
+  // has no backend user, so that skip does not leave the session pending.
+  if (!sent && user.jwtRequired && user.externalId) {
+    await markOnSessionPending(session, user.externalId);
+  }
+}
+
+// The flag is cleared before the request, so an upsert that overlaps this one
+// finds nothing pending. A skipped or rejected request sets it back.
+async function sendPendingOnSession(user: SessionUser, session: Session): Promise<void> {
+  const pendingFor = session.onSessionPendingFor;
+  session.onSessionPendingFor = undefined;
+  await db.put('Sessions', session);
+  // The count belongs to the user who started the session.
+  if (!pendingFor || pendingFor !== user.externalId) return;
+  const sent = await updateUserSession(user);
+  if (sent) return;
+  await markOnSessionPending(session, pendingFor);
+}
+
+// The request can wait through 120 s of retries, past the session threshold, so
+// the row may be gone or replaced by then. The flag goes on the stored row only
+// if it is still the same session; a write of the captured object could
+// recreate a row finalizeSession deleted.
+async function markOnSessionPending(session: Session, externalId: string): Promise<void> {
+  const current = await getCurrentSession();
+  if (!current || current.startTimestamp !== session.startTimestamp) return;
+  current.onSessionPendingFor = externalId;
+  await db.put('Sessions', current);
 }
 
 async function finalizeSession(

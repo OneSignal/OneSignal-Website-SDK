@@ -29,6 +29,20 @@ beforeEach(() => {
   );
 });
 
+test('internalInit: a stored token reaches the session manager', async () => {
+  vi.spyOn(OneSignal._context._serviceWorkerManager, '_installWorker').mockResolvedValue(undefined);
+  // Hidden, so the session init waits for a visibility change and the test stays small.
+  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+  const jwtUpdatedSpy = vi
+    .spyOn(OneSignal._context._sessionManager, '_handleJwtUpdated')
+    .mockResolvedValue();
+
+  await InitHelper.internalInit();
+  OneSignal._coreDirector._jwtTokenStore._putJwt('jd-1', 'jwt');
+
+  expect(jwtUpdatedSpy).toHaveBeenCalledExactlyOnceWith('jd-1');
+});
+
 /** onSdkInitialized */
 test('onSdkInitialized: ensure public sdk initialized triggered', async () => {
   OneSignal._emitter.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {

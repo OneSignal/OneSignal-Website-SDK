@@ -7,6 +7,11 @@ import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
 import { getResponseStatusType, ResponseStatusType } from '../helpers/network';
 import Log from '../libraries/Log';
+import {
+  type JwtUnauthorizedPayload,
+  WorkerMessengerCommand,
+} from '../libraries/workerMessenger/constants';
+import { postToOnePage } from '../libraries/workerMessenger/sw';
 import { OutcomeAttributionType, type OutcomeAttribution } from '../models/Outcomes';
 import type { OutcomeRequestData } from '../outcomes/types';
 import type { SessionUser } from '../session/types';
@@ -39,22 +44,31 @@ function sessionBackendParams({ onesignalId, jwtRequired, externalId, jwt }: Ses
   return null;
 }
 
-// The worker cannot reach the page token store. The page removes the token on
-// its own next 401, so the worker only reports the rejection.
-function logIfUnauthorized(response: OneSignalApiBaseResponse, jwt: string | undefined): void {
-  if (jwt && getResponseStatusType(response.status) === ResponseStatusType._Unauthorized) {
-    Log._error(`[SW] The server rejected the JWT on the session request (${response.status})`);
-  }
+// The worker cannot reach the page token store, so it tells one page which
+// token the server rejected. The page removes it only if it is still the stored one.
+// One page only: each tab that got the report would fire userJwtInvalidated.
+// Awaited so the post finishes inside the event's waitUntil, before the
+// browser can stop the worker.
+async function notifyPageIfUnauthorized(
+  response: OneSignalApiBaseResponse,
+  { externalId, jwt }: Pick<SessionUser, 'externalId' | 'jwt'>,
+): Promise<void> {
+  if (!jwt || !externalId) return;
+  if (getResponseStatusType(response.status) !== ResponseStatusType._Unauthorized) return;
+  Log._error(`[SW] The server rejected the JWT on the session request (${response.status})`);
+  const payload: JwtUnauthorizedPayload = { externalId, jwt };
+  await postToOnePage(WorkerMessengerCommand._JwtUnauthorized, payload);
 }
 
 /**
  *  Main on_session call
- * @returns
+ * @returns false when the request was skipped, got a 401, or did not reach the
+ * server, so a later token can send it again. Any other response counts as sent.
  */
-export async function updateUserSession(user: SessionUser): Promise<void> {
+export async function updateUserSession(user: SessionUser): Promise<boolean> {
   const { appId, subscriptionId } = user;
   const params = sessionBackendParams(user);
-  if (!params) return;
+  if (!params) return false;
   const { alias, jwt } = params;
   // TO DO: in future, we should aggregate session count in case network call fails
   const updateUserPayload: IUpdateUser = {
@@ -72,9 +86,11 @@ export async function updateUserSession(user: SessionUser): Promise<void> {
       alias,
       updateUserPayload,
     );
-    logIfUnauthorized(response, jwt);
+    await notifyPageIfUnauthorized(response, user);
+    return response.status !== 401;
   } catch (e) {
     Log._debug('Session update error:', e);
+    return false;
   }
 }
 
@@ -114,7 +130,7 @@ export async function sendSessionDuration(
         alias,
         updateUserPayload,
       );
-      logIfUnauthorized(response, jwt);
+      await notifyPageIfUnauthorized(response, user);
     }
 
     if (outcomePayload.notification_ids && outcomePayload.notification_ids.length > 0) {

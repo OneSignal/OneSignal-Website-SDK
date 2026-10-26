@@ -14,6 +14,12 @@ export interface Session {
   status: SessionStatusValue;
   lastDeactivatedTimestamp: number | null;
   lastActivatedTimestamp: number;
+  /**
+   * The external id of the user whose on_session request was skipped for a
+   * missing token, got a 401, or did not reach the server. The next upsert for
+   * the same user that brings a token sends it once.
+   */
+  onSessionPendingFor?: string;
 }
 
 interface BaseSessionPayload {

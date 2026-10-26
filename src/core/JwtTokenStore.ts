@@ -23,7 +23,8 @@ export type UserJwtInvalidatedListener = (event: UserJwtInvalidatedEvent) => voi
  * Tabs share the persisted map. Every read and every write starts from
  * localStorage, so a token another tab stored or removed is visible at once and
  * a write in this tab never overwrites it. No listener fires for a remote change:
- * the tab that saw the 401 already asked the app for a token, and the queue
+ * the tab that saw the 401, or the one tab the worker told about its 401,
+ * already asked the app for a token, and the queue
  * re-reads the store on every tick.
  */
 export class JwtTokenStore {
