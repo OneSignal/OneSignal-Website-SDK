@@ -1,6 +1,12 @@
 import { get } from '../api/base';
-import { db, getOptionsValue, isReadwriteWedged } from '../database/client';
-import { getFeatureFlags, getFeatureOverrides, setFeatureFlags } from '../helpers/localStorage';
+import { db, getOptionsValue } from '../database/client';
+import {
+  clearFeatureFlags,
+  getFeatureFlags,
+  getFeatureFlagsAppId,
+  getFeatureOverrides,
+  setFeatureFlags,
+} from '../helpers/localStorage';
 import Log from '../libraries/Log';
 import { VERSION } from '../utils/env';
 
@@ -35,24 +41,43 @@ function parseFlagList(json: string | null): string[] {
 // The worker mirror is written first; when that write is dropped, the page
 // list is left as is so the page and the worker keep the same flags.
 export async function refreshFeatureFlags(appId: string): Promise<void> {
-  const overrides = getFeatureOverrides();
-  // Bypasses Log so the warning shows in production builds, where Log is silent below trace.
-  if (overrides.length) console.warn('OneSignal: feature flag overrides are active:', overrides);
-
   try {
-    const { ok, result } = await get<FeaturesResponse>(`apps/${appId}/sdk/features/web/${VERSION}`);
-    if (!ok || !Array.isArray(result?.features)) return;
-    const flags = result.features.filter((f) => typeof f === 'string');
-    await db.put('Options', {
+    const overrides = getFeatureOverrides();
+    // Bypasses Log so the warning shows in production builds, where Log is silent below trace.
+    if (overrides.length) console.warn('OneSignal: feature flag overrides are active:', overrides);
+
+    // Flags are per app, so a list cached for another app is dropped before the fetch.
+    const cachedAppId = getFeatureFlagsAppId();
+    if (cachedAppId && cachedAppId !== appId) {
+      clearFeatureFlags();
+      await db.put('Options', { key: 'featureFlags', value: null });
+    }
+
+    const fresh = await fetchFeatureFlags(appId);
+    const flags = fresh ?? getFeatureFlags();
+    // `db.put` resolves to the key when the write commits and to undefined when
+    // the circuit breaker drops it.
+    const mirrored = await db.put('Options', {
       key: 'featureFlags',
       value: JSON.stringify([...overrides, ...flags]),
     });
-    if (isReadwriteWedged()) {
+    if (mirrored === undefined) {
       Log._warn('Feature flags not mirrored to the worker, keeping the cached list');
       return;
     }
-    setFeatureFlags(flags);
+    if (fresh) setFeatureFlags(appId, fresh);
+  } catch (e) {
+    Log._warn('Feature flags refresh failed', e);
+  }
+}
+
+async function fetchFeatureFlags(appId: string): Promise<string[] | undefined> {
+  try {
+    const { ok, result } = await get<FeaturesResponse>(`apps/${appId}/sdk/features/web/${VERSION}`);
+    if (!ok || !Array.isArray(result?.features)) return undefined;
+    return result.features.filter((f) => typeof f === 'string');
   } catch (e) {
     Log._warn('Feature flags fetch failed', e);
+    return undefined;
   }
 }

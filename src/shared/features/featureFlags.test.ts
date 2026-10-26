@@ -3,9 +3,13 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
-import * as clientModule from '../database/client';
 import { db, getOptionsValue } from '../database/client';
-import { getFeatureFlags, getFeatureOverrides, setFeatureFlags } from '../helpers/localStorage';
+import {
+  getFeatureFlags,
+  getFeatureFlagsAppId,
+  getFeatureOverrides,
+  setFeatureFlags,
+} from '../helpers/localStorage';
 import Log from '../libraries/Log';
 import {
   FeatureFlag,
@@ -14,19 +18,14 @@ import {
   refreshFeatureFlags,
 } from './featureFlags';
 
-vi.mock('../database/client', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../database/client')>();
-  return {
-    ...actual,
-    isReadwriteWedged: vi.fn(() => false),
-  };
-});
-
 const FLAG = FeatureFlag._IdentityVerification;
 const FEATURES_PATH = `**/apps/${APP_ID}/sdk/features/web/*`;
 
 const mockFeatures = (body: Record<string, unknown>, status = 200) =>
   server.use(http.get(FEATURES_PATH, () => HttpResponse.json(body, { status })));
+
+const mirror = (flags: string[]) =>
+  db.put('Options', { key: 'featureFlags', value: JSON.stringify(flags) });
 
 describe('featureFlags', () => {
   const warnSpy = vi.spyOn(Log, '_warn').mockImplementation(() => '');
@@ -47,12 +46,12 @@ describe('featureFlags', () => {
     });
 
     test('is false when the cached list does not contain the flag', () => {
-      setFeatureFlags(['sdk_background_threading']);
+      setFeatureFlags(APP_ID, ['sdk_background_threading']);
       expect(isFeatureEnabled(FLAG)).toBe(false);
     });
 
     test('is true when the cached list contains the flag', () => {
-      setFeatureFlags([FLAG]);
+      setFeatureFlags(APP_ID, [FLAG]);
       expect(isFeatureEnabled(FLAG)).toBe(true);
     });
 
@@ -72,8 +71,15 @@ describe('featureFlags', () => {
 
   describe('storage helpers', () => {
     test('getFeatureFlags drops non-string entries', () => {
-      localStorage.setItem('os_feature_flags', JSON.stringify([FLAG, 1, null]));
+      setFeatureFlags(APP_ID, [FLAG, 1, null]);
       expect(getFeatureFlags()).toEqual([FLAG]);
+      expect(getFeatureFlagsAppId()).toBe(APP_ID);
+    });
+
+    test('getFeatureFlags reads a list with no app as empty', () => {
+      localStorage.setItem('os_feature_flags', JSON.stringify([FLAG]));
+      expect(getFeatureFlags()).toEqual([]);
+      expect(getFeatureFlagsAppId()).toBeNull();
     });
 
     test('getFeatureOverrides trims and drops empty entries', () => {
@@ -93,7 +99,7 @@ describe('featureFlags', () => {
     });
 
     test('an empty server list turns a cached flag off', async () => {
-      setFeatureFlags([FLAG]);
+      setFeatureFlags(APP_ID, [FLAG]);
       mockFeatures({ features: [] });
 
       await refreshFeatureFlags(APP_ID);
@@ -102,7 +108,7 @@ describe('featureFlags', () => {
     });
 
     test('a non-2xx response keeps the cached list', async () => {
-      setFeatureFlags([FLAG]);
+      setFeatureFlags(APP_ID, [FLAG]);
       mockFeatures({ errors: ['nope'] }, 500);
 
       await refreshFeatureFlags(APP_ID);
@@ -111,7 +117,7 @@ describe('featureFlags', () => {
     });
 
     test('a malformed body keeps the cached list', async () => {
-      setFeatureFlags([FLAG]);
+      setFeatureFlags(APP_ID, [FLAG]);
       mockFeatures({ features: 'yes' });
 
       await refreshFeatureFlags(APP_ID);
@@ -120,7 +126,7 @@ describe('featureFlags', () => {
     });
 
     test('a non-JSON body logs a warning and keeps the cached list', async () => {
-      setFeatureFlags([FLAG]);
+      setFeatureFlags(APP_ID, [FLAG]);
       server.use(http.get(FEATURES_PATH, () => HttpResponse.text('<html>')));
 
       await refreshFeatureFlags(APP_ID);
@@ -161,26 +167,68 @@ describe('featureFlags', () => {
       );
     });
 
-    test('keeps the page list when the worker mirror write is dropped', async () => {
-      setFeatureFlags([FLAG]);
+    test('keeps both lists when the worker mirror write is dropped', async () => {
+      setFeatureFlags(APP_ID, [FLAG]);
+      await mirror([FLAG]);
       mockFeatures({ features: [] });
-      vi.mocked(clientModule.isReadwriteWedged).mockReturnValueOnce(true);
+      const putSpy = vi.spyOn(db, 'put').mockResolvedValueOnce(undefined);
 
       await refreshFeatureFlags(APP_ID);
 
+      expect(putSpy).toHaveBeenCalledTimes(1);
       expect(isFeatureEnabled(FLAG)).toBe(true);
+      expect(await isFeatureEnabledInWorker(FLAG)).toBe(true);
       expect(warnSpy).toHaveBeenCalledWith(
         'Feature flags not mirrored to the worker, keeping the cached list',
       );
+      putSpy.mockRestore();
     });
 
-    test('a failed fetch keeps the mirrored list', async () => {
-      await db.put('Options', { key: 'featureFlags', value: JSON.stringify([FLAG]) });
+    test('a failed fetch keeps the cached list and mirrors it with the overrides', async () => {
+      setFeatureFlags(APP_ID, [FLAG]);
+      localStorage.setItem('os_feature_overrides', 'other_flag');
       mockFeatures({ errors: ['nope'] }, 500);
 
       await refreshFeatureFlags(APP_ID);
 
-      expect(await isFeatureEnabledInWorker(FLAG)).toBe(true);
+      expect(getFeatureFlags()).toEqual([FLAG]);
+      expect(await getOptionsValue<string>('featureFlags')).toBe(
+        JSON.stringify(['other_flag', FLAG]),
+      );
+    });
+
+    test('drops a list cached for another app before the fetch', async () => {
+      setFeatureFlags('other-app-id', [FLAG]);
+      await mirror([FLAG]);
+      mockFeatures({ errors: ['nope'] }, 500);
+
+      await refreshFeatureFlags(APP_ID);
+
+      expect(getFeatureFlags()).toEqual([]);
+      expect(getFeatureFlagsAppId()).toBeNull();
+      expect(await isFeatureEnabledInWorker(FLAG)).toBe(false);
+    });
+
+    test('a fresh list replaces one cached for another app', async () => {
+      setFeatureFlags('other-app-id', ['sdk_background_threading']);
+      mockFeatures({ features: [FLAG] });
+
+      await refreshFeatureFlags(APP_ID);
+
+      expect(getFeatureFlags()).toEqual([FLAG]);
+      expect(getFeatureFlagsAppId()).toBe(APP_ID);
+      expect(await getOptionsValue<string>('featureFlags')).toBe(JSON.stringify([FLAG]));
+    });
+
+    test('a storage error is logged and does not reject', async () => {
+      mockFeatures({ features: [FLAG] });
+      const putSpy = vi.spyOn(db, 'put').mockRejectedValueOnce(new Error('idb closed'));
+
+      await expect(refreshFeatureFlags(APP_ID)).resolves.toBeUndefined();
+
+      expect(warnSpy).toHaveBeenCalledWith('Feature flags refresh failed', expect.any(Error));
+      expect(isFeatureEnabled(FLAG)).toBe(false);
+      putSpy.mockRestore();
     });
   });
 
