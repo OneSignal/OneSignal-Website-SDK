@@ -6,7 +6,6 @@ import type { ContextInterface } from '../context/types';
 import { db, getIdsValue, isReadwriteWedged } from '../database/client';
 import { getSubscription, setSubscription } from '../database/subscription';
 import type { OptionKey } from '../database/types';
-import { FeatureFlag, isFeatureEnabled } from '../features/featureFlags';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
@@ -369,13 +368,8 @@ export async function initSaveState(overridingPageTitle?: string) {
     overridingPageTitle || config.siteName || document.title || 'Notification';
   await db.put('Options', { key: 'pageTitle', value: pageTitle });
   Log._info(`Set pageTitle to be '${pageTitle}'.`);
-  // The worker also uses this key to fill a missing icon, so it is only set
-  // while the inline images flag is on.
-  const inlineImages = isFeatureEnabled(FeatureFlag._InlineNotificationImages);
-  await db.put('Options', {
-    key: 'defaultIcon',
-    value: inlineImages ? (config.defaultIconUrl ?? null) : null,
-  });
+  // The worker reads this key only while the inline images flag is on there.
+  await db.put('Options', { key: 'defaultIcon', value: config.defaultIconUrl ?? null });
 }
 
 async function handleAutoResubscribe(isOptedOut: boolean) {

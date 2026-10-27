@@ -4,22 +4,12 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import Context from 'src/page/models/Context';
 import { type AppConfig } from 'src/shared/config/types';
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-  type MockInstance,
-} from 'vite-plus/test';
+import { beforeEach, describe, expect, test, vi, type MockInstance } from 'vite-plus/test';
 
 import * as clientModule from '../database/client';
 import { db } from '../database/client';
 import { getAppState } from '../database/config';
-import { FeatureFlag } from '../features/featureFlags';
 import * as InitHelper from './init';
-import { setFeatureFlags } from './localStorage';
 
 vi.mock('../database/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../database/client')>();
@@ -121,14 +111,7 @@ test('correct degree of persistNotification setting should be stored', async () 
 });
 
 describe('initSaveState: default icon', () => {
-  const enableInlineImages = () => setFeatureFlags(APP_ID, [FeatureFlag._InlineNotificationImages]);
-
-  afterEach(() => {
-    localStorage.clear();
-  });
-
-  test('stores the site default icon url for the worker when the flag is on', async () => {
-    enableInlineImages();
+  test('stores the site default icon url for the worker', async () => {
     OneSignal.config!.defaultIconUrl = 'https://example.com/icon.png';
 
     await InitHelper.initSaveState();
@@ -137,18 +120,8 @@ describe('initSaveState: default icon', () => {
   });
 
   test('clears a stale default icon when the app has none', async () => {
-    enableInlineImages();
     await db.put('Options', { key: 'defaultIcon', value: 'https://example.com/old.png' });
     OneSignal.config!.defaultIconUrl = null;
-
-    await InitHelper.initSaveState();
-
-    expect((await db.get('Options', 'defaultIcon'))?.value).toBeNull();
-  });
-
-  test('clears the default icon when the flag is off', async () => {
-    await db.put('Options', { key: 'defaultIcon', value: 'https://example.com/old.png' });
-    OneSignal.config!.defaultIconUrl = 'https://example.com/icon.png';
 
     await InitHelper.initSaveState();
 

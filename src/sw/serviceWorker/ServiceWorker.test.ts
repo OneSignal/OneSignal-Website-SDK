@@ -419,6 +419,16 @@ describe('ServiceWorker', () => {
         expect(fetchMock).not.toHaveBeenCalled();
       });
 
+      test('without the flag, a stored default icon does not fill a missing icon', async () => {
+        await db.put('Options', { key: 'defaultIcon', value: 'https://example.com/default.png' });
+        const { icon: _icon, ...payload } = mockOSMinifiedNotificationPayload({ badge });
+
+        const options = await displayPush(payload);
+
+        expect(options.icon).toBeUndefined();
+        expect(fetchMock).not.toHaveBeenCalled();
+      });
+
       test('with the flag, passes the icon and badge as data URLs and keeps the URLs in data', async () => {
         await enableInlineImages();
 

@@ -578,8 +578,10 @@ async function displayNotification(notification: IMutableOSNotification) {
 
   // Use the default title if one isn't provided
   const defaultTitle = await getTitle();
-  // Use the default icon if one isn't provided
-  const defaultIcon = await getOptionsValue<string>('defaultIcon');
+  const inline = await isFeatureEnabledInWorker(FeatureFlag._InlineNotificationImages);
+  // Use the default icon if one isn't provided. The page stores it for every
+  // app, so the worker uses it only while the flag is on.
+  const defaultIcon = inline ? await getOptionsValue<string>('defaultIcon') : null;
   // Get option of whether we should leave notification displaying indefinitely
   const persistNotification = await getOptionsValue<boolean>('persistNotification');
 
@@ -592,11 +594,10 @@ async function displayNotification(notification: IMutableOSNotification) {
 
   ensureNotificationResourcesHttps(notification);
 
-  // The notification object stays as received so `data` and the click
-  // handlers keep the original URLs; only the display options get the bytes.
+  // `data` and the click handlers keep the remote URLs; only the display
+  // options get the inlined bytes.
   // On Chrome for macOS the server sets the icon to a per-notification image
   // when one is present, so only the app default icon is inlined in that case.
-  const inline = await isFeatureEnabledInWorker(FeatureFlag._InlineNotificationImages);
   const iconMayBeImage = !!notification.image && !iconIsAppDefault;
   const [icon, badge] = inline
     ? await Promise.all([
