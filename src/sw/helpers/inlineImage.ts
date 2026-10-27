@@ -19,6 +19,7 @@ interface ImageBytes {
 export async function inlineImage(url: string | undefined): Promise<string | undefined> {
   if (!url || url.startsWith('data:')) return url;
   const fresh = await fetchImage(url);
+  if (fresh === TOO_LARGE) return url;
   if (fresh) {
     await cacheImage(url, fresh);
     return toDataUrl(fresh);
@@ -27,19 +28,27 @@ export async function inlineImage(url: string | undefined): Promise<string | und
   return cached ? toDataUrl(cached) : url;
 }
 
-// Resolves to undefined for a failed fetch, a non-image response, or a body
-// over the inline limit, so the caller falls back to the cached copy.
-async function fetchImage(url: string): Promise<ImageBytes | undefined> {
+// The host served a valid image over the inline limit. The cached copy may be
+// an older image at the same URL, so the caller passes the remote URL.
+const TOO_LARGE = 'too-large';
+
+// Resolves to undefined for a failed fetch, a non-image response, or an empty
+// body, so the caller falls back to the cached copy.
+async function fetchImage(url: string): Promise<ImageBytes | typeof TOO_LARGE | undefined> {
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     const type = imageType(response);
-    const declaredLength = Number(response.headers.get('content-length'));
-    if (!response.ok || !type || !response.body || declaredLength > MAX_INLINE_BYTES) {
+    if (!response.ok || !type || !response.body) {
       void response.body?.cancel();
       return undefined;
     }
+    if (Number(response.headers.get('content-length')) > MAX_INLINE_BYTES) {
+      void response.body.cancel();
+      return TOO_LARGE;
+    }
     const bytes = await readUpTo(response.body, MAX_INLINE_BYTES);
-    return bytes && { bytes, type };
+    if (!bytes) return TOO_LARGE;
+    return bytes.byteLength ? { bytes, type } : undefined;
   } catch {
     return undefined;
   }

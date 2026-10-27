@@ -115,6 +115,24 @@ describe('inlineImage', () => {
     expect((await openCache()).entries.size).toBe(0);
   });
 
+  test('returns the remote URL, not an older cached copy, for an image over the inline limit', async () => {
+    fetchMock.mockResolvedValueOnce(imageResponse());
+    await inlineImage(ICON_URL);
+
+    fetchMock.mockResolvedValueOnce(imageResponse(new Uint8Array(128 * 1024 + 1)));
+    expect(await inlineImage(ICON_URL)).toBe(ICON_URL);
+  });
+
+  test('uses the cached copy for an empty body and keeps it in the cache', async () => {
+    fetchMock.mockResolvedValueOnce(imageResponse());
+    await inlineImage(ICON_URL);
+
+    fetchMock.mockResolvedValueOnce(imageResponse(new Uint8Array(0)));
+    expect(await inlineImage(ICON_URL)).toBe(PNG_DATA_URL);
+    const cached = await (await openCache()).match(ICON_URL);
+    expect(new Uint8Array(await cached!.arrayBuffer())).toEqual(PNG_BYTES);
+  });
+
   test('skips the body when Content-Length is over the inline limit', async () => {
     const cancel = vi.fn();
     fetchMock.mockResolvedValue(
