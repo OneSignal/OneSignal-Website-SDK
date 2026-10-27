@@ -33,15 +33,14 @@ describe('inlineImage', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  test('returns the fetched bytes as a data URL and caches them', async () => {
+  test('returns the fetched bytes as a data URL and caches it', async () => {
     fetchMock.mockResolvedValue(imageResponse());
 
     expect(await inlineImage(ICON_URL)).toBe(PNG_DATA_URL);
 
     expect(fetchMock).toHaveBeenCalledWith(ICON_URL, { signal: expect.any(AbortSignal) });
     const cached = await (await openCache()).match(ICON_URL);
-    expect(new Uint8Array(await cached!.arrayBuffer())).toEqual(PNG_BYTES);
-    expect(cached!.headers.get('content-type')).toBe('image/png');
+    expect(await cached!.text()).toBe(PNG_DATA_URL);
   });
 
   test('drops content-type parameters from the data URL', async () => {
@@ -130,7 +129,7 @@ describe('inlineImage', () => {
     fetchMock.mockResolvedValueOnce(imageResponse(new Uint8Array(0)));
     expect(await inlineImage(ICON_URL)).toBe(PNG_DATA_URL);
     const cached = await (await openCache()).match(ICON_URL);
-    expect(new Uint8Array(await cached!.arrayBuffer())).toEqual(PNG_BYTES);
+    expect(await cached!.text()).toBe(PNG_DATA_URL);
   });
 
   test('skips the body when Content-Length is over the inline limit', async () => {
