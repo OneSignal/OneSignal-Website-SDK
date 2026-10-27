@@ -1003,6 +1003,24 @@ describe('ServiceWorker', () => {
         }),
       );
     });
+
+    test('a DisplayNotification message keeps the worker alive until the notification shows', async () => {
+      const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
+      const event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand._DisplayNotification,
+        payload: {
+          notification: { notificationId: 'wait-id', title: 'Wait', confirmDelivery: false },
+        },
+      });
+      const waitUntil = vi.spyOn(event, 'waitUntil');
+
+      self.dispatchEvent(event);
+
+      expect(waitUntil).toHaveBeenCalledOnce();
+      expect(showNotificationSpy).not.toHaveBeenCalled();
+      await waitUntil.mock.calls[0][0];
+      expect(showNotificationSpy).toHaveBeenCalledOnce();
+    });
   });
 });
 
