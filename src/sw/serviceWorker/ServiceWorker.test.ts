@@ -20,6 +20,7 @@ import { getSubscription } from 'src/shared/database/subscription';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
+import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
 import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
@@ -30,7 +31,7 @@ import type { Session, UpsertOrDeactivateSessionPayload } from 'src/shared/sessi
 import { NotificationType } from 'src/shared/subscriptions/constants';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
-import { getAppId, run } from './ServiceWorker';
+import { getAppId, NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS, run } from './ServiceWorker';
 
 // Mock webhook notification events
 vi.mock('../webhooks/notifications/webhookNotificationEvent', () => ({
@@ -108,15 +109,30 @@ const flush = async () => {
   }
 };
 
-const waitForDisplayStatus = async () => {
-  while (!self.notificationDisplayStatus) {
-    await tick();
-  }
-};
-
 const dispatchEvent = async (event: Event) => {
   self.dispatchEvent(event);
   await flush();
+};
+
+const broadcastSpy = vi.spyOn(WorkerMessengerSW.prototype, '_broadcast');
+
+const hasBroadcastWillDisplay = () =>
+  broadcastSpy.mock.calls.some(
+    ([command]) => command === WorkerMessengerCommand._NotificationWillDisplay,
+  );
+
+// Waits for the will-display broadcast, then answers it like a page that runs the SDK.
+const respondToDisplayCheck = async (notificationId: string, preventDefault: boolean) => {
+  while (!hasBroadcastWillDisplay()) {
+    await tick();
+  }
+  isServiceWorker = true;
+  await dispatchEvent(
+    new ExtendableMessageEvent('message', {
+      command: WorkerMessengerCommand._NotificationWillDisplayResponse,
+      payload: { notificationId, preventDefault },
+    }),
+  );
 };
 
 const serverConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind._Custom, {
@@ -138,7 +154,6 @@ describe('ServiceWorker', () => {
   });
 
   beforeEach(async () => {
-    self.notificationDisplayStatus = undefined;
     isServiceWorker = false;
     await db.put('Ids', {
       type: 'appId',
@@ -201,8 +216,7 @@ describe('ServiceWorker', () => {
 
       self.dispatchEvent(new PushEvent('push', payload));
 
-      await waitForDisplayStatus();
-      self.notificationDisplayStatus!.resolve(false);
+      await respondToDisplayCheck(payload.custom.i, false);
 
       await flush();
 
@@ -253,8 +267,7 @@ describe('ServiceWorker', () => {
 
       self.dispatchEvent(new PushEvent('push', payload));
 
-      await waitForDisplayStatus();
-      self.notificationDisplayStatus!.resolve(false);
+      await respondToDisplayCheck(payload.custom.i, false);
 
       await flush();
 
@@ -295,8 +308,7 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        await waitForDisplayStatus();
-        self.notificationDisplayStatus!.resolve(true);
+        await respondToDisplayCheck(payload.custom.i, true);
 
         await flush();
 
@@ -318,8 +330,7 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        await waitForDisplayStatus();
-        self.notificationDisplayStatus!.resolve(false);
+        await respondToDisplayCheck(payload.custom.i, false);
 
         await flush();
 
@@ -332,6 +343,79 @@ describe('ServiceWorker', () => {
         );
       });
 
+      test('should display notification when a visible page never responds', async () => {
+        // e.g. a visible page in the service worker scope that does not load the SDK
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
+        const payload = mockOSMinifiedNotificationPayload();
+
+        vi.useFakeTimers();
+        try {
+          self.dispatchEvent(new PushEvent('push', payload));
+          // The wait starts when the will-display check is broadcast
+          while (!hasBroadcastWillDisplay()) {
+            await vi.advanceTimersByTimeAsync(0);
+          }
+          await vi.advanceTimersByTimeAsync(NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS - 1);
+          expect(showNotificationSpy).not.toHaveBeenCalled();
+
+          await vi.advanceTimersByTimeAsync(1);
+          // Showing the notification runs a few more short timers
+          await vi.advanceTimersByTimeAsync(10);
+        } finally {
+          vi.useRealTimers();
+        }
+
+        expect(showNotificationSpy).toHaveBeenCalledWith(
+          payload.title,
+          expect.objectContaining({
+            body: payload.alert,
+          }),
+        );
+      });
+
+      test('honors preventDefault when pushes overlap', async () => {
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
+        const payloadA = mockOSMinifiedNotificationPayload({ title: 'A', custom: { i: 'id-a' } });
+        const payloadB = mockOSMinifiedNotificationPayload({ title: 'B', custom: { i: 'id-b' } });
+
+        const willDisplayBroadcastCount = () =>
+          broadcastSpy.mock.calls.filter(
+            ([command]) => command === WorkerMessengerCommand._NotificationWillDisplay,
+          ).length;
+
+        vi.useFakeTimers();
+        try {
+          self.dispatchEvent(new PushEvent('push', payloadA));
+          self.dispatchEvent(new PushEvent('push', payloadB));
+          while (willDisplayBroadcastCount() < 2) {
+            await vi.advanceTimersByTimeAsync(0);
+          }
+
+          isServiceWorker = true;
+          self.dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._NotificationWillDisplayResponse,
+              payload: { notificationId: 'id-a', preventDefault: true },
+            }),
+          );
+          self.dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._NotificationWillDisplayResponse,
+              payload: { notificationId: 'id-b', preventDefault: false },
+            }),
+          );
+
+          // Past A's timeout, so a timer that was not cleared would show A
+          await vi.advanceTimersByTimeAsync(NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS + 500);
+        } finally {
+          vi.useRealTimers();
+        }
+        await flush();
+
+        const titles = showNotificationSpy.mock.calls.map(([title]) => title);
+        expect(titles).toEqual(['B']);
+      });
+
       test('should display notification via display() after preventDefault', async () => {
         const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
 
@@ -341,8 +425,7 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        await waitForDisplayStatus();
-        self.notificationDisplayStatus!.resolve(true);
+        await respondToDisplayCheck(payload.custom.i, true);
 
         await flush();
 

@@ -63,7 +63,14 @@ import type {
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 const MAX_CONFIRMED_DELIVERY_DELAY = 25;
+// How long to wait for a visible page to answer the NotificationWillDisplay broadcast.
+// A visible page that does not run the SDK never answers.
+export const NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS = 2_000;
 const workerMessenger = new WorkerMessengerSW(undefined);
+
+// Will-display checks waiting for a page's answer, keyed by notification id so
+// that overlapping pushes each get their own answer.
+const pendingDisplayChecks = new Map<string, (preventDefault: boolean) => void>();
 
 async function getPushSubscriptionId(): Promise<string | undefined> {
   const pushSubscription = await self.registration.pushManager.getSubscription();
@@ -203,13 +210,7 @@ function setupMessageListeners() {
     WorkerMessengerCommand._NotificationWillDisplayResponse,
     (payload: NotificationWillDisplayResponsePayload) => {
       Log._debug('[SW] NotifWillDisplay response', payload);
-
-      if (self.notificationDisplayStatus?.notificationId !== payload.notificationId) {
-        return;
-      }
-
-      self.notificationDisplayStatus.resolve(payload.preventDefault);
-      self.notificationDisplayStatus = undefined;
+      pendingDisplayChecks.get(payload.notificationId)?.(payload.preventDefault);
     },
   );
 
@@ -229,7 +230,8 @@ function setupMessageListeners() {
  * are present, skipping the broadcast entirely.
  *
  * Since preventDefault() is synchronous, the page responds immediately
- * after receiving the broadcast -- no polling or timeout needed.
+ * after receiving the broadcast. If no page responds in time (e.g. the
+ * visible page does not load the SDK), the notification is shown.
  */
 async function shouldPreventNotificationDisplay(notif: IOSNotification): Promise<boolean> {
   const clients = await self.clients.matchAll({
@@ -253,14 +255,18 @@ async function shouldPreventNotificationDisplay(notif: IOSNotification): Promise
 
   Log._debug(`[SW] ${visibleClients.length} visible clients, awaiting preventDefault`);
 
-  // Deferred promise: store the resolve callback on self so the
+  // Deferred promise: store the resolve callback so the
   // _NotificationWillDisplayResponse handler can settle it.
   // Must be created BEFORE broadcasting to avoid a race condition.
   const preventDefaultPromise = new Promise<boolean>((resolve) => {
-    self.notificationDisplayStatus = {
-      notificationId: notif.notificationId,
-      resolve,
+    const settle = (preventDefault: boolean) => {
+      clearTimeout(timer);
+      pendingDisplayChecks.delete(notif.notificationId);
+      resolve(preventDefault);
     };
+    // Show the notification if no page responds in time
+    const timer = setTimeout(() => settle(false), NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS);
+    pendingDisplayChecks.set(notif.notificationId, settle);
   });
 
   await workerMessenger
