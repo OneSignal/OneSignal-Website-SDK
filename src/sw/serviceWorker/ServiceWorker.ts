@@ -63,8 +63,23 @@ declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 const MAX_CONFIRMED_DELIVERY_DELAY = 25;
 // How long to wait for a visible page to answer the NotificationWillDisplay broadcast.
 // A visible page that does not run the SDK never answers.
-const NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS = 2_000;
+export const NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS = 2_000;
 const workerMessenger = new WorkerMessengerSW(undefined);
+
+// Will-display checks waiting for a page's answer, keyed by notification id so
+// that overlapping pushes each get their own answer.
+const pendingDisplayChecks = new Map<
+  string,
+  { resolve: (preventDefault: boolean) => void; timer: ReturnType<typeof setTimeout> }
+>();
+
+function settleDisplayCheck(notificationId: string, preventDefault: boolean): void {
+  const pending = pendingDisplayChecks.get(notificationId);
+  if (!pending) return;
+  clearTimeout(pending.timer);
+  pendingDisplayChecks.delete(notificationId);
+  pending.resolve(preventDefault);
+}
 
 async function getPushSubscriptionId(): Promise<string | undefined> {
   const pushSubscription = await self.registration.pushManager.getSubscription();
@@ -204,13 +219,7 @@ function setupMessageListeners() {
     WorkerMessengerCommand._NotificationWillDisplayResponse,
     (payload: NotificationWillDisplayResponsePayload) => {
       Log._debug('[SW] NotifWillDisplay response', payload);
-
-      if (self.notificationDisplayStatus?.notificationId !== payload.notificationId) {
-        return;
-      }
-
-      self.notificationDisplayStatus.resolve(payload.preventDefault);
-      self.notificationDisplayStatus = undefined;
+      settleDisplayCheck(payload.notificationId, payload.preventDefault);
     },
   );
 
@@ -255,16 +264,16 @@ async function shouldPreventNotificationDisplay(notif: IOSNotification): Promise
 
   Log._debug(`[SW] ${visibleClients.length} visible clients, awaiting preventDefault`);
 
-  // Deferred promise: store the resolve callback on self so the
+  // Deferred promise: store the resolve callback so the
   // _NotificationWillDisplayResponse handler can settle it.
   // Must be created BEFORE broadcasting to avoid a race condition.
   const preventDefaultPromise = new Promise<boolean>((resolve) => {
-    self.notificationDisplayStatus = {
-      notificationId: notif.notificationId,
-      resolve,
-    };
     // Show the notification if no page responds in time
-    setTimeout(() => resolve(false), NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS);
+    const timer = setTimeout(
+      () => settleDisplayCheck(notif.notificationId, false),
+      NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS,
+    );
+    pendingDisplayChecks.set(notif.notificationId, { resolve, timer });
   });
 
   await workerMessenger
