@@ -10,6 +10,7 @@ import {
   MissingSafariWebIdError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
+import { refreshFeatureFlags } from 'src/shared/features/featureFlags';
 import {
   errorIfInitAlreadyCalled,
   initSaveState,
@@ -154,6 +155,8 @@ export default class OneSignal {
     if (!idb) return;
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
+    // Writes to IndexedDB, so it waits for hydration in case the write stalls and trips the breaker.
+    void refreshFeatureFlags(OneSignal.config.appId);
 
     OneSignal._consentGiven = await getConsentGiven();
     if (getConsentRequired()) {

@@ -1,3 +1,5 @@
+const FEATURE_FLAGS = 'os_feature_flags';
+const FEATURE_OVERRIDES = 'os_feature_overrides';
 const IS_OPTED_OUT = 'isOptedOut';
 const IS_PUSH_NOTIFICATIONS_ENABLED = 'isPushNotificationsEnabled';
 const PAGE_VIEWS = 'os_pageViews';
@@ -35,6 +37,32 @@ export function setConsentGiven(value: boolean): void {
 export function getConsentGiven(): boolean | null {
   const value = localStorage.getItem(USER_CONSENT);
   return value === null ? null : value === 'true';
+}
+
+export function getFeatureFlags(): unknown[] {
+  return parseList(localStorage.getItem(FEATURE_FLAGS));
+}
+
+export function setFeatureFlags(flags: unknown[]): void {
+  localStorage.setItem(FEATURE_FLAGS, JSON.stringify(flags));
+}
+
+// Only the SDK writes these lists, so anything that isn't an array reads as empty.
+export function parseList(json: string | null | undefined): unknown[] {
+  try {
+    const list: unknown = JSON.parse(json || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+// Comma-separated flag keys forced on for local testing.
+export function getFeatureOverrides(): string[] {
+  return (localStorage.getItem(FEATURE_OVERRIDES) ?? '')
+    .split(',')
+    .map((f) => f.trim())
+    .filter(Boolean);
 }
 
 export function setLocalPageViewCount(count: number): void {

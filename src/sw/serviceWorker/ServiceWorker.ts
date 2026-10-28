@@ -10,6 +10,7 @@ import {
 } from 'src/shared/database/notifications';
 import { getSubscription, setSubscription } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
+import { FeatureFlag, isFeatureEnabledInWorker } from 'src/shared/features/featureFlags';
 import { delay } from 'src/shared/helpers/general';
 import { deactivateSession, upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
@@ -41,6 +42,7 @@ import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
 
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
+import { inlineImage } from '../helpers/inlineImage';
 import {
   isValidPayload,
   toNativeNotificationAction,
@@ -524,7 +526,9 @@ function ensureImageResourceHttps(imageUrl?: string) {
       const replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;
       return `https://i0.wp.com/${replacedImageUrl}`;
     } catch (e) {
+      // A URL the parser rejects may still load in the browser, so keep it.
       Log._error('ensureImageHttps:', e);
+      return imageUrl;
     }
   }
   return undefined;
@@ -574,8 +578,10 @@ async function displayNotification(notification: IMutableOSNotification) {
 
   // Use the default title if one isn't provided
   const defaultTitle = await getTitle();
-  // Use the default icon if one isn't provided
-  const defaultIcon = await getOptionsValue<string>('defaultIcon');
+  const inline = await isFeatureEnabledInWorker(FeatureFlag._InlineNotificationImages);
+  // Use the default icon if one isn't provided. The page stores it for every
+  // app, so the worker uses it only while the flag is on.
+  const defaultIcon = inline ? await getOptionsValue<string>('defaultIcon') : null;
   // Get option of whether we should leave notification displaying indefinitely
   const persistNotification = await getOptionsValue<boolean>('persistNotification');
 
@@ -584,12 +590,25 @@ async function displayNotification(notification: IMutableOSNotification) {
 
   notification.title = notification.title ? notification.title : defaultTitle;
   notification.icon = notification.icon ? notification.icon : defaultIcon ? defaultIcon : undefined;
+  const iconIsAppDefault = notification.icon === defaultIcon;
 
   ensureNotificationResourcesHttps(notification);
 
+  // `data` and the click handlers keep the remote URLs; only the display
+  // options get the inlined bytes.
+  // On Chrome for macOS the server sets the icon to a per-notification image
+  // when one is present, so only the app default icon is inlined in that case.
+  const iconMayBeImage = !!notification.image && !iconIsAppDefault;
+  const [icon, badge] = inline
+    ? await Promise.all([
+        iconMayBeImage ? notification.icon : inlineImage(notification.icon),
+        inlineImage(notification.badgeIcon),
+      ])
+    : [notification.icon, notification.badgeIcon];
+
   const notificationOptions: NotificationOptions = {
     body: notification.body,
-    icon: notification.icon,
+    icon,
     /*
      On Chrome 56, a large image can be displayed:
      https://bugs.chromium.org/p/chromium/issues/detail?id=614456
@@ -641,7 +660,7 @@ async function displayNotification(notification: IMutableOSNotification) {
      badge should accommodate devices up to 4x resolution, about 96 by
      96 px, and the image will be automatically masked.
      */
-    badge: notification.badgeIcon,
+    badge,
   };
 
   await self.registration.showNotification(notification.title, notificationOptions);
