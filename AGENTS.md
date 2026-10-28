@@ -29,5 +29,3 @@ release. Add a tool name to select part of the graph. For example, run
 ## Tests
 
 See `TESTS.md` for test conventions.
-
-- Don't use `try/catch` or `try/finally` in tests. Restore state such as fake timers in `afterEach`, and assert errors with `expect(...).rejects` or `expect(() => ...).toThrow()`.

@@ -114,3 +114,7 @@ expect(delaySpy).toHaveBeenCalledWith(30000);
 ### Global Setup
 
 `setupTests.ts` mocks all operation repo timing constants to small values (10ms), so tests using real timers will not have long waits. This means most tests can run without fake timers at all.
+
+## Cleanup and Errors
+
+Don't use `try/catch` or `try/finally` in tests. Restore state such as fake timers in `afterEach`, and assert errors with `expect(...).rejects` or `expect(() => ...).toThrow()`.
