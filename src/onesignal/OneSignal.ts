@@ -26,7 +26,7 @@ import {
   setConsentRequired as setStorageConsentRequired,
 } from 'src/shared/helpers/localStorage';
 import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
-import { _onSubscriptionChanged, checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
+import { _onSubscriptionChanged } from 'src/shared/listeners';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
@@ -179,10 +179,6 @@ export default class OneSignal {
 
       OneSignal._initAlreadyCalled = true;
 
-      OneSignal._emitter.on(
-        OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-        checkAndTriggerSubscriptionChanged,
-      );
       OneSignal._emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, _onSubscriptionChanged);
       OneSignal._emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
 

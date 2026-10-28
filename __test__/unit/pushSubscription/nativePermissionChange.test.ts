@@ -7,7 +7,6 @@ import { clearStore, db, getOptionsValue } from 'src/shared/database/client';
 import { setAppState as setDBAppState } from 'src/shared/database/config';
 import type { AppState } from 'src/shared/database/types';
 import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
-import Emitter from 'src/shared/libraries/Emitter';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test';
 
@@ -16,7 +15,6 @@ vi.mock('src/shared/libraries/Log');
 describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
-    OneSignal._emitter = new Emitter();
   });
 
   afterEach(async () => {
@@ -45,11 +43,9 @@ describe('Notification Types are set correctly on subscription change', () => {
     });
 
     test('should trigger change if permission status is different', async () => {
-      vi.stubGlobal('Notification', {
-        ...global.Notification,
-        permission: 'granted',
-      });
+      TestEnvironment.initialize({ permission: 'denied' });
       await setDbPermission('denied');
+      MockNotification.permission = 'granted';
 
       const permChangeStringListener = vi.fn();
       const permChangeListener = vi.fn();
@@ -68,6 +64,22 @@ describe('Notification Types are set correctly on subscription change', () => {
       expect(dbPermission).toBe('granted');
       expect(permChangeListener).toHaveBeenCalledWith(true);
       expect(permChangeStringListener).toHaveBeenCalledWith('granted');
+      expect(OneSignal.Notifications.permissionNative).toBe('granted');
+    });
+
+    test('should trigger change if the stored value matches native but the tab cache is stale', async () => {
+      TestEnvironment.initialize({ permission: 'denied' });
+      await setDbPermission('granted');
+      MockNotification.permission = 'granted';
+
+      const permChangeListener = vi.fn();
+      OneSignal.Notifications.addEventListener('permissionChange', permChangeListener);
+
+      await triggerNotificationPermissionChanged();
+
+      expect(permChangeListener).toHaveBeenCalledWith(true);
+      expect(OneSignal.Notifications.permission).toBe(true);
+      expect(OneSignal.Notifications.permissionNative).toBe('granted');
     });
   });
 

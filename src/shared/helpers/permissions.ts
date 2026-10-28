@@ -1,27 +1,29 @@
 import { db, getOptionsValue } from '../database/client';
+import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import OneSignalEvent from '../services/OneSignalEvent';
 
-// This flag prevents firing the NOTIFICATION_PERMISSION_CHANGED_AS_STRING event twice
-// We use multiple APIs:
+// Browsers can report one permission change through two APIs:
 //    1. Notification.requestPermission callback
 //    2. navigator.permissions.query({ name: 'notifications' }`).onchange
-// Some browsers support both, while others only support Notification.requestPermission
-let executing = false;
+// A plain call that arrives while another runs is dropped so the event fires once.
+// A forced call waits instead, because only `force` reports a dismissed prompt and
+// a `focus` handler can hold the lock when that call arrives.
+let inFlight: Promise<boolean> | null = null;
 
-export const triggerNotificationPermissionChanged = async (force = false) => {
-  if (executing) {
-    return;
-  }
+export const triggerNotificationPermissionChanged = async (force = false): Promise<void> => {
+  if (inFlight && !force) return;
+  while (inFlight) await inFlight.catch(() => undefined);
 
-  executing = true;
-  try {
-    await privateTriggerNotificationPermissionChanged(force);
-  } finally {
-    executing = false;
-  }
+  inFlight = privateTriggerNotificationPermissionChanged(force);
+  const reconcile = await inFlight.finally(() => {
+    inFlight = null;
+  });
+
+  if (reconcile) await checkAndTriggerSubscriptionChanged();
 };
 
-const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
+// Resolves to true when the subscription state should be reconciled.
+const privateTriggerNotificationPermissionChanged = async (force: boolean): Promise<boolean> => {
   const newPermission: NotificationPermission =
     await OneSignal._context._permissionManager._getPermissionStatus();
   const storedPermission = await getOptionsValue<NotificationPermission>('notificationPermission');
@@ -30,16 +32,17 @@ const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
   // against its own in-memory permission or its caches never refresh.
   const cachedPermission = OneSignal.Notifications.permissionNative;
 
-  const triggerEvent =
-    force || newPermission !== storedPermission || newPermission !== cachedPermission;
-  if (!triggerEvent) {
-    return;
+  const storedChanged = newPermission !== storedPermission;
+  if (!force && !storedChanged && newPermission === cachedPermission) {
+    return false;
   }
 
-  await db.put('Options', {
-    key: 'notificationPermission',
-    value: newPermission,
-  });
+  if (storedChanged) {
+    await db.put('Options', {
+      key: 'notificationPermission',
+      value: newPermission,
+    });
+  }
 
   OneSignalEvent._trigger(
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
@@ -49,4 +52,9 @@ const privateTriggerNotificationPermissionChanged = async (force: boolean) => {
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN,
     newPermission === 'granted',
   );
+
+  // When only this context's cache was stale, the context that stored the value
+  // already reconciled the subscription. This context may not hold that push
+  // model in memory yet, so a reconcile here would report a missing subscription.
+  return force || storedChanged;
 };
