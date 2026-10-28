@@ -25,3 +25,9 @@ release. Add a tool name to select part of the graph. For example, run
 - [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
 
 <!--VITE PLUS END-->
+
+## Tests
+
+See `TESTS.md` for test conventions.
+
+- Don't use `try/catch` or `try/finally` in tests. Restore state such as fake timers in `afterEach`, and assert errors with `expect(...).rejects` or `expect(() => ...).toThrow()`.
