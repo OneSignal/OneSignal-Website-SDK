@@ -68,18 +68,7 @@ const workerMessenger = new WorkerMessengerSW(undefined);
 
 // Will-display checks waiting for a page's answer, keyed by notification id so
 // that overlapping pushes each get their own answer.
-const pendingDisplayChecks = new Map<
-  string,
-  { resolve: (preventDefault: boolean) => void; timer: ReturnType<typeof setTimeout> }
->();
-
-function settleDisplayCheck(notificationId: string, preventDefault: boolean): void {
-  const pending = pendingDisplayChecks.get(notificationId);
-  if (!pending) return;
-  clearTimeout(pending.timer);
-  pendingDisplayChecks.delete(notificationId);
-  pending.resolve(preventDefault);
-}
+const pendingDisplayChecks = new Map<string, (preventDefault: boolean) => void>();
 
 async function getPushSubscriptionId(): Promise<string | undefined> {
   const pushSubscription = await self.registration.pushManager.getSubscription();
@@ -219,7 +208,7 @@ function setupMessageListeners() {
     WorkerMessengerCommand._NotificationWillDisplayResponse,
     (payload: NotificationWillDisplayResponsePayload) => {
       Log._debug('[SW] NotifWillDisplay response', payload);
-      settleDisplayCheck(payload.notificationId, payload.preventDefault);
+      pendingDisplayChecks.get(payload.notificationId)?.(payload.preventDefault);
     },
   );
 
@@ -268,12 +257,14 @@ async function shouldPreventNotificationDisplay(notif: IOSNotification): Promise
   // _NotificationWillDisplayResponse handler can settle it.
   // Must be created BEFORE broadcasting to avoid a race condition.
   const preventDefaultPromise = new Promise<boolean>((resolve) => {
+    const settle = (preventDefault: boolean) => {
+      clearTimeout(timer);
+      pendingDisplayChecks.delete(notif.notificationId);
+      resolve(preventDefault);
+    };
     // Show the notification if no page responds in time
-    const timer = setTimeout(
-      () => settleDisplayCheck(notif.notificationId, false),
-      NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS,
-    );
-    pendingDisplayChecks.set(notif.notificationId, { resolve, timer });
+    const timer = setTimeout(() => settle(false), NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS);
+    pendingDisplayChecks.set(notif.notificationId, settle);
   });
 
   await workerMessenger

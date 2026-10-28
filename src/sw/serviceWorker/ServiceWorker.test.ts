@@ -376,32 +376,43 @@ describe('ServiceWorker', () => {
         const payloadA = mockOSMinifiedNotificationPayload({ title: 'A', custom: { i: 'id-a' } });
         const payloadB = mockOSMinifiedNotificationPayload({ title: 'B', custom: { i: 'id-b' } });
 
-        self.dispatchEvent(new PushEvent('push', payloadA));
-        await flush();
-        self.dispatchEvent(new PushEvent('push', payloadB));
-        await flush();
+        const willDisplayBroadcastCount = () =>
+          broadcastSpy.mock.calls.filter(
+            ([command]) => command === WorkerMessengerCommand._NotificationWillDisplay,
+          ).length;
 
-        isServiceWorker = true;
-        await dispatchEvent(
-          new ExtendableMessageEvent('message', {
-            command: WorkerMessengerCommand._NotificationWillDisplayResponse,
-            payload: { notificationId: 'id-a', preventDefault: true },
-          }),
-        );
-        await dispatchEvent(
-          new ExtendableMessageEvent('message', {
-            command: WorkerMessengerCommand._NotificationWillDisplayResponse,
-            payload: { notificationId: 'id-b', preventDefault: false },
-          }),
-        );
+        vi.useFakeTimers();
+        try {
+          self.dispatchEvent(new PushEvent('push', payloadA));
+          self.dispatchEvent(new PushEvent('push', payloadB));
+          while (willDisplayBroadcastCount() < 2) {
+            await vi.advanceTimersByTimeAsync(0);
+          }
 
-        // Let A's timeout pass
-        await new Promise((r) => setTimeout(r, NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS + 500));
+          isServiceWorker = true;
+          self.dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._NotificationWillDisplayResponse,
+              payload: { notificationId: 'id-a', preventDefault: true },
+            }),
+          );
+          self.dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._NotificationWillDisplayResponse,
+              payload: { notificationId: 'id-b', preventDefault: false },
+            }),
+          );
+
+          // Past A's timeout, so a timer that was not cleared would show A
+          await vi.advanceTimersByTimeAsync(NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS + 500);
+        } finally {
+          vi.useRealTimers();
+        }
         await flush();
 
         const titles = showNotificationSpy.mock.calls.map(([title]) => title);
         expect(titles).toEqual(['B']);
-      }, 10_000);
+      });
 
       test('should display notification via display() after preventDefault', async () => {
         const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
