@@ -1,25 +1,25 @@
 import { db, getOptionsValue } from '../database/client';
+import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import OneSignalEvent from '../services/OneSignalEvent';
 
 // Browsers can report one permission change through two APIs:
 //    1. Notification.requestPermission callback
 //    2. navigator.permissions.query({ name: 'notifications' }`).onchange
-// A plain call that arrives while another runs is dropped so the event fires once.
-// A forced call waits instead, because only `force` reports a dismissed prompt and
-// a `focus` handler can hold the lock when that call arrives.
-let inFlight: Promise<boolean> | null = null;
+// Calls run one at a time. A second call for the same change finds the cache
+// already updated and fires nothing, so none of them needs to be dropped.
+let queue: Promise<unknown> = Promise.resolve();
 
-export const triggerNotificationPermissionChanged = async (force = false): Promise<void> => {
-  if (inFlight && !force) return;
-  while (inFlight) await inFlight.catch(() => undefined);
-
-  inFlight = privateTriggerNotificationPermissionChanged(force);
-  const reconcile = await inFlight.finally(() => {
-    inFlight = null;
-  });
-
-  if (reconcile) await checkAndTriggerSubscriptionChanged();
+export const triggerNotificationPermissionChanged = (force = false): Promise<void> => {
+  const run = queue.then(() => privateTriggerNotificationPermissionChanged(force));
+  queue = run.catch(() => undefined);
+  return run.then((reconcile) =>
+    reconcile
+      ? checkAndTriggerSubscriptionChanged().catch((e) =>
+          Log._error('Subscription reconcile failed', e),
+        )
+      : undefined,
+  );
 };
 
 // Resolves to true when the subscription state should be reconciled.

@@ -193,7 +193,7 @@ test('should run a forced call after an in-flight call instead of dropping it', 
   expect(reconcileSpy).toHaveBeenCalledTimes(1);
 });
 
-test('should drop a plain call that arrives while another call is in flight', async () => {
+test('should fire once when two plain calls arrive for the same change', async () => {
   TestEnvironment.initialize({ permission: 'default' });
   await db.put('Options', { key: 'notificationPermission', value: 'default' });
 
@@ -207,6 +207,37 @@ test('should drop a plain call that arrives while another call is in flight', as
   ]);
 
   expect(permChangeListener).toHaveBeenCalledTimes(1);
+});
+
+test('should run a plain call that arrives after an in-flight call read the old value', async () => {
+  // Desktop Chrome on Block: `focus` reads `default`, then `onchange` arrives while
+  // that call still holds the queue.
+  TestEnvironment.initialize({ permission: 'default' });
+  await db.put('Options', { key: 'notificationPermission', value: 'default' });
+
+  const permChangeListener = vi.fn();
+  OneSignal.Notifications.addEventListener('permissionChange', permChangeListener);
+  vi.spyOn(OneSignal._context._permissionManager, '_getPermissionStatus').mockResolvedValueOnce(
+    'default',
+  );
+
+  const focusCall = triggerNotificationPermissionChanged();
+  MockNotification.permission = 'denied';
+  const onchangeCall = triggerNotificationPermissionChanged();
+  await Promise.all([focusCall, onchangeCall]);
+
+  expect(permChangeListener).toHaveBeenCalledTimes(1);
+  expect(permChangeListener).toHaveBeenCalledWith(false);
+  expect(OneSignal.Notifications.permissionNative).toBe('denied');
+});
+
+test('should not reject the caller when the reconcile fails', async () => {
+  TestEnvironment.initialize({ permission: 'default' });
+  await db.put('Options', { key: 'notificationPermission', value: 'default' });
+  reconcileSpy.mockRejectedValueOnce(new Error('reconcile failed'));
+
+  await expect(callPermissionChange('granted')).resolves.toBeUndefined();
+  expect(OneSignal.Notifications.permissionNative).toBe('granted');
 });
 
 test('should handle denied permission', async () => {
