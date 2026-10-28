@@ -14,7 +14,7 @@ name: 'CodeQL'
 on:
   workflow_dispatch:
   push:
-    branches: ['main', 'better-tests-refactoring-serviceworker']
+    branches: ['main']
   schedule:
     - cron: '37 19 * * 4'
 
