@@ -3,58 +3,34 @@ import Log from '../libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from '../listeners';
 import OneSignalEvent from '../services/OneSignalEvent';
 
-// Browsers can report one permission change through two APIs:
-//    1. Notification.requestPermission callback
-//    2. navigator.permissions.query({ name: 'notifications' }`).onchange
-// Calls run one at a time. A second call for the same change finds the cache
-// already updated and fires nothing, so none of them needs to be dropped.
+// Focus, permissions.onchange, and the requestPermission result can all report one
+// change. Calls run one at a time; a later call finds nothing new and emits nothing.
 let queue: Promise<unknown> = Promise.resolve();
 
 export const triggerNotificationPermissionChanged = (force = false): Promise<void> => {
-  const run = queue.then(() => privateTriggerNotificationPermissionChanged(force));
+  const run = queue.then(() => checkPermission(force));
   queue = run.catch(() => undefined);
-  return run.then((reconcile) =>
-    reconcile
-      ? checkAndTriggerSubscriptionChanged().catch((e) =>
-          Log._error('Subscription reconcile failed', e),
-        )
-      : undefined,
-  );
+  return run;
 };
 
-// Resolves to true when the subscription state should be reconciled.
-const privateTriggerNotificationPermissionChanged = async (force: boolean): Promise<boolean> => {
-  const newPermission: NotificationPermission =
-    await OneSignal._context._permissionManager._getPermissionStatus();
-  const storedPermission = await getOptionsValue<NotificationPermission>('notificationPermission');
-  // IndexedDB is shared by every same-origin context (tabs, installed PWA). Another
-  // context can update the stored value first, so this context must also compare
-  // against its own in-memory permission or its caches never refresh.
-  const cachedPermission = OneSignal.Notifications.permissionNative;
+const checkPermission = async (force: boolean): Promise<void> => {
+  const permission = await OneSignal._context._permissionManager._getPermissionStatus();
+  const storedChanged =
+    permission !== (await getOptionsValue<NotificationPermission>('notificationPermission'));
+  // IndexedDB is shared by every same-origin context (tabs, installed PWA), so another
+  // context may have stored the new value first. Compare against this context's cache too.
+  if (!force && !storedChanged && permission === OneSignal.Notifications.permissionNative) return;
 
-  const storedChanged = newPermission !== storedPermission;
-  if (!force && !storedChanged && newPermission === cachedPermission) {
-    return false;
-  }
+  if (storedChanged) await db.put('Options', { key: 'notificationPermission', value: permission });
 
-  if (storedChanged) {
-    await db.put('Options', {
-      key: 'notificationPermission',
-      value: newPermission,
-    });
-  }
-
-  OneSignalEvent._trigger(
-    OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-    newPermission,
-  );
+  OneSignalEvent._trigger(OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING, permission);
   OneSignalEvent._trigger(
     OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_BOOLEAN,
-    newPermission === 'granted',
+    permission === 'granted',
   );
 
-  // When only this context's cache was stale, the context that stored the value
-  // already reconciled the subscription. This context may not hold that push
-  // model in memory yet, so a reconcile here would report a missing subscription.
-  return force || storedChanged;
+  // On a cache-only change, the context that stored the value already reconciled, and
+  // this context may not hold that push model yet. A failed reconcile must not reject
+  // callers such as the subscribe flow.
+  if (force || storedChanged) await checkAndTriggerSubscriptionChanged().catch(Log._error);
 };
