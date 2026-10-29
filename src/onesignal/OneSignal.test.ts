@@ -1240,16 +1240,16 @@ describe('OneSignal - No Consent Required', () => {
 });
 
 describe('OneSignal - Consent Required', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setupEnv(true);
-    void OneSignal.setConsentGiven(false);
+    await OneSignal.setConsentGiven(false);
   });
 
-  test('cannot call login if consent is required but not given', () => {
+  test('cannot call login if consent is required but not given', async () => {
     void OneSignal.login('some-id');
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
 
-    void OneSignal.setConsentGiven(true);
+    await OneSignal.setConsentGiven(true);
     warnSpy.mockClear();
     void OneSignal.login('some-id');
     expect(warnSpy).not.toHaveBeenCalled();
