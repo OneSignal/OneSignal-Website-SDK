@@ -22,3 +22,4 @@ coverage
 
 !.env.example
 .env
+.vitest/

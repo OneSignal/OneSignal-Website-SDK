@@ -1,5 +1,6 @@
 import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operation';
+import { getBrowserLanguage } from 'src/shared/helpers/general';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
@@ -141,7 +142,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     let subscriptions: SubscriptionMap = {};
     const properties: IUserProperties = {
       timezone_id: getTimeZoneId(),
-      language: getLanguage(),
+      language: getBrowserLanguage(),
     };
 
     if (createUserOperation._externalId) {
@@ -367,37 +368,5 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     }
   }
 }
-
-const TRADITIONAL_CHINESE_LANGUAGE_TAG = ['tw', 'hant'];
-const SIMPLIFIED_CHINESE_LANGUAGE_TAG = ['cn', 'hans'];
-
-const getLanguage = () => {
-  let languageTag = navigator.language;
-  if (languageTag) {
-    languageTag = languageTag.toLowerCase();
-    const languageSubtags = languageTag.split('-');
-    if (languageSubtags[0] == 'zh') {
-      // The language is zh-?
-      // We must categorize the language as either zh-Hans (simplified) or zh-Hant (traditional);
-      // OneSignal only supports these two Chinese variants
-      for (const traditionalSubtag of TRADITIONAL_CHINESE_LANGUAGE_TAG) {
-        if (languageSubtags.indexOf(traditionalSubtag) !== -1) {
-          return 'zh-Hant';
-        }
-      }
-      for (const simpleSubtag of SIMPLIFIED_CHINESE_LANGUAGE_TAG) {
-        if (languageSubtags.indexOf(simpleSubtag) !== -1) {
-          return 'zh-Hans';
-        }
-      }
-      return 'zh-Hant'; // Return Chinese traditional by default
-    } else {
-      // Return the language subtag (it can be three characters, so truncate it down to 2 just to be sure)
-      return languageSubtags[0].substring(0, 2);
-    }
-  } else {
-    return 'en';
-  }
-};
 
 const getTimeZoneId = () => Intl.DateTimeFormat().resolvedOptions().timeZone;

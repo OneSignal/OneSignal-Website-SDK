@@ -10,6 +10,7 @@ import {
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
+import { FeatureFlag, isFeatureEnabledInWorker } from 'src/shared/features/featureFlags';
 import { delay, redactJwt } from 'src/shared/helpers/general';
 import { deactivateSession, upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
@@ -41,6 +42,7 @@ import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
 
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
+import { inlineImage } from '../helpers/inlineImage';
 import {
   isValidPayload,
   toNativeNotificationAction,
@@ -61,7 +63,14 @@ import type {
 declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 const MAX_CONFIRMED_DELIVERY_DELAY = 25;
+// How long to wait for a visible page to answer the NotificationWillDisplay broadcast.
+// A visible page that does not run the SDK never answers.
+export const NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS = 2_000;
 const workerMessenger = new WorkerMessengerSW(undefined);
+
+// Will-display checks waiting for a page's answer, keyed by notification id so
+// that overlapping pushes each get their own answer.
+const pendingDisplayChecks = new Map<string, (preventDefault: boolean) => void>();
 
 async function getPushSubscriptionId(): Promise<string | undefined> {
   const pushSubscription = await self.registration.pushManager.getSubscription();
@@ -201,13 +210,7 @@ function setupMessageListeners() {
     WorkerMessengerCommand._NotificationWillDisplayResponse,
     (payload: NotificationWillDisplayResponsePayload) => {
       Log._debug('[SW] NotifWillDisplay response', payload);
-
-      if (self.notificationDisplayStatus?.notificationId !== payload.notificationId) {
-        return;
-      }
-
-      self.notificationDisplayStatus.resolve(payload.preventDefault);
-      self.notificationDisplayStatus = undefined;
+      pendingDisplayChecks.get(payload.notificationId)?.(payload.preventDefault);
     },
   );
 
@@ -227,7 +230,8 @@ function setupMessageListeners() {
  * are present, skipping the broadcast entirely.
  *
  * Since preventDefault() is synchronous, the page responds immediately
- * after receiving the broadcast -- no polling or timeout needed.
+ * after receiving the broadcast. If no page responds in time (e.g. the
+ * visible page does not load the SDK), the notification is shown.
  */
 async function shouldPreventNotificationDisplay(notif: IOSNotification): Promise<boolean> {
   const clients = await self.clients.matchAll({
@@ -251,14 +255,18 @@ async function shouldPreventNotificationDisplay(notif: IOSNotification): Promise
 
   Log._debug(`[SW] ${visibleClients.length} visible clients, awaiting preventDefault`);
 
-  // Deferred promise: store the resolve callback on self so the
+  // Deferred promise: store the resolve callback so the
   // _NotificationWillDisplayResponse handler can settle it.
   // Must be created BEFORE broadcasting to avoid a race condition.
   const preventDefaultPromise = new Promise<boolean>((resolve) => {
-    self.notificationDisplayStatus = {
-      notificationId: notif.notificationId,
-      resolve,
+    const settle = (preventDefault: boolean) => {
+      clearTimeout(timer);
+      pendingDisplayChecks.delete(notif.notificationId);
+      resolve(preventDefault);
     };
+    // Show the notification if no page responds in time
+    const timer = setTimeout(() => settle(false), NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS);
+    pendingDisplayChecks.set(notif.notificationId, settle);
   });
 
   await workerMessenger
@@ -510,7 +518,9 @@ function ensureImageResourceHttps(imageUrl?: string) {
       const replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;
       return `https://i0.wp.com/${replacedImageUrl}`;
     } catch (e) {
+      // A URL the parser rejects may still load in the browser, so keep it.
       Log._error('ensureImageHttps:', e);
+      return imageUrl;
     }
   }
   return undefined;
@@ -560,8 +570,10 @@ async function displayNotification(notification: IMutableOSNotification) {
 
   // Use the default title if one isn't provided
   const defaultTitle = await getTitle();
-  // Use the default icon if one isn't provided
-  const defaultIcon = await getOptionsValue<string>('defaultIcon');
+  const inline = await isFeatureEnabledInWorker(FeatureFlag._InlineNotificationImages);
+  // Use the default icon if one isn't provided. The page stores it for every
+  // app, so the worker uses it only while the flag is on.
+  const defaultIcon = inline ? await getOptionsValue<string>('defaultIcon') : null;
   // Get option of whether we should leave notification displaying indefinitely
   const persistNotification = await getOptionsValue<boolean>('persistNotification');
 
@@ -570,12 +582,25 @@ async function displayNotification(notification: IMutableOSNotification) {
 
   notification.title = notification.title ? notification.title : defaultTitle;
   notification.icon = notification.icon ? notification.icon : defaultIcon ? defaultIcon : undefined;
+  const iconIsAppDefault = notification.icon === defaultIcon;
 
   ensureNotificationResourcesHttps(notification);
 
+  // `data` and the click handlers keep the remote URLs; only the display
+  // options get the inlined bytes.
+  // On Chrome for macOS the server sets the icon to a per-notification image
+  // when one is present, so only the app default icon is inlined in that case.
+  const iconMayBeImage = !!notification.image && !iconIsAppDefault;
+  const [icon, badge] = inline
+    ? await Promise.all([
+        iconMayBeImage ? notification.icon : inlineImage(notification.icon),
+        inlineImage(notification.badgeIcon),
+      ])
+    : [notification.icon, notification.badgeIcon];
+
   const notificationOptions: NotificationOptions = {
     body: notification.body,
-    icon: notification.icon,
+    icon,
     /*
      On Chrome 56, a large image can be displayed:
      https://bugs.chromium.org/p/chromium/issues/detail?id=614456
@@ -627,7 +652,7 @@ async function displayNotification(notification: IMutableOSNotification) {
      badge should accommodate devices up to 4x resolution, about 96 by
      96 px, and the image will be automatically masked.
      */
-    badge: notification.badgeIcon,
+    badge,
   };
 
   await self.registration.showNotification(notification.title, notificationOptions);

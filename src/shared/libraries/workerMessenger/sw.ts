@@ -110,9 +110,10 @@ export class WorkerMessengerSW extends WorkerMessengerBase<ContextSW> {
       const listenerRecord = listenersToRemove[i];
       this._replies._deleteListenerRecord(data.command, listenerRecord);
     }
-    for (const listenerRecord of listenersToCall) {
-      listenerRecord.callback.apply(null, [data.payload]);
-    }
+    // A message from the page has no other event to keep the worker alive, so
+    // the event waits for the callbacks that return a promise.
+    const pending = listenersToCall.map((record) => Promise.resolve(record.callback(data.payload)));
+    event.waitUntil(Promise.allSettled(pending));
   }
 
   /**

@@ -1,11 +1,9 @@
-import { db, getOptionsValue } from '../database/client';
 import { getDBAppConfig } from '../database/config';
 import { getOneSignalApiUrl, useSafariLegacyPush } from '../environment/detect';
 import { AppIDMissingError, MalformedArgumentError } from '../errors/common';
 import Log from '../libraries/Log';
 import type { NotificationIcons } from '../notifications/types';
 import { getPlatformNotificationIcon, logMethodCall } from '../utils/utils';
-import { triggerNotificationPermissionChanged } from './permissions';
 import { isValidUrl } from './validators';
 
 export async function showLocalNotification(
@@ -68,20 +66,6 @@ export async function showLocalNotification(
       };
       await registration.showNotification(title, options);
     });
-}
-
-export async function checkAndTriggerNotificationPermissionChanged() {
-  const previousPermission = await getOptionsValue<string>('notificationPermission');
-
-  const currentPermission = await OneSignal._context._permissionManager._getPermissionStatus();
-
-  if (previousPermission !== currentPermission) {
-    await triggerNotificationPermissionChanged();
-    await db.put('Options', {
-      key: 'notificationPermission',
-      value: currentPermission,
-    });
-  }
 }
 
 export async function getNotificationIcons() {

@@ -13,6 +13,7 @@ export type OptionKey =
   | 'defaultIcon'
   | 'defaultTitle'
   | 'defaultUrl'
+  | 'featureFlags'
   | 'isPushEnabled'
   | 'lastOptedIn'
   | 'lastPushId'

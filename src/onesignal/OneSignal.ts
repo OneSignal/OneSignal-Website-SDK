@@ -18,19 +18,15 @@ import {
   onSdkInitialized,
   saveInitOptions,
 } from 'src/shared/helpers/init';
+import { isMissing } from 'src/shared/helpers/inputGuard';
 import {
   getConsentRequired,
   removeLegacySubscriptionOptions,
   setConsentGiven as setStorageConsentGiven,
   setConsentRequired as setStorageConsentRequired,
 } from 'src/shared/helpers/localStorage';
-import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
-import { isValidUuid } from 'src/shared/helpers/validators';
-import {
-  _onSubscriptionChanged,
-  checkAndTriggerSubscriptionChanged,
-  onUserJwtInvalidated,
-} from 'src/shared/listeners';
+import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
+import { _onSubscriptionChanged, onUserJwtInvalidated } from 'src/shared/listeners';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
@@ -105,7 +101,7 @@ export default class OneSignal {
     logMethodCall('login', { externalId, jwtToken });
     if (isConsentRequiredButNotGiven()) return;
 
-    if (!externalId) {
+    if (typeof externalId === 'undefined') {
       throw EmptyArgumentError('externalId');
     }
 
@@ -116,6 +112,8 @@ export default class OneSignal {
     if (jwtToken !== undefined && typeof jwtToken !== 'string') {
       throw WrongTypeArgumentError('jwtToken');
     }
+
+    if (isMissing(externalId, 'login: externalId')) return;
 
     await LoginManager.login(externalId, jwtToken);
   }
@@ -171,8 +169,6 @@ export default class OneSignal {
     removeLegacySubscriptionOptions();
 
     errorIfInitAlreadyCalled();
-    // Runs alongside the config fetch. A failure keeps the cached flags and never blocks init.
-    if (options?.appId && isValidUuid(options.appId)) void refreshFeatureFlags(options.appId);
     await OneSignal._initializeConfig(options);
     if (!OneSignal.config) {
       throw new Error('OneSignal config not initialized!');
@@ -194,6 +190,8 @@ export default class OneSignal {
     if (!idb) return;
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
+    // Writes to IndexedDB, so it waits for hydration in case the write stalls and trips the breaker.
+    void refreshFeatureFlags(OneSignal.config.appId);
 
     OneSignal._consentGiven = await getConsentGiven();
     if (getConsentRequired()) {
@@ -216,17 +214,13 @@ export default class OneSignal {
 
       OneSignal._initAlreadyCalled = true;
 
-      OneSignal._emitter.on(
-        OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-        checkAndTriggerSubscriptionChanged,
-      );
       OneSignal._emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, _onSubscriptionChanged);
       OneSignal._emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
 
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,
         //     since a user has to click out of and back on the page to check permissions
-        void checkAndTriggerNotificationPermissionChanged();
+        void triggerNotificationPermissionChanged();
       });
 
       await initSaveState();

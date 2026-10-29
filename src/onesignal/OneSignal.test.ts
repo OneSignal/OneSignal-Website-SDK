@@ -56,6 +56,7 @@ import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult } from 'src/core/types/operation';
+import LoginManager from 'src/page/managers/LoginManager';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { db } from 'src/shared/database/client';
 import { setPushToken } from 'src/shared/database/subscription';
@@ -415,19 +416,27 @@ describe('OneSignal - No Consent Required', () => {
           await expect(OneSignal.login()).rejects.toThrowError('"externalId" is empty');
 
           // @ts-expect-error - testing invalid argument
-          await expect(OneSignal.login(null)).rejects.toThrowError('"externalId" is empty');
-
-          // An empty external id would write external_id: '' to the identity model while
-          // every operation reads as anonymous.
-          await expect(OneSignal.login('')).rejects.toThrowError('"externalId" is empty');
-
-          // @ts-expect-error - testing invalid argument
-          await expect(OneSignal.login(1)).rejects.toThrowError('"externalId" is the wrong type');
-
-          // @ts-expect-error - testing invalid argument
-          await expect(OneSignal.login('some-id', 1)).rejects.toThrowError(
-            '"jwtToken" is the wrong type',
+          await expect(OneSignal.login(null)).rejects.toThrowError(
+            '"externalId" is the wrong type',
           );
+
+          // @ts-expect-error - testing invalid argument
+          await expect(OneSignal.login('', 1)).rejects.toThrowError('"jwtToken" is the wrong type');
+        });
+
+        test('rejects an empty or null-byte external id and keeps whitespace', async () => {
+          const loginSpy = vi.spyOn(LoginManager, 'login').mockResolvedValue();
+          const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => '');
+
+          await OneSignal.login('');
+          await OneSignal.login('ab\u0000c');
+          await OneSignal.login(' ');
+
+          expect(loginSpy).toHaveBeenCalledTimes(1);
+          expect(loginSpy).toHaveBeenCalledWith(' ', undefined);
+          expect(errorSpy).toHaveBeenCalledWith('login: externalId is required');
+          expect(errorSpy).toHaveBeenCalledWith('login: externalId contains a null byte');
+          loginSpy.mockRestore();
         });
 
         test('can login with a new external id', async () => {
@@ -1503,22 +1512,18 @@ describe('OneSignal - No Consent Required', () => {
 });
 
 describe('OneSignal - Consent Required', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setupEnv(true);
-    // Stop setConsentGiven(true) from running the real init. The tests below never
-    // await it, so it would still be running when Vitest tears down the DOM.
-    // @ts-expect-error - _delayedInit is private
-    vi.spyOn(OneSignal, '_delayedInit').mockResolvedValue(undefined);
-    void OneSignal.setConsentGiven(false);
+    await OneSignal.setConsentGiven(false);
     // The token store persists to localStorage, which outlives the test environment.
     setJwtTokens({});
   });
 
-  test('cannot call login if consent is required but not given', () => {
+  test('cannot call login if consent is required but not given', async () => {
     void OneSignal.login('some-id');
     expect(warnSpy).toHaveBeenCalledWith('Consent required but not given');
 
-    void OneSignal.setConsentGiven(true);
+    await OneSignal.setConsentGiven(true);
     warnSpy.mockClear();
     void OneSignal.login('some-id');
     expect(warnSpy).not.toHaveBeenCalled();

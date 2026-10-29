@@ -68,14 +68,12 @@ describe('PromptsManager', () => {
     const pm = new PromptsManager(OneSignal._context);
     const getOptsSpy = vi
       .spyOn(pm, '_getDelayedPromptOptions' as keyof PromptsManager)
-      .mockImplementation(
-        (): DelayedPromptOptions => ({
-          enabled: true,
-          autoPrompt: true,
-          timeDelay: 0,
-          pageViews: 0,
-        }),
-      );
+      .mockImplementation((): DelayedPromptOptions => ({
+        enabled: true,
+        autoPrompt: true,
+        timeDelay: 0,
+        pageViews: 0,
+      }));
     const condSpy = vi
       .spyOn(pm, '_isPageViewConditionMet' as keyof PromptsManager)
       .mockResolvedValue(true);

@@ -9,6 +9,8 @@ import {
   ReservedArgumentError,
   WrongTypeArgumentError,
 } from 'src/shared/errors/common';
+import { getBrowserLanguage } from 'src/shared/helpers/general';
+import { hasMissingEntries, hasMissingItems, isMissing } from 'src/shared/helpers/inputGuard';
 import { getAppId } from 'src/shared/helpers/main';
 import { isObject, isValidEmail } from 'src/shared/helpers/validators';
 import Log from 'src/shared/libraries/Log';
@@ -69,10 +71,14 @@ export default class User {
     logMethodCall('addAlias', { label, id });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateAliasLabel(label, 'label');
-    validateAliasValue(id, 'id');
+    if (
+      !isValidAlias(label, 'label', 'addAlias: label', true) ||
+      !isValidAlias(id, 'id', 'addAlias: id')
+    ) {
+      return;
+    }
 
-    this.addAliases({ [label]: id });
+    this._updateIdentityModel({ [label]: id });
   }
 
   public addAliases(aliases: { [key: string]: string }): void {
@@ -81,9 +87,14 @@ export default class User {
 
     validateObject(aliases, 'aliases');
 
-    for (const label of Object.keys(aliases)) {
-      validateAliasValue(aliases[label], `key: ${label}`);
-      validateAliasLabel(label, `key: ${label}`);
+    for (const label in aliases) {
+      const name = `key: ${label}`;
+      if (
+        !isValidAlias(aliases[label], name, 'addAliases: value') ||
+        !isValidAlias(label, name, 'addAliases: key', true)
+      ) {
+        return;
+      }
     }
 
     this._updateIdentityModel(aliases);
@@ -100,7 +111,10 @@ export default class User {
     logMethodCall('removeAliases', { aliases });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateArray(aliases, 'aliases');
+    validateArray(aliases, 'aliases', 'label');
+    for (const label of aliases) {
+      if (!isValidAlias(label, 'label', 'removeAliases: label', true)) return;
+    }
 
     const newAliases = Object.fromEntries(aliases.map((key) => [key, undefined]));
     this._updateIdentityModel(newAliases);
@@ -110,7 +124,8 @@ export default class User {
     logMethodCall('addEmail', { email });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateStringLabel(email, 'email');
+    validateString(email, 'email');
+    if (isMissing(email, 'addEmail: email')) return;
 
     if (!isValidEmail(email)) throw MalformedArgumentError('email');
 
@@ -124,7 +139,8 @@ export default class User {
     logMethodCall('addSms', { sms });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateStringLabel(sms, 'sms');
+    validateString(sms, 'sms');
+    if (isMissing(sms, 'addSms: sms')) return;
 
     addSubscriptionToModels({
       type: SubscriptionType._SMS,
@@ -136,7 +152,8 @@ export default class User {
     logMethodCall('removeEmail', { email });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateStringLabel(email, 'email');
+    validateString(email, 'email');
+    if (isMissing(email, 'removeEmail: email')) return;
 
     const emailSubscriptions = OneSignal._coreDirector._getEmailSubscriptionModels();
 
@@ -151,7 +168,8 @@ export default class User {
     logMethodCall('removeSms', { smsNumber });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateStringLabel(smsNumber, 'smsNumber');
+    validateString(smsNumber, 'smsNumber');
+    if (isMissing(smsNumber, 'removeSms: smsNumber')) return;
 
     const smsSubscriptions = OneSignal._coreDirector._getSmsSubscriptionModels();
     smsSubscriptions.forEach((model) => {
@@ -165,14 +183,15 @@ export default class User {
     logMethodCall('addTag', { key, value });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateStringLabel(key, 'key');
-    validateStringLabel(value, 'value');
+    validateString(key, 'key');
+    validateString(value, 'value');
 
     this.addTags({ [key]: value });
   }
 
   public addTags(tags: { [key: string]: string }): void {
     if (isConsentRequiredButNotGiven()) return;
+    if (hasMissingEntries(tags, 'addTags', true)) return;
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     const newTags = { ...propertiesModel._tags, ...tags };
@@ -183,8 +202,6 @@ export default class User {
     logMethodCall('removeTag', { tagKey });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateStringLabel(tagKey, 'tagKey');
-
     this.removeTags([tagKey]);
   }
 
@@ -192,7 +209,8 @@ export default class User {
     logMethodCall('removeTags', { tagKeys });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateArray(tagKeys, 'tagKeys', validateStringLabel);
+    validateArray(tagKeys, 'tagKeys', 'tagKey');
+    if (hasMissingItems(tagKeys, 'removeTags', 'key')) return;
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
     const newTags = { ...propertiesModel._tags };
@@ -213,10 +231,11 @@ export default class User {
     logMethodCall('setLanguage', { language });
     if (isConsentRequiredButNotGiven()) return;
 
-    validateStringLabel(language, 'language');
+    validateString(language, 'language');
+    if (language && isMissing(language, 'setLanguage: language')) return;
 
     const propertiesModel = OneSignal._coreDirector._getPropertiesModel();
-    propertiesModel._language = language;
+    propertiesModel._language = language || getBrowserLanguage();
   }
 
   public getLanguage(): string | undefined {
@@ -226,6 +245,8 @@ export default class User {
 
   public trackEvent(name: string, properties: Record<string, unknown> = {}) {
     if (isConsentRequiredButNotGiven()) return;
+    validateString(name, 'name');
+    if (isMissing(name, 'trackEvent: name')) return;
 
     // login operation / non-local onesignalId is needed to send custom events
     const onesignalId = OneSignal._coreDirector._getIdentityModel()._onesignalId;
@@ -306,24 +327,14 @@ function isObjectSerializable(value: unknown): boolean {
   }
 }
 
-function validateStringLabel(label: string, labelName: string): void {
-  if (typeof label !== 'string') throw WrongTypeArgumentError(labelName);
-
-  if (!label) throw EmptyArgumentError(labelName);
+function validateString(value: unknown, name: string): asserts value is string {
+  if (typeof value !== 'string') throw WrongTypeArgumentError(name);
 }
 
-function validateArray(
-  array: string[],
-  arrayName: string,
-  validateItem: (item: string, itemName: string) => void = validateAliasLabel,
-): void {
-  if (!Array.isArray(array)) throw WrongTypeArgumentError(arrayName);
-
-  if (array.length === 0) throw EmptyArgumentError(arrayName);
-
-  for (const label of array) {
-    validateItem(label, 'label');
-  }
+function validateArray(array: unknown, name: string, itemName: string): asserts array is string[] {
+  if (!Array.isArray(array)) throw WrongTypeArgumentError(name);
+  if (array.length === 0) throw EmptyArgumentError(name);
+  for (const item of array) validateString(item, itemName);
 }
 
 function validateObject(object: unknown, objectName: string): void {
@@ -335,18 +346,16 @@ function validateObject(object: unknown, objectName: string): void {
 // eslint-disable-next-line no-control-regex
 const INVALID_ALIAS_PATTERN = /[/?#&=\s\x00-\x1F\x7F]|\.\./;
 
-function validateAliasValue(value: string, valueName: string): void {
-  validateStringLabel(value, valueName);
-
-  if (value.length > 128 || INVALID_ALIAS_PATTERN.test(value)) {
-    throw MalformedArgumentError(valueName);
+/**
+ * Throws when [value] is not a string, is malformed, or is a reserved label.
+ * Logs and returns false when it is missing, per [isMissing].
+ */
+function isValidAlias(value: unknown, name: string, api: string, isLabel = false): boolean {
+  validateString(value, name);
+  if (isMissing(value, api)) return false;
+  if (value.length > 128 || INVALID_ALIAS_PATTERN.test(value)) throw MalformedArgumentError(name);
+  if (isLabel && (value === 'external_id' || value === 'onesignal_id')) {
+    throw ReservedArgumentError(value);
   }
-}
-
-function validateAliasLabel(label: string, labelName: string): void {
-  validateAliasValue(label, labelName);
-
-  if (label === 'external_id' || label === 'onesignal_id') {
-    throw ReservedArgumentError(label);
-  }
+  return true;
 }

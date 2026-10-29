@@ -75,6 +75,7 @@ export function getMergedConfig(
     appId: serverConfig.app_id,
     hasUnsupportedSubdomain,
     siteName: serverConfig.config.siteInfo.name,
+    defaultIconUrl: serverConfig.config.siteInfo.defaultIconUrl,
     origin: serverConfig.config.origin,
     restrictedOriginEnabled:
       serverConfig.features.restrict_origin && serverConfig.features.restrict_origin.enable,

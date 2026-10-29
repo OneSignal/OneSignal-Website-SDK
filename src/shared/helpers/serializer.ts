@@ -71,14 +71,12 @@ export function notificationClickToDatabase(
 function toDatabaseButtons(
   actionButtons?: IOSNotificationActionButton[],
 ): NotificationButtonsClickForOpenHandlingSchema[] | undefined {
-  return actionButtons?.map(
-    (button): NotificationButtonsClickForOpenHandlingSchema => ({
-      action: button.actionId,
-      title: button.text,
-      icon: button.icon,
-      url: button.launchURL,
-    }),
-  );
+  return actionButtons?.map((button): NotificationButtonsClickForOpenHandlingSchema => ({
+    action: button.actionId,
+    title: button.text,
+    icon: button.icon,
+    url: button.launchURL,
+  }));
 }
 
 export interface NotificationClickedForOutcomesSchema {

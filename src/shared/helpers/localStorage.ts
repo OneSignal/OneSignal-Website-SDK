@@ -81,16 +81,19 @@ export function getJwtTokens(): Record<string, string> {
   }
 }
 
-// The last feature list the server returned, stored as sent. The reader
-// drops non-string entries, and malformed JSON reads as empty.
+export function getFeatureFlags(): unknown[] {
+  return parseList(localStorage.getItem(FEATURE_FLAGS));
+}
+
 export function setFeatureFlags(flags: unknown[]): void {
   localStorage.setItem(FEATURE_FLAGS, JSON.stringify(flags));
 }
 
-export function getFeatureFlags(): string[] {
+// Only the SDK writes these lists, so anything that isn't an array reads as empty.
+export function parseList(json: string | null | undefined): unknown[] {
   try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(FEATURE_FLAGS) ?? '[]');
-    return Array.isArray(parsed) ? parsed.filter((f) => typeof f === 'string') : [];
+    const list: unknown = JSON.parse(json || '[]');
+    return Array.isArray(list) ? list : [];
   } catch {
     return [];
   }

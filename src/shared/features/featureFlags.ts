@@ -1,10 +1,16 @@
 import { get } from '../api/base';
-import { getFeatureFlags, getFeatureOverrides, setFeatureFlags } from '../helpers/localStorage';
-import Log from '../libraries/Log';
+import { db, getOptionsValue } from '../database/client';
+import {
+  getFeatureFlags,
+  getFeatureOverrides,
+  parseList,
+  setFeatureFlags,
+} from '../helpers/localStorage';
 import { VERSION } from '../utils/env';
 
 export const FeatureFlag = {
   _IdentityVerification: 'sdk_identity_verification',
+  _InlineNotificationImages: 'sdk_web_inline_notification_images',
 } as const;
 
 export type FeatureFlagValue = (typeof FeatureFlag)[keyof typeof FeatureFlag];
@@ -16,24 +22,37 @@ export function isFeatureEnabled(flag: FeatureFlagValue): boolean {
   return getFeatureOverrides().includes(flag) || getFeatureFlags().includes(flag);
 }
 
-// Fetches the flag list once per page load. A failure keeps the cached list.
-export async function refreshFeatureFlags(appId: string): Promise<void> {
-  const overrides = getFeatureOverrides();
-  // Bypasses Log so the warning shows in production builds, where Log is silent below trace.
-  if (overrides.length) console.warn('OneSignal: feature flag overrides are active:', overrides);
+// The worker has no localStorage, so the page mirrors the active list into IndexedDB.
+export async function isFeatureEnabledInWorker(flag: FeatureFlagValue): Promise<boolean> {
+  return parseList(await getOptionsValue<string>('featureFlags')).includes(flag);
+}
 
+// Fetches the flag list once per page load; a failure keeps the cached list.
+// The page cache is written only after the worker mirror commits, so both see the same flags.
+export async function refreshFeatureFlags(appId: string): Promise<void> {
   try {
-    const { ok, result } = await get<FeaturesResponse>([
+    const overrides = getFeatureOverrides();
+    // Bypasses Log so the warning shows in production builds, where Log is silent below trace.
+    if (overrides.length) console.warn('OneSignal: feature flag overrides are active:', overrides);
+
+    const res = await get<FeaturesResponse>([
       'apps',
       appId,
       'sdk',
       'features',
       'web',
       VERSION,
-    ]);
-    if (!ok || !Array.isArray(result?.features)) return;
-    setFeatureFlags(result.features);
-  } catch (e) {
-    Log._warn('Feature flags fetch failed', e);
+    ]).catch(() => undefined);
+    const features = res?.ok && res.result?.features;
+    const flags = Array.isArray(features)
+      ? features.filter((f) => typeof f === 'string')
+      : getFeatureFlags();
+    const mirrored = await db.put('Options', {
+      key: 'featureFlags',
+      value: JSON.stringify([...overrides, ...flags]),
+    });
+    if (mirrored !== undefined) setFeatureFlags(flags);
+  } catch {
+    // Storage errors leave the cached lists in place.
   }
 }

@@ -70,6 +70,7 @@ export interface AppConfig {
   sessionThreshold?: number;
 
   siteName: string;
+  defaultIconUrl: string | null;
 }
 
 export interface AppUserConfig {

@@ -7,6 +7,7 @@ import {
   setUpdateUserResponse,
   updateUserFn,
 } from '__test__/support/helpers/requests';
+import { installMockCacheStorage } from '__test__/support/mocks/MockCacheStorage';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
 import { server } from '__test__/support/mocks/server';
@@ -23,9 +24,11 @@ import {
   putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
+import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
+import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
 import { DEFAULT_DEVICE_ID } from 'src/shared/managers/subscription/constants';
 import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
@@ -34,9 +37,9 @@ import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategy
 import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from 'src/shared/session/constants';
 import type { Session, UpsertOrDeactivateSessionPayload } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
-import { getAppId, run } from './ServiceWorker';
+import { getAppId, NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS, run } from './ServiceWorker';
 
 // Mock webhook notification events
 vi.mock('../webhooks/notifications/webhookNotificationEvent', () => ({
@@ -108,21 +111,37 @@ vi.mock('src/shared/utils/EnvVariables', async (importOriginal) => ({
 
 const tick = () => new Promise<void>((r) => setTimeout(r, 0));
 
+// setImmediate so this still works when tests fake setTimeout
 const flush = async () => {
   for (let i = 0; i < 20; i++) {
-    await tick();
-  }
-};
-
-const waitForDisplayStatus = async () => {
-  while (!self.notificationDisplayStatus) {
-    await tick();
+    await new Promise<void>((r) => setImmediate(r));
   }
 };
 
 const dispatchEvent = async (event: Event) => {
   self.dispatchEvent(event);
   await flush();
+};
+
+const broadcastSpy = vi.spyOn(WorkerMessengerSW.prototype, '_broadcast');
+
+const hasBroadcastWillDisplay = () =>
+  broadcastSpy.mock.calls.some(
+    ([command]) => command === WorkerMessengerCommand._NotificationWillDisplay,
+  );
+
+// Waits for the will-display broadcast, then answers it like a page that runs the SDK.
+const respondToDisplayCheck = async (notificationId: string, preventDefault: boolean) => {
+  while (!hasBroadcastWillDisplay()) {
+    await tick();
+  }
+  isServiceWorker = true;
+  await dispatchEvent(
+    new ExtendableMessageEvent('message', {
+      command: WorkerMessengerCommand._NotificationWillDisplayResponse,
+      payload: { notificationId, preventDefault },
+    }),
+  );
 };
 
 const serverConfig = TestContext.getFakeServerAppConfig(ConfigIntegrationKind._Custom, {
@@ -144,7 +163,6 @@ describe('ServiceWorker', () => {
   });
 
   beforeEach(async () => {
-    self.notificationDisplayStatus = undefined;
     isServiceWorker = false;
     await db.put('Ids', {
       type: 'appId',
@@ -207,8 +225,7 @@ describe('ServiceWorker', () => {
 
       self.dispatchEvent(new PushEvent('push', payload));
 
-      await waitForDisplayStatus();
-      self.notificationDisplayStatus!.resolve(false);
+      await respondToDisplayCheck(payload.custom.i, false);
 
       await flush();
 
@@ -259,8 +276,7 @@ describe('ServiceWorker', () => {
 
       self.dispatchEvent(new PushEvent('push', payload));
 
-      await waitForDisplayStatus();
-      self.notificationDisplayStatus!.resolve(false);
+      await respondToDisplayCheck(payload.custom.i, false);
 
       await flush();
 
@@ -275,6 +291,10 @@ describe('ServiceWorker', () => {
     });
 
     describe('foregroundWillDisplay preventDefault', () => {
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
       test('should display notification when no visible clients exist', async () => {
         // Visibility check finds no visible clients — broadcast is skipped
         matchAllFn.mockResolvedValueOnce([unfocusedClient]);
@@ -304,8 +324,7 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        await waitForDisplayStatus();
-        self.notificationDisplayStatus!.resolve(true);
+        await respondToDisplayCheck(payload.custom.i, true);
 
         await flush();
 
@@ -330,8 +349,7 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        await waitForDisplayStatus();
-        self.notificationDisplayStatus!.resolve(false);
+        await respondToDisplayCheck(payload.custom.i, false);
 
         await flush();
 
@@ -344,6 +362,61 @@ describe('ServiceWorker', () => {
         );
       });
 
+      test('should display notification when a visible page never responds', async () => {
+        // e.g. a visible page in the service worker scope that does not load the SDK
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
+        const payload = mockOSMinifiedNotificationPayload();
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+        self.dispatchEvent(new PushEvent('push', payload));
+        await flush();
+        await vi.advanceTimersByTimeAsync(NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS - 1);
+        await flush();
+        expect(showNotificationSpy).not.toHaveBeenCalled();
+
+        await vi.advanceTimersByTimeAsync(1);
+        await flush();
+        expect(showNotificationSpy).toHaveBeenCalledWith(
+          payload.title,
+          expect.objectContaining({
+            body: payload.alert,
+          }),
+        );
+      });
+
+      test('honors preventDefault when pushes overlap', async () => {
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
+        const payloadA = mockOSMinifiedNotificationPayload({ title: 'A', custom: { i: 'id-a' } });
+        const payloadB = mockOSMinifiedNotificationPayload({ title: 'B', custom: { i: 'id-b' } });
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+        self.dispatchEvent(new PushEvent('push', payloadA));
+        self.dispatchEvent(new PushEvent('push', payloadB));
+        await flush();
+
+        isServiceWorker = true;
+        self.dispatchEvent(
+          new ExtendableMessageEvent('message', {
+            command: WorkerMessengerCommand._NotificationWillDisplayResponse,
+            payload: { notificationId: 'id-a', preventDefault: true },
+          }),
+        );
+        self.dispatchEvent(
+          new ExtendableMessageEvent('message', {
+            command: WorkerMessengerCommand._NotificationWillDisplayResponse,
+            payload: { notificationId: 'id-b', preventDefault: false },
+          }),
+        );
+        await flush();
+
+        // Past A's timeout, so a timer that was not cleared would show A
+        await vi.advanceTimersByTimeAsync(NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS);
+        await flush();
+
+        const titles = showNotificationSpy.mock.calls.map(([title]) => title);
+        expect(titles).toEqual(['B']);
+      });
+
       test('should display notification via display() after preventDefault', async () => {
         const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
 
@@ -353,8 +426,7 @@ describe('ServiceWorker', () => {
         const pushEvent = new PushEvent('push', payload);
         self.dispatchEvent(pushEvent);
 
-        await waitForDisplayStatus();
-        self.notificationDisplayStatus!.resolve(true);
+        await respondToDisplayCheck(payload.custom.i, true);
 
         await flush();
 
@@ -384,6 +456,145 @@ describe('ServiceWorker', () => {
             body: payload.alert,
           }),
         );
+      });
+    });
+
+    describe('notification images', () => {
+      const badge = 'https://example.com/badge.png';
+      // Each URL gets its own bytes so a swapped icon and badge would fail.
+      const dataUrlFor = (url: string) => `data:image/png;base64,${btoa(url)}`;
+      const fetchMock = vi.fn<typeof fetch>();
+
+      const enableInlineImages = () =>
+        db.put('Options', {
+          key: 'featureFlags',
+          value: JSON.stringify([FeatureFlag._InlineNotificationImages]),
+        });
+
+      const displayPush = async (payload = mockOSMinifiedNotificationPayload({ badge })) => {
+        matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+        const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
+        await dispatchEvent(new PushEvent('push', payload));
+        return showNotificationSpy.mock.calls[0]?.[1] as NotificationOptions;
+      };
+
+      beforeEach(() => {
+        installMockCacheStorage();
+        fetchMock.mockReset();
+        fetchMock.mockImplementation((input) =>
+          Promise.resolve(
+            new Response(new TextEncoder().encode(input as string), {
+              headers: { 'content-type': 'image/png' },
+            }),
+          ),
+        );
+        vi.stubGlobal('fetch', fetchMock);
+      });
+
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      test('without the flag, passes the remote URLs through and fetches nothing', async () => {
+        const options = await displayPush();
+
+        expect(options.icon).toBe('https://example.com/icon.png');
+        expect(options.badge).toBe(badge);
+        expect(fetchMock).not.toHaveBeenCalled();
+      });
+
+      test('without the flag, a stored default icon does not fill a missing icon', async () => {
+        await db.put('Options', { key: 'defaultIcon', value: 'https://example.com/default.png' });
+        const { icon: _icon, ...payload } = mockOSMinifiedNotificationPayload({ badge });
+
+        const options = await displayPush(payload);
+
+        expect(options.icon).toBeUndefined();
+        expect(fetchMock).not.toHaveBeenCalled();
+      });
+
+      test('with the flag, passes the icon and badge as data URLs and keeps the URLs in data', async () => {
+        await enableInlineImages();
+
+        const options = await displayPush();
+
+        expect(options.icon).toBe(dataUrlFor('https://example.com/icon.png'));
+        expect(options.badge).toBe(dataUrlFor(badge));
+        expect(options.data).toEqual(
+          expect.objectContaining({ icon: 'https://example.com/icon.png', badgeIcon: badge }),
+        );
+      });
+
+      describe('with the flag and a large image', () => {
+        const defaultIcon = 'https://example.com/default-icon.png';
+        const image = 'https://example.com/article.jpg';
+
+        beforeEach(async () => {
+          await enableInlineImages();
+          await db.put('Options', { key: 'defaultIcon', value: defaultIcon });
+        });
+
+        test('inlines the app default icon when the payload has no icon', async () => {
+          const { icon: _icon, ...payload } = mockOSMinifiedNotificationPayload({ badge, image });
+
+          const options = await displayPush(payload);
+
+          expect(options.icon).toBe(dataUrlFor(defaultIcon));
+          // @ts-expect-error - image is not in the NotificationOptions type
+          expect(options.image).toBe(image);
+          expect(fetchMock).toHaveBeenCalledWith(defaultIcon, expect.anything());
+        });
+
+        test('inlines the icon when the payload icon is the app default icon', async () => {
+          const options = await displayPush(
+            mockOSMinifiedNotificationPayload({ badge, icon: defaultIcon, image }),
+          );
+
+          expect(options.icon).toBe(dataUrlFor(defaultIcon));
+        });
+
+        test('leaves a per-notification icon as a remote URL', async () => {
+          const icon = 'https://example.com/other-image.jpg';
+
+          const options = await displayPush(
+            mockOSMinifiedNotificationPayload({ badge, icon, image }),
+          );
+
+          expect(options.icon).toBe(icon);
+          expect(options.badge).toBe(dataUrlFor(badge));
+          expect(fetchMock).toHaveBeenCalledTimes(1);
+          expect(fetchMock).toHaveBeenCalledWith(badge, expect.anything());
+        });
+
+        test('leaves the icon as a remote URL when it is the image itself', async () => {
+          const options = await displayPush(
+            mockOSMinifiedNotificationPayload({ badge, icon: image, image }),
+          );
+
+          expect(options.icon).toBe(image);
+          // @ts-expect-error - image is not in the NotificationOptions type
+          expect(options.image).toBe(image);
+          expect(fetchMock).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      test('with the flag, falls back to the remote URL when the fetch fails', async () => {
+        await enableInlineImages();
+        fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+        const options = await displayPush();
+
+        expect(options.icon).toBe('https://example.com/icon.png');
+        expect(options.badge).toBe(badge);
+      });
+
+      test('keeps an icon URL that the URL parser rejects', async () => {
+        const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
+
+        const options = await displayPush(mockOSMinifiedNotificationPayload({ icon: 'not a url' }));
+
+        expect(options.icon).toBe('not a url');
+        expect(errorSpy).toHaveBeenCalledWith('ensureImageHttps:', expect.any(TypeError));
       });
     });
   });
@@ -1284,6 +1495,7 @@ describe('ServiceWorker', () => {
       hasUnsupportedSubdomain: false,
       origin: 'https://some-origin.com',
       siteName: 'Example',
+      defaultIconUrl: null,
       vapidPublicKey: '1234567890',
       jwtRequired: JwtRequirement._NotRequired,
       userConfig: TestContext.getFakeAppUserConfig(),
@@ -1412,6 +1624,24 @@ describe('ServiceWorker', () => {
           body: notification.body,
         }),
       );
+    });
+
+    test('a DisplayNotification message keeps the worker alive until the notification shows', async () => {
+      const showNotificationSpy = vi.spyOn(self.registration, 'showNotification');
+      const event = new ExtendableMessageEvent('message', {
+        command: WorkerMessengerCommand._DisplayNotification,
+        payload: {
+          notification: { notificationId: 'wait-id', title: 'Wait', confirmDelivery: false },
+        },
+      });
+      const waitUntil = vi.spyOn(event, 'waitUntil');
+
+      self.dispatchEvent(event);
+
+      expect(waitUntil).toHaveBeenCalledOnce();
+      expect(showNotificationSpy).not.toHaveBeenCalled();
+      await waitUntil.mock.calls[0][0];
+      expect(showNotificationSpy).toHaveBeenCalledOnce();
     });
   });
 });
