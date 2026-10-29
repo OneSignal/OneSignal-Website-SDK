@@ -99,13 +99,7 @@ jobs:
         env:
           NEW_VERSION: ${{ steps.new_version.outputs.version }}
         run: |
-          # npm refuses to run because package.json devEngines names bun.
-          node -e '
-            const fs = require("fs");
-            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-            pkg.config.sdkVersion = process.env.NEW_VERSION;
-            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n");
-          '
+          vp env exec bun pm pkg set config.sdkVersion="$NEW_VERSION"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json
