@@ -25,8 +25,8 @@ import {
   setConsentGiven as setStorageConsentGiven,
   setConsentRequired as setStorageConsentRequired,
 } from 'src/shared/helpers/localStorage';
-import { checkAndTriggerNotificationPermissionChanged } from 'src/shared/helpers/main';
-import { _onSubscriptionChanged, checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
+import { triggerNotificationPermissionChanged } from 'src/shared/helpers/permissions';
+import { _onSubscriptionChanged } from 'src/shared/listeners';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName, getBrowserVersion } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
@@ -179,17 +179,13 @@ export default class OneSignal {
 
       OneSignal._initAlreadyCalled = true;
 
-      OneSignal._emitter.on(
-        OneSignal.EVENTS.NOTIFICATION_PERMISSION_CHANGED_AS_STRING,
-        checkAndTriggerSubscriptionChanged,
-      );
       OneSignal._emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, _onSubscriptionChanged);
       OneSignal._emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, onSdkInitialized);
 
       window.addEventListener('focus', () => {
         // Checks if permission changed every time a user focuses on the page,
         //     since a user has to click out of and back on the page to check permissions
-        void checkAndTriggerNotificationPermissionChanged();
+        void triggerNotificationPermissionChanged();
       });
 
       await initSaveState();
