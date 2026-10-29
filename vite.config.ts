@@ -75,7 +75,8 @@ export default defineConfig({
       : undefined,
   },
   plugins: [
-    mkcert(),
+    // mkcert calls the GitHub API at startup. Tests do not need HTTPS, so skip it there.
+    ...(isTest ? [] : [mkcert()]),
     ...(isBuild
       ? [
           analyzer({
