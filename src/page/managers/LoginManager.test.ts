@@ -3,10 +3,13 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { BaseSubscriptionOperation } from 'src/core/operations/BaseSubscriptionOperation';
+import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { SetPropertyOperation } from 'src/core/operations/SetPropertyOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from 'src/core/operations/UpdateSubscriptionOperation';
 import { ExecutionResult } from 'src/core/types/operation';
+import User from 'src/onesignal/User';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { OperationFailedError } from 'src/shared/errors/common';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
@@ -258,13 +261,47 @@ describe('LoginManager', () => {
         .mockResolvedValueOnce(undefined);
 
       await expect(LoginManager.login('A', 'jwt-a')).rejects.toThrow(OperationFailedError);
-      expect(LoginManager._switchInProgress).toBe(false);
 
       await LoginManager.login('B', 'jwt-b');
 
       expect(enqueueAndWaitSpy).toHaveBeenCalledTimes(2);
       expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('B');
     });
+  });
+
+  test('login: user data that follows each login without an await goes to that user', async () => {
+    setJwtRequirement(JwtRequirement._Required);
+    vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(undefined);
+    const enqueueAndWaitSpy = vi
+      .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
+      .mockResolvedValue(undefined);
+    const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+    const user = User._createOrGetInstance();
+
+    const loginA = LoginManager.login('A', 'jwt-a');
+    user.addTag('a', '1');
+    const loginB = LoginManager.login('B', 'jwt-b');
+    user.addTag('b', '1');
+    const loginC = LoginManager.login('C', 'jwt-c');
+    user.addTag('c', '1');
+    await Promise.all([loginA, loginB, loginC]);
+
+    const ops = enqueueSpy.mock.calls.map(([op]) => op);
+    const tagOps = ops.filter((op) => op instanceof SetPropertyOperation);
+    expect(tagOps.map((op) => [op._externalId, op.value])).toEqual([
+      ['A', { a: '1' }],
+      ['B', { b: '1' }],
+      ['C', { c: '1' }],
+    ]);
+    // Each operation names one user: the external id matches the onesignal id.
+    const userByOnesignalId = Object.fromEntries(
+      enqueueAndWaitSpy.mock.calls.map(([op]) => [op._onesignalId, op._externalId]),
+    );
+    ops.forEach((op) => expect(userByOnesignalId[op._onesignalId]).toBe(op._externalId));
+    // With no push model, only the current user gets the placeholder model.
+    const createSubOps = ops.filter((op) => op instanceof CreateSubscriptionOperation);
+    expect(createSubOps.map((op) => op._externalId)).toEqual(['C']);
+    expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('C');
   });
 
   test('logout: no external id logs debug and returns', async () => {

@@ -42,7 +42,6 @@ export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal._coreDirector = new CoreModuleDirector(core);
   // A switch left pending by an earlier test must not hold up this test's login.
   LoginManager._switchingUsersPromise = Promise.resolve();
-  LoginManager._switchInProgress = false;
   global.OneSignal._coreDirector._jwtTokenStore._addUserJwtInvalidatedListener(
     onUserJwtInvalidated,
   );
