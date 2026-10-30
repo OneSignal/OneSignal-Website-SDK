@@ -15,7 +15,8 @@ import { IDManager } from 'src/shared/managers/IDManager';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 
 export default class LoginManager {
-  // Other internal classes should await on this if they access users
+  // Other internal classes should await on this if they access users. It never
+  // rejects: a failed switch rejects only the promise that login or logout returns.
   static _switchingUsersPromise: Promise<void> = Promise.resolve();
   static _switchInProgress = false;
 
@@ -33,16 +34,15 @@ export default class LoginManager {
    */
   private static _runSwitch(run: () => Promise<void>): Promise<void> {
     const previous = LoginManager._switchingUsersPromise;
-    const current = LoginManager._switchInProgress
-      ? previous.catch(() => undefined).then(run)
-      : run();
+    const current = LoginManager._switchInProgress ? previous.then(run) : run();
     LoginManager._switchInProgress = true;
     const tracked: Promise<void> = current.finally(() => {
-      if (LoginManager._switchingUsersPromise === tracked) {
+      if (LoginManager._switchingUsersPromise === settled) {
         LoginManager._switchInProgress = false;
       }
     });
-    LoginManager._switchingUsersPromise = tracked;
+    const settled = tracked.catch(() => undefined);
+    LoginManager._switchingUsersPromise = settled;
     return tracked;
   }
 

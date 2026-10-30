@@ -6,7 +6,9 @@ import { BaseSubscriptionOperation } from 'src/core/operations/BaseSubscriptionO
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from 'src/core/operations/UpdateSubscriptionOperation';
+import { ExecutionResult } from 'src/core/types/operation';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
+import { OperationFailedError } from 'src/shared/errors/common';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
@@ -224,6 +226,44 @@ describe('LoginManager', () => {
       updateIdentityModel('onesignal_id', ONESIGNAL_ID);
 
       expect((await loginAndGetOp())._existingOnesignalId).toBeUndefined();
+    });
+  });
+
+  describe('login: the server rejects the login', () => {
+    const unauthorized = () => new OperationFailedError(ExecutionResult._FailUnauthorized);
+
+    beforeEach(() => {
+      vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(undefined);
+    });
+
+    test('rejects for the caller, and code that waits for the switch continues', async () => {
+      let rejectLogin: (e: Error) => void = () => undefined;
+      vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockImplementation(
+        () => new Promise((_, reject) => (rejectLogin = reject)),
+      );
+
+      const login = LoginManager.login('new-id', 'jwt');
+      const waiter = LoginManager._switchingUsersPromise;
+      rejectLogin(unauthorized());
+
+      await expect(login).rejects.toThrow(OperationFailedError);
+      await expect(waiter).resolves.toBeUndefined();
+      await expect(LoginManager._switchingUsersPromise).resolves.toBeUndefined();
+    });
+
+    test('a later login runs at once', async () => {
+      const enqueueAndWaitSpy = vi
+        .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
+        .mockRejectedValueOnce(unauthorized())
+        .mockResolvedValueOnce(undefined);
+
+      await expect(LoginManager.login('A', 'jwt-a')).rejects.toThrow(OperationFailedError);
+      expect(LoginManager._switchInProgress).toBe(false);
+
+      await LoginManager.login('B', 'jwt-b');
+
+      expect(enqueueAndWaitSpy).toHaveBeenCalledTimes(2);
+      expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('B');
     });
   });
 
