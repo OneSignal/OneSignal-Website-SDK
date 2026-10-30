@@ -1,4 +1,4 @@
-import { BASE_IDENTITY, BASE_SUB, EXTERNAL_ID } from '__test__/constants';
+import { APP_ID, BASE_IDENTITY, BASE_SUB, EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
@@ -14,6 +14,7 @@ import {
   mockPushSubscription,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { setPushToken } from '../database/subscription';
@@ -128,6 +129,44 @@ describe('SubscriptionManager', () => {
       expect(generatePushSubscriptionModelSpy).not.toHaveBeenCalled();
 
       expect(createUserFn).toHaveBeenCalledWith({
+        identity: {
+          external_id: 'some-external-id',
+        },
+        ...BASE_IDENTITY,
+        subscriptions: [
+          {
+            ...BASE_SUB,
+            token: rawSubscription.w3cEndpoint?.toString(),
+            type: 'ChromePush',
+          },
+        ],
+      });
+    });
+
+    test('with a login operation for the user still in the queue: enqueues no second login operation', async () => {
+      const rawSubscription = getRawPushSubscription();
+      mockPushManager.getSubscription.mockResolvedValue(
+        Object.assign({}, mockPushSubscription, {
+          endpoint: rawSubscription.w3cEndpoint?.toString(),
+        }),
+      );
+      setCreateUserResponse({ externalId: 'some-external-id' });
+
+      const onesignalId = IDManager._createLocalId();
+      updateIdentityModel('onesignal_id', onesignalId);
+      updateIdentityModel('external_id', 'some-external-id');
+      await setupSubModelStore({
+        id: IDManager._createLocalId(),
+        token: rawSubscription.w3cEndpoint?.toString(),
+        onesignalId,
+      });
+      OneSignal._coreDirector._operationRepo._enqueue(
+        new LoginUserOperation({ appId: APP_ID, onesignalId, externalId: 'some-external-id' }),
+      );
+
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
+
+      expect(createUserFn).toHaveBeenCalledExactlyOnceWith({
         identity: {
           external_id: 'some-external-id',
         },

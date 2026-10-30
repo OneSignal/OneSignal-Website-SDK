@@ -2,6 +2,7 @@ import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { ExecutionResult } from 'src/core/types/operation';
+import { hasLoginOp } from 'src/onesignal/User';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
@@ -52,13 +53,16 @@ async function createSubscribedUser(pushModel: SubscriptionModel): Promise<void>
   const identityModel = OneSignal._coreDirector._getIdentityModel();
   const appId = getAppId();
 
-  OneSignal._coreDirector._operationRepo._enqueue(
-    new LoginUserOperation({
-      appId,
-      onesignalId: identityModel._onesignalId,
-      externalId: identityModel._externalId,
-    }),
-  );
+  // The executor rejects a batch with 2 login operations for one user.
+  if (!hasLoginOp(identityModel._onesignalId)) {
+    OneSignal._coreDirector._operationRepo._enqueue(
+      new LoginUserOperation({
+        appId,
+        onesignalId: identityModel._onesignalId,
+        externalId: identityModel._externalId,
+      }),
+    );
+  }
   try {
     await OneSignal._coreDirector._operationRepo._enqueueAndWait(
       new CreateSubscriptionOperation({
