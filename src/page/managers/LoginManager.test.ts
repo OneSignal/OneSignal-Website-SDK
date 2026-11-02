@@ -271,7 +271,6 @@ describe('LoginManager', () => {
 
   test('login: user data that follows each login without an await goes to that user', async () => {
     setJwtRequirement(JwtRequirement._Required);
-    vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(undefined);
     const enqueueAndWaitSpy = vi
       .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
       .mockResolvedValue(undefined);
@@ -298,9 +297,14 @@ describe('LoginManager', () => {
       enqueueAndWaitSpy.mock.calls.map(([op]) => [op._onesignalId, op._externalId]),
     );
     ops.forEach((op) => expect(userByOnesignalId[op._onesignalId]).toBe(op._externalId));
-    // With no push model, only the current user gets the placeholder model.
+    // The first login adds the placeholder push model, and each later login moves it.
     const createSubOps = ops.filter((op) => op instanceof CreateSubscriptionOperation);
-    expect(createSubOps.map((op) => op._externalId)).toEqual(['C']);
+    expect(createSubOps.map((op) => op._externalId)).toEqual(['A']);
+    const transferOps = ops.filter((op) => op instanceof TransferSubscriptionOperation);
+    expect(transferOps.map((op) => [op._externalId, op._subscriptionId])).toEqual([
+      ['B', createSubOps[0]._subscriptionId],
+      ['C', createSubOps[0]._subscriptionId],
+    ]);
     expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('C');
   });
 

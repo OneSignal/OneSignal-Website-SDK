@@ -4,7 +4,9 @@ import { SubscriptionModelStoreListener } from 'src/core/listeners/SubscriptionM
 import { IdentityModel } from 'src/core/models/IdentityModel';
 import { PropertiesModel } from 'src/core/models/PropertiesModel';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
+import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import type { Operation } from 'src/core/operations/Operation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from 'src/core/operations/UpdateSubscriptionOperation';
 import { ModelChangeTags } from 'src/core/types/models';
@@ -14,13 +16,24 @@ import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 
-/** The part of a user switch that runs after the switch before it ends. */
-type SwitchTail = () => Promise<void>;
+type EnqueuePushOp = (operation: Operation) => void;
+
+type SwitchStart = {
+  /** Reads the push model, which is async, and enqueues the push operations of the switch. */
+  pushStep: (enqueue: EnqueuePushOp) => Promise<void>;
+  loginOp?: LoginUserOperation;
+  loginDone?: Promise<void>;
+};
 
 export default class LoginManager {
   // Other internal classes should await on this if they access users. It never
   // rejects: a failed switch rejects only the promise that login or logout returns.
   static _switchingUsersPromise: Promise<void> = Promise.resolve();
+
+  private static _pushStepsDone: Promise<void> = Promise.resolve();
+  private static _pendingPushSteps = 0;
+  private static _heldLogins: LoginUserOperation[] = [];
+  private static _pushOps = new WeakSet<Operation>();
 
   // public api
   static login(externalId: string, token?: string): Promise<void> {
@@ -30,25 +43,69 @@ export default class LoginManager {
   /**
    * Runs login and logout in call order. `begin` runs at once: it replaces the
    * identity and properties models and enqueues the login operation, so a user
-   * data call that follows without an await goes to the new user. The tail that
-   * `begin` returns reads the push model, so it waits for the tail before it, and
-   * the push operations of each switch keep their order in the queue.
+   * data call that follows without an await goes to the new user.
+   *
+   * The push step of each switch waits only for the push step before it, never
+   * for a login operation, so a login that waits for a JWT does not block a
+   * later switch. Each push step puts its operations ahead of the login
+   * operation of every later switch, and the queue holds those login operations
+   * until no push step is pending. Thus the server gets the push operations in
+   * call order, and each one keeps the ids of its own user.
    */
-  private static _runSwitch(begin: () => SwitchTail | undefined): Promise<void> {
-    let tail: SwitchTail | undefined;
+  private static _runSwitch(begin: () => SwitchStart | undefined): Promise<void> {
+    let start: SwitchStart | undefined;
     try {
-      tail = begin();
+      start = begin();
     } catch (e) {
       return Promise.reject(e);
     }
-    if (!tail) return LoginManager._switchingUsersPromise;
+    if (!start) return LoginManager._switchingUsersPromise;
 
-    const tracked = LoginManager._switchingUsersPromise.then(tail);
-    LoginManager._switchingUsersPromise = tracked.catch(() => undefined);
-    return tracked;
+    const { pushStep, loginOp, loginDone } = start;
+    if (loginOp) LoginManager._heldLogins.push(loginOp);
+    const laterLoginIndex = LoginManager._heldLogins.length;
+    const enqueue: EnqueuePushOp = (operation) => {
+      LoginManager._pushOps.add(operation);
+      const repo = OneSignal._coreDirector._operationRepo;
+      const laterLogin = LoginManager._heldLogins[laterLoginIndex];
+      if (laterLogin) repo._enqueueBefore(operation, laterLogin);
+      else repo._enqueue(operation);
+    };
+
+    LoginManager._pendingPushSteps++;
+    const pushDone = LoginManager._pushStepsDone
+      .then(() => pushStep(enqueue))
+      .finally(() => LoginManager._onPushStepDone());
+    LoginManager._pushStepsDone = pushDone.catch(() => undefined);
+
+    const done = loginDone ? pushDone.then(() => loginDone) : pushDone;
+    LoginManager._switchingUsersPromise = done.catch(() => undefined);
+    return done;
   }
 
-  private static _beginLogin(externalId: string, token?: string): SwitchTail | undefined {
+  /**
+   * A push operation of an earlier switch that still has a local user id waits
+   * for a login that did not run, maybe because it waits for a JWT. It would run
+   * after a new transfer and move the subscription back to the earlier user.
+   */
+  private static _removeStalePushOps(subscriptionId: string): void {
+    OneSignal._coreDirector._operationRepo._removeQueued(
+      (op) =>
+        LoginManager._pushOps.has(op) &&
+        (op instanceof TransferSubscriptionOperation ||
+          op instanceof UpdateSubscriptionOperation) &&
+        op._subscriptionId === subscriptionId &&
+        IDManager._isLocalId(op._onesignalId),
+    );
+  }
+
+  private static _onPushStepDone(): void {
+    if (--LoginManager._pendingPushSteps > 0) return;
+    for (const op of LoginManager._heldLogins) op._heldBySwitch = false;
+    LoginManager._heldLogins = [];
+  }
+
+  private static _beginLogin(externalId: string, token?: string): SwitchStart | undefined {
     // Stored before any early return and before the login operation is enqueued,
     // so the dispatch gate finds the token on its first pass. No token is a no-op.
     const jwtUpdated = OneSignal._coreDirector._jwtTokenStore._putJwt(externalId, token);
@@ -93,7 +150,7 @@ export default class LoginManager {
     return LoginManager._runSwitch(() => LoginManager._beginLogout());
   }
 
-  private static _beginLogout(): SwitchTail | undefined {
+  private static _beginLogout(): SwitchStart | undefined {
     const identityModel = OneSignal._coreDirector._getIdentityModel();
 
     if (!identityModel._externalId) {
@@ -117,15 +174,15 @@ export default class LoginManager {
    * The ids are copied before the reset: the store replaces the identity model
    * in place, so the model object would show the anonymous user.
    */
-  private static _beginLogoutUnderIv(identityModel: IdentityModel): SwitchTail {
+  private static _beginLogoutUnderIv(identityModel: IdentityModel): SwitchStart {
     const { _onesignalId: onesignalId, _externalId: externalId } = identityModel;
     LoginManager._resetAndGetIdentityModel();
 
-    return async () => {
+    const pushStep = async (enqueue: EnqueuePushOp) => {
       const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
       // A subscription with a local id never reached the server, so there is nothing to disable.
       if (pushModel && !IDManager._isLocalId(pushModel.id)) {
-        OneSignal._coreDirector._operationRepo._enqueue(
+        enqueue(
           new UpdateSubscriptionOperation({
             appId: getAppId(),
             onesignalId,
@@ -141,6 +198,7 @@ export default class LoginManager {
         );
       }
     };
+    return { pushStep };
   }
 
   /**
@@ -148,28 +206,26 @@ export default class LoginManager {
    * change that. Send the local push state after the transfer, so the user
    * that logs in gets push again when the device still opts in.
    */
-  private static _enqueuePushStateSync(
+  private static _getPushStateSyncOp(
     appId: string,
     onesignalId: string,
     externalId: string,
     pushModel: SubscriptionModel,
-  ): void {
+  ): UpdateSubscriptionOperation {
     const { enabled, notification_types } =
       SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(pushModel);
-    OneSignal._coreDirector._operationRepo._enqueue(
-      new UpdateSubscriptionOperation({
-        appId,
-        onesignalId,
-        externalId,
-        subscriptionId: pushModel.id,
-        type: pushModel.type,
-        token: pushModel.token,
-        enabled,
-        notification_types,
-        web_auth: pushModel.web_auth,
-        web_p256: pushModel.web_p256,
-      }),
-    );
+    return new UpdateSubscriptionOperation({
+      appId,
+      onesignalId,
+      externalId,
+      subscriptionId: pushModel.id,
+      type: pushModel.type,
+      token: pushModel.token,
+      enabled,
+      notification_types,
+      web_auth: pushModel.web_auth,
+      web_p256: pushModel.web_p256,
+    });
   }
 
   private static _resetAndGetIdentityModel() {
@@ -191,24 +247,25 @@ export default class LoginManager {
     externalId?: string,
     existingOneSignalId?: string,
     createSubIfMissing = false,
-  ): SwitchTail {
+  ): SwitchStart {
     const appId = getAppId();
 
-    const loginDone = OneSignal._coreDirector._operationRepo._enqueueAndWait(
-      new LoginUserOperation({
-        appId,
-        onesignalId: newOneSignalId,
-        externalId,
-        existingOnesignalId: existingOneSignalId,
-      }),
-    );
-    // The tail awaits this later. The handler stops an unhandled rejection until then.
+    const loginOp = new LoginUserOperation({
+      appId,
+      onesignalId: newOneSignalId,
+      externalId,
+      existingOnesignalId: existingOneSignalId,
+    });
+    loginOp._heldBySwitch = true;
+    const loginDone = OneSignal._coreDirector._operationRepo._enqueueAndWait(loginOp);
+    // _runSwitch awaits this after the push step. The handler stops an unhandled rejection until then.
     loginDone.catch(() => undefined);
 
-    return async () => {
+    const pushStep = async (enqueue: EnqueuePushOp) => {
       const pushOp = await OneSignal._coreDirector._getPushSubscriptionModel();
       if (pushOp) {
-        OneSignal._coreDirector._operationRepo._enqueue(
+        LoginManager._removeStalePushOps(pushOp.id);
+        enqueue(
           new TransferSubscriptionOperation({
             appId,
             onesignalId: newOneSignalId,
@@ -217,14 +274,9 @@ export default class LoginManager {
           }),
         );
         if (externalId && isIvBehaviorActive()) {
-          LoginManager._enqueuePushStateSync(appId, newOneSignalId, externalId, pushOp);
+          enqueue(LoginManager._getPushStateSyncOp(appId, newOneSignalId, externalId, pushOp));
         }
-      } else if (
-        createSubIfMissing &&
-        // The store listener gives the new model to the current user. After a later
-        // switch began, that is the later user, and its own tail adds the model.
-        OneSignal._coreDirector._getIdentityModel()._onesignalId === newOneSignalId
-      ) {
+      } else if (createSubIfMissing) {
         const newSub = new SubscriptionModel();
         newSub._mergeData({
           enabled: true,
@@ -233,9 +285,25 @@ export default class LoginManager {
           type: getSubscriptionType(),
           token: '',
         });
-        OneSignal._coreDirector._subscriptionModelStore._add(newSub);
+        // The store listener would give the model to the current user, which is a
+        // later user if a later switch began. Enqueue the create for this user instead.
+        OneSignal._coreDirector._subscriptionModelStore._add(newSub, ModelChangeTags._Hydrate);
+        const { enabled, notification_types } =
+          SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(newSub);
+        enqueue(
+          new CreateSubscriptionOperation({
+            appId,
+            onesignalId: newOneSignalId,
+            externalId,
+            subscriptionId: newSub.id,
+            type: newSub.type,
+            enabled,
+            token: newSub.token,
+            notification_types,
+          }),
+        );
       }
-      await loginDone;
     };
+    return { pushStep, loginOp, loginDone };
   }
 }
