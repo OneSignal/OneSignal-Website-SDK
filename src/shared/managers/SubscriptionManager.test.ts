@@ -86,13 +86,12 @@ describe('SubscriptionManager', () => {
       const subModels = OneSignal._coreDirector._subscriptionModelStore._list();
       expect(subModels.length).toBe(1);
       expect(IDManager._isLocalId(subModels[0].id)).toBe(true);
-      expect(warn).toHaveBeenCalledWith(
+      expect(warn).toHaveBeenCalledExactlyOnceWith(
         expect.stringContaining('create-subscription was dropped. Identity Verification is on'),
       );
 
-      // The anonymous login operation is exempt and waits for login; no request is sent.
-      const queue = OneSignal._coreDirector._operationRepo._queue;
-      expect(queue.map((item) => item.operation._name)).toEqual(['login-user']);
+      // The anonymous login operation could never send, so the queue drops it too.
+      expect(OneSignal._coreDirector._operationRepo._queue).toEqual([]);
       await new Promise((resolve) => setTimeout(resolve, 50));
       expect(createUserFn).not.toHaveBeenCalled();
     });

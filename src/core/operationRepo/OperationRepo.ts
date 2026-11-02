@@ -171,9 +171,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   /**
    * An anonymous operation can never dispatch while IV behavior is active: the gate
    * needs a token and an anonymous user has none. Drop it at enqueue instead of
-   * holding it forever. LoginUserOperation is exempt; login and the push grant
-   * enqueue it on purpose, and the load-time purge removes a stale one. An
-   * operation that needs no JWT is exempt too; the gate lets it through, unless
+   * holding it forever. An anonymous LoginUserOperation is dropped with no
+   * warning: the push grant, addEmail, and addSms enqueue it together with a
+   * subscription operation, and the drop of that operation warns. An
+   * operation that needs no JWT is exempt; the gate lets it through, unless
    * its user has a local id: no anonymous login runs under IV, so that id is never
    * translated and the operation would wait forever.
    * Outer gate isIvCodePathEnabled keeps the legacy enqueue path unchanged when
@@ -181,8 +182,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
    */
   private _shouldSuppressAnonymousOp(op: Operation): boolean {
     if (!isIvCodePathEnabled()) return false;
-    if (op instanceof LoginUserOperation) return false;
     if (!isIvBehaviorActive() || op._externalId) return false;
+    if (op instanceof LoginUserOperation) return true;
     if (!op._requiresJwt && !IDManager._isLocalId(op._onesignalId)) return false;
 
     // Bypasses Log so the developer sees this in production builds.
