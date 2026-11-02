@@ -101,7 +101,7 @@ export default class LoginManager {
 
   private static _onPushStepDone(): void {
     if (--LoginManager._pendingPushSteps > 0) return;
-    for (const op of LoginManager._heldLogins) op._heldBySwitch = false;
+    LoginManager._heldLogins.forEach((op) => (op._heldBySwitch = false));
     LoginManager._heldLogins = [];
   }
 

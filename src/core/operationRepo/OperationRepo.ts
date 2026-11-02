@@ -140,7 +140,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     const removed = this._queue.filter((item) => matches(item.operation));
     if (removed.length === 0) return;
     this._queue = this._queue.filter((item) => !matches(item.operation));
-    for (const item of removed) this._operationModelStore._remove(item.operation._modelId);
+    removed.forEach((item) => this._operationModelStore._remove(item.operation._modelId));
     Log._debug(`OpRepo: removed ${removed.length} queued ops`);
   }
 
