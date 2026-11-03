@@ -316,4 +316,34 @@ describe('LoginManager with the real operation queue under Identity Verification
     ]);
     expect(tagRequestsFor('bob')).toHaveLength(0);
   });
+
+  test('operations held for a token keep their order after a reload', async () => {
+    OneSignal._coreDirector._jwtTokenStore._invalidateJwt('A');
+    const user = User._createOrGetInstance();
+    // IndexedDB returns the operations in the order of their random model ids.
+    // These ids put the newer operation first.
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.9);
+    user.addTag('k1', 'v1');
+    random.mockReturnValue(0.1);
+    user.addTag('k2', 'v2');
+    random.mockRestore();
+    await settle();
+    expect(recorded).toEqual([]);
+
+    // Reload: stop the old queue, then start a new core module on the same IndexedDB.
+    OneSignal._coreDirector._operationRepo._pause();
+    TestEnvironment.initialize({ permission: 'granted' });
+    setFeatureFlags([FeatureFlag._IdentityVerification]);
+    setJwtRequirement(JwtRequirement._Required);
+    await expect
+      .poll(() => OneSignal._coreDirector._operationRepo._queue.length, { timeout: 3000 })
+      .toBeGreaterThan(0);
+    await settle();
+    expect(recorded).toEqual([]);
+
+    await OneSignal.updateUserJwt('A', 'jwt-a2');
+    await drainQueue();
+    expect(summary()).toEqual(['PATCH /users/by/external_id/A jwt-a2']);
+    expect(tagRequestsFor('A')[0].body.properties.tags).toEqual({ k1: 'v1', k2: 'v2' });
+  });
 });
