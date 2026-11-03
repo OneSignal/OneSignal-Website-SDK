@@ -9,11 +9,12 @@ import {
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
+import User from 'src/onesignal/User';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { clearAll } from 'src/shared/database/client';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
-import { afterEach, beforeEach, describe, expect, test } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import LoginManager from './LoginManager';
 
@@ -22,7 +23,12 @@ import LoginManager from './LoginManager';
  * so the order of the requests is the order that the queue sends them in.
  */
 
-type RecordedRequest = { method: string; path: string; body: Record<string, any> };
+type RecordedRequest = {
+  method: string;
+  path: string;
+  auth: string | null;
+  body: Record<string, any>;
+};
 const recorded: RecordedRequest[] = [];
 
 const recordRequest = async ({ request }: { request: Request }) => {
@@ -30,15 +36,24 @@ const recordRequest = async ({ request }: { request: Request }) => {
   recorded.push({
     method: request.method,
     path: new URL(request.url).pathname.split(/\/apps\/[^/]+/)[1],
+    auth: request.headers.get('authorization'),
     body: text ? JSON.parse(text) : {},
   });
 };
 
 const onesignalIdOf = (externalId: string) => `os-${externalId}`;
 
+// A request signed with a token that starts with "expired" gets a 401.
+const unauthorized = (request: Request) =>
+  request.headers.get('authorization')?.startsWith('Bearer expired')
+    ? HttpResponse.json({ errors: ['token expired'] }, { status: 401 })
+    : undefined;
+
 // The server gives each user a onesignal_id from its external_id, and each new subscription an id.
 const handlers = [
   http.post('**/apps/:appId/users', async ({ request }) => {
+    const denied = unauthorized(request);
+    if (denied) return denied;
     const body = (await request.json()) as {
       identity: { external_id: string };
       subscriptions?: { id?: string }[];
@@ -55,15 +70,27 @@ const handlers = [
       properties: {},
     });
   }),
-  http.get('**/apps/:appId/users/by/external_id/:externalId', ({ params }) =>
-    HttpResponse.json({
-      identity: {
-        onesignal_id: onesignalIdOf(params.externalId as string),
-        external_id: params.externalId,
-      },
-      subscriptions: [],
-      properties: {},
-    }),
+  http.get(
+    '**/apps/:appId/users/by/external_id/:externalId',
+    ({ request, params }) =>
+      unauthorized(request) ??
+      HttpResponse.json({
+        identity: {
+          onesignal_id: onesignalIdOf(params.externalId as string),
+          external_id: params.externalId,
+        },
+        subscriptions: [],
+        properties: {},
+      }),
+  ),
+  http.patch(
+    '**/apps/:appId/users/by/external_id/:externalId',
+    ({ request }) => unauthorized(request) ?? HttpResponse.json({}),
+  ),
+  http.post(
+    '**/apps/:appId/users/by/external_id/:externalId/subscriptions',
+    ({ request }) =>
+      unauthorized(request) ?? HttpResponse.json({ subscription: { id: 'email-sub' } }),
   ),
   http.patch('**/apps/:appId/subscriptions/:id', () => HttpResponse.json({})),
   http.patch('**/apps/:appId/subscriptions/:id/owner', () => HttpResponse.json({})),
@@ -77,6 +104,26 @@ async function drainQueue(): Promise<void> {
   await delay(OP_REPO_EXECUTION_INTERVAL * 3);
   expect(repo._queue.length).toBe(0);
 }
+
+/** Waits until no new request goes out for 3 queue passes. */
+async function settle(): Promise<void> {
+  for (;;) {
+    const before = recorded.length;
+    await delay(OP_REPO_EXECUTION_INTERVAL * 3);
+    if (recorded.length === before) return;
+  }
+}
+
+const summary = () =>
+  recorded.map(({ method, path, auth }) => `${method} ${path} ${auth?.slice(7) ?? '-'}`);
+
+const tagRequestsFor = (externalId: string) =>
+  recorded.filter(
+    ({ method, path, body }) =>
+      method === 'PATCH' && path === `/users/by/external_id/${externalId}` && body.properties?.tags,
+  );
+
+const invalidated: string[] = [];
 
 /** The enabled state of SUB_ID on the server after every recorded request. */
 function serverPushEnabled(): boolean | undefined {
@@ -115,12 +162,16 @@ describe('LoginManager with the real operation queue under Identity Verification
     await clearAll();
     localStorage.clear();
     recorded.length = 0;
+    invalidated.length = 0;
     server.events.on('request:start', recordRequest);
 
     TestEnvironment.initialize({ permission: 'granted' });
     setFeatureFlags([FeatureFlag._IdentityVerification]);
     setJwtRequirement(JwtRequirement._Required);
     server.use(...handlers);
+    OneSignal._coreDirector._jwtTokenStore._addUserJwtInvalidatedListener(({ externalId }) =>
+      invalidated.push(externalId),
+    );
 
     // User A is logged in and owns the push subscription, which is enabled.
     setupIdentityModel(ONESIGNAL_ID);
@@ -175,5 +226,94 @@ describe('LoginManager with the real operation queue under Identity Verification
     await drainQueue();
     expect(requestsFor('alice')).toHaveLength(1);
     expect(serverPushOwner()).toBe('bob');
+  });
+
+  test('a 401 for one user does not block a later user, and the event names the first user', async () => {
+    const user = User._createOrGetInstance();
+    void LoginManager.login('alice', 'expired-alice').catch(() => undefined);
+    user.addTag('a', '1');
+    const bob = LoginManager.login('bob', 'jwt-bob');
+    user.addTag('b', '1');
+    await bob;
+    await settle();
+
+    expect(summary()).toContain('POST /users jwt-bob');
+    expect(tagRequestsFor('bob')).toHaveLength(1);
+    expect(tagRequestsFor('alice')).toHaveLength(0);
+    expect(invalidated).toEqual(['alice']);
+    expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('bob');
+  });
+
+  test('updateUserJwt for a user that is not current sends its held operations', async () => {
+    const user = User._createOrGetInstance();
+    void LoginManager.login('alice', 'expired-alice').catch(() => undefined);
+    user.addTag('a', '1');
+    await LoginManager.login('bob', 'jwt-bob');
+    await settle();
+    const signedForAlice = () => requestsFor('alice').filter((r) => r.auth === 'Bearer jwt-alice');
+    expect(signedForAlice()).toHaveLength(0);
+
+    await OneSignal.updateUserJwt('alice', 'jwt-alice');
+    await drainQueue();
+
+    expect(signedForAlice()).toHaveLength(1);
+    expect(signedForAlice()[0].body.subscriptions ?? []).toEqual([]);
+    expect(tagRequestsFor('alice')).toHaveLength(1);
+    expect(serverPushOwner()).toBe('bob');
+    expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('bob');
+  });
+
+  test('logout disables push on the user that logs out, with no anonymous create', async () => {
+    await LoginManager.logout();
+    await drainQueue();
+
+    // The server rejects a bearer on PATCH subscriptions/{id}, so the SDK does not sign it.
+    expect(recorded).toEqual([
+      expect.objectContaining({
+        method: 'PATCH',
+        path: `/subscriptions/${SUB_ID}`,
+        auth: null,
+        body: { subscription: expect.objectContaining({ enabled: false, notification_types: -2 }) },
+      }),
+    ]);
+  });
+
+  test('user data after a logout sends no request and warns', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await LoginManager.logout();
+    await drainQueue();
+    recorded.length = 0;
+
+    const user = User._createOrGetInstance();
+    user.addTag('k', 'v');
+    user.addEmail('anon@example.com');
+    await settle();
+
+    expect(recorded).toEqual([]);
+    expect(OneSignal._coreDirector._operationRepo._queue).toEqual([]);
+    expect(warn.mock.calls.map(([message]) => message)).toEqual([
+      expect.stringContaining('set-property was dropped'),
+      expect.stringContaining('create-subscription was dropped'),
+    ]);
+  });
+
+  test('logout then login: the user that logs in gets push, and no data from the logout', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await LoginManager.logout();
+    const user = User._createOrGetInstance();
+    user.addTag('k', 'v');
+    user.addEmail('anon@example.com');
+    await drainQueue();
+    recorded.length = 0;
+
+    await LoginManager.login('bob', 'jwt-bob');
+    await drainQueue();
+
+    // The create batch has the transfer and the push state sync, so no separate request goes out.
+    expect(summary()).toEqual(['POST /users jwt-bob', 'GET /users/by/external_id/bob jwt-bob']);
+    expect(requestsFor('bob')[0].body.subscriptions).toEqual([
+      expect.objectContaining({ id: SUB_ID, enabled: true }),
+    ]);
+    expect(tagRequestsFor('bob')).toHaveLength(0);
   });
 });
