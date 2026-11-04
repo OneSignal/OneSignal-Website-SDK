@@ -145,6 +145,25 @@ describe('OperationRepo', () => {
       ]);
     });
 
+    test('IndexedDb returns saved operations in enqueue order', async () => {
+      await opRepo._loadSavedOperations();
+
+      const random = vi.spyOn(Math, 'random');
+      const ops = Array.from({ length: 20 }, (_, i) => {
+        random.mockReturnValue(0.99 - i * 0.04);
+        return new SetAliasOperation(APP_ID, ONESIGNAL_ID, `label-${i}`, 'value');
+      });
+      random.mockRestore();
+      ops.forEach((op) => opRepo._enqueue(op));
+
+      let saved: IndexedDBSchema['operations']['value'][] = [];
+      await vi.waitUntil(async () => {
+        saved = await db.getAll('operations');
+        return saved.length === ops.length;
+      });
+      expect(saved.map((op) => op.modelId)).toEqual(ops.map((op) => op._modelId));
+    });
+
     test('operations can be loaded from IndexedDb on start', async () => {
       const op = new SetAliasOperation();
       const op2 = new CreateSubscriptionOperation();
