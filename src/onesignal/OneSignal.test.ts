@@ -56,6 +56,7 @@ import * as MainHelper from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
+import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 mockPageStylesCss();
@@ -756,6 +757,7 @@ describe('OneSignal - No Consent Required', () => {
             subscriptions: [
               {
                 id: SUB_ID,
+                type: SubscriptionType._ChromePush,
               },
             ],
           });
@@ -1143,6 +1145,7 @@ describe('OneSignal - No Consent Required', () => {
         subscriptions: [
           {
             id: SUB_ID,
+            type: SubscriptionType._ChromePush,
           },
         ],
       });

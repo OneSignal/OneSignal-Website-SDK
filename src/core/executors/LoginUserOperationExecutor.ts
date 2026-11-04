@@ -5,6 +5,7 @@ import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/ne
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerUserChanged } from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
+import { SubscriptionType } from 'src/shared/subscriptions/constants';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
@@ -20,7 +21,12 @@ import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { createNewUser } from '../requests/api';
-import type { ICreateUserIdentity, ICreateUserSubscription, IUserProperties } from '../types/api';
+import type {
+  ICreateUserIdentity,
+  ICreateUserSubscription,
+  ISubscription,
+  IUserProperties,
+} from '../types/api';
 import type { ExecutionResponse } from '../types/operation';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
 
@@ -207,19 +213,19 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         }
       }
 
-      for (let i = 0; i < subscriptionList.length; i++) {
-        const [localId] = subscriptionList[i];
-        const backendSub = response.result.subscriptions?.[i];
-
-        if (!backendSub || !('id' in backendSub)) continue;
+      const remainingBackendSubs = [...(response.result.subscriptions ?? [])];
+      subscriptionList.forEach(([localId, localSub]) => {
+        const backendSub = findMatchingBackendSubscription(remainingBackendSubs, localId, localSub);
+        if (!backendSub) return;
+        remainingBackendSubs.splice(remainingBackendSubs.indexOf(backendSub), 1);
         idTranslations[localId] = backendSub.id;
 
-        if (!stillCurrent) continue;
+        if (!stillCurrent) return;
 
         const model = this._subscriptionsModelStore._getBySubscriptionId(localId);
         model?._setProperty('id', backendSub.id, ModelChangeTags._Hydrate);
         model?._setProperty('onesignalId', backendOneSignalId, ModelChangeTags._Hydrate);
-      }
+      });
 
       void checkAndTriggerUserChanged();
 
@@ -349,3 +355,24 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 }
 
 const getTimeZoneId = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/**
+ * The create user response does not list subscriptions in the request order,
+ * so match by ID, then by token. Email and SMS always match by token, so only
+ * push falls back to the type.
+ */
+function findMatchingBackendSubscription(
+  remaining: ISubscription[],
+  localId: string,
+  local: SubscriptionMap[string],
+): ISubscription | undefined {
+  const isEmail = local.type === SubscriptionType._Email;
+  const normalize = (token?: string) => (isEmail ? token?.toLowerCase() : token);
+  return (
+    remaining.find((sub) => sub.id === localId) ??
+    remaining.find((sub) => !!local.token && normalize(sub.token) === normalize(local.token)) ??
+    (isEmail || local.type === SubscriptionType._SMS
+      ? undefined
+      : remaining.find((sub) => sub.type === local.type))
+  );
+}
