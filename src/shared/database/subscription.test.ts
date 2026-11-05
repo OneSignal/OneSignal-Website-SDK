@@ -53,8 +53,8 @@ describe('page', () => {
 
     expect((await getSubscription()).optedOut).toBe(true);
     expect(localStorage.getItem(OPTED_OUT_KEY)).toBe('true');
+    expect(await getOptionsValue('optedOut')).toBeNull();
 
-    await db.delete('Options', 'optedOut');
     expect((await getSubscription()).optedOut).toBe(true);
   });
 
@@ -63,12 +63,31 @@ describe('page', () => {
 
     expect((await getSubscription()).optedOut).toBe(true);
     expect(localStorage.getItem(OPTED_OUT_KEY)).toBe('true');
+    expect(await getOptionsValue('subscription')).toBeNull();
+  });
+
+  test('a migrated value does not come back after localStorage is cleared', async () => {
+    await db.put('Options', { key: 'optedOut', value: true });
+    await getSubscription();
+    localStorage.setItem(OPTED_OUT_KEY, 'false');
+
+    localStorage.clear();
+
+    expect((await getSubscription()).optedOut).toBe(false);
+  });
+
+  test('a read and write of the subscription while wedged does not save optedOut', async () => {
+    vi.mocked(isReadwriteWedged).mockReturnValue(true);
+
+    await setSubscription(await getSubscription());
+
+    expect(localStorage.getItem(OPTED_OUT_KEY)).toBeNull();
   });
 
   test('getSubscription does not migrate while IndexedDB is wedged', async () => {
     vi.mocked(isReadwriteWedged).mockReturnValue(true);
 
-    expect((await getSubscription()).optedOut).toBe(false);
+    expect((await getSubscription()).optedOut).toBeUndefined();
     expect(localStorage.getItem(OPTED_OUT_KEY)).toBeNull();
 
     vi.mocked(isReadwriteWedged).mockReturnValue(false);

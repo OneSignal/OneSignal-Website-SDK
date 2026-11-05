@@ -73,10 +73,11 @@ async function sessionInit(): Promise<void> {
    * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
    * prevent the popup from opening.
    */
-  const isOptedOut = (await OneSignal._context._subscriptionManager._isOptedOut()) ?? false;
+  const optedOut = await OneSignal._context._subscriptionManager._isOptedOut();
+  const isOptedOut = optedOut ?? false;
   // saves isOptedOut to localStorage. used for require user interaction functionality
   const subscription = await getSubscription();
-  subscription.optedOut = isOptedOut;
+  subscription.optedOut = optedOut as boolean | undefined;
 
   await setSubscription(subscription);
   await handleAutoResubscribe(isOptedOut);

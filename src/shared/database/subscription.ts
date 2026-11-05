@@ -15,17 +15,22 @@ const getDbOptedOut = async (): Promise<boolean> => {
   return dbNotOptedOut == null ? false : !dbNotOptedOut;
 };
 
-const getOptedOut = async (): Promise<boolean> => {
+const getOptedOut = async (): Promise<boolean | undefined> => {
   if (IS_SERVICE_WORKER) return getDbOptedOut();
 
   const stored = getStorageOptedOut();
   if (stored !== null) return stored;
 
   // Migrate an opt-out persisted by older SDK versions that wrote it to IndexedDB.
-  // Skip the migration while wedged: the read falls back to the default, and
-  // storing that default would hide the real value permanently.
+  // While wedged, the read returns the default, so return undefined: setSubscription
+  // skips undefined, and saving the default would hide the real value permanently.
   const legacy = await getDbOptedOut();
-  if (!isReadwriteWedged()) setStorageOptedOut(legacy);
+  if (isReadwriteWedged()) return undefined;
+  setStorageOptedOut(legacy);
+  // The page no longer updates these rows, so a later localStorage.clear() must not
+  // bring back their old value.
+  await db.delete('Options', 'optedOut');
+  await db.delete('Options', 'subscription');
   return legacy;
 };
 
