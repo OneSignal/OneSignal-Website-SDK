@@ -66,7 +66,10 @@ import { setJwtRequirement, setJwtTokens } from 'src/shared/helpers/localStorage
 import * as MainHelper from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
+import {
+  SubscriptionManagerPage,
+  updatePushSubscriptionModelWithRawSubscription,
+} from 'src/shared/managers/subscription/page';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 mockPageStylesCss();
@@ -1401,6 +1404,31 @@ describe('OneSignal - No Consent Required', () => {
           }),
         ],
       });
+    });
+
+    test('under Identity Verification, an anonymous user with a local id: logs an error and sends nothing', async () => {
+      setJwtTokens({});
+      setJwtRequirement(JwtRequirement._Required);
+      setSendCustomEventResponse();
+      const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      updateIdentityModel('onesignal_id', IDManager._createLocalId());
+
+      expect(() => OneSignal.User.trackEvent(name)).not.toThrow();
+      expect(errorSpy).toHaveBeenCalledWith('User not logged in');
+
+      const rawSubscription = getRawPushSubscription();
+      await setPushToken(rawSubscription.w3cEndpoint?.toString());
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
+      const queue = OneSignal._coreDirector._operationRepo._queue;
+      expect(queue.map((item) => item.operation._name)).not.toContain('login-user');
+
+      expect(() => OneSignal.User.trackEvent(name, properties)).not.toThrow();
+      expect(errorSpy).toHaveBeenCalledTimes(2);
+
+      await new Promise((resolve) => setTimeout(resolve, OP_REPO_EXECUTION_INTERVAL * 2));
+      expect(sendCustomEventFn).not.toHaveBeenCalled();
+      expect(queue.map((item) => item.operation._name)).not.toContain('custom-event');
     });
   });
 
