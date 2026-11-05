@@ -18,6 +18,9 @@ import {
 } from '../identityVerification';
 import { type JwtTokenStore } from '../JwtTokenStore';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
+import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
+import { BaseSubscriptionOperation } from '../operations/BaseSubscriptionOperation';
+import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
@@ -50,6 +53,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   private _operationModelStore: OperationModelStore;
   private _newRecordState: NewRecordsState;
   private _jwtTokenStore: JwtTokenStore;
+  private _identityModelStore: IdentityModelStore;
   private _loggedUnknownDeferral = false;
 
   constructor(
@@ -57,10 +61,12 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     operationModelStore: OperationModelStore,
     newRecordState: NewRecordsState,
     jwtTokenStore: JwtTokenStore,
+    identityModelStore: IdentityModelStore,
   ) {
     this._operationModelStore = operationModelStore;
     this._newRecordState = newRecordState;
     this._jwtTokenStore = jwtTokenStore;
+    this._identityModelStore = identityModelStore;
 
     this._executorsMap = new Map<string, IOperationExecutor>();
     for (const executor of executors) {
@@ -91,6 +97,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     // The page fetches the config before the repo starts, so the requirement is
     // already hydrated here. This is the web equivalent of Android's hydrate hook.
     if (isIvBehaviorActive()) this._purgeAnonymousOperations();
+    this._removeUntranslatableOps(true);
     this._processQueueForever();
   }
 
@@ -135,13 +142,17 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     );
   }
 
-  /** Removes every queued operation that matches. Use it only for operations that nothing waits on. */
-  public _removeQueued(matches: (operation: Operation) => boolean): void {
+  /** Removes every queued operation that matches, and rejects its waiter. Returns the count. */
+  public _removeQueued(matches: (operation: Operation) => boolean): number {
     const removed = this._queue.filter((item) => matches(item.operation));
-    if (removed.length === 0) return;
-    this._queue = this._queue.filter((item) => !matches(item.operation));
-    removed.forEach((item) => this._operationModelStore._remove(item.operation._modelId));
+    if (!removed.length) return 0;
+    this._queue = this._queue.filter((item) => !removed.includes(item));
+    removed.forEach((item) => {
+      this._operationModelStore._remove(item.operation._modelId);
+      item.resolver?.(false, ExecutionResult._FailNoretry);
+    });
     Log._debug(`OpRepo: removed ${removed.length} queued ops`);
+    return removed.length;
   }
 
   /**
@@ -222,6 +233,55 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
 
     Log._debug(`OpRepo: purged ${removed.length}/${total} anonymous ops`);
+  }
+
+  /**
+   * A local id gets its server id only from a queued login-user or
+   * create-subscription operation. If that operation was dropped, the
+   * operations that wait for the id can never start, so they are removed.
+   * The current user keeps its operations: a later call can still enqueue its
+   * login. At start, a current user with an externalId gets a new login, because
+   * login with the same externalId does nothing.
+   */
+  private _removeUntranslatableOps(atStart: boolean): void {
+    const { _onesignalId: currentId, _externalId: externalId } = this._identityModelStore._model;
+    let created: Set<string | undefined>;
+    const isLost = (id?: string) => IDManager._isLocalId(id) && !created.has(id);
+    do {
+      created = new Set(
+        this._queue.map(({ operation: op }) =>
+          op instanceof LoginUserOperation
+            ? op._onesignalId
+            : op instanceof CreateSubscriptionOperation
+              ? op._subscriptionId
+              : '',
+        ),
+      );
+    } while (
+      this._removeQueued((op) => {
+        if (op instanceof LoginUserOperation) {
+          if (isLost(op._existingOnesignalId)) op._clearExistingOnesignalId();
+          return false;
+        }
+        return (
+          (op._onesignalId !== currentId && isLost(op._onesignalId)) ||
+          (op instanceof BaseSubscriptionOperation &&
+            !(op instanceof CreateSubscriptionOperation) &&
+            isLost(op._subscriptionId))
+        );
+      })
+    );
+
+    const waiting = this._queue.find(({ operation }) => operation._onesignalId === currentId);
+    if (atStart && waiting && externalId && isLost(currentId)) {
+      this._enqueue(
+        new LoginUserOperation({
+          appId: waiting.operation._appId,
+          onesignalId: currentId,
+          externalId,
+        }),
+      );
+    }
   }
 
   private _internalEnqueue(
@@ -382,6 +442,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         this._operationModelStore._remove(op.operation._modelId);
       });
       ops.forEach((op) => op.resolver?.(false, ExecutionResult._FailNoretry));
+      this._removeUntranslatableOps(false);
     }
   }
 
@@ -395,6 +456,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       this._operationModelStore._remove(op.operation._modelId);
     });
     ops.forEach((op) => op.resolver?.(false, result));
+    this._removeUntranslatableOps(false);
   }
 
   /**

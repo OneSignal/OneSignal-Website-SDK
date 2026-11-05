@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vi
 
 import { JwtTokenStore } from '../JwtTokenStore';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
+import { IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
@@ -21,6 +22,8 @@ import {
   Operation as OperationBase,
 } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
+import { SetPropertyOperation } from '../operations/SetPropertyOperation';
+import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
@@ -43,6 +46,7 @@ vi.spyOn(OperationModelStore.prototype, '_create').mockImplementation(() => {
 
 let mockOperationModelStore: OperationModelStore;
 let jwtTokenStore: JwtTokenStore;
+let identityModelStore: IdentityModelStore;
 
 const executeOps = async (opRepo: OperationRepo) => {
   await opRepo._loadSavedOperations();
@@ -71,11 +75,13 @@ describe('OperationRepo', () => {
 
     mockOperationModelStore = new OperationModelStore();
     jwtTokenStore = new JwtTokenStore();
+    identityModelStore = new IdentityModelStore();
     opRepo = new OperationRepo(
       [mockExecutor],
       mockOperationModelStore,
       new NewRecordsState(),
       jwtTokenStore,
+      identityModelStore,
     );
   });
 
@@ -314,18 +320,146 @@ describe('OperationRepo', () => {
     test('IV inactive: nothing is purged and existingOnesignalId is kept', async () => {
       const localId = IDManager._createLocalId();
       const anonymous = new Operation('anon');
+      const anonymousLogin = new LoginUserOperation({ appId: APP_ID, onesignalId: localId });
       const login = new LoginUserOperation({
         appId: APP_ID,
         onesignalId: ONESIGNAL_ID,
         externalId: EXTERNAL_ID,
         existingOnesignalId: localId,
       });
-      seedSaved(anonymous, login);
+      seedSaved(anonymous, anonymousLogin, login);
 
       await opRepo._start();
 
-      expect(queued()).toEqual([anonymous, login]);
+      expect(queued()).toEqual([anonymous, anonymousLogin, login]);
       expect(login._existingOnesignalId).toBe(localId);
+    });
+  });
+
+  describe('operations with a local id that no queued operation creates', () => {
+    const seedSaved = (...ops: OperationBase[]) =>
+      ops.forEach((op) => mockOperationModelStore._add(op));
+    const queued = () => opRepo._queue.map((item) => item.operation);
+    const setCurrentUser = (onesignalId: string, externalId?: string) => {
+      identityModelStore._model._onesignalId = onesignalId;
+      identityModelStore._model._externalId = externalId;
+    };
+    const setTag = (onesignalId: string, externalId?: string) =>
+      new SetPropertyOperation({
+        appId: APP_ID,
+        onesignalId,
+        externalId,
+        property: 'tags',
+        value: { g: '1' },
+      });
+    const login = (onesignalId: string, externalId?: string) =>
+      new LoginUserOperation({ appId: APP_ID, onesignalId, externalId });
+
+    test('start: removes an operation of an earlier user', async () => {
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      seedSaved(setTag(IDManager._createLocalId(), 'earlier-user'));
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+    });
+
+    test('start: keeps an operation while a login for its local id is queued', async () => {
+      const localId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      const tag = setTag(localId, 'earlier-user');
+      const earlierLogin = login(localId, 'earlier-user');
+      seedSaved(earlierLogin, tag);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([earlierLogin, tag]);
+    });
+
+    test('start: enqueues a login for the current user so its operations can send', async () => {
+      const localId = IDManager._createLocalId();
+      setCurrentUser(localId, EXTERNAL_ID);
+      const tag = setTag(localId, EXTERNAL_ID);
+      seedSaved(tag);
+
+      await opRepo._start();
+
+      const [first, second] = queued();
+      expect(first).toBe(tag);
+      expect(second).toBeInstanceOf(LoginUserOperation);
+      expect(second).toMatchObject({ _onesignalId: localId, _externalId: EXTERNAL_ID });
+      expect(mockOperationModelStore._list()).toEqual([tag, second]);
+    });
+
+    test('start: keeps the operations of an anonymous current user and enqueues no login', async () => {
+      const localId = IDManager._createLocalId();
+      setCurrentUser(localId);
+      const tag = setTag(localId);
+      seedSaved(tag);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([tag]);
+    });
+
+    test('start: removes subscription operations whose create operation is gone', async () => {
+      const lostUserId = IDManager._createLocalId();
+      const lostSubId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      const create = new CreateSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: lostUserId,
+        token: 'some-token',
+        type: SubscriptionType._Email,
+        subscriptionId: lostSubId,
+      });
+      const transfer = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        externalId: EXTERNAL_ID,
+        subscriptionId: lostSubId,
+      });
+      seedSaved(create, transfer);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+    });
+
+    test('start: clears a lost existingOnesignalId so the login can start', async () => {
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      const switchLogin = new LoginUserOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        externalId: EXTERNAL_ID,
+        existingOnesignalId: IDManager._createLocalId(),
+      });
+      seedSaved(switchLogin);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([switchLogin]);
+      expect(switchLogin._existingOnesignalId).toBeUndefined();
+      expect(switchLogin._canStartExecute).toBe(true);
+    });
+
+    test('a dropped login removes the operations of an earlier user and wakes their waiters', async () => {
+      const earlierId = IDManager._createLocalId();
+      const currentId = IDManager._createLocalId();
+      setCurrentUser(currentId, EXTERNAL_ID);
+      const earlierLogin = login(earlierId, 'earlier-user');
+      const currentTag = setTag(currentId, EXTERNAL_ID);
+      opRepo._enqueue(currentTag);
+      const earlierTag = opRepo._enqueueAndWait(setTag(earlierId, 'earlier-user'));
+
+      // No executor handles login-user here, so the batch goes to the catch that drops it.
+      await opRepo._executeOperations([{ operation: earlierLogin, bucket: 0, retries: 0 }]);
+
+      await expect(earlierTag).rejects.toThrow(OperationFailedError);
+      expect(queued()).toEqual([currentTag]);
+      expect(mockOperationModelStore._list()).toEqual([currentTag]);
     });
   });
 
