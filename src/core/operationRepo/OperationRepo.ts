@@ -93,7 +93,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async _start(): Promise<void> {
-    await this._loadSavedOperations();
+    await Promise.all([this._loadSavedOperations(), this._identityModelStore._loaded]);
     // The page fetches the config before the repo starts, so the requirement is
     // already hydrated here. This is the web equivalent of Android's hydrate hook.
     if (isIvBehaviorActive()) this._purgeAnonymousOperations();
@@ -243,14 +243,13 @@ export class OperationRepo implements IOperationRepo, IStartableService {
    * dropped, the operations that wait for the id can never start, so they are removed.
    * The current user keeps its operations: a later call can still enqueue its
    * login. At start, a current user with an externalId gets a new login, because
-   * login with the same externalId does nothing.
+   * login with the same externalId does nothing. The login is enqueued before the
+   * removal, so the subscription operations that it sends stay.
    */
   private _removeUntranslatableOps(atStart: boolean): void {
     const { _onesignalId: currentId, _externalId: externalId } = this._identityModelStore._model;
-    let created: Set<string | undefined>;
-    const isLost = (id?: string) => IDManager._isLocalId(id) && !created.has(id);
-    do {
-      created = new Set(
+    const findCreated = () =>
+      new Set<string | undefined>(
         this._queue.map(({ operation: op }) =>
           op instanceof LoginUserOperation
             ? op._onesignalId
@@ -259,6 +258,22 @@ export class OperationRepo implements IOperationRepo, IStartableService {
               : '',
         ),
       );
+    let created = findCreated();
+    const isLost = (id?: string) => IDManager._isLocalId(id) && !created.has(id);
+
+    const waiting = this._queue.find(({ operation }) => operation._onesignalId === currentId);
+    if (atStart && waiting && externalId && isLost(currentId)) {
+      this._enqueue(
+        new LoginUserOperation({
+          appId: waiting.operation._appId,
+          onesignalId: currentId,
+          externalId,
+        }),
+      );
+    }
+
+    do {
+      created = findCreated();
     } while (
       this._removeQueued((op) => {
         if (op instanceof LoginUserOperation) {
@@ -274,17 +289,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         );
       })
     );
-
-    const waiting = this._queue.find(({ operation }) => operation._onesignalId === currentId);
-    if (atStart && waiting && externalId && isLost(currentId)) {
-      this._enqueue(
-        new LoginUserOperation({
-          appId: waiting.operation._appId,
-          onesignalId: currentId,
-          externalId,
-        }),
-      );
-    }
   }
 
   private _internalEnqueue(
