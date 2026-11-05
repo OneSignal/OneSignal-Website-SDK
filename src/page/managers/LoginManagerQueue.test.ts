@@ -9,8 +9,9 @@ import {
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
+import { ModelChangeTags } from 'src/core/types/models';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
-import { clearAll } from 'src/shared/database/client';
+import { clearAll, db } from 'src/shared/database/client';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { afterEach, beforeEach, describe, expect, test } from 'vite-plus/test';
@@ -175,5 +176,23 @@ describe('LoginManager with the real operation queue under Identity Verification
     await drainQueue();
     expect(requestsFor('alice')).toHaveLength(1);
     expect(serverPushOwner()).toBe('bob');
+  });
+
+  test('a later login creates the new push subscription of a login that waits for a JWT', async () => {
+    // A device with no push token: the first login adds a placeholder push model.
+    OneSignal._coreDirector._subscriptionModelStore._replaceAll([], ModelChangeTags._Hydrate);
+    await db.delete('Options', 'lastPushToken');
+    void LoginManager.login('alice');
+    await LoginManager.login('bob', 'jwt-b');
+
+    await expect.poll(() => requestsFor('bob').length).toBe(1);
+    expect(requestsFor('bob')[0].body.subscriptions).toEqual([
+      expect.objectContaining({ type: 'ChromePush' }),
+    ]);
+
+    OneSignal._coreDirector._jwtTokenStore._putJwt('alice', 'jwt-alice');
+    await drainQueue();
+    expect(requestsFor('alice')).toHaveLength(1);
+    expect(requestsFor('alice')[0].body.subscriptions ?? []).toEqual([]);
   });
 });
