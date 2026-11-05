@@ -87,16 +87,23 @@ export default class LoginManager {
    * A push operation of an earlier switch that still has a local user id waits
    * for a login that did not run, maybe because it waits for a JWT. It would run
    * after a new transfer and move the subscription back to the earlier user.
+   * Returns true if a removed operation was the create of the subscription: the
+   * subscription then has no server id, so the later switch must create it.
    */
-  private static _removeStalePushOps(subscriptionId: string): void {
-    OneSignal._coreDirector._operationRepo._removeQueued(
-      (op) =>
-        LoginManager._pushOps.has(op) &&
-        (op instanceof TransferSubscriptionOperation ||
-          op instanceof UpdateSubscriptionOperation) &&
-        op._subscriptionId === subscriptionId &&
-        IDManager._isLocalId(op._onesignalId),
+  private static _removeStalePushOps(subscriptionId: string): boolean {
+    const repo = OneSignal._coreDirector._operationRepo;
+    const isStale = (op: Operation) =>
+      LoginManager._pushOps.has(op) &&
+      (op instanceof CreateSubscriptionOperation ||
+        op instanceof TransferSubscriptionOperation ||
+        op instanceof UpdateSubscriptionOperation) &&
+      op._subscriptionId === subscriptionId &&
+      IDManager._isLocalId(op._onesignalId);
+    const removesCreate = repo._queue.some(
+      ({ operation }) => operation instanceof CreateSubscriptionOperation && isStale(operation),
     );
+    repo._removeQueued(isStale);
+    return removesCreate;
   }
 
   private static _onPushStepDone(): void {
@@ -264,14 +271,15 @@ export default class LoginManager {
     const pushStep = async (enqueue: EnqueuePushOp) => {
       const pushOp = await OneSignal._coreDirector._getPushSubscriptionModel();
       if (pushOp) {
-        LoginManager._removeStalePushOps(pushOp.id);
         enqueue(
-          new TransferSubscriptionOperation({
-            appId,
-            onesignalId: newOneSignalId,
-            subscriptionId: pushOp.id,
-            externalId,
-          }),
+          LoginManager._removeStalePushOps(pushOp.id)
+            ? LoginManager._getCreatePushOp(appId, newOneSignalId, externalId, pushOp)
+            : new TransferSubscriptionOperation({
+                appId,
+                onesignalId: newOneSignalId,
+                subscriptionId: pushOp.id,
+                externalId,
+              }),
         );
         if (externalId && isIvBehaviorActive()) {
           enqueue(LoginManager._getPushStateSyncOp(appId, newOneSignalId, externalId, pushOp));
@@ -288,22 +296,29 @@ export default class LoginManager {
         // The store listener would give the model to the current user, which is a
         // later user if a later switch began. Enqueue the create for this user instead.
         OneSignal._coreDirector._subscriptionModelStore._add(newSub, ModelChangeTags._Hydrate);
-        const { enabled, notification_types } =
-          SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(newSub);
-        enqueue(
-          new CreateSubscriptionOperation({
-            appId,
-            onesignalId: newOneSignalId,
-            externalId,
-            subscriptionId: newSub.id,
-            type: newSub.type,
-            enabled,
-            token: newSub.token,
-            notification_types,
-          }),
-        );
+        enqueue(LoginManager._getCreatePushOp(appId, newOneSignalId, externalId, newSub));
       }
     };
     return { pushStep, loginOp, loginDone };
+  }
+
+  private static _getCreatePushOp(
+    appId: string,
+    onesignalId: string,
+    externalId: string | undefined,
+    pushModel: SubscriptionModel,
+  ): CreateSubscriptionOperation {
+    const { enabled, notification_types } =
+      SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(pushModel);
+    return new CreateSubscriptionOperation({
+      appId,
+      onesignalId,
+      externalId,
+      subscriptionId: pushModel.id,
+      type: pushModel.type,
+      enabled,
+      token: pushModel.token,
+      notification_types,
+    });
   }
 }
