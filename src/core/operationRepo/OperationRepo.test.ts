@@ -24,6 +24,7 @@ import {
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
+import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
@@ -426,6 +427,26 @@ describe('OperationRepo', () => {
 
       expect(queued()).toEqual([]);
       expect(mockOperationModelStore._list()).toEqual([]);
+    });
+
+    test('start: keeps a local subscription that a queued login creates from a transfer', async () => {
+      const localId = IDManager._createLocalId();
+      const localSubId = IDManager._createLocalId();
+      setCurrentUser(localId, EXTERNAL_ID);
+      const switchLogin = login(localId, EXTERNAL_ID);
+      const sub = { appId: APP_ID, onesignalId: localId, externalId: EXTERNAL_ID };
+      const transfer = new TransferSubscriptionOperation({ ...sub, subscriptionId: localSubId });
+      const pushState = new UpdateSubscriptionOperation({
+        ...sub,
+        subscriptionId: localSubId,
+        type: SubscriptionType._ChromePush,
+        token: 'push-token',
+      });
+      seedSaved(switchLogin, transfer, pushState);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([switchLogin, transfer, pushState]);
     });
 
     test('start: clears a lost existingOnesignalId so the login can start', async () => {

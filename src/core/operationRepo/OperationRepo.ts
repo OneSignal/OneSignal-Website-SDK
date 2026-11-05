@@ -237,8 +237,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   /**
    * A local id gets its server id only from a queued login-user or
-   * create-subscription operation. If that operation was dropped, the
-   * operations that wait for the id can never start, so they are removed.
+   * create-subscription operation. A queued login-user also sends the
+   * subscription operations of its user, and it can create a local subscription
+   * from a transfer, so those operations stay. If that operation was
+   * dropped, the operations that wait for the id can never start, so they are removed.
    * The current user keeps its operations: a later call can still enqueue its
    * login. At start, a current user with an externalId gets a new login, because
    * login with the same externalId does nothing.
@@ -267,6 +269,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           (op._onesignalId !== currentId && isLost(op._onesignalId)) ||
           (op instanceof BaseSubscriptionOperation &&
             !(op instanceof CreateSubscriptionOperation) &&
+            !created.has(op._onesignalId) &&
             isLost(op._subscriptionId))
         );
       })
