@@ -101,7 +101,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       this._removeOpsWithNoJwt();
     }
     this._removeUntranslatableOps(true);
-    this._pruneJwts();
     this._processQueueForever();
   }
 
@@ -256,13 +255,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         !this._jwtTokenStore._getJwt(externalId)
       );
     });
-  }
-
-  /** Keeps the tokens of the current user and of the users with queued operations. */
-  private _pruneJwts(): void {
-    const keep = this._queue.map(({ operation }) => operation._externalId);
-    keep.push(this._identityModelStore._model._externalId);
-    this._jwtTokenStore._pruneToExternalIds(keep.filter((id) => id !== undefined));
   }
 
   /**

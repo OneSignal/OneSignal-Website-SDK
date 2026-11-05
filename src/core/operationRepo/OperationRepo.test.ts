@@ -557,17 +557,15 @@ describe('OperationRepo', () => {
       expect(queued()).toEqual([earlier]);
     });
 
-    test('removes the tokens of users that are not current and have no queued operations', async () => {
+    test('keeps the tokens of users that another tab can use', async () => {
+      setJwtRequirement(JwtRequirement._Required);
       jwtTokenStore._putJwt(EXTERNAL_ID, 'current-jwt');
-      jwtTokenStore._putJwt('earlier-user', 'earlier-jwt');
-      jwtTokenStore._putJwt('old-user', 'old-jwt');
-      seedSaved(earlierOp());
+      jwtTokenStore._putJwt('other-tab-user', 'other-tab-jwt');
 
       await opRepo._start();
 
       expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBe('current-jwt');
-      expect(jwtTokenStore._getJwt('earlier-user')).toBe('earlier-jwt');
-      expect(jwtTokenStore._getJwt('old-user')).toBeUndefined();
+      expect(jwtTokenStore._getJwt('other-tab-user')).toBe('other-tab-jwt');
     });
   });
 
