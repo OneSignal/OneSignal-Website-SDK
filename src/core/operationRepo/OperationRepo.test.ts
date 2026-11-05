@@ -453,6 +453,57 @@ describe('OperationRepo', () => {
       expect(queued()).toEqual([switchLogin, transfer, pushState]);
     });
 
+    test('start: the new login keeps the subscription operations of the current user', async () => {
+      const localId = IDManager._createLocalId();
+      setCurrentUser(localId, EXTERNAL_ID);
+      const transfer = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: localId,
+        externalId: EXTERNAL_ID,
+        subscriptionId: IDManager._createLocalId(),
+      });
+      seedSaved(transfer);
+
+      await opRepo._start();
+
+      const [first, second] = queued();
+      expect(first).toBe(transfer);
+      expect(second).toBeInstanceOf(LoginUserOperation);
+      expect(second).toMatchObject({ _onesignalId: localId, _externalId: EXTERNAL_ID });
+    });
+
+    test('start: waits for the identity store to load before the cleanup', async () => {
+      const localId = IDManager._createLocalId();
+      await db.put('identity', {
+        modelId: 'identity-model',
+        modelName: 'identity',
+        onesignal_id: localId,
+        external_id: EXTERNAL_ID,
+      });
+      const getAll = db.getAll.bind(db);
+      const getAllSpy = vi.spyOn(db, 'getAll').mockImplementation(async (storeName) => {
+        if (storeName === 'identity') await new Promise((resolve) => setTimeout(resolve, 20));
+        return getAll(storeName);
+      });
+      identityModelStore = new IdentityModelStore();
+      opRepo = new OperationRepo(
+        [mockExecutor],
+        mockOperationModelStore,
+        new NewRecordsState(),
+        jwtTokenStore,
+        identityModelStore,
+      );
+      const tag = setTag(localId, EXTERNAL_ID);
+      seedSaved(tag);
+
+      await opRepo._start();
+      getAllSpy.mockRestore();
+
+      const [first, second] = queued();
+      expect(first).toBe(tag);
+      expect(second).toMatchObject({ _onesignalId: localId, _externalId: EXTERNAL_ID });
+    });
+
     test('start: clears a lost existingOnesignalId so the login can start', async () => {
       setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
       const switchLogin = new LoginUserOperation({
