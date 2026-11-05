@@ -297,14 +297,16 @@ describe('LoginManager', () => {
       enqueueAndWaitSpy.mock.calls.map(([op]) => [op._onesignalId, op._externalId]),
     );
     ops.forEach((op) => expect(userByOnesignalId[op._onesignalId]).toBe(op._externalId));
-    // The first login adds the placeholder push model, and each later login moves it.
+    // The first login adds the placeholder push model. No login ran, so each later
+    // login replaces the queued create of the placeholder with its own create.
     const createSubOps = ops.filter((op) => op instanceof CreateSubscriptionOperation);
-    expect(createSubOps.map((op) => op._externalId)).toEqual(['A']);
-    const transferOps = ops.filter((op) => op instanceof TransferSubscriptionOperation);
-    expect(transferOps.map((op) => [op._externalId, op._subscriptionId])).toEqual([
-      ['B', createSubOps[0]._subscriptionId],
-      ['C', createSubOps[0]._subscriptionId],
-    ]);
+    expect(createSubOps.map((op) => op._externalId)).toEqual(['A', 'B', 'C']);
+    expect(new Set(createSubOps.map((op) => op._subscriptionId)).size).toBe(1);
+    expect(ops.some((op) => op instanceof TransferSubscriptionOperation)).toBe(false);
+    const queuedSubOps = OneSignal._coreDirector._operationRepo._queue
+      .map(({ operation }) => operation)
+      .filter((op) => op instanceof CreateSubscriptionOperation);
+    expect(queuedSubOps).toEqual([createSubOps[2]]);
     expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('C');
   });
 
