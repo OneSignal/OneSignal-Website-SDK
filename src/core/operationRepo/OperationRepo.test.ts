@@ -240,6 +240,10 @@ describe('OperationRepo', () => {
       ops.forEach((op) => mockOperationModelStore._add(op));
     const queued = () => opRepo._queue.map((item) => item.operation);
 
+    beforeEach(() => {
+      identityModelStore._model._externalId = EXTERNAL_ID;
+    });
+
     test('IV active: drops anonymous operations from the queue and the store, spares identified ones', async () => {
       setJwtRequirement(JwtRequirement._Required);
       const anonymous = new Operation('anon');
@@ -460,6 +464,89 @@ describe('OperationRepo', () => {
       await expect(earlierTag).rejects.toThrow(OperationFailedError);
       expect(queued()).toEqual([currentTag]);
       expect(mockOperationModelStore._list()).toEqual([currentTag]);
+    });
+  });
+
+  describe('operations and tokens of an earlier user on start', () => {
+    const seedSaved = (...ops: OperationBase[]) =>
+      ops.forEach((op) => mockOperationModelStore._add(op));
+    const queued = () => opRepo._queue.map((item) => item.operation);
+    const earlierOp = () => ownedBy(new Operation('earlier'), 'earlier-user');
+    const currentOp = () => ownedBy(new Operation('current'), EXTERNAL_ID);
+
+    beforeEach(() => {
+      identityModelStore._model._onesignalId = ONESIGNAL_ID;
+      identityModelStore._model._externalId = EXTERNAL_ID;
+    });
+
+    test('IV active: removes the operations of an earlier user with no token', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const current = currentOp();
+      seedSaved(earlierOp(), current);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([current]);
+      expect(mockOperationModelStore._list()).toEqual([current]);
+    });
+
+    test('IV active: keeps the operations of the current user with no token', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const current = currentOp();
+      seedSaved(current);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([current]);
+    });
+
+    test('IV active: keeps the operations of an earlier user with a token', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      jwtTokenStore._putJwt('earlier-user', 'earlier-jwt');
+      const earlier = earlierOp();
+      seedSaved(earlier);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([earlier]);
+      expect(jwtTokenStore._getJwt('earlier-user')).toBe('earlier-jwt');
+    });
+
+    test('IV active: keeps an operation of an earlier user that needs no JWT', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const remove = new DeleteSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        externalId: 'earlier-user',
+        subscriptionId: SUB_ID,
+      });
+      seedSaved(remove);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([remove]);
+    });
+
+    test('IV inactive: keeps the operations of an earlier user with no token', async () => {
+      const earlier = earlierOp();
+      seedSaved(earlier);
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([earlier]);
+    });
+
+    test('removes the tokens of users that are not current and have no queued operations', async () => {
+      jwtTokenStore._putJwt(EXTERNAL_ID, 'current-jwt');
+      jwtTokenStore._putJwt('earlier-user', 'earlier-jwt');
+      jwtTokenStore._putJwt('old-user', 'old-jwt');
+      seedSaved(earlierOp());
+
+      await opRepo._start();
+
+      expect(jwtTokenStore._getJwt(EXTERNAL_ID)).toBe('current-jwt');
+      expect(jwtTokenStore._getJwt('earlier-user')).toBe('earlier-jwt');
+      expect(jwtTokenStore._getJwt('old-user')).toBeUndefined();
     });
   });
 
