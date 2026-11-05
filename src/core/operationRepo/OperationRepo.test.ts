@@ -1,6 +1,7 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { clearAll, db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
+import { RetryLimitError } from 'src/shared/errors/common';
 import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
@@ -16,7 +17,7 @@ import {
 } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import { OP_REPO_POST_CREATE_DELAY } from './constants';
+import { OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF, OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo } from './OperationRepo';
 
@@ -471,6 +472,36 @@ describe('OperationRepo', () => {
 
       // queue is clear so no more operations to process
       expect(opRepo._getNextOps(0)).toBeNull();
+    });
+
+    test('does not start operations while the browser is offline', () => {
+      const onLineSpy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      opRepo._enqueue(mockOperation);
+
+      expect(opRepo._getNextOps(0)).toBeNull();
+      expect(opRepo._queue).toHaveLength(1);
+
+      onLineSpy.mockReturnValue(true);
+      expect(opRepo._getNextOps(0)).toEqual([{ operation: mockOperation, bucket: 0, retries: 0 }]);
+      onLineSpy.mockRestore();
+    });
+
+    test('keeps operations when the request cannot reach the server', async () => {
+      executeFn.mockRejectedValueOnce(RetryLimitError);
+      const groupedOps = getGroupedOp();
+      const settled = vi.fn();
+      opRepo._enqueueAndWait(groupedOps[0]).then(settled, settled);
+      opRepo._enqueue(groupedOps[1]);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([
+        { operation: groupedOps[0], bucket: 0, retries: 1, resolver: expect.any(Function) },
+        { operation: groupedOps[1], bucket: 0, retries: 1 },
+      ]);
+      expect(mockOperationModelStore._list()).toEqual(groupedOps);
+      expect(settled).not.toHaveBeenCalled();
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF);
     });
   });
 });

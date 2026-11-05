@@ -5,6 +5,7 @@ import {
   type IStartableService,
 } from 'src/core/types/operation';
 import { db } from 'src/shared/database/client';
+import { RetryLimitError } from 'src/shared/errors/common';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 
@@ -251,6 +252,15 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
+      // The request never reached the server, so keep the operations and send them later.
+      if (e === RetryLimitError) {
+        [...ops].reverse().forEach((op) => {
+          op.retries++;
+          this._queue.unshift(op);
+        });
+        return this._delayBeforeNextExecution(ops[0].retries);
+      }
+
       Log._error(`Op execute error: ${JSON.stringify(ops)}`, e);
 
       // On failure remove operations from store
@@ -277,6 +287,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
+    if (!navigator.onLine) return null;
+
     const startingOpIndex = this._queue.findIndex(
       (item) =>
         item.operation._canStartExecute &&
