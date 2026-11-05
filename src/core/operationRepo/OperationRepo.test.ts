@@ -468,8 +468,20 @@ describe('OperationRepo', () => {
           expect(opRepo._queue).toEqual([]);
         });
 
-        test('an anonymous LoginUserOperation is exempt', () => {
-          const op = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID });
+        test('_enqueue drops an anonymous LoginUserOperation with no warning', () => {
+          opRepo._enqueue(new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID }));
+
+          expect(opRepo._queue).toEqual([]);
+          expect(mockOperationModelStore._list()).toEqual([]);
+          expect(warn).not.toHaveBeenCalled();
+        });
+
+        test('an identified LoginUserOperation is queued', () => {
+          const op = new LoginUserOperation({
+            appId: APP_ID,
+            onesignalId: ONESIGNAL_ID,
+            externalId: EXTERNAL_ID,
+          });
           opRepo._enqueue(op);
 
           expect(opRepo._queue).toEqual([{ operation: op, bucket: 0, retries: 0 }]);
