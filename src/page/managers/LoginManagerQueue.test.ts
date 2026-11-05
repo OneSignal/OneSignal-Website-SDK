@@ -106,13 +106,15 @@ async function drainQueue(): Promise<void> {
   expect(repo._queue.length).toBe(0);
 }
 
-/** Waits until no new request goes out for 3 queue passes. */
+/** Waits until no new request goes out for 10 queue passes, for 3 seconds at most. */
 async function settle(): Promise<void> {
-  for (;;) {
+  const deadline = Date.now() + 3000;
+  while (Date.now() < deadline) {
     const before = recorded.length;
-    await delay(OP_REPO_EXECUTION_INTERVAL * 3);
+    await delay(OP_REPO_EXECUTION_INTERVAL * 10);
     if (recorded.length === before) return;
   }
+  throw new Error('Requests did not stop in 3 seconds');
 }
 
 const summary = () =>
@@ -144,9 +146,12 @@ function serverPushEnabled(): boolean | undefined {
 function serverPushOwner(): string | undefined {
   let owner: string | undefined = 'A';
   for (const { method, path, body } of recorded) {
-    if (method !== 'POST' || path !== '/users') continue;
-    if (body.subscriptions?.some((s: { id?: string }) => s.id === SUB_ID)) {
-      owner = body.identity.external_id;
+    if (method === 'POST' && path === '/users') {
+      if (body.subscriptions?.some((s: { id?: string }) => s.id === SUB_ID)) {
+        owner = body.identity.external_id;
+      }
+    } else if (method === 'PATCH' && path === `/subscriptions/${SUB_ID}/owner`) {
+      owner = body.identity.external_id ?? body.identity.onesignal_id?.replace(/^os-/, '');
     }
   }
   return owner;
@@ -184,6 +189,7 @@ describe('LoginManager with the real operation queue under Identity Verification
 
   afterEach(() => {
     server.events.removeListener('request:start', recordRequest);
+    vi.restoreAllMocks();
   });
 
   test('login then logout without an await: push ends disabled on the user that logged in', async () => {
@@ -257,7 +263,12 @@ describe('LoginManager with the real operation queue under Identity Verification
     await settle();
 
     expect(summary()).toContain('POST /users jwt-bob');
-    expect(tagRequestsFor('bob')).toHaveLength(1);
+    expect(tagRequestsFor('bob')).toEqual([
+      expect.objectContaining({
+        auth: 'Bearer jwt-bob',
+        body: expect.objectContaining({ properties: { tags: { b: '1' } } }),
+      }),
+    ]);
     expect(tagRequestsFor('alice')).toHaveLength(0);
     expect(invalidated).toEqual(['alice']);
     expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('bob');
@@ -269,15 +280,22 @@ describe('LoginManager with the real operation queue under Identity Verification
     user.addTag('a', '1');
     await LoginManager.login('bob', 'jwt-bob');
     await settle();
-    const signedForAlice = () => requestsFor('alice').filter((r) => r.auth === 'Bearer jwt-alice');
-    expect(signedForAlice()).toHaveLength(0);
+    const signedForAlice = (jwt: string) =>
+      requestsFor('alice').filter((r) => r.auth === `Bearer ${jwt}`);
+    expect(signedForAlice('expired-alice')).toHaveLength(1);
 
     await OneSignal.updateUserJwt('alice', 'jwt-alice');
     await drainQueue();
 
-    expect(signedForAlice()).toHaveLength(1);
-    expect(signedForAlice()[0].body.subscriptions ?? []).toEqual([]);
-    expect(tagRequestsFor('alice')).toHaveLength(1);
+    expect(signedForAlice('expired-alice')).toHaveLength(1);
+    expect(signedForAlice('jwt-alice')).toHaveLength(1);
+    expect(signedForAlice('jwt-alice')[0].body.subscriptions ?? []).toEqual([]);
+    expect(tagRequestsFor('alice')).toEqual([
+      expect.objectContaining({
+        auth: 'Bearer jwt-alice',
+        body: expect.objectContaining({ properties: { tags: { a: '1' } } }),
+      }),
+    ]);
     expect(serverPushOwner()).toBe('bob');
     expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('bob');
   });
