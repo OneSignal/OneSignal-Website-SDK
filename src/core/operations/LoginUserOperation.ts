@@ -59,7 +59,15 @@ export class LoginUserOperation extends Operation<ILoginOp> {
     return GroupComparisonType._Create;
   }
 
+  /**
+   * Set while an earlier user switch still has push operations to enqueue, so
+   * the create batch of this user cannot start before they are in the queue.
+   * Not saved: after a reload no switch is in progress.
+   */
+  _heldBySwitch = false;
+
   override get _canStartExecute(): boolean {
+    if (this._heldBySwitch) return false;
     return !this._existingOnesignalId || !IDManager._isLocalId(this._existingOnesignalId);
   }
 

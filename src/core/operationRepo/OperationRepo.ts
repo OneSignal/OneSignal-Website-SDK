@@ -115,6 +115,36 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   /**
+   * Enqueues the operation just ahead of `before`, in the same bucket, so the
+   * queue cannot start `before` first. Appends if `before` is not in the queue.
+   */
+  public _enqueueBefore(operation: Operation, before: Operation): void {
+    const index = this._queue.findIndex((item) => item.operation === before);
+    if (index === -1) return this._enqueue(operation);
+    if (this._shouldSuppressAnonymousOp(operation)) return;
+    Log._debug(`OpRepo.enqueueBefore: ${JSON.stringify(operation)}`);
+
+    this._internalEnqueue(
+      {
+        operation,
+        bucket: this._queue[index].bucket,
+        retries: 0,
+      },
+      true,
+      index,
+    );
+  }
+
+  /** Removes every queued operation that matches. Use it only for operations that nothing waits on. */
+  public _removeQueued(matches: (operation: Operation) => boolean): void {
+    const removed = this._queue.filter((item) => matches(item.operation));
+    if (removed.length === 0) return;
+    this._queue = this._queue.filter((item) => !matches(item.operation));
+    removed.forEach((item) => this._operationModelStore._remove(item.operation._modelId));
+    Log._debug(`OpRepo: removed ${removed.length} queued ops`);
+  }
+
+  /**
    * Resolves when the operation succeeds. Rejects with an OperationFailedError
    * that carries the ExecutionResult that stopped the operation.
    */
