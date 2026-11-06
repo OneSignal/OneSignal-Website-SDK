@@ -10,11 +10,14 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { ModelChangeTags } from 'src/core/types/models';
+import PushSubscriptionNamespace from 'src/onesignal/PushSubscriptionNamespace';
 import User from 'src/onesignal/User';
+import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { clearAll, db } from 'src/shared/database/client';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
+import type { Subscription } from 'src/shared/models/Subscription';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import LoginManager from './LoginManager';
@@ -385,5 +388,31 @@ describe('LoginManager with the real operation queue under Identity Verification
       ]),
     );
     expect(OneSignal._coreDirector._operationRepo._queue).toEqual([]);
+  });
+
+  test('a login that creates an anonymous push subscription gives PushSubscription its server id', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    setupIdentityModel('local-anon');
+    await setupPropertiesModel('local-anon');
+    await setupSubModelStore({ id: 'local-sub', token: 'abc123', onesignalId: 'local-anon' });
+    const pushSubscription = new PushSubscriptionNamespace(
+      true,
+      { optedOut: false, subscriptionToken: 'abc123' } as Subscription,
+      'granted',
+    );
+    const changes: SubscriptionChangeEvent[] = [];
+    pushSubscription.addEventListener('change', (change) => changes.push(change));
+
+    const user = User._createOrGetInstance();
+    void LoginManager.login('alice', 'expired-alice').catch(() => undefined);
+    user.addTag('who', 'alice');
+    await LoginManager.login('bob', 'jwt-bob');
+    await settle();
+
+    expect(requestsFor('bob')[0].body.subscriptions).toEqual([
+      expect.objectContaining({ token: 'abc123' }),
+    ]);
+    expect(pushSubscription.id).toBe('new-sub-0');
+    expect(changes.map(({ current }) => current.id)).toEqual(['new-sub-0']);
   });
 });
