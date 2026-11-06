@@ -53,7 +53,7 @@ export function getSlidedownElement(dialogProps: SlidedownHtmlProps): Element {
     addCssClass(image, finalIconClass);
   }
 
-  image.setAttribute('alt', iconAlt || DEFAULT_ICON_ALT);
+  image.setAttribute('alt', iconAlt ?? DEFAULT_ICON_ALT);
   image.setAttribute('src', finalIcon || '');
 
   bodyMessage.innerText = messageText || '';

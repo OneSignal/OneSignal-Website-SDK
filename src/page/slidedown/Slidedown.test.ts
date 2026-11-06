@@ -165,6 +165,16 @@ describe('Slidedown', () => {
       const image = document.querySelector(`.${SLIDEDOWN_CSS_CLASSES._Icon} img`);
       expect(image?.getAttribute('alt')).toBe('NFL Logo');
     });
+
+    test('allows empty icon alt text', async () => {
+      const sd = createSlidedown({
+        text: { ...defaultOptions.text, iconAlt: '' },
+      });
+      await sd._create();
+
+      const image = document.querySelector(`.${SLIDEDOWN_CSS_CLASSES._Icon} img`);
+      expect(image?.getAttribute('alt')).toBe('');
+    });
   });
 
   describe('_onSlidedownCanceled', () => {
