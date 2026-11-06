@@ -200,8 +200,10 @@ export function onInternalSubscriptionSet(optedOut: boolean): void {
 function onSubscriptionChanged_showWelcomeNotification(
   change: SubscriptionChangeEvent | undefined,
 ) {
-  const isSubscribed = change?.current?.optedIn;
-  const pushSubscriptionId = change?.current?.id;
+  const previous = change?.previous;
+  const current = change?.current;
+  const isSubscribed = current?.optedIn;
+  const pushSubscriptionId = current?.id;
   if (OneSignal._doNotShowWelcomeNotification) {
     Log._debug('Skipping welcome notif: already subscribed');
     return;
@@ -209,8 +211,10 @@ function onSubscriptionChanged_showWelcomeNotification(
   // The server created a subscription that had a local id. The event for the local id
   // already showed the notification.
   if (
-    IDManager._isLocalId(change?.previous?.id) &&
-    change?.previous?.token === change?.current?.token
+    IDManager._isLocalId(previous?.id) &&
+    !IDManager._isLocalId(pushSubscriptionId) &&
+    previous?.token === current?.token &&
+    previous?.optedIn === isSubscribed
   ) {
     return;
   }

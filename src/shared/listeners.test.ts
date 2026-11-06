@@ -144,8 +144,8 @@ describe('checkAndTriggerSubscriptionChanged', () => {
 describe('welcome notification', () => {
   const showSpy = vi.spyOn(main, 'showLocalNotification').mockResolvedValue();
   const change = (
-    previous: { id?: string; token: string },
-    current: { id?: string; token: string },
+    previous: { id?: string; token: string; optedIn?: boolean },
+    current: { id?: string; token: string; optedIn?: boolean },
   ): SubscriptionChangeEvent => ({
     previous: { id: undefined, optedIn: true, ...previous },
     current: { id: undefined, optedIn: true, ...current },
@@ -171,6 +171,26 @@ describe('welcome notification', () => {
   test('shows for a new token on a subscription that had a local id', () => {
     eventListeners._onSubscriptionChanged(
       change({ id: 'local-sub', token: 'old' }, { id: 'local-sub', token: 'new' }),
+    );
+    expect(showSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('shows for an opt-in while the subscription still has a local id', () => {
+    eventListeners._onSubscriptionChanged(
+      change(
+        { id: 'local-sub', token: 't', optedIn: false },
+        { id: 'local-sub', token: 't', optedIn: true },
+      ),
+    );
+    expect(showSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('shows when the server creates a subscription and the user opts in at the same time', () => {
+    eventListeners._onSubscriptionChanged(
+      change(
+        { id: 'local-sub', token: 't', optedIn: false },
+        { id: 'server-id', token: 't', optedIn: true },
+      ),
     );
     expect(showSpy).toHaveBeenCalledTimes(1);
   });
