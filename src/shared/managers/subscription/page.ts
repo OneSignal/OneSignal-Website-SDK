@@ -1,6 +1,7 @@
 import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { ModelChangeTags } from 'src/core/types/models';
 import { ExecutionResult } from 'src/core/types/operation';
 import { hasLoginOp } from 'src/onesignal/User';
 import LoginManager from 'src/page/managers/LoginManager';
@@ -96,19 +97,24 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
     pushModel = OneSignal._coreDirector._generatePushSubscriptionModel(rawPushSubscription);
     return createSubscribedUser(pushModel);
   }
-  // for users with data failed to create a user or user + subscription on the server
-  if (IDManager._isLocalId(pushModel.id)) {
-    return createSubscribedUser(pushModel);
-  }
-
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
   const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
     rawPushSubscription,
   )._serialize();
+  // A local model can be the placeholder that a login adds with an empty token. Its
+  // create operation must hold the token, so hydrate the model instead of an update.
+  const isLocal = IDManager._isLocalId(pushModel.id);
   for (const key in serializedSubscriptionRecord) {
     const modelKey = key as keyof typeof serializedSubscriptionRecord;
-    pushModel._setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
+    pushModel._setProperty(
+      modelKey,
+      serializedSubscriptionRecord[modelKey],
+      isLocal ? ModelChangeTags._Hydrate : undefined,
+    );
   }
+
+  // for users with data failed to create a user or user + subscription on the server
+  if (isLocal) return createSubscribedUser(pushModel);
 };
 
 export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInterface> {
