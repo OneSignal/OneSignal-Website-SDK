@@ -94,6 +94,7 @@ export default class Slidedown {
       const slidedownElement = getSlidedownElement({
         messageText,
         icon,
+        iconAlt: this._options.text.iconAlt,
         positiveButtonText,
         negativeButtonText,
       });
