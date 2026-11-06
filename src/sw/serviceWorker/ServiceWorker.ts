@@ -603,10 +603,10 @@ async function displayNotification(notification: IMutableOSNotification) {
   // options get the inlined bytes.
   // On Chrome for macOS the server sets the icon to the notification image
   // when one is present. That icon is not inlined.
-  const iconMayBeImage = !!notification.image && notification.icon === notification.image;
+  const iconIsImage = !!notification.image && notification.icon === notification.image;
   const [icon, badge] = inline
     ? await Promise.all([
-        iconMayBeImage ? notification.icon : inlineImage(notification.icon),
+        iconIsImage ? notification.icon : inlineImage(notification.icon),
         inlineImage(notification.badgeIcon),
       ])
     : [notification.icon, notification.badgeIcon];
