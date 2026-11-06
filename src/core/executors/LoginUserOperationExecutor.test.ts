@@ -130,6 +130,23 @@ describe('LoginUserOperationExecutor', () => {
       await expect(res2).rejects.toThrow(`Unrecognized operation: ${someOp._name}`);
     });
 
+    test('a second login for the same user in the batch does not stop the create', async () => {
+      createUserFn.mockClear();
+      const executor = getExecutor();
+
+      const loginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID_2 });
+      const createSubOp = new CreateSubscriptionOperation(mockSubscriptionOpInfo);
+      const secondLoginOp = new LoginUserOperation({ appId: APP_ID, onesignalId: ONESIGNAL_ID_2 });
+
+      const res = await executor._execute([loginOp, createSubOp, secondLoginOp]);
+
+      expect(res._result).toBe(ExecutionResult._Success);
+      expect(createUserFn).toHaveBeenCalledTimes(1);
+      expect(createUserFn.mock.lastCall?.[0].subscriptions).toEqual([
+        expect.objectContaining({ token: mockSubscriptionOpInfo.token }),
+      ]);
+    });
+
     test('can create user if there is no onesignal id or externalId', async () => {
       const executor = getExecutor();
 

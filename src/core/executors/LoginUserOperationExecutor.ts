@@ -157,7 +157,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         operation instanceof DeleteSubscriptionOperation
       ) {
         subscriptions = this._createSubscriptionsFromOperation(operation, subscriptions);
-      } else {
+      } else if (!(operation instanceof LoginUserOperation)) {
+        // The batch groups by onesignalId, so a second login is for the same user.
+        // A queue saved before a reload can have one, so skip it.
         throw new Error(`Unrecognized operation: ${operation._name}`);
       }
     }

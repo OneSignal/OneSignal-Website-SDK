@@ -48,6 +48,8 @@ export interface OperationQueueItem {
 export class OperationRepo implements IOperationRepo, IStartableService {
   private _executorsMap: Map<string, IOperationExecutor>;
   public _queue: OperationQueueItem[] = [];
+  /** The batch that waits for its executor. These ops are not in `_queue` during that time. */
+  public _inFlightOps: OperationQueueItem[] = [];
   public _timerID: NodeJS.Timeout | undefined = undefined;
   private _enqueueIntoBucket = 0;
   private _operationModelStore: OperationModelStore;
@@ -370,7 +372,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       // token that login or updateUserJwt stored while the request was in flight.
       const externalId = startingOp.operation._externalId;
       const jwtAtDispatch = externalId ? this._jwtTokenStore._getJwt(externalId) : undefined;
-      const response = await executor._execute(operations);
+      this._inFlightOps = ops;
+      const response = await executor._execute(operations).finally(() => (this._inFlightOps = []));
       const idTranslations = response._idTranslations;
 
       Log._debug(`OpRepo: result = ${response._result}`);
