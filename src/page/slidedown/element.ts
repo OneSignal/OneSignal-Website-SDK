@@ -8,8 +8,10 @@ import {
 
 import type { SlidedownHtmlProps } from './types';
 
+const DEFAULT_ICON_ALT = 'notification icon';
+
 export function getSlidedownElement(dialogProps: SlidedownHtmlProps): Element {
-  const { icon, messageText, positiveButtonText, negativeButtonText } = dialogProps;
+  const { icon, iconAlt, messageText, positiveButtonText, negativeButtonText } = dialogProps;
 
   const finalIcon = icon === SLIDEDOWN_CSS_CLASSES._DefaultIcon ? DEFAULT_ICON : icon;
   const finalIconClass =
@@ -51,7 +53,7 @@ export function getSlidedownElement(dialogProps: SlidedownHtmlProps): Element {
     addCssClass(image, finalIconClass);
   }
 
-  image.setAttribute('alt', 'notification icon');
+  image.setAttribute('alt', iconAlt ?? DEFAULT_ICON_ALT);
   image.setAttribute('src', finalIcon || '');
 
   bodyMessage.innerText = messageText || '';
