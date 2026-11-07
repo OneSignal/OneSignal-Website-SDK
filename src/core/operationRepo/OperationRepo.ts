@@ -96,7 +96,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     await Promise.all([this._loadSavedOperations(), this._identityModelStore._loaded]);
     // The page fetches the config before the repo starts, so the requirement is
     // already hydrated here. This is the web equivalent of Android's hydrate hook.
-    if (isIvBehaviorActive()) this._purgeAnonymousOperations();
+    if (isIvBehaviorActive()) {
+      this._purgeAnonymousOperations();
+      this._removeOpsWithNoJwt();
+    }
     this._removeUntranslatableOps(true);
     this._processQueueForever();
   }
@@ -233,6 +236,25 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     }
 
     Log._debug(`OpRepo: purged ${removed.length}/${total} anonymous ops`);
+  }
+
+  /**
+   * Removes the operations of an earlier user that has no token. The SDK asks
+   * the app for a token only when a 401 removes one, so after a reload no
+   * token for that user comes. The current user keeps its operations, because
+   * the app gives its token with login or updateUserJwt.
+   */
+  private _removeOpsWithNoJwt(): void {
+    const currentExternalId = this._identityModelStore._model._externalId;
+    this._removeQueued((op) => {
+      const externalId = op._externalId;
+      return (
+        !!externalId &&
+        externalId !== currentExternalId &&
+        op._requiresJwt &&
+        !this._jwtTokenStore._getJwt(externalId)
+      );
+    });
   }
 
   /**
