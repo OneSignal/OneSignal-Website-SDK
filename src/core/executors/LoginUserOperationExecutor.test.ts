@@ -191,6 +191,51 @@ describe('LoginUserOperationExecutor', () => {
       });
     });
 
+    test('matches subscriptions when the response order differs from the request order', async () => {
+      const EMAIL = 'test@example.com';
+      const pushLocalId = IDManager._createLocalId();
+      const emailLocalId = IDManager._createLocalId();
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+
+      const pushModel = new SubscriptionModel();
+      pushModel._setProperty('id', pushLocalId, ModelChangeTags._NoPropogate);
+      subscriptionModelStore._add(pushModel, ModelChangeTags._NoPropogate);
+      const emailModel = new SubscriptionModel();
+      emailModel._setProperty('id', emailLocalId, ModelChangeTags._NoPropogate);
+      subscriptionModelStore._add(emailModel, ModelChangeTags._NoPropogate);
+
+      setCreateUserResponse({
+        onesignalId: ONESIGNAL_ID_2,
+        subscriptions: [
+          { id: 'backend-email', type: SubscriptionType._Email, token: EMAIL.toUpperCase() },
+          { id: 'backend-push', type: SubscriptionType._ChromePush, token: PUSH_TOKEN },
+        ],
+      });
+
+      const loginOp = new LoginUserOperation(APP_ID, ONESIGNAL_ID);
+      loginOp._setProperty('externalId', EXTERNAL_ID);
+      const createPushOp = new CreateSubscriptionOperation({
+        ...mockSubscriptionOpInfo,
+        subscriptionId: pushLocalId,
+      });
+      const createEmailOp = new CreateSubscriptionOperation({
+        ...mockSubscriptionOpInfo,
+        subscriptionId: emailLocalId,
+        token: EMAIL,
+        type: SubscriptionType._Email,
+      });
+
+      const res = await getExecutor()._execute([loginOp, createPushOp, createEmailOp]);
+
+      expect(pushModel._getProperty('id')).toBe('backend-push');
+      expect(emailModel._getProperty('id')).toBe('backend-email');
+      expect(res._idTranslations).toEqual({
+        [ONESIGNAL_ID]: ONESIGNAL_ID_2,
+        [pushLocalId]: 'backend-push',
+        [emailLocalId]: 'backend-email',
+      });
+    });
+
     // A concurrent login() can swap the properties model while createNewUser
     // is in flight; the response must not hydrate onto the new user's model.
     test('does not hydrate properties onto a model that was swapped mid-request', async () => {
@@ -244,7 +289,7 @@ describe('LoginUserOperationExecutor', () => {
 
       setCreateUserResponse({
         onesignalId: ONESIGNAL_ID_2,
-        subscriptions: [{ id: SUB_ID_2 }],
+        subscriptions: [{ id: SUB_ID_2, type: SubscriptionType._ChromePush, token: PUSH_TOKEN }],
       });
 
       const executor = getExecutor();
