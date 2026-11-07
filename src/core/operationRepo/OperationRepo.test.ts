@@ -486,11 +486,16 @@ describe('OperationRepo', () => {
       onLineSpy.mockRestore();
     });
 
-    test('keeps operations when the request cannot reach the server', async () => {
-      executeFn.mockRejectedValueOnce(RetryLimitError);
+    test('keeps operations when the request fails while the browser is offline', async () => {
+      const onLineSpy = vi.spyOn(navigator, 'onLine', 'get');
+      executeFn.mockImplementationOnce(() => {
+        onLineSpy.mockReturnValue(false);
+        return Promise.reject(RetryLimitError);
+      });
       const groupedOps = getGroupedOp();
-      const settled = vi.fn();
-      opRepo._enqueueAndWait(groupedOps[0]).then(settled, settled);
+      const resolved = vi.fn();
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(groupedOps[0]).then(resolved, rejected);
       opRepo._enqueue(groupedOps[1]);
 
       await executeOps(opRepo);
@@ -500,8 +505,31 @@ describe('OperationRepo', () => {
         { operation: groupedOps[1], bucket: 0, retries: 1 },
       ]);
       expect(mockOperationModelStore._list()).toEqual(groupedOps);
-      expect(settled).not.toHaveBeenCalled();
+      expect(resolved).not.toHaveBeenCalled();
+      expect(rejected).not.toHaveBeenCalled();
       expect(delaySpy).toHaveBeenCalledWith(OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF);
+
+      onLineSpy.mockReturnValue(true);
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+      expect(resolved).toHaveBeenCalled();
+      onLineSpy.mockRestore();
+    });
+
+    test('drops operations when the request fails while the browser is online', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      executeFn.mockRejectedValueOnce(RetryLimitError);
+      const op = new Operation('1');
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(op).catch(rejected);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
     });
   });
 });

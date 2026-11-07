@@ -35,6 +35,8 @@ export interface OperationQueueItem {
 export class OperationRepo implements IOperationRepo, IStartableService {
   private _executorsMap: Map<string, IOperationExecutor>;
   public _queue: OperationQueueItem[] = [];
+  /** The batch that waits for its executor. These ops are not in `_queue` during that time. */
+  public _inFlightOps: OperationQueueItem[] = [];
   public _timerID: NodeJS.Timeout | undefined = undefined;
   private _enqueueIntoBucket = 0;
   private _operationModelStore: OperationModelStore;
@@ -165,7 +167,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
 
       const operations = ops.map((op) => op.operation);
-      const response = await executor._execute(operations);
+      this._inFlightOps = ops;
+      const response = await executor._execute(operations).finally(() => (this._inFlightOps = []));
       const idTranslations = response._idTranslations;
 
       Log._debug(`OpRepo: result = ${response._result}`);
@@ -252,8 +255,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
-      // The request never reached the server, so keep the operations and send them later.
-      if (e === RetryLimitError) {
+      // No response from the server while offline, so keep the operations and send them later.
+      if (e === RetryLimitError && !navigator.onLine) {
         [...ops].reverse().forEach((op) => {
           op.retries++;
           this._queue.unshift(op);
