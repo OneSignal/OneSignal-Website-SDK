@@ -353,4 +353,37 @@ describe('LoginManager with the real operation queue under Identity Verification
     ]);
     expect(tagRequestsFor('bob')).toHaveLength(0);
   });
+
+  test('addEmail while the login request is in flight: the retry sends the email with the user create', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      http.post(
+        '**/apps/:appId/users',
+        async () => {
+          await held;
+          return HttpResponse.json({}, { status: 500 });
+        },
+        { once: true },
+      ),
+    );
+
+    void LoginManager.login('bob', 'jwt-bob');
+    await expect.poll(() => requestsFor('bob').length, { interval: 5 }).toBe(1);
+    User._createOrGetInstance().addEmail('bob@example.com');
+    expect(OneSignal._coreDirector._operationRepo._queue.map((op) => op.operation._name)).toEqual([
+      'create-subscription',
+    ]);
+    release();
+    await settle();
+
+    expect(requestsFor('bob')).toHaveLength(2);
+    expect(requestsFor('bob')[1].body.subscriptions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'Email', token: 'bob@example.com' }),
+      ]),
+    );
+    expect(OneSignal._coreDirector._operationRepo._queue).toEqual([]);
+  });
 });
