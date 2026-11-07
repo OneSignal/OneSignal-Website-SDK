@@ -1,6 +1,7 @@
 import * as OneSignalApi from 'src/shared/api/page';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { clearAll } from 'src/shared/database/client';
+import { _subscriptionCheckIdle } from 'src/shared/listeners';
 import { vi, beforeAll, beforeEach, afterEach, afterAll, type MockInstance } from 'vite-plus/test';
 
 import { DEFAULT_USER_AGENT } from './constants';
@@ -17,7 +18,9 @@ beforeEach(async () => {
   await clearAll();
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // A check that an executor started must not change the models of the next test.
+  await _subscriptionCheckIdle();
   server.resetHandlers();
   if (typeof OneSignal !== 'undefined') {
     // The poll interval must not outlive the test: after jsdom teardown a tick

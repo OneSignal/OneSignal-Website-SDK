@@ -2,6 +2,7 @@ import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operati
 import type { IRebuildUserService } from 'src/core/types/user';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
+import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 
 import { OPERATION_NAME } from '../constants';
 import { type JwtTokenStore } from '../JwtTokenStore';
@@ -124,6 +125,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           createOperation._onesignalId,
           ModelChangeTags._Hydrate,
         );
+        checkAndTriggerSubscriptionChanged().catch(Log._error);
       }
 
       return {

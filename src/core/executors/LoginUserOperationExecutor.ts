@@ -3,7 +3,10 @@ import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operati
 import { getBrowserLanguage } from 'src/shared/helpers/general';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
-import { checkAndTriggerUserChanged } from 'src/shared/listeners';
+import {
+  checkAndTriggerSubscriptionChanged,
+  checkAndTriggerUserChanged,
+} from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
@@ -239,6 +242,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       void checkAndTriggerUserChanged();
+      if (stillCurrent && subscriptionList.length) {
+        checkAndTriggerSubscriptionChanged().catch(Log._error);
+      }
 
       const followUp =
         Object.keys(identity).length > 0
