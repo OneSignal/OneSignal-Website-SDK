@@ -533,6 +533,52 @@ describe('OperationRepo', () => {
       expect(queued()).toEqual([currentTag]);
       expect(mockOperationModelStore._list()).toEqual([currentTag]);
     });
+
+    test('a dropped login keeps the subscription operations of the current user', async () => {
+      const localId = IDManager._createLocalId();
+      setCurrentUser(localId, EXTERNAL_ID);
+      const transfer = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: localId,
+        externalId: EXTERNAL_ID,
+        subscriptionId: IDManager._createLocalId(),
+      });
+      opRepo._enqueue(transfer);
+
+      await opRepo._executeOperations([
+        { operation: login(localId, EXTERNAL_ID), bucket: 0, retries: 0 },
+      ]);
+
+      expect(queued()).toEqual([transfer]);
+    });
+
+    test('a login that the server rejects removes the operations of its user', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      opRepo = new OperationRepo(
+        [
+          mockExecutor,
+          {
+            _operations: ['login-user'],
+            _execute: () => Promise.resolve({ _result: ExecutionResult._FailNoretry }),
+          },
+        ],
+        mockOperationModelStore,
+        new NewRecordsState(),
+        jwtTokenStore,
+        identityModelStore,
+      );
+      const localId = IDManager._createLocalId();
+      setCurrentUser(localId, EXTERNAL_ID);
+      const tag = opRepo._enqueueAndWait(setTag(localId, EXTERNAL_ID));
+
+      await opRepo._executeOperations([
+        { operation: login(localId, EXTERNAL_ID), bucket: 0, retries: 0 },
+      ]);
+
+      await expect(tag).rejects.toThrow(OperationFailedError);
+      expect(queued()).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+    });
   });
 
   describe('JWT requirement UNKNOWN', () => {

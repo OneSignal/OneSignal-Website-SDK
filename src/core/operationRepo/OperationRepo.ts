@@ -242,7 +242,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
    * from a transfer, so those operations stay. If that operation was
    * dropped, the operations that wait for the id can never start, so they are removed.
    * The current user keeps its operations: a later call can still enqueue its
-   * login. At start, a current user with an externalId gets a new login, because
+   * login. While its id is local, it also keeps its subscription operations,
+   * because that login sends them. At start, a current user with an externalId gets a new login, because
    * login with the same externalId does nothing. The login is enqueued before the
    * removal, so the subscription operations that it sends stay.
    */
@@ -285,6 +286,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           (op instanceof BaseSubscriptionOperation &&
             !(op instanceof CreateSubscriptionOperation) &&
             !created.has(op._onesignalId) &&
+            !(op._onesignalId === currentId && IDManager._isLocalId(currentId)) &&
             isLost(op._subscriptionId))
         );
       })
@@ -463,6 +465,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       this._operationModelStore._remove(op.operation._modelId);
     });
     ops.forEach((op) => op.resolver?.(false, result));
+    // The server rejected the user, so a new login at start would fail the same way.
+    operations.forEach((op) => {
+      if (op instanceof LoginUserOperation && IDManager._isLocalId(op._onesignalId))
+        this._removeQueued((queued) => queued._onesignalId === op._onesignalId);
+    });
     this._removeUntranslatableOps(false);
   }
 
