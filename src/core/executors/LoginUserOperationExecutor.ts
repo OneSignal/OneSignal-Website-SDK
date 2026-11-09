@@ -213,11 +213,13 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         }
       }
 
-      const remainingBackendSubs = [...(response.result.subscriptions ?? [])];
-      subscriptionList.forEach(([localId, localSub]) => {
-        const backendSub = findMatchingBackendSubscription(remainingBackendSubs, localId, localSub);
+      const matches = matchBackendSubscriptions(
+        subscriptionList,
+        response.result.subscriptions ?? [],
+      );
+      subscriptionList.forEach(([localId]) => {
+        const backendSub = matches.get(localId);
         if (!backendSub) return;
-        remainingBackendSubs.splice(remainingBackendSubs.indexOf(backendSub), 1);
         idTranslations[localId] = backendSub.id;
 
         if (!stillCurrent) return;
@@ -358,21 +360,38 @@ const getTimeZoneId = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 /**
  * The create user response does not list subscriptions in the request order,
- * so match by ID, then by token. Email and SMS always match by token, so only
- * push falls back to the type.
+ * so match every subscription by ID first, then by token. The response can also
+ * include subscriptions of the user on other devices. So an unmatched push only
+ * takes a push of the same type with a blank token, and only if it is the only one.
  */
-function findMatchingBackendSubscription(
-  remaining: ISubscription[],
-  localId: string,
-  local: SubscriptionMap[string],
-): ISubscription | undefined {
-  const isEmail = local.type === SubscriptionType._Email;
-  const normalize = (token?: string) => (isEmail ? token?.toLowerCase() : token);
-  return (
-    remaining.find((sub) => sub.id === localId) ??
-    remaining.find((sub) => !!local.token && normalize(sub.token) === normalize(local.token)) ??
-    (isEmail || local.type === SubscriptionType._SMS
-      ? undefined
-      : remaining.find((sub) => sub.type === local.type))
-  );
+function matchBackendSubscriptions(
+  localSubs: [string, SubscriptionMap[string]][],
+  backendSubs: ISubscription[],
+): Map<string, ISubscription> {
+  const remaining = backendSubs.filter((sub) => !!sub.id);
+  const matches = new Map<string, ISubscription>();
+  const matchEach = (
+    find: (localId: string, local: SubscriptionMap[string]) => ISubscription | undefined,
+  ) =>
+    localSubs.forEach(([localId, local]) => {
+      if (matches.has(localId)) return;
+      const sub = find(localId, local);
+      if (!sub) return;
+      matches.set(localId, sub);
+      remaining.splice(remaining.indexOf(sub), 1);
+    });
+
+  matchEach((localId) => remaining.find((sub) => sub.id === localId));
+  matchEach((_, local) => {
+    if (!local.token) return undefined;
+    const normalize = (token?: string) =>
+      local.type === SubscriptionType._Email ? token?.toLowerCase() : token;
+    return remaining.find((sub) => normalize(sub.token) === normalize(local.token));
+  });
+  matchEach((_, local) => {
+    if (local.type === SubscriptionType._Email || local.type === SubscriptionType._SMS) return;
+    const candidates = remaining.filter((sub) => sub.type === local.type && !sub.token);
+    return candidates.length === 1 ? candidates[0] : undefined;
+  });
+  return matches;
 }
