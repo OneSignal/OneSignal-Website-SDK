@@ -6,7 +6,7 @@ import {
   type IStartableService,
 } from 'src/core/types/operation';
 import { db } from 'src/shared/database/client';
-import { OperationFailedError } from 'src/shared/errors/common';
+import { OperationFailedError, RetryLimitError } from 'src/shared/errors/common';
 import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
@@ -443,6 +443,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           Log._error(`Op failed, pausing: ${JSON.stringify(operations)}`);
           this._pause();
           ops.forEach((op) => op.resolver?.(false, response._result));
+          this._removeOpsOfRejectedLogins(operations);
           [...ops].reverse().forEach((op) => {
             removeOpFromDB(op.operation);
             this._queue.unshift(op);
@@ -470,14 +471,24 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
     } catch (e) {
       Log._error(`Op execute error: ${JSON.stringify(ops)}`, e);
+      ops.forEach((op) => op.resolver?.(false, ExecutionResult._FailNoretry));
 
-      // On failure remove operations from store
+      // The server did not answer, so keep the operations in IndexedDB and send them on the next page load.
+      if (e === RetryLimitError) return;
+
       ops.forEach((op) => {
         this._operationModelStore._remove(op.operation._modelId);
       });
-      ops.forEach((op) => op.resolver?.(false, ExecutionResult._FailNoretry));
       this._removeUntranslatableOps(false);
     }
+  }
+
+  /** The server rejected the user, so a new login at start would fail the same way. */
+  private _removeOpsOfRejectedLogins(operations: Operation[]): void {
+    operations.forEach((op) => {
+      if (op instanceof LoginUserOperation && IDManager._isLocalId(op._onesignalId))
+        this._removeQueued((queued) => queued._onesignalId === op._onesignalId);
+    });
   }
 
   private _dropAndWake(
@@ -490,11 +501,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       this._operationModelStore._remove(op.operation._modelId);
     });
     ops.forEach((op) => op.resolver?.(false, result));
-    // The server rejected the user, so a new login at start would fail the same way.
-    operations.forEach((op) => {
-      if (op instanceof LoginUserOperation && IDManager._isLocalId(op._onesignalId))
-        this._removeQueued((queued) => queued._onesignalId === op._onesignalId);
-    });
+    this._removeOpsOfRejectedLogins(operations);
     this._removeUntranslatableOps(false);
   }
 
