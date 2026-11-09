@@ -15,10 +15,13 @@ let lastIdSequence = 0;
 /**
  * IndexedDB returns saved operations in key order, and the key is the model id.
  * The id starts with a fixed-width increasing number, so that order is the enqueue order after a reload.
+ * The `{` prefix sorts after `0-9a-z`, so operations that an older SDK saved with a random id load first.
  */
 function createOrderedModelId(): string {
   lastIdSequence = Math.max(Date.now() * 1000, lastIdSequence + 1);
-  return lastIdSequence.toString(36).padStart(11, '0') + Math.random().toString(36).substring(2, 8);
+  return (
+    '{' + lastIdSequence.toString(36).padStart(11, '0') + Math.random().toString(36).substring(2, 8)
+  );
 }
 
 type BaseOperation = {

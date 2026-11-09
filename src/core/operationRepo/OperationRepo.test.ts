@@ -164,6 +164,26 @@ describe('OperationRepo', () => {
       expect(saved.map((op) => op.modelId)).toEqual(ops.map((op) => op._modelId));
     });
 
+    test('IndexedDb returns operations from an older SDK before new operations', async () => {
+      const oldOp = new SetAliasOperation(APP_ID, ONESIGNAL_ID, 'old', 'value');
+      await db.put('operations', {
+        ...oldOp.toJSON(),
+        modelId: 'zzzzzzzzzzz',
+        modelName: 'operations',
+      });
+      await opRepo._loadSavedOperations();
+
+      const newOp = new SetAliasOperation(APP_ID, ONESIGNAL_ID, 'new', 'value');
+      opRepo._enqueue(newOp);
+
+      let saved: IndexedDBSchema['operations']['value'][] = [];
+      await vi.waitUntil(async () => {
+        saved = await db.getAll('operations');
+        return saved.length === 2;
+      });
+      expect(saved.map((op) => op.modelId)).toEqual(['zzzzzzzzzzz', newOp._modelId]);
+    });
+
     test('operations can be loaded from IndexedDb on start', async () => {
       const op = new SetAliasOperation();
       const op2 = new CreateSubscriptionOperation();
