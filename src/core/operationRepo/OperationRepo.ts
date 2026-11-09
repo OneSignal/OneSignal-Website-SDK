@@ -448,8 +448,16 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       Log._error(`Op execute error: ${JSON.stringify(ops)}`, e);
       ops.forEach((op) => op.resolver?.(false, ExecutionResult._FailNoretry));
 
-      // The server did not answer, so keep the operations in IndexedDB and send them on the next page load.
-      if (e === RetryLimitError) return;
+      // No response from the server, so keep the operations and send them later. The waiters
+      // already rejected, so the retries do not keep login() or a user switch pending.
+      if (e === RetryLimitError) {
+        [...ops].reverse().forEach((op) => {
+          op.retries++;
+          op.resolver = undefined;
+          this._queue.unshift(op);
+        });
+        return this._delayBeforeNextExecution(ops[0].retries);
+      }
 
       ops.forEach((op) => {
         this._operationModelStore._remove(op.operation._modelId);

@@ -562,7 +562,7 @@ describe('OperationRepo', () => {
       expect(queued()).toEqual([transfer]);
     });
 
-    test('a login that the server does not answer stays saved with the subscription operations in its batch', async () => {
+    test('a login that the server does not answer stays queued with the subscription operations in its batch', async () => {
       vi.spyOn(Log, '_error').mockImplementation(() => undefined);
       useLoginExecutor(() => Promise.reject(RetryLimitError));
       const localId = IDManager._createLocalId();
@@ -582,7 +582,10 @@ describe('OperationRepo', () => {
       await opRepo._executeOperations(batch!);
 
       await expect(waiter).rejects.toThrow(OperationFailedError);
-      expect(queued()).toEqual([]);
+      expect(opRepo._queue).toEqual([
+        { operation: loginOp, bucket: expect.any(Number), retries: 1 },
+        { operation: transfer, bucket: expect.any(Number), retries: 1 },
+      ]);
       expect(mockOperationModelStore._list()).toEqual([loginOp, transfer]);
     });
 
