@@ -8,11 +8,13 @@ import {
 } from '__test__/support/helpers/setup';
 import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
+import { LoginUserOperationExecutor } from 'src/core/executors/LoginUserOperationExecutor';
 import { OP_REPO_EXECUTION_INTERVAL } from 'src/core/operationRepo/constants';
 import { ModelChangeTags } from 'src/core/types/models';
 import User from 'src/onesignal/User';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { clearAll, db } from 'src/shared/database/client';
+import { RetryLimitError } from 'src/shared/errors/common';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
@@ -385,5 +387,31 @@ describe('LoginManager with the real operation queue under Identity Verification
       ]),
     );
     expect(OneSignal._coreDirector._operationRepo._queue).toEqual([]);
+  });
+
+  test('addEmail while the login request gets no answer: IndexedDB keeps the login and the email for the next page load', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    vi.spyOn(LoginUserOperationExecutor.prototype, '_execute').mockImplementationOnce(async () => {
+      await held;
+      throw RetryLimitError;
+    });
+
+    const login = LoginManager.login('bob', 'jwt-bob').catch(() => undefined);
+    const repo = OneSignal._coreDirector._operationRepo;
+    await expect.poll(() => repo._inFlightOps.length, { interval: 5 }).toBeGreaterThan(0);
+    const batch = repo._inFlightOps.map((op) => op.operation._name);
+    expect(batch[0]).toBe('login-user');
+    User._createOrGetInstance().addEmail('bob@example.com');
+    release();
+    await login;
+
+    await expect
+      .poll(async () => (await db.getAll('operations')).map((op) => op.name).sort())
+      .toEqual([...batch, 'create-subscription'].sort());
+    expect(OneSignal._coreDirector._operationRepo._queue.map((op) => op.operation._name)).toEqual([
+      'create-subscription',
+    ]);
   });
 });
