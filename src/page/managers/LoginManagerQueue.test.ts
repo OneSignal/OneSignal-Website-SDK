@@ -389,29 +389,26 @@ describe('LoginManager with the real operation queue under Identity Verification
     expect(OneSignal._coreDirector._operationRepo._queue).toEqual([]);
   });
 
-  test('addEmail while the login request gets no answer: IndexedDB keeps the login and the email for the next page load', async () => {
+  test('addEmail after the login request gets no answer: the retry sends 1 user create with the email', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    let release!: () => void;
-    const held = new Promise<void>((resolve) => (release = resolve));
-    vi.spyOn(LoginUserOperationExecutor.prototype, '_execute').mockImplementationOnce(async () => {
-      await held;
-      throw RetryLimitError;
-    });
+    vi.spyOn(LoginUserOperationExecutor.prototype, '_execute').mockRejectedValueOnce(
+      RetryLimitError,
+    );
 
-    const login = LoginManager.login('bob', 'jwt-bob').catch(() => undefined);
+    await expect(LoginManager.login('bob', 'jwt-bob')).rejects.toThrow();
     const repo = OneSignal._coreDirector._operationRepo;
-    await expect.poll(() => repo._inFlightOps.length, { interval: 5 }).toBeGreaterThan(0);
-    const batch = repo._inFlightOps.map((op) => op.operation._name);
-    expect(batch[0]).toBe('login-user');
+    expect(repo._queue[0].operation._name).toBe('login-user');
     User._createOrGetInstance().addEmail('bob@example.com');
-    release();
-    await login;
+    expect(repo._queue.filter((op) => op.operation._name === 'login-user')).toHaveLength(1);
+    await settle();
 
-    await expect
-      .poll(async () => (await db.getAll('operations')).map((op) => op.name).sort())
-      .toEqual([...batch, 'create-subscription'].sort());
-    expect(OneSignal._coreDirector._operationRepo._queue.map((op) => op.operation._name)).toEqual([
-      'create-subscription',
-    ]);
+    expect(requestsFor('bob')).toHaveLength(1);
+    expect(requestsFor('bob')[0].body.subscriptions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'Email', token: 'bob@example.com' }),
+      ]),
+    );
+    expect(repo._queue).toEqual([]);
+    expect(await db.getAll('operations')).toEqual([]);
   });
 });
