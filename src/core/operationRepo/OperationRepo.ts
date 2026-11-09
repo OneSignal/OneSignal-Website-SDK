@@ -266,10 +266,16 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       Log._error(`Op execute error: ${JSON.stringify(ops)}`, e);
 
-      // The server did not answer, so keep the operations in IndexedDB and send them on the next page load.
+      // Online, a request that gets no answer can be blocked (CSP, firewall), so reject the
+      // waiters. The operations stay queued, so login() does not stay pending.
       if (e === RetryLimitError) {
         ops.forEach((op) => op.resolver?.(false));
-        return;
+        [...ops].reverse().forEach((op) => {
+          op.retries++;
+          op.resolver = undefined;
+          this._queue.unshift(op);
+        });
+        return this._delayBeforeNextExecution(ops[0].retries);
       }
 
       // On failure remove operations from store

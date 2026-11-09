@@ -518,7 +518,7 @@ describe('OperationRepo', () => {
       onLineSpy.mockRestore();
     });
 
-    test('keeps operations for the next page load when the request fails while the browser is online', async () => {
+    test('rejects the waiters but keeps the operations queued when the request fails while the browser is online', async () => {
       vi.spyOn(Log, '_error').mockImplementation(() => undefined);
       executeFn.mockRejectedValueOnce(RetryLimitError);
       const groupedOps = getGroupedOp();
@@ -528,9 +528,19 @@ describe('OperationRepo', () => {
 
       await executeOps(opRepo);
 
-      expect(opRepo._queue).toEqual([]);
+      expect(opRepo._queue).toEqual([
+        { operation: groupedOps[0], bucket: 0, retries: 1 },
+        { operation: groupedOps[1], bucket: 0, retries: 1 },
+      ]);
+      expect(opRepo._queue[0].resolver).toBeUndefined();
       expect(mockOperationModelStore._list()).toEqual(groupedOps);
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF);
       await vi.waitUntil(() => rejected.mock.calls.length === 1);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
     });
 
     test('drops operations when the executor throws another error', async () => {
