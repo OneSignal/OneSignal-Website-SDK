@@ -266,6 +266,12 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       Log._error(`Op execute error: ${JSON.stringify(ops)}`, e);
 
+      // The server did not answer, so keep the operations in IndexedDB and send them on the next page load.
+      if (e === RetryLimitError) {
+        ops.forEach((op) => op.resolver?.(false));
+        return;
+      }
+
       // On failure remove operations from store
       ops.forEach((op) => {
         this._operationModelStore._remove(op.operation._modelId);

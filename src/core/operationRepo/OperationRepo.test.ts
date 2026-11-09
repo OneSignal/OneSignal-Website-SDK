@@ -518,9 +518,24 @@ describe('OperationRepo', () => {
       onLineSpy.mockRestore();
     });
 
-    test('drops operations when the request fails while the browser is online', async () => {
+    test('keeps operations for the next page load when the request fails while the browser is online', async () => {
       vi.spyOn(Log, '_error').mockImplementation(() => undefined);
       executeFn.mockRejectedValueOnce(RetryLimitError);
+      const groupedOps = getGroupedOp();
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(groupedOps[0]).catch(rejected);
+      opRepo._enqueue(groupedOps[1]);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual(groupedOps);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
+    });
+
+    test('drops operations when the executor throws another error', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      executeFn.mockRejectedValueOnce(new Error('executor error'));
       const op = new Operation('1');
       const rejected = vi.fn();
       opRepo._enqueueAndWait(op).catch(rejected);
