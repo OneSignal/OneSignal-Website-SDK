@@ -1,4 +1,5 @@
 import {
+  APP_ID,
   BASE_IDENTITY,
   BASE_SUB,
   DEVICE_OS,
@@ -45,6 +46,7 @@ import {
 } from '__test__/support/helpers/setup';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import type { OperationQueueItem } from 'src/core/operationRepo/OperationRepo';
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
 import { type ICreateUserSubscription } from 'src/core/types/api';
 import { ModelChangeTags } from 'src/core/types/models';
 import LoginManager from 'src/page/managers/LoginManager';
@@ -56,6 +58,7 @@ import * as MainHelper from 'src/shared/helpers/main';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
+import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 mockPageStylesCss();
@@ -240,6 +243,20 @@ describe('OneSignal - No Consent Required', () => {
             ...subscription,
           },
         ]);
+      });
+
+      test('does not add a second login while the login request is in flight', () => {
+        const localId = IDManager._createLocalId();
+        updateIdentityModel('onesignal_id', localId);
+        const opRepo = OneSignal._coreDirector._operationRepo;
+        opRepo._inFlightOps = [
+          { operation: new LoginUserOperation(APP_ID, localId), bucket: 0, retries: 0 },
+        ];
+
+        OneSignal.User.addEmail(email);
+
+        expect(opRepo._queue.map((item) => item.operation._name)).toEqual(['create-subscription']);
+        opRepo._inFlightOps = [];
       });
 
       test('can remove an email subscription from the current user', async () => {
@@ -756,6 +773,7 @@ describe('OneSignal - No Consent Required', () => {
             subscriptions: [
               {
                 id: SUB_ID,
+                type: SubscriptionType._ChromePush,
               },
             ],
           });
@@ -1143,6 +1161,7 @@ describe('OneSignal - No Consent Required', () => {
         subscriptions: [
           {
             id: SUB_ID,
+            type: SubscriptionType._ChromePush,
           },
         ],
       });

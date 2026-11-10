@@ -147,6 +147,34 @@ describe('Slidedown', () => {
       expect(sd._allowButton.innerText).toBe('Yes');
       expect(sd._cancelButton.innerText).toBe('No');
     });
+
+    test('uses default icon alt text', async () => {
+      const sd = createSlidedown();
+      await sd._create();
+
+      const image = document.querySelector(`.${SLIDEDOWN_CSS_CLASSES._Icon} img`);
+      expect(image?.getAttribute('alt')).toBe('notification icon');
+    });
+
+    test('uses icon alt text from options', async () => {
+      const sd = createSlidedown({
+        text: { ...defaultOptions.text, iconAlt: 'NFL Logo' },
+      });
+      await sd._create();
+
+      const image = document.querySelector(`.${SLIDEDOWN_CSS_CLASSES._Icon} img`);
+      expect(image?.getAttribute('alt')).toBe('NFL Logo');
+    });
+
+    test('allows empty icon alt text', async () => {
+      const sd = createSlidedown({
+        text: { ...defaultOptions.text, iconAlt: '' },
+      });
+      await sd._create();
+
+      const image = document.querySelector(`.${SLIDEDOWN_CSS_CLASSES._Icon} img`);
+      expect(image?.getAttribute('alt')).toBe('');
+    });
   });
 
   describe('_onSlidedownCanceled', () => {
