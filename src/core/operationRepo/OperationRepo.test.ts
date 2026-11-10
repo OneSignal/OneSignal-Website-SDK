@@ -1,6 +1,7 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { clearAll, db } from 'src/shared/database/client';
 import type { IndexedDBSchema } from 'src/shared/database/types';
+import { RetryLimitError } from 'src/shared/errors/common';
 import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
@@ -16,7 +17,7 @@ import {
 } from '../operations/Operation';
 import { SetAliasOperation } from '../operations/SetAliasOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import { OP_REPO_POST_CREATE_DELAY } from './constants';
+import { OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF, OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo } from './OperationRepo';
 
@@ -510,6 +511,89 @@ describe('OperationRepo', () => {
 
       // queue is clear so no more operations to process
       expect(opRepo._getNextOps(0)).toBeNull();
+    });
+
+    test('does not start operations while the browser is offline', () => {
+      const onLineSpy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      opRepo._enqueue(mockOperation);
+
+      expect(opRepo._getNextOps(0)).toBeNull();
+      expect(opRepo._queue).toHaveLength(1);
+
+      onLineSpy.mockReturnValue(true);
+      expect(opRepo._getNextOps(0)).toEqual([{ operation: mockOperation, bucket: 0, retries: 0 }]);
+      onLineSpy.mockRestore();
+    });
+
+    test('keeps operations when the request fails while the browser is offline', async () => {
+      const onLineSpy = vi.spyOn(navigator, 'onLine', 'get');
+      executeFn.mockImplementationOnce(() => {
+        onLineSpy.mockReturnValue(false);
+        return Promise.reject(RetryLimitError);
+      });
+      const groupedOps = getGroupedOp();
+      const resolved = vi.fn();
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(groupedOps[0]).then(resolved, rejected);
+      opRepo._enqueue(groupedOps[1]);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([
+        { operation: groupedOps[0], bucket: 0, retries: 1, resolver: expect.any(Function) },
+        { operation: groupedOps[1], bucket: 0, retries: 1 },
+      ]);
+      expect(mockOperationModelStore._list()).toEqual(groupedOps);
+      expect(resolved).not.toHaveBeenCalled();
+      expect(rejected).not.toHaveBeenCalled();
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF);
+
+      onLineSpy.mockReturnValue(true);
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+      expect(resolved).toHaveBeenCalled();
+      onLineSpy.mockRestore();
+    });
+
+    test('rejects the waiters but keeps the operations queued when the request fails while the browser is online', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      executeFn.mockRejectedValueOnce(RetryLimitError);
+      const groupedOps = getGroupedOp();
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(groupedOps[0]).catch(rejected);
+      opRepo._enqueue(groupedOps[1]);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([
+        { operation: groupedOps[0], bucket: 0, retries: 1 },
+        { operation: groupedOps[1], bucket: 0, retries: 1 },
+      ]);
+      expect(opRepo._queue[0].resolver).toBeUndefined();
+      expect(mockOperationModelStore._list()).toEqual(groupedOps);
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+    });
+
+    test('drops operations when the executor throws another error', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      executeFn.mockRejectedValueOnce(new Error('executor error'));
+      const op = new Operation('1');
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(op).catch(rejected);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
     });
   });
 });
