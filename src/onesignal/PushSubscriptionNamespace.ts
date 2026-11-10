@@ -1,6 +1,6 @@
-import { getDBAppConfig } from 'src/shared/database/config';
 import { getSubscription, setSubscription } from 'src/shared/database/subscription';
 import { AppIDMissingError, MalformedArgumentError } from 'src/shared/errors/common';
+import { getAppId } from 'src/shared/helpers/main';
 import {
   checkAndTriggerSubscriptionChanged,
   onInternalSubscriptionSet,
@@ -111,10 +111,9 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
   private async _enable(enabled: boolean): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    const appConfig = await getDBAppConfig();
     const subscriptionFromDb = await getSubscription();
 
-    if (!appConfig.appId) {
+    if (!getAppId()) {
       throw AppIDMissingError;
     }
     if (typeof enabled !== 'boolean') {
