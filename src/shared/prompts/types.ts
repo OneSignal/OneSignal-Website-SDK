@@ -69,6 +69,7 @@ export interface SlidedownTextOptions {
   actionMessage: string;
   acceptButton: string;
   cancelButton: string;
+  iconAlt?: string;
   negativeUpdateButton?: string;
   positiveUpdateButton?: string;
   updateMessage?: string;
