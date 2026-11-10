@@ -3,10 +3,15 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { updateIdentityModel } from '__test__/support/helpers/setup';
 import { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { BaseSubscriptionOperation } from 'src/core/operations/BaseSubscriptionOperation';
+import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { SetPropertyOperation } from 'src/core/operations/SetPropertyOperation';
 import { TransferSubscriptionOperation } from 'src/core/operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from 'src/core/operations/UpdateSubscriptionOperation';
+import { ExecutionResult } from 'src/core/types/operation';
+import User from 'src/onesignal/User';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
+import { OperationFailedError } from 'src/shared/errors/common';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
@@ -225,6 +230,84 @@ describe('LoginManager', () => {
 
       expect((await loginAndGetOp())._existingOnesignalId).toBeUndefined();
     });
+  });
+
+  describe('login: the server rejects the login', () => {
+    const unauthorized = () => new OperationFailedError(ExecutionResult._FailUnauthorized);
+
+    beforeEach(() => {
+      vi.spyOn(OneSignal._coreDirector, '_getPushSubscriptionModel').mockResolvedValue(undefined);
+    });
+
+    test('rejects for the caller, and code that waits for the switch continues', async () => {
+      let rejectLogin: (e: Error) => void = () => undefined;
+      vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockImplementation(
+        () => new Promise((_, reject) => (rejectLogin = reject)),
+      );
+
+      const login = LoginManager.login('new-id', 'jwt');
+      const waiter = LoginManager._switchingUsersPromise;
+      rejectLogin(unauthorized());
+
+      await expect(login).rejects.toThrow(OperationFailedError);
+      await expect(waiter).resolves.toBeUndefined();
+      await expect(LoginManager._switchingUsersPromise).resolves.toBeUndefined();
+    });
+
+    test('a later login runs at once', async () => {
+      const enqueueAndWaitSpy = vi
+        .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
+        .mockRejectedValueOnce(unauthorized())
+        .mockResolvedValueOnce(undefined);
+
+      await expect(LoginManager.login('A', 'jwt-a')).rejects.toThrow(OperationFailedError);
+
+      await LoginManager.login('B', 'jwt-b');
+
+      expect(enqueueAndWaitSpy).toHaveBeenCalledTimes(2);
+      expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('B');
+    });
+  });
+
+  test('login: user data that follows each login without an await goes to that user', async () => {
+    setJwtRequirement(JwtRequirement._Required);
+    const enqueueAndWaitSpy = vi
+      .spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait')
+      .mockResolvedValue(undefined);
+    const enqueueSpy = vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueue');
+    const user = User._createOrGetInstance();
+
+    const loginA = LoginManager.login('A', 'jwt-a');
+    user.addTag('a', '1');
+    const loginB = LoginManager.login('B', 'jwt-b');
+    user.addTag('b', '1');
+    const loginC = LoginManager.login('C', 'jwt-c');
+    user.addTag('c', '1');
+    await Promise.all([loginA, loginB, loginC]);
+
+    const ops = enqueueSpy.mock.calls.map(([op]) => op);
+    const tagOps = ops.filter((op) => op instanceof SetPropertyOperation);
+    expect(tagOps.map((op) => [op._externalId, op.value])).toEqual([
+      ['A', { a: '1' }],
+      ['B', { b: '1' }],
+      ['C', { c: '1' }],
+    ]);
+    // Each operation names one user: the external id matches the onesignal id.
+    const userByOnesignalId = Object.fromEntries(
+      enqueueAndWaitSpy.mock.calls.map(([op]) => [op._onesignalId, op._externalId]),
+    );
+    ops.forEach((op) => expect(userByOnesignalId[op._onesignalId]).toBe(op._externalId));
+    // The first login adds the placeholder push model. No login ran, so each later
+    // login replaces the queued create of the placeholder with its own create.
+    const createSubOps = ops.filter((op) => op instanceof CreateSubscriptionOperation);
+    expect(createSubOps.map((op) => op._externalId)).toEqual(['A', 'B', 'C']);
+    expect(new Set(createSubOps.map((op) => op._subscriptionId)).size).toBe(1);
+    expect(ops.some((op) => op instanceof TransferSubscriptionOperation)).toBe(false);
+    const queuedSubOps = OneSignal._coreDirector._operationRepo._queue
+      .map(({ operation }) => operation)
+      .filter((op) => op instanceof CreateSubscriptionOperation);
+    expect(queuedSubOps).toEqual([createSubOps[2]]);
+    expect(OneSignal._coreDirector._getIdentityModel()._externalId).toBe('C');
   });
 
   test('logout: no external id logs debug and returns', async () => {

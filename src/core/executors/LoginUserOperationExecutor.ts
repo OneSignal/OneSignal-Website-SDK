@@ -3,7 +3,10 @@ import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operati
 import { getBrowserLanguage } from 'src/shared/helpers/general';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
-import { checkAndTriggerUserChanged } from 'src/shared/listeners';
+import {
+  checkAndTriggerSubscriptionChanged,
+  checkAndTriggerUserChanged,
+} from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
@@ -157,7 +160,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         operation instanceof DeleteSubscriptionOperation
       ) {
         subscriptions = this._createSubscriptionsFromOperation(operation, subscriptions);
-      } else {
+      } else if (!(operation instanceof LoginUserOperation)) {
+        // The batch groups by onesignalId, so a second login is for the same user.
+        // A queue saved before a reload can have one, so skip it.
         throw new Error(`Unrecognized operation: ${operation._name}`);
       }
     }
@@ -237,6 +242,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       }
 
       void checkAndTriggerUserChanged();
+      if (stillCurrent && subscriptionList.length) {
+        checkAndTriggerSubscriptionChanged().catch(Log._error);
+      }
 
       const followUp =
         Object.keys(identity).length > 0

@@ -268,8 +268,9 @@ export default class User {
   }
 }
 
-function hasLoginOp(onesignalId: string) {
-  return OneSignal._coreDirector._operationRepo._queue.find(
+export function hasLoginOp(onesignalId: string): boolean {
+  const { _queue, _inFlightOps } = OneSignal._coreDirector._operationRepo;
+  return [..._queue, ..._inFlightOps].some(
     (op) => op.operation instanceof LoginUserOperation && op.operation._onesignalId === onesignalId,
   );
 }

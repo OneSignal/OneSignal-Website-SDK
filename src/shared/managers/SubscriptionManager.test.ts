@@ -1,8 +1,9 @@
-import { BASE_IDENTITY, BASE_SUB, EXTERNAL_ID } from '__test__/constants';
+import { APP_ID, BASE_IDENTITY, BASE_SUB, EXTERNAL_ID, ONESIGNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import {
   createUserFn,
+  requestHeadersFn,
   setCreateUserResponse,
   setUpdateSubscriptionResponse,
   updateSubscriptionFn,
@@ -14,6 +15,12 @@ import {
   mockPushSubscription,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
+import { server } from '__test__/support/mocks/server';
+import { http, HttpResponse } from 'msw';
+import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
+import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { JwtRequirement } from 'src/shared/config/jwtRequirement';
+import { setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { setPushToken } from '../database/subscription';
@@ -85,13 +92,12 @@ describe('SubscriptionManager', () => {
       const subModels = OneSignal._coreDirector._subscriptionModelStore._list();
       expect(subModels.length).toBe(1);
       expect(IDManager._isLocalId(subModels[0].id)).toBe(true);
-      expect(warn).toHaveBeenCalledWith(
+      expect(warn).toHaveBeenCalledExactlyOnceWith(
         expect.stringContaining('create-subscription was dropped. Identity Verification is on'),
       );
 
-      // The anonymous login operation is exempt and waits for login; no request is sent.
-      const queue = OneSignal._coreDirector._operationRepo._queue;
-      expect(queue.map((item) => item.operation._name)).toEqual(['login-user']);
+      // The anonymous login operation could never send, so the queue drops it too.
+      expect(OneSignal._coreDirector._operationRepo._queue).toEqual([]);
       await new Promise((resolve) => setTimeout(resolve, 50));
       expect(createUserFn).not.toHaveBeenCalled();
     });
@@ -137,9 +143,181 @@ describe('SubscriptionManager', () => {
             ...BASE_SUB,
             token: rawSubscription.w3cEndpoint?.toString(),
             type: 'ChromePush',
+            web_auth: rawSubscription.w3cAuth,
+            web_p256: rawSubscription.w3cP256dh,
           },
         ],
       });
+    });
+
+    test('with a login operation for the user still in the queue: enqueues no second login operation', async () => {
+      const rawSubscription = getRawPushSubscription();
+      mockPushManager.getSubscription.mockResolvedValue(
+        Object.assign({}, mockPushSubscription, {
+          endpoint: rawSubscription.w3cEndpoint?.toString(),
+        }),
+      );
+      setCreateUserResponse({ externalId: 'some-external-id' });
+
+      const onesignalId = IDManager._createLocalId();
+      updateIdentityModel('onesignal_id', onesignalId);
+      updateIdentityModel('external_id', 'some-external-id');
+      await setupSubModelStore({
+        id: IDManager._createLocalId(),
+        token: rawSubscription.w3cEndpoint?.toString(),
+        onesignalId,
+      });
+      OneSignal._coreDirector._operationRepo._enqueue(
+        new LoginUserOperation({ appId: APP_ID, onesignalId, externalId: 'some-external-id' }),
+      );
+
+      await updatePushSubscriptionModelWithRawSubscription(rawSubscription);
+
+      expect(createUserFn).toHaveBeenCalledExactlyOnceWith({
+        identity: {
+          external_id: 'some-external-id',
+        },
+        ...BASE_IDENTITY,
+        subscriptions: [
+          {
+            ...BASE_SUB,
+            token: rawSubscription.w3cEndpoint?.toString(),
+            type: 'ChromePush',
+            web_auth: rawSubscription.w3cAuth,
+            web_p256: rawSubscription.w3cP256dh,
+          },
+        ],
+      });
+    });
+
+    test('under Identity Verification, a push grant while a login waits for a new JWT adds no second login', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const rawSubscription = getRawPushSubscription();
+      const token = rawSubscription.w3cEndpoint?.toString();
+      mockPushManager.getSubscription.mockResolvedValue(
+        Object.assign({}, mockPushSubscription, { endpoint: token }),
+      );
+      server.use(
+        http.post(`**/apps/${APP_ID}/users`, async ({ request }) => {
+          requestHeadersFn(Object.fromEntries(request.headers), request.url);
+          createUserFn(await request.json());
+          if (request.headers.get('authorization') === 'Bearer jwt-1') {
+            return HttpResponse.json({}, { status: 401 });
+          }
+          return HttpResponse.json({
+            identity: { onesignal_id: ONESIGNAL_ID, external_id: EXTERNAL_ID },
+          });
+        }),
+        http.get(`**/apps/${APP_ID}/users/by/external_id/${EXTERNAL_ID}`, () =>
+          HttpResponse.json({
+            identity: { onesignal_id: ONESIGNAL_ID, external_id: EXTERNAL_ID },
+            subscriptions: [],
+            properties: {},
+          }),
+        ),
+      );
+
+      await expect(OneSignal.login(EXTERNAL_ID, 'jwt-1')).rejects.toThrow();
+      expect(OneSignal._coreDirector._jwtTokenStore._getJwt(EXTERNAL_ID)).toBeUndefined();
+
+      const queue = OneSignal._coreDirector._operationRepo._queue;
+      await setPushToken(token);
+      const grant = updatePushSubscriptionModelWithRawSubscription(rawSubscription);
+      const grantedId = () =>
+        OneSignal._coreDirector._subscriptionModelStore._list().find((sub) => sub.token === token)
+          ?.id;
+      await vi.waitUntil(
+        () =>
+          queue.some(
+            (item) =>
+              item.operation instanceof CreateSubscriptionOperation &&
+              item.operation._subscriptionId === grantedId(),
+          ),
+        { interval: 1 },
+      );
+      expect(queue.filter((item) => item.operation instanceof LoginUserOperation)).toHaveLength(1);
+
+      await OneSignal.updateUserJwt(EXTERNAL_ID, 'jwt-2');
+      await grant;
+
+      expect(createUserFn).toHaveBeenCalledTimes(2);
+      expect(requestHeadersFn.mock.calls[1][0].authorization).toBe('Bearer jwt-2');
+      expect(createUserFn.mock.calls[1][0]).toMatchObject({
+        identity: { external_id: EXTERNAL_ID },
+        subscriptions: expect.arrayContaining([
+          {
+            ...BASE_SUB,
+            token,
+            type: 'ChromePush',
+            web_auth: rawSubscription.w3cAuth,
+            web_p256: rawSubscription.w3cP256dh,
+          },
+        ]),
+      });
+    });
+
+    test('under Identity Verification, a push grant while a login waits for a new JWT sends the token in the placeholder', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const rawSubscription = getRawPushSubscription();
+      const token = rawSubscription.w3cEndpoint?.toString();
+      mockPushManager.getSubscription.mockResolvedValue(
+        Object.assign({}, mockPushSubscription, { endpoint: token }),
+      );
+      server.use(
+        http.post(`**/apps/${APP_ID}/users`, async ({ request }) => {
+          requestHeadersFn(Object.fromEntries(request.headers), request.url);
+          createUserFn(await request.json());
+          if (request.headers.get('authorization') === 'Bearer jwt-1') {
+            return HttpResponse.json({}, { status: 401 });
+          }
+          return HttpResponse.json({
+            identity: { onesignal_id: ONESIGNAL_ID, external_id: EXTERNAL_ID },
+          });
+        }),
+        http.get(`**/apps/${APP_ID}/users/by/external_id/${EXTERNAL_ID}`, () =>
+          HttpResponse.json({
+            identity: { onesignal_id: ONESIGNAL_ID, external_id: EXTERNAL_ID },
+            subscriptions: [],
+            properties: {},
+          }),
+        ),
+      );
+      await setPushToken(undefined);
+
+      await expect(OneSignal.login(EXTERNAL_ID, 'jwt-1')).rejects.toThrow();
+      const pushModels = () =>
+        OneSignal._coreDirector._subscriptionModelStore
+          ._list()
+          .filter((sub) => sub.type === 'ChromePush');
+      expect(pushModels()).toHaveLength(1);
+      const placeholderId = pushModels()[0].id;
+
+      const queue = OneSignal._coreDirector._operationRepo._queue;
+      const grant = updatePushSubscriptionModelWithRawSubscription(rawSubscription);
+      await vi.waitUntil(
+        () =>
+          queue.filter((item) => item.operation instanceof CreateSubscriptionOperation).length ===
+          2,
+        { interval: 1 },
+      );
+      expect(pushModels()).toHaveLength(1);
+      expect(pushModels()[0]).toMatchObject({ id: placeholderId, token });
+
+      await OneSignal.updateUserJwt(EXTERNAL_ID, 'jwt-2');
+      await grant;
+
+      expect(createUserFn).toHaveBeenCalledTimes(2);
+      expect(requestHeadersFn.mock.calls[1][0].authorization).toBe('Bearer jwt-2');
+      expect(createUserFn.mock.calls[1][0].subscriptions).toEqual([
+        {
+          ...BASE_SUB,
+          token,
+          type: 'ChromePush',
+          web_auth: rawSubscription.w3cAuth,
+          web_p256: rawSubscription.w3cP256dh,
+        },
+      ]);
+      expect((await OneSignal._coreDirector._getPushSubscriptionModel())?.token).toBe(token);
     });
 
     test('should update the push subscription model if it already exists', async () => {

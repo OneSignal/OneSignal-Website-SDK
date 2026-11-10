@@ -10,6 +10,7 @@ import { getCurrentPushToken, showLocalNotification } from './helpers/main';
 import type { EventHandler } from './libraries/Emitter';
 import Log from './libraries/Log';
 import { CustomLinkManager } from './managers/CustomLinkManager';
+import { IDManager } from './managers/IDManager';
 import { UserState } from './models/UserState';
 import type { NotificationClickEvent, NotificationClickEventInternal } from './notifications/types';
 import { isCategorySlidedownConfigured } from './prompts/helpers';
@@ -17,7 +18,20 @@ import { limitStorePut } from './services/limitStore';
 import OneSignalEvent from './services/OneSignalEvent';
 import { logMethodCall } from './utils/utils';
 
-export async function checkAndTriggerSubscriptionChanged() {
+let subscriptionCheck: Promise<unknown> = Promise.resolve();
+
+// An executor that writes the server id and the subscribe flow can both call this.
+// Calls run one at a time, so a later call finds nothing new and emits nothing.
+export function checkAndTriggerSubscriptionChanged(): Promise<void> {
+  const run = subscriptionCheck.then(checkSubscription);
+  subscriptionCheck = run.catch(() => undefined);
+  return run;
+}
+
+/** Settles when no subscription check is pending. */
+export const _subscriptionCheckIdle = (): Promise<unknown> => subscriptionCheck;
+
+async function checkSubscription() {
   logMethodCall('checkAndTriggerSubscriptionChanged');
   const context = OneSignal._context;
   // isPushEnabled = subscribed && is not opted out
@@ -184,11 +198,24 @@ export function onInternalSubscriptionSet(optedOut: boolean): void {
 }
 
 function onSubscriptionChanged_showWelcomeNotification(
-  isSubscribed: boolean | undefined,
-  pushSubscriptionId: string | undefined | null,
+  change: SubscriptionChangeEvent | undefined,
 ) {
+  const previous = change?.previous;
+  const current = change?.current;
+  const isSubscribed = current?.optedIn;
+  const pushSubscriptionId = current?.id;
   if (OneSignal._doNotShowWelcomeNotification) {
     Log._debug('Skipping welcome notif: already subscribed');
+    return;
+  }
+  // The server created a subscription that had a local id. The event for the local id
+  // already showed the notification.
+  if (
+    IDManager._isLocalId(previous?.id) &&
+    !IDManager._isLocalId(pushSubscriptionId) &&
+    previous?.token === current?.token &&
+    previous?.optedIn === isSubscribed
+  ) {
     return;
   }
   const welcome_notification_opts = OneSignal.config?.userConfig.welcomeNotification;
@@ -256,7 +283,7 @@ function onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed?: boolean 
 }
 
 export function _onSubscriptionChanged(change: SubscriptionChangeEvent | undefined) {
-  onSubscriptionChanged_showWelcomeNotification(change?.current?.optedIn, change?.current?.id);
+  onSubscriptionChanged_showWelcomeNotification(change);
   onSubscriptionChanged_sendCategorySlidedownTags(change?.current?.optedIn);
   onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
   onSubscriptionChanged_updateCustomLink();
