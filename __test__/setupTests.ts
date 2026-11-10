@@ -1,7 +1,6 @@
 import * as OneSignalApi from 'src/shared/api/page';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
 import { clearAll } from 'src/shared/database/client';
-import { _subscriptionCheckIdle } from 'src/shared/listeners';
 import { vi, beforeAll, beforeEach, afterEach, afterAll, type MockInstance } from 'vite-plus/test';
 
 import { DEFAULT_USER_AGENT } from './constants';
@@ -20,6 +19,8 @@ beforeEach(async () => {
 
 afterEach(async () => {
   // A check that an executor started must not change the models of the next test.
+  // A static import would load the module before the vi.mock calls of the test file.
+  const { _subscriptionCheckIdle } = await import('src/shared/listeners');
   await _subscriptionCheckIdle();
   server.resetHandlers();
   if (typeof OneSignal !== 'undefined') {

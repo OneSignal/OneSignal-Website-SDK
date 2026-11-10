@@ -4,12 +4,21 @@ import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import { setupSubModelStore } from '__test__/support/environment/TestEnvironmentHelpers';
 import Context from 'src/page/models/Context';
 import { type AppConfig } from 'src/shared/config/types';
-import { beforeEach, describe, expect, test, vi, type MockInstance } from 'vite-plus/test';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from 'vite-plus/test';
 
 import * as clientModule from '../database/client';
 import { db } from '../database/client';
 import { getAppState } from '../database/config';
 import * as InitHelper from './init';
+import { registerForPush } from './subscription';
 
 vi.mock('../database/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../database/client')>();
@@ -18,6 +27,11 @@ vi.mock('../database/client', async (importOriginal) => {
     isReadwriteWedged: vi.fn(() => false),
   };
 });
+
+vi.mock('./subscription', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./subscription')>()),
+  registerForPush: vi.fn(() => Promise.resolve(null)),
+}));
 
 let isSubscriptionExpiringSpy: MockInstance;
 
@@ -32,12 +46,13 @@ beforeEach(() => {
 test('internalInit: a stored token reaches the session manager', async () => {
   vi.spyOn(OneSignal._context._serviceWorkerManager, '_installWorker').mockResolvedValue(undefined);
   // Hidden, so the session init waits for a visibility change and the test stays small.
-  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+  const visibilitySpy = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
   const jwtUpdatedSpy = vi
     .spyOn(OneSignal._context._sessionManager, '_handleJwtUpdated')
     .mockResolvedValue();
 
   await InitHelper.internalInit();
+  visibilitySpy.mockRestore();
   OneSignal._coreDirector._jwtTokenStore._putJwt('jd-1', 'jwt');
 
   expect(jwtUpdatedSpy).toHaveBeenCalledExactlyOnceWith('jd-1');
@@ -140,6 +155,41 @@ describe('initSaveState: default icon', () => {
     await InitHelper.initSaveState();
 
     expect((await db.get('Options', 'defaultIcon'))?.value).toBeNull();
+  });
+});
+
+describe('sessionInit: auto-resubscribe', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestEnvironment.initialize({ permission: 'granted' });
+    OneSignal.config!.userConfig.autoResubscribe = true;
+    OneSignal.config!.userConfig.notifyButton = { enable: false };
+    vi.spyOn(OneSignal._context._serviceWorkerManager, '_installWorker').mockResolvedValue(
+      undefined,
+    );
+    vi.mocked(registerForPush).mockClear();
+  });
+
+  afterEach(() => {
+    vi.mocked(clientModule.isReadwriteWedged).mockReturnValue(false);
+  });
+
+  test('resubscribes when the user is known to be opted in', async () => {
+    localStorage.setItem('os_optedOut', 'false');
+
+    await InitHelper.internalInit();
+
+    expect(registerForPush).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not resubscribe while the opt-out is unknown because IndexedDB is wedged', async () => {
+    await db.put('Options', { key: 'optedOut', value: true });
+    vi.mocked(clientModule.isReadwriteWedged).mockReturnValue(true);
+
+    await InitHelper.internalInit();
+
+    expect(registerForPush).not.toHaveBeenCalled();
+    expect(localStorage.getItem('os_optedOut')).toBeNull();
   });
 });
 

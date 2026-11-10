@@ -11,6 +11,7 @@ const IS_OPTED_OUT = 'isOptedOut';
 const IS_PUSH_NOTIFICATIONS_ENABLED = 'isPushNotificationsEnabled';
 const JWT_REQUIRED = 'os_jwt_required';
 const JWT_TOKENS = 'os_jwt_tokens';
+const OPTED_OUT = 'os_optedOut';
 const PAGE_VIEWS = 'os_pageViews';
 const REQUIRES_PRIVACY_CONSENT = 'requiresPrivacyConsent';
 const USER_CONSENT = 'userConsent';
@@ -79,6 +80,20 @@ export function getJwtTokens(): Record<string, string> {
     localStorage.removeItem(JWT_TOKENS);
     return {};
   }
+}
+
+// Persisted in localStorage for the same reason as consent: on a wedged iOS
+// Safari PWA, a dropped IndexedDB write would undo the user's push opt-out on
+// later loads. Service workers have no localStorage, so they keep IndexedDB.
+export function setOptedOut(value: boolean): void {
+  localStorage.setItem(OPTED_OUT, value.toString());
+}
+
+// Returns null when no value has been stored, so callers can fall back to the
+// legacy IndexedDB row for one-time migration.
+export function getOptedOut(): boolean | null {
+  const value = localStorage.getItem(OPTED_OUT);
+  return value === null ? null : value === 'true';
 }
 
 export function getFeatureFlags(): unknown[] {

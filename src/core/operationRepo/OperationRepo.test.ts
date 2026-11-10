@@ -26,7 +26,7 @@ import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import { OP_REPO_POST_CREATE_DELAY } from './constants';
+import { OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF, OP_REPO_POST_CREATE_DELAY } from './constants';
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo, type OperationQueueItem } from './OperationRepo';
 
@@ -170,6 +170,60 @@ describe('OperationRepo', () => {
           modelName: 'operations',
         },
       ]);
+    });
+
+    test('IndexedDb returns saved operations in enqueue order', async () => {
+      await opRepo._loadSavedOperations();
+
+      const random = vi.spyOn(Math, 'random');
+      const ops = Array.from({ length: 20 }, (_, i) => {
+        random.mockReturnValue(0.99 - i * 0.04);
+        return new SetAliasOperation({
+          appId: APP_ID,
+          onesignalId: ONESIGNAL_ID,
+          label: `label-${i}`,
+          value: 'value',
+        });
+      });
+      random.mockRestore();
+      ops.forEach((op) => opRepo._enqueue(op));
+
+      let saved: IndexedDBSchema['operations']['value'][] = [];
+      await vi.waitUntil(async () => {
+        saved = await db.getAll('operations');
+        return saved.length === ops.length;
+      });
+      expect(saved.map((op) => op.modelId)).toEqual(ops.map((op) => op._modelId));
+    });
+
+    test('IndexedDb returns operations from an older SDK before new operations', async () => {
+      const oldOp = new SetAliasOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        label: 'old',
+        value: 'value',
+      });
+      await db.put('operations', {
+        ...oldOp.toJSON(),
+        modelId: 'zzzzzzzzzzz',
+        modelName: 'operations',
+      });
+      await opRepo._loadSavedOperations();
+
+      const newOp = new SetAliasOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        label: 'new',
+        value: 'value',
+      });
+      opRepo._enqueue(newOp);
+
+      let saved: IndexedDBSchema['operations']['value'][] = [];
+      await vi.waitUntil(async () => {
+        saved = await db.getAll('operations');
+        return saved.length === 2;
+      });
+      expect(saved.map((op) => op.modelId)).toEqual(['zzzzzzzzzzz', newOp._modelId]);
     });
 
     test('operations can be loaded from IndexedDb on start', async () => {
@@ -1347,6 +1401,89 @@ describe('OperationRepo', () => {
 
       // queue is clear so no more operations to process
       expect(opRepo._getNextOps(0)).toBeNull();
+    });
+
+    test('does not start operations while the browser is offline', () => {
+      const onLineSpy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      opRepo._enqueue(mockOperation);
+
+      expect(opRepo._getNextOps(0)).toBeNull();
+      expect(opRepo._queue).toHaveLength(1);
+
+      onLineSpy.mockReturnValue(true);
+      expect(opRepo._getNextOps(0)).toEqual([{ operation: mockOperation, bucket: 0, retries: 0 }]);
+      onLineSpy.mockRestore();
+    });
+
+    test('keeps operations when the request fails while the browser is offline', async () => {
+      const onLineSpy = vi.spyOn(navigator, 'onLine', 'get');
+      executeFn.mockImplementationOnce(() => {
+        onLineSpy.mockReturnValue(false);
+        return Promise.reject(RetryLimitError);
+      });
+      const groupedOps = getGroupedOp();
+      const resolved = vi.fn();
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(groupedOps[0]).then(resolved, rejected);
+      opRepo._enqueue(groupedOps[1]);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([
+        { operation: groupedOps[0], bucket: 0, retries: 1, resolver: expect.any(Function) },
+        { operation: groupedOps[1], bucket: 0, retries: 1 },
+      ]);
+      expect(mockOperationModelStore._list()).toEqual(groupedOps);
+      expect(resolved).not.toHaveBeenCalled();
+      expect(rejected).not.toHaveBeenCalled();
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF);
+
+      onLineSpy.mockReturnValue(true);
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+      expect(resolved).toHaveBeenCalled();
+      onLineSpy.mockRestore();
+    });
+
+    test('rejects the waiters but keeps the operations queued when the request fails while the browser is online', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      executeFn.mockRejectedValueOnce(RetryLimitError);
+      const groupedOps = getGroupedOp();
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(groupedOps[0]).catch(rejected);
+      opRepo._enqueue(groupedOps[1]);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([
+        { operation: groupedOps[0], bucket: 0, retries: 1 },
+        { operation: groupedOps[1], bucket: 0, retries: 1 },
+      ]);
+      expect(opRepo._queue[0].resolver).toBeUndefined();
+      expect(mockOperationModelStore._list()).toEqual(groupedOps);
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+    });
+
+    test('drops operations when the executor throws another error', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      executeFn.mockRejectedValueOnce(new Error('executor error'));
+      const op = new Operation('1');
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(op).catch(rejected);
+
+      await executeOps(opRepo);
+
+      expect(opRepo._queue).toEqual([]);
+      expect(mockOperationModelStore._list()).toEqual([]);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
     });
   });
 });

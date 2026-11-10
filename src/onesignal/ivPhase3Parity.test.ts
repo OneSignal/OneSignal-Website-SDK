@@ -26,6 +26,7 @@ import { registerForPushNotifications } from 'src/shared/helpers/init';
 import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionManagerPage } from 'src/shared/managers/subscription/page';
+import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 /*
@@ -90,7 +91,10 @@ async function setupSession({ flagOn }: { flagOn: boolean }): Promise<void> {
   setFeatureFlags(flagOn ? [FeatureFlag._IdentityVerification] : []);
   setJwtRequirement(JwtRequirement._NotRequired);
 
-  setCreateUserResponse({ onesignalId: ONESIGNAL_ID, subscriptions: [{ id: SUB_ID }] });
+  setCreateUserResponse({
+    onesignalId: ONESIGNAL_ID,
+    subscriptions: [{ id: SUB_ID, type: SubscriptionType._ChromePush }],
+  });
   setUpdateSubscriptionResponse({ subscriptionId: SUB_ID });
   setAddAliasResponse();
   setTransferSubscriptionResponse();

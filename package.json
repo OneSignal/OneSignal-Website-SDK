@@ -67,7 +67,7 @@
     "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0"
   },
   "config": {
-    "sdkVersion": "160700"
+    "sdkVersion": "160800"
   },
   "size-limit": [
     {
@@ -77,12 +77,12 @@
     },
     {
       "path": "./build/releases/OneSignalSDK.page.es6.js",
-      "limit": "46.7 kB",
+      "limit": "47.05 kB",
       "gzip": true
     },
     {
       "path": "./build/releases/OneSignalSDK.sw.js",
-      "limit": "13.61 kB",
+      "limit": "13.62 kB",
       "gzip": true
     },
     {

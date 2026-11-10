@@ -470,11 +470,20 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
+      // No response from the server while offline, so keep the operations and send them later.
+      if (e === RetryLimitError && !navigator.onLine) {
+        [...ops].reverse().forEach((op) => {
+          op.retries++;
+          this._queue.unshift(op);
+        });
+        return this._delayBeforeNextExecution(ops[0].retries);
+      }
+
       Log._error(`Op execute error: ${JSON.stringify(ops)}`, e);
       ops.forEach((op) => op.resolver?.(false, ExecutionResult._FailNoretry));
 
-      // No response from the server, so keep the operations and send them later. The waiters
-      // already rejected, so the retries do not keep login() or a user switch pending.
+      // Online, a request that gets no answer can be blocked (CSP, firewall). The waiters
+      // already rejected, and the operations stay queued, so login() does not stay pending.
       if (e === RetryLimitError) {
         [...ops].reverse().forEach((op) => {
           op.retries++;
@@ -484,6 +493,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         return this._delayBeforeNextExecution(ops[0].retries);
       }
 
+      // On failure remove operations from store
       ops.forEach((op) => {
         this._operationModelStore._remove(op.operation._modelId);
       });
@@ -563,6 +573,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
     if (!this._queue.length) return null;
+    if (!navigator.onLine) return null;
 
     // Until the requirement is known, an unsigned request could reach an app that
     // needs a JWT. Operations stay queued; the next tick re-reads the requirement.
