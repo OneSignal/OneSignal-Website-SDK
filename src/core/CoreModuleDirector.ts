@@ -9,6 +9,7 @@ import { logMethodCall } from 'src/shared/utils/utils';
 import { getCurrentPushToken } from '../shared/helpers/main';
 import { RawPushSubscription } from '../shared/models/RawPushSubscription';
 import CoreModule from './CoreModule';
+import type { JwtTokenStore } from './JwtTokenStore';
 import { IdentityModel } from './models/IdentityModel';
 import { PropertiesModel } from './models/PropertiesModel';
 import { SubscriptionModel } from './models/SubscriptionModel';
@@ -50,6 +51,10 @@ export class CoreModuleDirector {
 
   get _customEventController(): ICustomEventController {
     return this._core._customEventController;
+  }
+
+  get _jwtTokenStore(): JwtTokenStore {
+    return this._core._jwtTokenStore;
   }
 
   public _generatePushSubscriptionModel(

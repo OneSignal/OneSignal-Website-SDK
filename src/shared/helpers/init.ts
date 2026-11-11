@@ -29,6 +29,9 @@ export async function internalInit() {
     OneSignal.EVENTS.SESSION_STARTED,
     sessionManager._sendOnSessionUpdateFromPage.bind(sessionManager),
   );
+  OneSignal._coreDirector._jwtTokenStore._addUpdateListener((externalId) => {
+    void sessionManager._handleJwtUpdated(externalId);
+  });
   incrementPageViewCount();
 
   if (document.visibilityState !== 'visible') {

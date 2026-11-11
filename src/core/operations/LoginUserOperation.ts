@@ -1,12 +1,18 @@
 import { IDManager } from 'src/shared/managers/IDManager';
 
 import { OPERATION_NAME } from '../constants';
-import { GroupComparisonType, type GroupComparisonValue, Operation } from './Operation';
+import {
+  GroupComparisonType,
+  type GroupComparisonValue,
+  Operation,
+  type OperationOpts,
+} from './Operation';
 
 type ILoginOp = {
-  externalId?: string;
   existingOnesignalId?: string;
 };
+
+export type LoginUserOpts = OperationOpts & ILoginOp;
 
 /**
  * An Operation to login the user with the externalId provided. Logging in a user will do the
@@ -16,32 +22,9 @@ type ILoginOp = {
  *    this succeeds the existing user becomes
  */
 export class LoginUserOperation extends Operation<ILoginOp> {
-  constructor();
-  constructor(
-    appId: string,
-    onesignalId: string | undefined,
-    externalId?: string,
-    existingOneSignalId?: string,
-  );
-  constructor(
-    appId?: string,
-    onesignalId?: string,
-    externalId?: string,
-    existingOneSignalId?: string,
-  ) {
-    super(OPERATION_NAME._LoginUser, appId, onesignalId);
-    if (externalId) this._externalId = externalId;
-    if (existingOneSignalId) this._existingOnesignalId = existingOneSignalId;
-  }
-
-  /**
-   * The optional external ID of this newly logged-in user. Must be unique for the appId.
-   */
-  get _externalId(): string | undefined {
-    return this._getProperty('externalId');
-  }
-  private set _externalId(value: string) {
-    this._setProperty('externalId', value);
+  constructor(opts?: LoginUserOpts) {
+    super(OPERATION_NAME._LoginUser, opts?.appId, opts?.onesignalId, opts?.externalId);
+    if (opts?.existingOnesignalId) this._existingOnesignalId = opts.existingOnesignalId;
   }
 
   /**
@@ -56,6 +39,14 @@ export class LoginUserOperation extends Operation<ILoginOp> {
     this._setProperty('existingOnesignalId', value);
   }
 
+  /**
+   * Identity Verification never transfers anonymous state, so the login must create.
+   * A stale local id would also keep _canStartExecute false forever.
+   */
+  _clearExistingOnesignalId(): void {
+    this._setProperty('existingOnesignalId', undefined);
+  }
+
   override get _createComparisonKey(): string {
     return `${this._appId}.User.${this._onesignalId}`;
   }
@@ -68,7 +59,15 @@ export class LoginUserOperation extends Operation<ILoginOp> {
     return GroupComparisonType._Create;
   }
 
+  /**
+   * Set while an earlier user switch still has push operations to enqueue, so
+   * the create batch of this user cannot start before they are in the queue.
+   * Not saved: after a reload no switch is in progress.
+   */
+  _heldBySwitch = false;
+
   override get _canStartExecute(): boolean {
+    if (this._heldBySwitch) return false;
     return !this._existingOnesignalId || !IDManager._isLocalId(this._existingOnesignalId);
   }
 

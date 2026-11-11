@@ -12,19 +12,15 @@ type SubscriptionOp = ICreateUserSubscription & {
 export type SubscriptionWithAppId = SubscriptionOp & {
   appId: string;
   onesignalId: string;
+  externalId?: string;
 };
 
 /**
  * Base class for subscription-related operations with full properties
  */
 export abstract class BaseFullSubscriptionOperation extends BaseSubscriptionOperation<SubscriptionOp> {
-  constructor(
-    operationName: string,
-    appId?: string,
-    onesignalId?: string,
-    subscription?: SubscriptionOp,
-  ) {
-    super(operationName, appId, onesignalId);
+  constructor(operationName: string, subscription?: SubscriptionWithAppId) {
+    super(operationName, subscription);
 
     if (subscription) {
       this.sdk = VERSION;
@@ -32,7 +28,6 @@ export abstract class BaseFullSubscriptionOperation extends BaseSubscriptionOper
       this.device_os = getDeviceOS();
       this.enabled = subscription.enabled;
       this.notification_types = subscription.notification_types;
-      this._subscriptionId = subscription.subscriptionId;
       this.token = subscription.token;
       this.type = subscription.type;
       this.web_auth = subscription.web_auth;

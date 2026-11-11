@@ -11,11 +11,26 @@ import { IS_SERVICE_WORKER, VERSION } from '../utils/env';
 
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
+/**
+ * One entry per URL path segment. `call` percent-encodes each entry on its own,
+ * so a `/` inside a value such as an external id stays inside its segment.
+ */
+export type ApiPath = readonly string[];
+
 export interface OneSignalApiBaseResponse<T = unknown> {
   ok: boolean;
   result: T;
   status: number;
   retryAfterSeconds?: number;
+}
+
+export interface RequestOptions {
+  headers?: APIHeaders;
+  /**
+   * Sent as `Authorization: Bearer <jwt>`. Only this path sets the header, so the
+   * token never lands in `headers` where a log line could print it.
+   */
+  jwt?: string;
 }
 
 const getOrigin = () => {
@@ -26,55 +41,55 @@ const getOrigin = () => {
 };
 
 export function get<T>(
-  action: string,
+  path: ApiPath,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('GET', action, data, headers);
+  return call('GET', path, data, options);
 }
 
 export function post<T>(
-  action: string,
+  path: ApiPath,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('POST', action, data, headers);
+  return call('POST', path, data, options);
 }
 
 export function put<T>(
-  action: string,
+  path: ApiPath,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('PUT', action, data, headers);
+  return call('PUT', path, data, options);
 }
 
 function del<T>(
-  action: string,
+  path: ApiPath,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('DELETE', action, data, headers);
+  return call('DELETE', path, data, options);
 }
 
 // since delete is a keyword, cant name function delete
 export { del as delete };
 
 export function patch<T = unknown>(
-  action: string,
+  path: ApiPath,
   data?: any,
-  headers?: APIHeaders,
+  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  return call('PATCH', action, data, headers);
+  return call('PATCH', path, data, options);
 }
 
 function call<T = unknown>(
   method: SupportedMethods,
-  action: string,
+  path: ApiPath,
   data: any,
-  headers: APIHeaders | undefined,
+  options: RequestOptions | undefined,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  if (!requestHasAppId(action, data)) {
+  if (!requestHasAppId(path, data)) {
     return Promise.reject(AppIDMissingError);
   }
 
@@ -83,10 +98,14 @@ function call<T = unknown>(
   callHeaders.append('SDK-Version', `onesignal/web/${VERSION}`);
   callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
   callHeaders.append('Accept', 'application/vnd.onesignal.v1+json');
+  const headers = options?.headers;
   if (headers) {
     for (const key of Object.keys(headers)) {
       callHeaders.append(key, headers[key]);
     }
+  }
+  if (options?.jwt) {
+    callHeaders.append('Authorization', `Bearer ${options.jwt}`);
   }
 
   const contents: RequestInit = {
@@ -96,10 +115,9 @@ function call<T = unknown>(
   };
   if (data) contents.body = JSON.stringify(data);
 
-  const safeAction = action.split('/').map(encodeRFC3986URIComponent).join('/');
-  const url = `${getOneSignalApiUrl({
-    action,
-  }).toString()}${safeAction}`;
+  const action = path.map(encodeRFC3986URIComponent).join('/');
+  // getOneSignalApiUrl picks the API origin from the encoded path.
+  const url = `${getOneSignalApiUrl({ action }).toString()}${action}`;
 
   return executeFetch(url, contents);
 }
@@ -136,16 +154,9 @@ async function executeFetch<T = unknown>(
 
 // OneSignal's backend requires that all request have a
 // have a app_id in the UUID format in the request
-function requestHasAppId(url: string, body?: Record<string, unknown>): boolean {
-  if (url.startsWith('apps/')) {
-    const parts = url.split('/');
-    return isValidUuid(parts[1]);
-  }
-
-  // special case for sync
-  if (url.startsWith('sync/')) {
-    const parts = url.split('/');
-    return isValidUuid(parts[1]);
+function requestHasAppId(path: ApiPath, body?: Record<string, unknown>): boolean {
+  if (path[0] === 'apps' || path[0] === 'sync') {
+    return isValidUuid(path[1]);
   }
 
   if (body && typeof body['app_id'] === 'string') {

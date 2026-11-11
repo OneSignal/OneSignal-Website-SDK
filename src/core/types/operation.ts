@@ -48,6 +48,13 @@ export const ExecutionResult = {
    * and retry on a new session, giving the SDK a chance to recover from the failed user create.
    */
   _FailPauseOpRepo: 6,
+
+  /**
+   * Never returned by an executor. The operation repo uses it to reject an
+   * _enqueueAndWait caller whose operation was never queued because it cannot
+   * run under Identity Verification.
+   */
+  _Suppressed: 7,
 } as const;
 
 export type ExecutionResultValue = (typeof ExecutionResult)[keyof typeof ExecutionResult];

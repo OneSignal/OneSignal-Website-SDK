@@ -1,67 +1,75 @@
 import { IdentityConstants } from 'src/core/constants';
 import { updateUserByAlias } from 'src/core/requests/api';
-import type { IUpdateUser } from 'src/core/types/api';
+import type { AliasPair, IUpdateUser } from 'src/core/types/api';
 
 import type { ServerAppConfig } from '../config/types';
 import { enforceAlias, enforceAppId } from '../context/helpers';
 import { getSubscriptionType } from '../environment/detect';
+import { getResponseStatusType, ResponseStatusType } from '../helpers/network';
 import Log from '../libraries/Log';
-import type { DeliveryPlatformKindValue } from '../models/DeliveryPlatformKind';
+import {
+  type JwtUnauthorizedPayload,
+  WorkerMessengerCommand,
+} from '../libraries/workerMessenger/constants';
+import { postToOnePage } from '../libraries/workerMessenger/sw';
 import { OutcomeAttributionType, type OutcomeAttribution } from '../models/Outcomes';
 import type { OutcomeRequestData } from '../outcomes/types';
-import { NotificationType } from '../subscriptions/constants';
+import type { SessionUser } from '../session/types';
 import * as OneSignalApiBase from './base';
+import type { OneSignalApiBaseResponse } from './base';
 import { sendOutcome } from './shared';
 
 export async function downloadSWServerAppConfig(appId: string): Promise<ServerAppConfig> {
   enforceAppId(appId);
-  const response = await OneSignalApiBase.get<ServerAppConfig>(`sync/${appId}/web`, null);
+  const response = await OneSignalApiBase.get<ServerAppConfig>(['sync', appId, 'web'], null);
   return response?.result;
 }
 
 /**
- * Given a GCM or Firefox subscription endpoint or Safari device token, returns the user ID from OneSignal's server.
- * Used if the user clears his or her IndexedDB database and we need the user ID again.
+ * Under Identity Verification an anonymous user has no backend user, and a
+ * request without a token can only get a 401, so both return null and the
+ * caller skips the user request. The unsigned outcome request is not affected.
  */
-export async function getUserIdFromSubscriptionIdentifier(
-  appId: string,
-  deviceType: DeliveryPlatformKindValue,
-  identifier: string,
-): Promise<string | null> {
-  // Calling POST /players with an existing identifier returns us that player ID
-  enforceAppId(appId);
-  return OneSignalApiBase.post<{ id: string }>('players', {
-    app_id: appId,
-    device_type: deviceType,
-    identifier: identifier,
-    notification_types: NotificationType._TemporaryWebRecord,
-  })
-    .then((response) => {
-      if (response?.result?.id) {
-        return response.result.id;
-      } else {
-        return null;
-      }
-    })
-    .catch((e) => {
-      Log._debug('Error getting user ID:', e);
-      return null;
-    });
+function sessionBackendParams({ onesignalId, jwtRequired, externalId, jwt }: SessionUser): {
+  alias: AliasPair;
+  jwt?: string;
+} | null {
+  if (!jwtRequired) {
+    return { alias: { label: IdentityConstants._OneSignalID, id: onesignalId } };
+  }
+  if (externalId && jwt) {
+    return { alias: { label: IdentityConstants._ExternalID, id: externalId }, jwt };
+  }
+  Log._debug('[SW] No JWT under Identity Verification, skipping the session request');
+  return null;
+}
+
+// The worker cannot reach the page token store, so it tells one page which
+// token the server rejected. The page removes it only if it is still the stored one.
+// One page only: each tab that got the report would fire userJwtInvalidated.
+// Awaited so the post finishes inside the event's waitUntil, before the
+// browser can stop the worker.
+async function notifyPageIfUnauthorized(
+  response: OneSignalApiBaseResponse,
+  { externalId, jwt }: Pick<SessionUser, 'externalId' | 'jwt'>,
+): Promise<void> {
+  if (!jwt || !externalId) return;
+  if (getResponseStatusType(response.status) !== ResponseStatusType._Unauthorized) return;
+  Log._error(`[SW] The server rejected the JWT on the session request (${response.status})`);
+  const payload: JwtUnauthorizedPayload = { externalId, jwt };
+  await postToOnePage(WorkerMessengerCommand._JwtUnauthorized, payload);
 }
 
 /**
  *  Main on_session call
- * @returns
+ * @returns false when the request was skipped, got a 401, or did not reach the
+ * server, so a later token can send it again. Any other response counts as sent.
  */
-export async function updateUserSession(
-  appId: string,
-  onesignalId: string,
-  subscriptionId: string,
-): Promise<void> {
-  const aliasPair = {
-    label: IdentityConstants._OneSignalID,
-    id: onesignalId,
-  };
+export async function updateUserSession(user: SessionUser): Promise<boolean> {
+  const { appId, subscriptionId } = user;
+  const params = sessionBackendParams(user);
+  if (!params) return false;
+  const { alias, jwt } = params;
   // TO DO: in future, we should aggregate session count in case network call fails
   const updateUserPayload: IUpdateUser = {
     refresh_device_metadata: true,
@@ -71,31 +79,33 @@ export async function updateUserSession(
   };
 
   enforceAppId(appId);
-  enforceAlias(aliasPair);
+  enforceAlias(alias);
   try {
-    await updateUserByAlias({ appId, subscriptionId }, aliasPair, updateUserPayload);
+    const response = await updateUserByAlias(
+      { appId, subscriptionId, jwt },
+      alias,
+      updateUserPayload,
+    );
+    await notifyPageIfUnauthorized(response, user);
+    return response.status !== 401;
   } catch (e) {
     Log._debug('Session update error:', e);
+    return false;
   }
 }
 
 export async function sendSessionDuration(
-  appId: string,
-  onesignalId: string,
-  subscriptionId: string,
+  user: SessionUser,
   sessionDuration: number,
   attribution: OutcomeAttribution,
 ): Promise<void> {
+  const { appId, onesignalId, subscriptionId } = user;
+  const params = sessionBackendParams(user);
   const updateUserPayload: IUpdateUser = {
     refresh_device_metadata: true,
     deltas: {
       session_time: sessionDuration,
     },
-  };
-
-  const aliasPair = {
-    label: IdentityConstants._OneSignalID,
-    id: onesignalId,
   };
 
   const outcomePayload: OutcomeRequestData = {
@@ -113,7 +123,15 @@ export async function sendSessionDuration(
   outcomePayload.direct = attribution.type === OutcomeAttributionType._Direct ? true : false;
 
   try {
-    await updateUserByAlias({ appId, subscriptionId }, aliasPair, updateUserPayload);
+    if (params) {
+      const { alias, jwt } = params;
+      const response = await updateUserByAlias(
+        { appId, subscriptionId, jwt },
+        alias,
+        updateUserPayload,
+      );
+      await notifyPageIfUnauthorized(response, user);
+    }
 
     if (outcomePayload.notification_ids && outcomePayload.notification_ids.length > 0) {
       await sendOutcome(outcomePayload);

@@ -7,6 +7,7 @@ import { LoginUserOperationExecutor } from './executors/LoginUserOperationExecut
 import { RefreshUserOperationExecutor } from './executors/RefreshUserOperationExecutor';
 import { SubscriptionOperationExecutor } from './executors/SubscriptionOperationExecutor';
 import { UpdateUserOperationExecutor } from './executors/UpdateUserOperationExecutor';
+import { JwtTokenStore } from './JwtTokenStore';
 import { IdentityModelStoreListener } from './listeners/IdentityModelStoreListener';
 import { PropertiesModelStoreListener } from './listeners/PropertiesModelStoreListener';
 import { SubscriptionModelStoreListener } from './listeners/SubscriptionModelStoreListener';
@@ -27,6 +28,7 @@ export default class CoreModule {
   public _identityModelStore: IdentityModelStore;
   public _propertiesModelStore: PropertiesModelStore;
   public _customEventController: CustomEventController;
+  public _jwtTokenStore: JwtTokenStore;
 
   private _initPromise: Promise<void>;
 
@@ -34,6 +36,7 @@ export default class CoreModule {
   private _executors?: IOperationExecutor[];
 
   constructor() {
+    this._jwtTokenStore = new JwtTokenStore();
     this._newRecordsState = new NewRecordsState();
     this._operationModelStore = new OperationModelStore();
     this._identityModelStore = new IdentityModelStore();
@@ -50,6 +53,8 @@ export default class CoreModule {
       this._executors,
       this._operationModelStore,
       this._newRecordsState,
+      this._jwtTokenStore,
+      this._identityModelStore,
     );
     this._customEventController = new CustomEventController(
       this._identityModelStore,
@@ -69,7 +74,11 @@ export default class CoreModule {
     if (!this._operationRepo) return [];
     return [
       new IdentityModelStoreListener(this._identityModelStore, this._operationRepo),
-      new PropertiesModelStoreListener(this._propertiesModelStore, this._operationRepo),
+      new PropertiesModelStoreListener(
+        this._propertiesModelStore,
+        this._operationRepo,
+        this._identityModelStore,
+      ),
       new SubscriptionModelStoreListener(
         this._subscriptionModelStore,
         this._operationRepo,
@@ -83,12 +92,14 @@ export default class CoreModule {
       this._identityModelStore,
       this._rebuildUserService,
       this._newRecordsState,
+      this._jwtTokenStore,
     );
     const loginOpExecutor = new LoginUserOperationExecutor(
       identityOpExecutor,
       this._identityModelStore,
       this._propertiesModelStore,
       this._subscriptionModelStore,
+      this._jwtTokenStore,
     );
     const refreshOpExecutor = new RefreshUserOperationExecutor(
       this._identityModelStore,
@@ -96,19 +107,22 @@ export default class CoreModule {
       this._subscriptionModelStore,
       this._rebuildUserService,
       this._newRecordsState,
+      this._jwtTokenStore,
     );
     const subscriptionOpExecutor = new SubscriptionOperationExecutor(
       this._subscriptionModelStore,
       this._rebuildUserService,
       this._newRecordsState,
+      this._jwtTokenStore,
     );
     const updateSubOpExecutor = new UpdateUserOperationExecutor(
       this._identityModelStore,
       this._propertiesModelStore,
       this._rebuildUserService,
       this._newRecordsState,
+      this._jwtTokenStore,
     );
-    const customEventOpExecutor = new CustomEventsOperationExecutor();
+    const customEventOpExecutor = new CustomEventsOperationExecutor(this._jwtTokenStore);
 
     return [
       identityOpExecutor,

@@ -69,6 +69,7 @@ describe('RefreshUserOperationExecutor', () => {
       subscriptionModelStore,
       buildUserService,
       newRecordsState,
+      OneSignal._coreDirector._jwtTokenStore,
     );
   };
 

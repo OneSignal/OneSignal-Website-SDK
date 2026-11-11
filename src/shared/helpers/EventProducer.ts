@@ -18,9 +18,8 @@ export class EventProducer<THandler> implements IEventNotifier<THandler> {
     }
   }
 
+  // Iterates a copy so a handler that unsubscribes itself does not skip the next one.
   _fire(callback: (handler: THandler) => void): void {
-    for (const handler of this._subscribers) {
-      callback(handler);
-    }
+    this._subscribers.slice().forEach(callback);
   }
 }

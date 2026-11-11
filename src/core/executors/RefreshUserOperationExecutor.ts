@@ -3,7 +3,8 @@ import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
 import Log from 'src/shared/libraries/Log';
 import { NotificationType } from 'src/shared/subscriptions/constants';
 
-import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { OPERATION_NAME } from '../constants';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { IdentityModel } from '../models/IdentityModel';
 import { type IPropertiesModelKeys, PropertiesModel } from '../models/PropertiesModel';
 import { SubscriptionModel } from '../models/SubscriptionModel';
@@ -18,6 +19,7 @@ import { ModelChangeTags } from '../types/models';
 import type { ExecutionResponse } from '../types/operation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import { type IRebuildUserService } from '../types/user';
+import { resolveBackendParams } from './ivResolver';
 
 // Implements logic similar to Android SDK's RefreshUserOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/RefreshUserOperationExecutor.kt
@@ -27,6 +29,7 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   private _subscriptionsModelStore: SubscriptionModelStore;
   private _buildUserService: IRebuildUserService;
   private _newRecordState: NewRecordsState;
+  private _jwtTokenStore: JwtTokenStore;
 
   constructor(
     _identityModelStore: IdentityModelStore,
@@ -34,12 +37,14 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
     _subscriptionsModelStore: SubscriptionModelStore,
     _buildUserService: IRebuildUserService,
     _newRecordState: NewRecordsState,
+    _jwtTokenStore: JwtTokenStore,
   ) {
     this._identityModelStore = _identityModelStore;
     this._propertiesModelStore = _propertiesModelStore;
     this._subscriptionsModelStore = _subscriptionsModelStore;
     this._buildUserService = _buildUserService;
     this._newRecordState = _newRecordState;
+    this._jwtTokenStore = _jwtTokenStore;
   }
 
   get _operations(): string[] {
@@ -59,13 +64,8 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
   }
 
   private async _getUser(op: RefreshUserOperation): Promise<ExecutionResponse> {
-    const response = await getUserByAlias(
-      { appId: op._appId },
-      {
-        label: IdentityConstants._OneSignalID,
-        id: op._onesignalId,
-      },
-    );
+    const { alias, jwt } = resolveBackendParams(op, this._jwtTokenStore);
+    const response = await getUserByAlias({ appId: op._appId, jwt }, alias);
 
     const { ok, result, retryAfterSeconds, status } = response;
     if (ok) {

@@ -1,5 +1,6 @@
 import type { ContextInterface } from 'src/shared/context/types';
 import { supportsServiceWorkers } from 'src/shared/environment/detect';
+import { redactJwt } from 'src/shared/helpers/general';
 import { getAvailableServiceWorker } from 'src/sw/helpers/registration';
 
 import Log from '../Log';
@@ -51,7 +52,7 @@ export class WorkerMessengerPage extends WorkerMessengerBase<ContextInterface> {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    Log._debug('[WM] Page received:', event.data);
+    Log._debug('[WM] Page received:', { ...data, payload: redactJwt(data.payload) });
 
     for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {

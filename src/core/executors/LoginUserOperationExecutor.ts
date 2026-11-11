@@ -3,11 +3,16 @@ import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operati
 import { getBrowserLanguage } from 'src/shared/helpers/general';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
-import { checkAndTriggerUserChanged } from 'src/shared/listeners';
+import {
+  checkAndTriggerSubscriptionChanged,
+  checkAndTriggerUserChanged,
+} from 'src/shared/listeners';
 import { IDManager } from 'src/shared/managers/IDManager';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 
 import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { isIvBehaviorActive } from '../identityVerification';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { type IPropertiesModelKeys } from '../models/PropertiesModel';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
 import { PropertiesModelStore } from '../modelStores/PropertiesModelStore';
@@ -29,6 +34,7 @@ import type {
 } from '../types/api';
 import type { ExecutionResponse } from '../types/operation';
 import { type IdentityOperationExecutor } from './IdentityOperationExecutor';
+import { resolveJwt } from './ivResolver';
 
 type SubscriptionMap = Record<string, ICreateUserSubscription & { id?: string }>;
 
@@ -39,17 +45,20 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
   private _identityModelStore: IdentityModelStore;
   private _propertiesModelStore: PropertiesModelStore;
   private _subscriptionsModelStore: SubscriptionModelStore;
+  private _jwtTokenStore: JwtTokenStore;
 
   constructor(
     _identityOperationExecutor: IdentityOperationExecutor,
     _identityModelStore: IdentityModelStore,
     _propertiesModelStore: PropertiesModelStore,
     _subscriptionsModelStore: SubscriptionModelStore,
+    _jwtTokenStore: JwtTokenStore,
   ) {
     this._identityOperationExecutor = _identityOperationExecutor;
     this._identityModelStore = _identityModelStore;
     this._propertiesModelStore = _propertiesModelStore;
     this._subscriptionsModelStore = _subscriptionsModelStore;
+    this._jwtTokenStore = _jwtTokenStore;
   }
 
   get _operations(): string[] {
@@ -73,17 +82,24 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     // When there is no existing user to attempt to associate with the externalId provided, we go right to
     // createUser.  If there is no externalId provided this is an insert, if there is this will be an
     // "upsert with retrieval" as the user may already exist.
-    if (!loginUserOp._existingOnesignalId || !loginUserOp._externalId) {
+    //
+    // Under IV the identify step is skipped too: it addresses the user by
+    // onesignal_id, and the IV alias switch would rewrite that to an external_id
+    // the server does not know yet. Create-user with external_id in the
+    // identity map is an upsert on the server, so it covers both cases.
+    const externalId = loginUserOp._externalId;
+    if (!loginUserOp._existingOnesignalId || !externalId || isIvBehaviorActive()) {
       return this._createUser(loginUserOp, operations);
     }
 
     const result = await this._identityOperationExecutor._execute([
-      new SetAliasOperation(
-        loginUserOp._appId,
-        loginUserOp._existingOnesignalId,
-        IdentityConstants._ExternalID,
-        loginUserOp._externalId,
-      ),
+      new SetAliasOperation({
+        appId: loginUserOp._appId,
+        onesignalId: loginUserOp._existingOnesignalId,
+        label: IdentityConstants._ExternalID,
+        value: externalId,
+        externalId,
+      }),
     ]);
 
     switch (result._result) {
@@ -150,7 +166,9 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
         operation instanceof DeleteSubscriptionOperation
       ) {
         subscriptions = this._createSubscriptionsFromOperation(operation, subscriptions);
-      } else {
+      } else if (!(operation instanceof LoginUserOperation)) {
+        // The batch groups by onesignalId, so a second login is for the same user.
+        // A queue saved before a reload can have one, so skip it.
         throw new Error(`Unrecognized operation: ${operation._name}`);
       }
     }
@@ -165,8 +183,10 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       return { _result: ExecutionResult._FailNoretry };
     }
 
+    // POST /users has no alias in the path, so only the token applies.
+    const jwt = resolveJwt(createUserOperation, this._jwtTokenStore);
     const response = await createNewUser(
-      { appId: createUserOperation._appId },
+      { appId: createUserOperation._appId, jwt },
       {
         identity,
         subscriptions: subscriptionList.map(([, sub]) => sub),
@@ -230,10 +250,19 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
       });
 
       void checkAndTriggerUserChanged();
+      if (stillCurrent && subscriptionList.length) {
+        checkAndTriggerSubscriptionChanged().catch(Log._error);
+      }
 
       const followUp =
         Object.keys(identity).length > 0
-          ? [new RefreshUserOperation(createUserOperation._appId, backendOneSignalId)]
+          ? [
+              new RefreshUserOperation(
+                createUserOperation._appId,
+                backendOneSignalId,
+                createUserOperation._externalId,
+              ),
+            ]
           : undefined;
 
       return {

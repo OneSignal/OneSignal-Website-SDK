@@ -34,6 +34,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     return new CreateSubscriptionOperation({
       appId,
       onesignalId: this._identityModelStore._model._onesignalId,
+      externalId: this._identityModelStore._model._externalId,
       subscriptionId: model.id,
       type: model.type,
       enabled,
@@ -44,11 +45,12 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
 
   _getRemoveOperation(model: SubscriptionModel): Operation {
     const appId = getAppId();
-    return new DeleteSubscriptionOperation(
+    return new DeleteSubscriptionOperation({
       appId,
-      this._identityModelStore._model._onesignalId,
-      model.id,
-    );
+      onesignalId: this._identityModelStore._model._onesignalId,
+      subscriptionId: model.id,
+      externalId: this._identityModelStore._model._externalId,
+    });
   }
 
   _getUpdateOperation(model: SubscriptionModel): Operation {
@@ -59,6 +61,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     return new UpdateSubscriptionOperation({
       appId,
       onesignalId: this._identityModelStore._model._onesignalId,
+      externalId: this._identityModelStore._model._externalId,
       subscriptionId: model.id,
       type: model.type,
       enabled,
@@ -69,7 +72,7 @@ export class SubscriptionModelStoreListener extends ModelStoreListener<Subscript
     });
   }
 
-  private static _getSubscriptionEnabledAndStatus(model: SubscriptionModel): {
+  static _getSubscriptionEnabledAndStatus(model: SubscriptionModel): {
     enabled: boolean;
     notification_types: NotificationTypeValue | undefined;
   } {

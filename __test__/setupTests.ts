@@ -17,9 +17,16 @@ beforeEach(async () => {
   await clearAll();
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // A check that an executor started must not change the models of the next test.
+  // A static import would load the module before the vi.mock calls of the test file.
+  const { _subscriptionCheckIdle } = await import('src/shared/listeners');
+  await _subscriptionCheckIdle();
   server.resetHandlers();
   if (typeof OneSignal !== 'undefined') {
+    // The poll interval must not outlive the test: after jsdom teardown a tick
+    // that reads localStorage throws as an unhandled rejection.
+    OneSignal._coreDirector?._operationRepo._pause();
     OneSignal._coreDirector?._operationRepo._clear();
     OneSignal._emitter?._removeAllListeners();
   }

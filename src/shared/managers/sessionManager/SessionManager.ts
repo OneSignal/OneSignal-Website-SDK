@@ -1,13 +1,16 @@
-import { IdentityConstants } from 'src/core/constants';
+import { resolveUserBackendParams } from 'src/core/executors/ivResolver';
+import { isIvBehaviorActive } from 'src/core/identityVerification';
 import { updateUserByAlias } from 'src/core/requests/api';
 import type { IUpdateUser } from 'src/core/types/api';
 import { enforceAlias, enforceAppId } from 'src/shared/context/helpers';
 import type { ContextInterface } from 'src/shared/context/types';
 import { hasSafariWindow, supportsServiceWorkers } from 'src/shared/environment/detect';
+import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import { isFirstPageView } from 'src/shared/helpers/pageview';
 import { SessionOrigin } from 'src/shared/session/constants';
 import type {
   SessionOriginValue,
+  SessionUser,
   UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
@@ -23,9 +26,24 @@ import type { ISessionManager } from './types';
 export class SessionManager implements ISessionManager {
   private _context: ContextInterface;
   private _onSessionSent = false;
+  private _onSessionChain: Promise<void> = Promise.resolve();
+  private _sessionStarted = false;
 
   constructor(context: ContextInterface) {
     this._context = context;
+  }
+
+  /**
+   * The ids the worker needs to sign a session request. The message always goes
+   * out so the worker session state stays correct; the worker skips the network
+   * request when jwtRequired is set and a token is missing.
+   */
+  private _ivSessionCredentials(): Pick<SessionUser, 'jwtRequired' | 'externalId' | 'jwt'> {
+    if (!isIvBehaviorActive()) return {};
+
+    const externalId = OneSignal._coreDirector._getIdentityModel()._externalId;
+    const jwt = externalId ? OneSignal._coreDirector._jwtTokenStore._getJwt(externalId) : undefined;
+    return { jwtRequired: true, externalId, jwt };
   }
 
   _notifySWToUpsertSession(
@@ -42,6 +60,7 @@ export class SessionManager implements ISessionManager {
       sessionOrigin,
       isSafari: hasSafariWindow(),
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+      ...this._ivSessionCredentials(),
     };
     if (supportsServiceWorkers()) {
       Log._debug('SW upsert session');
@@ -68,6 +87,7 @@ export class SessionManager implements ISessionManager {
       sessionOrigin,
       isSafari: hasSafariWindow(),
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+      ...this._ivSessionCredentials(),
     };
     if (supportsServiceWorkers()) {
       Log._debug('SW deactivate session');
@@ -173,6 +193,7 @@ export class SessionManager implements ISessionManager {
         sessionOrigin: SessionOrigin._BeforeUnload,
         isSafari: hasSafariWindow(),
         outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+        ...this._ivSessionCredentials(),
       };
 
       Log._debug('SW deactivate (beforeunload)');
@@ -237,6 +258,7 @@ export class SessionManager implements ISessionManager {
 
   async _upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
     await LoginManager._switchingUsersPromise;
+    this._sessionStarted = true;
 
     if (User._singletonInstance?.onesignalId) {
       const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
@@ -304,7 +326,15 @@ export class SessionManager implements ISessionManager {
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
-  async _sendOnSessionUpdateFromPage(): Promise<void> {
+  // Sends run one at a time, so a token update during a request re-checks the
+  // flag after that request settles instead of sending a second on_session.
+  _sendOnSessionUpdateFromPage(): Promise<void> {
+    const run = this._onSessionChain.then(() => this._sendOnSessionUpdate());
+    this._onSessionChain = run.catch(() => undefined);
+    return run;
+  }
+
+  private async _sendOnSessionUpdate(): Promise<void> {
     const earlyReturn = this._onSessionSent || !isFirstPageView();
 
     if (earlyReturn) {
@@ -316,6 +346,13 @@ export class SessionManager implements ISessionManager {
 
     if (!onesignalId) {
       Log._debug('No onesignal id, skipping on_session');
+      return;
+    }
+
+    // An anonymous user has no backend user under IV, so there is nothing to update.
+    const externalId = identityModel._externalId;
+    if (isIvBehaviorActive() && !externalId) {
+      Log._debug('No external id under Identity Verification, skipping on_session');
       return;
     }
 
@@ -333,10 +370,17 @@ export class SessionManager implements ISessionManager {
     }
 
     try {
-      const aliasPair = {
-        label: IdentityConstants._OneSignalID,
-        id: onesignalId,
-      };
+      const { alias, jwt } = resolveUserBackendParams(
+        { onesignalId, externalId },
+        'on_session',
+        OneSignal._coreDirector._jwtTokenStore,
+      );
+      // Checked after the await above, so a token removed in the meantime is seen.
+      // A request without a token can only get a 401.
+      if (isIvBehaviorActive() && !jwt) {
+        Log._debug('No JWT under Identity Verification, skipping on_session');
+        return;
+      }
       // TO DO: in future, we should aggregate session count in case network call fails
       const updateUserPayload: IUpdateUser = {
         refresh_device_metadata: true,
@@ -347,10 +391,21 @@ export class SessionManager implements ISessionManager {
 
       const appId = getAppId();
       enforceAppId(appId);
-      enforceAlias(aliasPair);
+      enforceAlias(alias);
       try {
-        await updateUserByAlias({ appId, subscriptionId }, aliasPair, updateUserPayload);
-        this._onSessionSent = true;
+        const response = await updateUserByAlias(
+          { appId, subscriptionId, jwt },
+          alias,
+          updateUserPayload,
+        );
+        // After a 401 or a failed request the flag stays clear, so a fresh token
+        // can send this page view's on_session. A 403 counts as sent.
+        if (response.status !== 401) this._onSessionSent = true;
+        const unauthorized =
+          getResponseStatusType(response.status) === ResponseStatusType._Unauthorized;
+        if (unauthorized && jwt && externalId) {
+          this._invalidateJwtAfterUnauthorized(externalId, jwt);
+        }
       } catch (e) {
         Log._debug('Session update error:', e);
       }
@@ -358,6 +413,48 @@ export class SessionManager implements ISessionManager {
       if (e instanceof Error) {
         Log._error(`Session update failed: "${e.message}" ${e.stack}`);
       }
+    }
+  }
+
+  /**
+   * A token stored after the session started. Without a worker the page sends the
+   * on_session it skipped or that got a 401. With a worker the page asks for an
+   * upsert, and the worker sends on_session only if its session still waits for
+   * a token. Before the session start the normal flow carries the token.
+   */
+  async _handleJwtUpdated(externalId: string): Promise<void> {
+    if (!this._sessionStarted || !isIvBehaviorActive()) return;
+    if (OneSignal._coreDirector._getIdentityModel()._externalId !== externalId) return;
+
+    if (!supportsServiceWorkers()) {
+      await this._sendOnSessionUpdateFromPage();
+      return;
+    }
+
+    // An upsert from a hidden tab resets the worker's finalize timer, so the
+    // session_time would move out on every token refresh. The next focus upsert
+    // carries the token anyway.
+    if (document.visibilityState !== 'visible' || !document.hasFocus()) return;
+
+    await LoginManager._switchingUsersPromise;
+    if (!User._singletonInstance?.onesignalId) return;
+    try {
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+      await this._notifySWToUpsertSession(onesignalId, subscriptionId, SessionOrigin._JwtUpdated);
+    } catch (e) {
+      Log._error('JWT update session error:', e);
+    }
+  }
+
+  // Same rule as the operation queue: a 401 only says the token the request went
+  // out with is bad. A newer stored token is kept.
+  private _invalidateJwtAfterUnauthorized(externalId: string, jwtAtRequest: string): void {
+    const jwtTokenStore = OneSignal._coreDirector._jwtTokenStore;
+    if (jwtTokenStore._getJwt(externalId) === jwtAtRequest) {
+      jwtTokenStore._invalidateJwt(externalId);
+      Log._debug('on_session: 401, JWT invalidated');
+    } else {
+      Log._debug('on_session: 401, newer JWT kept');
     }
   }
 }

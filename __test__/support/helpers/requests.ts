@@ -18,6 +18,12 @@ export const mockPageStylesCss = () => {
   );
 };
 
+/**
+ * Records the headers of every request that reaches a `getHandler` handler,
+ * with the request URL as the second argument.
+ */
+export const requestHeadersFn = vi.fn<(headers: Record<string, string>, url: string) => void>();
+
 export const getHandler = ({
   uri,
   method,
@@ -35,6 +41,7 @@ export const getHandler = ({
 }) => {
   server.use(
     http[method](uri, async ({ request }) => {
+      requestHeadersFn(Object.fromEntries(request.headers), request.url);
       try {
         const data = await request.json();
         callback?.(data);

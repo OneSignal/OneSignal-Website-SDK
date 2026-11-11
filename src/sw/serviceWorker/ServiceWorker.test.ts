@@ -1,7 +1,12 @@
-import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
+import { APP_ID, EXTERNAL_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import TestContext from '__test__/support/environment/TestContext';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
-import { setUpdateUserResponse, updateUserFn } from '__test__/support/helpers/requests';
+import {
+  getHandler,
+  requestHeadersFn,
+  setUpdateUserResponse,
+  updateUserFn,
+} from '__test__/support/helpers/requests';
 import { installMockCacheStorage } from '__test__/support/mocks/MockCacheStorage';
 import { MockServiceWorker } from '__test__/support/mocks/MockServiceWorker';
 import { mockOSMinifiedNotificationPayload } from '__test__/support/mocks/notifcations';
@@ -9,7 +14,9 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { OperationRepo } from 'src/core/operationRepo/OperationRepo';
 import * as OneSignalApiBase from 'src/shared/api/base';
+import { updateUserSession } from 'src/shared/api/sw';
 import { ConfigIntegrationKind } from 'src/shared/config/constants';
+import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import type { AppConfig } from 'src/shared/config/types';
 import { db, getCurrentSession } from 'src/shared/database/client';
 import {
@@ -18,6 +25,7 @@ import {
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
+import { upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
@@ -272,11 +280,14 @@ describe('ServiceWorker', () => {
 
       await flush();
 
-      expect(apiPutSpy).toHaveBeenCalledWith(`notifications/${payload.custom.i}/report_received`, {
-        app_id: appId,
-        device_type: DeliveryPlatformKind._ChromeLike,
-        player_id: pushSubscriptionId,
-      });
+      expect(apiPutSpy).toHaveBeenCalledWith(
+        ['notifications', payload.custom.i, 'report_received'],
+        {
+          app_id: appId,
+          device_type: DeliveryPlatformKind._ChromeLike,
+          player_id: pushSubscriptionId,
+        },
+      );
     });
 
     describe('foregroundWillDisplay preventDefault', () => {
@@ -320,11 +331,14 @@ describe('ServiceWorker', () => {
         // Notification should NOT be displayed
         expect(showNotificationSpy).not.toHaveBeenCalled();
 
-        expect(apiPutSpy).toHaveBeenCalledWith(`notifications/${notificationId}/report_received`, {
-          app_id: appId,
-          device_type: expect.any(Number),
-          player_id: pushSubscriptionId,
-        });
+        expect(apiPutSpy).toHaveBeenCalledWith(
+          ['notifications', notificationId, 'report_received'],
+          {
+            app_id: appId,
+            device_type: expect.any(Number),
+            player_id: pushSubscriptionId,
+          },
+        );
       });
 
       test('should display notification when page responds with preventDefault=false', async () => {
@@ -644,7 +658,7 @@ describe('ServiceWorker', () => {
       );
 
       // should call api to report opened
-      expect(apiPutSpy).toHaveBeenCalledWith(`notifications/${notificationId}`, {
+      expect(apiPutSpy).toHaveBeenCalledWith(['notifications', notificationId], {
         app_id: appId,
         device_type: DeliveryPlatformKind._ChromeLike,
         opened: true,
@@ -677,21 +691,24 @@ describe('ServiceWorker', () => {
       SubscriptionManagerSW.prototype,
       '_registerSubscription',
     );
-
-    const someDeviceId = '123';
+    const playersFn = vi.fn();
 
     beforeEach(() => {
-      server.use(http.post(`**/players`, () => HttpResponse.json({ id: someDeviceId })));
+      server.use(
+        http.post(`**/players`, () => {
+          playersFn();
+          return HttpResponse.json({ id: '123' });
+        }),
+      );
 
       // @ts-expect-error - for setting sdk env
       global.ServiceWorkerGlobalScope = undefined;
     });
 
-    test('with old subscription and no device id', async () => {
+    test('with old subscription and no device id: removes the ids without a legacy player lookup', async () => {
       subscribeCall.mockImplementationOnce(() => {
         throw new Error('cant get raw sub');
       });
-      server.use(http.post(`**/players`, () => HttpResponse.json({ id: null })));
 
       await db.put('Ids', {
         type: 'userId',
@@ -707,6 +724,8 @@ describe('ServiceWorker', () => {
       });
       await dispatchEvent(event);
 
+      expect(playersFn).not.toHaveBeenCalled();
+      expect(registerSubscriptionCall).not.toHaveBeenCalled();
       // should remove previous ids
       const ids = await db.getAll('Ids');
       expect(ids).toEqual([
@@ -717,10 +736,11 @@ describe('ServiceWorker', () => {
       ]);
     });
 
-    test('with old subscription and a device id', async () => {
+    test('with old subscription and a stored device id', async () => {
       subscribeCall.mockImplementationOnce(() => {
         throw new Error('cant get raw sub');
       });
+      await db.put('Ids', { type: 'userId', id: '123' });
 
       const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
         oldSubscription: {},
@@ -728,6 +748,7 @@ describe('ServiceWorker', () => {
 
       await dispatchEvent(event);
 
+      expect(playersFn).not.toHaveBeenCalled();
       expect(subscribeCall).toHaveBeenCalledWith(SubscriptionStrategyKind._SubscribeNew);
       expect(registerSubscriptionCall).toHaveBeenCalledWith(
         undefined,
@@ -739,9 +760,25 @@ describe('ServiceWorker', () => {
       expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
     });
 
-    test('with new subscription ', async () => {
-      server.use(http.post(`**/players`, () => HttpResponse.json({ id: null })));
+    test('with old and new subscription and no device id: registers the new subscription', async () => {
+      await db.put('Ids', { type: 'userId', id: null });
 
+      const event = new SubscriptionChangeEvent('pushsubscriptionchange', {
+        oldSubscription: {},
+        newSubscription: {},
+      });
+      await dispatchEvent(event);
+
+      expect(playersFn).not.toHaveBeenCalled();
+      expect(subscribeCall).not.toHaveBeenCalled();
+      const [rawSubscription, subscriptionState] = registerSubscriptionCall.mock.calls[0];
+      expect(rawSubscription).toBeInstanceOf(RawPushSubscription);
+      expect(subscriptionState).toBeNull();
+      const subscription = await getSubscription();
+      expect(subscription.deviceId).toBe(DEFAULT_DEVICE_ID);
+    });
+
+    test('with new subscription ', async () => {
       // @ts-expect-error - normally readonly but doing this for testing
       global.Notification.permission = 'revoked';
 
@@ -812,6 +849,12 @@ describe('ServiceWorker', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
         const cancel = vi.fn();
         self.cancel = cancel;
+        // The deactivate starts a finalize step that sends these requests. With no
+        // handler they go to the network, retry for a long time, and the late
+        // cleanupCurrentSession() deletes the Sessions store of a later test.
+        setUpdateUserResponse();
+        getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+        const putSpy = vi.spyOn(db, 'put');
 
         await db.put('Sessions', session);
 
@@ -831,10 +874,17 @@ describe('ServiceWorker', () => {
         });
 
         // should de-active session since can't determine focused window for Safari
-        const updatedSession = (await getCurrentSession())!;
-        expect(updatedSession.status).toBe(SessionStatus._Inactive);
-        expect(updatedSession.lastDeactivatedTimestamp).not.toBeNull();
-        expect(updatedSession.accumulatedDuration).not.toBe(0);
+        const deactivated = putSpy.mock.calls
+          .map(([, value]) => value as Session)
+          .find((value) => value.status === SessionStatus._Inactive);
+        expect(deactivated?.lastDeactivatedTimestamp).toEqual(expect.any(Number));
+        expect(deactivated?.accumulatedDuration).toBeGreaterThan(0);
+
+        // the finalize step must finish inside this test
+        await vi.waitFor(async () => expect(await getCurrentSession()).toBeNull());
+        expect(updateUserFn).toHaveBeenCalledWith(
+          expect.objectContaining({ deltas: { session_time: deactivated!.accumulatedDuration } }),
+        );
       });
 
       test('with non-safari client', async () => {
@@ -895,6 +945,507 @@ describe('ServiceWorker', () => {
           });
         },
       );
+
+      describe('under Identity Verification', () => {
+        const JWT = 'header.payload.signature';
+        const externalIdUri = `**/apps/${appId}/users/by/external_id/${EXTERNAL_ID}`;
+
+        const upsertWith = (user: Partial<UpsertOrDeactivateSessionPayload>) =>
+          dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionUpsert,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                ...user,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+        test('addresses the user by external_id with the bearer when the payload carries both', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
+          const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+          expect(url).toContain(`/users/by/external_id/${EXTERNAL_ID}`);
+          expect(headers.authorization).toBe(`Bearer ${JWT}`);
+        });
+
+        test('without jwtRequired the request uses onesignal_id even with an externalId', async () => {
+          setUpdateUserResponse();
+
+          await upsertWith({ externalId: EXTERNAL_ID });
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+          expect(url).toContain(`/users/by/onesignal_id/${ONESIGNAL_ID}`);
+          expect(headers.authorization).toBeUndefined();
+        });
+
+        test('jwtRequired without a jwt: the session is stored as pending and no request is sent', async () => {
+          setUpdateUserResponse();
+          const putSpy = vi.spyOn(db, 'put');
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+
+          expect(putSpy).toHaveBeenCalledWith(
+            'Sessions',
+            expect.objectContaining({ status: SessionStatus._Active }),
+          );
+          expect(Log._debug).toHaveBeenCalledWith(
+            '[SW] No JWT under Identity Verification, skipping the session request',
+          );
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect(requestHeadersFn).not.toHaveBeenCalled();
+          expect(await getCurrentSession()).toMatchObject({
+            status: SessionStatus._Active,
+            onSessionPendingFor: EXTERNAL_ID,
+          });
+        });
+
+        test('a later upsert with a jwt sends the pending on_session once', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+          // Still no token: the session stays pending.
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect(await getCurrentSession()).toMatchObject({ onSessionPendingFor: EXTERNAL_ID });
+
+          await upsertWith({
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+            sessionOrigin: SessionOrigin._JwtUpdated,
+          });
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
+          const [headers, url] = requestHeadersFn.mock.calls.at(-1)!;
+          expect(url).toContain(`/users/by/external_id/${EXTERNAL_ID}`);
+          expect(headers.authorization).toBe(`Bearer ${JWT}`);
+          const afterSend = await getCurrentSession();
+          expect(afterSend).toMatchObject({ status: SessionStatus._Active });
+          expect(afterSend!.onSessionPendingFor).toBeUndefined();
+
+          // The session is active and no longer pending, so a focus upsert sends nothing.
+          await upsertWith({
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+            sessionOrigin: SessionOrigin._Focus,
+          });
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+        });
+
+        test('a pending session reactivated within the threshold sends on_session with the jwt', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          await db.put('Sessions', {
+            ...session,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now(),
+            onSessionPendingFor: EXTERNAL_ID,
+          });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          const current = await getCurrentSession();
+          expect(current).toMatchObject({ status: SessionStatus._Active });
+          expect(current!.onSessionPendingFor).toBeUndefined();
+        });
+
+        // An anonymous user has no backend user under IV, so no token can complete this request later.
+        test('an anonymous user does not leave the session pending', async () => {
+          setUpdateUserResponse();
+
+          await upsertWith({ jwtRequired: true });
+
+          expect(updateUserFn).not.toHaveBeenCalled();
+          const current = await getCurrentSession();
+          expect(current).toMatchObject({ status: SessionStatus._Active });
+          expect(current!.onSessionPendingFor).toBeUndefined();
+        });
+
+        test('a 401 leaves the session pending and the next token sends on_session once', async () => {
+          server.use(
+            http.patch(externalIdUri, async ({ request }) => {
+              requestHeadersFn(Object.fromEntries(request.headers), request.url);
+              updateUserFn(await request.json());
+              const rejected = request.headers.get('authorization') === `Bearer ${JWT}`;
+              return HttpResponse.json({}, { status: rejected ? 401 : 200 });
+            }),
+          );
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect(await getCurrentSession()).toMatchObject({
+            status: SessionStatus._Active,
+            onSessionPendingFor: EXTERNAL_ID,
+          });
+
+          await upsertWith({
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: 'fresh.jwt.value',
+            sessionOrigin: SessionOrigin._JwtUpdated,
+          });
+          expect(updateUserFn).toHaveBeenCalledTimes(2);
+          expect(requestHeadersFn.mock.calls.at(-1)![0].authorization).toBe(
+            'Bearer fresh.jwt.value',
+          );
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: 'fresh.jwt.value' });
+          expect(updateUserFn).toHaveBeenCalledTimes(2);
+        });
+
+        test('a request that does not reach the server leaves the session pending', async () => {
+          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          // Every retry fails, so the request gives up.
+          await expect
+            .poll(async () => (await getCurrentSession())?.onSessionPendingFor)
+            .toBe(EXTERNAL_ID);
+          expect(await getCurrentSession()).toMatchObject({ status: SessionStatus._Active });
+        });
+
+        // The retries can outlast the session threshold, so the row the request
+        // started with may be gone by the time the request gives up.
+        test('a session finalized while the request retries is not recreated', async () => {
+          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+          const user = {
+            ...baseMessagePayload,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          };
+
+          const upsert = upsertSession(user);
+          await vi.waitUntil(async () => (await getCurrentSession()) !== null, { interval: 1 });
+          await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
+          await upsert;
+
+          expect(await getCurrentSession()).toBeNull();
+        });
+
+        test('a pending restore after a failed retry goes on the current session only', async () => {
+          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+          await db.put('Sessions', { ...session, onSessionPendingFor: EXTERNAL_ID });
+          const user = {
+            ...baseMessagePayload,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          };
+
+          const upsert = upsertSession(user);
+          await vi.waitUntil(
+            async () => (await getCurrentSession())?.onSessionPendingFor === undefined,
+            { interval: 1 },
+          );
+          const replacement = { ...session, startTimestamp: session.startTimestamp + 1 };
+          await db.put('Sessions', replacement);
+          await upsert;
+
+          expect(await getCurrentSession()).toEqual(replacement);
+        });
+
+        test('a 4xx other than 401 counts as sent', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 400, callback: updateUserFn });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+        });
+
+        test('the pending on_session is not sent to a different user', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          getHandler({
+            uri: `**/apps/${appId}/users/by/external_id/someone-else`,
+            method: 'patch',
+            status: 200,
+            callback: updateUserFn,
+          });
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID });
+          expect(await getCurrentSession()).toMatchObject({ onSessionPendingFor: EXTERNAL_ID });
+
+          await upsertWith({ jwtRequired: true, externalId: 'someone-else', jwt: JWT });
+
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+        });
+
+        // The debounce only cancels a refresh that has not started, so a request
+        // slower than the debounce can overlap the next upsert.
+        test('two overlapping upserts send the pending on_session once', async () => {
+          server.use(
+            http.patch(externalIdUri, async ({ request }) => {
+              updateUserFn(await request.json());
+              await new Promise((resolve) => setTimeout(resolve, 50));
+              return HttpResponse.json({});
+            }),
+          );
+          await db.put('Sessions', { ...session, onSessionPendingFor: EXTERNAL_ID });
+          const user = {
+            ...baseMessagePayload,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          };
+
+          const first = upsertSession(user);
+          await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, { interval: 1 });
+          await upsertSession(user);
+          await first;
+
+          expect(updateUserFn).toHaveBeenCalledTimes(1);
+          expect((await getCurrentSession())!.onSessionPendingFor).toBeUndefined();
+        });
+
+        test.each([200, 401])(
+          'the jwt never reaches a log line of any level (status %i)',
+          async (status) => {
+            const logSpies = (['_debug', '_info', '_warn', '_error'] as const).map((level) =>
+              vi.spyOn(Log, level).mockImplementation(() => {}),
+            );
+            getHandler({ uri: externalIdUri, method: 'patch', status, callback: updateUserFn });
+
+            await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+            expect(Log._debug).toHaveBeenCalledWith(
+              '[SW] debounceRefresh',
+              expect.objectContaining({ jwt: '[redacted]' }),
+            );
+            const loggedText = logSpies
+              .flatMap((spy) => spy.mock.calls)
+              .map((args) => JSON.stringify(args))
+              .join('\n');
+            expect(loggedText).not.toContain(JWT);
+          },
+        );
+
+        test('a 401 on a signed request logs an error and tells the pages which token was rejected', async () => {
+          const errorSpy = vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(errorSpy).toHaveBeenCalledWith(
+            '[SW] The server rejected the JWT on the session request (401)',
+          );
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        // The broadcast runs inside the promise the event holds open, so the
+        // browser does not stop the worker before postMessage.
+        test('the session request does not settle before the pages get the 401 report', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          matchAllFn.mockImplementationOnce(
+            () => new Promise((resolve) => setTimeout(() => resolve([mockClient]), 30)),
+          );
+
+          const sent = await updateUserSession({
+            appId,
+            onesignalId: ONESIGNAL_ID,
+            subscriptionId: SUB_ID,
+            jwtRequired: true,
+            externalId: EXTERNAL_ID,
+            jwt: JWT,
+          });
+
+          expect(sent).toBe(false);
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        describe('the 401 report goes to one tab only', () => {
+          const focusedTab = () => new Client({ url: 'http://focused-tab.com' });
+          const visibleTab = () =>
+            new Client({
+              url: 'http://visible-tab.com',
+              focused: false,
+              visibilityState: 'visible',
+            });
+          const hiddenTab = (url = 'http://hidden-tab.com') =>
+            new Client({ url, focused: false, visibilityState: 'hidden' });
+
+          // Returns the postMessage spy of each tab, in the order given.
+          const reportTo = async (tabs: Client[]) => {
+            vi.spyOn(Log, '_error').mockImplementation(() => {});
+            getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+            const spies = tabs.map((tab) => vi.spyOn(tab, 'postMessage'));
+            // The first list goes to the focus check in refreshSession, the second to the report.
+            matchAllFn.mockResolvedValueOnce([mockClient]).mockResolvedValueOnce(tabs);
+            await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+            return spies;
+          };
+          const report = {
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          };
+
+          test('the focused tab gets it before a visible or a hidden tab', async () => {
+            const [hidden, visible, focused] = await reportTo([
+              hiddenTab(),
+              visibleTab(),
+              focusedTab(),
+            ]);
+            expect(focused).toHaveBeenCalledExactlyOnceWith(report);
+            expect(visible).not.toHaveBeenCalled();
+            expect(hidden).not.toHaveBeenCalled();
+          });
+
+          test('with no focused tab, a visible tab gets it', async () => {
+            const [hidden, visible] = await reportTo([hiddenTab(), visibleTab()]);
+            expect(visible).toHaveBeenCalledExactlyOnceWith(report);
+            expect(hidden).not.toHaveBeenCalled();
+          });
+
+          test('with only hidden tabs, the first tab gets it', async () => {
+            const [first, second] = await reportTo([
+              hiddenTab('http://hidden-1.com'),
+              hiddenTab('http://hidden-2.com'),
+            ]);
+            expect(first).toHaveBeenCalledExactlyOnceWith(report);
+            expect(second).not.toHaveBeenCalled();
+          });
+
+          test('if the chosen tab throws on postMessage, the next tab gets it', async () => {
+            const closing = focusedTab();
+            vi.spyOn(closing, 'postMessage').mockImplementation(() => {
+              throw new DOMException('closing', 'InvalidStateError');
+            });
+            const [closingSpy, hidden] = await reportTo([closing, hiddenTab()]);
+            expect(closingSpy).toHaveBeenCalledOnce();
+            expect(hidden).toHaveBeenCalledExactlyOnceWith(report);
+          });
+        });
+
+        test('a matchAll rejection on the duration path does not skip the outcome', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          const outcomeFn = vi.fn();
+          getHandler({
+            uri: `**/outcomes/measure`,
+            method: 'post',
+            status: 200,
+            callback: outcomeFn,
+          });
+          // The first list goes to the focus check, then the broadcast's matchAll rejects.
+          matchAllFn
+            .mockResolvedValueOnce([unfocusedClient])
+            .mockRejectedValueOnce(new DOMException('gone', 'InvalidStateError'));
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+          await putNotificationClickedForOutcomes(appId, clickOutcome);
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                jwtRequired: true,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          expect(postMessageFn).not.toHaveBeenCalled();
+          expect(outcomeFn).toHaveBeenCalledOnce();
+        });
+
+        test('a 200 on a signed request and a 401 on an unsigned request send nothing to the pages', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200 });
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
+          getHandler({
+            uri: `**/apps/${appId}/users/by/onesignal_id/${ONESIGNAL_ID}`,
+            method: 'patch',
+            status: 401,
+          });
+          await upsertWith({ externalId: EXTERNAL_ID });
+
+          expect(postMessageFn).not.toHaveBeenCalledWith(
+            expect.objectContaining({ command: WorkerMessengerCommand._JwtUnauthorized }),
+          );
+        });
+
+        test('a 401 on the signed session duration update also tells the pages', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          getHandler({ uri: externalIdUri, method: 'patch', status: 401 });
+          matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                jwtRequired: true,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
+            command: WorkerMessengerCommand._JwtUnauthorized,
+            payload: { externalId: EXTERNAL_ID, jwt: JWT },
+          });
+        });
+
+        test('the session duration update is signed and the outcome stays unsigned', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          getHandler({ uri: `**/outcomes/measure`, method: 'post', status: 200 });
+          matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+          await db.put('Sessions', { ...session, status: SessionStatus._Inactive });
+          await putNotificationClickedForOutcomes(appId, clickOutcome);
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                jwtRequired: true,
+                externalId: EXTERNAL_ID,
+                jwt: JWT,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          const requests = requestHeadersFn.mock.calls.map(([headers, url]) => ({
+            url,
+            authorization: headers.authorization,
+          }));
+          expect(requests).toEqual([
+            {
+              url: expect.stringContaining(`/users/by/external_id/${EXTERNAL_ID}`),
+              authorization: `Bearer ${JWT}`,
+            },
+            { url: expect.stringContaining('/outcomes/measure'), authorization: undefined },
+          ]);
+        });
+      });
     });
 
     describe('session deactivate event', () => {
@@ -959,6 +1510,7 @@ describe('ServiceWorker', () => {
       siteName: 'Example',
       defaultIconUrl: null,
       vapidPublicKey: '1234567890',
+      jwtRequired: JwtRequirement._NotRequired,
       userConfig: TestContext.getFakeAppUserConfig(),
     };
     const serializedSubscription = {

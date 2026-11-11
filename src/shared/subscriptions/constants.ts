@@ -31,7 +31,6 @@ export const NotificationType = {
   // UserOptedOut takes priority over NoNativePermission
   _UserOptedOut: -2,
   _NotSubscribed: -10,
-  _TemporaryWebRecord: -20,
   _PermissionRevoked: -21,
   _PushSubscriptionRevoked: -22,
   _ServiceWorkerStatus403: -23,

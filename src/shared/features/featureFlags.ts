@@ -35,9 +35,14 @@ export async function refreshFeatureFlags(appId: string): Promise<void> {
     // Bypasses Log so the warning shows in production builds, where Log is silent below trace.
     if (overrides.length) console.warn('OneSignal: feature flag overrides are active:', overrides);
 
-    const res = await get<FeaturesResponse>(`apps/${appId}/sdk/features/web/${VERSION}`).catch(
-      () => undefined,
-    );
+    const res = await get<FeaturesResponse>([
+      'apps',
+      appId,
+      'sdk',
+      'features',
+      'web',
+      VERSION,
+    ]).catch(() => undefined);
     const features = res?.ok && res.result?.features;
     const flags = Array.isArray(features)
       ? features.filter((f) => typeof f === 'string')

@@ -7,9 +7,9 @@ import { GroupComparisonType, type GroupComparisonValue, Operation } from './Ope
  */
 export class RefreshUserOperation extends Operation {
   constructor();
-  constructor(appId: string, onesignalId: string);
-  constructor(appId?: string, onesignalId?: string) {
-    super(OPERATION_NAME._RefreshUser, appId, onesignalId);
+  constructor(appId: string, onesignalId: string, externalId?: string);
+  constructor(appId?: string, onesignalId?: string, externalId?: string) {
+    super(OPERATION_NAME._RefreshUser, appId, onesignalId, externalId);
   }
 
   override get _createComparisonKey(): string {

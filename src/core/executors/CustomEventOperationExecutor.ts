@@ -4,16 +4,24 @@ import Log from 'src/shared/libraries/Log';
 import { VERSION } from 'src/shared/utils/env';
 
 import { OPERATION_NAME } from '../constants';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { Operation } from '../operations/Operation';
 import { TrackCustomEventOperation } from '../operations/TrackCustomEventOperation';
 import { sendCustomEvent } from '../requests/api';
 import type { ICustomEventMetadata } from '../types/customEvents';
 import type { ExecutionResponse } from '../types/operation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
+import { resolveJwt } from './ivResolver';
 
 // Implements logic similar to Android SDK's CustomEventOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/main/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/CustomEventOperationExecutor.kt
 export class CustomEventsOperationExecutor implements IOperationExecutor {
+  private _jwtTokenStore: JwtTokenStore;
+
+  constructor(_jwtTokenStore: JwtTokenStore) {
+    this._jwtTokenStore = _jwtTokenStore;
+  }
+
   get _operations(): string[] {
     return [OPERATION_NAME._CustomEvent];
   }
@@ -39,8 +47,9 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
       );
     }
 
+    const jwt = resolveJwt(operation, this._jwtTokenStore);
     const response = await sendCustomEvent(
-      { appId: operation._appId },
+      { appId: operation._appId, jwt },
       {
         name: operation._event.name,
         onesignal_id: operation._onesignalId,
@@ -53,7 +62,7 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
       },
     );
 
-    const { ok, status } = response;
+    const { ok, status, retryAfterSeconds } = response;
     const responseType = getResponseStatusType(status);
 
     if (ok) return { _result: ExecutionResult._Success };
@@ -61,6 +70,11 @@ export class CustomEventsOperationExecutor implements IOperationExecutor {
     switch (responseType) {
       case ResponseStatusType._Retryable:
         return { _result: ExecutionResult._FailRetry };
+      case ResponseStatusType._Unauthorized:
+        return {
+          _result: ExecutionResult._FailUnauthorized,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
       default:
         return { _result: ExecutionResult._FailNoretry };
     }

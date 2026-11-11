@@ -1,9 +1,17 @@
 import type { UserChangeEvent } from '../page/models/UserChangeEvent';
+import type { UserJwtInvalidatedEvent } from '../page/models/UserJwtInvalidatedEvent';
 import { EventListenerBase } from '../page/userModel/EventListenerBase';
 import Emitter from '../shared/libraries/Emitter';
 import { Subscription } from '../shared/models/Subscription';
 import PushSubscriptionNamespace from './PushSubscriptionNamespace';
 import User from './User';
+
+export type UserEventTypeMap = {
+  change: UserChangeEvent;
+  userJwtInvalidated: UserJwtInvalidatedEvent;
+};
+
+export type UserEventName = keyof UserEventTypeMap;
 
 export default class UserNamespace extends EventListenerBase {
   private _currentUser?: User;
@@ -104,11 +112,17 @@ export default class UserNamespace extends EventListenerBase {
     return this._currentUser?.trackEvent(name, properties);
   }
 
-  addEventListener(event: 'change', listener: (userChange: UserChangeEvent) => void): void {
+  addEventListener<K extends UserEventName>(
+    event: K,
+    listener: (obj: UserEventTypeMap[K]) => void,
+  ): void {
     UserNamespace._emitter.on(event, listener);
   }
 
-  removeEventListener(event: 'change', listener: (userChange: UserChangeEvent) => void): void {
+  removeEventListener<K extends UserEventName>(
+    event: K,
+    listener: (obj: UserEventTypeMap[K]) => void,
+  ): void {
     UserNamespace._emitter.off(event, listener);
   }
 }

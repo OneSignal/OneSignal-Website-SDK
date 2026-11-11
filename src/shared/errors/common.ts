@@ -1,3 +1,5 @@
+import type { ExecutionResultValue } from 'src/core/types/operation';
+
 import type { DelayedPromptTypeValue } from '../prompts/types';
 import { InvalidChannelInputField } from './constants';
 import type { InvalidChannelInputFieldValue } from './types';
@@ -31,6 +33,15 @@ export class ChannelCaptureError extends Error {
     }
     super(errorMessage);
     this.reason = invalidChannelInput;
+  }
+}
+
+export class OperationFailedError extends Error {
+  _result: ExecutionResultValue;
+
+  constructor(result: ExecutionResultValue) {
+    super(`Operation failed: ${result}`);
+    this._result = result;
   }
 }
 

@@ -7,11 +7,13 @@ import {
   mockPushSubscription,
   MockServiceWorker,
 } from '__test__/support/mocks/MockServiceWorker';
+import type { SubscriptionChangeEvent } from 'src/page/models/SubscriptionChangeEvent';
 import * as eventListeners from 'src/shared/listeners';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { getAppState } from './database/config';
 import { setPushToken } from './database/subscription';
+import * as main from './helpers/main';
 import { SubscriptionManagerPage } from './managers/subscription/page';
 
 beforeEach(() => {
@@ -116,6 +118,81 @@ describe('checkAndTriggerSubscriptionChanged', () => {
       lastKnownPushToken: token,
       lastKnownPushId: newID,
     });
+  });
+
+  test('2 calls at the same time emit 1 event for 1 change', async () => {
+    const changeListener = vi.fn();
+    OneSignal.User.PushSubscription.addEventListener('change', changeListener);
+    const token = 'overlap-token';
+    await setPushToken(token);
+    OneSignal._coreDirector._subscriptionModelStore._add(
+      createPushSub({ id: 'overlap-id', token }),
+    );
+    mockPushManager.getSubscription.mockResolvedValue(
+      Object.assign({}, mockPushSubscription, { endpoint: token }),
+    );
+
+    await Promise.all([
+      eventListeners.checkAndTriggerSubscriptionChanged(),
+      eventListeners.checkAndTriggerSubscriptionChanged(),
+    ]);
+
+    expect(changeListener).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('welcome notification', () => {
+  const showSpy = vi.spyOn(main, 'showLocalNotification').mockResolvedValue();
+  const change = (
+    previous: { id?: string; token: string; optedIn?: boolean },
+    current: { id?: string; token: string; optedIn?: boolean },
+  ): SubscriptionChangeEvent => ({
+    previous: { id: undefined, optedIn: true, ...previous },
+    current: { id: undefined, optedIn: true, ...current },
+  });
+
+  beforeEach(() => {
+    showSpy.mockClear();
+    OneSignal._doNotShowWelcomeNotification = false;
+  });
+
+  test('shows when the subscription gets its first id', () => {
+    eventListeners._onSubscriptionChanged(change({ token: 't' }, { id: 'server-id', token: 't' }));
+    expect(showSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not show again when the server creates a subscription that had a local id', () => {
+    eventListeners._onSubscriptionChanged(
+      change({ id: 'local-sub', token: 't' }, { id: 'server-id', token: 't' }),
+    );
+    expect(showSpy).not.toHaveBeenCalled();
+  });
+
+  test('shows for a new token on a subscription that had a local id', () => {
+    eventListeners._onSubscriptionChanged(
+      change({ id: 'local-sub', token: 'old' }, { id: 'local-sub', token: 'new' }),
+    );
+    expect(showSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('shows for an opt-in while the subscription still has a local id', () => {
+    eventListeners._onSubscriptionChanged(
+      change(
+        { id: 'local-sub', token: 't', optedIn: false },
+        { id: 'local-sub', token: 't', optedIn: true },
+      ),
+    );
+    expect(showSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('shows when the server creates a subscription and the user opts in at the same time', () => {
+    eventListeners._onSubscriptionChanged(
+      change(
+        { id: 'local-sub', token: 't', optedIn: false },
+        { id: 'server-id', token: 't', optedIn: true },
+      ),
+    );
+    expect(showSpy).toHaveBeenCalledTimes(1);
   });
 });
 

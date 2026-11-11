@@ -1,6 +1,9 @@
 import type { SubscriptionModel } from 'src/core/models/SubscriptionModel';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { ModelChangeTags } from 'src/core/types/models';
+import { ExecutionResult } from 'src/core/types/operation';
+import { hasLoginOp } from 'src/onesignal/User';
 import LoginManager from 'src/page/managers/LoginManager';
 import FuturePushSubscriptionRecord from 'src/page/userModel/FuturePushSubscriptionRecord';
 import type { ContextInterface } from 'src/shared/context/types';
@@ -8,6 +11,7 @@ import { getSubscription } from 'src/shared/database/subscription';
 import { getOneSignalApiUrl, useSafariLegacyPush } from 'src/shared/environment/detect';
 import {
   MissingSafariWebIdError,
+  OperationFailedError,
   PermissionBlockedError,
   SWRegistrationError,
 } from 'src/shared/errors/common';
@@ -50,17 +54,34 @@ async function createSubscribedUser(pushModel: SubscriptionModel): Promise<void>
   const identityModel = OneSignal._coreDirector._getIdentityModel();
   const appId = getAppId();
 
-  OneSignal._coreDirector._operationRepo._enqueue(
-    new LoginUserOperation(appId, identityModel._onesignalId, identityModel._externalId),
-  );
-  await OneSignal._coreDirector._operationRepo._enqueueAndWait(
-    new CreateSubscriptionOperation({
-      ...pushModel.toJSON(),
-      appId,
-      onesignalId: identityModel._onesignalId,
-      subscriptionId: pushModel.id!,
-    }),
-  );
+  // The executor rejects a batch with 2 login operations for one user.
+  if (!hasLoginOp(identityModel._onesignalId)) {
+    OneSignal._coreDirector._operationRepo._enqueue(
+      new LoginUserOperation({
+        appId,
+        onesignalId: identityModel._onesignalId,
+        externalId: identityModel._externalId,
+      }),
+    );
+  }
+  try {
+    await OneSignal._coreDirector._operationRepo._enqueueAndWait(
+      new CreateSubscriptionOperation({
+        ...pushModel.toJSON(),
+        appId,
+        onesignalId: identityModel._onesignalId,
+        externalId: identityModel._externalId,
+        subscriptionId: pushModel.id!,
+      }),
+    );
+  } catch (e) {
+    // Under Identity Verification an anonymous visitor has no backend user yet. The
+    // push model stays local and folds into the create-user request at login.
+    if (e instanceof OperationFailedError && e._result === ExecutionResult._Suppressed) {
+      return;
+    }
+    throw e;
+  }
 }
 
 export const updatePushSubscriptionModelWithRawSubscription = async (
@@ -76,19 +97,24 @@ export const updatePushSubscriptionModelWithRawSubscription = async (
     pushModel = OneSignal._coreDirector._generatePushSubscriptionModel(rawPushSubscription);
     return createSubscribedUser(pushModel);
   }
-  // for users with data failed to create a user or user + subscription on the server
-  if (IDManager._isLocalId(pushModel.id)) {
-    return createSubscribedUser(pushModel);
-  }
-
   // in case of notification state changes, we need to update its web_auth, web_p256, and other keys
   const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(
     rawPushSubscription,
   )._serialize();
+  // A local model can be the placeholder that a login adds with an empty token. Its
+  // create operation must hold the token, so hydrate the model instead of an update.
+  const isLocal = IDManager._isLocalId(pushModel.id);
   for (const key in serializedSubscriptionRecord) {
     const modelKey = key as keyof typeof serializedSubscriptionRecord;
-    pushModel._setProperty(modelKey, serializedSubscriptionRecord[modelKey]);
+    pushModel._setProperty(
+      modelKey,
+      serializedSubscriptionRecord[modelKey],
+      isLocal ? ModelChangeTags._Hydrate : undefined,
+    );
   }
+
+  // for users with data failed to create a user or user + subscription on the server
+  if (isLocal) return createSubscribedUser(pushModel);
 };
 
 export class SubscriptionManagerPage extends SubscriptionManagerBase<ContextInterface> {

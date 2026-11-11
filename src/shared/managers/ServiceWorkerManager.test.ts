@@ -1,6 +1,11 @@
+import { EXTERNAL_ID } from '__test__/constants';
 import { TestEnvironment } from '__test__/support/environment/TestEnvironment';
 import * as detect from 'src/shared/environment/detect';
 import * as helpers from 'src/shared/helpers/service-worker';
+import {
+  type JwtUnauthorizedPayload,
+  WorkerMessengerCommand,
+} from 'src/shared/libraries/workerMessenger/constants';
 import Path from 'src/shared/models/Path';
 import * as registration from 'src/sw/helpers/registration';
 import { beforeEach, describe, expect, test, vi, type MockInstance } from 'vite-plus/test';
@@ -113,5 +118,55 @@ describe('ServiceWorkerManager', () => {
     vi.spyOn(mgr, '_haveParamsChanged').mockResolvedValue(false);
     vi.spyOn(mgr, '_workerNeedsUpdate' as keyof ServiceWorkerManager).mockResolvedValue(false);
     await expect(mgr['_shouldInstallWorker']()).resolves.toBe(false);
+  });
+
+  describe('a worker 401 message', () => {
+    const JWT = 'header.payload.signature';
+
+    const receiveFromWorker = (payload: JwtUnauthorizedPayload) =>
+      OneSignal._context._workerMessenger._onPageMessageReceivedFromServiceWorker(
+        new MessageEvent('message', {
+          data: { command: WorkerMessengerCommand._JwtUnauthorized, payload },
+        }),
+      );
+
+    beforeEach(() => {
+      localStorage.clear();
+      new ServiceWorkerManager(OneSignal._context, config)._establishServiceWorkerChannel();
+    });
+
+    test('removes the rejected token and fires userJwtInvalidated once', async () => {
+      const store = OneSignal._coreDirector._jwtTokenStore;
+      store._putJwt(EXTERNAL_ID, JWT);
+      const listener = vi.fn();
+      OneSignal.User.addEventListener('userJwtInvalidated', listener);
+      const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => {});
+
+      receiveFromWorker({ externalId: EXTERNAL_ID, jwt: JWT });
+      // The same rejection reported again, for example from a second worker request.
+      receiveFromWorker({ externalId: EXTERNAL_ID, jwt: JWT });
+      await Promise.resolve();
+
+      expect(store._getJwt(EXTERNAL_ID)).toBeUndefined();
+      expect(listener).toHaveBeenCalledExactlyOnceWith({ externalId: EXTERNAL_ID });
+      expect(debugSpy).toHaveBeenCalledWith(
+        '[WM] Page received:',
+        expect.objectContaining({ payload: expect.objectContaining({ jwt: '[redacted]' }) }),
+      );
+      expect(JSON.stringify(debugSpy.mock.calls)).not.toContain(JWT);
+    });
+
+    test('keeps a newer stored token and fires nothing', async () => {
+      const store = OneSignal._coreDirector._jwtTokenStore;
+      store._putJwt(EXTERNAL_ID, 'fresh-jwt');
+      const listener = vi.fn();
+      OneSignal.User.addEventListener('userJwtInvalidated', listener);
+
+      receiveFromWorker({ externalId: EXTERNAL_ID, jwt: JWT });
+      await Promise.resolve();
+
+      expect(store._getJwt(EXTERNAL_ID)).toBe('fresh-jwt');
+      expect(listener).not.toHaveBeenCalled();
+    });
   });
 });

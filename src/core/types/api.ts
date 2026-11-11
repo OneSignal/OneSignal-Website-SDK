@@ -1,11 +1,14 @@
-import type { APIHeaders } from 'src/shared/models/APIHeaders';
 import type { NotificationTypeValue, SubscriptionTypeValue } from 'src/shared/subscriptions/types';
 import type { SetRequired } from 'type-fest';
 
 export interface RequestMetadata {
   appId: string;
   subscriptionId?: string;
-  jwtHeader?: APIHeaders;
+  /**
+   * Identity Verification token for the user this request addresses.
+   * Sent as `Authorization: Bearer <jwt>` when present.
+   */
+  jwt?: string;
 }
 
 export interface AliasPair {

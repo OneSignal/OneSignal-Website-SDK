@@ -2,8 +2,10 @@ import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operati
 import type { IRebuildUserService } from 'src/core/types/user';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import Log from 'src/shared/libraries/Log';
+import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 
-import { IdentityConstants, OPERATION_NAME } from '../constants';
+import { OPERATION_NAME } from '../constants';
+import { type JwtTokenStore } from '../JwtTokenStore';
 import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { type NewRecordsState } from '../operationRepo/NewRecordsState';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
@@ -20,6 +22,7 @@ import {
 } from '../requests/api';
 import { ModelChangeTags } from '../types/models';
 import type { ExecutionResponse } from '../types/operation';
+import { resolveBackendParams } from './ivResolver';
 
 // Implements logic similar to Android SDK's SubscriptionOperationExecutor
 // Reference: https://github.com/OneSignal/OneSignal-Android-SDK/blob/5.1.31/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/user/internal/operations/impl/executors/SubscriptionOperationExecutor.kt
@@ -27,15 +30,18 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   private _subscriptionModelStore: SubscriptionModelStore;
   private _buildUserService: IRebuildUserService;
   private _newRecordState: NewRecordsState;
+  private _jwtTokenStore: JwtTokenStore;
 
   constructor(
     _subscriptionModelStore: SubscriptionModelStore,
     _buildUserService: IRebuildUserService,
     _newRecordState: NewRecordsState,
+    _jwtTokenStore: JwtTokenStore,
   ) {
     this._subscriptionModelStore = _subscriptionModelStore;
     this._buildUserService = _buildUserService;
     this._newRecordState = _newRecordState;
+    this._jwtTokenStore = _jwtTokenStore;
   }
 
   get _operations(): string[] {
@@ -98,12 +104,10 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       notification_types,
     };
 
+    const { alias, jwt } = resolveBackendParams(createOperation, this._jwtTokenStore);
     const response = await createSubscriptionByAlias(
-      { appId: createOperation._appId },
-      {
-        label: IdentityConstants._OneSignalID,
-        id: createOperation._onesignalId,
-      },
+      { appId: createOperation._appId, jwt },
+      alias,
       { subscription },
     );
 
@@ -121,12 +125,19 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           createOperation._onesignalId,
           ModelChangeTags._Hydrate,
         );
+        checkAndTriggerSubscriptionChanged().catch(Log._error);
       }
 
       return {
         _result: ExecutionResult._Success,
         _operations: !backendSubscriptionId
-          ? [new RefreshUserOperation(createOperation._appId, createOperation._onesignalId)]
+          ? [
+              new RefreshUserOperation(
+                createOperation._appId,
+                createOperation._onesignalId,
+                createOperation._externalId,
+              ),
+            ]
           : undefined,
         _idTranslations: backendSubscriptionId
           ? {
@@ -232,12 +243,15 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
               enabled: lastOp.enabled,
               notification_types: lastOp.notification_types,
               onesignalId: lastOp._onesignalId,
+              externalId: lastOp._externalId,
               subscriptionId: lastOp._subscriptionId,
               token: lastOp.token,
               type: lastOp.type,
             }),
           ],
         };
+      case ResponseStatusType._Unauthorized:
+        return this._unsignedRouteRejected('update');
       default:
         return { _result: ExecutionResult._FailNoretry };
     }
@@ -246,8 +260,9 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
   private async _transferSubscription(
     op: TransferSubscriptionOperation,
   ): Promise<ExecutionResponse> {
-    const response = await transferSubscriptionById({ appId: op._appId }, op._subscriptionId, {
-      onesignal_id: op._onesignalId,
+    const { alias, jwt } = resolveBackendParams(op, this._jwtTokenStore);
+    const response = await transferSubscriptionById({ appId: op._appId, jwt }, op._subscriptionId, {
+      [alias.label]: alias.id,
     });
 
     if (response.ok) {
@@ -261,6 +276,11 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       case ResponseStatusType._Retryable:
         return {
           _result: ExecutionResult._FailRetry,
+          _retryAfterSeconds: retryAfterSeconds,
+        };
+      case ResponseStatusType._Unauthorized:
+        return {
+          _result: ExecutionResult._FailUnauthorized,
           _retryAfterSeconds: retryAfterSeconds,
         };
 
@@ -299,9 +319,18 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           _result: ExecutionResult._FailRetry,
           _retryAfterSeconds: retryAfterSeconds,
         };
+      case ResponseStatusType._Unauthorized:
+        return this._unsignedRouteRejected('delete');
 
       default:
         return { _result: ExecutionResult._FailNoretry };
     }
+  }
+
+  // The SDK never signs PATCH or DELETE subscriptions/{id}, so a 401 here means the
+  // server contract changed. The operation is dropped; make the loss visible.
+  private _unsignedRouteRejected(route: 'update' | 'delete'): ExecutionResponse {
+    Log._error(`SubOpExec: 401 on unsigned ${route}`);
+    return { _result: ExecutionResult._FailNoretry };
   }
 }
