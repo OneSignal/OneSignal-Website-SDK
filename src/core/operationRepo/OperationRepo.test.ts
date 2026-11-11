@@ -7,12 +7,14 @@ import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import { SubscriptionType } from 'src/shared/subscriptions/constants';
+import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vite-plus/test';
 
 import { JwtTokenStore } from '../JwtTokenStore';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
+import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
+import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
@@ -48,6 +50,7 @@ vi.spyOn(OperationModelStore.prototype, '_create').mockImplementation(() => {
 let mockOperationModelStore: OperationModelStore;
 let jwtTokenStore: JwtTokenStore;
 let identityModelStore: IdentityModelStore;
+let subscriptionModelStore: SubscriptionModelStore;
 
 const executeOps = async (opRepo: OperationRepo) => {
   await opRepo._loadSavedOperations();
@@ -77,12 +80,14 @@ describe('OperationRepo', () => {
     mockOperationModelStore = new OperationModelStore();
     jwtTokenStore = new JwtTokenStore();
     identityModelStore = new IdentityModelStore();
+    subscriptionModelStore = new SubscriptionModelStore();
     opRepo = new OperationRepo(
       [mockExecutor],
       mockOperationModelStore,
       new NewRecordsState(),
       jwtTokenStore,
       identityModelStore,
+      subscriptionModelStore,
     );
   });
 
@@ -487,6 +492,76 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore._list()).toEqual([]);
     });
 
+    const addEmailModel = (subscriptionId: string) => {
+      const model = new SubscriptionModel();
+      model._mergeData({
+        id: subscriptionId,
+        type: SubscriptionType._Email,
+        token: 'user@example.com',
+        enabled: true,
+        notification_types: NotificationType._Subscribed,
+      });
+      subscriptionModelStore._add(model);
+    };
+    const emailCreate = (onesignalId: string, subscriptionId: string, externalId?: string) =>
+      new CreateSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId,
+        externalId,
+        token: 'user@example.com',
+        type: SubscriptionType._Email,
+        subscriptionId,
+      });
+    const expectCreateFor = (op: OperationBase, subscriptionId: string) => {
+      expect(op).toBeInstanceOf(CreateSubscriptionOperation);
+      expect(op).toMatchObject({
+        _appId: APP_ID,
+        _onesignalId: ONESIGNAL_ID,
+        _externalId: EXTERNAL_ID,
+        _subscriptionId: subscriptionId,
+        type: SubscriptionType._Email,
+        token: 'user@example.com',
+        enabled: true,
+        notification_types: NotificationType._Subscribed,
+      });
+    };
+
+    test('start: enqueues a create for the current user when the create of an earlier user is gone', async () => {
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      seedSaved(emailCreate(IDManager._createLocalId(), subscriptionId, 'earlier-user'));
+
+      await opRepo._start();
+
+      expect(queued()).toHaveLength(1);
+      expectCreateFor(queued()[0], subscriptionId);
+      expect(mockOperationModelStore._list()).toEqual(queued());
+    });
+
+    test('start: enqueues no create when a queued transfer of the current user still sends the subscription', async () => {
+      const localId = IDManager._createLocalId();
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(localId, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      const switchLogin = login(localId, EXTERNAL_ID);
+      const transfer = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: localId,
+        externalId: EXTERNAL_ID,
+        subscriptionId,
+      });
+      seedSaved(
+        emailCreate(IDManager._createLocalId(), subscriptionId, 'earlier-user'),
+        switchLogin,
+        transfer,
+      );
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([switchLogin, transfer]);
+    });
+
     test('start: keeps a local subscription that a queued login creates from a transfer', async () => {
       const localId = IDManager._createLocalId();
       const localSubId = IDManager._createLocalId();
@@ -546,6 +621,7 @@ describe('OperationRepo', () => {
         new NewRecordsState(),
         jwtTokenStore,
         identityModelStore,
+        subscriptionModelStore,
       );
       const tag = setTag(localId, EXTERNAL_ID);
       seedSaved(tag);
@@ -592,6 +668,23 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore._list()).toEqual([currentTag]);
     });
 
+    test('a dropped login of an earlier user gives the create of its email subscription to the current user', async () => {
+      const earlierId = IDManager._createLocalId();
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      const earlierCreate = emailCreate(earlierId, subscriptionId, 'earlier-user');
+      opRepo._enqueue(earlierCreate);
+
+      await opRepo._executeOperations([
+        { operation: login(earlierId, 'earlier-user'), bucket: 0, retries: 0 },
+      ]);
+
+      expect(queued()).toHaveLength(1);
+      expect(queued()[0]).not.toBe(earlierCreate);
+      expectCreateFor(queued()[0], subscriptionId);
+    });
+
     const useLoginExecutor = (execute: IOperationExecutor['_execute']) => {
       opRepo = new OperationRepo(
         [mockExecutor, { _operations: ['login-user'], _execute: execute }],
@@ -599,6 +692,7 @@ describe('OperationRepo', () => {
         new NewRecordsState(),
         jwtTokenStore,
         identityModelStore,
+        subscriptionModelStore,
       );
     };
 
