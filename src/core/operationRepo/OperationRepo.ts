@@ -17,12 +17,15 @@ import {
   isJwtRequirementUnknown,
 } from '../identityVerification';
 import { type JwtTokenStore } from '../JwtTokenStore';
+import { SubscriptionModelStoreListener } from '../listeners/SubscriptionModelStoreListener';
 import { type OperationModelStore } from '../modelRepo/OperationModelStore';
 import { type IdentityModelStore } from '../modelStores/IdentityModelStore';
+import { type SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { BaseSubscriptionOperation } from '../operations/BaseSubscriptionOperation';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
+import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
   OP_REPO_EXECUTION_INTERVAL,
@@ -56,6 +59,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   private _newRecordState: NewRecordsState;
   private _jwtTokenStore: JwtTokenStore;
   private _identityModelStore: IdentityModelStore;
+  private _subscriptionModelStore: SubscriptionModelStore;
   private _loggedUnknownDeferral = false;
 
   constructor(
@@ -64,11 +68,13 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     newRecordState: NewRecordsState,
     jwtTokenStore: JwtTokenStore,
     identityModelStore: IdentityModelStore,
+    subscriptionModelStore: SubscriptionModelStore,
   ) {
     this._operationModelStore = operationModelStore;
     this._newRecordState = newRecordState;
     this._jwtTokenStore = jwtTokenStore;
     this._identityModelStore = identityModelStore;
+    this._subscriptionModelStore = subscriptionModelStore;
 
     this._executorsMap = new Map<string, IOperationExecutor>();
     for (const executor of executors) {
@@ -95,7 +101,11 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   }
 
   public async _start(): Promise<void> {
-    await Promise.all([this._loadSavedOperations(), this._identityModelStore._loaded]);
+    await Promise.all([
+      this._loadSavedOperations(),
+      this._identityModelStore._loaded,
+      this._subscriptionModelStore._loaded,
+    ]);
     // The page fetches the config before the repo starts, so the requirement is
     // already hydrated here. This is the web equivalent of Android's hydrate hook.
     if (isIvBehaviorActive()) {
@@ -270,6 +280,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
    * because that login sends them. At start, a current user with an externalId gets a new login, because
    * login with the same externalId does nothing. The login is enqueued before the
    * removal, so the subscription operations that it sends stay.
+   * A removed create-subscription goes to the current user again, see
+   * _recreateSubscriptions.
    */
   private _removeUntranslatableOps(atStart: boolean): void {
     const { _onesignalId: currentId, _externalId: externalId } = this._identityModelStore._model;
@@ -297,6 +309,7 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       );
     }
 
+    const removedCreates: CreateSubscriptionOperation[] = [];
     do {
       created = findCreated();
     } while (
@@ -305,16 +318,51 @@ export class OperationRepo implements IOperationRepo, IStartableService {
           if (isLost(op._existingOnesignalId)) op._clearExistingOnesignalId();
           return false;
         }
-        return (
+        const isRemoved =
           (op._onesignalId !== currentId && isLost(op._onesignalId)) ||
           (op instanceof BaseSubscriptionOperation &&
             !(op instanceof CreateSubscriptionOperation) &&
             !created.has(op._onesignalId) &&
             !(op._onesignalId === currentId && IDManager._isLocalId(currentId)) &&
-            isLost(op._subscriptionId))
-        );
+            isLost(op._subscriptionId));
+        if (isRemoved && op instanceof CreateSubscriptionOperation) removedCreates.push(op);
+        return isRemoved;
       })
     );
+    this._recreateSubscriptions(removedCreates);
+  }
+
+  /**
+   * Subscription models stay after a user switch, so the model of a removed
+   * create keeps its local id. A later addEmail or addSms with the same token
+   * does nothing, so no other code creates the subscription. Enqueues a create
+   * for the current user from the model. Skips a subscription that a queued
+   * create or transfer still sends, and a model that is gone.
+   */
+  private _recreateSubscriptions(removedCreates: CreateSubscriptionOperation[]): void {
+    const { _onesignalId: onesignalId, _externalId: externalId } = this._identityModelStore._model;
+    removedCreates.forEach(({ _appId: appId, _subscriptionId: subscriptionId }) => {
+      const model = this._subscriptionModelStore._getBySubscriptionId(subscriptionId);
+      const isSent = this._queue.some(
+        ({ operation: op }) =>
+          (op instanceof CreateSubscriptionOperation ||
+            op instanceof TransferSubscriptionOperation) &&
+          op._subscriptionId === subscriptionId,
+      );
+      if (model && !isSent) {
+        this._enqueue(
+          new CreateSubscriptionOperation({
+            appId,
+            onesignalId,
+            externalId,
+            subscriptionId,
+            type: model.type,
+            token: model.token,
+            ...SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(model),
+          }),
+        );
+      }
+    });
   }
 
   private _internalEnqueue(
