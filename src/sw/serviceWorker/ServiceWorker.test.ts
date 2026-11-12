@@ -946,6 +946,89 @@ describe('ServiceWorker', () => {
         },
       );
 
+      describe('session model', () => {
+        const mirrorFlags = (flags: string[]) =>
+          db.put('Options', { key: 'featureFlags', value: JSON.stringify(flags) });
+        const upsert = (user: Partial<UpsertOrDeactivateSessionPayload> = {}) =>
+          upsertSession({ ...baseMessagePayload, isSafari: false, ...user });
+
+        beforeEach(() => {
+          setUpdateUserResponse();
+        });
+
+        afterEach(async () => {
+          await db.delete('Options', 'featureFlags');
+        });
+
+        test('a new session pins its IDs and uses the legacy path when the flag is off', async () => {
+          await upsert();
+
+          const current = await getCurrentSession();
+          expect(current).toMatchObject({
+            sessionId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+            usesSessionsApi: false,
+            onesignalId: ONESIGNAL_ID,
+            subscriptionId: SUB_ID,
+          });
+          expect(current?.serverSessionId).toBeUndefined();
+        });
+
+        test('a new session uses the sessions API when the flag is on', async () => {
+          await mirrorFlags([FeatureFlag._SessionsV2ApiCutover]);
+
+          await upsert();
+
+          expect((await getCurrentSession())?.usesSessionsApi).toBe(true);
+        });
+
+        test('the flag and pinned IDs do not change mid-session', async () => {
+          await upsert();
+          const started = await getCurrentSession();
+
+          await mirrorFlags([FeatureFlag._SessionsV2ApiCutover]);
+          await upsert({ onesignalId: 'other-user', subscriptionId: 'other-subscription' });
+
+          expect(await getCurrentSession()).toEqual(started);
+        });
+
+        test('a session after the threshold gets a new ID and re-reads the flag', async () => {
+          getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+          await db.put('Sessions', {
+            ...session,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now() - 60_000,
+            sessionId: 'previous-session',
+            usesSessionsApi: false,
+            onesignalId: 'previous-user',
+            subscriptionId: 'previous-subscription',
+            serverSessionId: 'previous-server-session',
+          });
+          await mirrorFlags([FeatureFlag._SessionsV2ApiCutover]);
+
+          await upsert();
+
+          const current = (await getCurrentSession())!;
+          expect(current.sessionId).not.toBe('previous-session');
+          expect(current).toMatchObject({
+            usesSessionsApi: true,
+            onesignalId: ONESIGNAL_ID,
+            subscriptionId: SUB_ID,
+          });
+          expect(current.serverSessionId).toBeUndefined();
+        });
+
+        test('a session stored without the new fields stays on the legacy path', async () => {
+          await mirrorFlags([FeatureFlag._SessionsV2ApiCutover]);
+          await db.put('Sessions', session);
+
+          await upsert();
+
+          const current = (await getCurrentSession())!;
+          expect(current.usesSessionsApi).toBeUndefined();
+          expect(current.sessionId).toBeUndefined();
+        });
+      });
+
       describe('under Identity Verification', () => {
         const JWT = 'header.payload.signature';
         const externalIdUri = `**/apps/${appId}/users/by/external_id/${EXTERNAL_ID}`;

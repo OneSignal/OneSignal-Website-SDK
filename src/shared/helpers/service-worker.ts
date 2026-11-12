@@ -6,6 +6,7 @@ import { sendSessionDuration, updateUserSession } from '../api/sw';
 import { encodeHashAsUriComponent } from '../context/helpers';
 import { cleanupCurrentSession, clearStore, db, getCurrentSession } from '../database/client';
 import { getAllNotificationClickedForOutcomes } from '../database/notifications';
+import { FeatureFlag, isFeatureEnabledInWorker } from '../features/featureFlags';
 import Log from '../libraries/Log';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
@@ -41,7 +42,7 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
-    const session: Session = initializeNewSession({ appId });
+    const session = await startNewSession(options);
 
     // if there is a record about a clicked notification in our database, attribute session to it.
     const clickedNotification: OutcomesNotificationClicked | null =
@@ -89,9 +90,19 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
   // TODO: Possibly check that it's not unreasonably long.
   // TODO: Or couple with periodic ping for better results.
   await finalizeSession(options, existingSession);
-  const session: Session = initializeNewSession({ appId });
+  const session = await startNewSession(options);
   await db.put('Sessions', session);
   await sendOnSessionCall(options, session);
+}
+
+async function startNewSession({ appId, onesignalId, subscriptionId }: SessionUser) {
+  return initializeNewSession({
+    appId,
+    sessionId: crypto.randomUUID(),
+    usesSessionsApi: await isFeatureEnabledInWorker(FeatureFlag._SessionsV2ApiCutover),
+    onesignalId,
+    subscriptionId,
+  });
 }
 
 export async function deactivateSession(

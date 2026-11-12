@@ -8,8 +8,8 @@ export function initializeNewSession(options: NewSessionOptions): Session {
   const notificationId = (options && options.notificationId) || null;
 
   return {
+    ...options,
     accumulatedDuration: 0,
-    appId: options.appId,
     lastActivatedTimestamp: currentTimestamp,
     lastDeactivatedTimestamp: null,
     notificationId,
