@@ -321,6 +321,44 @@ describe('migrations', () => {
       ]);
     });
   });
+
+  describe('v8', () => {
+    test('adds the session request stores and keeps existing data', async () => {
+      const db = await getDb(7);
+      await db.put('Options', { key: 'userConsent', value: true });
+      await db.put('operations', { modelId: 'op-1', modelName: 'operations', name: 'login-user' });
+      await closeDb();
+
+      const db2 = await getDb(8);
+      expect(db2.objectStoreNames).toContain('SessionRequests');
+      expect(db2.objectStoreNames).toContain('SessionRequestStates');
+      expect(await db2.get('Options', 'userConsent')).toEqual({ key: 'userConsent', value: true });
+      expect(await db2.getAll('operations')).toEqual([
+        { modelId: 'op-1', modelName: 'operations', name: 'login-user' },
+      ]);
+
+      const request = {
+        id: 'request-1',
+        order: 1,
+        kind: 'create',
+        appId: APP_ID,
+        sessionId: 'session-1',
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: 'subscription-1',
+        idempotencyKey: 'key-1',
+        enqueuedAt: 1,
+        attempts: 0,
+        notBefore: 0,
+        subscriptionType: SubscriptionType._ChromePush,
+        startTime: 1,
+      } as const;
+      expect(await db2.put('SessionRequests', request)).toBe('request-1');
+      expect(await db2.get('SessionRequests', 'request-1')).toEqual(request);
+
+      const state = { sessionId: 'session-1', serverSessionId: 'server-1', createdAt: 1 };
+      expect(await db2.put('SessionRequestStates', state)).toBe('session-1');
+    });
+  });
 });
 
 describe('db timeout', () => {

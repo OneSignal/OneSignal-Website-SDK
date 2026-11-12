@@ -67,6 +67,11 @@ const open = async (version = VERSION) => {
         _db.createObjectStore('operations', { keyPath: 'modelId' });
       }
 
+      if (newDbVersion >= 8 && oldVersion < 8) {
+        _db.createObjectStore('SessionRequests', { keyPath: 'id' });
+        _db.createObjectStore('SessionRequestStates', { keyPath: 'sessionId' });
+      }
+
       // TODO: next version delete NotificationOpened table
       terminated = false;
       if (!IS_SERVICE_WORKER && typeof OneSignal !== 'undefined') {
