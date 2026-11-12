@@ -95,7 +95,11 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
   await sendOnSessionCall(options, session);
 }
 
-async function startNewSession({ appId, onesignalId, subscriptionId }: SessionUser) {
+async function startNewSession({
+  appId,
+  onesignalId,
+  subscriptionId,
+}: SessionUser): Promise<Session> {
   return initializeNewSession({
     appId,
     sessionId: crypto.randomUUID(),
