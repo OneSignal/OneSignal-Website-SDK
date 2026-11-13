@@ -20,6 +20,8 @@ export interface Session {
    * the same user that brings a token sends it once.
    */
   onSessionPendingFor?: string;
+  /** Unset until the sessions API creates this session. */
+  serverSessionId?: string;
   /**
    * The fields below are set when a session starts. A session stored by an
    * older SDK lacks them and stays on the legacy path until it ends.
@@ -33,8 +35,6 @@ export interface Session {
   /** The user and push subscription the session started with; kept after a login. */
   onesignalId?: string;
   subscriptionId?: string;
-  /** Unset until the sessions API creates this session. */
-  serverSessionId?: string;
 }
 
 interface BaseSessionPayload {

@@ -1,7 +1,13 @@
 import { ONESIGNAL_SESSION_KEY, SessionStatus } from './constants';
 import type { Session } from './types';
 
-type NewSessionOptions = Partial<Session> & { appId: string };
+type NewSessionOptions = Pick<Session, 'appId'> &
+  Partial<
+    Pick<
+      Session,
+      'notificationId' | 'sessionId' | 'usesSessionsApi' | 'onesignalId' | 'subscriptionId'
+    >
+  >;
 
 export function initializeNewSession(options: NewSessionOptions): Session {
   const currentTimestamp = new Date().getTime();
