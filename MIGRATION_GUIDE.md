@@ -171,25 +171,27 @@ OneSignal.User.addAlias('my_alias', '1234');
 
 All user functions are synchronous.
 
-| Property/Function       | Description                                          | Argument List                                                            |
-| ----------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
-| `addAlias()`            | Adds a new alias for the current user.               | `label: string, id: string`                                              |
-| `addAliases()`          | Adds multiple aliases for the current user.          | `aliases: { [key: string]: string }`                                     |
-| `removeAlias()`         | Removes an alias for the current user.               | `label: string`                                                          |
-| `removeAliases()`       | Removes multiple aliases for the current user.       | `labels: string[]`                                                       |
-| `addEmail()`            | Adds an email address for the current user.          | `email: string`                                                          |
-| `removeEmail()`         | Removes an email address for the current user.       | `email: string`                                                          |
-| `addSms()`              | Adds an SMS number for the current user.             | `smsNumber: string`                                                      |
-| `removeSms()`           | Removes an SMS number for the current user.          | `smsNumber: string`                                                      |
-| `addTag()`              | Adds a tag for the current user.                     | `key: string, value: string`                                             |
-| `addTags()`             | Adds multiple tags for the current user.             | `tags: { [key: string]: string }`                                        |
-| `removeTag()`           | Removes a tag for the current user.                  | `key: string`                                                            |
-| `removeTags()`          | Removes multiple tags for the current user.          | `keys: string[]`                                                         |
-| `getTags()`             | Returns the local tags on the current user.          |                                                                          |
-| `onesignalId`           | Returns the local OneSignal Id for the current user. |                                                                          |
-| `externalId`            | Returns the local external Id for the current user.  |                                                                          |
-| `addEventListener()`    | Adds an event listener for the `change` event.       | - `event` ("change")<br>- `listener` ((change: UserChangeEvent) => void) |
-| `removeEventListener()` | Removes an event listener for the `change` event.    | - `event` ("change")<br>- `listener` ((change: UserChangeEvent) => void) |
+| Property/Function       | Description                                                                                                       | Argument List                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `addAlias()`            | Adds a new alias for the current user.                                                                            | `label: string, id: string`                                                                 |
+| `addAliases()`          | Adds multiple aliases for the current user.                                                                       | `aliases: { [key: string]: string }`                                                        |
+| `removeAlias()`         | Removes an alias for the current user.                                                                            | `label: string`                                                                             |
+| `removeAliases()`       | Removes multiple aliases for the current user.                                                                    | `labels: string[]`                                                                          |
+| `addEmail()`            | Adds an email address for the current user.                                                                       | `email: string`                                                                             |
+| `removeEmail()`         | Removes an email address for the current user.                                                                    | `email: string`                                                                             |
+| `addSms()`              | Adds an SMS number for the current user.                                                                          | `smsNumber: string`                                                                         |
+| `removeSms()`           | Removes an SMS number for the current user.                                                                       | `smsNumber: string`                                                                         |
+| `addTag()`              | Adds a tag for the current user.                                                                                  | `key: string, value: string`                                                                |
+| `addTags()`             | Adds multiple tags for the current user.                                                                          | `tags: { [key: string]: string }`                                                           |
+| `removeTag()`           | Removes a tag for the current user.                                                                               | `key: string`                                                                               |
+| `removeTags()`          | Removes multiple tags for the current user.                                                                       | `keys: string[]`                                                                            |
+| `getTags()`             | Returns the local tags on the current user.                                                                       |                                                                                             |
+| `onesignalId`           | Returns the local OneSignal Id for the current user.                                                              |                                                                                             |
+| `externalId`            | Returns the local external Id for the current user.                                                               |                                                                                             |
+| `addEventListener()`    | Adds an event listener for the `change` event.                                                                    | - `event` ("change")<br>- `listener` ((change: UserChangeEvent) => void)                    |
+| `removeEventListener()` | Removes an event listener for the `change` event.                                                                 | - `event` ("change")<br>- `listener` ((change: UserChangeEvent) => void)                    |
+| `addEventListener()`    | Adds an event listener for the `userJwtInvalidated` event. See [Identity Verification](#6-identity-verification). | - `event` ("userJwtInvalidated")<br>- `listener` ((event: UserJwtInvalidatedEvent) => void) |
+| `removeEventListener()` | Removes an event listener for the `userJwtInvalidated` event.                                                     | - `event` ("userJwtInvalidated")<br>- `listener` ((event: UserJwtInvalidatedEvent) => void) |
 
 ### Notifications Namespace
 
@@ -258,6 +260,37 @@ OneSignal.Debug.setLogLevel(“trace”);
 | ------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | `setLogLevel` | Turns on logging with the given log level. | `setLogLevel: string`<br>- `"trace"`<br>- `"debug"`<br>- `"info"`<br>- `"warn"`<br>- `"error"` |
 
+## 6. Identity Verification
+
+Identity Verification is supported in version 160900 and later. When Token Identity Verification is on for your app, the SDK sends a JWT from your server with each user request. See the [Identity Verification documentation](https://documentation.onesignal.com/docs/en/identity-verification).
+
+Call these methods inside `OneSignalDeferred.push`, so that they run after `init`.
+
+```js
+OneSignalDeferred.push(async function (OneSignal) {
+  // Add the listener before you call login.
+  OneSignal.User.addEventListener('userJwtInvalidated', async function (event) {
+    const token = await fetchOneSignalJwt(event.externalId);
+    await OneSignal.updateUserJwt(event.externalId, token);
+  });
+
+  await OneSignal.login('myId', 'myJwt');
+});
+```
+
+| Sync/Async | Property/Function | Description                                                                                                                                                | Argument List                          |
+| ---------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `async`    | `login()`         | Logs in the user. Pass the JWT as the second argument.                                                                                                     | `externalId: string, jwtToken: string` |
+| `async`    | `updateUserJwt()` | Stores a new JWT for a user. Accepts any external ID, not only the current user. Requests that wait for a token for that user send on the next queue pass. | `externalId: string, token: string`    |
+
+`OneSignal.User.addEventListener('userJwtInvalidated', listener)` calls the listener with `{ externalId }` when OneSignal rejects the JWT of that user. The listener only gets events that fire after you add it.
+
+When Token Identity Verification is on:
+
+- `logout()` disables the push subscription of the user that logs out. The SDK does not create an anonymous user on OneSignal. A later `login(externalId, jwt)` restores the push subscription.
+- The SDK does not create a user on OneSignal for an anonymous visitor. A push subscription stays on the browser until `login(externalId, jwt)`. Then the login creates the user with that push subscription.
+- The SDK does not link a legacy (v15 and earlier) player ID to a user. Call `login(externalId, jwt)` to identify the visitor.
+
 # Limitations
 
 ## April 2023
@@ -269,7 +302,7 @@ Please test thoroughly prior to production use.
 - Any User namespace calls must be invoked **after** initialization (async). Example: `OneSignal.User.addTag("tag", "2");`
 - HTTP environments are not supported.
 - AMP environments are not supported.
-- Identity verification is not functional.
+- Identity verification is supported in version 160900 and later. See [Identity Verification](#6-identity-verification).
 
 ## January 2023
 
@@ -282,7 +315,7 @@ It is recommended this version is used **only** in development and staging envri
 - Aliases will be available in a future release,
 - HTTP environments are not supported.
 - AMP environments are not supported.
-- Identity verification is not functional.
+- Identity verification is supported in version 160900 and later. See [Identity Verification](#6-identity-verification).
 - Outcomes are not functional.
 
 # Glossary
