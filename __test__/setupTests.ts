@@ -5,6 +5,7 @@ import { vi, beforeAll, beforeEach, afterEach, afterAll, type MockInstance } fro
 
 import { DEFAULT_USER_AGENT } from './constants';
 import TestContext from './support/environment/TestContext';
+import { createFakeLocks } from './support/helpers/locks';
 import { server } from './support/mocks/server';
 
 beforeAll(() =>
@@ -52,6 +53,8 @@ vi.mock('src/core/operationRepo/constants', () => ({
   OP_REPO_POST_CREATE_RETRY_UP_TO: 20,
   RETRY_MS: 10,
 }));
+
+Object.defineProperty(navigator, 'locks', { value: createFakeLocks(), configurable: true });
 
 Object.defineProperty(navigator, 'userAgent', {
   value: DEFAULT_USER_AGENT,
