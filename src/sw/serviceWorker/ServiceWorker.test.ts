@@ -1215,7 +1215,14 @@ describe('ServiceWorker', () => {
         // The retries can outlast the session threshold, so the row the request
         // started with may be gone by the time the request gives up.
         test('a session finalized while the request retries is not recreated', async () => {
-          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+          let finalized!: () => void;
+          const finalizedPromise = new Promise<void>((resolve) => (finalized = resolve));
+          server.use(
+            http.patch(externalIdUri, async () => {
+              await finalizedPromise;
+              return HttpResponse.error();
+            }),
+          );
           const user = {
             ...baseMessagePayload,
             jwtRequired: true,
@@ -1226,6 +1233,7 @@ describe('ServiceWorker', () => {
           const upsert = upsertSession(user);
           await vi.waitUntil(async () => (await getCurrentSession()) !== null, { interval: 1 });
           await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
+          finalized();
           await upsert;
 
           expect(await getCurrentSession()).toBeNull();
