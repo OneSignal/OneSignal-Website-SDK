@@ -37,6 +37,7 @@ import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategy
 import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from 'src/shared/session/constants';
 import type { Session, UpsertOrDeactivateSessionPayload } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
+import { drainSessionRequests } from 'src/sw/sessionRequests/sender';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { getAppId, NOTIFICATION_WILL_DISPLAY_TIMEOUT_MS, run } from './ServiceWorker';
@@ -91,6 +92,10 @@ vi.mock('src/sw/helpers/CancelableTimeout', () => ({
       },
     };
   }),
+}));
+
+vi.mock('src/sw/sessionRequests/sender', () => ({
+  drainSessionRequests: vi.fn(() => Promise.resolve()),
 }));
 
 run();
@@ -194,6 +199,12 @@ describe('ServiceWorker', () => {
 
       expect(claimFn).toHaveBeenCalled();
     });
+  });
+
+  test('drains queued session requests when back online', async () => {
+    vi.mocked(drainSessionRequests).mockClear();
+    await dispatchEvent(new Event('online'));
+    expect(drainSessionRequests).toHaveBeenCalledTimes(1);
   });
 
   describe('push event', () => {

@@ -40,6 +40,7 @@ import type { NotificationTypeValue } from 'src/shared/subscriptions/types';
 import { Browser } from 'src/shared/useragent/constants';
 import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
+import { drainSessionRequests } from 'src/sw/sessionRequests/sender';
 
 import { cancelableTimeout } from '../helpers/CancelableTimeout';
 import { inlineImage } from '../helpers/inlineImage';
@@ -84,6 +85,7 @@ async function getPushSubscriptionId(): Promise<string | undefined> {
  */
 export function run() {
   self.addEventListener('activate', onServiceWorkerActivated);
+  self.addEventListener('online', () => void drainSessionRequests());
   self.addEventListener('push', onPushReceived);
   self.addEventListener('notificationclose', (event: NotificationEvent) =>
     event.waitUntil(onNotificationClosed(event)),
@@ -136,6 +138,9 @@ export function run() {
 
     // Install messaging event handlers for page <-> service worker communication
     setupMessageListeners();
+
+    // Best effort: the worker may stop before this finishes, and the next start retries.
+    void drainSessionRequests();
   }, 0);
 }
 
