@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/tes
 
 import { SubscriptionType } from '../subscriptions/constants';
 import { closeDb, db, getDb, isReadwriteWedged } from './client';
-import { DATABASE_NAME } from './constants';
+import { DATABASE_NAME, VERSION } from './constants';
 import type * as idbLite from './idb-lite';
 import { wrapRequest } from './idb-lite';
 import type { IndexedDBSchema } from './types';
@@ -41,6 +41,14 @@ describe('general', () => {
     const OneSignal = (global as any).OneSignal;
     await getDb();
     expect(OneSignal._isNewVisitor).toBe(true);
+  });
+
+  test('should not set _isNewVisitor when upgrading an existing db', async () => {
+    await getDb(VERSION - 1);
+    await closeDb();
+    (global as any).OneSignal = { _isNewVisitor: false };
+    await getDb();
+    expect((global as any).OneSignal._isNewVisitor).toBe(false);
   });
 
   test('can get 1 or all values', async () => {
@@ -320,6 +328,31 @@ describe('migrations', () => {
         },
       ]);
     });
+  });
+});
+
+describe('version changes', () => {
+  const openRaw = (version?: number) => wrapRequest(indexedDB.open(DATABASE_NAME, version));
+
+  test('closes and reopens so a newer version can upgrade', async () => {
+    await getDb();
+    await db.put('Options', { key: 'userConsent', value: true });
+
+    const newer = await openRaw(VERSION + 1);
+    expect(newer.version).toBe(VERSION + 1);
+    newer.close();
+
+    expect(await db.get('Options', 'userConsent')).toEqual({ key: 'userConsent', value: true });
+  });
+
+  test('opens a db already upgraded by a newer version', async () => {
+    await getDb();
+    await db.put('Options', { key: 'userConsent', value: true });
+    await closeDb();
+    (await openRaw(VERSION + 1)).close();
+
+    const _db = await getDb();
+    expect(await _db.get('Options', 'userConsent')).toEqual({ key: 'userConsent', value: true });
   });
 });
 
