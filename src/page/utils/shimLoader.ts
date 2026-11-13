@@ -42,7 +42,8 @@ function printEnvironmentNotSupported() {
 }
 
 export function start(): void {
-  if (isPushNotificationsSupported()) {
+  // Session tracking serializes its IndexedDB queue with Web Locks.
+  if (isPushNotificationsSupported() && 'locks' in navigator) {
     loadFullPageSDK();
   } else {
     printEnvironmentNotSupported();
