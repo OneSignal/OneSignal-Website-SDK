@@ -63,9 +63,9 @@ export function openDB(
       };
       resolve(db);
     };
-    // The DB was upgraded by a newer SDK (another tab, or a rollback); open it as is.
+    // A newer SDK already upgraded the DB (another tab, or a rollback); open it as is.
     req.onerror = () =>
-      version && req.error?.name === 'VersionError'
+      req.error?.name === 'VersionError'
         ? resolve(openDB(name, undefined, callbacks))
         : reject(req.error);
     req.onblocked = () => callbacks?.blocked?.();
