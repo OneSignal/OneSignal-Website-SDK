@@ -1,3 +1,4 @@
+import type { SessionRequestRecord, SessionRequestState } from '../../sw/sessionRequests/types';
 import type {
   NotificationClickedForOutcomesSchema,
   NotificationClickForOpenHandlingSchema,
@@ -183,6 +184,18 @@ export interface IndexedDBSchema {
       name: string;
       [key: string]: unknown;
     };
+  };
+
+  /** Written only by the service worker. */
+  SessionRequests: {
+    key: string;
+    value: SessionRequestRecord;
+  };
+
+  /** Written only by the service worker. */
+  SessionRequestStates: {
+    key: string;
+    value: SessionRequestState;
   };
 }
 
