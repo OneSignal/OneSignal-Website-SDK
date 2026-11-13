@@ -1232,7 +1232,14 @@ describe('ServiceWorker', () => {
         });
 
         test('a pending restore after a failed retry goes on the current session only', async () => {
-          server.use(http.patch(externalIdUri, () => HttpResponse.error()));
+          let replaced!: () => void;
+          const replacedPromise = new Promise<void>((resolve) => (replaced = resolve));
+          server.use(
+            http.patch(externalIdUri, async () => {
+              await replacedPromise;
+              return HttpResponse.error();
+            }),
+          );
           await db.put('Sessions', { ...session, onSessionPendingFor: EXTERNAL_ID });
           const user = {
             ...baseMessagePayload,
@@ -1248,6 +1255,7 @@ describe('ServiceWorker', () => {
           );
           const replacement = { ...session, startTimestamp: session.startTimestamp + 1 };
           await db.put('Sessions', replacement);
+          replaced();
           await upsert;
 
           expect(await getCurrentSession()).toEqual(replacement);

@@ -1,15 +1,11 @@
-import { RETRY_MS } from 'src/core/operationRepo/constants';
-
 import { getOneSignalApiUrl } from '../environment/detect';
 import { AppIDMissingError, RetryLimitError } from '../errors/common';
-import { delay } from '../helpers/general';
 import { isValidUuid } from '../helpers/validators';
-import Log from '../libraries/Log';
 import type { APIHeaders } from '../models/APIHeaders';
 import { encodeRFC3986URIComponent } from '../utils/encode';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/env';
 
-export type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 /**
  * One entry per URL path segment. `call` percent-encodes each entry on its own,
@@ -83,46 +79,19 @@ export function patch<T = unknown>(
   return call('PATCH', path, data, options);
 }
 
-function call<T = unknown>(
+/**
+ * Sends once, with no retry; callers own retry and backoff. Resolves with the status
+ * even when the body is empty or not JSON (`result` is then `undefined`), and rejects
+ * with `RetryLimitError` when there is no response.
+ */
+async function call<T = unknown>(
   method: SupportedMethods,
   path: ApiPath,
   data: any,
   options: RequestOptions | undefined,
 ): Promise<OneSignalApiBaseResponse<T>> {
-  if (!requestHasAppId(path, data)) {
-    return Promise.reject(AppIDMissingError);
-  }
-  return executeFetch(...buildRequest(method, path, data, options));
-}
-
-/**
- * Sends once with no retry on network failure, and resolves with the status even
- * when the body is empty or not JSON (`result` is then `undefined`). For callers
- * that own their retry policy.
- */
-export async function callOnce<T = unknown>(
-  method: SupportedMethods,
-  path: ApiPath,
-  data: any,
-): Promise<OneSignalApiBaseResponse<T | undefined>> {
   if (!requestHasAppId(path, data)) throw AppIDMissingError;
 
-  const response = await fetch(...buildRequest(method, path, data, undefined));
-  const retryAfter = parseInt(response.headers.get('Retry-After') ?? '');
-  return {
-    ok: response.ok,
-    result: await response.json().catch(() => undefined),
-    status: response.status,
-    retryAfterSeconds: retryAfter >= 0 ? retryAfter : undefined,
-  };
-}
-
-function buildRequest(
-  method: SupportedMethods,
-  path: ApiPath,
-  data: any,
-  options: RequestOptions | undefined,
-): [string, RequestInit] {
   const callHeaders = new Headers();
   callHeaders.append('Origin', getOrigin());
   callHeaders.append('SDK-Version', `onesignal/web/${VERSION}`);
@@ -149,37 +118,16 @@ function buildRequest(
   // getOneSignalApiUrl picks the API origin from the encoded path.
   const url = `${getOneSignalApiUrl({ action }).toString()}${action}`;
 
-  return [url, contents];
-}
-
-async function executeFetch<T = unknown>(
-  url: string,
-  contents: RequestInit,
-  retry = 5,
-): Promise<OneSignalApiBaseResponse<T>> {
-  if (retry === 0) {
-    return Promise.reject(RetryLimitError);
-  }
-  try {
-    const response = await fetch(url, contents);
-    const { status, headers } = response;
-    const json = await response.json();
-    const retryAfter = headers?.get('Retry-After');
-    return {
-      ok: response.ok,
-      result: json,
-      status,
-      retryAfterSeconds: retryAfter ? parseInt(retryAfter) : undefined,
-    };
-  } catch (e) {
-    if (e instanceof Error && e.name === 'TypeError') {
-      // start with 10 seconds, then 20 seconds, then 30 seconds
-      await delay(retry > 3 ? (6 - retry) * RETRY_MS : 3 * RETRY_MS);
-      Log._error(`Fetch timeout ${url}, retrying...`);
-      return executeFetch(url, contents, retry - 1);
-    }
-    throw new Error(`Failed to execute HTTP call: ${String(e)}`);
-  }
+  const response = await fetch(url, contents).catch(() => {
+    throw RetryLimitError;
+  });
+  const retryAfter = parseInt(response.headers.get('Retry-After') ?? '');
+  return {
+    ok: response.ok,
+    result: await response.json().catch(() => undefined),
+    status: response.status,
+    retryAfterSeconds: retryAfter >= 0 ? retryAfter : undefined,
+  };
 }
 
 // OneSignal's backend requires that all request have a

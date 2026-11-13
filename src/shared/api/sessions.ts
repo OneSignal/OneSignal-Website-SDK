@@ -34,14 +34,13 @@ interface CreateSessionResponse {
   data?: { session_id?: unknown };
 }
 
-// Single attempt: the queue owns retry and backoff.
 export function createSession(
   appId: string,
   request: CreateSessionRequest,
 ): Promise<SessionsApiResult<string>> {
   return send(
     () =>
-      OneSignalApiBase.callOnce<CreateSessionResponse>('POST', ['apps', appId, 'sessions'], {
+      OneSignalApiBase.post<CreateSessionResponse | undefined>(['apps', appId, 'sessions'], {
         onesignal_id: request.onesignalId,
         subscription_id: request.subscriptionId,
         subscription_type: request.subscriptionType,
@@ -72,7 +71,7 @@ export function updateSession(
 ): Promise<SessionsApiResult> {
   return send(
     () =>
-      OneSignalApiBase.callOnce('PATCH', ['apps', appId, 'sessions', sessionId], {
+      OneSignalApiBase.patch(['apps', appId, 'sessions', sessionId], {
         onesignal_id: request.onesignalId,
         subscription_id: request.subscriptionId,
         duration_seconds: request.durationSeconds,
