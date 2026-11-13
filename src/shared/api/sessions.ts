@@ -34,26 +34,21 @@ interface CreateSessionResponse {
   data?: { session_id?: unknown };
 }
 
-export async function createSession(
+// Single attempt: the queue owns retry and backoff.
+export function createSession(
   appId: string,
   request: CreateSessionRequest,
 ): Promise<SessionsApiResult<string>> {
-  const startTime = toIsoString(request.startTime);
-  if (startTime === undefined) return dropInvalidTime(request.startTime);
-
-  const body = {
-    onesignal_id: request.onesignalId,
-    subscription_id: request.subscriptionId,
-    subscription_type: request.subscriptionType,
-    start_time: startTime,
-    idempotency_key: request.idempotencyKey,
-    direct_attribution_id: request.directAttributionId,
-  };
-
   return send(
-    // Single attempt: the queue owns retry and backoff.
     () =>
-      OneSignalApiBase.callOnce<CreateSessionResponse>('POST', ['apps', appId, 'sessions'], body),
+      OneSignalApiBase.callOnce<CreateSessionResponse>('POST', ['apps', appId, 'sessions'], {
+        onesignal_id: request.onesignalId,
+        subscription_id: request.subscriptionId,
+        subscription_type: request.subscriptionType,
+        start_time: new Date(request.startTime).toISOString(),
+        idempotency_key: request.idempotencyKey,
+        direct_attribution_id: request.directAttributionId,
+      }),
     (response) => {
       const sessionId = response.result?.data?.session_id;
       if (typeof sessionId === 'string' && sessionId) {
@@ -61,31 +56,30 @@ export async function createSession(
       }
       // Retrying with the same idempotency key returns the session the backend already created.
       Log._warn('Sessions API: create response has no session id');
-      return { kind: 'retry', status: response.status, retryAfterSeconds: retryAfter(response) };
+      return {
+        kind: 'retry',
+        status: response.status,
+        retryAfterSeconds: response.retryAfterSeconds,
+      };
     },
   );
 }
 
-export async function updateSession(
+export function updateSession(
   appId: string,
   sessionId: string,
   request: UpdateSessionRequest,
 ): Promise<SessionsApiResult> {
-  const endTime = request.endTime === undefined ? undefined : toIsoString(request.endTime);
-  if (request.endTime !== undefined && endTime === undefined) {
-    return dropInvalidTime(request.endTime);
-  }
-
-  const body = {
-    onesignal_id: request.onesignalId,
-    subscription_id: request.subscriptionId,
-    duration_seconds: request.durationSeconds,
-    idempotency_key: request.idempotencyKey,
-    end_time: endTime,
-  };
-
   return send(
-    () => OneSignalApiBase.callOnce('PATCH', ['apps', appId, 'sessions', sessionId], body),
+    () =>
+      OneSignalApiBase.callOnce('PATCH', ['apps', appId, 'sessions', sessionId], {
+        onesignal_id: request.onesignalId,
+        subscription_id: request.subscriptionId,
+        duration_seconds: request.durationSeconds,
+        idempotency_key: request.idempotencyKey,
+        end_time:
+          request.endTime === undefined ? undefined : new Date(request.endTime).toISOString(),
+      }),
     () => ({ kind: 'success', value: undefined }),
   );
 }
@@ -98,29 +92,16 @@ async function send<R, T>(
   try {
     response = await request();
   } catch (e) {
-    if (e === AppIDMissingError) return { kind: 'drop' };
+    // A missing app id, or a RangeError from an invalid time: retrying will not help.
+    if (e === AppIDMissingError || e instanceof RangeError) return { kind: 'drop' };
     Log._debug('Sessions API request failed:', e);
     return { kind: 'retry' };
   }
 
-  const { ok, status } = response;
+  const { ok, status, retryAfterSeconds } = response;
   if (ok) return onSuccess(response);
   if (status === 408 || status === 429 || status >= 500) {
-    return { kind: 'retry', status, retryAfterSeconds: retryAfter(response) };
+    return { kind: 'retry', status, retryAfterSeconds };
   }
   return { kind: 'drop', status };
-}
-
-function retryAfter({ retryAfterSeconds }: OneSignalApiBaseResponse<unknown>): number | undefined {
-  return retryAfterSeconds !== undefined && retryAfterSeconds >= 0 ? retryAfterSeconds : undefined;
-}
-
-function toIsoString(epochMs: number): string | undefined {
-  const date = new Date(epochMs);
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
-}
-
-function dropInvalidTime(epochMs: number): SessionsApiResult<never> {
-  Log._warn('Sessions API: invalid time', epochMs);
-  return { kind: 'drop' };
 }

@@ -104,24 +104,16 @@ export async function callOnce<T = unknown>(
   method: SupportedMethods,
   path: ApiPath,
   data: any,
-  options?: RequestOptions,
 ): Promise<OneSignalApiBaseResponse<T | undefined>> {
   if (!requestHasAppId(path, data)) throw AppIDMissingError;
 
-  const response = await fetch(...buildRequest(method, path, data, options));
-  const body = await response.text();
-  const retryAfter = response.headers.get('Retry-After');
-  let result: T | undefined;
-  try {
-    result = JSON.parse(body);
-  } catch {
-    result = undefined;
-  }
+  const response = await fetch(...buildRequest(method, path, data, undefined));
+  const retryAfter = parseInt(response.headers.get('Retry-After') ?? '');
   return {
     ok: response.ok,
-    result,
+    result: await response.json().catch(() => undefined),
     status: response.status,
-    retryAfterSeconds: retryAfter ? parseInt(retryAfter) : undefined,
+    retryAfterSeconds: retryAfter >= 0 ? retryAfter : undefined,
   };
 }
 
