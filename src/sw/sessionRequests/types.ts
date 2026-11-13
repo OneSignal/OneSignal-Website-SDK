@@ -26,6 +26,8 @@ export interface CreateSessionRequestRecord extends BaseSessionRequest {
   /** Epoch milliseconds. */
   startTime: number;
   directAttributionId?: string;
+  /** Successful responses that had no session ID. */
+  missingSessionIdAttempts?: number;
 }
 
 export interface UpdateSessionRequestRecord extends BaseSessionRequest {
