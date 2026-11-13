@@ -28,4 +28,22 @@ describe('OneSignalShimLoader', () => {
       ),
     );
   });
+
+  test('does not load the page script without Web Locks', () => {
+    supportsSpy.mockReturnValue(true);
+    isIosSafariSpy.mockReturnValue(false);
+    vi.spyOn(console, 'info').mockImplementation(() => null);
+    document.head.innerHTML = '';
+    const locks = Object.getOwnPropertyDescriptor(navigator, 'locks')!;
+    // @ts-expect-error - removing locks to simulate an older browser
+    delete navigator.locks;
+    try {
+      start();
+    } finally {
+      Object.defineProperty(navigator, 'locks', locks);
+    }
+
+    expect(document.querySelector('script')).toBeNull();
+    expect(console.info).toHaveBeenCalledWith('Incompatible browser.');
+  });
 });

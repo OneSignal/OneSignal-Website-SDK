@@ -24,6 +24,7 @@ import {
   putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
+import { getSubscriptionType } from 'src/shared/environment/detect';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
@@ -1037,6 +1038,119 @@ describe('ServiceWorker', () => {
           const current = (await getCurrentSession())!;
           expect(current.usesSessionsApi).toBeUndefined();
           expect(current.sessionId).toBeUndefined();
+        });
+      });
+
+      describe('sessions API start', () => {
+        const enableSessionsApi = () =>
+          db.put('Options', {
+            key: 'featureFlags',
+            value: JSON.stringify([FeatureFlag._SessionsV2ApiCutover]),
+          });
+        const upsert = (user: Partial<UpsertOrDeactivateSessionPayload> = {}) =>
+          upsertSession({ ...baseMessagePayload, isSafari: false, ...user });
+        const queued = () => db.getAll('SessionRequests');
+
+        beforeEach(() => {
+          setUpdateUserResponse();
+          vi.mocked(drainSessionRequests).mockClear();
+        });
+
+        afterEach(async () => {
+          await db.delete('Options', 'featureFlags');
+        });
+
+        test('a new session enqueues a create with its start time and pinned IDs, then drains', async () => {
+          await enableSessionsApi();
+
+          await upsert();
+
+          const current = (await getCurrentSession())!;
+          expect(await queued()).toEqual([
+            expect.objectContaining({
+              kind: 'create',
+              appId,
+              sessionId: current.sessionId,
+              onesignalId: ONESIGNAL_ID,
+              subscriptionId: SUB_ID,
+              subscriptionType: getSubscriptionType(),
+              startTime: current.startTimestamp,
+              idempotencyKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
+            }),
+          ]);
+          expect(drainSessionRequests).toHaveBeenCalled();
+          // The legacy start is still sent.
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
+        });
+
+        test('upserts from other tabs during the session enqueue no second create', async () => {
+          await enableSessionsApi();
+
+          await upsert();
+          await upsert();
+          await upsert({ sessionOrigin: SessionOrigin._Focus });
+
+          expect(await queued()).toHaveLength(1);
+        });
+
+        test('resuming within the threshold enqueues no create', async () => {
+          await enableSessionsApi();
+          await db.put('Sessions', {
+            ...session,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now() - 1_000,
+            sessionId: 'resumed-session',
+            usesSessionsApi: true,
+          });
+
+          await upsert({ sessionThreshold: 30 });
+
+          expect((await getCurrentSession())?.sessionId).toBe('resumed-session');
+          expect(await queued()).toEqual([]);
+        });
+
+        test('a session after the threshold enqueues a create for the new session', async () => {
+          getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+          await enableSessionsApi();
+          await db.put('Sessions', {
+            ...session,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now() - 60_000,
+            sessionId: 'previous-session',
+            usesSessionsApi: true,
+          });
+
+          await upsert({ sessionThreshold: 30 });
+
+          const current = (await getCurrentSession())!;
+          expect(current.sessionId).not.toBe('previous-session');
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', sessionId: current.sessionId }),
+          ]);
+        });
+
+        test('flag off: no create', async () => {
+          await upsert();
+
+          expect(await queued()).toEqual([]);
+          expect(drainSessionRequests).not.toHaveBeenCalled();
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
+        });
+
+        test.each([
+          ['onesignal', { onesignalId: 'local-user' }],
+          ['subscription', { subscriptionId: 'local-subscription' }],
+        ])('a local %s id enqueues no create', async (_, ids) => {
+          vi.spyOn(Log, '_warn').mockImplementation(() => {});
+          await enableSessionsApi();
+
+          await upsert(ids);
+
+          expect(await queued()).toEqual([]);
         });
       });
 
