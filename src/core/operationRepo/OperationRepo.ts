@@ -472,8 +472,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
-      // No response from the server while offline, so keep the operations and send them later.
-      if (e === RetryLimitError && !navigator.onLine) {
+      // No response, so keep the operations and their waiters and retry, like FailRetry.
+      // Offline, _getNextOps holds the queue until the browser is back online.
+      if (e === RetryLimitError) {
         [...ops].reverse().forEach((op) => {
           op.retries++;
           this._queue.unshift(op);
@@ -483,17 +484,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
       Log._error(`Op execute error: ${JSON.stringify(ops)}`, e);
       ops.forEach((op) => op.resolver?.(false, ExecutionResult._FailNoretry));
-
-      // Online, a request that gets no answer can be blocked (CSP, firewall). The waiters
-      // already rejected, and the operations stay queued, so login() does not stay pending.
-      if (e === RetryLimitError) {
-        [...ops].reverse().forEach((op) => {
-          op.retries++;
-          op.resolver = undefined;
-          this._queue.unshift(op);
-        });
-        return this._delayBeforeNextExecution(ops[0].retries);
-      }
 
       // On failure remove operations from store
       ops.forEach((op) => {

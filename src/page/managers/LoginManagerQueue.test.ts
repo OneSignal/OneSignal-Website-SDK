@@ -423,13 +423,23 @@ describe('LoginManager with the real operation queue under Identity Verification
     vi.spyOn(LoginUserOperationExecutor.prototype, '_execute').mockRejectedValueOnce(
       RetryLimitError,
     );
-
-    await expect(LoginManager.login('bob', 'jwt-bob')).rejects.toThrow();
     const repo = OneSignal._coreDirector._operationRepo;
-    expect(repo._queue[0].operation._name).toBe('login-user');
-    User._createOrGetInstance().addEmail('bob@example.com');
-    expect(repo._queue.filter((op) => op.operation._name === 'login-user')).toHaveLength(1);
+    const backoff = repo._delayBeforeNextExecution.bind(repo);
+    let queuedLogins = 0;
+    // The first wait with retries is the backoff after the failed login, before its retry.
+    vi.spyOn(repo, '_delayBeforeNextExecution').mockImplementation(async (retries, retryAfter) => {
+      if (retries && !queuedLogins) {
+        expect(repo._queue[0].operation._name).toBe('login-user');
+        User._createOrGetInstance().addEmail('bob@example.com');
+        queuedLogins = repo._queue.filter((op) => op.operation._name === 'login-user').length;
+      }
+      return backoff(retries, retryAfter);
+    });
+
+    const login = LoginManager.login('bob', 'jwt-bob');
     await settle();
+
+    expect(queuedLogins).toBe(1);
 
     expect(requestsFor('bob')).toHaveLength(1);
     expect(requestsFor('bob')[0].body.subscriptions).toEqual(
@@ -439,5 +449,6 @@ describe('LoginManager with the real operation queue under Identity Verification
     );
     expect(repo._queue).toEqual([]);
     expect(await db.getAll('operations')).toEqual([]);
+    await expect(login).resolves.toBeUndefined();
   });
 });
