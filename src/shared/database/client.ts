@@ -69,7 +69,7 @@ const open = async (version = VERSION) => {
 
       // TODO: next version delete NotificationOpened table
       terminated = false;
-      if (!IS_SERVICE_WORKER && typeof OneSignal !== 'undefined') {
+      if (oldVersion === 0 && !IS_SERVICE_WORKER && typeof OneSignal !== 'undefined') {
         OneSignal._isNewVisitor = true;
       }
     },
@@ -82,6 +82,9 @@ const open = async (version = VERSION) => {
         terminated = true;
         void getDb();
       }
+    },
+    versionchange() {
+      void getDb();
     },
   });
   return wrapDb<IndexedDBSchema>(raw);
