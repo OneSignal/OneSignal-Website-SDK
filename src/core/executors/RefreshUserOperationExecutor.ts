@@ -74,14 +74,14 @@ export class RefreshUserOperationExecutor implements IOperationExecutor {
       }
 
       const identityModel = new IdentityModel();
-      for (const [key, value] of Object.entries(result.identity)) {
+      for (const [key, value] of Object.entries(result!.identity)) {
         identityModel._setProperty(key, value);
       }
 
       const propertiesModel = new PropertiesModel();
       propertiesModel._onesignalId = op._onesignalId;
 
-      const { properties = {}, subscriptions = [] } = result;
+      const { properties = {}, subscriptions = [] } = result!;
 
       Object.entries(properties).forEach(([key, value]) => {
         propertiesModel._setProperty(key as IPropertiesModelKeys, value);

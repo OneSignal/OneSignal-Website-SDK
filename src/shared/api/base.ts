@@ -15,7 +15,7 @@ export type ApiPath = readonly string[];
 
 export interface OneSignalApiBaseResponse<T = unknown> {
   ok: boolean;
-  result: T;
+  result: T | undefined;
   status: number;
   retryAfterSeconds?: number;
 }
