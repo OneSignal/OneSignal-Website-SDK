@@ -26,7 +26,12 @@ import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import { OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF, OP_REPO_POST_CREATE_DELAY } from './constants';
+import {
+  OP_REPO_BASE_FAIL_RETRY_BACKOFF,
+  OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+  OP_REPO_MAX_RETRY_AFTER,
+  OP_REPO_POST_CREATE_DELAY,
+} from './constants';
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo, type OperationQueueItem } from './OperationRepo';
 
@@ -1167,6 +1172,14 @@ describe('OperationRepo', () => {
   });
 
   describe('Executor Operations', () => {
+    // Top of the jitter range, so the backoff equals its base.
+    beforeEach(() => {
+      vi.spyOn(Math, 'random').mockReturnValue(1);
+    });
+    afterEach(() => {
+      vi.mocked(Math.random).mockRestore();
+    });
+
     test('can handle success operation and process additional operations', async () => {
       const additionalOps = [
         new Operation('3', GroupComparisonType._None),
@@ -1436,7 +1449,7 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore._list()).toEqual(groupedOps);
       expect(resolved).not.toHaveBeenCalled();
       expect(rejected).not.toHaveBeenCalled();
-      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF);
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_BASE_FAIL_RETRY_BACKOFF);
 
       onLineSpy.mockReturnValue(true);
       await executeOps(opRepo);
@@ -1463,7 +1476,7 @@ describe('OperationRepo', () => {
       ]);
       expect(opRepo._queue[0].resolver).toBeUndefined();
       expect(mockOperationModelStore._list()).toEqual(groupedOps);
-      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF);
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_BASE_FAIL_RETRY_BACKOFF);
       await vi.waitUntil(() => rejected.mock.calls.length === 1);
 
       await executeOps(opRepo);
@@ -1484,6 +1497,43 @@ describe('OperationRepo', () => {
       expect(opRepo._queue).toEqual([]);
       expect(mockOperationModelStore._list()).toEqual([]);
       await vi.waitUntil(() => rejected.mock.calls.length === 1);
+    });
+  });
+
+  describe('_delayBeforeNextExecution', () => {
+    beforeEach(() => {
+      vi.spyOn(Math, 'random').mockReturnValue(1);
+    });
+    afterEach(() => {
+      vi.mocked(Math.random).mockRestore();
+    });
+
+    test.each([
+      [0, 1, 0],
+      [1, 1, OP_REPO_BASE_FAIL_RETRY_BACKOFF],
+      [2, 1, OP_REPO_BASE_FAIL_RETRY_BACKOFF * 2],
+      [3, 1, OP_REPO_BASE_FAIL_RETRY_BACKOFF * 4],
+      [50, 1, OP_REPO_MAX_FAIL_RETRY_BACKOFF],
+      [2, 0, OP_REPO_BASE_FAIL_RETRY_BACKOFF],
+    ])('waits for retry %i with random %d', async (retries, random, expected) => {
+      vi.mocked(Math.random).mockReturnValue(random);
+
+      await opRepo._delayBeforeNextExecution(retries);
+
+      if (expected) expect(delaySpy).toHaveBeenCalledWith(expected);
+      else expect(delaySpy).not.toHaveBeenCalled();
+    });
+
+    test('waits for Retry-After when it is longer than the backoff', async () => {
+      await opRepo._delayBeforeNextExecution(1, 30);
+
+      expect(delaySpy).toHaveBeenCalledWith(30_000);
+    });
+
+    test('caps Retry-After', async () => {
+      await opRepo._delayBeforeNextExecution(0, OP_REPO_MAX_RETRY_AFTER);
+
+      expect(delaySpy).toHaveBeenCalledWith(OP_REPO_MAX_RETRY_AFTER);
     });
   });
 });

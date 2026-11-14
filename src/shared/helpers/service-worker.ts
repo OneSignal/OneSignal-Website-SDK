@@ -185,8 +185,8 @@ async function sendPendingOnSession(user: SessionUser, session: Session): Promis
   await markOnSessionPending(session, pendingFor);
 }
 
-// The request can wait through 120 s of retries, past the session threshold, so
-// the row may be gone or replaced by then. The flag goes on the stored row only
+// The request can outlast the session threshold, so the row may be gone or
+// replaced by then. The flag goes on the stored row only
 // if it is still the same session; a write of the captured object could
 // recreate a row finalizeSession deleted.
 async function markOnSessionPending(session: Session, externalId: string): Promise<void> {

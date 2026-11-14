@@ -46,7 +46,9 @@ export function deepMerge<T extends object>(target: T, source: DeepPartial<T>): 
 export const nock = (responseBody: any, status = 200) =>
   // @ts-expect-error - simple mock for mocking fetch responses, avoid using
   vi.spyOn(global, 'fetch').mockResolvedValue({
+    ok: status >= 200 && status < 300,
     status,
+    headers: new Headers(),
     json: vi.fn().mockResolvedValue(responseBody),
   });
 

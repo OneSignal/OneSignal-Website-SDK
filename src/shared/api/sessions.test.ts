@@ -113,7 +113,7 @@ describe('Sessions API', () => {
     test('retries a 202 with an empty body', async () => {
       mockCreate(() => new HttpResponse(null, { status: 202 }));
 
-      expect(await createSession(APP_ID, createRequest)).toEqual({ kind: 'retry', status: 202 });
+      expect(await createSession(APP_ID, createRequest)).toEqual({ kind: 'retry' });
     });
 
     test('passes Retry-After through on a 202 without a session id', async () => {
@@ -170,13 +170,10 @@ describe('Sessions API', () => {
       expect(requestBody).toMatchObject({ end_time: '2023-11-14T22:14:02.500Z' });
     });
 
-    test.each([204, 202])('succeeds on a %i with an empty body', async (status) => {
-      mockUpdate(() => new HttpResponse(null, { status }));
+    test('retries a 2xx with an empty body', async () => {
+      mockUpdate(() => new HttpResponse(null, { status: 202 }));
 
-      expect(await updateSession(APP_ID, SESSION_ID, updateRequest)).toEqual({
-        kind: 'success',
-        value: undefined,
-      });
+      expect(await updateSession(APP_ID, SESSION_ID, updateRequest)).toEqual({ kind: 'retry' });
     });
 
     test('drops an invalid end time without sending', async () => {
