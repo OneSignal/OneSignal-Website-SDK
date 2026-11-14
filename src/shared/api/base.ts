@@ -18,9 +18,8 @@ interface ResponseMeta {
   retryAfterSeconds?: number;
 }
 
-/** A 2xx always has a JSON body: `call` throws when it does not. */
 export type OneSignalApiBaseResponse<T = unknown> = ResponseMeta &
-  ({ ok: true; result: T } | { ok: false; result: unknown });
+  ({ ok: true; result: T } | { ok: false; result?: undefined });
 
 export interface RequestOptions {
   headers?: APIHeaders;
@@ -82,9 +81,9 @@ export function patch<T = unknown>(
 }
 
 /**
- * Sends once, with no retry; callers own retry and backoff. Resolves with the status
- * even when the body is empty or not JSON (`result` is then `undefined`), and rejects
- * with `RetryLimitError` when there is no response.
+ * Sends once, with no retry; callers own retry and backoff. Parses the body only on
+ * a 2xx, and throws if that body is not JSON. Rejects with `RetryLimitError` when
+ * there is no response.
  */
 async function call<T = unknown>(
   method: SupportedMethods,
@@ -124,12 +123,11 @@ async function call<T = unknown>(
     throw RetryLimitError;
   });
   const retryAfter = parseInt(response.headers.get('Retry-After') ?? '');
+  const { ok, status } = response;
   return {
-    ok: response.ok,
-    result: await response.json().catch((e) => {
-      if (response.ok) throw e;
-    }),
-    status: response.status,
+    ok,
+    result: ok ? await response.json() : undefined,
+    status,
     retryAfterSeconds: retryAfter >= 0 ? retryAfter : undefined,
   } as OneSignalApiBaseResponse<T>;
 }
