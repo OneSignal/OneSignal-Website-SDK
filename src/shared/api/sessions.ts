@@ -92,9 +92,9 @@ async function send<R, T>(
   try {
     response = await request();
   } catch (e) {
+    Log._debug('Sessions API request failed:', e);
     // A missing app id, or a RangeError from an invalid time: retrying will not help.
     if (e === AppIDMissingError || e instanceof RangeError) return { kind: 'drop' };
-    Log._debug('Sessions API request failed:', e);
     return { kind: 'retry' };
   }
 
