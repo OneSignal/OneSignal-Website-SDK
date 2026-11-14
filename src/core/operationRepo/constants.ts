@@ -3,6 +3,8 @@
 export const OP_REPO_BASE_FAIL_RETRY_BACKOFF = 5_000;
 export const OP_REPO_MAX_FAIL_RETRY_BACKOFF = 300_000;
 export const OP_REPO_MAX_RETRY_AFTER = 3_600_000;
+// About 2.5 min of backoff, close to the old 2 min of request retries.
+export const OP_REPO_MAX_WAITER_RETRIES = 5;
 export const OP_REPO_POST_CREATE_DELAY = 500;
 export const OP_REPO_EXECUTION_INTERVAL = 500;
 export const OP_REPO_POST_CREATE_RETRY_UP_TO = 15_000;
