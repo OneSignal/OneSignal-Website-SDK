@@ -13,12 +13,14 @@ type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
  */
 export type ApiPath = readonly string[];
 
-export interface OneSignalApiBaseResponse<T = unknown> {
-  ok: boolean;
-  result: T | undefined;
+interface ResponseMeta {
   status: number;
   retryAfterSeconds?: number;
 }
+
+/** A 2xx always has a JSON body: `call` throws when it does not. */
+export type OneSignalApiBaseResponse<T = unknown> = ResponseMeta &
+  ({ ok: true; result: T } | { ok: false; result: unknown });
 
 export interface RequestOptions {
   headers?: APIHeaders;
@@ -124,10 +126,12 @@ async function call<T = unknown>(
   const retryAfter = parseInt(response.headers.get('Retry-After') ?? '');
   return {
     ok: response.ok,
-    result: await response.json().catch(() => undefined),
+    result: await response.json().catch((e) => {
+      if (response.ok) throw e;
+    }),
     status: response.status,
     retryAfterSeconds: retryAfter >= 0 ? retryAfter : undefined,
-  };
+  } as OneSignalApiBaseResponse<T>;
 }
 
 // OneSignal's backend requires that all request have a

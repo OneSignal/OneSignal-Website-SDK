@@ -112,7 +112,7 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
     );
 
     if (response.ok) {
-      const { subscription } = response.result!;
+      const { subscription } = response.result;
       const subscriptionModel = this._subscriptionModelStore._getBySubscriptionId(
         createOperation._subscriptionId,
       );

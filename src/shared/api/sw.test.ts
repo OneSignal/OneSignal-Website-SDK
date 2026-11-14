@@ -12,8 +12,8 @@ describe('OneSignalApiSW', () => {
     expect(appConfig).toBeDefined();
   });
 
-  test('downloadServerAppConfig rejects a response without a JSON body', async () => {
-    nock(undefined);
+  test('downloadServerAppConfig rejects a failed response', async () => {
+    nock({ errors: ['app not found'] }, 400);
     await expect(OneSignalApiSW.downloadSWServerAppConfig(APP_ID)).rejects.toThrow();
   });
 });

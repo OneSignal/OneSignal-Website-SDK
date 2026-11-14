@@ -195,7 +195,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
     );
 
     if (response.ok) {
-      const backendOneSignalId = response.result!.identity.onesignal_id;
+      const backendOneSignalId = response.result.identity.onesignal_id;
       const opOneSignalId = createUserOperation._onesignalId;
 
       const idTranslations: Record<string, string> = {
@@ -221,7 +221,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
           ModelChangeTags._Hydrate,
         );
 
-        const resultProperties = response.result!.properties;
+        const resultProperties = response.result.properties;
         if (resultProperties) {
           for (const [key, value] of Object.entries(resultProperties)) {
             this._propertiesModelStore._model._setProperty(
@@ -235,7 +235,7 @@ export class LoginUserOperationExecutor implements IOperationExecutor {
 
       const matches = matchBackendSubscriptions(
         subscriptionList,
-        response.result!.subscriptions ?? [],
+        response.result.subscriptions ?? [],
       );
       subscriptionList.forEach(([localId]) => {
         const backendSub = matches.get(localId);

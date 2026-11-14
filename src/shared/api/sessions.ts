@@ -40,7 +40,7 @@ export function createSession(
 ): Promise<SessionsApiResult<string>> {
   return send(
     () =>
-      OneSignalApiBase.post<CreateSessionResponse | undefined>(['apps', appId, 'sessions'], {
+      OneSignalApiBase.post<CreateSessionResponse>(['apps', appId, 'sessions'], {
         onesignal_id: request.onesignalId,
         subscription_id: request.subscriptionId,
         subscription_type: request.subscriptionType,
@@ -85,7 +85,7 @@ export function updateSession(
 
 async function send<R, T>(
   request: () => Promise<OneSignalApiBaseResponse<R>>,
-  onSuccess: (response: OneSignalApiBaseResponse<R>) => SessionsApiResult<T>,
+  onSuccess: (response: OneSignalApiBaseResponse<R> & { ok: true }) => SessionsApiResult<T>,
 ): Promise<SessionsApiResult<T>> {
   let response: OneSignalApiBaseResponse<R>;
   try {
@@ -97,8 +97,8 @@ async function send<R, T>(
     return { kind: 'retry' };
   }
 
-  const { ok, status, retryAfterSeconds } = response;
-  if (ok) return onSuccess(response);
+  if (response.ok) return onSuccess(response);
+  const { status, retryAfterSeconds } = response;
   if (status === 408 || status === 429 || status >= 500) {
     return { kind: 'retry', status, retryAfterSeconds };
   }
