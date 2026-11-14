@@ -30,6 +30,7 @@ import {
   OP_REPO_BASE_FAIL_RETRY_BACKOFF,
   OP_REPO_MAX_FAIL_RETRY_BACKOFF,
   OP_REPO_MAX_RETRY_AFTER,
+  OP_REPO_MAX_WAITER_RETRIES,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { NewRecordsState } from './NewRecordsState';
@@ -1492,6 +1493,24 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore._list()).toEqual([]);
       expect(resolved).toHaveBeenCalled();
       expect(rejected).not.toHaveBeenCalled();
+    });
+
+    test('rejects the waiter but keeps the operation after repeated failures with no response', async () => {
+      executeFn.mockRejectedValue(RetryLimitError);
+      const op = new Operation('1');
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(op).catch(rejected);
+
+      for (let i = 1; i < OP_REPO_MAX_WAITER_RETRIES; i++) await executeOps(opRepo);
+      expect(rejected).not.toHaveBeenCalled();
+
+      await executeOps(opRepo);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
+      expect(rejected.mock.calls[0][0]._result).toBe(ExecutionResult._FailNoretry);
+      expect(opRepo._queue).toEqual([
+        { operation: op, bucket: 0, retries: OP_REPO_MAX_WAITER_RETRIES, resolver: undefined },
+      ]);
+      expect(mockOperationModelStore._list()).toEqual([op]);
     });
 
     test('drops operations when the executor throws another error', async () => {
