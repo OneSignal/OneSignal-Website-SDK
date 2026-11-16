@@ -84,7 +84,7 @@ const open = async (version = VERSION) => {
       }
     },
     versionchange() {
-      void getDb();
+      getDb().catch((e) => Log._debug('IndexedDB: reopen failed', e));
     },
   });
   return wrapDb<IndexedDBSchema>(raw);
@@ -113,10 +113,15 @@ let dbWedged = false;
 
 export const isReadwriteWedged = () => dbWedged;
 
-// `op` is invoked synchronously (callers await `dbPromise` first), so the
-// timeout scopes only to the request, not DB open/upgrade.
-function guard<T>(label: string, op: () => Promise<T>, fallback: T): Promise<T> {
-  if (dbWedged) return Promise.resolve(fallback);
+type Db = Awaited<typeof dbPromise>;
+
+// Checks `dbWedged` before awaiting `dbPromise`: a reopen queued behind a wedged
+// txn stays pending. The timeout starts after the open, so it scopes only to the request.
+async function guard<T>(label: string, op: (_db: Db) => Promise<T>, fallback: T): Promise<T> {
+  if (dbWedged) return fallback;
+  // A failed open or reopen would otherwise fail every later op. Concurrent ops share one retry.
+  const failed = dbPromise;
+  const _db = await failed.catch(() => (dbPromise === failed ? getDb() : dbPromise));
   let timer: ReturnType<typeof setTimeout>;
   const timeout = new Promise<T>((resolve) => {
     timer = setTimeout(() => {
@@ -125,39 +130,36 @@ function guard<T>(label: string, op: () => Promise<T>, fallback: T): Promise<T> 
       resolve(fallback);
     }, DB_TIMEOUT_MS);
   });
-  return Promise.race([op(), timeout]).finally(() => clearTimeout(timer));
+  return Promise.race([op(_db), timeout]).finally(() => clearTimeout(timer));
 }
 
 export const db = {
-  async get<K extends IDBStoreName>(
+  get<K extends IDBStoreName>(
     storeName: K,
     key: IndexedDBSchema[K]['key'],
   ): Promise<IndexedDBSchema[K]['value'] | undefined> {
-    const _db = await dbPromise;
-    return guard(`get(${storeName})`, () => _db.get(storeName, key), undefined);
+    return guard(`get(${storeName})`, (_db) => _db.get(storeName, key), undefined);
   },
-  async getAll<K extends IDBStoreName>(storeName: K): Promise<IndexedDBSchema[K]['value'][]> {
-    const _db = await dbPromise;
+  getAll<K extends IDBStoreName>(storeName: K): Promise<IndexedDBSchema[K]['value'][]> {
     return guard<IndexedDBSchema[K]['value'][]>(
       `getAll(${storeName})`,
-      () => _db.getAll(storeName),
+      (_db) => _db.getAll(storeName),
       [],
     );
   },
-  async put<K extends IDBStoreName>(storeName: K, value: IndexedDBSchema[K]['value']) {
-    const _db = await dbPromise;
-    return guard(`put(${storeName})`, () => _db.put(storeName, value), undefined);
+  put<K extends IDBStoreName>(
+    storeName: K,
+    value: IndexedDBSchema[K]['value'],
+  ): Promise<IDBValidKey | undefined> {
+    return guard(`put(${storeName})`, (_db) => _db.put(storeName, value), undefined);
   },
-  async delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']) {
-    const _db = await dbPromise;
-    return guard(`delete(${storeName}/${key})`, () => _db.delete(storeName, key), undefined);
+  delete<K extends IDBStoreName>(storeName: K, key: IndexedDBSchema[K]['key']): Promise<undefined> {
+    return guard(`delete(${storeName}/${key})`, (_db) => _db.delete(storeName, key), undefined);
   },
 };
 
-export const clearStore = async <K extends IDBStoreName>(storeName: K) => {
-  const _db = await dbPromise;
-  return guard(`clear(${storeName})`, () => _db.clear(storeName), undefined);
-};
+export const clearStore = <K extends IDBStoreName>(storeName: K): Promise<undefined> =>
+  guard(`clear(${storeName})`, (_db) => _db.clear(storeName), undefined);
 
 export const getObjectStoreNames = async () => {
   return Array.from((await dbPromise).objectStoreNames) as IDBStoreName[];

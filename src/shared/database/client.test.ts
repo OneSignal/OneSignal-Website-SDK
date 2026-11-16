@@ -423,3 +423,61 @@ test('should reopen db when terminated', async () => {
     value: true,
   });
 });
+
+describe('reopen after versionchange', () => {
+  const freshClient = async () => {
+    vi.resetModules();
+    openFn.mockClear();
+    const client = await vi.importActual<typeof import('./client')>('./client');
+    const raw: IDBDatabase = await openFn.mock.results[0].value;
+    return { client, raw };
+  };
+
+  test('recovers when the reopen fails', async () => {
+    const { client } = await freshClient();
+    await client.db.put('Options', { key: 'userConsent', value: true });
+    const unhandled = vi.fn();
+    process.on('unhandledRejection', unhandled);
+    openFn.mockImplementationOnce(() => Promise.reject(new DOMException('', 'UnknownError')));
+
+    openFn.mock.calls[0][2].versionchange();
+    await expect(client.dbPromise).rejects.toThrow();
+
+    const consent = { key: 'userConsent', value: true };
+    expect(
+      await Promise.all([client.db.get('Options', 'userConsent'), client.db.getAll('Options')]),
+    ).toEqual([consent, [consent]]);
+    // initial open, failed reopen, one shared retry
+    expect(openFn).toHaveBeenCalledTimes(3);
+    process.off('unhandledRejection', unhandled);
+    expect(unhandled).not.toHaveBeenCalled();
+    await client.closeDb();
+  });
+
+  test('short-circuits while the reopen waits on a wedged txn', async () => {
+    const { client, raw } = await freshClient();
+    // Keep a readwrite txn open, like the WebKit stall, so close() stays pending.
+    let stalled = true;
+    const store = raw.transaction('Options', 'readwrite').objectStore('Options');
+    const spin = () => {
+      if (stalled) store.get('x').onsuccess = spin;
+    };
+    spin();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    vi.spyOn(await client.dbPromise, 'put').mockReturnValue(new Promise(() => {}));
+    const first = client.db.put('Options', { key: 'userConsent', value: true });
+    await vi.advanceTimersByTimeAsync(2001);
+    await first;
+    vi.useRealTimers();
+    expect(client.isReadwriteWedged()).toBe(true);
+
+    const newer = indexedDB.open(DATABASE_NAME, VERSION + 1);
+    while (openFn.mock.calls.length === 1) await new Promise((r) => setImmediate(r));
+
+    expect(await client.db.get('Options', 'userConsent')).toBeUndefined();
+
+    stalled = false;
+    (await wrapRequest(newer)).close();
+    await client.closeDb();
+  });
+});
