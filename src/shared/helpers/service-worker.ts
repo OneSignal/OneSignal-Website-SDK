@@ -8,7 +8,6 @@ import { sendSessionDuration, updateUserSession } from '../api/sw';
 import { encodeHashAsUriComponent } from '../context/helpers';
 import { cleanupCurrentSession, clearStore, db, getCurrentSession } from '../database/client';
 import { getAllNotificationClickedForOutcomes } from '../database/notifications';
-import { getSubscriptionType } from '../environment/detect';
 import { FeatureFlag, isFeatureEnabledInWorker } from '../features/featureFlags';
 import Log from '../libraries/Log';
 import { IDManager } from '../managers/IDManager';
@@ -59,6 +58,8 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
     await reportSessionStart(options, session);
     return;
   }
+
+  await createDeferredServerSession(options, existingSession);
 
   if (existingSession.status === SessionStatus._Active) {
     if (existingSession.onSessionPendingFor) {
@@ -116,23 +117,54 @@ async function startNewSession({
 }
 
 async function reportSessionStart(user: SessionUser, session: NewSession): Promise<void> {
-  const { appId, onesignalId, subscriptionId } = user;
-  if (!session.usesSessionsApi) return sendOnSessionCall(user, session);
+  await Promise.all([
+    sendOnSessionCall(user, session),
+    session.usesSessionsApi && createServerSession(user, session.sessionId, session.startTimestamp),
+  ]);
+}
 
+/**
+ * A new subscriber's first session starts before the user and subscription
+ * exist, so its create waits for an upsert that brings the server IDs.
+ */
+async function createDeferredServerSession(user: SessionUser, session: Session): Promise<void> {
+  const { sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
+  if (!usesSessionsApi || !sessionId || !hasLocalId(onesignalId, subscriptionId)) return;
+  if (hasLocalId(user.onesignalId, user.subscriptionId)) return;
+
+  session.onesignalId = user.onesignalId;
+  session.subscriptionId = user.subscriptionId;
+  await db.put('Sessions', session);
+  await createServerSession(user, sessionId, session.startTimestamp);
+}
+
+async function createServerSession(
+  { appId, onesignalId, subscriptionId, subscriptionType }: SessionUser,
+  sessionId: string,
+  startTime: number,
+): Promise<void> {
   // Queued records are never rewritten, so a create with a local ID could never send.
-  if (IDManager._isLocalId(onesignalId) || IDManager._isLocalId(subscriptionId)) {
-    Log._warn('Sessions API: no create for a local id');
-  } else {
+  if (!subscriptionType || hasLocalId(onesignalId, subscriptionId)) {
+    Log._debug('Sessions API: create waits for server ids and subscription type');
+    return;
+  }
+  try {
     await enqueueSessionCreate({
       appId,
-      sessionId: session.sessionId,
+      sessionId,
       onesignalId,
       subscriptionId,
-      subscriptionType: getSubscriptionType(),
-      startTime: session.startTimestamp,
-    }).catch((e) => Log._error('Sessions API: enqueue failed', e));
+      subscriptionType,
+      startTime,
+    });
+    await drainSessionRequests();
+  } catch (e) {
+    Log._error('Sessions API: enqueue failed', e);
   }
-  await Promise.all([sendOnSessionCall(user, session), drainSessionRequests()]);
+}
+
+function hasLocalId(...ids: (string | undefined)[]): boolean {
+  return ids.some((id) => IDManager._isLocalId(id));
 }
 
 export async function deactivateSession(

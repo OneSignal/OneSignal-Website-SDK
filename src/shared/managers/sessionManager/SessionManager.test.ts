@@ -18,6 +18,7 @@ import { setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { setPageViewCount } from 'src/shared/helpers/pageview';
 import Log from 'src/shared/libraries/Log';
 import { SessionOrigin } from 'src/shared/session/constants';
+import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { beforeEach, describe, expect, test, vi, type MockInstance } from 'vite-plus/test';
 
 import User from '../../../onesignal/User';
@@ -164,8 +165,22 @@ describe('SessionManager', () => {
         .spyOn(OneSignal._context._workerMessenger, '_unicast')
         .mockResolvedValue(undefined);
 
-      await sm['_notifySWToUpsertSession']('one', 'sub', SessionOrigin._UserCreate);
+      await sm['_notifySWToUpsertSession'](
+        { onesignalId: 'one', subscriptionId: 'sub' },
+        SessionOrigin._UserCreate,
+      );
       expect(unicastSpy).toHaveBeenCalled();
+    });
+
+    test('_getOneSignalAndSubscriptionIds includes the push subscription type', async () => {
+      await setupSubModelStore({ id: SUB_ID });
+      const pushModel = await OneSignal._coreDirector._getPushSubscriptionModel();
+      pushModel!.type = SubscriptionType._SafariLegacyPush;
+
+      await expect(sm._getOneSignalAndSubscriptionIds()).resolves.toMatchObject({
+        subscriptionId: SUB_ID,
+        subscriptionType: SubscriptionType._SafariLegacyPush,
+      });
     });
 
     test('_upsertSession does nothing when no user is present', async () => {
@@ -254,7 +269,10 @@ describe('SessionManager', () => {
     test('IV inactive: the payload carries no externalId or jwt, even with a stored token', async () => {
       OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
 
-      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+      await sm._notifySWToUpsertSession(
+        { onesignalId: ONESIGNAL_ID, subscriptionId: SUB_ID },
+        SessionOrigin._Focus,
+      );
 
       expect(lastPayload()).not.toHaveProperty('jwtRequired');
       expect(lastPayload()).not.toHaveProperty('externalId');
@@ -265,7 +283,10 @@ describe('SessionManager', () => {
       setJwtRequirement(JwtRequirement._Required);
       OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
 
-      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+      await sm._notifySWToUpsertSession(
+        { onesignalId: ONESIGNAL_ID, subscriptionId: SUB_ID },
+        SessionOrigin._Focus,
+      );
       expect(lastPayload()).toMatchObject({
         onesignalId: ONESIGNAL_ID,
         jwtRequired: true,
@@ -273,7 +294,10 @@ describe('SessionManager', () => {
         jwt: JWT,
       });
 
-      await sm._notifySWToDeactivateSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Blur);
+      await sm._notifySWToDeactivateSession(
+        { onesignalId: ONESIGNAL_ID, subscriptionId: SUB_ID },
+        SessionOrigin._Blur,
+      );
       expect(lastPayload()).toMatchObject({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
       expect(unicastSpy).toHaveBeenCalledTimes(2);
     });
@@ -284,8 +308,14 @@ describe('SessionManager', () => {
       setJwtRequirement(JwtRequirement._Required);
       updateIdentityModel('external_id', undefined);
 
-      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
-      await sm._notifySWToDeactivateSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Blur);
+      await sm._notifySWToUpsertSession(
+        { onesignalId: ONESIGNAL_ID, subscriptionId: SUB_ID },
+        SessionOrigin._Focus,
+      );
+      await sm._notifySWToDeactivateSession(
+        { onesignalId: ONESIGNAL_ID, subscriptionId: SUB_ID },
+        SessionOrigin._Blur,
+      );
 
       expect(unicastSpy).toHaveBeenCalledTimes(2);
       for (const [, payload] of unicastSpy.mock.calls) {
@@ -296,7 +326,10 @@ describe('SessionManager', () => {
     test('IV active without a stored token: the message carries externalId and no jwt', async () => {
       setJwtRequirement(JwtRequirement._Required);
 
-      await sm._notifySWToUpsertSession(ONESIGNAL_ID, SUB_ID, SessionOrigin._Focus);
+      await sm._notifySWToUpsertSession(
+        { onesignalId: ONESIGNAL_ID, subscriptionId: SUB_ID },
+        SessionOrigin._Focus,
+      );
 
       expect(lastPayload()).toMatchObject({
         jwtRequired: true,

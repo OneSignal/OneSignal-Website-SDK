@@ -1,4 +1,5 @@
 import type { OutcomesConfig } from '../outcomes/types';
+import type { SubscriptionTypeValue } from '../subscriptions/types';
 import type { SessionOrigin, SessionStatus } from './constants';
 
 export type SessionStatusValue = (typeof SessionStatus)[keyof typeof SessionStatus];
@@ -55,6 +56,8 @@ export interface SessionUser {
   appId: string;
   onesignalId: string;
   subscriptionId: string;
+  /** Unset when sent by an older page SDK. */
+  subscriptionType?: SubscriptionTypeValue;
   jwtRequired?: boolean;
   externalId?: string;
   jwt?: string;

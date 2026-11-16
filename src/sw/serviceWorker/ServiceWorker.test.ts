@@ -24,7 +24,6 @@ import {
   putNotificationClickedForOutcomes,
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
-import { getSubscriptionType } from 'src/shared/environment/detect';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import { upsertSession } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
@@ -37,7 +36,7 @@ import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from 'src/shared/session/constants';
 import type { Session, UpsertOrDeactivateSessionPayload } from 'src/shared/session/types';
-import { NotificationType } from 'src/shared/subscriptions/constants';
+import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import { drainSessionRequests } from 'src/sw/sessionRequests/sender';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
@@ -830,6 +829,7 @@ describe('ServiceWorker', () => {
       sessionOrigin: SessionOrigin._UserCreate,
       sessionThreshold: 1,
       subscriptionId: SUB_ID,
+      subscriptionType: SubscriptionType._ChromePush,
     };
 
     const session: Session = {
@@ -1063,7 +1063,7 @@ describe('ServiceWorker', () => {
         test('a new session enqueues a create with its start time and pinned IDs, then drains', async () => {
           await enableSessionsApi();
 
-          await upsert();
+          await upsert({ subscriptionType: SubscriptionType._SafariLegacyPush });
 
           const current = (await getCurrentSession())!;
           expect(await queued()).toEqual([
@@ -1073,7 +1073,7 @@ describe('ServiceWorker', () => {
               sessionId: current.sessionId,
               onesignalId: ONESIGNAL_ID,
               subscriptionId: SUB_ID,
-              subscriptionType: getSubscriptionType(),
+              subscriptionType: SubscriptionType._SafariLegacyPush,
               startTime: current.startTimestamp,
               idempotencyKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
             }),
@@ -1144,13 +1144,58 @@ describe('ServiceWorker', () => {
         test.each([
           ['onesignal', { onesignalId: 'local-user' }],
           ['subscription', { subscriptionId: 'local-subscription' }],
-        ])('a local %s id enqueues no create', async (_, ids) => {
-          vi.spyOn(Log, '_warn').mockImplementation(() => {});
+        ])(
+          'a session started with a local %s id enqueues its create on the next upsert with server ids',
+          async (_, localIds) => {
+            await enableSessionsApi();
+
+            await upsert(localIds);
+            expect(await queued()).toEqual([]);
+            await upsert(localIds);
+            expect(await queued()).toEqual([]);
+
+            await upsert({ sessionOrigin: SessionOrigin._Focus });
+
+            const current = (await getCurrentSession())!;
+            expect(current).toMatchObject({ onesignalId: ONESIGNAL_ID, subscriptionId: SUB_ID });
+            expect(await queued()).toEqual([
+              expect.objectContaining({
+                kind: 'create',
+                sessionId: current.sessionId,
+                onesignalId: ONESIGNAL_ID,
+                subscriptionId: SUB_ID,
+                startTime: current.startTimestamp,
+              }),
+            ]);
+
+            await upsert();
+            expect(await queued()).toHaveLength(1);
+          },
+        );
+
+        test('a payload without a subscription type enqueues no create', async () => {
           await enableSessionsApi();
 
-          await upsert(ids);
+          await upsert({ subscriptionType: undefined });
 
           expect(await queued()).toEqual([]);
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
+        });
+
+        test('a queue failure still sends the legacy session start', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          vi.spyOn(navigator.locks, 'request').mockImplementationOnce(() => {
+            throw new TypeError('locks unavailable');
+          });
+          await enableSessionsApi();
+
+          await upsert();
+
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
         });
       });
 
