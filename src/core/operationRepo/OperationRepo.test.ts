@@ -30,6 +30,7 @@ import {
   OP_REPO_BASE_FAIL_RETRY_BACKOFF,
   OP_REPO_MAX_FAIL_RETRY_BACKOFF,
   OP_REPO_MAX_RETRY_AFTER,
+  OP_REPO_MAX_WAITER_RETRIES,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { NewRecordsState } from './NewRecordsState';
@@ -640,13 +641,21 @@ describe('OperationRepo', () => {
       const waiter = opRepo._enqueueAndWait(loginOp);
       opRepo._enqueue(transfer);
 
+      const settled = vi.fn();
+      waiter.then(settled, settled);
+
       const batch = opRepo._getNextOps(Infinity);
       expect(batch?.map((item) => item.operation)).toEqual([loginOp, transfer]);
       await opRepo._executeOperations(batch!);
 
-      await expect(waiter).rejects.toThrow(OperationFailedError);
+      expect(settled).not.toHaveBeenCalled();
       expect(opRepo._queue).toEqual([
-        { operation: loginOp, bucket: expect.any(Number), retries: 1 },
+        {
+          operation: loginOp,
+          bucket: expect.any(Number),
+          retries: 1,
+          resolver: expect.any(Function),
+        },
         { operation: transfer, bucket: expect.any(Number), retries: 1 },
       ]);
       expect(mockOperationModelStore._list()).toEqual([loginOp, transfer]);
@@ -1460,29 +1469,48 @@ describe('OperationRepo', () => {
       onLineSpy.mockRestore();
     });
 
-    test('rejects the waiters but keeps the operations queued when the request fails while the browser is online', async () => {
-      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+    test('keeps the operations and waiters when the request fails while the browser is online', async () => {
       executeFn.mockRejectedValueOnce(RetryLimitError);
       const groupedOps = getGroupedOp();
+      const resolved = vi.fn();
       const rejected = vi.fn();
-      opRepo._enqueueAndWait(groupedOps[0]).catch(rejected);
+      opRepo._enqueueAndWait(groupedOps[0]).then(resolved, rejected);
       opRepo._enqueue(groupedOps[1]);
 
       await executeOps(opRepo);
 
       expect(opRepo._queue).toEqual([
-        { operation: groupedOps[0], bucket: 0, retries: 1 },
+        { operation: groupedOps[0], bucket: 0, retries: 1, resolver: expect.any(Function) },
         { operation: groupedOps[1], bucket: 0, retries: 1 },
       ]);
-      expect(opRepo._queue[0].resolver).toBeUndefined();
       expect(mockOperationModelStore._list()).toEqual(groupedOps);
       expect(delaySpy).toHaveBeenCalledWith(OP_REPO_BASE_FAIL_RETRY_BACKOFF);
-      await vi.waitUntil(() => rejected.mock.calls.length === 1);
+      expect(rejected).not.toHaveBeenCalled();
 
       await executeOps(opRepo);
 
       expect(opRepo._queue).toEqual([]);
       expect(mockOperationModelStore._list()).toEqual([]);
+      expect(resolved).toHaveBeenCalled();
+      expect(rejected).not.toHaveBeenCalled();
+    });
+
+    test('rejects the waiter but keeps the operation after repeated failures with no response', async () => {
+      executeFn.mockRejectedValue(RetryLimitError);
+      const op = new Operation('1');
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(op).catch(rejected);
+
+      for (let i = 1; i < OP_REPO_MAX_WAITER_RETRIES; i++) await executeOps(opRepo);
+      expect(rejected).not.toHaveBeenCalled();
+
+      await executeOps(opRepo);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
+      expect(rejected.mock.calls[0][0]._result).toBe(ExecutionResult._FailNoretry);
+      expect(opRepo._queue).toEqual([
+        { operation: op, bucket: 0, retries: OP_REPO_MAX_WAITER_RETRIES, resolver: undefined },
+      ]);
+      expect(mockOperationModelStore._list()).toEqual([op]);
     });
 
     test('drops operations when the executor throws another error', async () => {
