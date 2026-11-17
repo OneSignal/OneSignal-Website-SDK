@@ -2,7 +2,7 @@ import {
   cancelableTimeout,
   type CancelableTimeoutPromise,
 } from '../../sw/helpers/CancelableTimeout';
-import { enqueueSessionCreate } from '../../sw/sessionRequests/queue';
+import { enqueueSessionCreate, enqueueSessionUpdate } from '../../sw/sessionRequests/queue';
 import { drainSessionRequests } from '../../sw/sessionRequests/sender';
 import { sendSessionDuration, updateUserSession } from '../api/sw';
 import { encodeHashAsUriComponent } from '../context/helpers';
@@ -166,15 +166,21 @@ async function enqueueCreate(
     Log._debug('Sessions API: create waits for server ids and subscription type');
     return false;
   }
-  try {
-    await enqueueSessionCreate({
+  return tryEnqueue(() =>
+    enqueueSessionCreate({
       appId,
       sessionId,
       onesignalId,
       subscriptionId,
       subscriptionType,
       startTime,
-    });
+    }),
+  );
+}
+
+async function tryEnqueue(enqueue: () => Promise<void>): Promise<boolean> {
+  try {
+    await enqueue();
     return true;
   } catch (e) {
     Log._error('Sessions API: enqueue failed', e);
@@ -279,6 +285,7 @@ async function finalizeSession(
 ): Promise<void> {
   const { enableSessionDuration: sendOnFocusEnabled, outcomesConfig } = options;
   Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
+  const endQueued = await enqueueSessionEnd(session);
   if (sendOnFocusEnabled) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
@@ -287,7 +294,36 @@ async function finalizeSession(
   }
 
   await Promise.all([cleanupCurrentSession(), clearStore('Outcomes.NotificationClicked')]);
+  if (endQueued) await drainSessionRequests();
   Log._debug('Finalize session finished');
+}
+
+/**
+ * Ends the session at the moment the last tab went hidden, not when the
+ * threshold expired. Its create was queued with the pinned IDs, so the end
+ * uses them too, and is skipped while they are local since no create exists.
+ */
+async function enqueueSessionEnd(session: Session): Promise<boolean> {
+  const { appId, sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
+  if (
+    !usesSessionsApi ||
+    !sessionId ||
+    !onesignalId ||
+    !subscriptionId ||
+    hasLocalId(onesignalId, subscriptionId)
+  ) {
+    return false;
+  }
+  return tryEnqueue(() =>
+    enqueueSessionUpdate({
+      appId,
+      sessionId,
+      onesignalId,
+      subscriptionId,
+      durationSeconds: session.accumulatedDuration,
+      endTime: session.lastDeactivatedTimestamp ?? Date.now(),
+    }),
+  );
 }
 
 const resetSentUniqueOutcomes = async (): Promise<void> => {
