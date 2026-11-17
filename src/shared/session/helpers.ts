@@ -1,5 +1,10 @@
-import { ONESIGNAL_SESSION_KEY, SessionStatus } from './constants';
-import type { Session } from './types';
+import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from './constants';
+import type { Session, SessionOriginValue } from './types';
+
+/** A tab hid or closed, as opposed to the window only losing focus. */
+export function isBackgroundOrigin(origin: SessionOriginValue): boolean {
+  return origin === SessionOrigin._VisibilityHidden || origin === SessionOrigin._PageHide;
+}
 
 type NewSessionOptions = Pick<Session, 'appId'> &
   Partial<

@@ -35,7 +35,11 @@ import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from 'src/shared/session/constants';
-import type { Session, UpsertOrDeactivateSessionPayload } from 'src/shared/session/types';
+import type {
+  Session,
+  SessionOriginValue,
+  UpsertOrDeactivateSessionPayload,
+} from 'src/shared/session/types';
 import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import { cancelableTimeout } from 'src/sw/helpers/CancelableTimeout';
 import { enqueueSessionUpdate } from 'src/sw/sessionRequests/queue';
@@ -1546,6 +1550,32 @@ describe('ServiceWorker', () => {
             blurred.accumulatedDuration,
           );
           expect(drainSessionRequests).toHaveBeenCalled();
+        });
+
+        test('a blur that reaches the worker after the hidden still checkpoints', async () => {
+          await db.put('Sessions', activeSession());
+          matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+          const debounce = vi.mocked(cancelableTimeout).getMockImplementation()!;
+          vi.mocked(cancelableTimeout)
+            .mockImplementationOnce(debounce)
+            .mockImplementationOnce(debounce)
+            .mockReturnValueOnce({ promise: new Promise(() => {}), cancel: vi.fn() });
+          const message = (sessionOrigin: SessionOriginValue) =>
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                sessionOrigin,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            });
+
+          self.dispatchEvent(message(SessionOrigin._VisibilityHidden));
+          self.dispatchEvent(message(SessionOrigin._Blur));
+          await flush();
+
+          expect(await queued()).toEqual([expect.objectContaining({ kind: 'update' })]);
+          expect((await queued())[0]).not.toHaveProperty('endTime', expect.anything());
         });
 
         test('no checkpoint when the duration has not grown since the last one', async () => {

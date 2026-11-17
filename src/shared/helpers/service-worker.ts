@@ -13,8 +13,8 @@ import Log from '../libraries/Log';
 import { IDManager } from '../managers/IDManager';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
-import { SessionOrigin, SessionStatus } from '../session/constants';
-import { initializeNewSession } from '../session/helpers';
+import { SessionStatus } from '../session/constants';
+import { initializeNewSession, isBackgroundOrigin } from '../session/helpers';
 import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
 import { getBaseUrl } from './general';
 import { getConfigAttribution } from './OutcomesHelper';
@@ -274,12 +274,7 @@ async function enqueueCheckpoint(
   options: UpsertOrDeactivateSessionPayload,
   session: Session,
 ): Promise<boolean> {
-  const { sessionOrigin } = options;
-  if (
-    sessionOrigin !== SessionOrigin._VisibilityHidden &&
-    sessionOrigin !== SessionOrigin._PageHide
-  )
-    return false;
+  if (!isBackgroundOrigin(options.sessionOrigin)) return false;
   if (session.accumulatedDuration <= (session.checkpointedDuration ?? 0)) return false;
   if (!(await enqueueDurationUpdate(options, session))) return false;
   session.checkpointedDuration = session.accumulatedDuration;
